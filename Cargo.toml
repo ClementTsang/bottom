@@ -73,6 +73,8 @@ flume = "0.10.14"
 futures = "0.3.21"
 futures-timer = "3.0.2"
 fxhash = "0.2.1"
+humantime = "2.1.0"
+humantime-serde = "1.1.1"
 indexmap = "1.8.1"
 itertools = "0.10.3"
 kstring = { version = "2.0.0", features = ["arc"] }

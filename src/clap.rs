@@ -348,6 +348,13 @@ use CPU (3) as the default instead.
             "Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rather than a decimal prefix (i.e. kilobits, megabits). Defaults to decimal prefixes.",
         );
 
+    let retention = Arg::new("retention")
+        .long("retention")
+        .takes_value(true)
+        .value_name("time")
+        .help("The timespan of data kept.")
+        .long_help("How much data is stored at once in terms of time. Takes in human-readable time spans (e.g. 10m, 1h), with a minimum of 1 minute. Note higher values will take up more memory. Defaults to 10 minutes.");
+
     #[allow(unused_mut)]
     let mut app = Command::new(crate_name!())
         .version(crate_version!())
@@ -391,7 +398,8 @@ use CPU (3) as the default instead.
         .arg(network_use_binary_prefix)
         .arg(current_usage)
         .arg(use_old_network_legend)
-        .arg(whole_word);
+        .arg(whole_word)
+        .arg(retention);
 
     #[cfg(feature = "battery")]
     {

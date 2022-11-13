@@ -3,9 +3,10 @@ use std::{
     collections::{HashMap, HashSet},
     convert::TryInto,
     str::FromStr,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
+use clap::ArgMatches;
 use layout_options::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -88,6 +89,9 @@ pub struct ConfigFlags {
     pub network_use_log: Option<bool>,
     pub network_use_binary_prefix: Option<bool>,
     pub enable_gpu_memory: Option<bool>,
+    #[serde(with = "humantime_serde")]
+    #[serde(default)]
+    pub retention: Option<Duration>,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
@@ -168,13 +172,16 @@ pub struct IgnoreList {
 }
 
 pub fn build_app(
-    matches: &clap::ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
+    matches: &ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
     colours: &CanvasColours,
 ) -> Result<App> {
     use BottomWidgetType::*;
+
+    let retention_ms =
+        get_retention_ms(matches, config).context("Update `retention` in your config file.")?;
     let autohide_time = get_autohide_time(matches, config);
-    let default_time_value = get_default_time_value(matches, config)
+    let default_time_value = get_default_time_value(matches, config, retention_ms)
         .context("Update 'default_time_value' in your config file.")?;
     let use_basic_mode = get_use_basic_mode(matches, config);
 
@@ -224,7 +231,7 @@ pub fn build_app(
         use_current_cpu_total: get_use_current_cpu_total(matches, config),
         use_basic_mode,
         default_time_value,
-        time_interval: get_time_interval(matches, config)
+        time_interval: get_time_interval(matches, config, retention_ms)
             .context("Update 'time_delta' in your config file.")?,
         hide_time: get_hide_time(matches, config),
         autohide_time,
@@ -241,6 +248,7 @@ pub fn build_app(
         network_scale_type,
         network_unit_type,
         network_use_binary_prefix,
+        retention_ms,
     };
 
     for row in &widget_layout.rows {
@@ -422,7 +430,7 @@ pub fn build_app(
 }
 
 pub fn get_widget_layout(
-    matches: &clap::ArgMatches, config: &Config,
+    matches: &ArgMatches, config: &Config,
 ) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
     let left_legend = get_use_left_legend(matches, config);
     let (default_widget_type, mut default_widget_count) =
@@ -486,9 +494,7 @@ pub fn get_widget_layout(
     Ok((bottom_layout, default_widget_id, default_widget_type))
 }
 
-fn get_update_rate_in_milliseconds(
-    matches: &clap::ArgMatches, config: &Config,
-) -> error::Result<u64> {
+fn get_update_rate_in_milliseconds(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
     let update_rate_in_milliseconds = if let Some(update_rate) = matches.value_of("rate") {
         update_rate.parse::<u64>().map_err(|_| {
             BottomError::ConfigError(
@@ -515,7 +521,7 @@ fn get_update_rate_in_milliseconds(
 }
 
 fn get_temperature(
-    matches: &clap::ArgMatches, config: &Config,
+    matches: &ArgMatches, config: &Config,
 ) -> error::Result<data_harvester::temperature::TemperatureType> {
     if matches.is_present("fahrenheit") {
         return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
@@ -541,7 +547,7 @@ fn get_temperature(
 }
 
 /// Yes, this function gets whether to show average CPU (true) or not (false)
-fn get_show_average_cpu(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_show_average_cpu(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("hide_avg_cpu") {
         return false;
     } else if let Some(flags) = &config.flags {
@@ -553,7 +559,7 @@ fn get_show_average_cpu(matches: &clap::ArgMatches, config: &Config) -> bool {
     true
 }
 
-fn get_use_dot(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_use_dot(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("dot_marker") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -564,7 +570,7 @@ fn get_use_dot(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_use_left_legend(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_use_left_legend(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("left_legend") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -576,7 +582,7 @@ fn get_use_left_legend(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_use_current_cpu_total(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_use_current_cpu_total(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("current_usage") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -588,7 +594,7 @@ fn get_use_current_cpu_total(matches: &clap::ArgMatches, config: &Config) -> boo
     false
 }
 
-fn get_use_basic_mode(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_use_basic_mode(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("basic") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -600,7 +606,10 @@ fn get_use_basic_mode(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_default_time_value(matches: &clap::ArgMatches, config: &Config) -> error::Result<u64> {
+/// FIXME: Let this accept human times.
+fn get_default_time_value(
+    matches: &ArgMatches, config: &Config, retention_ms: u64,
+) -> error::Result<u64> {
     let default_time = if let Some(default_time_value) = matches.value_of("default_time_value") {
         default_time_value.parse::<u64>().map_err(|_| {
             BottomError::ConfigError(
@@ -621,17 +630,19 @@ fn get_default_time_value(matches: &clap::ArgMatches, config: &Config) -> error:
         return Err(BottomError::ConfigError(
             "set your default value to be at least 30000 milliseconds.".to_string(),
         ));
-    } else if default_time > STALE_MAX_MILLISECONDS {
+    } else if default_time > retention_ms {
         return Err(BottomError::ConfigError(format!(
             "set your default value to be at most {} milliseconds.",
-            STALE_MAX_MILLISECONDS
+            retention_ms
         )));
     }
 
     Ok(default_time)
 }
 
-fn get_time_interval(matches: &clap::ArgMatches, config: &Config) -> error::Result<u64> {
+fn get_time_interval(
+    matches: &ArgMatches, config: &Config, retention_ms: u64,
+) -> error::Result<u64> {
     let time_interval = if let Some(time_interval) = matches.value_of("time_delta") {
         time_interval.parse::<u64>().map_err(|_| {
             BottomError::ConfigError(
@@ -652,17 +663,17 @@ fn get_time_interval(matches: &clap::ArgMatches, config: &Config) -> error::Resu
         return Err(BottomError::ConfigError(
             "set your time delta to be at least 1000 milliseconds.".to_string(),
         ));
-    } else if time_interval > STALE_MAX_MILLISECONDS {
+    } else if time_interval > retention_ms {
         return Err(BottomError::ConfigError(format!(
             "set your time delta to be at most {} milliseconds.",
-            STALE_MAX_MILLISECONDS
+            retention_ms
         )));
     }
 
     Ok(time_interval)
 }
 
-pub fn get_app_grouping(matches: &clap::ArgMatches, config: &Config) -> bool {
+pub fn get_app_grouping(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("group") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -673,7 +684,7 @@ pub fn get_app_grouping(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-pub fn get_app_case_sensitive(matches: &clap::ArgMatches, config: &Config) -> bool {
+pub fn get_app_case_sensitive(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("case_sensitive") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -684,7 +695,7 @@ pub fn get_app_case_sensitive(matches: &clap::ArgMatches, config: &Config) -> bo
     false
 }
 
-pub fn get_app_match_whole_word(matches: &clap::ArgMatches, config: &Config) -> bool {
+pub fn get_app_match_whole_word(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("whole_word") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -695,7 +706,7 @@ pub fn get_app_match_whole_word(matches: &clap::ArgMatches, config: &Config) -> 
     false
 }
 
-pub fn get_app_use_regex(matches: &clap::ArgMatches, config: &Config) -> bool {
+pub fn get_app_use_regex(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("regex") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -706,7 +717,7 @@ pub fn get_app_use_regex(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_hide_time(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_hide_time(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("hide_time") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -717,7 +728,7 @@ fn get_hide_time(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_autohide_time(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_autohide_time(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("autohide_time") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -730,7 +741,7 @@ fn get_autohide_time(matches: &clap::ArgMatches, config: &Config) -> bool {
 }
 
 fn get_default_widget_and_count(
-    matches: &clap::ArgMatches, config: &Config,
+    matches: &ArgMatches, config: &Config,
 ) -> error::Result<(Option<BottomWidgetType>, u64)> {
     let widget_type = if let Some(widget_type) = matches.value_of("default_widget_type") {
         let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
@@ -779,7 +790,7 @@ fn get_default_widget_and_count(
     }
 }
 
-fn get_disable_click(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_disable_click(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("disable_click") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -790,7 +801,7 @@ fn get_disable_click(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_use_old_network_legend(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_use_old_network_legend(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("use_old_network_legend") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -801,7 +812,7 @@ fn get_use_old_network_legend(matches: &clap::ArgMatches, config: &Config) -> bo
     false
 }
 
-fn get_hide_table_gap(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_hide_table_gap(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("hide_table_gap") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -812,7 +823,7 @@ fn get_hide_table_gap(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_use_battery(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
     if cfg!(feature = "battery") {
         if matches.is_present("battery") {
             return true;
@@ -825,7 +836,7 @@ fn get_use_battery(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_enable_gpu_memory(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_enable_gpu_memory(matches: &ArgMatches, config: &Config) -> bool {
     if cfg!(feature = "gpu") {
         if matches.is_present("enable_gpu_memory") {
             return true;
@@ -839,7 +850,7 @@ fn get_enable_gpu_memory(matches: &clap::ArgMatches, config: &Config) -> bool {
 }
 
 #[allow(dead_code)]
-fn get_no_write(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_no_write(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("no_write") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -887,9 +898,7 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Fil
     }
 }
 
-pub fn get_color_scheme(
-    matches: &clap::ArgMatches, config: &Config,
-) -> error::Result<ColourScheme> {
+pub fn get_color_scheme(matches: &ArgMatches, config: &Config) -> error::Result<ColourScheme> {
     if let Some(color) = matches.value_of("color") {
         // Highest priority is always command line flags...
         return ColourScheme::from_str(color);
@@ -914,7 +923,7 @@ pub fn get_color_scheme(
     Ok(ColourScheme::Default)
 }
 
-fn get_mem_as_value(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_mem_as_value(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("mem_as_value") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -925,7 +934,7 @@ fn get_mem_as_value(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_is_default_tree(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_is_default_tree(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("tree") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -936,7 +945,7 @@ fn get_is_default_tree(matches: &clap::ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_show_table_scroll_position(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_show_table_scroll_position(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("show_table_scroll_position") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -947,7 +956,7 @@ fn get_show_table_scroll_position(matches: &clap::ArgMatches, config: &Config) -
     false
 }
 
-fn get_is_default_process_command(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_is_default_process_command(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("process_command") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -958,7 +967,7 @@ fn get_is_default_process_command(matches: &clap::ArgMatches, config: &Config) -
     false
 }
 
-fn get_is_advanced_kill_disabled(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_is_advanced_kill_disabled(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("disable_advanced_kill") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -969,7 +978,7 @@ fn get_is_advanced_kill_disabled(matches: &clap::ArgMatches, config: &Config) ->
     false
 }
 
-fn get_network_unit_type(matches: &clap::ArgMatches, config: &Config) -> DataUnit {
+fn get_network_unit_type(matches: &ArgMatches, config: &Config) -> DataUnit {
     if matches.is_present("network_use_bytes") {
         return DataUnit::Byte;
     } else if let Some(flags) = &config.flags {
@@ -983,7 +992,7 @@ fn get_network_unit_type(matches: &clap::ArgMatches, config: &Config) -> DataUni
     DataUnit::Bit
 }
 
-fn get_network_scale_type(matches: &clap::ArgMatches, config: &Config) -> AxisScaling {
+fn get_network_scale_type(matches: &ArgMatches, config: &Config) -> AxisScaling {
     if matches.is_present("network_use_log") {
         return AxisScaling::Log;
     } else if let Some(flags) = &config.flags {
@@ -997,7 +1006,7 @@ fn get_network_scale_type(matches: &clap::ArgMatches, config: &Config) -> AxisSc
     AxisScaling::Linear
 }
 
-fn get_network_use_binary_prefix(matches: &clap::ArgMatches, config: &Config) -> bool {
+fn get_network_use_binary_prefix(matches: &ArgMatches, config: &Config) -> bool {
     if matches.is_present("network_use_binary_prefix") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -1006,4 +1015,22 @@ fn get_network_use_binary_prefix(matches: &clap::ArgMatches, config: &Config) ->
         }
     }
     false
+}
+
+fn get_retention_ms(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
+    const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
+
+    if let Some(retention) = matches.value_of("retention") {
+        humantime::parse_duration(retention)
+            .map(|dur| dur.as_millis() as u64)
+            .map_err(|err| BottomError::ConfigError(format!("invalid retention duration: {err:?}")))
+    } else if let Some(flags) = &config.flags {
+        if let Some(retention) = flags.retention {
+            Ok(retention.as_millis() as u64)
+        } else {
+            Ok(DEFAULT_RETENTION_MS)
+        }
+    } else {
+        Ok(DEFAULT_RETENTION_MS)
+    }
 }

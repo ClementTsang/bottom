@@ -44,3 +44,4 @@ The following flags can be provided to bottom in the command line to change the 
 | `-V, --version`                       | Prints version information.                                    |
 | `-W, --whole_word`                    | Enables whole-word matching by default.                        |
 | `--enable_gpu_memory`                 | Enable collecting and displaying GPU memory usage.             |
+| `--retention`                         | How much data is stored at once in terms of time.              |
