@@ -97,7 +97,7 @@ libc = "0.2.124"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "net", "sensors"] }
-procfs = { version = "0.12.0", default-features = false }
+procfs = { version = "0.14.1", default-features = false }
 smol = "1.2.5"
 
 [target.'cfg(target_os = "macos")'.dependencies]
@@ -110,7 +110,7 @@ winapi = "0.3.9"
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
 serde_json = { version = "1.0.82" }
-sysctl = { version = "0.4.6", optional = true }
+sysctl = { version = "0.5.2", optional = true }
 
 [dev-dependencies]
 assert_cmd = "2.0.4"
