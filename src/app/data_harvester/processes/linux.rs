@@ -1,7 +1,5 @@
 //! Process data collection for Linux.
 
-use std::collections::hash_map::Entry;
-
 use fxhash::{FxHashMap, FxHashSet};
 use procfs::process::{Process, Stat};
 use sysinfo::ProcessStatus;
@@ -15,23 +13,11 @@ use crate::Pid;
 /// If it's equal or greater, then we instead refer to the command for the name.
 const MAX_STAT_NAME_LEN: usize = 15;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct PrevProcDetails {
-    pub total_read_bytes: u64,
-    pub total_write_bytes: u64,
-    pub cpu_time: u64,
-    pub process: Process,
-}
-
-impl PrevProcDetails {
-    fn new(pid: Pid) -> error::Result<Self> {
-        Ok(Self {
-            total_read_bytes: 0,
-            total_write_bytes: 0,
-            cpu_time: 0,
-            process: Process::new(pid)?,
-        })
-    }
+    total_read_bytes: u64,
+    total_write_bytes: u64,
+    cpu_time: u64,
 }
 
 fn calculate_idle_values(line: String) -> Point {
@@ -113,14 +99,11 @@ fn get_linux_cpu_usage(
 }
 
 fn read_proc(
-    prev_proc: &PrevProcDetails, stat: &Stat, cpu_usage: f64, cpu_fraction: f64,
+    prev_proc: &PrevProcDetails, process: &Process, cpu_usage: f64, cpu_fraction: f64,
     use_current_cpu_total: bool, time_difference_in_secs: u64, mem_total_kb: u64,
     user_table: &mut UserTable,
 ) -> error::Result<(ProcessHarvest, u64)> {
-    use std::convert::TryFrom;
-
-    let process = &prev_proc.process;
-
+    let stat = process.stat()?;
     let (command, name) = {
         let truncated_name = stat.comm.as_str();
         if let Ok(cmdline) = process.cmdline() {
@@ -157,14 +140,14 @@ fn read_proc(
         process_state_char,
     );
     let (cpu_usage_percent, new_process_times) = get_linux_cpu_usage(
-        stat,
+        &stat,
         cpu_usage,
         cpu_fraction,
         prev_proc.cpu_time,
         use_current_cpu_total,
     );
     let parent_pid = Some(stat.ppid);
-    let mem_usage_bytes = u64::try_from(stat.rss_bytes()?).unwrap_or(0);
+    let mem_usage_bytes = stat.rss_bytes()?;
     let mem_usage_kb = mem_usage_bytes / 1024;
     let mem_usage_percent = mem_usage_kb as f64 / mem_total_kb as f64 * 100.0;
 
@@ -198,7 +181,7 @@ fn read_proc(
             (0, 0, 0, 0)
         };
 
-    let uid = process.owner;
+    let uid = process.uid()?;
 
     Ok((
         ProcessHarvest {
@@ -238,49 +221,27 @@ pub fn get_process_data(
             .filter_map(|dir| {
                 if let Ok(dir) = dir {
                     if let Ok(pid) = dir.file_name().to_string_lossy().trim().parse::<Pid>() {
-                        let mut fresh = false;
-                        if let Entry::Vacant(entry) = pid_mapping.entry(pid) {
-                            if let Ok(ppd) = PrevProcDetails::new(pid) {
-                                entry.insert(ppd);
-                                fresh = true;
-                            } else {
-                                // Bail early.
-                                return None;
-                            }
+                        let Ok(process) = Process::new(pid) else {
+                            return None;
                         };
+                        let prev_proc_details = pid_mapping.entry(pid).or_default();
 
-                        if let Some(prev_proc_details) = pid_mapping.get_mut(&pid) {
-                            let stat;
-                            let stat_live;
-                            if fresh {
-                                stat = &prev_proc_details.process.stat;
-                            } else if let Ok(s) = prev_proc_details.process.stat() {
-                                stat_live = s;
-                                stat = &stat_live;
-                            } else {
-                                // Bail early.
-                                return None;
-                            }
+                        if let Ok((process_harvest, new_process_times)) = read_proc(
+                            prev_proc_details,
+                            &process,
+                            cpu_usage,
+                            cpu_fraction,
+                            use_current_cpu_total,
+                            time_difference_in_secs,
+                            mem_total_kb,
+                            user_table,
+                        ) {
+                            prev_proc_details.cpu_time = new_process_times;
+                            prev_proc_details.total_read_bytes = process_harvest.total_read_bytes;
+                            prev_proc_details.total_write_bytes = process_harvest.total_write_bytes;
 
-                            if let Ok((process_harvest, new_process_times)) = read_proc(
-                                prev_proc_details,
-                                stat,
-                                cpu_usage,
-                                cpu_fraction,
-                                use_current_cpu_total,
-                                time_difference_in_secs,
-                                mem_total_kb,
-                                user_table,
-                            ) {
-                                prev_proc_details.cpu_time = new_process_times;
-                                prev_proc_details.total_read_bytes =
-                                    process_harvest.total_read_bytes;
-                                prev_proc_details.total_write_bytes =
-                                    process_harvest.total_write_bytes;
-
-                                pids_to_clear.remove(&pid);
-                                return Some(process_harvest);
-                            }
+                            pids_to_clear.remove(&pid);
+                            return Some(process_harvest);
                         }
                     }
                 }
