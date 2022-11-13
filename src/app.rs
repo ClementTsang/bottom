@@ -72,6 +72,7 @@ pub struct AppConfigFields {
     pub network_unit_type: DataUnit,
     pub network_scale_type: AxisScaling,
     pub network_use_binary_prefix: bool,
+    pub retention_ms: u64,
 }
 
 /// For filtering out information
@@ -2186,16 +2187,16 @@ impl App {
                 {
                     let new_time = cpu_widget_state.current_display_time
                         + self.app_config_fields.time_interval;
-                    if new_time <= constants::STALE_MAX_MILLISECONDS {
+                    if new_time <= self.app_config_fields.retention_ms {
                         cpu_widget_state.current_display_time = new_time;
                         self.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
                     } else if cpu_widget_state.current_display_time
-                        != constants::STALE_MAX_MILLISECONDS
+                        != self.app_config_fields.retention_ms
                     {
-                        cpu_widget_state.current_display_time = constants::STALE_MAX_MILLISECONDS;
+                        cpu_widget_state.current_display_time = self.app_config_fields.retention_ms;
                         self.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
@@ -2211,16 +2212,16 @@ impl App {
                 {
                     let new_time = mem_widget_state.current_display_time
                         + self.app_config_fields.time_interval;
-                    if new_time <= constants::STALE_MAX_MILLISECONDS {
+                    if new_time <= self.app_config_fields.retention_ms {
                         mem_widget_state.current_display_time = new_time;
                         self.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
                     } else if mem_widget_state.current_display_time
-                        != constants::STALE_MAX_MILLISECONDS
+                        != self.app_config_fields.retention_ms
                     {
-                        mem_widget_state.current_display_time = constants::STALE_MAX_MILLISECONDS;
+                        mem_widget_state.current_display_time = self.app_config_fields.retention_ms;
                         self.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
@@ -2236,16 +2237,16 @@ impl App {
                 {
                     let new_time = net_widget_state.current_display_time
                         + self.app_config_fields.time_interval;
-                    if new_time <= constants::STALE_MAX_MILLISECONDS {
+                    if new_time <= self.app_config_fields.retention_ms {
                         net_widget_state.current_display_time = new_time;
                         self.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
                     } else if net_widget_state.current_display_time
-                        != constants::STALE_MAX_MILLISECONDS
+                        != self.app_config_fields.retention_ms
                     {
-                        net_widget_state.current_display_time = constants::STALE_MAX_MILLISECONDS;
+                        net_widget_state.current_display_time = self.app_config_fields.retention_ms;
                         self.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());

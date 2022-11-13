@@ -5,9 +5,6 @@ use crate::options::ConfigColours;
 // Default widget ID
 pub const DEFAULT_WIDGET_ID: u64 = 56709;
 
-// How long to store data.
-pub const STALE_MAX_MILLISECONDS: u64 = 600 * 1000; // Keep 10 minutes of data.
-
 // How much data is SHOWN
 pub const DEFAULT_TIME_MILLISECONDS: u64 = 60 * 1000; // Defaults to 1 min.
 pub const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds

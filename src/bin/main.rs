@@ -85,12 +85,12 @@ fn main() -> Result<()> {
         let lock = thread_termination_lock.clone();
         let cvar = thread_termination_cvar.clone();
         let cleaning_sender = sender.clone();
-        const OFFSET_WAIT_TIME: u64 = constants::STALE_MAX_MILLISECONDS + 60000;
+        let offset_wait_time = app.app_config_fields.retention_ms + 60000;
         thread::spawn(move || {
             loop {
                 let result = cvar.wait_timeout(
                     lock.lock().unwrap(),
-                    Duration::from_millis(OFFSET_WAIT_TIME),
+                    Duration::from_millis(offset_wait_time),
                 );
                 if let Ok(result) = result {
                     if *(result.0) {
@@ -271,7 +271,7 @@ fn main() -> Result<()> {
                 }
                 BottomEvent::Clean => {
                     app.data_collection
-                        .clean_data(constants::STALE_MAX_MILLISECONDS);
+                        .clean_data(app.app_config_fields.retention_ms);
                 }
             }
         }
