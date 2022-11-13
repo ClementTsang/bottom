@@ -4,11 +4,8 @@ set -e
 
 echo "Running pre-push hook:"
 
-echo "Checking fmt"
+echo "Executing: cargo fmt --all -- --check"
 cargo fmt --all -- --check
 
 echo "Executing: cargo clippy --all-targets --workspace -- -D warnings"
 cargo clippy --all-targets --workspace -- -D warnings
-
-# echo "Executing: cargo test"
-# cargo test
