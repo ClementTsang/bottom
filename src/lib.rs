@@ -20,7 +20,10 @@ use std::{
     panic::PanicInfo,
     path::PathBuf,
     sync::Mutex,
-    sync::{Arc, Condvar},
+    sync::{
+        mpsc::{Receiver, Sender},
+        Arc, Condvar,
+    },
     thread::{self, JoinHandle},
     time::{Duration, Instant},
 };
@@ -42,7 +45,6 @@ use crossterm::{
     terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
 use data_conversion::*;
-use flume::{Receiver, Sender};
 use options::*;
 use utils::error;
 

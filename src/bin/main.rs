@@ -10,7 +10,7 @@ use std::{
     panic,
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc, Condvar, Mutex,
+        mpsc, Arc, Condvar, Mutex,
     },
     thread,
     time::Duration,
@@ -77,7 +77,7 @@ fn main() -> Result<()> {
     let thread_termination_cvar = Arc::new(Condvar::new());
 
     // Set up input handling
-    let (sender, receiver) = flume::unbounded();
+    let (sender, receiver) = mpsc::channel();
     let _input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
 
     // Cleaning loop
@@ -106,7 +106,7 @@ fn main() -> Result<()> {
     };
 
     // Event loop
-    let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = flume::unbounded();
+    let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
     let _collection_thread = create_collection_thread(
         sender,
         collection_thread_ctrl_receiver,
