@@ -37,3 +37,4 @@ Most of the [command line flags](../../command-line-flags) have config file equi
 | `network_use_bytes`          | Boolean                                                                                        | Displays the network widget using bytes.                       |
 | `network_use_log`            | Boolean                                                                                        | Displays the network widget with a log scale.                  |
 | `enable_gpu_memory`          | Boolean                                                                                        | Shows the GPU memory widget.                                   |
+| `retention`                  | String (human readable time, such as "10m", "1h", etc.)                                        | How much data is stored at once in terms of time.              |

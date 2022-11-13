@@ -546,6 +546,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #disable_advanced_kill = false
 # Shows GPU(s) memory
 #enable_gpu_memory = false
+# How much data is stored at once in terms of time.
+#retention = "10m"
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
