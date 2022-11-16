@@ -84,9 +84,10 @@ fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error:
 }
 
 /// Returns the usage and a new set of process times. Note: cpu_fraction should be represented WITHOUT the x100 factor!
+#[inline]
 fn get_linux_cpu_usage(
-    stat: &Stat, cpu_usage: f64, cpu_fraction: f64, prev_proc_times: u64,
-    use_current_cpu_total: bool,
+    stat: &Stat, cpu_usage: f64, cpu_fraction: f64, prev_proc_times: u64, logical_count: u64,
+    use_current_cpu_total: bool, per_core_percentage: bool,
 ) -> (f64, u64) {
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
     let new_proc_times = stat.utime + stat.stime;
@@ -94,6 +95,11 @@ fn get_linux_cpu_usage(
 
     if cpu_usage == 0.0 {
         (0.0, new_proc_times)
+    } else if per_core_percentage {
+        (
+            diff / cpu_usage * 100_f64 * cpu_fraction * (logical_count as f64),
+            new_proc_times,
+        )
     } else if use_current_cpu_total {
         ((diff / cpu_usage) * 100.0, new_proc_times)
     } else {
@@ -101,10 +107,11 @@ fn get_linux_cpu_usage(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn read_proc(
     prev_proc: &PrevProcDetails, process: &Process, cpu_usage: f64, cpu_fraction: f64,
-    use_current_cpu_total: bool, time_difference_in_secs: u64, mem_total_kb: u64,
-    user_table: &mut UserTable,
+    use_current_cpu_total: bool, per_core_percentage: bool, time_difference_in_secs: u64,
+    mem_total_kb: u64, logical_count: u64, user_table: &mut UserTable,
 ) -> error::Result<(ProcessHarvest, u64)> {
     let stat = process.stat()?;
     let (command, name) = {
@@ -147,7 +154,9 @@ fn read_proc(
         cpu_usage,
         cpu_fraction,
         prev_proc.cpu_time,
+        logical_count,
         use_current_cpu_total,
+        per_core_percentage,
     );
     let parent_pid = Some(stat.ppid);
     let mem_usage_bytes = stat.rss_bytes()?;
@@ -209,10 +218,12 @@ fn read_proc(
     ))
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn get_process_data(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
     pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
-    time_difference_in_secs: u64, mem_total_kb: u64, user_table: &mut UserTable,
+    per_core_percentage: bool, time_difference_in_secs: u64, mem_total_kb: u64, logical_count: u64,
+    user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     // TODO: [PROC THREADS] Add threads
 
@@ -234,8 +245,10 @@ pub fn get_process_data(
                             cpu_usage,
                             cpu_fraction,
                             use_current_cpu_total,
+                            per_core_percentage,
                             time_difference_in_secs,
                             mem_total_kb,
+                            logical_count,
                             user_table,
                         ) {
                             prev_proc_details.cpu_time = new_process_times;

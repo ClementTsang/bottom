@@ -25,11 +25,13 @@ struct ProcessRow {
 }
 
 pub fn get_process_data(
-    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64, user_table: &mut UserTable,
+    sys: &System, use_current_cpu_total: bool, per_core_percentage: bool, mem_total_kb: u64,
+    user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     super::macos_freebsd::get_process_data(
         sys,
         use_current_cpu_total,
+        per_core_percentage,
         mem_total_kb,
         user_table,
         get_freebsd_process_cpu_usage,
