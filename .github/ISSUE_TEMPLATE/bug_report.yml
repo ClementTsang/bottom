@@ -29,18 +29,16 @@ body:
         bottom is failing to output information for a mounted encrypted partition on basic mode. It should
         be able to report this information, but I'm not seeing the entry at all.
 
-  - type: dropdown
+  - type: textarea
     id: operating_system
     attributes:
-      label: What operating system are you using?
+      label: What operating system and version are you using?
       description: >
-        Please select the operating system(s) that are experiencing the described issue.
-      multiple: true
-      options:
-        - Linux
-        - macOS
-        - Windows
-        - "Other (please specify in description)"
+        Please provide what operating system(s) and version(s) you are running that
+        experiences the described issue. Note that operating systems that
+        [are not officially supported](https://github.com/ClementTsang/bottom#support)
+        may not be prioritized/resolved.
+      placeholder: Arch Linux 5.18.15
 
   - type: dropdown
     id: architecture
@@ -49,14 +47,14 @@ body:
       description: >
         Please select the architecture(s) that are experiencing the described issue.
         Note that systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
-        may not be resolved.
+        may not be prioritized/resolved.
       multiple: true
       options:
         - x86_64 / AMD64
         - arm64
         - arm32
         - x86
-        - Other (please specify in description)
+        - Other (*please specify above in description*)
 
   - type: textarea
     id: terminal
