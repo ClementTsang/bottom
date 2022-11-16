@@ -29,7 +29,7 @@ body:
         bottom is failing to output information for a mounted encrypted partition on basic mode. It should
         be able to report this information, but I'm not seeing the entry at all.
 
-  - type: textarea
+  - type: input
     id: operating_system
     attributes:
       label: What operating system and version are you using?
