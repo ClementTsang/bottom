@@ -251,14 +251,22 @@ impl DataCollector {
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
-            if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
-                self.sys.refresh_networks();
+
+            #[cfg(target_os = "windows")]
+            {
+                if self.widgets_to_harvest.use_net {
+                    self.sys.refresh_networks();
+                }
             }
-            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_disk {
-                self.sys.refresh_disks();
-            }
-            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_mem {
-                self.sys.refresh_memory();
+
+            #[cfg(target_os = "freebsd")]
+            {
+                if self.widgets_to_harvest.use_disk {
+                    self.sys.refresh_disks();
+                }
+                if self.widgets_to_harvest.use_mem {
+                    self.sys.refresh_memory();
+                }
             }
         }
 

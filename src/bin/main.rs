@@ -131,6 +131,16 @@ fn main() -> Result<()> {
     terminal.clear()?;
     terminal.hide_cursor()?;
 
+    #[cfg(target_os = "freebsd")]
+    let _stderr_fd = {
+        // A really ugly band-aid to suppress stderr warnings on FreeBSD due to sysinfo.
+        use filedescriptor::{FileDescriptor, StdioDescriptor};
+        use std::fs::OpenOptions;
+
+        let path = OpenOptions::new().write(true).open("/dev/null")?;
+        FileDescriptor::redirect_stdio(&path, StdioDescriptor::Stderr)?
+    };
+
     // Set panic hook
     panic::set_hook(Box::new(panic_hook));
 
