@@ -28,6 +28,15 @@ pub struct Id {
     prefix: Option<String>,
 }
 
+impl From<&'static str> for Id {
+    fn from(s: &'static str) -> Self {
+        Id {
+            id_type: IdType::Name(s.to_string()),
+            prefix: None,
+        }
+    }
+}
+
 impl Id {
     /// Returns the ID as a lowercase [`String`], with no prefix. This is primarily useful for
     /// cases like sorting where we treat everything as the same case (e.g. `Discord` comes before

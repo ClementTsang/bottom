@@ -139,3 +139,93 @@ impl SortsRow for ProcColumn {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::app::widgets::MemUsage;
+
+    #[test]
+    fn test_proc_sort() {
+        let a = ProcWidgetData {
+            pid: 1,
+            ppid: None,
+            id: "A".into(),
+            cpu_usage_percent: 0.0,
+            mem_usage: MemUsage::Percent(1.1),
+            rps: 0,
+            wps: 0,
+            total_read: 0,
+            total_write: 0,
+            process_state: "N/A".to_string(),
+            process_char: '?',
+            user: "root".to_string(),
+            num_similar: 0,
+            disabled: false,
+        };
+
+        let b = ProcWidgetData {
+            pid: 2,
+            id: "B".into(),
+            cpu_usage_percent: 1.1,
+            mem_usage: MemUsage::Percent(2.2),
+            ..(a.clone())
+        };
+
+        let c = ProcWidgetData {
+            pid: 3,
+            id: "C".into(),
+            cpu_usage_percent: 2.2,
+            mem_usage: MemUsage::Percent(0.0),
+            ..(a.clone())
+        };
+
+        let d = ProcWidgetData {
+            pid: 4,
+            id: "D".into(),
+            cpu_usage_percent: 0.0,
+            mem_usage: MemUsage::Percent(0.0),
+            ..(a.clone())
+        };
+
+        let mut data = vec![d.clone(), b.clone(), c.clone(), a.clone()];
+
+        ProcColumn::CpuPercent.sort_data(&mut data, true);
+        assert_eq!(
+            vec![&c, &b, &a, &d]
+                .iter()
+                .map(|d| (d.pid))
+                .collect::<Vec<_>>(),
+            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+        );
+
+        // Note that the PID ordering for ties is still ascending.
+        ProcColumn::CpuPercent.sort_data(&mut data, false);
+        assert_eq!(
+            vec![&a, &d, &b, &c]
+                .iter()
+                .map(|d| (d.pid))
+                .collect::<Vec<_>>(),
+            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+        );
+
+        ProcColumn::MemoryPercent.sort_data(&mut data, true);
+        assert_eq!(
+            vec![&b, &a, &c, &d]
+                .iter()
+                .map(|d| (d.pid))
+                .collect::<Vec<_>>(),
+            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+        );
+
+        // Note that the PID ordering for ties is still ascending.
+        ProcColumn::MemoryPercent.sort_data(&mut data, false);
+        assert_eq!(
+            vec![&c, &d, &a, &b]
+                .iter()
+                .map(|d| (d.pid))
+                .collect::<Vec<_>>(),
+            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+        );
+    }
+}
