@@ -571,12 +571,7 @@ impl ProcWidget {
             let column = column.inner();
             let descending = matches!(self.table.order(), SortOrder::Descending);
 
-            match column {
-                ProcColumn::Pid if !descending => {}
-                _ => {
-                    column.sort_data(filtered_data, descending);
-                }
-            }
+            sort_skip_pid_asc(column, filtered_data, descending);
         }
     }
 
@@ -867,10 +862,112 @@ impl ProcWidget {
     }
 }
 
+fn sort_skip_pid_asc(column: &ProcColumn, data: &mut [ProcWidgetData], descending: bool) {
+    match column {
+        ProcColumn::Pid if !descending => {}
+        _ => {
+            column.sort_data(data, descending);
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use super::*;
+    use crate::app::widgets::MemUsage;
+
     #[test]
     fn sorting_trees() {
         // FIXME: Add a test for this...
+    }
+
+    #[test]
+    fn test_proc_sort() {
+        let a = ProcWidgetData {
+            pid: 1,
+            ppid: None,
+            id: "A".into(),
+            cpu_usage_percent: 0.0,
+            mem_usage: MemUsage::Percent(1.1),
+            rps: 0,
+            wps: 0,
+            total_read: 0,
+            total_write: 0,
+            process_state: "N/A".to_string(),
+            process_char: '?',
+            #[cfg(target_family = "unix")]
+            user: "root".to_string(),
+            num_similar: 0,
+            disabled: false,
+        };
+
+        let b = ProcWidgetData {
+            pid: 2,
+            id: "B".into(),
+            cpu_usage_percent: 1.1,
+            mem_usage: MemUsage::Percent(2.2),
+            ..(a.clone())
+        };
+
+        let c = ProcWidgetData {
+            pid: 3,
+            id: "C".into(),
+            cpu_usage_percent: 2.2,
+            mem_usage: MemUsage::Percent(0.0),
+            ..(a.clone())
+        };
+
+        let d = ProcWidgetData {
+            pid: 4,
+            id: "D".into(),
+            cpu_usage_percent: 0.0,
+            mem_usage: MemUsage::Percent(0.0),
+            ..(a.clone())
+        };
+
+        let mut data = vec![d.clone(), b.clone(), c.clone(), a.clone()];
+
+        // Assume we had sorted over by pid.
+        data.sort_by_key(|p| p.pid);
+        sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, true);
+        assert_eq!(
+            vec![&c, &b, &a, &d]
+                .iter()
+                .map(|d| (d.pid))
+                .collect::<Vec<_>>(),
+            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+        );
+
+        // Note that the PID ordering for ties is still ascending.
+        data.sort_by_key(|p| p.pid);
+        sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, false);
+        assert_eq!(
+            vec![&a, &d, &b, &c]
+                .iter()
+                .map(|d| (d.pid))
+                .collect::<Vec<_>>(),
+            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+        );
+
+        data.sort_by_key(|p| p.pid);
+        sort_skip_pid_asc(&ProcColumn::MemoryPercent, &mut data, true);
+        assert_eq!(
+            vec![&b, &a, &c, &d]
+                .iter()
+                .map(|d| (d.pid))
+                .collect::<Vec<_>>(),
+            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+        );
+
+        // Note that the PID ordering for ties is still ascending.
+        data.sort_by_key(|p| p.pid);
+        sort_skip_pid_asc(&ProcColumn::MemoryPercent, &mut data, false);
+        assert_eq!(
+            vec![&c, &d, &a, &b]
+                .iter()
+                .map(|d| (d.pid))
+                .collect::<Vec<_>>(),
+            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+        );
     }
 }
