@@ -80,7 +80,6 @@ pub async fn get_disk_usage(
             .collect()
     })?;
 
-    vec_disks.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(Some(vec_disks))
 }
 

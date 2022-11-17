@@ -321,7 +321,7 @@ impl DataCollector {
         }
 
         if self.widgets_to_harvest.use_proc {
-            if let Ok(process_list) = {
+            if let Ok(mut process_list) = {
                 #[cfg(target_os = "linux")]
                 {
                     processes::get_process_data(
@@ -357,6 +357,8 @@ impl DataCollector {
                     }
                 }
             } {
+                // Sort by PID here.
+                process_list.sort_unstable_by_key(|p| p.pid);
                 self.data.list_of_processes = Some(process_list);
             }
         }

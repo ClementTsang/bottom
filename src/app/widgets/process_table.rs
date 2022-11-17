@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::BTreeMap};
 
 use fxhash::{FxHashMap, FxHashSet};
 use itertools::Itertools;
@@ -13,7 +13,7 @@ use crate::{
     canvas::canvas_colours::CanvasColours,
     components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
-        DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder,
+        DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
     Pid,
 };
@@ -384,7 +384,9 @@ impl ProcWidget {
             })
             .collect_vec();
 
-        self.try_sort(&mut stack);
+        stack.sort_unstable_by_key(|p| p.pid);
+        self.try_sort_skip_pid_asc(&mut stack);
+        stack.reverse();
 
         let mut length_stack = vec![stack.len()];
 
@@ -447,6 +449,7 @@ impl ProcWidget {
                 data.push(process.prefix(Some(prefix)).disabled(disabled));
 
                 if let Some(children_pids) = filtered_tree.get(&pid) {
+                    // TODO: Can probably use static strings for prefixes rather than allocating.
                     if prefixes.is_empty() {
                         prefixes.push(String::default());
                     } else {
@@ -485,7 +488,7 @@ impl ProcWidget {
     }
 
     fn get_normal_data(
-        &mut self, process_harvest: &FxHashMap<Pid, ProcessHarvest>,
+        &mut self, process_harvest: &BTreeMap<Pid, ProcessHarvest>,
     ) -> Vec<ProcWidgetData> {
         let search_query = self.get_query();
         let is_using_command = self.is_using_command();
@@ -545,15 +548,8 @@ impl ProcWidget {
         };
 
         self.id_pid_map = id_pid_map;
-        self.try_sort(&mut filtered_data);
+        self.try_sort_skip_pid_asc(&mut filtered_data);
         filtered_data
-    }
-
-    #[inline(always)]
-    fn try_sort(&self, filtered_data: &mut [ProcWidgetData]) {
-        if let Some(column) = self.table.columns.get(self.table.sort_index()) {
-            column.sort_by(filtered_data, self.table.order());
-        }
     }
 
     #[inline(always)]
@@ -566,6 +562,21 @@ impl ProcWidget {
                     SortOrder::Descending => SortOrder::Ascending,
                 },
             );
+        }
+    }
+
+    #[inline(always)]
+    fn try_sort_skip_pid_asc(&self, filtered_data: &mut [ProcWidgetData]) {
+        if let Some(column) = self.table.columns.get(self.table.sort_index()) {
+            let column = column.inner();
+            let descending = matches!(self.table.order(), SortOrder::Descending);
+
+            match column {
+                ProcColumn::Pid if !descending => {}
+                _ => {
+                    column.sort_data(filtered_data, descending);
+                }
+            }
         }
     }
 
@@ -853,5 +864,13 @@ impl ProcWidget {
 
         self.is_sort_open = false;
         self.force_rerender_and_update();
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn sorting_trees() {
+        // FIXME: Add a test for this...
     }
 }

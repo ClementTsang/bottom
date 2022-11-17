@@ -67,34 +67,22 @@ impl SortsRow for ProcColumn {
     type DataType = ProcWidgetData;
 
     fn sort_data(&self, data: &mut [ProcWidgetData], descending: bool) {
-        fn init_pid_sort(data: &mut [ProcWidgetData]) {
-            data.sort_by(|a, b| sort_partial_fn(false)(a.pid, b.pid));
-        }
-
         match self {
             ProcColumn::CpuPercent => {
-                init_pid_sort(data);
                 data.sort_by(|a, b| {
                     sort_partial_fn(descending)(a.cpu_usage_percent, b.cpu_usage_percent)
                 });
             }
             ProcColumn::MemoryVal | ProcColumn::MemoryPercent => {
-                init_pid_sort(data);
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.mem_usage, &b.mem_usage));
             }
             ProcColumn::Pid => {
-                if descending {
-                    data.sort_by(|a, b| sort_partial_fn(descending)(a.pid, b.pid));
-                } else {
-                    init_pid_sort(data);
-                }
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.pid, b.pid));
             }
             ProcColumn::Count => {
-                init_pid_sort(data);
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.num_similar, b.num_similar));
             }
             ProcColumn::Name | ProcColumn::Command => {
-                init_pid_sort(data);
                 if descending {
                     data.sort_by_cached_key(|pd| Reverse(pd.id.to_lowercase()));
                 } else {
@@ -102,23 +90,18 @@ impl SortsRow for ProcColumn {
                 }
             }
             ProcColumn::ReadPerSecond => {
-                init_pid_sort(data);
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.rps, b.rps));
             }
             ProcColumn::WritePerSecond => {
-                init_pid_sort(data);
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.wps, b.wps));
             }
             ProcColumn::TotalRead => {
-                init_pid_sort(data);
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.total_read, b.total_read));
             }
             ProcColumn::TotalWrite => {
-                init_pid_sort(data);
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.total_write, b.total_write));
             }
             ProcColumn::State => {
-                init_pid_sort(data);
                 if descending {
                     data.sort_by_cached_key(|pd| Reverse(pd.process_state.to_lowercase()));
                 } else {
@@ -128,7 +111,6 @@ impl SortsRow for ProcColumn {
             ProcColumn::User => {
                 #[cfg(target_family = "unix")]
                 {
-                    init_pid_sort(data);
                     if descending {
                         data.sort_by_cached_key(|pd| Reverse(pd.user.to_lowercase()));
                     } else {
@@ -159,6 +141,7 @@ mod test {
             total_write: 0,
             process_state: "N/A".to_string(),
             process_char: '?',
+            #[cfg(target_family = "unix")]
             user: "root".to_string(),
             num_similar: 0,
             disabled: false,
