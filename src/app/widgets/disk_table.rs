@@ -13,7 +13,7 @@ use crate::{
     utils::gen_util::{get_decimal_bytes, sort_partial_fn, truncate_text},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DiskWidgetData {
     pub name: KString,
     pub mount_point: KString,

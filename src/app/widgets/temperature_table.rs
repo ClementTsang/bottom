@@ -14,7 +14,7 @@ use crate::{
     utils::gen_util::{sort_partial_fn, truncate_text},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TempWidgetData {
     pub sensor: KString,
     pub temperature_value: u64,
@@ -78,7 +78,7 @@ impl SortsRow for TempWidgetColumn {
     fn sort_data(&self, data: &mut [Self::DataType], descending: bool) {
         match self {
             TempWidgetColumn::Sensor => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(&a.sensor, &b.sensor));
+                data.sort_by(move |a, b| sort_partial_fn(descending)(&a.sensor, &b.sensor));
             }
             TempWidgetColumn::Temp => {
                 data.sort_by(|a, b| {
