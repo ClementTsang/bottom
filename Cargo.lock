@@ -219,6 +219,7 @@ dependencies = [
  "ctrlc",
  "dirs",
  "fern",
+ "filedescriptor",
  "futures",
  "futures-timer",
  "fxhash",
@@ -587,6 +588,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3bdd7b0849075e79ee9a1836df22c717d1eba30451796fdc631b04565dd11e2a"
 dependencies = [
  "log",
+]
+
+[[package]]
+name = "filedescriptor"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7199d965852c3bac31f779ef99cbb4537f80e952e2d6aa0ffeb30cce00f4f46e"
+dependencies = [
+ "libc",
+ "thiserror",
+ "winapi",
 ]
 
 [[package]]
