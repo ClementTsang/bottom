@@ -357,7 +357,8 @@ impl DataCollector {
                     }
                 }
             } {
-                // Sort by PID here.
+                // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by PID here.
+                // We also want to avoid re-sorting *again* since this process list is sorted!
                 process_list.sort_unstable_by_key(|p| p.pid);
                 self.data.list_of_processes = Some(process_list);
             }
