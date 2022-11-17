@@ -13,10 +13,9 @@
 //! memory usage and higher CPU usage - you will be trying to process more and
 //! more points as this is used!
 
-use std::{time::Instant, vec::Vec};
+use std::{collections::BTreeMap, time::Instant, vec::Vec};
 
 use fxhash::FxHashMap;
-use itertools::Itertools;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -48,7 +47,7 @@ pub struct TimedData {
 #[derive(Clone, Debug, Default)]
 pub struct ProcessData {
     /// A PID to process data map.
-    pub process_harvest: FxHashMap<Pid, ProcessHarvest>,
+    pub process_harvest: BTreeMap<Pid, ProcessHarvest>,
 
     /// A mapping between a process PID to any children process PIDs.
     pub process_parent_mapping: FxHashMap<Pid, Vec<Pid>>,
@@ -84,22 +83,14 @@ impl ProcessData {
         // We collect all processes that either:
         // - Do not have a parent PID (that is, they are orphan processes)
         // - Have a parent PID but we don't have the parent (we promote them as orphans)
-        // Note this also needs a quick sort + reverse to be in the correct order.
-        self.orphan_pids = {
-            let mut res: Vec<Pid> = self
-                .process_harvest
-                .iter()
-                .filter_map(|(pid, process_harvest)| match process_harvest.parent_pid {
-                    Some(parent_pid) if self.process_harvest.contains_key(&parent_pid) => None,
-                    _ => Some(*pid),
-                })
-                .sorted()
-                .collect();
-
-            res.reverse();
-
-            res
-        }
+        self.orphan_pids = self
+            .process_harvest
+            .iter()
+            .filter_map(|(pid, process_harvest)| match process_harvest.parent_pid {
+                Some(parent_pid) if self.process_harvest.contains_key(&parent_pid) => None,
+                _ => Some(*pid),
+            })
+            .collect();
     }
 }
 

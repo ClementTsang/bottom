@@ -111,7 +111,7 @@ pub fn truncate_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
 }
 
 #[inline]
-pub fn sort_partial_fn<T: std::cmp::PartialOrd>(is_descending: bool) -> fn(T, T) -> Ordering {
+pub const fn sort_partial_fn<T: std::cmp::PartialOrd>(is_descending: bool) -> fn(T, T) -> Ordering {
     if is_descending {
         partial_ordering_desc
     } else {

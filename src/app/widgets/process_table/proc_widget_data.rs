@@ -16,16 +16,25 @@ use crate::{
     Pid,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum IdType {
     Name(String),
     Command(String),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Id {
     id_type: IdType,
     prefix: Option<String>,
+}
+
+impl From<&'static str> for Id {
+    fn from(s: &'static str) -> Self {
+        Id {
+            id_type: IdType::Name(s.to_string()),
+            prefix: None,
+        }
+    }
 }
 
 impl Id {
@@ -73,7 +82,7 @@ impl Display for Id {
 }
 
 // TODO: Can reduce this to 32 bytes.
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum MemUsage {
     Percent(f64),
     Bytes(u64),
@@ -98,7 +107,7 @@ impl Display for MemUsage {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ProcWidgetData {
     pub pid: Pid,
     pub ppid: Option<Pid>,
