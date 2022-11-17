@@ -3,8 +3,8 @@
 use anyhow::Result;
 
 use super::{
-    convert_celsius_to_fahrenheit, convert_celsius_to_kelvin, is_temp_filtered, temp_vec_sort,
-    TempHarvest, TemperatureType,
+    convert_celsius_to_fahrenheit, convert_celsius_to_kelvin, is_temp_filtered, TempHarvest,
+    TemperatureType,
 };
 use crate::app::Filter;
 
@@ -38,6 +38,5 @@ pub fn get_temperature_data(
         super::nvidia::add_nvidia_data(&mut temperature_vec, temp_type, filter)?;
     }
 
-    temp_vec_sort(&mut temperature_vec);
     Ok(Some(temperature_vec))
 }
