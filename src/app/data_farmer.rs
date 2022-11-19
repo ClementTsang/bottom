@@ -196,6 +196,7 @@ impl DataCollection {
         };
 
         self.timed_data_vec.drain(0..remove_index);
+        self.timed_data_vec.shrink_to_fit();
     }
 
     pub fn eat_data(&mut self, harvested_data: Box<Data>) {
