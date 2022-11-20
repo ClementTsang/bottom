@@ -100,13 +100,7 @@ impl From<regex::Error> for BottomError {
         let err_str = err.to_string();
         let error = err_str.split('\n').map(|s| s.trim()).collect::<Vec<_>>();
 
-        BottomError::QueryError(
-            format!(
-                "Regex error: {}",
-                error.last().unwrap_or(&"".to_string().as_str())
-            )
-            .into(),
-        )
+        BottomError::QueryError(format!("Regex error: {}", error.last().unwrap_or(&"")).into())
     }
 }
 

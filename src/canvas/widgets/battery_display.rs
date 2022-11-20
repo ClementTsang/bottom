@@ -37,7 +37,7 @@ impl Painter {
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Battery ── Esc to go back ";
                 Spans::from(vec![
-                    Span::styled(" Battery ".to_string(), self.colours.widget_title_style),
+                    Span::styled(" Battery ", self.colours.widget_title_style),
                     Span::styled(
                         format!(
                             "─{}─ Esc to go back ",
@@ -49,10 +49,7 @@ impl Painter {
                     ),
                 ])
             } else {
-                Spans::from(Span::styled(
-                    " Battery ".to_string(),
-                    self.colours.widget_title_style,
-                ))
+                Spans::from(Span::styled(" Battery ", self.colours.widget_title_style))
             };
 
             let battery_block = if draw_border {

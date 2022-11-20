@@ -47,26 +47,26 @@ pub const LOG_TEBI_LIMIT_U32: u32 = 40;
 /// Returns a tuple containing the value and the unit in bytes.  In units of 1024.
 /// This only supports up to a tebi.  Note the "single" unit will have a space appended to match the others if
 /// `spacing` is true.
-pub fn get_binary_bytes(bytes: u64) -> (f64, String) {
+pub fn get_binary_bytes(bytes: u64) -> (f64, &'static str) {
     match bytes {
-        b if b < KIBI_LIMIT => (bytes as f64, "B".to_string()),
-        b if b < MEBI_LIMIT => (bytes as f64 / 1024.0, "KiB".to_string()),
-        b if b < GIBI_LIMIT => (bytes as f64 / 1_048_576.0, "MiB".to_string()),
-        b if b < TERA_LIMIT => (bytes as f64 / 1_073_741_824.0, "GiB".to_string()),
-        _ => (bytes as f64 / 1_099_511_627_776.0, "TiB".to_string()),
+        b if b < KIBI_LIMIT => (bytes as f64, "B"),
+        b if b < MEBI_LIMIT => (bytes as f64 / 1024.0, "KiB"),
+        b if b < GIBI_LIMIT => (bytes as f64 / 1_048_576.0, "MiB"),
+        b if b < TERA_LIMIT => (bytes as f64 / 1_073_741_824.0, "GiB"),
+        _ => (bytes as f64 / 1_099_511_627_776.0, "TiB"),
     }
 }
 
 /// Returns a tuple containing the value and the unit in bytes.  In units of 1000.
 /// This only supports up to a tera.  Note the "single" unit will have a space appended to match the others if
 /// `spacing` is true.
-pub fn get_decimal_bytes(bytes: u64) -> (f64, String) {
+pub fn get_decimal_bytes(bytes: u64) -> (f64, &'static str) {
     match bytes {
-        b if b < KILO_LIMIT => (bytes as f64, "B".to_string()),
-        b if b < MEGA_LIMIT => (bytes as f64 / 1000.0, "KB".to_string()),
-        b if b < GIGA_LIMIT => (bytes as f64 / 1_000_000.0, "MB".to_string()),
-        b if b < TERA_LIMIT => (bytes as f64 / 1_000_000_000.0, "GB".to_string()),
-        _ => (bytes as f64 / 1_000_000_000_000.0, "TB".to_string()),
+        b if b < KILO_LIMIT => (bytes as f64, "B"),
+        b if b < MEGA_LIMIT => (bytes as f64 / 1000.0, "KB"),
+        b if b < GIGA_LIMIT => (bytes as f64 / 1_000_000.0, "MB"),
+        b if b < TERA_LIMIT => (bytes as f64 / 1_000_000_000.0, "GB"),
+        _ => (bytes as f64 / 1_000_000_000_000.0, "TB"),
     }
 }
 

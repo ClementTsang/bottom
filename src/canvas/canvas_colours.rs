@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use anyhow::Context;
 use colour_utils::*;
 use tui::style::{Color, Style};
@@ -283,7 +285,7 @@ impl CanvasColours {
         Ok(())
     }
 
-    pub fn set_gpu_colours(&mut self, colours: &[String]) -> error::Result<()> {
+    pub fn set_gpu_colours(&mut self, colours: &[Cow<'static, str>]) -> error::Result<()> {
         self.gpu_colour_styles = colours
             .iter()
             .map(|colour| get_style_from_config(colour))
@@ -321,7 +323,7 @@ impl CanvasColours {
         Ok(())
     }
 
-    pub fn set_cpu_colours(&mut self, colours: &[String]) -> error::Result<()> {
+    pub fn set_cpu_colours(&mut self, colours: &[Cow<'static, str>]) -> error::Result<()> {
         self.cpu_colour_styles = colours
             .iter()
             .map(|colour| get_style_from_config(colour))

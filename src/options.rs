@@ -114,29 +114,29 @@ impl WidgetIdEnabled {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ConfigColours {
-    pub table_header_color: Option<String>,
-    pub all_cpu_color: Option<String>,
-    pub avg_cpu_color: Option<String>,
-    pub cpu_core_colors: Option<Vec<String>>,
-    pub ram_color: Option<String>,
-    pub swap_color: Option<String>,
-    pub arc_color: Option<String>,
-    pub gpu_core_colors: Option<Vec<String>>,
-    pub rx_color: Option<String>,
-    pub tx_color: Option<String>,
-    pub rx_total_color: Option<String>, // These only affect basic mode.
-    pub tx_total_color: Option<String>, // These only affect basic mode.
-    pub border_color: Option<String>,
-    pub highlighted_border_color: Option<String>,
-    pub disabled_text_color: Option<String>,
-    pub text_color: Option<String>,
-    pub selected_text_color: Option<String>,
-    pub selected_bg_color: Option<String>,
-    pub widget_title_color: Option<String>,
-    pub graph_color: Option<String>,
-    pub high_battery_color: Option<String>,
-    pub medium_battery_color: Option<String>,
-    pub low_battery_color: Option<String>,
+    pub table_header_color: Option<Cow<'static, str>>,
+    pub all_cpu_color: Option<Cow<'static, str>>,
+    pub avg_cpu_color: Option<Cow<'static, str>>,
+    pub cpu_core_colors: Option<Vec<Cow<'static, str>>>,
+    pub ram_color: Option<Cow<'static, str>>,
+    pub swap_color: Option<Cow<'static, str>>,
+    pub arc_color: Option<Cow<'static, str>>,
+    pub gpu_core_colors: Option<Vec<Cow<'static, str>>>,
+    pub rx_color: Option<Cow<'static, str>>,
+    pub tx_color: Option<Cow<'static, str>>,
+    pub rx_total_color: Option<Cow<'static, str>>, // These only affect basic mode.
+    pub tx_total_color: Option<Cow<'static, str>>, // These only affect basic mode.
+    pub border_color: Option<Cow<'static, str>>,
+    pub highlighted_border_color: Option<Cow<'static, str>>,
+    pub disabled_text_color: Option<Cow<'static, str>>,
+    pub text_color: Option<Cow<'static, str>>,
+    pub selected_text_color: Option<Cow<'static, str>>,
+    pub selected_bg_color: Option<Cow<'static, str>>,
+    pub widget_title_color: Option<Cow<'static, str>>,
+    pub graph_color: Option<Cow<'static, str>>,
+    pub high_battery_color: Option<Cow<'static, str>>,
+    pub medium_battery_color: Option<Cow<'static, str>>,
+    pub low_battery_color: Option<Cow<'static, str>>,
 }
 
 impl ConfigColours {
