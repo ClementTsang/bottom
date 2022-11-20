@@ -50,11 +50,12 @@ where
         };
 
         let pcu = {
-            let p = process_val.cpu_usage() as f64 / num_processors;
-            if p.is_nan() {
-                process_val.cpu_usage() as f64
+            let usage = process_val.cpu_usage() as f64;
+            let res = usage / num_processors;
+            if res.is_finite() {
+                res
             } else {
-                p
+                usage
             }
         };
         let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0.0 {
