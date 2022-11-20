@@ -3,13 +3,10 @@
 use std::time::Instant;
 
 use futures::join;
-
 #[cfg(target_os = "linux")]
 use fxhash::FxHashMap;
-
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
-
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{System, SystemExt};
 

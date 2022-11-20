@@ -371,7 +371,7 @@ pub fn convert_network_data_points(
         ),
     };
 
-    let (rx_converted_result, total_rx_converted_result): ((f64, String), (f64, String)) =
+    let (rx_converted_result, total_rx_converted_result): ((f64, String), (f64, &'static str)) =
         if network_use_binary_prefix {
             (
                 get_binary_prefix(rx_data, unit), // If this isn't obvious why there's two functions, one you can configure the unit, the other is always bytes
@@ -384,7 +384,7 @@ pub fn convert_network_data_points(
             )
         };
 
-    let (tx_converted_result, total_tx_converted_result): ((f64, String), (f64, String)) =
+    let (tx_converted_result, total_tx_converted_result): ((f64, String), (f64, &'static str)) =
         if network_use_binary_prefix {
             (
                 get_binary_prefix(tx_data, unit),

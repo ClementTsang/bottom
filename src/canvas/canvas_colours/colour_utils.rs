@@ -1,44 +1,35 @@
-use std::collections::HashMap;
-
-use once_cell::sync::Lazy;
 use tui::style::{Color, Style};
 
 use crate::utils::error;
 
-// Approx, good enough for use (also Clippy gets mad if it's too long)
-pub const STANDARD_FIRST_COLOUR: Color = Color::LightMagenta;
-pub const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
-pub const STANDARD_THIRD_COLOUR: Color = Color::LightCyan;
-pub const STANDARD_FOURTH_COLOUR: Color = Color::LightGreen;
-pub const STANDARD_HIGHLIGHT_COLOUR: Color = Color::LightBlue;
+pub const FIRST_COLOUR: Color = Color::LightMagenta;
+pub const SECOND_COLOUR: Color = Color::LightYellow;
+pub const THIRD_COLOUR: Color = Color::LightCyan;
+pub const FOURTH_COLOUR: Color = Color::LightGreen;
+pub const HIGHLIGHT_COLOUR: Color = Color::LightBlue;
 pub const AVG_COLOUR: Color = Color::Red;
 pub const ALL_COLOUR: Color = Color::Green;
 
-static COLOR_NAME_LOOKUP_TABLE: Lazy<HashMap<&'static str, Color>> = Lazy::new(|| {
-    [
-        ("reset", Color::Reset),
-        ("black", Color::Black),
-        ("red", Color::Red),
-        ("green", Color::Green),
-        ("yellow", Color::Yellow),
-        ("blue", Color::Blue),
-        ("magenta", Color::Magenta),
-        ("cyan", Color::Cyan),
-        ("gray", Color::Gray),
-        ("grey", Color::Gray),
-        ("darkgray", Color::DarkGray),
-        ("lightred", Color::LightRed),
-        ("lightgreen", Color::LightGreen),
-        ("lightyellow", Color::LightYellow),
-        ("lightblue", Color::LightBlue),
-        ("lightmagenta", Color::LightMagenta),
-        ("lightcyan", Color::LightCyan),
-        ("white", Color::White),
-    ]
-    .iter()
-    .copied()
-    .collect()
-});
+static COLOR_LOOKUP_TABLE: phf::Map<&'static str, Color> = phf::phf_map! {
+    "reset" => Color::Reset,
+    "black" => Color::Black,
+    "red" => Color::Red,
+    "green" => Color::Green,
+    "yellow" => Color::Yellow,
+    "blue" => Color::Blue,
+    "magenta" => Color::Magenta,
+    "cyan" => Color::Cyan,
+    "gray" => Color::Gray,
+    "grey" => Color::Gray,
+    "darkgray" => Color::DarkGray,
+    "lightred" => Color::LightRed,
+    "lightgreen" => Color::LightGreen,
+    "lightyellow" => Color::LightYellow,
+    "lightblue" => Color::LightBlue,
+    "lightmagenta" => Color::LightMagenta,
+    "lightcyan" => Color::LightCyan,
+    "white" => Color::White,
+};
 
 pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
     fn hex_err(hex: &str) -> error::Result<u8> {
@@ -149,14 +140,12 @@ pub fn get_style_from_rgb(rgb_str: &str) -> error::Result<Style> {
 }
 
 fn convert_name_to_color(color_name: &str) -> error::Result<Color> {
-    let color = COLOR_NAME_LOOKUP_TABLE.get(color_name.to_lowercase().as_str());
-    if let Some(color) = color {
-        return Ok(*color);
-    }
-
-    Err(error::BottomError::ConfigError(format!(
-        "\"{}\" is an invalid named colour.
-        
+    if let Some(color) = COLOR_LOOKUP_TABLE.get(color_name.to_lowercase().as_str()) {
+        Ok(*color)
+    } else {
+        Err(error::BottomError::ConfigError(format!(
+            "\"{}\" is an invalid named colour.
+            
 The following are supported strings: 
 +--------+------------+--------------+
 |  Reset | Magenta    | LightYellow  |
@@ -172,8 +161,9 @@ The following are supported strings:
 |  Blue  | LightGreen |              |
 +--------+------------+--------------+
         ",
-        color_name
-    )))
+            color_name
+        )))
+    }
 }
 
 pub fn get_style_from_color_name(color_name: &str) -> error::Result<Style> {

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use anyhow::Context;
 use colour_utils::*;
 use tui::style::{Color, Style};
@@ -45,15 +47,13 @@ impl Default for CanvasColours {
         CanvasColours {
             currently_selected_text_colour: Color::Black,
             currently_selected_bg_colour: Color::Cyan,
-            currently_selected_text_style: Style::default()
-                .fg(Color::Black)
-                .bg(STANDARD_HIGHLIGHT_COLOUR),
-            table_header_style: Style::default().fg(STANDARD_HIGHLIGHT_COLOUR),
-            ram_style: Style::default().fg(STANDARD_FIRST_COLOUR),
-            swap_style: Style::default().fg(STANDARD_SECOND_COLOUR),
-            arc_style: Style::default().fg(STANDARD_THIRD_COLOUR),
+            currently_selected_text_style: Style::default().fg(Color::Black).bg(HIGHLIGHT_COLOUR),
+            table_header_style: Style::default().fg(HIGHLIGHT_COLOUR),
+            ram_style: Style::default().fg(FIRST_COLOUR),
+            swap_style: Style::default().fg(SECOND_COLOUR),
+            arc_style: Style::default().fg(THIRD_COLOUR),
             gpu_colour_styles: vec![
-                Style::default().fg(STANDARD_FOURTH_COLOUR),
+                Style::default().fg(FOURTH_COLOUR),
                 Style::default().fg(Color::LightBlue),
                 Style::default().fg(Color::LightRed),
                 Style::default().fg(Color::Cyan),
@@ -61,10 +61,10 @@ impl Default for CanvasColours {
                 Style::default().fg(Color::Blue),
                 Style::default().fg(Color::Red),
             ],
-            rx_style: Style::default().fg(STANDARD_FIRST_COLOUR),
-            tx_style: Style::default().fg(STANDARD_SECOND_COLOUR),
-            total_rx_style: Style::default().fg(STANDARD_THIRD_COLOUR),
-            total_tx_style: Style::default().fg(STANDARD_FOURTH_COLOUR),
+            rx_style: Style::default().fg(FIRST_COLOUR),
+            tx_style: Style::default().fg(SECOND_COLOUR),
+            total_rx_style: Style::default().fg(THIRD_COLOUR),
+            total_tx_style: Style::default().fg(FOURTH_COLOUR),
             all_colour_style: Style::default().fg(ALL_COLOUR),
             avg_colour_style: Style::default().fg(AVG_COLOUR),
             cpu_colour_styles: vec![
@@ -80,7 +80,7 @@ impl Default for CanvasColours {
                 Style::default().fg(Color::Red),
             ],
             border_style: Style::default().fg(text_colour),
-            highlighted_border_style: Style::default().fg(STANDARD_HIGHLIGHT_COLOUR),
+            highlighted_border_style: Style::default().fg(HIGHLIGHT_COLOUR),
             text_style: Style::default().fg(text_colour),
             widget_title_style: Style::default().fg(text_colour),
             graph_style: Style::default().fg(text_colour),
@@ -283,7 +283,7 @@ impl CanvasColours {
         Ok(())
     }
 
-    pub fn set_gpu_colours(&mut self, colours: &[String]) -> error::Result<()> {
+    pub fn set_gpu_colours(&mut self, colours: &[Cow<'static, str>]) -> error::Result<()> {
         self.gpu_colour_styles = colours
             .iter()
             .map(|colour| get_style_from_config(colour))
@@ -321,7 +321,7 @@ impl CanvasColours {
         Ok(())
     }
 
-    pub fn set_cpu_colours(&mut self, colours: &[String]) -> error::Result<()> {
+    pub fn set_cpu_colours(&mut self, colours: &[Cow<'static, str>]) -> error::Result<()> {
         self.cpu_colour_styles = colours
             .iter()
             .map(|colour| get_style_from_config(colour))
