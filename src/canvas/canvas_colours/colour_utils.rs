@@ -2,16 +2,15 @@ use tui::style::{Color, Style};
 
 use crate::utils::error;
 
-// Approx, good enough for use (also Clippy gets mad if it's too long)
-pub const STANDARD_FIRST_COLOUR: Color = Color::LightMagenta;
-pub const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
-pub const STANDARD_THIRD_COLOUR: Color = Color::LightCyan;
-pub const STANDARD_FOURTH_COLOUR: Color = Color::LightGreen;
-pub const STANDARD_HIGHLIGHT_COLOUR: Color = Color::LightBlue;
+pub const FIRST_COLOUR: Color = Color::LightMagenta;
+pub const SECOND_COLOUR: Color = Color::LightYellow;
+pub const THIRD_COLOUR: Color = Color::LightCyan;
+pub const FOURTH_COLOUR: Color = Color::LightGreen;
+pub const HIGHLIGHT_COLOUR: Color = Color::LightBlue;
 pub const AVG_COLOUR: Color = Color::Red;
 pub const ALL_COLOUR: Color = Color::Green;
 
-static COLOR_LOOKUP_MAP: phf::Map<&'static str, Color> = phf::phf_map! {
+static COLOR_LOOKUP_TABLE: phf::Map<&'static str, Color> = phf::phf_map! {
     "reset" => Color::Reset,
     "black" => Color::Black,
     "red" => Color::Red,
@@ -141,7 +140,7 @@ pub fn get_style_from_rgb(rgb_str: &str) -> error::Result<Style> {
 }
 
 fn convert_name_to_color(color_name: &str) -> error::Result<Color> {
-    if let Some(color) = COLOR_LOOKUP_MAP.get(color_name.to_lowercase().as_str()) {
+    if let Some(color) = COLOR_LOOKUP_TABLE.get(color_name.to_lowercase().as_str()) {
         Ok(*color)
     } else {
         Err(error::BottomError::ConfigError(format!(
