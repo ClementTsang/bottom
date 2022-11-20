@@ -1,5 +1,8 @@
 //! Process data collection for Linux.
 
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+
 use fxhash::{FxHashMap, FxHashSet};
 use procfs::process::{Process, Stat};
 use sysinfo::ProcessStatus;
@@ -20,7 +23,7 @@ pub struct PrevProcDetails {
     cpu_time: u64,
 }
 
-fn calculate_idle_values(line: String) -> Point {
+fn calculate_idle_values(line: &str) -> Point {
     /// Converts a `Option<&str>` value to an f64. If it fails to parse or is `None`, then it will return `0_f64`.
     fn str_to_f64(val: Option<&str>) -> f64 {
         val.and_then(|v| v.parse::<f64>().ok()).unwrap_or(0_f64)
@@ -46,35 +49,35 @@ fn calculate_idle_values(line: String) -> Point {
 }
 
 fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error::Result<Point> {
-    use std::io::prelude::*;
-    use std::io::BufReader;
+    let (idle, non_idle) = {
+        // From SO answer: https://stackoverflow.com/a/23376195
+        let mut reader = BufReader::new(File::open("/proc/stat")?);
+        let mut first_line = String::new();
+        reader.read_line(&mut first_line)?;
 
-    // From SO answer: https://stackoverflow.com/a/23376195
-    let mut reader = BufReader::new(std::fs::File::open("/proc/stat")?);
-    let mut first_line = String::new();
-    reader.read_line(&mut first_line)?;
-
-    let (idle, non_idle) = calculate_idle_values(first_line);
+        calculate_idle_values(&first_line)
+    };
 
     let total = idle + non_idle;
     let prev_total = *prev_idle + *prev_non_idle;
 
-    let total_delta: f64 = total - prev_total;
-    let idle_delta: f64 = idle - *prev_idle;
+    let total_delta = total - prev_total;
+    let idle_delta = idle - *prev_idle;
 
     *prev_idle = idle;
     *prev_non_idle = non_idle;
 
-    let result = if total_delta - idle_delta != 0_f64 {
+    // TODO: Should these return errors instead?
+    let result = if total_delta - idle_delta != 0.0 {
         total_delta - idle_delta
     } else {
-        1_f64
+        1.0
     };
 
-    let cpu_percentage = if total_delta != 0_f64 {
+    let cpu_percentage = if total_delta != 0.0 {
         result / total_delta
     } else {
-        0_f64
+        0.0
     };
 
     Ok((result, cpu_percentage))
@@ -92,9 +95,9 @@ fn get_linux_cpu_usage(
     if cpu_usage == 0.0 {
         (0.0, new_proc_times)
     } else if use_current_cpu_total {
-        (diff / cpu_usage * 100_f64, new_proc_times)
+        ((diff / cpu_usage) * 100.0, new_proc_times)
     } else {
-        (diff / cpu_usage * 100_f64 * cpu_fraction, new_proc_times)
+        ((diff / cpu_usage) * 100.0 * cpu_fraction, new_proc_times)
     }
 }
 
@@ -157,19 +160,18 @@ fn read_proc(
         if let Ok(io) = process.io() {
             let total_read_bytes = io.read_bytes;
             let total_write_bytes = io.write_bytes;
+            let prev_total_read_bytes = prev_proc.total_read_bytes;
+            let prev_total_write_bytes = prev_proc.total_write_bytes;
 
-            let read_bytes_per_sec = if time_difference_in_secs == 0 {
-                0
-            } else {
-                total_read_bytes.saturating_sub(prev_proc.total_read_bytes)
-                    / time_difference_in_secs
-            };
-            let write_bytes_per_sec = if time_difference_in_secs == 0 {
-                0
-            } else {
-                total_write_bytes.saturating_sub(prev_proc.total_write_bytes)
-                    / time_difference_in_secs
-            };
+            let read_bytes_per_sec = total_read_bytes
+                .saturating_sub(prev_total_read_bytes)
+                .checked_div(time_difference_in_secs)
+                .unwrap_or(0);
+
+            let write_bytes_per_sec = total_write_bytes
+                .saturating_sub(prev_total_write_bytes)
+                .checked_div(time_difference_in_secs)
+                .unwrap_or(0);
 
             (
                 total_read_bytes,
@@ -270,37 +272,37 @@ mod tests {
     fn test_proc_cpu_parse() {
         assert_eq!(
             (100_f64, 200_f64),
-            calculate_idle_values("100 0 100 100".to_string()),
+            calculate_idle_values("100 0 100 100"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 4 values"
         );
         assert_eq!(
             (120_f64, 200_f64),
-            calculate_idle_values("100 0 100 100 20".to_string()),
+            calculate_idle_values("100 0 100 100 20"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 5 values"
         );
         assert_eq!(
             (120_f64, 230_f64),
-            calculate_idle_values("100 0 100 100 20 30".to_string()),
+            calculate_idle_values("100 0 100 100 20 30"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 6 values"
         );
         assert_eq!(
             (120_f64, 270_f64),
-            calculate_idle_values("100 0 100 100 20 30 40".to_string()),
+            calculate_idle_values("100 0 100 100 20 30 40"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 7 values"
         );
         assert_eq!(
             (120_f64, 320_f64),
-            calculate_idle_values("100 0 100 100 20 30 40 50".to_string()),
+            calculate_idle_values("100 0 100 100 20 30 40 50"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 8 values"
         );
         assert_eq!(
             (120_f64, 320_f64),
-            calculate_idle_values("100 0 100 100 20 30 40 50 100".to_string()),
+            calculate_idle_values("100 0 100 100 20 30 40 50 100"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 9 values"
         );
         assert_eq!(
             (120_f64, 320_f64),
-            calculate_idle_values("100 0 100 100 20 30 40 50 100 200".to_string()),
+            calculate_idle_values("100 0 100 100 20 30 40 50 100 200"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 10 values"
         );
     }
