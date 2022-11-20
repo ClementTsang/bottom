@@ -213,21 +213,17 @@ impl Painter {
 
             // TODO: [MOUSE] Mouse support for these in search
             // TODO: [MOVEMENT] Movement support for these in search
+            let (case, whole, regex) = if self.is_mac_os {
+                ("Case(F1)", "Whole(F2)", "Regex(F3)")
+            } else {
+                ("Case(Alt+C)", "Whole(Alt+W)", "Regex(Alt+R)")
+            };
             let option_text = Spans::from(vec![
-                Span::styled(
-                    format!("Case({})", if self.is_mac_os { "F1" } else { "Alt+C" }),
-                    case_style,
-                ),
+                Span::styled(case, case_style),
                 Span::raw("  "),
-                Span::styled(
-                    format!("Whole({})", if self.is_mac_os { "F2" } else { "Alt+W" }),
-                    whole_word_style,
-                ),
+                Span::styled(whole, whole_word_style),
                 Span::raw("  "),
-                Span::styled(
-                    format!("Regex({})", if self.is_mac_os { "F3" } else { "Alt+R" }),
-                    regex_style,
-                ),
+                Span::styled(regex, regex_style),
             ]);
 
             search_text.push(Spans::from(Span::styled(

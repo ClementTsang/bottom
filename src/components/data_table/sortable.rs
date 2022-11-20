@@ -17,6 +17,16 @@ pub enum SortOrder {
     Descending,
 }
 
+impl SortOrder {
+    /// Returns the reverse [`SortOrder`].
+    pub fn rev(&self) -> SortOrder {
+        match self {
+            SortOrder::Ascending => SortOrder::Descending,
+            SortOrder::Descending => SortOrder::Ascending,
+        }
+    }
+}
+
 impl Default for SortOrder {
     fn default() -> Self {
         Self::Ascending

@@ -1,5 +1,6 @@
 use std::{borrow::Cow, collections::BTreeMap};
 
+use const_format::formatcp;
 use fxhash::{FxHashMap, FxHashSet};
 use itertools::Itertools;
 
@@ -385,7 +386,10 @@ impl ProcWidget {
             .collect_vec();
 
         stack.sort_unstable_by_key(|p| p.pid);
-        self.try_sort_skip_pid_asc(&mut stack);
+
+        let column = self.table.columns.get(self.table.sort_index()).unwrap();
+        sort_skip_pid_asc(column.inner(), &mut stack, self.table.order());
+
         stack.reverse();
 
         let mut length_stack = vec![stack.len()];
@@ -449,14 +453,13 @@ impl ProcWidget {
                 data.push(process.prefix(Some(prefix)).disabled(disabled));
 
                 if let Some(children_pids) = filtered_tree.get(&pid) {
-                    // TODO: Can probably use static strings for prefixes rather than allocating.
                     if prefixes.is_empty() {
-                        prefixes.push(String::default());
+                        prefixes.push("");
                     } else {
                         prefixes.push(if is_last {
-                            "   ".to_string()
+                            "   "
                         } else {
-                            format!("{}  ", BRANCH_VERTICAL)
+                            formatcp!("{}  ", BRANCH_VERTICAL)
                         });
                     }
 
@@ -468,7 +471,9 @@ impl ProcWidget {
                             })
                         })
                         .collect_vec();
-                    self.try_rev_sort(&mut children);
+
+                    column.sort_by(&mut children, self.table.order().rev());
+
                     length_stack.push(children.len());
                     stack.extend(children);
                 }
@@ -548,31 +553,12 @@ impl ProcWidget {
         };
 
         self.id_pid_map = id_pid_map;
-        self.try_sort_skip_pid_asc(&mut filtered_data);
+
+        if let Some(column) = self.table.columns.get(self.table.sort_index()) {
+            sort_skip_pid_asc(column.inner(), &mut filtered_data, self.table.order());
+        }
+
         filtered_data
-    }
-
-    #[inline(always)]
-    fn try_rev_sort(&self, filtered_data: &mut [ProcWidgetData]) {
-        if let Some(column) = self.table.columns.get(self.table.sort_index()) {
-            column.sort_by(
-                filtered_data,
-                match self.table.order() {
-                    SortOrder::Ascending => SortOrder::Descending,
-                    SortOrder::Descending => SortOrder::Ascending,
-                },
-            );
-        }
-    }
-
-    #[inline(always)]
-    fn try_sort_skip_pid_asc(&self, filtered_data: &mut [ProcWidgetData]) {
-        if let Some(column) = self.table.columns.get(self.table.sort_index()) {
-            let column = column.inner();
-            let descending = matches!(self.table.order(), SortOrder::Descending);
-
-            sort_skip_pid_asc(column, filtered_data, descending);
-        }
     }
 
     #[inline(always)]
@@ -862,7 +848,9 @@ impl ProcWidget {
     }
 }
 
-fn sort_skip_pid_asc(column: &ProcColumn, data: &mut [ProcWidgetData], descending: bool) {
+#[inline]
+fn sort_skip_pid_asc(column: &ProcColumn, data: &mut [ProcWidgetData], order: SortOrder) {
+    let descending = matches!(order, SortOrder::Descending);
     match column {
         ProcColumn::Pid if !descending => {}
         _ => {
@@ -875,11 +863,6 @@ fn sort_skip_pid_asc(column: &ProcColumn, data: &mut [ProcWidgetData], descendin
 mod test {
     use super::*;
     use crate::app::widgets::MemUsage;
-
-    #[test]
-    fn sorting_trees() {
-        // FIXME: Add a test for this...
-    }
 
     #[test]
     fn test_proc_sort() {
@@ -903,6 +886,7 @@ mod test {
 
         let b = ProcWidgetData {
             pid: 2,
+            ppid: Some(1),
             id: "B".into(),
             cpu_usage_percent: 1.1,
             mem_usage: MemUsage::Percent(2.2),
@@ -911,6 +895,7 @@ mod test {
 
         let c = ProcWidgetData {
             pid: 3,
+            ppid: Some(1),
             id: "C".into(),
             cpu_usage_percent: 2.2,
             mem_usage: MemUsage::Percent(0.0),
@@ -919,17 +904,17 @@ mod test {
 
         let d = ProcWidgetData {
             pid: 4,
+            ppid: Some(2),
             id: "D".into(),
             cpu_usage_percent: 0.0,
             mem_usage: MemUsage::Percent(0.0),
             ..(a.clone())
         };
-
         let mut data = vec![d.clone(), b.clone(), c.clone(), a.clone()];
 
         // Assume we had sorted over by pid.
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, true);
+        sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Descending);
         assert_eq!(
             vec![&c, &b, &a, &d]
                 .iter()
@@ -940,7 +925,7 @@ mod test {
 
         // Note that the PID ordering for ties is still ascending.
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, false);
+        sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
             vec![&a, &d, &b, &c]
                 .iter()
@@ -950,7 +935,7 @@ mod test {
         );
 
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::MemoryPercent, &mut data, true);
+        sort_skip_pid_asc(&ProcColumn::MemoryPercent, &mut data, SortOrder::Descending);
         assert_eq!(
             vec![&b, &a, &c, &d]
                 .iter()
@@ -961,7 +946,7 @@ mod test {
 
         // Note that the PID ordering for ties is still ascending.
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::MemoryPercent, &mut data, false);
+        sort_skip_pid_asc(&ProcColumn::MemoryPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
             vec![&c, &d, &a, &b]
                 .iter()

@@ -64,6 +64,7 @@ anyhow = "1.0.57"
 backtrace = "0.3.65"
 cfg-if = "1.0.0"
 clap = { version = "3.1.12", features = ["default", "cargo", "wrap_help"] }
+const_format = "0.2.30"
 concat-string = "1.0.1"
 crossterm = "0.25.0"
 ctrlc = { version = "3.1.9", features = ["termination"] }
