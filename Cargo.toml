@@ -142,12 +142,11 @@ assets = [
     ],
     ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
 ]
-extended-description = """\
-A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows.
+extended-description = """
 
-By default, bottom will look for a config file in ~/.config/bottom/bottom.toml.
-If one is not specified it will fall back to defaults. If a config file does not
-exist at the specified or default location, a blank one will be created for the user.
+By default, bottom will look for a config file in ~/.config/bottom/bottom.toml. A config file can be specified \
+using `-C`. If a config file does not exist at the specified or default location, a default one will be created \
+for the user there.
 """
 
 [package.metadata.deb.variants.arm64]
