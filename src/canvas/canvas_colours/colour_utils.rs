@@ -10,27 +10,6 @@ pub const HIGHLIGHT_COLOUR: Color = Color::LightBlue;
 pub const AVG_COLOUR: Color = Color::Red;
 pub const ALL_COLOUR: Color = Color::Green;
 
-static COLOR_LOOKUP_TABLE: phf::Map<&'static str, Color> = phf::phf_map! {
-    "reset" => Color::Reset,
-    "black" => Color::Black,
-    "red" => Color::Red,
-    "green" => Color::Green,
-    "yellow" => Color::Yellow,
-    "blue" => Color::Blue,
-    "magenta" => Color::Magenta,
-    "cyan" => Color::Cyan,
-    "gray" => Color::Gray,
-    "grey" => Color::Gray,
-    "darkgray" => Color::DarkGray,
-    "lightred" => Color::LightRed,
-    "lightgreen" => Color::LightGreen,
-    "lightyellow" => Color::LightYellow,
-    "lightblue" => Color::LightBlue,
-    "lightmagenta" => Color::LightMagenta,
-    "lightcyan" => Color::LightCyan,
-    "white" => Color::White,
-};
-
 pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
     fn hex_err(hex: &str) -> error::Result<u8> {
         Err(
@@ -140,32 +119,99 @@ pub fn get_style_from_rgb(rgb_str: &str) -> error::Result<Style> {
 }
 
 fn convert_name_to_color(color_name: &str) -> error::Result<Color> {
-    if let Some(color) = COLOR_LOOKUP_TABLE.get(color_name.to_lowercase().as_str()) {
-        Ok(*color)
-    } else {
-        Err(error::BottomError::ConfigError(format!(
+    match color_name.to_lowercase().trim() {
+        "reset" => Ok(Color::Reset),
+        "black" => Ok(Color::Black),
+        "red" => Ok(Color::Red),
+        "green" => Ok(Color::Green),
+        "yellow" => Ok(Color::Yellow),
+        "blue" => Ok(Color::Blue),
+        "magenta" => Ok(Color::Magenta),
+        "cyan" => Ok(Color::Cyan),
+        "gray" | "grey" => Ok(Color::Gray),
+        "darkgray" | "darkgrey" | "dark gray" | "dark grey" => Ok(Color::DarkGray),
+        "lightred" | "light red" => Ok(Color::LightRed),
+        "lightgreen" | "light green" => Ok(Color::LightGreen),
+        "lightyellow" | "light yellow" => Ok(Color::LightYellow),
+        "lightblue" | "light blue" => Ok(Color::LightBlue),
+        "lightmagenta" | "light magenta" => Ok(Color::LightMagenta),
+        "lightcyan" | "light cyan" => Ok(Color::LightCyan),
+        "white" => Ok(Color::White),
+        _ => Err(error::BottomError::ConfigError(format!(
             "\"{}\" is an invalid named colour.
             
 The following are supported strings: 
-+--------+------------+--------------+
-|  Reset | Magenta    | LightYellow  |
-+--------+------------+--------------+
-|  Black | Cyan       | LightBlue    |
-+--------+------------+--------------+
-|   Red  | Gray       | LightMagenta |
-+--------+------------+--------------+
-|  Green | DarkGray   | LightCyan    |
-+--------+------------+--------------+
-| Yellow | LightRed   | White        |
-+--------+------------+--------------+
-|  Blue  | LightGreen |              |
-+--------+------------+--------------+
++--------+-------------+---------------------+
+|  Reset | Magenta     | Light Yellow        |
++--------+-------------+---------------------+
+|  Black | Cyan        | Light Blue          |
++--------+-------------+---------------------+
+|   Red  | Gray/Grey   | Light Magenta       |
++--------+-------------+---------------------+
+|  Green | Light Cyan  | Dark Gray/Dark Grey |
++--------+-------------+---------------------+
+| Yellow | Light Red   | White               |
++--------+-------------+---------------------+
+|  Blue  | Light Green |                     |
++--------+-------------+---------------------+
         ",
             color_name
-        )))
+        ))),
     }
 }
 
 pub fn get_style_from_color_name(color_name: &str) -> error::Result<Style> {
     Ok(Style::default().fg(convert_name_to_color(color_name)?))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_invalid_colours() {
+        // Test invalid spacing in single word.
+        assert!(convert_name_to_color("bl ack").is_err());
+
+        // Test invalid spacing in dual word.
+        assert!(convert_name_to_color("darkg ray").is_err());
+
+        // Test completely invalid colour.
+        assert!(convert_name_to_color("darkreset").is_err());
+    }
+
+    #[test]
+    fn test_valid_colours() {
+        // Standard color should work
+        assert_eq!(convert_name_to_color("red"), Ok(Color::Red));
+
+        // Capitalizing should be fine.
+        assert_eq!(convert_name_to_color("RED"), Ok(Color::Red));
+
+        // Spacing shouldn't be an issue now.
+        assert_eq!(convert_name_to_color(" red "), Ok(Color::Red));
+
+        // The following are all equivalent.
+        assert_eq!(convert_name_to_color("darkgray"), Ok(Color::DarkGray));
+        assert_eq!(convert_name_to_color("darkgrey"), Ok(Color::DarkGray));
+        assert_eq!(convert_name_to_color("dark grey"), Ok(Color::DarkGray));
+        assert_eq!(convert_name_to_color("dark gray"), Ok(Color::DarkGray));
+
+        assert_eq!(convert_name_to_color("grey"), Ok(Color::Gray));
+        assert_eq!(convert_name_to_color("gray"), Ok(Color::Gray));
+
+        // One more test with spacing.
+        assert_eq!(
+            convert_name_to_color(" lightmagenta "),
+            Ok(Color::LightMagenta)
+        );
+        assert_eq!(
+            convert_name_to_color("light magenta"),
+            Ok(Color::LightMagenta)
+        );
+        assert_eq!(
+            convert_name_to_color(" light magenta "),
+            Ok(Color::LightMagenta)
+        );
+    }
 }
