@@ -161,11 +161,16 @@ fn get_from_hwmon(
 
             if is_temp_filtered(filter, &name) {
                 let temp = if should_read_temp {
-                    let temp = fs::read_to_string(temp)?;
-                    let temp = temp.trim_end().parse::<f32>().map_err(|e| {
-                        crate::utils::error::BottomError::ConversionError(e.to_string())
-                    })?;
-                    temp / 1_000.0
+                    if let Ok(temp) = fs::read_to_string(temp) {
+                        let temp = temp.trim_end().parse::<f32>().map_err(|e| {
+                            crate::utils::error::BottomError::ConversionError(e.to_string())
+                        })?;
+                        temp / 1_000.0
+                    } else {
+                        // For some devices (e.g. iwlwifi), this file becomes empty when the device
+                        // is disabled. In this case we skip the device.
+                        continue;
+                    }
                 } else {
                     0.0
                 };
