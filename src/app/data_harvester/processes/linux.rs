@@ -48,7 +48,15 @@ fn calculate_idle_values(line: &str) -> Point {
     (idle, non_idle)
 }
 
-fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error::Result<Point> {
+struct CpuUsage {
+    /// Difference between the total delta and the idle delta.
+    cpu_usage: f64,
+
+    /// Overall CPU usage as a fraction.
+    cpu_fraction: f64,
+}
+
+fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error::Result<CpuUsage> {
     let (idle, non_idle) = {
         // From SO answer: https://stackoverflow.com/a/23376195
         let mut reader = BufReader::new(File::open("/proc/stat")?);
@@ -68,38 +76,40 @@ fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error:
     *prev_non_idle = non_idle;
 
     // TODO: Should these return errors instead?
-    let result = if total_delta - idle_delta != 0.0 {
+    let cpu_usage = if total_delta - idle_delta != 0.0 {
         total_delta - idle_delta
     } else {
         1.0
     };
 
-    let cpu_percentage = if total_delta != 0.0 {
-        result / total_delta
+    let cpu_fraction = if total_delta != 0.0 {
+        cpu_usage / total_delta
     } else {
         0.0
     };
 
-    Ok((result, cpu_percentage))
+    Ok(CpuUsage {
+        cpu_usage,
+        cpu_fraction,
+    })
 }
 
-/// Returns the usage and a new set of process times. Note: cpu_fraction should be represented WITHOUT the x100 factor!
-#[inline]
+/// Returns the usage and a new set of process times.
+///
+/// NB: cpu_fraction should be represented WITHOUT the x100 factor!
 fn get_linux_cpu_usage(
-    stat: &Stat, cpu_usage: f64, cpu_fraction: f64, prev_proc_times: u64, logical_count: u64,
-    use_current_cpu_total: bool, per_core_percentage: bool,
+    stat: &Stat, cpu_usage: f64, cpu_fraction: f64, prev_proc_times: u64,
+    use_current_cpu_total: bool,
 ) -> (f64, u64) {
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
     let new_proc_times = stat.utime + stat.stime;
-    let diff = (new_proc_times - prev_proc_times) as f64; // I HATE that it's done like this but there isn't a try_from for u64 -> f64... we can accept a bit of loss in the worst case though
+
+    // I HATE that it's done like this but there isn't a try_from for u64 -> f64...
+    // we can accept a bit of loss in the worst case though.
+    let diff = (new_proc_times - prev_proc_times) as f64;
 
     if cpu_usage == 0.0 {
         (0.0, new_proc_times)
-    } else if per_core_percentage {
-        (
-            diff / cpu_usage * 100_f64 * cpu_fraction * (logical_count as f64),
-            new_proc_times,
-        )
     } else if use_current_cpu_total {
         ((diff / cpu_usage) * 100.0, new_proc_times)
     } else {
@@ -107,11 +117,10 @@ fn get_linux_cpu_usage(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn read_proc(
     prev_proc: &PrevProcDetails, process: &Process, cpu_usage: f64, cpu_fraction: f64,
-    use_current_cpu_total: bool, per_core_percentage: bool, time_difference_in_secs: u64,
-    mem_total_kb: u64, logical_count: u64, user_table: &mut UserTable,
+    use_current_cpu_total: bool, time_difference_in_secs: u64, mem_total_kb: u64,
+    user_table: &mut UserTable,
 ) -> error::Result<(ProcessHarvest, u64)> {
     let stat = process.stat()?;
     let (command, name) = {
@@ -154,9 +163,7 @@ fn read_proc(
         cpu_usage,
         cpu_fraction,
         prev_proc.cpu_time,
-        logical_count,
         use_current_cpu_total,
-        per_core_percentage,
     );
     let parent_pid = Some(stat.ppid);
     let mem_usage_bytes = stat.rss_bytes()?;
@@ -164,7 +171,6 @@ fn read_proc(
     let mem_usage_percent = mem_usage_kb as f64 / mem_total_kb as f64 * 100.0;
 
     // This can fail if permission is denied!
-
     let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
         if let Ok(io) = process.io() {
             let total_read_bytes = io.read_bytes;
@@ -218,16 +224,38 @@ fn read_proc(
     ))
 }
 
-#[allow(clippy::too_many_arguments)]
+/// How to calculate CPU usage.
+pub enum CpuUsageStrategy {
+    /// Normalized means the displayed usage percentage is divided over the number of CPU cores.
+    ///
+    /// For example, if the "overall" usage over the entire system is 105%, and there are 5 cores, then
+    /// the displayed percentage is 21%.
+    Normalized,
+
+    /// Non-normalized means that the overall usage over the entire system is shown, without dividing
+    /// over the number of cores.
+    NonNormalized(f64),
+}
+
 pub fn get_process_data(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
     pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
-    per_core_percentage: bool, time_difference_in_secs: u64, mem_total_kb: u64, logical_count: u64,
+    normalization: CpuUsageStrategy, time_difference_in_secs: u64, mem_total_kb: u64,
     user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     // TODO: [PROC THREADS] Add threads
 
-    if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
+    if let Ok(CpuUsage {
+        mut cpu_usage,
+        cpu_fraction,
+    }) = cpu_usage_calculation(prev_idle, prev_non_idle)
+    {
+        if let CpuUsageStrategy::NonNormalized(num_cores) = normalization {
+            // Note we *divide* here because the later calculation divides `cpu_usage` - in effect,
+            // multiplying over the number of cores.
+            cpu_usage = cpu_usage / num_cores;
+        }
+
         let mut pids_to_clear: FxHashSet<Pid> = pid_mapping.keys().cloned().collect();
 
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
@@ -245,10 +273,8 @@ pub fn get_process_data(
                             cpu_usage,
                             cpu_fraction,
                             use_current_cpu_total,
-                            per_core_percentage,
                             time_difference_in_secs,
                             mem_total_kb,
-                            logical_count,
                             user_table,
                         ) {
                             prev_proc_details.cpu_time = new_process_times;

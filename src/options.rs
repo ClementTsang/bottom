@@ -62,7 +62,7 @@ pub struct ConfigFlags {
     pub rate: Option<u64>,
     pub left_legend: Option<bool>,
     pub current_usage: Option<bool>,
-    pub per_core_percentage: Option<bool>,
+    pub non_normalized_cpu: Option<bool>,
     pub group_processes: Option<bool>,
     pub case_sensitive: Option<bool>,
     pub whole_word: Option<bool>,
@@ -230,7 +230,7 @@ pub fn build_app(
         use_dot: get_use_dot(matches, config),
         left_legend: get_use_left_legend(matches, config),
         use_current_cpu_total: get_use_current_cpu_total(matches, config),
-        per_core_percentage: get_per_core_percentage(matches, config),
+        non_normalized_cpu: get_non_normalized_cpu(matches, config),
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(matches, config, retention_ms)
@@ -596,12 +596,12 @@ fn get_use_current_cpu_total(matches: &ArgMatches, config: &Config) -> bool {
     false
 }
 
-fn get_per_core_percentage(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.is_present("per_core_percentage") {
+fn get_non_normalized_cpu(matches: &ArgMatches, config: &Config) -> bool {
+    if matches.is_present("non_normalized_cpu") {
         return true;
     } else if let Some(flags) = &config.flags {
-        if let Some(per_core_percentage) = flags.per_core_percentage {
-            return per_core_percentage;
+        if let Some(non_normalized_cpu) = flags.non_normalized_cpu {
+            return non_normalized_cpu;
         }
     }
 

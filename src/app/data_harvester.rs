@@ -13,6 +13,8 @@ use starship_battery::{Battery, Manager};
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{System, SystemExt};
 
+use self::processes::CpuUsageStrategy;
+
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
@@ -112,7 +114,7 @@ pub struct DataCollector {
     mem_total_kb: u64,
     temperature_type: temperature::TemperatureType,
     use_current_cpu_total: bool,
-    per_core_percentage: bool,
+    non_normalized_cpu: bool,
     last_collection_time: Instant,
     total_rx: u64,
     total_tx: u64,
@@ -145,7 +147,7 @@ impl DataCollector {
             mem_total_kb: 0,
             temperature_type: temperature::TemperatureType::Celsius,
             use_current_cpu_total: false,
-            per_core_percentage: false,
+            non_normalized_cpu: false,
             last_collection_time: Instant::now(),
             total_rx: 0,
             total_tx: 0,
@@ -237,8 +239,8 @@ impl DataCollector {
         self.use_current_cpu_total = use_current_cpu_total;
     }
 
-    pub fn set_per_core_percentage(&mut self, per_core_percentage: bool) {
-        self.per_core_percentage = per_core_percentage;
+    pub fn set_non_normalized_cpu(&mut self, non_normalized_cpu: bool) {
+        self.non_normalized_cpu = non_normalized_cpu;
     }
 
     pub fn set_show_average_cpu(&mut self, show_average_cpu: bool) {
@@ -327,39 +329,39 @@ impl DataCollector {
         }
 
         if self.widgets_to_harvest.use_proc {
-            #[cfg(target_os = "linux")]
-            {
-                if let Ok(logical_count) = heim::cpu::logical_count().await {
-                    if let Ok(mut process_list) = processes::get_process_data(
+            if let Ok(mut process_list) = {
+                #[cfg(target_os = "linux")]
+                {
+                    let normalization = if self.non_normalized_cpu {
+                        heim::cpu::logical_count()
+                            .await
+                            .map(|v| CpuUsageStrategy::NonNormalized(v as f64))
+                            .unwrap_or(CpuUsageStrategy::Normalized)
+                    } else {
+                        CpuUsageStrategy::Normalized
+                    };
+
+                    processes::get_process_data(
                         &mut self.prev_idle,
                         &mut self.prev_non_idle,
                         &mut self.pid_mapping,
                         self.use_current_cpu_total,
-                        self.per_core_percentage,
+                        normalization,
                         current_instant
                             .duration_since(self.last_collection_time)
                             .as_secs(),
                         self.mem_total_kb,
-                        logical_count,
                         &mut self.user_table,
-                    ) {
-                        // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by PID here.
-                        // We also want to avoid re-sorting *again* since this process list is sorted!
-                        process_list.sort_unstable_by_key(|p| p.pid);
-                        self.data.list_of_processes = Some(process_list);
-                    }
+                    )
                 }
-            }
-
-            #[cfg(not(target_os = "linux"))]
-            {
-                if let Ok(mut process_list) = {
+                #[cfg(not(target_os = "linux"))]
+                {
                     #[cfg(target_family = "unix")]
                     {
                         processes::get_process_data(
                             &self.sys,
                             self.use_current_cpu_total,
-                            self.per_core_percentage,
+                            self.non_normalized_cpu,
                             self.mem_total_kb,
                             &mut self.user_table,
                         )
@@ -369,14 +371,16 @@ impl DataCollector {
                         processes::get_process_data(
                             &self.sys,
                             self.use_current_cpu_total,
-                            self.per_core_percentage,
+                            self.non_normalized_cpu,
                             self.mem_total_kb,
                         )
                     }
-                } {
-                    process_list.sort_unstable_by_key(|p| p.pid);
-                    self.data.list_of_processes = Some(process_list);
                 }
+            } {
+                // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by PID here.
+                // We also want to avoid re-sorting *again* since this process list is sorted!
+                process_list.sort_unstable_by_key(|p| p.pid);
+                self.data.list_of_processes = Some(process_list);
             }
         }
 

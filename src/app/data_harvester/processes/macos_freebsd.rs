@@ -9,8 +9,8 @@ use super::ProcessHarvest;
 use crate::{data_harvester::processes::UserTable, utils::error::Result, Pid};
 
 pub fn get_process_data<F>(
-    sys: &System, use_current_cpu_total: bool, per_core_percentage: bool, mem_total_kb: u64,
-    user_table: &mut UserTable, get_process_cpu_usage: F,
+    sys: &System, use_current_cpu_total: bool, non_normalized_cpu: bool, mem_total_kb: u64,
+    user_table: &mut UserTable, backup_cpu_proc_usage: F,
 ) -> Result<Vec<ProcessHarvest>>
 where
     F: Fn(&[Pid]) -> io::Result<HashMap<Pid, f64>>,
@@ -48,12 +48,13 @@ where
             }
         };
 
+        let num_processors = sys.cpus().len() as f64;
         let pcu = {
             let usage = process_val.cpu_usage() as f64;
-            if per_core_percentage || sys.cpus().is_empty() {
+            if non_normalized_cpu || num_processors == 0.0 {
                 usage
             } else {
-                usage / (sys.cpus().len() as f64)
+                usage / num_processors
             }
         };
         let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0.0 {
@@ -116,13 +117,13 @@ where
         .filter(|process| process.process_state.0 == unknown_state)
         .map(|process| process.pid)
         .collect();
-    let cpu_usages = get_process_cpu_usage(&cpu_usage_unknown_pids)?;
+    let cpu_usages = backup_cpu_proc_usage(&cpu_usage_unknown_pids)?;
     for process in &mut process_vector {
         if cpu_usages.contains_key(&process.pid) {
-            process.cpu_usage_percent = if per_core_percentage || sys.cpus().is_empty() {
+            process.cpu_usage_percent = if non_normalized_cpu || num_processors == 0.0 {
                 *cpu_usages.get(&process.pid).unwrap()
             } else {
-                *cpu_usages.get(&process.pid).unwrap() / (sys.cpus().len() as f64)
+                *cpu_usages.get(&process.pid).unwrap() / num_processors
             };
         }
     }

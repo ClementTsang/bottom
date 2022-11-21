@@ -493,7 +493,7 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 # Whether to set CPU% on a process to be based on the total CPU or just current usage.
 #current_usage = false
 # Whether to set CPU% on a process to be based on the total CPU or per-core CPU% (not divided by the number of cpus).
-#per_core_percentage = false
+#non_normalized_cpu = false
 # Whether to group processes with the same name together by default.
 #group_processes = false
 # Whether to make process searching case sensitive by default.
