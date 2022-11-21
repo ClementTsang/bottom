@@ -253,7 +253,7 @@ pub fn get_process_data(
         if let CpuUsageStrategy::NonNormalized(num_cores) = normalization {
             // Note we *divide* here because the later calculation divides `cpu_usage` - in effect,
             // multiplying over the number of cores.
-            cpu_usage = cpu_usage / num_cores;
+            cpu_usage /= num_cores;
         }
 
         let mut pids_to_clear: FxHashSet<Pid> = pid_mapping.keys().cloned().collect();
