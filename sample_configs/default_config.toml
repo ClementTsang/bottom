@@ -18,7 +18,7 @@
 # Whether to set CPU% on a process to be based on the total CPU or just current usage.
 #current_usage = false
 # Whether to set CPU% on a process to be based on the total CPU or per-core CPU% (not divided by the number of cpus).
-#per_core_percentage = false
+#unnormalized_cpu = false
 # Whether to group processes with the same name together by default.
 #group_processes = false
 # Whether to make process searching case sensitive by default.
@@ -147,7 +147,6 @@
 #  [[row.child]]
 #    type="proc"
 #    default=true
-
 
 # Filters - you can hide specific temperature sensors, network interfaces, and disks using filters.  This is admittedly
 # a bit hard to use as of now, and there is a planned in-app interface for managing this in the future:

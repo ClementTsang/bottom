@@ -135,12 +135,12 @@ pub fn build_app() -> Command<'static> {
         .help("Sets process CPU% to be based on current CPU%.")
         .long_help("Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage.");
 
-    let per_core_percentage = Arg::new("per_core_percentage")
+    let unnormalized_cpu = Arg::new("unnormalized_cpu")
         .short('p')
-        .long("per_core_percentage")
-        .help("Sets CPU% to be based on per core CPU%.")
+        .long("unnormalized_cpu")
+        .help("Show process CPU% without normalizing over the number of cores.")
         .long_help(
-            "Sets CPU% usage to be based on the per core CPU% usage rather than total CPU usage.",
+            "Shows process CPU usage without averaging over the number of CPU cores in the system.",
         );
 
     // TODO: [DEBUG] Add a proper debugging solution.
@@ -405,7 +405,7 @@ use CPU (3) as the default instead.
         .arg(network_use_log)
         .arg(network_use_binary_prefix)
         .arg(current_usage)
-        .arg(per_core_percentage)
+        .arg(unnormalized_cpu)
         .arg(use_old_network_legend)
         .arg(whole_word)
         .arg(retention);
