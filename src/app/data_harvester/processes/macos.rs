@@ -13,7 +13,7 @@ pub fn get_process_data(
     super::macos_freebsd::get_process_data(
         sys,
         use_current_cpu_total,
-        cpu_strategy,
+        unnormalized_cpu,
         mem_total_kb,
         user_table,
         get_macos_process_cpu_usage,

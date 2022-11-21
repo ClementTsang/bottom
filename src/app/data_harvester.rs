@@ -13,8 +13,6 @@ use starship_battery::{Battery, Manager};
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{System, SystemExt};
 
-use self::processes::CpuUsageStrategy;
-
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
@@ -333,6 +331,8 @@ impl DataCollector {
                 #[cfg(target_os = "linux")]
                 {
                     // Must do this here since we otherwise have to make `get_process_data` async.
+                    use self::processes::CpuUsageStrategy;
+
                     let normalize_cpu = if self.unnormalized_cpu {
                         heim::cpu::logical_count()
                             .await
