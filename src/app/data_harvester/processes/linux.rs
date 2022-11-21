@@ -103,10 +103,7 @@ fn get_linux_cpu_usage(
 ) -> (f64, u64) {
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
     let new_proc_times = stat.utime + stat.stime;
-
-    // I HATE that it's done like this but there isn't a try_from for u64 -> f64...
-    // we can accept a bit of loss in the worst case though.
-    let diff = (new_proc_times - prev_proc_times) as f64;
+    let diff = (new_proc_times - prev_proc_times) as f64; // No try_from for u64 -> f64... oh well.
 
     if cpu_usage == 0.0 {
         (0.0, new_proc_times)

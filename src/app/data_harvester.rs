@@ -332,6 +332,7 @@ impl DataCollector {
             if let Ok(mut process_list) = {
                 #[cfg(target_os = "linux")]
                 {
+                    // Must do this here since we otherwise have to make `get_process_data` async.
                     let normalization = if self.non_normalized_cpu {
                         heim::cpu::logical_count()
                             .await
@@ -378,7 +379,8 @@ impl DataCollector {
                 }
             } {
                 // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by PID here.
-                // We also want to avoid re-sorting *again* since this process list is sorted!
+                // We also want to avoid re-sorting *again* later on if we're sorting by PID, since we already
+                // did it here!
                 process_list.sort_unstable_by_key(|p| p.pid);
                 self.data.list_of_processes = Some(process_list);
             }
