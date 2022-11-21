@@ -62,6 +62,7 @@ pub struct ConfigFlags {
     pub rate: Option<u64>,
     pub left_legend: Option<bool>,
     pub current_usage: Option<bool>,
+    pub per_core_percentage: Option<bool>,
     pub group_processes: Option<bool>,
     pub case_sensitive: Option<bool>,
     pub whole_word: Option<bool>,
@@ -229,6 +230,7 @@ pub fn build_app(
         use_dot: get_use_dot(matches, config),
         left_legend: get_use_left_legend(matches, config),
         use_current_cpu_total: get_use_current_cpu_total(matches, config),
+        per_core_percentage: get_per_core_percentage(matches, config),
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(matches, config, retention_ms)
@@ -588,6 +590,18 @@ fn get_use_current_cpu_total(matches: &ArgMatches, config: &Config) -> bool {
     } else if let Some(flags) = &config.flags {
         if let Some(current_usage) = flags.current_usage {
             return current_usage;
+        }
+    }
+
+    false
+}
+
+fn get_per_core_percentage(matches: &ArgMatches, config: &Config) -> bool {
+    if matches.is_present("per_core_percentage") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(per_core_percentage) = flags.per_core_percentage {
+            return per_core_percentage;
         }
     }
 

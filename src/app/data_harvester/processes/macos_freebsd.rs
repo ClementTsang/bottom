@@ -9,8 +9,8 @@ use super::ProcessHarvest;
 use crate::{data_harvester::processes::UserTable, utils::error::Result, Pid};
 
 pub fn get_process_data<F>(
-    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64, user_table: &mut UserTable,
-    get_process_cpu_usage: F,
+    sys: &System, use_current_cpu_total: bool, per_core_percentage: bool, mem_total_kb: u64,
+    user_table: &mut UserTable, get_process_cpu_usage: F,
 ) -> Result<Vec<ProcessHarvest>>
 where
     F: Fn(&[Pid]) -> io::Result<HashMap<Pid, f64>>,
@@ -18,7 +18,6 @@ where
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
     let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;
-    let num_processors = sys.cpus().len() as f64;
     for process_val in process_hashmap.values() {
         let name = if process_val.name().is_empty() {
             let process_cmd = process_val.cmd();
@@ -51,11 +50,10 @@ where
 
         let pcu = {
             let usage = process_val.cpu_usage() as f64;
-            let res = usage / num_processors;
-            if res.is_finite() {
-                res
-            } else {
+            if per_core_percentage || sys.cpus().is_empty() {
                 usage
+            } else {
+                usage / (sys.cpus().len() as f64)
             }
         };
         let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0.0 {
@@ -121,10 +119,10 @@ where
     let cpu_usages = get_process_cpu_usage(&cpu_usage_unknown_pids)?;
     for process in &mut process_vector {
         if cpu_usages.contains_key(&process.pid) {
-            process.cpu_usage_percent = if num_processors == 0.0 {
+            process.cpu_usage_percent = if per_core_percentage || sys.cpus().is_empty() {
                 *cpu_usages.get(&process.pid).unwrap()
             } else {
-                *cpu_usages.get(&process.pid).unwrap() / num_processors
+                *cpu_usages.get(&process.pid).unwrap() / (sys.cpus().len() as f64)
             };
         }
     }

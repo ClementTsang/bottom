@@ -135,6 +135,14 @@ pub fn build_app() -> Command<'static> {
         .help("Sets process CPU% to be based on current CPU%.")
         .long_help("Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage.");
 
+    let per_core_percentage = Arg::new("per_core_percentage")
+        .short('p')
+        .long("per_core_percentage")
+        .help("Sets CPU% to be based on per core CPU%.")
+        .long_help(
+            "Sets CPU% usage to be based on the per core CPU% usage rather than total CPU usage.",
+        );
+
     // TODO: [DEBUG] Add a proper debugging solution.
 
     let disable_click = Arg::new("disable_click")
@@ -397,6 +405,7 @@ use CPU (3) as the default instead.
         .arg(network_use_log)
         .arg(network_use_binary_prefix)
         .arg(current_usage)
+        .arg(per_core_percentage)
         .arg(use_old_network_legend)
         .arg(whole_word)
         .arg(retention);
