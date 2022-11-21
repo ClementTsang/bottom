@@ -9,7 +9,7 @@ use procfs::ProcError;
 pub type Result<T> = result::Result<T, BottomError>;
 
 /// An error that can occur while Bottom runs.
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum BottomError {
     /// An error when there is an IO exception.
     #[error("IO exception, {0}")]
