@@ -474,7 +474,7 @@ pub fn create_collection_thread(
 ) -> JoinHandle<()> {
     let temp_type = app_config_fields.temperature_type;
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
-    let non_normalized_cpu = app_config_fields.non_normalized_cpu;
+    let unnormalized_cpu = app_config_fields.unnormalized_cpu;
     let show_average_cpu = app_config_fields.show_average_cpu;
     let update_rate_in_milliseconds = app_config_fields.update_rate_in_milliseconds;
 
@@ -484,7 +484,7 @@ pub fn create_collection_thread(
         data_state.set_data_collection(used_widget_set);
         data_state.set_temperature_type(temp_type);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
-        data_state.set_non_normalized_cpu(non_normalized_cpu);
+        data_state.set_unnormalized_cpu(unnormalized_cpu);
         data_state.set_show_average_cpu(show_average_cpu);
 
         data_state.init();
@@ -510,7 +510,7 @@ pub fn create_collection_thread(
                         data_state.set_temperature_type(app_config_fields.temperature_type);
                         data_state
                             .set_use_current_cpu_total(app_config_fields.use_current_cpu_total);
-                        data_state.set_non_normalized_cpu(non_normalized_cpu);
+                        data_state.set_unnormalized_cpu(unnormalized_cpu);
                         data_state.set_show_average_cpu(app_config_fields.show_average_cpu);
                     }
                     ThreadControlEvent::UpdateUsedWidgets(used_widget_set) => {

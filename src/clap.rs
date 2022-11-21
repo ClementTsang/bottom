@@ -135,9 +135,9 @@ pub fn build_app() -> Command<'static> {
         .help("Sets process CPU% to be based on current CPU%.")
         .long_help("Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage.");
 
-    let non_normalized_cpu = Arg::new("non_normalized_cpu")
+    let unnormalized_cpu = Arg::new("unnormalized_cpu")
         .short('p')
-        .long("non_normalized_cpu")
+        .long("unnormalized_cpu")
         .help("Show process CPU% without normalizing over the number of cores.")
         .long_help(
             "Shows process CPU usage without averaging over the number of CPU cores in the system.",
@@ -405,7 +405,7 @@ use CPU (3) as the default instead.
         .arg(network_use_log)
         .arg(network_use_binary_prefix)
         .arg(current_usage)
-        .arg(non_normalized_cpu)
+        .arg(unnormalized_cpu)
         .arg(use_old_network_legend)
         .arg(whole_word)
         .arg(retention);

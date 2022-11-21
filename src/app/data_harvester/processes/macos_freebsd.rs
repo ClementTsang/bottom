@@ -9,7 +9,7 @@ use super::ProcessHarvest;
 use crate::{data_harvester::processes::UserTable, utils::error::Result, Pid};
 
 pub fn get_process_data<F>(
-    sys: &System, use_current_cpu_total: bool, non_normalized_cpu: bool, mem_total_kb: u64,
+    sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, mem_total_kb: u64,
     user_table: &mut UserTable, backup_cpu_proc_usage: F,
 ) -> Result<Vec<ProcessHarvest>>
 where
@@ -51,7 +51,7 @@ where
         let num_processors = sys.cpus().len() as f64;
         let pcu = {
             let usage = process_val.cpu_usage() as f64;
-            if non_normalized_cpu || num_processors == 0.0 {
+            if unnormalized_cpu || num_processors == 0.0 {
                 usage
             } else {
                 usage / num_processors
@@ -120,7 +120,7 @@ where
     let cpu_usages = backup_cpu_proc_usage(&cpu_usage_unknown_pids)?;
     for process in &mut process_vector {
         if cpu_usages.contains_key(&process.pid) {
-            process.cpu_usage_percent = if non_normalized_cpu || num_processors == 0.0 {
+            process.cpu_usage_percent = if unnormalized_cpu || num_processors == 0.0 {
                 *cpu_usages.get(&process.pid).unwrap()
             } else {
                 *cpu_usages.get(&process.pid).unwrap() / num_processors

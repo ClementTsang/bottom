@@ -45,4 +45,4 @@ The following flags can be provided to bottom in the command line to change the 
 | `-W, --whole_word`                    | Enables whole-word matching by default.                         |
 | `--enable_gpu_memory`                 | Enable collecting and displaying GPU memory usage.              |
 | `--retention`                         | How much data is stored at once in terms of time.               |
-| `--non_normalized_cpu`                | Show process CPU% without normalizing over the number of cores. |
+| `--unnormalized_cpu`                  | Show process CPU% without normalizing over the number of cores. |

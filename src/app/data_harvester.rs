@@ -114,7 +114,7 @@ pub struct DataCollector {
     mem_total_kb: u64,
     temperature_type: temperature::TemperatureType,
     use_current_cpu_total: bool,
-    non_normalized_cpu: bool,
+    unnormalized_cpu: bool,
     last_collection_time: Instant,
     total_rx: u64,
     total_tx: u64,
@@ -147,7 +147,7 @@ impl DataCollector {
             mem_total_kb: 0,
             temperature_type: temperature::TemperatureType::Celsius,
             use_current_cpu_total: false,
-            non_normalized_cpu: false,
+            unnormalized_cpu: false,
             last_collection_time: Instant::now(),
             total_rx: 0,
             total_tx: 0,
@@ -239,8 +239,8 @@ impl DataCollector {
         self.use_current_cpu_total = use_current_cpu_total;
     }
 
-    pub fn set_non_normalized_cpu(&mut self, non_normalized_cpu: bool) {
-        self.non_normalized_cpu = non_normalized_cpu;
+    pub fn set_unnormalized_cpu(&mut self, unnormalized_cpu: bool) {
+        self.unnormalized_cpu = unnormalized_cpu;
     }
 
     pub fn set_show_average_cpu(&mut self, show_average_cpu: bool) {
@@ -333,7 +333,7 @@ impl DataCollector {
                 #[cfg(target_os = "linux")]
                 {
                     // Must do this here since we otherwise have to make `get_process_data` async.
-                    let normalization = if self.non_normalized_cpu {
+                    let normalize_cpu = if self.unnormalized_cpu {
                         heim::cpu::logical_count()
                             .await
                             .map(|v| CpuUsageStrategy::NonNormalized(v as f64))
@@ -347,7 +347,7 @@ impl DataCollector {
                         &mut self.prev_non_idle,
                         &mut self.pid_mapping,
                         self.use_current_cpu_total,
-                        normalization,
+                        normalize_cpu,
                         current_instant
                             .duration_since(self.last_collection_time)
                             .as_secs(),
@@ -362,7 +362,7 @@ impl DataCollector {
                         processes::get_process_data(
                             &self.sys,
                             self.use_current_cpu_total,
-                            self.non_normalized_cpu,
+                            self.unnormalized_cpu,
                             self.mem_total_kb,
                             &mut self.user_table,
                         )
@@ -372,7 +372,7 @@ impl DataCollector {
                         processes::get_process_data(
                             &self.sys,
                             self.use_current_cpu_total,
-                            self.non_normalized_cpu,
+                            self.unnormalized_cpu,
                             self.mem_total_kb,
                         )
                     }
