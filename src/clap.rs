@@ -85,6 +85,7 @@ pub fn get_matches() -> clap::ArgMatches {
 }
 
 // TODO: Refactor this a bit, it's quite messy atm
+// TODO: [DEBUG] Add a proper debugging solution.
 pub fn build_app() -> Command<'static> {
     // Temps
     let kelvin = Arg::new("kelvin")
@@ -136,14 +137,12 @@ pub fn build_app() -> Command<'static> {
         .long_help("Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage.");
 
     let unnormalized_cpu = Arg::new("unnormalized_cpu")
-        .short('p')
+        .short('n')
         .long("unnormalized_cpu")
         .help("Show process CPU% without normalizing over the number of cores.")
         .long_help(
             "Shows process CPU usage without averaging over the number of CPU cores in the system.",
         );
-
-    // TODO: [DEBUG] Add a proper debugging solution.
 
     let disable_click = Arg::new("disable_click")
         .long("disable_click")
