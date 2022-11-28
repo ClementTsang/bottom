@@ -10,8 +10,9 @@ use tui::{
 };
 
 use crate::{
-    app::{widgets::ProcWidgetMode, App, KillSignal},
+    app::{App, KillSignal},
     canvas::Painter,
+    widgets::ProcWidgetMode,
 };
 
 const DD_BASE: &str = " Confirm Kill Process ── Esc to close ";

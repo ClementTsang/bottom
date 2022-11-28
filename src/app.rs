@@ -13,7 +13,7 @@ use typed_builder::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
-use self::widgets::{ProcWidget, ProcWidgetMode};
+use crate::widgets::{ProcWidget, ProcWidgetMode};
 use crate::{
     constants,
     data_conversion::ConvertedData,
@@ -29,7 +29,6 @@ pub mod layout_manager;
 mod process_killer;
 pub mod query;
 pub mod states;
-pub mod widgets;
 
 use frozen_state::FrozenState;
 

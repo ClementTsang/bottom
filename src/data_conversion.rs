@@ -3,15 +3,15 @@
 
 use kstring::KString;
 
-use crate::app::data_farmer::DataCollection;
-use crate::app::data_harvester::cpu::CpuDataType;
 use crate::app::{
-    data_harvester::temperature::TemperatureType,
-    widgets::{DiskWidgetData, TempWidgetData},
+    data_farmer::DataCollection,
+    data_harvester::{cpu::CpuDataType, temperature::TemperatureType},
+    AxisScaling,
 };
 use crate::components::tui_widget::time_chart::Point;
+use crate::units::data_units::DataUnit;
 use crate::utils::gen_util::*;
-use crate::{app::AxisScaling, units::data_units::DataUnit};
+use crate::widgets::{DiskWidgetData, TempWidgetData};
 
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {
