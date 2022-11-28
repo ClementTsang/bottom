@@ -522,6 +522,8 @@ pub fn create_collection_thread(
                     }
                 }
             }
+
+            // TODO: [OPT] this feels like it might not be totally optimal. Hm.
             futures::executor::block_on(data_state.update_data());
 
             // Yet another check to bail if needed...

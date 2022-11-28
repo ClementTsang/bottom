@@ -132,7 +132,7 @@ impl<'a> TimeGraph<'a> {
 
         // This is some ugly manual loop unswitching. Maybe unnecessary.
         // TODO: Optimize this step. Cut out unneeded points.
-        let data = graph_data.iter().map(|data| create_dataset(data)).collect();
+        let data = graph_data.iter().map(create_dataset).collect();
         let block = Block::default()
             .title(self.generate_title(draw_loc))
             .borders(Borders::ALL)
