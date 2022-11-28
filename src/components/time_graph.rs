@@ -22,9 +22,6 @@ pub struct GraphData<'a> {
 }
 
 pub struct TimeGraph<'a> {
-    /// Whether to use a dot marker over the default braille markers.
-    pub use_dot: bool,
-
     /// The min and max x boundaries. Expects a f64 representing the time range in milliseconds.
     pub x_bounds: [u64; 2],
 
@@ -54,6 +51,10 @@ pub struct TimeGraph<'a> {
 
     /// Any legend constraints.
     pub legend_constraints: Option<(Constraint, Constraint)>,
+
+    /// The marker type. Unlike tui-rs' native charts, we assume
+    /// only a single type of market.
+    pub marker: Marker,
 }
 
 impl<'a> TimeGraph<'a> {
@@ -131,18 +132,7 @@ impl<'a> TimeGraph<'a> {
 
         // This is some ugly manual loop unswitching. Maybe unnecessary.
         // TODO: Optimize this step. Cut out unneeded points.
-        let data = if self.use_dot {
-            graph_data
-                .iter()
-                .map(|data| create_dataset(data, Marker::Dot))
-                .collect()
-        } else {
-            graph_data
-                .iter()
-                .map(|data| create_dataset(data, Marker::Braille))
-                .collect()
-        };
-
+        let data = graph_data.iter().map(|data| create_dataset(data)).collect();
         let block = Block::default()
             .title(self.generate_title(draw_loc))
             .borders(Borders::ALL)
@@ -164,7 +154,7 @@ impl<'a> TimeGraph<'a> {
 }
 
 /// Creates a new [`Dataset`].
-fn create_dataset<'a>(data: &'a GraphData<'a>, marker: Marker) -> Dataset<'a> {
+fn create_dataset<'a>(data: &'a GraphData<'a>) -> Dataset<'a> {
     let GraphData {
         points,
         style,
@@ -174,8 +164,7 @@ fn create_dataset<'a>(data: &'a GraphData<'a>, marker: Marker) -> Dataset<'a> {
     let dataset = Dataset::default()
         .style(*style)
         .data(points)
-        .graph_type(GraphType::Line)
-        .marker(marker);
+        .graph_type(GraphType::Line);
 
     if let Some(name) = name {
         dataset.name(name.as_ref())
@@ -191,6 +180,7 @@ mod test {
     use tui::{
         layout::Rect,
         style::{Color, Style},
+        symbols::Marker,
         text::{Span, Spans},
     };
 
@@ -206,7 +196,6 @@ mod test {
     fn create_time_graph() -> TimeGraph<'static> {
         TimeGraph {
             title: " Network ".into(),
-            use_dot: true,
             x_bounds: [0, 15000],
             hide_x_labels: false,
             y_bounds: [0.0, 100.5],
@@ -216,6 +205,7 @@ mod test {
             is_expanded: false,
             title_style: Style::default().fg(Color::Cyan),
             legend_constraints: None,
+            marker: Marker::Braille,
         }
     }
 

@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use tui::{
     backend::Backend,
     layout::{Constraint, Rect},
+    symbols::Marker,
     terminal::Frame,
 };
 
@@ -104,8 +105,13 @@ impl Painter {
                 points
             };
 
+            let marker = if app_state.app_config_fields.use_dot {
+                Marker::Dot
+            } else {
+                Marker::Braille
+            };
+
             TimeGraph {
-                use_dot: app_state.app_config_fields.use_dot,
                 x_bounds,
                 hide_x_labels,
                 y_bounds: Y_BOUNDS,
@@ -116,6 +122,7 @@ impl Painter {
                 is_expanded: app_state.is_expanded,
                 title_style: self.colours.widget_title_style,
                 legend_constraints: Some((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
+                marker,
             }
             .draw_time_graph(f, draw_loc, &points);
         }

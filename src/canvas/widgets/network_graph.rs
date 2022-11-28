@@ -1,6 +1,7 @@
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
+    symbols::Marker,
     terminal::Frame,
     text::Text,
     widgets::{Block, Borders, Row, Table},
@@ -142,8 +143,13 @@ impl Painter {
                 ]
             };
 
+            let marker = if app_state.app_config_fields.use_dot {
+                Marker::Dot
+            } else {
+                Marker::Braille
+            };
+
             TimeGraph {
-                use_dot: app_state.app_config_fields.use_dot,
                 x_bounds,
                 hide_x_labels,
                 y_bounds,
@@ -154,6 +160,7 @@ impl Painter {
                 is_expanded: app_state.is_expanded,
                 title_style: self.colours.widget_title_style,
                 legend_constraints: Some(legend_constraints),
+                marker,
             }
             .draw_time_graph(f, draw_loc, &points);
         }
