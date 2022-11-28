@@ -13,18 +13,15 @@ use serde::{Deserialize, Serialize};
 use typed_builder::*;
 
 use crate::{
-    app::{
-        layout_manager::*,
-        widgets::{
-            BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
-            ProcWidget, ProcWidgetMode, TempWidgetState,
-        },
-        *,
-    },
+    app::{layout_manager::*, *},
     canvas::{canvas_colours::CanvasColours, ColourScheme},
     constants::*,
     units::data_units::DataUnit,
     utils::error::{self, BottomError},
+    widgets::{
+        BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
+        ProcWidget, ProcWidgetMode, TempWidgetState,
+    },
 };
 
 pub mod layout_options;

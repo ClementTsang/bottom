@@ -130,6 +130,7 @@ impl<'a> TimeGraph<'a> {
         let y_axis = self.generate_y_axis();
 
         // This is some ugly manual loop unswitching. Maybe unnecessary.
+        // TODO: Optimize this step. Cut out unneeded points.
         let data = if self.use_dot {
             graph_data
                 .iter()

@@ -862,7 +862,7 @@ fn sort_skip_pid_asc(column: &ProcColumn, data: &mut [ProcWidgetData], order: So
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::app::widgets::MemUsage;
+    use crate::widgets::MemUsage;
 
     #[test]
     fn test_proc_sort() {

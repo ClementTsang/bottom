@@ -422,6 +422,7 @@ impl<'a> Widget for TimeChart<'a> {
             }
         }
 
+        // Probably better to move the dataset inside.
         for dataset in &self.datasets {
             Canvas::default()
                 .background_color(self.style.bg.unwrap_or(Color::Reset))

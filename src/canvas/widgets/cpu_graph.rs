@@ -8,13 +8,14 @@ use tui::{
 };
 
 use crate::{
-    app::{layout_manager::WidgetDirection, widgets::CpuWidgetState, App},
+    app::{layout_manager::WidgetDirection, App},
     canvas::{drawing_utils::should_hide_x_label, Painter},
     components::{
         data_table::{DrawInfo, SelectionState},
         time_graph::{GraphData, TimeGraph},
     },
     data_conversion::CpuWidgetData,
+    widgets::CpuWidgetState,
 };
 
 const AVG_POSITION: usize = 1;

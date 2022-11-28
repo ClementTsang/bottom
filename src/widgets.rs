@@ -1,5 +1,3 @@
-// FIXME: Move this outside of app, along with components?
-
 pub mod process_table;
 pub use process_table::*;
 

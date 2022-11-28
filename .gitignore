@@ -9,6 +9,7 @@
 *.log
 
 # Flamegraph stuff
+flamegraphs/
 rust-unmangle
 *.svg
 *.data

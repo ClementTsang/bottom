@@ -61,6 +61,7 @@ pub mod constants;
 pub mod data_conversion;
 pub mod options;
 pub mod units;
+pub mod widgets;
 
 #[cfg(target_family = "windows")]
 pub type Pid = usize;
