@@ -316,6 +316,11 @@ use CPU (3) as the default instead.
         .help("Sets the default widget type, use --help for info.")
         .long_help(DEFAULT_WIDGET_TYPE_STR);
 
+    let expanded_on_startup = Arg::new("expanded_on_startup")
+        .long("expanded")
+        .short('e')
+        .help("Expanded selected widget upon starting the app. Same as pressing \"e\" inside the app. Use with \"default_widget_type\" and \"default_widget_count\" to select desired expanded widget.");
+
     let rate = Arg::new("rate")
         .short('r')
         .long("rate")
@@ -407,7 +412,8 @@ use CPU (3) as the default instead.
         .arg(unnormalized_cpu)
         .arg(use_old_network_legend)
         .arg(whole_word)
-        .arg(retention);
+        .arg(retention)
+        .arg(expanded_on_startup);
 
     #[cfg(feature = "battery")]
     {

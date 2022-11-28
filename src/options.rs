@@ -71,6 +71,7 @@ pub struct ConfigFlags {
     pub hide_time: Option<bool>,
     pub default_widget_type: Option<String>,
     pub default_widget_count: Option<u64>,
+    pub expanded_on_startup: Option<bool>,
     pub use_old_network_legend: Option<bool>,
     pub hide_table_gap: Option<bool>,
     pub battery: Option<bool>,
@@ -172,7 +173,7 @@ pub struct IgnoreList {
 pub fn build_app(
     matches: &ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
-    colours: &CanvasColours,
+    expanded_upon_startup: bool, colours: &CanvasColours,
 ) -> Result<App> {
     use BottomWidgetType::*;
 
@@ -419,6 +420,7 @@ pub fn build_app(
         .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // TODO: [UNWRAP] - many of the unwraps are fine (like this one) but do a once-over and/or switch to expect?
         .widget_map(widget_map)
         .used_widgets(used_widgets)
+        .is_expanded(expanded_upon_startup)
         .filters(DataFilters {
             disk_filter,
             mount_filter,
@@ -430,7 +432,7 @@ pub fn build_app(
 
 pub fn get_widget_layout(
     matches: &ArgMatches, config: &Config,
-) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
+) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>, bool)> {
     let left_legend = get_use_left_legend(matches, config);
     let (default_widget_type, mut default_widget_count) =
         get_default_widget_and_count(matches, config)?;
@@ -490,7 +492,14 @@ pub fn get_widget_layout(
         }
     };
 
-    Ok((bottom_layout, default_widget_id, default_widget_type))
+    let expanded_upon_startup = get_expanded_on_startup(matches, config);
+
+    Ok((
+        bottom_layout,
+        default_widget_id,
+        default_widget_type,
+        expanded_upon_startup,
+    ))
 }
 
 fn get_update_rate_in_milliseconds(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
@@ -749,6 +758,15 @@ fn get_autohide_time(matches: &ArgMatches, config: &Config) -> bool {
     }
 
     false
+}
+
+fn get_expanded_on_startup(matches: &ArgMatches, config: &Config) -> bool {
+    matches.is_present("expanded_on_startup")
+        || config
+            .flags
+            .as_ref()
+            .and_then(|x| x.expanded_on_startup)
+            .unwrap_or(false)
 }
 
 fn get_default_widget_and_count(

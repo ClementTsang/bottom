@@ -518,6 +518,7 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 # Override layout default widget
 #default_widget_type = "proc"
 #default_widget_count = 1
+#expanded_on_startup = false
 # Use basic mode
 #basic = false
 # Use the old network legend style
