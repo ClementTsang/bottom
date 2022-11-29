@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 
-use concat_string::concat_string;
-use tui::text::Text;
+use tui::text::{Span, Spans, Text};
 use unicode_segmentation::UnicodeSegmentation;
 
 pub const KILO_LIMIT: u64 = 1000;
@@ -99,14 +98,37 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
 pub fn truncate_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
     let width = width.into();
-    let graphemes: Vec<&str> = UnicodeSegmentation::graphemes(content, true).collect();
+    let mut graphemes = UnicodeSegmentation::graphemes(content, true);
+    let grapheme_len = {
+        let (_, upper) = graphemes.size_hint();
+        match upper {
+            Some(upper) => upper,
+            None => graphemes.clone().count(), // Don't think this ever fires.
+        }
+    };
 
-    if graphemes.len() > width && width > 0 {
-        // Truncate with ellipsis
-        let first_n = graphemes[..(width - 1)].concat();
-        Text::raw(concat_string!(first_n, "…"))
+    let text = if grapheme_len > width {
+        let mut text = String::with_capacity(width);
+        // Truncate with ellipsis.
+
+        // Use a hack to reduce the size to size `width`. Think of it like removing
+        // The last `grapheme_len - width` graphemes, which reduces the length to
+        // `width` long.
+        //
+        // This is a way to get around the currently experimental`advance_back_by`.
+        graphemes.nth_back(grapheme_len - width);
+
+        text.push_str(graphemes.as_str());
+        text.push('…');
+
+        text
     } else {
-        Text::raw(content.to_string())
+        content.to_string()
+    };
+
+    // TODO: [OPT] maybe add interning here?
+    Text {
+        lines: vec![Spans(vec![Span::raw(text)])],
     }
 }
 
@@ -155,5 +177,10 @@ mod test {
 
         y.sort_by(|a, b| sort_partial_fn(true)(a, b));
         assert_eq!(y, vec![16.15, 15.0, 1.0, -1.0, -100.0, -100.0, -100.1]);
+    }
+
+    #[test]
+    fn test_truncation() {
+        // TODO: Add tests for `truncate_text`
     }
 }

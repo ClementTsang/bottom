@@ -41,6 +41,8 @@ doctest = true
 doc = true
 
 [profile.release]
+# debug = true
+# strip = false
 debug = 0
 strip = "symbols"
 lto = true

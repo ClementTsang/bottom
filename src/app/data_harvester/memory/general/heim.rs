@@ -32,6 +32,7 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     let (mem_total_in_kib, mem_used_in_kib) = {
         #[cfg(target_os = "linux")]
         {
+            // TODO: [OPT] is this efficient?
             use smol::fs::read_to_string;
             let meminfo = read_to_string("/proc/meminfo").await?;
 

@@ -4,7 +4,7 @@ use tui::{
     buffer::Buffer,
     layout::{Constraint, Rect},
     style::{Color, Style},
-    symbols,
+    symbols::{self, Marker},
     text::{Span, Spans},
     widgets::{
         canvas::{Canvas, Line, Points},
@@ -75,8 +75,6 @@ pub struct Dataset<'a> {
     name: Cow<'a, str>,
     /// A reference to the actual data
     data: &'a [Point],
-    /// Symbol used for each points of this dataset
-    marker: symbols::Marker,
     /// Determines graph type used for drawing points
     graph_type: GraphType,
     /// Style used to plot this dataset
@@ -88,7 +86,6 @@ impl<'a> Default for Dataset<'a> {
         Dataset {
             name: Cow::from(""),
             data: &[],
-            marker: symbols::Marker::Dot,
             graph_type: GraphType::Scatter,
             style: Style::default(),
         }
@@ -107,11 +104,6 @@ impl<'a> Dataset<'a> {
 
     pub fn data(mut self, data: &'a [Point]) -> Dataset<'a> {
         self.data = data;
-        self
-    }
-
-    pub fn marker(mut self, marker: symbols::Marker) -> Dataset<'a> {
-        self.marker = marker;
         self
     }
 
@@ -173,10 +165,12 @@ pub struct TimeChart<'a> {
     legend_style: Style,
     /// Constraints used to determine whether the legend should be shown or not
     hidden_legend_constraints: (Constraint, Constraint),
+    /// The marker type.
+    marker: Marker,
 }
 
 pub const DEFAULT_LEGEND_CONSTRAINTS: (Constraint, Constraint) =
-    (Constraint::Ratio(1, 4), Constraint::Ratio(1, 4));
+    (Constraint::Ratio(1, 4), Constraint::Length(4));
 
 #[allow(dead_code)]
 impl<'a> TimeChart<'a> {
@@ -192,6 +186,7 @@ impl<'a> TimeChart<'a> {
             legend_style: Default::default(),
             datasets,
             hidden_legend_constraints: DEFAULT_LEGEND_CONSTRAINTS,
+            marker: Marker::Braille,
         }
     }
 
@@ -217,6 +212,11 @@ impl<'a> TimeChart<'a> {
 
     pub fn y_axis(mut self, axis: Axis<'a>) -> TimeChart<'a> {
         self.y_axis = axis;
+        self
+    }
+
+    pub fn marker(mut self, marker: Marker) -> TimeChart<'a> {
+        self.marker = marker;
         self
     }
 
@@ -422,14 +422,14 @@ impl<'a> Widget for TimeChart<'a> {
             }
         }
 
-        // Probably better to move the dataset inside.
-        for dataset in &self.datasets {
-            Canvas::default()
-                .background_color(self.style.bg.unwrap_or(Color::Reset))
-                .x_bounds(self.x_axis.bounds)
-                .y_bounds(self.y_axis.bounds)
-                .marker(dataset.marker)
-                .paint(|ctx| {
+        Canvas::default()
+            .background_color(self.style.bg.unwrap_or(Color::Reset))
+            .x_bounds(self.x_axis.bounds)
+            .y_bounds(self.y_axis.bounds)
+            .paint(|ctx| {
+                for dataset in &self.datasets {
+                    let color = dataset.style.fg.unwrap_or(Color::Reset);
+
                     let start_bound = self.x_axis.bounds[0];
                     let end_bound = self.x_axis.bounds[1];
 
@@ -437,11 +437,6 @@ impl<'a> Widget for TimeChart<'a> {
                     let (end_index, interpolate_end) = get_end(dataset, end_bound);
 
                     let data_slice = &dataset.data[start_index..end_index];
-
-                    ctx.draw(&Points {
-                        coords: data_slice,
-                        color: dataset.style.fg.unwrap_or(Color::Reset),
-                    });
 
                     if let Some(interpolate_start) = interpolate_start {
                         if let (Some(older_point), Some(newer_point)) = (
@@ -453,18 +448,18 @@ impl<'a> Widget for TimeChart<'a> {
                                 interpolate_point(older_point, newer_point, self.x_axis.bounds[0]),
                             );
 
-                            ctx.draw(&Points {
-                                coords: &[interpolated_point],
-                                color: dataset.style.fg.unwrap_or(Color::Reset),
-                            });
-
                             if let GraphType::Line = dataset.graph_type {
                                 ctx.draw(&Line {
                                     x1: interpolated_point.0,
                                     y1: interpolated_point.1,
                                     x2: newer_point.0,
                                     y2: newer_point.1,
-                                    color: dataset.style.fg.unwrap_or(Color::Reset),
+                                    color,
+                                });
+                            } else {
+                                ctx.draw(&Points {
+                                    coords: &[interpolated_point],
+                                    color,
                                 });
                             }
                         }
@@ -477,9 +472,14 @@ impl<'a> Widget for TimeChart<'a> {
                                 y1: data[0].1,
                                 x2: data[1].0,
                                 y2: data[1].1,
-                                color: dataset.style.fg.unwrap_or(Color::Reset),
+                                color,
                             });
                         }
+                    } else {
+                        ctx.draw(&Points {
+                            coords: data_slice,
+                            color,
+                        });
                     }
 
                     if let Some(interpolate_end) = interpolate_end {
@@ -492,25 +492,25 @@ impl<'a> Widget for TimeChart<'a> {
                                 interpolate_point(older_point, newer_point, self.x_axis.bounds[1]),
                             );
 
-                            ctx.draw(&Points {
-                                coords: &[interpolated_point],
-                                color: dataset.style.fg.unwrap_or(Color::Reset),
-                            });
-
                             if let GraphType::Line = dataset.graph_type {
                                 ctx.draw(&Line {
                                     x1: older_point.0,
                                     y1: older_point.1,
                                     x2: interpolated_point.0,
                                     y2: interpolated_point.1,
-                                    color: dataset.style.fg.unwrap_or(Color::Reset),
+                                    color,
+                                });
+                            } else {
+                                ctx.draw(&Points {
+                                    coords: &[interpolated_point],
+                                    color,
                                 });
                             }
                         }
                     }
-                })
-                .render(graph_area, buf);
-        }
+                }
+            })
+            .render(graph_area, buf);
 
         if let Some(legend_area) = layout.legend_area {
             buf.set_style(legend_area, original_style);
