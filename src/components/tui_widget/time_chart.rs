@@ -428,6 +428,8 @@ impl<'a> Widget for TimeChart<'a> {
             .y_bounds(self.y_axis.bounds)
             .paint(|ctx| {
                 for dataset in &self.datasets {
+                    let color = dataset.style.fg.unwrap_or(Color::Reset);
+
                     let start_bound = self.x_axis.bounds[0];
                     let end_bound = self.x_axis.bounds[1];
 
@@ -435,11 +437,6 @@ impl<'a> Widget for TimeChart<'a> {
                     let (end_index, interpolate_end) = get_end(dataset, end_bound);
 
                     let data_slice = &dataset.data[start_index..end_index];
-
-                    ctx.draw(&Points {
-                        coords: data_slice,
-                        color: dataset.style.fg.unwrap_or(Color::Reset),
-                    });
 
                     if let Some(interpolate_start) = interpolate_start {
                         if let (Some(older_point), Some(newer_point)) = (
@@ -451,18 +448,18 @@ impl<'a> Widget for TimeChart<'a> {
                                 interpolate_point(older_point, newer_point, self.x_axis.bounds[0]),
                             );
 
-                            ctx.draw(&Points {
-                                coords: &[interpolated_point],
-                                color: dataset.style.fg.unwrap_or(Color::Reset),
-                            });
-
                             if let GraphType::Line = dataset.graph_type {
                                 ctx.draw(&Line {
                                     x1: interpolated_point.0,
                                     y1: interpolated_point.1,
                                     x2: newer_point.0,
                                     y2: newer_point.1,
-                                    color: dataset.style.fg.unwrap_or(Color::Reset),
+                                    color,
+                                });
+                            } else {
+                                ctx.draw(&Points {
+                                    coords: &[interpolated_point],
+                                    color,
                                 });
                             }
                         }
@@ -475,9 +472,14 @@ impl<'a> Widget for TimeChart<'a> {
                                 y1: data[0].1,
                                 x2: data[1].0,
                                 y2: data[1].1,
-                                color: dataset.style.fg.unwrap_or(Color::Reset),
+                                color,
                             });
                         }
+                    } else {
+                        ctx.draw(&Points {
+                            coords: data_slice,
+                            color,
+                        });
                     }
 
                     if let Some(interpolate_end) = interpolate_end {
@@ -490,18 +492,18 @@ impl<'a> Widget for TimeChart<'a> {
                                 interpolate_point(older_point, newer_point, self.x_axis.bounds[1]),
                             );
 
-                            ctx.draw(&Points {
-                                coords: &[interpolated_point],
-                                color: dataset.style.fg.unwrap_or(Color::Reset),
-                            });
-
                             if let GraphType::Line = dataset.graph_type {
                                 ctx.draw(&Line {
                                     x1: older_point.0,
                                     y1: older_point.1,
                                     x2: interpolated_point.0,
                                     y2: interpolated_point.1,
-                                    color: dataset.style.fg.unwrap_or(Color::Reset),
+                                    color,
+                                });
+                            } else {
+                                ctx.draw(&Points {
+                                    coords: &[interpolated_point],
+                                    color,
                                 });
                             }
                         }
