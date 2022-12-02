@@ -48,7 +48,7 @@ fn main() -> Result<()> {
         .context("Unable to properly parse or create the config file.")?;
 
     // Get widget layout separately
-    let (widget_layout, default_widget_id, default_widget_type_option, expanded_on_startup) =
+    let (widget_layout, default_widget_id, default_widget_type_option) =
         get_widget_layout(&matches, &config)
             .context("Found an issue while trying to build the widget layout.")?;
 
@@ -65,7 +65,6 @@ fn main() -> Result<()> {
         &widget_layout,
         default_widget_id,
         &default_widget_type_option,
-        expanded_on_startup,
         &colours,
     )?;
 

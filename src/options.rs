@@ -173,7 +173,7 @@ pub struct IgnoreList {
 pub fn build_app(
     matches: &ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
-    expanded_upon_startup: bool, colours: &CanvasColours,
+    colours: &CanvasColours,
 ) -> Result<App> {
     use BottomWidgetType::*;
 
@@ -407,6 +407,8 @@ pub fn build_app(
     let net_filter =
         get_ignore_list(&config.net_filter).context("Update 'net_filter' in your config file")?;
 
+    let expanded_upon_startup = get_expanded_on_startup(matches, config);
+
     Ok(App::builder()
         .app_config_fields(app_config_fields)
         .cpu_state(CpuState::init(cpu_state_map))
@@ -432,7 +434,7 @@ pub fn build_app(
 
 pub fn get_widget_layout(
     matches: &ArgMatches, config: &Config,
-) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>, bool)> {
+) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
     let left_legend = get_use_left_legend(matches, config);
     let (default_widget_type, mut default_widget_count) =
         get_default_widget_and_count(matches, config)?;
@@ -492,14 +494,7 @@ pub fn get_widget_layout(
         }
     };
 
-    let expanded_upon_startup = get_expanded_on_startup(matches, config);
-
-    Ok((
-        bottom_layout,
-        default_widget_id,
-        default_widget_type,
-        expanded_upon_startup,
-    ))
+    Ok((bottom_layout, default_widget_id, default_widget_type))
 }
 
 fn get_update_rate_in_milliseconds(matches: &ArgMatches, config: &Config) -> error::Result<u64> {

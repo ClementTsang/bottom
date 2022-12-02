@@ -319,7 +319,8 @@ use CPU (3) as the default instead.
     let expanded_on_startup = Arg::new("expanded_on_startup")
         .long("expanded")
         .short('e')
-        .help("Expanded selected widget upon starting the app. Same as pressing \"e\" inside the app. Use with \"default_widget_type\" and \"default_widget_count\" to select desired expanded widget.");
+        .help("Expand selected widget upon starting the app.")
+        .long_help("Expand selected widget upon starting the app. Same as pressing \"e\" inside the app. Use with \"default_widget_type\" and \"default_widget_count\" to select desired expanded widget.");
 
     let rate = Arg::new("rate")
         .short('r')
