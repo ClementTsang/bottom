@@ -162,14 +162,17 @@ fn main() -> Result<()> {
                         break;
                     }
                     update_data(&mut app);
+                    try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::MouseInput(event) => {
                     handle_mouse_event(event, &mut app);
                     update_data(&mut app);
+                    try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::PasteEvent(paste) => {
                     app.handle_paste(paste);
                     update_data(&mut app);
+                    try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::Update(data) => {
                     app.data_collection.eat_data(data);
@@ -278,6 +281,7 @@ fn main() -> Result<()> {
                         }
 
                         update_data(&mut app);
+                        try_drawing(&mut terminal, &mut app, &mut painter)?;
                     }
                 }
                 BottomEvent::Clean => {
@@ -286,9 +290,6 @@ fn main() -> Result<()> {
                 }
             }
         }
-
-        // TODO: [OPT] Should not draw if no change (ie: scroll max)
-        try_drawing(&mut terminal, &mut app, &mut painter)?;
     }
 
     // I think doing it in this order is safe...
