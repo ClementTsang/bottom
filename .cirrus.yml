@@ -47,6 +47,9 @@ test_task:
     - name: "FreeBSD 13 Test"
       freebsd_instance:
         image_family: freebsd-13-1
+    - name: "FreeBSD 12 Test"
+      freebsd_instance:
+        image_family: freebsd-12-3
     - name: "macOS M1 Test"
       macos_instance:
         image: ghcr.io/cirruslabs/macos-monterey-base:latest
