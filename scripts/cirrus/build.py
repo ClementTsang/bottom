@@ -18,7 +18,8 @@ from urllib.request import Request, urlopen, urlretrieve
 
 URL = "https://api.cirrus-ci.com/graphql"
 TASKS = [
-    ("freebsd_build", "bottom_x86_64-unknown-freebsd.tar.gz"),
+    ("freebsd_12_3_build", "bottom_x86_64-unknown-freebsd-12-3.tar.gz"),
+    ("freebsd_13_1_build", "bottom_x86_64-unknown-freebsd-13-1.tar.gz"),
     ("macos_build", "bottom_aarch64-apple-darwin.tar.gz"),
 ]
 DL_URL_TEMPLATE = "https://api.cirrus-ci.com/v1/artifact/build/%s/%s/binaries/%s"
