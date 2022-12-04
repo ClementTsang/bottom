@@ -100,6 +100,7 @@ impl SortType for Sortable {
                             SortOrder::Ascending => UP_ARROW,
                             SortOrder::Descending => DOWN_ARROW,
                         };
+                        // TODO: [OPT] Can probably intern some of these strings.
                         Some(truncate_text(&concat_string!(c.header(), arrow), width))
                     } else {
                         Some(truncate_text(&c.header(), width))

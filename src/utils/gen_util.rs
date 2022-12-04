@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 
 use tui::text::{Span, Spans, Text};
 use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 pub const KILO_LIMIT: u64 = 1000;
 pub const MEGA_LIMIT: u64 = 1_000_000;
@@ -98,16 +99,10 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
 pub fn truncate_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
     let width = width.into();
-    let mut graphemes = UnicodeSegmentation::graphemes(content, true);
-    let grapheme_len = {
-        let (_, upper) = graphemes.size_hint();
-        match upper {
-            Some(upper) => upper,
-            None => graphemes.clone().count(), // Don't think this ever fires.
-        }
-    };
+    let grapheme_len = UnicodeWidthStr::width(content); // TODO: This isn't "true" for cjk though...
 
     let text = if grapheme_len > width {
+        let mut graphemes = UnicodeSegmentation::graphemes(content, true);
         let mut text = String::with_capacity(width);
         // Truncate with ellipsis.
 
