@@ -71,6 +71,7 @@ pub type Pid = libc::pid_t;
 
 #[derive(Debug)]
 pub enum BottomEvent {
+    Resize,
     KeyInput(KeyEvent),
     MouseInput(MouseEvent),
     PasteEvent(String),
@@ -431,6 +432,14 @@ pub fn create_input_thread(
                     if let Ok(event) = read() {
                         // FIXME: Handle all other event cases.
                         match event {
+                            // TODO: Might want to debounce this in the future, or take into account the actual resize
+                            // values. Maybe we want to keep the current implementation in case the resize event might
+                            // not fire... not sure.
+                            Event::Resize(_, _) => {
+                                if sender.send(BottomEvent::Resize).is_err() {
+                                    break;
+                                }
+                            }
                             Event::Paste(paste) => {
                                 if sender.send(BottomEvent::PasteEvent(paste)).is_err() {
                                     break;
