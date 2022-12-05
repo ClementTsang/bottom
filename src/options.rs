@@ -422,7 +422,7 @@ pub fn build_app(
         .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // TODO: [UNWRAP] - many of the unwraps are fine (like this one) but do a once-over and/or switch to expect?
         .widget_map(widget_map)
         .used_widgets(used_widgets)
-        .is_expanded(expanded_upon_startup)
+        .is_expanded(expanded_upon_startup && !use_basic_mode)
         .filters(DataFilters {
             disk_filter,
             mount_filter,
