@@ -103,6 +103,10 @@ pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a>
     }
 }
 
+/// Truncates a string with an ellipsis character.
+///
+/// NB: This probably does not handle EVERY case, but I think it handles most cases
+/// we will use this function for fine... hopefully.
 fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
     let width = width.into();
     let mut text = String::with_capacity(width);
@@ -118,6 +122,7 @@ fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
         // - Completes adding the entire string.
         // - Adds a character up to the boundary, then fails.
         // - Adds a character not up to the boundary, then fails.
+        // Inspired by https://tomdebruijn.com/posts/rust-string-length-width-calculations/
         for g in UnicodeSegmentation::graphemes(content, true) {
             let g_width = if g.contains('\u{200d}') {
                 2
