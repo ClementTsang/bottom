@@ -157,6 +157,9 @@ fn main() -> Result<()> {
         // TODO: Would be good to instead use a mix of is_terminated check + recv. Probably use a termination event instead.
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             match recv {
+                BottomEvent::Resize => {
+                    try_drawing(&mut terminal, &mut app, &mut painter)?;
+                }
                 BottomEvent::KeyInput(event) => {
                     if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
                         break;
