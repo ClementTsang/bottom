@@ -12,7 +12,7 @@ use crate::{
     canvas::Painter,
     components::data_table::{DataTableColumn, DataToCell},
     data_conversion::{binary_byte_string, dec_bytes_per_second_string, dec_bytes_string},
-    utils::gen_util::truncate_text,
+    utils::gen_util::truncate_to_text,
     Pid,
 };
 
@@ -222,7 +222,7 @@ impl ProcWidgetData {
 impl DataToCell<ProcColumn> for ProcWidgetData {
     fn to_cell<'a>(&'a self, column: &ProcColumn, calculated_width: u16) -> Option<Text<'a>> {
         // TODO: Optimize the string allocations here...
-        Some(truncate_text(
+        Some(truncate_to_text(
             &match column {
                 ProcColumn::CpuPercent => {
                     format!("{:.1}%", self.cpu_usage_percent)

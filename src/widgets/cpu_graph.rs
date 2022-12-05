@@ -11,7 +11,7 @@ use crate::{
         DataToCell,
     },
     data_conversion::CpuWidgetData,
-    utils::gen_util::truncate_text,
+    utils::gen_util::truncate_to_text,
 };
 
 #[derive(Default)]
@@ -88,7 +88,7 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
         // it is too small.
         match &self {
             CpuWidgetTableData::All => match column {
-                CpuWidgetColumn::CPU => Some(truncate_text("All", calculated_width)),
+                CpuWidgetColumn::CPU => Some(truncate_to_text("All", calculated_width)),
                 CpuWidgetColumn::Use => None,
             },
             CpuWidgetTableData::Entry {
@@ -100,13 +100,13 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
                         None
                     } else {
                         match data_type {
-                            CpuDataType::Avg => Some(truncate_text("AVG", calculated_width)),
+                            CpuDataType::Avg => Some(truncate_to_text("AVG", calculated_width)),
                             CpuDataType::Cpu(index) => {
                                 let index_str = index.to_string();
                                 let text = if calculated_width < CPU_HIDE_BREAKPOINT {
-                                    truncate_text(&index_str, calculated_width)
+                                    truncate_to_text(&index_str, calculated_width)
                                 } else {
-                                    truncate_text(
+                                    truncate_to_text(
                                         &concat_string!("CPU", index_str),
                                         calculated_width,
                                     )
@@ -117,7 +117,7 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
                         }
                     }
                 }
-                CpuWidgetColumn::Use => Some(truncate_text(
+                CpuWidgetColumn::Use => Some(truncate_to_text(
                     &format!("{:.0}%", last_entry.round()),
                     calculated_width,
                 )),

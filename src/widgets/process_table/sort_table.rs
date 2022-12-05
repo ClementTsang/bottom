@@ -4,7 +4,7 @@ use tui::text::Text;
 
 use crate::{
     components::data_table::{ColumnHeader, DataTableColumn, DataToCell},
-    utils::gen_util::truncate_text,
+    utils::gen_util::truncate_to_text,
 };
 
 pub struct SortTableColumn;
@@ -17,7 +17,7 @@ impl ColumnHeader for SortTableColumn {
 
 impl DataToCell<SortTableColumn> for &'static str {
     fn to_cell<'a>(&'a self, _column: &SortTableColumn, calculated_width: u16) -> Option<Text<'a>> {
-        Some(truncate_text(self, calculated_width))
+        Some(truncate_to_text(self, calculated_width))
     }
 
     fn column_widths<C: DataTableColumn<SortTableColumn>>(data: &[Self], _columns: &[C]) -> Vec<u16>
@@ -30,7 +30,7 @@ impl DataToCell<SortTableColumn> for &'static str {
 
 impl DataToCell<SortTableColumn> for Cow<'static, str> {
     fn to_cell<'a>(&'a self, _column: &SortTableColumn, calculated_width: u16) -> Option<Text<'a>> {
-        Some(truncate_text(self, calculated_width))
+        Some(truncate_to_text(self, calculated_width))
     }
 
     fn column_widths<C: DataTableColumn<SortTableColumn>>(data: &[Self], _columns: &[C]) -> Vec<u16>

@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 
 use tui::text::{Span, Spans, Text};
 use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 pub const KILO_LIMIT: u64 = 1000;
 pub const MEGA_LIMIT: u64 = 1_000_000;
@@ -96,40 +97,59 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
 }
 
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
-pub fn truncate_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
-    let width = width.into();
-    let mut graphemes = UnicodeSegmentation::graphemes(content, true);
-    let grapheme_len = {
-        let (_, upper) = graphemes.size_hint();
-        match upper {
-            Some(upper) => upper,
-            None => graphemes.clone().count(), // Don't think this ever fires.
-        }
-    };
-
-    let text = if grapheme_len > width {
-        let mut text = String::with_capacity(width);
-        // Truncate with ellipsis.
-
-        // Use a hack to reduce the size to size `width`. Think of it like removing
-        // The last `grapheme_len - width` graphemes, which reduces the length to
-        // `width` long.
-        //
-        // This is a way to get around the currently experimental`advance_back_by`.
-        graphemes.nth_back(grapheme_len - width);
-
-        text.push_str(graphemes.as_str());
-        text.push('…');
-
-        text
-    } else {
-        content.to_string()
-    };
-
-    // TODO: [OPT] maybe add interning here?
+pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
     Text {
-        lines: vec![Spans(vec![Span::raw(text)])],
+        lines: vec![Spans(vec![Span::raw(truncate_str(content, width))])],
     }
+}
+
+/// Truncates a string with an ellipsis character.
+///
+/// NB: This probably does not handle EVERY case, but I think it handles most cases
+/// we will use this function for fine... hopefully.
+fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
+    let width = width.into();
+    let mut text = String::with_capacity(width);
+
+    if width > 0 {
+        let mut curr_width = 0;
+        let mut early_break = false;
+
+        // This tracks the length of the last added string - note this does NOT match the grapheme *width*.
+        let mut last_added_str_len = 0;
+
+        // Cases to handle:
+        // - Completes adding the entire string.
+        // - Adds a character up to the boundary, then fails.
+        // - Adds a character not up to the boundary, then fails.
+        // Inspired by https://tomdebruijn.com/posts/rust-string-length-width-calculations/
+        for g in UnicodeSegmentation::graphemes(content, true) {
+            let g_width = if g.contains('\u{200d}') {
+                2
+            } else {
+                UnicodeWidthStr::width(g)
+            };
+
+            if curr_width + g_width <= width {
+                curr_width += g_width;
+                last_added_str_len = g.len();
+                text.push_str(g);
+            } else {
+                early_break = true;
+                break;
+            }
+        }
+
+        if early_break {
+            if curr_width == width {
+                // Remove the last grapheme cluster added.
+                text.truncate(text.len() - last_added_str_len);
+            }
+            text.push('…');
+        }
+    }
+
+    text
 }
 
 #[inline]
@@ -180,7 +200,162 @@ mod test {
     }
 
     #[test]
-    fn test_truncation() {
-        // TODO: Add tests for `truncate_text`
+    fn test_truncate() {
+        let cpu_header = "CPU(c)▲";
+
+        assert_eq!(
+            truncate_str(cpu_header, 8_usize),
+            cpu_header,
+            "should match base string as there is enough room"
+        );
+
+        assert_eq!(
+            truncate_str(cpu_header, 7_usize),
+            cpu_header,
+            "should match base string as there is enough room"
+        );
+
+        assert_eq!(truncate_str(cpu_header, 6_usize), "CPU(c…");
+        assert_eq!(truncate_str(cpu_header, 5_usize), "CPU(…");
+        assert_eq!(truncate_str(cpu_header, 4_usize), "CPU…");
+        assert_eq!(truncate_str(cpu_header, 1_usize), "…");
+        assert_eq!(truncate_str(cpu_header, 0_usize), "");
+    }
+
+    #[test]
+    fn test_truncate_cjk() {
+        let cjk = "施氏食獅史";
+
+        assert_eq!(
+            truncate_str(cjk, 11_usize),
+            cjk,
+            "should match base string as there is enough room"
+        );
+
+        assert_eq!(
+            truncate_str(cjk, 10_usize),
+            cjk,
+            "should match base string as there is enough room"
+        );
+
+        assert_eq!(truncate_str(cjk, 9_usize), "施氏食獅…");
+        assert_eq!(truncate_str(cjk, 8_usize), "施氏食…");
+        assert_eq!(truncate_str(cjk, 2_usize), "…");
+        assert_eq!(truncate_str(cjk, 1_usize), "…");
+        assert_eq!(truncate_str(cjk, 0_usize), "");
+    }
+
+    #[test]
+    fn test_truncate_mixed() {
+        let test = "Test (施氏食獅史) Test";
+
+        assert_eq!(
+            truncate_str(test, 30_usize),
+            test,
+            "should match base string as there is enough room"
+        );
+
+        assert_eq!(
+            truncate_str(test, 22_usize),
+            test,
+            "should match base string as there is just enough room"
+        );
+
+        assert_eq!(
+            truncate_str(test, 21_usize),
+            "Test (施氏食獅史) Te…",
+            "should truncate the t and replace the s with ellipsis"
+        );
+
+        assert_eq!(truncate_str(test, 18_usize), "Test (施氏食獅史)…");
+        assert_eq!(truncate_str(test, 17_usize), "Test (施氏食獅史…");
+        assert_eq!(truncate_str(test, 16_usize), "Test (施氏食獅…");
+        assert_eq!(truncate_str(test, 15_usize), "Test (施氏食獅…");
+        assert_eq!(truncate_str(test, 14_usize), "Test (施氏食…");
+        assert_eq!(truncate_str(test, 13_usize), "Test (施氏食…");
+        assert_eq!(truncate_str(test, 8_usize), "Test (…");
+        assert_eq!(truncate_str(test, 7_usize), "Test (…");
+        assert_eq!(truncate_str(test, 6_usize), "Test …");
+    }
+
+    #[test]
+    fn test_truncate_flags() {
+        let flag = "🇨🇦";
+        assert_eq!(truncate_str(flag, 3_usize), flag);
+        assert_eq!(truncate_str(flag, 2_usize), flag);
+        assert_eq!(truncate_str(flag, 1_usize), "…");
+        assert_eq!(truncate_str(flag, 0_usize), "");
+
+        let flag_text = "oh 🇨🇦";
+        assert_eq!(truncate_str(flag_text, 6_usize), flag_text);
+        assert_eq!(truncate_str(flag_text, 5_usize), flag_text);
+        assert_eq!(truncate_str(flag_text, 4_usize), "oh …");
+
+        let flag_text_wrap = "!🇨🇦!";
+        assert_eq!(truncate_str(flag_text_wrap, 6_usize), flag_text_wrap);
+        assert_eq!(truncate_str(flag_text_wrap, 4_usize), flag_text_wrap);
+        assert_eq!(truncate_str(flag_text_wrap, 3_usize), "!…");
+        assert_eq!(truncate_str(flag_text_wrap, 2_usize), "!…");
+        assert_eq!(truncate_str(flag_text_wrap, 1_usize), "…");
+
+        let flag_cjk = "加拿大🇨🇦";
+        assert_eq!(truncate_str(flag_cjk, 9_usize), flag_cjk);
+        assert_eq!(truncate_str(flag_cjk, 8_usize), flag_cjk);
+        assert_eq!(truncate_str(flag_cjk, 7_usize), "加拿大…");
+        assert_eq!(truncate_str(flag_cjk, 6_usize), "加拿…");
+        assert_eq!(truncate_str(flag_cjk, 5_usize), "加拿…");
+        assert_eq!(truncate_str(flag_cjk, 4_usize), "加…");
+
+        let flag_mix = "🇨🇦加gaa拿naa大daai🇨🇦";
+        assert_eq!(truncate_str(flag_mix, 20_usize), flag_mix);
+        assert_eq!(truncate_str(flag_mix, 19_usize), "🇨🇦加gaa拿naa大daai…");
+        assert_eq!(truncate_str(flag_mix, 18_usize), "🇨🇦加gaa拿naa大daa…");
+        assert_eq!(truncate_str(flag_mix, 17_usize), "🇨🇦加gaa拿naa大da…");
+        assert_eq!(truncate_str(flag_mix, 15_usize), "🇨🇦加gaa拿naa大…");
+        assert_eq!(truncate_str(flag_mix, 14_usize), "🇨🇦加gaa拿naa…");
+        assert_eq!(truncate_str(flag_mix, 13_usize), "🇨🇦加gaa拿naa…");
+        assert_eq!(truncate_str(flag_mix, 3_usize), "🇨🇦…");
+        assert_eq!(truncate_str(flag_mix, 2_usize), "…");
+        assert_eq!(truncate_str(flag_mix, 1_usize), "…");
+        assert_eq!(truncate_str(flag_mix, 0_usize), "");
+    }
+
+    /// This might not be the best way to handle it, but this at least tests that it doesn't crash...
+    #[test]
+    fn test_truncate_hindi() {
+        // cSpell:disable
+        let test = "हिन्दी";
+        assert_eq!(truncate_str(test, 10_usize), test);
+        assert_eq!(truncate_str(test, 6_usize), "हिन्दी");
+        assert_eq!(truncate_str(test, 5_usize), "हिन्दी");
+        assert_eq!(truncate_str(test, 4_usize), "हिन्…");
+        assert_eq!(truncate_str(test, 3_usize), "हि…");
+        assert_eq!(truncate_str(test, 2_usize), "…");
+        assert_eq!(truncate_str(test, 1_usize), "…");
+        assert_eq!(truncate_str(test, 0_usize), "");
+        // cSpell:enable
+    }
+
+    #[test]
+    fn test_truncate_emoji() {
+        let heart = "❤️";
+        assert_eq!(truncate_str(heart, 2_usize), heart);
+        assert_eq!(truncate_str(heart, 1_usize), heart);
+        assert_eq!(truncate_str(heart, 0_usize), "");
+
+        let emote = "💎";
+        assert_eq!(truncate_str(emote, 2_usize), emote);
+        assert_eq!(truncate_str(emote, 1_usize), "…");
+        assert_eq!(truncate_str(emote, 0_usize), "");
+
+        let family = "👨‍👨‍👧‍👦";
+        assert_eq!(truncate_str(family, 2_usize), family);
+        assert_eq!(truncate_str(family, 1_usize), "…");
+        assert_eq!(truncate_str(family, 0_usize), "");
+
+        let scientist = "👩‍🔬";
+        assert_eq!(truncate_str(scientist, 2_usize), scientist);
+        assert_eq!(truncate_str(scientist, 1_usize), "…");
+        assert_eq!(truncate_str(scientist, 0_usize), "");
     }
 }
