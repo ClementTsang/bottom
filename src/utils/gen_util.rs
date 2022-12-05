@@ -103,7 +103,7 @@ pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a>
     }
 }
 
-fn truncate_str<'a, U: Into<usize>>(content: &str, width: U) -> String {
+fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
     let width = width.into();
     let mut text = String::with_capacity(width);
 
@@ -119,7 +119,7 @@ fn truncate_str<'a, U: Into<usize>>(content: &str, width: U) -> String {
         // - Adds a character up to the boundary, then fails.
         // - Adds a character not up to the boundary, then fails.
         for g in UnicodeSegmentation::graphemes(content, true) {
-            let g_width = if g.contains("\u{200d}") {
+            let g_width = if g.contains('\u{200d}') {
                 2
             } else {
                 UnicodeWidthStr::width(g)
