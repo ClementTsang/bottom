@@ -11,7 +11,7 @@ use crate::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    utils::gen_util::{sort_partial_fn, truncate_text},
+    utils::gen_util::{sort_partial_fn, truncate_to_text},
 };
 
 #[derive(Clone, Debug)]
@@ -50,8 +50,8 @@ impl TempWidgetData {
 impl DataToCell<TempWidgetColumn> for TempWidgetData {
     fn to_cell<'a>(&'a self, column: &TempWidgetColumn, calculated_width: u16) -> Option<Text<'a>> {
         Some(match column {
-            TempWidgetColumn::Sensor => truncate_text(&self.sensor, calculated_width),
-            TempWidgetColumn::Temp => truncate_text(&self.temperature(), calculated_width),
+            TempWidgetColumn::Sensor => truncate_to_text(&self.sensor, calculated_width),
+            TempWidgetColumn::Temp => truncate_to_text(&self.temperature(), calculated_width),
         })
     }
 

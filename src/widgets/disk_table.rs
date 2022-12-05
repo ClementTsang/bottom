@@ -10,7 +10,7 @@ use crate::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    utils::gen_util::{get_decimal_bytes, sort_partial_fn, truncate_text},
+    utils::gen_util::{get_decimal_bytes, sort_partial_fn, truncate_to_text},
 };
 
 #[derive(Clone, Debug)]
@@ -84,13 +84,13 @@ impl ColumnHeader for DiskWidgetColumn {
 impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
     fn to_cell<'a>(&'a self, column: &DiskWidgetColumn, calculated_width: u16) -> Option<Text<'a>> {
         let text = match column {
-            DiskWidgetColumn::Disk => truncate_text(&self.name, calculated_width),
-            DiskWidgetColumn::Mount => truncate_text(&self.mount_point, calculated_width),
-            DiskWidgetColumn::Used => truncate_text(&self.usage(), calculated_width),
-            DiskWidgetColumn::Free => truncate_text(&self.free_space(), calculated_width),
-            DiskWidgetColumn::Total => truncate_text(&self.total_space(), calculated_width),
-            DiskWidgetColumn::IoRead => truncate_text(&self.io_read, calculated_width),
-            DiskWidgetColumn::IoWrite => truncate_text(&self.io_write, calculated_width),
+            DiskWidgetColumn::Disk => truncate_to_text(&self.name, calculated_width),
+            DiskWidgetColumn::Mount => truncate_to_text(&self.mount_point, calculated_width),
+            DiskWidgetColumn::Used => truncate_to_text(&self.usage(), calculated_width),
+            DiskWidgetColumn::Free => truncate_to_text(&self.free_space(), calculated_width),
+            DiskWidgetColumn::Total => truncate_to_text(&self.total_space(), calculated_width),
+            DiskWidgetColumn::IoRead => truncate_to_text(&self.io_read, calculated_width),
+            DiskWidgetColumn::IoWrite => truncate_to_text(&self.io_write, calculated_width),
         };
 
         Some(text)

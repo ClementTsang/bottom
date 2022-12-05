@@ -8,7 +8,7 @@ use super::{
     ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,
     DataTableStyling, DataToCell,
 };
-use crate::utils::gen_util::truncate_text;
+use crate::utils::gen_util::truncate_to_text;
 
 /// Denotes the sort order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -61,7 +61,7 @@ pub trait SortType: private::Sealed {
             if width == 0 {
                 None
             } else {
-                Some(truncate_text(&c.header(), width))
+                Some(truncate_to_text(&c.header(), width))
             }
         }))
     }
@@ -100,10 +100,9 @@ impl SortType for Sortable {
                             SortOrder::Ascending => UP_ARROW,
                             SortOrder::Descending => DOWN_ARROW,
                         };
-                        // TODO: [OPT] Can probably intern some of these strings.
-                        Some(truncate_text(&concat_string!(c.header(), arrow), width))
+                        Some(truncate_to_text(&concat_string!(c.header(), arrow), width))
                     } else {
-                        Some(truncate_text(&c.header(), width))
+                        Some(truncate_to_text(&c.header(), width))
                     }
                 }),
         )
