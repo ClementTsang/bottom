@@ -107,6 +107,7 @@ pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a>
 ///
 /// NB: This probably does not handle EVERY case, but I think it handles most cases
 /// we will use this function for fine... hopefully.
+#[inline]
 fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
     let width = width.into();
     let mut text = String::with_capacity(width);

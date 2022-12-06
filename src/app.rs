@@ -32,8 +32,6 @@ pub mod states;
 
 use frozen_state::FrozenState;
 
-const MAX_SEARCH_LENGTH: usize = 200; // FIXME: Remove this limit, it's unnecessary.
-
 #[derive(Debug, Clone)]
 pub enum AxisScaling {
     Log,
@@ -1113,16 +1111,7 @@ impl App {
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if is_in_search_widget
-                        && proc_widget_state.is_search_enabled()
-                        && UnicodeWidthStr::width(
-                            proc_widget_state
-                                .proc_search
-                                .search_state
-                                .current_search_query
-                                .as_str(),
-                        ) <= MAX_SEARCH_LENGTH
-                    {
+                    if is_in_search_widget && proc_widget_state.is_search_enabled() {
                         proc_widget_state
                             .proc_search
                             .search_state
@@ -2734,10 +2723,7 @@ impl App {
             let paste_width = UnicodeWidthStr::width(paste.as_str());
             let num_runes = UnicodeSegmentation::graphemes(paste.as_str(), true).count();
 
-            if is_in_search_widget
-                && proc_widget_state.is_search_enabled()
-                && curr_width + paste_width <= MAX_SEARCH_LENGTH
-            {
+            if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 let paste_char_width = paste.len();
                 let left_bound = proc_widget_state.get_search_cursor_position();
 
