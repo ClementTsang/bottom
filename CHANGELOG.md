@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#881](https://github.com/ClementTsang/bottom/pull/881): Add pasting to the search bar.
 - [#892](https://github.com/ClementTsang/bottom/pull/892): Add custom retention periods for data.
 - [#899](https://github.com/ClementTsang/bottom/pull/899): Add non-normalized CPU usage to processes.
+- [#919](https://github.com/ClementTsang/bottom/pull/919): Add an option to expand the default widget on startup.
 
 ## [0.6.8] - 2022-02-01
 
