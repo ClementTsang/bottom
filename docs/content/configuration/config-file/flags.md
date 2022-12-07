@@ -39,3 +39,4 @@ Most of the [command line flags](../../command-line-flags) have config file equi
 | `enable_gpu_memory`          | Boolean                                                                                        | Shows the GPU memory widget.                                    |
 | `retention`                  | String (human readable time, such as "10m", "1h", etc.)                                        | How much data is stored at once in terms of time.               |
 | `unnormalized_cpu`           | Boolean                                                                                        | Show process CPU% without normalizing over the number of cores. |
+| `expanded_on_startup`        | Boolean                                                                                        | Expand the default widget upon starting the app.                |
