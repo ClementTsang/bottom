@@ -43,6 +43,8 @@
 # Override layout default widget
 #default_widget_type = "proc"
 #default_widget_count = 1
+# Expand selected widget upon starting the app
+#expanded_on_startup = true
 # Use basic mode
 #basic = false
 # Use the old network legend style

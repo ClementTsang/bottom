@@ -123,7 +123,7 @@ pub struct App {
     #[builder(default, setter(skip))]
     pub help_dialog_state: AppHelpDialogState,
 
-    #[builder(default = false, setter(skip))]
+    #[builder(default = false)]
     pub is_expanded: bool,
 
     #[builder(default = false, setter(skip))]
