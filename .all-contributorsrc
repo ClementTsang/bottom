@@ -326,6 +326,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "sou-chon",
+      "name": "Chon Sou",
+      "avatar_url": "https://avatars.githubusercontent.com/u/35537528?v=4",
+      "profile": "https://github.com/sou-chon",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

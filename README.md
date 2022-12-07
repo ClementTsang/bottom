@@ -377,6 +377,9 @@ Thanks to all contributors:
       <td align="center"><a href="https://github.com/lroobrou"><img src="https://avatars.githubusercontent.com/u/35152113?v=4?s=100" width="100px;" alt="lroobrou"/><br /><sub><b>lroobrou</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=lroobrou" title="Code">💻</a></td>
       <td align="center"><a href="https://cube64128.xyz/"><img src="https://avatars.githubusercontent.com/u/18757988?v=4?s=100" width="100px;" alt="database64128"/><br /><sub><b>database64128</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=database64128" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center"><a href="https://github.com/sou-chon"><img src="https://avatars.githubusercontent.com/u/35537528?v=4?s=100" width="100px;" alt="Chon Sou"/><br /><sub><b>Chon Sou</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=sou-chon" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
