@@ -31,6 +31,7 @@ jobs:
     name: "Build binaries"
     runs-on: ${{ matrix.info.os }}
     container: ${{ matrix.info.container }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
