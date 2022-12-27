@@ -363,7 +363,7 @@ impl<'a> TimeChart<'a> {
         for (i, label) in labels.iter().enumerate() {
             let dy = i as u16 * (graph_area.height - 1) / (labels_len - 1);
             if dy < graph_area.bottom() {
-                buf.set_span(x, graph_area.bottom() - 1 - dy, label, label_width as u16);
+                buf.set_span(x, graph_area.bottom() - 1 - dy, label, label_width);
             }
         }
     }
@@ -426,6 +426,7 @@ impl<'a> Widget for TimeChart<'a> {
             .background_color(self.style.bg.unwrap_or(Color::Reset))
             .x_bounds(self.x_axis.bounds)
             .y_bounds(self.y_axis.bounds)
+            .marker(self.marker)
             .paint(|ctx| {
                 for dataset in &self.datasets {
                     let color = dataset.style.fg.unwrap_or(Color::Reset);

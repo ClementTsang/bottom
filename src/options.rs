@@ -236,11 +236,7 @@ pub fn build_app(
         hide_time: get_hide_time(matches, config),
         autohide_time,
         use_old_network_legend: get_use_old_network_legend(matches, config),
-        table_gap: if get_hide_table_gap(matches, config) {
-            0
-        } else {
-            1
-        },
+        table_gap: u16::from(!get_hide_table_gap(matches, config)),
         disable_click: get_disable_click(matches, config),
         enable_gpu_memory: get_enable_gpu_memory(matches, config),
         show_table_scroll_position: get_show_table_scroll_position(matches, config),

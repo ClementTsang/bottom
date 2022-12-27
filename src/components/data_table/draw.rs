@@ -147,7 +147,7 @@ where
         let draw_loc = draw_info.loc;
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)])
-            .horizontal_margin(if draw_horizontal { 0 } else { 1 })
+            .horizontal_margin(u16::from(!draw_horizontal))
             .direction(Direction::Horizontal)
             .split(draw_loc)[0];
 

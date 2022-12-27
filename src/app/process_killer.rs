@@ -39,7 +39,7 @@ impl Process {
 /// Kills a process, given a PID, for unix.
 #[cfg(target_family = "unix")]
 pub fn kill_process_given_pid(pid: Pid, signal: usize) -> crate::utils::error::Result<()> {
-    let output = unsafe { libc::kill(pid as i32, signal as i32) };
+    let output = unsafe { libc::kill(pid, signal as i32) };
     if output != 0 {
         // We had an error...
         let err_code = std::io::Error::last_os_error().raw_os_error();

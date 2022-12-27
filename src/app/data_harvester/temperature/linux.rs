@@ -64,7 +64,7 @@ fn get_from_hwmon(
         }
 
         let hwmon_name = file_path.join("name");
-        let hwmon_name = Some(fs::read_to_string(&hwmon_name)?);
+        let hwmon_name = Some(fs::read_to_string(hwmon_name)?);
 
         // Whether the temperature should *actually* be read during enumeration
         // Set to false if the device is in ACPI D3cold.

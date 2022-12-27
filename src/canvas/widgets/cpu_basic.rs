@@ -97,8 +97,7 @@ impl Painter {
                         let to_divide = REQUIRED_COLUMNS - itx;
                         let num_taken = min(
                             remaining_height,
-                            (row_counter / to_divide)
-                                + (if row_counter % to_divide == 0 { 0 } else { 1 }),
+                            (row_counter / to_divide) + usize::from(row_counter % to_divide != 0),
                         );
                         row_counter -= num_taken;
                         let chunk = (&mut gauge_info).take(num_taken);
