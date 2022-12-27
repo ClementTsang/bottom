@@ -1,5 +1,6 @@
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, ops::Range, time::Instant};
 
+use indexmap::IndexMap;
 use unicode_segmentation::GraphemeCursor;
 
 use crate::{
@@ -71,10 +72,11 @@ pub struct AppSearchState {
     pub is_invalid_search: bool,
     pub grapheme_cursor: GraphemeCursor,
     pub cursor_direction: CursorDirection,
-    pub cursor_bar: usize,
-    /// This represents the position in terms of CHARACTERS, not graphemes
-    pub char_cursor_position: usize,
-    /// The query
+
+    pub display_start_char_index: usize,
+    pub size_mappings: IndexMap<usize, Range<usize>>,
+
+    /// The query. TODO: Merge this as one enum.
     pub query: Option<Query>,
     pub error_message: Option<String>,
 }
@@ -88,8 +90,8 @@ impl Default for AppSearchState {
             is_blank_search: true,
             grapheme_cursor: GraphemeCursor::new(0, 0, true),
             cursor_direction: CursorDirection::Right,
-            cursor_bar: 0,
-            char_cursor_position: 0,
+            display_start_char_index: 0,
+            size_mappings: IndexMap::default(),
             query: None,
             error_message: None,
         }
@@ -108,6 +110,83 @@ impl AppSearchState {
     /// Returns whether the [`AppSearchState`] has an invalid or blank search.
     pub fn is_invalid_or_blank_search(&self) -> bool {
         self.is_blank_search || self.is_invalid_search
+    }
+
+    /// Sets the starting grapheme index to draw from.
+    pub fn get_start_position(&mut self, available_width: usize, is_force_redraw: bool) {
+        // Remember - the number of columns != the number of grapheme slots/sizes, you
+        // cannot use index to determine this reliably!
+
+        let start_index = if is_force_redraw {
+            0
+        } else {
+            self.display_start_char_index
+        };
+        let cursor_index = self.grapheme_cursor.cur_cursor();
+
+        if let Some(start_range) = self.size_mappings.get(&start_index) {
+            let cursor_range = self
+                .size_mappings
+                .get(&cursor_index)
+                .cloned()
+                .unwrap_or_else(|| {
+                    self.size_mappings
+                        .last()
+                        .map(|(_, r)| r.end..(r.end + 1))
+                        .unwrap_or(start_range.end..(start_range.end + 1))
+                });
+
+            // Cases to handle in both cases:
+            // - The current start index can show the cursor's word.
+            // - The current start index cannot show the cursor's word.
+            //
+            // What differs is how we "scroll" based on the cursor movement direction.
+
+            self.display_start_char_index = match self.cursor_direction {
+                CursorDirection::Right => {
+                    if start_range.start + available_width >= cursor_range.end {
+                        // Use the current index.
+                        start_index
+                    } else if cursor_range.end >= available_width {
+                        // If the current position is past the last visible element, skip until we see it.
+
+                        let mut index = 0;
+                        for i in 0..(cursor_index + 1) {
+                            if let Some(r) = self.size_mappings.get(&i) {
+                                if r.start + available_width >= cursor_range.end {
+                                    index = i;
+                                    break;
+                                }
+                            }
+                        }
+
+                        index
+                    } else {
+                        0
+                    }
+                }
+                CursorDirection::Left => {
+                    if cursor_range.start < start_range.end {
+                        let mut index = 0;
+                        for i in cursor_index..(self.current_search_query.len()) {
+                            if let Some(r) = self.size_mappings.get(&i) {
+                                if r.start + available_width >= cursor_range.end {
+                                    index = i;
+                                    break;
+                                }
+                            }
+                        }
+                        index
+                    } else {
+                        start_index
+                    }
+                }
+            };
+        } else {
+            // If we fail here somehow, just reset to 0 index + scroll left.
+            self.display_start_char_index = 0;
+            self.cursor_direction = CursorDirection::Left;
+        };
     }
 }
 

@@ -52,26 +52,27 @@ impl Default for DataTableState {
 impl DataTableState {
     /// Gets the starting position of a table.
     pub fn get_start_position(&mut self, num_rows: usize, is_force_redraw: bool) {
-        let mut start_index = self.display_start_index;
+        let start_index = if is_force_redraw {
+            0
+        } else {
+            self.display_start_index
+        };
         let current_scroll_position = self.current_index;
         let scroll_direction = self.scroll_direction;
-
-        if is_force_redraw {
-            start_index = 0;
-        }
 
         self.display_start_index = match scroll_direction {
             ScrollDirection::Down => {
                 if current_scroll_position < start_index + num_rows {
-                    // If, using previous_scrolled_position, we can see the element
-                    // (so within that and + num_rows) just reuse the current previously scrolled position
+                    // If, using the current scroll position, we can see the element
+                    // (so within that and + num_rows) just reuse the current previously
+                    // scrolled position.
                     start_index
                 } else if current_scroll_position >= num_rows {
-                    // Else if the current position past the last element visible in the list, omit
-                    // until we can see that element
+                    // If the current position past the last element visible in the list,
+                    // then skip until we can see that element.
                     current_scroll_position - num_rows + 1
                 } else {
-                    // Else, if it is not past the last element visible, do not omit anything
+                    // Else, if it is not past the last element visible, do not omit anything.
                     0
                 }
             }

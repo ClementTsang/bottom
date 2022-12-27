@@ -16,6 +16,7 @@ use crate::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
+    utils::gen_util::str_width,
     Pid,
 };
 
@@ -27,7 +28,7 @@ pub use proc_widget_data::*;
 
 mod sort_table;
 use sort_table::SortTableColumn;
-use unicode_segmentation::GraphemeIncomplete;
+use unicode_segmentation::{GraphemeIncomplete, UnicodeSegmentation};
 
 /// ProcessSearchState only deals with process' search's current settings and state.
 pub struct ProcessSearchState {
@@ -710,19 +711,15 @@ impl ProcWidget {
             .collect::<Vec<_>>()
     }
 
-    pub fn get_search_cursor_position(&self) -> usize {
+    pub fn cursor_char_index(&self) -> usize {
         self.proc_search.search_state.grapheme_cursor.cur_cursor()
-    }
-
-    pub fn get_char_cursor_position(&self) -> usize {
-        self.proc_search.search_state.char_cursor_position
     }
 
     pub fn is_search_enabled(&self) -> bool {
         self.proc_search.search_state.is_enabled
     }
 
-    pub fn get_current_search_query(&self) -> &String {
+    pub fn current_search_query(&self) -> &str {
         &self.proc_search.search_state.current_search_query
     }
 
@@ -758,6 +755,26 @@ impl ProcWidget {
         }
         self.table.state.display_start_index = 0;
         self.table.state.current_index = 0;
+
+        // Update the internal sizes too.
+        self.proc_search.search_state.size_mappings.clear();
+        let mut curr_offset = 0;
+        for (index, grapheme) in UnicodeSegmentation::grapheme_indices(
+            self.proc_search.search_state.current_search_query.as_str(),
+            true,
+        ) {
+            let width = str_width(grapheme);
+            let end = curr_offset + width;
+
+            self.proc_search
+                .search_state
+                .size_mappings
+                .insert(index, curr_offset..end);
+
+            curr_offset = end;
+        }
+
+        self.proc_search.search_state.size_mappings.shrink_to_fit();
 
         self.force_data_update();
     }
