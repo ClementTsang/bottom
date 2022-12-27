@@ -363,7 +363,7 @@ impl<'a> TimeChart<'a> {
         for (i, label) in labels.iter().enumerate() {
             let dy = i as u16 * (graph_area.height - 1) / (labels_len - 1);
             if dy < graph_area.bottom() {
-                buf.set_span(x, graph_area.bottom() - 1 - dy, label, label_width as u16);
+                buf.set_span(x, graph_area.bottom() - 1 - dy, label, label_width);
             }
         }
     }

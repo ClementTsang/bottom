@@ -272,7 +272,7 @@ impl Painter {
 
             let margined_draw_loc = Layout::default()
                 .constraints([Constraint::Percentage(100)])
-                .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
+                .horizontal_margin(u16::from(!(is_on_widget || draw_border)))
                 .direction(Direction::Horizontal)
                 .split(draw_loc)[0];
 
