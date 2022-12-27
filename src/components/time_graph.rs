@@ -143,6 +143,7 @@ impl<'a> TimeGraph<'a> {
                 .block(block)
                 .x_axis(x_axis)
                 .y_axis(y_axis)
+                .marker(self.marker)
                 .legend_style(self.graph_style)
                 .hidden_legend_constraints(
                     self.legend_constraints

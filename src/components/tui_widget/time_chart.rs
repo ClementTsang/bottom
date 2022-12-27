@@ -426,6 +426,7 @@ impl<'a> Widget for TimeChart<'a> {
             .background_color(self.style.bg.unwrap_or(Color::Reset))
             .x_bounds(self.x_axis.bounds)
             .y_bounds(self.y_axis.bounds)
+            .marker(self.marker)
             .paint(|ctx| {
                 for dataset in &self.datasets {
                     let color = dataset.style.fg.unwrap_or(Color::Reset);
