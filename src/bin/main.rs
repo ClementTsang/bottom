@@ -158,7 +158,7 @@ fn main() -> Result<()> {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             match recv {
                 BottomEvent::Resize => {
-                    try_drawing(&mut terminal, &mut app, &mut painter)?;
+                    try_drawing(&mut terminal, &mut app, &mut painter)?; // FIXME: This is bugged with frozen?
                 }
                 BottomEvent::KeyInput(event) => {
                     if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
