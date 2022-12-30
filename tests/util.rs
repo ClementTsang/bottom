@@ -59,7 +59,6 @@ fn cross_runner() -> Option<String> {
 }
 
 /// Returns the [`Command`] of a binary invocation of bottom.
-///
 pub fn btm_command() -> Command {
     let btm_exe = env!("CARGO_BIN_EXE_btm");
     match cross_runner() {

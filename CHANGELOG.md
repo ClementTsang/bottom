@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#690](https://github.com/ClementTsang/bottom/pull/690): Add some colour to `-h`/`--help` as part of updating to clap 3.0.
 - [#807](https://github.com/ClementTsang/bottom/pull/807): Add more human friendly temperature sensor names for Linux.
+- [#845](https://github.com/ClementTsang/bottom/pull/845), [#922](https://github.com/ClementTsang/bottom/pull/922): Add macOS M1, FreeBSD 12, and FreeBSD 13 binary build tasks.
+- [#916](https://github.com/ClementTsang/bottom/pull/916), [#937](https://github.com/ClementTsang/bottom/pull/937): Improve CPU usage by optimizing draw logic of charts and tables.
 
 ## Features
 
@@ -34,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#870](https://github.com/ClementTsang/bottom/pull/870): Make disk widget sortable.
 - [#881](https://github.com/ClementTsang/bottom/pull/881): Add pasting to the search bar.
 - [#892](https://github.com/ClementTsang/bottom/pull/892): Add custom retention periods for data.
-- [#899](https://github.com/ClementTsang/bottom/pull/899): Add non-normalized CPU usage to processes.
+- [#899](https://github.com/ClementTsang/bottom/pull/899), [#910](https://github.com/ClementTsang/bottom/pull/910), [#912](https://github.com/ClementTsang/bottom/pull/912): Add non-normalized CPU usage to processes.
 - [#919](https://github.com/ClementTsang/bottom/pull/919): Add an option to expand the default widget on startup.
 
 ## [0.6.8] - 2022-02-01
