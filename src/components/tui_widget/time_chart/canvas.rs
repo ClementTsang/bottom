@@ -347,7 +347,6 @@ pub struct Context<'a> {
     y_bounds: [f64; 2],
     grid: Box<dyn Grid>,
     dirty: bool,
-    layers: Vec<Layer>,
     labels: Vec<Label<'a>>,
 }
 
@@ -365,7 +364,6 @@ impl<'a> Context<'a> {
             y_bounds,
             grid,
             dirty: false,
-            layers: Vec::new(),
             labels: Vec::new(),
         }
     }
@@ -378,20 +376,6 @@ impl<'a> Context<'a> {
         self.dirty = true;
         let mut painter = Painter::from(self);
         shape.draw(&mut painter);
-    }
-
-    /// Go one layer above in the canvas.
-    pub fn layer(&mut self) {
-        self.layers.push(self.grid.save());
-        self.grid.reset();
-        self.dirty = false;
-    }
-
-    /// Push the last layer if necessary.
-    fn finish(&mut self) {
-        if self.dirty {
-            self.layer()
-        }
     }
 }
 
@@ -504,24 +488,27 @@ where
         );
         // Paint to this context
         painter(&mut ctx);
-        ctx.finish();
 
-        // Retreive painted points for each layer
-        for layer in ctx.layers {
-            for (i, (ch, color)) in layer
-                .string
-                .chars()
-                .zip(layer.colors.into_iter())
-                .enumerate()
-            {
-                if ch != ' ' && ch != '\u{2800}' {
-                    let (x, y) = (i % width, i / width);
-                    buf.get_mut(x as u16 + canvas_area.left(), y as u16 + canvas_area.top())
-                        .set_char(ch)
-                        .set_fg(color);
-                }
+        // Paint whatever is in the ctx.
+        let layer = ctx.grid.save();
+
+        for (i, (ch, color)) in layer
+            .string
+            .chars()
+            .zip(layer.colors.into_iter())
+            .enumerate()
+        {
+            if ch != ' ' && ch != '\u{2800}' {
+                let (x, y) = (i % width, i / width);
+                buf.get_mut(x as u16 + canvas_area.left(), y as u16 + canvas_area.top())
+                    .set_char(ch)
+                    .set_fg(color);
             }
         }
+
+        // Reset the grid and mark as non-dirty.
+        ctx.grid.reset();
+        ctx.dirty = false;
 
         // Finally draw the labels
         let left = self.x_bounds[0];
