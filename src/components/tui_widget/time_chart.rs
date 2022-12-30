@@ -1,4 +1,4 @@
-mod grid;
+mod canvas;
 
 use std::{borrow::Cow, cmp::max};
 
@@ -16,7 +16,7 @@ use tui::{
 use unicode_width::UnicodeWidthStr;
 
 use crate::utils::gen_util::partial_ordering;
-use grid::*;
+use canvas::*;
 
 /// A single graph point.
 pub type Point = (f64, f64);

@@ -194,12 +194,13 @@ impl Grid for BrailleGrid {
 
     fn paint(&mut self, x: usize, y: usize, color: Color) {
         let index = y / 4 * self.width as usize + x / 2;
-        if let Some(c) = self.colors.get_mut(index) {
-            if *c != color {
-                *c = color;
-                if let Some(c) = self.cells.get_mut(index) {
-                    *c = symbols::braille::BLANK;
-                    *c |= symbols::braille::DOTS[y % 4][x % 2];
+        if let Some(curr_color) = self.colors.get_mut(index) {
+            if *curr_color != color {
+                *curr_color = color;
+                if let Some(cell) = self.cells.get_mut(index) {
+                    *cell = symbols::braille::BLANK;
+
+                    *cell |= symbols::braille::DOTS[y % 4][x % 2];
                 }
             } else if let Some(c) = self.cells.get_mut(index) {
                 *c |= symbols::braille::DOTS[y % 4][x % 2];
@@ -386,7 +387,7 @@ impl<'a> Context<'a> {
         self.dirty = false;
     }
 
-    /// Push the last layer if necessary
+    /// Push the last layer if necessary.
     fn finish(&mut self) {
         if self.dirty {
             self.layer()
