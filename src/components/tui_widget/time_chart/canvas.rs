@@ -282,7 +282,10 @@ impl<'a, 'b> Painter<'a, 'b> {
     ///
     /// # Examples:
     /// ```
-    /// use tui::{symbols, widgets::canvas::{Painter, Context}};
+    /// use tui::{
+    ///     symbols,
+    ///     widgets::canvas::{Context, Painter},
+    /// };
     ///
     /// let mut ctx = Context::new(2, 2, [1.0, 2.0], [0.0, 2.0], symbols::Marker::Braille);
     /// let mut painter = Painter::from(&mut ctx);
@@ -319,7 +322,11 @@ impl<'a, 'b> Painter<'a, 'b> {
     ///
     /// # Examples:
     /// ```
-    /// use tui::{style::Color, symbols, widgets::canvas::{Painter, Context}};
+    /// use tui::{
+    ///     style::Color,
+    ///     symbols,
+    ///     widgets::canvas::{Context, Painter},
+    /// };
     ///
     /// let mut ctx = Context::new(1, 1, [0.0, 2.0], [0.0, 2.0], symbols::Marker::Braille);
     /// let mut painter = Painter::from(&mut ctx);
@@ -443,11 +450,17 @@ where
     /// ```
     /// # use tui::widgets::canvas::Canvas;
     /// # use tui::symbols;
-    /// Canvas::default().marker(symbols::Marker::Braille).paint(|ctx| {});
+    /// Canvas::default()
+    ///     .marker(symbols::Marker::Braille)
+    ///     .paint(|ctx| {});
     ///
-    /// Canvas::default().marker(symbols::Marker::Dot).paint(|ctx| {});
+    /// Canvas::default()
+    ///     .marker(symbols::Marker::Dot)
+    ///     .paint(|ctx| {});
     ///
-    /// Canvas::default().marker(symbols::Marker::Block).paint(|ctx| {});
+    /// Canvas::default()
+    ///     .marker(symbols::Marker::Block)
+    ///     .paint(|ctx| {});
     /// ```
     pub fn marker(mut self, marker: symbols::Marker) -> Canvas<'a, F> {
         self.marker = marker;

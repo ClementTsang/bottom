@@ -2,6 +2,7 @@ mod canvas;
 
 use std::{borrow::Cow, cmp::max};
 
+use canvas::*;
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Rect},
@@ -16,7 +17,6 @@ use tui::{
 use unicode_width::UnicodeWidthStr;
 
 use crate::utils::gen_util::partial_ordering;
-use canvas::*;
 
 /// A single graph point.
 pub type Point = (f64, f64);
