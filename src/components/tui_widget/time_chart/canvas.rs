@@ -3,7 +3,10 @@
 //! of doing it all in a single layer via the normal tui-rs crate. This means you can do it all in a single pass, with
 //! just one string alloc and no resets.
 
-use std::fmt::Debug;
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    fmt::Debug,
+};
 
 use tui::{
     buffer::Buffer,
@@ -16,6 +19,8 @@ use tui::{
         Block, Widget,
     },
 };
+
+use crossterm::style::Color as CColor;
 
 /// Interface for all shapes that may be drawn on a Canvas widget.
 pub trait Shape {
@@ -146,6 +151,7 @@ struct BrailleGrid {
     height: u16,
     cells: Vec<u16>,
     colors: Vec<Color>,
+    past_cells: HashMap<(usize, CColor), u16>,
 }
 
 impl BrailleGrid {
@@ -156,6 +162,7 @@ impl BrailleGrid {
             height,
             cells: vec![symbols::braille::BLANK; length],
             colors: vec![Color::Reset; length],
+            past_cells: HashMap::default(),
         }
     }
 }
@@ -190,16 +197,31 @@ impl Grid for BrailleGrid {
         for c in &mut self.colors {
             *c = Color::Reset;
         }
+
+        self.past_cells.clear();
     }
 
     fn paint(&mut self, x: usize, y: usize, color: Color) {
         let index = y / 4 * self.width as usize + x / 2;
         if let Some(curr_color) = self.colors.get_mut(index) {
             if *curr_color != color {
-                *curr_color = color;
                 if let Some(cell) = self.cells.get_mut(index) {
-                    *cell = symbols::braille::BLANK;
+                    if *curr_color != Color::Reset {
+                        match self.past_cells.entry((index, (*curr_color).into())) {
+                            Entry::Occupied(mut o) => {
+                                o.insert(*cell);
+                            }
+                            Entry::Vacant(v) => {
+                                v.insert(*cell);
+                            }
+                        }
+                    }
+                    *curr_color = color;
 
+                    *cell = self
+                        .past_cells
+                        .remove(&(index, color.into()))
+                        .unwrap_or(symbols::braille::BLANK);
                     *cell |= symbols::braille::DOTS[y % 4][x % 2];
                 }
             } else if let Some(c) = self.cells.get_mut(index) {
