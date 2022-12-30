@@ -1,12 +1,13 @@
-# Simple job to clear the cache used by a PR when it is closed/merged.
+# Simple job to clear the cache used by a workflow. This automatically runs when a PR is closed/merged
+# to clean up the corresponding PR's cache.
 
-name: "clear PR cache"
+name: "clear workflow cache"
 
 on:
   workflow_dispatch:
     inputs:
       id:
-        description: "Which id to clear:"
+        description: "Which id to clear. Type 'main'/'master'/'all' to clean all."
         required: false
   pull_request:
     types:

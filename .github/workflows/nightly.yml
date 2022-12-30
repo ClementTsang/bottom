@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       isMock:
-        description: "Replace to trigger a non-mock run."
+        description: "Replace with any word other than 'mock' to trigger a non-mock run."
         default: "mock"
         required: false
 
