@@ -1,3 +1,5 @@
+mod grid;
+
 use std::{borrow::Cow, cmp::max};
 
 use tui::{
@@ -7,13 +9,14 @@ use tui::{
     symbols::{self, Marker},
     text::{Span, Spans},
     widgets::{
-        canvas::{Canvas, Line, Points},
+        canvas::{Line, Points},
         Block, Borders, GraphType, Widget,
     },
 };
 use unicode_width::UnicodeWidthStr;
 
 use crate::utils::gen_util::partial_ordering;
+use grid::*;
 
 /// A single graph point.
 pub type Point = (f64, f64);
@@ -428,6 +431,13 @@ impl<'a> Widget for TimeChart<'a> {
             .y_bounds(self.y_axis.bounds)
             .marker(self.marker)
             .paint(|ctx| {
+                // Idea is to:
+                // - Go over all datasets, determine *where* a point will be drawn.
+                // - We take the topmost (last) point first.
+                // - After we determine all points, then we paint them all.
+                // This helps relieve the issue where normally, braille grids are painted via |=, when we want
+                // an exclusive replacement.
+
                 for dataset in &self.datasets {
                     let color = dataset.style.fg.unwrap_or(Color::Reset);
 

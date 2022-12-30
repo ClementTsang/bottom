@@ -128,9 +128,21 @@ clap_mangen = "0.1.6"
 [package.metadata.deb]
 section = "utility"
 assets = [
-    ["target/release/btm", "usr/bin/", "755"],
-    ["LICENSE", "usr/share/doc/btm/", "644"],
-    ["manpage/btm.1.gz", "usr/share/man/man1/btm.1.gz", "644"],
+    [
+        "target/release/btm",
+        "usr/bin/",
+        "755",
+    ],
+    [
+        "LICENSE",
+        "usr/share/doc/btm/",
+        "644",
+    ],
+    [
+        "manpage/btm.1.gz",
+        "usr/share/man/man1/btm.1.gz",
+        "644",
+    ],
     [
         "completion/btm.bash",
         "usr/share/bash-completion/completions/btm",
@@ -141,7 +153,11 @@ assets = [
         "usr/share/fish/vendor_completions.d/btm.fish",
         "644",
     ],
-    ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
+    [
+        "completion/_btm",
+        "usr/share/zsh/vendor-completions/",
+        "644",
+    ],
 ]
 extended-description = """
 
