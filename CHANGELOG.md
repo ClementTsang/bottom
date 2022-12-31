@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#805](https://github.com/ClementTsang/bottom/pull/805): Fix bottom keeping devices awake in certain scenarios.
 - [#825](https://github.com/ClementTsang/bottom/pull/825): Use alternative method of getting parent PID in some cases on macOS devices to avoid needing root access.
 - [#916](https://github.com/ClementTsang/bottom/pull/916): Fix possible gaps with widget layout spacing.
+- [#938](https://github.com/ClementTsang/bottom/pull/938): Fix search scrolling with wider Unicode characters.
 
 ## Changes
 

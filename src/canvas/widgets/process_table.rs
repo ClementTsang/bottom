@@ -1,16 +1,16 @@
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::Style,
     terminal::Frame,
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
 };
-use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
-use unicode_width::UnicodeWidthStr;
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    app::App,
-    canvas::{drawing_utils::get_search_start_position, Painter},
+    app::{App, AppSearchState},
+    canvas::Painter,
     components::data_table::{DrawInfo, SelectionState},
     constants::*,
 };
@@ -68,8 +68,6 @@ impl Painter {
 
     /// Draws the process sort box.
     /// - `widget_id` represents the widget ID of the process widget itself.an
-    ///
-    /// This should not be directly called.
     fn draw_processes_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
@@ -99,38 +97,42 @@ impl Painter {
     /// Draws the process search field.
     /// - `widget_id` represents the widget ID of the search box itself --- NOT the process widget
     /// state that is stored.
-    ///
-    /// This should not be directly called.
     fn draw_search_field<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
-        fn build_query<'a>(
-            is_on_widget: bool, grapheme_indices: GraphemeIndices<'a>, start_position: usize,
-            cursor_position: usize, query: &str, currently_selected_text_style: tui::style::Style,
-            text_style: tui::style::Style,
-        ) -> Vec<Span<'a>> {
-            let mut current_grapheme_pos = 0;
+        fn build_query_span(
+            search_state: &AppSearchState, available_width: usize, is_on_widget: bool,
+            currently_selected_text_style: Style, text_style: Style,
+        ) -> Vec<Span<'_>> {
+            let start_index = search_state.display_start_char_index;
+            let cursor_index = search_state.grapheme_cursor.cur_cursor();
+            let mut current_width = 0;
+            let query = search_state.current_search_query.as_str();
 
             if is_on_widget {
-                let mut res = grapheme_indices
-                    .filter_map(|grapheme| {
-                        current_grapheme_pos += UnicodeWidthStr::width(grapheme.1);
-
-                        if current_grapheme_pos <= start_position {
-                            None
+                let mut res = Vec::with_capacity(available_width);
+                for ((index, grapheme), lengths) in
+                    UnicodeSegmentation::grapheme_indices(query, true)
+                        .zip(search_state.size_mappings.values())
+                {
+                    if index < start_index {
+                        continue;
+                    } else if current_width > available_width {
+                        break;
+                    } else {
+                        let styled = if index == cursor_index {
+                            Span::styled(grapheme, currently_selected_text_style)
                         } else {
-                            let styled = if grapheme.0 == cursor_position {
-                                Span::styled(grapheme.1, currently_selected_text_style)
-                            } else {
-                                Span::styled(grapheme.1, text_style)
-                            };
-                            Some(styled)
-                        }
-                    })
-                    .collect::<Vec<_>>();
+                            Span::styled(grapheme, text_style)
+                        };
 
-                if cursor_position == query.len() {
+                        res.push(styled);
+                        current_width += lengths.end - lengths.start;
+                    }
+                }
+
+                if cursor_index == query.len() {
                     res.push(Span::styled(" ", currently_selected_text_style))
                 }
 
@@ -143,44 +145,36 @@ impl Painter {
             }
         }
 
-        // TODO: Make the cursor scroll back if there's space!
         if let Some(proc_widget_state) =
             app_state.proc_state.widget_states.get_mut(&(widget_id - 1))
         {
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let num_columns = usize::from(draw_loc.width);
-            let search_title = "> ";
+            const SEARCH_TITLE: &str = "> ";
+            let offset = if draw_border { 4 } else { 2 }; // width of 3 removed for >_|
+            let available_width = if num_columns > (offset + 3) {
+                num_columns - offset
+            } else {
+                num_columns
+            };
 
-            let num_chars_for_text = search_title.len();
-            let cursor_position = proc_widget_state.get_search_cursor_position();
-            let current_cursor_position = proc_widget_state.get_char_cursor_position();
+            proc_widget_state
+                .proc_search
+                .search_state
+                .get_start_position(available_width, app_state.is_force_redraw);
 
-            let start_position: usize = get_search_start_position(
-                num_columns - num_chars_for_text - 5,
-                &proc_widget_state.proc_search.search_state.cursor_direction,
-                &mut proc_widget_state.proc_search.search_state.cursor_bar,
-                current_cursor_position,
-                app_state.is_force_redraw,
-            );
-
-            let query = proc_widget_state.get_current_search_query().as_str();
-            let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true);
-
-            // TODO: [CURSOR] blank cursor if not selected
             // TODO: [CURSOR] blinking cursor?
-            let query_with_cursor = build_query(
+            let query_with_cursor = build_query_span(
+                &proc_widget_state.proc_search.search_state,
+                available_width,
                 is_on_widget,
-                grapheme_indices,
-                start_position,
-                cursor_position,
-                query,
                 self.colours.currently_selected_text_style,
                 self.colours.text_style,
             );
 
             let mut search_text = vec![Spans::from({
                 let mut search_vec = vec![Span::styled(
-                    search_title,
+                    SEARCH_TITLE,
                     if is_on_widget {
                         self.colours.table_header_style
                     } else {
@@ -300,8 +294,6 @@ impl Painter {
     /// Draws the process sort box.
     /// - `widget_id` represents the widget ID of the sort box itself --- NOT the process widget
     /// state that is stored.
-    ///
-    /// This should not be directly called.
     fn draw_sort_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {

@@ -1,10 +1,12 @@
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, ops::Range, time::Instant};
 
-use unicode_segmentation::GraphemeCursor;
+use indexmap::IndexMap;
+use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete, UnicodeSegmentation};
 
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
     constants,
+    utils::gen_util::str_width,
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
         ProcWidget, TempWidgetState,
@@ -71,10 +73,11 @@ pub struct AppSearchState {
     pub is_invalid_search: bool,
     pub grapheme_cursor: GraphemeCursor,
     pub cursor_direction: CursorDirection,
-    pub cursor_bar: usize,
-    /// This represents the position in terms of CHARACTERS, not graphemes
-    pub char_cursor_position: usize,
-    /// The query
+
+    pub display_start_char_index: usize,
+    pub size_mappings: IndexMap<usize, Range<usize>>,
+
+    /// The query. TODO: Merge this as one enum.
     pub query: Option<Query>,
     pub error_message: Option<String>,
 }
@@ -88,8 +91,8 @@ impl Default for AppSearchState {
             is_blank_search: true,
             grapheme_cursor: GraphemeCursor::new(0, 0, true),
             cursor_direction: CursorDirection::Right,
-            cursor_bar: 0,
-            char_cursor_position: 0,
+            display_start_char_index: 0,
+            size_mappings: IndexMap::default(),
             query: None,
             error_message: None,
         }
@@ -108,6 +111,142 @@ impl AppSearchState {
     /// Returns whether the [`AppSearchState`] has an invalid or blank search.
     pub fn is_invalid_or_blank_search(&self) -> bool {
         self.is_blank_search || self.is_invalid_search
+    }
+
+    /// Sets the starting grapheme index to draw from.
+    pub fn get_start_position(&mut self, available_width: usize, is_force_redraw: bool) {
+        // Remember - the number of columns != the number of grapheme slots/sizes, you
+        // cannot use index to determine this reliably!
+
+        let start_index = if is_force_redraw {
+            0
+        } else {
+            self.display_start_char_index
+        };
+        let cursor_index = self.grapheme_cursor.cur_cursor();
+
+        if let Some(start_range) = self.size_mappings.get(&start_index) {
+            let cursor_range = self
+                .size_mappings
+                .get(&cursor_index)
+                .cloned()
+                .unwrap_or_else(|| {
+                    self.size_mappings
+                        .last()
+                        .map(|(_, r)| r.end..(r.end + 1))
+                        .unwrap_or(start_range.end..(start_range.end + 1))
+                });
+
+            // Cases to handle in both cases:
+            // - The current start index can show the cursor's word.
+            // - The current start index cannot show the cursor's word.
+            //
+            // What differs is how we "scroll" based on the cursor movement direction.
+
+            self.display_start_char_index = match self.cursor_direction {
+                CursorDirection::Right => {
+                    if start_range.start + available_width >= cursor_range.end {
+                        // Use the current index.
+                        start_index
+                    } else if cursor_range.end >= available_width {
+                        // If the current position is past the last visible element, skip until we see it.
+
+                        let mut index = 0;
+                        for i in 0..(cursor_index + 1) {
+                            if let Some(r) = self.size_mappings.get(&i) {
+                                if r.start + available_width >= cursor_range.end {
+                                    index = i;
+                                    break;
+                                }
+                            }
+                        }
+
+                        index
+                    } else {
+                        0
+                    }
+                }
+                CursorDirection::Left => {
+                    if cursor_range.start < start_range.end {
+                        let mut index = 0;
+                        for i in cursor_index..(self.current_search_query.len()) {
+                            if let Some(r) = self.size_mappings.get(&i) {
+                                if r.start + available_width >= cursor_range.end {
+                                    index = i;
+                                    break;
+                                }
+                            }
+                        }
+                        index
+                    } else {
+                        start_index
+                    }
+                }
+            };
+        } else {
+            // If we fail here somehow, just reset to 0 index + scroll left.
+            self.display_start_char_index = 0;
+            self.cursor_direction = CursorDirection::Left;
+        };
+    }
+
+    pub(crate) fn walk_forward(&mut self) {
+        // TODO: Add tests for this.
+        let start_position = self.grapheme_cursor.cur_cursor();
+        let chunk = &self.current_search_query[start_position..];
+
+        match self.grapheme_cursor.next_boundary(chunk, start_position) {
+            Ok(_) => {}
+            Err(err) => match err {
+                GraphemeIncomplete::PreContext(ctx) => {
+                    // Provide the entire string as context. Not efficient but should resolve failures.
+                    self.grapheme_cursor
+                        .provide_context(&self.current_search_query[0..ctx], 0);
+
+                    self.grapheme_cursor
+                        .next_boundary(chunk, start_position)
+                        .unwrap();
+                }
+                _ => Err(err).unwrap(),
+            },
+        }
+    }
+
+    pub(crate) fn walk_backward(&mut self) {
+        // TODO: Add tests for this.
+        let start_position = self.grapheme_cursor.cur_cursor();
+        let chunk = &self.current_search_query[..start_position];
+
+        match self.grapheme_cursor.prev_boundary(chunk, 0) {
+            Ok(_) => {}
+            Err(err) => match err {
+                GraphemeIncomplete::PreContext(ctx) => {
+                    // Provide the entire string as context. Not efficient but should resolve failures.
+                    self.grapheme_cursor
+                        .provide_context(&self.current_search_query[0..ctx], 0);
+
+                    self.grapheme_cursor.prev_boundary(chunk, 0).unwrap();
+                }
+                _ => Err(err).unwrap(),
+            },
+        }
+    }
+
+    pub(crate) fn update_sizes(&mut self) {
+        self.size_mappings.clear();
+        let mut curr_offset = 0;
+        for (index, grapheme) in
+            UnicodeSegmentation::grapheme_indices(self.current_search_query.as_str(), true)
+        {
+            let width = str_width(grapheme);
+            let end = curr_offset + width;
+
+            self.size_mappings.insert(index, curr_offset..end);
+
+            curr_offset = end;
+        }
+
+        self.size_mappings.shrink_to_fit();
     }
 }
 
@@ -265,4 +404,93 @@ impl BatteryState {
 pub struct ParagraphScrollState {
     pub current_scroll_index: u16,
     pub max_scroll_index: u16,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn move_right(state: &mut AppSearchState) {
+        state.walk_forward();
+        state.cursor_direction = CursorDirection::Right;
+    }
+
+    fn move_left(state: &mut AppSearchState) {
+        state.walk_backward();
+        state.cursor_direction = CursorDirection::Left;
+    }
+
+    #[test]
+    fn search_cursor_moves() {
+        let mut state = AppSearchState::default();
+        state.current_search_query = "Hi, 你好! 🇦🇶".to_string();
+        state.grapheme_cursor = GraphemeCursor::new(0, state.current_search_query.len(), true);
+        state.update_sizes();
+
+        // Moving right.
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 0);
+        assert_eq!(state.display_start_char_index, 0);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 1);
+        assert_eq!(state.display_start_char_index, 0);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 2);
+        assert_eq!(state.display_start_char_index, 0);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 3);
+        assert_eq!(state.display_start_char_index, 0);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 4);
+        assert_eq!(state.display_start_char_index, 2);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 7);
+        assert_eq!(state.display_start_char_index, 4);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 10);
+        assert_eq!(state.display_start_char_index, 7);
+
+        move_right(&mut state);
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 12);
+        assert_eq!(state.display_start_char_index, 10);
+
+        // Moving left.
+        move_left(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 11);
+        assert_eq!(state.display_start_char_index, 10);
+
+        move_left(&mut state);
+        move_left(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 7);
+        assert_eq!(state.display_start_char_index, 7);
+
+        move_left(&mut state);
+        move_left(&mut state);
+        move_left(&mut state);
+        move_left(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 1);
+        assert_eq!(state.display_start_char_index, 1);
+
+        move_left(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 0);
+        assert_eq!(state.display_start_char_index, 0);
+    }
 }

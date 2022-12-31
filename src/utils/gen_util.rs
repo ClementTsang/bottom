@@ -103,10 +103,39 @@ pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a>
     }
 }
 
+/// Returns the width of a str `s`. This takes into account some things like
+/// joiners when calculating width.
+pub fn str_width(s: &str) -> usize {
+    UnicodeSegmentation::graphemes(s, true)
+        .map(|g| {
+            if g.contains('\u{200d}') {
+                2
+            } else {
+                UnicodeWidthStr::width(g)
+            }
+        })
+        .sum()
+}
+
+/// Returns the "width" of grapheme `g`. This takes into account some things like
+/// joiners when calculating width.
+///
+/// Note that while you *can* pass in an entire string, the point is to check
+/// individual graphemes (e.g. `"a"`, `"💎"`, `"大"`, `"🇨🇦"`).
+#[inline]
+fn grapheme_width(g: &str) -> usize {
+    if g.contains('\u{200d}') {
+        2
+    } else {
+        UnicodeWidthStr::width(g)
+    }
+}
+
 /// Truncates a string with an ellipsis character.
 ///
 /// NB: This probably does not handle EVERY case, but I think it handles most cases
 /// we will use this function for fine... hopefully.
+#[inline]
 fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
     let width = width.into();
     let mut text = String::with_capacity(width);
@@ -124,11 +153,7 @@ fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
         // - Adds a character not up to the boundary, then fails.
         // Inspired by https://tomdebruijn.com/posts/rust-string-length-width-calculations/
         for g in UnicodeSegmentation::graphemes(content, true) {
-            let g_width = if g.contains('\u{200d}') {
-                2
-            } else {
-                UnicodeWidthStr::width(g)
-            };
+            let g_width = grapheme_width(g);
 
             if curr_width + g_width <= width {
                 curr_width += g_width;
@@ -164,7 +189,6 @@ pub const fn sort_partial_fn<T: std::cmp::PartialOrd>(is_descending: bool) -> fn
 /// Returns an [`Ordering`] between two [`PartialOrd`]s.
 #[inline]
 pub fn partial_ordering<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
-    // TODO: Switch to `total_cmp` on 1.62
     a.partial_cmp(&b).unwrap_or(Ordering::Equal)
 }
 

@@ -2,45 +2,6 @@ use std::{cmp::min, time::Instant};
 
 use tui::layout::Rect;
 
-use crate::app::CursorDirection;
-
-pub fn get_search_start_position(
-    num_columns: usize, cursor_direction: &CursorDirection, cursor_bar: &mut usize,
-    current_cursor_position: usize, is_force_redraw: bool,
-) -> usize {
-    if is_force_redraw {
-        *cursor_bar = 0;
-    }
-
-    match cursor_direction {
-        CursorDirection::Right => {
-            if current_cursor_position < *cursor_bar + num_columns {
-                // If, using previous_scrolled_position, we can see the element
-                // (so within that and + num_rows) just reuse the current previously scrolled position.
-                *cursor_bar
-            } else if current_cursor_position >= num_columns {
-                // Else if the current position past the last element visible in the list, omit
-                // until we can see that element.
-                *cursor_bar = current_cursor_position - num_columns;
-                *cursor_bar
-            } else {
-                // Else, if it is not past the last element visible, do not omit anything.
-                0
-            }
-        }
-        CursorDirection::Left => {
-            if current_cursor_position <= *cursor_bar {
-                // If it's past the first element, then show from that element downwards.
-                *cursor_bar = current_cursor_position;
-            } else if current_cursor_position >= *cursor_bar + num_columns {
-                *cursor_bar = current_cursor_position - num_columns;
-            }
-            // Else, don't change what our start position is from whatever it is set to!
-            *cursor_bar
-        }
-    }
-}
-
 /// Calculate how many bars are to be drawn within basic mode's components.
 pub fn calculate_basic_use_bars(use_percentage: f64, num_bars_available: usize) -> usize {
     min(

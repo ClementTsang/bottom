@@ -11,7 +11,6 @@ use layout_manager::*;
 pub use states::*;
 use typed_builder::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
-use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 use crate::widgets::{ProcWidget, ProcWidgetMode};
 use crate::{
@@ -31,8 +30,6 @@ pub mod query;
 pub mod states;
 
 use frozen_state::FrozenState;
-
-const MAX_SEARCH_LENGTH: usize = 200; // FIXME: Remove this limit, it's unnecessary.
 
 #[derive(Debug, Clone)]
 pub enum AxisScaling {
@@ -504,23 +501,21 @@ impl App {
             {
                 if is_in_search_widget {
                     if proc_widget_state.proc_search.search_state.is_enabled
-                        && proc_widget_state.get_search_cursor_position()
+                        && proc_widget_state.cursor_char_index()
                             < proc_widget_state
                                 .proc_search
                                 .search_state
                                 .current_search_query
                                 .len()
                     {
-                        let current_cursor = proc_widget_state.get_search_cursor_position();
-                        proc_widget_state
-                            .search_walk_forward(proc_widget_state.get_search_cursor_position());
+                        let current_cursor = proc_widget_state.cursor_char_index();
+                        proc_widget_state.search_walk_forward();
 
-                        let _removed_chars: String = proc_widget_state
+                        let _ = proc_widget_state
                             .proc_search
                             .search_state
                             .current_search_query
-                            .drain(current_cursor..proc_widget_state.get_search_cursor_position())
-                            .collect();
+                            .drain(current_cursor..proc_widget_state.cursor_char_index());
 
                         proc_widget_state.proc_search.search_state.grapheme_cursor =
                             GraphemeCursor::new(
@@ -552,22 +547,21 @@ impl App {
             {
                 if is_in_search_widget
                     && proc_widget_state.proc_search.search_state.is_enabled
-                    && proc_widget_state.get_search_cursor_position() > 0
+                    && proc_widget_state.cursor_char_index() > 0
                 {
-                    let current_cursor = proc_widget_state.get_search_cursor_position();
-                    proc_widget_state
-                        .search_walk_back(proc_widget_state.get_search_cursor_position());
+                    let current_cursor = proc_widget_state.cursor_char_index();
+                    proc_widget_state.search_walk_back();
 
-                    let removed_chars: String = proc_widget_state
+                    // Remove the indices in between.
+                    let _ = proc_widget_state
                         .proc_search
                         .search_state
                         .current_search_query
-                        .drain(proc_widget_state.get_search_cursor_position()..current_cursor)
-                        .collect();
+                        .drain(proc_widget_state.cursor_char_index()..current_cursor);
 
                     proc_widget_state.proc_search.search_state.grapheme_cursor =
                         GraphemeCursor::new(
-                            proc_widget_state.get_search_cursor_position(),
+                            proc_widget_state.cursor_char_index(),
                             proc_widget_state
                                 .proc_search
                                 .search_state
@@ -575,11 +569,6 @@ impl App {
                                 .len(),
                             true,
                         );
-
-                    proc_widget_state
-                        .proc_search
-                        .search_state
-                        .char_cursor_position -= UnicodeWidthStr::width(removed_chars.as_str());
 
                     proc_widget_state.proc_search.search_state.cursor_direction =
                         CursorDirection::Left;
@@ -684,19 +673,9 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.get_search_cursor_position();
-                            proc_widget_state
-                                .search_walk_back(proc_widget_state.get_search_cursor_position());
-                            if proc_widget_state.get_search_cursor_position() < prev_cursor {
-                                let str_slice = &proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    [proc_widget_state.get_search_cursor_position()..prev_cursor];
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .char_cursor_position -= UnicodeWidthStr::width(str_slice);
+                            let prev_cursor = proc_widget_state.cursor_char_index();
+                            proc_widget_state.search_walk_back();
+                            if proc_widget_state.cursor_char_index() < prev_cursor {
                                 proc_widget_state.proc_search.search_state.cursor_direction =
                                     CursorDirection::Left;
                             }
@@ -753,20 +732,9 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.get_search_cursor_position();
-                            proc_widget_state.search_walk_forward(
-                                proc_widget_state.get_search_cursor_position(),
-                            );
-                            if proc_widget_state.get_search_cursor_position() > prev_cursor {
-                                let str_slice = &proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    [prev_cursor..proc_widget_state.get_search_cursor_position()];
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .char_cursor_position += UnicodeWidthStr::width(str_slice);
+                            let prev_cursor = proc_widget_state.cursor_char_index();
+                            proc_widget_state.search_walk_forward();
+                            if proc_widget_state.cursor_char_index() > prev_cursor {
                                 proc_widget_state.proc_search.search_state.cursor_direction =
                                     CursorDirection::Right;
                             }
@@ -932,10 +900,7 @@ impl App {
                                     .len(),
                                 true,
                             );
-                        proc_widget_state
-                            .proc_search
-                            .search_state
-                            .char_cursor_position = 0;
+
                         proc_widget_state.proc_search.search_state.cursor_direction =
                             CursorDirection::Left;
                     }
@@ -954,30 +919,14 @@ impl App {
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
                     if is_in_search_widget {
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                true,
-                            );
-                        proc_widget_state
+                        let query_len = proc_widget_state
                             .proc_search
                             .search_state
-                            .char_cursor_position = UnicodeWidthStr::width(
-                            proc_widget_state
-                                .proc_search
-                                .search_state
-                                .current_search_query
-                                .as_str(),
-                        );
+                            .current_search_query
+                            .len();
+
+                        proc_widget_state.proc_search.search_state.grapheme_cursor =
+                            GraphemeCursor::new(query_len, query_len, true);
                         proc_widget_state.proc_search.search_state.cursor_direction =
                             CursorDirection::Right;
                     }
@@ -1008,11 +957,11 @@ impl App {
                 // Traverse backwards from the current cursor location until you hit non-whitespace characters,
                 // then continue to traverse (and delete) backwards until you hit a whitespace character.  Halt.
 
-                // So... first, let's get our current cursor position using graphemes...
-                let end_index = proc_widget_state.get_char_cursor_position();
+                // So... first, let's get our current cursor position in terms of char indices.
+                let end_index = proc_widget_state.cursor_char_index();
 
                 // Then, let's crawl backwards until we hit our location, and store the "head"...
-                let query = proc_widget_state.get_current_search_query();
+                let query = proc_widget_state.current_search_query();
                 let mut start_index = 0;
                 let mut saw_non_whitespace = false;
 
@@ -1032,12 +981,11 @@ impl App {
                     }
                 }
 
-                let removed_chars: String = proc_widget_state
+                let _ = proc_widget_state
                     .proc_search
                     .search_state
                     .current_search_query
-                    .drain(start_index..end_index)
-                    .collect();
+                    .drain(start_index..end_index);
 
                 proc_widget_state.proc_search.search_state.grapheme_cursor = GraphemeCursor::new(
                     start_index,
@@ -1048,11 +996,6 @@ impl App {
                         .len(),
                     true,
                 );
-
-                proc_widget_state
-                    .proc_search
-                    .search_state
-                    .char_cursor_position -= UnicodeWidthStr::width(removed_chars.as_str());
 
                 proc_widget_state.proc_search.search_state.cursor_direction = CursorDirection::Left;
 
@@ -1113,25 +1056,16 @@ impl App {
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if is_in_search_widget
-                        && proc_widget_state.is_search_enabled()
-                        && UnicodeWidthStr::width(
-                            proc_widget_state
-                                .proc_search
-                                .search_state
-                                .current_search_query
-                                .as_str(),
-                        ) <= MAX_SEARCH_LENGTH
-                    {
+                    if is_in_search_widget && proc_widget_state.is_search_enabled() {
                         proc_widget_state
                             .proc_search
                             .search_state
                             .current_search_query
-                            .insert(proc_widget_state.get_search_cursor_position(), caught_char);
+                            .insert(proc_widget_state.cursor_char_index(), caught_char);
 
                         proc_widget_state.proc_search.search_state.grapheme_cursor =
                             GraphemeCursor::new(
-                                proc_widget_state.get_search_cursor_position(),
+                                proc_widget_state.cursor_char_index(),
                                 proc_widget_state
                                     .proc_search
                                     .search_state
@@ -1139,14 +1073,7 @@ impl App {
                                     .len(),
                                 true,
                             );
-                        proc_widget_state
-                            .search_walk_forward(proc_widget_state.get_search_cursor_position());
-
-                        proc_widget_state
-                            .proc_search
-                            .search_state
-                            .char_cursor_position +=
-                            UnicodeWidthChar::width(caught_char).unwrap_or(0);
+                        proc_widget_state.search_walk_forward();
 
                         proc_widget_state.update_query();
                         proc_widget_state.proc_search.search_state.cursor_direction =
@@ -2724,22 +2651,10 @@ impl App {
             .widget_states
             .get_mut(&(self.current_widget.widget_id - 1))
         {
-            let curr_width = UnicodeWidthStr::width(
-                proc_widget_state
-                    .proc_search
-                    .search_state
-                    .current_search_query
-                    .as_str(),
-            );
-            let paste_width = UnicodeWidthStr::width(paste.as_str());
             let num_runes = UnicodeSegmentation::graphemes(paste.as_str(), true).count();
 
-            if is_in_search_widget
-                && proc_widget_state.is_search_enabled()
-                && curr_width + paste_width <= MAX_SEARCH_LENGTH
-            {
-                let paste_char_width = paste.len();
-                let left_bound = proc_widget_state.get_search_cursor_position();
+            if is_in_search_widget && proc_widget_state.is_search_enabled() {
+                let left_bound = proc_widget_state.cursor_char_index();
 
                 let curr_query = &mut proc_widget_state
                     .proc_search
@@ -2752,14 +2667,8 @@ impl App {
                     GraphemeCursor::new(left_bound, curr_query.len(), true);
 
                 for _ in 0..num_runes {
-                    let cursor = proc_widget_state.get_search_cursor_position();
-                    proc_widget_state.search_walk_forward(cursor);
+                    proc_widget_state.search_walk_forward();
                 }
-
-                proc_widget_state
-                    .proc_search
-                    .search_state
-                    .char_cursor_position += paste_char_width;
 
                 proc_widget_state.update_query();
                 proc_widget_state.proc_search.search_state.cursor_direction =

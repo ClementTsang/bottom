@@ -253,7 +253,7 @@ pub fn parse_query(
                             if content == "=" {
                                 // Check next string if possible
                                 if let Some(queue_next) = query.pop_front() {
-                                    // TODO: [Query, ???] Need to consider the following cases:
+                                    // TODO: [Query] Need to consider the following cases:
                                     // - (test)
                                     // - (test
                                     // - test)
