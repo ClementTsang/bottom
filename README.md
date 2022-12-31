@@ -151,8 +151,8 @@ A `.deb` file is provided on each [stable release](https://github.com/ClementTsa
 (note stable ARM builds only started with 0.6.8). You could install this way doing something like:
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_0.6.8_amd64.deb
-sudo dpkg -i bottom_0.6.8_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.0/bottom_0.7.0_amd64.deb
+sudo dpkg -i bottom_0.7.0_amd64.deb
 ```
 
 ### Snap
@@ -232,7 +232,7 @@ Since validation of the package takes time, it may take a while to become availa
 choco install bottom
 
 # The version number may be required for newer releases during the approval process:
-choco install bottom --version=0.6.8
+choco install bottom --version=0.7.0
 ```
 
 ### winget
@@ -261,8 +261,8 @@ to do so using the most recent version of stable Rust, which is how the binaries
 rustup update stable
 
 # Option 1 - Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.6.8.tar.gz
-tar -xzvf 0.6.8.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.7.0.tar.gz
+tar -xzvf 0.7.0.tar.gz
 cargo install --path .
 
 # Option 2 - Clone from master and install manually

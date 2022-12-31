@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.9] / [0.7.0] - Unreleased
+## [0.7.0] - 2022-12-31
 
 ## Bug Fixes
 
 - [#711](https://github.com/ClementTsang/bottom/pull/711): Fix building in Rust beta 1.61 due to `as_ref()` calls causing type inference issues.
 - [#717](https://github.com/ClementTsang/bottom/pull/717): Fix clicking on empty space in tables selecting the very last entry of a list in some cases.
+- [#720](https://github.com/ClementTsang/bottom/pull/720): Fix panic if battery feature was disabled during compilation.
 - [#805](https://github.com/ClementTsang/bottom/pull/805): Fix bottom keeping devices awake in certain scenarios.
 - [#825](https://github.com/ClementTsang/bottom/pull/825): Use alternative method of getting parent PID in some cases on macOS devices to avoid needing root access.
 - [#916](https://github.com/ClementTsang/bottom/pull/916): Fix possible gaps with widget layout spacing.
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes
 
 - [#690](https://github.com/ClementTsang/bottom/pull/690): Add some colour to `-h`/`--help` as part of updating to clap 3.0.
+- [#726](https://github.com/ClementTsang/bottom/pull/726): Add ARM musl binary build tasks.
 - [#807](https://github.com/ClementTsang/bottom/pull/807): Add more human friendly temperature sensor names for Linux.
 - [#845](https://github.com/ClementTsang/bottom/pull/845), [#922](https://github.com/ClementTsang/bottom/pull/922): Add macOS M1, FreeBSD 12, and FreeBSD 13 binary build tasks.
 - [#916](https://github.com/ClementTsang/bottom/pull/916), [#937](https://github.com/ClementTsang/bottom/pull/937): Improve CPU usage by optimizing draw logic of charts and tables.
@@ -32,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#784](https://github.com/ClementTsang/bottom/pull/784): Add ZFS ARC support.
 - [#794](https://github.com/ClementTsang/bottom/pull/794): Add GPU memory support for NVIDIA GPUs.
 - [#806](https://github.com/ClementTsang/bottom/pull/806): Update sysinfo to support M1 macOS temperature sensors.
+- [#836](https://github.com/ClementTsang/bottom/pull/836): Add CLI options for GPU memory.
 - [#841](https://github.com/ClementTsang/bottom/pull/841): Add page up/page down support for the help screen.
 - [#868](https://github.com/ClementTsang/bottom/pull/868): Make temperature widget sortable.
 - [#870](https://github.com/ClementTsang/bottom/pull/870): Make disk widget sortable.
