@@ -148,7 +148,7 @@ sudo pacman -Syu bottom
 
 A `.deb` file is provided on each [stable release](https://github.com/ClementTsang/bottom/releases/latest) and
 [nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly) for x86, aarch64, and armv7
-(note stable ARM builds only started with 0.6.8). You could install this way doing something like:
+(note stable ARM builds are only available for 0.6.8 and later). If you want to install this way, do something like:
 
 ```bash
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.0/bottom_0.7.0_amd64.deb
