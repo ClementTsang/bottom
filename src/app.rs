@@ -509,8 +509,7 @@ impl App {
                                 .len()
                     {
                         let current_cursor = proc_widget_state.cursor_char_index();
-                        proc_widget_state
-                            .search_walk_forward(proc_widget_state.cursor_char_index());
+                        proc_widget_state.search_walk_forward();
 
                         let _ = proc_widget_state
                             .proc_search
@@ -551,7 +550,7 @@ impl App {
                     && proc_widget_state.cursor_char_index() > 0
                 {
                     let current_cursor = proc_widget_state.cursor_char_index();
-                    proc_widget_state.search_walk_back(proc_widget_state.cursor_char_index());
+                    proc_widget_state.search_walk_back();
 
                     // Remove the indices in between.
                     let _ = proc_widget_state
@@ -675,8 +674,7 @@ impl App {
                     {
                         if is_in_search_widget {
                             let prev_cursor = proc_widget_state.cursor_char_index();
-                            proc_widget_state
-                                .search_walk_back(proc_widget_state.cursor_char_index());
+                            proc_widget_state.search_walk_back();
                             if proc_widget_state.cursor_char_index() < prev_cursor {
                                 proc_widget_state.proc_search.search_state.cursor_direction =
                                     CursorDirection::Left;
@@ -735,8 +733,7 @@ impl App {
                     {
                         if is_in_search_widget {
                             let prev_cursor = proc_widget_state.cursor_char_index();
-                            proc_widget_state
-                                .search_walk_forward(proc_widget_state.cursor_char_index());
+                            proc_widget_state.search_walk_forward();
                             if proc_widget_state.cursor_char_index() > prev_cursor {
                                 proc_widget_state.proc_search.search_state.cursor_direction =
                                     CursorDirection::Right;
@@ -1076,8 +1073,7 @@ impl App {
                                     .len(),
                                 true,
                             );
-                        proc_widget_state
-                            .search_walk_forward(proc_widget_state.cursor_char_index());
+                        proc_widget_state.search_walk_forward();
 
                         proc_widget_state.update_query();
                         proc_widget_state.proc_search.search_state.cursor_direction =
@@ -2671,8 +2667,7 @@ impl App {
                     GraphemeCursor::new(left_bound, curr_query.len(), true);
 
                 for _ in 0..num_runes {
-                    let cursor = proc_widget_state.cursor_char_index();
-                    proc_widget_state.search_walk_forward(cursor);
+                    proc_widget_state.search_walk_forward();
                 }
 
                 proc_widget_state.update_query();

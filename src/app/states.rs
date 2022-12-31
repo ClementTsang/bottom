@@ -1,11 +1,12 @@
 use std::{collections::HashMap, ops::Range, time::Instant};
 
 use indexmap::IndexMap;
-use unicode_segmentation::GraphemeCursor;
+use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete, UnicodeSegmentation};
 
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
     constants,
+    utils::gen_util::str_width,
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
         ProcWidget, TempWidgetState,
@@ -188,6 +189,65 @@ impl AppSearchState {
             self.cursor_direction = CursorDirection::Left;
         };
     }
+
+    pub(crate) fn walk_forward(&mut self) {
+        // TODO: Add tests for this.
+        let start_position = self.grapheme_cursor.cur_cursor();
+        let chunk = &self.current_search_query[start_position..];
+
+        match self.grapheme_cursor.next_boundary(chunk, start_position) {
+            Ok(_) => {}
+            Err(err) => match err {
+                GraphemeIncomplete::PreContext(ctx) => {
+                    // Provide the entire string as context. Not efficient but should resolve failures.
+                    self.grapheme_cursor
+                        .provide_context(&self.current_search_query[0..ctx], 0);
+
+                    self.grapheme_cursor
+                        .next_boundary(chunk, start_position)
+                        .unwrap();
+                }
+                _ => Err(err).unwrap(),
+            },
+        }
+    }
+
+    pub(crate) fn walk_backward(&mut self) {
+        // TODO: Add tests for this.
+        let start_position = self.grapheme_cursor.cur_cursor();
+        let chunk = &self.current_search_query[..start_position];
+
+        match self.grapheme_cursor.prev_boundary(chunk, 0) {
+            Ok(_) => {}
+            Err(err) => match err {
+                GraphemeIncomplete::PreContext(ctx) => {
+                    // Provide the entire string as context. Not efficient but should resolve failures.
+                    self.grapheme_cursor
+                        .provide_context(&self.current_search_query[0..ctx], 0);
+
+                    self.grapheme_cursor.prev_boundary(chunk, 0).unwrap();
+                }
+                _ => Err(err).unwrap(),
+            },
+        }
+    }
+
+    pub(crate) fn update_sizes(&mut self) {
+        self.size_mappings.clear();
+        let mut curr_offset = 0;
+        for (index, grapheme) in
+            UnicodeSegmentation::grapheme_indices(self.current_search_query.as_str(), true)
+        {
+            let width = str_width(grapheme);
+            let end = curr_offset + width;
+
+            self.size_mappings.insert(index, curr_offset..end);
+
+            curr_offset = end;
+        }
+
+        self.size_mappings.shrink_to_fit();
+    }
 }
 
 pub struct ProcState {
@@ -344,4 +404,93 @@ impl BatteryState {
 pub struct ParagraphScrollState {
     pub current_scroll_index: u16,
     pub max_scroll_index: u16,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn move_right(state: &mut AppSearchState) {
+        state.walk_forward();
+        state.cursor_direction = CursorDirection::Right;
+    }
+
+    fn move_left(state: &mut AppSearchState) {
+        state.walk_backward();
+        state.cursor_direction = CursorDirection::Left;
+    }
+
+    #[test]
+    fn search_cursor_moves() {
+        let mut state = AppSearchState::default();
+        state.current_search_query = "Hi, 你好! 🇦🇶".to_string();
+        state.grapheme_cursor = GraphemeCursor::new(0, state.current_search_query.len(), true);
+        state.update_sizes();
+
+        // Moving right.
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 0);
+        assert_eq!(state.display_start_char_index, 0);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 1);
+        assert_eq!(state.display_start_char_index, 0);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 2);
+        assert_eq!(state.display_start_char_index, 0);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 3);
+        assert_eq!(state.display_start_char_index, 0);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 4);
+        assert_eq!(state.display_start_char_index, 2);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 7);
+        assert_eq!(state.display_start_char_index, 4);
+
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 10);
+        assert_eq!(state.display_start_char_index, 7);
+
+        move_right(&mut state);
+        move_right(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 12);
+        assert_eq!(state.display_start_char_index, 10);
+
+        // Moving left.
+        move_left(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 11);
+        assert_eq!(state.display_start_char_index, 10);
+
+        move_left(&mut state);
+        move_left(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 7);
+        assert_eq!(state.display_start_char_index, 7);
+
+        move_left(&mut state);
+        move_left(&mut state);
+        move_left(&mut state);
+        move_left(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 1);
+        assert_eq!(state.display_start_char_index, 1);
+
+        move_left(&mut state);
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 0);
+        assert_eq!(state.display_start_char_index, 0);
+    }
 }

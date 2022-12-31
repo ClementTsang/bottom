@@ -16,7 +16,6 @@ use crate::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    utils::gen_util::str_width,
     Pid,
 };
 
@@ -28,7 +27,6 @@ pub use proc_widget_data::*;
 
 mod sort_table;
 use sort_table::SortTableColumn;
-use unicode_segmentation::{GraphemeIncomplete, UnicodeSegmentation};
 
 /// ProcessSearchState only deals with process' search's current settings and state.
 pub struct ProcessSearchState {
@@ -757,24 +755,7 @@ impl ProcWidget {
         self.table.state.current_index = 0;
 
         // Update the internal sizes too.
-        self.proc_search.search_state.size_mappings.clear();
-        let mut curr_offset = 0;
-        for (index, grapheme) in UnicodeSegmentation::grapheme_indices(
-            self.proc_search.search_state.current_search_query.as_str(),
-            true,
-        ) {
-            let width = str_width(grapheme);
-            let end = curr_offset + width;
-
-            self.proc_search
-                .search_state
-                .size_mappings
-                .insert(index, curr_offset..end);
-
-            curr_offset = end;
-        }
-
-        self.proc_search.search_state.size_mappings.shrink_to_fit();
+        self.proc_search.search_state.update_sizes();
 
         self.force_data_update();
     }
@@ -784,69 +765,12 @@ impl ProcWidget {
         self.force_data_update();
     }
 
-    pub fn search_walk_forward(&mut self, start_position: usize) {
-        // TODO: Add tests for this.
-        let chunk = &self.proc_search.search_state.current_search_query[start_position..];
-
-        match self
-            .proc_search
-            .search_state
-            .grapheme_cursor
-            .next_boundary(chunk, start_position)
-        {
-            Ok(_) => {}
-            Err(err) => match err {
-                GraphemeIncomplete::PreContext(ctx) => {
-                    // Provide the entire string as context. Not efficient but should resolve failures.
-                    self.proc_search
-                        .search_state
-                        .grapheme_cursor
-                        .provide_context(
-                            &self.proc_search.search_state.current_search_query[0..ctx],
-                            0,
-                        );
-
-                    self.proc_search
-                        .search_state
-                        .grapheme_cursor
-                        .next_boundary(chunk, start_position)
-                        .unwrap();
-                }
-                _ => Err(err).unwrap(),
-            },
-        }
+    pub fn search_walk_forward(&mut self) {
+        self.proc_search.search_state.walk_forward();
     }
 
-    pub fn search_walk_back(&mut self, start_position: usize) {
-        // TODO: Add tests for this.
-        let chunk = &self.proc_search.search_state.current_search_query[..start_position];
-        match self
-            .proc_search
-            .search_state
-            .grapheme_cursor
-            .prev_boundary(chunk, 0)
-        {
-            Ok(_) => {}
-            Err(err) => match err {
-                GraphemeIncomplete::PreContext(ctx) => {
-                    // Provide the entire string as context. Not efficient but should resolve failures.
-                    self.proc_search
-                        .search_state
-                        .grapheme_cursor
-                        .provide_context(
-                            &self.proc_search.search_state.current_search_query[0..ctx],
-                            0,
-                        );
-
-                    self.proc_search
-                        .search_state
-                        .grapheme_cursor
-                        .prev_boundary(chunk, 0)
-                        .unwrap();
-                }
-                _ => Err(err).unwrap(),
-            },
-        }
+    pub fn search_walk_back(&mut self) {
+        self.proc_search.search_state.walk_backward();
     }
 
     /// Returns the number of columns *enabled*. Note this differs from *visible* - a column may be enabled but not
