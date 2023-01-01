@@ -112,6 +112,8 @@ def main():
     build_type = args[3] if len(args) >= 4 else "build"
     build_id = args[4] if len(args) >= 5 else None
 
+    print(f"Running Cirrus script with branch '{branch}'")
+
     # Check if this build has already been completed before.
     if build_id is not None:
         print("Previous build ID was provided, checking if complete.")
