@@ -26,6 +26,7 @@ env:
   COMPLETION_DIR: "target/tmp/bottom/completion/"
   MANPAGE_DIR: "target/tmp/bottom/manpage/"
 
+# TODO: Maybe add retry job in case of timeouts?
 jobs:
   build-binaries:
     name: "Build binaries"
