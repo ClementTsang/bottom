@@ -379,9 +379,9 @@ impl App {
                     .get_mut(&self.current_widget.widget_id)
                 {
                     proc_widget_state.toggle_mem_percentage();
-                    proc_widget_state.force_data_update();
                 }
             }
+
             _ => {}
         }
     }
@@ -1219,6 +1219,12 @@ impl App {
                     {
                         proc_widget_state.select_column(ProcWidget::PID_OR_COUNT);
                     }
+                } else if let Some(disk) = self
+                    .disk_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    disk.table.set_sort_index(5);
+                    disk.force_data_update();
                 }
             }
             'P' => {
@@ -1302,7 +1308,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(5);
+                    disk.table.set_sort_index(6);
                     disk.force_data_update();
                 }
             }
@@ -1311,7 +1317,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(6);
+                    disk.table.set_sort_index(7);
                     disk.force_data_update();
                 }
             }

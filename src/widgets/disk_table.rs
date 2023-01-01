@@ -20,20 +20,12 @@ pub struct DiskWidgetData {
     pub free_bytes: Option<u64>,
     pub used_bytes: Option<u64>,
     pub total_bytes: Option<u64>,
+    pub summed_total_bytes: Option<u64>,
     pub io_read: KString,
     pub io_write: KString,
 }
 
 impl DiskWidgetData {
-    pub fn free_space(&self) -> KString {
-        if let Some(free_bytes) = self.free_bytes {
-            let converted_free_space = get_decimal_bytes(free_bytes);
-            format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
-        } else {
-            "N/A".into()
-        }
-    }
-
     pub fn total_space(&self) -> KString {
         if let Some(total_bytes) = self.total_bytes {
             let converted_total_space = get_decimal_bytes(total_bytes);
@@ -47,11 +39,55 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn usage(&self) -> KString {
-        if let (Some(used_bytes), Some(total_bytes)) = (self.used_bytes, self.total_bytes) {
-            format!("{:.0}%", used_bytes as f64 / total_bytes as f64 * 100_f64).into()
+    pub fn free_space(&self) -> KString {
+        if let Some(free_bytes) = self.free_bytes {
+            let converted_free_space = get_decimal_bytes(free_bytes);
+            format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
         } else {
             "N/A".into()
+        }
+    }
+
+    pub fn used_space(&self) -> KString {
+        if let Some(used_bytes) = self.used_bytes {
+            let converted_free_space = get_decimal_bytes(used_bytes);
+            format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
+        } else {
+            "N/A".into()
+        }
+    }
+
+    pub fn free_percent(&self) -> Option<f64> {
+        if let (Some(free_bytes), Some(summed_total_bytes)) =
+            (self.free_bytes, self.summed_total_bytes)
+        {
+            Some(free_bytes as f64 / summed_total_bytes as f64 * 100_f64)
+        } else {
+            None
+        }
+    }
+
+    pub fn free_percent_string(&self) -> KString {
+        match self.free_percent() {
+            Some(val) => format!("{:.1}%", val).into(),
+            None => "N/A".into(),
+        }
+    }
+
+    pub fn used_percent(&self) -> Option<f64> {
+        if let (Some(used_bytes), Some(summed_total_bytes)) =
+            (self.used_bytes, self.summed_total_bytes)
+        {
+            Some(used_bytes as f64 / summed_total_bytes as f64 * 100_f64)
+        } else {
+            None
+        }
+    }
+
+    pub fn used_percent_string(&self) -> KString {
+        match self.used_percent() {
+            Some(val) => format!("{:.1}%", val).into(),
+            None => "N/A".into(),
         }
     }
 }
@@ -62,6 +98,8 @@ pub enum DiskWidgetColumn {
     Used,
     Free,
     Total,
+    UsedPercent,
+    FreePercent,
     IoRead,
     IoWrite,
 }
@@ -73,6 +111,8 @@ impl ColumnHeader for DiskWidgetColumn {
             DiskWidgetColumn::Mount => "Mount(m)",
             DiskWidgetColumn::Used => "Used(u)",
             DiskWidgetColumn::Free => "Free(n)",
+            DiskWidgetColumn::UsedPercent => "Used%(p)",
+            DiskWidgetColumn::FreePercent => "Free%",
             DiskWidgetColumn::Total => "Total(t)",
             DiskWidgetColumn::IoRead => "R/s(r)",
             DiskWidgetColumn::IoWrite => "W/s(w)",
@@ -86,8 +126,14 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
         let text = match column {
             DiskWidgetColumn::Disk => truncate_to_text(&self.name, calculated_width),
             DiskWidgetColumn::Mount => truncate_to_text(&self.mount_point, calculated_width),
-            DiskWidgetColumn::Used => truncate_to_text(&self.usage(), calculated_width),
+            DiskWidgetColumn::Used => truncate_to_text(&self.used_space(), calculated_width),
             DiskWidgetColumn::Free => truncate_to_text(&self.free_space(), calculated_width),
+            DiskWidgetColumn::UsedPercent => {
+                truncate_to_text(&self.used_percent_string(), calculated_width)
+            }
+            DiskWidgetColumn::FreePercent => {
+                truncate_to_text(&self.free_percent_string(), calculated_width)
+            }
             DiskWidgetColumn::Total => truncate_to_text(&self.total_space(), calculated_width),
             DiskWidgetColumn::IoRead => truncate_to_text(&self.io_read, calculated_width),
             DiskWidgetColumn::IoWrite => truncate_to_text(&self.io_write, calculated_width),
@@ -132,8 +178,18 @@ impl SortsRow for DiskWidgetColumn {
             DiskWidgetColumn::Used => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.used_bytes, &b.used_bytes));
             }
+            DiskWidgetColumn::UsedPercent => {
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(&a.used_percent(), &b.used_percent())
+                });
+            }
             DiskWidgetColumn::Free => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.free_bytes, &b.free_bytes));
+            }
+            DiskWidgetColumn::FreePercent => {
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(&a.free_percent(), &b.free_percent())
+                });
             }
             DiskWidgetColumn::Total => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.total_bytes, &b.total_bytes));
@@ -156,6 +212,7 @@ impl DiskTableWidget {
             SortColumn::hard(DiskWidgetColumn::Used, 8).default_descending(),
             SortColumn::hard(DiskWidgetColumn::Free, 8).default_descending(),
             SortColumn::hard(DiskWidgetColumn::Total, 9).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::UsedPercent, 9).default_descending(),
             SortColumn::hard(DiskWidgetColumn::IoRead, 10).default_descending(),
             SortColumn::hard(DiskWidgetColumn::IoWrite, 11).default_descending(),
         ];
