@@ -57,31 +57,37 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn free_percent(&self) -> KString {
+    pub fn free_percent(&self) -> Option<f64> {
         if let (Some(free_bytes), Some(summed_total_bytes)) =
             (self.free_bytes, self.summed_total_bytes)
         {
-            format!(
-                "{:.1}%",
-                free_bytes as f64 / summed_total_bytes as f64 * 100_f64
-            )
-            .into()
+            Some(free_bytes as f64 / summed_total_bytes as f64 * 100_f64)
         } else {
-            "N/A".into()
+            None
         }
     }
 
-    pub fn used_percent(&self) -> KString {
+    pub fn free_percent_string(&self) -> KString {
+        match self.free_percent() {
+            Some(val) => format!("{:.1}%", val).into(),
+            None => "N/A".into(),
+        }
+    }
+
+    pub fn used_percent(&self) -> Option<f64> {
         if let (Some(used_bytes), Some(summed_total_bytes)) =
             (self.used_bytes, self.summed_total_bytes)
         {
-            format!(
-                "{:.1}%",
-                used_bytes as f64 / summed_total_bytes as f64 * 100_f64
-            )
-            .into()
+            Some(used_bytes as f64 / summed_total_bytes as f64 * 100_f64)
         } else {
-            "N/A".into()
+            None
+        }
+    }
+
+    pub fn used_percent_string(&self) -> KString {
+        match self.used_percent() {
+            Some(val) => format!("{:.1}%", val).into(),
+            None => "N/A".into(),
         }
     }
 }
@@ -105,7 +111,7 @@ impl ColumnHeader for DiskWidgetColumn {
             DiskWidgetColumn::Mount => "Mount(m)",
             DiskWidgetColumn::Used => "Used(u)",
             DiskWidgetColumn::Free => "Free(n)",
-            DiskWidgetColumn::UsedPercent => "Used%",
+            DiskWidgetColumn::UsedPercent => "Used%(p)",
             DiskWidgetColumn::FreePercent => "Free%(n)",
             DiskWidgetColumn::Total => "Total(t)",
             DiskWidgetColumn::IoRead => "R/s(r)",
@@ -123,10 +129,10 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
             DiskWidgetColumn::Used => truncate_to_text(&self.used_space(), calculated_width),
             DiskWidgetColumn::Free => truncate_to_text(&self.free_space(), calculated_width),
             DiskWidgetColumn::UsedPercent => {
-                truncate_to_text(&self.used_percent(), calculated_width)
+                truncate_to_text(&self.used_percent_string(), calculated_width)
             }
             DiskWidgetColumn::FreePercent => {
-                truncate_to_text(&self.free_percent(), calculated_width)
+                truncate_to_text(&self.free_percent_string(), calculated_width)
             }
             DiskWidgetColumn::Total => truncate_to_text(&self.total_space(), calculated_width),
             DiskWidgetColumn::IoRead => truncate_to_text(&self.io_read, calculated_width),
@@ -170,13 +176,21 @@ impl SortsRow for DiskWidgetColumn {
             DiskWidgetColumn::Mount => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.mount_point, &b.mount_point));
             }
-            DiskWidgetColumn::Used | DiskWidgetColumn::UsedPercent => {
-                // Cheat a bit by sorting by total bytes for both cases.
+            DiskWidgetColumn::Used => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.used_bytes, &b.used_bytes));
             }
-            DiskWidgetColumn::Free | DiskWidgetColumn::FreePercent => {
-                // Cheat a bit by sorting by total bytes for both cases.
+            DiskWidgetColumn::UsedPercent => {
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(&a.used_percent(), &b.used_percent())
+                });
+            }
+            DiskWidgetColumn::Free => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.free_bytes, &b.free_bytes));
+            }
+            DiskWidgetColumn::FreePercent => {
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(&a.free_percent(), &b.free_percent())
+                });
             }
             DiskWidgetColumn::Total => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.total_bytes, &b.total_bytes));
@@ -199,7 +213,7 @@ impl DiskTableWidget {
             SortColumn::hard(DiskWidgetColumn::Used, 8).default_descending(),
             SortColumn::hard(DiskWidgetColumn::Free, 8).default_descending(),
             SortColumn::hard(DiskWidgetColumn::Total, 9).default_descending(),
-            SortColumn::hard(DiskWidgetColumn::UsedPercent, 6).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::UsedPercent, 9).default_descending(),
             SortColumn::hard(DiskWidgetColumn::IoRead, 10).default_descending(),
             SortColumn::hard(DiskWidgetColumn::IoWrite, 11).default_descending(),
         ];
