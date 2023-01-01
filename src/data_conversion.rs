@@ -63,7 +63,7 @@ pub struct ConvertedData {
     pub mem_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
 
-    pub mem_data: Vec<Point>, // TODO: Switch this and all data points over to a better data structure...
+    pub mem_data: Vec<Point>, /* TODO: Switch this and all data points over to a better data structure... */
     pub swap_data: Vec<Point>,
 
     #[cfg(feature = "zfs")]
@@ -374,7 +374,7 @@ pub fn convert_network_data_points(
     let (rx_converted_result, total_rx_converted_result): ((f64, String), (f64, &'static str)) =
         if network_use_binary_prefix {
             (
-                get_binary_prefix(rx_data, unit), // If this isn't obvious why there's two functions, one you can configure the unit, the other is always bytes
+                get_binary_prefix(rx_data, unit), /* If this isn't obvious why there's two functions, one you can configure the unit, the other is always bytes */
                 get_binary_bytes(total_rx_data),
             )
         } else {
