@@ -105,7 +105,7 @@ impl ColumnHeader for DiskWidgetColumn {
             DiskWidgetColumn::Mount => "Mount(m)",
             DiskWidgetColumn::Used => "Used(u)",
             DiskWidgetColumn::Free => "Free(n)",
-            DiskWidgetColumn::UsedPercent => "Used%(u)",
+            DiskWidgetColumn::UsedPercent => "Used%",
             DiskWidgetColumn::FreePercent => "Free%(n)",
             DiskWidgetColumn::Total => "Total(t)",
             DiskWidgetColumn::IoRead => "R/s(r)",
@@ -199,6 +199,7 @@ impl DiskTableWidget {
             SortColumn::hard(DiskWidgetColumn::Used, 8).default_descending(),
             SortColumn::hard(DiskWidgetColumn::Free, 8).default_descending(),
             SortColumn::hard(DiskWidgetColumn::Total, 9).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::UsedPercent, 6).default_descending(),
             SortColumn::hard(DiskWidgetColumn::IoRead, 10).default_descending(),
             SortColumn::hard(DiskWidgetColumn::IoWrite, 11).default_descending(),
         ];
@@ -237,35 +238,5 @@ impl DiskTableWidget {
             column.sort_by(&mut data, self.table.order());
         }
         self.table.set_data(data);
-    }
-
-    pub fn toggle_percentage(&mut self) {
-        if let Some(col) = self.table.columns.get_mut(2) {
-            let col = col.inner_mut();
-            match col {
-                DiskWidgetColumn::Used => {
-                    *col = DiskWidgetColumn::UsedPercent;
-                }
-                DiskWidgetColumn::UsedPercent => {
-                    *col = DiskWidgetColumn::Used;
-                }
-                _ => unreachable!(),
-            }
-        }
-
-        if let Some(col) = self.table.columns.get_mut(3) {
-            let col = col.inner_mut();
-            match col {
-                DiskWidgetColumn::Free => {
-                    *col = DiskWidgetColumn::FreePercent;
-                }
-                DiskWidgetColumn::FreePercent => {
-                    *col = DiskWidgetColumn::Free;
-                }
-                _ => unreachable!(),
-            }
-        }
-
-        self.force_data_update();
     }
 }
