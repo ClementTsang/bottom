@@ -112,7 +112,7 @@ impl ColumnHeader for DiskWidgetColumn {
             DiskWidgetColumn::Used => "Used(u)",
             DiskWidgetColumn::Free => "Free(n)",
             DiskWidgetColumn::UsedPercent => "Used%(p)",
-            DiskWidgetColumn::FreePercent => "Free%(n)",
+            DiskWidgetColumn::FreePercent => "Free%",
             DiskWidgetColumn::Total => "Total(t)",
             DiskWidgetColumn::IoRead => "R/s(r)",
             DiskWidgetColumn::IoWrite => "W/s(w)",
@@ -162,7 +162,6 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
 pub struct DiskTableWidget {
     pub table: SortDataTable<DiskWidgetData, DiskWidgetColumn>,
     pub force_update_data: bool,
-    pub using_percentage: bool,
 }
 
 impl SortsRow for DiskWidgetColumn {
@@ -236,7 +235,6 @@ impl DiskTableWidget {
         Self {
             table: SortDataTable::new_sortable(columns, props, styling),
             force_update_data: false,
-            using_percentage: false,
         }
     }
 
