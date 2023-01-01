@@ -379,7 +379,15 @@ impl App {
                     .get_mut(&self.current_widget.widget_id)
                 {
                     proc_widget_state.toggle_mem_percentage();
-                    proc_widget_state.force_data_update();
+                }
+            }
+            BottomWidgetType::Disk => {
+                if let Some(disk_widget_state) = self
+                    .disk_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    disk_widget_state.toggle_percentage();
                 }
             }
             _ => {}

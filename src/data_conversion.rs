@@ -90,12 +90,18 @@ impl ConvertedData {
             .iter()
             .zip(&data.io_labels)
             .for_each(|(disk, (io_read, io_write))| {
+                let summed_total_bytes = match (disk.used_space, disk.free_space) {
+                    (Some(used), Some(free)) => Some(used + free),
+                    _ => None,
+                };
+
                 self.disk_data.push(DiskWidgetData {
                     name: KString::from_ref(&disk.name),
                     mount_point: KString::from_ref(&disk.mount_point),
                     free_bytes: disk.free_space,
                     used_bytes: disk.used_space,
                     total_bytes: disk.total_space,
+                    summed_total_bytes,
                     io_read: io_read.into(),
                     io_write: io_write.into(),
                 });
