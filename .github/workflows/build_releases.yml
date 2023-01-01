@@ -139,8 +139,10 @@ jobs:
           sh rustup.sh --default-toolchain stable -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
+      # We disable this for cross builds, as it seems to cause some issues.
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
+        if: matrix.info.cross != true
         with:
           shared-key: build-cache-${{ matrix.info.target }}
           save-if: "false"
@@ -317,6 +319,7 @@ jobs:
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
+        if: matrix.info.cross != true
         uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
         with:
           shared-key: build-cache-${{ matrix.info.target }}
