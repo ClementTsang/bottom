@@ -107,16 +107,12 @@ def main():
 
     key = env["CIRRUS_KEY"]
     branch = args[1]
-    branch_type = args[2]
-
-    # TODO: This is a bit of a hack, sorry. You want to properly handle this I suppose with the endpoint you hit.
-    if branch_type == "tag":
-        branch = "master"
-
-    dl_path = args[3] if len(args) >= 4 else ""
+    dl_path = args[2] if len(args) >= 3 else ""
     dl_path = Path(dl_path)
-    build_type = args[4] if len(args) >= 5 else "build"
-    build_id = args[5] if len(args) >= 6 else None
+    build_type = args[3] if len(args) >= 4 else "build"
+    build_id = args[4] if len(args) >= 5 else None
+
+    print(f"Running Cirrus script with branch '{branch}'")
 
     # Check if this build has already been completed before.
     if build_id is not None:
