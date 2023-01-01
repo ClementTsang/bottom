@@ -222,6 +222,7 @@ impl ProcWidgetData {
 impl DataToCell<ProcColumn> for ProcWidgetData {
     fn to_cell<'a>(&'a self, column: &ProcColumn, calculated_width: u16) -> Option<Text<'a>> {
         // TODO: Optimize the string allocations here...
+        // TODO: Also maybe just pull in the to_string call but add a variable for the differences.
         Some(truncate_to_text(
             &match column {
                 ProcColumn::CpuPercent => {
