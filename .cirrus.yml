@@ -76,6 +76,7 @@ build_task:
     BTM_GENERATE: true
     COMPLETION_DIR: "target/tmp/bottom/completion/"
     MANPAGE_DIR: "target/tmp/bottom/manpage/"
+    # -PLACEHOLDER FOR CI-
   matrix:
     - name: "FreeBSD 13 Build"
       alias: "freebsd_13_1_build"
@@ -104,6 +105,7 @@ build_task:
     - . $HOME/.cargo/env
     - cargo build --release --verbose --locked --features deploy
     - mv ./target/release/btm ./
+    - ./btm -V
     - mv "$COMPLETION_DIR" completion
     - mv "$MANPAGE_DIR" manpage
     - tar -czvf bottom_$NAME.tar.gz btm completion

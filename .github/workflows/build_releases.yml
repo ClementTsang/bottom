@@ -152,6 +152,7 @@ jobs:
         uses: ClementTsang/cargo-action@v0.0.3
         env:
           BTM_GENERATE: true
+          BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
         with:
           command: build
           args: --release --verbose --locked --target=${{ matrix.info.target }} --features deploy

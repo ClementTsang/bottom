@@ -315,7 +315,7 @@ More details on configuration can be found [in the documentation](https://clemen
 ## Troubleshooting
 
 If some things aren't working, give the [Troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting) a look. If things still aren't
-working, then consider asking a [question by opening a question](https://github.com/ClementTsang/bottom/discussions) or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose).
+working, then consider opening [a question](https://github.com/ClementTsang/bottom/discussions) or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose).
 
 ## Contribution
 
