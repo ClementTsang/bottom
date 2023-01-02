@@ -368,9 +368,14 @@ use CPU (3) as the default instead.
         .help("The timespan of data kept.")
         .long_help("How much data is stored at once in terms of time. Takes in human-readable time spans (e.g. 10m, 1h), with a minimum of 1 minute. Note higher values will take up more memory. Defaults to 10 minutes.");
 
+    const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
+        Some(nightly_version) => nightly_version,
+        None => crate_version!(),
+    };
+
     #[allow(unused_mut)]
     let mut app = Command::new(crate_name!())
-        .version(crate_version!())
+        .version(VERSION)
         .author(crate_authors!())
         .about(crate_description!())
         .override_usage(USAGE)

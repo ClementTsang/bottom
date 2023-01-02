@@ -1,6 +1,5 @@
 use std::{
-    env, fs,
-    io::Result,
+    env, fs, io,
     path::{Path, PathBuf},
 };
 
@@ -8,7 +7,7 @@ use clap_complete::{generate_to, shells::Shell};
 
 include!("src/clap.rs");
 
-fn create_dir(dir: &Path) -> Result<()> {
+fn create_dir(dir: &Path) -> io::Result<()> {
     let res = fs::create_dir_all(dir);
     match &res {
         Ok(()) => {}
@@ -23,12 +22,14 @@ fn create_dir(dir: &Path) -> Result<()> {
     res
 }
 
-fn main() -> Result<()> {
-    const COMPLETION_DIR: &str = "./target/tmp/bottom/completion/";
-    const MANPAGE_DIR: &str = "./target/tmp/bottom/manpage/";
+fn btm_generate() -> io::Result<()> {
+    const ENV_KEY: &str = "BTM_GENERATE";
 
-    match env::var_os("BTM_GENERATE") {
+    match env::var_os(ENV_KEY) {
         Some(var) if !var.is_empty() => {
+            const COMPLETION_DIR: &str = "./target/tmp/bottom/completion/";
+            const MANPAGE_DIR: &str = "./target/tmp/bottom/manpage/";
+
             let completion_out_dir = PathBuf::from(COMPLETION_DIR);
             let manpage_out_dir = PathBuf::from(MANPAGE_DIR);
 
@@ -53,7 +54,34 @@ fn main() -> Result<()> {
         _ => {}
     }
 
-    println!("cargo:rerun-if-env-changed=BTM_GENERATE");
+    println!("cargo:rerun-if-env-changed={ENV_KEY}");
+
+    Ok(())
+}
+
+fn nightly_version() {
+    const ENV_KEY: &str = "BTM_BUILD_RELEASE_CALLER";
+
+    match env::var_os(ENV_KEY) {
+        Some(var) if !var.is_empty() && var == "nightly" => {
+            if let Ok(output) = std::process::Command::new("git")
+                .args(["rev-parse", "--short", "HEAD"])
+                .output()
+            {
+                let version = env!("CARGO_PKG_VERSION");
+                let git_hash = String::from_utf8(output.stdout).unwrap();
+                println!("cargo:rustc-env=NIGHTLY_VERSION={version}-nightly-{git_hash}");
+            }
+        }
+        _ => {}
+    }
+
+    println!("cargo:rerun-if-env-changed={ENV_KEY}");
+}
+
+fn main() -> Result<()> {
+    btm_generate()?;
+    nightly_version();
 
     Ok(())
 }
