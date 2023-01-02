@@ -64,11 +64,16 @@ fn nightly_version() {
 
     match env::var_os(ENV_KEY) {
         Some(var) if !var.is_empty() && var == "nightly" => {
-            if let Ok(output) = std::process::Command::new("git")
+            let version = env!("CARGO_PKG_VERSION");
+
+            if let Some(git_hash) = option_env!("CIRRUS_CHANGE_IN_REPO")
+                .and_then(|cirrus_sha: &str| cirrus_sha.get(0..8))
+            {
+                println!("cargo:rustc-env=NIGHTLY_VERSION={version}-nightly-{git_hash}");
+            } else if let Ok(output) = std::process::Command::new("git")
                 .args(["rev-parse", "--short", "HEAD"])
                 .output()
             {
-                let version = env!("CARGO_PKG_VERSION");
                 let git_hash = String::from_utf8(output.stdout).unwrap();
                 println!("cargo:rustc-env=NIGHTLY_VERSION={version}-nightly-{git_hash}");
             }
@@ -77,6 +82,7 @@ fn nightly_version() {
     }
 
     println!("cargo:rerun-if-env-changed={ENV_KEY}");
+    println!("cargo:rerun-if-env-changed=CIRRUS_CHANGE_IN_REPO");
 }
 
 fn main() -> Result<()> {

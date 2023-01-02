@@ -28,17 +28,24 @@ DL_URL_TEMPLATE = "https://api.cirrus-ci.com/v1/artifact/build/%s/%s/binaries/%s
 def make_query_request(key: str, branch: str, build_type: str):
     print("Creating query request.")
     mutation_id = "Cirrus CI Build {}-{}-{}".format(build_type, branch, int(time()))
+
+    # Dumb but if it works...
+    config_override = (
+        Path(".cirrus.yml").read_text().replace("# -PLACEHOLDER FOR CI-", 'BTM_BUILD_RELEASE_CALLER: "nightly"')
+    )
     query = """
         mutation CreateCirrusCIBuild (
             $repo: ID!,
             $branch: String!,
-            $mutation_id: String!
+            $mutation_id: String!,
+            $config_override: String,
         ) {
             createBuild(
                 input: {
                     repositoryId: $repo,
                     branch: $branch,
                     clientMutationId: $mutation_id,
+                    configOverride: $config_override
                 }
             ) {
                 build {
@@ -52,6 +59,7 @@ def make_query_request(key: str, branch: str, build_type: str):
         "repo": "6646638922956800",
         "branch": branch,
         "mutation_id": mutation_id,
+        "config_override": dedent(config_override),
     }
     data = {"query": dedent(query), "variables": params}
     data = json.dumps(data).encode()
