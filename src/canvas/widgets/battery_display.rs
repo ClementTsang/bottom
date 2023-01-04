@@ -11,6 +11,7 @@ use crate::{
     app::App,
     canvas::{drawing_utils::calculate_basic_use_bars, Painter},
     constants::*,
+    data_conversion::BatteryDuration,
 };
 
 impl Painter {
@@ -108,8 +109,8 @@ impl Painter {
                 .get(battery_widget_state.currently_selected_battery_index)
             {
                 // Assuming a 50/50 split in width
-                let bar_length =
-                    usize::from((draw_loc.width.saturating_sub(2) / 2).saturating_sub(8));
+                let half_width = draw_loc.width.saturating_sub(2) / 2;
+                let bar_length = usize::from(half_width.saturating_sub(8));
                 let charge_percentage = battery_details.charge_percentage;
                 let num_bars = calculate_basic_use_bars(charge_percentage, bar_length);
                 let bars = format!(
@@ -118,6 +119,60 @@ impl Painter {
                     " ".repeat(bar_length - num_bars),
                     charge_percentage,
                 );
+
+                fn long_time(secs: i64) -> String {
+                    let time = time::Duration::seconds(secs);
+                    let num_minutes = time.whole_minutes() - time.whole_hours() * 60;
+                    let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
+                    format!(
+                        "{} hour{}, {} minute{}, {} second{}",
+                        time.whole_hours(),
+                        if time.whole_hours() == 1 { "" } else { "s" },
+                        num_minutes,
+                        if num_minutes == 1 { "" } else { "s" },
+                        num_seconds,
+                        if num_seconds == 1 { "" } else { "s" },
+                    )
+                }
+
+                fn short_time(secs: i64) -> String {
+                    let time = time::Duration::seconds(secs);
+                    let num_minutes = time.whole_minutes() - time.whole_hours() * 60;
+                    let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
+                    format!("{}h {}m {}s", time.whole_hours(), num_minutes, num_seconds,)
+                }
+
+                let s: String; // Brought out due to lifetimes.
+                let time_text = {
+                    let style = self.colours.text_style;
+                    match &battery_details.battery_duration {
+                        BatteryDuration::ToEmpty(secs) => {
+                            if half_width > 25 {
+                                s = long_time(*secs);
+                                Row::new(vec!["Time to empty", &s]).style(style)
+                            } else {
+                                s = short_time(*secs);
+                                Row::new(vec!["To empty", &s]).style(style)
+                            }
+                        }
+                        BatteryDuration::ToFull(secs) => {
+                            if half_width > 25 {
+                                s = long_time(*secs);
+                                Row::new(vec!["Time to full", &s]).style(style)
+                            } else {
+                                s = short_time(*secs);
+                                Row::new(vec!["To full", &s]).style(style)
+                            }
+                        }
+                        BatteryDuration::Unknown => {
+                            if half_width > 15 {
+                                Row::new(vec!["Time to full/empty", "N/A"]).style(style)
+                            } else {
+                                Row::new(vec!["To empty/full", "N/A"]).style(style)
+                            }
+                        }
+                    }
+                };
 
                 let battery_rows = vec![
                     Row::new(vec![
@@ -132,16 +187,7 @@ impl Painter {
                     ]),
                     Row::new(vec!["Consumption", &battery_details.watt_consumption])
                         .style(self.colours.text_style),
-                    if let Some(duration_until_full) = &battery_details.duration_until_full {
-                        Row::new(vec!["Time to full", duration_until_full])
-                            .style(self.colours.text_style)
-                    } else if let Some(duration_until_empty) = &battery_details.duration_until_empty
-                    {
-                        Row::new(vec!["Time to empty", duration_until_empty])
-                            .style(self.colours.text_style)
-                    } else {
-                        Row::new(vec!["Time to full/empty", "N/A"]).style(self.colours.text_style)
-                    },
+                    time_text,
                     Row::new(vec!["Health %", &battery_details.health])
                         .style(self.colours.text_style),
                 ];
