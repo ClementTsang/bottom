@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#950](https://github.com/ClementTsang/bottom/pull/950): Split usage into usage percentage and value.
 
+## Other
+
+- [#951](https://github.com/ClementTsang/bottom/pull/951): Nightly builds now have their version number (`btm -V`) tagged with the commit hash.
+
 ## [0.7.0] - 2022-12-31
 
 ## Bug Fixes
@@ -72,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#655](https://github.com/ClementTsang/bottom/pull/665): Fix bug where the program would stall in an infinite loop if the width of the terminal was too small.
 
-## Internal Changes
+## Other
 
 - [#658](https://github.com/ClementTsang/bottom/pull/658): Update sysinfo.
 
