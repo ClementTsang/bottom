@@ -17,6 +17,10 @@ impl ColumnHeader for SortTableColumn {
 
 impl DataToCell<SortTableColumn> for &'static str {
     fn to_cell<'a>(&'a self, _column: &SortTableColumn, calculated_width: u16) -> Option<Text<'a>> {
+        if calculated_width == 0 {
+            return None;
+        }
+
         Some(truncate_to_text(self, calculated_width))
     }
 
@@ -30,6 +34,10 @@ impl DataToCell<SortTableColumn> for &'static str {
 
 impl DataToCell<SortTableColumn> for Cow<'static, str> {
     fn to_cell<'a>(&'a self, _column: &SortTableColumn, calculated_width: u16) -> Option<Text<'a>> {
+        if calculated_width == 0 {
+            return None;
+        }
+
         Some(truncate_to_text(self, calculated_width))
     }
 

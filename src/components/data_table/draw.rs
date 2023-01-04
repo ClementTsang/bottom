@@ -221,11 +221,7 @@ where
                                 .iter()
                                 .zip(&self.state.calculated_widths)
                                 .filter_map(|(column, &width)| {
-                                    if width > 0 {
-                                        data_row.to_cell(column.inner(), width)
-                                    } else {
-                                        None
-                                    }
+                                    data_row.to_cell(column.inner(), width)
                                 }),
                         );
 

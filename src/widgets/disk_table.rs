@@ -123,6 +123,10 @@ impl ColumnHeader for DiskWidgetColumn {
 
 impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
     fn to_cell<'a>(&'a self, column: &DiskWidgetColumn, calculated_width: u16) -> Option<Text<'a>> {
+        if calculated_width == 0 {
+            return None;
+        }
+
         let text = match column {
             DiskWidgetColumn::Disk => truncate_to_text(&self.name, calculated_width),
             DiskWidgetColumn::Mount => truncate_to_text(&self.mount_point, calculated_width),
