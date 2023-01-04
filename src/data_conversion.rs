@@ -13,13 +13,25 @@ use crate::units::data_units::DataUnit;
 use crate::utils::gen_util::*;
 use crate::widgets::{DiskWidgetData, TempWidgetData};
 
+#[derive(Debug)]
+pub enum BatteryDuration {
+    ToEmpty(i64),
+    ToFull(i64),
+    Unknown,
+}
+
+impl Default for BatteryDuration {
+    fn default() -> Self {
+        BatteryDuration::Unknown
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {
     pub battery_name: String,
     pub charge_percentage: f64,
     pub watt_consumption: String,
-    pub duration_until_full: Option<String>,
-    pub duration_until_empty: Option<String>,
+    pub battery_duration: BatteryDuration,
     pub health: String,
 }
 
@@ -527,37 +539,12 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
             battery_name: format!("Battery {}", itx),
             charge_percentage: battery_harvest.charge_percent,
             watt_consumption: format!("{:.2}W", battery_harvest.power_consumption_rate_watts),
-            duration_until_empty: if let Some(secs_till_empty) = battery_harvest.secs_until_empty {
-                let time = time::Duration::seconds(secs_till_empty);
-                let num_minutes = time.whole_minutes() - time.whole_hours() * 60;
-                let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
-                Some(format!(
-                    "{} hour{}, {} minute{}, {} second{}",
-                    time.whole_hours(),
-                    if time.whole_hours() == 1 { "" } else { "s" },
-                    num_minutes,
-                    if num_minutes == 1 { "" } else { "s" },
-                    num_seconds,
-                    if num_seconds == 1 { "" } else { "s" },
-                ))
+            battery_duration: if let Some(secs) = battery_harvest.secs_until_empty {
+                BatteryDuration::ToEmpty(secs)
+            } else if let Some(secs) = battery_harvest.secs_until_full {
+                BatteryDuration::ToFull(secs)
             } else {
-                None
-            },
-            duration_until_full: if let Some(secs_till_full) = battery_harvest.secs_until_full {
-                let time = time::Duration::seconds(secs_till_full);
-                let num_minutes = time.whole_minutes() - time.whole_hours() * 60;
-                let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
-                Some(format!(
-                    "{} hour{}, {} minute{}, {} second{}",
-                    time.whole_hours(),
-                    if time.whole_hours() == 1 { "" } else { "s" },
-                    num_minutes,
-                    if num_minutes == 1 { "" } else { "s" },
-                    num_seconds,
-                    if num_seconds == 1 { "" } else { "s" },
-                ))
-            } else {
-                None
+                BatteryDuration::Unknown
             },
             health: format!("{:.2}%", battery_harvest.health_percent),
         })
