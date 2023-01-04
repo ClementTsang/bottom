@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Bug Fixes
 
 - [#952](https://github.com/ClementTsang/bottom/pull/952): Partially fix battery text getting cut off in small windows.
+- [#953](https://github.com/ClementTsang/bottom/pull/953): Fix CPU widget's 'all' label being missing on small sizes.
 
 ## Changes
 

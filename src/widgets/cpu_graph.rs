@@ -77,7 +77,7 @@ impl CpuWidgetTableData {
 
 impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
     fn to_cell<'a>(&'a self, column: &CpuWidgetColumn, calculated_width: u16) -> Option<Text<'a>> {
-        const CPU_HIDE_BREAKPOINT: u16 = 5;
+        const CPU_TRUNCATE_BREAKPOINT: u16 = 5;
 
         // This is a bit of a hack, but apparently we can avoid having to do any fancy checks
         // of showing the "All" on a specific column if the other is hidden by just always
@@ -88,22 +88,22 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
         // it is too small.
         match &self {
             CpuWidgetTableData::All => match column {
-                CpuWidgetColumn::CPU => Some(truncate_to_text("All", calculated_width)),
+                CpuWidgetColumn::CPU => Some("All".into()),
                 CpuWidgetColumn::Use => None,
             },
             CpuWidgetTableData::Entry {
                 data_type,
                 last_entry,
-            } => match column {
-                CpuWidgetColumn::CPU => {
-                    if calculated_width == 0 {
-                        None
-                    } else {
-                        match data_type {
+            } => {
+                if calculated_width == 0 {
+                    None
+                } else {
+                    match column {
+                        CpuWidgetColumn::CPU => match data_type {
                             CpuDataType::Avg => Some(truncate_to_text("AVG", calculated_width)),
                             CpuDataType::Cpu(index) => {
                                 let index_str = index.to_string();
-                                let text = if calculated_width < CPU_HIDE_BREAKPOINT {
+                                let text = if calculated_width < CPU_TRUNCATE_BREAKPOINT {
                                     truncate_to_text(&index_str, calculated_width)
                                 } else {
                                     truncate_to_text(
@@ -114,14 +114,14 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
 
                                 Some(text)
                             }
-                        }
+                        },
+                        CpuWidgetColumn::Use => Some(truncate_to_text(
+                            &format!("{:.0}%", last_entry.round()),
+                            calculated_width,
+                        )),
                     }
                 }
-                CpuWidgetColumn::Use => Some(truncate_to_text(
-                    &format!("{:.0}%", last_entry.round()),
-                    calculated_width,
-                )),
-            },
+            }
         }
     }
 

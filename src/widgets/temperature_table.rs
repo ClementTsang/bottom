@@ -49,6 +49,10 @@ impl TempWidgetData {
 
 impl DataToCell<TempWidgetColumn> for TempWidgetData {
     fn to_cell<'a>(&'a self, column: &TempWidgetColumn, calculated_width: u16) -> Option<Text<'a>> {
+        if calculated_width == 0 {
+            return None;
+        }
+
         Some(match column {
             TempWidgetColumn::Sensor => truncate_to_text(&self.sensor, calculated_width),
             TempWidgetColumn::Temp => truncate_to_text(&self.temperature(), calculated_width),
