@@ -76,10 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#655](https://github.com/ClementTsang/bottom/pull/665): Fix bug where the program would stall in an infinite loop if the width of the terminal was too small.
 
-## Other
-
-- [#658](https://github.com/ClementTsang/bottom/pull/658): Update sysinfo.
-
 ## [0.6.6] - 2021-12-22
 
 ## Bug Fixes
