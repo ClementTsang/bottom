@@ -118,7 +118,7 @@ extra:
   # Versioning
   version:
     provider: mike
-    default: nightly
+    default: stable
 
 # Navigation
 nav:
