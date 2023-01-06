@@ -152,7 +152,7 @@ impl Painter {
                                 Row::new(vec!["Time to empty", &s]).style(style)
                             } else {
                                 s = short_time(*secs);
-                                Row::new(vec!["To empty", &s]).style(style)
+                                Row::new(vec!["Empty", &s]).style(style)
                             }
                         }
                         BatteryDuration::ToFull(secs) => {
@@ -161,14 +161,15 @@ impl Painter {
                                 Row::new(vec!["Time to full", &s]).style(style)
                             } else {
                                 s = short_time(*secs);
-                                Row::new(vec!["To full", &s]).style(style)
+                                Row::new(vec!["Full", &s]).style(style)
                             }
                         }
                         BatteryDuration::Unknown => {
-                            if half_width > 15 {
+                            // TODO: Potentially just don't draw this?
+                            if half_width > 20 {
                                 Row::new(vec!["Time to full/empty", "N/A"]).style(style)
                             } else {
-                                Row::new(vec!["To empty/full", "N/A"]).style(style)
+                                Row::new(vec!["Empty/full", "N/A"]).style(style)
                             }
                         }
                     }
