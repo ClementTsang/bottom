@@ -1174,7 +1174,7 @@ up in terms of reported data.</p>
 <h2 id="why-cant-i-see-all-my-processesprocess-data-on-macos"><a class="toclink" href="#why-cant-i-see-all-my-processesprocess-data-on-macos">Why can't I see all my processes/process data on macOS?</a></h2>
 <p>This is a <a href="../support/official/#macos">known limitation</a>, and you may have to run the program with elevated
 privileges to work around it - for example:</p>
-<div class="highlight"><pre><span></span><code>sudo btm
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>btm
 </code></pre></div>
 <p><strong>Please note that you should be certain that you trust any software you grant root privileges.</strong></p>
 <p>There are measures taken to try to maximize the amount of information obtained without elevated privileges. For example,
@@ -1186,12 +1186,12 @@ on how to run htop without sudo for bottom. However <strong>please</strong> unde
 <p>It may be handy to refer to the automatically generated config files or the <a href="https://github.com/ClementTsang/bottom/tree/master/sample_configs">sample configuration files</a>.
 The config files also follow the <a href="https://toml.io/en/">TOML</a> format.</p>
 <p>Also make sure your config options are under the right table - for example, to set your temperature type, you must set it under the <code>[flags]</code> table:</p>
-<div class="highlight"><pre><span></span><code><span class="k">[flags]</span><span class="w"></span>
-<span class="n">temperature_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;f&quot;</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="k">[flags]</span>
+<span class="n">temperature_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;f&quot;</span>
 </code></pre></div>
 <p>Meanwhile, if you want to set a custom color scheme, it would be under the <code>[colors]</code> table:</p>
-<div class="highlight"><pre><span></span><code><span class="k">[colors]</span><span class="w"></span>
-<span class="n">table_header_color</span><span class="o">=</span><span class="s">&quot;LightBlue&quot;</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="k">[colors]</span>
+<span class="n">table_header_color</span><span class="o">=</span><span class="s">&quot;LightBlue&quot;</span>
 </code></pre></div>
 <h3 id="check-the-configuration-file-location"><a class="toclink" href="#check-the-configuration-file-location">Check the configuration file location</a></h3>
 <p>Make sure bottom is reading the right configuration file. By default, bottom looks for config files at these locations:</p>
@@ -1218,15 +1218,15 @@ The config files also follow the <a href="https://toml.io/en/">TOML</a> format.<
 </tbody>
 </table>
 <p>If you want to use a config file in another location, use the <code>--config</code> or <code>-C</code> flags along with the path to the configuration file, like so:</p>
-<div class="highlight"><pre><span></span><code>btm -C path_to_config
+<div class="highlight"><pre><span></span><code>btm<span class="w"> </span>-C<span class="w"> </span>path_to_config
 </code></pre></div>
 <h2 id="my-installation-through-snap-has-some-widgets-that-are-blankshow-no-data"><a class="toclink" href="#my-installation-through-snap-has-some-widgets-that-are-blankshow-no-data">My installation through snap has some widgets that are blank/show no data</a></h2>
 <p>Make sure bottom is given the correct permissions in order to collect data. <a href="https://snapcraft.io/docs/interface-management">Snapcraft</a>
 explains how to do so, but the TL;DR is:</p>
-<div class="highlight"><pre><span></span><code>sudo snap connect bottom:mount-observe
-sudo snap connect bottom:hardware-observe
-sudo snap connect bottom:system-observe
-sudo snap connect bottom:process-control
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>snap<span class="w"> </span>connect<span class="w"> </span>bottom:mount-observe
+sudo<span class="w"> </span>snap<span class="w"> </span>connect<span class="w"> </span>bottom:hardware-observe
+sudo<span class="w"> </span>snap<span class="w"> </span>connect<span class="w"> </span>bottom:system-observe
+sudo<span class="w"> </span>snap<span class="w"> </span>connect<span class="w"> </span>bottom:process-control
 </code></pre></div>
 
 
@@ -1291,7 +1291,7 @@ sudo snap connect bottom:process-control
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.top", "navigation.expand", "navigation.instant", "navigation.sections", "toc.integrate", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": {"default": "nightly", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.top", "navigation.expand", "navigation.instant", "navigation.sections", "toc.integrate", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
       <script src="../assets/javascripts/bundle.8492ddcf.min.js"></script>
