@@ -153,8 +153,13 @@ A `.deb` file is provided on each [stable release](https://github.com/ClementTsa
 (note stable ARM builds are only available for 0.6.8 and later). If you want to install this way, do something like:
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_0.7.1_amd64.deb
-sudo dpkg -i bottom_0.7.1_amd64.deb
+# x86-64
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_x86_64-unknown-linux-gnu.deb
+sudo dpkg -i bottom_x86_64-unknown-linux-gnu.deb 
+
+# ARM64
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_aarch64-unknown-linux-gnu.deb
+sudo dpkg -i bottom_aarch64-unknown-linux-gnu.deb
 ```
 
 ### Snap
