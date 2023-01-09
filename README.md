@@ -42,6 +42,7 @@
   - [Scoop](#scoop)
   - [Chocolatey](#chocolatey)
   - [winget](#winget)
+  - [MSI](#MSI)
   - [Manual installation](#manual-installation)
   - [Binaries](#binaries)
     - [Auto-completion](#auto-completion)
@@ -232,19 +233,19 @@ scoop install bottom
 
 ### Chocolatey
 
-Choco package located [here](https://chocolatey.org/packages/bottom).
-Since validation of the package takes time, it may take a while to become available after a release.
+Chocolatey packages are located [here](https://chocolatey.org/packages/bottom).
 
 ```bash
 choco install bottom
 
-# The version number may be required for newer releases during the approval process:
+# The version number may need to be specified for newer releases for the first
+# few hours/days during the approval process:
 choco install bottom --version=0.7.1
 ```
 
 ### winget
 
-You can find the packages [here](https://github.com/microsoft/winget-pkgs/tree/master/manifests/Clement/bottom):
+Packages can be found [here](https://github.com/microsoft/winget-pkgs/tree/master/manifests/Clement/bottom):
 
 ```bash
 winget install bottom
@@ -253,10 +254,12 @@ winget install bottom
 winget install Clement.bottom
 ```
 
-You can also manually do the same thing by going to the [latest release](https://github.com/ClementTsang/bottom/releases/latest)
-and installing via the `.msi` file.
-
 You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
+
+### MSI
+
+You can also manually install bottom as a Windows program by going to the [latest release](https://github.com/ClementTsang/bottom/releases/latest)
+and installing via the `.msi` file.
 
 ### Manual installation
 
