@@ -10,6 +10,7 @@ use clap::ArgMatches;
 use layout_options::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use starship_battery::Manager;
 use typed_builder::*;
 
 use crate::{
@@ -844,6 +845,14 @@ fn get_hide_table_gap(matches: &ArgMatches, config: &Config) -> bool {
 }
 
 fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
+    if let Ok(battery_manager) = Manager::new() {
+        if let Ok(batteries) = battery_manager.batteries() {
+            if batteries.count() == 0 {
+                return false;
+            }
+        }
+    }
+
     if cfg!(feature = "battery") {
         if matches.is_present("battery") {
             return true;
