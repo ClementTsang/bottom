@@ -364,8 +364,15 @@ jobs:
         if: ${{ inputs.caller == 'nightly' }}
         id: custom-version
         run: |
-          VERSION=$(./target/${{ matrix.info.target }}/release/btm -V | awk '{print $2}')
-          echo "CUSTOM_VERSION_ARG='--deb-version=$VERSION'" >> $GITHUB_OUTPUT
+          if [[ ${{ matrix.info.cross }} == false ]]; then
+            # x86-64 can be directly executed, so we can do the easy way out.
+            VERSION=$(./target/${{ matrix.info.target }}/release/btm -V | awk '{print $2}')
+            echo "CUSTOM_VERSION_ARG='--deb-version=$VERSION'" >> $GITHUB_OUTPUT
+          else
+            VER=$(grep -m1 "^version" Cargo.toml | awk '{print $3}' | tr -d \")
+            APPEND=nightly-${GITHUB_SHA::7}
+            echo "CUSTOM_VERSION_ARG='--deb-version=$VER-$APPEND'" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build Debian release (x86-64)
         if: matrix.info.cross == false
