@@ -70,6 +70,10 @@ fn nightly_version() {
                 .and_then(|cirrus_sha: &str| cirrus_sha.get(0..8))
             {
                 println!("cargo:rustc-env=NIGHTLY_VERSION={version}-nightly-{git_hash}");
+            } else if let Some(git_hash) =
+                option_env!("GITHUB_SHA").and_then(|gha_sha: &str| gha_sha.get(0..8))
+            {
+                println!("cargo:rustc-env=NIGHTLY_VERSION={version}-nightly-{git_hash}");
             } else if let Ok(output) = std::process::Command::new("git")
                 .args(["rev-parse", "--short=8", "HEAD"])
                 .output()
