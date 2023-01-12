@@ -360,6 +360,13 @@ jobs:
         run: |
           gzip ./manpage/btm.1
 
+      - name: Prepare custom version if needed
+        if: ${{ inputs.caller == 'nightly' }}
+        id: custom-version
+        run: |
+          VERSION=$(./target/${{ matrix.info.target }}/release/btm -V | awk '{print $2}')
+          echo "CUSTOM_VERSION_ARG='--deb-version=$VERSION'" >> $GITHUB_OUTPUT
+
       - name: Build Debian release (x86-64)
         if: matrix.info.cross == false
         env:
