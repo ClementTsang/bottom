@@ -364,7 +364,7 @@ jobs:
         if: ${{ inputs.caller == 'nightly' }}
         id: custom-version
         run: |
-          VERSION=$(./target/${{ matrix.info.target }}/btm -V | awk '{print $2}')
+          VERSION=$(./target/${{ matrix.info.target }}/release/btm -V | awk '{print $2}')
           echo "CUSTOM_VERSION_ARG='--deb-version $VERSION'" >> $GITHUB_OUTPUT
 
       - name: Build Debian release (x86-64)
@@ -372,7 +372,7 @@ jobs:
         env:
           BTM_GENERATE: true
         run: |
-          cargo install cargo-deb --version 1.41.1 --locked
+          cargo install cargo-deb --version 1.41.3 --locked
           cargo deb --no-build --target ${{ matrix.info.target }} ${{ steps.custom-version.outputs.CUSTOM_VERSION_ARG }}
           cp ./target/${{ matrix.info.target }}/debian/bottom_*.deb .
 
