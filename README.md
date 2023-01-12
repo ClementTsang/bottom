@@ -42,7 +42,7 @@
   - [Scoop](#scoop)
   - [Chocolatey](#chocolatey)
   - [winget](#winget)
-  - [MSI](#MSI)
+  - [Windows installer](#windows-installer)
   - [Manual installation](#manual-installation)
   - [Binaries](#binaries)
     - [Auto-completion](#auto-completion)
@@ -156,11 +156,11 @@ A `.deb` file is provided on each [stable release](https://github.com/ClementTsa
 ```bash
 # x86-64
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_x86_64-unknown-linux-gnu.deb
-sudo dpkg -i bottom_x86_64-unknown-linux-gnu.deb 
+sudo dpkg -i bottom_0.7.1_amd64.deb
 
 # ARM64
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_aarch64-unknown-linux-gnu.deb
-sudo dpkg -i bottom_aarch64-unknown-linux-gnu.deb
+sudo dpkg -i bottom_0.7.1_armhf.deb
 ```
 
 ### Snap
@@ -256,7 +256,7 @@ winget install Clement.bottom
 
 You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 
-### MSI
+### Windows installer
 
 You can also manually install bottom as a Windows program by going to the [latest release](https://github.com/ClementTsang/bottom/releases/latest)
 and installing via the `.msi` file.

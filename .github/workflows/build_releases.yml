@@ -343,6 +343,7 @@ jobs:
         uses: ClementTsang/cargo-action@v0.0.3
         env:
           BTM_GENERATE: true
+          BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
         with:
           command: build
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
@@ -359,14 +360,20 @@ jobs:
         run: |
           gzip ./manpage/btm.1
 
+      - name: Prepare custom version if needed
+        id: custom-version
+        if: ${{ inputs.caller == "nightly" }}
+        run: |
+          echo "CUSTOM_VERSION_ARG='--deb-version $(./target/${{ matrix.info.target }}/btm -V)'" >> $GITHUB_OUTPUT
+
       - name: Build Debian release (x86-64)
         if: matrix.info.cross == false
         env:
           BTM_GENERATE: true
         run: |
           cargo install cargo-deb --version 1.41.1 --locked
-          cargo deb --no-build --target ${{ matrix.info.target }}
-          cp ./target/${{ matrix.info.target }}/debian/bottom_*.deb ./bottom_${{ matrix.info.target }}.deb
+          cargo deb --no-build --target ${{ matrix.info.target }} ${{ steps.custom-version.outputs.CUSTOM_VERSION_ARG }}
+          cp ./target/${{ matrix.info.target }}/debian/bottom_*.deb .
 
       - name: Build Debian release (ARM)
         if: matrix.info.cross == true
@@ -374,13 +381,16 @@ jobs:
           BTM_GENERATE: true
         run: |
           docker pull ${{ matrix.info.container }}
-          docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.info.container }} "--variant ${{ matrix.info.dpkg }} --target ${{ matrix.info.target }} --no-build" "/volume"
-          cp ./target/${{ matrix.info.target }}/debian/bottom-*.deb ./bottom_${{ matrix.info.target }}.deb
+          docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.info.container }} "--variant ${{ matrix.info.dpkg }} --target ${{ matrix.info.target }} --no-build ${{ steps.custom-version.outputs.CUSTOM_VERSION_ARG }}" "/volume"
+          cp ./target/${{ matrix.info.target }}/debian/bottom-*.deb .
 
-      - name: Test Debian release
+      - name: Verify Debian release
+        id: verify
         run: |
-          dpkg -I ./bottom_${{ matrix.info.target }}.deb
-          dpkg -I ./bottom_${{ matrix.info.target }}.deb | grep ${{ matrix.info.dpkg }} && echo "Found correct architecture"
+          DEB_FILE=$(find bottom_*.deb)
+          dpkg -I $DEB_FILE
+          dpkg -I $DEB_FILE | grep ${{ matrix.info.dpkg }} && echo "Found correct architecture"
+          echo "DEB_FILE=$DEB_FILE" >> $GITHUB_OUTPUT
 
       - name: Delete generated Debian folder
         run: |
@@ -391,7 +401,7 @@ jobs:
         shell: bash
         run: |
           mkdir release
-          mv bottom_${{ matrix.info.target }}.deb release/
+          mv ${{ steps.verify.outputs.DEB_FILE }} release/
 
       - name: Save release as artifact
         uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # v3.1.1
