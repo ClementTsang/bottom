@@ -155,11 +155,15 @@ A `.deb` file is provided on each [stable release](https://github.com/ClementTsa
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_x86_64-unknown-linux-gnu.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_0.7.1_amd64.deb
 sudo dpkg -i bottom_0.7.1_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_aarch64-unknown-linux-gnu.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_0.7.1_arm64.deb
+sudo dpkg -i bottom_0.7.1_arm64.deb
+
+# ARM
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_0.7.1_armhf.deb
 sudo dpkg -i bottom_0.7.1_armhf.deb
 ```
 
