@@ -330,14 +330,14 @@ jobs:
           toolchain: stable
           target: ${{ matrix.info.target }}
 
-      - name: Enable Rust cache
-        if: matrix.info.cross != true
-        timeout-minutes: 5
-        continue-on-error: true
-        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
-        with:
-          shared-key: build-cache-${{ matrix.info.target }}
-          save-if: "false"
+      # - name: Enable Rust cache
+      #   if: matrix.info.cross != true
+      #   timeout-minutes: 5
+      #   continue-on-error: true
+      #   uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
+      #   with:
+      #     shared-key: build-cache-${{ matrix.info.target }}
+      #     save-if: "false"
 
       # TODO: Could I use the previous jobs to skip this call?
       - name: Build
