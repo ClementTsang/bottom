@@ -369,8 +369,8 @@ jobs:
             VERSION=$(./target/${{ matrix.info.target }}/release/btm -V | awk '{print $2}')
             echo "CUSTOM_VERSION_ARG='--deb-version=$VERSION'" >> $GITHUB_OUTPUT
           else
-            VER=$(grep -m1 "^version" Cargo.toml | awk '{print $3}' | tr -d \")
-            APPEND=nightly-${GITHUB_SHA::7}
+            VER=$(grep -m1 "^version" Cargo.toml | awk '{print $3}' | tr -d \") # NB: Assumes the first instance of version is the build version
+            APPEND=nightly-${GITHUB_SHA::8}
             echo "CUSTOM_VERSION_ARG='--deb-version=$VER-$APPEND'" >> $GITHUB_OUTPUT
           fi
 
