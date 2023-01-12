@@ -71,12 +71,11 @@ fn nightly_version() {
             {
                 println!("cargo:rustc-env=NIGHTLY_VERSION={version}-nightly-{git_hash}");
             } else if let Ok(output) = std::process::Command::new("git")
-                .args(["rev-parse", "HEAD"])
+                .args(["rev-parse", "--short=8", "HEAD"])
                 .output()
             {
                 let git_hash = String::from_utf8(output.stdout).unwrap();
-                let short_hash = git_hash.get(0..8).unwrap();
-                println!("cargo:rustc-env=NIGHTLY_VERSION={version}-nightly-{short_hash}");
+                println!("cargo:rustc-env=NIGHTLY_VERSION={version}-nightly-{git_hash}");
             }
         }
         _ => {}
