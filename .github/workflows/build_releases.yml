@@ -361,8 +361,8 @@ jobs:
           gzip ./manpage/btm.1
 
       - name: Prepare custom version if needed
+        if: ${{ inputs.caller == 'nightly' }}
         id: custom-version
-        if: ${{ inputs.caller == "nightly" }}
         run: |
           VERSION=$(./target/${{ matrix.info.target }}/btm -V | awk '{print $2}')
           echo "CUSTOM_VERSION_ARG='--deb-version $VERSION'" >> $GITHUB_OUTPUT
