@@ -376,7 +376,7 @@ jobs:
         run: |
           docker pull ${{ matrix.info.container }}
           docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.info.container }} "--variant ${{ matrix.info.dpkg }} --target ${{ matrix.info.target }} --no-build ${{ steps.custom-version.outputs.CUSTOM_VERSION_ARG }}" "/volume"
-          cp ./target/${{ matrix.info.target }}/debian/bottom-*.deb .
+          cp ./target/${{ matrix.info.target }}/debian/bottom_*.deb .
 
       - name: Verify Debian release
         id: verify
