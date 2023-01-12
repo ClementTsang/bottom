@@ -380,7 +380,8 @@ jobs:
           BTM_GENERATE: true
         run: |
           cargo install cargo-deb --version 1.41.3 --locked
-          cargo deb --no-build --target ${{ matrix.info.target }} ${{ steps.custom-version.outputs.CUSTOM_VERSION_ARG }}
+          VERSION_ARG=$(echo ${{ steps.custom-version.outputs.CUSTOM_VERSION_ARG }} | tr -d \')
+          cargo deb --no-build --target ${{ matrix.info.target }} $VERSION_ARG
           cp ./target/${{ matrix.info.target }}/debian/bottom_*.deb .
 
       - name: Build Debian release (ARM)
@@ -389,7 +390,8 @@ jobs:
           BTM_GENERATE: true
         run: |
           docker pull ${{ matrix.info.container }}
-          docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.info.container }} "--variant ${{ matrix.info.dpkg }} --target ${{ matrix.info.target }} --no-build ${{ steps.custom-version.outputs.CUSTOM_VERSION_ARG }}" "/volume"
+          VERSION_ARG=$(echo ${{ steps.custom-version.outputs.CUSTOM_VERSION_ARG }} | tr -d \')
+          docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.info.container }} "--no-build --variant ${{ matrix.info.dpkg }} --target ${{ matrix.info.target }} $VERSION_ARG" "/volume"
           cp ./target/${{ matrix.info.target }}/debian/bottom-*.deb .
           TMP_NAME=$(find bottom-*.deb)
           VERSION=${{ matrix.info.dpkg }}
