@@ -364,7 +364,8 @@ jobs:
         id: custom-version
         if: ${{ inputs.caller == "nightly" }}
         run: |
-          echo "CUSTOM_VERSION_ARG='--deb-version $(./target/${{ matrix.info.target }}/btm -V)'" >> $GITHUB_OUTPUT
+          VERSION=$(./target/${{ matrix.info.target }}/btm -V | awk '{print $2}')
+          echo "CUSTOM_VERSION_ARG='--deb-version $VERSION'" >> $GITHUB_OUTPUT
 
       - name: Build Debian release (x86-64)
         if: matrix.info.cross == false
