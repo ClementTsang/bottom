@@ -12,6 +12,8 @@ on:
   pull_request:
     types:
       - closed
+  schedule:
+    - cron: "0 11 * * *"
 
 jobs:
   clear-cache:
@@ -25,7 +27,9 @@ jobs:
           fetch-depth: 1
 
       - run: |
-          if [[ -z "${{ github.event.inputs.id }}" ]]; then
+          if [[ -n "${{ github.event.schedule }}" ]]; then
+            python ./scripts/clear_cache.py keep-master
+          elif [[ -z "${{ github.event.inputs.id }}" ]]; then
             python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
           else
             python ./scripts/clear_cache.py ${{ github.event.inputs.id }}

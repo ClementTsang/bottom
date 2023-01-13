@@ -53,6 +53,23 @@ def main():
                         print("URLError with delete.")
                     else:
                         print("Successfully deleted cache ID {}!".format(id))
+    elif args[1] == "keep-main" or args[1] == "keep-master":
+        print("Clearing all but default branch cache.")
+        with urlopen(cache_list_request(key)) as response:
+            response = json.load(response)
+            caches = response["actions_caches"]
+            for cache in caches:
+                if not ("master" in cache["ref"] or "main" in cache["ref"]):
+                    id = cache["id"]
+                    try:
+                        print("Deleting ID {}...".format(id))
+                        urlopen(delete_cache_request(key, id))
+                    except HTTPError as e:
+                        print("HTTPError with delete, error code {}.".format(e.code))
+                    except URLError as _:
+                        print("URLError with delete.")
+                    else:
+                        print("Successfully deleted cache ID {}!".format(id))
     elif args[1] == "main" or args[1] == "master" or args[1] == "all":
         print("Clearing all caches.")
         with urlopen(cache_list_request(key)) as response:
