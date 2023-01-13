@@ -140,16 +140,6 @@ jobs:
           sh rustup.sh --default-toolchain stable -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      # We disable this for cross builds, as it seems to cause some issues.
-      - name: Enable Rust cache
-        if: matrix.info.cross != true
-        timeout-minutes: 5
-        continue-on-error: true
-        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
-        with:
-          shared-key: build-cache-${{ matrix.info.target }}
-          save-if: "false"
-
       - name: Build
         uses: ClementTsang/cargo-action@v0.0.3
         env:
@@ -236,14 +226,6 @@ jobs:
           toolchain: stable
           target: x86_64-pc-windows-msvc
 
-      - name: Enable Rust cache
-        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
-        timeout-minutes: 5
-        continue-on-error: true
-        with:
-          key: "build-cache-x86_64-pc-windows-msvc"
-          save-if: "false"
-
       - name: Build MSI file
         shell: powershell
         env:
@@ -329,15 +311,6 @@ jobs:
         with:
           toolchain: stable
           target: ${{ matrix.info.target }}
-
-      # - name: Enable Rust cache
-      #   if: matrix.info.cross != true
-      #   timeout-minutes: 5
-      #   continue-on-error: true
-      #   uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
-      #   with:
-      #     shared-key: build-cache-${{ matrix.info.target }}
-      #     save-if: "false"
 
       # TODO: Could I use the previous jobs to skip this call?
       - name: Build
