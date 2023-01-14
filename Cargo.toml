@@ -69,7 +69,7 @@ clap = { version = "3.1.12", features = ["default", "cargo", "wrap_help"] }
 const_format = "0.2.30"
 concat-string = "1.0.1"
 crossterm = "0.25.0"
-ctrlc = { version = "3.1.9", features = ["termination"] }
+ctrlc = { version = "3.2.4", features = ["termination"] }
 dirs = "4.0.0"
 fern = { version = "0.6.1", optional = true }
 futures = "0.3.21"
@@ -100,7 +100,7 @@ libc = "0.2.124"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "net", "sensors"] }
-procfs = { version = "0.14.1", default-features = false }
+procfs = { version = "0.14.2", default-features = false }
 smol = "1.2.5"
 
 [target.'cfg(target_os = "macos")'.dependencies]
