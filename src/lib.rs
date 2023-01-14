@@ -113,11 +113,6 @@ pub fn handle_key_event_or_break(
 ) -> bool {
     // debug!("KeyEvent: {:?}", event);
 
-    // TODO: [PASTE] Note that this does NOT support some emojis like flags.  This is due to us
-    // catching PER CHARACTER right now WITH A forced throttle!  This means multi-char will not work.
-    // We can solve this (when we do paste probably) while keeping the throttle (mainly meant for movement)
-    // by throttling after *bulk+singular* actions, not just singular ones.
-
     if event.modifiers.is_empty() {
         // Required catch for searching - otherwise you couldn't search with q.
         if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {

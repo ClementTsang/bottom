@@ -41,7 +41,7 @@ doctest = true
 doc = true
 
 [profile.release]
-# debug = true
+# debug = true # Might be nice to have a custom profile for flamegraphs.
 # strip = false
 debug = 0
 strip = "symbols"
