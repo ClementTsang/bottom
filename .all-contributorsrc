@@ -335,6 +335,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "NitrogenDev",
+      "name": "Nitrogen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44950964?v=4",
+      "profile": "https://youtube.com/c/nitrogendev",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
