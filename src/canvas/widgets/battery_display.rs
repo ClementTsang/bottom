@@ -142,56 +142,52 @@ impl Painter {
                     format!("{}h {}m {}s", time.whole_hours(), num_minutes, num_seconds,)
                 }
 
-                let s: String; // Brought out due to lifetimes.
-                let time_text = {
+                let mut battery_rows = Vec::with_capacity(4);
+                battery_rows.push(Row::new(vec![
+                    Cell::from("Charge %").style(self.colours.text_style),
+                    Cell::from(bars).style(if charge_percentage < 10.0 {
+                        self.colours.low_battery_colour
+                    } else if charge_percentage < 50.0 {
+                        self.colours.medium_battery_colour
+                    } else {
+                        self.colours.high_battery_colour
+                    }),
+                ]));
+                battery_rows.push(
+                    Row::new(vec!["Consumption", &battery_details.watt_consumption])
+                        .style(self.colours.text_style),
+                );
+
+                let s: String; // Keep string in scope.
+                {
                     let style = self.colours.text_style;
                     match &battery_details.battery_duration {
                         BatteryDuration::ToEmpty(secs) => {
                             if half_width > 25 {
                                 s = long_time(*secs);
-                                Row::new(vec!["Time to empty", &s]).style(style)
+                                battery_rows.push(Row::new(vec!["Time to empty", &s]).style(style));
                             } else {
                                 s = short_time(*secs);
-                                Row::new(vec!["Empty", &s]).style(style)
+                                battery_rows.push(Row::new(vec!["To empty", &s]).style(style));
                             }
                         }
                         BatteryDuration::ToFull(secs) => {
                             if half_width > 25 {
                                 s = long_time(*secs);
-                                Row::new(vec!["Time to full", &s]).style(style)
+                                battery_rows.push(Row::new(vec!["Time to full", &s]).style(style));
                             } else {
                                 s = short_time(*secs);
-                                Row::new(vec!["Full", &s]).style(style)
+                                battery_rows.push(Row::new(vec!["To full", &s]).style(style));
                             }
                         }
-                        BatteryDuration::Unknown => {
-                            // TODO: Potentially just don't draw this?
-                            if half_width > 20 {
-                                Row::new(vec!["Time to full/empty", "N/A"]).style(style)
-                            } else {
-                                Row::new(vec!["Empty/full", "N/A"]).style(style)
-                            }
-                        }
+                        BatteryDuration::Unknown => {}
                     }
-                };
+                }
 
-                let battery_rows = vec![
-                    Row::new(vec![
-                        Cell::from("Charge %").style(self.colours.text_style),
-                        Cell::from(bars).style(if charge_percentage < 10.0 {
-                            self.colours.low_battery_colour
-                        } else if charge_percentage < 50.0 {
-                            self.colours.medium_battery_colour
-                        } else {
-                            self.colours.high_battery_colour
-                        }),
-                    ]),
-                    Row::new(vec!["Consumption", &battery_details.watt_consumption])
-                        .style(self.colours.text_style),
-                    time_text,
+                battery_rows.push(
                     Row::new(vec!["Health %", &battery_details.health])
                         .style(self.colours.text_style),
-                ];
+                );
 
                 // Draw
                 f.render_widget(

@@ -1183,7 +1183,7 @@ impl App {
             'k' => self.on_up_key(),
             'j' => self.on_down_key(),
             'f' => {
-                self.frozen_state.toggle(&self.data_collection); // TODO: Unthawing should force a full data refresh and redraw immediately.
+                self.frozen_state.toggle(&self.data_collection); // TODO: Thawing should force a full data refresh and redraw immediately.
             }
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
