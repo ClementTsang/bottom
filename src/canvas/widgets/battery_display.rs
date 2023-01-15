@@ -168,7 +168,7 @@ impl Painter {
                                 battery_rows.push(Row::new(vec!["Time to empty", &s]).style(style));
                             } else {
                                 s = short_time(*secs);
-                                battery_rows.push(Row::new(vec!["Empty", &s]).style(style));
+                                battery_rows.push(Row::new(vec!["To empty", &s]).style(style));
                             }
                         }
                         BatteryDuration::ToFull(secs) => {
@@ -177,7 +177,7 @@ impl Painter {
                                 battery_rows.push(Row::new(vec!["Time to full", &s]).style(style));
                             } else {
                                 s = short_time(*secs);
-                                battery_rows.push(Row::new(vec!["Full", &s]).style(style));
+                                battery_rows.push(Row::new(vec!["To full", &s]).style(style));
                             }
                         }
                         BatteryDuration::Unknown => {}
