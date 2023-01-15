@@ -63,7 +63,7 @@ deploy = ["battery", "gpu", "zfs"]
 
 [dependencies]
 anyhow = "1.0.57"
-backtrace = "0.3.65"
+backtrace = "0.3.67"
 cfg-if = "1.0.0"
 clap = { version = "3.1.12", features = ["default", "cargo", "wrap_help"] }
 const_format = "0.2.30"
@@ -72,7 +72,7 @@ crossterm = "0.25.0"
 ctrlc = { version = "3.2.4", features = ["termination"] }
 dirs = "4.0.0"
 fern = { version = "0.6.1", optional = true }
-futures = "0.3.21"
+futures = "0.3.25"
 futures-timer = "3.0.2"
 fxhash = "0.2.1"
 humantime = "2.1.0"
@@ -87,9 +87,9 @@ regex = "1.7.1"
 serde = { version = "1.0.152", features = ["derive"] }
 starship-battery = { version = "0.7.9", optional = true }
 sysinfo = "0.26.7"
-thiserror = "1.0.30"
+thiserror = "1.0.38"
 time = { version = "0.3.9", features = ["formatting", "macros"] }
-toml = "0.5.9"
+toml = "0.5.10"
 tui = "0.19.0"
 typed-builder = "0.10.0"
 unicode-segmentation = "1.10.0"
