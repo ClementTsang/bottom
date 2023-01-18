@@ -2,7 +2,7 @@
 name = "bottom"
 version = "0.7.2"
 authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
-edition = "2018"
+edition = "2018" # TODO: Bump to 2021 at some point?
 repository = "https://github.com/ClementTsang/bottom"
 keywords = ["cross-platform", "monitoring", "cli", "top", "tui"]
 license = "MIT"
@@ -99,7 +99,7 @@ unicode-width = "0.1.10"
 libc = "0.2.124"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "net", "sensors"] }
+heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "memory", "net", "sensors"] }
 procfs = { version = "0.14.2", default-features = false }
 smol = "1.2.5"
 
