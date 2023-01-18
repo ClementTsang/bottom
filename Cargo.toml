@@ -2,7 +2,7 @@
 name = "bottom"
 version = "0.7.2"
 authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
-edition = "2018" # TODO: Bump to 2021 at some point?
+edition = "2021"
 repository = "https://github.com/ClementTsang/bottom"
 keywords = ["cross-platform", "monitoring", "cli", "top", "tui"]
 license = "MIT"
