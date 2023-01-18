@@ -1,39 +1,49 @@
-// Copied from SO: https://stackoverflow.com/a/55231715
-#[cfg(target_os = "windows")]
-use winapi::{
-    shared::{minwindef::DWORD, ntdef::HANDLE},
-    um::{
-        processthreadsapi::{OpenProcess, TerminateProcess},
-        winnt::{PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE},
-    },
-};
+//! This file is meant to house (OS specific) implementations on how to kill processes.
 
-/// This file is meant to house (OS specific) implementations on how to kill processes.
 #[cfg(target_family = "unix")]
 use crate::utils::error::BottomError;
 use crate::Pid;
 
 #[cfg(target_os = "windows")]
+use windows::Win32::{
+    Foundation::HANDLE,
+    System::Threading::{
+        OpenProcess, TerminateProcess, PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE,
+    },
+};
+
+/// Based from [this SO answer](https://stackoverflow.com/a/55231715).
+#[cfg(target_os = "windows")]
 struct Process(HANDLE);
 
 #[cfg(target_os = "windows")]
 impl Process {
-    fn open(pid: DWORD) -> Result<Process, String> {
-        let pc = unsafe { OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE, 0, pid) };
-        if pc.is_null() {
-            return Err("OpenProcess".to_string());
+    fn open(pid: u32) -> Result<Process, String> {
+        match unsafe { OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE, false, pid) } {
+            Ok(process) => Ok(Process(process)),
+            Err(_) => Err("process may have already been terminated.".to_string()),
         }
-        Ok(Process(pc))
     }
 
     fn kill(self) -> Result<(), String> {
         let result = unsafe { TerminateProcess(self.0, 1) };
-        if result == 0 {
-            return Err("Failed to kill process".to_string());
+        if result.0 == 0 {
+            return Err("process may have already been terminated.".to_string());
         }
 
         Ok(())
     }
+}
+
+/// Kills a process, given a PID, for windows.
+#[cfg(target_os = "windows")]
+pub fn kill_process_given_pid(pid: Pid) -> crate::utils::error::Result<()> {
+    {
+        let process = Process::open(pid as u32)?;
+        process.kill()?;
+    }
+
+    Ok(())
 }
 
 /// Kills a process, given a PID, for unix.
@@ -61,17 +71,6 @@ pub fn kill_process_given_pid(pid: Pid, signal: usize) -> crate::utils::error::R
                 err,
             )))
         };
-    }
-
-    Ok(())
-}
-
-/// Kills a process, given a PID, for windows.
-#[cfg(target_os = "windows")]
-pub fn kill_process_given_pid(pid: Pid) -> crate::utils::error::Result<()> {
-    {
-        let process = Process::open(pid as DWORD)?;
-        process.kill()?;
     }
 
     Ok(())
