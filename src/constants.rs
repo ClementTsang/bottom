@@ -261,15 +261,17 @@ pub static NORD_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigC
 });
 
 // Help text
-pub const HELP_CONTENTS_TEXT: [&str; 8] = [
+pub const HELP_CONTENTS_TEXT: [&str; 10] = [
     "Either scroll or press the number key to go to the corresponding help menu section:",
     "1 - General",
     "2 - CPU widget",
     "3 - Process widget",
     "4 - Process search widget",
     "5 - Process sort widget",
-    "6 - Battery widget",
-    "7 - Basic memory widget",
+    "6 - Temperature widget",
+    "7 - Disk widget",
+    "8 - Battery widget",
+    "9 - Basic memory widget",
 ];
 
 // TODO [Help]: Search in help?
@@ -310,17 +312,17 @@ pub const GENERAL_HELP_TEXT: [&str; 32] = [
 ];
 
 pub const CPU_HELP_TEXT: [&str; 2] = [
-    "2 - CPU widget\n",
+    "2 - CPU widget",
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
 pub const PROCESS_HELP_TEXT: [&str; 15] = [
     "3 - Process widget",
     "dd, F9           Kill the selected process",
-    "c                Sort by CPU usage, press again to reverse sorting order",
-    "m                Sort by memory usage, press again to reverse sorting order",
-    "p                Sort by PID name, press again to reverse sorting order",
-    "n                Sort by process name, press again to reverse sorting order",
+    "c                Sort by CPU usage, press again to reverse",
+    "m                Sort by memory usage, press again to reverse",
+    "p                Sort by PID name, press again to reverse",
+    "n                Sort by process name, press again to reverse",
     "Tab              Group/un-group processes with the same name",
     "Ctrl-f, /        Open process search widget",
     "P                Toggle between showing the full command or just the process name",
@@ -384,7 +386,7 @@ pub const SEARCH_HELP_TEXT: [&str; 48] = [
 ];
 
 pub const SORT_HELP_TEXT: [&str; 6] = [
-    "5 - Sort widget\n",
+    "5 - Sort widget",
     "Down, 'j'        Scroll down in list",
     "Up, 'k'          Scroll up in list",
     "Mouse scroll     Scroll through sort widget",
@@ -392,24 +394,44 @@ pub const SORT_HELP_TEXT: [&str; 6] = [
     "Enter            Sort by current selected column",
 ];
 
+pub const TEMP_HELP_WIDGET: [&str; 3] = [
+    "6 - Temperature widget",
+    "'s'              Sort by sensor name, press again to reverse",
+    "'t'              Sort by temperature, press again to reverse",
+];
+
+pub const DISK_HELP_WIDGET: [&str; 9] = [
+    "7 - Disk widget",
+    "'d'              Sort by disk name, press again to reverse",
+    "'m'              Sort by disk mount, press again to reverse",
+    "'u'              Sort by disk usage, press again to reverse",
+    "'n'              Sort by disk free space, press again to reverse",
+    "'t'              Sort by total disk space, press again to reverse",
+    "'p'              Sort by disk usage percentage, press again to reverse",
+    "'r'              Sort by disk read activity, press again to reverse",
+    "'w'              Sort by disk write activity, press again to reverse",
+];
+
 pub const BATTERY_HELP_TEXT: [&str; 3] = [
-    "6 - Battery widget",
+    "8 - Battery widget",
     "Left             Go to previous battery",
     "Right            Go to next battery",
 ];
 
 pub const BASIC_MEM_HELP_TEXT: [&str; 2] = [
-    "7 - Basic memory widget",
+    "9 - Basic memory widget",
     "%                Toggle between values and percentages for memory usage",
 ];
 
-pub const HELP_TEXT: &[&[&str]] = &[
+pub const HELP_TEXT: [&[&str]; HELP_CONTENTS_TEXT.len()] = [
     &HELP_CONTENTS_TEXT,
     &GENERAL_HELP_TEXT,
     &CPU_HELP_TEXT,
     &PROCESS_HELP_TEXT,
     &SEARCH_HELP_TEXT,
     &SORT_HELP_TEXT,
+    &TEMP_HELP_WIDGET,
+    &DISK_HELP_WIDGET,
     &BATTERY_HELP_TEXT,
     &BASIC_MEM_HELP_TEXT,
 ];
@@ -691,3 +713,17 @@ pub const CONFIG_LAYOUT_HEAD: &str = r##"
 pub const CONFIG_FILTER_HEAD: &str = r##"
 # These options represent disabled entries for the temperature and disk widgets.
 "##;
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn help_menu_matches_entry_len() {
+        assert_eq!(
+            HELP_CONTENTS_TEXT.len(),
+            HELP_TEXT.len(),
+            "the two should be equal, or this test should be updated"
+        )
+    }
+}
