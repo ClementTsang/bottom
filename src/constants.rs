@@ -312,7 +312,7 @@ pub const GENERAL_HELP_TEXT: [&str; 32] = [
 ];
 
 pub const CPU_HELP_TEXT: [&str; 2] = [
-    "2 - CPU widget\n",
+    "2 - CPU widget",
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
@@ -386,7 +386,7 @@ pub const SEARCH_HELP_TEXT: [&str; 48] = [
 ];
 
 pub const SORT_HELP_TEXT: [&str; 6] = [
-    "5 - Sort widget\n",
+    "5 - Sort widget",
     "Down, 'j'        Scroll down in list",
     "Up, 'k'          Scroll up in list",
     "Mouse scroll     Scroll through sort widget",
@@ -395,13 +395,13 @@ pub const SORT_HELP_TEXT: [&str; 6] = [
 ];
 
 pub const TEMP_HELP_WIDGET: [&str; 3] = [
-    "6 - Temperature widget\n",
+    "6 - Temperature widget",
     "'s'              Sort by sensor name, press again to reverse",
     "'t'              Sort by temperature, press again to reverse",
 ];
 
 pub const DISK_HELP_WIDGET: [&str; 9] = [
-    "7 - Disk widget\n",
+    "7 - Disk widget",
     "'d'              Sort by disk name, press again to reverse",
     "'m'              Sort by disk mount, press again to reverse",
     "'u'              Sort by disk usage, press again to reverse",
