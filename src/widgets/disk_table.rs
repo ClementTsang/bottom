@@ -255,4 +255,9 @@ impl DiskTableWidget {
         }
         self.table.set_data(data);
     }
+
+    pub fn set_index(&mut self, index: usize) {
+        self.table.set_sort_index(index);
+        self.force_data_update();
+    }
 }

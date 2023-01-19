@@ -1159,8 +1159,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(0);
-                    disk.force_data_update();
+                    disk.set_index(0);
                 }
             }
             'g' => {
@@ -1207,8 +1206,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(1);
-                    disk.force_data_update();
+                    disk.set_index(1);
                 }
             }
             'p' => {
@@ -1223,8 +1221,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(5);
-                    disk.force_data_update();
+                    disk.set_index(5);
                 }
             }
             'P' => {
@@ -1249,8 +1246,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(3);
-                    disk.force_data_update();
+                    disk.set_index(3);
                 }
             }
             '?' => {
@@ -1274,8 +1270,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(4);
-                    disk.force_data_update();
+                    disk.set_index(4);
                 }
             }
             '+' => self.on_plus(),
@@ -1299,8 +1294,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(2);
-                    disk.force_data_update();
+                    disk.set_index(2);
                 }
             }
             'r' => {
@@ -1308,8 +1302,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(6);
-                    disk.force_data_update();
+                    disk.set_index(6);
                 }
             }
             'w' => {
@@ -1317,8 +1310,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(7);
-                    disk.force_data_update();
+                    disk.set_index(7);
                 }
             }
             'I' => self.invert_sort(),
