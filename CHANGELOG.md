@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Other
 
-- [#950](https://github.com/ClementTsang/bottom/pull/950): Update help menu for disk and temperature widgets to support sorting.
+- [#950](https://github.com/ClementTsang/bottom/pull/950): Update help menu for disk and temperature widgets with sorting support.
 
 ## [0.7.1] - 2023-01-06
 
