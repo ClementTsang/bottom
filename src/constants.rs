@@ -423,7 +423,7 @@ pub const BASIC_MEM_HELP_TEXT: [&str; 2] = [
     "%                Toggle between values and percentages for memory usage",
 ];
 
-pub const HELP_TEXT: &[&[&str]] = &[
+pub const HELP_TEXT: [&[&str]; HELP_CONTENTS_TEXT.len()] = [
     &HELP_CONTENTS_TEXT,
     &GENERAL_HELP_TEXT,
     &CPU_HELP_TEXT,
@@ -713,3 +713,17 @@ pub const CONFIG_LAYOUT_HEAD: &str = r##"
 pub const CONFIG_FILTER_HEAD: &str = r##"
 # These options represent disabled entries for the temperature and disk widgets.
 "##;
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn help_menu_matches_entry_len() {
+        assert_eq!(
+            HELP_CONTENTS_TEXT.len(),
+            HELP_TEXT.len(),
+            "the two should be equal, or this test should be updated"
+        )
+    }
+}

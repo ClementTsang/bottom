@@ -187,7 +187,7 @@ impl Painter {
         let mut styled_help_spans = Vec::new();
 
         // Init help text:
-        (*HELP_TEXT).iter().enumerate().for_each(|(itx, section)| {
+        HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
             if itx == 0 {
                 styled_help_spans.extend(
                     section
