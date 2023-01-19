@@ -77,9 +77,7 @@ impl Painter {
                 });
 
             let max_scroll_index = &mut app_state.help_dialog_state.scroll_state.max_scroll_index;
-            *max_scroll_index = (self.styled_help_text.len() as u16
-                + (constants::HELP_TEXT.len() as u16 - 5)
-                + overflow_buffer)
+            *max_scroll_index = (self.styled_help_text.len() as u16 + 3 + overflow_buffer)
                 .saturating_sub(draw_loc.height + 1);
 
             // Fix if over-scrolled

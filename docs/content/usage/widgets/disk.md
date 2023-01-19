@@ -33,6 +33,7 @@ Note that key bindings are generally case-sensitive.
 | ++u++              | Sort by amount used, press again to reverse sorting order           |
 | ++n++              | Sort by amount free, press again to reverse sorting order           |
 | ++t++              | Sort by total space available, press again to reverse sorting order |
+| ++p++              | Sort by percentage used, press again to reverse sorting order       |
 | ++r++              | Sort by read rate, press again to reverse sorting order             |
 | ++w++              | Sort by write rate, press again to reverse sorting order            |
 
