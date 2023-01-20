@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
+- [#994](https://github.com/ClementTsang/bottom/pull/994): Fix time graph labels not being styled.
+
 ## Features
 
 - [#950](https://github.com/ClementTsang/bottom/pull/950): Split usage into both usage percentage and usage value.
@@ -26,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
-- [#950](https://github.com/ClementTsang/bottom/pull/950): Fixes invalid sorting order for disk usage percentage.
+- [#950](https://github.com/ClementTsang/bottom/pull/950): Fix invalid sorting order for disk usage percentage.
 - [#952](https://github.com/ClementTsang/bottom/pull/952), [#960](https://github.com/ClementTsang/bottom/pull/960): Partially fix battery text getting cut off in small windows.
 - [#953](https://github.com/ClementTsang/bottom/pull/953): Fix CPU widget's 'all' label being missing on small sizes.
 

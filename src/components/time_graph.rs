@@ -71,8 +71,8 @@ impl<'a> TimeGraph<'a> {
             let xb_zero = (self.x_bounds[0] / 1000).to_string();
 
             let x_labels = vec![
-                Span::raw(concat_string!(xb_one, "s")),
-                Span::raw(concat_string!(xb_zero, "s")),
+                Span::styled(concat_string!(xb_one, "s"), self.graph_style),
+                Span::styled(concat_string!(xb_zero, "s"), self.graph_style),
             ];
 
             Axis::default()
@@ -90,7 +90,7 @@ impl<'a> TimeGraph<'a> {
             .labels(
                 self.y_labels
                     .iter()
-                    .map(|label| Span::raw(label.clone()))
+                    .map(|label| Span::styled(label.clone(), self.graph_style))
                     .collect(),
             )
     }
@@ -213,12 +213,13 @@ mod test {
     #[test]
     fn time_graph_gen_x_axis() {
         let tg = create_time_graph();
-
+        let style = Style::default().fg(Color::Red);
         let x_axis = tg.generate_x_axis();
+
         let actual = Axis::default()
             .bounds([-15000.0, 0.0])
-            .labels(vec![Span::raw("15s"), Span::raw("0s")])
-            .style(Style::default().fg(Color::Red));
+            .labels(vec![Span::styled("15s", style), Span::styled("0s", style)])
+            .style(style);
         assert_eq!(x_axis.bounds, actual.bounds);
         assert_eq!(x_axis.labels, actual.labels);
         assert_eq!(x_axis.style, actual.style);
@@ -227,12 +228,17 @@ mod test {
     #[test]
     fn time_graph_gen_y_axis() {
         let tg = create_time_graph();
-
+        let style = Style::default().fg(Color::Red);
         let y_axis = tg.generate_y_axis();
+
         let actual = Axis::default()
             .bounds([0.0, 100.5])
-            .labels(vec![Span::raw("0%"), Span::raw("50%"), Span::raw("100%")])
-            .style(Style::default().fg(Color::Red));
+            .labels(vec![
+                Span::styled("0%", style),
+                Span::styled("50%", style),
+                Span::styled("100%", style),
+            ])
+            .style(style);
 
         assert_eq!(y_axis.bounds, actual.bounds);
         assert_eq!(y_axis.labels, actual.labels);
