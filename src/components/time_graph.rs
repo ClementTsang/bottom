@@ -71,8 +71,8 @@ impl<'a> TimeGraph<'a> {
             let xb_zero = (self.x_bounds[0] / 1000).to_string();
 
             let x_labels = vec![
-                Span::raw(concat_string!(xb_one, "s")),
-                Span::raw(concat_string!(xb_zero, "s")),
+                Span::styled(concat_string!(xb_one, "s"), self.graph_style),
+                Span::styled(concat_string!(xb_zero, "s"), self.graph_style),
             ];
 
             Axis::default()
@@ -90,7 +90,7 @@ impl<'a> TimeGraph<'a> {
             .labels(
                 self.y_labels
                     .iter()
-                    .map(|label| Span::raw(label.clone()))
+                    .map(|label| Span::styled(label.clone(), self.graph_style))
                     .collect(),
             )
     }
