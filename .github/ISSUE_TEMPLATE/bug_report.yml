@@ -88,6 +88,8 @@ body:
         **Note: if you installed from `bottom` from cargo, please ensure that you installed the right crate (https://crates.io/crates/bottom).**
       placeholder: Installed bottom through the Arch official repos.
 
+  # TODO: After some point also add in a `btm check` invocation
+
   - type: textarea
     id: reproduce
     validations:

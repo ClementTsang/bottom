@@ -9,7 +9,7 @@ use crate::{
     utils::gen_util::str_width,
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
-        ProcWidget, TempWidgetState,
+        ProcWidgetState, TempWidgetState,
     },
 };
 
@@ -251,19 +251,19 @@ impl AppSearchState {
 }
 
 pub struct ProcState {
-    pub widget_states: HashMap<u64, ProcWidget>,
+    pub widget_states: HashMap<u64, ProcWidgetState>,
 }
 
 impl ProcState {
-    pub fn init(widget_states: HashMap<u64, ProcWidget>) -> Self {
+    pub fn init(widget_states: HashMap<u64, ProcWidgetState>) -> Self {
         ProcState { widget_states }
     }
 
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut ProcWidget> {
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut ProcWidgetState> {
         self.widget_states.get_mut(&widget_id)
     }
 
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&ProcWidget> {
+    pub fn get_widget_state(&self, widget_id: u64) -> Option<&ProcWidgetState> {
         self.widget_states.get(&widget_id)
     }
 }

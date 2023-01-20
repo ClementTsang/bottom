@@ -24,7 +24,7 @@ use crate::{
     utils::error::{self, BottomError},
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
-        ProcWidget, ProcWidgetMode, TempWidgetState,
+        ProcWidgetMode, ProcWidgetState, TempWidgetState,
     },
 };
 
@@ -198,7 +198,7 @@ pub fn build_app(
     let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
     let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::new();
     let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::new();
-    let mut proc_state_map: HashMap<u64, ProcWidget> = HashMap::new();
+    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::new();
     let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
     let mut disk_state_map: HashMap<u64, DiskTableWidget> = HashMap::new();
     let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::new();
@@ -326,7 +326,7 @@ pub fn build_app(
 
                             proc_state_map.insert(
                                 widget.widget_id,
-                                ProcWidget::new(
+                                ProcWidgetState::new(
                                     &app_config_fields,
                                     mode,
                                     is_case_sensitive,

@@ -72,7 +72,7 @@ type ProcessTable = SortDataTable<ProcWidgetData, ProcColumn>;
 type SortTable = DataTable<Cow<'static, str>, SortTableColumn>;
 type StringPidMap = FxHashMap<String, Vec<Pid>>;
 
-pub struct ProcWidget {
+pub struct ProcWidgetState {
     pub mode: ProcWidgetMode,
 
     /// The state of the search box.
@@ -92,7 +92,7 @@ pub struct ProcWidget {
     pub force_update_data: bool,
 }
 
-impl ProcWidget {
+impl ProcWidgetState {
     pub const PID_OR_COUNT: usize = 0;
     pub const PROC_NAME_OR_CMD: usize = 1;
     pub const CPU: usize = 2;
@@ -222,7 +222,7 @@ impl ProcWidget {
 
         let id_pid_map = FxHashMap::default();
 
-        let mut table = ProcWidget {
+        let mut table = ProcWidgetState {
             proc_search: process_search_state,
             table,
             sort_table,
@@ -240,7 +240,7 @@ impl ProcWidget {
     pub fn is_using_command(&self) -> bool {
         self.table
             .columns
-            .get(ProcWidget::PROC_NAME_OR_CMD)
+            .get(ProcWidgetState::PROC_NAME_OR_CMD)
             .map(|col| matches!(col.inner(), ProcColumn::Command))
             .unwrap_or(false)
     }
@@ -248,7 +248,7 @@ impl ProcWidget {
     pub fn is_mem_percent(&self) -> bool {
         self.table
             .columns
-            .get(ProcWidget::MEM)
+            .get(ProcWidgetState::MEM)
             .map(|col| matches!(col.inner(), ProcColumn::MemoryPercent))
             .unwrap_or(false)
     }
