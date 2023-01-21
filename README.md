@@ -155,16 +155,16 @@ A `.deb` file is provided on each [stable release](https://github.com/ClementTsa
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_0.7.1_amd64.deb
-sudo dpkg -i bottom_0.7.1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.8.0/bottom_0.8.0_amd64.deb
+sudo dpkg -i bottom_0.8.0_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_0.7.1_arm64.deb
-sudo dpkg -i bottom_0.7.1_arm64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.8.0/bottom_0.8.0_arm64.deb
+sudo dpkg -i bottom_0.8.0_arm64.deb
 
 # ARM
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.7.1/bottom_0.7.1_armhf.deb
-sudo dpkg -i bottom_0.7.1_armhf.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.8.0/bottom_0.8.0_armhf.deb
+sudo dpkg -i bottom_0.8.0_armhf.deb
 ```
 
 ### Snap
@@ -244,7 +244,7 @@ choco install bottom
 
 # The version number may need to be specified for newer releases for the first
 # few hours/days during the approval process:
-choco install bottom --version=0.7.1
+choco install bottom --version=0.8.0
 ```
 
 ### winget
@@ -276,7 +276,7 @@ rustup update stable
 
 # Option 1 - Download from releases and install
 curl -LO https://github.com/ClementTsang/bottom/archive/0.7.0.tar.gz
-tar -xzvf 0.7.1.tar.gz
+tar -xzvf 0.8.0.tar.gz
 cargo install --path .
 
 # Option 2 - Clone from master and install manually
