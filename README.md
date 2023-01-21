@@ -111,9 +111,12 @@ For more details on supported platforms and known problems, check out [the docum
 
 ### Unofficial
 
-bottom may work on a number of platforms that aren't officially supported - these platforms may not be properly tested
-by maintainers prior to a stable release, or may receive more limited support, or missing features/problems that may
-not be fixed. Some of these may eventually be officially supported (e.g., FreeBSD, M1 macOS devices).
+bottom may work on a number of platforms that aren't officially supported. Note that unsupported platforms:
+- Might not be tested in CI to build or pass tests (see [here](./.github/workflows/ci.yml) for checked platforms).
+- Might not be properly tested by maintainers prior to a stable release.
+- May only receive limited support, such as missing features or bugs that may not be fixed.
+
+Note that some unsupported platforms may eventually be officially supported (e.g., FreeBSD, M1 macOS devices).
 
 A non-comprehensive list of some currently unofficially supported platforms that may compile/work include:
 
