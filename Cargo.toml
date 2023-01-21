@@ -94,6 +94,7 @@ tui = "0.19.0"
 typed-builder = "0.10.0"
 unicode-segmentation = "1.9.0"
 unicode-width = "0.1.9"
+gethostname = "0.4.1"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.124"

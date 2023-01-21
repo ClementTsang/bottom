@@ -27,7 +27,7 @@ use bottom::{
 use crossterm::{
     event::{EnableBracketedPaste, EnableMouseCapture},
     execute,
-    terminal::{enable_raw_mode, EnterAlternateScreen},
+    terminal::{enable_raw_mode, EnterAlternateScreen, SetTitle},
 };
 use tui::{backend::CrosstermBackend, Terminal};
 
@@ -123,7 +123,8 @@ fn main() -> Result<()> {
         stdout_val,
         EnterAlternateScreen,
         EnableMouseCapture,
-        EnableBracketedPaste
+        EnableBracketedPaste,
+        SetTitle(get_terminal_name(&matches, &config))
     )?;
     enable_raw_mode()?;
 
