@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
+- [#950](https://github.com/ClementTsang/bottom/pull/950): Update help menu for disk and temperature widgets with sorting support.
 - [#994](https://github.com/ClementTsang/bottom/pull/994): Fix time graph labels not being styled.
 
 ## Features
@@ -18,11 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes
 
 - [#974](https://github.com/ClementTsang/bottom/pull/974): Hide battery duration section if the value is unknown. Also update shortened text.
-- [#975](https://github.com/ClementTsang/bottom/pull/975): Automatically hide the battery widget if no batteries are found.
+- [#975](https://github.com/ClementTsang/bottom/pull/975): Automatically hide the battery widget if no batteries are found but `--battery` is enabled.
 
 ## Other
 
-- [#950](https://github.com/ClementTsang/bottom/pull/950): Update help menu for disk and temperature widgets with sorting support.
+- [#969](https://github.com/ClementTsang/bottom/pull/969): Follow Debian conventions for naming generated `.deb` binaries.
 
 ## [0.7.1] - 2023-01-06
 
