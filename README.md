@@ -278,7 +278,7 @@ to do so using the most recent version of stable Rust, which is how the binaries
 rustup update stable
 
 # Option 1 - Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.7.0.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.8.0.tar.gz
 tar -xzvf 0.8.0.tar.gz
 cargo install --path .
 
