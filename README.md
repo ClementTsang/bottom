@@ -112,6 +112,7 @@ For more details on supported platforms and known problems, check out [the docum
 ### Unofficial
 
 bottom may work on a number of platforms that aren't officially supported. Note that unsupported platforms:
+
 - Might not be tested in CI to build or pass tests (see [here](./.github/workflows/ci.yml) for checked platforms).
 - Might not be properly tested by maintainers prior to a stable release.
 - May only receive limited support, such as missing features or bugs that may not be fixed.
@@ -290,7 +291,7 @@ cargo install --path .
 # Option 3 - Clone and install directly from the repo all via Cargo
 cargo install --git https://github.com/ClementTsang/bottom
 
-# You can also want to pass in the target-cpu=native flag for
+# You can also pass in the target-cpu=native flag for
 # better CPU-specific optimizations. For example:
 RUSTFLAGS="-C target-cpu=native" cargo install --path .
 ```
@@ -312,7 +313,7 @@ The release binaries are packaged with shell auto-completion files for bash, fis
 - For zsh, move `_btm` to one of your `$fpath` directories.
 - For PowerShell, add `. _btm.ps1` to your PowerShell
   [profile](<https://docs.microsoft.com/en-us/previous-versions//bb613488(v=vs.85)>).
-  
+
 The individual auto-completion files are also included in the stable/nightly releases as `completion.tar.gz`.
 
 ## Usage
