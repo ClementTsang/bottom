@@ -111,7 +111,7 @@ impl ColumnHeader for DiskWidgetColumn {
             DiskWidgetColumn::Mount => "Mount(m)",
             DiskWidgetColumn::Used => "Used(u)",
             DiskWidgetColumn::Free => "Free(n)",
-            DiskWidgetColumn::UsedPercent => "Used(u)",
+            DiskWidgetColumn::UsedPercent => "Used%(p)",
             DiskWidgetColumn::FreePercent => "Free%",
             DiskWidgetColumn::Total => "Total(t)",
             DiskWidgetColumn::IoRead => "R/s(r)",
@@ -213,9 +213,10 @@ impl DiskTableWidget {
         let columns = [
             SortColumn::soft(DiskWidgetColumn::Disk, Some(0.2)),
             SortColumn::soft(DiskWidgetColumn::Mount, Some(0.2)),
-            SortColumn::hard(DiskWidgetColumn::UsedPercent, 9).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::Used, 8).default_descending(),
             SortColumn::hard(DiskWidgetColumn::Free, 8).default_descending(),
             SortColumn::hard(DiskWidgetColumn::Total, 9).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::UsedPercent, 9).default_descending(),
             SortColumn::hard(DiskWidgetColumn::IoRead, 10).default_descending(),
             SortColumn::hard(DiskWidgetColumn::IoWrite, 11).default_descending(),
         ];
@@ -253,5 +254,10 @@ impl DiskTableWidget {
             column.sort_by(&mut data, self.table.order());
         }
         self.table.set_data(data);
+    }
+
+    pub fn set_index(&mut self, index: usize) {
+        self.table.set_sort_index(index);
+        self.force_data_update();
     }
 }

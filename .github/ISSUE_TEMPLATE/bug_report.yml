@@ -34,9 +34,8 @@ body:
     attributes:
       label: What operating system and version are you using?
       description: >
-        Please provide what operating system(s) and version(s) you are running that
-        experiences the described issue. Note that operating systems that
-        [are not officially supported](https://github.com/ClementTsang/bottom#support)
+        Please provide what operating system(s) and version(s) you are running that experiences the described issue.
+        Note that operating systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
         may not be prioritized/resolved.
       placeholder: Arch Linux 5.18.15
 
@@ -62,7 +61,7 @@ body:
       label: What terminal(s) are you running `bottom` on?
       description: >
         Please provide what terminal(s) you are running `bottom` on (e.g. Konsole, kitty)
-        that are experiencing the issue, as well as their version and any relevant settings.
+        that are experiencing the issue, as well as their version and any relevant settings (e.g. terminal theme).
       placeholder: kitty 0.25.2
 
   - type: input
@@ -74,7 +73,7 @@ body:
       description: >
         Please provide which version of `bottom` you're running, which you can find with `btm -V`. If you are using
         a nightly/non-release version, please also specify that.
-      placeholder: 0.7.1
+      placeholder: 0.8.0
 
   - type: input
     id: install
@@ -87,6 +86,8 @@ body:
 
         **Note: if you installed from `bottom` from cargo, please ensure that you installed the right crate (https://crates.io/crates/bottom).**
       placeholder: Installed bottom through the Arch official repos.
+
+  # TODO: After some point also add in a `btm check` invocation
 
   - type: textarea
     id: reproduce

@@ -344,6 +344,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "felipesuri",
+      "name": "felipesuri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50281523?v=4",
+      "profile": "http://felipesuri.com",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

@@ -30,7 +30,7 @@ pub struct Axis<'a> {
     pub bounds: [f64; 2],
     /// A list of labels to put to the left or below the axis
     pub labels: Option<Vec<Span<'a>>>,
-    /// The style used to draw the axis itself
+    /// The style used to draw the axis itself - NOT The labels.
     pub style: Style,
 }
 

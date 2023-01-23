@@ -21,7 +21,7 @@ pub enum BottomError {
     #[error("Error caused by Crossterm, {0}")]
     CrosstermError(String),
     /// An error to represent generic errors.
-    #[error("Generic error, {0}")]
+    #[error("Error, {0}")]
     GenericError(String),
     /// An error to represent errors with fern.
     #[error("Fern error, {0}")]

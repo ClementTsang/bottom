@@ -5,9 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.2]/[0.8.0] - ???
+## [0.8.0] - 2023-01-22
 
 ## Bug Fixes
+
+- [#950](https://github.com/ClementTsang/bottom/pull/950): Update help menu for disk and temperature widgets with sorting support.
+- [#994](https://github.com/ClementTsang/bottom/pull/994): Fix time graph labels not being styled.
 
 ## Features
 
@@ -16,15 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes
 
 - [#974](https://github.com/ClementTsang/bottom/pull/974): Hide battery duration section if the value is unknown. Also update shortened text.
-- [#975](https://github.com/ClementTsang/bottom/pull/975): Automatically hide the battery widget if no batteries are found.
+- [#975](https://github.com/ClementTsang/bottom/pull/975): Automatically hide the battery widget if no batteries are found but `--battery` is enabled.
 
 ## Other
+
+- [#969](https://github.com/ClementTsang/bottom/pull/969): Follow Debian conventions for naming generated `.deb` binaries.
 
 ## [0.7.1] - 2023-01-06
 
 ## Bug Fixes
 
-- [#950](https://github.com/ClementTsang/bottom/pull/950): Fixes invalid sorting order for disk usage percentage.
+- [#950](https://github.com/ClementTsang/bottom/pull/950): Fix invalid sorting order for disk usage percentage.
 - [#952](https://github.com/ClementTsang/bottom/pull/952), [#960](https://github.com/ClementTsang/bottom/pull/960): Partially fix battery text getting cut off in small windows.
 - [#953](https://github.com/ClementTsang/bottom/pull/953): Fix CPU widget's 'all' label being missing on small sizes.
 

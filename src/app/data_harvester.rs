@@ -182,7 +182,7 @@ impl DataCollector {
                 self.sys.refresh_networks_list();
             }
 
-            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_cpu {
+            if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
                 self.sys.refresh_cpu();
             }
 
