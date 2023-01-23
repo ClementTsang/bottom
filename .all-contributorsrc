@@ -127,15 +127,6 @@
       ]
     },
     {
-      "login": "georgybog",
-      "name": "georgybog",
-      "avatar_url": "https://avatars.githubusercontent.com/u/60893791?v=4",
-      "profile": "https://github.com/georgybog",
-      "contributions": [
-        "doc"
-      ]
-    },
-    {
       "login": "briandipalma",
       "name": "Brian Di Palma",
       "avatar_url": "https://avatars.githubusercontent.com/u/1597820?v=4",
@@ -332,6 +323,24 @@
       "name": "Chon Sou",
       "avatar_url": "https://avatars.githubusercontent.com/u/35537528?v=4",
       "profile": "https://github.com/sou-chon",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Drsheppard01",
+      "name": "DrSheppard",
+      "avatar_url": "https://avatars.githubusercontent.com/u/60893791?v=4",
+      "profile": "https://github.com/Drsheppard01",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "RaresCon",
+      "name": "Rareș Constantin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/95525840?v=4",
+      "profile": "https://github.com/RaresCon",
       "contributions": [
         "code"
       ]

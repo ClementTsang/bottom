@@ -5,18 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.1] - ???
+## [0.7.2]/[0.8.0] - ???
 
 ## Bug Fixes
 
-- [#952](https://github.com/ClementTsang/bottom/pull/952): Partially fix battery text getting cut off in small windows.
-- [#953](https://github.com/ClementTsang/bottom/pull/953): Fix CPU widget's 'all' label being missing on small sizes.
+## Features
+
+- [#950](https://github.com/ClementTsang/bottom/pull/950): Split usage into both usage percentage and usage value.
 
 ## Changes
 
-## Features
+- [#974](https://github.com/ClementTsang/bottom/pull/974): Hide battery duration section if the value is unknown. Also update shortened text.
+- [#975](https://github.com/ClementTsang/bottom/pull/975): Automatically hide the battery widget if no batteries are found.
 
-- [#950](https://github.com/ClementTsang/bottom/pull/950): Split usage into usage percentage and value.
+## Other
+
+## [0.7.1] - 2023-01-06
+
+## Bug Fixes
+
+- [#950](https://github.com/ClementTsang/bottom/pull/950): Fixes invalid sorting order for disk usage percentage.
+- [#952](https://github.com/ClementTsang/bottom/pull/952), [#960](https://github.com/ClementTsang/bottom/pull/960): Partially fix battery text getting cut off in small windows.
+- [#953](https://github.com/ClementTsang/bottom/pull/953): Fix CPU widget's 'all' label being missing on small sizes.
 
 ## Other
 

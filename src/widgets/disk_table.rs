@@ -111,7 +111,7 @@ impl ColumnHeader for DiskWidgetColumn {
             DiskWidgetColumn::Mount => "Mount(m)",
             DiskWidgetColumn::Used => "Used(u)",
             DiskWidgetColumn::Free => "Free(n)",
-            DiskWidgetColumn::UsedPercent => "Used%(p)",
+            DiskWidgetColumn::UsedPercent => "Used(u)",
             DiskWidgetColumn::FreePercent => "Free%",
             DiskWidgetColumn::Total => "Total(t)",
             DiskWidgetColumn::IoRead => "R/s(r)",
@@ -213,10 +213,9 @@ impl DiskTableWidget {
         let columns = [
             SortColumn::soft(DiskWidgetColumn::Disk, Some(0.2)),
             SortColumn::soft(DiskWidgetColumn::Mount, Some(0.2)),
-            SortColumn::hard(DiskWidgetColumn::Used, 8).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::UsedPercent, 9).default_descending(),
             SortColumn::hard(DiskWidgetColumn::Free, 8).default_descending(),
             SortColumn::hard(DiskWidgetColumn::Total, 9).default_descending(),
-            SortColumn::hard(DiskWidgetColumn::UsedPercent, 9).default_descending(),
             SortColumn::hard(DiskWidgetColumn::IoRead, 10).default_descending(),
             SortColumn::hard(DiskWidgetColumn::IoWrite, 11).default_descending(),
         ];

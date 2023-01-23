@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.7.1"
+version = "0.7.2"
 authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
 edition = "2018"
 repository = "https://github.com/ClementTsang/bottom"
@@ -63,37 +63,37 @@ deploy = ["battery", "gpu", "zfs"]
 
 [dependencies]
 anyhow = "1.0.57"
-backtrace = "0.3.65"
+backtrace = "0.3.67"
 cfg-if = "1.0.0"
 clap = { version = "3.1.12", features = ["default", "cargo", "wrap_help"] }
 const_format = "0.2.30"
 concat-string = "1.0.1"
 crossterm = "0.25.0"
-ctrlc = { version = "3.1.9", features = ["termination"] }
+ctrlc = { version = "3.2.4", features = ["termination"] }
 dirs = "4.0.0"
 fern = { version = "0.6.1", optional = true }
-futures = "0.3.21"
+futures = "0.3.25"
 futures-timer = "3.0.2"
 fxhash = "0.2.1"
 humantime = "2.1.0"
 humantime-serde = "1.1.1"
-indexmap = "1.8.1"
-itertools = "0.10.3"
+indexmap = "1.9.2"
+itertools = "0.10.5"
 kstring = { version = "2.0.0", features = ["arc"] }
-log = { version = "0.4.16", optional = true }
+log = { version = "0.4.17", optional = true }
 nvml-wrapper = { version = "0.8.0", optional = true }
 once_cell = "1.5.2"
-regex = "1.5.5"
-serde = { version = "1.0.136", features = ["derive"] }
+regex = "1.7.1"
+serde = { version = "1.0.152", features = ["derive"] }
 starship-battery = { version = "0.7.9", optional = true }
 sysinfo = "0.26.7"
-thiserror = "1.0.30"
+thiserror = "1.0.38"
 time = { version = "0.3.9", features = ["formatting", "macros"] }
-toml = "0.5.9"
+toml = "0.5.10"
 tui = "0.19.0"
 typed-builder = "0.10.0"
-unicode-segmentation = "1.9.0"
-unicode-width = "0.1.9"
+unicode-segmentation = "1.10.0"
+unicode-width = "0.1.10"
 gethostname = "0.4.1"
 
 [target.'cfg(unix)'.dependencies]
@@ -101,7 +101,7 @@ libc = "0.2.124"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "net", "sensors"] }
-procfs = { version = "0.14.1", default-features = false }
+procfs = { version = "0.14.2", default-features = false }
 smol = "1.2.5"
 
 [target.'cfg(target_os = "macos")'.dependencies]

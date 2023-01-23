@@ -1183,7 +1183,7 @@ impl App {
             'k' => self.on_up_key(),
             'j' => self.on_down_key(),
             'f' => {
-                self.frozen_state.toggle(&self.data_collection); // TODO: Unthawing should force a full data refresh and redraw immediately.
+                self.frozen_state.toggle(&self.data_collection); // TODO: Thawing should force a full data refresh and redraw immediately.
             }
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
@@ -1219,12 +1219,6 @@ impl App {
                     {
                         proc_widget_state.select_column(ProcWidget::PID_OR_COUNT);
                     }
-                } else if let Some(disk) = self
-                    .disk_state
-                    .get_mut_widget_state(self.current_widget.widget_id)
-                {
-                    disk.table.set_sort_index(5);
-                    disk.force_data_update();
                 }
             }
             'P' => {
@@ -1308,7 +1302,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(6);
+                    disk.table.set_sort_index(5);
                     disk.force_data_update();
                 }
             }
@@ -1317,7 +1311,7 @@ impl App {
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    disk.table.set_sort_index(7);
+                    disk.table.set_sort_index(6);
                     disk.force_data_update();
                 }
             }

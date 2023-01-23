@@ -2,7 +2,7 @@
 
 !!! Warning
 
-    The battery features are unavailable if the binary is compiled with the `battery` feature disabled!
+    The battery features are unavailable if the binary is compiled with the `battery` feature disabled or if there are no batteries on the system!
 
 The battery widget provides information about batteries on the system.
 
