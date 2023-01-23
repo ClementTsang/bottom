@@ -124,8 +124,13 @@ fn main() -> Result<()> {
         EnterAlternateScreen,
         EnableMouseCapture,
         EnableBracketedPaste,
-        SetTitle(get_terminal_name(&matches, &config))
     )?;
+
+    let use_terminal_name = get_use_terminal_name(&matches, &config);
+    if use_terminal_name.0 {
+        execute!(stdout_val, SetTitle(use_terminal_name.1),)?;
+    }
+
     enable_raw_mode()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;

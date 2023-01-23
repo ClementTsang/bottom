@@ -734,29 +734,24 @@ pub fn get_app_use_regex(matches: &ArgMatches, config: &Config) -> bool {
     false
 }
 
-pub fn get_terminal_name(matches: &ArgMatches, config: &Config) -> String {
+pub fn get_use_terminal_name(matches: &ArgMatches, config: &Config) -> (bool, String) {
     if matches.is_present("title") {
-        if let Some(custom_name) = matches.value_of("title") {
-            String::from(custom_name)
+        return if let Some(custom_name) = matches.value_of("title") {
+            (true, String::from(custom_name))
         } else {
-            String::from("Bottom")
-        }
+            (false, String::from(""))
+        };
     } else if let Some(flags) = &config.flags {
         if let Some(title_to_hostname) = flags.title_to_hostname {
             if title_to_hostname {
-                match gethostname().into_string() {
-                    Ok(hostname) => hostname,
-                    Err(_) => String::from("Bottom"),
-                }
-            } else {
-                String::from("Bottom")
+                return match gethostname().into_string() {
+                    Ok(hostname) => (title_to_hostname, format!("btm ({})", hostname)),
+                    Err(_) => (false, String::from("")),
+                };
             }
-        } else {
-            String::from("Bottom")
         }
-    } else {
-        String::from("Bottom")
     }
+    (false, String::from(""))
 }
 
 fn get_hide_time(matches: &ArgMatches, config: &Config) -> bool {
