@@ -1,4 +1,5 @@
 #![warn(rust_2018_idioms)]
+#![allow(clippy::uninlined_format_args)]
 #[allow(unused_imports)]
 #[cfg(feature = "log")]
 #[macro_use]
