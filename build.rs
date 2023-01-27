@@ -13,8 +13,7 @@ fn create_dir(dir: &Path) -> io::Result<()> {
         Ok(()) => {}
         Err(err) => {
             eprintln!(
-            "Failed to create a directory at location {:?}, encountered error {:?}.  Aborting...",
-            dir, err
+            "Failed to create a directory at location {dir:?}, encountered error {err:?}.  Aborting...",
         );
         }
     }
