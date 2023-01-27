@@ -1055,14 +1055,21 @@
 
 
 <h1 id="packaging-and-distribution"><a class="toclink" href="#packaging-and-distribution">Packaging and Distribution</a></h1>
-<p>Package maintainers are always welcome and appreciated! Here's some info on how one can help with package distribution and bottom.</p>
+<p>Package maintainers are always welcome and appreciated! Here's some info on how one can help with package distribution
+and bottom.</p>
 <h2 id="pre-built-binaries"><a class="toclink" href="#pre-built-binaries">Pre-built binaries</a></h2>
-<p>The latest stable release can be found <a href="https://github.com/ClementTsang/bottom/releases/latest">here</a>, where you can find pre-built binaries in either a <code>tar.gz</code> or <code>zip</code> format.
-Binaries here also include automatically generated shell completion files for zsh, bash, fish, and Powershell, which you may want to also install during the packaging
+<p>The latest stable release can be found <a href="https://github.com/ClementTsang/bottom/releases/latest">here</a>, where you ca
+find pre-built binaries in either a <code>tar.gz</code> or <code>zip</code> format. Binaries here also include automatically generated shell
+completion files for zsh, bash, fish, and Powershell, which you may want to also install during the packaging
 process.</p>
-<p>You can also find a nightly build in the <a href="https://github.com/ClementTsang/bottom/releases">releases page</a>, built every day at 00:00 UTC off of the master branch.</p>
+<p>You can also find a nightly build in the <a href="https://github.com/ClementTsang/bottom/releases">releases page</a>, built every
+day at 00:00 UTC off of the master branch.</p>
+<p>In both cases, we use a combination of GitHub Actions and CirrusCI (mainly for FreeBSD and macOS M1) to create our
+release binaries. <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml"><code>build_releases.yml</code></a>
+contains the GitHub Action workflow used to do both of these, if reference is needed.</p>
 <h2 id="building-manually"><a class="toclink" href="#building-manually">Building manually</a></h2>
-<p>If you want to manually build bottom rather than distributing a pre-built binary, you'll need the most recent version of stable Rust, which you can get with:</p>
+<p>If you want to manually build bottom rather than distributing a pre-built binary, you'll need the most recent version
+of stable Rust, which you can get with:</p>
 <div class="highlight"><pre><span></span><code>rustup<span class="w"> </span>update<span class="w"> </span>stable
 </code></pre></div>
 <p>You'll then want to build with:</p>
@@ -1088,9 +1095,10 @@ script.</p>
 <p>For more information, you may want to look at either the <a href="https://github.com/ClementTsang/bottom/blob/master/build.rs"><code>build.rs</code></a>
 file or the <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml">binary build CI workflow</a>.</p>
 <h2 id="adding-an-installation-source"><a class="toclink" href="#adding-an-installation-source">Adding an installation source</a></h2>
-<p>Once you've finished your installation source, if you want to mention it in the main bottom repo, fork the repo and add the installation method and any details to
-the <a href="https://github.com/ClementTsang/bottom/blob/master/README.md"><code>README.md</code></a> file under the <a href="https://github.com/ClementTsang/bottom#installation">Installation</a> section.
-Once that's done, open a pull request - these will usually be approved of very quickly.</p>
+<p>Once you've finished your installation source, if you want to mention it in the main bottom repo, fork the repo and add
+the installation method and any details to the <a href="https://github.com/ClementTsang/bottom/blob/master/README.md"><code>README.md</code></a>
+file under the <a href="https://github.com/ClementTsang/bottom#installation">Installation</a> section, as well as a corresponding
+table of contents entry. Once that's done, open a pull request - these will usually be approved of very quickly.</p>
 <p>You can find more info on the contribution process <a href="../issues-and-pull-requests/#pull-requests">here</a>.</p>
 
 
