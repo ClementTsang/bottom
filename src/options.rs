@@ -625,21 +625,22 @@ fn get_use_basic_mode(matches: &ArgMatches, config: &Config) -> bool {
 fn get_default_time_value(
     matches: &ArgMatches, config: &Config, retention_ms: u64,
 ) -> error::Result<u64> {
-    let default_time = if let Some(default_time_value) = matches.get_one::<String>("default_time_value") {
-        default_time_value.parse::<u64>().map_err(|_| {
-            BottomError::ConfigError(
-                "could not parse as a valid 64-bit unsigned integer".to_string(),
-            )
-        })?
-    } else if let Some(flags) = &config.flags {
-        if let Some(default_time_value) = flags.default_time_value {
-            default_time_value
+    let default_time =
+        if let Some(default_time_value) = matches.get_one::<String>("default_time_value") {
+            default_time_value.parse::<u64>().map_err(|_| {
+                BottomError::ConfigError(
+                    "could not parse as a valid 64-bit unsigned integer".to_string(),
+                )
+            })?
+        } else if let Some(flags) = &config.flags {
+            if let Some(default_time_value) = flags.default_time_value {
+                default_time_value
+            } else {
+                DEFAULT_TIME_MILLISECONDS
+            }
         } else {
             DEFAULT_TIME_MILLISECONDS
-        }
-    } else {
-        DEFAULT_TIME_MILLISECONDS
-    };
+        };
 
     if default_time < 30000 {
         return Err(BottomError::ConfigError(
@@ -789,7 +790,8 @@ fn get_default_widget_and_count(
         None
     };
 
-    let widget_count = if let Some(widget_count) = matches.get_one::<String>("default_widget_count") {
+    let widget_count = if let Some(widget_count) = matches.get_one::<String>("default_widget_count")
+    {
         Some(widget_count.parse::<u128>()?)
     } else if let Some(flags) = &config.flags {
         flags
@@ -1052,7 +1054,7 @@ fn get_network_use_binary_prefix(matches: &ArgMatches, config: &Config) -> bool 
 
 fn get_retention_ms(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
- 
+
     if let Some(retention) = matches.get_one::<String>("retention") {
         humantime::parse_duration(retention)
             .map(|dur| dur.as_millis() as u64)
