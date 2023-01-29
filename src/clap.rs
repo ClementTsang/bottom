@@ -1,5 +1,5 @@
-use clap::*;
 use clap::builder::PossibleValuesParser;
+use clap::*;
 
 const TEMPLATE: &str = "\
 {bin} {version}
