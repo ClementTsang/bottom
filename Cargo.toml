@@ -127,8 +127,8 @@ assert_cmd = "2.0.4"
 predicates = "2.1.1"
 
 [build-dependencies]
-clap = { version = "3.1.12", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "3.1.2"
+clap = { version = "3.2.2", features = ["default", "cargo", "wrap_help"] }
+clap_complete = "3.2.2"
 clap_mangen = "0.1.6"
 
 [package.metadata.deb]
