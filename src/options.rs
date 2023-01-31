@@ -1060,7 +1060,7 @@ fn get_retention_ms(matches: &ArgMatches, config: &Config) -> error::Result<u64>
             .map(|dur| dur.as_millis() as u64)
             .map_err(|err| BottomError::ConfigError(format!("invalid retention duration: {err:?}")))
     } else if let Some(flags) = &config.flags {
-        if let Some(retention) = &flags.retention {
+        if let Some(retention) = flags.retention {
             Ok(retention.as_millis() as u64)
         } else {
             Ok(DEFAULT_RETENTION_MS)

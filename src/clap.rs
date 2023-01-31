@@ -238,7 +238,7 @@ pub fn build_app() -> Command<'static> {
         .long("color")
         .takes_value(true)
         .value_name("COLOR SCHEME")
-        .value_parser(PossibleValuesParser::new(vec![
+        .value_parser(PossibleValuesParser::new([
             "default",
             "default-light",
             "gruvbox",
