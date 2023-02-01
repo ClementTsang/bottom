@@ -65,7 +65,7 @@ deploy = ["battery", "gpu", "zfs"]
 anyhow = "1.0.57"
 backtrace = "0.3.67"
 cfg-if = "1.0.0"
-clap = { version = "3.1.12", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "3.1.18", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 const_format = "0.2.30"
 crossterm = "0.25.0"
@@ -115,6 +115,7 @@ features = ["user-hooks"]
 [target.'cfg(target_os = "windows")'.dependencies]
 heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "memory"] }
 windows = { version = "0.44.0", features = ["Win32_System_Threading", "Win32_Foundation"] }
+
 winapi = "0.3.9"
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
@@ -128,8 +129,8 @@ predicates = "2.1.1"
 
 [build-dependencies]
 clap = { version = "3.2.2", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "3.2.2"
-clap_mangen = "0.1.6"
+clap_complete = "3.2.4"
+clap_mangen = "0.1.11"
 
 [package.metadata.deb]
 section = "utility"
