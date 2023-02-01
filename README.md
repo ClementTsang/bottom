@@ -401,6 +401,7 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Drsheppard01"><img src="https://avatars.githubusercontent.com/u/60893791?v=4?s=100" width="100px;" alt="DrSheppard"/><br /><sub><b>DrSheppard</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Drsheppard01" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/RaresCon"><img src="https://avatars.githubusercontent.com/u/95525840?v=4?s=100" width="100px;" alt="Rareș Constantin"/><br /><sub><b>Rareș Constantin</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=RaresCon" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://felipesuri.com"><img src="https://avatars.githubusercontent.com/u/50281523?v=4?s=100" width="100px;" alt="felipesuri"/><br /><sub><b>felipesuri</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=felipesuri" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/spital"><img src="https://avatars.githubusercontent.com/u/11034264?v=4?s=100" width="100px;" alt="spital"/><br /><sub><b>spital</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=spital" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
