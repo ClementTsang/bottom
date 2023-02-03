@@ -863,8 +863,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-should-i-add-documentation" class="md-nav__link">
-    How should I add documentation?
+  <a href="#how-should-i-addupdate-documentation" class="md-nav__link">
+    How should I add/update documentation?
   </a>
   
 </li>
@@ -1044,35 +1044,43 @@
 <h1 id="documentation"><a class="toclink" href="#documentation">Documentation</a></h1>
 <h2 id="when-should-documentation-changes-be-done"><a class="toclink" href="#when-should-documentation-changes-be-done">When should documentation changes be done?</a></h2>
 <ul>
-<li>Whenever a new feature is added, a bug is fixed, or a breaking change is made, it should be documented where appropriate (ex: <code>README.md</code>, changelog, etc.)</li>
+<li>Whenever a new feature is added, a bug is fixed, or a breaking change is made, it should be documented where
+  appropriate (ex: <code>README.md</code>, changelog, etc.)</li>
 <li>New methods of installation are always appreciated and should be documented</li>
 </ul>
 <h2 id="what-pages-need-documentation"><a class="toclink" href="#what-pages-need-documentation">What pages need documentation?</a></h2>
 <p>There are a few areas where documentation changes are often needed:</p>
 <ul>
-<li>The <a href="https://clementtsang.github.io/bottom/nightly/">extended documentation</a> (AKA here)</li>
 <li>The <a href="https://github.com/ClementTsang/bottom/blob/master/README.md"><code>README.md</code></a></li>
 <li>The help menu inside of the application (located <a href="https://github.com/ClementTsang/bottom/blob/master/src/constants.rs">here</a>)</li>
+<li>The <a href="https://clementtsang.github.io/bottom/nightly/">extended documentation</a> (here)</li>
 <li>The <a href="https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md"><code>CHANGELOG.md</code></a></li>
 </ul>
-<h2 id="how-should-i-add-documentation"><a class="toclink" href="#how-should-i-add-documentation">How should I add documentation?</a></h2>
+<h2 id="how-should-i-addupdate-documentation"><a class="toclink" href="#how-should-i-addupdate-documentation">How should I add/update documentation?</a></h2>
 <ol>
 <li>
-<p>Fork the repository first and make changes there.</p>
+<p>Fork the repository to make changes in.</p>
 </li>
 <li>
 <p>Where you're adding documentation will probably affect what you need to do:</p>
-<p>### <code>README.md</code> or <code>CHANGELOG.md</code></p>
+<h3><code>README.md</code> or <code>CHANGELOG.md</code></h3>
+
 <p>For changes to <a href="https://github.com/ClementTsang/bottom/blob/master/README.md"><code>README.md</code></a> and <a href="https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md"><code>CHANGELOG.md</code></a>, just follow the formatting provided and use any editor.</p>
-<p>### Help menu</p>
+<p>Generally, changes to <a href="https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md"><code>CHANGELOG.md</code></a> will be handled
+ by a maintainer, and changes should follow the <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a> format, as
+ well as link to the relevant PR or issue.</p>
+<h3>Help menu</h3>
+
 <p>For changes to the help menu, try to refer to the existing code within <code>src/constants.rs</code> on how the help menu is generated.</p>
-<p>### Extended documentation</p>
+<h3>Extended documentation</h3>
+
 <p>For changes to the extended documentation, you'll probably want <a href="https://www.mkdocs.org/">MkDocs</a>, <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a>, <code>mdx_truly_sane_lists</code>, and optionally <a href="https://github.com/jimporter/mike">Mike</a> installed to provide live reloading and preview for your changes. They aren't needed but it'll help with validating your changes.</p>
-<p>You can do so through <code>pip</code> or your system's package managers. If you use <code>pip</code>, you probably would want to do something like so through a venv:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Starting from the repo root:</span>
+<p>You can do so through <code>pip</code> or your system's package managers. If you use <code>pip</code>, you can use venv to install the
+ documentation dependencies:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Change directories to the documentation.</span>
 <span class="nb">cd</span><span class="w"> </span>docs/
 
-<span class="c1"># Create venv and activate</span>
+<span class="c1"># Create and activate venv.</span>
 python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
 <span class="nb">source</span><span class="w"> </span>venv/bin/activate
 
@@ -1082,9 +1090,11 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <span class="c1"># Run mkdocs</span>
 venv/bin/mkdocs<span class="w"> </span>serve
 </code></pre></div>
+<p>This will serve a local version of the docs that you can open on your browser. It will update as you make changes.</p>
 </li>
 <li>
-<p>Once you have your documentation changes done, submit it as a pull request. For more information regarding that, refer to <a href="../issues-and-pull-requests/">Issues, Pull Requests, and Discussions</a>.</p>
+<p>Once you have your documentation changes done, submit it as a pull request. For more information regarding that,
+   refer to <a href="../issues-and-pull-requests/">Issues, Pull Requests, and Discussions</a>.</p>
 </li>
 </ol>
 

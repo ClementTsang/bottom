@@ -609,6 +609,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#process-termination" class="md-nav__link">
+    Process termination
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tree-mode" class="md-nav__link">
     Tree mode
   </a>
@@ -1208,6 +1215,21 @@ is added together when displayed.</p>
 </figure>
 
 <p>Note that the process state and user columns are disabled in this mode.</p>
+<h3 id="process-termination"><a class="toclink" href="#process-termination">Process termination</a></h3>
+<p>Pressing <span class="keys"><kbd class="key-d">d</kbd><span>+</span><kbd class="key-d">d</kbd></span> or <span class="keys"><kbd class="key-f9">F9</kbd></span> will allow you to terminate the currently selected process/process group. On Unix-like
+operating systems, you are also able to control which specific signals to send (e.g. <code>SIGKILL</code>, <code>SIGTERM</code>).</p>
+<figure>
+    <img src="../../../assets/screenshots/process/process_kill_linux.webp" alt="A picture of the process kill menu on Linux."/>
+    <figcaption><sub>The process termination menu on Linux</sub></figcaption>
+</figure>
+
+<p>If you're on Windows, or if the <code>disable_advanced_kill</code> flag is set in the options or command-line, then a simpler termination
+screen will be shown to confirm whether you want to kill that process/process group.</p>
+<figure>
+    <img src="../../../assets/screenshots/process/process_kill_simple.webp" alt="A picture of the process kill menu on Windows."/>
+    <figcaption><sub>The process termination menu on Windows</sub></figcaption>
+</figure>
+
 <h3 id="tree-mode"><a class="toclink" href="#tree-mode">Tree mode</a></h3>
 <p>Pressing <span class="keys"><kbd class="key-t">t</kbd></span> or <span class="keys"><kbd class="key-f5">F5</kbd></span> in the table toggles tree mode in the process widget, displaying processes in regards to their parent-child process relationships.</p>
 <figure>
