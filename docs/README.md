@@ -3,6 +3,8 @@
 This is where the extended documentation resides, hosted on GitHub Pages. We use [MkDocs](https://www.mkdocs.org/),
 [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/), and [mike](https://github.com/jimporter/mike).
 
+Documentation is currently built using Python 3.11, though it should work fine with older versions.
+
 ## Running locally
 
 ```bash
