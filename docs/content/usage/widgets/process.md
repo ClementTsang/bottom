@@ -50,6 +50,24 @@ is added together when displayed.
 
 Note that the process state and user columns are disabled in this mode.
 
+### Process termination
+
+Pressing ++d+d++ or ++f9++ will allow you to terminate the currently selected process/process group. On Unix-like
+operating systems, you are also able to control which specific signals to send (e.g. `SIGKILL`, `SIGTERM`).
+
+<figure>
+    <img src="../../../assets/screenshots/process/process_kill_linux.webp" alt="A picture of the process kill menu on Linux."/>
+    <figcaption><sub>The process termination menu on Linux</sub></figcaption>
+</figure>
+
+If you're on Windows, or if the `disable_advanced_kill` flag is set in the options or command-line, then a simpler termination
+screen will be shown to confirm whether you want to kill that process/process group.
+
+<figure>
+    <img src="../../../assets/screenshots/process/process_kill_simple.webp" alt="A picture of the process kill menu on Windows."/>
+    <figcaption><sub>The process termination menu on Windows</sub></figcaption>
+</figure>
+
 ### Tree mode
 
 Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, displaying processes in regards to their parent-child process relationships.
