@@ -8,7 +8,7 @@ render braille fonts.
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/no_braille.webp" alt="Example of a terminal with no braille font."/>
-    <figcaption>Powershell shown missing braille fonts</figcaption>
+    <figcaption><sub>An example of missing braille fonts in Powershell</sub></figcaption>
 </figure>
 
 One alternative is to use the `--dot_marker` option to render graph charts using dots instead of the braille characters,
@@ -16,7 +16,7 @@ which generally seems better supported out of the box, at the expense of looking
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/dots.webp" alt="Example of running bottom with the dot marker flag"/>
-    <figcaption>Example using <code>btm --dot_marker</code></figcaption>
+    <figcaption><sub>Example using <code>btm --dot_marker</code></sub></figcaption>
 </figure>
 
 Another (better) alternative is to install a font that supports braille fonts, and configure your terminal to use it. For example, installing
@@ -41,16 +41,16 @@ Let's say you're installing [Iosevka](https://github.com/be5invis/Iosevka). The 
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
-    <figcaption>The last entry is the new entry for Iosevka</code></figcaption>
+    <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
 </figure>
 
-5. Then, open the Command Prompt/PowerShell, and right click on the top bar, and open `Properties`:
+1. Then, open the Command Prompt/PowerShell, and right click on the top bar, and open "Properties":
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
 </figure>
 
-6. From here, go to `Font`, and set the font to your new font (e.g. `Iosevka`):
+1. From here, go to "Font", and set the font to your new font (so in this example, Iosevka):
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>

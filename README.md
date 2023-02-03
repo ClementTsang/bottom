@@ -73,8 +73,8 @@ As (yet another) process/system visualization and management application, bottom
 
 - [A process widget](https://clementtsang.github.io/bottom/nightly/usage/widgets/process/) for displaying, sorting, and searching info about processes, as well as support for:
 
-  - Kill signals
-  - Tree mode
+  - [Kill signals](https://clementtsang.github.io/bottom/nightly/usage/widgets/process/#process-termination)
+  - [Tree mode](https://clementtsang.github.io/bottom/nightly/usage/widgets/process/#tree-mode)
 
 - Cross-platform support for Linux, macOS, and Windows, with more planned in the future.
 
