@@ -7,6 +7,8 @@ Documentation is currently built using Python 3.11, though it should work fine w
 
 ## Running locally
 
+One way is to just run `serve.sh`. Alternatively, the manual steps are:
+
 ```bash
 # Change directories to the documentation.
 cd docs/
