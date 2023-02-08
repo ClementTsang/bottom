@@ -43,14 +43,21 @@ doc = true
 [profile.dev.package."*"]
 opt-level = 3 # Compile dependencies with optimizations on.
 
+[profile.no-opt]
+inherits = "dev"
+opt-level = 0
+
 [profile.release]
-# debug = true # Might be nice to have a custom profile for flamegraphs.
-# strip = false
 debug = 0
 strip = "symbols"
 lto = true
 opt-level = 3
 codegen-units = 1
+
+[profile.flamegraph]
+inherits = "release"
+debug = true
+strip = false
 
 [features]
 battery = ["starship-battery"]
@@ -110,11 +117,6 @@ smol = "1.2.5"
 heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "memory", "net"] }
 mach2 = "0.4.1"
 
-[dev-dependencies.cargo-husky]
-version = "1"
-default-features = false
-features = ["user-hooks"]
-
 [target.'cfg(target_os = "windows")'.dependencies]
 heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "memory"] }
 windows = { version = "0.44.0", features = ["Win32_System_Threading", "Win32_Foundation"] }
@@ -129,6 +131,11 @@ filedescriptor = "0.8.2"
 [dev-dependencies]
 assert_cmd = "2.0.4"
 predicates = "2.1.1"
+
+[dev-dependencies.cargo-husky]
+version = "1"
+default-features = false
+features = ["user-hooks"]
 
 [build-dependencies]
 clap = { version = "3.2.2", features = ["default", "cargo", "wrap_help"] }
