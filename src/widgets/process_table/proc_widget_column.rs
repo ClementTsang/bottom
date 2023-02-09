@@ -109,13 +109,10 @@ impl SortsRow for ProcColumn {
                 }
             }
             ProcColumn::User => {
-                #[cfg(target_family = "unix")]
-                {
-                    if descending {
-                        data.sort_by_cached_key(|pd| Reverse(pd.user.to_lowercase()));
-                    } else {
-                        data.sort_by_cached_key(|pd| pd.user.to_lowercase());
-                    }
+                if descending {
+                    data.sort_by_cached_key(|pd| Reverse(pd.user.to_lowercase()));
+                } else {
+                    data.sort_by_cached_key(|pd| pd.user.to_lowercase());
                 }
             }
         }

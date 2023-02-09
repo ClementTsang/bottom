@@ -101,12 +101,8 @@ impl ProcWidgetState {
     pub const WPS: usize = 5;
     pub const T_READ: usize = 6;
     pub const T_WRITE: usize = 7;
-    #[cfg(target_family = "unix")]
     pub const USER: usize = 8;
-    #[cfg(target_family = "unix")]
     pub const STATE: usize = 9;
-    #[cfg(not(target_family = "unix"))]
-    pub const STATE: usize = 8;
 
     fn new_sort_table(config: &AppConfigFields, colours: &CanvasColours) -> SortTable {
         const COLUMNS: [Column<SortTableColumn>; 1] = [Column::hard(SortTableColumn, 7)];
@@ -162,7 +158,6 @@ impl ProcWidgetState {
                 wps,
                 tr,
                 tw,
-                #[cfg(target_family = "unix")]
                 SortColumn::soft(User, Some(0.05)),
                 state,
             ]
@@ -677,7 +672,6 @@ impl ProcWidgetState {
                         *col = ProcColumn::Count;
                         sort_col.default_order = SortOrder::Descending;
 
-                        #[cfg(target_family = "unix")]
                         self.hide_column(Self::USER);
                         self.hide_column(Self::STATE);
                         self.mode = ProcWidgetMode::Grouped;
@@ -686,7 +680,6 @@ impl ProcWidgetState {
                         *col = ProcColumn::Pid;
                         sort_col.default_order = SortOrder::Ascending;
 
-                        #[cfg(target_family = "unix")]
                         self.show_column(Self::USER);
                         self.show_column(Self::STATE);
                         self.mode = ProcWidgetMode::Normal;
@@ -821,6 +814,8 @@ mod test {
             process_char: '?',
             #[cfg(target_family = "unix")]
             user: "root".to_string(),
+            #[cfg(not(target_family = "unix"))]
+            user: "N/A".to_string(),
             num_similar: 0,
             disabled: false,
         };

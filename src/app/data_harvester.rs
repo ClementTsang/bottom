@@ -182,6 +182,10 @@ impl DataCollector {
                 self.sys.refresh_networks_list();
             }
 
+            if cfg!(target_os = "windows") && self.widgets_to_harvest.use_proc {
+                self.sys.refresh_users_list();
+            }
+
             if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
                 self.sys.refresh_cpu();
             }

@@ -120,7 +120,6 @@ pub struct ProcWidgetData {
     pub total_write: u64,
     pub process_state: String,
     pub process_char: char,
-    #[cfg(target_family = "unix")]
     pub user: String,
     pub num_similar: u64,
     pub disabled: bool,
@@ -155,7 +154,6 @@ impl ProcWidgetData {
             total_write: process.total_write_bytes,
             process_state: process.process_state.0.clone(),
             process_char: process.process_state.1,
-            #[cfg(target_family = "unix")]
             user: process.user.to_string(),
             num_similar: 1,
             disabled: false,
@@ -205,16 +203,7 @@ impl ProcWidgetData {
             ProcColumn::TotalRead => dec_bytes_string(self.total_read),
             ProcColumn::TotalWrite => dec_bytes_string(self.total_write),
             ProcColumn::State => self.process_char.to_string(),
-            ProcColumn::User => {
-                #[cfg(target_family = "unix")]
-                {
-                    self.user.clone()
-                }
-                #[cfg(not(target_family = "unix"))]
-                {
-                    "".to_string()
-                }
-            }
+            ProcColumn::User => self.user.clone(),
         }
     }
 }
@@ -247,16 +236,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                         self.process_state.clone()
                     }
                 }
-                ProcColumn::User => {
-                    #[cfg(target_family = "unix")]
-                    {
-                        self.user.clone()
-                    }
-                    #[cfg(not(target_family = "unix"))]
-                    {
-                        "".to_string()
-                    }
-                }
+                ProcColumn::User => self.user.clone(),
             },
             calculated_width,
         ))
