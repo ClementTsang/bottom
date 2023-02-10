@@ -670,16 +670,7 @@ impl Prefix {
                     }),
                     PrefixType::Pid => r.is_match(process.pid.to_string().as_str()),
                     PrefixType::State => r.is_match(process.process_state.0.as_str()),
-                    PrefixType::User => {
-                        #[cfg(target_family = "unix")]
-                        {
-                            r.is_match(process.user.as_ref())
-                        }
-                        #[cfg(not(target_family = "unix"))]
-                        {
-                            false
-                        }
-                    }
+                    PrefixType::User => r.is_match(process.user.as_ref()),
                     _ => true,
                 }
             } else {

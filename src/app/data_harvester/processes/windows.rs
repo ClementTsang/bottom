@@ -1,6 +1,6 @@
 //! Process data collection for Windows.  Uses sysinfo.
 
-use sysinfo::{CpuExt, PidExt, ProcessExt, System, SystemExt};
+use sysinfo::{CpuExt, PidExt, ProcessExt, System, SystemExt, UserExt};
 
 use super::ProcessHarvest;
 
@@ -75,6 +75,10 @@ pub fn get_process_data(
             total_read_bytes: disk_usage.total_read_bytes,
             total_write_bytes: disk_usage.total_written_bytes,
             process_state,
+            user: process_val
+                .user_id()
+                .and_then(|uid| sys.get_user_by_id(uid))
+                .map_or_else(|| "N/A".into(), |user| user.name().to_owned().into()),
         });
     }
 

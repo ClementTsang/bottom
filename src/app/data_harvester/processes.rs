@@ -72,8 +72,7 @@ pub struct ProcessHarvest {
     #[cfg(target_family = "unix")]
     pub uid: Option<libc::uid_t>,
 
-    /// This is the process' user. This is only used on Unix platforms.
-    #[cfg(target_family = "unix")]
+    /// This is the process' user.
     pub user: std::borrow::Cow<'static, str>,
     // TODO: Additional fields
     // pub rss_kb: u64,
