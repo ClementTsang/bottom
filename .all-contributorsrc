@@ -362,6 +362,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "mbikovitsky",
+      "name": "Michael Bikovitsky",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1389811?v=4",
+      "profile": "https://bikodbg.com/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
