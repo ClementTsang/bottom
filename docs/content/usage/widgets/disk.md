@@ -12,9 +12,10 @@ The disk widget provides the following information:
 
 - Disk name
 - Disk mount location
-- Percentage of space used
+- Amount of space used
 - Amount of space left
 - Total amount of space
+- Percentage of space used
 - Read per second
 - Write per second
 
