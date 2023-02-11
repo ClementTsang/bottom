@@ -26,7 +26,7 @@ By default, the main process table displays the following information for each p
 - Total amount read
 - Total amount written
 - User
-- State
+- Process state
 
 ### Sorting
 
