@@ -26,8 +26,10 @@ The expected workflow for a pull request is:
 1. Fork the project.
 2. Make your changes.
 3. Make any documentation changes if necessary - if you add a new feature, it'll probably need documentation changes. See [here](./documentation.md) for tips on documentation.
-4. Commit and create a pull request to merge into the `master` branch. **Please follow the pull request template**.
-5. Ask/wait for a maintainer to review your pull request.
-   - Check if the CI workflow passes. These consist of clippy lints, rustfmt checks, and basic tests.
+4. Commit and create a pull request to merge into the `master` branch. **Please fill out the pull request template**.
+5. Ask a maintainer to review your pull request.
+   - Check if the CI workflow passes. These consist of clippy lints, rustfmt checks, and basic tests. If you are a
+     first-time contributor, you may need to wait for a maintainer to let CI run.
    - If changes are suggested or any comments are made, they should probably be addressed.
-6. Once it looks good, it'll be merged! Note that _generally_, PRs are squashed, though feel free to ask otherwise if that isn't preferable.
+6. Once it looks good, it'll be merged! Note that _generally_, PRs are squashed to maintain repo cleanliness, though
+   feel free to ask otherwise if that isn't preferable.
