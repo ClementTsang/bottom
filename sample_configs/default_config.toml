@@ -62,7 +62,7 @@
 # Show tree mode by default in the processes widget.
 #tree = false
 # Set terminal name to hostname
-#title_to_hostname = false
+#title_has_hostname = false
 # Shows an indicator in table widgets tracking where in the list you are.
 #show_table_scroll_position = false
 # Show processes as their commands by default in the process widget.

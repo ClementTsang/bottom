@@ -93,7 +93,7 @@ pub struct ConfigFlags {
     pub network_use_log: Option<bool>,
     pub network_use_binary_prefix: Option<bool>,
     pub enable_gpu_memory: Option<bool>,
-    pub title_to_hostname: Option<bool>,
+    pub title_has_hostname: Option<bool>,
     #[serde(with = "humantime_serde")]
     #[serde(default)]
     pub retention: Option<Duration>,
@@ -734,24 +734,22 @@ pub fn get_app_use_regex(matches: &ArgMatches, config: &Config) -> bool {
     false
 }
 
-pub fn get_use_terminal_name(matches: &ArgMatches, config: &Config) -> (bool, String) {
-    if matches.is_present("title") {
-        return if let Some(custom_name) = matches.value_of("title") {
-            (true, String::from(custom_name))
-        } else {
-            (false, String::from(""))
-        };
-    } else if let Some(flags) = &config.flags {
-        if let Some(title_to_hostname) = flags.title_to_hostname {
-            if title_to_hostname {
-                return match gethostname().into_string() {
-                    Ok(hostname) => (title_to_hostname, format!("btm ({})", hostname)),
-                    Err(_) => (false, String::from("")),
-                };
+pub fn get_use_terminal_name(matches: &ArgMatches, config: &Config) -> Option<String> {
+    match gethostname().into_string() {
+        Ok(hostname) => {
+            if matches.is_present("title") {
+                return Some(format!("btm ({})", hostname));
+            } else if let Some(flags) = &config.flags {
+                if let Some(title_has_hostname) = flags.title_has_hostname {
+                    if title_has_hostname {
+                        return Some(format!("btm ({})", hostname));
+                    }
+                }
             }
+            None
         }
+        Err(_) => None,
     }
-    (false, String::from(""))
 }
 
 fn get_hide_time(matches: &ArgMatches, config: &Config) -> bool {

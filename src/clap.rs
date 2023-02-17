@@ -340,9 +340,7 @@ use CPU (3) as the default instead.
 
     let title = Arg::new("title")
         .long("title")
-        .takes_value(true)
-        .value_name("Title")
-        .help("Sets the title of the current terminal.");
+        .help("Sets the title of the current terminal to \"btm ($hostname)\".");
 
     let tree = Arg::new("tree")
         .short('T')

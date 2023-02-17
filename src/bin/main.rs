@@ -126,9 +126,8 @@ fn main() -> Result<()> {
         EnableBracketedPaste,
     )?;
 
-    let use_terminal_name = get_use_terminal_name(&matches, &config);
-    if use_terminal_name.0 {
-        execute!(stdout_val, SetTitle(use_terminal_name.1),)?;
+    if let Some(hostname) = get_use_terminal_name(&matches, &config) {
+        execute!(stdout_val, SetTitle(hostname),)?;
     }
 
     enable_raw_mode()?;
