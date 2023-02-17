@@ -199,7 +199,7 @@ pub fn handle_key_event_or_break(
     false
 }
 
-pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBuf>> {
+pub fn read_config(config_location: Option<&String>) -> error::Result<Option<PathBuf>> {
     let config_path = if let Some(conf_loc) = config_location {
         Some(PathBuf::from(conf_loc))
     } else if cfg!(target_os = "windows") {

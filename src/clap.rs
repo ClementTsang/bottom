@@ -1,3 +1,4 @@
+use clap::builder::PossibleValuesParser;
 use clap::*;
 
 const TEMPLATE: &str = "\
@@ -237,14 +238,14 @@ pub fn build_app() -> Command<'static> {
         .long("color")
         .takes_value(true)
         .value_name("COLOR SCHEME")
-        .possible_values([
+        .value_parser(PossibleValuesParser::new([
             "default",
             "default-light",
             "gruvbox",
             "gruvbox-light",
             "nord",
             "nord-light",
-        ])
+        ]))
         .hide_possible_values(true)
         .help("Use a color scheme, use --help for info.")
         .long_help(

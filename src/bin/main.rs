@@ -42,7 +42,7 @@ fn main() -> Result<()> {
     check_if_terminal();
 
     // Read from config file.
-    let config_path = read_config(matches.value_of("config_location"))
+    let config_path = read_config(matches.get_one::<String>("config_location"))
         .context("Unable to access the given config file location.")?;
     let mut config: Config = create_or_get_config(&config_path)
         .context("Unable to properly parse or create the config file.")?;
