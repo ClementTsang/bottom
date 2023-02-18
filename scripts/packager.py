@@ -34,7 +34,7 @@ def get_hash(deployment_file):
     elif str.lower(hash_type) == "sha1":
         deployment_hash = hashlib.sha1(deployment_file.read()).hexdigest()
     else:
-        print('Unsupported hash format "%s".  Please use SHA512, SHA256, or SHA1.', hash_type)
+        print('Unsupported hash format "%s". Please use SHA512, SHA256, or SHA1.', hash_type)
         exit(1)
 
     print("Generated hash: %s" % str(deployment_hash))

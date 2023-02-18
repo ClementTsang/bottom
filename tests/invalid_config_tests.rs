@@ -56,7 +56,7 @@ fn test_invalid_colour_hex() {
         .arg("./tests/invalid_configs/invalid_colour_hex.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid hex colour"));
+        .stderr(predicate::str::contains("invalid hex color"));
 }
 
 /// Checks for if a hex is too long
@@ -67,7 +67,7 @@ fn test_invalid_colour_hex_2() {
         .arg("./tests/invalid_configs/invalid_colour_hex_2.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid hex colour"));
+        .stderr(predicate::str::contains("invalid hex color"));
 }
 
 /// Checks unicode hex because the way we originally did it could cause char
@@ -79,7 +79,7 @@ fn test_invalid_colour_hex_3() {
         .arg("./tests/invalid_configs/invalid_colour_hex_3.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid hex colour"));
+        .stderr(predicate::str::contains("invalid hex color"));
 }
 
 #[test]
@@ -89,7 +89,7 @@ fn test_invalid_colour_name() {
         .arg("./tests/invalid_configs/invalid_colour_name.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid named colour"));
+        .stderr(predicate::str::contains("invalid named color"));
 }
 
 #[test]
@@ -119,7 +119,7 @@ fn test_invalid_colour_string() {
         .arg("./tests/invalid_configs/invalid_colour_string.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid named colour"));
+        .stderr(predicate::str::contains("invalid named color"));
 }
 
 #[test]

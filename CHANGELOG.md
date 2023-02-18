@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Features
 
 - [#1016](https://github.com/ClementTsang/bottom/pull/1016): Add support for displaying process usernames on Windows.
+- [#1022](https://github.com/ClementTsang/bottom/pull/1022): Support three-character hex colour strings for styling.
 
 ## Changes
 
