@@ -168,17 +168,17 @@ impl Painter {
                 &proc_widget_state.proc_search.search_state,
                 available_width,
                 is_on_widget,
-                self.colours.currently_selected_text_style,
-                self.colours.text_style,
+                self.styling.currently_selected_text_style,
+                self.styling.text_style,
             );
 
             let mut search_text = vec![Spans::from({
                 let mut search_vec = vec![Span::styled(
                     SEARCH_TITLE,
                     if is_on_widget {
-                        self.colours.table_header_style
+                        self.styling.table_header_style
                     } else {
-                        self.colours.text_style
+                        self.styling.text_style
                     },
                 )];
                 search_vec.extend(query_with_cursor);
@@ -188,21 +188,21 @@ impl Painter {
 
             // Text options shamelessly stolen from VS Code.
             let case_style = if !proc_widget_state.proc_search.is_ignoring_case {
-                self.colours.currently_selected_text_style
+                self.styling.currently_selected_text_style
             } else {
-                self.colours.text_style
+                self.styling.text_style
             };
 
             let whole_word_style = if proc_widget_state.proc_search.is_searching_whole_word {
-                self.colours.currently_selected_text_style
+                self.styling.currently_selected_text_style
             } else {
-                self.colours.text_style
+                self.styling.text_style
             };
 
             let regex_style = if proc_widget_state.proc_search.is_searching_with_regex {
-                self.colours.currently_selected_text_style
+                self.styling.currently_selected_text_style
             } else {
-                self.colours.text_style
+                self.styling.text_style
             };
 
             // TODO: [MOUSE] Mouse support for these in search
@@ -226,17 +226,17 @@ impl Painter {
                 } else {
                     ""
                 },
-                self.colours.invalid_query_style,
+                self.styling.invalid_query_style,
             )));
             search_text.push(option_text);
 
             let current_border_style =
                 if proc_widget_state.proc_search.search_state.is_invalid_search {
-                    self.colours.invalid_query_style
+                    self.styling.invalid_query_style
                 } else if is_on_widget {
-                    self.colours.highlighted_border_style
+                    self.styling.highlighted_border_style
                 } else {
-                    self.colours.border_style
+                    self.styling.border_style
                 };
 
             let title = Span::styled(
@@ -273,7 +273,7 @@ impl Painter {
             f.render_widget(
                 Paragraph::new(search_text)
                     .block(process_search_block)
-                    .style(self.colours.text_style)
+                    .style(self.styling.text_style)
                     .alignment(Alignment::Left),
                 margined_draw_loc,
             );

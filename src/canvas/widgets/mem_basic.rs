@@ -20,7 +20,7 @@ impl Painter {
             f.render_widget(
                 Block::default()
                     .borders(SIDE_BORDERS)
-                    .border_style(self.colours.highlighted_border_style),
+                    .border_style(self.styling.highlighted_border_style),
                 draw_loc,
             );
         }
@@ -49,8 +49,8 @@ impl Painter {
                 .ratio(ram_percentage / 100.0)
                 .start_label("RAM")
                 .inner_label(memory_fraction_label)
-                .label_style(self.colours.ram_style)
-                .gauge_style(self.colours.ram_style),
+                .label_style(self.styling.ram_style)
+                .gauge_style(self.styling.ram_style),
         );
 
         let swap_data = &app_state.converted_data.swap_data;
@@ -72,8 +72,8 @@ impl Painter {
                     .ratio(swap_percentage / 100.0)
                     .start_label("SWP")
                     .inner_label(swap_fraction_label)
-                    .label_style(self.colours.swap_style)
-                    .gauge_style(self.colours.swap_style),
+                    .label_style(self.styling.swap_style)
+                    .gauge_style(self.styling.swap_style),
             );
         }
 
@@ -105,7 +105,7 @@ impl Painter {
         #[cfg(feature = "gpu")]
         {
             if let Some(gpu_data) = &app_state.converted_data.gpu_data {
-                let gpu_styles = &self.colours.gpu_colour_styles;
+                let gpu_styles = &self.styling.gpu_colour_styles;
                 let mut color_index = 0;
 
                 gpu_data.iter().for_each(|gpu_data_vec| {

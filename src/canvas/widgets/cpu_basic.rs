@@ -38,7 +38,7 @@ impl Painter {
                 f.render_widget(
                     Block::default()
                         .borders(SIDE_BORDERS)
-                        .border_style(self.colours.highlighted_border_style),
+                        .border_style(self.styling.highlighted_border_style),
                     draw_loc,
                 );
             }
@@ -62,11 +62,11 @@ impl Painter {
                         last_entry,
                     } => {
                         let (outer, style) = match data_type {
-                            CpuDataType::Avg => ("AVG".to_string(), self.colours.avg_colour_style),
+                            CpuDataType::Avg => ("AVG".to_string(), self.styling.avg_colour_style),
                             CpuDataType::Cpu(index) => (
                                 format!("{index:<3}",),
-                                self.colours.cpu_colour_styles
-                                    [index % self.colours.cpu_colour_styles.len()],
+                                self.styling.cpu_colour_styles
+                                    [index % self.styling.cpu_colour_styles.len()],
                             ),
                         };
                         let inner = format!("{:>3.0}%", last_entry.round());

@@ -96,7 +96,7 @@ impl Painter {
                 Spans::default(),
                 Spans::from(Span::styled(
                     format!("◄ {}", left_name),
-                    self.colours.text_style,
+                    self.styling.text_style,
                 )),
             ];
 
@@ -104,7 +104,7 @@ impl Painter {
                 Spans::default(),
                 Spans::from(Span::styled(
                     format!("{} ►", right_name),
-                    self.colours.text_style,
+                    self.styling.text_style,
                 )),
             ];
 

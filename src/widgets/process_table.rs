@@ -11,7 +11,7 @@ use crate::{
         query::*,
         AppConfigFields, AppSearchState,
     },
-    canvas::canvas_styling::CanvasColours,
+    canvas::canvas_styling::CanvasStyling,
     components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
@@ -104,7 +104,7 @@ impl ProcWidgetState {
     pub const USER: usize = 8;
     pub const STATE: usize = 9;
 
-    fn new_sort_table(config: &AppConfigFields, colours: &CanvasColours) -> SortTable {
+    fn new_sort_table(config: &AppConfigFields, colours: &CanvasStyling) -> SortTable {
         const COLUMNS: [Column<SortTableColumn>; 1] = [Column::hard(SortTableColumn, 7)];
 
         let props = DataTableProps {
@@ -122,7 +122,7 @@ impl ProcWidgetState {
     }
 
     fn new_process_table(
-        config: &AppConfigFields, colours: &CanvasColours, mode: &ProcWidgetMode, is_count: bool,
+        config: &AppConfigFields, colours: &CanvasStyling, mode: &ProcWidgetMode, is_count: bool,
         is_command: bool, show_memory_as_values: bool,
     ) -> ProcessTable {
         let (default_index, default_order) = if matches!(mode, ProcWidgetMode::Tree { .. }) {
@@ -185,7 +185,7 @@ impl ProcWidgetState {
     pub fn new(
         config: &AppConfigFields, mode: ProcWidgetMode, is_case_sensitive: bool,
         is_match_whole_word: bool, is_use_regex: bool, show_memory_as_values: bool,
-        is_command: bool, colours: &CanvasColours,
+        is_command: bool, colours: &CanvasStyling,
     ) -> Self {
         let process_search_state = {
             let mut pss = ProcessSearchState::default();

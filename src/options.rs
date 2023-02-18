@@ -18,7 +18,7 @@ use typed_builder::*;
 
 use crate::{
     app::{layout_manager::*, *},
-    canvas::{canvas_styling::CanvasColours, ColourScheme},
+    canvas::{canvas_styling::CanvasStyling, ColourScheme},
     constants::*,
     units::data_units::DataUnit,
     utils::error::{self, BottomError},
@@ -177,7 +177,7 @@ pub struct IgnoreList {
 pub fn build_app(
     matches: &ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
-    colours: &CanvasColours,
+    colours: &CanvasStyling,
 ) -> Result<App> {
     use BottomWidgetType::*;
 

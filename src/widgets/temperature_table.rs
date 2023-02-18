@@ -6,7 +6,7 @@ use tui::text::Text;
 
 use crate::{
     app::{data_harvester::temperature::TemperatureType, AppConfigFields},
-    canvas::canvas_styling::CanvasColours,
+    canvas::canvas_styling::CanvasStyling,
     components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
@@ -99,7 +99,7 @@ pub struct TempWidgetState {
 }
 
 impl TempWidgetState {
-    pub fn new(config: &AppConfigFields, colours: &CanvasColours) -> Self {
+    pub fn new(config: &AppConfigFields, colours: &CanvasStyling) -> Self {
         let columns = [
             SortColumn::soft(TempWidgetColumn::Sensor, Some(0.8)),
             SortColumn::soft(TempWidgetColumn::Temp, None).default_descending(),

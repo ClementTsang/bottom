@@ -135,13 +135,13 @@ impl Painter {
                         CpuWidgetData::All => None,
                         CpuWidgetData::Entry { data, .. } => {
                             let style = if show_avg_cpu && itx == AVG_POSITION {
-                                self.colours.avg_colour_style
+                                self.styling.avg_colour_style
                             } else if itx == ALL_POSITION {
-                                self.colours.all_colour_style
+                                self.styling.all_colour_style
                             } else {
                                 let offset_position = itx - 1; // Because of the all position
-                                self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
-                                    % self.colours.cpu_colour_styles.len()]
+                                self.styling.cpu_colour_styles[(offset_position - show_avg_offset)
+                                    % self.styling.cpu_colour_styles.len()]
                             };
 
                             Some(GraphData {
@@ -157,11 +157,11 @@ impl Painter {
             cpu_data.get(current_scroll_position)
         {
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
-                self.colours.avg_colour_style
+                self.styling.avg_colour_style
             } else {
                 let offset_position = current_scroll_position - 1; // Because of the all position
-                self.colours.cpu_colour_styles
-                    [(offset_position - show_avg_offset) % self.colours.cpu_colour_styles.len()]
+                self.styling.cpu_colour_styles
+                    [(offset_position - show_avg_offset) % self.styling.cpu_colour_styles.len()]
             };
 
             vec![GraphData {
@@ -221,11 +221,11 @@ impl Painter {
                 hide_x_labels,
                 y_bounds: Y_BOUNDS,
                 y_labels: &Y_LABELS,
-                graph_style: self.colours.graph_style,
+                graph_style: self.styling.graph_style,
                 border_style,
                 title,
                 is_expanded: app_state.is_expanded,
-                title_style: self.colours.widget_title_style,
+                title_style: self.styling.widget_title_style,
                 legend_constraints: None,
                 marker,
             }

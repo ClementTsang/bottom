@@ -20,7 +20,7 @@ impl Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
         let help_title = Spans::from(vec![
-            Span::styled(" Help ", self.colours.widget_title_style),
+            Span::styled(" Help ", self.styling.widget_title_style),
             Span::styled(
                 format!(
                     "─{}─ Esc to close ",
@@ -28,15 +28,15 @@ impl Painter {
                         usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2)
                     )
                 ),
-                self.colours.border_style,
+                self.styling.border_style,
             ),
         ]);
 
         let block = Block::default()
             .title(help_title)
-            .style(self.colours.border_style)
+            .style(self.styling.border_style)
             .borders(Borders::ALL)
-            .border_style(self.colours.border_style);
+            .border_style(self.styling.border_style);
 
         if app_state.should_get_widget_bounds() {
             app_state.help_dialog_state.height = block.inner(draw_loc).height;
@@ -92,7 +92,7 @@ impl Painter {
         f.render_widget(
             Paragraph::new(self.styled_help_text.clone())
                 .block(block)
-                .style(self.colours.text_style)
+                .style(self.styling.text_style)
                 .alignment(Alignment::Left)
                 .wrap(Wrap { trim: true })
                 .scroll((

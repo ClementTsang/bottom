@@ -5,7 +5,7 @@ use tui::text::Text;
 
 use crate::{
     app::AppConfigFields,
-    canvas::canvas_styling::CanvasColours,
+    canvas::canvas_styling::CanvasStyling,
     components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
@@ -209,7 +209,7 @@ impl SortsRow for DiskWidgetColumn {
 }
 
 impl DiskTableWidget {
-    pub fn new(config: &AppConfigFields, colours: &CanvasColours) -> Self {
+    pub fn new(config: &AppConfigFields, colours: &CanvasStyling) -> Self {
         let columns = [
             SortColumn::soft(DiskWidgetColumn::Disk, Some(0.2)),
             SortColumn::soft(DiskWidgetColumn::Mount, Some(0.2)),

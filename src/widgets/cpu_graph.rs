@@ -5,7 +5,7 @@ use tui::{style::Style, text::Text, widgets::Row};
 
 use crate::{
     app::{data_harvester::cpu::CpuDataType, AppConfigFields},
-    canvas::{canvas_styling::CanvasColours, Painter},
+    canvas::{canvas_styling::CanvasStyling, Painter},
     components::data_table::{
         Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
         DataToCell,
@@ -22,7 +22,7 @@ pub struct CpuWidgetStyling {
 }
 
 impl CpuWidgetStyling {
-    fn from_colours(colours: &CanvasColours) -> Self {
+    fn from_colours(colours: &CanvasStyling) -> Self {
         let entries = if colours.cpu_colour_styles.is_empty() {
             vec![Style::default()]
         } else {
@@ -128,15 +128,15 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
     #[inline(always)]
     fn style_row<'a>(&self, row: Row<'a>, painter: &Painter) -> Row<'a> {
         let style = match self {
-            CpuWidgetTableData::All => painter.colours.all_colour_style,
+            CpuWidgetTableData::All => painter.styling.all_colour_style,
             CpuWidgetTableData::Entry {
                 data_type,
                 last_entry: _,
             } => match data_type {
-                CpuDataType::Avg => painter.colours.avg_colour_style,
+                CpuDataType::Avg => painter.styling.avg_colour_style,
                 CpuDataType::Cpu(index) => {
-                    painter.colours.cpu_colour_styles
-                        [index % painter.colours.cpu_colour_styles.len()]
+                    painter.styling.cpu_colour_styles
+                        [index % painter.styling.cpu_colour_styles.len()]
                 }
             },
         };
@@ -166,7 +166,7 @@ pub struct CpuWidgetState {
 impl CpuWidgetState {
     pub fn new(
         config: &AppConfigFields, current_display_time: u64, autohide_timer: Option<Instant>,
-        colours: &CanvasColours,
+        colours: &CanvasStyling,
     ) -> Self {
         const COLUMNS: [Column<CpuWidgetColumn>; 2] = [
             Column::soft(CpuWidgetColumn::CPU, Some(0.5)),

@@ -25,9 +25,9 @@ impl Painter {
         {
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let border_style = if is_on_widget {
-                self.colours.highlighted_border_style
+                self.styling.highlighted_border_style
             } else {
-                self.colours.border_style
+                self.styling.border_style
             };
             let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
@@ -38,7 +38,7 @@ impl Painter {
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Battery ── Esc to go back ";
                 Spans::from(vec![
-                    Span::styled(" Battery ", self.colours.widget_title_style),
+                    Span::styled(" Battery ", self.styling.widget_title_style),
                     Span::styled(
                         format!(
                             "─{}─ Esc to go back ",
@@ -50,7 +50,7 @@ impl Painter {
                     ),
                 ])
             } else {
-                Spans::from(Span::styled(" Battery ", self.colours.widget_title_style))
+                Spans::from(Span::styled(" Battery ", self.styling.widget_title_style))
             };
 
             let battery_block = if draw_border {
@@ -61,7 +61,7 @@ impl Painter {
             } else if is_on_widget {
                 Block::default()
                     .borders(SIDE_BORDERS)
-                    .border_style(self.colours.highlighted_border_style)
+                    .border_style(self.styling.highlighted_border_style)
             } else {
                 Block::default().borders(Borders::NONE)
             };
@@ -91,8 +91,8 @@ impl Painter {
                 )
                 .block(Block::default())
                 .divider(tui::symbols::line::VERTICAL)
-                .style(self.colours.text_style)
-                .highlight_style(self.colours.currently_selected_text_style)
+                .style(self.styling.text_style)
+                .highlight_style(self.styling.currently_selected_text_style)
                 .select(battery_widget_state.currently_selected_battery_index),
                 tab_draw_loc,
             );
@@ -144,23 +144,23 @@ impl Painter {
 
                 let mut battery_rows = Vec::with_capacity(4);
                 battery_rows.push(Row::new(vec![
-                    Cell::from("Charge %").style(self.colours.text_style),
+                    Cell::from("Charge %").style(self.styling.text_style),
                     Cell::from(bars).style(if charge_percentage < 10.0 {
-                        self.colours.low_battery_colour
+                        self.styling.low_battery_colour
                     } else if charge_percentage < 50.0 {
-                        self.colours.medium_battery_colour
+                        self.styling.medium_battery_colour
                     } else {
-                        self.colours.high_battery_colour
+                        self.styling.high_battery_colour
                     }),
                 ]));
                 battery_rows.push(
                     Row::new(vec!["Consumption", &battery_details.watt_consumption])
-                        .style(self.colours.text_style),
+                        .style(self.styling.text_style),
                 );
 
                 let s: String; // Keep string in scope.
                 {
-                    let style = self.colours.text_style;
+                    let style = self.styling.text_style;
                     match &battery_details.battery_duration {
                         BatteryDuration::ToEmpty(secs) => {
                             if half_width > 25 {
@@ -186,7 +186,7 @@ impl Painter {
 
                 battery_rows.push(
                     Row::new(vec!["Health %", &battery_details.health])
-                        .style(self.colours.text_style),
+                        .style(self.styling.text_style),
                 );
 
                 // Draw
@@ -202,7 +202,7 @@ impl Painter {
 
                 contents.push(Spans::from(Span::styled(
                     "No data found for this battery",
-                    self.colours.text_style,
+                    self.styling.text_style,
                 )));
 
                 f.render_widget(

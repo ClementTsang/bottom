@@ -52,7 +52,7 @@ impl Painter {
                     let mem_label = format!("RAM:{}{}", label_percent, label_frac);
                     points.push(GraphData {
                         points: &app_state.converted_data.mem_data,
-                        style: self.colours.ram_style,
+                        style: self.styling.ram_style,
                         name: Some(mem_label.into()),
                     });
                 }
@@ -60,7 +60,7 @@ impl Painter {
                     let swap_label = format!("SWP:{}{}", label_percent, label_frac);
                     points.push(GraphData {
                         points: &app_state.converted_data.swap_data,
-                        style: self.colours.swap_style,
+                        style: self.styling.swap_style,
                         name: Some(swap_label.into()),
                     });
                 }
@@ -77,7 +77,7 @@ impl Painter {
                 {
                     if let Some(gpu_data) = &app_state.converted_data.gpu_data {
                         let mut color_index = 0;
-                        let gpu_styles = &self.colours.gpu_colour_styles;
+                        let gpu_styles = &self.styling.gpu_colour_styles;
                         gpu_data.iter().for_each(|gpu| {
                             let gpu_label =
                                 format!("{}:{}{}", gpu.name, gpu.mem_percent, gpu.mem_total);
@@ -116,11 +116,11 @@ impl Painter {
                 hide_x_labels,
                 y_bounds: Y_BOUNDS,
                 y_labels: &Y_LABELS,
-                graph_style: self.colours.graph_style,
+                graph_style: self.styling.graph_style,
                 border_style,
                 title: " Memory ".into(),
                 is_expanded: app_state.is_expanded,
-                title_style: self.colours.widget_title_style,
+                title_style: self.styling.widget_title_style,
                 legend_constraints: Some((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
                 marker,
             }

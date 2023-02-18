@@ -59,7 +59,7 @@ impl FromStr for ColourScheme {
 
 /// Handles the canvas' state.
 pub struct Painter {
-    pub colours: CanvasColours,
+    pub styling: CanvasStyling,
     height: u16,
     width: u16,
     styled_help_text: Vec<Spans<'static>>,
@@ -82,10 +82,12 @@ enum LayoutConstraint {
 }
 
 impl Painter {
-    pub fn init(widget_layout: BottomLayout, colours: CanvasColours) -> anyhow::Result<Self> {
+    pub fn init(widget_layout: BottomLayout, styling: CanvasStyling) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
+
+        // TODO: Redo how we do this, this is gross lol.
 
         let mut row_constraints = Vec::new();
         let mut col_constraints = Vec::new();
@@ -153,7 +155,7 @@ impl Painter {
         });
 
         let mut painter = Painter {
-            colours,
+            styling,
             height: 0,
             width: 0,
             styled_help_text: Vec::default(),
@@ -175,9 +177,9 @@ impl Painter {
     pub fn get_border_style(&self, widget_id: u64, selected_widget_id: u64) -> tui::style::Style {
         let is_on_widget = widget_id == selected_widget_id;
         if is_on_widget {
-            self.colours.highlighted_border_style
+            self.styling.highlighted_border_style
         } else {
-            self.colours.border_style
+            self.styling.border_style
         }
     }
 
@@ -192,7 +194,7 @@ impl Painter {
                 styled_help_spans.extend(
                     section
                         .iter()
-                        .map(|&text| Span::styled(text, self.colours.text_style))
+                        .map(|&text| Span::styled(text, self.styling.text_style))
                         .collect::<Vec<_>>(),
                 );
             } else {
@@ -201,11 +203,11 @@ impl Painter {
                 if section.len() > 1 {
                     styled_help_spans.push(Span::raw(""));
                     styled_help_spans
-                        .push(Span::styled(section[0], self.colours.table_header_style));
+                        .push(Span::styled(section[0], self.styling.table_header_style));
                     styled_help_spans.extend(
                         section[1..]
                             .iter()
-                            .map(|&text| Span::styled(text, self.colours.text_style))
+                            .map(|&text| Span::styled(text, self.styling.text_style))
                             .collect::<Vec<_>>(),
                     );
                 }
@@ -219,7 +221,7 @@ impl Painter {
         f.render_widget(
             Paragraph::new(Span::styled(
                 "Frozen, press 'f' to unfreeze",
-                self.colours.currently_selected_text_style,
+                self.styling.currently_selected_text_style,
             )),
             Layout::default()
                 .horizontal_margin(1)

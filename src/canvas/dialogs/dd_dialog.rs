@@ -69,12 +69,12 @@ impl Painter {
         if cfg!(target_os = "windows") || !app_state.app_config_fields.is_advanced_kill {
             let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
                 KillSignal::Kill(_) => (
-                    Span::styled("Yes", self.colours.currently_selected_text_style),
-                    Span::styled("No", self.colours.text_style),
+                    Span::styled("Yes", self.styling.currently_selected_text_style),
+                    Span::styled("No", self.styling.text_style),
                 ),
                 KillSignal::Cancel => (
-                    Span::styled("Yes", self.colours.text_style),
-                    Span::styled("No", self.colours.currently_selected_text_style),
+                    Span::styled("Yes", self.styling.text_style),
+                    Span::styled("No", self.styling.currently_selected_text_style),
                 ),
             };
 
@@ -323,12 +323,12 @@ impl Painter {
                 let mut buttons = signal_text
                     [scroll_offset + 1..min((layout.len()) + scroll_offset, signal_text.len())]
                     .iter()
-                    .map(|text| Span::styled(*text, self.colours.text_style))
+                    .map(|text| Span::styled(*text, self.styling.text_style))
                     .collect::<Vec<Span<'_>>>();
-                buttons.insert(0, Span::styled(signal_text[0], self.colours.text_style));
+                buttons.insert(0, Span::styled(signal_text[0], self.styling.text_style));
                 buttons[selected - scroll_offset] = Span::styled(
                     signal_text[selected],
-                    self.colours.currently_selected_text_style,
+                    self.styling.currently_selected_text_style,
                 );
 
                 app_state.delete_dialog_state.button_positions = layout
@@ -358,7 +358,7 @@ impl Painter {
         if let Some(dd_text) = dd_text {
             let dd_title = if app_state.dd_err.is_some() {
                 Spans::from(vec![
-                    Span::styled(" Error ", self.colours.widget_title_style),
+                    Span::styled(" Error ", self.styling.widget_title_style),
                     Span::styled(
                         format!(
                             "─{}─ Esc to close ",
@@ -367,12 +367,12 @@ impl Painter {
                                     .saturating_sub(DD_ERROR_BASE.chars().count() + 2)
                             )
                         ),
-                        self.colours.border_style,
+                        self.styling.border_style,
                     ),
                 ])
             } else {
                 Spans::from(vec![
-                    Span::styled(" Confirm Kill Process ", self.colours.widget_title_style),
+                    Span::styled(" Confirm Kill Process ", self.styling.widget_title_style),
                     Span::styled(
                         format!(
                             "─{}─ Esc to close ",
@@ -381,7 +381,7 @@ impl Painter {
                                     .saturating_sub(DD_BASE.chars().count() + 2)
                             )
                         ),
-                        self.colours.border_style,
+                        self.styling.border_style,
                     ),
                 ])
             };
@@ -391,11 +391,11 @@ impl Painter {
                     .block(
                         Block::default()
                             .title(dd_title)
-                            .style(self.colours.border_style)
+                            .style(self.styling.border_style)
                             .borders(Borders::ALL)
-                            .border_style(self.colours.border_style),
+                            .border_style(self.styling.border_style),
                     )
-                    .style(self.colours.text_style)
+                    .style(self.styling.text_style)
                     .alignment(Alignment::Center)
                     .wrap(Wrap { trim: true }),
                 draw_loc,

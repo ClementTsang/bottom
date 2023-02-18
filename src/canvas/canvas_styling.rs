@@ -12,7 +12,8 @@ use crate::{
 };
 mod colour_utils;
 
-pub struct CanvasColours {
+/// The colouring/styles used for drawing.
+pub struct CanvasStyling {
     pub currently_selected_text_colour: Color,
     pub currently_selected_bg_colour: Color,
     pub currently_selected_text_style: Style,
@@ -40,13 +41,13 @@ pub struct CanvasColours {
     pub disabled_text_style: Style,
 }
 
-impl Default for CanvasColours {
+impl Default for CanvasStyling {
     fn default() -> Self {
         let text_colour = Color::Gray;
         let currently_selected_text_colour = Color::Black;
         let currently_selected_bg_colour = HIGHLIGHT_COLOUR;
 
-        CanvasColours {
+        CanvasStyling {
             currently_selected_text_colour,
             currently_selected_bg_colour,
             currently_selected_text_style: Style::default()
@@ -95,7 +96,7 @@ impl Default for CanvasColours {
     }
 }
 
-impl CanvasColours {
+impl CanvasStyling {
     pub fn new(colour_scheme: ColourScheme, config: &Config) -> anyhow::Result<Self> {
         let mut canvas_colours = Self::default();
 
@@ -378,11 +379,11 @@ mod test {
 
     use tui::style::{Color, Style};
 
-    use super::CanvasColours;
+    use super::CanvasStyling;
 
     #[test]
     fn default_selected_colour_works() {
-        let mut colours = CanvasColours::default();
+        let mut colours = CanvasStyling::default();
 
         assert_eq!(
             colours.currently_selected_text_style,
