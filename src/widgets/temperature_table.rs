@@ -6,7 +6,7 @@ use tui::text::Text;
 
 use crate::{
     app::{data_harvester::temperature::TemperatureType, AppConfigFields},
-    canvas::canvas_colours::CanvasColours,
+    canvas::canvas_styling::CanvasColours,
     components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,

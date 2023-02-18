@@ -11,7 +11,7 @@ use crate::{
         query::*,
         AppConfigFields, AppSearchState,
     },
-    canvas::canvas_colours::CanvasColours,
+    canvas::canvas_styling::CanvasColours,
     components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,

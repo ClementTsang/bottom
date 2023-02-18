@@ -43,11 +43,15 @@ pub struct CanvasColours {
 impl Default for CanvasColours {
     fn default() -> Self {
         let text_colour = Color::Gray;
+        let currently_selected_text_colour = Color::Black;
+        let currently_selected_bg_colour = HIGHLIGHT_COLOUR;
 
         CanvasColours {
-            currently_selected_text_colour: Color::Black,
-            currently_selected_bg_colour: Color::Cyan,
-            currently_selected_text_style: Style::default().fg(Color::Black).bg(HIGHLIGHT_COLOUR),
+            currently_selected_text_colour,
+            currently_selected_bg_colour,
+            currently_selected_text_style: Style::default()
+                .fg(currently_selected_text_colour)
+                .bg(currently_selected_bg_colour),
             table_header_style: Style::default().fg(HIGHLIGHT_COLOUR),
             ram_style: Style::default().fg(FIRST_COLOUR),
             swap_style: Style::default().fg(SECOND_COLOUR),
@@ -240,95 +244,95 @@ impl CanvasColours {
     }
 
     pub fn set_disabled_text_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.disabled_text_style = get_style_from_config(colour)?;
+        self.disabled_text_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_text_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.text_style = get_style_from_config(colour)?;
+        self.text_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_border_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.border_style = get_style_from_config(colour)?;
+        self.border_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_highlighted_border_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.highlighted_border_style = get_style_from_config(colour)?;
+        self.highlighted_border_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_table_header_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.table_header_style = get_style_from_config(colour)?;
+        self.table_header_style = str_to_fg(colour)?;
         // Disabled as it seems to be bugged when I go into full command mode...?  It becomes huge lol
         // self.table_header_style = get_style_from_config(colour)?.modifier(Modifier::BOLD);
         Ok(())
     }
 
     pub fn set_ram_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.ram_style = get_style_from_config(colour)?;
+        self.ram_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_swap_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.swap_style = get_style_from_config(colour)?;
+        self.swap_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_arc_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.arc_style = get_style_from_config(colour)?;
+        self.arc_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_gpu_colours(&mut self, colours: &[Cow<'static, str>]) -> error::Result<()> {
         self.gpu_colour_styles = colours
             .iter()
-            .map(|colour| get_style_from_config(colour))
+            .map(|colour| str_to_fg(colour))
             .collect::<error::Result<Vec<Style>>>()?;
         Ok(())
     }
 
     pub fn set_rx_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.rx_style = get_style_from_config(colour)?;
+        self.rx_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_tx_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.tx_style = get_style_from_config(colour)?;
+        self.tx_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_rx_total_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.total_rx_style = get_style_from_config(colour)?;
+        self.total_rx_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_tx_total_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.total_tx_style = get_style_from_config(colour)?;
+        self.total_tx_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_avg_cpu_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.avg_colour_style = get_style_from_config(colour)?;
+        self.avg_colour_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_all_cpu_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.all_colour_style = get_style_from_config(colour)?;
+        self.all_colour_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_cpu_colours(&mut self, colours: &[Cow<'static, str>]) -> error::Result<()> {
         self.cpu_colour_styles = colours
             .iter()
-            .map(|colour| get_style_from_config(colour))
+            .map(|colour| str_to_fg(colour))
             .collect::<error::Result<Vec<Style>>>()?;
         Ok(())
     }
 
     pub fn set_scroll_entry_text_color(&mut self, colour: &str) -> error::Result<()> {
-        self.currently_selected_text_colour = get_colour_from_config(colour)?;
+        self.currently_selected_text_colour = str_to_colour(colour)?;
         self.currently_selected_text_style = Style::default()
             .fg(self.currently_selected_text_colour)
             .bg(self.currently_selected_bg_colour);
@@ -336,7 +340,7 @@ impl CanvasColours {
     }
 
     pub fn set_scroll_entry_bg_color(&mut self, colour: &str) -> error::Result<()> {
-        self.currently_selected_bg_colour = get_colour_from_config(colour)?;
+        self.currently_selected_bg_colour = str_to_colour(colour)?;
         self.currently_selected_text_style = Style::default()
             .fg(self.currently_selected_text_colour)
             .bg(self.currently_selected_bg_colour);
@@ -344,27 +348,63 @@ impl CanvasColours {
     }
 
     pub fn set_widget_title_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.widget_title_style = get_style_from_config(colour)?;
+        self.widget_title_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_graph_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.graph_style = get_style_from_config(colour)?;
+        self.graph_style = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_high_battery_color(&mut self, colour: &str) -> error::Result<()> {
-        self.high_battery_colour = get_style_from_config(colour)?;
+        self.high_battery_colour = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_medium_battery_color(&mut self, colour: &str) -> error::Result<()> {
-        self.medium_battery_colour = get_style_from_config(colour)?;
+        self.medium_battery_colour = str_to_fg(colour)?;
         Ok(())
     }
 
     pub fn set_low_battery_color(&mut self, colour: &str) -> error::Result<()> {
-        self.low_battery_colour = get_style_from_config(colour)?;
+        self.low_battery_colour = str_to_fg(colour)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use tui::style::{Color, Style};
+
+    use super::CanvasColours;
+
+    #[test]
+    fn default_selected_colour_works() {
+        let mut colours = CanvasColours::default();
+
+        assert_eq!(
+            colours.currently_selected_text_style,
+            Style::default()
+                .fg(colours.currently_selected_text_colour)
+                .bg(colours.currently_selected_bg_colour),
+        );
+
+        colours.set_scroll_entry_text_color("red").unwrap();
+
+        assert_eq!(
+            colours.currently_selected_text_style,
+            Style::default()
+                .fg(Color::Red)
+                .bg(colours.currently_selected_bg_colour),
+        );
+
+        colours.set_scroll_entry_bg_color("magenta").unwrap();
+
+        assert_eq!(
+            colours.currently_selected_text_style,
+            Style::default().fg(Color::Red).bg(Color::Magenta),
+        );
     }
 }

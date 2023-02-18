@@ -18,7 +18,7 @@ use typed_builder::*;
 
 use crate::{
     app::{layout_manager::*, *},
-    canvas::{canvas_colours::CanvasColours, ColourScheme},
+    canvas::{canvas_styling::CanvasColours, ColourScheme},
     constants::*,
     units::data_units::DataUnit,
     utils::error::{self, BottomError},

@@ -10,7 +10,7 @@ pub const HIGHLIGHT_COLOUR: Color = Color::LightBlue;
 pub const AVG_COLOUR: Color = Color::Red;
 pub const ALL_COLOUR: Color = Color::Green;
 
-pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
+fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
     fn hex_err(hex: &str) -> error::Result<u8> {
         Err(
             error::BottomError::ConfigError(format!(
@@ -47,26 +47,13 @@ pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
     Ok(Color::Rgb(rgb.0, rgb.1, rgb.2))
 }
 
-pub fn get_style_from_config(input_val: &str) -> error::Result<Style> {
-    if input_val.len() > 1 {
-        if &input_val[0..1] == "#" {
-            get_style_from_hex(input_val)
-        } else if input_val.contains(',') {
-            get_style_from_rgb(input_val)
-        } else {
-            get_style_from_color_name(input_val)
-        }
-    } else {
-        Err(error::BottomError::ConfigError(format!(
-            "value \"{}\" is not valid.",
-            input_val
-        )))
-    }
+pub fn str_to_fg(input_val: &str) -> error::Result<Style> {
+    Ok(Style::default().fg(str_to_colour(input_val)?))
 }
 
-pub fn get_colour_from_config(input_val: &str) -> error::Result<Color> {
+pub fn str_to_colour(input_val: &str) -> error::Result<Color> {
     if input_val.len() > 1 {
-        if &input_val[0..1] == "#" {
+        if input_val.starts_with('#') {
             convert_hex_to_color(input_val)
         } else if input_val.contains(',') {
             convert_rgb_to_color(input_val)
@@ -79,10 +66,6 @@ pub fn get_colour_from_config(input_val: &str) -> error::Result<Color> {
             input_val
         )))
     }
-}
-
-pub fn get_style_from_hex(hex: &str) -> error::Result<Style> {
-    Ok(Style::default().fg(convert_hex_to_color(hex)?))
 }
 
 fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
@@ -112,10 +95,6 @@ fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
             rgb_str
         )))
     }
-}
-
-pub fn get_style_from_rgb(rgb_str: &str) -> error::Result<Style> {
-    Ok(Style::default().fg(convert_rgb_to_color(rgb_str)?))
 }
 
 fn convert_name_to_color(color_name: &str) -> error::Result<Color> {
@@ -158,10 +137,6 @@ The following are supported strings:
             color_name
         ))),
     }
-}
-
-pub fn get_style_from_color_name(color_name: &str) -> error::Result<Style> {
-    Ok(Style::default().fg(convert_name_to_color(color_name)?))
 }
 
 #[cfg(test)]

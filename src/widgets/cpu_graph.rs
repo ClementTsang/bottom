@@ -5,7 +5,7 @@ use tui::{style::Style, text::Text, widgets::Row};
 
 use crate::{
     app::{data_harvester::cpu::CpuDataType, AppConfigFields},
-    canvas::{canvas_colours::CanvasColours, Painter},
+    canvas::{canvas_styling::CanvasColours, Painter},
     components::data_table::{
         Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
         DataToCell,
