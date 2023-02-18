@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
+- [#1021](https://github.com/ClementTsang/bottom/pull/1021): Fix selected text background colour being wrong if only the foreground colour was set.
+
 ## Features
 
 - [#1016](https://github.com/ClementTsang/bottom/pull/1016): Add support for displaying process usernames on Windows.
