@@ -19,7 +19,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use bottom::{
-    canvas::{self, canvas_colours::CanvasColours},
+    canvas::{self, canvas_styling::CanvasColours},
     constants::*,
     data_conversion::*,
     options::*,

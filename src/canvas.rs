@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use canvas_colours::*;
+use canvas_styling::*;
 use itertools::izip;
 use tui::{
     backend::Backend,
@@ -21,7 +21,7 @@ use crate::{
     utils::error::BottomError,
 };
 
-pub mod canvas_colours;
+pub mod canvas_styling;
 mod dialogs;
 mod drawing_utils;
 mod widgets;

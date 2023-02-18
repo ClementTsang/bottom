@@ -10,7 +10,7 @@ pub const HIGHLIGHT_COLOUR: Color = Color::LightBlue;
 pub const AVG_COLOUR: Color = Color::Red;
 pub const ALL_COLOUR: Color = Color::Green;
 
-pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
+fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
     fn hex_err(hex: &str) -> error::Result<u8> {
         Err(
             error::BottomError::ConfigError(format!(
