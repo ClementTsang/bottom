@@ -372,3 +372,39 @@ impl CanvasColours {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use tui::style::{Color, Style};
+
+    use super::CanvasColours;
+
+    #[test]
+    fn default_selected_colour_works() {
+        let mut colours = CanvasColours::default();
+
+        assert_eq!(
+            colours.currently_selected_text_style,
+            Style::default()
+                .fg(colours.currently_selected_text_colour)
+                .bg(colours.currently_selected_bg_colour),
+        );
+
+        colours.set_scroll_entry_text_color("red").unwrap();
+
+        assert_eq!(
+            colours.currently_selected_text_style,
+            Style::default()
+                .fg(Color::Red)
+                .bg(colours.currently_selected_bg_colour),
+        );
+
+        colours.set_scroll_entry_bg_color("magenta").unwrap();
+
+        assert_eq!(
+            colours.currently_selected_text_style,
+            Style::default().fg(Color::Red).bg(Color::Magenta),
+        );
+    }
+}
