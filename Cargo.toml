@@ -63,13 +63,12 @@ strip = false
 battery = ["starship-battery"]
 gpu = ["nvidia"]
 nvidia = ["nvml-wrapper"]
-zfs = ["sysctl"]
 
 # The features we use by default.
-default = ["fern", "log", "battery", "gpu", "zfs"]
+default = ["fern", "log", "battery", "gpu"]
 
 # The features we use on deploy. Logging is not included as that is primarily (for now) just for debugging locally.
-deploy = ["battery", "gpu", "zfs"]
+deploy = ["battery", "gpu"]
 
 [dependencies]
 anyhow = "1.0.57"
@@ -134,7 +133,7 @@ winapi = "0.3.9"
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
 serde_json = { version = "1.0.82" }
-sysctl = { version = "0.5.4", optional = true }
+sysctl = { version = "0.5.4" }
 filedescriptor = "0.8.2"
 
 [dev-dependencies]
