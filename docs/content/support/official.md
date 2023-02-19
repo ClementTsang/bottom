@@ -2,7 +2,7 @@
 
 bottom _officially_ supports the following operating systems and corresponding architectures:
 
-- macOS (`x86_64`)
+- macOS (`x86_64`, `aarch64`)
 - Linux (`x86_64`, `i686`, `aarch64`)
 - Windows (`x86_64`, `i686`)
 

@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes
 
+- [#1025](https://github.com/ClementTsang/bottom/pull/1025): Officially support M1 macOS.
+
 ## Other
 
 ## [0.8.0] - 2023-01-22

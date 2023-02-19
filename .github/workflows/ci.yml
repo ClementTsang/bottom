@@ -52,6 +52,8 @@ jobs:
           do_not_skip: '["workflow_dispatch", "push"]'
 
   # Runs rustfmt + tests + clippy on the main supported platforms.
+  #
+  # Note that m1 macOS is tested via CirrusCI.
   supported:
     needs: pre-job
     runs-on: ${{ matrix.info.os }}

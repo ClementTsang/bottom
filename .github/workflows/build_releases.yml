@@ -77,7 +77,7 @@ jobs:
               cross: true,
             }
 
-          # macOS (x64)
+          # macOS (x64), M1 is built via CirrusCI.
           - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
 
           # Windows (x64, x86)
