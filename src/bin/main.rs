@@ -28,7 +28,7 @@ use bottom::{
 use crossterm::{
     event::{EnableBracketedPaste, EnableMouseCapture},
     execute,
-    terminal::{enable_raw_mode, EnterAlternateScreen},
+    terminal::{enable_raw_mode, EnterAlternateScreen, SetTitle},
 };
 use tui::{backend::CrosstermBackend, Terminal};
 
@@ -124,8 +124,13 @@ fn main() -> Result<()> {
         stdout_val,
         EnterAlternateScreen,
         EnableMouseCapture,
-        EnableBracketedPaste
+        EnableBracketedPaste,
     )?;
+
+    if let Some(hostname) = get_use_terminal_name(&matches, &config) {
+        execute!(stdout_val, SetTitle(hostname),)?;
+    }
+
     enable_raw_mode()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;

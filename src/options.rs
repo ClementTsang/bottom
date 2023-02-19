@@ -31,6 +31,7 @@ use crate::{
 pub mod layout_options;
 
 use anyhow::{Context, Result};
+use gethostname::gethostname;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Config {
@@ -92,6 +93,7 @@ pub struct ConfigFlags {
     pub network_use_log: Option<bool>,
     pub network_use_binary_prefix: Option<bool>,
     pub enable_gpu_memory: Option<bool>,
+    pub title_has_hostname: Option<bool>,
     #[serde(with = "humantime_serde")]
     #[serde(default)]
     pub retention: Option<Duration>,
@@ -731,6 +733,24 @@ pub fn get_app_use_regex(matches: &ArgMatches, config: &Config) -> bool {
         }
     }
     false
+}
+
+pub fn get_use_terminal_name(matches: &ArgMatches, config: &Config) -> Option<String> {
+    match gethostname().into_string() {
+        Ok(hostname) => {
+            if matches.contains_id("title") {
+                return Some(format!("btm ({})", hostname));
+            } else if let Some(flags) = &config.flags {
+                if let Some(title_has_hostname) = flags.title_has_hostname {
+                    if title_has_hostname {
+                        return Some(format!("btm ({})", hostname));
+                    }
+                }
+            }
+            None
+        }
+        Err(_) => None,
+    }
 }
 
 fn get_hide_time(matches: &ArgMatches, config: &Config) -> bool {

@@ -339,6 +339,10 @@ use CPU (3) as the default instead.
         .help("The amount in ms changed upon zooming.")
         .long_help("The amount of time in milliseconds changed when zooming in/out. The minimum is 1s (1000), and defaults to 15s (15000).");
 
+    let title = Arg::new("title")
+        .long("title")
+        .help("Sets the title of the current terminal to \"btm ($hostname)\".");
+
     let tree = Arg::new("tree")
         .short('T')
         .long("tree")
@@ -411,6 +415,7 @@ use CPU (3) as the default instead.
         .arg(rate)
         .arg(regex)
         .arg(time_delta)
+        .arg(title)
         .arg(tree)
         .arg(network_use_bytes)
         .arg(network_use_log)
