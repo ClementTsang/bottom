@@ -17,6 +17,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' || github.repository != 'ClementTsang/bottom' }}
 
+# TODO: Maybe add this for more than just Linux.
 jobs:
   pre-job:
     runs-on: ubuntu-latest
