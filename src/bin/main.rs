@@ -39,9 +39,6 @@ fn main() -> Result<()> {
         utils::logging::init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log"))?;
     }
 
-    // Check if the current environment is in a terminal.
-    check_if_terminal();
-
     // Read from config file.
     let config_path = read_config(matches.get_one::<String>("config_location"))
         .context("Unable to access the given config file location.")?;
@@ -71,6 +68,9 @@ fn main() -> Result<()> {
 
     // Create painter and set colours.
     let mut painter = canvas::Painter::init(widget_layout, colours)?;
+
+    // Check if the current environment is in a terminal.
+    check_if_terminal();
 
     // Create termination mutex and cvar
     #[allow(clippy::mutex_atomic)]
