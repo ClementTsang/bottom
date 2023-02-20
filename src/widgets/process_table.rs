@@ -307,6 +307,24 @@ impl ProcWidgetState {
             })
             .collect::<FxHashSet<_>>();
 
+        #[inline]
+        fn is_ancestor_shown(
+            current_process: &ProcessHarvest, kept_pids: &FxHashSet<Pid>,
+            process_harvest: &BTreeMap<Pid, ProcessHarvest>,
+        ) -> bool {
+            if let Some(ppid) = current_process.parent_pid {
+                if kept_pids.contains(&ppid) {
+                    true
+                } else if let Some(parent) = process_harvest.get(&ppid) {
+                    is_ancestor_shown(parent, kept_pids, process_harvest)
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        }
+
         // A process is shown under the filtered tree if at least one of these conditions hold:
         // - The process itself matches.
         // - The process contains some descendant that matches.
@@ -340,10 +358,7 @@ impl ProcWidgetState {
                         // - Is the child of a shown process.
                         let is_shown = is_process_matching
                             || !shown_children.is_empty()
-                            || process
-                                .parent_pid
-                                .map(|ppid| kept_pids.contains(&ppid))
-                                .unwrap_or(false);
+                            || is_ancestor_shown(process, &kept_pids, process_harvest);
                         visited_pids.insert(process.pid, is_shown);
 
                         if is_shown {
@@ -370,10 +385,7 @@ impl ProcWidgetState {
                     }
                 } else {
                     let is_shown = is_process_matching
-                        || process
-                            .parent_pid
-                            .map(|ppid| kept_pids.contains(&ppid))
-                            .unwrap_or(false);
+                        || is_ancestor_shown(process, &kept_pids, process_harvest);
 
                     if is_shown {
                         filtered_tree.insert(process.pid, vec![]);
