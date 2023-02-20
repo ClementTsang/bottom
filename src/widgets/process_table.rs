@@ -307,6 +307,10 @@ impl ProcWidgetState {
             })
             .collect::<FxHashSet<_>>();
 
+        // A process is shown under the filtered tree if at least one of these conditions hold:
+        // - The process itself matches.
+        // - The process contains some descendant that matches.
+        // - The process's parent (and only parent, not any ancestor) matches.
         let filtered_tree = {
             let mut filtered_tree = FxHashMap::default();
 
@@ -334,7 +338,12 @@ impl ProcWidgetState {
                         // - Matches the filter.
                         // - Has at least one child (doesn't have to be direct) that matches the filter.
                         // - Is the child of a shown process.
-                        let is_shown = is_process_matching || !shown_children.is_empty();
+                        let is_shown = is_process_matching
+                            || !shown_children.is_empty()
+                            || process
+                                .parent_pid
+                                .map(|ppid| kept_pids.contains(&ppid))
+                                .unwrap_or(false);
                         visited_pids.insert(process.pid, is_shown);
 
                         if is_shown {
@@ -360,11 +369,17 @@ impl ProcWidgetState {
                             });
                     }
                 } else {
-                    if is_process_matching {
+                    let is_shown = is_process_matching
+                        || process
+                            .parent_pid
+                            .map(|ppid| kept_pids.contains(&ppid))
+                            .unwrap_or(false);
+
+                    if is_shown {
                         filtered_tree.insert(process.pid, vec![]);
                     }
 
-                    visited_pids.insert(process.pid, is_process_matching);
+                    visited_pids.insert(process.pid, is_shown);
                     stack.pop();
                 }
             }
@@ -392,9 +407,8 @@ impl ProcWidgetState {
         let column = self.table.columns.get(self.table.sort_index()).unwrap();
         sort_skip_pid_asc(column.inner(), &mut stack, self.table.order());
 
-        stack.reverse();
-
         let mut length_stack = vec![stack.len()];
+        stack.reverse();
 
         while let (Some(process), Some(siblings_left)) = (stack.pop(), length_stack.last_mut()) {
             *siblings_left -= 1;
