@@ -36,6 +36,7 @@ use anyhow::{Context, Result};
 pub struct Config {
     pub flags: Option<ConfigFlags>,
     pub colors: Option<ConfigColours>,
+    pub text: Option<TextStylingConfig>,
     pub row: Option<Vec<Row>>,
     pub disk_filter: Option<IgnoreList>,
     pub mount_filter: Option<IgnoreList>,
@@ -153,6 +154,10 @@ impl ConfigColours {
         true
     }
 }
+
+/// Styling configuration for text.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct TextStylingConfig {}
 
 /// Workaround as per https://github.com/serde-rs/serde/issues/1030
 fn default_as_true() -> bool {

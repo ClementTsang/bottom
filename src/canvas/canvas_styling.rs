@@ -98,33 +98,35 @@ impl Default for CanvasStyling {
 
 impl CanvasStyling {
     pub fn new(colour_scheme: ColourScheme, config: &Config) -> anyhow::Result<Self> {
-        let mut canvas_colours = Self::default();
+        let mut canvas_styling = Self::default();
 
         match colour_scheme {
             ColourScheme::Default => {}
             ColourScheme::DefaultLight => {
-                canvas_colours.set_colours_from_palette(&DEFAULT_LIGHT_MODE_COLOUR_PALETTE)?;
+                canvas_styling.set_colours_from_palette(&DEFAULT_LIGHT_MODE_COLOUR_PALETTE)?;
             }
             ColourScheme::Gruvbox => {
-                canvas_colours.set_colours_from_palette(&GRUVBOX_COLOUR_PALETTE)?;
+                canvas_styling.set_colours_from_palette(&GRUVBOX_COLOUR_PALETTE)?;
             }
             ColourScheme::GruvboxLight => {
-                canvas_colours.set_colours_from_palette(&GRUVBOX_LIGHT_COLOUR_PALETTE)?;
+                canvas_styling.set_colours_from_palette(&GRUVBOX_LIGHT_COLOUR_PALETTE)?;
             }
             ColourScheme::Nord => {
-                canvas_colours.set_colours_from_palette(&NORD_COLOUR_PALETTE)?;
+                canvas_styling.set_colours_from_palette(&NORD_COLOUR_PALETTE)?;
             }
             ColourScheme::NordLight => {
-                canvas_colours.set_colours_from_palette(&NORD_LIGHT_COLOUR_PALETTE)?;
+                canvas_styling.set_colours_from_palette(&NORD_LIGHT_COLOUR_PALETTE)?;
             }
             ColourScheme::Custom => {
                 if let Some(colors) = &config.colors {
-                    canvas_colours.set_colours_from_palette(colors)?;
+                    canvas_styling.set_colours_from_palette(colors)?;
                 }
             }
         }
 
-        Ok(canvas_colours)
+        // Now check if text styling is enabled.
+
+        Ok(canvas_styling)
     }
 
     pub fn set_colours_from_palette(&mut self, colours: &ConfigColours) -> anyhow::Result<()> {
