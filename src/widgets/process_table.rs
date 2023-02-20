@@ -289,25 +289,50 @@ impl ProcWidgetState {
             ..
         } = &data_collection.process_data;
 
+        // Only keep a set of the kept PIDs.
         let kept_pids = data_collection
             .process_data
             .process_harvest
             .iter()
-            .map(|(pid, process)| {
-                (
-                    *pid,
-                    search_query
-                        .as_ref()
-                        .map(|q| q.check(process, is_using_command))
-                        .unwrap_or(true),
-                )
+            .filter_map(|(pid, process)| {
+                if search_query
+                    .as_ref()
+                    .map(|q| q.check(process, is_using_command))
+                    .unwrap_or(true)
+                {
+                    Some(*pid)
+                } else {
+                    None
+                }
             })
-            .collect::<FxHashMap<_, _>>();
+            .collect::<FxHashSet<_>>();
 
+        #[inline]
+        fn is_ancestor_shown(
+            current_process: &ProcessHarvest, kept_pids: &FxHashSet<Pid>,
+            process_harvest: &BTreeMap<Pid, ProcessHarvest>,
+        ) -> bool {
+            if let Some(ppid) = current_process.parent_pid {
+                if kept_pids.contains(&ppid) {
+                    true
+                } else if let Some(parent) = process_harvest.get(&ppid) {
+                    is_ancestor_shown(parent, kept_pids, process_harvest)
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        }
+
+        // A process is shown under the filtered tree if at least one of these conditions hold:
+        // - The process itself matches.
+        // - The process contains some descendant that matches.
+        // - The process's parent (and only parent, not any ancestor) matches.
         let filtered_tree = {
             let mut filtered_tree = FxHashMap::default();
 
-            // We do a simple BFS traversal to build our filtered parent-to-tree mappings.
+            // We do a simple DFS traversal to build our filtered parent-to-tree mappings.
             let mut visited_pids = FxHashMap::default();
             let mut stack = orphan_pids
                 .iter()
@@ -315,7 +340,7 @@ impl ProcWidgetState {
                 .collect_vec();
 
             while let Some(process) = stack.last() {
-                let is_process_matching = *kept_pids.get(&process.pid).unwrap_or(&false);
+                let is_process_matching = kept_pids.contains(&process.pid);
 
                 if let Some(children_pids) = process_parent_mapping.get(&process.pid) {
                     if children_pids
@@ -326,7 +351,14 @@ impl ProcWidgetState {
                             .iter()
                             .filter(|pid| visited_pids.get(*pid).copied().unwrap_or(false))
                             .collect_vec();
-                        let is_shown = is_process_matching || !shown_children.is_empty();
+
+                        // Show the entry if it is:
+                        // - Matches the filter.
+                        // - Has at least one child (doesn't have to be direct) that matches the filter.
+                        // - Is the child of a shown process.
+                        let is_shown = is_process_matching
+                            || !shown_children.is_empty()
+                            || is_ancestor_shown(process, &kept_pids, process_harvest);
                         visited_pids.insert(process.pid, is_shown);
 
                         if is_shown {
@@ -352,11 +384,14 @@ impl ProcWidgetState {
                             });
                     }
                 } else {
-                    if is_process_matching {
+                    let is_shown = is_process_matching
+                        || is_ancestor_shown(process, &kept_pids, process_harvest);
+
+                    if is_shown {
                         filtered_tree.insert(process.pid, vec![]);
                     }
 
-                    visited_pids.insert(process.pid, is_process_matching);
+                    visited_pids.insert(process.pid, is_shown);
                     stack.pop();
                 }
             }
@@ -384,14 +419,13 @@ impl ProcWidgetState {
         let column = self.table.columns.get(self.table.sort_index()).unwrap();
         sort_skip_pid_asc(column.inner(), &mut stack, self.table.order());
 
-        stack.reverse();
-
         let mut length_stack = vec![stack.len()];
+        stack.reverse();
 
         while let (Some(process), Some(siblings_left)) = (stack.pop(), length_stack.last_mut()) {
             *siblings_left -= 1;
 
-            let disabled = !*kept_pids.get(&process.pid).unwrap_or(&false);
+            let disabled = !kept_pids.contains(&process.pid);
             let is_last = *siblings_left == 0;
 
             if collapsed_pids.contains(&process.pid) {
