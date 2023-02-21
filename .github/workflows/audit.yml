@@ -7,6 +7,7 @@ on:
     - cron: "0 0 * * 1"
 jobs:
   audit:
+    timeout-minutes: 18
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

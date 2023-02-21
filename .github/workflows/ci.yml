@@ -58,7 +58,7 @@ jobs:
     needs: pre-job
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    timeout-minutes: 30
+    timeout-minutes: 18
     strategy:
       fail-fast: false
       matrix:
@@ -136,7 +136,7 @@ jobs:
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     continue-on-error: true
-    timeout-minutes: 30
+    timeout-minutes: 18
     strategy:
       fail-fast: false
       matrix:
