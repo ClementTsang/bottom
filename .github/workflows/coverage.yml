@@ -34,7 +34,7 @@ jobs:
   coverage:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    timeout-minutes: 15
+    timeout-minutes: 18
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
