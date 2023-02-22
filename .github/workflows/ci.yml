@@ -14,6 +14,10 @@
 #
 # Unsupported platforms run the following tasks:
 # - cargo check
+#
+# Note that not all platforms are tested using this CI action! There are some
+# tested by Cirrus CI due to (free) platform limitations on GitHub. Currently,
+# this is just macOS M1 and FreeBSD.
 
 name: ci
 
