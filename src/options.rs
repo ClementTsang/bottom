@@ -52,8 +52,7 @@ pub struct ConfigFlags {
     pub left_legend: Option<bool>,
     pub current_usage: Option<bool>,
     pub unnormalized_cpu: Option<bool>,
-    #[serde(rename = "group_processes")]
-    pub group: Option<bool>,
+    pub group_processes: Option<bool>,
     pub case_sensitive: Option<bool>,
     pub whole_word: Option<bool>,
     pub regex: Option<bool>,
@@ -183,7 +182,7 @@ pub fn build_app(
     let expanded_upon_startup = is_flag_enabled!(expanded_on_startup, matches, config);
 
     // For processes
-    let is_grouped = is_flag_enabled!(group, matches, config);
+    let is_grouped = is_flag_enabled!("group", group_processes, matches, config);
     let is_case_sensitive = is_flag_enabled!(case_sensitive, matches, config);
     let is_match_whole_word = is_flag_enabled!(whole_word, matches, config);
     let is_use_regex = is_flag_enabled!(regex, matches, config);
