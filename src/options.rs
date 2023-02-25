@@ -43,18 +43,6 @@ pub struct Config {
     pub net_filter: Option<IgnoreList>,
 }
 
-impl Config {
-    pub fn get_config_as_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        let config_string: Vec<Cow<'_, str>> = vec![
-            // Top level
-            CONFIG_TOP_HEAD.into(),
-            toml::to_string_pretty(self)?.into(),
-        ];
-
-        Ok(config_string.concat().as_bytes().to_vec())
-    }
-}
-
 #[derive(Clone, Debug, Default, Deserialize, Serialize, TypedBuilder)]
 pub struct ConfigFlags {
     pub hide_avg_cpu: Option<bool>,
@@ -81,7 +69,7 @@ pub struct ConfigFlags {
     pub battery: Option<bool>,
     pub disable_click: Option<bool>,
     pub no_write: Option<bool>,
-    // For built-in colour palettes.
+    /// For built-in colour palettes.
     pub color: Option<String>,
     pub mem_as_value: Option<bool>,
     pub tree: Option<bool>,
@@ -95,24 +83,6 @@ pub struct ConfigFlags {
     #[serde(with = "humantime_serde")]
     #[serde(default)]
     pub retention: Option<Duration>,
-}
-
-#[derive(Clone, Default, Debug, Deserialize, Serialize)]
-pub struct WidgetIdEnabled {
-    id: u64,
-    enabled: bool,
-}
-
-impl WidgetIdEnabled {
-    pub fn create_from_hashmap(hashmap: &HashMap<u64, bool>) -> Vec<WidgetIdEnabled> {
-        hashmap
-            .iter()
-            .map(|(id, enabled)| WidgetIdEnabled {
-                id: *id,
-                enabled: *enabled,
-            })
-            .collect()
-    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -143,11 +113,10 @@ pub struct ConfigColours {
 }
 
 impl ConfigColours {
+    /// Returns `true` if there is a [`ConfigColours`] that is empty or there isn't one at all.
     pub fn is_empty(&self) -> bool {
         if let Ok(serialized_string) = toml::to_string(self) {
-            if !serialized_string.is_empty() {
-                return false;
-            }
+            return serialized_string.is_empty();
         }
 
         true
