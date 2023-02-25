@@ -34,8 +34,15 @@ jobs:
   coverage:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    runs-on: ${{ matrix.info.os }}
     timeout-minutes: 18
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          - { os: "ubuntu-latest" }
+          - { os: "macos-12" }
+          - { os: "windows-2019" }
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
