@@ -24,7 +24,7 @@ pub struct TempHarvest {
     pub temperature: f32,
 }
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq)]
 pub enum TemperatureType {
     Celsius,
     Kelvin,

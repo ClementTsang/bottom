@@ -808,9 +808,19 @@ fn get_retention_ms(matches: &ArgMatches, config: &Config) -> error::Result<u64>
 #[cfg(test)]
 mod test {
 
-    use crate::canvas::canvas_styling::CanvasColours;
+    use clap::ArgMatches;
+
+    use crate::{app::App, canvas::canvas_styling::CanvasColours};
 
     use super::{get_color_scheme, get_widget_layout, Config};
+
+    fn create_app(mut config: Config, matches: ArgMatches) -> App {
+        let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();
+        let colours =
+            CanvasColours::new(get_color_scheme(&matches, &config).unwrap(), &config).unwrap();
+
+        super::build_app(&matches, &mut config, &layout, id, &ty, &colours).unwrap()
+    }
 
     // TODO: There's probably a better way to create clap options AND unify together to avoid the possibility of
     // typos/mixing up. Use macros!
@@ -818,18 +828,46 @@ mod test {
     fn verify_cli_options_build() {
         let app = crate::clap::build_app();
 
+        let default_app = {
+            let app = app.clone();
+            let config = Config::default();
+            let matches = app.get_matches_from([""]);
+
+            create_app(config, matches)
+        };
+
+        // Skip battery since it's tricky to test depending on the platform testing.
+        let skip = ["help", "version", "celsius", "battery"];
+
         for arg in app.get_arguments().collect::<Vec<_>>() {
-            if !arg.is_takes_value_set() {
+            let arg_name = arg
+                .get_long_and_visible_aliases()
+                .unwrap()
+                .first()
+                .unwrap()
+                .to_owned();
+
+            if !arg.is_takes_value_set() && !skip.contains(&arg_name) {
+                let arg = format!("--{arg_name}");
+
+                let arguments = vec!["btm", &arg];
                 let app = app.clone();
-                let mut config = Config::default();
+                let config = Config::default();
+                let matches = app.get_matches_from(arguments);
 
-                let matches = app.get_matches_from([arg.get_id()]);
-                let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();
-                let colours =
-                    CanvasColours::new(get_color_scheme(&matches, &config).unwrap(), &config)
-                        .unwrap();
+                let testing_app = create_app(config, matches);
 
-                super::build_app(&matches, &mut config, &layout, id, &ty, &colours).unwrap();
+                if (default_app.app_config_fields == testing_app.app_config_fields)
+                    && default_app.is_expanded == testing_app.is_expanded
+                    && default_app
+                        .proc_state
+                        .widget_states
+                        .iter()
+                        .zip(testing_app.proc_state.widget_states.iter())
+                        .all(|(a, b)| (a.1.test_equality(b.1)))
+                {
+                    panic!("failed on {arg_name}");
+                }
             }
         }
     }
