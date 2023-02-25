@@ -61,7 +61,7 @@ impl ProcessSearchState {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ProcWidgetMode {
     Tree { collapsed_pids: FxHashSet<Pid> },
     Grouped,
@@ -813,6 +813,26 @@ impl ProcWidgetState {
 
         self.is_sort_open = false;
         self.force_rerender_and_update();
+    }
+
+    #[cfg(test)]
+    pub(crate) fn test_equality(&self, other: &Self) -> bool {
+        self.mode == other.mode
+            && self.proc_search.is_ignoring_case == other.proc_search.is_ignoring_case
+            && self.proc_search.is_searching_whole_word == other.proc_search.is_searching_whole_word
+            && self.proc_search.is_searching_with_regex == other.proc_search.is_searching_with_regex
+            && self
+                .table
+                .columns
+                .iter()
+                .map(|c| c.header())
+                .collect::<Vec<_>>()
+                == other
+                    .table
+                    .columns
+                    .iter()
+                    .map(|c| c.header())
+                    .collect::<Vec<_>>()
     }
 }
 

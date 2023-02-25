@@ -31,7 +31,7 @@ pub mod states;
 
 use frozen_state::FrozenState;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum AxisScaling {
     Log,
     Linear,
@@ -45,7 +45,7 @@ impl Default for AxisScaling {
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Eq, PartialEq)]
 pub struct AppConfigFields {
     pub update_rate_in_milliseconds: u64,
     pub temperature_type: temperature::TemperatureType,
