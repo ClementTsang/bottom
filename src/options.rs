@@ -235,7 +235,7 @@ pub fn build_app(
         use_old_network_legend: is_flag_enabled!(use_old_network_legend, matches, config),
         table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, matches, config))),
         disable_click: is_flag_enabled!(disable_click, matches, config),
-        enable_gpu_memory: is_flag_enabled!(enable_gpu_memory, matches, config),
+        enable_gpu_memory: get_enable_gpu_memory(matches, config),
         show_table_scroll_position: is_flag_enabled!(show_table_scroll_position, matches, config),
         is_advanced_kill,
         network_scale_type,
@@ -383,7 +383,7 @@ pub fn build_app(
     let used_widgets = UsedWidgets {
         use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
         use_mem,
-        use_gpu: use_mem && is_flag_enabled!(enable_gpu_memory, matches, config),
+        use_gpu: use_mem && get_enable_gpu_memory(matches, config),
         use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
         use_proc: used_widget_set.get(&Proc).is_some(),
         use_disk: used_widget_set.get(&Disk).is_some(),
@@ -673,6 +673,7 @@ fn get_default_widget_and_count(
     }
 }
 
+#[allow(unused_variables)]
 fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
     #[cfg(feature = "battery")]
     {
@@ -689,6 +690,22 @@ fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
         } else if let Some(flags) = &config.flags {
             if let Some(battery) = flags.battery {
                 return battery;
+            }
+        }
+    }
+
+    false
+}
+
+#[allow(unused_variables)]
+fn get_enable_gpu_memory(matches: &ArgMatches, config: &Config) -> bool {
+    #[cfg(feature = "gpu")]
+    {
+        if matches.contains_id("enable_gpu_memory") {
+            return true;
+        } else if let Some(flags) = &config.flags {
+            if let Some(enable_gpu_memory) = flags.enable_gpu_memory {
+                return enable_gpu_memory;
             }
         }
     }
