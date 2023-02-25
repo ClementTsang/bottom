@@ -52,7 +52,8 @@ pub struct ConfigFlags {
     pub left_legend: Option<bool>,
     pub current_usage: Option<bool>,
     pub unnormalized_cpu: Option<bool>,
-    pub group_processes: Option<bool>,
+    #[serde(rename = "group_processes")]
+    pub group: Option<bool>,
     pub case_sensitive: Option<bool>,
     pub whole_word: Option<bool>,
     pub regex: Option<bool>,
@@ -143,6 +144,28 @@ pub struct IgnoreList {
     pub whole_word: bool,
 }
 
+macro_rules! is_flag_enabled {
+    ($flag_name:ident, $matches:expr, $config:expr) => {
+        if $matches.contains_id(stringify!($flag_name)) {
+            true
+        } else if let Some(flags) = &$config.flags {
+            flags.$flag_name.unwrap_or(false)
+        } else {
+            false
+        }
+    };
+
+    ($cmd_flag:literal, $cfg_flag:ident, $matches:expr, $config:expr) => {
+        if $matches.contains_id($cmd_flag) {
+            true
+        } else if let Some(flags) = &$config.flags {
+            flags.$cfg_flag.unwrap_or(false)
+        } else {
+            false
+        }
+    };
+}
+
 pub fn build_app(
     matches: &ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
@@ -152,16 +175,18 @@ pub fn build_app(
 
     let retention_ms =
         get_retention_ms(matches, config).context("Update `retention` in your config file.")?;
-    let autohide_time = get_autohide_time(matches, config);
+    let autohide_time = is_flag_enabled!(autohide_time, matches, config);
     let default_time_value = get_default_time_value(matches, config, retention_ms)
         .context("Update 'default_time_value' in your config file.")?;
-    let use_basic_mode = get_use_basic_mode(matches, config);
+
+    let use_basic_mode = is_flag_enabled!(basic, matches, config);
+    let expanded_upon_startup = is_flag_enabled!(expanded_on_startup, matches, config);
 
     // For processes
-    let is_grouped = get_app_grouping(matches, config);
-    let is_case_sensitive = get_app_case_sensitive(matches, config);
-    let is_match_whole_word = get_app_match_whole_word(matches, config);
-    let is_use_regex = get_app_use_regex(matches, config);
+    let is_grouped = is_flag_enabled!(group, matches, config);
+    let is_case_sensitive = is_flag_enabled!(case_sensitive, matches, config);
+    let is_match_whole_word = is_flag_enabled!(whole_word, matches, config);
+    let is_use_regex = is_flag_enabled!(regex, matches, config);
 
     let mut widget_map = HashMap::new();
     let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
@@ -183,14 +208,14 @@ pub fn build_app(
     let is_custom_layout = config.row.is_some();
     let mut used_widget_set = HashSet::new();
 
-    let show_memory_as_values = get_mem_as_value(matches, config);
-    let is_default_tree = get_is_default_tree(matches, config);
-    let is_default_command = get_is_default_process_command(matches, config);
-    let is_advanced_kill = !get_is_advanced_kill_disabled(matches, config);
+    let show_memory_as_values = is_flag_enabled!(mem_as_value, matches, config);
+    let is_default_tree = is_flag_enabled!(tree, matches, config);
+    let is_default_command = is_flag_enabled!(process_command, matches, config);
+    let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, matches, config));
 
     let network_unit_type = get_network_unit_type(matches, config);
     let network_scale_type = get_network_scale_type(matches, config);
-    let network_use_binary_prefix = get_network_use_binary_prefix(matches, config);
+    let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, matches, config);
 
     let app_config_fields = AppConfigFields {
         update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)
@@ -198,21 +223,21 @@ pub fn build_app(
         temperature_type: get_temperature(matches, config)
             .context("Update 'temperature_type' in your config file.")?,
         show_average_cpu: get_show_average_cpu(matches, config),
-        use_dot: get_use_dot(matches, config),
-        left_legend: get_use_left_legend(matches, config),
-        use_current_cpu_total: get_use_current_cpu_total(matches, config),
-        unnormalized_cpu: get_unnormalized_cpu(matches, config),
+        use_dot: is_flag_enabled!(dot_marker, matches, config),
+        left_legend: is_flag_enabled!(left_legend, matches, config),
+        use_current_cpu_total: is_flag_enabled!(current_usage, matches, config),
+        unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, matches, config),
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(matches, config, retention_ms)
             .context("Update 'time_delta' in your config file.")?,
-        hide_time: get_hide_time(matches, config),
+        hide_time: is_flag_enabled!(hide_time, matches, config),
         autohide_time,
-        use_old_network_legend: get_use_old_network_legend(matches, config),
-        table_gap: u16::from(!get_hide_table_gap(matches, config)),
-        disable_click: get_disable_click(matches, config),
-        enable_gpu_memory: get_enable_gpu_memory(matches, config),
-        show_table_scroll_position: get_show_table_scroll_position(matches, config),
+        use_old_network_legend: is_flag_enabled!(use_old_network_legend, matches, config),
+        table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, matches, config))),
+        disable_click: is_flag_enabled!(disable_click, matches, config),
+        enable_gpu_memory: is_flag_enabled!(enable_gpu_memory, matches, config),
+        show_table_scroll_position: is_flag_enabled!(show_table_scroll_position, matches, config),
         is_advanced_kill,
         network_scale_type,
         network_unit_type,
@@ -359,7 +384,7 @@ pub fn build_app(
     let used_widgets = UsedWidgets {
         use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
         use_mem,
-        use_gpu: use_mem && get_enable_gpu_memory(matches, config),
+        use_gpu: use_mem && is_flag_enabled!(enable_gpu_memory, matches, config),
         use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
         use_proc: used_widget_set.get(&Proc).is_some(),
         use_disk: used_widget_set.get(&Disk).is_some(),
@@ -375,8 +400,6 @@ pub fn build_app(
         get_ignore_list(&config.temp_filter).context("Update 'temp_filter' in your config file")?;
     let net_filter =
         get_ignore_list(&config.net_filter).context("Update 'net_filter' in your config file")?;
-
-    let expanded_upon_startup = get_expanded_on_startup(matches, config);
 
     Ok(App::builder()
         .app_config_fields(app_config_fields)
@@ -404,12 +427,13 @@ pub fn build_app(
 pub fn get_widget_layout(
     matches: &ArgMatches, config: &Config,
 ) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
-    let left_legend = get_use_left_legend(matches, config);
+    let left_legend = is_flag_enabled!(left_legend, matches, config);
+
     let (default_widget_type, mut default_widget_count) =
         get_default_widget_and_count(matches, config)?;
     let mut default_widget_id = 1;
 
-    let bottom_layout = if get_use_basic_mode(matches, config) {
+    let bottom_layout = if is_flag_enabled!(basic, matches, config) {
         default_widget_id = DEFAULT_WIDGET_ID;
 
         BottomLayout::init_basic_default(get_use_battery(matches, config))
@@ -531,65 +555,6 @@ fn get_show_average_cpu(matches: &ArgMatches, config: &Config) -> bool {
     true
 }
 
-fn get_use_dot(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("dot_marker") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(dot_marker) = flags.dot_marker {
-            return dot_marker;
-        }
-    }
-    false
-}
-
-fn get_use_left_legend(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("left_legend") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(left_legend) = flags.left_legend {
-            return left_legend;
-        }
-    }
-
-    false
-}
-
-fn get_use_current_cpu_total(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("current_usage") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(current_usage) = flags.current_usage {
-            return current_usage;
-        }
-    }
-
-    false
-}
-
-fn get_unnormalized_cpu(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("unnormalized_cpu") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(unnormalized_cpu) = flags.unnormalized_cpu {
-            return unnormalized_cpu;
-        }
-    }
-
-    false
-}
-
-fn get_use_basic_mode(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("basic") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(basic) = flags.basic {
-            return basic;
-        }
-    }
-
-    false
-}
-
 /// FIXME: Let this accept human times.
 fn get_default_time_value(
     matches: &ArgMatches, config: &Config, retention_ms: u64,
@@ -658,82 +623,6 @@ fn get_time_interval(
     Ok(time_interval)
 }
 
-pub fn get_app_grouping(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("group") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(grouping) = flags.group_processes {
-            return grouping;
-        }
-    }
-    false
-}
-
-pub fn get_app_case_sensitive(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("case_sensitive") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(case_sensitive) = flags.case_sensitive {
-            return case_sensitive;
-        }
-    }
-    false
-}
-
-pub fn get_app_match_whole_word(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("whole_word") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(whole_word) = flags.whole_word {
-            return whole_word;
-        }
-    }
-    false
-}
-
-pub fn get_app_use_regex(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("regex") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(regex) = flags.regex {
-            return regex;
-        }
-    }
-    false
-}
-
-fn get_hide_time(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("hide_time") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(hide_time) = flags.hide_time {
-            return hide_time;
-        }
-    }
-    false
-}
-
-fn get_autohide_time(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("autohide_time") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(autohide_time) = flags.autohide_time {
-            return autohide_time;
-        }
-    }
-
-    false
-}
-
-fn get_expanded_on_startup(matches: &ArgMatches, config: &Config) -> bool {
-    matches.contains_id("expanded_on_startup")
-        || config
-            .flags
-            .as_ref()
-            .and_then(|x| x.expanded_on_startup)
-            .unwrap_or(false)
-}
-
 fn get_default_widget_and_count(
     matches: &ArgMatches, config: &Config,
 ) -> error::Result<(Option<BottomWidgetType>, u64)> {
@@ -785,50 +674,17 @@ fn get_default_widget_and_count(
     }
 }
 
-fn get_disable_click(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("disable_click") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(disable_click) = flags.disable_click {
-            return disable_click;
-        }
-    }
-    false
-}
-
-fn get_use_old_network_legend(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("use_old_network_legend") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(use_old_network_legend) = flags.use_old_network_legend {
-            return use_old_network_legend;
-        }
-    }
-    false
-}
-
-fn get_hide_table_gap(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("hide_table_gap") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(hide_table_gap) = flags.hide_table_gap {
-            return hide_table_gap;
-        }
-    }
-    false
-}
-
 fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
     #[cfg(feature = "battery")]
-    if let Ok(battery_manager) = Manager::new() {
-        if let Ok(batteries) = battery_manager.batteries() {
-            if batteries.count() == 0 {
-                return false;
+    {
+        if let Ok(battery_manager) = Manager::new() {
+            if let Ok(batteries) = battery_manager.batteries() {
+                if batteries.count() == 0 {
+                    return false;
+                }
             }
         }
-    }
 
-    if cfg!(feature = "battery") {
         if matches.contains_id("battery") {
             return true;
         } else if let Some(flags) = &config.flags {
@@ -837,31 +693,7 @@ fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
             }
         }
     }
-    false
-}
 
-fn get_enable_gpu_memory(matches: &ArgMatches, config: &Config) -> bool {
-    if cfg!(feature = "gpu") {
-        if matches.contains_id("enable_gpu_memory") {
-            return true;
-        } else if let Some(flags) = &config.flags {
-            if let Some(enable_gpu_memory) = flags.enable_gpu_memory {
-                return enable_gpu_memory;
-            }
-        }
-    }
-    false
-}
-
-#[allow(dead_code)]
-fn get_no_write(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("no_write") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(no_write) = flags.no_write {
-            return no_write;
-        }
-    }
     false
 }
 
@@ -927,61 +759,6 @@ pub fn get_color_scheme(matches: &ArgMatches, config: &Config) -> error::Result<
     Ok(ColourScheme::Default)
 }
 
-fn get_mem_as_value(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("mem_as_value") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(mem_as_value) = flags.mem_as_value {
-            return mem_as_value;
-        }
-    }
-    false
-}
-
-fn get_is_default_tree(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("tree") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(tree) = flags.tree {
-            return tree;
-        }
-    }
-    false
-}
-
-fn get_show_table_scroll_position(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("show_table_scroll_position") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(show_table_scroll_position) = flags.show_table_scroll_position {
-            return show_table_scroll_position;
-        }
-    }
-    false
-}
-
-fn get_is_default_process_command(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("process_command") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(process_command) = flags.process_command {
-            return process_command;
-        }
-    }
-    false
-}
-
-fn get_is_advanced_kill_disabled(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("disable_advanced_kill") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(disable_advanced_kill) = flags.disable_advanced_kill {
-            return disable_advanced_kill;
-        }
-    }
-    false
-}
-
 fn get_network_unit_type(matches: &ArgMatches, config: &Config) -> DataUnit {
     if matches.contains_id("network_use_bytes") {
         return DataUnit::Byte;
@@ -1010,17 +787,6 @@ fn get_network_scale_type(matches: &ArgMatches, config: &Config) -> AxisScaling 
     AxisScaling::Linear
 }
 
-fn get_network_use_binary_prefix(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("network_use_binary_prefix") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(network_use_binary_prefix) = flags.network_use_binary_prefix {
-            return network_use_binary_prefix;
-        }
-    }
-    false
-}
-
 fn get_retention_ms(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
@@ -1036,5 +802,35 @@ fn get_retention_ms(matches: &ArgMatches, config: &Config) -> error::Result<u64>
         }
     } else {
         Ok(DEFAULT_RETENTION_MS)
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use crate::canvas::canvas_styling::CanvasColours;
+
+    use super::{get_color_scheme, get_widget_layout, Config};
+
+    // TODO: There's probably a better way to create clap options AND unify together to avoid the possibility of
+    // typos/mixing up. Use macros!
+    #[test]
+    fn verify_cli_options_build() {
+        let app = crate::clap::build_app();
+
+        for arg in app.get_arguments().collect::<Vec<_>>() {
+            if !arg.is_takes_value_set() {
+                let app = app.clone();
+                let mut config = Config::default();
+
+                let matches = app.get_matches_from([arg.get_id()]);
+                let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();
+                let colours =
+                    CanvasColours::new(get_color_scheme(&matches, &config).unwrap(), &config)
+                        .unwrap();
+
+                super::build_app(&matches, &mut config, &layout, id, &ty, &colours).unwrap();
+            }
+        }
     }
 }
