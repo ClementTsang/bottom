@@ -71,17 +71,17 @@ default = ["fern", "log", "battery", "gpu"]
 deploy = ["battery", "gpu"]
 
 [dependencies]
-anyhow = "1.0.57"
+anyhow = "1.0.69"
 backtrace = "0.3.67"
 cfg-if = "1.0.0"
 clap = { version = "3.2.2", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 const_format = "0.2.30"
 crossterm = "0.25.0"
-ctrlc = { version = "3.2.4", features = ["termination"] }
+ctrlc = { version = "3.2.5", features = ["termination"] }
 dirs = "4.0.0"
 fern = { version = "0.6.1", optional = true }
-futures = "0.3.25"
+futures = "0.3.26"
 futures-timer = "3.0.2"
 fxhash = "0.2.1"
 humantime = "2.1.0"
@@ -97,11 +97,11 @@ serde = { version = "1.0.152", features = ["derive"] }
 starship-battery = { version = "0.7.9", optional = true }
 sysinfo = "0.26.7"
 thiserror = "1.0.38"
-time = { version = "0.3.9", features = ["formatting", "macros"] }
+time = { version = "0.3.20", features = ["formatting", "macros"] }
 toml = "0.5.10"
 tui = "0.19.0"
 typed-builder = "0.10.0"
-unicode-segmentation = "1.10.0"
+unicode-segmentation = "1.10.1"
 unicode-width = "0.1.10"
 
 [target.'cfg(unix)'.dependencies]
@@ -129,19 +129,17 @@ windows = { version = "0.44.0", features = [
     "Win32_Foundation",
 ] }
 
-winapi = "0.3.9"
-
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.82" }
+serde_json = { version = "1.0.93" }
 sysctl = { version = "0.5.4" }
 filedescriptor = "0.8.2"
 
 [dev-dependencies]
-assert_cmd = "2.0.4"
-predicates = "2.1.1"
+assert_cmd = "2.0.4" # cannot update this due to once_cell
+predicates = "2.1.5"
 
 [dev-dependencies.cargo-husky]
-version = "1"
+version = "1.5.0"
 default-features = false
 features = ["user-hooks"]
 
