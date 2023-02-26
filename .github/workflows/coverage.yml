@@ -1,5 +1,7 @@
 # Code coverage generation via cargo-llvm-cov, which is then uploaded to Codecov.
 # Codecov will report back via a comment if run on a PR.
+#
+# Note that Codecov will report back the average all uploaded coverage files.
 
 name: codecov
 
@@ -17,7 +19,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' || github.repository != 'ClementTsang/bottom' }}
 
-# TODO: Maybe add this for more than just Linux.
 jobs:
   pre-job:
     runs-on: ubuntu-latest
@@ -70,5 +71,5 @@ jobs:
         with:
           files: lcov.info
           fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }} # This is generally not needed, but sometimes the default shared token hits limits.
           flags: ${{ matrix.info.os }}
