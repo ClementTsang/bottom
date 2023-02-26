@@ -60,8 +60,8 @@ jobs:
   # Note that m1 macOS is tested via CirrusCI.
   supported:
     needs: pre-job
-    runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    runs-on: ${{ matrix.info.os }}
     timeout-minutes: 18
     strategy:
       fail-fast: false
