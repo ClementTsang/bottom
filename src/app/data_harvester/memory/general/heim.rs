@@ -257,9 +257,11 @@ pub async fn get_arc_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     }))
 }
 
+// FIXME: Can unify this with the sysinfo impl
 #[cfg(feature = "nvidia")]
 pub async fn get_gpu_data() -> crate::utils::error::Result<Option<Vec<(String, MemHarvest)>>> {
     use crate::data_harvester::nvidia::NVML_DATA;
+
     if let Ok(nvml) = &*NVML_DATA {
         if let Ok(ngpu) = nvml.device_count() {
             let mut results = Vec::with_capacity(ngpu as usize);
