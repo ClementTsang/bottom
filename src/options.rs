@@ -115,7 +115,7 @@ pub struct ConfigColours {
 impl ConfigColours {
     /// Returns `true` if there is a [`ConfigColours`] that is empty or there isn't one at all.
     pub fn is_empty(&self) -> bool {
-        if let Ok(serialized_string) = toml::to_string(self) {
+        if let Ok(serialized_string) = toml_edit::ser::to_string(self) {
             return serialized_string.is_empty();
         }
 
@@ -442,7 +442,7 @@ pub fn get_widget_layout(
             Some(r) => r,
             None => {
                 // This cannot (like it really shouldn't) fail!
-                ref_row = toml::from_str::<Config>(if get_use_battery(matches, config) {
+                ref_row = toml_edit::de::from_str::<Config>(if get_use_battery(matches, config) {
                     DEFAULT_BATTERY_LAYOUT
                 } else {
                     DEFAULT_LAYOUT

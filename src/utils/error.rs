@@ -69,8 +69,8 @@ impl From<std::string::String> for BottomError {
     }
 }
 
-impl From<toml::de::Error> for BottomError {
-    fn from(err: toml::de::Error) -> Self {
+impl From<toml_edit::de::Error> for BottomError {
+    fn from(err: toml_edit::de::Error) -> Self {
         BottomError::ConfigError(err.to_string())
     }
 }

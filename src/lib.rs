@@ -241,7 +241,7 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
     if let Some(path) = config_path {
         if let Ok(config_string) = fs::read_to_string(path) {
             // We found a config file!
-            Ok(toml::from_str(config_string.as_str())?)
+            Ok(toml_edit::de::from_str(config_string.as_str())?)
         } else {
             // Config file DNE...
             if let Some(parent_path) = path.parent() {
