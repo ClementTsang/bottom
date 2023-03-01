@@ -12,8 +12,6 @@ use starship_battery::{Battery, Manager};
 
 use sysinfo::{System, SystemExt};
 
-use self::processes::{PrevProc, ProcHarvestOptions};
-
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
@@ -306,6 +304,8 @@ impl DataCollector {
             if let Ok(mut process_list) = {
                 #[cfg(target_os = "linux")]
                 {
+                    use self::processes::{PrevProc, ProcHarvestOptions};
+
                     let prev_proc = PrevProc {
                         prev_idle: &mut self.prev_idle,
                         prev_non_idle: &mut self.prev_non_idle,
