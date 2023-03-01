@@ -276,16 +276,12 @@ impl DataCollector {
 
         // CPU
         if self.widgets_to_harvest.use_cpu {
-            if let Ok(cpu_data) = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu) {
-                self.data.cpu = Some(cpu_data);
-            }
+            self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu).ok();
 
             #[cfg(target_family = "unix")]
             {
                 // Load Average
-                if let Ok(load_avg_data) = cpu::get_load_avg() {
-                    self.data.load_avg = Some(load_avg_data);
-                }
+                self.data.load_avg = cpu::get_load_avg().ok();
             }
         }
 
