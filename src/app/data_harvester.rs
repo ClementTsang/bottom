@@ -10,8 +10,9 @@ use fxhash::FxHashMap;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
 
-#[cfg(not(target_os = "linux"))]
 use sysinfo::{System, SystemExt};
+
+use self::processes::{PrevProc, ProcHarvestOptions};
 
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
@@ -99,10 +100,7 @@ impl Data {
 #[derive(Debug)]
 pub struct DataCollector {
     pub data: Data,
-    #[cfg(not(target_os = "linux"))]
     sys: System,
-    previous_cpu_times: Vec<(cpu::PastCpuWork, cpu::PastCpuTotal)>,
-    previous_average_cpu_time: Option<(cpu::PastCpuWork, cpu::PastCpuTotal)>,
     #[cfg(target_os = "linux")]
     pid_mapping: FxHashMap<crate::Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
@@ -132,10 +130,7 @@ impl DataCollector {
     pub fn new(filters: DataFilters) -> Self {
         DataCollector {
             data: Data::default(),
-            #[cfg(not(target_os = "linux"))]
             sys: System::new_with_specifics(sysinfo::RefreshKind::new()),
-            previous_cpu_times: vec![],
-            previous_average_cpu_time: None,
             #[cfg(target_os = "linux")]
             pid_mapping: FxHashMap::default(),
             #[cfg(target_os = "linux")]
@@ -186,14 +181,14 @@ impl DataCollector {
                 self.sys.refresh_users_list();
             }
 
-            if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
-                self.sys.refresh_cpu();
-            }
-
             // Refresh disk list once...
             if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_disk {
                 self.sys.refresh_disks_list();
             }
+        }
+
+        if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
+            self.sys.refresh_cpu();
         }
 
         #[cfg(feature = "battery")]
@@ -216,8 +211,6 @@ impl DataCollector {
         std::thread::sleep(std::time::Duration::from_millis(250));
 
         self.data.cleanup();
-
-        // trace!("Enabled widgets to harvest: {:#?}", self.widgets_to_harvest);
     }
 
     #[cfg(target_os = "linux")]
@@ -250,11 +243,12 @@ impl DataCollector {
     }
 
     pub async fn update_data(&mut self) {
+        if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
+            self.sys.refresh_cpu();
+        }
+
         #[cfg(not(target_os = "linux"))]
         {
-            if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
-                self.sys.refresh_cpu();
-            }
             if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
@@ -284,36 +278,14 @@ impl DataCollector {
 
         // CPU
         if self.widgets_to_harvest.use_cpu {
-            #[cfg(not(target_os = "freebsd"))]
-            {
-                if let Ok(cpu_data) = cpu::get_cpu_data_list(
-                    self.show_average_cpu,
-                    &mut self.previous_cpu_times,
-                    &mut self.previous_average_cpu_time,
-                )
-                .await
-                {
-                    self.data.cpu = Some(cpu_data);
-                }
-            }
-            #[cfg(target_os = "freebsd")]
-            {
-                if let Ok(cpu_data) = cpu::get_cpu_data_list(
-                    &self.sys,
-                    self.show_average_cpu,
-                    &mut self.previous_cpu_times,
-                    &mut self.previous_average_cpu_time,
-                )
-                .await
-                {
-                    self.data.cpu = Some(cpu_data);
-                }
+            if let Ok(cpu_data) = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu) {
+                self.data.cpu = Some(cpu_data);
             }
 
             #[cfg(target_family = "unix")]
             {
                 // Load Average
-                if let Ok(load_avg_data) = cpu::get_load_avg().await {
+                if let Ok(load_avg_data) = cpu::get_load_avg() {
                     self.data.load_avg = Some(load_avg_data);
                 }
             }
@@ -334,24 +306,21 @@ impl DataCollector {
             if let Ok(mut process_list) = {
                 #[cfg(target_os = "linux")]
                 {
-                    // Must do this here since we otherwise have to make `get_process_data` async.
-                    use self::processes::CpuUsageStrategy;
+                    let prev_proc = PrevProc {
+                        prev_idle: &mut self.prev_idle,
+                        prev_non_idle: &mut self.prev_non_idle,
+                    };
 
-                    let normalize_cpu = if self.unnormalized_cpu {
-                        heim::cpu::logical_count()
-                            .await
-                            .map(|v| CpuUsageStrategy::NonNormalized(v as f64))
-                            .unwrap_or(CpuUsageStrategy::Normalized)
-                    } else {
-                        CpuUsageStrategy::Normalized
+                    let proc_harvest_options = ProcHarvestOptions {
+                        use_current_cpu_total: self.use_current_cpu_total,
+                        unnormalized_cpu: self.unnormalized_cpu,
                     };
 
                     processes::get_process_data(
-                        &mut self.prev_idle,
-                        &mut self.prev_non_idle,
+                        &self.sys,
+                        prev_proc,
                         &mut self.pid_mapping,
-                        self.use_current_cpu_total,
-                        normalize_cpu,
+                        proc_harvest_options,
                         current_instant
                             .duration_since(self.last_collection_time)
                             .as_secs(),

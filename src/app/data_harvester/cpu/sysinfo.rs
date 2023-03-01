@@ -5,13 +5,11 @@ use std::collections::VecDeque;
 
 use sysinfo::{CpuExt, LoadAvg, System, SystemExt};
 
-use super::{CpuData, CpuDataType, CpuHarvest, PastCpuTotal, PastCpuWork};
+use super::{CpuData, CpuDataType, CpuHarvest};
 use crate::app::data_harvester::cpu::LoadAvgHarvest;
 
-pub async fn get_cpu_data_list(
+pub fn get_cpu_data_list(
     sys: &sysinfo::System, show_average_cpu: bool,
-    _previous_cpu_times: &mut [(PastCpuWork, PastCpuTotal)],
-    _previous_average_cpu_time: &mut Option<(PastCpuWork, PastCpuTotal)>,
 ) -> crate::error::Result<CpuHarvest> {
     let mut cpu_deque: VecDeque<_> = sys
         .cpus()
@@ -35,7 +33,7 @@ pub async fn get_cpu_data_list(
     Ok(Vec::from(cpu_deque))
 }
 
-pub async fn get_load_avg() -> crate::error::Result<LoadAvgHarvest> {
+pub fn get_load_avg() -> crate::error::Result<LoadAvgHarvest> {
     let sys = System::new();
     let LoadAvg { one, five, fifteen } = sys.load_average();
 
