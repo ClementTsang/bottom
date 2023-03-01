@@ -45,7 +45,7 @@ fn test_duplicate_temp_type() {
         .arg("./tests/invalid_configs/duplicate_temp_type.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("duplicate field"));
+        .stderr(predicate::str::contains("duplicate key"));
 }
 
 /// Checks for if a hex is valid
@@ -139,5 +139,5 @@ fn test_invalid_default_widget_count() {
         .arg("./tests/invalid_configs/invalid_default_widget_count.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid number"));
+        .stderr(predicate::str::contains("number too large"));
 }

@@ -7,6 +7,10 @@ use bottom::constants::{DEFAULT_LAYOUT, DEFAULT_WIDGET_ID};
 use bottom::options::{layout_options::Row, Config};
 use bottom::utils::error;
 
+use toml_edit::de::from_str;
+
+// TODO: Could move these into the library files rather than external tbh.
+
 const PROC_LAYOUT: &str = r##"
 [[row]]
     [[row.child]]
@@ -57,10 +61,7 @@ fn test_create_layout(
 #[test]
 /// Tests the default setup.
 fn test_default_movement() {
-    let rows = toml::from_str::<Config>(DEFAULT_LAYOUT)
-        .unwrap()
-        .row
-        .unwrap();
+    let rows = from_str::<Config>(DEFAULT_LAYOUT).unwrap().row.unwrap();
     let ret_bottom_layout = test_create_layout(&rows, DEFAULT_WIDGET_ID, None, 1, false);
 
     // Simple tests for the top CPU widget
@@ -132,7 +133,7 @@ fn test_default_movement() {
 #[test]
 /// Tests battery movement in the default setup.
 fn test_default_battery_movement() {
-    let rows = toml::from_str::<Config>(DEFAULT_BATTERY_LAYOUT)
+    let rows = from_str::<Config>(DEFAULT_BATTERY_LAYOUT)
         .unwrap()
         .row
         .unwrap();
@@ -178,10 +179,7 @@ fn test_default_battery_movement() {
 #[test]
 /// Tests using left_legend.
 fn test_left_legend() {
-    let rows = toml::from_str::<Config>(DEFAULT_LAYOUT)
-        .unwrap()
-        .row
-        .unwrap();
+    let rows = from_str::<Config>(DEFAULT_LAYOUT).unwrap().row.unwrap();
     let ret_bottom_layout = test_create_layout(&rows, DEFAULT_WIDGET_ID, None, 1, true);
 
     // Legend
@@ -240,7 +238,7 @@ fn test_default_widget_in_layout() {
         [[row.child]]
             type="proc"
     "##;
-    let rows = toml::from_str::<Config>(proc_layout).unwrap().row.unwrap();
+    let rows = from_str::<Config>(proc_layout).unwrap().row.unwrap();
     let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
     let mut total_height_ratio = 0;
     let mut default_widget_count = 1;
@@ -273,7 +271,7 @@ fn test_default_widget_in_layout() {
 #[test]
 /// Tests default widget by setting type and count.
 fn test_default_widget_by_option() {
-    let rows = toml::from_str::<Config>(PROC_LAYOUT).unwrap().row.unwrap();
+    let rows = from_str::<Config>(PROC_LAYOUT).unwrap().row.unwrap();
     let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
     let mut total_height_ratio = 0;
     let mut default_widget_count = 3;
@@ -305,7 +303,7 @@ fn test_default_widget_by_option() {
 
 #[test]
 fn test_proc_custom_layout() {
-    let rows = toml::from_str::<Config>(PROC_LAYOUT).unwrap().row.unwrap();
+    let rows = from_str::<Config>(PROC_LAYOUT).unwrap().row.unwrap();
     let ret_bottom_layout = test_create_layout(&rows, DEFAULT_WIDGET_ID, None, 1, false);
 
     // First proc widget
