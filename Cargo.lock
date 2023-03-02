@@ -821,7 +821,6 @@ checksum = "b8a653442b9bdd11a77d3753a60443c60c4437d3acac8e6c3d4a6a9acd7cceed"
 dependencies = [
  "heim-common",
  "heim-disk",
- "heim-memory",
  "heim-net",
  "heim-runtime",
  "heim-sensors",
@@ -860,21 +859,6 @@ dependencies = [
  "libc",
  "mach",
  "widestring",
- "winapi",
-]
-
-[[package]]
-name = "heim-memory"
-version = "0.1.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fa81bccc5e81ab0c68f520ecba5cb42817bacabfc6120160de886754ad0e3e1"
-dependencies = [
- "cfg-if",
- "heim-common",
- "heim-runtime",
- "lazy_static",
- "libc",
- "mach",
  "winapi",
 ]
 

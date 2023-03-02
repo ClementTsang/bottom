@@ -157,15 +157,11 @@ impl DataCollector {
     }
 
     pub fn init(&mut self) {
-        #[cfg(target_os = "linux")]
-        {
-            futures::executor::block_on(self.initialize_memory_size());
-        }
+        self.sys.refresh_memory();
+        self.mem_total_kb = self.sys.total_memory();
+
         #[cfg(not(target_os = "linux"))]
         {
-            self.sys.refresh_memory();
-            self.mem_total_kb = self.sys.total_memory();
-
             // TODO: Would be good to get this and network list running on a timer instead...?
             // Refresh components list once...
             if self.widgets_to_harvest.use_temp {
@@ -213,15 +209,6 @@ impl DataCollector {
         self.data.cleanup();
     }
 
-    #[cfg(target_os = "linux")]
-    async fn initialize_memory_size(&mut self) {
-        self.mem_total_kb = if let Ok(mem) = heim::memory::memory().await {
-            mem.total().get::<heim::units::information::kilobyte>()
-        } else {
-            1
-        };
-    }
-
     pub fn set_data_collection(&mut self, used_widgets: UsedWidgets) {
         self.widgets_to_harvest = used_widgets;
     }
@@ -247,6 +234,10 @@ impl DataCollector {
             self.sys.refresh_cpu();
         }
 
+        if self.widgets_to_harvest.use_mem {
+            self.sys.refresh_memory();
+        }
+
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
@@ -267,9 +258,6 @@ impl DataCollector {
             {
                 if self.widgets_to_harvest.use_disk {
                     self.sys.refresh_disks();
-                }
-                if self.widgets_to_harvest.use_mem {
-                    self.sys.refresh_memory();
                 }
             }
         }
