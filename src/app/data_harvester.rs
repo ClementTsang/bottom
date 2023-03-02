@@ -372,6 +372,7 @@ impl DataCollector {
             let MemCollect {
                 ram,
                 swap,
+                #[cfg(feature = "gpu")]
                 gpus,
                 #[cfg(feature = "zfs")]
                 arc,
