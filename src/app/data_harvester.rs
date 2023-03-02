@@ -12,6 +12,8 @@ use starship_battery::{Battery, Manager};
 
 use sysinfo::{System, SystemExt};
 
+use self::memory::MemCollect;
+
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
@@ -403,23 +405,7 @@ impl DataCollector {
                 )
             }
         };
-        let mem_data_fut = {
-            #[cfg(not(target_os = "freebsd"))]
-            {
-                memory::get_mem_data(
-                    self.widgets_to_harvest.use_mem,
-                    self.widgets_to_harvest.use_gpu,
-                )
-            }
-            #[cfg(target_os = "freebsd")]
-            {
-                memory::get_mem_data(
-                    &self.sys,
-                    self.widgets_to_harvest.use_mem,
-                    self.widgets_to_harvest.use_gpu,
-                )
-            }
-        };
+
         let disk_data_fut = disks::get_disk_usage(
             self.widgets_to_harvest.use_disk,
             &self.filters.disk_filter,
@@ -427,12 +413,8 @@ impl DataCollector {
         );
         let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
 
-        let (net_data, mem_res, disk_res, io_res) = join!(
-            network_data_fut,
-            mem_data_fut,
-            disk_data_fut,
-            disk_io_usage_fut,
-        );
+        let (net_data, disk_res, io_res) =
+            join!(network_data_fut, disk_data_fut, disk_io_usage_fut,);
 
         if let Ok(net_data) = net_data {
             if let Some(net_data) = &net_data {
@@ -442,22 +424,27 @@ impl DataCollector {
             self.data.network = net_data;
         }
 
-        if let Ok(memory) = mem_res.ram {
-            self.data.memory = memory;
-        }
+        if self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_gpu {
+            let MemCollect {
+                ram,
+                swap,
+                gpus,
+                #[cfg(feature = "zfs")]
+                arc,
+            } = memory::get_mem_data(&self.sys, self.widgets_to_harvest.use_gpu);
 
-        if let Ok(swap) = mem_res.swap {
+            self.data.memory = ram;
             self.data.swap = swap;
-        }
 
-        #[cfg(feature = "zfs")]
-        if let Ok(arc) = mem_res.arc {
-            self.data.arc = arc;
-        }
+            #[cfg(feature = "zfs")]
+            {
+                self.data.arc = arc;
+            }
 
-        #[cfg(feature = "gpu")]
-        if let Ok(gpu) = mem_res.gpus {
-            self.data.gpu = gpu;
+            #[cfg(feature = "gpu")]
+            {
+                self.data.gpu = gpus;
+            }
         }
 
         if let Ok(disks) = disk_res {
