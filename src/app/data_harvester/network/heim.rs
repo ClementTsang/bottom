@@ -23,22 +23,17 @@ pub async fn get_network_data(
     while let Some(io) = io_data.next().await {
         if let Ok(io) = io {
             let to_keep = if let Some(filter) = filter {
-                if filter.is_list_ignored {
-                    let mut ret = true;
-                    for r in &filter.list {
-                        if r.is_match(io.interface()) {
-                            ret = false;
-                            break;
-                        }
+                let mut ret = filter.is_list_ignored;
+                for r in &filter.list {
+                    if r.is_match(io.interface()) {
+                        ret = !filter.is_list_ignored;
+                        break;
                     }
-                    ret
-                } else {
-                    true
                 }
+                ret
             } else {
                 true
             };
-
             if to_keep {
                 // TODO: Use bytes as the default instead, perhaps?
                 // Since you might have to do a double conversion (bytes -> bits -> bytes) in some cases;
