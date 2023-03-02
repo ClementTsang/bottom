@@ -109,7 +109,7 @@ libc = "0.2.124"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 heim = { version = "0.1.0-rc.1", features = ["disk", "memory", "net", "sensors"] }
-procfs = { version = "0.14.2", default-features = false }
+procfs = { version = "0.15.1", default-features = false }
 smol = "1.2.5"
 
 [target.'cfg(target_os = "macos")'.dependencies]
