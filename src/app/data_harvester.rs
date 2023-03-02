@@ -368,6 +368,29 @@ impl DataCollector {
             }
         }
 
+        if self.widgets_to_harvest.use_mem {
+            let MemCollect {
+                ram,
+                swap,
+                gpus,
+                #[cfg(feature = "zfs")]
+                arc,
+            } = memory::get_mem_data(&self.sys, self.widgets_to_harvest.use_gpu);
+
+            self.data.memory = ram;
+            self.data.swap = swap;
+
+            #[cfg(feature = "zfs")]
+            {
+                self.data.arc = arc;
+            }
+
+            #[cfg(feature = "gpu")]
+            {
+                self.data.gpu = gpus;
+            }
+        }
+
         let network_data_fut = {
             #[cfg(any(target_os = "windows", target_os = "freebsd"))]
             {
@@ -410,29 +433,6 @@ impl DataCollector {
                 self.total_tx = net_data.total_tx;
             }
             self.data.network = net_data;
-        }
-
-        if self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_gpu {
-            let MemCollect {
-                ram,
-                swap,
-                gpus,
-                #[cfg(feature = "zfs")]
-                arc,
-            } = memory::get_mem_data(&self.sys, self.widgets_to_harvest.use_gpu);
-
-            self.data.memory = ram;
-            self.data.swap = swap;
-
-            #[cfg(feature = "zfs")]
-            {
-                self.data.arc = arc;
-            }
-
-            #[cfg(feature = "gpu")]
-            {
-                self.data.gpu = gpus;
-            }
         }
 
         if let Ok(disks) = disk_res {

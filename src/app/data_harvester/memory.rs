@@ -5,8 +5,8 @@ pub(crate) use self::sysinfo::*;
 
 #[derive(Debug, Clone, Default)]
 pub struct MemHarvest {
-    pub mem_total_in_kib: u64,
-    pub mem_used_in_kib: u64,
+    pub total_kib: u64,
+    pub used_kib: u64,
     pub use_percent: Option<f64>,
 }
 

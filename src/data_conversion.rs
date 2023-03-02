@@ -262,7 +262,7 @@ pub fn convert_mem_labels(
     }
 
     (
-        if current_data.memory_harvest.mem_total_in_kib > 0 {
+        if current_data.memory_harvest.total_kib > 0 {
             Some((
                 format!(
                     "{:3.0}%",
@@ -270,14 +270,14 @@ pub fn convert_mem_labels(
                 ),
                 {
                     let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
-                        current_data.memory_harvest.mem_total_in_kib,
+                        current_data.memory_harvest.total_kib,
                     );
 
                     format!(
                         "   {:.1}{}/{:.1}{}",
-                        current_data.memory_harvest.mem_used_in_kib as f64 / denominator,
+                        current_data.memory_harvest.used_kib as f64 / denominator,
                         unit,
-                        (current_data.memory_harvest.mem_total_in_kib as f64 / denominator),
+                        (current_data.memory_harvest.total_kib as f64 / denominator),
                         unit
                     )
                 },
@@ -285,7 +285,7 @@ pub fn convert_mem_labels(
         } else {
             None
         },
-        if current_data.swap_harvest.mem_total_in_kib > 0 {
+        if current_data.swap_harvest.total_kib > 0 {
             Some((
                 format!(
                     "{:3.0}%",
@@ -293,14 +293,14 @@ pub fn convert_mem_labels(
                 ),
                 {
                     let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
-                        current_data.swap_harvest.mem_total_in_kib,
+                        current_data.swap_harvest.total_kib,
                     );
 
                     format!(
                         "   {:.1}{}/{:.1}{}",
-                        current_data.swap_harvest.mem_used_in_kib as f64 / denominator,
+                        current_data.swap_harvest.used_kib as f64 / denominator,
                         unit,
-                        (current_data.swap_harvest.mem_total_in_kib as f64 / denominator),
+                        (current_data.swap_harvest.total_kib as f64 / denominator),
                         unit
                     )
                 },
@@ -688,13 +688,13 @@ pub fn convert_gpu_data(
                 mem_percent: format!("{:3.0}%", gpu.1.use_percent.unwrap_or(0.0)),
                 mem_total: {
                     let (unit, denominator) =
-                        return_unit_and_denominator_for_mem_kib(gpu.1.mem_total_in_kib);
+                        return_unit_and_denominator_for_mem_kib(gpu.1.total_kib);
 
                     format!(
                         "   {:.1}{}/{:.1}{}",
-                        gpu.1.mem_used_in_kib as f64 / denominator,
+                        gpu.1.used_kib as f64 / denominator,
                         unit,
-                        (gpu.1.mem_total_in_kib as f64 / denominator),
+                        (gpu.1.total_kib as f64 / denominator),
                         unit
                     )
                 },

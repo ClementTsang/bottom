@@ -240,7 +240,6 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "smol",
  "starship-battery",
  "sysctl",
  "sysinfo",
@@ -1640,9 +1639,9 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.26.7"
+version = "0.26.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c375d5fd899e32847b8566e10598d6e9f1d9b55ec6de3cdf9e7da4bdc51371bc"
+checksum = "5c18a6156d1f27a9592ee18c1a846ca8dd5c258b7179fc193ae87c74ebb666f5"
 dependencies = [
  "cfg-if",
  "core-foundation-sys 0.8.3",

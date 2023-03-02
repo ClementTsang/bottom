@@ -18,11 +18,12 @@ pub(crate) fn get_mem_data(sys: &System, _get_gpu: bool) -> MemCollect {
 
 /// Returns RAM usage.
 pub(crate) fn get_ram_data(sys: &System) -> Option<MemHarvest> {
-    let (mem_total_in_kib, mem_used_in_kib) = (sys.total_memory() / 1024, sys.used_memory() / 1024);
+    let mem_used_in_kib = sys.used_memory() / 1024;
+    let mem_total_in_kib = sys.total_memory() / 1024;
 
     Some(MemHarvest {
-        mem_total_in_kib,
-        mem_used_in_kib,
+        total_kib: mem_total_in_kib,
+        used_kib: mem_used_in_kib,
         use_percent: if mem_total_in_kib == 0 {
             None
         } else {
@@ -33,11 +34,12 @@ pub(crate) fn get_ram_data(sys: &System) -> Option<MemHarvest> {
 
 /// Returns SWAP usage.
 pub(crate) fn get_swap_data(sys: &System) -> Option<MemHarvest> {
-    let (mem_total_in_kib, mem_used_in_kib) = (sys.total_swap() / 1024, sys.used_swap() / 1024);
+    let mem_used_in_kib = sys.used_swap() / 1024;
+    let mem_total_in_kib = sys.total_swap() / 1024;
 
     Some(MemHarvest {
-        mem_total_in_kib,
-        mem_used_in_kib,
+        total_kib: mem_total_in_kib,
+        used_kib: mem_used_in_kib,
         use_percent: if mem_total_in_kib == 0 {
             None
         } else {
@@ -84,6 +86,7 @@ pub(crate) fn get_arc_data() -> Option<MemHarvest> {
 #[cfg(feature = "nvidia")]
 pub(crate) fn get_gpu_data() -> Option<Vec<(String, MemHarvest)>> {
     use crate::data_harvester::nvidia::NVML_DATA;
+
     if let Ok(nvml) = &*NVML_DATA {
         if let Ok(ngpu) = nvml.device_count() {
             let mut results = Vec::with_capacity(ngpu as usize);
@@ -96,8 +99,8 @@ pub(crate) fn get_gpu_data() -> Option<Vec<(String, MemHarvest)>> {
                         results.push((
                             name,
                             MemHarvest {
-                                mem_total_in_kib,
-                                mem_used_in_kib,
+                                total_kib: mem_total_in_kib,
+                                used_kib: mem_used_in_kib,
                                 use_percent: if mem_total_in_kib == 0 {
                                     None
                                 } else {
