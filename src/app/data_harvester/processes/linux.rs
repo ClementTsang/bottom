@@ -5,7 +5,7 @@ use std::io::{BufRead, BufReader};
 
 use fxhash::{FxHashMap, FxHashSet};
 use procfs::process::{Process, Stat};
-use sysinfo::ProcessStatus;
+use sysinfo::{ProcessStatus, System};
 
 use super::{ProcessHarvest, UserTable};
 use crate::components::tui_widget::time_chart::Point;
@@ -221,25 +221,31 @@ fn read_proc(
     ))
 }
 
-/// How to calculate CPU usage.
-pub enum CpuUsageStrategy {
-    /// Normalized means the displayed usage percentage is divided over the number of CPU cores.
-    ///
-    /// For example, if the "overall" usage over the entire system is 105%, and there are 5 cores, then
-    /// the displayed percentage is 21%.
-    Normalized,
-
-    /// Non-normalized means that the overall usage over the entire system is shown, without dividing
-    /// over the number of cores.
-    NonNormalized(f64),
+pub(crate) struct PrevProc<'a> {
+    pub prev_idle: &'a mut f64,
+    pub prev_non_idle: &'a mut f64,
 }
 
-pub fn get_process_data(
-    prev_idle: &mut f64, prev_non_idle: &mut f64,
-    pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
-    normalization: CpuUsageStrategy, time_difference_in_secs: u64, mem_total_kb: u64,
+pub(crate) struct ProcHarvestOptions {
+    pub use_current_cpu_total: bool,
+    pub unnormalized_cpu: bool,
+}
+
+pub(crate) fn get_process_data(
+    sys: &System, prev_proc: PrevProc<'_>, pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>,
+    proc_harvest_options: ProcHarvestOptions, time_difference_in_secs: u64, mem_total_kb: u64,
     user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+    let ProcHarvestOptions {
+        use_current_cpu_total,
+        unnormalized_cpu,
+    } = proc_harvest_options;
+
+    let PrevProc {
+        prev_idle,
+        prev_non_idle,
+    } = prev_proc;
+
     // TODO: [PROC THREADS] Add threads
 
     if let Ok(CpuUsage {
@@ -247,10 +253,13 @@ pub fn get_process_data(
         cpu_fraction,
     }) = cpu_usage_calculation(prev_idle, prev_non_idle)
     {
-        if let CpuUsageStrategy::NonNormalized(num_cores) = normalization {
+        if unnormalized_cpu {
+            use sysinfo::SystemExt;
+            let num_processors = sys.cpus().len() as f64;
+
             // Note we *divide* here because the later calculation divides `cpu_usage` - in effect,
             // multiplying over the number of cores.
-            cpu_usage /= num_cores;
+            cpu_usage /= num_processors;
         }
 
         let mut pids_to_clear: FxHashSet<Pid> = pid_mapping.keys().cloned().collect();
