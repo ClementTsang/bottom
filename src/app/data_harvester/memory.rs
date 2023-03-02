@@ -1,9 +1,7 @@
-//! Data collection for memory.
-//!
-//! For Linux, macOS, and Windows, this is handled by Heim. On FreeBSD it is handled by sysinfo.
+//! Memory data collection.
 
 pub mod sysinfo;
-pub use self::sysinfo::*;
+pub(crate) use self::sysinfo::*;
 
 #[derive(Debug, Clone, Default)]
 pub struct MemHarvest {

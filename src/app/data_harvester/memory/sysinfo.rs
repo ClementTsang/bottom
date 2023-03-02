@@ -1,10 +1,11 @@
-//! Data collection for memory via sysinfo.
+//! Collecting memory data using sysinfo.
 
 use sysinfo::{System, SystemExt};
 
 use crate::data_harvester::memory::{MemCollect, MemHarvest};
 
-pub fn get_mem_data(sys: &System, _get_gpu: bool) -> MemCollect {
+/// Returns all memory data.
+pub(crate) fn get_mem_data(sys: &System, _get_gpu: bool) -> MemCollect {
     MemCollect {
         ram: get_ram_data(sys),
         swap: get_swap_data(sys),
@@ -15,7 +16,8 @@ pub fn get_mem_data(sys: &System, _get_gpu: bool) -> MemCollect {
     }
 }
 
-pub fn get_ram_data(sys: &System) -> Option<MemHarvest> {
+/// Returns RAM usage.
+pub(crate) fn get_ram_data(sys: &System) -> Option<MemHarvest> {
     let (mem_total_in_kib, mem_used_in_kib) = (sys.total_memory() / 1024, sys.used_memory() / 1024);
 
     Some(MemHarvest {
@@ -29,7 +31,8 @@ pub fn get_ram_data(sys: &System) -> Option<MemHarvest> {
     })
 }
 
-pub fn get_swap_data(sys: &System) -> Option<MemHarvest> {
+/// Returns SWAP usage.
+pub(crate) fn get_swap_data(sys: &System) -> Option<MemHarvest> {
     let (mem_total_in_kib, mem_used_in_kib) = (sys.total_swap() / 1024, sys.used_swap() / 1024);
 
     Some(MemHarvest {
@@ -43,8 +46,9 @@ pub fn get_swap_data(sys: &System) -> Option<MemHarvest> {
     })
 }
 
+/// Return ARC usage.
 #[cfg(feature = "zfs")]
-pub fn get_arc_data() -> Option<MemHarvest> {
+pub(crate) fn get_arc_data() -> Option<MemHarvest> {
     let (mem_total_in_kib, mem_used_in_kib) = {
         #[cfg(target_os = "freebsd")]
         {
@@ -76,8 +80,9 @@ pub fn get_arc_data() -> Option<MemHarvest> {
     })
 }
 
+/// Return GPU data. Currently only supports NVIDIA cards.
 #[cfg(feature = "nvidia")]
-pub fn get_gpu_data() -> Option<Vec<(String, MemHarvest)>> {
+pub(crate) fn get_gpu_data() -> Option<Vec<(String, MemHarvest)>> {
     use crate::data_harvester::nvidia::NVML_DATA;
     if let Ok(nvml) = &*NVML_DATA {
         if let Ok(ngpu) = nvml.device_count() {
