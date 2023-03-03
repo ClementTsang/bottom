@@ -402,6 +402,7 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="http://felipesuri.com"><img src="https://avatars.githubusercontent.com/u/50281523?v=4?s=100" width="100px;" alt="felipesuri"/><br /><sub><b>felipesuri</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=felipesuri" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/spital"><img src="https://avatars.githubusercontent.com/u/11034264?v=4?s=100" width="100px;" alt="spital"/><br /><sub><b>spital</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=spital" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://bikodbg.com/"><img src="https://avatars.githubusercontent.com/u/1389811?v=4?s=100" width="100px;" alt="Michael Bikovitsky"/><br /><sub><b>Michael Bikovitsky</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mbikovitsky" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/dvalter"><img src="https://avatars.githubusercontent.com/u/38795282?v=4?s=100" width="100px;" alt="Dmitry Valter"/><br /><sub><b>Dmitry Valter</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=dvalter" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
