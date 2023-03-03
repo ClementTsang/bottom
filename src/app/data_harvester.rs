@@ -12,6 +12,8 @@ use starship_battery::{Battery, Manager};
 
 use sysinfo::{System, SystemExt};
 
+use self::memory::MemCollect;
+
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
@@ -155,15 +157,11 @@ impl DataCollector {
     }
 
     pub fn init(&mut self) {
-        #[cfg(target_os = "linux")]
-        {
-            futures::executor::block_on(self.initialize_memory_size());
-        }
+        self.sys.refresh_memory();
+        self.mem_total_kb = self.sys.total_memory();
+
         #[cfg(not(target_os = "linux"))]
         {
-            self.sys.refresh_memory();
-            self.mem_total_kb = self.sys.total_memory();
-
             // TODO: Would be good to get this and network list running on a timer instead...?
             // Refresh components list once...
             if self.widgets_to_harvest.use_temp {
@@ -211,15 +209,6 @@ impl DataCollector {
         self.data.cleanup();
     }
 
-    #[cfg(target_os = "linux")]
-    async fn initialize_memory_size(&mut self) {
-        self.mem_total_kb = if let Ok(mem) = heim::memory::memory().await {
-            mem.total().get::<heim::units::information::kilobyte>()
-        } else {
-            1
-        };
-    }
-
     pub fn set_data_collection(&mut self, used_widgets: UsedWidgets) {
         self.widgets_to_harvest = used_widgets;
     }
@@ -245,6 +234,10 @@ impl DataCollector {
             self.sys.refresh_cpu();
         }
 
+        if self.widgets_to_harvest.use_mem {
+            self.sys.refresh_memory();
+        }
+
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
@@ -265,9 +258,6 @@ impl DataCollector {
             {
                 if self.widgets_to_harvest.use_disk {
                     self.sys.refresh_disks();
-                }
-                if self.widgets_to_harvest.use_mem {
-                    self.sys.refresh_memory();
                 }
             }
         }
@@ -378,6 +368,30 @@ impl DataCollector {
             }
         }
 
+        if self.widgets_to_harvest.use_mem {
+            let MemCollect {
+                ram,
+                swap,
+                #[cfg(feature = "gpu")]
+                gpus,
+                #[cfg(feature = "zfs")]
+                arc,
+            } = memory::get_mem_data(&self.sys, self.widgets_to_harvest.use_gpu);
+
+            self.data.memory = ram;
+            self.data.swap = swap;
+
+            #[cfg(feature = "zfs")]
+            {
+                self.data.arc = arc;
+            }
+
+            #[cfg(feature = "gpu")]
+            {
+                self.data.gpu = gpus;
+            }
+        }
+
         let network_data_fut = {
             #[cfg(any(target_os = "windows", target_os = "freebsd"))]
             {
@@ -403,23 +417,7 @@ impl DataCollector {
                 )
             }
         };
-        let mem_data_fut = {
-            #[cfg(not(target_os = "freebsd"))]
-            {
-                memory::get_mem_data(
-                    self.widgets_to_harvest.use_mem,
-                    self.widgets_to_harvest.use_gpu,
-                )
-            }
-            #[cfg(target_os = "freebsd")]
-            {
-                memory::get_mem_data(
-                    &self.sys,
-                    self.widgets_to_harvest.use_mem,
-                    self.widgets_to_harvest.use_gpu,
-                )
-            }
-        };
+
         let disk_data_fut = disks::get_disk_usage(
             self.widgets_to_harvest.use_disk,
             &self.filters.disk_filter,
@@ -427,12 +425,8 @@ impl DataCollector {
         );
         let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
 
-        let (net_data, mem_res, disk_res, io_res) = join!(
-            network_data_fut,
-            mem_data_fut,
-            disk_data_fut,
-            disk_io_usage_fut,
-        );
+        let (net_data, disk_res, io_res) =
+            join!(network_data_fut, disk_data_fut, disk_io_usage_fut,);
 
         if let Ok(net_data) = net_data {
             if let Some(net_data) = &net_data {
@@ -440,24 +434,6 @@ impl DataCollector {
                 self.total_tx = net_data.total_tx;
             }
             self.data.network = net_data;
-        }
-
-        if let Ok(memory) = mem_res.ram {
-            self.data.memory = memory;
-        }
-
-        if let Ok(swap) = mem_res.swap {
-            self.data.swap = swap;
-        }
-
-        #[cfg(feature = "zfs")]
-        if let Ok(arc) = mem_res.arc {
-            self.data.arc = arc;
-        }
-
-        #[cfg(feature = "gpu")]
-        if let Ok(gpu) = mem_res.gpus {
-            self.data.gpu = gpu;
         }
 
         if let Ok(disks) = disk_res {

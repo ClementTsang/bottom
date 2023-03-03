@@ -240,7 +240,6 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "smol",
  "starship-battery",
  "sysctl",
  "sysinfo",
@@ -821,7 +820,6 @@ checksum = "b8a653442b9bdd11a77d3753a60443c60c4437d3acac8e6c3d4a6a9acd7cceed"
 dependencies = [
  "heim-common",
  "heim-disk",
- "heim-memory",
  "heim-net",
  "heim-runtime",
  "heim-sensors",
@@ -860,21 +858,6 @@ dependencies = [
  "libc",
  "mach",
  "widestring",
- "winapi",
-]
-
-[[package]]
-name = "heim-memory"
-version = "0.1.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fa81bccc5e81ab0c68f520ecba5cb42817bacabfc6120160de886754ad0e3e1"
-dependencies = [
- "cfg-if",
- "heim-common",
- "heim-runtime",
- "lazy_static",
- "libc",
- "mach",
  "winapi",
 ]
 
@@ -1656,9 +1639,9 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.26.7"
+version = "0.26.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c375d5fd899e32847b8566e10598d6e9f1d9b55ec6de3cdf9e7da4bdc51371bc"
+checksum = "5c18a6156d1f27a9592ee18c1a846ca8dd5c258b7179fc193ae87c74ebb666f5"
 dependencies = [
  "cfg-if",
  "core-foundation-sys 0.8.3",
