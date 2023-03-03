@@ -820,7 +820,6 @@ checksum = "b8a653442b9bdd11a77d3753a60443c60c4437d3acac8e6c3d4a6a9acd7cceed"
 dependencies = [
  "heim-common",
  "heim-disk",
- "heim-net",
  "heim-runtime",
  "heim-sensors",
 ]
@@ -859,21 +858,6 @@ dependencies = [
  "mach",
  "widestring",
  "winapi",
-]
-
-[[package]]
-name = "heim-net"
-version = "0.1.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d13afa5e9b71c813c1e087bb27f51ae87d3a6d68a2bdd045bae4322dfae4948b"
-dependencies = [
- "bitflags",
- "cfg-if",
- "heim-common",
- "heim-runtime",
- "libc",
- "macaddr",
- "nix 0.19.1",
 ]
 
 [[package]]
@@ -1041,12 +1025,6 @@ checksum = "abb12e687cfb44aa40f41fc3978ef76448f9b6038cad6aef4259d3c095a2382e"
 dependencies = [
  "cfg-if",
 ]
-
-[[package]]
-name = "macaddr"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baee0bbc17ce759db233beb01648088061bf678383130602a298e6998eedb2d8"
 
 [[package]]
 name = "mach"
