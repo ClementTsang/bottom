@@ -6,6 +6,7 @@ use crate::app::Filter;
 
 use super::NetworkHarvest;
 
+// TODO: Eventually make it so that this thing also takes individual usage into account, so we can show per-interface!
 pub fn get_network_data(
     sys: &sysinfo::System, prev_net_access_time: Instant, prev_net_rx: &mut u64,
     prev_net_tx: &mut u64, curr_time: Instant, filter: &Option<Filter>,
