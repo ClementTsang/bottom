@@ -98,6 +98,7 @@ fn matches_ignore_list(filter_check_map: &[(&Option<Filter>, &String)]) -> bool 
 }
 
 fn get_disk_info() -> io::Result<StorageSystemInformation> {
+    // TODO: Ideally we don't have to shell out to a new program.
     let output = std::process::Command::new("df")
         .args(["--libxo", "json", "-k", "-t", "ufs,msdosfs,zfs"])
         .output()?;
