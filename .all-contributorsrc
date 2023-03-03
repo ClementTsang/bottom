@@ -371,6 +371,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "dvalter",
+      "name": "Dmitry Valter",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38795282?v=4",
+      "profile": "https://github.com/dvalter",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
