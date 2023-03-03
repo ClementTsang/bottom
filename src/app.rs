@@ -7,6 +7,7 @@ use std::{
 use concat_string::concat_string;
 use data_farmer::*;
 use data_harvester::temperature;
+use filter::*;
 use layout_manager::*;
 pub use states::*;
 use typed_builder::*;
@@ -23,6 +24,7 @@ use crate::{
 
 pub mod data_farmer;
 pub mod data_harvester;
+pub mod filter;
 pub mod frozen_state;
 pub mod layout_manager;
 mod process_killer;
@@ -79,12 +81,6 @@ pub struct DataFilters {
     pub mount_filter: Option<Filter>,
     pub temp_filter: Option<Filter>,
     pub net_filter: Option<Filter>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Filter {
-    pub is_list_ignored: bool,
-    pub list: Vec<regex::Regex>,
 }
 
 #[derive(TypedBuilder)]
