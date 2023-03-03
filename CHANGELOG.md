@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Bug Fixes
 
 - [#1021](https://github.com/ClementTsang/bottom/pull/1021): Fix selected text background colour being wrong if only the foreground colour was set.
+- [#1037](https://github.com/ClementTsang/bottom/pull/1037): Fix `is_list_ignored` accepting all results if set to `false`.
 
 ## Features
 
@@ -20,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes
 
 - [#1025](https://github.com/ClementTsang/bottom/pull/1025): Officially support M1 macOS.
+- [#1035](https://github.com/ClementTsang/bottom/pull/1035): Migrate away from heim for CPU information.
+- [#1036](https://github.com/ClementTsang/bottom/pull/1036): Migrate away from heim for memory information; Linux
+  platforms will now try to use `MemAvailable` to determine used memory if supported.
 
 ## Other
 
