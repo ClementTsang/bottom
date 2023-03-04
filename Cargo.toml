@@ -108,11 +108,11 @@ unicode-width = "0.1.10"
 libc = "0.2.124"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-heim = { version = "0.1.0-rc.1", features = ["disk", "net", "sensors"] }
+heim = { version = "0.1.0-rc.1", features = ["disk", "sensors"] }
 procfs = { version = "0.15.1", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-heim = { version = "0.1.0-rc.1", features = ["disk", "net"] }
+heim = { version = "0.1.0-rc.1", features = ["disk"] }
 mach2 = "0.4.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]

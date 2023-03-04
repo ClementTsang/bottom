@@ -17,7 +17,7 @@ use starship_battery::Manager;
 use typed_builder::*;
 
 use crate::{
-    app::{layout_manager::*, *},
+    app::{filter::Filter, layout_manager::*, *},
     canvas::{canvas_styling::CanvasColours, ColourScheme},
     constants::*,
     units::data_units::DataUnit,

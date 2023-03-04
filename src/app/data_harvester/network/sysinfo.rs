@@ -2,18 +2,16 @@
 
 use std::time::Instant;
 
+use crate::app::Filter;
+
 use super::NetworkHarvest;
 
-pub async fn get_network_data(
+// TODO: Eventually make it so that this thing also takes individual usage into account, so we can show per-interface!
+pub fn get_network_data(
     sys: &sysinfo::System, prev_net_access_time: Instant, prev_net_rx: &mut u64,
-    prev_net_tx: &mut u64, curr_time: Instant, actually_get: bool,
-    filter: &Option<crate::app::Filter>,
-) -> crate::utils::error::Result<Option<NetworkHarvest>> {
+    prev_net_tx: &mut u64, curr_time: Instant, filter: &Option<Filter>,
+) -> NetworkHarvest {
     use sysinfo::{NetworkExt, SystemExt};
-
-    if !actually_get {
-        return Ok(None);
-    }
 
     let mut total_rx: u64 = 0;
     let mut total_tx: u64 = 0;
@@ -21,14 +19,7 @@ pub async fn get_network_data(
     let networks = sys.networks();
     for (name, network) in networks {
         let to_keep = if let Some(filter) = filter {
-            let mut ret = filter.is_list_ignored;
-            for r in &filter.list {
-                if r.is_match(name) {
-                    ret = !filter.is_list_ignored;
-                    break;
-                }
-            }
-            ret
+            filter.keep_entry(name)
         } else {
             true
         };
@@ -52,10 +43,10 @@ pub async fn get_network_data(
 
     *prev_net_rx = total_rx;
     *prev_net_tx = total_tx;
-    Ok(Some(NetworkHarvest {
+    NetworkHarvest {
         rx,
         tx,
         total_rx,
         total_tx,
-    }))
+    }
 }

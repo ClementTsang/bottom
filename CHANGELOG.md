@@ -23,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1025](https://github.com/ClementTsang/bottom/pull/1025): Officially support M1 macOS.
 - [#1035](https://github.com/ClementTsang/bottom/pull/1035): Migrate away from heim for CPU information.
 - [#1036](https://github.com/ClementTsang/bottom/pull/1036): Migrate away from heim for memory information; Linux
-  platforms will now try to use `MemAvailable` to determine used memory if supported.
+  platforms will also now try to use `MemAvailable` to determine used memory if supported.
+- [#1041](https://github.com/ClementTsang/bottom/pull/1041): Migrate away from heim for network information.
 
 ## Other
 

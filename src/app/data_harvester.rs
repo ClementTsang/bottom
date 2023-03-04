@@ -160,17 +160,23 @@ impl DataCollector {
         self.sys.refresh_memory();
         self.mem_total_kb = self.sys.total_memory();
 
+        // Refresh network list once at the start.
+        // TODO: may be worth refreshing every once in a while (maybe on a separate timer).
+        if self.widgets_to_harvest.use_net {
+            self.sys.refresh_networks_list();
+        }
+
+        if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
+            self.sys.refresh_cpu();
+        }
+
         #[cfg(not(target_os = "linux"))]
         {
             // TODO: Would be good to get this and network list running on a timer instead...?
+
             // Refresh components list once...
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components_list();
-            }
-
-            // Refresh network list once...
-            if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
-                self.sys.refresh_networks_list();
             }
 
             if cfg!(target_os = "windows") && self.widgets_to_harvest.use_proc {
@@ -181,10 +187,6 @@ impl DataCollector {
             if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_disk {
                 self.sys.refresh_disks_list();
             }
-        }
-
-        if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
-            self.sys.refresh_cpu();
         }
 
         #[cfg(feature = "battery")]
@@ -238,6 +240,10 @@ impl DataCollector {
             self.sys.refresh_memory();
         }
 
+        if self.widgets_to_harvest.use_net {
+            self.sys.refresh_networks();
+        }
+
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
@@ -245,13 +251,6 @@ impl DataCollector {
             }
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
-            }
-
-            #[cfg(target_os = "windows")]
-            {
-                if self.widgets_to_harvest.use_net {
-                    self.sys.refresh_networks();
-                }
             }
 
             #[cfg(target_os = "freebsd")]
@@ -392,31 +391,20 @@ impl DataCollector {
             }
         }
 
-        let network_data_fut = {
-            #[cfg(any(target_os = "windows", target_os = "freebsd"))]
-            {
-                network::get_network_data(
-                    &self.sys,
-                    self.last_collection_time,
-                    &mut self.total_rx,
-                    &mut self.total_tx,
-                    current_instant,
-                    self.widgets_to_harvest.use_net,
-                    &self.filters.net_filter,
-                )
-            }
-            #[cfg(not(any(target_os = "windows", target_os = "freebsd")))]
-            {
-                network::get_network_data(
-                    self.last_collection_time,
-                    &mut self.total_rx,
-                    &mut self.total_tx,
-                    current_instant,
-                    self.widgets_to_harvest.use_net,
-                    &self.filters.net_filter,
-                )
-            }
-        };
+        if self.widgets_to_harvest.use_net {
+            let net_data = network::get_network_data(
+                &self.sys,
+                self.last_collection_time,
+                &mut self.total_rx,
+                &mut self.total_tx,
+                current_instant,
+                &self.filters.net_filter,
+            );
+
+            self.total_rx = net_data.total_rx;
+            self.total_tx = net_data.total_tx;
+            self.data.network = Some(net_data);
+        }
 
         let disk_data_fut = disks::get_disk_usage(
             self.widgets_to_harvest.use_disk,
@@ -425,16 +413,7 @@ impl DataCollector {
         );
         let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
 
-        let (net_data, disk_res, io_res) =
-            join!(network_data_fut, disk_data_fut, disk_io_usage_fut,);
-
-        if let Ok(net_data) = net_data {
-            if let Some(net_data) = &net_data {
-                self.total_rx = net_data.total_rx;
-                self.total_tx = net_data.total_tx;
-            }
-            self.data.network = net_data;
-        }
+        let (disk_res, io_res) = join!(disk_data_fut, disk_io_usage_fut,);
 
         if let Ok(disks) = disk_res {
             self.data.disks = disks;
