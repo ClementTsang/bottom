@@ -572,22 +572,21 @@ pub fn convert_arc_labels(
         }
     }
 
-    if current_data.arc_harvest.mem_total_in_kib > 0 {
+    if current_data.arc_harvest.total_kib > 0 {
         Some((
             format!(
                 "{:3.0}%",
                 current_data.arc_harvest.use_percent.unwrap_or(0.0)
             ),
             {
-                let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
-                    current_data.arc_harvest.mem_total_in_kib,
-                );
+                let (unit, denominator) =
+                    return_unit_and_denominator_for_mem_kib(current_data.arc_harvest.total_kib);
 
                 format!(
                     "   {:.1}{}/{:.1}{}",
-                    current_data.arc_harvest.mem_used_in_kib as f64 / denominator,
+                    current_data.arc_harvest.used_kib as f64 / denominator,
                     unit,
-                    (current_data.arc_harvest.mem_total_in_kib as f64 / denominator),
+                    (current_data.arc_harvest.total_kib as f64 / denominator),
                     unit
                 )
             },
