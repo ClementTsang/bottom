@@ -63,12 +63,13 @@ strip = false
 battery = ["starship-battery"]
 gpu = ["nvidia"]
 nvidia = ["nvml-wrapper"]
+zfs = []
 
 # The features we use by default.
-default = ["fern", "log", "battery", "gpu"]
+default = ["fern", "log", "battery", "gpu", "zfs"]
 
 # The features we use on deploy. Logging is not included as that is primarily (for now) just for debugging locally.
-deploy = ["battery", "gpu"]
+deploy = ["battery", "gpu", "zfs"]
 
 [dependencies]
 anyhow = "1.0.69"
