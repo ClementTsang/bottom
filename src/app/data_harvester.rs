@@ -259,10 +259,13 @@ impl DataCollector {
             }
         }
 
-        let current_instant = std::time::Instant::now();
+        let current_instant = Instant::now();
 
         self.update_cpu_usage();
-        self.update_processes(current_instant);
+        self.update_processes(
+            #[cfg(target_os = "linux")]
+            current_instant,
+        );
         self.update_temps();
         self.update_memory_usage();
         self.update_network_usage(current_instant);
@@ -294,9 +297,9 @@ impl DataCollector {
             self.data.io = io;
         }
 
-        // Update time
-        self.data.last_collection_time = current_instant;
+        // Update times.
         self.last_collection_time = current_instant;
+        self.data.last_collection_time = current_instant;
     }
 
     #[inline]
@@ -313,7 +316,7 @@ impl DataCollector {
     }
 
     #[inline]
-    fn update_processes(&mut self, current_instant: Instant) {
+    fn update_processes(&mut self, #[cfg(target_os = "linux")] current_instant: Instant) {
         if self.widgets_to_harvest.use_proc {
             if let Ok(mut process_list) = {
                 #[cfg(target_os = "linux")]
