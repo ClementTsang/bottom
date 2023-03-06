@@ -3,19 +3,11 @@
 pub mod sysinfo;
 pub(crate) use self::sysinfo::{get_ram_usage, get_swap_usage};
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "gpu")] {
-        pub mod gpu;
-        pub(crate) use gpu::get_gpu_mem_usage;
-    }
-}
+#[cfg(feature = "gpu")]
+pub mod gpu;
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "zfs")] {
-        pub mod arc;
-        pub(crate) use arc::get_arc_usage;
-    }
-}
+#[cfg(feature = "zfs")]
+pub mod arc;
 
 #[derive(Debug, Clone, Default)]
 pub struct MemHarvest {

@@ -2,8 +2,6 @@
 
 use std::time::Instant;
 
-use futures::join;
-
 #[cfg(target_os = "linux")]
 use fxhash::FxHashMap;
 
@@ -11,6 +9,8 @@ use fxhash::FxHashMap;
 use starship_battery::{Battery, Manager};
 
 use sysinfo::{System, SystemExt};
+
+use self::temperature::TemperatureType;
 
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
@@ -20,6 +20,7 @@ pub mod nvidia;
 
 #[cfg(feature = "battery")]
 pub mod batteries;
+
 pub mod cpu;
 pub mod disks;
 pub mod memory;
@@ -106,7 +107,7 @@ pub struct DataCollector {
     #[cfg(target_os = "linux")]
     prev_non_idle: f64,
     mem_total_kb: u64,
-    temperature_type: temperature::TemperatureType,
+    temperature_type: TemperatureType,
     use_current_cpu_total: bool,
     unnormalized_cpu: bool,
     last_collection_time: Instant,
@@ -136,7 +137,7 @@ impl DataCollector {
             #[cfg(target_os = "linux")]
             prev_non_idle: 0_f64,
             mem_total_kb: 0,
-            temperature_type: temperature::TemperatureType::Celsius,
+            temperature_type: TemperatureType::Celsius,
             use_current_cpu_total: false,
             unnormalized_cpu: false,
             last_collection_time: Instant::now(),
@@ -159,9 +160,8 @@ impl DataCollector {
         self.mem_total_kb = self.sys.total_memory();
 
         // Refresh network list once at the start.
-        // TODO: may be worth refreshing every once in a while (maybe on a separate timer).
         if self.widgets_to_harvest.use_net {
-            self.sys.refresh_networks_list();
+            self.sys.refresh_networks_list(); // TODO: refresh on a timer?
         }
 
         if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
@@ -170,11 +170,9 @@ impl DataCollector {
 
         #[cfg(not(target_os = "linux"))]
         {
-            // TODO: Would be good to get this and network list running on a timer instead...?
-
-            // Refresh components list once...
+            // Refresh components list once.
             if self.widgets_to_harvest.use_temp {
-                self.sys.refresh_components_list();
+                self.sys.refresh_components_list(); // TODO: refresh on a timer?
             }
 
             if cfg!(target_os = "windows") && self.widgets_to_harvest.use_proc {
@@ -213,7 +211,7 @@ impl DataCollector {
         self.widgets_to_harvest = used_widgets;
     }
 
-    pub fn set_temperature_type(&mut self, temperature_type: temperature::TemperatureType) {
+    pub fn set_temperature_type(&mut self, temperature_type: TemperatureType) {
         self.temperature_type = temperature_type;
     }
 
@@ -250,12 +248,12 @@ impl DataCollector {
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
+        }
 
-            #[cfg(target_os = "freebsd")]
-            {
-                if self.widgets_to_harvest.use_disk {
-                    self.sys.refresh_disks();
-                }
+        #[cfg(target_os = "freebsd")]
+        {
+            if self.widgets_to_harvest.use_disk {
+                self.sys.refresh_disks();
             }
         }
 
@@ -280,14 +278,14 @@ impl DataCollector {
             }
         }
 
-        let disk_data_fut = disks::get_disk_usage(
-            self.widgets_to_harvest.use_disk,
-            &self.filters.disk_filter,
-            &self.filters.mount_filter,
+        let (disk_res, io_res) = futures::join!(
+            disks::get_disk_usage(
+                self.widgets_to_harvest.use_disk,
+                &self.filters.disk_filter,
+                &self.filters.mount_filter,
+            ),
+            disks::get_io_usage(self.widgets_to_harvest.use_disk)
         );
-        let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
-
-        let (disk_res, io_res) = join!(disk_data_fut, disk_io_usage_fut,);
 
         if let Ok(disks) = disk_res {
             self.data.disks = disks;
@@ -297,7 +295,7 @@ impl DataCollector {
             self.data.io = io;
         }
 
-        // Update times.
+        // Update times for future reference.
         self.last_collection_time = current_instant;
         self.data.last_collection_time = current_instant;
     }
@@ -309,7 +307,6 @@ impl DataCollector {
 
             #[cfg(target_family = "unix")]
             {
-                // Load Average
                 self.data.load_avg = cpu::get_load_avg().ok();
             }
         }
@@ -411,14 +408,12 @@ impl DataCollector {
 
             #[cfg(feature = "zfs")]
             {
-                self.data.arc = memory::get_arc_usage();
+                self.data.arc = memory::arc::get_arc_usage();
             }
 
             #[cfg(feature = "gpu")]
-            {
-                if self.widgets_to_harvest.use_gpu {
-                    self.data.gpu = memory::get_gpu_mem_usage();
-                }
+            if self.widgets_to_harvest.use_gpu {
+                self.data.gpu = memory::gpu::get_gpu_mem_usage();
             }
         }
     }
