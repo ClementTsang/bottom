@@ -2,7 +2,7 @@ use super::MemHarvest;
 
 /// Return GPU data. Currently only supports NVIDIA cards.
 #[cfg(feature = "nvidia")]
-pub(crate) fn get_gpu_data() -> Option<Vec<(String, MemHarvest)>> {
+pub(crate) fn get_gpu_mem_usage() -> Option<Vec<(String, MemHarvest)>> {
     use crate::data_harvester::nvidia::NVML_DATA;
 
     if let Ok(nvml) = &*NVML_DATA {

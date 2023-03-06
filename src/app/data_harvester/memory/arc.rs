@@ -2,7 +2,7 @@ use super::MemHarvest;
 
 /// Return ARC usage.
 #[cfg(feature = "zfs")]
-pub(crate) fn get_arc_data() -> Option<MemHarvest> {
+pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
     let (mem_total_in_kib, mem_used_in_kib) = {
         cfg_if::cfg_if! {
             if #[cfg(target_os = "linux")]

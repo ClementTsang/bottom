@@ -12,8 +12,6 @@ use starship_battery::{Battery, Manager};
 
 use sysinfo::{System, SystemExt};
 
-use self::memory::MemCollect;
-
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
@@ -368,20 +366,18 @@ impl DataCollector {
         }
 
         if self.widgets_to_harvest.use_mem {
-            let MemCollect { ram, swap } = memory::get_mem_data(&self.sys);
-
-            self.data.memory = ram;
-            self.data.swap = swap;
+            self.data.memory = memory::get_ram_usage(&self.sys);
+            self.data.swap = memory::get_swap_usage(&self.sys);
 
             #[cfg(feature = "zfs")]
             {
-                self.data.arc = memory::get_arc_data();
+                self.data.arc = memory::get_arc_usage();
             }
 
             #[cfg(feature = "gpu")]
             {
                 if self.widgets_to_harvest.use_gpu {
-                    self.data.gpu = memory::get_gpu_data();
+                    self.data.gpu = memory::get_gpu_mem_usage();
                 }
             }
         }
