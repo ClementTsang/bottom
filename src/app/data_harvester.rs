@@ -203,7 +203,6 @@ impl DataCollector {
         futures::executor::block_on(self.update_data());
 
         std::thread::sleep(std::time::Duration::from_millis(250));
-
         self.data.cleanup();
     }
 
@@ -245,16 +244,15 @@ impl DataCollector {
             if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
+
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
         }
 
         #[cfg(target_os = "freebsd")]
-        {
-            if self.widgets_to_harvest.use_disk {
-                self.sys.refresh_disks();
-            }
+        if self.widgets_to_harvest.use_disk {
+            self.sys.refresh_disks();
         }
 
         let current_instant = Instant::now();
@@ -269,12 +267,10 @@ impl DataCollector {
         self.update_network_usage(current_instant);
 
         #[cfg(feature = "battery")]
-        {
-            if let Some(battery_manager) = &self.battery_manager {
-                if let Some(battery_list) = &mut self.battery_list {
-                    self.data.list_of_batteries =
-                        Some(batteries::refresh_batteries(battery_manager, battery_list));
-                }
+        if let Some(battery_manager) = &self.battery_manager {
+            if let Some(battery_list) = &mut self.battery_list {
+                self.data.list_of_batteries =
+                    Some(batteries::refresh_batteries(battery_manager, battery_list));
             }
         }
 
@@ -330,14 +326,16 @@ impl DataCollector {
                         unnormalized_cpu: self.unnormalized_cpu,
                     };
 
+                    let time_diff = current_instant
+                        .duration_since(self.last_collection_time)
+                        .as_secs();
+
                     processes::get_process_data(
                         &self.sys,
                         prev_proc,
                         &mut self.pid_mapping,
                         proc_harvest_options,
-                        current_instant
-                            .duration_since(self.last_collection_time)
-                            .as_secs(),
+                        time_diff,
                         self.mem_total_kb,
                         &mut self.user_table,
                     )
@@ -378,24 +376,19 @@ impl DataCollector {
     fn update_temps(&mut self) {
         if self.widgets_to_harvest.use_temp {
             #[cfg(not(target_os = "linux"))]
-            {
-                if let Ok(data) = temperature::get_temperature_data(
-                    &self.sys,
-                    &self.temperature_type,
-                    &self.filters.temp_filter,
-                ) {
-                    self.data.temperature_sensors = data;
-                }
+            if let Ok(data) = temperature::get_temperature_data(
+                &self.sys,
+                &self.temperature_type,
+                &self.filters.temp_filter,
+            ) {
+                self.data.temperature_sensors = data;
             }
 
             #[cfg(target_os = "linux")]
+            if let Ok(data) =
+                temperature::get_temperature_data(&self.temperature_type, &self.filters.temp_filter)
             {
-                if let Ok(data) = temperature::get_temperature_data(
-                    &self.temperature_type,
-                    &self.filters.temp_filter,
-                ) {
-                    self.data.temperature_sensors = data;
-                }
+                self.data.temperature_sensors = data;
             }
         }
     }

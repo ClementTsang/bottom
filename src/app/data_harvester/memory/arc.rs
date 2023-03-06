@@ -5,8 +5,7 @@ use super::MemHarvest;
 pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
     let (mem_total_in_kib, mem_used_in_kib) = {
         cfg_if::cfg_if! {
-            if #[cfg(target_os = "linux")]
-            {
+            if #[cfg(target_os = "linux")] {
                 // TODO: [OPT] is this efficient?
                 use std::fs::read_to_string;
                 if let Ok(arc_stats) = read_to_string("/proc/spl/kstat/zfs/arcstats") {
