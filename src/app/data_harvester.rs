@@ -368,26 +368,21 @@ impl DataCollector {
         }
 
         if self.widgets_to_harvest.use_mem {
-            let MemCollect {
-                ram,
-                swap,
-                #[cfg(feature = "gpu")]
-                gpus,
-                #[cfg(feature = "zfs")]
-                arc,
-            } = memory::get_mem_data(&self.sys, self.widgets_to_harvest.use_gpu);
+            let MemCollect { ram, swap } = memory::get_mem_data(&self.sys);
 
             self.data.memory = ram;
             self.data.swap = swap;
 
             #[cfg(feature = "zfs")]
             {
-                self.data.arc = arc;
+                self.data.arc = memory::get_arc_data();
             }
 
             #[cfg(feature = "gpu")]
             {
-                self.data.gpu = gpus;
+                if self.widgets_to_harvest.use_gpu {
+                    self.data.gpu = memory::get_gpu_data();
+                }
             }
         }
 

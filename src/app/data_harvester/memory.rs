@@ -1,7 +1,13 @@
 //! Memory data collection.
 
 pub mod sysinfo;
-pub(crate) use self::sysinfo::*;
+pub(crate) use self::sysinfo::get_mem_data;
+
+pub mod gpu;
+pub(crate) use gpu::get_gpu_data;
+
+pub mod arc;
+pub(crate) use arc::get_arc_data;
 
 #[derive(Debug, Clone, Default)]
 pub struct MemHarvest {
@@ -14,8 +20,4 @@ pub struct MemHarvest {
 pub struct MemCollect {
     pub ram: Option<MemHarvest>,
     pub swap: Option<MemHarvest>,
-    #[cfg(feature = "zfs")]
-    pub arc: Option<MemHarvest>,
-    #[cfg(feature = "gpu")]
-    pub gpus: Option<Vec<(String, MemHarvest)>>,
 }
