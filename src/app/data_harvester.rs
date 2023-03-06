@@ -261,18 +261,12 @@ impl DataCollector {
 
         let current_instant = std::time::Instant::now();
 
-        // CPU
-        if self.widgets_to_harvest.use_cpu {
-            self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu).ok();
+        self.update_cpu_usage();
+        self.update_processes(current_instant);
+        self.update_temps();
+        self.update_memory_usage();
+        self.update_network_usage(current_instant);
 
-            #[cfg(target_family = "unix")]
-            {
-                // Load Average
-                self.data.load_avg = cpu::get_load_avg().ok();
-            }
-        }
-
-        // Batteries
         #[cfg(feature = "battery")]
         {
             if let Some(battery_manager) = &self.battery_manager {
@@ -283,6 +277,43 @@ impl DataCollector {
             }
         }
 
+        let disk_data_fut = disks::get_disk_usage(
+            self.widgets_to_harvest.use_disk,
+            &self.filters.disk_filter,
+            &self.filters.mount_filter,
+        );
+        let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
+
+        let (disk_res, io_res) = join!(disk_data_fut, disk_io_usage_fut,);
+
+        if let Ok(disks) = disk_res {
+            self.data.disks = disks;
+        }
+
+        if let Ok(io) = io_res {
+            self.data.io = io;
+        }
+
+        // Update time
+        self.data.last_collection_time = current_instant;
+        self.last_collection_time = current_instant;
+    }
+
+    #[inline]
+    fn update_cpu_usage(&mut self) {
+        if self.widgets_to_harvest.use_cpu {
+            self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu).ok();
+
+            #[cfg(target_family = "unix")]
+            {
+                // Load Average
+                self.data.load_avg = cpu::get_load_avg().ok();
+            }
+        }
+    }
+
+    #[inline]
+    fn update_processes(&mut self, current_instant: Instant) {
         if self.widgets_to_harvest.use_proc {
             if let Ok(mut process_list) = {
                 #[cfg(target_os = "linux")]
@@ -341,7 +372,10 @@ impl DataCollector {
                 self.data.list_of_processes = Some(process_list);
             }
         }
+    }
 
+    #[inline]
+    fn update_temps(&mut self) {
         if self.widgets_to_harvest.use_temp {
             #[cfg(not(target_os = "linux"))]
             {
@@ -364,7 +398,10 @@ impl DataCollector {
                 }
             }
         }
+    }
 
+    #[inline]
+    fn update_memory_usage(&mut self) {
         if self.widgets_to_harvest.use_mem {
             self.data.memory = memory::get_ram_usage(&self.sys);
             self.data.swap = memory::get_swap_usage(&self.sys);
@@ -381,7 +418,10 @@ impl DataCollector {
                 }
             }
         }
+    }
 
+    #[inline]
+    fn update_network_usage(&mut self, current_instant: Instant) {
         if self.widgets_to_harvest.use_net {
             let net_data = network::get_network_data(
                 &self.sys,
@@ -396,27 +436,6 @@ impl DataCollector {
             self.total_tx = net_data.total_tx;
             self.data.network = Some(net_data);
         }
-
-        let disk_data_fut = disks::get_disk_usage(
-            self.widgets_to_harvest.use_disk,
-            &self.filters.disk_filter,
-            &self.filters.mount_filter,
-        );
-        let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
-
-        let (disk_res, io_res) = join!(disk_data_fut, disk_io_usage_fut,);
-
-        if let Ok(disks) = disk_res {
-            self.data.disks = disks;
-        }
-
-        if let Ok(io) = io_res {
-            self.data.io = io;
-        }
-
-        // Update time
-        self.data.last_collection_time = current_instant;
-        self.last_collection_time = current_instant;
     }
 }
 

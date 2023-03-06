@@ -109,7 +109,7 @@ unicode-width = "0.1.10"
 libc = "0.2.124"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-heim = { version = "0.1.0-rc.1", features = ["disk", "sensors"] }
+heim = { version = "0.1.0-rc.1", features = ["disk"] }
 procfs = { version = "0.15.1", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dependencies]

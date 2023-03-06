@@ -821,7 +821,6 @@ dependencies = [
  "heim-common",
  "heim-disk",
  "heim-runtime",
- "heim-sensors",
 ]
 
 [[package]]
@@ -870,17 +869,6 @@ dependencies = [
  "futures-timer",
  "once_cell",
  "smol",
-]
-
-[[package]]
-name = "heim-sensors"
-version = "0.1.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82de7f0784d3b0c53f2e8875c63f430bf6718b03ec8ddce905c12887031158f5"
-dependencies = [
- "cfg-if",
- "heim-common",
- "heim-runtime",
 ]
 
 [[package]]
