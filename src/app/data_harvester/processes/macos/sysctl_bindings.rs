@@ -264,12 +264,13 @@ pub(crate) struct eproc {
 
 /// Obtains the [`kinfo_proc`] given a process PID.
 ///
-/// From [heim](https://github.com/heim-rs/heim/blob/master/heim-process/src/sys/macos/bindings/process.rs#L235).
+/// Based on the implementation from [heim](https://github.com/heim-rs/heim/blob/master/heim-process/src/sys/macos/bindings/process.rs#L235).
 pub(crate) fn kinfo_process(pid: Pid) -> Result<kinfo_proc> {
     let mut name: [i32; 4] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid];
     let mut size = mem::size_of::<kinfo_proc>();
     let mut info = mem::MaybeUninit::<kinfo_proc>::uninit();
 
+    // SAFETY: libc binding, we assume all arguments are valid.
     let result = unsafe {
         libc::sysctl(
             name.as_mut_ptr(),
@@ -290,6 +291,10 @@ pub(crate) fn kinfo_process(pid: Pid) -> Result<kinfo_proc> {
         bail!("failed to get process for pid {pid}");
     }
 
+    // SAFETY: info is initialized if result succeeded and returned a non-negative result. If sysctl failed, it returns
+    // -1 with errno set.
+    //
+    // Source: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/sysctl.3.html
     unsafe { Ok(info.assume_init()) }
 }
 

@@ -7,6 +7,7 @@
 
 #![warn(rust_2018_idioms)]
 #![allow(clippy::uninlined_format_args)]
+#![deny(clippy::missing_safety_doc)]
 #[allow(unused_imports)]
 #[cfg(feature = "log")]
 #[macro_use]
