@@ -2,8 +2,6 @@
 
 use std::time::Instant;
 
-use futures::join;
-
 #[cfg(target_os = "linux")]
 use fxhash::FxHashMap;
 
@@ -12,7 +10,7 @@ use starship_battery::{Battery, Manager};
 
 use sysinfo::{System, SystemExt};
 
-use self::memory::MemCollect;
+use self::temperature::TemperatureType;
 
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
@@ -22,6 +20,7 @@ pub mod nvidia;
 
 #[cfg(feature = "battery")]
 pub mod batteries;
+
 pub mod cpu;
 pub mod disks;
 pub mod memory;
@@ -108,7 +107,7 @@ pub struct DataCollector {
     #[cfg(target_os = "linux")]
     prev_non_idle: f64,
     mem_total_kb: u64,
-    temperature_type: temperature::TemperatureType,
+    temperature_type: TemperatureType,
     use_current_cpu_total: bool,
     unnormalized_cpu: bool,
     last_collection_time: Instant,
@@ -138,7 +137,7 @@ impl DataCollector {
             #[cfg(target_os = "linux")]
             prev_non_idle: 0_f64,
             mem_total_kb: 0,
-            temperature_type: temperature::TemperatureType::Celsius,
+            temperature_type: TemperatureType::Celsius,
             use_current_cpu_total: false,
             unnormalized_cpu: false,
             last_collection_time: Instant::now(),
@@ -161,9 +160,8 @@ impl DataCollector {
         self.mem_total_kb = self.sys.total_memory();
 
         // Refresh network list once at the start.
-        // TODO: may be worth refreshing every once in a while (maybe on a separate timer).
         if self.widgets_to_harvest.use_net {
-            self.sys.refresh_networks_list();
+            self.sys.refresh_networks_list(); // TODO: refresh on a timer?
         }
 
         if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
@@ -172,11 +170,9 @@ impl DataCollector {
 
         #[cfg(not(target_os = "linux"))]
         {
-            // TODO: Would be good to get this and network list running on a timer instead...?
-
-            // Refresh components list once...
+            // Refresh components list once.
             if self.widgets_to_harvest.use_temp {
-                self.sys.refresh_components_list();
+                self.sys.refresh_components_list(); // TODO: refresh on a timer?
             }
 
             if cfg!(target_os = "windows") && self.widgets_to_harvest.use_proc {
@@ -207,7 +203,6 @@ impl DataCollector {
         futures::executor::block_on(self.update_data());
 
         std::thread::sleep(std::time::Duration::from_millis(250));
-
         self.data.cleanup();
     }
 
@@ -215,7 +210,7 @@ impl DataCollector {
         self.widgets_to_harvest = used_widgets;
     }
 
-    pub fn set_temperature_type(&mut self, temperature_type: temperature::TemperatureType) {
+    pub fn set_temperature_type(&mut self, temperature_type: TemperatureType) {
         self.temperature_type = temperature_type;
     }
 
@@ -249,42 +244,72 @@ impl DataCollector {
             if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
+
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
+        }
 
-            #[cfg(target_os = "freebsd")]
-            {
-                if self.widgets_to_harvest.use_disk {
-                    self.sys.refresh_disks();
-                }
+        #[cfg(target_os = "freebsd")]
+        if self.widgets_to_harvest.use_disk {
+            self.sys.refresh_disks();
+        }
+
+        let current_instant = Instant::now();
+
+        self.update_cpu_usage();
+        self.update_processes(
+            #[cfg(target_os = "linux")]
+            current_instant,
+        );
+        self.update_temps();
+        self.update_memory_usage();
+        self.update_network_usage(current_instant);
+
+        #[cfg(feature = "battery")]
+        if let Some(battery_manager) = &self.battery_manager {
+            if let Some(battery_list) = &mut self.battery_list {
+                self.data.list_of_batteries =
+                    Some(batteries::refresh_batteries(battery_manager, battery_list));
             }
         }
 
-        let current_instant = std::time::Instant::now();
+        let (disk_res, io_res) = futures::join!(
+            disks::get_disk_usage(
+                self.widgets_to_harvest.use_disk,
+                &self.filters.disk_filter,
+                &self.filters.mount_filter,
+            ),
+            disks::get_io_usage(self.widgets_to_harvest.use_disk)
+        );
 
-        // CPU
+        if let Ok(disks) = disk_res {
+            self.data.disks = disks;
+        }
+
+        if let Ok(io) = io_res {
+            self.data.io = io;
+        }
+
+        // Update times for future reference.
+        self.last_collection_time = current_instant;
+        self.data.last_collection_time = current_instant;
+    }
+
+    #[inline]
+    fn update_cpu_usage(&mut self) {
         if self.widgets_to_harvest.use_cpu {
             self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu).ok();
 
             #[cfg(target_family = "unix")]
             {
-                // Load Average
                 self.data.load_avg = cpu::get_load_avg().ok();
             }
         }
+    }
 
-        // Batteries
-        #[cfg(feature = "battery")]
-        {
-            if let Some(battery_manager) = &self.battery_manager {
-                if let Some(battery_list) = &mut self.battery_list {
-                    self.data.list_of_batteries =
-                        Some(batteries::refresh_batteries(battery_manager, battery_list));
-                }
-            }
-        }
-
+    #[inline]
+    fn update_processes(&mut self, #[cfg(target_os = "linux")] current_instant: Instant) {
         if self.widgets_to_harvest.use_proc {
             if let Ok(mut process_list) = {
                 #[cfg(target_os = "linux")]
@@ -301,14 +326,16 @@ impl DataCollector {
                         unnormalized_cpu: self.unnormalized_cpu,
                     };
 
+                    let time_diff = current_instant
+                        .duration_since(self.last_collection_time)
+                        .as_secs();
+
                     processes::get_process_data(
                         &self.sys,
                         prev_proc,
                         &mut self.pid_mapping,
                         proc_harvest_options,
-                        current_instant
-                            .duration_since(self.last_collection_time)
-                            .as_secs(),
+                        time_diff,
                         self.mem_total_kb,
                         &mut self.user_table,
                     )
@@ -343,54 +370,49 @@ impl DataCollector {
                 self.data.list_of_processes = Some(process_list);
             }
         }
+    }
 
+    #[inline]
+    fn update_temps(&mut self) {
         if self.widgets_to_harvest.use_temp {
             #[cfg(not(target_os = "linux"))]
-            {
-                if let Ok(data) = temperature::get_temperature_data(
-                    &self.sys,
-                    &self.temperature_type,
-                    &self.filters.temp_filter,
-                ) {
-                    self.data.temperature_sensors = data;
-                }
+            if let Ok(data) = temperature::get_temperature_data(
+                &self.sys,
+                &self.temperature_type,
+                &self.filters.temp_filter,
+            ) {
+                self.data.temperature_sensors = data;
             }
 
             #[cfg(target_os = "linux")]
+            if let Ok(data) =
+                temperature::get_temperature_data(&self.temperature_type, &self.filters.temp_filter)
             {
-                if let Ok(data) = temperature::get_temperature_data(
-                    &self.temperature_type,
-                    &self.filters.temp_filter,
-                ) {
-                    self.data.temperature_sensors = data;
-                }
+                self.data.temperature_sensors = data;
             }
         }
+    }
 
+    #[inline]
+    fn update_memory_usage(&mut self) {
         if self.widgets_to_harvest.use_mem {
-            let MemCollect {
-                ram,
-                swap,
-                #[cfg(feature = "gpu")]
-                gpus,
-                #[cfg(feature = "zfs")]
-                arc,
-            } = memory::get_mem_data(&self.sys, self.widgets_to_harvest.use_gpu);
-
-            self.data.memory = ram;
-            self.data.swap = swap;
+            self.data.memory = memory::get_ram_usage(&self.sys);
+            self.data.swap = memory::get_swap_usage(&self.sys);
 
             #[cfg(feature = "zfs")]
             {
-                self.data.arc = arc;
+                self.data.arc = memory::arc::get_arc_usage();
             }
 
             #[cfg(feature = "gpu")]
-            {
-                self.data.gpu = gpus;
+            if self.widgets_to_harvest.use_gpu {
+                self.data.gpu = memory::gpu::get_gpu_mem_usage();
             }
         }
+    }
 
+    #[inline]
+    fn update_network_usage(&mut self, current_instant: Instant) {
         if self.widgets_to_harvest.use_net {
             let net_data = network::get_network_data(
                 &self.sys,
@@ -405,27 +427,6 @@ impl DataCollector {
             self.total_tx = net_data.total_tx;
             self.data.network = Some(net_data);
         }
-
-        let disk_data_fut = disks::get_disk_usage(
-            self.widgets_to_harvest.use_disk,
-            &self.filters.disk_filter,
-            &self.filters.mount_filter,
-        );
-        let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
-
-        let (disk_res, io_res) = join!(disk_data_fut, disk_io_usage_fut,);
-
-        if let Ok(disks) = disk_res {
-            self.data.disks = disks;
-        }
-
-        if let Ok(io) = io_res {
-            self.data.io = io;
-        }
-
-        // Update time
-        self.data.last_collection_time = current_instant;
-        self.last_collection_time = current_instant;
     }
 }
 

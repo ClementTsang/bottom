@@ -214,17 +214,13 @@ impl DataCollection {
         }
 
         #[cfg(feature = "zfs")]
-        {
-            if let Some(arc) = harvested_data.arc {
-                self.eat_arc(arc, &mut new_entry);
-            }
+        if let Some(arc) = harvested_data.arc {
+            self.eat_arc(arc, &mut new_entry);
         }
 
         #[cfg(feature = "gpu")]
-        {
-            if let Some(gpu) = harvested_data.gpu {
-                self.eat_gpu(gpu, &mut new_entry);
-            }
+        if let Some(gpu) = harvested_data.gpu {
+            self.eat_gpu(gpu, &mut new_entry);
         }
 
         // CPU
@@ -417,7 +413,7 @@ impl DataCollection {
     #[cfg(feature = "gpu")]
     fn eat_gpu(&mut self, gpu: Vec<(String, memory::MemHarvest)>, new_entry: &mut TimedData) {
         // Note this only pre-calculates the data points - the names will be
-        // within the local copy of gpu_harvest.  Since it's all sequential
+        // within the local copy of gpu_harvest. Since it's all sequential
         // it probably doesn't matter anyways.
         gpu.iter().for_each(|data| {
             new_entry.gpu_data.push(data.1.use_percent);
