@@ -1,7 +1,17 @@
 //! Memory data collection.
 
 pub mod sysinfo;
-pub(crate) use self::sysinfo::{get_ram_usage, get_swap_usage};
+pub(crate) use self::sysinfo::get_ram_usage;
+
+cfg_if::cfg_if! {
+    if #[cfg(target_os = "windows")] {
+        pub mod windows;
+        pub(crate) use self::windows::get_swap_usage;
+    } else {
+        pub(crate) use self::sysinfo::get_swap_usage;
+
+    }
+}
 
 #[cfg(feature = "gpu")]
 pub mod gpu;
