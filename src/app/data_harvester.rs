@@ -229,6 +229,12 @@ impl DataCollector {
             self.sys.refresh_networks();
         }
 
+        // FreeBSD uses a custom implementation.
+        #[cfg(not(target_os = "freebsd"))]
+        if self.widgets_to_harvest.use_disk {
+            self.sys.refresh_disks();
+        }
+
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
