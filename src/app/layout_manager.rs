@@ -883,7 +883,9 @@ pub struct BottomWidget {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Default)]
 pub enum BottomWidgetType {
+    #[default]
     Empty,
     Cpu,
     CpuLegend,
@@ -927,11 +929,7 @@ impl BottomWidgetType {
     }
 }
 
-impl Default for BottomWidgetType {
-    fn default() -> Self {
-        BottomWidgetType::Empty
-    }
-}
+
 
 impl std::str::FromStr for BottomWidgetType {
     type Err = BottomError;

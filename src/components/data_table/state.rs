@@ -1,19 +1,17 @@
 use tui::{layout::Rect, widgets::TableState};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Default)]
 pub enum ScrollDirection {
     // UP means scrolling up --- this usually DECREMENTS
     Up,
 
     // DOWN means scrolling down --- this usually INCREMENTS
+    #[default]
     Down,
 }
 
-impl Default for ScrollDirection {
-    fn default() -> Self {
-        ScrollDirection::Down
-    }
-}
+
 
 /// Internal state representation of a [`DataTable`](super::DataTable).
 pub struct DataTableState {

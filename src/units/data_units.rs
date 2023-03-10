@@ -1,11 +1,9 @@
 #[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Default)]
 pub enum DataUnit {
     Byte,
+    #[default]
     Bit,
 }
 
-impl Default for DataUnit {
-    fn default() -> Self {
-        DataUnit::Bit
-    }
-}
+

@@ -14,17 +14,15 @@ use crate::utils::gen_util::*;
 use crate::widgets::{DiskWidgetData, TempWidgetData};
 
 #[derive(Debug)]
+#[derive(Default)]
 pub enum BatteryDuration {
     ToEmpty(i64),
     ToFull(i64),
+    #[default]
     Unknown,
 }
 
-impl Default for BatteryDuration {
-    fn default() -> Self {
-        BatteryDuration::Unknown
-    }
-}
+
 
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {
