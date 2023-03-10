@@ -33,15 +33,12 @@ pub mod states;
 
 use frozen_state::FrozenState;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-#[derive(Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub enum AxisScaling {
     #[default]
     Log,
     Linear,
 }
-
-
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.

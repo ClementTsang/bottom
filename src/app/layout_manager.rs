@@ -882,8 +882,7 @@ pub struct BottomWidget {
     pub bottom_right_corner: Option<(u16, u16)>,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-#[derive(Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
 pub enum BottomWidgetType {
     #[default]
     Empty,
@@ -928,8 +927,6 @@ impl BottomWidgetType {
         }
     }
 }
-
-
 
 impl std::str::FromStr for BottomWidgetType {
     type Err = BottomError;
