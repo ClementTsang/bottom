@@ -7,9 +7,6 @@ cfg_if::cfg_if! {
     if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))] {
         pub mod heim;
         pub use self::heim::*;
-
-        pub mod sysinfo;
-        pub use self::sysinfo::*;
     } else if #[cfg(target_os = "freebsd")] {
         pub mod freebsd;
         pub use self::freebsd::*;
@@ -20,6 +17,8 @@ cfg_if::cfg_if! {
 pub struct DiskHarvest {
     pub name: String,
     pub mount_point: String,
+
+    // TODO: Maybe unify all these?
     pub free_space: Option<u64>,
     pub used_space: Option<u64>,
     pub total_space: Option<u64>,

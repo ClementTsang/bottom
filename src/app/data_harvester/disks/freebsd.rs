@@ -24,11 +24,7 @@ struct FileSystem {
     mounted_on: String,
 }
 
-pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Option<IoHarvest>> {
-    if !actually_get {
-        return Ok(None);
-    }
-
+pub fn get_io_usage() -> crate::utils::error::Result<IoHarvest> {
     let io_harvest = get_disk_info().map(|storage_system_information| {
         storage_system_information
             .filesystem
@@ -36,16 +32,13 @@ pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Opt
             .map(|disk| (disk.name, None))
             .collect()
     })?;
-    Ok(Some(io_harvest))
+
+    Ok(io_harvest)
 }
 
-pub async fn get_disk_usage(
-    actually_get: bool, disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
-) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
-    if !actually_get {
-        return Ok(None);
-    }
-
+pub fn get_disk_usage(
+    disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
+) -> crate::utils::error::Result<Vec<DiskHarvest>> {
     let vec_disks: Vec<DiskHarvest> = get_disk_info().map(|storage_system_information| {
         storage_system_information
             .filesystem
@@ -80,7 +73,7 @@ pub async fn get_disk_usage(
             .collect()
     })?;
 
-    Ok(Some(vec_disks))
+    Ok(vec_disks)
 }
 
 fn matches_allow_list(filter_check_map: &[(&Option<Filter>, &String)]) -> bool {
