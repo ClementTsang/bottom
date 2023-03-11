@@ -882,8 +882,9 @@ pub struct BottomWidget {
     pub bottom_right_corner: Option<(u16, u16)>,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
 pub enum BottomWidgetType {
+    #[default]
     Empty,
     Cpu,
     CpuLegend,
@@ -924,12 +925,6 @@ impl BottomWidgetType {
             Battery => "Battery",
             _ => "",
         }
-    }
-}
-
-impl Default for BottomWidgetType {
-    fn default() -> Self {
-        BottomWidgetType::Empty
     }
 }
 

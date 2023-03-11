@@ -24,17 +24,12 @@ pub struct TempHarvest {
     pub temperature: f32,
 }
 
-#[derive(Clone, Debug, Copy, PartialEq, Eq)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq, Default)]
 pub enum TemperatureType {
+    #[default]
     Celsius,
     Kelvin,
     Fahrenheit,
-}
-
-impl Default for TemperatureType {
-    fn default() -> Self {
-        TemperatureType::Celsius
-    }
 }
 
 fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
