@@ -14,6 +14,8 @@ on:
 
 env:
   CARGO_INCREMENTAL: 0
+  CARGO_HUSKY_DONT_INSTALL_HOOKS: true
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
