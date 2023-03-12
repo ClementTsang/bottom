@@ -43,9 +43,9 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          - { os: "ubuntu-latest" }
-          - { os: "macos-12" }
-          - { os: "windows-2019" }
+          - { os: "ubuntu-latest", target: "x86_64-unknown-linux-gnu" }
+          - { os: "macos-12", target: "x86_64-apple-darwin" }
+          - { os: "windows-2019", target: "x86_64-pc-windows-msvc" }
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -56,8 +56,10 @@ jobs:
           toolchain: stable
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
+        uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f #2.2.1
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
+        with:
+          key: ${{ matrix.info.target }}
 
       - name: Install cargo-llvm-cov
         run: |
@@ -66,7 +68,7 @@ jobs:
 
       - name: Generate code coverage
         run: |
-          cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --locked
+          cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --locked --target=${{ matrix.info.target }}
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@d9f34f8cd5cb3b3eb79b3e4b5dae3a16df499a70 # 3.1.1
