@@ -258,7 +258,11 @@ pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
 
 pub fn convert_mem_labels(
     current_data: &DataCollection,
-) -> (Option<(String, String)>, Option<(String, String)>, Option<(String, String)>) {
+) -> (
+    Option<(String, String)>,
+    Option<(String, String)>,
+    Option<(String, String)>,
+) {
     /// Returns the unit type and denominator for given total amount of memory in kibibytes.
     fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
         if mem_total_kib < 1024 {

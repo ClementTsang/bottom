@@ -212,7 +212,11 @@ impl DataCollection {
         }
 
         // Memory and Swap
-        if let (Some(memory), Some(cache), Some(swap)) = (harvested_data.memory, harvested_data.cache, harvested_data.swap) {
+        if let (Some(memory), Some(cache), Some(swap)) = (
+            harvested_data.memory,
+            harvested_data.cache,
+            harvested_data.swap,
+        ) {
             self.eat_memory_and_swap(memory, cache, swap, &mut new_entry);
         }
 
@@ -267,7 +271,8 @@ impl DataCollection {
     }
 
     fn eat_memory_and_swap(
-        &mut self, memory: memory::MemHarvest, cache: memory::MemHarvest, swap: memory::MemHarvest, new_entry: &mut TimedData,
+        &mut self, memory: memory::MemHarvest, cache: memory::MemHarvest, swap: memory::MemHarvest,
+        new_entry: &mut TimedData,
     ) {
         // Memory
         new_entry.mem_data = memory.use_percent;

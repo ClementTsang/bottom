@@ -1,8 +1,8 @@
 //! Memory data collection.
 
 pub mod sysinfo;
-pub(crate) use self::sysinfo::get_ram_usage;
 pub(crate) use self::sysinfo::get_cache_usage;
+pub(crate) use self::sysinfo::get_ram_usage;
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "windows")] {
