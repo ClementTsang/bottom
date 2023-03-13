@@ -34,6 +34,7 @@ pub struct Data {
     pub cpu: Option<cpu::CpuHarvest>,
     pub load_avg: Option<cpu::LoadAvgHarvest>,
     pub memory: Option<memory::MemHarvest>,
+    pub cache: Option<memory::MemHarvest>,
     pub swap: Option<memory::MemHarvest>,
     pub temperature_sensors: Option<Vec<temperature::TempHarvest>>,
     pub network: Option<network::NetworkHarvest>,
@@ -55,6 +56,7 @@ impl Default for Data {
             cpu: None,
             load_avg: None,
             memory: None,
+            cache: None,
             swap: None,
             temperature_sensors: None,
             list_of_processes: None,
@@ -397,6 +399,7 @@ impl DataCollector {
     fn update_memory_usage(&mut self) {
         if self.widgets_to_harvest.use_mem {
             self.data.memory = memory::get_ram_usage(&self.sys);
+            self.data.cache = memory::get_cache_usage(&self.sys);
             self.data.swap = memory::get_swap_usage(
                 #[cfg(not(target_os = "windows"))]
                 &self.sys,
