@@ -282,13 +282,14 @@ jobs:
           path: release
 
   build-deb:
-    name: "Build Debian installers"
+    name: "Build Debian .deb software packages"
     runs-on: "ubuntu-20.04"
     strategy:
       fail-fast: false
       matrix:
         info:
           - { target: "x86_64-unknown-linux-gnu", cross: false, dpkg: amd64 }
+          - { target: "x86_64-unknown-linux-musl", cross: false, dpkg: amd64 }
           - {
               target: "aarch64-unknown-linux-gnu",
               cross: true,
@@ -300,6 +301,12 @@ jobs:
               cross: true,
               dpkg: armhf,
               container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
+            }
+          - { target: "aarch64-unknown-linux-musl", cross: true, dpkg: arm64 }
+          - {
+              target: "armv7-unknown-linux-musleabihf",
+              cross: true,
+              dpkg: armhf,
             }
     steps:
       - name: Checkout repository
@@ -356,10 +363,17 @@ jobs:
           VERSION=${{ matrix.info.dpkg }}
           mv $TMP_NAME $(echo $TMP_NAME | sed "s/-$VERSION//")
 
+      - name: Rename if it is a musl target
+        if: contains(${{ matrix.info.target }}, "musl")
+        run: |
+          TMP_NAME=$(find bottom_*.deb)
+          mv $TMP_NAME $(echo $TMP_NAME | sed "s/bottom/bottom-musl/")
+
+      # TODO: Maybe rename version if nightly?
       - name: Verify Debian release
         id: verify
         run: |
-          DEB_FILE=$(find bottom_*.deb)
+          DEB_FILE=$(find bottom*_*.deb)
           dpkg -I $DEB_FILE
           dpkg -I $DEB_FILE | grep ${{ matrix.info.dpkg }} && echo "Found correct architecture"
           echo "DEB_FILE=$DEB_FILE" >> $GITHUB_OUTPUT
