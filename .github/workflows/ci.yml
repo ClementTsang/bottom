@@ -50,7 +50,7 @@ jobs:
     steps:
       - name: Check if this action should be skipped
         id: skip_check
-        uses: fkirc/skip-duplicate-actions@f11521568414503656a5af807dc3018c012552c4 # v5.2.0
+        uses: fkirc/skip-duplicate-actions@12aca0a884f6137d619d6a8a09fcc3406ced5281 # v5.3.0
         with:
           skip_after_successful_duplicate: "true"
           paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml", "Cross.toml"]'
@@ -97,10 +97,10 @@ jobs:
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
+        uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # 2.2.1
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
-          shared-key: build-cache-${{ matrix.info.target }}
+          key: ${{ matrix.info.target }}
 
       - name: Check cargo fmt
         run: cargo fmt --all -- --check
@@ -241,10 +241,10 @@ jobs:
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
+        uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # 2.2.1
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
-          shared-key: build-cache-${{ matrix.info.target }}
+          key: ${{ matrix.info.target }}
 
       - name: Check
         uses: ClementTsang/cargo-action@v0.0.3
