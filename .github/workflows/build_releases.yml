@@ -302,11 +302,17 @@ jobs:
               dpkg: armhf,
               container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
             }
-          - { target: "aarch64-unknown-linux-musl", cross: true, dpkg: arm64 }
+          - {
+              target: "aarch64-unknown-linux-musl",
+              cross: true,
+              dpkg: arm64,
+              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
+            }
           - {
               target: "armv7-unknown-linux-musleabihf",
               cross: true,
               dpkg: armhf,
+              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
             }
     steps:
       - name: Checkout repository
