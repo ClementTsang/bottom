@@ -370,7 +370,7 @@ jobs:
           mv $TMP_NAME $(echo $TMP_NAME | sed "s/-$VERSION//")
 
       - name: Rename if it is a musl target
-        if: contains(${{ matrix.info.target }}, "musl")
+        if: contains(matrix.info.target, 'musl')
         run: |
           TMP_NAME=$(find bottom_*.deb)
           mv $TMP_NAME $(echo $TMP_NAME | sed "s/bottom/bottom-musl/")
