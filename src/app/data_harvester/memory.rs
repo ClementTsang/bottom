@@ -1,9 +1,10 @@
 //! Memory data collection.
 
-pub mod sysinfo;
+#[cfg(not(target_os = "windows"))]
 pub(crate) use self::sysinfo::get_cache_usage;
 pub(crate) use self::sysinfo::get_ram_usage;
 
+pub mod sysinfo;
 cfg_if::cfg_if! {
     if #[cfg(target_os = "windows")] {
         pub mod windows;

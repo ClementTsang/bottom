@@ -38,7 +38,8 @@ pub(crate) fn get_swap_usage(sys: &System) -> Option<MemHarvest> {
 }
 
 /// Returns cache usage. sysinfo has no way to do this directly but it should equal the difference
-/// between the available and free memory. On windows, this will always be 0. TODO: hide on windows?
+/// between the available and free memory. On windows, this will always be 0.
+#[cfg(not(target_os = "windows"))]
 pub(crate) fn get_cache_usage(sys: &System) -> Option<MemHarvest> {
     let mem_used_in_kib = (sys.available_memory() - sys.free_memory()) / 1024;
     let mem_total_in_kib = sys.total_memory() / 1024;

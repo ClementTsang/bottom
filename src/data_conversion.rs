@@ -3,6 +3,7 @@
 
 use kstring::KString;
 
+use crate::app::data_harvester::memory::MemHarvest;
 use crate::app::{
     data_farmer::DataCollection,
     data_harvester::{cpu::CpuDataType, temperature::TemperatureType},
@@ -68,10 +69,12 @@ pub struct ConvertedData {
     pub network_data_tx: Vec<Point>,
 
     pub mem_labels: Option<(String, String)>,
+    #[cfg(not(target_os = "windows"))]
     pub cache_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
 
     pub mem_data: Vec<Point>, /* TODO: Switch this and all data points over to a better data structure... */
+    #[cfg(not(target_os = "windows"))]
     pub cache_data: Vec<Point>,
     pub swap_data: Vec<Point>,
 
@@ -220,6 +223,7 @@ pub fn convert_mem_data_points(current_data: &DataCollection) -> Vec<Point> {
     result
 }
 
+#[cfg(not(target_os = "windows"))]
 pub fn convert_cache_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = current_data.current_instant;
@@ -256,13 +260,7 @@ pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
     result
 }
 
-pub fn convert_mem_labels(
-    current_data: &DataCollection,
-) -> (
-    Option<(String, String)>,
-    Option<(String, String)>,
-    Option<(String, String)>,
-) {
+pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
     /// Returns the unit type and denominator for given total amount of memory in kibibytes.
     fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
         if mem_total_kib < 1024 {
@@ -280,77 +278,21 @@ pub fn convert_mem_labels(
         }
     }
 
-    (
-        if current_data.memory_harvest.total_kib > 0 {
-            Some((
-                format!(
-                    "{:3.0}%",
-                    current_data.memory_harvest.use_percent.unwrap_or(0.0)
-                ),
-                {
-                    let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
-                        current_data.memory_harvest.total_kib,
-                    );
+    if harvest.total_kib > 0 {
+        Some((format!("{:3.0}%", harvest.use_percent.unwrap_or(0.0)), {
+            let (unit, denominator) = return_unit_and_denominator_for_mem_kib(harvest.total_kib);
 
-                    format!(
-                        "   {:.1}{}/{:.1}{}",
-                        current_data.memory_harvest.used_kib as f64 / denominator,
-                        unit,
-                        (current_data.memory_harvest.total_kib as f64 / denominator),
-                        unit
-                    )
-                },
-            ))
-        } else {
-            None
-        },
-        if current_data.cache_harvest.total_kib > 0 {
-            Some((
-                format!(
-                    "{:3.0}%",
-                    current_data.cache_harvest.use_percent.unwrap_or(0.0)
-                ),
-                {
-                    let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
-                        current_data.cache_harvest.total_kib,
-                    );
-
-                    format!(
-                        "   {:.1}{}/{:.1}{}",
-                        current_data.cache_harvest.used_kib as f64 / denominator,
-                        unit,
-                        (current_data.cache_harvest.total_kib as f64 / denominator),
-                        unit
-                    )
-                },
-            ))
-        } else {
-            None
-        },
-        if current_data.swap_harvest.total_kib > 0 {
-            Some((
-                format!(
-                    "{:3.0}%",
-                    current_data.swap_harvest.use_percent.unwrap_or(0.0)
-                ),
-                {
-                    let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
-                        current_data.swap_harvest.total_kib,
-                    );
-
-                    format!(
-                        "   {:.1}{}/{:.1}{}",
-                        current_data.swap_harvest.used_kib as f64 / denominator,
-                        unit,
-                        (current_data.swap_harvest.total_kib as f64 / denominator),
-                        unit
-                    )
-                },
-            ))
-        } else {
-            None
-        },
-    )
+            format!(
+                "   {:.1}{}/{:.1}{}",
+                harvest.used_kib as f64 / denominator,
+                unit,
+                (harvest.total_kib as f64 / denominator),
+                unit
+            )
+        }))
+    } else {
+        None
+    }
 }
 
 pub fn get_rx_tx_data_points(

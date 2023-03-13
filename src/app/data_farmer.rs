@@ -37,6 +37,7 @@ pub struct TimedData {
     pub cpu_data: Vec<Value>,
     pub load_avg_data: [f32; 3],
     pub mem_data: Option<Value>,
+    #[cfg(not(target_os = "windows"))]
     pub cache_data: Option<Value>,
     pub swap_data: Option<Value>,
     #[cfg(feature = "zfs")]
@@ -111,6 +112,7 @@ pub struct DataCollection {
     pub timed_data_vec: Vec<(Instant, TimedData)>,
     pub network_harvest: network::NetworkHarvest,
     pub memory_harvest: memory::MemHarvest,
+    #[cfg(not(target_os = "windows"))]
     pub cache_harvest: memory::MemHarvest,
     pub swap_harvest: memory::MemHarvest,
     pub cpu_harvest: cpu::CpuHarvest,
@@ -136,6 +138,7 @@ impl Default for DataCollection {
             timed_data_vec: Vec::default(),
             network_harvest: network::NetworkHarvest::default(),
             memory_harvest: memory::MemHarvest::default(),
+            #[cfg(not(target_os = "windows"))]
             cache_harvest: memory::MemHarvest::default(),
             swap_harvest: memory::MemHarvest::default(),
             cpu_harvest: cpu::CpuHarvest::default(),
@@ -211,13 +214,19 @@ impl DataCollection {
             self.eat_network(network, &mut new_entry);
         }
 
-        // Memory and Swap
+        // Memory, Swap, and Cache if not windows
+        #[cfg(not(target_os = "windows"))]
         if let (Some(memory), Some(cache), Some(swap)) = (
             harvested_data.memory,
             harvested_data.cache,
             harvested_data.swap,
         ) {
             self.eat_memory_and_swap(memory, cache, swap, &mut new_entry);
+        }
+
+        #[cfg(target_os = "windows")]
+        if let (Some(memory), Some(swap)) = (harvested_data.memory, harvested_data.swap) {
+            self.eat_memory_and_swap(memory, swap, &mut new_entry);
         }
 
         #[cfg(feature = "zfs")]
@@ -271,21 +280,28 @@ impl DataCollection {
     }
 
     fn eat_memory_and_swap(
-        &mut self, memory: memory::MemHarvest, cache: memory::MemHarvest, swap: memory::MemHarvest,
+        &mut self, memory: memory::MemHarvest,
+        #[cfg(not(target_os = "windows"))] cache: memory::MemHarvest, swap: memory::MemHarvest,
         new_entry: &mut TimedData,
     ) {
         // Memory
         new_entry.mem_data = memory.use_percent;
 
         // Cache
-        new_entry.cache_data = cache.use_percent;
+        #[cfg(not(target_os = "windows"))]
+        {
+            new_entry.cache_data = cache.use_percent;
+        }
 
         // Swap
         new_entry.swap_data = swap.use_percent;
 
         // In addition copy over latest data for easy reference
         self.memory_harvest = memory;
-        self.cache_harvest = cache;
+        #[cfg(not(target_os = "windows"))]
+        {
+            self.cache_harvest = cache;
+        }
         self.swap_harvest = swap;
     }
 

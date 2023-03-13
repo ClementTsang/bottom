@@ -19,6 +19,13 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use crossterm::{
+    event::{EnableBracketedPaste, EnableMouseCapture},
+    execute,
+    terminal::{enable_raw_mode, EnterAlternateScreen},
+};
+use tui::{backend::CrosstermBackend, Terminal};
+
 use bottom::{
     canvas::{self, canvas_styling::CanvasColours},
     constants::*,
@@ -26,12 +33,6 @@ use bottom::{
     options::*,
     *,
 };
-use crossterm::{
-    event::{EnableBracketedPaste, EnableMouseCapture},
-    execute,
-    terminal::{enable_raw_mode, EnterAlternateScreen},
-};
-use tui::{backend::CrosstermBackend, Terminal};
 
 fn main() -> Result<()> {
     let matches = clap::get_matches();
@@ -239,8 +240,11 @@ fn main() -> Result<()> {
                         if app.used_widgets.use_mem {
                             app.converted_data.mem_data =
                                 convert_mem_data_points(&app.data_collection);
-                            app.converted_data.cache_data =
-                                convert_cache_data_points(&app.data_collection);
+                            #[cfg(not(target_os = "windows"))]
+                            {
+                                app.converted_data.cache_data =
+                                    convert_cache_data_points(&app.data_collection);
+                            }
                             app.converted_data.swap_data =
                                 convert_swap_data_points(&app.data_collection);
                             #[cfg(feature = "zfs")]
@@ -253,12 +257,17 @@ fn main() -> Result<()> {
                                 app.converted_data.gpu_data =
                                     convert_gpu_data(&app.data_collection);
                             }
-                            let (memory_labels, cache_labels, swap_labels) =
-                                convert_mem_labels(&app.data_collection);
 
-                            app.converted_data.mem_labels = memory_labels;
-                            app.converted_data.cache_labels = cache_labels;
-                            app.converted_data.swap_labels = swap_labels;
+                            app.converted_data.mem_labels =
+                                convert_mem_label(&app.data_collection.memory_harvest);
+                            app.converted_data.swap_labels =
+                                convert_mem_label(&app.data_collection.swap_harvest);
+                            #[cfg(not(target_os = "windows"))]
+                            {
+                                app.converted_data.cache_labels =
+                                    convert_mem_label(&app.data_collection.cache_harvest);
+                            }
+
                             #[cfg(feature = "zfs")]
                             {
                                 let arc_labels = convert_arc_labels(&app.data_collection);

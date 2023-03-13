@@ -386,7 +386,10 @@ pub fn update_data(app: &mut App) {
     // TODO: [OPT] Prefer reassignment over new vectors?
     if app.mem_state.force_update.is_some() {
         app.converted_data.mem_data = convert_mem_data_points(data_source);
-        app.converted_data.cache_data = convert_cache_data_points(data_source);
+        #[cfg(not(target_os = "windows"))]
+        {
+            app.converted_data.cache_data = convert_cache_data_points(data_source);
+        }
         app.converted_data.swap_data = convert_swap_data_points(data_source);
         #[cfg(feature = "zfs")]
         {
