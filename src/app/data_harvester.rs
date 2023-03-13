@@ -401,10 +401,12 @@ impl DataCollector {
     fn update_memory_usage(&mut self) {
         if self.widgets_to_harvest.use_mem {
             self.data.memory = memory::get_ram_usage(&self.sys);
+
             #[cfg(not(target_os = "windows"))]
-            {
+            if self.widgets_to_harvest.use_cache {
                 self.data.cache = memory::get_cache_usage(&self.sys);
             }
+
             self.data.swap = memory::get_swap_usage(
                 #[cfg(not(target_os = "windows"))]
                 &self.sys,
