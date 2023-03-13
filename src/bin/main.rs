@@ -239,6 +239,8 @@ fn main() -> Result<()> {
                         if app.used_widgets.use_mem {
                             app.converted_data.mem_data =
                                 convert_mem_data_points(&app.data_collection);
+                            app.converted_data.cache_data =
+                                convert_cache_data_points(&app.data_collection);
                             app.converted_data.swap_data =
                                 convert_swap_data_points(&app.data_collection);
                             #[cfg(feature = "zfs")]
@@ -251,10 +253,11 @@ fn main() -> Result<()> {
                                 app.converted_data.gpu_data =
                                     convert_gpu_data(&app.data_collection);
                             }
-                            let (memory_labels, swap_labels) =
+                            let (memory_labels, cache_labels, swap_labels) =
                                 convert_mem_labels(&app.data_collection);
 
                             app.converted_data.mem_labels = memory_labels;
+                            app.converted_data.cache_labels = cache_labels;
                             app.converted_data.swap_labels = swap_labels;
                             #[cfg(feature = "zfs")]
                             {

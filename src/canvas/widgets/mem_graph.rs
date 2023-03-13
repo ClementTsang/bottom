@@ -56,6 +56,14 @@ impl Painter {
                         name: Some(mem_label.into()),
                     });
                 }
+                if let Some((label_percent, label_frac)) = &app_state.converted_data.cache_labels {
+                    let cache_label = format!("CACHE:{}{}", label_percent, label_frac);
+                    points.push(GraphData {
+                        points: &app_state.converted_data.cache_data,
+                        style: self.colours.cache_style,
+                        name: Some(cache_label.into()),
+                    });
+                }
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.swap_labels {
                     let swap_label = format!("SWP:{}{}", label_percent, label_frac);
                     points.push(GraphData {

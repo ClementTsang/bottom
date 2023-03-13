@@ -18,6 +18,7 @@ pub struct CanvasColours {
     pub currently_selected_text_style: Style,
     pub table_header_style: Style,
     pub ram_style: Style,
+    pub cache_style: Style,
     pub swap_style: Style,
     pub arc_style: Style,
     pub gpu_colour_styles: Vec<Style>,
@@ -54,6 +55,7 @@ impl Default for CanvasColours {
                 .bg(currently_selected_bg_colour),
             table_header_style: Style::default().fg(HIGHLIGHT_COLOUR),
             ram_style: Style::default().fg(FIRST_COLOUR),
+            cache_style: Style::default().fg(FOURTH_COLOUR),
             swap_style: Style::default().fg(SECOND_COLOUR),
             arc_style: Style::default().fg(THIRD_COLOUR),
             gpu_colour_styles: vec![
