@@ -78,7 +78,7 @@ cfg-if = "1.0.0"
 clap = { version = "3.2.2", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 const_format = "0.2.30"
-crossterm = "0.26.1"
+crossterm = "0.25.0"
 ctrlc = { version = "3.2.5", features = ["termination"] }
 dirs = "4.0.0"
 fern = { version = "0.6.1", optional = true }
