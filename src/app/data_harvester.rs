@@ -229,12 +229,6 @@ impl DataCollector {
             self.sys.refresh_networks();
         }
 
-        // FreeBSD uses a custom implementation.
-        #[cfg(not(target_os = "freebsd"))]
-        if self.widgets_to_harvest.use_disk {
-            self.sys.refresh_disks();
-        }
-
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
@@ -268,26 +262,10 @@ impl DataCollector {
         );
         self.update_temps();
         self.update_network_usage(current_instant);
+        self.update_disks();
 
         #[cfg(feature = "battery")]
         self.update_batteries();
-
-        let (disk_res, io_res) = futures::join!(
-            disks::get_disk_usage(
-                self.widgets_to_harvest.use_disk,
-                &self.filters.disk_filter,
-                &self.filters.mount_filter,
-            ),
-            disks::get_io_usage(self.widgets_to_harvest.use_disk)
-        );
-
-        if let Ok(disks) = disk_res {
-            self.data.disks = disks;
-        }
-
-        if let Ok(io) = io_res {
-            self.data.io = io;
-        }
 
         // Update times for future reference.
         self.last_collection_time = current_instant;
@@ -444,6 +422,31 @@ impl DataCollector {
                 self.data.list_of_batteries =
                     Some(batteries::refresh_batteries(battery_manager, battery_list));
             }
+        }
+    }
+
+    #[inline]
+    fn update_disks(&mut self) {
+        if self.widgets_to_harvest.use_disk {
+            #[cfg(any(target_os = "freebsd", target_os = "linux", target_os = "macos"))]
+            {
+                self.data.disks = disks::usage::get_disk_usage(
+                    &self.filters.disk_filter,
+                    &self.filters.mount_filter,
+                )
+                .ok();
+            }
+
+            #[cfg(target_os = "windows")]
+            {
+                self.data.disks = Some(disks::usage::get_disk_usage(
+                    &self.sys,
+                    &self.filters.disk_filter,
+                    &self.filters.mount_filter,
+                ));
+            }
+
+            self.data.io = disks::io::get_io_usage().ok();
         }
     }
 }

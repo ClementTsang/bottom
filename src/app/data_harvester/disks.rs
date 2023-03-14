@@ -1,17 +1,9 @@
-//! Data collection for disks (IO, usage, space, etc.).
-//!
-//! For Linux, macOS, and Windows, this is handled by heim. For FreeBSD there is a custom
-//! implementation.
+//! Data collection about disks (e.g. I/O, usage, space).
 
-cfg_if::cfg_if! {
-    if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))] {
-        pub mod heim;
-        pub use self::heim::*;
-    } else if #[cfg(target_os = "freebsd")] {
-        pub mod freebsd;
-        pub use self::freebsd::*;
-    }
-}
+use std::collections::HashMap;
+
+pub mod io;
+pub mod usage;
 
 #[derive(Debug, Clone, Default)]
 pub struct DiskHarvest {
@@ -19,9 +11,9 @@ pub struct DiskHarvest {
     pub mount_point: String,
 
     // TODO: Maybe unify all these?
-    pub free_space: Option<u64>,
-    pub used_space: Option<u64>,
-    pub total_space: Option<u64>,
+    pub free_space: u64,
+    pub used_space: u64,
+    pub total_space: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -30,4 +22,4 @@ pub struct IoData {
     pub write_bytes: u64,
 }
 
-pub type IoHarvest = std::collections::HashMap<String, Option<IoData>>;
+pub type IoHarvest = HashMap<String, Option<IoData>>;
