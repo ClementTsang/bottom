@@ -76,7 +76,7 @@ As (yet another) process/system visualization and management application, bottom
   - [Kill signals](https://clementtsang.github.io/bottom/nightly/usage/widgets/process/#process-termination)
   - [Tree mode](https://clementtsang.github.io/bottom/nightly/usage/widgets/process/#tree-mode)
 
-- Cross-platform support for Linux, macOS, and Windows, with more planned in the future.
+- [Cross-platform support](https://github.com/ClementTsang/bottom#support) for Linux, macOS, and Windows, with more planned in the future.
 
 - [Customizable behaviour](https://clementtsang.github.io/bottom/nightly/configuration/command-line-flags/) that can be controlled with command-line flags or a config file, such as:
 
