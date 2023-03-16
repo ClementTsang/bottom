@@ -2,8 +2,21 @@
 
 use std::collections::HashMap;
 
-pub mod io;
-pub mod usage;
+cfg_if::cfg_if! {
+    if #[cfg(target_os = "freebsd")] {
+        pub mod freebsd;
+        pub use self::freebsd::*;
+    } else if #[cfg(target_os = "windows")] {
+        pub mod windows;
+        pub use self::windows::*;
+    } else if #[cfg(target_os = "linux")] {
+        pub mod unix;
+        pub use self::unix::*;
+    } else if #[cfg(target_os = "macos")] {
+        pub mod unix;
+        pub use self::unix::*;
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct DiskHarvest {

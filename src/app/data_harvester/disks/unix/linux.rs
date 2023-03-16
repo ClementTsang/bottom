@@ -1,20 +1,6 @@
 use heim::disk::Partition;
 
-use crate::{
-    app::{data_harvester::disks::DiskHarvest, filter::Filter},
-    utils::error,
-};
-
 #[allow(dead_code)]
-#[allow(unused_variables)]
-pub fn get_disk_usage(
-    disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
-) -> error::Result<Vec<DiskHarvest>> {
-    Ok(vec![])
-}
-
-#[allow(dead_code)]
-#[cfg(target_os = "linux")]
 fn get_device_name(partition: &Partition) -> String {
     if let Some(device) = partition.device() {
         // See if this disk is actually mounted elsewhere on Linux...
@@ -41,19 +27,6 @@ fn get_device_name(partition: &Partition) -> String {
         }
         .into_string()
         .unwrap_or_else(|_| "Name Unavailable".to_string())
-    } else {
-        "Name Unavailable".to_string()
-    }
-}
-
-#[allow(dead_code)]
-#[cfg(not(target_os = "linux"))]
-fn get_device_name(partition: &Partition) -> String {
-    if let Some(device) = partition.device() {
-        device
-            .to_os_string()
-            .into_string()
-            .unwrap_or_else(|_| "Name Unavailable".to_string())
     } else {
         "Name Unavailable".to_string()
     }

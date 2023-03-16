@@ -4,10 +4,14 @@ use std::io;
 
 use serde::Deserialize;
 
-use crate::app::Filter;
-use crate::data_harvester::deserialize_xo;
-use crate::data_harvester::disks::DiskHarvest;
-use crate::utils::error;
+use crate::{
+    app::Filter,
+    data_harvester::{
+        deserialize_xo,
+        disks::{DiskHarvest, IoHarvest},
+    },
+    utils::error,
+};
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -23,6 +27,18 @@ struct FileSystem {
     used_blocks: u64,
     available_blocks: u64,
     mounted_on: String,
+}
+
+pub fn get_io_usage() -> error::Result<IoHarvest> {
+    let io_harvest = get_disk_info().map(|storage_system_information| {
+        storage_system_information
+            .filesystem
+            .into_iter()
+            .map(|disk| (disk.name, None))
+            .collect()
+    })?;
+
+    Ok(io_harvest)
 }
 
 pub fn get_disk_usage(

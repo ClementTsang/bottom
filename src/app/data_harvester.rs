@@ -430,23 +430,21 @@ impl DataCollector {
         if self.widgets_to_harvest.use_disk {
             #[cfg(any(target_os = "freebsd", target_os = "linux", target_os = "macos"))]
             {
-                self.data.disks = disks::usage::get_disk_usage(
-                    &self.filters.disk_filter,
-                    &self.filters.mount_filter,
-                )
-                .ok();
+                self.data.disks =
+                    disks::get_disk_usage(&self.filters.disk_filter, &self.filters.mount_filter)
+                        .ok();
             }
 
             #[cfg(target_os = "windows")]
             {
-                self.data.disks = Some(disks::usage::get_disk_usage(
+                self.data.disks = Some(disks::get_disk_usage(
                     &self.sys,
                     &self.filters.disk_filter,
                     &self.filters.mount_filter,
                 ));
             }
 
-            self.data.io = disks::io::get_io_usage().ok();
+            self.data.io = disks::get_io_usage().ok();
         }
     }
 }
