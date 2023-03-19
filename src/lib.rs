@@ -40,7 +40,7 @@ use constants::*;
 use crossterm::{
     event::{
         poll, read, DisableBracketedPaste, DisableMouseCapture, Event, KeyCode, KeyEvent,
-        KeyModifiers, MouseEvent, MouseEventKind,
+        KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind,
     },
     execute,
     style::Print,
@@ -448,7 +448,9 @@ pub fn create_input_thread(
                                     break;
                                 }
                             }
-                            Event::Key(key) => {
+                            Event::Key(key) if key.kind == KeyEventKind::Press => {
+                                // For now, we only care about keydown events. This may change in the future.
+
                                 if sender.send(BottomEvent::KeyInput(key)).is_err() {
                                     break;
                                 }
