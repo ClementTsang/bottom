@@ -82,8 +82,6 @@ crossterm = "0.26.1"
 ctrlc = { version = "3.2.5", features = ["termination"] }
 dirs = "5.0.0"
 fern = { version = "0.6.2", optional = true }
-futures = "0.3.26"
-futures-timer = "3.0.2"
 fxhash = "0.2.1"
 humantime = "2.1.0"
 humantime-serde = "1.1.1"

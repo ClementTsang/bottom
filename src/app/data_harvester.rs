@@ -182,7 +182,7 @@ impl DataCollector {
             self.sys.refresh_users_list();
         }
 
-        futures::executor::block_on(self.update_data());
+        self.update_data();
 
         std::thread::sleep(std::time::Duration::from_millis(250));
         self.data.cleanup();
@@ -249,7 +249,7 @@ impl DataCollector {
         }
     }
 
-    pub async fn update_data(&mut self) {
+    pub fn update_data(&mut self) {
         self.refresh_sysinfo_data();
 
         let current_instant = Instant::now();
