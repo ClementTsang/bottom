@@ -4,10 +4,11 @@
 
     This section is in progress, and is just copied from the old documentation.
 
-Most of the [command line flags](../../command-line-flags) have config file equivalents to avoid having to type them out each time:
+Most of the [command line flags](../../command-line-flags) have config file equivalents to avoid having to type them out
+each time:
 
 | Field                        | Type                                                                                           | Functionality                                                   |
-| ---------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+|------------------------------|------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
 | `hide_avg_cpu`               | Boolean                                                                                        | Hides the average CPU usage.                                    |
 | `dot_marker`                 | Boolean                                                                                        | Uses a dot marker for graphs.                                   |
 | `left_legend`                | Boolean                                                                                        | Puts the CPU chart legend to the left side.                     |
@@ -28,6 +29,7 @@ Most of the [command line flags](../../command-line-flags) have config file equi
 | `default_widget_count`       | Unsigned Int (represents which `default_widget_type`)                                          | Sets the n'th selected widget type as the default.              |
 | `disable_click`              | Boolean                                                                                        | Disables mouse clicks.                                          |
 | `color`                      | String (one of ["default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"]) | Use a color scheme, use --help for supported values.            |
+| `enable_cache_memory`        | Boolean                                                                                        | Enable collecting and displaying cache and buffer memory.       |
 | `mem_as_value`               | Boolean                                                                                        | Defaults to showing process memory usage by value.              |
 | `tree`                       | Boolean                                                                                        | Defaults to showing the process widget in tree mode.            |
 | `show_table_scroll_position` | Boolean                                                                                        | Shows the scroll position tracker in table widgets.             |
