@@ -3,7 +3,7 @@ use super::MemHarvest;
 /// Return ARC usage.
 #[cfg(feature = "zfs")]
 pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
-    let (mem_total_in_kib, mem_used_in_kib) = {
+    let (mem_total, mem_used) = {
         cfg_if::cfg_if! {
             if #[cfg(target_os = "linux")] {
                 // TODO: [OPT] is this efficient?
@@ -64,12 +64,12 @@ pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
     };
 
     Some(MemHarvest {
-        total_bytes: mem_total_in_kib,
-        used_bytes: mem_used_in_kib,
-        use_percent: if mem_total_in_kib == 0 {
+        total_bytes: mem_total,
+        used_bytes: mem_used,
+        use_percent: if mem_total == 0 {
             None
         } else {
-            Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
+            Some(mem_used as f64 / mem_total as f64 * 100.0)
         },
     })
 }
