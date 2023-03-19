@@ -333,7 +333,7 @@ More details on configuration can be found [in the documentation](https://clemen
 
 ## Troubleshooting
 
-If some things aren't working, give the [Troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting) a look. If things still aren't
+If some things aren't working, give the [troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting) a look. If things still aren't
 working, then consider opening [a question](https://github.com/ClementTsang/bottom/discussions) or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose).
 
 ## Contribution
@@ -421,4 +421,4 @@ Thanks to all contributors:
   work of many talented people. This application would be impossible without their
   work. I used to thank them all individually but the list got too large...
 
-- And of course, another round of thanks to all contributors and package maintainers!
+- And of course, another round of thanks to all the contributors and package maintainers!
