@@ -1,31 +1,41 @@
-#![allow(unused_imports)] // FIXME: Remove this
+//! Implementation based on [heim's](https://github.com/heim-rs/heim)
+//! Unix disk usage.
 
-use crate::{
-    app::{
-        data_harvester::disks::{DiskHarvest, IoHarvest},
-        filter::Filter,
-    },
-    utils::error,
+use std::path::Path;
+
+use crate::app::{
+    data_harvester::disks::{DiskHarvest, IoHarvest},
+    filter::Filter,
 };
+
+mod file_systems;
+pub(crate) use file_systems::FileSystem;
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
-        mod linux;
-        use linux::*;
-    } else if #[cfg(not(target_os = "linux"))] {
-        mod other;
-        use other::*;
+        use super::linux::partitions;
+    } else {
+        mod partition;
+        mod mounts;
+
+        use partition::*;
     }
 }
 
-pub fn get_io_usage() -> error::Result<IoHarvest> {
-    Ok(IoHarvest::default())
+pub(crate) struct Usage {}
+
+fn disk_usage(path: &Path) -> anyhow::Result<Usage> {
+    todo!()
 }
 
-#[allow(dead_code)]
-#[allow(unused_variables)]
 pub fn get_disk_usage(
     disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
-) -> error::Result<Vec<DiskHarvest>> {
+) -> anyhow::Result<Vec<DiskHarvest>> {
+    let partitions = partitions()?;
+
     Ok(vec![])
+}
+
+pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
+    Ok(IoHarvest::default())
 }

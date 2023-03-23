@@ -21,18 +21,24 @@ pub(crate) fn get_disk_usage(
     disks
         .iter()
         .filter_map(|disk| {
-            let name = disk
-                .name()
-                .to_os_string()
-                .into_string()
-                .unwrap_or_else(|_| "Name Unavailable".to_string());
+            let name = {
+                let name = disk.name();
+
+                if name.is_empty() {
+                    "Name unavailable".to_string()
+                } else {
+                    name.to_os_string()
+                        .into_string()
+                        .unwrap_or_else(|_| "Name unavailable".to_string())
+                }
+            };
 
             let mount_point = disk
                 .mount_point()
                 .as_os_str()
                 .to_os_string()
                 .into_string()
-                .unwrap_or_else(|_| "Name Unavailable".to_string());
+                .unwrap_or_else(|_| "Mount unavailable".to_string());
 
             if keep_entry(&name, &mount_point, disk_filter, mount_filter) {
                 let free_space = disk.available_space();

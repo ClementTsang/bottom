@@ -29,7 +29,7 @@ pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Opt
 
     while let Some(io) = counter_stream.next().await {
         if let Ok(io) = io {
-            let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
+            let mount_point = io.device_name().to_str().unwrap_or("Mount Unavailable");
 
             io_hash.insert(
                 mount_point.to_string(),
@@ -64,7 +64,7 @@ pub async fn get_disk_usage(
             let mount_point = (partition
                 .mount_point()
                 .to_str()
-                .unwrap_or("Name Unavailable"))
+                .unwrap_or("Name unavailable"))
             .to_string();
 
             // Precedence ordering in the case where name and mount filters disagree, "allow" takes precedence over "deny".

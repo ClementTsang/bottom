@@ -14,9 +14,6 @@ pub enum BottomError {
     /// An error when there is an IO exception.
     #[error("IO exception, {0}")]
     InvalidIo(String),
-    /// An error when the heim library encounters a problem.
-    #[error("Error caused by Heim, {0}")]
-    InvalidHeim(String),
     /// An error when the Crossterm library encounters a problem.
     #[error("Error caused by Crossterm, {0}")]
     CrosstermError(String),
@@ -47,13 +44,6 @@ pub enum BottomError {
 impl From<std::io::Error> for BottomError {
     fn from(err: std::io::Error) -> Self {
         BottomError::InvalidIo(err.to_string())
-    }
-}
-
-#[cfg(not(target_os = "freebsd"))]
-impl From<heim::Error> for BottomError {
-    fn from(err: heim::Error) -> Self {
-        BottomError::InvalidHeim(err.to_string())
     }
 }
 
