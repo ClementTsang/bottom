@@ -1,6 +1,6 @@
 //! This is the main file to house data collection functions.
 
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 #[cfg(target_os = "linux")]
 use fxhash::FxHashMap;
@@ -173,6 +173,17 @@ impl DataCollector {
             }
         }
 
+        if self.widgets_to_harvest.use_net {
+            self.sys.refresh_networks_list();
+        }
+        if self.widgets_to_harvest.use_temp {
+            self.sys.refresh_components_list();
+        }
+        #[cfg(target_os = "windows")]
+        if self.widgets_to_harvest.use_proc {
+            self.sys.refresh_users_list();
+        }
+
         futures::executor::block_on(self.update_data());
 
         std::thread::sleep(std::time::Duration::from_millis(250));
@@ -201,6 +212,10 @@ impl DataCollector {
 
     /// Refresh sysinfo data.
     fn refresh_sysinfo_data(&mut self) {
+        // Refresh once every minute. If it's too frequent it can cause segfaults.
+        const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
+        let refresh_start = Instant::now();
+
         if self.widgets_to_harvest.use_cpu || self.widgets_to_harvest.use_proc {
             self.sys.refresh_cpu();
         }
@@ -211,7 +226,9 @@ impl DataCollector {
         }
 
         if self.widgets_to_harvest.use_net {
-            self.sys.refresh_networks_list();
+            if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                self.sys.refresh_networks_list();
+            }
             self.sys.refresh_networks();
         }
 
@@ -219,7 +236,7 @@ impl DataCollector {
         {
             if self.widgets_to_harvest.use_proc {
                 #[cfg(target_os = "windows")]
-                if self.widgets_to_harvest.use_proc {
+                if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
                     self.sys.refresh_users_list();
                 }
 
@@ -227,7 +244,9 @@ impl DataCollector {
             }
 
             if self.widgets_to_harvest.use_temp {
-                self.sys.refresh_components_list();
+                if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                    self.sys.refresh_components_list();
+                }
                 self.sys.refresh_components();
             }
         }
