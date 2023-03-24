@@ -247,12 +247,7 @@ impl DataCollector {
         self.update_network_usage(current_instant);
 
         #[cfg(feature = "battery")]
-        if let Some(battery_manager) = &self.battery_manager {
-            if let Some(battery_list) = &mut self.battery_list {
-                self.data.list_of_batteries =
-                    Some(batteries::refresh_batteries(battery_manager, battery_list));
-            }
-        }
+        self.update_batteries();
 
         let (disk_res, io_res) = futures::join!(
             disks::get_disk_usage(
@@ -409,6 +404,17 @@ impl DataCollector {
             self.total_rx = net_data.total_rx;
             self.total_tx = net_data.total_tx;
             self.data.network = Some(net_data);
+        }
+    }
+
+    #[inline]
+    #[cfg(feature = "battery")]
+    fn update_batteries(&mut self) {
+        if let Some(battery_manager) = &self.battery_manager {
+            if let Some(battery_list) = &mut self.battery_list {
+                self.data.list_of_batteries =
+                    Some(batteries::refresh_batteries(battery_manager, battery_list));
+            }
         }
     }
 }
