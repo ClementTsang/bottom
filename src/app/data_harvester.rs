@@ -100,12 +100,6 @@ impl Data {
 pub struct DataCollector {
     pub data: Data,
     sys: System,
-    #[cfg(target_os = "linux")]
-    pid_mapping: FxHashMap<crate::Pid, processes::PrevProcDetails>,
-    #[cfg(target_os = "linux")]
-    prev_idle: f64,
-    #[cfg(target_os = "linux")]
-    prev_non_idle: f64,
     mem_total_kb: u64,
     temperature_type: TemperatureType,
     use_current_cpu_total: bool,
@@ -115,11 +109,19 @@ pub struct DataCollector {
     total_tx: u64,
     show_average_cpu: bool,
     widgets_to_harvest: UsedWidgets,
+    filters: DataFilters,
+
+    #[cfg(target_os = "linux")]
+    pid_mapping: FxHashMap<crate::Pid, processes::PrevProcDetails>,
+    #[cfg(target_os = "linux")]
+    prev_idle: f64,
+    #[cfg(target_os = "linux")]
+    prev_non_idle: f64,
+
     #[cfg(feature = "battery")]
     battery_manager: Option<Manager>,
     #[cfg(feature = "battery")]
     battery_list: Option<Vec<Battery>>,
-    filters: DataFilters,
 
     #[cfg(target_family = "unix")]
     user_table: self::processes::UserTable,
@@ -156,35 +158,6 @@ impl DataCollector {
     }
 
     pub fn init(&mut self) {
-        self.sys.refresh_memory();
-        self.mem_total_kb = self.sys.total_memory();
-
-        // Refresh network list once at the start.
-        if self.widgets_to_harvest.use_net {
-            self.sys.refresh_networks_list(); // TODO: refresh on a timer?
-        }
-
-        if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
-            self.sys.refresh_cpu();
-        }
-
-        #[cfg(not(target_os = "linux"))]
-        {
-            // Refresh components list once.
-            if self.widgets_to_harvest.use_temp {
-                self.sys.refresh_components_list(); // TODO: refresh on a timer?
-            }
-
-            if cfg!(target_os = "windows") && self.widgets_to_harvest.use_proc {
-                self.sys.refresh_users_list();
-            }
-
-            // Refresh disk list once...
-            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_disk {
-                self.sys.refresh_disks_list();
-            }
-        }
-
         #[cfg(feature = "battery")]
         {
             if self.widgets_to_harvest.use_battery {
@@ -226,44 +199,51 @@ impl DataCollector {
         self.show_average_cpu = show_average_cpu;
     }
 
-    pub async fn update_data(&mut self) {
-        if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
+    /// Refresh sysinfo data.
+    fn refresh_sysinfo_data(&mut self) {
+        if self.widgets_to_harvest.use_cpu || self.widgets_to_harvest.use_proc {
             self.sys.refresh_cpu();
         }
 
-        if self.widgets_to_harvest.use_mem {
+        if self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_proc {
             self.sys.refresh_memory();
         }
 
         if self.widgets_to_harvest.use_net {
+            self.sys.refresh_networks_list();
             self.sys.refresh_networks();
         }
 
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
+                #[cfg(target_os = "windows")]
+                if self.widgets_to_harvest.use_proc {
+                    self.sys.refresh_users_list();
+                }
+
                 self.sys.refresh_processes();
             }
 
             if self.widgets_to_harvest.use_temp {
+                self.sys.refresh_components_list();
                 self.sys.refresh_components();
             }
         }
+    }
 
-        #[cfg(target_os = "freebsd")]
-        if self.widgets_to_harvest.use_disk {
-            self.sys.refresh_disks();
-        }
+    pub async fn update_data(&mut self) {
+        self.refresh_sysinfo_data();
 
         let current_instant = Instant::now();
 
         self.update_cpu_usage();
+        self.update_temps();
+        self.update_memory_usage();
         self.update_processes(
             #[cfg(target_os = "linux")]
             current_instant,
         );
-        self.update_temps();
-        self.update_memory_usage();
         self.update_network_usage(current_instant);
 
         #[cfg(feature = "battery")]
