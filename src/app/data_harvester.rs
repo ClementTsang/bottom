@@ -207,6 +207,7 @@ impl DataCollector {
 
         if self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_proc {
             self.sys.refresh_memory();
+            self.mem_total_kb = self.sys.total_memory(); // FIXME: This is sorta not really correct atm due to units, fix in future PR.
         }
 
         if self.widgets_to_harvest.use_net {
