@@ -237,7 +237,7 @@ pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
 }
 
 /// Returns the binary prefix unit type (e.g. kibibyte) and denominator for given total amount of memory in bytes.
-fn return_unit_and_denominator_for_mem(bytes: u64) -> (&'static str, f64) {
+fn get_mem_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
     if bytes < KIBI_LIMIT {
         // Stay with B
         ("B", 1.0)
@@ -267,7 +267,7 @@ pub fn convert_mem_labels(
                     current_data.memory_harvest.use_percent.unwrap_or(0.0)
                 ),
                 {
-                    let (unit, denominator) = return_unit_and_denominator_for_mem(
+                    let (unit, denominator) = get_mem_binary_unit_and_denominator(
                         current_data.memory_harvest.total_bytes,
                     );
 
@@ -291,7 +291,7 @@ pub fn convert_mem_labels(
                 ),
                 {
                     let (unit, denominator) =
-                        return_unit_and_denominator_for_mem(current_data.swap_harvest.total_bytes);
+                        get_mem_binary_unit_and_denominator(current_data.swap_harvest.total_bytes);
 
                     format!(
                         "   {:.1}{}/{:.1}{}",
@@ -560,7 +560,7 @@ pub fn convert_arc_labels(
             ),
             {
                 let (unit, denominator) =
-                    return_unit_and_denominator_for_mem(current_data.arc_harvest.total_bytes);
+                    get_mem_binary_unit_and_denominator(current_data.arc_harvest.total_bytes);
 
                 format!(
                     "   {:.1}{}/{:.1}{}",
@@ -650,7 +650,7 @@ pub fn convert_gpu_data(
                 mem_percent: format!("{:3.0}%", gpu.1.use_percent.unwrap_or(0.0)),
                 mem_total: {
                     let (unit, denominator) =
-                        return_unit_and_denominator_for_mem(gpu.1.total_bytes);
+                        get_mem_binary_unit_and_denominator(gpu.1.total_bytes);
 
                     format!(
                         "   {:.1}{}/{:.1}{}",
