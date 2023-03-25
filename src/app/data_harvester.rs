@@ -255,12 +255,12 @@ impl DataCollector {
         let current_instant = Instant::now();
 
         self.update_cpu_usage();
-        self.update_temps();
         self.update_memory_usage();
         self.update_processes(
             #[cfg(target_os = "linux")]
             current_instant,
         );
+        self.update_temps();
         self.update_network_usage(current_instant);
 
         #[cfg(feature = "battery")]
