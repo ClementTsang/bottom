@@ -96,7 +96,7 @@ once_cell = "1.5.2"
 regex = "1.7.1"
 serde = { version = "1.0.152", features = ["derive"] }
 starship-battery = { version = "0.7.9", optional = true }
-sysinfo = "0.28.3"
+sysinfo = "0.28.4"
 thiserror = "1.0.38"
 time = { version = "0.3.20", features = ["formatting", "macros"] }
 toml_edit = { version = "0.19.4", features = ["serde"] }
