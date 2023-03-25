@@ -21,8 +21,8 @@ pub(crate) fn get_swap_usage() -> Option<MemHarvest> {
             let swap_used = perf_info.PageSize.saturating_mul(perf_info.CommitTotal) as u64;
 
             Some(MemHarvest {
-                total_kib: swap_total,
-                used_kib: swap_used,
+                used_bytes: swap_used,
+                total_bytes: swap_total,
                 use_percent: Some(swap_used as f64 / swap_total as f64 * 100.0),
             })
         } else {
