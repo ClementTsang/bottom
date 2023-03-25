@@ -100,7 +100,6 @@ impl Data {
 pub struct DataCollector {
     pub data: Data,
     sys: System,
-    mem_total_kb: u64,
     temperature_type: TemperatureType,
     use_current_cpu_total: bool,
     unnormalized_cpu: bool,
@@ -138,7 +137,6 @@ impl DataCollector {
             prev_idle: 0_f64,
             #[cfg(target_os = "linux")]
             prev_non_idle: 0_f64,
-            mem_total_kb: 0,
             temperature_type: TemperatureType::Celsius,
             use_current_cpu_total: false,
             unnormalized_cpu: false,
@@ -222,7 +220,6 @@ impl DataCollector {
 
         if self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_proc {
             self.sys.refresh_memory();
-            self.mem_total_kb = self.sys.total_memory() / 1024; // FIXME: This is sorta not really correct atm due to units, fix in future PR.
         }
 
         if self.widgets_to_harvest.use_net {
@@ -307,6 +304,12 @@ impl DataCollector {
     fn update_processes(&mut self, #[cfg(target_os = "linux")] current_instant: Instant) {
         if self.widgets_to_harvest.use_proc {
             if let Ok(mut process_list) = {
+                let total_memory = if let Some(memory) = &self.data.memory {
+                    memory.total_bytes
+                } else {
+                    self.sys.total_memory()
+                };
+
                 #[cfg(target_os = "linux")]
                 {
                     use self::processes::{PrevProc, ProcHarvestOptions};
@@ -331,7 +334,7 @@ impl DataCollector {
                         &mut self.pid_mapping,
                         proc_harvest_options,
                         time_diff,
-                        self.mem_total_kb,
+                        total_memory,
                         &mut self.user_table,
                     )
                 }
@@ -343,7 +346,7 @@ impl DataCollector {
                             &self.sys,
                             self.use_current_cpu_total,
                             self.unnormalized_cpu,
-                            self.mem_total_kb * 1024,
+                            total_memory,
                             &mut self.user_table,
                         )
                     }
@@ -353,7 +356,7 @@ impl DataCollector {
                             &self.sys,
                             self.use_current_cpu_total,
                             self.unnormalized_cpu,
-                            self.mem_total_kb * 1024,
+                            total_memory,
                         )
                     }
                 }

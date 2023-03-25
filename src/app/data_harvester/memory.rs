@@ -21,7 +21,7 @@ pub mod arc;
 
 #[derive(Debug, Clone, Default)]
 pub struct MemHarvest {
-    pub total_kib: u64,
-    pub used_kib: u64,
+    pub used_bytes: u64,
+    pub total_bytes: u64,
     pub use_percent: Option<f64>,
 }
