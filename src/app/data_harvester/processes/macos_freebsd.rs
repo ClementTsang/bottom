@@ -9,7 +9,7 @@ use super::ProcessHarvest;
 use crate::{data_harvester::processes::UserTable, utils::error::Result, Pid};
 
 pub fn get_process_data<F>(
-    sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, mem_total_kb: u64,
+    sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, mem_total: u64,
     user_table: &mut UserTable, backup_cpu_proc_usage: F,
 ) -> Result<Vec<ProcessHarvest>>
 where
@@ -88,8 +88,8 @@ where
             },
             name,
             command,
-            mem_usage_percent: if mem_total_kb > 0 {
-                process_val.memory() as f64 * 100.0 / mem_total_kb as f64
+            mem_usage_percent: if mem_total > 0 {
+                process_val.memory() as f64 * 100.0 / mem_total as f64
             } else {
                 0.0
             },

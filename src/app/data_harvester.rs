@@ -343,7 +343,7 @@ impl DataCollector {
                             &self.sys,
                             self.use_current_cpu_total,
                             self.unnormalized_cpu,
-                            self.mem_total_kb,
+                            self.mem_total_kb * 1024,
                             &mut self.user_table,
                         )
                     }
@@ -353,7 +353,7 @@ impl DataCollector {
                             &self.sys,
                             self.use_current_cpu_total,
                             self.unnormalized_cpu,
-                            self.mem_total_kb,
+                            self.mem_total_kb * 1024,
                         )
                     }
                 }
