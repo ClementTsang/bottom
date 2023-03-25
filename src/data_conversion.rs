@@ -236,22 +236,22 @@ pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
     result
 }
 
-/// Returns the binary prefix unit type (e.g. kibibyte) and denominator for given total amount of memory in bytes.
+/// Returns the most appropriate binary prefix unit type (e.g. kibibyte) and denominator for the given amount of bytes.
+///
+/// The expected usage is to divide out the given value with the returned denominator in order to be able to use it
+/// with the returned binary unit (e.g. divide 3000 bytes by 1024 to have a value in KiB).
 fn get_mem_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
     if bytes < KIBI_LIMIT {
-        // Stay with B
+        // Stick with bytes if under a kibibyte.
         ("B", 1.0)
     } else if bytes < MEBI_LIMIT {
-        // Use KiB
         ("KiB", KIBI_LIMIT_F64)
     } else if bytes < GIBI_LIMIT {
-        // Use MiB
         ("MiB", MEBI_LIMIT_F64)
     } else if bytes < TEBI_LIMIT {
-        // Use GiB
         ("GiB", GIBI_LIMIT_F64)
     } else {
-        // Use TiB
+        // Otherwise just use tebibytes, which is probably safe for most use cases.
         ("TiB", TEBI_LIMIT_F64)
     }
 }
