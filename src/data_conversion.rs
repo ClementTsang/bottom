@@ -272,11 +272,9 @@ pub fn convert_mem_labels(
                     );
 
                     format!(
-                        "   {:.1}{}/{:.1}{}",
+                        "   {:.1}{unit}/{:.1}{unit}",
                         current_data.memory_harvest.used_bytes as f64 / denominator,
-                        unit,
                         (current_data.memory_harvest.total_bytes as f64 / denominator),
-                        unit
                     )
                 },
             ))
@@ -294,11 +292,9 @@ pub fn convert_mem_labels(
                         get_mem_binary_unit_and_denominator(current_data.swap_harvest.total_bytes);
 
                     format!(
-                        "   {:.1}{}/{:.1}{}",
+                        "   {:.1}{unit}/{:.1}{unit}",
                         current_data.swap_harvest.used_bytes as f64 / denominator,
-                        unit,
                         (current_data.swap_harvest.total_bytes as f64 / denominator),
-                        unit
                     )
                 },
             ))
@@ -563,11 +559,9 @@ pub fn convert_arc_labels(
                     get_mem_binary_unit_and_denominator(current_data.arc_harvest.total_bytes);
 
                 format!(
-                    "   {:.1}{}/{:.1}{}",
+                    "   {:.1}{unit}/{:.1}{unit}",
                     current_data.arc_harvest.used_bytes as f64 / denominator,
-                    unit,
                     (current_data.arc_harvest.total_bytes as f64 / denominator),
-                    unit
                 )
             },
         ))
@@ -653,11 +647,9 @@ pub fn convert_gpu_data(
                         get_mem_binary_unit_and_denominator(gpu.1.total_bytes);
 
                     format!(
-                        "   {:.1}{}/{:.1}{}",
+                        "   {:.1}{unit}/{:.1}{unit}",
                         gpu.1.used_bytes as f64 / denominator,
-                        unit,
                         (gpu.1.total_bytes as f64 / denominator),
-                        unit
                     )
                 },
             }
