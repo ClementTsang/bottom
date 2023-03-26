@@ -3,14 +3,6 @@
 use std::collections::HashMap;
 
 cfg_if::cfg_if! {
-    if #[cfg(target_family = "unix")]
-    {
-        pub mod unix;
-        pub use self::unix::*;
-    }
-}
-
-cfg_if::cfg_if! {
     if #[cfg(target_os = "freebsd")] {
         pub mod freebsd;
         pub use self::freebsd::*;
@@ -18,8 +10,13 @@ cfg_if::cfg_if! {
         pub mod windows;
         pub use self::windows::*;
     } else if #[cfg(target_os = "linux")] {
-        pub(crate) mod linux;
+        pub mod unix;
+        pub use self::unix::*;
+    } else if #[cfg(target_os = "macos")] {
+        pub mod unix;
+        pub use self::unix::*;
     }
+    // TODO: Add dummy impls here for other OSes?
 }
 
 #[derive(Debug, Clone, Default)]

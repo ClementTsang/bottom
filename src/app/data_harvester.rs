@@ -430,9 +430,9 @@ impl DataCollector {
         if self.widgets_to_harvest.use_disk {
             #[cfg(any(target_os = "freebsd", target_os = "linux", target_os = "macos"))]
             {
-                self.data.disks =
-                    disks::get_disk_usage(&self.filters.disk_filter, &self.filters.mount_filter)
-                        .ok();
+                let disk_filter = &self.filters.disk_filter;
+                let mount_filter = &self.filters.mount_filter;
+                self.data.disks = disks::get_disk_usage(disk_filter, mount_filter).ok();
             }
 
             #[cfg(target_os = "windows")]
