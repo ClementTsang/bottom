@@ -116,7 +116,7 @@ fn get_linux_cpu_usage(
 
 fn read_proc(
     prev_proc: &PrevProcDetails, process: &Process, cpu_usage: f64, cpu_fraction: f64,
-    use_current_cpu_total: bool, time_difference_in_secs: u64, mem_total_kb: u64,
+    use_current_cpu_total: bool, time_difference_in_secs: u64, total_memory: u64,
     user_table: &mut UserTable,
 ) -> error::Result<(ProcessHarvest, u64)> {
     let stat = process.stat()?;
@@ -164,8 +164,7 @@ fn read_proc(
     );
     let parent_pid = Some(stat.ppid);
     let mem_usage_bytes = stat.rss_bytes();
-    let mem_usage_kb = mem_usage_bytes / 1024;
-    let mem_usage_percent = mem_usage_kb as f64 / mem_total_kb as f64 * 100.0;
+    let mem_usage_percent = mem_usage_bytes as f64 / total_memory as f64 * 100.0;
 
     // This can fail if permission is denied!
     let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
@@ -233,7 +232,7 @@ pub(crate) struct ProcHarvestOptions {
 
 pub(crate) fn get_process_data(
     sys: &System, prev_proc: PrevProc<'_>, pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>,
-    proc_harvest_options: ProcHarvestOptions, time_difference_in_secs: u64, mem_total_kb: u64,
+    proc_harvest_options: ProcHarvestOptions, time_difference_in_secs: u64, total_memory: u64,
     user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let ProcHarvestOptions {
@@ -280,7 +279,7 @@ pub(crate) fn get_process_data(
                             cpu_fraction,
                             use_current_cpu_total,
                             time_difference_in_secs,
-                            mem_total_kb,
+                            total_memory,
                             user_table,
                         ) {
                             prev_proc_details.cpu_time = new_process_times;

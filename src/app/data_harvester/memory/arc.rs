@@ -37,7 +37,7 @@ pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
                             }
                         }
                     }
-                    (mem_total / 1024, mem_arc / 1024)
+                    (mem_total, mem_arc)
                 } else {
                     (0, 0)
                 }
@@ -50,7 +50,7 @@ pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
                     if let (Ok(sysctl::CtlValue::U64(arc)), Ok(sysctl::CtlValue::Ulong(mem))) =
                         (mem_arc_value.value(), mem_sys_value.value())
                     {
-                        (mem / 1024, arc / 1024)
+                        (mem, arc)
                     } else {
                         (0, 0)
                     }
@@ -64,8 +64,8 @@ pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
     };
 
     Some(MemHarvest {
-        total_kib: mem_total_in_kib,
-        used_kib: mem_used_in_kib,
+        total_bytes: mem_total_in_kib,
+        used_bytes: mem_used_in_kib,
         use_percent: if mem_total_in_kib == 0 {
             None
         } else {
