@@ -1018,6 +1018,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#braille-font-issues-on-linux" class="md-nav__link">
+    Braille font issues on Linux
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#installing-fonts-for-windows-command-promptpowershell" class="md-nav__link">
     Installing fonts for Windows Command Prompt/PowerShell
   </a>
@@ -1144,9 +1151,15 @@ which generally seems better supported out of the box, at the expense of looking
     <figcaption><sub>Example using <code>btm --dot_marker</code></sub></figcaption>
 </figure>
 
-<p>Another (better) alternative is to install a font that supports braille fonts, and configure your terminal to use it. For example, installing
-something like <a href="https://yudit.org/download/fonts/UBraille/">UBraille</a> or <a href="https://github.com/be5invis/Iosevka">Iosevka</a>
+<p>Another (better) alternative is to install a font that supports braille fonts, and configure your terminal emulator to use it.
+For example, installing something like <a href="https://yudit.org/download/fonts/UBraille/">UBraille</a> or <a href="https://github.com/be5invis/Iosevka">Iosevka</a>
 and ensuring your terminal uses it should work.</p>
+<h3 id="braille-font-issues-on-linux"><a class="toclink" href="#braille-font-issues-on-linux">Braille font issues on Linux</a></h3>
+<p>See <a href="https://github.com/cjbassi/gotop/issues/18">here</a> for possible fixes if you're having font issues. Generally, the
+problem comes down to you either not having a font that supports the braille markers, or your terminal emulator is not
+using the correct font for the braille markers.</p>
+<p>If you're still having issues, feel free to open a <a href="https://github.com/ClementTsang/bottom/discussions/new/">discussion</a>
+question about it.</p>
 <h3 id="installing-fonts-for-windows-command-promptpowershell"><a class="toclink" href="#installing-fonts-for-windows-command-promptpowershell">Installing fonts for Windows Command Prompt/PowerShell</a></h3>
 <p><strong>Note: I would advise backing up your registry beforehand if you aren't sure what you are doing!</strong></p>
 <p>Let's say you're installing <a href="https://github.com/be5invis/Iosevka">Iosevka</a>. The steps you can take are:</p>
