@@ -5,7 +5,7 @@ use sysinfo::{CpuExt, PidExt, ProcessExt, System, SystemExt, UserExt};
 use super::ProcessHarvest;
 
 pub fn get_process_data(
-    sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, mem_total_kb: u64,
+    sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
@@ -63,8 +63,8 @@ pub fn get_process_data(
             parent_pid: process_val.parent().map(|p| p.as_u32() as _),
             name,
             command,
-            mem_usage_percent: if mem_total_kb > 0 {
-                process_val.memory() as f64 * 100.0 / mem_total_kb as f64
+            mem_usage_percent: if total_memory > 0 {
+                process_val.memory() as f64 * 100.0 / total_memory as f64
             } else {
                 0.0
             },

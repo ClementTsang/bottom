@@ -19,9 +19,20 @@ which generally seems better supported out of the box, at the expense of looking
     <figcaption><sub>Example using <code>btm --dot_marker</code></sub></figcaption>
 </figure>
 
-Another (better) alternative is to install a font that supports braille fonts, and configure your terminal to use it. For example, installing
-something like [UBraille](https://yudit.org/download/fonts/UBraille/) or [Iosevka](https://github.com/be5invis/Iosevka)
+Another (better) alternative is to install a font that supports braille fonts, and configure your terminal emulator to use it.
+For example, installing something like [UBraille](https://yudit.org/download/fonts/UBraille/) or [Iosevka](https://github.com/be5invis/Iosevka)
 and ensuring your terminal uses it should work.
+
+### Braille font issues on Linux/macOS/Unix-like
+
+Generally, the problem comes down to you either not having a font that supports the braille markers, or your terminal
+emulator is not using the correct font for the braille markers.
+
+See [here](https://github.com/cjbassi/gotop/issues/18) for possible fixes if you're having font issues on Linux, which
+may also be helpful for macOS or other Unix-like systems.
+
+If you're still having issues, feel free to open a [discussion](https://github.com/ClementTsang/bottom/discussions/new/)
+question about it.
 
 ### Installing fonts for Windows Command Prompt/PowerShell
 

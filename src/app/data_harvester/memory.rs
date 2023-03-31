@@ -23,7 +23,7 @@ pub mod arc;
 
 #[derive(Debug, Clone, Default)]
 pub struct MemHarvest {
-    pub total_kib: u64,
-    pub used_kib: u64,
-    pub use_percent: Option<f64>,
+    pub used_bytes: u64,
+    pub total_bytes: u64,
+    pub use_percent: Option<f64>, // TODO: Might be find to just make this an f64, and any consumer checks NaN.
 }

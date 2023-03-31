@@ -22,17 +22,15 @@ fn get_nvidia_mem_usage() -> Option<Vec<(String, MemHarvest)>> {
                 if let Ok(device) = nvml.device_by_index(i) {
                     if let (Ok(name), Ok(mem)) = (device.name(), device.memory_info()) {
                         // add device memory in bytes
-                        let mem_total_in_kib = mem.total / 1024;
-                        let mem_used_in_kib = mem.used / 1024;
                         results.push((
                             name,
                             MemHarvest {
-                                total_kib: mem_total_in_kib,
-                                used_kib: mem_used_in_kib,
-                                use_percent: if mem_total_in_kib == 0 {
+                                total_bytes: mem.total,
+                                used_bytes: mem.used,
+                                use_percent: if mem.total == 0 {
                                     None
                                 } else {
-                                    Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
+                                    Some(mem.used as f64 / mem.total as f64 * 100.0)
                                 },
                             },
                         ));

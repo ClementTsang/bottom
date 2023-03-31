@@ -6,14 +6,13 @@
 //! bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
 
 #![warn(rust_2018_idioms)]
-#![allow(clippy::uninlined_format_args)]
 #![deny(clippy::missing_safety_doc)]
+// TODO: Deny unused imports.
 #[allow(unused_imports)]
+// Only used for builds not intended for release.
 #[cfg(feature = "log")]
 #[macro_use]
 extern crate log;
-
-// TODO: Deny unused imports.
 
 use std::{
     boxed::Box,

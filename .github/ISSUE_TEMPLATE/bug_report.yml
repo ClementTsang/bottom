@@ -15,20 +15,6 @@ body:
             issues.
           required: true
 
-  - type: textarea
-    id: description
-    validations:
-      required: true
-    attributes:
-      label: Describe the issue
-      description: >
-        Give a high level description of the issue, the expected behaviour, and the observed behaviour.
-        If possible, provide screenshots/videos.
-      placeholder: |
-        Example:
-        bottom is failing to output information for a mounted encrypted partition on basic mode. It should
-        be able to report this information, but I'm not seeing the entry at all.
-
   - type: input
     id: operating_system
     attributes:
@@ -88,6 +74,43 @@ body:
       placeholder: Installed bottom through the Arch official repos.
 
   # TODO: After some point also add in a `btm check` invocation
+
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: Describe the issue
+      description: >
+        Give a description of the issue. If possible, provide screenshots/videos.
+      placeholder: |
+        Example:
+        bottom is failing to output information for a mounted encrypted partition on basic mode. It should
+        be able to report this information, but I'm not seeing the entry at all.
+
+  - type: textarea
+    id: expected
+    validations:
+      required: true
+    attributes:
+      label: What is the expected behaviour?
+      description: >
+        Describe the behaviour you expected.
+      placeholder: |
+        Example:
+        I expect to be able to see information about the encrypted partition on basic mode.
+        
+  - type: textarea
+    id: actual
+    validations:
+      required: true
+    attributes:
+      label: What is the actual behaviour?
+      description: >
+        Describe the behaviour you actually see. If possible, provide screenshots/videos.
+      placeholder: |
+        Example:
+        I am unable to see information about my encrypted partition.
 
   - type: textarea
     id: reproduce

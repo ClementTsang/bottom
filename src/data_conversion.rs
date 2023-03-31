@@ -260,6 +260,26 @@ pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
     result
 }
 
+/// Returns the most appropriate binary prefix unit type (e.g. kibibyte) and denominator for the given amount of bytes.
+///
+/// The expected usage is to divide out the given value with the returned denominator in order to be able to use it
+/// with the returned binary unit (e.g. divide 3000 bytes by 1024 to have a value in KiB).
+fn get_mem_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
+    if bytes < KIBI_LIMIT {
+        // Stick with bytes if under a kibibyte.
+        ("B", 1.0)
+    } else if bytes < MEBI_LIMIT {
+        ("KiB", KIBI_LIMIT_F64)
+    } else if bytes < GIBI_LIMIT {
+        ("MiB", MEBI_LIMIT_F64)
+    } else if bytes < TEBI_LIMIT {
+        ("GiB", GIBI_LIMIT_F64)
+    } else {
+        // Otherwise just use tebibytes, which is probably safe for most use cases.
+        ("TiB", TEBI_LIMIT_F64)
+    }
+}
+
 pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
     /// Returns the unit type and denominator for given total amount of memory in kibibytes.
     fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
@@ -539,24 +559,7 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
 pub fn convert_arc_labels(
     current_data: &crate::app::data_farmer::DataCollection,
 ) -> Option<(String, String)> {
-    /// Returns the unit type and denominator for given total amount of memory in kibibytes.
-    fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
-        if mem_total_kib < 1024 {
-            // Stay with KiB
-            ("KiB", 1.0)
-        } else if mem_total_kib < MEBI_LIMIT {
-            // Use MiB
-            ("MiB", KIBI_LIMIT_F64)
-        } else if mem_total_kib < GIBI_LIMIT {
-            // Use GiB
-            ("GiB", MEBI_LIMIT_F64)
-        } else {
-            // Use TiB
-            ("TiB", GIBI_LIMIT_F64)
-        }
-    }
-
-    if current_data.arc_harvest.total_kib > 0 {
+    if current_data.arc_harvest.total_bytes > 0 {
         Some((
             format!(
                 "{:3.0}%",
@@ -564,14 +567,12 @@ pub fn convert_arc_labels(
             ),
             {
                 let (unit, denominator) =
-                    return_unit_and_denominator_for_mem_kib(current_data.arc_harvest.total_kib);
+                    get_mem_binary_unit_and_denominator(current_data.arc_harvest.total_bytes);
 
                 format!(
-                    "   {:.1}{}/{:.1}{}",
-                    current_data.arc_harvest.used_kib as f64 / denominator,
-                    unit,
-                    (current_data.arc_harvest.total_kib as f64 / denominator),
-                    unit
+                    "   {:.1}{unit}/{:.1}{unit}",
+                    current_data.arc_harvest.used_bytes as f64 / denominator,
+                    (current_data.arc_harvest.total_bytes as f64 / denominator),
                 )
             },
         ))
@@ -614,23 +615,6 @@ pub struct ConvertedGpuData {
 pub fn convert_gpu_data(
     current_data: &crate::app::data_farmer::DataCollection,
 ) -> Option<Vec<ConvertedGpuData>> {
-    /// Returns the unit type and denominator for given total amount of memory in kibibytes.
-    fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
-        if mem_total_kib < 1024 {
-            // Stay with KiB
-            ("KiB", 1.0)
-        } else if mem_total_kib < MEBI_LIMIT {
-            // Use MiB
-            ("MiB", KIBI_LIMIT_F64)
-        } else if mem_total_kib < GIBI_LIMIT {
-            // Use GiB
-            ("GiB", MEBI_LIMIT_F64)
-        } else {
-            // Use TiB
-            ("TiB", GIBI_LIMIT_F64)
-        }
-    }
-
     let current_time = current_data.current_instant;
 
     // convert points
@@ -671,14 +655,12 @@ pub fn convert_gpu_data(
                 mem_percent: format!("{:3.0}%", gpu.1.use_percent.unwrap_or(0.0)),
                 mem_total: {
                     let (unit, denominator) =
-                        return_unit_and_denominator_for_mem_kib(gpu.1.total_kib);
+                        get_mem_binary_unit_and_denominator(gpu.1.total_bytes);
 
                     format!(
-                        "   {:.1}{}/{:.1}{}",
-                        gpu.1.used_kib as f64 / denominator,
-                        unit,
-                        (gpu.1.total_kib as f64 / denominator),
-                        unit
+                        "   {:.1}{unit}/{:.1}{unit}",
+                        gpu.1.used_bytes as f64 / denominator,
+                        (gpu.1.total_bytes as f64 / denominator),
                     )
                 },
             }
