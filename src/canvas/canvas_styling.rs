@@ -166,6 +166,12 @@ impl CanvasColours {
                 .context("Update 'ram_color' in your config file..")?;
         }
 
+        #[cfg(not(target_os = "windows"))]
+        if let Some(cache_color) = &colours.cache_color {
+            self.set_cache_colour(cache_color)
+                .context("Update 'cache_color' in your config file..")?;
+        }
+
         if let Some(swap_color) = &colours.swap_color {
             self.set_swap_colour(swap_color)
                 .context("Update 'swap_color' in your config file..")?;
@@ -276,6 +282,12 @@ impl CanvasColours {
 
     pub fn set_ram_colour(&mut self, colour: &str) -> error::Result<()> {
         self.ram_style = str_to_fg(colour)?;
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    pub fn set_cache_colour(&mut self, colour: &str) -> error::Result<()> {
+        self.cache_style = str_to_fg(colour)?;
         Ok(())
     }
 
