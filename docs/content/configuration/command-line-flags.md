@@ -21,7 +21,7 @@ The following flags can be provided to bottom in the command line to change the 
 | `--default_widget_type <WIDGET TYPE>`        | Sets the default widget type, use --help for more info.                              |
 | `--disable_advanced_kill`                    | Hides advanced options to stop a process on Unix-like systems.                       |
 | `--disable_click`                            | Disables mouse clicks.                                                               |
-| `--enable_cache_memory`                      | Enable collecting and displaying cache and buffer memory (not available on windows). |
+| `--enable_cache_memory`                      | Enable collecting and displaying cache and buffer memory (not available on Windows). |
 | `-m`, `--dot_marker`                         | Uses a dot marker for graphs.                                                        |
 | `-f`, `--fahrenheit`                         | Sets the temperature type to Fahrenheit.                                             |
 | `-g`, `--group`                              | Groups processes with the same name by default.                                      |

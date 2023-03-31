@@ -29,7 +29,7 @@ each time:
 | `default_widget_count`       | Unsigned Int (represents which `default_widget_type`)                                          | Sets the n'th selected widget type as the default.                                   |
 | `disable_click`              | Boolean                                                                                        | Disables mouse clicks.                                                               |
 | `color`                      | String (one of ["default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"]) | Use a color scheme, use --help for supported values.                                 |
-| `enable_cache_memory`        | Boolean                                                                                        | Enable collecting and displaying cache and buffer memory (not available on windows). |
+| `enable_cache_memory`        | Boolean                                                                                        | Enable collecting and displaying cache and buffer memory (not available on Windows). |
 | `mem_as_value`               | Boolean                                                                                        | Defaults to showing process memory usage by value.                                   |
 | `tree`                       | Boolean                                                                                        | Defaults to showing the process widget in tree mode.                                 |
 | `show_table_scroll_position` | Boolean                                                                                        | Shows the scroll position tracker in table widgets.                                  |
