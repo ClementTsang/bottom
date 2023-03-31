@@ -280,33 +280,17 @@ fn get_mem_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
     }
 }
 
+/// Returns the unit type and denominator for given total amount of memory in kibibytes.
 pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
-    /// Returns the unit type and denominator for given total amount of memory in kibibytes.
-    fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
-        if mem_total_kib < 1024 {
-            // Stay with KiB
-            ("KiB", 1.0)
-        } else if mem_total_kib < MEBI_LIMIT {
-            // Use MiB
-            ("MiB", KIBI_LIMIT_F64)
-        } else if mem_total_kib < GIBI_LIMIT {
-            // Use GiB
-            ("GiB", MEBI_LIMIT_F64)
-        } else {
-            // Use TiB
-            ("TiB", GIBI_LIMIT_F64)
-        }
-    }
-
-    if harvest.total_kib > 0 {
+    if harvest.total_bytes > 0 {
         Some((format!("{:3.0}%", harvest.use_percent.unwrap_or(0.0)), {
-            let (unit, denominator) = return_unit_and_denominator_for_mem_kib(harvest.total_kib);
+            let (unit, denominator) = get_mem_binary_unit_and_denominator(harvest.total_bytes);
 
             format!(
                 "   {:.1}{}/{:.1}{}",
-                harvest.used_kib as f64 / denominator,
+                harvest.used_bytes as f64 / denominator,
                 unit,
-                (harvest.total_kib as f64 / denominator),
+                (harvest.total_bytes as f64 / denominator),
                 unit
             )
         }))

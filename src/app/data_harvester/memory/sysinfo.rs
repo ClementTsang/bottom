@@ -41,16 +41,16 @@ pub(crate) fn get_swap_usage(sys: &System) -> Option<MemHarvest> {
 /// between the available and free memory. On windows, this will always be 0.
 #[cfg(not(target_os = "windows"))]
 pub(crate) fn get_cache_usage(sys: &System) -> Option<MemHarvest> {
-    let mem_used_in_kib = (sys.available_memory() - sys.free_memory()) / 1024;
-    let mem_total_in_kib = sys.total_memory() / 1024;
+    let mem_used = sys.available_memory() - sys.free_memory();
+    let mem_total = sys.total_memory();
 
     Some(MemHarvest {
-        total_kib: mem_total_in_kib,
-        used_kib: mem_used_in_kib,
-        use_percent: if mem_total_in_kib == 0 {
+        total_bytes: mem_total,
+        used_bytes: mem_used,
+        use_percent: if mem_total == 0 {
             None
         } else {
-            Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
+            Some(mem_used as f64 / mem_total as f64 * 100.0)
         },
     })
 }
