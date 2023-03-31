@@ -94,7 +94,7 @@ pub static GRUVBOX_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColo
     ]),
     ram_color: Some("#8ec07c".into()),
     #[cfg(not(target_os = "windows"))]
-    cache_color: Some("#d79921".into()),
+    cache_color: Some("#b16286".into()),
     swap_color: Some("#fabd2f".into()),
     arc_color: Some("#689d6a".into()),
     gpu_core_colors: Some(vec![
@@ -151,7 +151,7 @@ pub static GRUVBOX_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| Conf
     ]),
     ram_color: Some("#427b58".into()),
     #[cfg(not(target_os = "windows"))]
-    cache_color: Some("9d0006".into()),
+    cache_color: Some("d79921".into()),
     swap_color: Some("#cc241d".into()),
     arc_color: Some("#689d6a".into()),
     gpu_core_colors: Some(vec![
@@ -196,7 +196,7 @@ pub static NORD_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColours
     ]),
     ram_color: Some("#88c0d0".into()),
     #[cfg(not(target_os = "windows"))]
-    cache_color: Some("#8fbcbb".into()),
+    cache_color: Some("#d8dee9".into()),
     swap_color: Some("#d08770".into()),
     arc_color: Some("#5e81ac".into()),
     gpu_core_colors: Some(vec![
@@ -241,7 +241,7 @@ pub static NORD_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigC
     ]),
     ram_color: Some("#81a1c1".into()),
     #[cfg(not(target_os = "windows"))]
-    cache_color: Some("#8fbcbb".into()),
+    cache_color: Some("#4c566a".into()),
     swap_color: Some("#d08770".into()),
     arc_color: Some("#5e81ac".into()),
     gpu_core_colors: Some(vec![

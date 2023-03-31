@@ -57,7 +57,7 @@ impl Default for CanvasColours {
             table_header_style: Style::default().fg(HIGHLIGHT_COLOUR),
             ram_style: Style::default().fg(FIRST_COLOUR),
             #[cfg(not(target_os = "windows"))]
-            cache_style: Style::default().fg(FOURTH_COLOUR),
+            cache_style: Style::default().fg(FIFTH_COLOUR),
             swap_style: Style::default().fg(SECOND_COLOUR),
             arc_style: Style::default().fg(THIRD_COLOUR),
             gpu_colour_styles: vec![

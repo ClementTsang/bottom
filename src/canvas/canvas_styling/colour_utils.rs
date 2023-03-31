@@ -9,6 +9,7 @@ pub const FIRST_COLOUR: Color = Color::LightMagenta;
 pub const SECOND_COLOUR: Color = Color::LightYellow;
 pub const THIRD_COLOUR: Color = Color::LightCyan;
 pub const FOURTH_COLOUR: Color = Color::LightGreen;
+pub const FIFTH_COLOUR: Color = Color::LightRed;
 pub const HIGHLIGHT_COLOUR: Color = Color::LightBlue;
 pub const AVG_COLOUR: Color = Color::Red;
 pub const ALL_COLOUR: Color = Color::Green;
