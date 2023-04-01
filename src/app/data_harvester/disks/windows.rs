@@ -10,10 +10,12 @@ use crate::{
     utils::error,
 };
 
+// TODO: Unify this bit with Unix impl.
 pub fn get_io_usage() -> error::Result<IoHarvest> {
     Ok(IoHarvest::default())
 }
 
+// TODO: Unify this bit with Unix impl.
 pub(crate) fn get_disk_usage(
     sys: &System, disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
 ) -> Vec<DiskHarvest> {
