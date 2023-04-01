@@ -208,7 +208,13 @@ impl DataCollector {
         self.show_average_cpu = show_average_cpu;
     }
 
-    /// Refresh sysinfo data.
+    /// Refresh sysinfo data. We use sysinfo for the following data:
+    /// - CPU usage
+    /// - Memory usage
+    /// - Network usage
+    /// - Processes (non-Linux)
+    /// - Disk (Windows)
+    /// - Temperatures (non-Linux)
     fn refresh_sysinfo_data(&mut self) {
         // Refresh once every minute. If it's too frequent it can cause segfaults.
         const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
@@ -229,9 +235,14 @@ impl DataCollector {
             self.sys.refresh_networks();
         }
 
+        // sysinfo is used on non-Linux systems for the following:
+        // - Processes (users list as well for Windows)
+        // - Disks (Windows only)
+        // - Temperatures and temperature components list.
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
+                // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
                 if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
                     self.sys.refresh_users_list();
@@ -246,6 +257,11 @@ impl DataCollector {
                 }
                 self.sys.refresh_components();
             }
+        }
+
+        #[cfg(target_os = "windows")]
+        if self.widgets_to_harvest.use_disk {
+            self.sys.refresh_disks();
         }
     }
 
