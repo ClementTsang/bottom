@@ -98,7 +98,10 @@ impl ConvertedData {
             .zip(&data.io_labels)
             .for_each(|(disk, (io_read, io_write))| {
                 // Because this sometimes does *not* equal to disk.total.
-                let summed_total_bytes = disk.used_space + disk.free_space;
+                let summed_total_bytes = match (disk.used_space, disk.free_space) {
+                    (Some(used), Some(free)) => Some(used + free),
+                    _ => None,
+                };
 
                 self.disk_data.push(DiskWidgetData {
                     name: KString::from_ref(&disk.name),

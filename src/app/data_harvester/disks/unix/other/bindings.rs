@@ -11,7 +11,7 @@ extern "C" {
 }
 
 /// Returns all the mounts on the system at the moment.
-pub(crate) fn mounts() -> anyhow::Result<Vec<libc::statfs>> {
+fn mounts() -> anyhow::Result<Vec<libc::statfs>> {
     let expected_len = unsafe { getfsstat64(std::ptr::null_mut(), 0, MNT_NOWAIT) };
     let mut mounts: Vec<libc::statfs> = Vec::with_capacity(expected_len as usize);
     let result = unsafe {

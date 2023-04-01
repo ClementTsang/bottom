@@ -25,9 +25,9 @@ pub struct DiskHarvest {
     pub mount_point: String,
 
     // TODO: Maybe unify all these?
-    pub free_space: u64,
-    pub used_space: u64,
-    pub total_space: u64,
+    pub free_space: Option<u64>,
+    pub used_space: Option<u64>,
+    pub total_space: Option<u64>,
 }
 
 #[derive(Clone, Debug)]

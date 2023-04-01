@@ -2,8 +2,8 @@ use std::str::FromStr;
 
 /// Known filesystems. From [heim](https://github.com/heim-rs/heim/blob/master/heim-disk/src/filesystem.rs).
 ///
-/// All physical filesystems should have their own enum element
-/// and all virtual filesystems will go into the [`FileSystem::Other`] element.
+/// All physical filesystems should have their own enum element and all virtual filesystems will go into
+/// the [`FileSystem::Other`] element.
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 #[non_exhaustive]
 pub enum FileSystem {
@@ -72,15 +72,18 @@ pub enum FileSystem {
 
 impl FileSystem {
     /// Checks if filesystem is used for a physical devices.
+    #[inline]
     pub fn is_physical(&self) -> bool {
-        matches!(self, FileSystem::Other(..))
+        !self.is_virtual()
     }
 
     /// Checks if filesystem is used for a virtual devices (such as `tmpfs` or `smb` mounts).
+    #[inline]
     pub fn is_virtual(&self) -> bool {
-        !self.is_physical()
+        matches!(self, FileSystem::Other(..))
     }
 
+    #[allow(dead_code)]
     /// Returns a string identifying this filesystem.
     pub fn as_str(&self) -> &str {
         match self {
