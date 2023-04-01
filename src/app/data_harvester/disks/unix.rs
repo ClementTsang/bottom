@@ -25,7 +25,7 @@ pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
     let mut io_hash: HashMap<String, Option<IoData>> = HashMap::new();
 
     for io in io_stats()?.flatten() {
-        let mount_point = io.device_name().to_str().unwrap_or("Mount Unavailable");
+        let mount_point = io.device_name().to_string_lossy();
 
         io_hash.insert(
             mount_point.to_string(),
@@ -46,12 +46,7 @@ pub fn get_disk_usage(
 
     for partition in partitions_physical()? {
         let name = partition.get_device_name();
-
-        let mount_point = (partition
-            .mount_point()
-            .to_str()
-            .unwrap_or("Name unavailable"))
-        .to_string();
+        let mount_point = partition.mount_point().to_string_lossy().to_string();
 
         // Precedence ordering in the case where name and mount filters disagree, "allow" takes precedence over "deny".
         //
