@@ -4,14 +4,8 @@ use std::io;
 
 use serde::Deserialize;
 
-use crate::{
-    app::Filter,
-    data_harvester::{
-        deserialize_xo,
-        disks::{DiskHarvest, IoHarvest},
-    },
-    utils::error,
-};
+use super::{keep_disk_entry, DiskHarvest, IoData, IoHarvest};
+use crate::{app::Filter, data_harvester::deserialize_xo, utils::error};
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -49,21 +43,7 @@ pub fn get_disk_usage(
             .filesystem
             .into_iter()
             .filter_map(|disk| {
-                // Precedence ordering in the case where name and mount filters disagree, "allow"
-                // takes precedence over "deny".
-                //
-                // For implementation, we do this as follows:
-                //
-                // 1. Is the entry allowed through any filter? That is, does it match an entry in a
-                //    filter where `is_list_ignored` is `false`? If so, we always keep this entry.
-                // 2. Is the entry denied through any filter? That is, does it match an entry in a
-                //    filter where `is_list_ignored` is `true`? If so, we always deny this entry.
-                // 3. Anything else is allowed.
-                let filter_check_map =
-                    [(disk_filter, &disk.name), (mount_filter, &disk.mounted_on)];
-                if matches_allow_list(filter_check_map.as_slice())
-                    || !matches_ignore_list(filter_check_map.as_slice())
-                {
+                if keep_disk_entry(&disk.name, &disk.mounted_on, disk_filter, mount_filter) {
                     Some(DiskHarvest {
                         free_space: disk.available_blocks * 1024,
                         used_space: disk.used_blocks * 1024,
@@ -79,20 +59,6 @@ pub fn get_disk_usage(
     })?;
 
     Ok(vec_disks)
-}
-
-fn matches_allow_list(filter_check_map: &[(&Option<Filter>, &String)]) -> bool {
-    filter_check_map.iter().any(|(filter, text)| match filter {
-        Some(f) if !f.is_list_ignored => f.list.iter().any(|r| r.is_match(text)),
-        Some(_) | None => false,
-    })
-}
-
-fn matches_ignore_list(filter_check_map: &[(&Option<Filter>, &String)]) -> bool {
-    filter_check_map.iter().any(|(filter, text)| match filter {
-        Some(f) if f.is_list_ignored => f.list.iter().any(|r| r.is_match(text)),
-        Some(_) | None => false,
-    })
 }
 
 fn get_disk_info() -> io::Result<StorageSystemInformation> {

@@ -23,16 +23,19 @@ pub(crate) struct Partition {
 
 impl Partition {
     /// Returns the device name, if there is one.
+    #[inline]
     pub fn device(&self) -> Option<&str> {
         self.device.as_deref()
     }
 
     /// Returns the mount point for this partition.
+    #[inline]
     pub fn mount_point(&self) -> &Path {
         self.mount_point.as_path()
     }
 
     /// Returns the [`FileSystem`] of this partition.
+    #[inline]
     pub fn fs_type(&self) -> &FileSystem {
         &self.fs_type
     }
@@ -139,29 +142,51 @@ impl FromStr for Partition {
 }
 
 #[allow(dead_code)]
-/// Returns all partitions.
+/// Returns a [`Vec`] containing all partitions.
 pub(crate) fn partitions() -> anyhow::Result<Vec<Partition>> {
     const PROC_MOUNTS: &str = "/proc/mounts";
 
-    let mounts = BufReader::new(File::open(PROC_MOUNTS)?).lines();
-    Ok(mounts
-        .filter_map(|line| match line {
-            Ok(line) => Partition::from_str(&line).ok(),
-            Err(_) => None,
-        })
-        .collect())
+    let mut results = vec![];
+    let mut reader = BufReader::new(File::open(PROC_MOUNTS)?);
+    let mut line = String::new();
+
+    while let Ok(bytes) = reader.read_line(&mut line) {
+        if bytes > 0 {
+            if let Ok(partition) = Partition::from_str(&line) {
+                results.push(partition);
+            }
+
+            line.clear();
+        } else {
+            break;
+        }
+    }
+
+    Ok(results)
 }
 
-/// Returns all physical partitions.
+/// Returns a [`Vec`] containing all *physical* partitions. This is defined by
+/// [`FileSystem::is_physical()`].
 pub(crate) fn partitions_physical() -> anyhow::Result<Vec<Partition>> {
     const PROC_MOUNTS: &str = "/proc/mounts";
 
-    let mounts = BufReader::new(File::open(PROC_MOUNTS)?).lines();
-    Ok(mounts
-        .filter_map(|line| match line {
-            Ok(line) => Partition::from_str(&line).ok(),
-            Err(_) => None,
-        })
-        .filter(|partition| partition.fs_type().is_physical())
-        .collect())
+    let mut results = vec![];
+    let mut reader = BufReader::new(File::open(PROC_MOUNTS)?);
+    let mut line = String::new();
+
+    while let Ok(bytes) = reader.read_line(&mut line) {
+        if bytes > 0 {
+            if let Ok(partition) = Partition::from_str(&line) {
+                if partition.fs_type().is_physical() {
+                    results.push(partition);
+                }
+            }
+
+            line.clear();
+        } else {
+            break;
+        }
+    }
+
+    Ok(results)
 }

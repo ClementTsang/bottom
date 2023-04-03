@@ -23,7 +23,7 @@ const DISK_SECTOR_SIZE: u64 = 512;
 
 #[allow(dead_code)]
 #[derive(Debug, Default)]
-pub struct IoStats {
+pub struct IoCounters {
     name: String,
     read_count: u64,
     read_merged_count: u64,
@@ -35,7 +35,7 @@ pub struct IoStats {
     write_time_secs: u64,
 }
 
-impl IoStats {
+impl IoCounters {
     pub(crate) fn device_name(&self) -> &OsStr {
         OsStr::new(&self.name)
     }
@@ -49,7 +49,7 @@ impl IoStats {
     }
 }
 
-impl FromStr for IoStats {
+impl FromStr for IoCounters {
     type Err = anyhow::Error;
 
     /// Converts a `&str` to an [`IoStats`].
@@ -60,7 +60,7 @@ impl FromStr for IoStats {
     ///
     /// https://www.kernel.org/doc/Documentation/iostats.txt
     /// https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
-    fn from_str(s: &str) -> anyhow::Result<IoStats> {
+    fn from_str(s: &str) -> anyhow::Result<IoCounters> {
         fn next_part<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Result<&'a str, io::Error> {
             iter.next()
                 .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidData))
@@ -81,7 +81,7 @@ impl FromStr for IoStats {
         let write_bytes = next_part(&mut parts)?.parse::<u64>()? * DISK_SECTOR_SIZE;
         let write_time_secs = next_part(&mut parts)?.parse()?;
 
-        Ok(IoStats {
+        Ok(IoCounters {
             name,
             read_count,
             read_merged_count,
@@ -96,13 +96,21 @@ impl FromStr for IoStats {
 }
 
 /// Returns an iterator of disk I/O stats. Pulls data from `/proc/diskstats`.
-pub fn io_stats() -> anyhow::Result<impl Iterator<Item = anyhow::Result<IoStats>>> {
+pub fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
     const PROC_DISKSTATS: &str = "/proc/diskstats";
 
-    Ok(BufReader::new(File::open(PROC_DISKSTATS)?)
-        .lines()
-        .map(|line| match line {
-            Ok(line) => IoStats::from_str(&line),
-            Err(err) => Err(err.into()),
-        }))
+    let mut results = vec![];
+    let mut reader = BufReader::new(File::open(PROC_DISKSTATS)?);
+    let mut line = String::new();
+
+    while let Ok(bytes) = reader.read_line(&mut line) {
+        if bytes > 0 {
+            results.push(IoCounters::from_str(&line));
+            line.clear();
+        } else {
+            break;
+        }
+    }
+
+    Ok(results)
 }
