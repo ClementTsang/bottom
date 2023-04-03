@@ -150,7 +150,7 @@ jobs:
           command: build
           args: --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.4
+          cross-version: 0.2.5
 
       - name: Move automatically generated completion/manpage
         shell: bash
@@ -336,7 +336,7 @@ jobs:
           command: build
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.4
+          cross-version: 0.2.5
 
       - name: Move automatically generated completion/manpage
         shell: bash

@@ -301,7 +301,6 @@ You can also try to use the generated release binaries and manually install on y
 
 - [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), generated off of the release branch
 - [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated daily off of the master branch at 00:00 UTC
-  - Note that for now, FreeBSD and ARM macOS builds are primarily only available on the nightly release.
 
 #### Auto-completion
 

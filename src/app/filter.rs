@@ -9,11 +9,13 @@ impl Filter {
     /// Whether the filter should keep the entry or reject it.
     #[inline]
     pub(crate) fn keep_entry(&self, value: &str) -> bool {
-        self.list
-            .iter()
-            .find(|regex| regex.is_match(value))
-            .map(|_| !self.is_list_ignored)
-            .unwrap_or(self.is_list_ignored)
+        if self.list.iter().any(|regex| regex.is_match(value)) {
+            // If a match is found, then if we wanted to ignore if we match, return false. If we want
+            // to keep if we match, return true. Thus, return the inverse of `is_list_ignored`.
+            !self.is_list_ignored
+        } else {
+            self.is_list_ignored
+        }
     }
 }
 
@@ -55,6 +57,38 @@ mod test {
             results
                 .into_iter()
                 .filter(|r| ignore_false.keep_entry(r))
+                .collect::<Vec<_>>(),
+            vec!["CPU socket temperature", "motherboard temperature"]
+        );
+
+        let multi_true = Filter {
+            is_list_ignored: true,
+            list: vec![
+                Regex::new("socket").unwrap(),
+                Regex::new("temperature").unwrap(),
+            ],
+        };
+
+        assert_eq!(
+            results
+                .into_iter()
+                .filter(|r| multi_true.keep_entry(r))
+                .collect::<Vec<_>>(),
+            vec!["wifi_0", "amd gpu"]
+        );
+
+        let multi_false = Filter {
+            is_list_ignored: false,
+            list: vec![
+                Regex::new("socket").unwrap(),
+                Regex::new("temperature").unwrap(),
+            ],
+        };
+
+        assert_eq!(
+            results
+                .into_iter()
+                .filter(|r| multi_false.keep_entry(r))
                 .collect::<Vec<_>>(),
             vec!["CPU socket temperature", "motherboard temperature"]
         );
