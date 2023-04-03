@@ -111,7 +111,7 @@ jobs:
           command: test
           args: --no-run --locked ${{ matrix.features }} --target=${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.4
+          cross-version: 0.2.5
         env:
           RUST_BACKTRACE: full
 
@@ -121,7 +121,7 @@ jobs:
           command: test
           args: --no-fail-fast ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.4
+          cross-version: 0.2.5
         env:
           RUST_BACKTRACE: full
 
@@ -131,17 +131,18 @@ jobs:
           command: clippy
           args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} -- -D warnings
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.4
+          cross-version: 0.2.5
         env:
           RUST_BACKTRACE: full
 
-  # Run cargo check on all other platforms
+  # Check running cargo build on all other platforms.
+  # TODO: Maybe some of these should be allowed to fail.
   other-check:
     needs: pre-job
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     continue-on-error: true
-    timeout-minutes: 18
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -178,7 +179,7 @@ jobs:
               rust: stable,
             }
 
-          # Beta; should be allowed to fail.
+          # Beta
           - {
               os: "ubuntu-latest",
               target: "x86_64-unknown-linux-gnu",
@@ -246,13 +247,13 @@ jobs:
         with:
           key: ${{ matrix.info.target }}
 
-      - name: Check
+      - name: Try building
         uses: ClementTsang/cargo-action@v0.0.3
         with:
-          command: check
+          command: build
           args: --all-targets --verbose --target=${{ matrix.info.target }} --locked
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.4
+          cross-version: 0.2.5
 
   completion:
     name: "CI Pass Check"
