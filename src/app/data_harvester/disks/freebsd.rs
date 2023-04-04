@@ -4,7 +4,7 @@ use std::io;
 
 use serde::Deserialize;
 
-use super::{keep_disk_entry, DiskHarvest, IoData, IoHarvest};
+use super::{keep_disk_entry, DiskHarvest, IoHarvest};
 use crate::{app::Filter, data_harvester::deserialize_xo, utils::error};
 
 #[derive(Deserialize, Debug, Default)]
@@ -45,9 +45,9 @@ pub fn get_disk_usage(
             .filter_map(|disk| {
                 if keep_disk_entry(&disk.name, &disk.mounted_on, disk_filter, mount_filter) {
                     Some(DiskHarvest {
-                        free_space: disk.available_blocks * 1024,
-                        used_space: disk.used_blocks * 1024,
-                        total_space: disk.total_blocks * 1024,
+                        free_space: Some(disk.available_blocks * 1024),
+                        used_space: Some(disk.used_blocks * 1024),
+                        total_space: Some(disk.total_blocks * 1024),
                         mount_point: disk.mounted_on,
                         name: disk.name,
                     })
