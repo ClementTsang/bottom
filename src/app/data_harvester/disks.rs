@@ -12,11 +12,11 @@ cfg_if::cfg_if! {
         pub mod windows;
         pub use self::windows::*;
     } else if #[cfg(target_os = "linux")] {
-        pub mod unix;
-        pub use self::unix::*;
+        pub mod system;
+        pub use self::system::*;
     } else if #[cfg(target_os = "macos")] {
-        pub mod unix;
-        pub use self::unix::*;
+        pub mod system;
+        pub use self::system::*;
     }
     // TODO: Add dummy impls here for other OSes?
 }

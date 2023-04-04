@@ -21,8 +21,9 @@ pub(crate) fn mounts() -> anyhow::Result<Vec<libc::statfs>> {
             MNT_NOWAIT,
         )
     };
+
     if result == -1 {
-        return Err(anyhow::Error::from(Error::last_os_error()).context("getfsstat64"));
+        Err(anyhow::Error::from(Error::last_os_error()).context("getfsstat64"))
     } else {
         debug_assert_eq!(
             expected_len, result,
@@ -31,7 +32,6 @@ pub(crate) fn mounts() -> anyhow::Result<Vec<libc::statfs>> {
         unsafe {
             mounts.set_len(result as usize);
         }
+        Ok(mounts)
     }
-
-    Ok(mounts)
 }
