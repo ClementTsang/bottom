@@ -435,6 +435,13 @@ impl Painter {
                     }
                 }
 
+                #[cfg(not(target_os = "windows"))]
+                {
+                    if app_state.converted_data.cache_labels.is_some() {
+                        mem_rows += 1;
+                    }
+                }
+
                 #[cfg(feature = "gpu")]
                 {
                     if let Some(gpu_data) = &app_state.converted_data.gpu_data {
