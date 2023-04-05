@@ -4,6 +4,7 @@ use std::{
     ffi::OsStr,
     fs::File,
     io::{self, BufRead, BufReader},
+    num::ParseIntError,
     str::FromStr,
 };
 
@@ -60,20 +61,24 @@ impl FromStr for IoCounters {
                 .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidData))
         }
 
+        fn next_part_to_u64<'a>(iter: &mut impl Iterator<Item = &'a str>) -> anyhow::Result<u64> {
+            next_part(iter)?
+                .parse()
+                .map_err(|err: ParseIntError| err.into())
+        }
+
         // Skip the major and minor numbers.
         let mut parts = s.split_whitespace().skip(2);
 
         let name = next_part(&mut parts)?.to_string();
 
-        let _read_count = next_part(&mut parts)?.parse()?;
-        let _read_merged_count = next_part(&mut parts)?.parse()?;
-        let read_bytes = next_part(&mut parts)?.parse::<u64>()? * DISK_SECTOR_SIZE;
-        let _read_time_secs = next_part(&mut parts)?.parse()?;
+        // Skip read count, read merged count.
+        let mut parts = parts.skip(2);
+        let read_bytes = next_part_to_u64(&mut parts)? * DISK_SECTOR_SIZE;
 
-        let _write_count = next_part(&mut parts)?.parse()?;
-        let _write_merged_count = next_part(&mut parts)?.parse()?;
-        let write_bytes = next_part(&mut parts)?.parse::<u64>()? * DISK_SECTOR_SIZE;
-        let _write_time_secs = next_part(&mut parts)?.parse()?;
+        // Skip read time seconds, write count, and write merged count.
+        let mut parts = parts.skip(3);
+        let write_bytes = next_part_to_u64(&mut parts)? * DISK_SECTOR_SIZE;
 
         Ok(IoCounters {
             name,
