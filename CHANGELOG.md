@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1021](https://github.com/ClementTsang/bottom/pull/1021): Fix selected text background colour being wrong if only the foreground colour was set.
 - [#1037](https://github.com/ClementTsang/bottom/pull/1037): Fix `is_list_ignored` accepting all results if set to `false`.
-- [#1064](https://github.com/ClementTsang/bottom/pull/1064): Disk name/mount filter was fixed to not just drop entries if one filter wasn't set.
+- [#1064](https://github.com/ClementTsang/bottom/pull/1064): Disk name/mount filter now doesn't always show all entries if one filter wasn't set.
 - [#1064](https://github.com/ClementTsang/bottom/pull/1064): macOS disk I/O is potentially working now.
 - [#597](https://github.com/ClementTsang/bottom/issues/597): Resolve RUSTSEC-2021-0119 by removing heim.
 
