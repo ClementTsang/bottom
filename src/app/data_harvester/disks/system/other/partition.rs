@@ -48,6 +48,12 @@ impl Partition {
             bail!("statvfs failed to get the disk usage for disk {path:?}")
         }
     }
+
+    /// Returns the device name.
+    #[inline]
+    pub fn get_device_name(&self) -> String {
+        self.device.clone()
+    }
 }
 
 fn partitions_iter() -> anyhow::Result<impl Iterator<Item = Partition>> {

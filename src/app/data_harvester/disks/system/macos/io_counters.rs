@@ -28,7 +28,7 @@ impl IoCounters {
     }
 }
 
-/// Returns an iterator of disk I/O stats. Pulls data from `/proc/diskstats`.
+/// Returns an iterator of disk I/O stats. Pulls data through IOKit.
 pub fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
     Ok(vec![])
 }

@@ -53,7 +53,7 @@ pub fn get_disk_usage(
     let mut vec_disks: Vec<DiskHarvest> = Vec::new();
 
     for partition in physical_partitions()? {
-        let name = partition.device().to_string();
+        let name = partition.get_device_name();
         let mount_point = partition.mount_point().to_string_lossy().to_string();
 
         // Precedence ordering in the case where name and mount filters disagree, "allow" takes precedence over "deny".
