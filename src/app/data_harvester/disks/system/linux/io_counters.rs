@@ -25,14 +25,8 @@ const DISK_SECTOR_SIZE: u64 = 512;
 #[derive(Debug, Default)]
 pub struct IoCounters {
     name: String,
-    read_count: u64,
-    read_merged_count: u64,
     read_bytes: u64,
-    read_time_secs: u64,
-    write_count: u64,
-    write_merged_count: u64,
     write_bytes: u64,
-    write_time_secs: u64,
 }
 
 impl IoCounters {
@@ -71,26 +65,20 @@ impl FromStr for IoCounters {
 
         let name = next_part(&mut parts)?.to_string();
 
-        let read_count = next_part(&mut parts)?.parse()?;
-        let read_merged_count = next_part(&mut parts)?.parse()?;
+        let _read_count = next_part(&mut parts)?.parse()?;
+        let _read_merged_count = next_part(&mut parts)?.parse()?;
         let read_bytes = next_part(&mut parts)?.parse::<u64>()? * DISK_SECTOR_SIZE;
-        let read_time_secs = next_part(&mut parts)?.parse()?;
+        let _read_time_secs = next_part(&mut parts)?.parse()?;
 
-        let write_count = next_part(&mut parts)?.parse()?;
-        let write_merged_count = next_part(&mut parts)?.parse()?;
+        let _write_count = next_part(&mut parts)?.parse()?;
+        let _write_merged_count = next_part(&mut parts)?.parse()?;
         let write_bytes = next_part(&mut parts)?.parse::<u64>()? * DISK_SECTOR_SIZE;
-        let write_time_secs = next_part(&mut parts)?.parse()?;
+        let _write_time_secs = next_part(&mut parts)?.parse()?;
 
         Ok(IoCounters {
             name,
-            read_count,
-            read_merged_count,
             read_bytes,
-            read_time_secs,
-            write_count,
-            write_merged_count,
             write_bytes,
-            write_time_secs,
         })
     }
 }

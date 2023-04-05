@@ -17,12 +17,6 @@ pub(crate) struct Partition {
 }
 
 impl Partition {
-    /// Returns the device name, if there is one.
-    #[inline]
-    pub fn device(&self) -> &str {
-        self.device.as_str()
-    }
-
     /// Returns the mount point for this partition.
     #[inline]
     pub fn mount_point(&self) -> &Path {
@@ -59,22 +53,23 @@ impl Partition {
 fn partitions_iter() -> anyhow::Result<impl Iterator<Item = Partition>> {
     let mounts = bindings::mounts()?;
 
-    fn ptr_to_str<'a>(ptr: *const i8) -> std::borrow::Cow<'a, str> {
-        unsafe { CStr::from_ptr(ptr) }.to_string_lossy()
+    unsafe fn ptr_to_cow<'a>(ptr: *const i8) -> std::borrow::Cow<'a, str> {
+        CStr::from_ptr(ptr).to_string_lossy()
     }
 
     Ok(mounts.into_iter().map(|stat| {
-        let device = ptr_to_str(stat.f_mntfromname.as_ptr()).to_string();
+        // SAFETY: Should be a non-null pointer.
+        let device = unsafe { ptr_to_cow(stat.f_mntfromname.as_ptr()).to_string() };
 
         let fs_type = {
-            let fs_type_str = ptr_to_str(stat.f_fstypename.as_ptr());
-
+            // SAFETY: Should be a non-null pointer.
+            let fs_type_str = unsafe { ptr_to_cow(stat.f_fstypename.as_ptr()) };
             FileSystem::from_str(&fs_type_str).unwrap_or(FileSystem::Other(fs_type_str.to_string()))
         };
 
         let mount_point = {
-            let path_str = ptr_to_str(stat.f_mntonname.as_ptr()).to_string();
-
+            // SAFETY: Should be a non-null pointer.
+            let path_str = unsafe { ptr_to_cow(stat.f_mntonname.as_ptr()).to_string() };
             PathBuf::from(path_str)
         };
 

@@ -110,6 +110,7 @@ libc = "0.2.141"
 procfs = { version = "0.15.1", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "0.9.3"
 mach2 = "0.4.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
