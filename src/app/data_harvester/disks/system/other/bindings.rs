@@ -12,8 +12,12 @@ extern "C" {
 
 /// Returns all the mounts on the system at the moment.
 pub(crate) fn mounts() -> anyhow::Result<Vec<libc::statfs>> {
+    // SAFETY: System API FFI call, arguments should be correct.
     let expected_len = unsafe { getfsstat64(std::ptr::null_mut(), 0, MNT_NOWAIT) };
+
     let mut mounts: Vec<libc::statfs> = Vec::with_capacity(expected_len as usize);
+
+    // SAFETY: System API FFI call, arguments should be correct.
     let result = unsafe {
         getfsstat64(
             mounts.as_mut_ptr(),
@@ -29,6 +33,11 @@ pub(crate) fn mounts() -> anyhow::Result<Vec<libc::statfs>> {
             expected_len, result,
             "Expected {expected_len} statfs entries, but instead got {result} entries",
         );
+
+        // SAFETY: We have a debug assert check, and if `result` is not correct (-1), we check against it.
+        // Otherwise, getfsstat64 should return the number of statfs structures if it succeeded.
+        //
+        // Source: https://man.freebsd.org/cgi/man.cgi?query=getfsstat&sektion=2&format=html
         unsafe {
             mounts.set_len(result as usize);
         }

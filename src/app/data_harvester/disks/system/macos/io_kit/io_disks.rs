@@ -7,7 +7,7 @@ use super::{bindings::*, IoIterator};
 pub fn get_disks() -> anyhow::Result<IoIterator> {
     let mut media_iter: io_iterator_t = 0;
 
-    // SAFETY: This is a safe syscall,
+    // SAFETY: This is a safe syscall via IOKit, all the arguments should be safe.
     let result = unsafe {
         IOServiceGetMatchingServices(
             kIOMasterPortDefault,

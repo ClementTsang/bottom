@@ -86,9 +86,12 @@ impl Partition {
             .map_err(|e| anyhow::anyhow!("invalid path: {e:?}"))?;
 
         let mut vfs = mem::MaybeUninit::<libc::statvfs>::uninit();
+
+        // SAFETY: libc call, `path` is a valid C string and buf is a valid pointer to write to.
         let result = unsafe { libc::statvfs(path.as_ptr(), vfs.as_mut_ptr()) };
 
         if result == 0 {
+            // SAFETY: If result is 0, it succeeded, and vfs should be non-null.
             let vfs = unsafe { vfs.assume_init() };
             Ok(Usage::new(vfs))
         } else {
