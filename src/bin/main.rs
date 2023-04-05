@@ -1,6 +1,8 @@
 #![warn(rust_2018_idioms)]
+#![deny(clippy::todo)]
+#![deny(clippy::unimplemented)]
 #![deny(clippy::missing_safety_doc)]
-#[allow(unused_imports)]
+#[allow(unused_imports)] // TODO: Deny unused imports.
 #[cfg(feature = "log")]
 #[macro_use]
 extern crate log;
