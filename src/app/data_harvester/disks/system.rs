@@ -12,6 +12,12 @@ cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
         mod linux;
         use linux::*;
+    } else if #[cfg(target_os = "macos")] {
+        mod other;
+        use other::*;
+
+        mod macos;
+        use macos::*;
     } else {
         mod other;
         use other::*;
@@ -46,8 +52,8 @@ pub fn get_disk_usage(
 ) -> anyhow::Result<Vec<DiskHarvest>> {
     let mut vec_disks: Vec<DiskHarvest> = Vec::new();
 
-    for partition in partitions_physical()? {
-        let name = partition.get_device_name();
+    for partition in physical_partitions()? {
+        let name = partition.device().to_string();
         let mount_point = partition.mount_point().to_string_lossy().to_string();
 
         // Precedence ordering in the case where name and mount filters disagree, "allow" takes precedence over "deny".

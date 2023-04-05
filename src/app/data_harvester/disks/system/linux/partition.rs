@@ -167,7 +167,7 @@ pub(crate) fn partitions() -> anyhow::Result<Vec<Partition>> {
 
 /// Returns a [`Vec`] containing all *physical* partitions. This is defined by
 /// [`FileSystem::is_physical()`].
-pub(crate) fn partitions_physical() -> anyhow::Result<Vec<Partition>> {
+pub(crate) fn physical_partitions() -> anyhow::Result<Vec<Partition>> {
     const PROC_MOUNTS: &str = "/proc/mounts";
 
     let mut results = vec![];
