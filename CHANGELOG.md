@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1021](https://github.com/ClementTsang/bottom/pull/1021): Fix selected text background colour being wrong if only the foreground colour was set.
 - [#1037](https://github.com/ClementTsang/bottom/pull/1037): Fix `is_list_ignored` accepting all results if set to `false`.
 - [#1064](https://github.com/ClementTsang/bottom/pull/1064): Disk name/mount filter was fixed to not just drop entries if one filter wasn't set.
+- [#1064](https://github.com/ClementTsang/bottom/pull/1064): macOS disk I/O is potentially working now.
+- [#597](https://github.com/ClementTsang/bottom/issues/597): Resolve RUSTSEC-2021-0119 by removing heim.
 
 ## Features
 
@@ -26,7 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1036](https://github.com/ClementTsang/bottom/pull/1036): Migrate away from heim for memory information; Linux
   platforms will also now try to use `MemAvailable` to determine used memory if supported.
 - [#1041](https://github.com/ClementTsang/bottom/pull/1041): Migrate away from heim for network information.
-- [#1064](https://github.com/ClementTsang/bottom/pull/1064): Removed the Heim dependency.
+- [#1064](https://github.com/ClementTsang/bottom/pull/1064): Migrate away from heim for storage information.
+- [#812](https://github.com/ClementTsang/bottom/issues/812): Fully remove heim from bottom.
+- [#1075](https://github.com/ClementTsang/bottom/issues/1075): Update how drives are named in Windows.
 
 ## Other
 
