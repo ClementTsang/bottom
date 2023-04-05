@@ -96,6 +96,7 @@ pub fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
     let mut reader = BufReader::new(File::open(PROC_DISKSTATS)?);
     let mut line = String::new();
 
+    // This saves us from doing a string allocation on each iteration compared to `lines()`.
     while let Ok(bytes) = reader.read_line(&mut line) {
         if bytes > 0 {
             results.push(IoCounters::from_str(&line));

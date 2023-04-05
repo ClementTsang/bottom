@@ -153,6 +153,7 @@ pub(crate) fn partitions() -> anyhow::Result<Vec<Partition>> {
     let mut reader = BufReader::new(File::open(PROC_MOUNTS)?);
     let mut line = String::new();
 
+    // This saves us from doing a string allocation on each iteration compared to `lines()`.
     while let Ok(bytes) = reader.read_line(&mut line) {
         if bytes > 0 {
             if let Ok(partition) = Partition::from_str(&line) {
@@ -177,6 +178,7 @@ pub(crate) fn physical_partitions() -> anyhow::Result<Vec<Partition>> {
     let mut reader = BufReader::new(File::open(PROC_MOUNTS)?);
     let mut line = String::new();
 
+    // This saves us from doing a string allocation on each iteration compared to `lines()`.
     while let Ok(bytes) = reader.read_line(&mut line) {
         if bytes > 0 {
             if let Ok(partition) = Partition::from_str(&line) {
