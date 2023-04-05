@@ -57,12 +57,12 @@ impl IoObject {
         }
     }
 
-    pub fn conforms_to_block_storage_driver(&self) -> bool {
-        let result =
-            unsafe { IOObjectConformsTo(self.0, "IOBlockStorageDriver\0".as_ptr().cast()) };
+    // pub fn conforms_to_block_storage_driver(&self) -> bool {
+    //     let result =
+    //         unsafe { IOObjectConformsTo(self.0, "IOBlockStorageDriver\0".as_ptr().cast()) };
 
-        result != 0
-    }
+    //     result != 0
+    // }
 }
 
 impl From<io_object_t> for IoObject {

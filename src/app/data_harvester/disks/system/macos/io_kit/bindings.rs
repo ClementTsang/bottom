@@ -9,8 +9,8 @@ use core_foundation::base::{mach_port_t, CFAllocatorRef};
 use core_foundation::dictionary::CFMutableDictionaryRef;
 
 use libc::c_char;
+use mach2::kern_return::kern_return_t;
 use mach2::port::MACH_PORT_NULL;
-use mach2::{boolean::boolean_t, kern_return::kern_return_t};
 
 #[allow(non_camel_case_types)]
 pub type io_object_t = mach_port_t;
@@ -49,7 +49,7 @@ extern "C" {
         entry: io_registry_entry_t, plane: *const libc::c_char, parent: *mut io_registry_entry_t,
     ) -> kern_return_t;
 
-    pub fn IOObjectConformsTo(object: io_object_t, className: *const libc::c_char) -> boolean_t;
+    // pub fn IOObjectConformsTo(object: io_object_t, className: *const libc::c_char) -> mach2::boolean::boolean_t;
 
     pub fn IORegistryEntryCreateCFProperties(
         entry: io_registry_entry_t, properties: *mut CFMutableDictionaryRef,
