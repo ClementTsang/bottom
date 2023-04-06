@@ -7,16 +7,16 @@ use crate::app::filter::Filter;
 cfg_if::cfg_if! {
     if #[cfg(target_os = "freebsd")] {
         mod freebsd;
-        pub use self::freebsd::*;
+        pub(crate) use self::freebsd::*;
     } else if #[cfg(target_os = "windows")] {
         mod windows;
-        pub use self::windows::*;
+        pub(crate) use self::windows::*;
     } else if #[cfg(target_os = "linux")] {
         mod unix;
-        pub use self::unix::*;
+        pub(crate) use self::unix::*;
     } else if #[cfg(target_os = "macos")] {
         mod unix;
-        pub use self::unix::*;
+        pub(crate) use self::unix::*;
     }
     // TODO: Add dummy impls here for other OSes?
 }

@@ -2,8 +2,13 @@
 
 use sysinfo::{DiskExt, System, SystemExt};
 
-use super::{keep_disk_entry, DiskHarvest, IoHarvest};
-use crate::{app::filter::Filter, utils::error};
+use super::{keep_disk_entry, DiskHarvest};
+use crate::app::filter::Filter;
+
+/// Returns I/O stats.
+pub(crate) fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
+    Ok(vec![])
+}
 
 pub(crate) fn get_disk_usage(
     sys: &System, disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
