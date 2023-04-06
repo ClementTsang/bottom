@@ -8,7 +8,7 @@ use std::{
 use anyhow::bail;
 
 use super::bindings;
-use crate::app::data_harvester::disks::system::{FileSystem, Usage};
+use crate::app::data_harvester::disks::unix::{FileSystem, Usage};
 
 pub(crate) struct Partition {
     device: String,
