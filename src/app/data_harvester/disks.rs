@@ -11,15 +11,12 @@ cfg_if::cfg_if! {
     } else if #[cfg(target_os = "windows")] {
         mod windows;
         pub use self::windows::*;
-
-        mod system;
-        pub use self::system::get_io_usage;
     } else if #[cfg(target_os = "linux")] {
-        mod system;
-        pub use self::system::*;
+        mod unix;
+        pub use self::unix::*;
     } else if #[cfg(target_os = "macos")] {
-        mod system;
-        pub use self::system::*;
+        mod unix;
+        pub use self::unix::*;
     }
     // TODO: Add dummy impls here for other OSes?
 }
@@ -42,6 +39,25 @@ pub struct IoData {
 }
 
 pub type IoHarvest = HashMap<String, Option<IoData>>;
+
+/// Returns the I/O usage of certain mount points.
+pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
+    let mut io_hash: HashMap<String, Option<IoData>> = HashMap::new();
+
+    for io in io_stats()?.into_iter().flatten() {
+        let mount_point = io.device_name().to_string_lossy();
+
+        io_hash.insert(
+            mount_point.to_string(),
+            Some(IoData {
+                read_bytes: io.read_bytes(),
+                write_bytes: io.write_bytes(),
+            }),
+        );
+    }
+
+    Ok(io_hash)
+}
 
 /// Whether to keep the current disk entry given the filters, disk name, and disk mount.
 /// Precedence ordering in the case where name and mount filters disagree, "allow"

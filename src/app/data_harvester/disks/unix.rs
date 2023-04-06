@@ -1,7 +1,6 @@
 //! Disk stats for Unix-like systems that aren't supported through other means.
 
 mod file_systems;
-use std::collections::HashMap;
 
 use file_systems::*;
 
@@ -11,43 +10,21 @@ use usage::*;
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
         mod linux;
-        use linux::*;
+        pub use linux::*;
     } else if #[cfg(target_os = "macos")] {
-        mod unix;
-        use unix::*;
+        mod other;
+        use other::*;
 
         mod macos;
-        use macos::*;
-    } else if #[cfg(target_os = "windows")] {
-        mod windows;
-        use windows::*;
+        pub use macos::*;
     } else {
-        mod unix;
-        use unix::*;
+        mod other;
+        use other::*;
     }
 }
 
-use super::{keep_disk_entry, DiskHarvest, IoData, IoHarvest};
+use super::{keep_disk_entry, DiskHarvest};
 use crate::app::Filter;
-
-/// Returns the I/O usage of certain mount points.
-pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
-    let mut io_hash: HashMap<String, Option<IoData>> = HashMap::new();
-
-    for io in io_stats()?.into_iter().flatten() {
-        let mount_point = io.device_name().to_string_lossy();
-
-        io_hash.insert(
-            mount_point.to_string(),
-            Some(IoData {
-                read_bytes: io.read_bytes(),
-                write_bytes: io.write_bytes(),
-            }),
-        );
-    }
-
-    Ok(io_hash)
-}
 
 /// Returns the disk usage of the mounted (and for now, physical) disks.
 pub fn get_disk_usage(

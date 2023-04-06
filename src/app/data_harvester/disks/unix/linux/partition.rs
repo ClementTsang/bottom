@@ -12,7 +12,7 @@ use std::{
 
 use anyhow::bail;
 
-use crate::app::data_harvester::disks::system::{FileSystem, Usage};
+use crate::app::data_harvester::disks::unix::{FileSystem, Usage};
 
 /// Representation of partition details. Based on [`heim`](https://github.com/heim-rs/heim/tree/master).
 pub(crate) struct Partition {
