@@ -4,6 +4,9 @@ use std::collections::HashMap;
 
 use crate::app::filter::Filter;
 
+mod io_counters;
+pub use io_counters::IoCounters;
+
 cfg_if::cfg_if! {
     if #[cfg(target_os = "freebsd")] {
         mod freebsd;

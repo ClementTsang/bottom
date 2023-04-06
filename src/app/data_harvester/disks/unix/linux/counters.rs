@@ -1,12 +1,13 @@
 //! Based on [heim's implementation](https://github.com/heim-rs/heim/blob/master/heim-disk/src/sys/linux/counters.rs).
 
 use std::{
-    ffi::OsStr,
     fs::File,
     io::{self, BufRead, BufReader},
     num::ParseIntError,
     str::FromStr,
 };
+
+use crate::app::data_harvester::disks::IoCounters;
 
 /// Copied from the `psutil` sources:
 ///
@@ -21,27 +22,6 @@ use std::{
 /// * https://github.com/torvalds/linux/blob/4f671fe2f9523a1ea206f63fe60a7c7b3a56d5c7/include/linux/bio.h#L99
 /// * https://lkml.org/lkml/2015/8/17/234
 const DISK_SECTOR_SIZE: u64 = 512;
-
-#[derive(Debug, Default)]
-pub struct IoCounters {
-    name: String,
-    read_bytes: u64,
-    write_bytes: u64,
-}
-
-impl IoCounters {
-    pub(crate) fn device_name(&self) -> &OsStr {
-        OsStr::new(&self.name)
-    }
-
-    pub(crate) fn read_bytes(&self) -> u64 {
-        self.read_bytes
-    }
-
-    pub(crate) fn write_bytes(&self) -> u64 {
-        self.write_bytes
-    }
-}
 
 impl FromStr for IoCounters {
     type Err = anyhow::Error;
@@ -79,11 +59,7 @@ impl FromStr for IoCounters {
         let mut parts = parts.skip(3);
         let write_bytes = next_part_to_u64(&mut parts)? * DISK_SECTOR_SIZE;
 
-        Ok(IoCounters {
-            name,
-            read_bytes,
-            write_bytes,
-        })
+        Ok(IoCounters::new(name, read_bytes, write_bytes))
     }
 }
 

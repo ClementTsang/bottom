@@ -1,4 +1,5 @@
-//! Disk stats for Unix-like systems that aren't supported through other means.
+//! Disk stats for Unix-like systems that aren't supported through other means. Officially,
+//! for now, this means Linux and macOS.
 
 mod file_systems;
 

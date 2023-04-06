@@ -1,4 +1,4 @@
-mod io_counters;
-pub use io_counters::*;
+mod counters;
+pub use counters::*;
 
 mod io_kit;
