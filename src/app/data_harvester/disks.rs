@@ -3,11 +3,9 @@
 use std::collections::HashMap;
 
 use crate::app::filter::Filter;
+use cfg_if::cfg_if;
 
-mod io_counters;
-pub use io_counters::IoCounters;
-
-cfg_if::cfg_if! {
+cfg_if! {
     if #[cfg(target_os = "freebsd")] {
         mod freebsd;
         pub(crate) use self::freebsd::*;
@@ -43,23 +41,30 @@ pub struct IoData {
 
 pub type IoHarvest = HashMap<String, Option<IoData>>;
 
-/// Returns the I/O usage of certain mount points.
-pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
-    let mut io_hash: HashMap<String, Option<IoData>> = HashMap::new();
+cfg_if! {
+    if #[cfg(not(target_os = "freebsd"))] {
+        mod io_counters;
+        pub use io_counters::IoCounters;
 
-    for io in io_stats()?.into_iter().flatten() {
-        let mount_point = io.device_name().to_string_lossy();
+        /// Returns the I/O usage of certain mount points.
+        pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
+            let mut io_hash: HashMap<String, Option<IoData>> = HashMap::new();
 
-        io_hash.insert(
-            mount_point.to_string(),
-            Some(IoData {
-                read_bytes: io.read_bytes(),
-                write_bytes: io.write_bytes(),
-            }),
-        );
+            for io in io_stats()?.into_iter().flatten() {
+                let mount_point = io.device_name().to_string_lossy();
+
+                io_hash.insert(
+                    mount_point.to_string(),
+                    Some(IoData {
+                        read_bytes: io.read_bytes(),
+                        write_bytes: io.write_bytes(),
+                    }),
+                );
+            }
+
+            Ok(io_hash)
+        }
     }
-
-    Ok(io_hash)
 }
 
 /// Whether to keep the current disk entry given the filters, disk name, and disk mount.
