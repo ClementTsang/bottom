@@ -13,14 +13,17 @@ cfg_if::cfg_if! {
         mod linux;
         use linux::*;
     } else if #[cfg(target_os = "macos")] {
-        mod other;
-        use other::*;
+        mod unix;
+        use unix::*;
 
         mod macos;
         use macos::*;
+    } else if #[cfg(target_os = "windows")] {
+        mod windows;
+        use windows::*;
     } else {
-        mod other;
-        use other::*;
+        mod unix;
+        use unix::*;
     }
 }
 

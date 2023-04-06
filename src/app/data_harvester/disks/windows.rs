@@ -5,10 +5,6 @@ use sysinfo::{DiskExt, System, SystemExt};
 use super::{keep_disk_entry, DiskHarvest, IoHarvest};
 use crate::{app::filter::Filter, utils::error};
 
-pub fn get_io_usage() -> error::Result<IoHarvest> {
-    Ok(IoHarvest::default())
-}
-
 pub(crate) fn get_disk_usage(
     sys: &System, disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
 ) -> Vec<DiskHarvest> {
