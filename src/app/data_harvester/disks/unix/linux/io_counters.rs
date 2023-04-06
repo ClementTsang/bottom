@@ -22,7 +22,6 @@ use std::{
 /// * https://lkml.org/lkml/2015/8/17/234
 const DISK_SECTOR_SIZE: u64 = 512;
 
-#[allow(dead_code)]
 #[derive(Debug, Default)]
 pub struct IoCounters {
     name: String,

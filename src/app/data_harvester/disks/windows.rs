@@ -5,6 +5,13 @@ use sysinfo::{DiskExt, System, SystemExt};
 use super::{keep_disk_entry, DiskHarvest};
 use crate::app::filter::Filter;
 
+#[derive(Debug, Default)]
+pub struct IoCounters {
+    name: String,
+    read_bytes: u64,
+    write_bytes: u64,
+}
+
 /// Returns I/O stats.
 pub(crate) fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
     Ok(vec![])
