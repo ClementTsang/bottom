@@ -1,7 +1,5 @@
 //! Based on [heim's implementation](https://github.com/heim-rs/heim/blob/master/heim-disk/src/sys/macos/counters.rs).
 
-use std::ffi::OsStr;
-
 use super::io_kit::{self, get_dict, get_disks, get_i64, get_string};
 use crate::app::data_harvester::disks::IoCounters;
 
@@ -42,11 +40,7 @@ fn get_device_io(device: io_kit::IoObject) -> anyhow::Result<IoCounters> {
     // let read_count = stats.get_i64("Operations (Read)")? as u64;
     // let write_count = stats.get_i64("Operations (Write)")? as u64;
 
-    Ok(IoCounters {
-        name,
-        read_bytes,
-        write_bytes,
-    })
+    Ok(IoCounters::new(name, read_bytes, write_bytes))
 }
 
 /// Returns an iterator of disk I/O stats. Pulls data through IOKit.
