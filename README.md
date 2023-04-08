@@ -130,16 +130,19 @@ For more details on unsupported platforms and known problems, check out [the doc
 
 ### Cargo
 
-Installation via cargo is done by installing the `bottom` crate:
+Installation via cargo can be done by installing the [`bottom`](https://crates.io/crates/bottom) crate:
 
 ```bash
-# If required, update Rust on the stable channel
+# If required, update Rust to the stable channel
 rustup update stable
 
-cargo install bottom --locked
-
-# Alternatively, --locked may be omitted if you wish to not used locked dependencies:
 cargo install bottom
+
+# If you use another channel by default, you can specify the stable channel as such:
+cargo +stable install bottom --locked
+
+# --locked may be omitted if you wish to not used locked dependencies, though this may also cause problems:
+cargo +stable install bottom
 ```
 
 ### Arch Linux
