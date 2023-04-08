@@ -309,7 +309,7 @@ The release binaries are packaged with shell auto-completion files for bash, fis
 - For bash, move `btm.bash` to `$XDG_CONFIG_HOME/bash_completion or /etc/bash_completion.d/`.
 - For fish, move `btm.fish` to `$HOME/.config/fish/completions/`.
 - For zsh, move `_btm` to one of your `$fpath` directories.
-- For PowerShell, add `. _btm.ps1` to your PowerShell
+- For PowerShell, add `_btm.ps1` to your PowerShell
   [profile](<https://docs.microsoft.com/en-us/previous-versions//bb613488(v=vs.85)>).
 
 The individual auto-completion files are also included in the stable/nightly releases as `completion.tar.gz`.
