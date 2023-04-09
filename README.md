@@ -306,6 +306,12 @@ You can also try to use the generated release binaries and manually install on y
 - [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), generated off of the release branch
 - [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated daily off of the master branch at 00:00 UTC
 
+To use, download and extract the binary that matches your system and run by doing:
+
+```bash
+./btm
+```
+
 #### Auto-completion
 
 The release binaries are packaged with shell auto-completion files for bash, fish, zsh, and Powershell. To install them:
