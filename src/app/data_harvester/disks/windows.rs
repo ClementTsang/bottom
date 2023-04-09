@@ -6,6 +6,9 @@ use super::{keep_disk_entry, DiskHarvest};
 use crate::app::data_harvester::disks::IoCounters;
 use crate::app::filter::Filter;
 
+mod bindings;
+use bindings::*;
+
 /// Returns I/O stats.
 pub(crate) fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
     Ok(vec![])
