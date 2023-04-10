@@ -343,8 +343,8 @@ impl DataCollection {
                             // Must trim one level further for macOS!
                             static DISK_REGEX: Lazy<Regex> =
                                 Lazy::new(|| Regex::new(r"disk\d+").unwrap());
-                            if let Some(disk_trim) = DISK_REGEX.find(trim) {
-                                io.get(disk_trim.as_str())
+                            if let Some(new_name) = DISK_REGEX.find(checked_name) {
+                                io.get(new_name.as_str())
                             } else {
                                 None
                             }
