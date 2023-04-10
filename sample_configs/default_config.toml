@@ -75,6 +75,8 @@
 #disable_advanced_kill = false
 # Shows GPU(s) memory
 #enable_gpu_memory = false
+# Shows cache and buffer memory
+#enable_cache_memory = false
 # How much data is stored at once in terms of time.
 #retention = "10m"
 
@@ -96,6 +98,8 @@
 #swap_color="LightYellow"
 # Represents the colour ARC will use in the memory legend and graph.
 #arc_color="LightCyan"
+# Represents the colour cache and buffer memory will use in the memory legend and graph.
+#cache_color="LightRed"
 # Represents the colour the GPU will use in the memory legend and graph.
 #gpu_core_colors=["LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
 # Represents the colour rx will use in the network legend and graph.
