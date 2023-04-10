@@ -55,15 +55,15 @@ impl Painter {
 
         #[cfg(not(target_os = "windows"))]
         {
-            let cache_data = &app_state.converted_data.cache_data;
-
-            let cache_percentage = if let Some(cache) = cache_data.last() {
-                cache.1
-            } else {
-                0.0
-            };
-
             if let Some((_, label_frac)) = &app_state.converted_data.cache_labels {
+                let cache_data = &app_state.converted_data.cache_data;
+
+                let cache_percentage = if let Some(cache) = cache_data.last() {
+                    cache.1
+                } else {
+                    0.0
+                };
+                
                 let cache_fraction_label = if app_state.basic_mode_use_percent {
                     format!("{:3.0}%", cache_percentage.round())
                 } else {
