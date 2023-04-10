@@ -78,7 +78,11 @@ impl DiskWidgetData {
         if let (Some(used_bytes), Some(summed_total_bytes)) =
             (self.used_bytes, self.summed_total_bytes)
         {
-            Some(used_bytes as f64 / summed_total_bytes as f64 * 100_f64)
+            if summed_total_bytes > 0 {
+                Some(used_bytes as f64 / summed_total_bytes as f64 * 100_f64)
+            } else {
+                None
+            }
         } else {
             None
         }

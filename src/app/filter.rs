@@ -9,13 +9,19 @@ impl Filter {
     /// Whether the filter should keep the entry or reject it.
     #[inline]
     pub(crate) fn keep_entry(&self, value: &str) -> bool {
-        if self.list.iter().any(|regex| regex.is_match(value)) {
+        if self.has_match(value) {
             // If a match is found, then if we wanted to ignore if we match, return false. If we want
             // to keep if we match, return true. Thus, return the inverse of `is_list_ignored`.
             !self.is_list_ignored
         } else {
             self.is_list_ignored
         }
+    }
+
+    /// Whether there is a filter that matches the result.
+    #[inline]
+    pub(crate) fn has_match(&self, value: &str) -> bool {
+        self.list.iter().any(|regex| regex.is_match(value))
     }
 }
 

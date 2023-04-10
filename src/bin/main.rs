@@ -299,11 +299,8 @@ fn main() -> Result<()> {
     }
 
     // I think doing it in this order is safe...
-
     *thread_termination_lock.lock().unwrap() = true;
-
     thread_termination_cvar.notify_all();
-
     cleanup_terminal(&mut terminal)?;
 
     Ok(())

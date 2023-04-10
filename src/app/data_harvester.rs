@@ -171,18 +171,27 @@ impl DataCollector {
             }
         }
 
+        // Sysinfo-related list refreshing.
         if self.widgets_to_harvest.use_net {
             self.sys.refresh_networks_list();
         }
+
         if self.widgets_to_harvest.use_temp {
             self.sys.refresh_components_list();
         }
+
         #[cfg(target_os = "windows")]
-        if self.widgets_to_harvest.use_proc {
-            self.sys.refresh_users_list();
+        {
+            if self.widgets_to_harvest.use_proc {
+                self.sys.refresh_users_list();
+            }
+
+            if self.widgets_to_harvest.use_disk {
+                self.sys.refresh_disks_list();
+            }
         }
 
-        futures::executor::block_on(self.update_data());
+        self.update_data();
 
         std::thread::sleep(std::time::Duration::from_millis(250));
         self.data.cleanup();
@@ -208,7 +217,13 @@ impl DataCollector {
         self.show_average_cpu = show_average_cpu;
     }
 
-    /// Refresh sysinfo data.
+    /// Refresh sysinfo data. We use sysinfo for the following data:
+    /// - CPU usage
+    /// - Memory usage
+    /// - Network usage
+    /// - Processes (non-Linux)
+    /// - Disk (Windows)
+    /// - Temperatures (non-Linux)
     fn refresh_sysinfo_data(&mut self) {
         // Refresh once every minute. If it's too frequent it can cause segfaults.
         const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
@@ -229,9 +244,14 @@ impl DataCollector {
             self.sys.refresh_networks();
         }
 
+        // sysinfo is used on non-Linux systems for the following:
+        // - Processes (users list as well for Windows)
+        // - Disks (Windows only)
+        // - Temperatures and temperature components list.
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
+                // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
                 if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
                     self.sys.refresh_users_list();
@@ -247,9 +267,17 @@ impl DataCollector {
                 self.sys.refresh_components();
             }
         }
+
+        #[cfg(target_os = "windows")]
+        if self.widgets_to_harvest.use_disk {
+            if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                self.sys.refresh_disks_list();
+            }
+            self.sys.refresh_disks();
+        }
     }
 
-    pub async fn update_data(&mut self) {
+    pub fn update_data(&mut self) {
         self.refresh_sysinfo_data();
 
         let current_instant = Instant::now();
@@ -262,26 +290,10 @@ impl DataCollector {
         );
         self.update_temps();
         self.update_network_usage(current_instant);
+        self.update_disks();
 
         #[cfg(feature = "battery")]
         self.update_batteries();
-
-        let (disk_res, io_res) = futures::join!(
-            disks::get_disk_usage(
-                self.widgets_to_harvest.use_disk,
-                &self.filters.disk_filter,
-                &self.filters.mount_filter,
-            ),
-            disks::get_io_usage(self.widgets_to_harvest.use_disk)
-        );
-
-        if let Ok(disks) = disk_res {
-            self.data.disks = disks;
-        }
-
-        if let Ok(io) = io_res {
-            self.data.io = io;
-        }
 
         // Update times for future reference.
         self.last_collection_time = current_instant;
@@ -438,6 +450,29 @@ impl DataCollector {
                 self.data.list_of_batteries =
                     Some(batteries::refresh_batteries(battery_manager, battery_list));
             }
+        }
+    }
+
+    #[inline]
+    fn update_disks(&mut self) {
+        if self.widgets_to_harvest.use_disk {
+            #[cfg(any(target_os = "freebsd", target_os = "linux", target_os = "macos"))]
+            {
+                let disk_filter = &self.filters.disk_filter;
+                let mount_filter = &self.filters.mount_filter;
+                self.data.disks = disks::get_disk_usage(disk_filter, mount_filter).ok();
+            }
+
+            #[cfg(target_os = "windows")]
+            {
+                self.data.disks = Some(disks::get_disk_usage(
+                    &self.sys,
+                    &self.filters.disk_filter,
+                    &self.filters.mount_filter,
+                ));
+            }
+
+            self.data.io = disks::get_io_usage().ok();
         }
     }
 }

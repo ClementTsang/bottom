@@ -16,8 +16,6 @@
 use std::{collections::BTreeMap, time::Instant, vec::Vec};
 
 use fxhash::FxHashMap;
-use once_cell::sync::Lazy;
-use regex::Regex;
 
 #[cfg(feature = "battery")]
 use crate::data_harvester::batteries;
@@ -317,23 +315,43 @@ impl DataCollection {
         &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IoHarvest, harvested_time: Instant,
     ) {
         // TODO: [PO] To implement
-
         let time_since_last_harvest = harvested_time
             .duration_since(self.current_instant)
             .as_secs_f64();
 
         for (itx, device) in disks.iter().enumerate() {
-            if let Some(trim) = device.name.split('/').last() {
-                let io_device = if cfg!(target_os = "macos") {
-                    // Must trim one level further for macOS!
-                    static DISK_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"disk\d+").unwrap());
-                    if let Some(disk_trim) = DISK_REGEX.find(trim) {
-                        io.get(disk_trim.as_str())
+            let checked_name = {
+                cfg_if::cfg_if! {
+                    if #[cfg(target_os = "windows")] {
+                        match &device.volume_name {
+                            Some(volume_name) => Some(volume_name.as_str()),
+                            None => device.name.split('/').last(),
+                        }
                     } else {
-                        None
+                        device.name.split('/').last()
                     }
-                } else {
-                    io.get(trim)
+                }
+            };
+
+            if let Some(checked_name) = checked_name {
+                let io_device = {
+                    cfg_if::cfg_if! {
+                        if #[cfg(target_os = "macos")] {
+                            use once_cell::sync::Lazy;
+                            use regex::Regex;
+
+                            // Must trim one level further for macOS!
+                            static DISK_REGEX: Lazy<Regex> =
+                                Lazy::new(|| Regex::new(r"disk\d+").unwrap());
+                            if let Some(new_name) = DISK_REGEX.find(checked_name) {
+                                io.get(new_name.as_str())
+                            } else {
+                                None
+                            }
+                        } else {
+                            io.get(checked_name)
+                        }
+                    }
                 };
 
                 if let Some(io_device) = io_device {

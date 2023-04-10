@@ -31,8 +31,8 @@ fn get_from_hwmon(
     let mut temperature_vec: Vec<TempHarvest> = vec![];
     let path = Path::new("/sys/class/hwmon");
 
-    // NOTE: Technically none of this is async, *but* sysfs is in memory,
-    // so in theory none of this should block if we're slightly careful.
+    // Note that none of this is async if we ever go back to it, but sysfs is in
+    // memory, so in theory none of this should block if we're slightly careful.
     // Of note is that reading the temperature sensors of a device that has
     // `/sys/class/hwmon/hwmon*/device/power_state` == `D3cold` will
     // wake the device up, and will block until it initializes.
