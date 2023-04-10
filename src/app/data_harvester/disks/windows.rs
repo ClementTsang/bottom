@@ -1,5 +1,6 @@
 //! Disk stats via sysinfo.
 
+use itertools::Itertools;
 use sysinfo::{DiskExt, System, SystemExt};
 
 use super::{keep_disk_entry, DiskHarvest};
@@ -11,7 +12,18 @@ use bindings::*;
 
 /// Returns I/O stats.
 pub(crate) fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
-    Ok(vec![])
+    let volume_io = all_volume_io()?;
+
+    Ok(volume_io
+        .into_iter()
+        .map_ok(|(performance, volume_name)| {
+            let name = volume_name;
+            let read_bytes = performance.BytesRead as u64;
+            let write_bytes = performance.BytesWritten as u64;
+
+            IoCounters::new(name, read_bytes, write_bytes)
+        })
+        .collect::<Vec<_>>())
 }
 
 pub(crate) fn get_disk_usage(
@@ -25,11 +37,11 @@ pub(crate) fn get_disk_usage(
                 let name = disk.name();
 
                 if name.is_empty() {
-                    "Name unavailable".to_string()
+                    "No Name".to_string()
                 } else {
                     name.to_os_string()
                         .into_string()
-                        .unwrap_or_else(|_| "Name unavailable".to_string())
+                        .unwrap_or_else(|_| "Name Unavailable".to_string())
                 }
             };
 
@@ -38,7 +50,9 @@ pub(crate) fn get_disk_usage(
                 .as_os_str()
                 .to_os_string()
                 .into_string()
-                .unwrap_or_else(|_| "Mount unavailable".to_string());
+                .unwrap_or_else(|_| "Mount Unavailable".to_string());
+
+            let volume_name = volume_name_from_mount(&mount_point).ok();
 
             if keep_disk_entry(&name, &mount_point, disk_filter, mount_filter) {
                 let free_space = disk.available_space();
@@ -48,6 +62,7 @@ pub(crate) fn get_disk_usage(
                 Some(DiskHarvest {
                     name,
                     mount_point,
+                    volume_name,
                     free_space: Some(free_space),
                     used_space: Some(used_space),
                     total_space: Some(total_space),

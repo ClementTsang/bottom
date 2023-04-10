@@ -49,7 +49,7 @@ impl Partition {
                 if path.is_absolute() {
                     path.into_os_string()
                         .into_string()
-                        .unwrap_or_else(|_| "Name unavailable".to_string())
+                        .unwrap_or_else(|_| "Name Unavailable".to_string())
                 } else {
                     let mut combined_path = std::path::PathBuf::new();
                     combined_path.push(device);
@@ -61,7 +61,7 @@ impl Partition {
                         canon_path
                             .into_os_string()
                             .into_string()
-                            .unwrap_or_else(|_| "Name unavailable".to_string())
+                            .unwrap_or_else(|_| "Name Unavailable".to_string())
                     } else {
                         device.to_owned()
                     }
@@ -70,7 +70,7 @@ impl Partition {
                 device.to_owned()
             }
         } else {
-            "Name unavailable".to_string()
+            "Name Unavailable".to_string()
         }
     }
 

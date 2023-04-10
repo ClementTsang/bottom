@@ -27,6 +27,10 @@ pub struct DiskHarvest {
     pub name: String,
     pub mount_point: String,
 
+    /// Windows also contains an additional volume name field.
+    #[cfg(target_os = "windows")]
+    pub volume_name: Option<String>,
+
     // TODO: Maybe unify all these?
     pub free_space: Option<u64>,
     pub used_space: Option<u64>,

@@ -171,15 +171,24 @@ impl DataCollector {
             }
         }
 
+        // Sysinfo-related list refreshing.
         if self.widgets_to_harvest.use_net {
             self.sys.refresh_networks_list();
         }
+
         if self.widgets_to_harvest.use_temp {
             self.sys.refresh_components_list();
         }
+
         #[cfg(target_os = "windows")]
-        if self.widgets_to_harvest.use_proc {
-            self.sys.refresh_users_list();
+        {
+            if self.widgets_to_harvest.use_proc {
+                self.sys.refresh_users_list();
+            }
+
+            if self.widgets_to_harvest.use_disk {
+                self.sys.refresh_disks_list();
+            }
         }
 
         self.update_data();
@@ -261,6 +270,9 @@ impl DataCollector {
 
         #[cfg(target_os = "windows")]
         if self.widgets_to_harvest.use_disk {
+            if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                self.sys.refresh_disks_list();
+            }
             self.sys.refresh_disks();
         }
     }
