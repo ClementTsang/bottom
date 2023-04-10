@@ -45,7 +45,7 @@ pub(crate) fn get_swap_usage(sys: &System) -> Option<MemHarvest> {
 /// and [memory explanation](https://askubuntu.com/questions/867068/what-is-available-memory-while-using-free-command)
 #[cfg(not(target_os = "windows"))]
 pub(crate) fn get_cache_usage(sys: &System) -> Option<MemHarvest> {
-    let mem_used = sys.available_memory() - sys.free_memory();
+    let mem_used = sys.available_memory().saturating_sub(sys.free_memory());
     let mem_total = sys.total_memory();
 
     Some(MemHarvest {
