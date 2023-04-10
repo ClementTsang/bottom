@@ -63,7 +63,7 @@ impl Painter {
                 } else {
                     0.0
                 };
-                
+
                 let cache_fraction_label = if app_state.basic_mode_use_percent {
                     format!("{:3.0}%", cache_percentage.round())
                 } else {
