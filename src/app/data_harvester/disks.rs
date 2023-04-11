@@ -1,6 +1,6 @@
 //! Data collection about disks (e.g. I/O, usage, space).
 
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 use crate::app::filter::Filter;
 use cfg_if::cfg_if;

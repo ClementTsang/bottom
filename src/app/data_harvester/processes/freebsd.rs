@@ -2,6 +2,7 @@
 
 use std::io;
 
+use hashbrown::HashMap;
 use serde::{Deserialize, Deserializer};
 use sysinfo::System;
 
@@ -38,9 +39,9 @@ pub fn get_process_data(
     )
 }
 
-fn get_freebsd_process_cpu_usage(pids: &[i32]) -> io::Result<std::collections::HashMap<i32, f64>> {
+fn get_freebsd_process_cpu_usage(pids: &[i32]) -> io::Result<HashMap<i32, f64>> {
     if pids.is_empty() {
-        return Ok(std::collections::HashMap::new());
+        return Ok(HashMap::new());
     }
 
     let output = std::process::Command::new("ps")

@@ -1,12 +1,12 @@
 use std::{
     borrow::Cow,
-    collections::{HashMap, HashSet},
     convert::TryInto,
     str::FromStr,
     time::{Duration, Instant},
 };
 
 use clap::ArgMatches;
+use hashbrown::{HashMap, HashSet};
 use layout_options::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};

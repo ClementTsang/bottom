@@ -1,17 +1,18 @@
 use std::{
     cmp::{max, min},
-    collections::HashMap,
     time::Instant,
 };
 
 use concat_string::concat_string;
+use hashbrown::HashMap;
+use typed_builder::*;
+use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
+
 use data_farmer::*;
 use data_harvester::temperature;
 use filter::*;
 use layout_manager::*;
 pub use states::*;
-use typed_builder::*;
-use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::widgets::{ProcWidgetMode, ProcWidgetState};
 use crate::{

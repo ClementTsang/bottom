@@ -1,8 +1,8 @@
 //! Shared process data harvesting code from macOS and FreeBSD via sysinfo.
 
-use std::collections::HashMap;
 use std::io;
 
+use hashbrown::HashMap;
 use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System, SystemExt};
 
 use super::ProcessHarvest;

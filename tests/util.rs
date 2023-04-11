@@ -1,4 +1,6 @@
-use std::{collections::HashMap, env, process::Command};
+use std::{env, process::Command};
+
+use hashbrown::HashMap;
 
 /// Returns a QEMU runner target given an architecture.
 fn get_qemu_target(arch: &str) -> &str {
