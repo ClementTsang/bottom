@@ -54,7 +54,7 @@ lto = true
 opt-level = 3
 codegen-units = 1
 
-[profile.flamegraph]
+[profile.profiling]
 inherits = "release"
 debug = true
 strip = false
@@ -80,6 +80,7 @@ concat-string = "1.0.1"
 const_format = "0.2.30"
 crossterm = "0.26.1"
 ctrlc = { version = "3.2.5", features = ["termination"] }
+# dhat = "0.3.2"
 dirs = "5.0.0"
 fern = { version = "0.6.2", optional = true }
 fxhash = "0.2.1"
