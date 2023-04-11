@@ -3,7 +3,7 @@
 use std::time::{Duration, Instant};
 
 #[cfg(target_os = "linux")]
-use fxhash::FxHashMap;
+use hashbrown::HashMap;
 
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
@@ -111,7 +111,7 @@ pub struct DataCollector {
     filters: DataFilters,
 
     #[cfg(target_os = "linux")]
-    pid_mapping: FxHashMap<crate::Pid, processes::PrevProcDetails>,
+    pid_mapping: HashMap<crate::Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
     prev_idle: f64,
     #[cfg(target_os = "linux")]
@@ -132,7 +132,7 @@ impl DataCollector {
             data: Data::default(),
             sys: System::new_with_specifics(sysinfo::RefreshKind::new()),
             #[cfg(target_os = "linux")]
-            pid_mapping: FxHashMap::default(),
+            pid_mapping: HashMap::default(),
             #[cfg(target_os = "linux")]
             prev_idle: 0_f64,
             #[cfg(target_os = "linux")]

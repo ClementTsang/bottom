@@ -3,7 +3,7 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-use fxhash::{FxHashMap, FxHashSet};
+use hashbrown::{HashMap, HashSet};
 use procfs::process::{Process, Stat};
 use sysinfo::{ProcessStatus, System};
 
@@ -231,7 +231,7 @@ pub(crate) struct ProcHarvestOptions {
 }
 
 pub(crate) fn get_process_data(
-    sys: &System, prev_proc: PrevProc<'_>, pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>,
+    sys: &System, prev_proc: PrevProc<'_>, pid_mapping: &mut HashMap<Pid, PrevProcDetails>,
     proc_harvest_options: ProcHarvestOptions, time_difference_in_secs: u64, total_memory: u64,
     user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
@@ -261,7 +261,7 @@ pub(crate) fn get_process_data(
             cpu_usage /= num_processors;
         }
 
-        let mut pids_to_clear: FxHashSet<Pid> = pid_mapping.keys().cloned().collect();
+        let mut pids_to_clear: HashSet<Pid> = pid_mapping.keys().cloned().collect();
 
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
             .filter_map(|dir| {

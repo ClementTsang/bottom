@@ -83,7 +83,7 @@ ctrlc = { version = "3.2.5", features = ["termination"] }
 # dhat = "0.3.2"
 dirs = "5.0.0"
 fern = { version = "0.6.2", optional = true }
-fxhash = "0.2.1"
+hashbrown = "0.13.2"
 humantime = "2.1.0"
 humantime-serde = "1.1.1"
 indexmap = "1.9.3"
