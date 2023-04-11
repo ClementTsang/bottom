@@ -4,9 +4,10 @@
 #
 # Expects a GitHub token in the environment variables as GITHUB_TOKEN.
 
-import os
 import json
+import os
 import sys
+import time
 from urllib.error import HTTPError, URLError
 
 from urllib.request import Request, urlopen
@@ -53,6 +54,7 @@ def main():
                         print("URLError with delete.")
                     else:
                         print("Successfully deleted cache ID {}!".format(id))
+                    time.sleep(0.1)
     elif args[1] == "keep-main" or args[1] == "keep-master":
         print("Clearing all but default branch cache.")
         with urlopen(cache_list_request(key)) as response:
@@ -70,6 +72,7 @@ def main():
                         print("URLError with delete.")
                     else:
                         print("Successfully deleted cache ID {}!".format(id))
+                    time.sleep(0.1)
     elif args[1] == "main" or args[1] == "master" or args[1] == "all":
         print("Clearing all caches.")
         with urlopen(cache_list_request(key)) as response:
@@ -86,6 +89,7 @@ def main():
                     print("URLError with delete.")
                 else:
                     print("Successfully deleted cache ID {}!".format(id))
+                time.sleep(0.1)
     else:
         print(f"Skipping, given argument {args[1]}.")
 
