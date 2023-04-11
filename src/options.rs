@@ -10,9 +10,10 @@ use hashbrown::{HashMap, HashSet};
 use layout_options::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use typed_builder::*;
+
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
-use typed_builder::*;
 
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
