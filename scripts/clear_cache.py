@@ -54,7 +54,7 @@ def main():
                         print("URLError with delete.")
                     else:
                         print("Successfully deleted cache ID {}!".format(id))
-                    time.sleep(0.3)
+                    time.sleep(0.1)
     elif args[1] == "keep-main" or args[1] == "keep-master":
         print("Clearing all but default branch cache.")
         with urlopen(cache_list_request(key)) as response:
@@ -72,7 +72,7 @@ def main():
                         print("URLError with delete.")
                     else:
                         print("Successfully deleted cache ID {}!".format(id))
-                    time.sleep(0.3)
+                    time.sleep(0.1)
     elif args[1] == "main" or args[1] == "master" or args[1] == "all":
         print("Clearing all caches.")
         with urlopen(cache_list_request(key)) as response:
@@ -89,7 +89,7 @@ def main():
                     print("URLError with delete.")
                 else:
                     print("Successfully deleted cache ID {}!".format(id))
-                time.sleep(0.3)
+                time.sleep(0.1)
     else:
         print(f"Skipping, given argument {args[1]}.")
 
