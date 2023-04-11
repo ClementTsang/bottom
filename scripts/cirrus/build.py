@@ -31,7 +31,9 @@ def make_query_request(key: str, branch: str, build_type: str):
 
     # Dumb but if it works...
     config_override = (
-        Path(".cirrus.yml").read_text().replace("# -PLACEHOLDER FOR CI-", 'BTM_BUILD_RELEASE_CALLER: "nightly"')
+        Path(".cirrus.yml")
+        .read_text()
+        .replace("# -PLACEHOLDER FOR CI-", 'BTM_BUILD_RELEASE_CALLER: "nightly"')
     )
     query = """
         mutation CreateCirrusCIBuild (
@@ -102,7 +104,7 @@ def check_build_status(key: str, id: str) -> Optional[str]:
 
 
 def try_download(build_id: str, dl_path: Path):
-    for (task, file) in TASKS:
+    for task, file in TASKS:
         url = DL_URL_TEMPLATE % (build_id, task, file)
         out = dl_path / file
         print("Downloading {} to {}".format(file, out))
@@ -187,9 +189,14 @@ def main():
                         print("Unexpected error:")
                         print(ex)
                         print(traceback.format_exc())
-                        sleep(60)  # Sleep for a minute if something went wrong, just in case.
+                        # Sleep for a minute if something went wrong, just in case.
+                        sleep(60)
                 else:
-                    print("Build failed to complete after {} minutes, bailing.".format(MINUTES))
+                    print(
+                        "Build failed to complete after {} minutes, bailing.".format(
+                            MINUTES
+                        )
+                    )
 
         if not success:
             exit(2)
