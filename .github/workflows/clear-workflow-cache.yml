@@ -26,11 +26,19 @@ jobs:
         with:
           fetch-depth: 1
 
-      - run: |
+      # We run each script twice with a small delay in between to try and catch everything.
+      - name: Clear cache
+        run: |
           if [[ -n "${{ github.event.schedule }}" ]]; then
+            python ./scripts/clear_cache.py keep-master
+            sleep 5
             python ./scripts/clear_cache.py keep-master
           elif [[ -z "${{ github.event.inputs.id }}" ]]; then
             python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
+            sleep 5
+            python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
           else
+            python ./scripts/clear_cache.py ${{ github.event.inputs.id }}
+            sleep 5
             python ./scripts/clear_cache.py ${{ github.event.inputs.id }}
           fi
