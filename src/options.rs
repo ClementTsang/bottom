@@ -10,10 +10,8 @@ use hashbrown::{HashMap, HashSet};
 use layout_options::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
-
 use typed_builder::*;
 
 use crate::{
@@ -826,9 +824,8 @@ mod test {
 
     use clap::ArgMatches;
 
-    use crate::{app::App, canvas::canvas_styling::CanvasColours};
-
     use super::{get_color_scheme, get_widget_layout, Config};
+    use crate::{app::App, canvas::canvas_styling::CanvasColours};
 
     fn create_app(mut config: Config, matches: ArgMatches) -> App {
         let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();

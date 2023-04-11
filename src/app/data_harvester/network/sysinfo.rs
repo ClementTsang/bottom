@@ -2,9 +2,8 @@
 
 use std::time::Instant;
 
-use crate::app::Filter;
-
 use super::NetworkHarvest;
+use crate::app::Filter;
 
 // TODO: Eventually make it so that this thing also takes individual usage into account, so we can show per-interface!
 pub fn get_network_data(

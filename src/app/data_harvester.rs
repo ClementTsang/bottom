@@ -4,14 +4,11 @@ use std::time::{Duration, Instant};
 
 #[cfg(target_os = "linux")]
 use hashbrown::HashMap;
-
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
-
 use sysinfo::{System, SystemExt};
 
 use self::temperature::TemperatureType;
-
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
