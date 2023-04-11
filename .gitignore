@@ -35,3 +35,7 @@ deny.toml
 
 # mkdocs
 site/
+
+# dhat heap profiling
+dhat-heap.json
+dhat/

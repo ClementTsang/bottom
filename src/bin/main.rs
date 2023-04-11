@@ -34,7 +34,12 @@ use crossterm::{
 };
 use tui::{backend::CrosstermBackend, Terminal};
 
+// #[global_allocator]
+// static ALLOC: dhat::Alloc = dhat::Alloc;
+
 fn main() -> Result<()> {
+    // let _profiler = dhat::Profiler::new_heap();
+
     let matches = clap::get_matches();
     #[cfg(all(feature = "fern", debug_assertions))]
     {
