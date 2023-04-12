@@ -1,20 +1,19 @@
 use std::{
     borrow::Cow,
-    collections::{HashMap, HashSet},
     convert::TryInto,
     str::FromStr,
     time::{Duration, Instant},
 };
 
 use clap::ArgMatches;
+use hashbrown::{HashMap, HashSet};
 use layout_options::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use typed_builder::*;
 
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
-
-use typed_builder::*;
 
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
@@ -826,9 +825,8 @@ mod test {
 
     use clap::ArgMatches;
 
-    use crate::{app::App, canvas::canvas_styling::CanvasColours};
-
     use super::{get_color_scheme, get_widget_layout, Config};
+    use crate::{app::App, canvas::canvas_styling::CanvasColours};
 
     fn create_app(mut config: Config, matches: ArgMatches) -> App {
         let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();

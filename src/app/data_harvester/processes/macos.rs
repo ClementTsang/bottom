@@ -1,5 +1,6 @@
 //! Process data collection for macOS.  Uses sysinfo and custom bindings.
 
+use hashbrown::HashMap;
 use sysinfo::System;
 
 use super::ProcessHarvest;
@@ -26,9 +27,7 @@ pub(crate) fn fallback_macos_ppid(pid: Pid) -> Option<Pid> {
         .ok()
 }
 
-fn get_macos_process_cpu_usage(
-    pids: &[Pid],
-) -> std::io::Result<std::collections::HashMap<i32, f64>> {
+fn get_macos_process_cpu_usage(pids: &[Pid]) -> std::io::Result<HashMap<i32, f64>> {
     use itertools::Itertools;
     let output = std::process::Command::new("ps")
         .args(["-o", "pid=,pcpu=", "-p"])
@@ -38,7 +37,7 @@ fn get_macos_process_cpu_usage(
                 .collect::<String>(),
         )
         .output()?;
-    let mut result = std::collections::HashMap::new();
+    let mut result = HashMap::new();
     String::from_utf8_lossy(&output.stdout)
         .split_whitespace()
         .chunks(2)

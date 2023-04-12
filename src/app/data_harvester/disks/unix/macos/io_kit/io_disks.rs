@@ -1,5 +1,4 @@
 use anyhow::bail;
-
 use mach2::kern_return;
 
 use super::{bindings::*, IoIterator};

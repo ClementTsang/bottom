@@ -15,7 +15,7 @@
 
 use std::{collections::BTreeMap, time::Instant, vec::Vec};
 
-use fxhash::FxHashMap;
+use hashbrown::HashMap;
 
 #[cfg(feature = "battery")]
 use crate::data_harvester::batteries;
@@ -48,7 +48,7 @@ pub struct ProcessData {
     pub process_harvest: BTreeMap<Pid, ProcessHarvest>,
 
     /// A mapping between a process PID to any children process PIDs.
-    pub process_parent_mapping: FxHashMap<Pid, Vec<Pid>>,
+    pub process_parent_mapping: HashMap<Pid, Vec<Pid>>,
 
     /// PIDs corresponding to processes that have no parents.
     pub orphan_pids: Vec<Pid>,

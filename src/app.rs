@@ -1,6 +1,5 @@
 use std::{
     cmp::{max, min},
-    collections::HashMap,
     time::Instant,
 };
 
@@ -8,6 +7,7 @@ use concat_string::concat_string;
 use data_farmer::*;
 use data_harvester::temperature;
 use filter::*;
+use hashbrown::HashMap;
 use layout_manager::*;
 pub use states::*;
 use typed_builder::*;

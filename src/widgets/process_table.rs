@@ -1,7 +1,7 @@
 use std::{borrow::Cow, collections::BTreeMap};
 
 use const_format::formatcp;
-use fxhash::{FxHashMap, FxHashSet};
+use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
 use crate::{
@@ -63,14 +63,14 @@ impl ProcessSearchState {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ProcWidgetMode {
-    Tree { collapsed_pids: FxHashSet<Pid> },
+    Tree { collapsed_pids: HashSet<Pid> },
     Grouped,
     Normal,
 }
 
 type ProcessTable = SortDataTable<ProcWidgetData, ProcColumn>;
 type SortTable = DataTable<Cow<'static, str>, SortTableColumn>;
-type StringPidMap = FxHashMap<String, Vec<Pid>>;
+type StringPidMap = HashMap<String, Vec<Pid>>;
 
 pub struct ProcWidgetState {
     pub mode: ProcWidgetMode,
@@ -215,7 +215,7 @@ impl ProcWidgetState {
             show_memory_as_values,
         );
 
-        let id_pid_map = FxHashMap::default();
+        let id_pid_map = HashMap::default();
 
         let mut table = ProcWidgetState {
             proc_search: process_search_state,
@@ -271,7 +271,7 @@ impl ProcWidgetState {
     }
 
     fn get_tree_data(
-        &self, collapsed_pids: &FxHashSet<Pid>, data_collection: &DataCollection,
+        &self, collapsed_pids: &HashSet<Pid>, data_collection: &DataCollection,
     ) -> Vec<ProcWidgetData> {
         const BRANCH_END: char = '└';
         const BRANCH_VERTICAL: char = '│';
@@ -305,11 +305,11 @@ impl ProcWidgetState {
                     None
                 }
             })
-            .collect::<FxHashSet<_>>();
+            .collect::<HashSet<_>>();
 
         #[inline]
         fn is_ancestor_shown(
-            current_process: &ProcessHarvest, kept_pids: &FxHashSet<Pid>,
+            current_process: &ProcessHarvest, kept_pids: &HashSet<Pid>,
             process_harvest: &BTreeMap<Pid, ProcessHarvest>,
         ) -> bool {
             if let Some(ppid) = current_process.parent_pid {
@@ -330,10 +330,10 @@ impl ProcWidgetState {
         // - The process contains some descendant that matches.
         // - The process's parent (and only parent, not any ancestor) matches.
         let filtered_tree = {
-            let mut filtered_tree = FxHashMap::default();
+            let mut filtered_tree: HashMap<Pid, Vec<Pid>> = HashMap::default();
 
             // We do a simple DFS traversal to build our filtered parent-to-tree mappings.
-            let mut visited_pids = FxHashMap::default();
+            let mut visited_pids: HashMap<Pid, bool> = HashMap::default();
             let mut stack = orphan_pids
                 .iter()
                 .filter_map(|process| process_harvest.get(process))
@@ -534,9 +534,9 @@ impl ProcWidgetState {
                 .unwrap_or(true)
         });
 
-        let mut id_pid_map: FxHashMap<String, Vec<Pid>> = FxHashMap::default();
+        let mut id_pid_map: HashMap<String, Vec<Pid>> = HashMap::default();
         let mut filtered_data: Vec<ProcWidgetData> = if let ProcWidgetMode::Grouped = self.mode {
-            let mut id_process_mapping: FxHashMap<&String, ProcessHarvest> = FxHashMap::default();
+            let mut id_process_mapping: HashMap<&String, ProcessHarvest> = HashMap::default();
             for process in filtered_iter {
                 let id = if is_using_command {
                     &process.command

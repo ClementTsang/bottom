@@ -1,9 +1,5 @@
 //! This file is meant to house (OS specific) implementations on how to kill processes.
 
-#[cfg(target_family = "unix")]
-use crate::utils::error::BottomError;
-use crate::Pid;
-
 #[cfg(target_os = "windows")]
 use windows::Win32::{
     Foundation::HANDLE,
@@ -11,6 +7,10 @@ use windows::Win32::{
         OpenProcess, TerminateProcess, PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE,
     },
 };
+
+#[cfg(target_family = "unix")]
+use crate::utils::error::BottomError;
+use crate::Pid;
 
 /// Based from [this SO answer](https://stackoverflow.com/a/55231715).
 #[cfg(target_os = "windows")]

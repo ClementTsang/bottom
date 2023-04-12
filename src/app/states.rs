@@ -1,5 +1,6 @@
-use std::{collections::HashMap, ops::Range, time::Instant};
+use std::{ops::Range, time::Instant};
 
+use hashbrown::HashMap;
 use indexmap::IndexMap;
 use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete, UnicodeSegmentation};
 

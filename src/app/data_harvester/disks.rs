@@ -1,9 +1,9 @@
 //! Data collection about disks (e.g. I/O, usage, space).
 
-use std::collections::HashMap;
+use cfg_if::cfg_if;
+use hashbrown::HashMap;
 
 use crate::app::filter::Filter;
-use cfg_if::cfg_if;
 
 cfg_if! {
     if #[cfg(target_os = "freebsd")] {
@@ -114,9 +114,8 @@ pub(self) fn keep_disk_entry(
 mod test {
     use regex::Regex;
 
-    use crate::app::filter::Filter;
-
     use super::keep_disk_entry;
+    use crate::app::filter::Filter;
 
     fn run_filter(disk_filter: &Option<Filter>, mount_filter: &Option<Filter>) -> Vec<usize> {
         let targets = [
