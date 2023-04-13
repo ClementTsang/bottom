@@ -53,6 +53,33 @@ impl Painter {
                 .gauge_style(self.colours.ram_style),
         );
 
+        #[cfg(not(target_os = "windows"))]
+        {
+            if let Some((_, label_frac)) = &app_state.converted_data.cache_labels {
+                let cache_data = &app_state.converted_data.cache_data;
+
+                let cache_percentage = if let Some(cache) = cache_data.last() {
+                    cache.1
+                } else {
+                    0.0
+                };
+
+                let cache_fraction_label = if app_state.basic_mode_use_percent {
+                    format!("{:3.0}%", cache_percentage.round())
+                } else {
+                    label_frac.trim().to_string()
+                };
+                draw_widgets.push(
+                    PipeGauge::default()
+                        .ratio(cache_percentage / 100.0)
+                        .start_label("CHE")
+                        .inner_label(cache_fraction_label)
+                        .label_style(self.colours.cache_style)
+                        .gauge_style(self.colours.cache_style),
+                );
+            }
+        }
+
         let swap_data = &app_state.converted_data.swap_data;
 
         let swap_percentage = if let Some(swap) = swap_data.last() {

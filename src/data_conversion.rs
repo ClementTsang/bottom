@@ -3,6 +3,7 @@
 
 use kstring::KString;
 
+use crate::app::data_harvester::memory::MemHarvest;
 use crate::app::{
     data_farmer::DataCollection,
     data_harvester::{cpu::CpuDataType, temperature::TemperatureType},
@@ -68,9 +69,13 @@ pub struct ConvertedData {
     pub network_data_tx: Vec<Point>,
 
     pub mem_labels: Option<(String, String)>,
+    #[cfg(not(target_os = "windows"))]
+    pub cache_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
 
     pub mem_data: Vec<Point>, /* TODO: Switch this and all data points over to a better data structure... */
+    #[cfg(not(target_os = "windows"))]
+    pub cache_data: Vec<Point>,
     pub swap_data: Vec<Point>,
 
     #[cfg(feature = "zfs")]
@@ -219,6 +224,25 @@ pub fn convert_mem_data_points(current_data: &DataCollection) -> Vec<Point> {
     result
 }
 
+#[cfg(not(target_os = "windows"))]
+pub fn convert_cache_data_points(current_data: &DataCollection) -> Vec<Point> {
+    let mut result: Vec<Point> = Vec::new();
+    let current_time = current_data.current_instant;
+
+    for (time, data) in &current_data.timed_data_vec {
+        if let Some(cache_data) = data.cache_data {
+            let time_from_start: f64 =
+                (current_time.duration_since(*time).as_millis() as f64).floor();
+            result.push((-time_from_start, cache_data));
+            if *time == current_time {
+                break;
+            }
+        }
+    }
+
+    result
+}
+
 pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = current_data.current_instant;
@@ -257,52 +281,23 @@ fn get_mem_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
     }
 }
 
-pub fn convert_mem_labels(
-    current_data: &DataCollection,
-) -> (Option<(String, String)>, Option<(String, String)>) {
-    (
-        if current_data.memory_harvest.total_bytes > 0 {
-            Some((
-                format!(
-                    "{:3.0}%",
-                    current_data.memory_harvest.use_percent.unwrap_or(0.0)
-                ),
-                {
-                    let (unit, denominator) = get_mem_binary_unit_and_denominator(
-                        current_data.memory_harvest.total_bytes,
-                    );
+/// Returns the unit type and denominator for given total amount of memory in kibibytes.
+pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
+    if harvest.total_bytes > 0 {
+        Some((format!("{:3.0}%", harvest.use_percent.unwrap_or(0.0)), {
+            let (unit, denominator) = get_mem_binary_unit_and_denominator(harvest.total_bytes);
 
-                    format!(
-                        "   {:.1}{unit}/{:.1}{unit}",
-                        current_data.memory_harvest.used_bytes as f64 / denominator,
-                        (current_data.memory_harvest.total_bytes as f64 / denominator),
-                    )
-                },
-            ))
-        } else {
-            None
-        },
-        if current_data.swap_harvest.total_bytes > 0 {
-            Some((
-                format!(
-                    "{:3.0}%",
-                    current_data.swap_harvest.use_percent.unwrap_or(0.0)
-                ),
-                {
-                    let (unit, denominator) =
-                        get_mem_binary_unit_and_denominator(current_data.swap_harvest.total_bytes);
-
-                    format!(
-                        "   {:.1}{unit}/{:.1}{unit}",
-                        current_data.swap_harvest.used_bytes as f64 / denominator,
-                        (current_data.swap_harvest.total_bytes as f64 / denominator),
-                    )
-                },
-            ))
-        } else {
-            None
-        },
-    )
+            format!(
+                "   {:.1}{}/{:.1}{}",
+                harvest.used_bytes as f64 / denominator,
+                unit,
+                (harvest.total_bytes as f64 / denominator),
+                unit
+            )
+        }))
+    } else {
+        None
+    }
 }
 
 pub fn get_rx_tx_data_points(

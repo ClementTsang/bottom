@@ -441,6 +441,14 @@ use CPU (3) as the default instead.
         app = app.arg(enable_gpu_memory);
     }
 
+    #[cfg(not(target_os = "windows"))]
+    {
+        let cache = Arg::new("enable_cache_memory")
+            .long("enable_cache_memory")
+            .help("Enable collecting and displaying cache and buffer memory.");
+        app = app.arg(cache);
+    }
+
     app
 }
 

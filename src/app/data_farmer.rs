@@ -35,6 +35,8 @@ pub struct TimedData {
     pub cpu_data: Vec<Value>,
     pub load_avg_data: [f32; 3],
     pub mem_data: Option<Value>,
+    #[cfg(not(target_os = "windows"))]
+    pub cache_data: Option<Value>,
     pub swap_data: Option<Value>,
     #[cfg(feature = "zfs")]
     pub arc_data: Option<Value>,
@@ -108,6 +110,8 @@ pub struct DataCollection {
     pub timed_data_vec: Vec<(Instant, TimedData)>,
     pub network_harvest: network::NetworkHarvest,
     pub memory_harvest: memory::MemHarvest,
+    #[cfg(not(target_os = "windows"))]
+    pub cache_harvest: memory::MemHarvest,
     pub swap_harvest: memory::MemHarvest,
     pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
@@ -132,6 +136,8 @@ impl Default for DataCollection {
             timed_data_vec: Vec::default(),
             network_harvest: network::NetworkHarvest::default(),
             memory_harvest: memory::MemHarvest::default(),
+            #[cfg(not(target_os = "windows"))]
+            cache_harvest: memory::MemHarvest::default(),
             swap_harvest: memory::MemHarvest::default(),
             cpu_harvest: cpu::CpuHarvest::default(),
             load_avg_harvest: cpu::LoadAvgHarvest::default(),
@@ -206,9 +212,15 @@ impl DataCollection {
             self.eat_network(network, &mut new_entry);
         }
 
-        // Memory and Swap
+        // Memory, Swap
         if let (Some(memory), Some(swap)) = (harvested_data.memory, harvested_data.swap) {
             self.eat_memory_and_swap(memory, swap, &mut new_entry);
+        }
+
+        // Cache memory
+        #[cfg(not(target_os = "windows"))]
+        if let Some(cache) = harvested_data.cache {
+            self.eat_cache(cache, &mut new_entry);
         }
 
         #[cfg(feature = "zfs")]
@@ -273,6 +285,15 @@ impl DataCollection {
         // In addition copy over latest data for easy reference
         self.memory_harvest = memory;
         self.swap_harvest = swap;
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn eat_cache(&mut self, cache: memory::MemHarvest, new_entry: &mut TimedData) {
+        // Cache and buffer memory
+        new_entry.cache_data = cache.use_percent;
+
+        // In addition copy over latest data for easy reference
+        self.cache_harvest = cache;
     }
 
     fn eat_network(&mut self, network: network::NetworkHarvest, new_entry: &mut TimedData) {

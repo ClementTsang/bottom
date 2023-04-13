@@ -18,6 +18,8 @@ pub struct CanvasColours {
     pub currently_selected_text_style: Style,
     pub table_header_style: Style,
     pub ram_style: Style,
+    #[cfg(not(target_os = "windows"))]
+    pub cache_style: Style,
     pub swap_style: Style,
     pub arc_style: Style,
     pub gpu_colour_styles: Vec<Style>,
@@ -54,6 +56,8 @@ impl Default for CanvasColours {
                 .bg(currently_selected_bg_colour),
             table_header_style: Style::default().fg(HIGHLIGHT_COLOUR),
             ram_style: Style::default().fg(FIRST_COLOUR),
+            #[cfg(not(target_os = "windows"))]
+            cache_style: Style::default().fg(FIFTH_COLOUR),
             swap_style: Style::default().fg(SECOND_COLOUR),
             arc_style: Style::default().fg(THIRD_COLOUR),
             gpu_colour_styles: vec![
@@ -160,6 +164,12 @@ impl CanvasColours {
         if let Some(ram_color) = &colours.ram_color {
             self.set_ram_colour(ram_color)
                 .context("Update 'ram_color' in your config file..")?;
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        if let Some(cache_color) = &colours.cache_color {
+            self.set_cache_colour(cache_color)
+                .context("Update 'cache_color' in your config file..")?;
         }
 
         if let Some(swap_color) = &colours.swap_color {
@@ -272,6 +282,12 @@ impl CanvasColours {
 
     pub fn set_ram_colour(&mut self, colour: &str) -> error::Result<()> {
         self.ram_style = str_to_fg(colour)?;
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    pub fn set_cache_colour(&mut self, colour: &str) -> error::Result<()> {
+        self.cache_style = str_to_fg(colour)?;
         Ok(())
     }
 
