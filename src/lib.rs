@@ -34,7 +34,7 @@ use app::{
     data_harvester,
     frozen_state::FrozenState,
     layout_manager::{UsedWidgets, WidgetDirection},
-    App,
+    App, AppConfigFields, DataFilters,
 };
 use constants::*;
 use crossterm::{
@@ -84,7 +84,7 @@ pub enum BottomEvent {
 #[derive(Debug)]
 pub enum ThreadControlEvent {
     Reset,
-    UpdateConfig(Box<app::AppConfigFields>),
+    UpdateConfig(Box<AppConfigFields>),
     UpdateUsedWidgets(Box<UsedWidgets>),
     UpdateUpdateTime(u64),
 }
@@ -484,8 +484,7 @@ pub fn create_input_thread(
 pub fn create_collection_thread(
     sender: Sender<BottomEvent>, control_receiver: Receiver<ThreadControlEvent>,
     termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
-    app_config_fields: &app::AppConfigFields, filters: app::DataFilters,
-    used_widget_set: UsedWidgets,
+    app_config_fields: &AppConfigFields, filters: DataFilters, used_widget_set: UsedWidgets,
 ) -> JoinHandle<()> {
     let temp_type = app_config_fields.temperature_type;
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
