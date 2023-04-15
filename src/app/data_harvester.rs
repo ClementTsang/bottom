@@ -194,16 +194,25 @@ impl DataCollector {
 
         self.update_data();
 
-        // Sleep a few seconds to avoid potentially weird data...
+        // Sleep a few seconds to avoid potentially weird data.
         let sleep_duration = {
-            cfg_if::cfg_if! {
-                if #[cfg(target_os = "freebsd")] {
-                    // FreeBSD's min duration value is 1s, which is a bit too long for me so I'll accept the one-time
-                    // inaccuracy.
-                    std::time::Duration::from_millis(250)
-                } else {
-                    sysinfo::System::MINIMUM_CPU_UPDATE_INTERVAL + Duration::from_millis(1)
-                }
+            // TL;DR: use a value between 10ms and 250ms, ideally sysinfo's MINIMUM_CPU_UPDATE_INTERVAL.
+            // We bound the upper end to avoid waiting too long (e.g. FreeBSD is 1s, which I'm fine with losing
+            // accuracy on for the first refresh), and we bound the lower end just to avoid the off-chance that
+            // refreshing too quickly causes problems. This second case should only happen on unsupported
+            // systems via sysinfo, in which case `MINIMUM_CPU_UPDATE_INTERVAL` is defined as 0.
+            //
+            // TODO: We could probably make this const if const duration comparisons existed.
+
+            let min_sleep = Duration::from_millis(10);
+            let max_sleep = Duration::from_millis(250);
+
+            if sysinfo::System::MINIMUM_CPU_UPDATE_INTERVAL < min_sleep {
+                min_sleep
+            } else if sysinfo::System::MINIMUM_CPU_UPDATE_INTERVAL > max_sleep {
+                max_sleep
+            } else {
+                sysinfo::System::MINIMUM_CPU_UPDATE_INTERVAL + Duration::from_millis(1)
             }
         };
 
