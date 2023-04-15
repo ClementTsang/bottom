@@ -345,8 +345,8 @@ impl Painter {
                     })
                     .collect::<Vec<(u16, u16, u16, u16, usize)>>();
 
-                for (btn, pos) in buttons.into_iter().zip(layout.into_iter()) {
-                    f.render_widget(Paragraph::new(btn).alignment(Alignment::Left), pos);
+                for (btn, pos) in buttons.into_iter().zip(layout.iter()) {
+                    f.render_widget(Paragraph::new(btn).alignment(Alignment::Left), *pos);
                 }
             }
         }
