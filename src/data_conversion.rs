@@ -301,21 +301,20 @@ pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
 }
 
 pub fn get_rx_tx_data_points(
-    current_data: &DataCollection, network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
-    network_use_binary_prefix: bool,
+    data: &DataCollection, scale_type: &AxisScaling, unit_type: &DataUnit, use_binary_prefix: bool,
 ) -> (Vec<Point>, Vec<Point>) {
     let mut rx: Vec<Point> = Vec::new();
     let mut tx: Vec<Point> = Vec::new();
 
-    let current_time = current_data.current_instant;
+    let current_time = data.current_instant;
 
-    for (time, data) in &current_data.timed_data_vec {
+    for (time, data) in &data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
 
-        let (rx_data, tx_data) = match network_scale_type {
+        let (rx_data, tx_data) = match scale_type {
             AxisScaling::Log => {
-                if network_use_binary_prefix {
-                    match network_unit_type {
+                if use_binary_prefix {
+                    match unit_type {
                         DataUnit::Byte => {
                             // As dividing by 8 is equal to subtracting 4 in base 2!
                             ((data.rx_data).log2() - 4.0, (data.tx_data).log2() - 4.0)
@@ -323,7 +322,7 @@ pub fn get_rx_tx_data_points(
                         DataUnit::Bit => ((data.rx_data).log2(), (data.tx_data).log2()),
                     }
                 } else {
-                    match network_unit_type {
+                    match unit_type {
                         DataUnit::Byte => {
                             ((data.rx_data / 8.0).log10(), (data.tx_data / 8.0).log10())
                         }
@@ -331,7 +330,7 @@ pub fn get_rx_tx_data_points(
                     }
                 }
             }
-            AxisScaling::Linear => match network_unit_type {
+            AxisScaling::Linear => match unit_type {
                 DataUnit::Byte => (data.rx_data / 8.0, data.tx_data / 8.0),
                 DataUnit::Bit => (data.rx_data, data.tx_data),
             },
@@ -348,38 +347,33 @@ pub fn get_rx_tx_data_points(
 }
 
 pub fn convert_network_data_points(
-    current_data: &DataCollection, need_four_points: bool, network_scale_type: &AxisScaling,
-    network_unit_type: &DataUnit, network_use_binary_prefix: bool,
+    data: &DataCollection, need_four_points: bool, scale_type: &AxisScaling, unit_type: &DataUnit,
+    use_binary_prefix: bool,
 ) -> ConvertedNetworkData {
-    let (rx, tx) = get_rx_tx_data_points(
-        current_data,
-        network_scale_type,
-        network_unit_type,
-        network_use_binary_prefix,
-    );
+    let (rx, tx) = get_rx_tx_data_points(data, scale_type, unit_type, use_binary_prefix);
 
-    let unit = match network_unit_type {
+    let unit = match unit_type {
         DataUnit::Byte => "B/s",
         DataUnit::Bit => "b/s",
     };
 
-    let (rx_data, tx_data, total_rx_data, total_tx_data) = match network_unit_type {
+    let (rx_data, tx_data, total_rx_data, total_tx_data) = match unit_type {
         DataUnit::Byte => (
-            current_data.network_harvest.rx / 8,
-            current_data.network_harvest.tx / 8,
-            current_data.network_harvest.total_rx / 8,
-            current_data.network_harvest.total_tx / 8,
+            data.network_harvest.rx / 8,
+            data.network_harvest.tx / 8,
+            data.network_harvest.total_rx / 8,
+            data.network_harvest.total_tx / 8,
         ),
         DataUnit::Bit => (
-            current_data.network_harvest.rx,
-            current_data.network_harvest.tx,
-            current_data.network_harvest.total_rx / 8, // We always make this bytes...
-            current_data.network_harvest.total_tx / 8,
+            data.network_harvest.rx,
+            data.network_harvest.tx,
+            data.network_harvest.total_rx / 8, // We always make this bytes...
+            data.network_harvest.total_tx / 8,
         ),
     };
 
     let (rx_converted_result, total_rx_converted_result): ((f64, String), (f64, &'static str)) =
-        if network_use_binary_prefix {
+        if use_binary_prefix {
             (
                 get_binary_prefix(rx_data, unit), /* If this isn't obvious why there's two functions, one you can configure the unit, the other is always bytes */
                 get_binary_bytes(total_rx_data),
@@ -392,7 +386,7 @@ pub fn convert_network_data_points(
         };
 
     let (tx_converted_result, total_tx_converted_result): ((f64, String), (f64, &'static str)) =
-        if network_use_binary_prefix {
+        if use_binary_prefix {
             (
                 get_binary_prefix(tx_data, unit),
                 get_binary_bytes(total_tx_data),
@@ -426,12 +420,12 @@ pub fn convert_network_data_points(
     } else {
         let rx_display = format!(
             "RX: {:<10}  All: {}",
-            if network_use_binary_prefix {
+            if use_binary_prefix {
                 format!("{:.1}{:3}", rx_converted_result.0, rx_converted_result.1)
             } else {
                 format!("{:.1}{:2}", rx_converted_result.0, rx_converted_result.1)
             },
-            if network_use_binary_prefix {
+            if use_binary_prefix {
                 format!(
                     "{:.1}{:3}",
                     total_rx_converted_result.0, total_rx_converted_result.1
@@ -445,12 +439,12 @@ pub fn convert_network_data_points(
         );
         let tx_display = format!(
             "TX: {:<10}  All: {}",
-            if network_use_binary_prefix {
+            if use_binary_prefix {
                 format!("{:.1}{:3}", tx_converted_result.0, tx_converted_result.1)
             } else {
                 format!("{:.1}{:2}", tx_converted_result.0, tx_converted_result.1)
             },
-            if network_use_binary_prefix {
+            if use_binary_prefix {
                 format!(
                     "{:.1}{:3}",
                     total_tx_converted_result.0, total_tx_converted_result.1

@@ -504,7 +504,7 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
 // Config and flags
 pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
-// TODO: Eventually deprecate this.
+// TODO: Eventually deprecate this, or grab from a file.
 pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  All of the settings are commented
 # out by default; if you wish to change them uncomment and modify as you see
 # fit.
@@ -582,6 +582,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #disable_advanced_kill = false
 # Shows GPU(s) memory
 #enable_gpu_memory = false
+# Shows cache and buffer memory
+#enable_cache_memory = false
 # How much data is stored at once in terms of time.
 #retention = "10m"
 
