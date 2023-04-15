@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1016](https://github.com/ClementTsang/bottom/pull/1016): Add support for displaying process usernames on Windows.
 - [#1022](https://github.com/ClementTsang/bottom/pull/1022): Support three-character hex colour strings for styling.
 - [#1024](https://github.com/ClementTsang/bottom/pull/1024): Support FreeBSD temperature sensors based on `hw.temperature`.
-- [#1063](https://github.com/ClementTsang/bottom/pull/1063): Add buffer and cache memory tracking
+- [#1063](https://github.com/ClementTsang/bottom/pull/1063): Add buffer and cache memory tracking.
 
 ## Changes
 
@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1075](https://github.com/ClementTsang/bottom/issues/1075): Update how drives are named in Windows.
 
 ## Other
+
+- [#1100](https://github.com/ClementTsang/bottom/pull/1100): Speed up first draw and first data collection.
 
 ## [0.8.0] - 2023-01-22
 
