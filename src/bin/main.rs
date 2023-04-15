@@ -85,15 +85,28 @@ fn main() -> Result<()> {
     let thread_termination_lock = Arc::new(Mutex::new(false));
     let thread_termination_cvar = Arc::new(Condvar::new());
 
-    // Set up input handling
     let (sender, receiver) = mpsc::channel();
+
+    // Set up event loop thread; we set this up early to speed up first-time-to-data.
+    let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
+    let _collection_thread = create_collection_thread(
+        sender.clone(),
+        collection_thread_ctrl_receiver,
+        thread_termination_lock.clone(),
+        thread_termination_cvar.clone(),
+        &app.app_config_fields,
+        app.filters.clone(),
+        app.used_widgets,
+    );
+
+    // Set up input handling loop thread.
     let _input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
 
-    // Cleaning loop
+    // Set up cleaning loop thread.
     let _cleaning_thread = {
         let lock = thread_termination_lock.clone();
         let cvar = thread_termination_cvar.clone();
-        let cleaning_sender = sender.clone();
+        let cleaning_sender = sender;
         let offset_wait_time = app.app_config_fields.retention_ms + 60000;
         thread::spawn(move || {
             loop {
@@ -113,18 +126,6 @@ fn main() -> Result<()> {
             }
         })
     };
-
-    // Event loop
-    let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
-    let _collection_thread = create_collection_thread(
-        sender,
-        collection_thread_ctrl_receiver,
-        thread_termination_lock.clone(),
-        thread_termination_cvar.clone(),
-        &app.app_config_fields,
-        app.filters.clone(),
-        app.used_widgets.clone(),
-    );
 
     // Set up tui and crossterm
     let mut stdout_val = stdout();

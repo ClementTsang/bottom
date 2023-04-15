@@ -195,21 +195,19 @@ impl DataCollector {
         self.update_data();
 
         // Sleep a few seconds to avoid potentially weird data...
-        {
-            let sleep_duration = {
-                cfg_if::cfg_if! {
-                    if #[cfg(target_os = "freebsd")] {
-                        // FreeBSD's system value is 1s, which is a bit too long for me so I'll accept the one-time
-                        // inaccuracy.
-                        std::time::Duration::from_millis(250)
-                    } else {
-                        sysinfo::System::MINIMUM_CPU_UPDATE_INTERVAL + Duration::from_millis(1)
-                    }
+        let sleep_duration = {
+            cfg_if::cfg_if! {
+                if #[cfg(target_os = "freebsd")] {
+                    // FreeBSD's min duration value is 1s, which is a bit too long for me so I'll accept the one-time
+                    // inaccuracy.
+                    std::time::Duration::from_millis(250)
+                } else {
+                    sysinfo::System::MINIMUM_CPU_UPDATE_INTERVAL + Duration::from_millis(1)
                 }
-            };
+            }
+        };
 
-            std::thread::sleep(sleep_duration);
-        }
+        std::thread::sleep(sleep_duration);
         self.data.cleanup();
     }
 
