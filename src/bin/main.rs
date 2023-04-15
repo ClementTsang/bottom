@@ -42,7 +42,7 @@ fn main() -> Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
 
     let matches = clap::get_matches();
-    #[cfg(all(feature = "fern", debug_assertions))]
+    #[cfg(all(feature = "fern"))]
     {
         utils::logging::init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log"))?;
     }
@@ -126,7 +126,7 @@ fn main() -> Result<()> {
         app.used_widgets.clone(),
     );
 
-    // Set up up tui and crossterm
+    // Set up tui and crossterm
     let mut stdout_val = stdout();
     execute!(
         stdout_val,
@@ -161,6 +161,9 @@ fn main() -> Result<()> {
         ist_clone.store(true, Ordering::SeqCst);
     })?;
     let mut first_run = true;
+
+    // Draw once first to initialize the canvas, so it doesn't feel like it's frozen.
+    try_drawing(&mut terminal, &mut app, &mut painter)?;
 
     while !is_terminated.load(Ordering::SeqCst) {
         // TODO: Would be good to instead use a mix of is_terminated check + recv. Probably use a termination event instead.
