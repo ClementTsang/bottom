@@ -195,28 +195,9 @@ impl DataCollector {
         self.update_data();
 
         // Sleep a few seconds to avoid potentially weird data.
-        let sleep_duration = {
-            // TL;DR: use a value between 10ms and 250ms, ideally sysinfo's MINIMUM_CPU_UPDATE_INTERVAL.
-            // We bound the upper end to avoid waiting too long (e.g. FreeBSD is 1s, which I'm fine with losing
-            // accuracy on for the first refresh), and we bound the lower end just to avoid the off-chance that
-            // refreshing too quickly causes problems. This second case should only happen on unsupported
-            // systems via sysinfo, in which case `MINIMUM_CPU_UPDATE_INTERVAL` is defined as 0.
-            //
-            // TODO: We could probably make this const if const duration comparisons existed.
+        const SLEEP: Duration = get_sleep_duration();
 
-            let min_sleep = Duration::from_millis(10);
-            let max_sleep = Duration::from_millis(250);
-
-            if sysinfo::System::MINIMUM_CPU_UPDATE_INTERVAL < min_sleep {
-                min_sleep
-            } else if sysinfo::System::MINIMUM_CPU_UPDATE_INTERVAL > max_sleep {
-                max_sleep
-            } else {
-                sysinfo::System::MINIMUM_CPU_UPDATE_INTERVAL + Duration::from_millis(1)
-            }
-        };
-
-        std::thread::sleep(sleep_duration);
+        std::thread::sleep(SLEEP);
         self.data.cleanup();
     }
 
@@ -503,6 +484,28 @@ impl DataCollector {
 
             self.data.io = disks::get_io_usage().ok();
         }
+    }
+}
+
+/// We set a sleep duration between 10ms and 250ms, ideally sysinfo's [`System::MINIMUM_CPU_UPDATE_INTERVAL`] + 1.
+///
+/// We bound the upper end to avoid waiting too long (e.g. FreeBSD is 1s, which I'm fine with losing
+/// accuracy on for the first refresh), and we bound the lower end just to avoid the off-chance that
+/// refreshing too quickly causes problems. This second case should only happen on unsupported
+/// systems via sysinfo, in which case [`System::MINIMUM_CPU_UPDATE_INTERVAL`] is defined as 0.
+///
+/// We also do `INTERVAL + 1` for some wiggle room, just in case.
+const fn get_sleep_duration() -> Duration {
+    const MIN_SLEEP: u64 = 10;
+    const MAX_SLEEP: u64 = 250;
+    const INTERVAL: u64 = System::MINIMUM_CPU_UPDATE_INTERVAL.as_millis() as u64;
+
+    if INTERVAL < MIN_SLEEP {
+        Duration::from_millis(MIN_SLEEP)
+    } else if INTERVAL > MAX_SLEEP {
+        Duration::from_millis(MAX_SLEEP)
+    } else {
+        Duration::from_millis(INTERVAL + 1)
     }
 }
 
