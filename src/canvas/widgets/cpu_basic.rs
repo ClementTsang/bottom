@@ -92,7 +92,7 @@ impl Painter {
 
                 let num_entries = cpu_data.len();
                 let mut row_counter = num_entries;
-                for (itx, column) in columns.into_iter().enumerate() {
+                for (itx, column) in columns.iter().enumerate() {
                     if REQUIRED_COLUMNS > itx {
                         let to_divide = REQUIRED_COLUMNS - itx;
                         let num_taken = min(
@@ -106,9 +106,11 @@ impl Painter {
                             .direction(Direction::Vertical)
                             .constraints(vec![Constraint::Length(1); remaining_height])
                             .horizontal_margin(1)
-                            .split(column);
+                            .split(*column);
 
-                        for ((start_label, inner_label, ratio, style), row) in chunk.zip(rows) {
+                        for ((start_label, inner_label, ratio, style), row) in
+                            chunk.zip(rows.iter())
+                        {
                             f.render_widget(
                                 PipeGauge::default()
                                     .gauge_style(style)
@@ -117,7 +119,7 @@ impl Painter {
                                     .start_label(start_label)
                                     .ratio(ratio)
                                     .hide_parts(hide_parts),
-                                row,
+                                *row,
                             );
                         }
                     }
