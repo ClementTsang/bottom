@@ -283,6 +283,7 @@ fn get_mem_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
 
 /// Returns the unit type and denominator for given total amount of memory in kibibytes.
 pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
+    // TODO: Add an alignment field.
     if harvest.total_bytes > 0 {
         Some((format!("{:3.0}%", harvest.use_percent.unwrap_or(0.0)), {
             let (unit, denominator) = get_mem_binary_unit_and_denominator(harvest.total_bytes);

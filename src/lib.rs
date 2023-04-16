@@ -548,6 +548,7 @@ pub fn create_collection_thread(
             }
 
             let event = BottomEvent::Update(Box::from(data_state.data));
+            // TODO: Should we just keep copies of existing data to avoid reallocs?
             data_state.data = data_harvester::Data::default();
             if sender.send(event).is_err() {
                 break;

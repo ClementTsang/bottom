@@ -25,6 +25,9 @@ pub mod network;
 pub mod processes;
 pub mod temperature;
 
+// Refresh certain details once every minute. If it's too frequent it can cause segfaults.
+const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
+
 #[derive(Clone, Debug)]
 pub struct Data {
     pub last_collection_time: Instant,
@@ -229,8 +232,6 @@ impl DataCollector {
     /// - Disk (Windows)
     /// - Temperatures (non-Linux)
     fn refresh_sysinfo_data(&mut self) {
-        // Refresh once every minute. If it's too frequent it can cause segfaults.
-        const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
         let refresh_start = Instant::now();
 
         if self.widgets_to_harvest.use_cpu || self.widgets_to_harvest.use_proc {
@@ -344,6 +345,7 @@ impl DataCollector {
                         .duration_since(self.last_collection_time)
                         .as_secs();
 
+                    // TODO: Can I reuse the previous data's buffer?
                     processes::get_process_data(
                         &self.sys,
                         prev_proc,
