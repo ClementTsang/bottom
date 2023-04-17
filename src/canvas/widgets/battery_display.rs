@@ -153,8 +153,13 @@ impl Painter {
                         self.colours.high_battery_colour
                     }),
                 ]));
+                let state = match &battery_details.battery_duration {
+                    BatteryDuration::ToFull(_) => "Charging",
+                    BatteryDuration::ToEmpty(_) => "Consumption",
+                    _ => "Unknown",
+                };
                 battery_rows.push(
-                    Row::new(vec!["Consumption", &battery_details.watt_consumption])
+                    Row::new(vec![state, &battery_details.watt_consumption])
                         .style(self.colours.text_style),
                 );
 
