@@ -11,7 +11,7 @@
 
 use starship_battery::{
     units::{power::watt, ratio::percent, time::second},
-    Battery, Manager,
+    Battery, Manager, State,
 };
 
 #[derive(Debug, Clone)]
@@ -21,6 +21,7 @@ pub struct BatteryHarvest {
     pub secs_until_empty: Option<i64>,
     pub power_consumption_rate_watts: f64,
     pub health_percent: f64,
+    pub state: State,
 }
 
 pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<BatteryHarvest> {
@@ -40,6 +41,7 @@ pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<Ba
                     charge_percent: f64::from(battery.state_of_charge().get::<percent>()),
                     power_consumption_rate_watts: f64::from(battery.energy_rate().get::<watt>()),
                     health_percent: f64::from(battery.state_of_health().get::<percent>()),
+                    state: battery.state(),
                 })
             } else {
                 None

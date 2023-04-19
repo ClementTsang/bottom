@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1022](https://github.com/ClementTsang/bottom/pull/1022): Support three-character hex colour strings for styling.
 - [#1024](https://github.com/ClementTsang/bottom/pull/1024): Support FreeBSD temperature sensors based on `hw.temperature`.
 - [#1063](https://github.com/ClementTsang/bottom/pull/1063): Add buffer and cache memory tracking.
+- [#1106](https://github.com/ClementTsang/bottom/pull/1106): Add current battery charging state.
 
 ## Changes
 
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1064](https://github.com/ClementTsang/bottom/pull/1064): Migrate away from heim for storage information.
 - [#812](https://github.com/ClementTsang/bottom/issues/812): Fully remove heim from bottom.
 - [#1075](https://github.com/ClementTsang/bottom/issues/1075): Update how drives are named in Windows.
+- [#1106](https://github.com/ClementTsang/bottom/pull/1106): Rename battery consumption field to rate.
 
 ## Other
 
