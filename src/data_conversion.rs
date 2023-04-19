@@ -18,6 +18,8 @@ use crate::widgets::{DiskWidgetData, TempWidgetData};
 pub enum BatteryDuration {
     ToEmpty(i64),
     ToFull(i64),
+    Empty,
+    Full,
     #[default]
     Unknown,
 }
@@ -29,6 +31,7 @@ pub struct ConvertedBatteryData {
     pub watt_consumption: String,
     pub battery_duration: BatteryDuration,
     pub health: String,
+    pub state: String,
 }
 
 #[derive(Default, Debug)]
@@ -527,9 +530,20 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
             } else if let Some(secs) = battery_harvest.secs_until_full {
                 BatteryDuration::ToFull(secs)
             } else {
-                BatteryDuration::Unknown
+                match battery_harvest.state {
+                    starship_battery::State::Empty => BatteryDuration::Empty,
+                    starship_battery::State::Full => BatteryDuration::Full,
+                    _ => BatteryDuration::Unknown,
+                }
             },
             health: format!("{:.2}%", battery_harvest.health_percent),
+            state: {
+                let mut s = battery_harvest.state.to_string();
+                if !s.is_empty() {
+                    s[0..1].make_ascii_uppercase();
+                }
+                s
+            },
         })
         .collect()
 }

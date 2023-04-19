@@ -122,24 +122,42 @@ impl Painter {
 
                 fn long_time(secs: i64) -> String {
                     let time = time::Duration::seconds(secs);
-                    let num_minutes = time.whole_minutes() - time.whole_hours() * 60;
+                    let num_hours = time.whole_hours();
+                    let num_minutes = time.whole_minutes() - num_hours * 60;
                     let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
-                    format!(
-                        "{} hour{}, {} minute{}, {} second{}",
-                        time.whole_hours(),
-                        if time.whole_hours() == 1 { "" } else { "s" },
-                        num_minutes,
-                        if num_minutes == 1 { "" } else { "s" },
-                        num_seconds,
-                        if num_seconds == 1 { "" } else { "s" },
-                    )
+
+                    if num_hours > 0 {
+                        format!(
+                            "{} hour{}, {} minute{}, {} second{}",
+                            num_hours,
+                            if num_hours == 1 { "" } else { "s" },
+                            num_minutes,
+                            if num_minutes == 1 { "" } else { "s" },
+                            num_seconds,
+                            if num_seconds == 1 { "" } else { "s" },
+                        )
+                    } else {
+                        format!(
+                            "{} minute{}, {} second{}",
+                            num_minutes,
+                            if num_minutes == 1 { "" } else { "s" },
+                            num_seconds,
+                            if num_seconds == 1 { "" } else { "s" },
+                        )
+                    }
                 }
 
                 fn short_time(secs: i64) -> String {
                     let time = time::Duration::seconds(secs);
-                    let num_minutes = time.whole_minutes() - time.whole_hours() * 60;
+                    let num_hours = time.whole_hours();
+                    let num_minutes = time.whole_minutes() - num_hours * 60;
                     let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
-                    format!("{}h {}m {}s", time.whole_hours(), num_minutes, num_seconds,)
+
+                    if num_hours > 0 {
+                        format!("{}h {}m {}s", time.whole_hours(), num_minutes, num_seconds,)
+                    } else {
+                        format!("{}m {}s", num_minutes, num_seconds,)
+                    }
                 }
 
                 let mut battery_rows = Vec::with_capacity(4);
@@ -154,17 +172,22 @@ impl Painter {
                     }),
                 ]));
                 battery_rows.push(
-                    Row::new(vec!["Consumption", &battery_details.watt_consumption])
+                    Row::new(vec!["Rate", &battery_details.watt_consumption])
                         .style(self.colours.text_style),
                 );
 
-                let s: String; // Keep string in scope.
+                battery_rows.push(
+                    Row::new(vec!["State", &battery_details.state]).style(self.colours.text_style),
+                );
+
+                let mut s: String; // Keep string in scope.
                 {
                     let style = self.colours.text_style;
                     match &battery_details.battery_duration {
                         BatteryDuration::ToEmpty(secs) => {
-                            if half_width > 25 {
-                                s = long_time(*secs);
+                            s = long_time(*secs);
+
+                            if half_width as usize > s.len() {
                                 battery_rows.push(Row::new(vec!["Time to empty", &s]).style(style));
                             } else {
                                 s = short_time(*secs);
@@ -172,15 +195,18 @@ impl Painter {
                             }
                         }
                         BatteryDuration::ToFull(secs) => {
-                            if half_width > 25 {
-                                s = long_time(*secs);
+                            s = long_time(*secs);
+
+                            if half_width as usize > s.len() {
                                 battery_rows.push(Row::new(vec!["Time to full", &s]).style(style));
                             } else {
                                 s = short_time(*secs);
                                 battery_rows.push(Row::new(vec!["To full", &s]).style(style));
                             }
                         }
-                        BatteryDuration::Unknown => {}
+                        BatteryDuration::Empty
+                        | BatteryDuration::Full
+                        | BatteryDuration::Unknown => {}
                     }
                 }
 

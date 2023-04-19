@@ -17,7 +17,8 @@ The battery widget can be enabled through either the `--battery` flag, the `batt
 The following data is displayed for batteries:
 
 - Charge percent
-- Consumption
+- Consumption rate
+- Charging state
 - Time to empty/charge, based on the current state
 - Battery health percent
 
