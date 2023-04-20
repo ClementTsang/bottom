@@ -93,9 +93,7 @@ fn test_negative_rate() {
         .arg("-1000")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "wasn't expected, or isn't valid in this context",
-        ));
+        .stderr(predicate::str::contains("unexpected argument"));
 }
 
 #[test]
@@ -160,7 +158,7 @@ fn test_missing_default_widget_type() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "The following required arguments were not provided",
+            "the following required arguments were not provided",
         ));
 }
 

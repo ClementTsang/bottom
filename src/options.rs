@@ -147,7 +147,7 @@ pub struct IgnoreList {
 
 macro_rules! is_flag_enabled {
     ($flag_name:ident, $matches:expr, $config:expr) => {
-        if $matches.contains_id(stringify!($flag_name)) {
+        if $matches.get_flag(stringify!($flag_name)) {
             true
         } else if let Some(flags) = &$config.flags {
             flags.$flag_name.unwrap_or(false)
@@ -157,7 +157,7 @@ macro_rules! is_flag_enabled {
     };
 
     ($cmd_flag:literal, $cfg_flag:ident, $matches:expr, $config:expr) => {
-        if $matches.contains_id($cmd_flag) {
+        if $matches.get_flag($cmd_flag) {
             true
         } else if let Some(flags) = &$config.flags {
             flags.$cfg_flag.unwrap_or(false)
@@ -522,11 +522,11 @@ fn get_update_rate_in_milliseconds(matches: &ArgMatches, config: &Config) -> err
 fn get_temperature(
     matches: &ArgMatches, config: &Config,
 ) -> error::Result<data_harvester::temperature::TemperatureType> {
-    if matches.contains_id("fahrenheit") {
+    if matches.get_flag("fahrenheit") {
         return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
-    } else if matches.contains_id("kelvin") {
+    } else if matches.get_flag("kelvin") {
         return Ok(data_harvester::temperature::TemperatureType::Kelvin);
-    } else if matches.contains_id("celsius") {
+    } else if matches.get_flag("celsius") {
         return Ok(data_harvester::temperature::TemperatureType::Celsius);
     } else if let Some(flags) = &config.flags {
         if let Some(temp_type) = &flags.temperature_type {
@@ -547,7 +547,7 @@ fn get_temperature(
 
 /// Yes, this function gets whether to show average CPU (true) or not (false)
 fn get_show_average_cpu(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.contains_id("hide_avg_cpu") {
+    if matches.get_flag("hide_avg_cpu") {
         return false;
     } else if let Some(flags) = &config.flags {
         if let Some(avg_cpu) = flags.hide_avg_cpu {
@@ -689,7 +689,7 @@ fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
             }
         }
 
-        if matches.contains_id("battery") {
+        if matches.get_flag("battery") {
             return true;
         } else if let Some(flags) = &config.flags {
             if let Some(battery) = flags.battery {
@@ -705,7 +705,7 @@ fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
 fn get_enable_gpu_memory(matches: &ArgMatches, config: &Config) -> bool {
     #[cfg(feature = "gpu")]
     {
-        if matches.contains_id("enable_gpu_memory") {
+        if matches.get_flag("enable_gpu_memory") {
             return true;
         } else if let Some(flags) = &config.flags {
             if let Some(enable_gpu_memory) = flags.enable_gpu_memory {
@@ -721,7 +721,7 @@ fn get_enable_gpu_memory(matches: &ArgMatches, config: &Config) -> bool {
 fn get_enable_cache_memory(matches: &ArgMatches, config: &Config) -> bool {
     #[cfg(not(target_os = "windows"))]
     {
-        if matches.contains_id("enable_cache_memory") {
+        if matches.get_flag("enable_cache_memory") {
             return true;
         } else if let Some(flags) = &config.flags {
             if let Some(enable_cache_memory) = flags.enable_cache_memory {
@@ -796,7 +796,7 @@ pub fn get_color_scheme(matches: &ArgMatches, config: &Config) -> error::Result<
 }
 
 fn get_network_unit_type(matches: &ArgMatches, config: &Config) -> DataUnit {
-    if matches.contains_id("network_use_bytes") {
+    if matches.get_flag("network_use_bytes") {
         return DataUnit::Byte;
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_bytes) = flags.network_use_bytes {
@@ -810,7 +810,7 @@ fn get_network_unit_type(matches: &ArgMatches, config: &Config) -> DataUnit {
 }
 
 fn get_network_scale_type(matches: &ArgMatches, config: &Config) -> AxisScaling {
-    if matches.contains_id("network_use_log") {
+    if matches.get_flag("network_use_log") {
         return AxisScaling::Log;
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_log) = flags.network_use_log {
@@ -858,7 +858,7 @@ mod test {
     }
 
     // TODO: There's probably a better way to create clap options AND unify together to avoid the possibility of
-    // typos/mixing up. Use macros!
+    // typos/mixing up. Use proc macros to unify on one struct?
     #[test]
     fn verify_cli_options_build() {
         let app = crate::clap::build_app();
@@ -871,7 +871,7 @@ mod test {
             create_app(config, matches)
         };
 
-        // Skip battery since it's tricky to test depending on the platform testing.
+        // Skip battery since it's tricky to test depending on the platform/features we're testing with.
         let skip = ["help", "version", "celsius", "battery"];
 
         for arg in app.get_arguments().collect::<Vec<_>>() {
@@ -882,7 +882,7 @@ mod test {
                 .unwrap()
                 .to_owned();
 
-            if !arg.is_takes_value_set() && !skip.contains(&arg_name) {
+            if !arg.get_action().takes_values() && !skip.contains(&arg_name) {
                 let arg = format!("--{arg_name}");
 
                 let arguments = vec!["btm", &arg];
