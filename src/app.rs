@@ -146,21 +146,21 @@ pub struct App {
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
         /// The max signal we can send to a process on Linux.
-        const MAX_PROCESS_SIGNAL: usize = 64;
+        pub const MAX_PROCESS_SIGNAL: usize = 64;
     } else if #[cfg(target_os = "macos")] {
         /// The max signal we can send to a process on macOS.
-        const MAX_PROCESS_SIGNAL: usize = 31;
+        pub const MAX_PROCESS_SIGNAL: usize = 31;
     } else if #[cfg(target_os = "freebsd")] {
         /// The max signal we can send to a process on FreeBSD.
         /// See [https://www.freebsd.org/cgi/man.cgi?query=signal&apropos=0&sektion=3&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html]
         /// for more details.
-        const MAX_PROCESS_SIGNAL: usize = 33;
+        pub const MAX_PROCESS_SIGNAL: usize = 33;
     } else if #[cfg(target_os = "windows")] {
         /// The max signal we can send to a process. For Windows, we only have support for one signal (kill).
-        const MAX_PROCESS_SIGNAL: usize = 1;
+        pub const MAX_PROCESS_SIGNAL: usize = 1;
     } else {
         /// The max signal we can send to a process. As a fallback, we only support one signal (kill).
-        const MAX_PROCESS_SIGNAL: usize = 1;
+        pub const MAX_PROCESS_SIGNAL: usize = 1;
     }
 }
 
