@@ -67,6 +67,7 @@ pub fn btm_command() -> Command {
         None => Command::new(btm_exe),
         Some(runner) => {
             let mut cmd = Command::new(runner);
+            cmd.env("NO_COLOR", "1");
             cmd.arg(btm_exe);
             cmd
         }

@@ -170,7 +170,7 @@ fn test_battery_flag() {
             .assert()
             .failure()
             .stderr(predicate::str::contains(
-                "'--battery' which wasn't expected",
+                "unexpected argument '--battery' found",
             ));
     }
 }

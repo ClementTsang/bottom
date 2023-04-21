@@ -410,7 +410,7 @@ use CPU (3) as the default instead.
         .version(VERSION)
         .author(crate_authors!())
         .about(crate_description!())
-        .color(ColorChoice::Always)
+        .color(ColorChoice::Auto)
         .override_usage(USAGE)
         .help_template(TEMPLATE)
         .disable_version_flag(true)
