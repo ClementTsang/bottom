@@ -93,9 +93,7 @@ fn test_negative_rate() {
         .arg("-1000")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "wasn't expected, or isn't valid in this context",
-        ));
+        .stderr(predicate::str::contains("unexpected argument"));
 }
 
 #[test]
@@ -160,11 +158,12 @@ fn test_missing_default_widget_type() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "The following required arguments were not provided",
+            "the following required arguments were not provided",
         ));
 }
 
 #[test]
+#[cfg_attr(feature = "battery", ignore)]
 fn test_battery_flag() {
     if !cfg!(feature = "battery") {
         btm_command()
@@ -172,7 +171,21 @@ fn test_battery_flag() {
             .assert()
             .failure()
             .stderr(predicate::str::contains(
-                "'--battery' which wasn't expected",
+                "unexpected argument '--battery' found",
+            ));
+    }
+}
+
+#[test]
+#[cfg_attr(feature = "gpu", ignore)]
+fn test_gpu_flag() {
+    if !cfg!(feature = "gpu") {
+        btm_command()
+            .arg("--enable_gpu_memory")
+            .assert()
+            .failure()
+            .stderr(predicate::str::contains(
+                "unexpected argument '--enable_gpu_memory' found",
             ));
     }
 }

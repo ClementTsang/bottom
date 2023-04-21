@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Other
 
 - [#1100](https://github.com/ClementTsang/bottom/pull/1100): Speed up first draw and first data collection.
+- [#1107](https://github.com/ClementTsang/bottom/pull/1107): Update to clap v4.
 
 ## [0.8.0] - 2023-01-22
 

@@ -60,13 +60,15 @@ fn cross_runner() -> Option<String> {
     }
 }
 
-/// Returns the [`Command`] of a binary invocation of bottom.
+/// Returns the [`Command`] of a binary invocation of bottom, alongside
+/// any required env variables.
 pub fn btm_command() -> Command {
     let btm_exe = env!("CARGO_BIN_EXE_btm");
     match cross_runner() {
         None => Command::new(btm_exe),
         Some(runner) => {
             let mut cmd = Command::new(runner);
+            cmd.env("NO_COLOR", "1");
             cmd.arg(btm_exe);
             cmd
         }

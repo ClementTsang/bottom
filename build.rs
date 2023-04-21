@@ -88,7 +88,7 @@ fn nightly_version() {
     println!("cargo:rerun-if-env-changed=CIRRUS_CHANGE_IN_REPO");
 }
 
-fn main() -> Result<()> {
+fn main() -> io::Result<()> {
     btm_generate()?;
     nightly_version();
 

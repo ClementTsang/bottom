@@ -75,7 +75,7 @@ deploy = ["battery", "gpu", "zfs"]
 anyhow = "1.0.70"
 backtrace = "0.3.67"
 cfg-if = "1.0.0"
-clap = { version = "3.2.2", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.2.4", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 const_format = "0.2.30"
 crossterm = "0.26.1"
@@ -140,9 +140,9 @@ default-features = false
 features = ["user-hooks"]
 
 [build-dependencies]
-clap = { version = "3.2.2", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "3.2.4"
-clap_mangen = "0.1.11"
+clap = { version = "4.2.4", features = ["default", "cargo", "wrap_help"] }
+clap_complete = "4.2.0"
+clap_mangen = "0.2.10"
 
 [package.metadata.deb]
 section = "utility"
