@@ -163,6 +163,7 @@ fn test_missing_default_widget_type() {
 }
 
 #[test]
+#[cfg_attr(feature = "battery", ignore)]
 fn test_battery_flag() {
     if !cfg!(feature = "battery") {
         btm_command()
@@ -171,6 +172,20 @@ fn test_battery_flag() {
             .failure()
             .stderr(predicate::str::contains(
                 "unexpected argument '--battery' found",
+            ));
+    }
+}
+
+#[test]
+#[cfg_attr(feature = "gpu", ignore)]
+fn test_gpu_flag() {
+    if !cfg!(feature = "gpu") {
+        btm_command()
+            .arg("--enable_gpu_memory")
+            .assert()
+            .failure()
+            .stderr(predicate::str::contains(
+                "unexpected argument '--enable_gpu_memory' found",
             ));
     }
 }
