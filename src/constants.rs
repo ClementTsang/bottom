@@ -1,4 +1,5 @@
 use once_cell::sync::Lazy;
+use tui::widgets::Borders;
 
 use crate::options::ConfigColours;
 
@@ -21,7 +22,7 @@ pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 
 // Side borders
-pub const SIDE_BORDERS: tui::widgets::Borders = tui::widgets::Borders::from_bits_truncate(20);
+pub const SIDE_BORDERS: Borders = Borders::LEFT.union(Borders::RIGHT);
 pub static DEFAULT_TEXT_STYLE: Lazy<tui::style::Style> =
     Lazy::new(|| tui::style::Style::default().fg(tui::style::Color::Gray));
 pub static DEFAULT_HEADER_STYLE: Lazy<tui::style::Style> =
@@ -736,6 +737,16 @@ mod test {
             HELP_CONTENTS_TEXT.len(),
             HELP_TEXT.len(),
             "the two should be equal, or this test should be updated"
+        )
+    }
+
+    /// This test exists because previously, [`SIDE_BORDERS`] was set incorrectly after I moved from
+    /// tui-rs to ratatui.
+    #[test]
+    fn assert_side_border_bits_match() {
+        assert_eq!(
+            SIDE_BORDERS,
+            Borders::ALL.difference(Borders::TOP.union(Borders::BOTTOM))
         )
     }
 }
