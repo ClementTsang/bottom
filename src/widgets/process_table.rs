@@ -1,6 +1,7 @@
 use std::{borrow::Cow, collections::BTreeMap};
 
 use hashbrown::{HashMap, HashSet};
+use indexmap::IndexSet;
 use itertools::Itertools;
 
 use crate::{
@@ -71,6 +72,35 @@ type ProcessTable = SortDataTable<ProcWidgetData, ProcColumn>;
 type SortTable = DataTable<Cow<'static, str>, SortTableColumn>;
 type StringPidMap = HashMap<String, Vec<Pid>>;
 
+fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
+    use ProcColumn::*;
+
+    match column {
+        CpuPercent => SortColumn::new(CpuPercent).default_descending(),
+        MemoryVal => SortColumn::new(MemoryVal).default_descending(),
+        MemoryPercent => SortColumn::new(MemoryPercent).default_descending(),
+        Pid => SortColumn::new(Pid),
+        Count => SortColumn::new(Count),
+        Name => SortColumn::soft(Name, Some(0.3)),
+        Command => SortColumn::soft(Command, Some(0.3)),
+        ReadPerSecond => SortColumn::hard(ReadPerSecond, 8).default_descending(),
+        WritePerSecond => SortColumn::hard(WritePerSecond, 8).default_descending(),
+        TotalRead => SortColumn::hard(TotalRead, 8).default_descending(),
+        TotalWrite => SortColumn::hard(TotalWrite, 8).default_descending(),
+        User => SortColumn::soft(User, Some(0.05)),
+        State => SortColumn::hard(State, 7),
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct ProcTableConfig {
+    pub is_case_sensitive: bool,
+    pub is_match_whole_word: bool,
+    pub is_use_regex: bool,
+    pub show_memory_as_values: bool,
+    pub is_command: bool,
+}
+
 pub struct ProcWidgetState {
     pub mode: ProcWidgetMode,
 
@@ -92,6 +122,8 @@ pub struct ProcWidgetState {
 }
 
 impl ProcWidgetState {
+    // FIXME: This needs to be updated.
+    // FIXME: Add tests.
     pub const PID_OR_COUNT: usize = 0;
     pub const PROC_NAME_OR_CMD: usize = 1;
     pub const CPU: usize = 2;
@@ -123,6 +155,7 @@ impl ProcWidgetState {
     fn new_process_table(
         config: &AppConfigFields, colours: &CanvasColours, mode: &ProcWidgetMode, is_count: bool,
         is_command: bool, show_memory_as_values: bool,
+        config_columns: &Option<IndexSet<ProcColumn>>,
     ) -> ProcessTable {
         let (default_index, default_order) = if matches!(mode, ProcWidgetMode::Tree { .. }) {
             (Self::PID_OR_COUNT, SortOrder::Ascending)
@@ -130,36 +163,35 @@ impl ProcWidgetState {
             (Self::CPU, SortOrder::Descending)
         };
 
-        let columns = {
+        let columns: Vec<SortColumn<ProcColumn>> = {
             use ProcColumn::*;
 
-            let pid_or_count = SortColumn::new(if is_count { Count } else { Pid });
-            let name_or_cmd = SortColumn::soft(if is_command { Command } else { Name }, Some(0.3));
-            let cpu = SortColumn::new(CpuPercent).default_descending();
-            let mem = SortColumn::new(if show_memory_as_values {
-                MemoryVal
+            if let Some(config_columns) = config_columns {
+                config_columns
+                    .into_iter()
+                    .map(|c| make_column(*c))
+                    .collect()
             } else {
-                MemoryPercent
-            })
-            .default_descending();
-            let rps = SortColumn::hard(ReadPerSecond, 8).default_descending();
-            let wps = SortColumn::hard(WritePerSecond, 8).default_descending();
-            let tr = SortColumn::hard(TotalRead, 8).default_descending();
-            let tw = SortColumn::hard(TotalWrite, 8).default_descending();
-            let state = SortColumn::hard(State, 7);
-
-            vec![
-                pid_or_count,
-                name_or_cmd,
-                cpu,
-                mem,
-                rps,
-                wps,
-                tr,
-                tw,
-                SortColumn::soft(User, Some(0.05)),
-                state,
-            ]
+                [
+                    if is_count { Count } else { Pid },
+                    if is_command { Command } else { Name },
+                    CpuPercent,
+                    if show_memory_as_values {
+                        MemoryVal
+                    } else {
+                        MemoryPercent
+                    },
+                    ReadPerSecond,
+                    WritePerSecond,
+                    TotalRead,
+                    TotalWrite,
+                    User,
+                    State,
+                ]
+                .into_iter()
+                .map(make_column)
+                .collect()
+            }
         };
 
         let inner_props = DataTableProps {
@@ -182,10 +214,17 @@ impl ProcWidgetState {
     }
 
     pub fn new(
-        config: &AppConfigFields, mode: ProcWidgetMode, is_case_sensitive: bool,
-        is_match_whole_word: bool, is_use_regex: bool, show_memory_as_values: bool,
-        is_command: bool, colours: &CanvasColours,
+        config: &AppConfigFields, mode: ProcWidgetMode, table_config: ProcTableConfig,
+        colours: &CanvasColours, config_columns: &Option<IndexSet<ProcColumn>>,
     ) -> Self {
+        let ProcTableConfig {
+            is_case_sensitive,
+            is_match_whole_word,
+            is_use_regex,
+            show_memory_as_values,
+            is_command,
+        } = table_config;
+
         let process_search_state = {
             let mut pss = ProcessSearchState::default();
 
@@ -212,6 +251,7 @@ impl ProcWidgetState {
             is_count,
             is_command,
             show_memory_as_values,
+            config_columns,
         );
 
         let id_pid_map = HashMap::default();
