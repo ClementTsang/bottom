@@ -1,6 +1,5 @@
 use std::{borrow::Cow, collections::BTreeMap};
 
-use const_format::formatcp;
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
@@ -274,9 +273,9 @@ impl ProcWidgetState {
         &self, collapsed_pids: &HashSet<Pid>, data_collection: &DataCollection,
     ) -> Vec<ProcWidgetData> {
         const BRANCH_END: char = '└';
-        const BRANCH_VERTICAL: char = '│';
         const BRANCH_SPLIT: char = '├';
         const BRANCH_HORIZONTAL: char = '─';
+        const SPACED_BRANCH_VERTICAL: &str = "│  ";
 
         let search_query = self.get_query();
         let is_using_command = self.is_using_command();
@@ -487,7 +486,7 @@ impl ProcWidgetState {
                         prefixes.push(if is_last {
                             "   "
                         } else {
-                            formatcp!("{}  ", BRANCH_VERTICAL)
+                            SPACED_BRANCH_VERTICAL
                         });
                     }
 
