@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1100](https://github.com/ClementTsang/bottom/pull/1100): Speed up first draw and first data collection.
 - [#1107](https://github.com/ClementTsang/bottom/pull/1107): Update to clap v4.
+- [#1111](https://github.com/ClementTsang/bottom/pull/1111): Update to regex [1.8.0](https://github.com/rust-lang/regex/blob/93316a3b1adc43cc12fab6c73a59f646658cd984/CHANGELOG.md#180-2023-04-20), supporting more escapable characters and named captures.
 
 ## [0.8.0] - 2023-01-22
 
