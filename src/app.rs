@@ -143,16 +143,26 @@ pub struct App {
     pub filters: DataFilters,
 }
 
-// TODO: Should probably set a fallback max signal/not supported for this.
-#[cfg(target_os = "windows")]
-const MAX_SIGNAL: usize = 1;
-#[cfg(target_os = "linux")]
-const MAX_SIGNAL: usize = 64;
-#[cfg(target_os = "macos")]
-const MAX_SIGNAL: usize = 31;
-// https://www.freebsd.org/cgi/man.cgi?query=signal&apropos=0&sektion=3&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html
-#[cfg(target_os = "freebsd")]
-const MAX_SIGNAL: usize = 33;
+cfg_if::cfg_if! {
+    if #[cfg(target_os = "linux")] {
+        /// The max signal we can send to a process on Linux.
+        pub const MAX_PROCESS_SIGNAL: usize = 64;
+    } else if #[cfg(target_os = "macos")] {
+        /// The max signal we can send to a process on macOS.
+        pub const MAX_PROCESS_SIGNAL: usize = 31;
+    } else if #[cfg(target_os = "freebsd")] {
+        /// The max signal we can send to a process on FreeBSD.
+        /// See [https://www.freebsd.org/cgi/man.cgi?query=signal&apropos=0&sektion=3&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html]
+        /// for more details.
+        pub const MAX_PROCESS_SIGNAL: usize = 33;
+    } else if #[cfg(target_os = "windows")] {
+        /// The max signal we can send to a process. For Windows, we only have support for one signal (kill).
+        pub const MAX_PROCESS_SIGNAL: usize = 1;
+    } else {
+        /// The max signal we can send to a process. As a fallback, we only support one signal (kill).
+        pub const MAX_PROCESS_SIGNAL: usize = 1;
+    }
+}
 
 impl App {
     pub fn reset(&mut self) {
@@ -811,7 +821,7 @@ impl App {
         if self.delete_dialog_state.is_showing_dd {
             let mut new_signal = match self.delete_dialog_state.selected_signal {
                 KillSignal::Cancel => 8,
-                KillSignal::Kill(signal) => min(signal + 8, MAX_SIGNAL),
+                KillSignal::Kill(signal) => min(signal + 8, MAX_PROCESS_SIGNAL),
             };
             if new_signal > 31 && new_signal < 42 {
                 new_signal += 2;
@@ -1930,7 +1940,7 @@ impl App {
             self.help_dialog_state.scroll_state.current_scroll_index =
                 self.help_dialog_state.scroll_state.max_scroll_index;
         } else if self.delete_dialog_state.is_showing_dd {
-            self.delete_dialog_state.selected_signal = KillSignal::Kill(MAX_SIGNAL);
+            self.delete_dialog_state.selected_signal = KillSignal::Kill(MAX_PROCESS_SIGNAL);
         }
     }
 

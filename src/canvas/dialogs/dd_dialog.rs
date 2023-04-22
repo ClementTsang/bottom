@@ -10,7 +10,7 @@ use tui::{
 };
 
 use crate::{
-    app::{App, KillSignal},
+    app::{App, KillSignal, MAX_PROCESS_SIGNAL},
     canvas::Painter,
     widgets::ProcWidgetMode,
 };
@@ -66,7 +66,7 @@ impl Painter {
     fn draw_dd_confirm_buttons<B: Backend>(
         &self, f: &mut Frame<'_, B>, button_draw_loc: &Rect, app_state: &mut App,
     ) {
-        if cfg!(target_os = "windows") || !app_state.app_config_fields.is_advanced_kill {
+        if MAX_PROCESS_SIGNAL == 1 || !app_state.app_config_fields.is_advanced_kill {
             let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
                 KillSignal::Kill(_) => (
                     Span::styled("Yes", self.colours.currently_selected_text_style),
@@ -135,7 +135,7 @@ impl Painter {
         } else {
             #[cfg(target_family = "unix")]
             {
-                let signal_text;
+                let signal_text: Vec<&str>;
                 #[cfg(target_os = "linux")]
                 {
                     signal_text = vec![
@@ -401,12 +401,19 @@ impl Painter {
                 draw_loc,
             );
 
-            let btn_height =
-                if cfg!(target_os = "windows") || !app_state.app_config_fields.is_advanced_kill {
-                    3
-                } else {
-                    20
-                };
+            let btn_height = {
+                cfg_if::cfg_if! {
+                    if #[cfg(target_os = "windows")] {
+                        3
+                    } else {
+                        if !app_state.app_config_fields.is_advanced_kill {
+                            3
+                        } else {
+                            20
+                        }
+                    }
+                }
+            };
 
             // Now draw buttons if needed...
             let split_draw_loc = Layout::default()
