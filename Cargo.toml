@@ -131,12 +131,8 @@ filedescriptor = "0.8.2"
 
 [dev-dependencies]
 assert_cmd = "2.0.10"
+cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
 predicates = "3.0.2"
-
-[dev-dependencies.cargo-husky]
-version = "1.5.0"
-default-features = false
-features = ["user-hooks"]
 
 [build-dependencies]
 clap = { version = "4.2.4", features = ["default", "cargo", "wrap_help"] }
