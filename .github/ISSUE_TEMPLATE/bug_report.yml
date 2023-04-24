@@ -1,6 +1,5 @@
 name: Bug report
 description: Found something wrong or broken? If it hasn't already been filed/solved, report it!
-title: "[Bug] "
 labels: ["bug"]
 body:
   - type: checkboxes
@@ -99,7 +98,7 @@ body:
       placeholder: |
         Example:
         I expect to be able to see information about the encrypted partition on basic mode.
-        
+
   - type: textarea
     id: actual
     validations:

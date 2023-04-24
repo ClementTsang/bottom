@@ -1,6 +1,5 @@
 name: Feature request
 description: Got a good idea that hasn't already been suggested?  Mention it here!
-title: "[Feature] "
 labels: ["feature"]
 body:
   - type: checkboxes
