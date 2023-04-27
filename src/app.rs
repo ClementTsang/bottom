@@ -13,7 +13,7 @@ pub use states::*;
 use typed_builder::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
-use crate::widgets::{ProcWidgetMode, ProcWidgetState};
+use crate::widgets::{ProcWidgetColumn, ProcWidgetMode};
 use crate::{
     constants,
     data_conversion::ConvertedData,
@@ -1193,7 +1193,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.select_column(ProcWidgetState::CPU);
+                        proc_widget_state.select_column(ProcWidgetColumn::Cpu);
                     }
                 }
             }
@@ -1203,7 +1203,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.select_column(ProcWidgetState::MEM);
+                        proc_widget_state.select_column(ProcWidgetColumn::Mem);
                     }
                 } else if let Some(disk) = self
                     .disk_state
@@ -1218,7 +1218,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.select_column(ProcWidgetState::PID_OR_COUNT);
+                        proc_widget_state.select_column(ProcWidgetColumn::PidOrCount);
                     }
                 } else if let Some(disk) = self
                     .disk_state
@@ -1243,7 +1243,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.select_column(ProcWidgetState::PROC_NAME_OR_CMD);
+                        proc_widget_state.select_column(ProcWidgetColumn::ProcNameOrCmd);
                     }
                 } else if let Some(disk) = self
                     .disk_state
