@@ -3,6 +3,8 @@
 #![deny(clippy::unimplemented)]
 #![deny(clippy::missing_safety_doc)]
 #[allow(unused_imports)] // TODO: Deny unused imports.
+
+// Primarily used for debug purposes.
 #[cfg(feature = "log")]
 #[macro_use]
 extern crate log;
@@ -35,6 +37,7 @@ use bottom::{
     *,
 };
 
+// Used for heap allocation debugging purposes.
 // #[global_allocator]
 // static ALLOC: dhat::Alloc = dhat::Alloc;
 
@@ -64,7 +67,7 @@ fn main() -> Result<()> {
         CanvasColours::new(colour_scheme, &config)?
     };
 
-    // Create "app" struct, which will control most of the program and store settings/state
+    // Create an "app" struct, which will control most of the program and store settings/state
     let mut app = build_app(
         &matches,
         &mut config,
@@ -144,9 +147,9 @@ fn main() -> Result<()> {
     #[cfg(target_os = "freebsd")]
     let _stderr_fd = {
         // A really ugly band-aid to suppress stderr warnings on FreeBSD due to sysinfo.
-        use std::fs::OpenOptions;
-
+        // For more information, see https://github.com/ClementTsang/bottom/issues/798.
         use filedescriptor::{FileDescriptor, StdioDescriptor};
+        use std::fs::OpenOptions;
 
         let path = OpenOptions::new().write(true).open("/dev/null")?;
         FileDescriptor::redirect_stdio(&path, StdioDescriptor::Stderr)?
@@ -171,7 +174,8 @@ fn main() -> Result<()> {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             match recv {
                 BottomEvent::Resize => {
-                    try_drawing(&mut terminal, &mut app, &mut painter)?; // FIXME: This is bugged with frozen?
+                    // FIXME: This is bugged with frozen?
+                    try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::KeyInput(event) => {
                     if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
