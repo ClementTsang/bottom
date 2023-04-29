@@ -779,7 +779,7 @@ impl ProcWidgetState {
     ///
     /// Otherwise, if count is disabled, then if the columns exist, the User and State columns should be re-enabled,
     /// and the mode switched to [`ProcWidgetMode::Normal`].
-    pub fn on_tab(&mut self) {
+    pub fn toggle_tab(&mut self) {
         if !matches!(self.mode, ProcWidgetMode::Tree { .. }) {
             if let Some(index) = self
                 .column_mapping
@@ -1092,11 +1092,11 @@ mod test {
         assert_eq!(get_columns(&state.table), original_columns);
 
         // This should hide the state.
-        state.on_tab();
+        state.toggle_tab();
         assert_eq!(get_columns(&state.table), new_columns);
 
         // This should re-reveal the state.
-        state.on_tab();
+        state.toggle_tab();
         assert_eq!(get_columns(&state.table), original_columns);
     }
 
@@ -1119,11 +1119,11 @@ mod test {
         assert_eq!(get_columns(&state.table), original_columns);
 
         // This should hide the state.
-        state.on_tab();
+        state.toggle_tab();
         assert_eq!(get_columns(&state.table), new_columns);
 
         // This should re-reveal the state.
-        state.on_tab();
+        state.toggle_tab();
         assert_eq!(get_columns(&state.table), original_columns);
     }
 
@@ -1200,5 +1200,45 @@ mod test {
 
         state.toggle_mem_percentage();
         assert_eq!(get_columns(&state.table), original_columns);
+    }
+
+    #[test]
+    fn test_is_using_command() {
+        let original_columns = vec![
+            ProcColumn::Pid,
+            ProcColumn::MemoryVal,
+            ProcColumn::State,
+            ProcColumn::Command,
+        ];
+
+        let mut state = init_default_state(&original_columns);
+        assert_eq!(get_columns(&state.table), original_columns);
+        assert!(state.is_using_command());
+
+        state.toggle_command();
+        assert!(!state.is_using_command());
+
+        state.toggle_command();
+        assert!(state.is_using_command());
+    }
+
+    #[test]
+    fn test_is_memory() {
+        let original_columns = vec![
+            ProcColumn::Pid,
+            ProcColumn::MemoryVal,
+            ProcColumn::State,
+            ProcColumn::Command,
+        ];
+
+        let mut state = init_default_state(&original_columns);
+        assert_eq!(get_columns(&state.table), original_columns);
+        assert!(!state.is_mem_percent());
+
+        state.toggle_mem_percentage();
+        assert!(state.is_mem_percent());
+
+        state.toggle_mem_percentage();
+        assert!(!state.is_mem_percent());
     }
 }

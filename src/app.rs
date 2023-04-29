@@ -300,7 +300,7 @@ impl App {
                     .proc_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    proc_widget_state.on_tab();
+                    proc_widget_state.toggle_tab();
                 }
             }
         }
