@@ -1,12 +1,14 @@
 use std::{borrow::Cow, cmp::Reverse};
 
+use serde::{de::Error, Deserialize, Serialize};
+
 use super::ProcWidgetData;
 use crate::{
     components::data_table::{ColumnHeader, SortsRow},
     utils::gen_util::sort_partial_fn,
 };
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 pub enum ProcColumn {
     CpuPercent,
     MemoryVal,
@@ -21,6 +23,40 @@ pub enum ProcColumn {
     TotalWrite,
     State,
     User,
+}
+
+impl<'de> Deserialize<'de> for ProcColumn {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?.to_lowercase();
+        match value.as_str() {
+            "cpu%" => Ok(ProcColumn::CpuPercent),
+            "mem" => Ok(ProcColumn::MemoryVal),
+            "mem%" => Ok(ProcColumn::MemoryPercent),
+            "pid" => Ok(ProcColumn::Pid),
+            "count" => Ok(ProcColumn::Count),
+            "name" => Ok(ProcColumn::Name),
+            "command" => Ok(ProcColumn::Command),
+            "read" | "r/s" | "rps" => Ok(ProcColumn::ReadPerSecond),
+            "write" | "w/s" | "wps" => Ok(ProcColumn::WritePerSecond),
+            "tread" | "t.read" => Ok(ProcColumn::TotalRead),
+            "twrite" | "t.write" => Ok(ProcColumn::TotalWrite),
+            "state" => Ok(ProcColumn::State),
+            "user" => Ok(ProcColumn::User),
+            _ => Err(D::Error::custom("doesn't match any column type")),
+        }
+    }
+}
+
+impl Serialize for ProcColumn {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.text())
+    }
 }
 
 impl ColumnHeader for ProcColumn {

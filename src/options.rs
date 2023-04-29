@@ -7,6 +7,7 @@ use std::{
 
 use clap::ArgMatches;
 use hashbrown::{HashMap, HashSet};
+use indexmap::IndexSet;
 use layout_options::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -23,11 +24,14 @@ use crate::{
     utils::error::{self, BottomError},
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
-        ProcWidgetMode, ProcWidgetState, TempWidgetState,
+        ProcColumn, ProcTableConfig, ProcWidgetMode, ProcWidgetState, TempWidgetState,
     },
 };
 
 pub mod layout_options;
+
+pub mod process_columns;
+use self::process_columns::ProcessConfig;
 
 use anyhow::{Context, Result};
 
@@ -40,6 +44,7 @@ pub struct Config {
     pub mount_filter: Option<IgnoreList>,
     pub temp_filter: Option<IgnoreList>,
     pub net_filter: Option<IgnoreList>,
+    pub processes: Option<ProcessConfig>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, TypedBuilder)]
@@ -218,6 +223,24 @@ pub fn build_app(
     let network_scale_type = get_network_scale_type(matches, config);
     let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, matches, config);
 
+    let proc_columns: Option<IndexSet<ProcColumn>> = {
+        let columns = config
+            .processes
+            .as_ref()
+            .and_then(|cfg| cfg.columns.clone());
+
+        match columns {
+            Some(columns) => {
+                if columns.is_empty() {
+                    None
+                } else {
+                    Some(IndexSet::from_iter(columns.into_iter()))
+                }
+            }
+            None => None,
+        }
+    };
+
     let app_config_fields = AppConfigFields {
         update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)
             .context("Update 'rate' in your config file.")?,
@@ -245,6 +268,14 @@ pub fn build_app(
         network_unit_type,
         network_use_binary_prefix,
         retention_ms,
+    };
+
+    let table_config = ProcTableConfig {
+        is_case_sensitive,
+        is_match_whole_word,
+        is_use_regex,
+        show_memory_as_values,
+        is_command: is_default_command,
     };
 
     for row in &widget_layout.rows {
@@ -325,12 +356,9 @@ pub fn build_app(
                                 ProcWidgetState::new(
                                     &app_config_fields,
                                     mode,
-                                    is_case_sensitive,
-                                    is_match_whole_word,
-                                    is_use_regex,
-                                    show_memory_as_values,
-                                    is_default_command,
+                                    table_config,
                                     colours,
+                                    &proc_columns,
                                 ),
                             );
                         }
