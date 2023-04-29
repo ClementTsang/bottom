@@ -44,7 +44,7 @@ pub struct Config {
     pub mount_filter: Option<IgnoreList>,
     pub temp_filter: Option<IgnoreList>,
     pub net_filter: Option<IgnoreList>,
-    pub process_columns: Option<ProcessConfig>,
+    pub processes: Option<ProcessConfig>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, TypedBuilder)]
@@ -225,7 +225,7 @@ pub fn build_app(
 
     let proc_columns: Option<IndexSet<ProcColumn>> = {
         let columns = config
-            .process_columns
+            .processes
             .as_ref()
             .and_then(|cfg| cfg.columns.clone());
 
