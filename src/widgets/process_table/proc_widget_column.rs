@@ -42,7 +42,7 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "read" | "r/s" | "rps" => Ok(ProcColumn::ReadPerSecond),
             "write" | "w/s" | "wps" => Ok(ProcColumn::WritePerSecond),
             "tread" | "t.read" => Ok(ProcColumn::TotalRead),
-            "twead" | "t.write" => Ok(ProcColumn::TotalWrite),
+            "twrite" | "t.write" => Ok(ProcColumn::TotalWrite),
             "state" => Ok(ProcColumn::State),
             "user" => Ok(ProcColumn::User),
             _ => Err(D::Error::custom("doesn't match any column type")),
