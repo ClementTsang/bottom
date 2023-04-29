@@ -22,9 +22,9 @@ mod test {
     }
 
     #[test]
-    fn set_column_setting() {
+    fn process_column_settings() {
         let config = r#"
-            columns = ["CPU%", "PiD", "user", "MEM"]
+            columns = ["CPU%", "PiD", "user", "MEM", "Tread", "T.Write", "Rps", "W/s"]
         "#;
 
         let generated: ProcessConfig = toml_edit::de::from_str(config).unwrap();
@@ -34,7 +34,11 @@ mod test {
                 ProcColumn::CpuPercent,
                 ProcColumn::Pid,
                 ProcColumn::User,
-                ProcColumn::MemoryVal
+                ProcColumn::MemoryVal,
+                ProcColumn::TotalRead,
+                ProcColumn::TotalWrite,
+                ProcColumn::ReadPerSecond,
+                ProcColumn::WritePerSecond,
             ]),
         );
     }

@@ -367,11 +367,11 @@ pub const SEARCH_HELP_TEXT: [&str; 48] = [
     "cpu, cpu%        ex: cpu > 4.2",
     "mem, mem%        ex: mem < 4.2",
     "memb             ex: memb < 100 kb",
-    "read, r/s        ex: read >= 1 b",
-    "write, w/s       ex: write <= 1 tb",
+    "read, r/s, rps   ex: read >= 1 b",
+    "write, w/s, wps  ex: write <= 1 tb",
     "tread, t.read    ex: tread = 1",
     "twrite, t.write  ex: twrite = 1",
-    "user            ex: user = root",
+    "user             ex: user = root",
     "state            ex: state = running",
     "",
     "Comparison operators:",
@@ -587,6 +587,11 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #enable_cache_memory = false
 # How much data is stored at once in terms of time.
 #retention = "10m"
+
+# These are flags around the process widget.
+
+#[processes]
+#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State"]
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
