@@ -1087,6 +1087,34 @@ mod test {
             ProcColumn::Command,
             ProcColumn::MemoryPercent,
         ];
+
+        let mut state = init_default_state(&original_columns);
+        assert_eq!(get_columns(&state.table), original_columns);
+
+        // This should hide the state.
+        state.on_tab();
+        assert_eq!(get_columns(&state.table), new_columns);
+
+        // This should re-reveal the state.
+        state.on_tab();
+        assert_eq!(get_columns(&state.table), original_columns);
+    }
+
+    #[test]
+    fn toggle_count_pid_2() {
+        let original_columns = vec![
+            ProcColumn::Command,
+            ProcColumn::MemoryPercent,
+            ProcColumn::User,
+            ProcColumn::State,
+            ProcColumn::Pid,
+        ];
+        let new_columns = vec![
+            ProcColumn::Command,
+            ProcColumn::MemoryPercent,
+            ProcColumn::Count,
+        ];
+
         let mut state = init_default_state(&original_columns);
         assert_eq!(get_columns(&state.table), original_columns);
 
@@ -1113,6 +1141,7 @@ mod test {
             ProcColumn::State,
             ProcColumn::Name,
         ];
+
         let mut state = init_default_state(&original_columns);
         assert_eq!(get_columns(&state.table), original_columns);
 
@@ -1120,6 +1149,56 @@ mod test {
         assert_eq!(get_columns(&state.table), new_columns);
 
         state.toggle_command();
+        assert_eq!(get_columns(&state.table), original_columns);
+    }
+
+    #[test]
+    fn toggle_mem_percentage() {
+        let original_columns = vec![
+            ProcColumn::Pid,
+            ProcColumn::MemoryPercent,
+            ProcColumn::State,
+            ProcColumn::Command,
+        ];
+        let new_columns = vec![
+            ProcColumn::Pid,
+            ProcColumn::MemoryVal,
+            ProcColumn::State,
+            ProcColumn::Command,
+        ];
+
+        let mut state = init_default_state(&original_columns);
+        assert_eq!(get_columns(&state.table), original_columns);
+
+        state.toggle_mem_percentage();
+        assert_eq!(get_columns(&state.table), new_columns);
+
+        state.toggle_mem_percentage();
+        assert_eq!(get_columns(&state.table), original_columns);
+    }
+
+    #[test]
+    fn toggle_mem_percentage_2() {
+        let new_columns = vec![
+            ProcColumn::Pid,
+            ProcColumn::MemoryPercent,
+            ProcColumn::State,
+            ProcColumn::Command,
+        ];
+        let original_columns = vec![
+            ProcColumn::Pid,
+            ProcColumn::MemoryVal,
+            ProcColumn::State,
+            ProcColumn::Command,
+        ];
+
+        let mut state = init_default_state(&original_columns);
+        assert_eq!(get_columns(&state.table), original_columns);
+
+        state.toggle_mem_percentage();
+        assert_eq!(get_columns(&state.table), new_columns);
+
+        state.toggle_mem_percentage();
         assert_eq!(get_columns(&state.table), original_columns);
     }
 }
