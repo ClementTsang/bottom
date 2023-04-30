@@ -197,8 +197,15 @@ fn read_proc(
 
     let uid = process.uid()?;
 
-    let time =
-        Duration::from_secs(stat.utime + stat.stime) / u32::try_from(procfs::ticks_per_second())?;
+    let time = if let Ok(ticks_per_sec) = u32::try_from(procfs::ticks_per_second()) {
+        if ticks_per_sec == 0 {
+            Duration::ZERO
+        } else {
+            Duration::from_secs(stat.utime + stat.stime) / ticks_per_sec
+        }
+    } else {
+        Duration::ZERO
+    };
 
     Ok((
         ProcessHarvest {
