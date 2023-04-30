@@ -264,7 +264,7 @@ impl ProcWidgetData {
             ProcColumn::TotalWrite => dec_bytes_string(self.total_write),
             ProcColumn::State => self.process_char.to_string(),
             ProcColumn::User => self.user.clone(),
-            ProcColumn::Time => format_time(self.time).to_string(),
+            ProcColumn::Time => format_time(self.time),
         }
     }
 }
@@ -298,7 +298,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                     }
                 }
                 ProcColumn::User => self.user.clone(),
-                ProcColumn::Time => format_time(self.time).to_string(),
+                ProcColumn::Time => format_time(self.time),
             },
             calculated_width,
         ))
