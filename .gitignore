@@ -22,7 +22,7 @@ rust-unmangle
 *.zst
 
 # For testing
-sample_configs/testing.toml
+sample_configs/testing*.toml
 
 # Wix
 /wix/
