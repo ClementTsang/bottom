@@ -28,6 +28,8 @@ cfg_if::cfg_if! {
     }
 }
 
+use std::{borrow::Cow, time::Duration};
+
 use crate::Pid;
 
 #[derive(Debug, Clone, Default)]
@@ -69,14 +71,14 @@ pub struct ProcessHarvest {
     pub process_state: (String, char),
 
     /// Cumulative total CPU time used.
-    pub time: std::time::Duration,
+    pub time: Duration,
 
     /// This is the *effective* user ID of the process. This is only used on Unix platforms.
     #[cfg(target_family = "unix")]
     pub uid: Option<libc::uid_t>,
 
     /// This is the process' user.
-    pub user: std::borrow::Cow<'static, str>,
+    pub user: Cow<'static, str>,
     // TODO: Additional fields
     // pub rss_kb: u64,
     // pub virt_kb: u64,
