@@ -1,5 +1,8 @@
 use std::fmt::Debug;
+use std::time::Duration;
 use std::{borrow::Cow, collections::VecDeque};
+
+use humantime::parse_duration;
 
 use super::data_harvester::processes::ProcessHarvest;
 use crate::utils::error::{
@@ -279,12 +282,63 @@ pub fn parse_query(
                                 });
                             }
                         }
+                        PrefixType::Time => {
+                            let mut condition: Option<QueryComparison> = None;
+                            let mut duration_string: Option<String> = None;
+
+                            if content == "=" {
+                                condition = Some(QueryComparison::Equal);
+                                duration_string = query.pop_front();
+                            } else if content == ">" || content == "<" {
+                                if let Some(queue_next) = query.pop_front() {
+                                    if queue_next == "=" {
+                                        condition = Some(if content == ">" {
+                                            QueryComparison::GreaterOrEqual
+                                        } else {
+                                            QueryComparison::LessOrEqual
+                                        });
+                                        duration_string = query.pop_front();
+                                    } else {
+                                        condition = Some(if content == ">" {
+                                            QueryComparison::Greater
+                                        } else {
+                                            QueryComparison::Less
+                                        });
+                                        duration_string = Some(queue_next);
+                                    }
+                                } else {
+                                    return Err(QueryError("Missing value".into()));
+                                }
+                            }
+
+                            if let Some(condition) = condition {
+                                let duration = parse_duration(
+                                    &duration_string.ok_or(QueryError("Missing value".into()))?,
+                                )
+                                .map_err(|err| QueryError(err.to_string().into()))?;
+
+                                return Ok(Prefix {
+                                    or: None,
+                                    regex_prefix: None,
+                                    compare_prefix: Some((
+                                        prefix_type,
+                                        ComparableQuery::Time(TimeQuery {
+                                            condition,
+                                            duration,
+                                        }),
+                                    )),
+                                });
+                            } else {
+                            }
+                        }
                         _ => {
+                            // Assume it's some numerical value.
                             // Now we gotta parse the content... yay.
 
                             let mut condition: Option<QueryComparison> = None;
                             let mut value: Option<f64> = None;
 
+                            // TODO: Jeez, what the heck did I write here... add some tests and clean this up, please.
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
                                 if let Some(queue_next) = query.pop_front() {
@@ -321,11 +375,8 @@ pub fn parse_query(
 
                             if let Some(condition) = condition {
                                 if let Some(read_value) = value {
-                                    // Now we want to check one last thing - is there a unit?
-                                    // If no unit, assume base.
-                                    // Furthermore, base must be PEEKED at initially, and will
-                                    // require (likely) prefix_type specific checks
-                                    // Lastly, if it *is* a unit, remember to POP!
+                                    // Note that the values *might* have a unit or need to be parsed differently
+                                    // based on the prefix type!
 
                                     let mut value = read_value;
 
@@ -335,6 +386,11 @@ pub fn parse_query(
                                         | PrefixType::Wps
                                         | PrefixType::TRead
                                         | PrefixType::TWrite => {
+                                            // If no unit, assume base.
+                                            // Furthermore, base must be PEEKED at initially, and will
+                                            // require (likely) prefix_type specific checks
+                                            // Lastly, if it *is* a unit, remember to POP!
+
                                             if let Some(potential_unit) = query.front() {
                                                 match potential_unit.to_lowercase().as_str() {
                                                     "tb" => {
@@ -385,7 +441,10 @@ pub fn parse_query(
                                         regex_prefix: None,
                                         compare_prefix: Some((
                                             prefix_type,
-                                            NumericalQuery { condition, value },
+                                            ComparableQuery::Numerical(NumericalQuery {
+                                                condition,
+                                                value,
+                                            }),
                                         )),
                                     });
                                 }
@@ -592,17 +651,18 @@ impl std::str::FromStr for PrefixType {
             "pid" => Ok(Pid),
             "state" => Ok(State),
             "user" => Ok(User),
-            "time" => Ok(Time), // FIXME: Support time searching!
+            "time" => Ok(Time),
             _ => Ok(Name),
         }
     }
 }
 
+// TODO: This is also jank and could be better represented. Add tests, then clean up!
 #[derive(Default)]
 pub struct Prefix {
     pub or: Option<Box<Or>>,
     pub regex_prefix: Option<(PrefixType, StringQuery)>,
-    pub compare_prefix: Option<(PrefixType, NumericalQuery)>,
+    pub compare_prefix: Option<(PrefixType, ComparableQuery)>,
 }
 
 impl Prefix {
@@ -660,6 +720,16 @@ impl Prefix {
             }
         }
 
+        fn matches_duration(condition: &QueryComparison, lhs: Duration, rhs: Duration) -> bool {
+            match condition {
+                QueryComparison::Equal => lhs == rhs,
+                QueryComparison::Less => lhs < rhs,
+                QueryComparison::Greater => lhs > rhs,
+                QueryComparison::LessOrEqual => lhs <= rhs,
+                QueryComparison::GreaterOrEqual => lhs >= rhs,
+            }
+        }
+
         if let Some(and) = &self.or {
             and.check(process, is_using_command)
         } else if let Some((prefix_type, query_content)) = &self.regex_prefix {
@@ -678,44 +748,52 @@ impl Prefix {
             } else {
                 true
             }
-        } else if let Some((prefix_type, numerical_query)) = &self.compare_prefix {
-            match prefix_type {
-                PrefixType::PCpu => matches_condition(
-                    &numerical_query.condition,
-                    process.cpu_usage_percent,
-                    numerical_query.value,
-                ),
-                PrefixType::PMem => matches_condition(
-                    &numerical_query.condition,
-                    process.mem_usage_percent,
-                    numerical_query.value,
-                ),
-                PrefixType::MemBytes => matches_condition(
-                    &numerical_query.condition,
-                    process.mem_usage_bytes as f64,
-                    numerical_query.value,
-                ),
-                PrefixType::Rps => matches_condition(
-                    &numerical_query.condition,
-                    process.read_bytes_per_sec as f64,
-                    numerical_query.value,
-                ),
-                PrefixType::Wps => matches_condition(
-                    &numerical_query.condition,
-                    process.write_bytes_per_sec as f64,
-                    numerical_query.value,
-                ),
-                PrefixType::TRead => matches_condition(
-                    &numerical_query.condition,
-                    process.total_read_bytes as f64,
-                    numerical_query.value,
-                ),
-                PrefixType::TWrite => matches_condition(
-                    &numerical_query.condition,
-                    process.total_write_bytes as f64,
-                    numerical_query.value,
-                ),
-                _ => true,
+        } else if let Some((prefix_type, comparable_query)) = &self.compare_prefix {
+            match comparable_query {
+                ComparableQuery::Numerical(numerical_query) => match prefix_type {
+                    PrefixType::PCpu => matches_condition(
+                        &numerical_query.condition,
+                        process.cpu_usage_percent,
+                        numerical_query.value,
+                    ),
+                    PrefixType::PMem => matches_condition(
+                        &numerical_query.condition,
+                        process.mem_usage_percent,
+                        numerical_query.value,
+                    ),
+                    PrefixType::MemBytes => matches_condition(
+                        &numerical_query.condition,
+                        process.mem_usage_bytes as f64,
+                        numerical_query.value,
+                    ),
+                    PrefixType::Rps => matches_condition(
+                        &numerical_query.condition,
+                        process.read_bytes_per_sec as f64,
+                        numerical_query.value,
+                    ),
+                    PrefixType::Wps => matches_condition(
+                        &numerical_query.condition,
+                        process.write_bytes_per_sec as f64,
+                        numerical_query.value,
+                    ),
+                    PrefixType::TRead => matches_condition(
+                        &numerical_query.condition,
+                        process.total_read_bytes as f64,
+                        numerical_query.value,
+                    ),
+                    PrefixType::TWrite => matches_condition(
+                        &numerical_query.condition,
+                        process.total_write_bytes as f64,
+                        numerical_query.value,
+                    ),
+                    _ => true,
+                },
+                ComparableQuery::Time(time_query) => match prefix_type {
+                    PrefixType::Time => {
+                        matches_duration(&time_query.condition, process.time, time_query.duration)
+                    }
+                    _ => true,
+                },
             }
         } else {
             // Somehow we have an empty condition... oh well.  Return true.
@@ -754,7 +832,19 @@ pub enum StringQuery {
 }
 
 #[derive(Debug)]
+pub enum ComparableQuery {
+    Numerical(NumericalQuery),
+    Time(TimeQuery),
+}
+
+#[derive(Debug)]
 pub struct NumericalQuery {
     pub condition: QueryComparison,
     pub value: f64,
+}
+
+#[derive(Debug)]
+pub struct TimeQuery {
+    pub condition: QueryComparison,
+    pub duration: Duration,
 }
