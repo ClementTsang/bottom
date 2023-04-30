@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1063](https://github.com/ClementTsang/bottom/pull/1063): Add buffer and cache memory tracking.
 - [#1106](https://github.com/ClementTsang/bottom/pull/1106): Add current battery charging state.
 - [#1115](https://github.com/ClementTsang/bottom/pull/1115): Add customizable process columns to config file.
+- [#801](https://github.com/ClementTsang/bottom/pull/801): Add optional process time column and querying.
 
 ## Changes
 
