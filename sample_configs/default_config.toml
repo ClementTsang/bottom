@@ -43,7 +43,7 @@
 # Override layout default widget
 #default_widget_type = "proc"
 #default_widget_count = 1
-# Expand the default widget upon starting the app.
+# Expand selected widget upon starting the app
 #expanded_on_startup = true
 # Use basic mode
 #basic = false
@@ -80,6 +80,11 @@
 # How much data is stored at once in terms of time.
 #retention = "10m"
 
+# These are flags around the process widget.
+
+#[processes]
+#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State"]
+
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
 
@@ -98,8 +103,6 @@
 #swap_color="LightYellow"
 # Represents the colour ARC will use in the memory legend and graph.
 #arc_color="LightCyan"
-# Represents the colour cache and buffer memory will use in the memory legend and graph.
-#cache_color="LightRed"
 # Represents the colour the GPU will use in the memory legend and graph.
 #gpu_core_colors=["LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
 # Represents the colour rx will use in the network legend and graph.
@@ -153,6 +156,7 @@
 #  [[row.child]]
 #    type="proc"
 #    default=true
+
 
 # Filters - you can hide specific temperature sensors, network interfaces, and disks using filters.  This is admittedly
 # a bit hard to use as of now, and there is a planned in-app interface for managing this in the future:
