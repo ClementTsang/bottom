@@ -89,6 +89,7 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         TotalWrite => SortColumn::hard(TotalWrite, 8).default_descending(),
         User => SortColumn::soft(User, Some(0.05)),
         State => SortColumn::hard(State, 7),
+        Time => SortColumn::new(Time),
     }
 }
 
@@ -114,6 +115,7 @@ pub enum ProcWidgetColumn {
     TotalWrite,
     User,
     State,
+    Time,
 }
 
 pub struct ProcWidgetState {
@@ -251,6 +253,7 @@ impl ProcWidgetState {
                     TotalWrite => ProcWidgetColumn::TotalWrite,
                     State => ProcWidgetColumn::State,
                     User => ProcWidgetColumn::User,
+                    Time => ProcWidgetColumn::Time,
                 }
             })
             .collect::<IndexSet<_>>();
@@ -936,6 +939,8 @@ fn sort_skip_pid_asc(column: &ProcColumn, data: &mut [ProcWidgetData], order: So
 
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
+
     use super::*;
     use crate::widgets::MemUsage;
 
@@ -959,6 +964,7 @@ mod test {
             user: "N/A".to_string(),
             num_similar: 0,
             disabled: false,
+            time: Duration::from_secs(0),
         };
 
         let b = ProcWidgetData {

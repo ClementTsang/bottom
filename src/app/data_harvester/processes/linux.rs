@@ -2,6 +2,7 @@
 
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::time::Duration;
 
 use hashbrown::{HashMap, HashSet};
 use procfs::process::{Process, Stat};
@@ -196,6 +197,16 @@ fn read_proc(
 
     let uid = process.uid()?;
 
+    let time = if let Ok(ticks_per_sec) = u32::try_from(procfs::ticks_per_second()) {
+        if ticks_per_sec == 0 {
+            Duration::ZERO
+        } else {
+            Duration::from_secs(stat.utime + stat.stime) / ticks_per_sec
+        }
+    } else {
+        Duration::ZERO
+    };
+
     Ok((
         ProcessHarvest {
             pid: process.pid,
@@ -215,6 +226,7 @@ fn read_proc(
                 .get_uid_to_username_mapping(uid)
                 .map(Into::into)
                 .unwrap_or_else(|_| "N/A".into()),
+            time,
         },
         new_process_times,
     ))

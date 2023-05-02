@@ -28,6 +28,8 @@ cfg_if::cfg_if! {
     }
 }
 
+use std::{borrow::Cow, time::Duration};
+
 use crate::Pid;
 
 #[derive(Debug, Clone, Default)]
@@ -35,7 +37,7 @@ pub struct ProcessHarvest {
     /// The pid of the process.
     pub pid: Pid,
 
-    /// The parent PID of the process. Remember, parent_pid 0 is root.
+    /// The parent PID of the process. A `parent_pid` of 0 is usually the root.
     pub parent_pid: Option<Pid>,
 
     /// CPU usage as a percentage.
@@ -65,15 +67,18 @@ pub struct ProcessHarvest {
     /// The total number of bytes written by the process.
     pub total_write_bytes: u64,
 
-    /// The current state of the process (e.g. zombie, asleep)
+    /// The current state of the process (e.g. zombie, asleep).
     pub process_state: (String, char),
+
+    /// Cumulative total CPU time used.
+    pub time: Duration,
 
     /// This is the *effective* user ID of the process. This is only used on Unix platforms.
     #[cfg(target_family = "unix")]
     pub uid: Option<libc::uid_t>,
 
     /// This is the process' user.
-    pub user: std::borrow::Cow<'static, str>,
+    pub user: Cow<'static, str>,
     // TODO: Additional fields
     // pub rss_kb: u64,
     // pub virt_kb: u64,
@@ -88,5 +93,6 @@ impl ProcessHarvest {
         self.write_bytes_per_sec += rhs.write_bytes_per_sec;
         self.total_read_bytes += rhs.total_read_bytes;
         self.total_write_bytes += rhs.total_write_bytes;
+        self.time += rhs.time;
     }
 }

@@ -1,6 +1,7 @@
 use std::{
     cmp::{max, Ordering},
     fmt::Display,
+    time::Duration,
 };
 
 use concat_string::concat_string;
@@ -107,6 +108,63 @@ impl Display for MemUsage {
     }
 }
 
+trait DurationExt {
+    fn num_days(&self) -> u64;
+    fn num_hours(&self) -> u64;
+    fn num_minutes(&self) -> u64;
+}
+
+const SECS_PER_DAY: u64 = SECS_PER_HOUR * 24;
+const SECS_PER_HOUR: u64 = SECS_PER_MINUTE * 60;
+const SECS_PER_MINUTE: u64 = 60;
+
+impl DurationExt for Duration {
+    /// Number of full days in this duration.
+    #[inline]
+    fn num_days(&self) -> u64 {
+        self.as_secs() / SECS_PER_DAY
+    }
+
+    /// Number of full hours in this duration.
+    #[inline]
+    fn num_hours(&self) -> u64 {
+        self.as_secs() / SECS_PER_HOUR
+    }
+
+    /// Number of full minutes in this duration.
+    #[inline]
+    fn num_minutes(&self) -> u64 {
+        self.as_secs() / SECS_PER_MINUTE
+    }
+}
+
+fn format_time(dur: Duration) -> String {
+    if dur.num_days() > 0 {
+        format!(
+            "{}d {}h {}m",
+            dur.num_days(),
+            dur.num_hours() % 24,
+            dur.num_minutes() % 60
+        )
+    } else if dur.num_hours() > 0 {
+        format!(
+            "{}h {}m {}s",
+            dur.num_hours(),
+            dur.num_minutes() % 60,
+            dur.as_secs() % 60
+        )
+    } else if dur.num_minutes() > 0 {
+        format!(
+            "{}m {}.{:02}s",
+            dur.num_minutes(),
+            dur.as_secs() % 60,
+            dur.as_millis() % 1000 / 10
+        )
+    } else {
+        format!("{}.{:03}s", dur.as_secs(), dur.as_millis() % 1000)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ProcWidgetData {
     pub pid: Pid,
@@ -123,6 +181,7 @@ pub struct ProcWidgetData {
     pub user: String,
     pub num_similar: u64,
     pub disabled: bool,
+    pub time: Duration,
 }
 
 impl ProcWidgetData {
@@ -157,6 +216,7 @@ impl ProcWidgetData {
             user: process.user.to_string(),
             num_similar: 1,
             disabled: false,
+            time: process.time,
         }
     }
 
@@ -204,6 +264,7 @@ impl ProcWidgetData {
             ProcColumn::TotalWrite => dec_bytes_string(self.total_write),
             ProcColumn::State => self.process_char.to_string(),
             ProcColumn::User => self.user.clone(),
+            ProcColumn::Time => format_time(self.time),
         }
     }
 }
@@ -237,6 +298,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                     }
                 }
                 ProcColumn::User => self.user.clone(),
+                ProcColumn::Time => format_time(self.time),
             },
             calculated_width,
         ))
@@ -264,5 +326,43 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
         }
 
         widths
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::time::Duration;
+
+    use crate::widgets::proc_widget_data::format_time;
+
+    #[test]
+    fn test_format_time() {
+        const ONE_DAY: u64 = 24 * 60 * 60;
+
+        assert_eq!(format_time(Duration::from_millis(500)), "0.500s");
+        assert_eq!(format_time(Duration::from_millis(900)), "0.900s");
+        assert_eq!(format_time(Duration::from_secs(1)), "1.000s");
+        assert_eq!(format_time(Duration::from_secs(10)), "10.000s");
+        assert_eq!(format_time(Duration::from_secs(60)), "1m 0.00s");
+        assert_eq!(format_time(Duration::from_secs(61)), "1m 1.00s");
+        assert_eq!(format_time(Duration::from_secs(600)), "10m 0.00s");
+        assert_eq!(format_time(Duration::from_secs(601)), "10m 1.00s");
+        assert_eq!(format_time(Duration::from_secs(3600)), "1h 0m 0s");
+        assert_eq!(format_time(Duration::from_secs(3601)), "1h 0m 1s");
+        assert_eq!(format_time(Duration::from_secs(3660)), "1h 1m 0s");
+        assert_eq!(format_time(Duration::from_secs(3661)), "1h 1m 1s");
+        assert_eq!(format_time(Duration::from_secs(ONE_DAY - 1)), "23h 59m 59s");
+        assert_eq!(format_time(Duration::from_secs(ONE_DAY)), "1d 0h 0m");
+        assert_eq!(format_time(Duration::from_secs(ONE_DAY + 1)), "1d 0h 0m");
+        assert_eq!(format_time(Duration::from_secs(ONE_DAY + 60)), "1d 0h 1m");
+        assert_eq!(
+            format_time(Duration::from_secs(ONE_DAY + 3600 - 1)),
+            "1d 0h 59m"
+        );
+        assert_eq!(format_time(Duration::from_secs(ONE_DAY + 3600)), "1d 1h 0m");
+        assert_eq!(
+            format_time(Duration::from_secs(ONE_DAY * 365 - 1)),
+            "364d 23h 59m"
+        );
     }
 }

@@ -35,6 +35,8 @@ pub enum BottomError {
     /// An error that just signifies something minor went wrong; no message.
     #[error("Minor error.")]
     MinorError,
+    #[error("Error casting integers {0}")]
+    TryFromIntError(#[from] std::num::TryFromIntError),
     /// An error to represent errors with procfs
     #[cfg(target_os = "linux")]
     #[error("Procfs error, {0}")]
