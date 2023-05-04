@@ -231,6 +231,15 @@ jobs:
               rust: stable,
             }
 
+          # Android ARM64
+          - {
+              os: "ubuntu-latest",
+              target: "aarch64-linux-android",
+              cross: true,
+              rust: stable,
+              no-default-features: true,
+            }
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
@@ -248,11 +257,21 @@ jobs:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      - name: Try building
+      - name: Try building with default features
         uses: ClementTsang/cargo-action@v0.0.3
+        if: ${{ matrix.info.no-default-features != true }}
         with:
           command: build
           args: --all-targets --verbose --target=${{ matrix.info.target }} --locked
+          use-cross: ${{ matrix.info.cross }}
+          cross-version: 0.2.5
+
+      - name: Try building with no features
+        uses: ClementTsang/cargo-action@v0.0.3
+        if: ${{ matrix.info.no-default-features == true  }}
+        with:
+          command: build
+          args: --all-targets --verbose --target=${{ matrix.info.target }} --locked --no-default-features
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.5
 
