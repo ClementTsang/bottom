@@ -6,20 +6,16 @@ use std::time::Duration;
 use hashbrown::HashMap;
 use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System, SystemExt};
 
-use super::ProcessHarvest;
+use crate::data_harvester::processes::ProcessHarvest;
 use crate::{data_harvester::processes::UserTable, utils::error::Result, Pid};
 
-pub fn get_process_data<F>(
+fn get_process_data_core(
     sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
-    user_table: &mut UserTable, backup_cpu_proc_usage: F,
-) -> Result<Vec<ProcessHarvest>>
-where
-    F: Fn(&[Pid]) -> io::Result<HashMap<Pid, f64>>,
-{
+    user_table: &mut UserTable, num_processors: f64,
+) -> Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
     let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;
-    let num_processors = sys.cpus().len() as f64;
 
     for process_val in process_hashmap.values() {
         let name = if process_val.name().is_empty() {
@@ -77,10 +73,11 @@ where
             parent_pid: {
                 #[cfg(target_os = "macos")]
                 {
+                    use crate::data_harvester::processes::fallback_macos_ppid;
                     process_val
                         .parent()
                         .map(|p| p.as_u32() as _)
-                        .or_else(|| super::fallback_macos_ppid(pid))
+                        .or_else(|| fallback_macos_ppid(pid))
                 }
                 #[cfg(not(target_os = "macos"))]
                 {
@@ -114,12 +111,48 @@ where
         });
     }
 
+    Ok(process_vector)
+}
+
+pub fn process_data_wrapper(
+    sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
+    user_table: &mut UserTable,
+) -> Result<Vec<ProcessHarvest>> {
+    let num_processors = sys.cpus().len() as f64;
+    get_process_data_core(
+        sys,
+        use_current_cpu_total,
+        unnormalized_cpu,
+        total_memory,
+        user_table,
+        num_processors,
+    )
+}
+
+pub fn process_data_with_backup<F>(
+    sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
+    user_table: &mut UserTable, backup_cpu_proc_usage: F,
+) -> Result<Vec<ProcessHarvest>>
+where
+    F: Fn(&[Pid]) -> io::Result<HashMap<Pid, f64>>,
+{
+    let num_processors = sys.cpus().len() as f64;
+    let mut process_vector = get_process_data_core(
+        sys,
+        use_current_cpu_total,
+        unnormalized_cpu,
+        total_memory,
+        user_table,
+        num_processors,
+    )?;
+
     let unknown_state = ProcessStatus::Unknown(0).to_string();
     let cpu_usage_unknown_pids: Vec<Pid> = process_vector
         .iter()
         .filter(|process| process.process_state.0 == unknown_state)
         .map(|process| process.pid)
         .collect();
+
     let cpu_usages = backup_cpu_proc_usage(&cpu_usage_unknown_pids)?;
     for process in &mut process_vector {
         if cpu_usages.contains_key(&process.pid) {

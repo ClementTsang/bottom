@@ -1,33 +1,31 @@
 //! Unix-specific parts of process collection.
 
-use hashbrown::HashMap;
+mod user_table;
+pub use user_table::*;
 
-use crate::utils::error;
-
-#[derive(Debug, Default)]
-pub struct UserTable {
-    pub uid_user_mapping: HashMap<libc::uid_t, String>,
+cfg_if::cfg_if! {
+    if #[cfg(all(target_family = "unix", not(target_os = "linux")))] {
+        mod process_data;
+        pub use process_data::*;
+    }
 }
 
-impl UserTable {
-    pub fn get_uid_to_username_mapping(&mut self, uid: libc::uid_t) -> error::Result<String> {
-        if let Some(user) = self.uid_user_mapping.get(&uid) {
-            Ok(user.clone())
-        } else {
-            // SAFETY: getpwuid returns a null pointer if no passwd entry is found for the uid
-            let passwd = unsafe { libc::getpwuid(uid) };
+cfg_if::cfg_if! {
+    if #[cfg(all(target_family = "unix", all(not(target_os = "linux"), not(target_os = "macos"), not(target_os = "freebsd"))))] {
+        use sysinfo::{System};
+        use super::ProcessHarvest;
 
-            if passwd.is_null() {
-                Err(error::BottomError::QueryError("Missing passwd".into()))
-            } else {
-                // SAFETY: We return early if passwd is null.
-                let username = unsafe { std::ffi::CStr::from_ptr((*passwd).pw_name) }
-                    .to_str()?
-                    .to_string();
-                self.uid_user_mapping.insert(uid, username.clone());
-
-                Ok(username)
-            }
+        pub fn get_process_data(
+            sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, mem_total: u64,
+            user_table: &mut UserTable,
+        ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+            process_data_wrapper(
+                sys,
+                use_current_cpu_total,
+                unnormalized_cpu,
+                mem_total,
+                user_table,
+            )
         }
     }
 }

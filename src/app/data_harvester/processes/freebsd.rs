@@ -29,7 +29,7 @@ pub fn get_process_data(
     sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
     user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
-    super::macos_freebsd::get_process_data(
+    super::unix::process_data_with_backup(
         sys,
         use_current_cpu_total,
         unnormalized_cpu,
