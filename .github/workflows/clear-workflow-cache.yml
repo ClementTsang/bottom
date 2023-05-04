@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       id:
-        description: "Which id to clear. Type 'main'/'master'/'all' to clean all."
+        description: "Which id to clear. Type main/master/all to clean all, and keep-main/keep-master to clean all but the main branch."
         required: false
   pull_request:
     types:
