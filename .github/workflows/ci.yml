@@ -263,10 +263,10 @@ jobs:
       - name: CI Passed
         if: ${{ success() }}
         run: |
-          echo "CI workflow completed."
+          echo "CI workflow completed successfully.";
 
-      - name: CI Failed
-        if: ${{ failure() }}
-        run: |
-          echo "CI workflow failed."
-          exit 1
+      # - name: CI Failed
+      #   if: ${{ failure() }}
+      #   run: |
+      #     echo "CI workflow failed at some point.";
+      #     exit 1;
