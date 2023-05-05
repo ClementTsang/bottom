@@ -261,12 +261,12 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
-        if: ${{ success() }}
+        if: ${{ needs.supported.result == 'success' && needs.other-check.result == 'success' }}
         run: |
           echo "CI workflow completed successfully.";
 
       - name: CI Failed
-        if: ${{ failure() }}
+        if: ${{ needs.supported.result != 'success' || needs.other-check.result != 'success' }}
         run: |
           echo "CI workflow failed at some point.";
           exit 1;
