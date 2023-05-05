@@ -141,7 +141,6 @@ jobs:
     needs: pre-job
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    continue-on-error: true
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -258,8 +257,16 @@ jobs:
   completion:
     name: "CI Pass Check"
     needs: [supported, other-check]
+    if: ${{ always() }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
+        if: ${{ needs.supported.result == 'success' && needs.other-check.result == 'success' }}
         run: |
-          echo "CI workflow completed."
+          echo "CI workflow completed successfully.";
+
+      - name: CI Failed
+        if: ${{ needs.supported.result != 'success' || needs.other-check.result != 'success' }}
+        run: |
+          echo "CI workflow failed at some point.";
+          exit 1;
