@@ -141,7 +141,6 @@ jobs:
     needs: pre-job
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    continue-on-error: true
     timeout-minutes: 20
     strategy:
       fail-fast: false
