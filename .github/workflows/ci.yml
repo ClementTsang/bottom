@@ -257,6 +257,7 @@ jobs:
   completion:
     name: "CI Pass Check"
     needs: [supported, other-check]
+    if: ${{ always() }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
