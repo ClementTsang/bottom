@@ -28,7 +28,7 @@ Binaries are built currently for various targets. Note that not all of these are
 - Enable cache.
 - Build a release build with:
 
-  - `--features deploy`, which disables unneeded dev features in bottom.
+  - `--features deploy`, which enables only crates needed for release builds.
   - `--locked` to lock the dependency versions.
   - The following env variables set:
 
