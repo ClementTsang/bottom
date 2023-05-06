@@ -66,10 +66,13 @@ nvidia = ["nvml-wrapper"]
 zfs = []
 
 # The features we use by default.
-default = ["fern", "log", "battery", "gpu", "zfs"]
+default = ["deploy"]
 
 # The features we use on deploy. Logging is not included as that is primarily (for now) just for debugging locally.
 deploy = ["battery", "gpu", "zfs"]
+
+# Including logging for debugging purposes.
+logging = ["fern", "log"]
 
 [dependencies]
 anyhow = "1.0.71"
@@ -131,7 +134,9 @@ filedescriptor = "0.8.2"
 
 [dev-dependencies]
 assert_cmd = "2.0.11"
-cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
+cargo-husky = { version = "1.5.0", default-features = false, features = [
+    "user-hooks",
+] }
 predicates = "3.0.3"
 
 [build-dependencies]
