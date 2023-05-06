@@ -47,7 +47,11 @@ fn main() -> Result<()> {
     let matches = clap::get_matches();
     #[cfg(all(feature = "fern"))]
     {
-        utils::logging::init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log"))?;
+        if let Err(err) =
+            utils::logging::init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log"))
+        {
+            println!("Issue initializing logger: {err}");
+        }
     }
 
     // Read from config file.
