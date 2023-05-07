@@ -13,7 +13,7 @@
 # - cargo clippy (apparently faster to do it after the build/test)
 #
 # Unsupported platforms run the following tasks:
-# - cargo check
+# - cargo build
 #
 # Note that not all platforms are tested using this CI action! There are some
 # tested by Cirrus CI due to (free) platform limitations on GitHub. Currently,
@@ -135,7 +135,7 @@ jobs:
         env:
           RUST_BACKTRACE: full
 
-  # Check running cargo build on all other platforms.
+  # Try running cargo build on all other platforms.
   # TODO: Maybe some of these should be allowed to fail.
   other-check:
     needs: pre-job
