@@ -28,6 +28,13 @@ By default, the main process table displays the following information for each p
 - User
 - Process state
 
+It can also additionally display the following columns:
+
+- Process time
+
+See [the processes configuration page](../../configuration/config-file/processes.md) on how to customize which columns
+are shown.
+
 ### Sorting
 
 The table can be sorted by clicking on the table headers, which will either sort the table by that column, or if already
