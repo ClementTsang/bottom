@@ -30,7 +30,7 @@ By default, the main process table displays the following information for each p
 
 It can also additionally display the following columns:
 
-- Process time
+- Process running time
 
 See [the processes configuration page](../../configuration/config-file/processes.md) on how to customize which columns
 are shown.
