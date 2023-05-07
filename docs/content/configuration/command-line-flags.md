@@ -1,13 +1,10 @@
 # Command-line Flags
 
-!!! Warning
-
-    This section is in progress, and is just copied from the old documentation.
-
-The following flags can be provided to bottom in the command line to change the behaviour of the program (run `btm --help` for more information on each flag):
+The following flags can be provided to bottom in the command line to change the behaviour of the program. You can also
+see information on these flags by running `btm -h`, or run `btm --help` to display more detailed information on each flag:
 
 | Flag                                         | Behaviour                                                                            |
-|----------------------------------------------|--------------------------------------------------------------------------------------|
+| -------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `--autohide_time`                            | Temporarily shows the time scale in graphs.                                          |
 | `-b`, `--basic`                              | Hides graphs and uses a more basic look.                                             |
 | `--battery`                                  | Shows the battery widget.                                                            |
@@ -21,7 +18,6 @@ The following flags can be provided to bottom in the command line to change the 
 | `--default_widget_type <WIDGET TYPE>`        | Sets the default widget type, use --help for more info.                              |
 | `--disable_advanced_kill`                    | Hides advanced options to stop a process on Unix-like systems.                       |
 | `--disable_click`                            | Disables mouse clicks.                                                               |
-| `--enable_cache_memory`                      | Enable collecting and displaying cache and buffer memory (not available on Windows). |
 | `-m`, `--dot_marker`                         | Uses a dot marker for graphs.                                                        |
 | `-f`, `--fahrenheit`                         | Sets the temperature type to Fahrenheit.                                             |
 | `-g`, `--group`                              | Groups processes with the same name by default.                                      |
@@ -45,6 +41,7 @@ The following flags can be provided to bottom in the command line to change the 
 | `-V`, `--version`                            | Prints version information.                                                          |
 | `-W`, `--whole_word`                         | Enables whole-word matching by default.                                              |
 | `--enable_gpu_memory`                        | Enable collecting and displaying GPU memory usage.                                   |
+| `--enable_cache_memory`                      | Enable collecting and displaying cache and buffer memory (not available on Windows). |
 | `--retention`                                | How much data is stored at once in terms of time.                                    |
 | `-n`, `--unnormalized_cpu`                   | Show process CPU% without normalizing over the number of cores.                      |
 | `-e`, `--expanded`                           | Expand the default widget upon starting the app.                                     |
