@@ -145,6 +145,7 @@ nav:
           - "Theming": configuration/config-file/theming.md
           - "Layout": configuration/config-file/layout.md
           - "Data Filtering": configuration/config-file/data-filtering.md
+          - "Processes": configuration/config-file/processes.md
   - "Contribution":
       - "Issues, Pull Requests, and Discussions": contribution/issues-and-pull-requests.md
       - "Documentation": contribution/documentation.md
