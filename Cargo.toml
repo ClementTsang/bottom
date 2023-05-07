@@ -78,7 +78,7 @@ logging = ["fern", "log"]
 anyhow = "1.0.71"
 backtrace = "0.3.67"
 cfg-if = "1.0.0"
-clap = { version = "4.2.5", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.2.7", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 crossterm = "0.26.1"
 ctrlc = { version = "3.2.5", features = ["termination"] }
@@ -107,7 +107,7 @@ unicode-segmentation = "1.10.1"
 unicode-width = "0.1.10"
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.142"
+libc = "0.2.143"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 procfs = { version = "0.15.1", default-features = false }
@@ -140,7 +140,7 @@ cargo-husky = { version = "1.5.0", default-features = false, features = [
 predicates = "3.0.3"
 
 [build-dependencies]
-clap = { version = "4.2.5", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.2.7", features = ["default", "cargo", "wrap_help"] }
 clap_complete = "4.2.1"
 clap_mangen = "0.2.10"
 

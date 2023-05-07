@@ -61,11 +61,9 @@ pub enum FileSystem {
     /// APFS (https://en.wikipedia.org/wiki/Apple_File_System)
     Apfs,
 
-    // TODO: Should it be considered as a physical FS?
     /// FUSE (https://en.wikipedia.org/wiki/Filesystem_in_Userspace)
     FuseBlk,
 
-    // TODO: Extend list
     /// Some unspecified filesystem.
     Other(String),
 }
