@@ -19,7 +19,7 @@ By default, the main process table displays the following information for each p
 
 - PID
 - Name of the process
-- CPU use percentage (note this is averaged out per available thread)
+- CPU use percentage (note this is averaged out per available thread by default)
 - Memory use percentage
 - Reads per second
 - Writes per second

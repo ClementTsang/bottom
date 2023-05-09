@@ -1243,7 +1243,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.select_column(ProcWidgetColumn::ProcNameOrCmd);
+                        proc_widget_state.select_column(ProcWidgetColumn::ProcNameOrCommand);
                     }
                 } else if let Some(disk) = self
                     .disk_state

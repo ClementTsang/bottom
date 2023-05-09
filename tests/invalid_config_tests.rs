@@ -141,3 +141,13 @@ fn test_invalid_default_widget_count() {
         .failure()
         .stderr(predicate::str::contains("number too large"));
 }
+
+#[test]
+fn test_invalid_process_column() {
+    btm_command()
+        .arg("-C")
+        .arg("./tests/invalid_configs/invalid_process_column.toml")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("doesn't match"));
+}
