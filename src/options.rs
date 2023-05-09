@@ -22,10 +22,7 @@ use crate::{
     constants::*,
     units::data_units::DataUnit,
     utils::error::{self, BottomError},
-    widgets::{
-        BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
-        ProcColumn, ProcTableConfig, ProcWidgetMode, ProcWidgetState, TempWidgetState,
-    },
+    widgets::*,
 };
 
 pub mod layout_options;
@@ -35,7 +32,7 @@ use self::process_columns::ProcessConfig;
 
 use anyhow::{Context, Result};
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct Config {
     pub flags: Option<ConfigFlags>,
     pub colors: Option<ConfigColours>,
@@ -223,7 +220,7 @@ pub fn build_app(
     let network_scale_type = get_network_scale_type(matches, config);
     let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, matches, config);
 
-    let proc_columns: Option<IndexSet<ProcColumn>> = {
+    let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
         let columns = config
             .processes
             .as_ref()

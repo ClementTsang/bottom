@@ -1,16 +1,16 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-use crate::widgets::ProcColumn;
+use crate::widgets::ProcWidgetColumn;
 
 /// Process column settings.
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct ProcessConfig {
-    pub columns: Option<Vec<ProcColumn>>,
+    pub columns: Option<Vec<ProcWidgetColumn>>,
 }
 
 #[cfg(test)]
 mod test {
-    use crate::widgets::ProcColumn;
+    use crate::widgets::ProcWidgetColumn;
 
     use super::ProcessConfig;
 
@@ -31,50 +31,55 @@ mod test {
         assert_eq!(
             generated.columns,
             Some(vec![
-                ProcColumn::CpuPercent,
-                ProcColumn::Pid,
-                ProcColumn::User,
-                ProcColumn::MemoryVal,
-                ProcColumn::TotalRead,
-                ProcColumn::TotalWrite,
-                ProcColumn::ReadPerSecond,
-                ProcColumn::WritePerSecond,
-                ProcColumn::Time,
-                ProcColumn::User,
-                ProcColumn::State,
+                ProcWidgetColumn::Cpu,
+                ProcWidgetColumn::PidOrCount,
+                ProcWidgetColumn::User,
+                ProcWidgetColumn::Mem,
+                ProcWidgetColumn::TotalRead,
+                ProcWidgetColumn::TotalWrite,
+                ProcWidgetColumn::ReadPerSecond,
+                ProcWidgetColumn::WritePerSecond,
+                ProcWidgetColumn::Time,
+                ProcWidgetColumn::User,
+                ProcWidgetColumn::State,
             ]),
         );
     }
 
     #[test]
     fn process_column_settings_2() {
-        let config = r#"columns = ["MEM%"]"#;
-        let generated: ProcessConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(generated.columns, Some(vec![ProcColumn::MemoryPercent]));
-    }
-
-    #[test]
-    fn process_column_settings_3() {
-        let config = r#"columns = ["MEM%", "TWrite", "Cpuz", "read", "wps"]"#;
+        let config = r#"columns = ["MEM", "TWrite", "Cpuz", "read", "wps"]"#;
         toml_edit::de::from_str::<ProcessConfig>(config).expect_err("Should error out!");
     }
 
     #[test]
-    fn process_column_settings_4() {
+    fn process_column_settings_3() {
         let config = r#"columns = ["Twrite", "T.Write"]"#;
         let generated: ProcessConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(generated.columns, Some(vec![ProcColumn::TotalWrite; 2]));
+        assert_eq!(
+            generated.columns,
+            Some(vec![ProcWidgetColumn::TotalWrite; 2])
+        );
 
         let config = r#"columns = ["Tread", "T.read"]"#;
         let generated: ProcessConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(generated.columns, Some(vec![ProcColumn::TotalRead; 2]));
+        assert_eq!(
+            generated.columns,
+            Some(vec![ProcWidgetColumn::TotalRead; 2])
+        );
 
         let config = r#"columns = ["read", "rps", "r/s"]"#;
         let generated: ProcessConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(generated.columns, Some(vec![ProcColumn::ReadPerSecond; 3]));
+        assert_eq!(
+            generated.columns,
+            Some(vec![ProcWidgetColumn::ReadPerSecond; 3])
+        );
 
         let config = r#"columns = ["write", "wps", "w/s"]"#;
         let generated: ProcessConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(generated.columns, Some(vec![ProcColumn::WritePerSecond; 3]));
+        assert_eq!(
+            generated.columns,
+            Some(vec![ProcWidgetColumn::WritePerSecond; 3])
+        );
     }
 }
