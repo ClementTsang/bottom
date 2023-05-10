@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
@@ -22,6 +22,6 @@ jobs:
         run: |
           cargo install cargo-audit --locked
 
-      - uses: rustsec/audit-check@bb800784d9c5b0afa352b75dae201bf2e438960a # https://github.com/rustsec/audit-check/commit/bb800784d9c5b0afa352b75dae201bf2e438960a
+      - uses: rustsec/audit-check@dd51754d4e59da7395a4cd9b593f0ff2d61a9b95 # v1.4.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

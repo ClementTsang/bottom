@@ -62,12 +62,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           fetch-depth: 1
 
       - name: Get release version
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
           name: release-version
           path: release-version
@@ -83,7 +83,7 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Get release artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
           name: release
           path: release
@@ -111,7 +111,7 @@ jobs:
     needs: [generate-choco, build-release]
     steps:
       - name: Get release version
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
           name: release-version
           path: release-version
@@ -127,7 +127,7 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Get release artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
           name: release
           path: release
