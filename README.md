@@ -301,16 +301,18 @@ RUSTFLAGS="-C target-cpu=native" cargo install --path .
 
 ### Binaries
 
-You can also try to use the generated release binaries and manually install on your system:
+You can also use the pre-built release binaries manually:
 
 - [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), generated off of the release branch
 - [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated daily off of the master branch at 00:00 UTC
 
-To use, download and extract the binary that matches your system and run by doing:
+To use, download and extract the binary that matches your system. You can then run by doing:
 
 ```bash
 ./btm
 ```
+
+or by installing to your system following whatever the procedure is for installing a binary to your system.
 
 #### Auto-completion
 
