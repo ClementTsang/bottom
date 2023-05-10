@@ -244,14 +244,10 @@ scoop install bottom
 
 ### Chocolatey
 
-Chocolatey packages are located [here](https://chocolatey.org/packages/bottom).
+Chocolatey packages are located [here](https://chocolatey.org/packages/bottom):
 
 ```bash
 choco install bottom
-
-# The version number may need to be specified for newer releases for the first
-# few hours/days during the approval process:
-choco install bottom --version=0.9.0
 ```
 
 ### winget
