@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.0] - Unreleased
+## [0.9.0] - 2023-05-10
 
 ## Bug Fixes
 
@@ -29,8 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1025](https://github.com/ClementTsang/bottom/pull/1025): Officially support M1 macOS.
 - [#1035](https://github.com/ClementTsang/bottom/pull/1035): Migrate away from heim for CPU information.
-- [#1036](https://github.com/ClementTsang/bottom/pull/1036): Migrate away from heim for memory information; Linux
-  platforms will also now try to use `MemAvailable` to determine used memory if supported.
+- [#1036](https://github.com/ClementTsang/bottom/pull/1036): Migrate away from heim for memory information; bottom will now try to use `MemAvailable` on Linux to determine used memory.
 - [#1041](https://github.com/ClementTsang/bottom/pull/1041): Migrate away from heim for network information.
 - [#1064](https://github.com/ClementTsang/bottom/pull/1064): Migrate away from heim for storage information.
 - [#812](https://github.com/ClementTsang/bottom/issues/812): Fully remove heim from bottom.
