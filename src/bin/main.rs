@@ -30,7 +30,7 @@ use crossterm::{
 use tui::{backend::CrosstermBackend, Terminal};
 
 use bottom::{
-    canvas::{self, canvas_styling::CanvasColours},
+    canvas::{self, canvas_styling::CanvasStyling},
     constants::*,
     data_conversion::*,
     options::*,
@@ -68,7 +68,7 @@ fn main() -> Result<()> {
     // FIXME: Should move this into build app or config
     let colours = {
         let colour_scheme = get_color_scheme(&matches, &config)?;
-        CanvasColours::new(colour_scheme, &config)?
+        CanvasStyling::new(colour_scheme, &config)?
     };
 
     // Create an "app" struct, which will control most of the program and store settings/state

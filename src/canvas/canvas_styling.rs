@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use anyhow::Context;
 use colour_utils::*;
 use tui::style::{Color, Style};
@@ -12,7 +10,7 @@ use crate::{
 };
 mod colour_utils;
 
-pub struct CanvasColours {
+pub struct CanvasStyling {
     pub currently_selected_text_colour: Color,
     pub currently_selected_bg_colour: Color,
     pub currently_selected_text_style: Style,
@@ -42,13 +40,13 @@ pub struct CanvasColours {
     pub disabled_text_style: Style,
 }
 
-impl Default for CanvasColours {
+impl Default for CanvasStyling {
     fn default() -> Self {
         let text_colour = Color::Gray;
         let currently_selected_text_colour = Color::Black;
         let currently_selected_bg_colour = HIGHLIGHT_COLOUR;
 
-        CanvasColours {
+        CanvasStyling {
             currently_selected_text_colour,
             currently_selected_bg_colour,
             currently_selected_text_style: Style::default()
@@ -99,7 +97,35 @@ impl Default for CanvasColours {
     }
 }
 
-impl CanvasColours {
+macro_rules! try_set_colour {
+    ($styling:expr, $field:ident, $colours:expr, $colour_field:ident) => {
+        if let Some(colour_str) = &$colours.$colour_field {
+            $styling.$field = str_to_fg(colour_str).context(concat!(
+                "update ",
+                stringify!($colour_field),
+                " in your config file"
+            ))?;
+        }
+    };
+}
+
+macro_rules! try_set_colour_list {
+    ($styling:expr, $field:ident, $colours:expr, $colour_field:ident) => {
+        if let Some(colour_list) = &$colours.$colour_field {
+            $styling.$field = colour_list
+                .iter()
+                .map(|s| str_to_fg(s))
+                .collect::<error::Result<Vec<Style>>>()
+                .context(concat!(
+                    "update ",
+                    stringify!($colour_field),
+                    " in your config file"
+                ))?;
+        }
+    };
+}
+
+impl CanvasStyling {
     pub fn new(colour_scheme: ColourScheme, config: &Config) -> anyhow::Result<Self> {
         let mut canvas_colours = Self::default();
 
@@ -131,76 +157,45 @@ impl CanvasColours {
     }
 
     pub fn set_colours_from_palette(&mut self, colours: &ConfigColours) -> anyhow::Result<()> {
-        if let Some(border_color) = &colours.border_color {
-            self.set_border_colour(border_color)
-                .context("Update 'border_color' in your config file..")?;
-        }
-
-        if let Some(highlighted_border_color) = &colours.highlighted_border_color {
-            self.set_highlighted_border_colour(highlighted_border_color)
-                .context("Update 'highlighted_border_color' in your config file..")?;
-        }
-
-        if let Some(text_color) = &colours.text_color {
-            self.set_text_colour(text_color)
-                .context("Update 'text_color' in your config file..")?;
-        }
-
-        if let Some(avg_cpu_color) = &colours.avg_cpu_color {
-            self.set_avg_cpu_colour(avg_cpu_color)
-                .context("Update 'avg_cpu_color' in your config file..")?;
-        }
-
-        if let Some(all_cpu_color) = &colours.all_cpu_color {
-            self.set_all_cpu_colour(all_cpu_color)
-                .context("Update 'all_cpu_color' in your config file..")?;
-        }
-
-        if let Some(cpu_core_colors) = &colours.cpu_core_colors {
-            self.set_cpu_colours(cpu_core_colors)
-                .context("Update 'cpu_core_colors' in your config file..")?;
-        }
-
-        if let Some(ram_color) = &colours.ram_color {
-            self.set_ram_colour(ram_color)
-                .context("Update 'ram_color' in your config file..")?;
-        }
+        try_set_colour!(self, avg_colour_style, colours, avg_cpu_color);
+        try_set_colour!(self, all_colour_style, colours, all_cpu_color);
+        try_set_colour!(self, all_colour_style, colours, all_cpu_color);
+        try_set_colour_list!(self, cpu_colour_styles, colours, cpu_core_colors);
 
         #[cfg(not(target_os = "windows"))]
-        if let Some(cache_color) = &colours.cache_color {
-            self.set_cache_colour(cache_color)
-                .context("Update 'cache_color' in your config file..")?;
-        }
+        try_set_colour!(self, cache_style, colours, cache_color);
 
-        if let Some(swap_color) = &colours.swap_color {
-            self.set_swap_colour(swap_color)
-                .context("Update 'swap_color' in your config file..")?;
-        }
+        #[cfg(feature = "zfs")]
+        try_set_colour!(self, arc_style, colours, arc_color);
 
-        if let Some(arc_color) = &colours.arc_color {
-            self.set_arc_colour(arc_color)
-                .context("Update 'arc_color' in your config file..")?;
-        }
+        #[cfg(feature = "gpu")]
+        try_set_colour_list!(self, gpu_colour_styles, colours, gpu_core_colors);
 
-        if let Some(gpu_core_colors) = &colours.gpu_core_colors {
-            self.set_gpu_colours(gpu_core_colors)
-                .context("Update 'gpu_core_colors' in your config file..")?;
-        }
+        try_set_colour!(self, ram_style, colours, ram_color);
+        try_set_colour!(self, swap_style, colours, swap_color);
 
-        if let Some(rx_color) = &colours.rx_color {
-            self.set_rx_colour(rx_color)
-                .context("Update 'rx_color' in your config file..")?;
-        }
+        try_set_colour!(self, rx_style, colours, rx_color);
+        try_set_colour!(self, tx_style, colours, tx_color);
+        try_set_colour!(self, total_rx_style, colours, rx_total_color);
+        try_set_colour!(self, total_tx_style, colours, tx_total_color);
 
-        if let Some(tx_color) = &colours.tx_color {
-            self.set_tx_colour(tx_color)
-                .context("Update 'tx_color' in your config file..")?;
-        }
+        try_set_colour!(self, high_battery_colour, colours, high_battery_color);
+        try_set_colour!(self, medium_battery_colour, colours, medium_battery_color);
+        try_set_colour!(self, low_battery_colour, colours, low_battery_color);
 
-        if let Some(table_header_color) = &colours.table_header_color {
-            self.set_table_header_colour(table_header_color)
-                .context("Update 'table_header_color' in your config file..")?;
-        }
+        try_set_colour!(self, table_header_style, colours, table_header_color);
+
+        try_set_colour!(self, widget_title_style, colours, widget_title_color);
+        try_set_colour!(self, graph_style, colours, graph_color);
+        try_set_colour!(self, border_style, colours, border_color);
+        try_set_colour!(self, text_style, colours, text_color);
+        try_set_colour!(self, disabled_text_style, colours, disabled_text_color);
+        try_set_colour!(
+            self,
+            highlighted_border_style,
+            colours,
+            highlighted_border_color
+        );
 
         if let Some(scroll_entry_text_color) = &colours.selected_text_color {
             self.set_scroll_entry_text_color(scroll_entry_text_color)
@@ -212,142 +207,10 @@ impl CanvasColours {
                 .context("Update 'selected_bg_color' in your config file..")?;
         }
 
-        if let Some(widget_title_color) = &colours.widget_title_color {
-            self.set_widget_title_colour(widget_title_color)
-                .context("Update 'widget_title_color' in your config file..")?;
-        }
-
-        if let Some(graph_color) = &colours.graph_color {
-            self.set_graph_colour(graph_color)
-                .context("Update 'graph_color' in your config file..")?;
-        }
-
-        if let Some(high_battery_color) = &colours.high_battery_color {
-            self.set_high_battery_color(high_battery_color)
-                .context("Update 'high_battery_color' in your config file.")?;
-        }
-
-        if let Some(medium_battery_color) = &colours.medium_battery_color {
-            self.set_medium_battery_color(medium_battery_color)
-                .context("Update 'medium_battery_color' in your config file.")?;
-        }
-
-        if let Some(low_battery_color) = &colours.low_battery_color {
-            self.set_low_battery_color(low_battery_color)
-                .context("Update 'low_battery_color' in your config file.")?;
-        }
-
-        if let Some(disabled_text_color) = &colours.disabled_text_color {
-            self.set_disabled_text_colour(disabled_text_color)
-                .context("Update 'disabled_text_color' in your config file.")?;
-        }
-
-        if let Some(rx_total_color) = &colours.rx_total_color {
-            self.set_rx_total_colour(rx_total_color)?;
-        }
-
-        if let Some(tx_total_color) = &colours.tx_total_color {
-            self.set_tx_total_colour(tx_total_color)?;
-        }
-
         Ok(())
     }
 
-    pub fn set_disabled_text_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.disabled_text_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_text_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.text_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_border_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.border_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_highlighted_border_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.highlighted_border_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_table_header_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.table_header_style = str_to_fg(colour)?;
-        // Disabled as it seems to be bugged when I go into full command mode...?  It becomes huge lol
-        // self.table_header_style = get_style_from_config(colour)?.modifier(Modifier::BOLD);
-        Ok(())
-    }
-
-    pub fn set_ram_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.ram_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    pub fn set_cache_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.cache_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_swap_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.swap_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_arc_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.arc_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_gpu_colours(&mut self, colours: &[Cow<'static, str>]) -> error::Result<()> {
-        self.gpu_colour_styles = colours
-            .iter()
-            .map(|colour| str_to_fg(colour))
-            .collect::<error::Result<Vec<Style>>>()?;
-        Ok(())
-    }
-
-    pub fn set_rx_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.rx_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_tx_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.tx_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_rx_total_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.total_rx_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_tx_total_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.total_tx_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_avg_cpu_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.avg_colour_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_all_cpu_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.all_colour_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_cpu_colours(&mut self, colours: &[Cow<'static, str>]) -> error::Result<()> {
-        self.cpu_colour_styles = colours
-            .iter()
-            .map(|colour| str_to_fg(colour))
-            .collect::<error::Result<Vec<Style>>>()?;
-        Ok(())
-    }
-
-    pub fn set_scroll_entry_text_color(&mut self, colour: &str) -> error::Result<()> {
+    fn set_scroll_entry_text_color(&mut self, colour: &str) -> error::Result<()> {
         self.currently_selected_text_colour = str_to_colour(colour)?;
         self.currently_selected_text_style = Style::default()
             .fg(self.currently_selected_text_colour)
@@ -355,36 +218,11 @@ impl CanvasColours {
         Ok(())
     }
 
-    pub fn set_scroll_entry_bg_color(&mut self, colour: &str) -> error::Result<()> {
+    fn set_scroll_entry_bg_color(&mut self, colour: &str) -> error::Result<()> {
         self.currently_selected_bg_colour = str_to_colour(colour)?;
         self.currently_selected_text_style = Style::default()
             .fg(self.currently_selected_text_colour)
             .bg(self.currently_selected_bg_colour);
-        Ok(())
-    }
-
-    pub fn set_widget_title_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.widget_title_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_graph_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.graph_style = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_high_battery_color(&mut self, colour: &str) -> error::Result<()> {
-        self.high_battery_colour = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_medium_battery_color(&mut self, colour: &str) -> error::Result<()> {
-        self.medium_battery_colour = str_to_fg(colour)?;
-        Ok(())
-    }
-
-    pub fn set_low_battery_color(&mut self, colour: &str) -> error::Result<()> {
-        self.low_battery_colour = str_to_fg(colour)?;
         Ok(())
     }
 }
@@ -392,13 +230,13 @@ impl CanvasColours {
 #[cfg(test)]
 mod test {
 
-    use super::{CanvasColours, ColourScheme};
+    use super::{CanvasStyling, ColourScheme};
     use crate::Config;
     use tui::style::{Color, Style};
 
     #[test]
     fn default_selected_colour_works() {
-        let mut colours = CanvasColours::default();
+        let mut colours = CanvasStyling::default();
 
         assert_eq!(
             colours.currently_selected_text_style,
@@ -427,11 +265,11 @@ mod test {
     #[test]
     fn test_built_in_colour_schemes() {
         let config = Config::default();
-        CanvasColours::new(ColourScheme::Default, &config).unwrap();
-        CanvasColours::new(ColourScheme::DefaultLight, &config).unwrap();
-        CanvasColours::new(ColourScheme::Gruvbox, &config).unwrap();
-        CanvasColours::new(ColourScheme::GruvboxLight, &config).unwrap();
-        CanvasColours::new(ColourScheme::Nord, &config).unwrap();
-        CanvasColours::new(ColourScheme::NordLight, &config).unwrap();
+        CanvasStyling::new(ColourScheme::Default, &config).unwrap();
+        CanvasStyling::new(ColourScheme::DefaultLight, &config).unwrap();
+        CanvasStyling::new(ColourScheme::Gruvbox, &config).unwrap();
+        CanvasStyling::new(ColourScheme::GruvboxLight, &config).unwrap();
+        CanvasStyling::new(ColourScheme::Nord, &config).unwrap();
+        CanvasStyling::new(ColourScheme::NordLight, &config).unwrap();
     }
 }

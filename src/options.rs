@@ -18,7 +18,7 @@ use starship_battery::Manager;
 
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::{canvas_styling::CanvasColours, ColourScheme},
+    canvas::{canvas_styling::CanvasStyling, ColourScheme},
     constants::*,
     units::data_units::DataUnit,
     utils::error::{self, BottomError},
@@ -172,7 +172,7 @@ macro_rules! is_flag_enabled {
 pub fn build_app(
     matches: &ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
-    colours: &CanvasColours,
+    colours: &CanvasStyling,
 ) -> Result<App> {
     use BottomWidgetType::*;
 
@@ -872,12 +872,12 @@ mod test {
     use clap::ArgMatches;
 
     use super::{get_color_scheme, get_widget_layout, Config};
-    use crate::{app::App, canvas::canvas_styling::CanvasColours};
+    use crate::{app::App, canvas::canvas_styling::CanvasStyling};
 
     fn create_app(mut config: Config, matches: ArgMatches) -> App {
         let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();
         let colours =
-            CanvasColours::new(get_color_scheme(&matches, &config).unwrap(), &config).unwrap();
+            CanvasStyling::new(get_color_scheme(&matches, &config).unwrap(), &config).unwrap();
 
         super::build_app(&matches, &mut config, &layout, id, &ty, &colours).unwrap()
     }
