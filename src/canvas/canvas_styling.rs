@@ -98,9 +98,9 @@ impl Default for CanvasStyling {
 }
 
 macro_rules! try_set_colour {
-    ($styling:expr, $field:ident, $colours:expr, $colour_field:ident) => {
+    ($field:expr, $colours:expr, $colour_field:ident) => {
         if let Some(colour_str) = &$colours.$colour_field {
-            $styling.$field = str_to_fg(colour_str).context(concat!(
+            $field = str_to_fg(colour_str).context(concat!(
                 "update '",
                 stringify!($colour_field),
                 "' in your config file"
@@ -110,9 +110,9 @@ macro_rules! try_set_colour {
 }
 
 macro_rules! try_set_colour_list {
-    ($styling:expr, $field:ident, $colours:expr, $colour_field:ident) => {
+    ($field:expr, $colours:expr, $colour_field:ident) => {
         if let Some(colour_list) = &$colours.$colour_field {
-            $styling.$field = colour_list
+            $field = colour_list
                 .iter()
                 .map(|s| str_to_fg(s))
                 .collect::<error::Result<Vec<Style>>>()
@@ -157,42 +157,41 @@ impl CanvasStyling {
     }
 
     pub fn set_colours_from_palette(&mut self, colours: &ConfigColours) -> anyhow::Result<()> {
-        try_set_colour!(self, avg_colour_style, colours, avg_cpu_color);
-        try_set_colour!(self, all_colour_style, colours, all_cpu_color);
-        try_set_colour!(self, all_colour_style, colours, all_cpu_color);
-        try_set_colour_list!(self, cpu_colour_styles, colours, cpu_core_colors);
+        try_set_colour!(self.avg_colour_style, colours, avg_cpu_color);
+        try_set_colour!(self.all_colour_style, colours, all_cpu_color);
+        try_set_colour!(self.all_colour_style, colours, all_cpu_color);
+        try_set_colour_list!(self.cpu_colour_styles, colours, cpu_core_colors);
 
         #[cfg(not(target_os = "windows"))]
-        try_set_colour!(self, cache_style, colours, cache_color);
+        try_set_colour!(self.cache_style, colours, cache_color);
 
         #[cfg(feature = "zfs")]
-        try_set_colour!(self, arc_style, colours, arc_color);
+        try_set_colour!(self.arc_style, colours, arc_color);
 
         #[cfg(feature = "gpu")]
-        try_set_colour_list!(self, gpu_colour_styles, colours, gpu_core_colors);
+        try_set_colour_list!(self.gpu_colour_styles, colours, gpu_core_colors);
 
-        try_set_colour!(self, ram_style, colours, ram_color);
-        try_set_colour!(self, swap_style, colours, swap_color);
+        try_set_colour!(self.ram_style, colours, ram_color);
+        try_set_colour!(self.swap_style, colours, swap_color);
 
-        try_set_colour!(self, rx_style, colours, rx_color);
-        try_set_colour!(self, tx_style, colours, tx_color);
-        try_set_colour!(self, total_rx_style, colours, rx_total_color);
-        try_set_colour!(self, total_tx_style, colours, tx_total_color);
+        try_set_colour!(self.rx_style, colours, rx_color);
+        try_set_colour!(self.tx_style, colours, tx_color);
+        try_set_colour!(self.total_rx_style, colours, rx_total_color);
+        try_set_colour!(self.total_tx_style, colours, tx_total_color);
 
-        try_set_colour!(self, high_battery_colour, colours, high_battery_color);
-        try_set_colour!(self, medium_battery_colour, colours, medium_battery_color);
-        try_set_colour!(self, low_battery_colour, colours, low_battery_color);
+        try_set_colour!(self.high_battery_colour, colours, high_battery_color);
+        try_set_colour!(self.medium_battery_colour, colours, medium_battery_color);
+        try_set_colour!(self.low_battery_colour, colours, low_battery_color);
 
-        try_set_colour!(self, table_header_style, colours, table_header_color);
+        try_set_colour!(self.table_header_style, colours, table_header_color);
 
-        try_set_colour!(self, widget_title_style, colours, widget_title_color);
-        try_set_colour!(self, graph_style, colours, graph_color);
-        try_set_colour!(self, border_style, colours, border_color);
-        try_set_colour!(self, text_style, colours, text_color);
-        try_set_colour!(self, disabled_text_style, colours, disabled_text_color);
+        try_set_colour!(self.widget_title_style, colours, widget_title_color);
+        try_set_colour!(self.graph_style, colours, graph_color);
+        try_set_colour!(self.border_style, colours, border_color);
+        try_set_colour!(self.text_style, colours, text_color);
+        try_set_colour!(self.disabled_text_style, colours, disabled_text_color);
         try_set_colour!(
-            self,
-            highlighted_border_style,
+            self.highlighted_border_style,
             colours,
             highlighted_border_color
         );
