@@ -157,11 +157,12 @@ impl CanvasStyling {
     }
 
     pub fn set_colours_from_palette(&mut self, colours: &ConfigColours) -> anyhow::Result<()> {
+        // CPU
         try_set_colour!(self.avg_colour_style, colours, avg_cpu_color);
-        try_set_colour!(self.all_colour_style, colours, all_cpu_color);
         try_set_colour!(self.all_colour_style, colours, all_cpu_color);
         try_set_colour_list!(self.cpu_colour_styles, colours, cpu_core_colors);
 
+        // Memory
         #[cfg(not(target_os = "windows"))]
         try_set_colour!(self.cache_style, colours, cache_color);
 
@@ -174,36 +175,40 @@ impl CanvasStyling {
         try_set_colour!(self.ram_style, colours, ram_color);
         try_set_colour!(self.swap_style, colours, swap_color);
 
+        // Network
         try_set_colour!(self.rx_style, colours, rx_color);
         try_set_colour!(self.tx_style, colours, tx_color);
         try_set_colour!(self.total_rx_style, colours, rx_total_color);
         try_set_colour!(self.total_tx_style, colours, tx_total_color);
 
+        // Battery
         try_set_colour!(self.high_battery_colour, colours, high_battery_color);
         try_set_colour!(self.medium_battery_colour, colours, medium_battery_color);
         try_set_colour!(self.low_battery_colour, colours, low_battery_color);
 
-        try_set_colour!(self.table_header_style, colours, table_header_color);
-
+        // Widget text and graphs
         try_set_colour!(self.widget_title_style, colours, widget_title_color);
         try_set_colour!(self.graph_style, colours, graph_color);
-        try_set_colour!(self.border_style, colours, border_color);
         try_set_colour!(self.text_style, colours, text_color);
         try_set_colour!(self.disabled_text_style, colours, disabled_text_color);
+        try_set_colour!(self.border_style, colours, border_color);
         try_set_colour!(
             self.highlighted_border_style,
             colours,
             highlighted_border_color
         );
 
+        // Tables
+        try_set_colour!(self.table_header_style, colours, table_header_color);
+
         if let Some(scroll_entry_text_color) = &colours.selected_text_color {
             self.set_scroll_entry_text_color(scroll_entry_text_color)
-                .context("Update 'selected_text_color' in your config file..")?;
+                .context("update 'selected_text_color' in your config file")?;
         }
 
         if let Some(scroll_entry_bg_color) = &colours.selected_bg_color {
             self.set_scroll_entry_bg_color(scroll_entry_bg_color)
-                .context("Update 'selected_bg_color' in your config file..")?;
+                .context("update 'selected_bg_color' in your config file")?;
         }
 
         Ok(())
@@ -214,6 +219,7 @@ impl CanvasStyling {
         self.currently_selected_text_style = Style::default()
             .fg(self.currently_selected_text_colour)
             .bg(self.currently_selected_bg_colour);
+
         Ok(())
     }
 
@@ -222,13 +228,13 @@ impl CanvasStyling {
         self.currently_selected_text_style = Style::default()
             .fg(self.currently_selected_text_colour)
             .bg(self.currently_selected_bg_colour);
+
         Ok(())
     }
 }
 
 #[cfg(test)]
 mod test {
-
     use super::{CanvasStyling, ColourScheme};
     use crate::Config;
     use tui::style::{Color, Style};
@@ -245,7 +251,6 @@ mod test {
         );
 
         colours.set_scroll_entry_text_color("red").unwrap();
-
         assert_eq!(
             colours.currently_selected_text_style,
             Style::default()
@@ -254,7 +259,22 @@ mod test {
         );
 
         colours.set_scroll_entry_bg_color("magenta").unwrap();
+        assert_eq!(
+            colours.currently_selected_text_style,
+            Style::default().fg(Color::Red).bg(Color::Magenta),
+        );
 
+        colours.set_scroll_entry_text_color("fake red").unwrap_err();
+        assert_eq!(
+            colours.currently_selected_text_style,
+            Style::default()
+                .fg(Color::Red)
+                .bg(colours.currently_selected_bg_colour),
+        );
+
+        colours
+            .set_scroll_entry_bg_color("fake magenta")
+            .unwrap_err();
         assert_eq!(
             colours.currently_selected_text_style,
             Style::default().fg(Color::Red).bg(Color::Magenta),
@@ -262,7 +282,7 @@ mod test {
     }
 
     #[test]
-    fn test_built_in_colour_schemes() {
+    fn built_in_colour_schemes_work() {
         let config = Config::default();
         CanvasStyling::new(ColourScheme::Default, &config).unwrap();
         CanvasStyling::new(ColourScheme::DefaultLight, &config).unwrap();
