@@ -257,7 +257,7 @@ The winget package can be found [here](https://github.com/microsoft/winget-pkgs/
 ```bash
 winget install bottom
 
-# Alternatively, to be more specific:
+# If you need a more specific app id:
 winget install Clement.bottom
 ```
 
@@ -280,19 +280,19 @@ rustup update stable
 # Option 1 - Download from releases and install
 curl -LO https://github.com/ClementTsang/bottom/archive/0.9.0.tar.gz
 tar -xzvf 0.9.0.tar.gz
-cargo install --path .
+cargo install --path . --locked
 
 # Option 2 - Clone from master and install manually
 git clone https://github.com/ClementTsang/bottom
 cd bottom
-cargo install --path .
+cargo install --path . --locked
 
 # Option 3 - Clone and install directly from the repo all via Cargo
-cargo install --git https://github.com/ClementTsang/bottom
+cargo install --git https://github.com/ClementTsang/bottom --locked
 
 # You can also pass in the target-cpu=native flag for
 # better CPU-specific optimizations. For example:
-RUSTFLAGS="-C target-cpu=native" cargo install --path .
+RUSTFLAGS="-C target-cpu=native" cargo install --path . --locked
 ```
 
 ### Binaries
