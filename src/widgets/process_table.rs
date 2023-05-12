@@ -1119,14 +1119,14 @@ mod test {
 
     fn init_state(table_config: ProcTableConfig, columns: &[ProcWidgetColumn]) -> ProcWidgetState {
         let config = AppConfigFields::default();
-        let colours = CanvasStyling::default();
+        let styling = CanvasStyling::default();
         let columns = Some(columns.iter().cloned().collect());
 
         ProcWidgetState::new(
             &config,
             ProcWidgetMode::Normal,
             table_config,
-            &colours,
+            &styling,
             &columns,
         )
     }

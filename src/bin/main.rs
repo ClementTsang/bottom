@@ -66,7 +66,7 @@ fn main() -> Result<()> {
             .context("Found an issue while trying to build the widget layout.")?;
 
     // FIXME: Should move this into build app or config
-    let colours = {
+    let styling = {
         let colour_scheme = get_color_scheme(&matches, &config)?;
         CanvasStyling::new(colour_scheme, &config)?
     };
@@ -78,11 +78,11 @@ fn main() -> Result<()> {
         &widget_layout,
         default_widget_id,
         &default_widget_type_option,
-        &colours,
+        &styling,
     )?;
 
     // Create painter and set colours.
-    let mut painter = canvas::Painter::init(widget_layout, colours)?;
+    let mut painter = canvas::Painter::init(widget_layout, styling)?;
 
     // Check if the current environment is in a terminal.
     check_if_terminal();

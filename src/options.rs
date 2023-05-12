@@ -172,7 +172,7 @@ macro_rules! is_flag_enabled {
 pub fn build_app(
     matches: &ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
-    colours: &CanvasStyling,
+    styling: &CanvasStyling,
 ) -> Result<App> {
     use BottomWidgetType::*;
 
@@ -321,7 +321,7 @@ pub fn build_app(
                                     &app_config_fields,
                                     default_time_value,
                                     autohide_timer,
-                                    colours,
+                                    styling,
                                 ),
                             );
                         }
@@ -354,7 +354,7 @@ pub fn build_app(
                                     &app_config_fields,
                                     mode,
                                     table_config,
-                                    colours,
+                                    styling,
                                     &proc_columns,
                                 ),
                             );
@@ -362,13 +362,13 @@ pub fn build_app(
                         Disk => {
                             disk_state_map.insert(
                                 widget.widget_id,
-                                DiskTableWidget::new(&app_config_fields, colours),
+                                DiskTableWidget::new(&app_config_fields, styling),
                             );
                         }
                         Temp => {
                             temp_state_map.insert(
                                 widget.widget_id,
-                                TempWidgetState::new(&app_config_fields, colours),
+                                TempWidgetState::new(&app_config_fields, styling),
                             );
                         }
                         Battery => {
@@ -868,7 +868,6 @@ fn get_retention_ms(matches: &ArgMatches, config: &Config) -> error::Result<u64>
 
 #[cfg(test)]
 mod test {
-
     use clap::ArgMatches;
 
     use super::{get_color_scheme, get_widget_layout, Config};
@@ -876,10 +875,10 @@ mod test {
 
     fn create_app(mut config: Config, matches: ArgMatches) -> App {
         let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();
-        let colours =
+        let styling =
             CanvasStyling::new(get_color_scheme(&matches, &config).unwrap(), &config).unwrap();
 
-        super::build_app(&matches, &mut config, &layout, id, &ty, &colours).unwrap()
+        super::build_app(&matches, &mut config, &layout, id, &ty, &styling).unwrap()
     }
 
     // TODO: There's probably a better way to create clap options AND unify together to avoid the possibility of
