@@ -152,7 +152,7 @@ pub static GRUVBOX_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| Conf
     ]),
     ram_color: Some("#427b58".into()),
     #[cfg(not(target_os = "windows"))]
-    cache_color: Some("d79921".into()),
+    cache_color: Some("#d79921".into()),
     swap_color: Some("#cc241d".into()),
     arc_color: Some("#689d6a".into()),
     gpu_core_colors: Some(vec![

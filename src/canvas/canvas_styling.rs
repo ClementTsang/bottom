@@ -392,9 +392,9 @@ impl CanvasColours {
 #[cfg(test)]
 mod test {
 
+    use super::{CanvasColours, ColourScheme};
+    use crate::Config;
     use tui::style::{Color, Style};
-
-    use super::CanvasColours;
 
     #[test]
     fn default_selected_colour_works() {
@@ -422,5 +422,16 @@ mod test {
             colours.currently_selected_text_style,
             Style::default().fg(Color::Red).bg(Color::Magenta),
         );
+    }
+
+    #[test]
+    fn test_built_in_colour_schemes() {
+        let config = Config::default();
+        CanvasColours::new(ColourScheme::Default, &config).unwrap();
+        CanvasColours::new(ColourScheme::DefaultLight, &config).unwrap();
+        CanvasColours::new(ColourScheme::Gruvbox, &config).unwrap();
+        CanvasColours::new(ColourScheme::GruvboxLight, &config).unwrap();
+        CanvasColours::new(ColourScheme::Nord, &config).unwrap();
+        CanvasColours::new(ColourScheme::NordLight, &config).unwrap();
     }
 }
