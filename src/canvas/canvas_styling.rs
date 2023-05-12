@@ -101,9 +101,9 @@ macro_rules! try_set_colour {
     ($styling:expr, $field:ident, $colours:expr, $colour_field:ident) => {
         if let Some(colour_str) = &$colours.$colour_field {
             $styling.$field = str_to_fg(colour_str).context(concat!(
-                "update ",
+                "update '",
                 stringify!($colour_field),
-                " in your config file"
+                "' in your config file"
             ))?;
         }
     };
@@ -117,9 +117,9 @@ macro_rules! try_set_colour_list {
                 .map(|s| str_to_fg(s))
                 .collect::<error::Result<Vec<Style>>>()
                 .context(concat!(
-                    "update ",
+                    "update '",
                     stringify!($colour_field),
-                    " in your config file"
+                    "' in your config file"
                 ))?;
         }
     };
