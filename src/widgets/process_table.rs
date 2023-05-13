@@ -12,7 +12,7 @@ use crate::{
         query::*,
         AppConfigFields, AppSearchState,
     },
-    canvas::canvas_styling::CanvasColours,
+    canvas::canvas_styling::CanvasStyling,
     components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
@@ -177,7 +177,7 @@ pub struct ProcWidgetState {
 }
 
 impl ProcWidgetState {
-    fn new_sort_table(config: &AppConfigFields, colours: &CanvasColours) -> SortTable {
+    fn new_sort_table(config: &AppConfigFields, colours: &CanvasStyling) -> SortTable {
         const COLUMNS: [Column<SortTableColumn>; 1] = [Column::hard(SortTableColumn, 7)];
 
         let props = DataTableProps {
@@ -194,7 +194,7 @@ impl ProcWidgetState {
     }
 
     fn new_process_table(
-        config: &AppConfigFields, colours: &CanvasColours, columns: Vec<SortColumn<ProcColumn>>,
+        config: &AppConfigFields, colours: &CanvasStyling, columns: Vec<SortColumn<ProcColumn>>,
         default_index: usize, default_order: SortOrder,
     ) -> ProcessTable {
         let inner_props = DataTableProps {
@@ -217,7 +217,7 @@ impl ProcWidgetState {
 
     pub fn new(
         config: &AppConfigFields, mode: ProcWidgetMode, table_config: ProcTableConfig,
-        colours: &CanvasColours, config_columns: &Option<IndexSet<ProcWidgetColumn>>,
+        colours: &CanvasStyling, config_columns: &Option<IndexSet<ProcWidgetColumn>>,
     ) -> Self {
         let process_search_state = {
             let mut pss = ProcessSearchState::default();
@@ -1119,14 +1119,14 @@ mod test {
 
     fn init_state(table_config: ProcTableConfig, columns: &[ProcWidgetColumn]) -> ProcWidgetState {
         let config = AppConfigFields::default();
-        let colours = CanvasColours::default();
+        let styling = CanvasStyling::default();
         let columns = Some(columns.iter().cloned().collect());
 
         ProcWidgetState::new(
             &config,
             ProcWidgetMode::Normal,
             table_config,
-            &colours,
+            &styling,
             &columns,
         )
     }

@@ -200,6 +200,7 @@ mod test {
 
     #[test]
     fn valid_hex_colours() {
+        // Check hex with 6 characters.
         assert_eq!(
             convert_hex_to_color("#ffffff").unwrap(),
             Color::Rgb(255, 255, 255)
@@ -216,6 +217,7 @@ mod test {
             Color::Rgb(18, 58, 188)
         );
 
+        // Check hex with 3 characters.
         assert_eq!(
             convert_hex_to_color("#fff").unwrap(),
             Color::Rgb(255, 255, 255)

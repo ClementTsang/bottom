@@ -59,7 +59,7 @@ impl FromStr for ColourScheme {
 
 /// Handles the canvas' state.
 pub struct Painter {
-    pub colours: CanvasColours,
+    pub colours: CanvasStyling,
     height: u16,
     width: u16,
     styled_help_text: Vec<Spans<'static>>,
@@ -82,7 +82,7 @@ enum LayoutConstraint {
 }
 
 impl Painter {
-    pub fn init(widget_layout: BottomLayout, colours: CanvasColours) -> anyhow::Result<Self> {
+    pub fn init(widget_layout: BottomLayout, styling: CanvasStyling) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -153,7 +153,7 @@ impl Painter {
         });
 
         let mut painter = Painter {
-            colours,
+            colours: styling,
             height: 0,
             width: 0,
             styled_help_text: Vec::default(),
