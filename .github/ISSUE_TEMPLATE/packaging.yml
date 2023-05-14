@@ -7,12 +7,12 @@ body:
       value: >
         If this is an issue about supporting a new package/installation method for a platform you use, please
         consider maintaining it yourself/with others and submitting a PR or issue with a link to it - they'll be
-        very much appreciated and likely accepted very quickly. [The documentation on packaging/distribution](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
-        may be helpful. If there are some issues with bottom itself causing problems with packaging, feel free to open
-        an issue.
+        very much appreciated and likely added to the README quickly. [The documentation on packaging/distribution](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
+        may be helpful in setting things up. If there are some issues with bottom itself causing problems with
+        packaging, feel free to open an appropriate issue.
 
 
-        If this is an issue regarding an existing distribution channel, then please understand that outside of:
+        If this is an issue regarding a specific existing distribution channel, then please understand that outside of:
 
           * [crates.io](https://crates.io/crates/bottom)
           * [Chocolatey](https://community.chocolatey.org/packages/bottom)
@@ -20,13 +20,15 @@ body:
 
 
         I do _not_ personally maintain any other distribution channel. Preferably, for any issues with other distribution
-        channels, you should try to first contact the package maintainers where appropriate for help regarding
-        distribution-related issues (e.g. package has issues installing, is outdated, etc.) before reaching out here.
+        channels, you should first try to contact the package maintainers where appropriate for help regarding
+        distribution-specific issues (e.g. the package has issues installing, it is outdated, etc.) before reaching out
+        here.
 
 
-        While I am happy to help where possible, I do not personally use many of the various ways people distribute
-        bottom, and as such, it's likely that I cannot help you with packaging on things I don't maintain myself beyond
-        maybe pointing you towards someone to ask, and issues where I cannot help will likely be closed.
+        This is as while I am happy to help where possible, I do not personally use many of the various ways people
+        distribute bottom. As such, unless specified, it's very likely I lack the platform-specific context, knowledge,
+        or tools to be able to help you at all, and the best I can do is just point you to whoever added the
+        distribution method in the first place - as such, it's probably easier to just ask them directly.
 
   - type: checkboxes
     id: acknowledgements
