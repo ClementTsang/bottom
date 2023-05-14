@@ -252,7 +252,7 @@ choco install bottom
 
 ### winget
 
-The winget package can be found [here](https://github.com/microsoft/winget-pkgs/tree/master/manifests/Clement/bottom):
+The winget package can be found [here](https://github.com/microsoft/winget-pkgs/tree/master/manifests/c/Clement/bottom):
 
 ```bash
 winget install bottom
