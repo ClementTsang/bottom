@@ -7,32 +7,34 @@ body:
       value: >
         If this is an issue about supporting a new package/installation method for a platform you use, please
         consider maintaining it yourself/with others and submitting a PR or issue with a link to it - they'll be
-        very much appreciated and likely added very quickly. [This documentation](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
-        may be helpful.
+        very much appreciated and likely accepted very quickly. [The documentation on packaging/distribution](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
+        may be helpful. If there are some issues with bottom itself causing problems with packaging, feel free to open
+        an issue.
 
 
-        Furthermore, outside of:
+        If this is an issue regarding an existing distribution channel, then please understand that outside of:
 
           * [crates.io](https://crates.io/crates/bottom)
           * [Chocolatey](https://community.chocolatey.org/packages/bottom)
-          * [Binary releases on GitHub](https://github.com/ClementTsang/bottom/releases)
+          * [Binary releases released on GitHub](https://github.com/ClementTsang/bottom/releases)
 
 
-        I do not maintain any other distribution channel. Preferably, you should contact the package
-        maintainers first where appropriate for help for distribution-related issues (e.g. package
-        has issues installing, is outdated, etc.)
+        I do _not_ personally maintain any other distribution channel. Preferably, for any issues with other distribution
+        channels, you should try to first contact the package maintainers where appropriate for help regarding
+        distribution-related issues (e.g. package has issues installing, is outdated, etc.) before reaching out here.
 
 
-        Please understand that I likely can't help you much if it's an issue about a specific distribution channel,
-        other than maybe pointing you to the package maintainer who added support in the first place, and the issue may
-        be closed if nothing can really be done on my side.
+        While I am happy to help where possible, I do not personally use many of the various ways people distribute
+        bottom, and as such, it's likely that I cannot help you with packaging on things I don't maintain myself beyond
+        maybe pointing you towards someone to ask, and issues where I cannot help will likely be closed.
 
   - type: checkboxes
     id: acknowledgements
     attributes:
       label: Checklist
       options:
-        - label: I have read the above text.
+        - label: >
+            I have read and understood the above text.
           required: true
 
   - type: textarea
