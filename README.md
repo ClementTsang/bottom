@@ -148,7 +148,8 @@ cargo +stable install bottom
 
 ### Arch Linux
 
-There is an [official package](https://archlinux.org/packages/community/x86_64/bottom/) that can be installed with `pacman`:
+There is an [official package](https://archlinux.org/packages/community/x86_64/bottom/) that can be installed with
+`pacman`:
 
 ```bash
 sudo pacman -S bottom
@@ -199,7 +200,7 @@ sudo dnf install bottom
 
 ### Gentoo
 
-Available in the official Gentoo repo:
+Available in the [official Gentoo repo](https://packages.gentoo.org/packages/sys-process/bottom):
 
 ```bash
 sudo emerge --ask sys-process/bottom
@@ -207,11 +208,15 @@ sudo emerge --ask sys-process/bottom
 
 ### Nix
 
+Available [in the nix-community repo](https://github.com/nix-community/home-manager/blob/master/modules/programs/bottom.nix):
+
 ```bash
 nix-env -i bottom
 ```
 
 ### Solus
+
+Available [in the Solus repos](https://dev.getsol.us/source/bottom/):
 
 ```bash
 sudo eopkg it bottom
@@ -219,11 +224,15 @@ sudo eopkg it bottom
 
 ### Void
 
+Available [in the void-packages repo](https://github.com/void-linux/void-packages/tree/master/srcpkgs/bottom):
+
 ```bash
 sudo xbps-install bottom
 ```
 
 ### Homebrew
+
+Formula available [here](https://formulae.brew.sh/formula/bottom):
 
 ```bash
 brew install bottom
@@ -231,12 +240,16 @@ brew install bottom
 
 ### MacPorts
 
+Available [here](https://ports.macports.org/port/bottom/):
+
 ```bash
 sudo port selfupdate
 sudo port install bottom
 ```
 
 ### Scoop
+
+Available in the [Main bucket](https://github.com/ScoopInstaller/Main):
 
 ```bash
 scoop install bottom
