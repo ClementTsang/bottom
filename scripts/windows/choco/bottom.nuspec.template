@@ -42,10 +42,11 @@ This is a nuspec. It mostly adheres to https://docs.nuget.org/create/Nuspec-Refe
     To use, run `btm` in a terminal.
     
     For more [documentation and usage](https://github.com/ClementTsang/bottom/blob/master/README.md), see the [official repo](https://github.com/ClementTsang/bottom).
-    
 
+    Please report any issues with the Chocolatey package [here](https://github.com/ClementTsang/choco-bottom).
+    
     **Note**
-    This currently depends on Visual C++ Redistributable for Visual Studio 2015 https://chocolatey.org/packages/vcredist2015. 
+    This package currently depends on Visual C++ Redistributable for Visual Studio 2015 https://chocolatey.org/packages/vcredist2015. 
     </description>
     <releaseNotes>https://github.com/ClementTsang/bottom/releases/tag/$version/</releaseNotes>
   </metadata>

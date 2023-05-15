@@ -12,23 +12,19 @@ body:
         packaging, feel free to open an appropriate issue.
 
 
-        If this is an issue regarding a specific existing distribution channel, then please understand that outside of:
+        If this is an issue regarding a specific existing distribution channel, feel free to report issues here if they
+        are related to the following sources:
 
           * [crates.io](https://crates.io/crates/bottom)
-          * [Chocolatey](https://community.chocolatey.org/packages/bottom)
           * [Binary releases released on GitHub](https://github.com/ClementTsang/bottom/releases)
 
 
-        I do _not_ personally maintain any other distribution channel. Preferably, for any issues with other distribution
-        channels, you should first try to contact the package maintainers where appropriate for help regarding
-        distribution-specific issues (e.g. the package has issues installing, it is outdated, etc.) before reaching out
-        here.
-
-
-        This is as while I am happy to help where possible, I do not personally use many of the various ways people
-        distribute bottom. As such, unless specified, it's very likely I lack the platform-specific context, knowledge,
-        or tools to be able to help you at all, and the best I can do is just point you to whoever added the
-        distribution method in the first place - as such, it's probably easier to just ask them directly.
+        For any other distribution channel, please first try to contact the package maintainers where appropriate
+        to get help regarding distribution-specific issues (e.g. the package has issues installing, the package
+        is outdated, etc.) before reaching out here. This is as while I am happy to help where possible, I do not
+        personally use many of the various ways people distribute bottom. As such, unless specified, I might lack the
+        platform-specific context, knowledge, or tools to be able to help you at all regarding the distribution method,
+        and the best I can do is just point you to the package maintainer.
 
   - type: checkboxes
     id: acknowledgements
