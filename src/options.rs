@@ -11,7 +11,6 @@ use indexmap::IndexSet;
 use layout_options::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use typed_builder::*;
 
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
@@ -44,7 +43,7 @@ pub struct Config {
     pub processes: Option<ProcessConfig>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize, TypedBuilder)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ConfigFlags {
     pub hide_avg_cpu: Option<bool>,
     pub dot_marker: Option<bool>,
