@@ -59,49 +59,39 @@ impl Row {
                                 BottomCol::builder()
                                     .col_width_ratio(width_ratio)
                                     .children(if left_legend {
-                                        vec![BottomColRow::builder()
-                                            .total_widget_ratio(20)
-                                            .children(vec![
-                                                BottomWidget::builder()
-                                                    .width_ratio(3)
-                                                    .widget_type(BottomWidgetType::CpuLegend)
-                                                    .widget_id(*iter_id)
-                                                    .canvas_handle_width(true)
-                                                    .parent_reflector(Some((
-                                                        WidgetDirection::Right,
-                                                        1,
-                                                    )))
-                                                    .build(),
-                                                BottomWidget::builder()
-                                                    .width_ratio(17)
-                                                    .widget_type(BottomWidgetType::Cpu)
-                                                    .widget_id(cpu_id)
-                                                    .flex_grow(true)
-                                                    .build(),
-                                            ])
-                                            .build()]
+                                        vec![BottomColRow::new(vec![
+                                            BottomWidget::builder()
+                                                .width_ratio(3)
+                                                .widget_type(BottomWidgetType::CpuLegend)
+                                                .widget_id(*iter_id)
+                                                .canvas_handle_width(true)
+                                                .parent_reflector(Some((WidgetDirection::Right, 1)))
+                                                .build(),
+                                            BottomWidget::builder()
+                                                .width_ratio(17)
+                                                .widget_type(BottomWidgetType::Cpu)
+                                                .widget_id(cpu_id)
+                                                .flex_grow(true)
+                                                .build(),
+                                        ])
+                                        .total_widget_ratio(20)]
                                     } else {
-                                        vec![BottomColRow::builder()
-                                            .total_widget_ratio(20)
-                                            .children(vec![
-                                                BottomWidget::builder()
-                                                    .width_ratio(17)
-                                                    .widget_type(BottomWidgetType::Cpu)
-                                                    .widget_id(cpu_id)
-                                                    .flex_grow(true)
-                                                    .build(),
-                                                BottomWidget::builder()
-                                                    .width_ratio(3)
-                                                    .widget_type(BottomWidgetType::CpuLegend)
-                                                    .widget_id(*iter_id)
-                                                    .canvas_handle_width(true)
-                                                    .parent_reflector(Some((
-                                                        WidgetDirection::Left,
-                                                        1,
-                                                    )))
-                                                    .build(),
-                                            ])
-                                            .build()]
+                                        vec![BottomColRow::new(vec![
+                                            BottomWidget::builder()
+                                                .width_ratio(17)
+                                                .widget_type(BottomWidgetType::Cpu)
+                                                .widget_id(cpu_id)
+                                                .flex_grow(true)
+                                                .build(),
+                                            BottomWidget::builder()
+                                                .width_ratio(3)
+                                                .widget_type(BottomWidgetType::CpuLegend)
+                                                .widget_id(*iter_id)
+                                                .canvas_handle_width(true)
+                                                .parent_reflector(Some((WidgetDirection::Left, 1)))
+                                                .build(),
+                                        ])
+                                        .total_widget_ratio(20)]
                                     })
                                     .build()
                             }
@@ -113,46 +103,37 @@ impl Row {
                                     .total_col_row_ratio(2)
                                     .col_width_ratio(width_ratio)
                                     .children(vec![
-                                        BottomColRow::builder()
-                                            .children(vec![
-                                                BottomWidget::builder()
-                                                    .widget_type(BottomWidgetType::ProcSort)
-                                                    .widget_id(*iter_id)
-                                                    .canvas_handle_width(true)
-                                                    .parent_reflector(Some((
-                                                        WidgetDirection::Right,
-                                                        2,
-                                                    )))
-                                                    .width_ratio(1)
-                                                    .build(),
-                                                BottomWidget::builder()
-                                                    .widget_type(BottomWidgetType::Proc)
-                                                    .widget_id(proc_id)
-                                                    .width_ratio(2)
-                                                    .build(),
-                                            ])
-                                            .total_widget_ratio(3)
-                                            .flex_grow(true)
-                                            .build(),
-                                        BottomColRow::builder()
-                                            .children(vec![BottomWidget::builder()
-                                                .widget_type(BottomWidgetType::ProcSearch)
-                                                .widget_id(proc_search_id)
-                                                .parent_reflector(Some((WidgetDirection::Up, 1)))
-                                                .build()])
-                                            .canvas_handle_height(true)
-                                            .build(),
+                                        BottomColRow::new(vec![
+                                            BottomWidget::builder()
+                                                .widget_type(BottomWidgetType::ProcSort)
+                                                .widget_id(*iter_id)
+                                                .canvas_handle_width(true)
+                                                .parent_reflector(Some((WidgetDirection::Right, 2)))
+                                                .width_ratio(1)
+                                                .build(),
+                                            BottomWidget::builder()
+                                                .widget_type(BottomWidgetType::Proc)
+                                                .widget_id(proc_id)
+                                                .width_ratio(2)
+                                                .build(),
+                                        ])
+                                        .total_widget_ratio(3)
+                                        .flex_grow(true),
+                                        BottomColRow::new(vec![BottomWidget::builder()
+                                            .widget_type(BottomWidgetType::ProcSearch)
+                                            .widget_id(proc_search_id)
+                                            .parent_reflector(Some((WidgetDirection::Up, 1)))
+                                            .build()])
+                                        .canvas_handle_height(true),
                                     ])
                                     .build()
                             }
                             _ => BottomCol::builder()
                                 .col_width_ratio(width_ratio)
-                                .children(vec![BottomColRow::builder()
-                                    .children(vec![BottomWidget::builder()
-                                        .widget_type(widget_type)
-                                        .widget_id(*iter_id)
-                                        .build()])
-                                    .build()])
+                                .children(vec![BottomColRow::new(vec![BottomWidget::builder()
+                                    .widget_type(widget_type)
+                                    .widget_id(*iter_id)
+                                    .build()])])
                                 .build(),
                         });
                     }
@@ -194,53 +175,49 @@ impl Row {
                                     *iter_id += 1;
                                     if left_legend {
                                         col_row_children.push(
-                                            BottomColRow::builder()
-                                                .col_row_height_ratio(col_row_height_ratio)
-                                                .total_widget_ratio(20)
-                                                .children(vec![
-                                                    BottomWidget::builder()
-                                                        .width_ratio(3)
-                                                        .widget_type(BottomWidgetType::CpuLegend)
-                                                        .widget_id(*iter_id)
-                                                        .canvas_handle_width(true)
-                                                        .parent_reflector(Some((
-                                                            WidgetDirection::Right,
-                                                            1,
-                                                        )))
-                                                        .build(),
-                                                    BottomWidget::builder()
-                                                        .width_ratio(17)
-                                                        .widget_type(BottomWidgetType::Cpu)
-                                                        .widget_id(cpu_id)
-                                                        .flex_grow(true)
-                                                        .build(),
-                                                ])
-                                                .build(),
+                                            BottomColRow::new(vec![
+                                                BottomWidget::builder()
+                                                    .width_ratio(3)
+                                                    .widget_type(BottomWidgetType::CpuLegend)
+                                                    .widget_id(*iter_id)
+                                                    .canvas_handle_width(true)
+                                                    .parent_reflector(Some((
+                                                        WidgetDirection::Right,
+                                                        1,
+                                                    )))
+                                                    .build(),
+                                                BottomWidget::builder()
+                                                    .width_ratio(17)
+                                                    .widget_type(BottomWidgetType::Cpu)
+                                                    .widget_id(cpu_id)
+                                                    .flex_grow(true)
+                                                    .build(),
+                                            ])
+                                            .col_row_height_ratio(col_row_height_ratio)
+                                            .total_widget_ratio(20),
                                         );
                                     } else {
                                         col_row_children.push(
-                                            BottomColRow::builder()
-                                                .col_row_height_ratio(col_row_height_ratio)
-                                                .total_widget_ratio(20)
-                                                .children(vec![
-                                                    BottomWidget::builder()
-                                                        .width_ratio(17)
-                                                        .widget_type(BottomWidgetType::Cpu)
-                                                        .widget_id(cpu_id)
-                                                        .flex_grow(true)
-                                                        .build(),
-                                                    BottomWidget::builder()
-                                                        .width_ratio(3)
-                                                        .widget_type(BottomWidgetType::CpuLegend)
-                                                        .widget_id(*iter_id)
-                                                        .canvas_handle_width(true)
-                                                        .parent_reflector(Some((
-                                                            WidgetDirection::Left,
-                                                            1,
-                                                        )))
-                                                        .build(),
-                                                ])
-                                                .build(),
+                                            BottomColRow::new(vec![
+                                                BottomWidget::builder()
+                                                    .width_ratio(17)
+                                                    .widget_type(BottomWidgetType::Cpu)
+                                                    .widget_id(cpu_id)
+                                                    .flex_grow(true)
+                                                    .build(),
+                                                BottomWidget::builder()
+                                                    .width_ratio(3)
+                                                    .widget_type(BottomWidgetType::CpuLegend)
+                                                    .widget_id(*iter_id)
+                                                    .canvas_handle_width(true)
+                                                    .parent_reflector(Some((
+                                                        WidgetDirection::Left,
+                                                        1,
+                                                    )))
+                                                    .build(),
+                                            ])
+                                            .col_row_height_ratio(col_row_height_ratio)
+                                            .total_widget_ratio(20),
                                         );
                                     }
                                 }
@@ -250,48 +227,39 @@ impl Row {
                                     let proc_search_id = *iter_id + 1;
                                     *iter_id += 2;
                                     col_row_children.push(
-                                        BottomColRow::builder()
-                                            .children(vec![
-                                                BottomWidget::builder()
-                                                    .widget_type(BottomWidgetType::ProcSort)
-                                                    .widget_id(*iter_id)
-                                                    .canvas_handle_width(true)
-                                                    .parent_reflector(Some((
-                                                        WidgetDirection::Right,
-                                                        2,
-                                                    )))
-                                                    .width_ratio(1)
-                                                    .build(),
-                                                BottomWidget::builder()
-                                                    .widget_type(BottomWidgetType::Proc)
-                                                    .widget_id(proc_id)
-                                                    .width_ratio(2)
-                                                    .build(),
-                                            ])
-                                            .col_row_height_ratio(col_row_height_ratio)
-                                            .total_widget_ratio(3)
-                                            .build(),
+                                        BottomColRow::new(vec![
+                                            BottomWidget::builder()
+                                                .widget_type(BottomWidgetType::ProcSort)
+                                                .widget_id(*iter_id)
+                                                .canvas_handle_width(true)
+                                                .parent_reflector(Some((WidgetDirection::Right, 2)))
+                                                .width_ratio(1)
+                                                .build(),
+                                            BottomWidget::builder()
+                                                .widget_type(BottomWidgetType::Proc)
+                                                .widget_id(proc_id)
+                                                .width_ratio(2)
+                                                .build(),
+                                        ])
+                                        .col_row_height_ratio(col_row_height_ratio)
+                                        .total_widget_ratio(3),
                                     );
                                     col_row_children.push(
-                                        BottomColRow::builder()
-                                            .col_row_height_ratio(col_row_height_ratio)
-                                            .children(vec![BottomWidget::builder()
-                                                .widget_type(BottomWidgetType::ProcSearch)
-                                                .widget_id(proc_search_id)
-                                                .parent_reflector(Some((WidgetDirection::Up, 1)))
-                                                .build()])
-                                            .canvas_handle_height(true)
-                                            .build(),
+                                        BottomColRow::new(vec![BottomWidget::builder()
+                                            .widget_type(BottomWidgetType::ProcSearch)
+                                            .widget_id(proc_search_id)
+                                            .parent_reflector(Some((WidgetDirection::Up, 1)))
+                                            .build()])
+                                        .canvas_handle_height(true)
+                                        .col_row_height_ratio(col_row_height_ratio),
                                     );
                                 }
                                 _ => col_row_children.push(
-                                    BottomColRow::builder()
-                                        .col_row_height_ratio(col_row_height_ratio)
-                                        .children(vec![BottomWidget::builder()
-                                            .widget_type(widget_type)
-                                            .widget_id(*iter_id)
-                                            .build()])
-                                        .build(),
+                                    BottomColRow::new(vec![BottomWidget::builder()
+                                        .widget_type(widget_type)
+                                        .widget_id(*iter_id)
+                                        .build()])
+                                    .col_row_height_ratio(col_row_height_ratio),
                                 ),
                             }
                         }

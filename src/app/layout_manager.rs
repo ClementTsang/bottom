@@ -538,161 +538,143 @@ impl BottomLayout {
             vec![
                 BottomCol::builder()
                     .canvas_handle_width(true)
-                    .children(vec![BottomColRow::builder()
-                        .canvas_handle_height(true)
-                        .children(vec![BottomWidget::builder()
-                            .canvas_handle_width(true)
-                            .widget_type(BottomWidgetType::Disk)
-                            .widget_id(4)
-                            .up_neighbour(Some(100))
-                            .left_neighbour(Some(8))
-                            .right_neighbour(Some(DEFAULT_WIDGET_ID + 2))
-                            .build()])
+                    .children(vec![BottomColRow::new(vec![BottomWidget::builder()
+                        .canvas_handle_width(true)
+                        .widget_type(BottomWidgetType::Disk)
+                        .widget_id(4)
+                        .up_neighbour(Some(100))
+                        .left_neighbour(Some(8))
+                        .right_neighbour(Some(DEFAULT_WIDGET_ID + 2))
                         .build()])
+                    .canvas_handle_height(true)])
                     .build(),
                 BottomCol::builder()
                     .canvas_handle_width(true)
                     .children(vec![
-                        BottomColRow::builder()
-                            .canvas_handle_height(true)
-                            .total_widget_ratio(3)
-                            .children(vec![
-                                BottomWidget::builder()
-                                    .canvas_handle_width(true)
-                                    .widget_type(BottomWidgetType::ProcSort)
-                                    .widget_id(DEFAULT_WIDGET_ID + 2)
-                                    .up_neighbour(Some(100))
-                                    .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                                    .left_neighbour(Some(4))
-                                    .right_neighbour(Some(DEFAULT_WIDGET_ID))
-                                    .width_ratio(1)
-                                    .parent_reflector(Some((WidgetDirection::Right, 2)))
-                                    .build(),
-                                BottomWidget::builder()
-                                    .canvas_handle_width(true)
-                                    .widget_type(BottomWidgetType::Proc)
-                                    .widget_id(DEFAULT_WIDGET_ID)
-                                    .up_neighbour(Some(100))
-                                    .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                                    .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
-                                    .right_neighbour(Some(7))
-                                    .width_ratio(2)
-                                    .build(),
-                            ])
-                            .build(),
-                        BottomColRow::builder()
-                            .canvas_handle_height(true)
-                            .children(vec![BottomWidget::builder()
+                        BottomColRow::new(vec![
+                            BottomWidget::builder()
                                 .canvas_handle_width(true)
-                                .widget_type(BottomWidgetType::ProcSearch)
-                                .widget_id(DEFAULT_WIDGET_ID + 1)
-                                .up_neighbour(Some(DEFAULT_WIDGET_ID))
+                                .widget_type(BottomWidgetType::ProcSort)
+                                .widget_id(DEFAULT_WIDGET_ID + 2)
+                                .up_neighbour(Some(100))
+                                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                                 .left_neighbour(Some(4))
+                                .right_neighbour(Some(DEFAULT_WIDGET_ID))
+                                .width_ratio(1)
+                                .parent_reflector(Some((WidgetDirection::Right, 2)))
+                                .build(),
+                            BottomWidget::builder()
+                                .canvas_handle_width(true)
+                                .widget_type(BottomWidgetType::Proc)
+                                .widget_id(DEFAULT_WIDGET_ID)
+                                .up_neighbour(Some(100))
+                                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                                .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
                                 .right_neighbour(Some(7))
-                                .parent_reflector(Some((WidgetDirection::Up, 1)))
-                                .build()])
-                            .build(),
+                                .width_ratio(2)
+                                .build(),
+                        ])
+                        .canvas_handle_height(true)
+                        .total_widget_ratio(3),
+                        BottomColRow::new(vec![BottomWidget::builder()
+                            .canvas_handle_width(true)
+                            .widget_type(BottomWidgetType::ProcSearch)
+                            .widget_id(DEFAULT_WIDGET_ID + 1)
+                            .up_neighbour(Some(DEFAULT_WIDGET_ID))
+                            .left_neighbour(Some(4))
+                            .right_neighbour(Some(7))
+                            .parent_reflector(Some((WidgetDirection::Up, 1)))
+                            .build()])
+                        .canvas_handle_height(true),
                     ])
                     .build(),
                 BottomCol::builder()
                     .canvas_handle_width(true)
-                    .children(vec![BottomColRow::builder()
-                        .canvas_handle_height(true)
-                        .children(vec![BottomWidget::builder()
-                            .canvas_handle_width(true)
-                            .widget_type(BottomWidgetType::Temp)
-                            .widget_id(7)
-                            .up_neighbour(Some(100))
-                            .left_neighbour(Some(DEFAULT_WIDGET_ID))
-                            .right_neighbour(Some(8))
-                            .build()])
+                    .children(vec![BottomColRow::new(vec![BottomWidget::builder()
+                        .canvas_handle_width(true)
+                        .widget_type(BottomWidgetType::Temp)
+                        .widget_id(7)
+                        .up_neighbour(Some(100))
+                        .left_neighbour(Some(DEFAULT_WIDGET_ID))
+                        .right_neighbour(Some(8))
                         .build()])
+                    .canvas_handle_height(true)])
                     .build(),
                 BottomCol::builder()
                     .canvas_handle_width(true)
-                    .children(vec![BottomColRow::builder()
-                        .canvas_handle_height(true)
-                        .children(vec![BottomWidget::builder()
-                            .canvas_handle_width(true)
-                            .widget_type(BottomWidgetType::Battery)
-                            .widget_id(8)
-                            .up_neighbour(Some(100))
-                            .left_neighbour(Some(7))
-                            .right_neighbour(Some(4))
-                            .build()])
+                    .children(vec![BottomColRow::new(vec![BottomWidget::builder()
+                        .canvas_handle_width(true)
+                        .widget_type(BottomWidgetType::Battery)
+                        .widget_id(8)
+                        .up_neighbour(Some(100))
+                        .left_neighbour(Some(7))
+                        .right_neighbour(Some(4))
                         .build()])
+                    .canvas_handle_height(true)])
                     .build(),
             ]
         } else {
             vec![
                 BottomCol::builder()
                     .canvas_handle_width(true)
-                    .children(vec![BottomColRow::builder()
-                        .canvas_handle_height(true)
-                        .children(vec![BottomWidget::builder()
-                            .canvas_handle_width(true)
-                            .widget_type(BottomWidgetType::Disk)
-                            .widget_id(4)
-                            .up_neighbour(Some(100))
-                            .left_neighbour(Some(7))
-                            .right_neighbour(Some(DEFAULT_WIDGET_ID + 2))
-                            .build()])
+                    .children(vec![BottomColRow::new(vec![BottomWidget::builder()
+                        .canvas_handle_width(true)
+                        .widget_type(BottomWidgetType::Disk)
+                        .widget_id(4)
+                        .up_neighbour(Some(100))
+                        .left_neighbour(Some(7))
+                        .right_neighbour(Some(DEFAULT_WIDGET_ID + 2))
                         .build()])
+                    .canvas_handle_height(true)])
                     .build(),
                 BottomCol::builder()
                     .canvas_handle_width(true)
                     .children(vec![
-                        BottomColRow::builder()
-                            .canvas_handle_height(true)
-                            .children(vec![
-                                BottomWidget::builder()
-                                    .canvas_handle_width(true)
-                                    .widget_type(BottomWidgetType::ProcSort)
-                                    .widget_id(DEFAULT_WIDGET_ID + 2)
-                                    .up_neighbour(Some(100))
-                                    .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                                    .left_neighbour(Some(4))
-                                    .right_neighbour(Some(DEFAULT_WIDGET_ID))
-                                    .parent_reflector(Some((WidgetDirection::Right, 2)))
-                                    .build(),
-                                BottomWidget::builder()
-                                    .canvas_handle_width(true)
-                                    .widget_type(BottomWidgetType::Proc)
-                                    .widget_id(DEFAULT_WIDGET_ID)
-                                    .up_neighbour(Some(100))
-                                    .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                                    .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
-                                    .right_neighbour(Some(7))
-                                    .build(),
-                            ])
-                            .build(),
-                        BottomColRow::builder()
-                            .canvas_handle_height(true)
-                            .children(vec![BottomWidget::builder()
+                        BottomColRow::new(vec![
+                            BottomWidget::builder()
                                 .canvas_handle_width(true)
-                                .widget_type(BottomWidgetType::ProcSearch)
-                                .widget_id(DEFAULT_WIDGET_ID + 1)
-                                .up_neighbour(Some(DEFAULT_WIDGET_ID))
+                                .widget_type(BottomWidgetType::ProcSort)
+                                .widget_id(DEFAULT_WIDGET_ID + 2)
+                                .up_neighbour(Some(100))
+                                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                                 .left_neighbour(Some(4))
+                                .right_neighbour(Some(DEFAULT_WIDGET_ID))
+                                .parent_reflector(Some((WidgetDirection::Right, 2)))
+                                .build(),
+                            BottomWidget::builder()
+                                .canvas_handle_width(true)
+                                .widget_type(BottomWidgetType::Proc)
+                                .widget_id(DEFAULT_WIDGET_ID)
+                                .up_neighbour(Some(100))
+                                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                                .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
                                 .right_neighbour(Some(7))
-                                .parent_reflector(Some((WidgetDirection::Up, 1)))
-                                .build()])
-                            .build(),
+                                .build(),
+                        ])
+                        .canvas_handle_height(true),
+                        BottomColRow::new(vec![BottomWidget::builder()
+                            .canvas_handle_width(true)
+                            .widget_type(BottomWidgetType::ProcSearch)
+                            .widget_id(DEFAULT_WIDGET_ID + 1)
+                            .up_neighbour(Some(DEFAULT_WIDGET_ID))
+                            .left_neighbour(Some(4))
+                            .right_neighbour(Some(7))
+                            .parent_reflector(Some((WidgetDirection::Up, 1)))
+                            .build()])
+                        .canvas_handle_height(true),
                     ])
                     .build(),
                 BottomCol::builder()
                     .canvas_handle_width(true)
-                    .children(vec![BottomColRow::builder()
-                        .canvas_handle_height(true)
-                        .children(vec![BottomWidget::builder()
-                            .canvas_handle_width(true)
-                            .widget_type(BottomWidgetType::Temp)
-                            .widget_id(7)
-                            .up_neighbour(Some(100))
-                            .left_neighbour(Some(DEFAULT_WIDGET_ID))
-                            .right_neighbour(Some(4))
-                            .build()])
+                    .children(vec![BottomColRow::new(vec![BottomWidget::builder()
+                        .canvas_handle_width(true)
+                        .widget_type(BottomWidgetType::Temp)
+                        .widget_id(7)
+                        .up_neighbour(Some(100))
+                        .left_neighbour(Some(DEFAULT_WIDGET_ID))
+                        .right_neighbour(Some(4))
                         .build()])
+                    .canvas_handle_height(true)])
                     .build(),
             ]
         };
@@ -704,57 +686,51 @@ impl BottomLayout {
                     .canvas_handle_height(true)
                     .children(vec![BottomCol::builder()
                         .canvas_handle_width(true)
-                        .children(vec![BottomColRow::builder()
-                            .canvas_handle_height(true)
-                            .children(vec![BottomWidget::builder()
-                                .canvas_handle_width(true)
-                                .widget_type(BottomWidgetType::BasicCpu)
-                                .widget_id(1)
-                                .down_neighbour(Some(2))
-                                .build()])
+                        .children(vec![BottomColRow::new(vec![BottomWidget::builder()
+                            .canvas_handle_width(true)
+                            .widget_type(BottomWidgetType::BasicCpu)
+                            .widget_id(1)
+                            .down_neighbour(Some(2))
                             .build()])
+                        .canvas_handle_height(true)])
                         .build()])
                     .build(),
                 BottomRow::builder()
                     .canvas_handle_height(true)
                     .children(vec![BottomCol::builder()
                         .canvas_handle_width(true)
-                        .children(vec![BottomColRow::builder()
-                            .canvas_handle_height(true)
-                            .children(vec![
-                                BottomWidget::builder()
-                                    .canvas_handle_width(true)
-                                    .widget_type(BottomWidgetType::BasicMem)
-                                    .widget_id(2)
-                                    .up_neighbour(Some(1))
-                                    .down_neighbour(Some(100))
-                                    .right_neighbour(Some(3))
-                                    .build(),
-                                BottomWidget::builder()
-                                    .canvas_handle_width(true)
-                                    .widget_type(BottomWidgetType::BasicNet)
-                                    .widget_id(3)
-                                    .up_neighbour(Some(1))
-                                    .down_neighbour(Some(100))
-                                    .left_neighbour(Some(2))
-                                    .build(),
-                            ])
-                            .build()])
+                        .children(vec![BottomColRow::new(vec![
+                            BottomWidget::builder()
+                                .canvas_handle_width(true)
+                                .widget_type(BottomWidgetType::BasicMem)
+                                .widget_id(2)
+                                .up_neighbour(Some(1))
+                                .down_neighbour(Some(100))
+                                .right_neighbour(Some(3))
+                                .build(),
+                            BottomWidget::builder()
+                                .canvas_handle_width(true)
+                                .widget_type(BottomWidgetType::BasicNet)
+                                .widget_id(3)
+                                .up_neighbour(Some(1))
+                                .down_neighbour(Some(100))
+                                .left_neighbour(Some(2))
+                                .build(),
+                        ])
+                        .canvas_handle_height(true)])
                         .build()])
                     .build(),
                 BottomRow::builder()
                     .canvas_handle_height(true)
                     .children(vec![BottomCol::builder()
                         .canvas_handle_width(true)
-                        .children(vec![BottomColRow::builder()
-                            .canvas_handle_height(true)
-                            .children(vec![BottomWidget::builder()
-                                .canvas_handle_width(true)
-                                .widget_type(BottomWidgetType::BasicTables)
-                                .widget_id(100)
-                                .up_neighbour(Some(2))
-                                .build()])
+                        .children(vec![BottomColRow::new(vec![BottomWidget::builder()
+                            .canvas_handle_width(true)
+                            .widget_type(BottomWidgetType::BasicTables)
+                            .widget_id(100)
+                            .up_neighbour(Some(2))
                             .build()])
+                        .canvas_handle_height(true)])
                         .build()])
                     .build(),
                 BottomRow::builder()
@@ -804,21 +780,45 @@ pub struct BottomCol {
     pub flex_grow: bool,
 }
 
-#[derive(Clone, Default, Debug, TypedBuilder)]
+#[derive(Clone, Default, Debug)]
 pub struct BottomColRow {
     pub children: Vec<BottomWidget>,
-
-    #[builder(default = 1)]
     pub total_widget_ratio: u32,
-
-    #[builder(default = 1)]
     pub col_row_height_ratio: u32,
-
-    #[builder(default = false)]
     pub canvas_handle_height: bool,
-
-    #[builder(default = false)]
     pub flex_grow: bool,
+}
+
+impl BottomColRow {
+    pub(crate) fn new(children: Vec<BottomWidget>) -> Self {
+        Self {
+            children,
+            total_widget_ratio: 1,
+            col_row_height_ratio: 1,
+            canvas_handle_height: false,
+            flex_grow: false,
+        }
+    }
+
+    pub(crate) fn total_widget_ratio(mut self, total_widget_ratio: u32) -> Self {
+        self.total_widget_ratio = total_widget_ratio;
+        self
+    }
+
+    pub(crate) fn col_row_height_ratio(mut self, col_row_height_ratio: u32) -> Self {
+        self.col_row_height_ratio = col_row_height_ratio;
+        self
+    }
+
+    pub(crate) fn canvas_handle_height(mut self, canvas_handle_height: bool) -> Self {
+        self.canvas_handle_height = canvas_handle_height;
+        self
+    }
+
+    pub(crate) fn flex_grow(mut self, flex_grow: bool) -> Self {
+        self.flex_grow = flex_grow;
+        self
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
