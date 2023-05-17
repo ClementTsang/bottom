@@ -12,6 +12,35 @@ pub struct Row {
     pub child: Option<Vec<RowChildren>>,
 }
 
+fn new_cpu(left_legend: bool, iter_id: &mut u64) -> BottomColRow {
+    let cpu_id = *iter_id;
+    *iter_id += 1;
+    let legend_id = *iter_id;
+
+    if left_legend {
+        BottomColRow::new(vec![
+            BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
+                .width_ratio(3)
+                .canvas_handle_width(true)
+                .parent_reflector(Some((WidgetDirection::Right, 1))),
+            BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
+                .width_ratio(17)
+                .flex_grow(true),
+        ])
+    } else {
+        BottomColRow::new(vec![
+            BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
+                .width_ratio(17)
+                .flex_grow(true),
+            BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
+                .width_ratio(3)
+                .canvas_handle_width(true)
+                .parent_reflector(Some((WidgetDirection::Left, 1))),
+        ])
+    }
+    .total_widget_ratio(20)
+}
+
 impl Row {
     pub fn convert_row_to_bottom_row(
         &self, iter_id: &mut u64, total_height_ratio: &mut u32, default_widget_id: &mut u64,
@@ -53,42 +82,10 @@ impl Row {
                         }
 
                         children.push(match widget_type {
-                            BottomWidgetType::Cpu => {
-                                let cpu_id = *iter_id;
-                                *iter_id += 1;
-                                BottomCol::builder()
-                                    .col_width_ratio(width_ratio)
-                                    .children(if left_legend {
-                                        vec![BottomColRow::new(vec![
-                                            BottomWidget::new(
-                                                BottomWidgetType::CpuLegend,
-                                                *iter_id,
-                                            )
-                                            .width_ratio(3)
-                                            .canvas_handle_width(true)
-                                            .parent_reflector(Some((WidgetDirection::Right, 1))),
-                                            BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
-                                                .width_ratio(17)
-                                                .flex_grow(true),
-                                        ])
-                                        .total_widget_ratio(20)]
-                                    } else {
-                                        vec![BottomColRow::new(vec![
-                                            BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
-                                                .width_ratio(17)
-                                                .flex_grow(true),
-                                            BottomWidget::new(
-                                                BottomWidgetType::CpuLegend,
-                                                *iter_id,
-                                            )
-                                            .width_ratio(3)
-                                            .canvas_handle_width(true)
-                                            .parent_reflector(Some((WidgetDirection::Left, 1))),
-                                        ])
-                                        .total_widget_ratio(20)]
-                                    })
-                                    .build()
-                            }
+                            BottomWidgetType::Cpu => BottomCol::builder()
+                                .col_width_ratio(width_ratio)
+                                .children(vec![new_cpu(left_legend, iter_id)])
+                                .build(),
                             BottomWidgetType::Proc => {
                                 let proc_id = *iter_id;
                                 let proc_search_id = *iter_id + 1;
@@ -159,46 +156,10 @@ impl Row {
 
                             match widget_type {
                                 BottomWidgetType::Cpu => {
-                                    let cpu_id = *iter_id;
-                                    *iter_id += 1;
-                                    if left_legend {
-                                        col_row_children.push(
-                                            BottomColRow::new(vec![
-                                                BottomWidget::new(
-                                                    BottomWidgetType::CpuLegend,
-                                                    *iter_id,
-                                                )
-                                                .width_ratio(3)
-                                                .canvas_handle_width(true)
-                                                .parent_reflector(Some((
-                                                    WidgetDirection::Right,
-                                                    1,
-                                                ))),
-                                                BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
-                                                    .width_ratio(17)
-                                                    .flex_grow(true),
-                                            ])
-                                            .col_row_height_ratio(col_row_height_ratio)
-                                            .total_widget_ratio(20),
-                                        );
-                                    } else {
-                                        col_row_children.push(
-                                            BottomColRow::new(vec![
-                                                BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
-                                                    .width_ratio(17)
-                                                    .flex_grow(true),
-                                                BottomWidget::new(
-                                                    BottomWidgetType::CpuLegend,
-                                                    *iter_id,
-                                                )
-                                                .width_ratio(3)
-                                                .canvas_handle_width(true)
-                                                .parent_reflector(Some((WidgetDirection::Left, 1))),
-                                            ])
-                                            .col_row_height_ratio(col_row_height_ratio)
-                                            .total_widget_ratio(20),
-                                        );
-                                    }
+                                    col_row_children.push(
+                                        new_cpu(left_legend, iter_id)
+                                            .col_row_height_ratio(col_row_height_ratio),
+                                    );
                                 }
                                 BottomWidgetType::Proc => {
                                     contains_proc = true;
