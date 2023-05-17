@@ -41,6 +41,22 @@ fn new_cpu(left_legend: bool, iter_id: &mut u64) -> BottomColRow {
     .total_widget_ratio(20)
 }
 
+fn new_proc_sort(sort_id: u64) -> BottomWidget {
+    BottomWidget::new(BottomWidgetType::ProcSort, sort_id)
+        .canvas_handle_width(true)
+        .parent_reflector(Some((WidgetDirection::Right, 2)))
+        .width_ratio(1)
+}
+
+fn new_proc(proc_id: u64) -> BottomWidget {
+    BottomWidget::new(BottomWidgetType::Proc, proc_id).width_ratio(2)
+}
+
+fn new_proc_search(search_id: u64) -> BottomWidget {
+    BottomWidget::new(BottomWidgetType::ProcSearch, search_id)
+        .parent_reflector(Some((WidgetDirection::Up, 1)))
+}
+
 impl Row {
     pub fn convert_row_to_bottom_row(
         &self, iter_id: &mut u64, total_height_ratio: &mut u32, default_widget_id: &mut u64,
@@ -95,21 +111,13 @@ impl Row {
                                     .col_width_ratio(width_ratio)
                                     .children(vec![
                                         BottomColRow::new(vec![
-                                            BottomWidget::new(BottomWidgetType::ProcSort, *iter_id)
-                                                .canvas_handle_width(true)
-                                                .parent_reflector(Some((WidgetDirection::Right, 2)))
-                                                .width_ratio(1),
-                                            BottomWidget::new(BottomWidgetType::Proc, proc_id)
-                                                .width_ratio(2),
+                                            new_proc_sort(*iter_id),
+                                            new_proc(proc_id),
                                         ])
                                         .total_widget_ratio(3)
                                         .flex_grow(true),
-                                        BottomColRow::new(vec![BottomWidget::new(
-                                            BottomWidgetType::ProcSearch,
-                                            proc_search_id,
-                                        )
-                                        .parent_reflector(Some((WidgetDirection::Up, 1)))])
-                                        .canvas_handle_height(true),
+                                        BottomColRow::new(vec![new_proc_search(proc_search_id)])
+                                            .canvas_handle_height(true),
                                     ])
                                     .build()
                             }
@@ -168,24 +176,16 @@ impl Row {
                                     *iter_id += 2;
                                     col_row_children.push(
                                         BottomColRow::new(vec![
-                                            BottomWidget::new(BottomWidgetType::ProcSort, *iter_id)
-                                                .canvas_handle_width(true)
-                                                .parent_reflector(Some((WidgetDirection::Right, 2)))
-                                                .width_ratio(1),
-                                            BottomWidget::new(BottomWidgetType::Proc, proc_id)
-                                                .width_ratio(2),
+                                            new_proc_sort(*iter_id),
+                                            new_proc(proc_id),
                                         ])
                                         .col_row_height_ratio(col_row_height_ratio)
                                         .total_widget_ratio(3),
                                     );
                                     col_row_children.push(
-                                        BottomColRow::new(vec![BottomWidget::new(
-                                            BottomWidgetType::ProcSearch,
-                                            proc_search_id,
-                                        )
-                                        .parent_reflector(Some((WidgetDirection::Up, 1)))])
-                                        .canvas_handle_height(true)
-                                        .col_row_height_ratio(col_row_height_ratio),
+                                        BottomColRow::new(vec![new_proc_search(proc_search_id)])
+                                            .canvas_handle_height(true)
+                                            .col_row_height_ratio(col_row_height_ratio),
                                     );
                                 }
                                 _ => col_row_children.push(
