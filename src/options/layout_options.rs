@@ -60,36 +60,30 @@ impl Row {
                                     .col_width_ratio(width_ratio)
                                     .children(if left_legend {
                                         vec![BottomColRow::new(vec![
-                                            BottomWidget::builder()
-                                                .width_ratio(3)
-                                                .widget_type(BottomWidgetType::CpuLegend)
-                                                .widget_id(*iter_id)
-                                                .canvas_handle_width(true)
-                                                .parent_reflector(Some((WidgetDirection::Right, 1)))
-                                                .build(),
-                                            BottomWidget::builder()
+                                            BottomWidget::new(
+                                                BottomWidgetType::CpuLegend,
+                                                *iter_id,
+                                            )
+                                            .width_ratio(3)
+                                            .canvas_handle_width(true)
+                                            .parent_reflector(Some((WidgetDirection::Right, 1))),
+                                            BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
                                                 .width_ratio(17)
-                                                .widget_type(BottomWidgetType::Cpu)
-                                                .widget_id(cpu_id)
-                                                .flex_grow(true)
-                                                .build(),
+                                                .flex_grow(true),
                                         ])
                                         .total_widget_ratio(20)]
                                     } else {
                                         vec![BottomColRow::new(vec![
-                                            BottomWidget::builder()
+                                            BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
                                                 .width_ratio(17)
-                                                .widget_type(BottomWidgetType::Cpu)
-                                                .widget_id(cpu_id)
-                                                .flex_grow(true)
-                                                .build(),
-                                            BottomWidget::builder()
-                                                .width_ratio(3)
-                                                .widget_type(BottomWidgetType::CpuLegend)
-                                                .widget_id(*iter_id)
-                                                .canvas_handle_width(true)
-                                                .parent_reflector(Some((WidgetDirection::Left, 1)))
-                                                .build(),
+                                                .flex_grow(true),
+                                            BottomWidget::new(
+                                                BottomWidgetType::CpuLegend,
+                                                *iter_id,
+                                            )
+                                            .width_ratio(3)
+                                            .canvas_handle_width(true)
+                                            .parent_reflector(Some((WidgetDirection::Left, 1))),
                                         ])
                                         .total_widget_ratio(20)]
                                     })
@@ -104,36 +98,30 @@ impl Row {
                                     .col_width_ratio(width_ratio)
                                     .children(vec![
                                         BottomColRow::new(vec![
-                                            BottomWidget::builder()
-                                                .widget_type(BottomWidgetType::ProcSort)
-                                                .widget_id(*iter_id)
+                                            BottomWidget::new(BottomWidgetType::ProcSort, *iter_id)
                                                 .canvas_handle_width(true)
                                                 .parent_reflector(Some((WidgetDirection::Right, 2)))
-                                                .width_ratio(1)
-                                                .build(),
-                                            BottomWidget::builder()
-                                                .widget_type(BottomWidgetType::Proc)
-                                                .widget_id(proc_id)
-                                                .width_ratio(2)
-                                                .build(),
+                                                .width_ratio(1),
+                                            BottomWidget::new(BottomWidgetType::Proc, proc_id)
+                                                .width_ratio(2),
                                         ])
                                         .total_widget_ratio(3)
                                         .flex_grow(true),
-                                        BottomColRow::new(vec![BottomWidget::builder()
-                                            .widget_type(BottomWidgetType::ProcSearch)
-                                            .widget_id(proc_search_id)
-                                            .parent_reflector(Some((WidgetDirection::Up, 1)))
-                                            .build()])
+                                        BottomColRow::new(vec![BottomWidget::new(
+                                            BottomWidgetType::ProcSearch,
+                                            proc_search_id,
+                                        )
+                                        .parent_reflector(Some((WidgetDirection::Up, 1)))])
                                         .canvas_handle_height(true),
                                     ])
                                     .build()
                             }
                             _ => BottomCol::builder()
                                 .col_width_ratio(width_ratio)
-                                .children(vec![BottomColRow::new(vec![BottomWidget::builder()
-                                    .widget_type(widget_type)
-                                    .widget_id(*iter_id)
-                                    .build()])])
+                                .children(vec![BottomColRow::new(vec![BottomWidget::new(
+                                    widget_type,
+                                    *iter_id,
+                                )])])
                                 .build(),
                         });
                     }
@@ -176,22 +164,19 @@ impl Row {
                                     if left_legend {
                                         col_row_children.push(
                                             BottomColRow::new(vec![
-                                                BottomWidget::builder()
-                                                    .width_ratio(3)
-                                                    .widget_type(BottomWidgetType::CpuLegend)
-                                                    .widget_id(*iter_id)
-                                                    .canvas_handle_width(true)
-                                                    .parent_reflector(Some((
-                                                        WidgetDirection::Right,
-                                                        1,
-                                                    )))
-                                                    .build(),
-                                                BottomWidget::builder()
+                                                BottomWidget::new(
+                                                    BottomWidgetType::CpuLegend,
+                                                    *iter_id,
+                                                )
+                                                .width_ratio(3)
+                                                .canvas_handle_width(true)
+                                                .parent_reflector(Some((
+                                                    WidgetDirection::Right,
+                                                    1,
+                                                ))),
+                                                BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
                                                     .width_ratio(17)
-                                                    .widget_type(BottomWidgetType::Cpu)
-                                                    .widget_id(cpu_id)
-                                                    .flex_grow(true)
-                                                    .build(),
+                                                    .flex_grow(true),
                                             ])
                                             .col_row_height_ratio(col_row_height_ratio)
                                             .total_widget_ratio(20),
@@ -199,22 +184,16 @@ impl Row {
                                     } else {
                                         col_row_children.push(
                                             BottomColRow::new(vec![
-                                                BottomWidget::builder()
+                                                BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
                                                     .width_ratio(17)
-                                                    .widget_type(BottomWidgetType::Cpu)
-                                                    .widget_id(cpu_id)
-                                                    .flex_grow(true)
-                                                    .build(),
-                                                BottomWidget::builder()
-                                                    .width_ratio(3)
-                                                    .widget_type(BottomWidgetType::CpuLegend)
-                                                    .widget_id(*iter_id)
-                                                    .canvas_handle_width(true)
-                                                    .parent_reflector(Some((
-                                                        WidgetDirection::Left,
-                                                        1,
-                                                    )))
-                                                    .build(),
+                                                    .flex_grow(true),
+                                                BottomWidget::new(
+                                                    BottomWidgetType::CpuLegend,
+                                                    *iter_id,
+                                                )
+                                                .width_ratio(3)
+                                                .canvas_handle_width(true)
+                                                .parent_reflector(Some((WidgetDirection::Left, 1))),
                                             ])
                                             .col_row_height_ratio(col_row_height_ratio)
                                             .total_widget_ratio(20),
@@ -228,37 +207,31 @@ impl Row {
                                     *iter_id += 2;
                                     col_row_children.push(
                                         BottomColRow::new(vec![
-                                            BottomWidget::builder()
-                                                .widget_type(BottomWidgetType::ProcSort)
-                                                .widget_id(*iter_id)
+                                            BottomWidget::new(BottomWidgetType::ProcSort, *iter_id)
                                                 .canvas_handle_width(true)
                                                 .parent_reflector(Some((WidgetDirection::Right, 2)))
-                                                .width_ratio(1)
-                                                .build(),
-                                            BottomWidget::builder()
-                                                .widget_type(BottomWidgetType::Proc)
-                                                .widget_id(proc_id)
-                                                .width_ratio(2)
-                                                .build(),
+                                                .width_ratio(1),
+                                            BottomWidget::new(BottomWidgetType::Proc, proc_id)
+                                                .width_ratio(2),
                                         ])
                                         .col_row_height_ratio(col_row_height_ratio)
                                         .total_widget_ratio(3),
                                     );
                                     col_row_children.push(
-                                        BottomColRow::new(vec![BottomWidget::builder()
-                                            .widget_type(BottomWidgetType::ProcSearch)
-                                            .widget_id(proc_search_id)
-                                            .parent_reflector(Some((WidgetDirection::Up, 1)))
-                                            .build()])
+                                        BottomColRow::new(vec![BottomWidget::new(
+                                            BottomWidgetType::ProcSearch,
+                                            proc_search_id,
+                                        )
+                                        .parent_reflector(Some((WidgetDirection::Up, 1)))])
                                         .canvas_handle_height(true)
                                         .col_row_height_ratio(col_row_height_ratio),
                                     );
                                 }
                                 _ => col_row_children.push(
-                                    BottomColRow::new(vec![BottomWidget::builder()
-                                        .widget_type(widget_type)
-                                        .widget_id(*iter_id)
-                                        .build()])
+                                    BottomColRow::new(vec![BottomWidget::new(
+                                        widget_type,
+                                        *iter_id,
+                                    )])
                                     .col_row_height_ratio(col_row_height_ratio),
                                 ),
                             }
