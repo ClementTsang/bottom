@@ -43,7 +43,7 @@ body:
   - type: textarea
     id: terminal
     attributes:
-      label: What terminal(s) are you running `bottom` on?
+      label: What terminal(s) are you running bottom on?
       description: >
         Please provide what terminal(s) you are running `bottom` on (e.g. Konsole, kitty)
         that are experiencing the issue, as well as their version and any relevant settings (e.g. terminal theme).
@@ -54,7 +54,7 @@ body:
     validations:
       required: true
     attributes:
-      label: What version of `bottom` are you running?
+      label: What version of bottom are you running?
       description: >
         Please provide which version of `bottom` you're running, which you can find with `btm -V`. If you are using
         a nightly/non-release version, please also specify that.
@@ -65,7 +65,7 @@ body:
     validations:
       required: true
     attributes:
-      label: How did you install `bottom`?
+      label: How did you install bottom?
       description: >
         Please mention how you installed `bottom`. If you manually compiled it, please also mention your _Rust version_.
 
