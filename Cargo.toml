@@ -99,15 +99,15 @@ serde = { version = "1.0.163", features = ["derive"] }
 starship-battery = { version = "0.8.0", optional = true }
 sysinfo = "=0.29.0"
 thiserror = "1.0.40"
-time = { version = "0.3.20", features = ["formatting", "macros"] }
-toml_edit = { version = "0.19.8", features = ["serde"] }
+time = { version = "0.3.21", features = ["formatting", "macros"] }
+toml_edit = { version = "0.19.9", features = ["serde"] }
 tui = { version = "0.20.1", package = "ratatui" }
 typed-builder = "0.14.0"
 unicode-segmentation = "1.10.1"
 unicode-width = "0.1.10"
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.143"
+libc = "0.2.144"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 procfs = { version = "0.15.1", default-features = false }
