@@ -6,14 +6,12 @@ Contribution in any way is appreciated, whether it is reporting problems, fixing
 
 ### Bug reports
 
-When filing a bug report, use the [bug report template](https://github.com/ClementTsang/bottom/issues/new?assignees=&labels=bug&template=bug_report.yml)
-and fill in as much as you can. It is _incredibly_ difficult for a maintainer to fix a bug when it cannot be reproduced,
-and giving as much detail as possible generally helps to make it easier to reproduce the problem!
+When filing a bug report, fill out the [bug report template](https://github.com/ClementTsang/bottom/issues/new?assignees=&labels=bug&template=bug_report.yml). Be sure to give all the neccessary details! It is _incredibly_ difficult for a maintainer to fix a bug when it cannot be reproduced,
+so that makes it much easier to reproduce the problem!
 
 ### Feature requests
 
-Please use the [feature request template](https://github.com/ClementTsang/bottom/issues/new?assignees=&labels=feature&template=feature_request.yml) and fill it out.
-Remember to give details about what the feature is along with why you think this suggestion will be useful.
+Please fill out the [feature request template](https://github.com/ClementTsang/bottom/issues/new?assignees=&labels=feature&template=feature_request.yml). Remember to give details about what the feature is along with why you think this suggestion will be useful.
 
 ## Pull requests
 
@@ -39,4 +37,4 @@ For contributing to documentation, see [here](https://clementtsang.github.io/bot
 ### Packaging
 
 If you want to become a package maintainer, see [here](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
-for details on how to build bottom, corresponding completion/manpages, and how to add installation instructions for the package to the README.
+for details on how to build bottom, how to generate/obtain completion files and manpages, and how to add installation instructions for the package to the README.
