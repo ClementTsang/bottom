@@ -20,6 +20,7 @@ use crate::Pid;
 
 static PAGESIZE: Lazy<u64> = Lazy::new(|| rustix::param::page_size() as u64);
 
+#[inline]
 fn next_part<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Result<&'a str, io::Error> {
     iter.next()
         .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidData))
@@ -49,6 +50,7 @@ pub(crate) struct Stat {
 }
 
 impl Stat {
+    #[inline]
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
         // Since this is just one line, we can read it all at once. However, since it might have non-utf8 characters,
         // we can't just use read_to_string.
@@ -99,6 +101,7 @@ impl Stat {
     }
 
     /// Returns the Resident Set Size in bytes.
+    #[inline]
     pub fn rss_bytes(&self) -> u64 {
         self.rss * *PAGESIZE
     }
@@ -113,6 +116,7 @@ pub(crate) struct Io {
 }
 
 impl Io {
+    #[inline]
     fn from_file(f: File, buffer: &mut String) -> anyhow::Result<Io> {
         const NUM_FIELDS: u16 = 0; // Make sure to update this if you want more fields!
         enum Fields {
@@ -252,6 +256,7 @@ impl Process {
     }
 }
 
+#[inline]
 fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Result<Vec<String>> {
     open_at(root, "cmdline", fd)
         .map(|mut file| file.read_to_string(buffer))
