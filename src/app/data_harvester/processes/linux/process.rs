@@ -49,11 +49,10 @@ pub(crate) struct Stat {
 }
 
 impl Stat {
-    fn from_file(mut f: File) -> anyhow::Result<Stat> {
+    fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
         // Since this is just one line, we can read it all at once. However, since it might have non-utf8 characters,
         // we can't just use read_to_string.
-        let mut buffer = Vec::with_capacity(500);
-        f.read_to_end(&mut buffer)?;
+        f.read_to_end(unsafe { buffer.as_mut_vec() })?;
 
         let line = buffer.to_string_lossy();
         let line = line.trim();
@@ -114,7 +113,7 @@ pub(crate) struct Io {
 }
 
 impl Io {
-    fn from_file(f: File) -> anyhow::Result<Io> {
+    fn from_file(f: File, buffer: &mut String) -> anyhow::Result<Io> {
         const NUM_FIELDS: u16 = 0; // Make sure to update this if you want more fields!
         enum Fields {
             ReadBytes,
@@ -122,28 +121,27 @@ impl Io {
         }
 
         let mut read_fields = 0;
-        let mut line = String::new();
         let mut reader = BufReader::new(f);
 
         let mut read_bytes = 0;
         let mut write_bytes = 0;
 
         // This saves us from doing a string allocation on each iteration compared to `lines()`.
-        while let Ok(bytes) = reader.read_line(&mut line) {
+        while let Ok(bytes) = reader.read_line(buffer) {
             if bytes > 0 {
-                if line.is_empty() {
+                if buffer.is_empty() {
                     // Empty, no need to clear.
                     continue;
                 }
 
-                let mut parts = line.split_whitespace();
+                let mut parts = buffer.split_whitespace();
 
                 if let Some(field) = parts.next() {
                     let curr_field = match field {
                         "read_bytes:" => Fields::ReadBytes,
                         "write_bytes:" => Fields::WriteBytes,
                         _ => {
-                            line.clear();
+                            buffer.clear();
                             continue;
                         }
                     };
@@ -168,7 +166,7 @@ impl Io {
                     break;
                 }
 
-                line.clear();
+                buffer.clear();
             } else {
                 break;
             }
@@ -230,12 +228,19 @@ impl Process {
             }
         };
 
-        let mut root = pid_path.clone();
-        let cmdline = cmdline(&mut root, &fd);
+        let mut root = pid_path;
+        let mut buffer = String::new();
+
+        let stat =
+            open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, &mut buffer))?;
         root.pop();
-        let stat = open_at(&mut root, "stat", &fd).and_then(Stat::from_file)?;
+        buffer.clear();
+
+        let cmdline = cmdline(&mut root, &fd, &mut buffer);
         root.pop();
-        let io = open_at(&mut root, "io", &fd).and_then(Io::from_file);
+        buffer.clear();
+
+        let io = open_at(&mut root, "io", &fd).and_then(|file| Io::from_file(file, &mut buffer));
 
         Ok(Process {
             pid,
@@ -247,12 +252,12 @@ impl Process {
     }
 }
 
-fn cmdline(root: &mut PathBuf, fd: &OwnedFd) -> anyhow::Result<Vec<String>> {
-    let mut buf = String::new();
+fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Result<Vec<String>> {
     open_at(root, "cmdline", fd)
-        .map(|mut file| file.read_to_string(&mut buf))
+        .map(|mut file| file.read_to_string(buffer))
         .map(|_| {
-            buf.split('\0')
+            buffer
+                .split('\0')
                 .filter_map(|s| {
                     if !s.is_empty() {
                         Some(s.to_string())
@@ -270,7 +275,7 @@ fn cmdline(root: &mut PathBuf, fd: &OwnedFd) -> anyhow::Result<Vec<String>> {
 #[inline]
 fn open_at(root: &mut PathBuf, child: &str, fd: &OwnedFd) -> anyhow::Result<File> {
     root.push(child);
-    let new_fd = rustix::fs::openat(&fd, &*root, OFlags::RDONLY | OFlags::CLOEXEC, Mode::empty())?;
+    let new_fd = rustix::fs::openat(fd, &*root, OFlags::RDONLY | OFlags::CLOEXEC, Mode::empty())?;
 
     Ok(File::from(new_fd))
 }
