@@ -194,6 +194,12 @@ pub(crate) struct Process {
     pub cmdline: anyhow::Result<Vec<String>>,
 }
 
+#[inline]
+fn reset(root: &mut PathBuf, buffer: &mut String) {
+    root.pop();
+    buffer.clear();
+}
+
 impl Process {
     /// Creates a new [`Process`] given a `/proc/<PID>` path. This may fail if the process
     /// no longer exists or there are permissions issues.
@@ -235,14 +241,13 @@ impl Process {
         let mut root = pid_path;
         let mut buffer = String::new();
 
+        // NB: Whenever you add a new stat, make sure to pop the root and clear the buffer!
         let stat =
             open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, &mut buffer))?;
-        root.pop();
-        buffer.clear();
+        reset(&mut root, &mut buffer);
 
         let cmdline = cmdline(&mut root, &fd, &mut buffer);
-        root.pop();
-        buffer.clear();
+        reset(&mut root, &mut buffer);
 
         let io = open_at(&mut root, "io", &fd).and_then(|file| Io::from_file(file, &mut buffer));
 
