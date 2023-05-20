@@ -535,162 +535,166 @@ impl BottomLayout {
 
     pub fn init_basic_default(use_battery: bool) -> Self {
         let table_widgets = if use_battery {
-            vec![
-                BottomCol::new(vec![BottomColRow::new(vec![BottomWidget::new(
-                    BottomWidgetType::Disk,
-                    4,
-                )
+            let disk_widget = BottomWidget::new(BottomWidgetType::Disk, 4)
                 .canvas_handle_width(true)
                 .up_neighbour(Some(100))
                 .left_neighbour(Some(8))
-                .right_neighbour(Some(DEFAULT_WIDGET_ID + 2))])
-                .canvas_handle_height(true)])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![
-                        BottomWidget::new(BottomWidgetType::ProcSort, DEFAULT_WIDGET_ID + 2)
-                            .canvas_handle_width(true)
-                            .up_neighbour(Some(100))
-                            .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                            .left_neighbour(Some(4))
-                            .right_neighbour(Some(DEFAULT_WIDGET_ID))
-                            .width_ratio(1)
-                            .parent_reflector(Some((WidgetDirection::Right, 2))),
-                        BottomWidget::new(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
-                            .canvas_handle_width(true)
-                            .up_neighbour(Some(100))
-                            .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                            .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
-                            .right_neighbour(Some(7))
-                            .width_ratio(2),
-                    ])
-                    .canvas_handle_height(true)
-                    .total_widget_ratio(3),
-                    BottomColRow::new(vec![BottomWidget::new(
-                        BottomWidgetType::ProcSearch,
-                        DEFAULT_WIDGET_ID + 1,
-                    )
+                .right_neighbour(Some(DEFAULT_WIDGET_ID + 2));
+
+            let proc_sort = BottomWidget::new(BottomWidgetType::ProcSort, DEFAULT_WIDGET_ID + 2)
+                .canvas_handle_width(true)
+                .up_neighbour(Some(100))
+                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                .left_neighbour(Some(4))
+                .right_neighbour(Some(DEFAULT_WIDGET_ID))
+                .width_ratio(1)
+                .parent_reflector(Some((WidgetDirection::Right, 2)));
+
+            let proc = BottomWidget::new(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
+                .canvas_handle_width(true)
+                .up_neighbour(Some(100))
+                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
+                .right_neighbour(Some(7))
+                .width_ratio(2);
+
+            let proc_search =
+                BottomWidget::new(BottomWidgetType::ProcSearch, DEFAULT_WIDGET_ID + 1)
                     .canvas_handle_width(true)
                     .up_neighbour(Some(DEFAULT_WIDGET_ID))
                     .left_neighbour(Some(4))
                     .right_neighbour(Some(7))
-                    .parent_reflector(Some((WidgetDirection::Up, 1)))])
-                    .canvas_handle_height(true),
-                ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![BottomColRow::new(vec![BottomWidget::new(
-                    BottomWidgetType::Temp,
-                    7,
-                )
+                    .parent_reflector(Some((WidgetDirection::Up, 1)));
+
+            let temp = BottomWidget::new(BottomWidgetType::Temp, 7)
                 .canvas_handle_width(true)
                 .up_neighbour(Some(100))
                 .left_neighbour(Some(DEFAULT_WIDGET_ID))
-                .right_neighbour(Some(8))])
-                .canvas_handle_height(true)])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![BottomColRow::new(vec![BottomWidget::new(
-                    BottomWidgetType::Battery,
-                    8,
-                )
+                .right_neighbour(Some(8));
+
+            let battery = BottomWidget::new(BottomWidgetType::Battery, 8)
                 .canvas_handle_width(true)
                 .up_neighbour(Some(100))
                 .left_neighbour(Some(7))
-                .right_neighbour(Some(4))])
-                .canvas_handle_height(true)])
+                .right_neighbour(Some(4));
+
+            vec![
+                BottomCol::new(vec![
+                    BottomColRow::new(vec![disk_widget]).canvas_handle_height(true)
+                ])
+                .canvas_handle_width(true),
+                BottomCol::new(vec![
+                    BottomColRow::new(vec![proc_sort, proc])
+                        .canvas_handle_height(true)
+                        .total_widget_ratio(3),
+                    BottomColRow::new(vec![proc_search]).canvas_handle_height(true),
+                ])
+                .canvas_handle_width(true),
+                BottomCol::new(vec![
+                    BottomColRow::new(vec![temp]).canvas_handle_height(true)
+                ])
+                .canvas_handle_width(true),
+                BottomCol::new(vec![
+                    BottomColRow::new(vec![battery]).canvas_handle_height(true)
+                ])
                 .canvas_handle_width(true),
             ]
         } else {
-            vec![
-                BottomCol::new(vec![BottomColRow::new(vec![BottomWidget::new(
-                    BottomWidgetType::Disk,
-                    4,
-                )
+            let disk = BottomWidget::new(BottomWidgetType::Disk, 4)
                 .canvas_handle_width(true)
                 .up_neighbour(Some(100))
                 .left_neighbour(Some(7))
-                .right_neighbour(Some(DEFAULT_WIDGET_ID + 2))])
-                .canvas_handle_height(true)])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![
-                        BottomWidget::new(BottomWidgetType::ProcSort, DEFAULT_WIDGET_ID + 2)
-                            .canvas_handle_width(true)
-                            .up_neighbour(Some(100))
-                            .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                            .left_neighbour(Some(4))
-                            .right_neighbour(Some(DEFAULT_WIDGET_ID))
-                            .parent_reflector(Some((WidgetDirection::Right, 2))),
-                        BottomWidget::new(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
-                            .canvas_handle_width(true)
-                            .up_neighbour(Some(100))
-                            .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                            .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
-                            .right_neighbour(Some(7)),
-                    ])
-                    .canvas_handle_height(true),
-                    BottomColRow::new(vec![BottomWidget::new(
-                        BottomWidgetType::ProcSearch,
-                        DEFAULT_WIDGET_ID + 1,
-                    )
+                .right_neighbour(Some(DEFAULT_WIDGET_ID + 2));
+
+            let proc_sort = BottomWidget::new(BottomWidgetType::ProcSort, DEFAULT_WIDGET_ID + 2)
+                .canvas_handle_width(true)
+                .up_neighbour(Some(100))
+                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                .left_neighbour(Some(4))
+                .right_neighbour(Some(DEFAULT_WIDGET_ID))
+                .parent_reflector(Some((WidgetDirection::Right, 2)));
+
+            let proc = BottomWidget::new(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
+                .canvas_handle_width(true)
+                .up_neighbour(Some(100))
+                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
+                .right_neighbour(Some(7));
+
+            let proc_search =
+                BottomWidget::new(BottomWidgetType::ProcSearch, DEFAULT_WIDGET_ID + 1)
                     .canvas_handle_width(true)
                     .up_neighbour(Some(DEFAULT_WIDGET_ID))
                     .left_neighbour(Some(4))
                     .right_neighbour(Some(7))
-                    .parent_reflector(Some((WidgetDirection::Up, 1)))])
-                    .canvas_handle_height(true),
-                ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![BottomColRow::new(vec![BottomWidget::new(
-                    BottomWidgetType::Temp,
-                    7,
-                )
+                    .parent_reflector(Some((WidgetDirection::Up, 1)));
+
+            let temp = BottomWidget::new(BottomWidgetType::Temp, 7)
                 .canvas_handle_width(true)
                 .up_neighbour(Some(100))
                 .left_neighbour(Some(DEFAULT_WIDGET_ID))
-                .right_neighbour(Some(4))])
-                .canvas_handle_height(true)])
+                .right_neighbour(Some(4));
+
+            vec![
+                BottomCol::new(vec![
+                    BottomColRow::new(vec![disk]).canvas_handle_height(true)
+                ])
+                .canvas_handle_width(true),
+                BottomCol::new(vec![
+                    BottomColRow::new(vec![proc_sort, proc]).canvas_handle_height(true),
+                    BottomColRow::new(vec![proc_search]).canvas_handle_height(true),
+                ])
+                .canvas_handle_width(true),
+                BottomCol::new(vec![
+                    BottomColRow::new(vec![temp]).canvas_handle_height(true)
+                ])
                 .canvas_handle_width(true),
             ]
         };
+
+        let cpu = BottomWidget::new(BottomWidgetType::BasicCpu, 1)
+            .canvas_handle_width(true)
+            .down_neighbour(Some(2));
+
+        let mem = BottomWidget::new(BottomWidgetType::BasicMem, 2)
+            .canvas_handle_width(true)
+            .up_neighbour(Some(1))
+            .down_neighbour(Some(100))
+            .right_neighbour(Some(3));
+
+        let net = BottomWidget::new(BottomWidgetType::BasicNet, 3)
+            .canvas_handle_width(true)
+            .up_neighbour(Some(1))
+            .down_neighbour(Some(100))
+            .left_neighbour(Some(2));
+
+        let table = BottomWidget::new(BottomWidgetType::BasicTables, 100)
+            .canvas_handle_width(true)
+            .up_neighbour(Some(2));
 
         BottomLayout {
             total_row_height_ratio: 3,
             rows: vec![
                 BottomRow::builder()
                     .canvas_handle_height(true)
+                    .children(vec![BottomCol::new(vec![
+                        BottomColRow::new(vec![cpu]).canvas_handle_height(true)
+                    ])
+                    .canvas_handle_width(true)])
+                    .build(),
+                BottomRow::builder()
+                    .canvas_handle_height(true)
                     .children(vec![BottomCol::new(vec![BottomColRow::new(vec![
-                        BottomWidget::new(BottomWidgetType::BasicCpu, 1)
-                            .canvas_handle_width(true)
-                            .down_neighbour(Some(2)),
+                        mem, net,
                     ])
                     .canvas_handle_height(true)])
                     .canvas_handle_width(true)])
                     .build(),
                 BottomRow::builder()
                     .canvas_handle_height(true)
-                    .children(vec![BottomCol::new(vec![BottomColRow::new(vec![
-                        BottomWidget::new(BottomWidgetType::BasicMem, 2)
-                            .canvas_handle_width(true)
-                            .up_neighbour(Some(1))
-                            .down_neighbour(Some(100))
-                            .right_neighbour(Some(3)),
-                        BottomWidget::new(BottomWidgetType::BasicNet, 3)
-                            .canvas_handle_width(true)
-                            .up_neighbour(Some(1))
-                            .down_neighbour(Some(100))
-                            .left_neighbour(Some(2)),
+                    .children(vec![BottomCol::new(vec![
+                        BottomColRow::new(vec![table]).canvas_handle_height(true)
                     ])
-                    .canvas_handle_height(true)])
-                    .canvas_handle_width(true)])
-                    .build(),
-                BottomRow::builder()
-                    .canvas_handle_height(true)
-                    .children(vec![BottomCol::new(vec![BottomColRow::new(vec![
-                        BottomWidget::new(BottomWidgetType::BasicTables, 100)
-                            .canvas_handle_width(true)
-                            .up_neighbour(Some(2)),
-                    ])
-                    .canvas_handle_height(true)])
                     .canvas_handle_width(true)])
                     .build(),
                 BottomRow::builder()
