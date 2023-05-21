@@ -110,7 +110,7 @@ unicode-width = "0.1.10"
 libc = "0.2.144"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-procfs = { version = "0.15.1", default-features = false }
+rustix = { version = "0.37.19", features = ["fs", "param", "process"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.9.3"

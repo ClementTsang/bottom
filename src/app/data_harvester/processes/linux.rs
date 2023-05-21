@@ -1,11 +1,13 @@
 //! Process data collection for Linux.
 
-use std::fs::File;
+mod process;
+use process::*;
+
+use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::time::Duration;
 
 use hashbrown::{HashMap, HashSet};
-use procfs::process::{Process, Stat};
 use sysinfo::{ProcessStatus, System};
 
 use super::{ProcessHarvest, UserTable};
@@ -116,14 +118,21 @@ fn get_linux_cpu_usage(
 }
 
 fn read_proc(
-    prev_proc: &PrevProcDetails, process: &Process, cpu_usage: f64, cpu_fraction: f64,
+    prev_proc: &PrevProcDetails, process: Process, cpu_usage: f64, cpu_fraction: f64,
     use_current_cpu_total: bool, time_difference_in_secs: u64, total_memory: u64,
     user_table: &mut UserTable,
 ) -> error::Result<(ProcessHarvest, u64)> {
-    let stat = process.stat()?;
+    let Process {
+        pid: _,
+        uid,
+        stat,
+        io,
+        cmdline,
+    } = process;
+
     let (command, name) = {
         let truncated_name = stat.comm.as_str();
-        if let Ok(cmdline) = process.cmdline() {
+        if let Ok(cmdline) = cmdline {
             if cmdline.is_empty() {
                 (format!("[{}]", truncated_name), truncated_name.to_string())
             } else {
@@ -169,7 +178,7 @@ fn read_proc(
 
     // This can fail if permission is denied!
     let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
-        if let Ok(io) = process.io() {
+        if let Ok(io) = io {
             let total_read_bytes = io.read_bytes;
             let total_write_bytes = io.write_bytes;
             let prev_total_read_bytes = prev_proc.total_read_bytes;
@@ -195,9 +204,16 @@ fn read_proc(
             (0, 0, 0, 0)
         };
 
-    let uid = process.uid()?;
+    let user = uid
+        .and_then(|uid| {
+            user_table
+                .get_uid_to_username_mapping(uid)
+                .map(Into::into)
+                .ok()
+        })
+        .unwrap_or_else(|| "N/A".into());
 
-    let time = if let Ok(ticks_per_sec) = u32::try_from(procfs::ticks_per_second()) {
+    let time = if let Ok(ticks_per_sec) = u32::try_from(rustix::param::clock_ticks_per_second()) {
         if ticks_per_sec == 0 {
             Duration::ZERO
         } else {
@@ -221,11 +237,8 @@ fn read_proc(
             total_read_bytes,
             total_write_bytes,
             process_state,
-            uid: Some(uid),
-            user: user_table
-                .get_uid_to_username_mapping(uid)
-                .map(Into::into)
-                .unwrap_or_else(|_| "N/A".into()),
+            uid,
+            user,
             time,
         },
         new_process_times,
@@ -240,6 +253,10 @@ pub(crate) struct PrevProc<'a> {
 pub(crate) struct ProcHarvestOptions {
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
+}
+
+fn is_str_numeric(s: &str) -> bool {
+    s.chars().all(|c| c.is_ascii_digit())
 }
 
 pub(crate) fn get_process_data(
@@ -275,32 +292,36 @@ pub(crate) fn get_process_data(
 
         let mut pids_to_clear: HashSet<Pid> = pid_mapping.keys().cloned().collect();
 
-        let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
-            .filter_map(|dir| {
-                if let Ok(dir) = dir {
-                    if let Ok(pid) = dir.file_name().to_string_lossy().trim().parse::<Pid>() {
-                        let Ok(process) = Process::new(pid) else {
-                            return None;
-                        };
-                        let prev_proc_details = pid_mapping.entry(pid).or_default();
+        let pids = fs::read_dir("/proc")?.flatten().filter_map(|dir| {
+            if is_str_numeric(dir.file_name().to_string_lossy().trim()) {
+                Some(dir.path())
+            } else {
+                None
+            }
+        });
 
-                        if let Ok((process_harvest, new_process_times)) = read_proc(
-                            prev_proc_details,
-                            &process,
-                            cpu_usage,
-                            cpu_fraction,
-                            use_current_cpu_total,
-                            time_difference_in_secs,
-                            total_memory,
-                            user_table,
-                        ) {
-                            prev_proc_details.cpu_time = new_process_times;
-                            prev_proc_details.total_read_bytes = process_harvest.total_read_bytes;
-                            prev_proc_details.total_write_bytes = process_harvest.total_write_bytes;
+        let process_vector: Vec<ProcessHarvest> = pids
+            .filter_map(|pid_path| {
+                if let Ok(process) = Process::from_path(pid_path) {
+                    let pid = process.pid;
+                    let prev_proc_details = pid_mapping.entry(pid).or_default();
 
-                            pids_to_clear.remove(&pid);
-                            return Some(process_harvest);
-                        }
+                    if let Ok((process_harvest, new_process_times)) = read_proc(
+                        prev_proc_details,
+                        process,
+                        cpu_usage,
+                        cpu_fraction,
+                        use_current_cpu_total,
+                        time_difference_in_secs,
+                        total_memory,
+                        user_table,
+                    ) {
+                        prev_proc_details.cpu_time = new_process_times;
+                        prev_proc_details.total_read_bytes = process_harvest.total_read_bytes;
+                        prev_proc_details.total_write_bytes = process_harvest.total_write_bytes;
+
+                        pids_to_clear.remove(&pid);
+                        return Some(process_harvest);
                     }
                 }
 
