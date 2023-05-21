@@ -78,7 +78,7 @@ logging = ["fern", "log"]
 anyhow = "1.0.71"
 backtrace = "0.3.67"
 cfg-if = "1.0.0"
-clap = { version = "4.2.7", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.3.0", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 crossterm = "0.26.1"
 ctrlc = { version = "3.2.5", features = ["termination"] }
@@ -140,9 +140,9 @@ cargo-husky = { version = "1.5.0", default-features = false, features = [
 predicates = "3.0.3"
 
 [build-dependencies]
-clap = { version = "4.2.7", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "4.2.3"
-clap_mangen = "0.2.10"
+clap = { version = "4.3.0", features = ["default", "cargo", "wrap_help"] }
+clap_complete = "4.3.0"
+clap_mangen = "0.2.11"
 
 [package.metadata.deb]
 section = "utility"
