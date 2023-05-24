@@ -82,11 +82,10 @@ pub enum BottomEvent {
 }
 
 #[derive(Debug)]
-pub enum ThreadControlEvent {
+pub enum ThreadEvent {
     Reset,
     UpdateConfig(Box<AppConfigFields>),
     UpdateUsedWidgets(Box<UsedWidgets>),
-    UpdateUpdateTime(u64),
 }
 
 pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
@@ -111,7 +110,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 }
 
 pub fn handle_key_event_or_break(
-    event: KeyEvent, app: &mut App, reset_sender: &Sender<ThreadControlEvent>,
+    event: KeyEvent, app: &mut App, reset_sender: &Sender<ThreadEvent>,
 ) -> bool {
     // debug!("KeyEvent: {:?}", event);
 
@@ -168,7 +167,7 @@ pub fn handle_key_event_or_break(
                 KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
                 KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
                 KeyCode::Char('r') => {
-                    if reset_sender.send(ThreadControlEvent::Reset).is_ok() {
+                    if reset_sender.send(ThreadEvent::Reset).is_ok() {
                         app.reset();
                     }
                 }
@@ -482,7 +481,7 @@ pub fn create_input_thread(
 }
 
 pub fn create_collection_thread(
-    sender: Sender<BottomEvent>, control_receiver: Receiver<ThreadControlEvent>,
+    sender: Sender<BottomEvent>, control_receiver: Receiver<ThreadEvent>,
     termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
     app_config_fields: &AppConfigFields, filters: DataFilters, used_widget_set: UsedWidgets,
 ) -> JoinHandle<()> {
@@ -490,7 +489,7 @@ pub fn create_collection_thread(
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
     let unnormalized_cpu = app_config_fields.unnormalized_cpu;
     let show_average_cpu = app_config_fields.show_average_cpu;
-    let update_rate_in_milliseconds = app_config_fields.update_rate_in_milliseconds;
+    let update_time = app_config_fields.update_rate_in_milliseconds;
 
     thread::spawn(move || {
         let mut data_state = data_harvester::DataCollector::new(filters);
@@ -504,43 +503,37 @@ pub fn create_collection_thread(
         data_state.init();
 
         loop {
-            // Check once at the very top...
+            // Check once at the very top... don't block though.
             if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
-                // We don't block here.
                 if *is_terminated {
                     drop(is_terminated);
                     break;
                 }
             }
 
-            let mut update_time = update_rate_in_milliseconds;
             if let Ok(message) = control_receiver.try_recv() {
                 // trace!("Received message in collection thread: {:?}", message);
                 match message {
-                    ThreadControlEvent::Reset => {
+                    ThreadEvent::Reset => {
                         data_state.data.cleanup();
                     }
-                    ThreadControlEvent::UpdateConfig(app_config_fields) => {
+                    ThreadEvent::UpdateConfig(app_config_fields) => {
                         data_state.set_temperature_type(app_config_fields.temperature_type);
                         data_state
                             .set_use_current_cpu_total(app_config_fields.use_current_cpu_total);
                         data_state.set_unnormalized_cpu(unnormalized_cpu);
                         data_state.set_show_average_cpu(app_config_fields.show_average_cpu);
                     }
-                    ThreadControlEvent::UpdateUsedWidgets(used_widget_set) => {
+                    ThreadEvent::UpdateUsedWidgets(used_widget_set) => {
                         data_state.set_data_collection(*used_widget_set);
-                    }
-                    ThreadControlEvent::UpdateUpdateTime(new_time) => {
-                        update_time = new_time;
                     }
                 }
             }
 
             data_state.update_data();
 
-            // Yet another check to bail if needed...
+            // Yet another check to bail if needed... do not block!
             if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
-                // We don't block here.
                 if *is_terminated {
                     drop(is_terminated);
                     break;
@@ -553,6 +546,7 @@ pub fn create_collection_thread(
                 break;
             }
 
+            // This is actually used as a "sleep" that can be interrupted by another thread.
             if let Ok((is_terminated, _wait_timeout_result)) = termination_ctrl_cvar.wait_timeout(
                 termination_ctrl_lock.lock().unwrap(),
                 Duration::from_millis(update_time),
