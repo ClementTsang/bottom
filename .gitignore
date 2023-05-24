@@ -39,3 +39,6 @@ site/
 # dhat heap profiling
 dhat-heap.json
 dhat/
+
+# cargo vet
+supply-chain/
