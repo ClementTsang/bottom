@@ -955,12 +955,14 @@ mod test {
     #[test]
     fn config_human_times() {
         let app = crate::clap::build_app();
-        let matches = app.get_matches_from(&["btm"]);
+        let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
-        let mut flags = ConfigFlags::default();
-        flags.time_delta = Some("2 min".to_string());
-        flags.default_time_value = Some("300s".to_string());
+        let flags = ConfigFlags {
+            time_delta: Some("2 min".to_string()),
+            default_time_value: Some("300s".to_string()),
+            ..Default::default()
+        };
 
         config.flags = Some(flags);
 
@@ -978,12 +980,14 @@ mod test {
     #[test]
     fn config_number_times() {
         let app = crate::clap::build_app();
-        let matches = app.get_matches_from(&["btm"]);
+        let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
-        let mut flags = ConfigFlags::default();
-        flags.time_delta = Some("120000".to_string());
-        flags.default_time_value = Some("300000".to_string());
+        let flags = ConfigFlags {
+            time_delta: Some("120000".to_string()),
+            default_time_value: Some("300000".to_string()),
+            ..Default::default()
+        };
 
         config.flags = Some(flags);
 
