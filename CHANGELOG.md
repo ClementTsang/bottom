@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - Unreleased
+
+## Features
+
+- [#1172](https://github.com/ClementTsang/bottom/pull/1172): Support human times for `time_delta` and `default_time_value`.
+
 ## [0.9.1] - 2023-05-14
 
 ## Bug Fixes
