@@ -433,12 +433,12 @@ pub fn create_input_thread(
             if let Ok(poll) = poll(Duration::from_millis(20)) {
                 if poll {
                     if let Ok(event) = read() {
-                        // FIXME: Handle all other event cases.
                         match event {
-                            // TODO: Might want to debounce this in the future, or take into account the actual resize
-                            // values. Maybe we want to keep the current implementation in case the resize event might
-                            // not fire... not sure.
                             Event::Resize(_, _) => {
+                                // TODO: Might want to debounce this in the future, or take into account the actual resize
+                                // values. Maybe we want to keep the current implementation in case the resize event might
+                                // not fire... not sure.
+
                                 if sender.send(BottomEvent::Resize).is_err() {
                                     break;
                                 }
@@ -449,8 +449,7 @@ pub fn create_input_thread(
                                 }
                             }
                             Event::Key(key) if key.kind == KeyEventKind::Press => {
-                                // For now, we only care about keydown events. This may change in the future.
-
+                                // For now, we only care about key down events. This may change in the future.
                                 if sender.send(BottomEvent::KeyInput(key)).is_err() {
                                     break;
                                 }
@@ -472,7 +471,9 @@ pub fn create_input_thread(
                                     }
                                 }
                             },
-                            _ => (),
+                            Event::Key(_) => {}
+                            Event::FocusGained => {}
+                            Event::FocusLost => {}
                         }
                     }
                 }

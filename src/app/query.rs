@@ -338,7 +338,8 @@ pub fn parse_query(
                             let mut condition: Option<QueryComparison> = None;
                             let mut value: Option<f64> = None;
 
-                            // TODO: Jeez, what the heck did I write here... add some tests and clean this up, please.
+                            // TODO: Jeez, what the heck did I write here... add some tests and clean this up in the
+                            // future.
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
                                 if let Some(queue_next) = query.pop_front() {
