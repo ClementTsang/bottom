@@ -13,10 +13,7 @@ use std::{
     boxed::Box,
     io::stdout,
     panic,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc, Arc, Condvar, Mutex,
-    },
+    sync::{mpsc, Arc, Condvar, Mutex},
     thread,
     time::Duration,
 };
@@ -31,7 +28,6 @@ use tui::{backend::CrosstermBackend, Terminal};
 
 use bottom::{
     canvas::{self, canvas_styling::CanvasStyling},
-    constants::*,
     data_conversion::*,
     options::*,
     *,
@@ -87,33 +83,33 @@ fn main() -> Result<()> {
     // Check if the current environment is in a terminal.
     check_if_terminal();
 
-    // Create termination mutex and cvar
-    #[allow(clippy::mutex_atomic)]
-    let thread_termination_lock = Arc::new(Mutex::new(false));
-    let thread_termination_cvar = Arc::new(Condvar::new());
+    // Create termination mutex and cvar. We use this setup because we need to sleep at some points in the update
+    // thread, but we want to be able to interrupt the "sleep" if a termination occurs.
+    let termination_lock = Arc::new(Mutex::new(false));
+    let termination_cvar = Arc::new(Condvar::new());
 
     let (sender, receiver) = mpsc::channel();
 
-    // Set up event loop thread; we set this up early to speed up first-time-to-data.
+    // Set up the event loop thread; we set this up early to speed up first-time-to-data.
     let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
     let _collection_thread = create_collection_thread(
         sender.clone(),
         collection_thread_ctrl_receiver,
-        thread_termination_lock.clone(),
-        thread_termination_cvar.clone(),
+        termination_lock.clone(),
+        termination_cvar.clone(),
         &app.app_config_fields,
         app.filters.clone(),
         app.used_widgets,
     );
 
-    // Set up input handling loop thread.
-    let _input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
+    // Set up the input handling loop thread.
+    let _input_thread = create_input_thread(sender.clone(), termination_lock.clone());
 
-    // Set up cleaning loop thread.
+    // Set up the cleaning loop thread.
     let _cleaning_thread = {
-        let lock = thread_termination_lock.clone();
-        let cvar = thread_termination_cvar.clone();
-        let cleaning_sender = sender;
+        let lock = termination_lock.clone();
+        let cvar = termination_cvar.clone();
+        let cleaning_sender = sender.clone();
         let offset_wait_time = app.app_config_fields.retention_ms + 60000;
         thread::spawn(move || {
             loop {
@@ -163,20 +159,21 @@ fn main() -> Result<()> {
     panic::set_hook(Box::new(panic_hook));
 
     // Set termination hook
-    let is_terminated = Arc::new(AtomicBool::new(false));
-    let ist_clone = is_terminated.clone();
     ctrlc::set_handler(move || {
-        ist_clone.store(true, Ordering::SeqCst);
+        let _ = sender.send(BottomEvent::Terminate);
     })?;
+
     let mut first_run = true;
 
     // Draw once first to initialize the canvas, so it doesn't feel like it's frozen.
     try_drawing(&mut terminal, &mut app, &mut painter)?;
 
-    while !is_terminated.load(Ordering::SeqCst) {
-        // TODO: Would be good to instead use a mix of is_terminated check + recv. Probably use a termination event instead.
-        if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
+    loop {
+        if let Ok(recv) = receiver.recv() {
             match recv {
+                BottomEvent::Terminate => {
+                    break;
+                }
                 BottomEvent::Resize => {
                     // FIXME: This is bugged with frozen?
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
@@ -328,8 +325,8 @@ fn main() -> Result<()> {
     }
 
     // I think doing it in this order is safe...
-    *thread_termination_lock.lock().unwrap() = true;
-    thread_termination_cvar.notify_all();
+    *termination_lock.lock().unwrap() = true;
+    termination_cvar.notify_all();
     cleanup_terminal(&mut terminal)?;
 
     Ok(())

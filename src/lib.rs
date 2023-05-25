@@ -79,6 +79,7 @@ pub enum BottomEvent {
     PasteEvent(String),
     Update(Box<data_harvester::Data>),
     Clean,
+    Terminate,
 }
 
 #[derive(Debug)]
@@ -482,7 +483,7 @@ pub fn create_input_thread(
 
 pub fn create_collection_thread(
     sender: Sender<BottomEvent>, control_receiver: Receiver<ThreadEvent>,
-    termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
+    termination_lock: Arc<Mutex<bool>>, termination_cvar: Arc<Condvar>,
     app_config_fields: &AppConfigFields, filters: DataFilters, used_widget_set: UsedWidgets,
 ) -> JoinHandle<()> {
     let temp_type = app_config_fields.temperature_type;
@@ -504,7 +505,7 @@ pub fn create_collection_thread(
 
         loop {
             // Check once at the very top... don't block though.
-            if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
+            if let Ok(is_terminated) = termination_lock.try_lock() {
                 if *is_terminated {
                     drop(is_terminated);
                     break;
@@ -533,7 +534,7 @@ pub fn create_collection_thread(
             data_state.update_data();
 
             // Yet another check to bail if needed... do not block!
-            if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
+            if let Ok(is_terminated) = termination_lock.try_lock() {
                 if *is_terminated {
                     drop(is_terminated);
                     break;
@@ -547,8 +548,8 @@ pub fn create_collection_thread(
             }
 
             // This is actually used as a "sleep" that can be interrupted by another thread.
-            if let Ok((is_terminated, _wait_timeout_result)) = termination_ctrl_cvar.wait_timeout(
-                termination_ctrl_lock.lock().unwrap(),
+            if let Ok((is_terminated, _)) = termination_cvar.wait_timeout(
+                termination_lock.lock().unwrap(),
                 Duration::from_millis(update_time),
             ) {
                 if *is_terminated {
