@@ -57,8 +57,8 @@ pub struct ConfigFlags {
     pub whole_word: Option<bool>,
     pub regex: Option<bool>,
     pub basic: Option<bool>,
-    pub default_time_value: Option<u64>,
-    pub time_delta: Option<u64>,
+    pub default_time_value: Option<String>,
+    pub time_delta: Option<String>,
     pub autohide_time: Option<bool>,
     pub hide_time: Option<bool>,
     pub default_widget_type: Option<String>,
@@ -582,20 +582,27 @@ fn get_show_average_cpu(matches: &ArgMatches, config: &Config) -> bool {
     true
 }
 
-/// FIXME: Let this accept human times.
+fn try_parse_secs(s: &str) -> error::Result<u64> {
+    if let Ok(val) = humantime::parse_duration(s) {
+        Ok(val.as_secs())
+    } else if let Ok(val) = s.parse::<u64>() {
+        Ok(val)
+    } else {
+        Err(BottomError::ConfigError(
+            "could not parse as a valid 64-bit unsigned integer or a human time".to_string(),
+        ))
+    }
+}
+
 fn get_default_time_value(
     matches: &ArgMatches, config: &Config, retention_ms: u64,
 ) -> error::Result<u64> {
     let default_time =
         if let Some(default_time_value) = matches.get_one::<String>("default_time_value") {
-            default_time_value.parse::<u64>().map_err(|_| {
-                BottomError::ConfigError(
-                    "could not parse as a valid 64-bit unsigned integer".to_string(),
-                )
-            })?
+            try_parse_secs(default_time_value)?
         } else if let Some(flags) = &config.flags {
-            if let Some(default_time_value) = flags.default_time_value {
-                default_time_value
+            if let Some(default_time_value) = &flags.default_time_value {
+                try_parse_secs(default_time_value)?
             } else {
                 DEFAULT_TIME_MILLISECONDS
             }
@@ -621,14 +628,10 @@ fn get_time_interval(
     matches: &ArgMatches, config: &Config, retention_ms: u64,
 ) -> error::Result<u64> {
     let time_interval = if let Some(time_interval) = matches.get_one::<String>("time_delta") {
-        time_interval.parse::<u64>().map_err(|_| {
-            BottomError::ConfigError(
-                "could not parse as a valid 64-bit unsigned integer".to_string(),
-            )
-        })?
+        try_parse_secs(time_interval)?
     } else if let Some(flags) = &config.flags {
-        if let Some(time_interval) = flags.time_delta {
-            time_interval
+        if let Some(time_interval) = &flags.time_delta {
+            try_parse_secs(time_interval)?
         } else {
             TIME_CHANGE_MILLISECONDS
         }
@@ -870,7 +873,26 @@ mod test {
     use clap::ArgMatches;
 
     use super::{get_color_scheme, get_widget_layout, Config};
-    use crate::{app::App, canvas::canvas_styling::CanvasStyling};
+    use crate::{app::App, canvas::canvas_styling::CanvasStyling, options::try_parse_secs};
+
+    #[test]
+    fn verify_try_parse_secs() {
+        let a = "100s";
+        let b = "100";
+        let c = "1 min";
+        let d = "1 hour 1 min";
+
+        assert_eq!(try_parse_secs(a), Ok(100));
+        assert_eq!(try_parse_secs(b), Ok(100));
+        assert_eq!(try_parse_secs(c), Ok(60));
+        assert_eq!(try_parse_secs(d), Ok(3660));
+
+        let a_bad = "1 test";
+        let b_bad = "-100";
+
+        assert!(try_parse_secs(a_bad).is_err());
+        assert!(try_parse_secs(b_bad).is_err());
+    }
 
     fn create_app(mut config: Config, matches: ArgMatches) -> App {
         let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();
