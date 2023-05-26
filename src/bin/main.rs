@@ -175,7 +175,6 @@ fn main() -> Result<()> {
                     break;
                 }
                 BottomEvent::Resize => {
-                    // FIXME: This is bugged with frozen?
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::KeyInput(event) => {
