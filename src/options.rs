@@ -57,8 +57,8 @@ pub struct ConfigFlags {
     pub whole_word: Option<bool>,
     pub regex: Option<bool>,
     pub basic: Option<bool>,
-    pub default_time_value: Option<u64>,
-    pub time_delta: Option<u64>,
+    pub default_time_value: Option<String>,
+    pub time_delta: Option<String>,
     pub autohide_time: Option<bool>,
     pub hide_time: Option<bool>,
     pub default_widget_type: Option<String>,
@@ -582,20 +582,27 @@ fn get_show_average_cpu(matches: &ArgMatches, config: &Config) -> bool {
     true
 }
 
-/// FIXME: Let this accept human times.
+fn try_parse_ms(s: &str) -> error::Result<u64> {
+    if let Ok(val) = humantime::parse_duration(s) {
+        Ok(val.as_millis().try_into()?)
+    } else if let Ok(val) = s.parse::<u64>() {
+        Ok(val)
+    } else {
+        Err(BottomError::ConfigError(
+            "could not parse as a valid 64-bit unsigned integer or a human time".to_string(),
+        ))
+    }
+}
+
 fn get_default_time_value(
     matches: &ArgMatches, config: &Config, retention_ms: u64,
 ) -> error::Result<u64> {
     let default_time =
         if let Some(default_time_value) = matches.get_one::<String>("default_time_value") {
-            default_time_value.parse::<u64>().map_err(|_| {
-                BottomError::ConfigError(
-                    "could not parse as a valid 64-bit unsigned integer".to_string(),
-                )
-            })?
+            try_parse_ms(default_time_value)?
         } else if let Some(flags) = &config.flags {
-            if let Some(default_time_value) = flags.default_time_value {
-                default_time_value
+            if let Some(default_time_value) = &flags.default_time_value {
+                try_parse_ms(default_time_value)?
             } else {
                 DEFAULT_TIME_MILLISECONDS
             }
@@ -621,14 +628,10 @@ fn get_time_interval(
     matches: &ArgMatches, config: &Config, retention_ms: u64,
 ) -> error::Result<u64> {
     let time_interval = if let Some(time_interval) = matches.get_one::<String>("time_delta") {
-        time_interval.parse::<u64>().map_err(|_| {
-            BottomError::ConfigError(
-                "could not parse as a valid 64-bit unsigned integer".to_string(),
-            )
-        })?
+        try_parse_ms(time_interval)?
     } else if let Some(flags) = &config.flags {
-        if let Some(time_interval) = flags.time_delta {
-            time_interval
+        if let Some(time_interval) = &flags.time_delta {
+            try_parse_ms(time_interval)?
         } else {
             TIME_CHANGE_MILLISECONDS
         }
@@ -869,8 +872,135 @@ fn get_retention_ms(matches: &ArgMatches, config: &Config) -> error::Result<u64>
 mod test {
     use clap::ArgMatches;
 
-    use super::{get_color_scheme, get_widget_layout, Config};
-    use crate::{app::App, canvas::canvas_styling::CanvasStyling};
+    use super::{get_color_scheme, get_time_interval, get_widget_layout, Config};
+    use crate::{
+        app::App,
+        canvas::canvas_styling::CanvasStyling,
+        options::{get_default_time_value, try_parse_ms, ConfigFlags},
+    };
+
+    #[test]
+    fn verify_try_parse_ms() {
+        let a = "100s";
+        let b = "100";
+        let c = "1 min";
+        let d = "1 hour 1 min";
+
+        assert_eq!(try_parse_ms(a), Ok(100 * 1000));
+        assert_eq!(try_parse_ms(b), Ok(100));
+        assert_eq!(try_parse_ms(c), Ok(60 * 1000));
+        assert_eq!(try_parse_ms(d), Ok(3660 * 1000));
+
+        let a_bad = "1 test";
+        let b_bad = "-100";
+
+        assert!(try_parse_ms(a_bad).is_err());
+        assert!(try_parse_ms(b_bad).is_err());
+    }
+
+    #[test]
+    fn matches_human_times() {
+        let config = Config::default();
+        let app = crate::clap::build_app();
+
+        {
+            let app = app.clone();
+            let delta_args = vec!["btm", "--time_delta", "2 min"];
+            let matches = app.get_matches_from(delta_args);
+
+            assert_eq!(
+                get_time_interval(&matches, &config, 60 * 60 * 1000),
+                Ok(2 * 60 * 1000)
+            );
+        }
+
+        {
+            let default_time_args = vec!["btm", "--default_time_value", "300s"];
+            let matches = app.get_matches_from(default_time_args);
+
+            assert_eq!(
+                get_default_time_value(&matches, &config, 60 * 60 * 1000),
+                Ok(5 * 60 * 1000)
+            );
+        }
+    }
+
+    #[test]
+    fn matches_number_times() {
+        let config = Config::default();
+        let app = crate::clap::build_app();
+
+        {
+            let app = app.clone();
+            let delta_args = vec!["btm", "--time_delta", "120000"];
+            let matches = app.get_matches_from(delta_args);
+
+            assert_eq!(
+                get_time_interval(&matches, &config, 60 * 60 * 1000),
+                Ok(2 * 60 * 1000)
+            );
+        }
+
+        {
+            let default_time_args = vec!["btm", "--default_time_value", "300000"];
+            let matches = app.get_matches_from(default_time_args);
+
+            assert_eq!(
+                get_default_time_value(&matches, &config, 60 * 60 * 1000),
+                Ok(5 * 60 * 1000)
+            );
+        }
+    }
+
+    #[test]
+    fn config_human_times() {
+        let app = crate::clap::build_app();
+        let matches = app.get_matches_from(["btm"]);
+
+        let mut config = Config::default();
+        let flags = ConfigFlags {
+            time_delta: Some("2 min".to_string()),
+            default_time_value: Some("300s".to_string()),
+            ..Default::default()
+        };
+
+        config.flags = Some(flags);
+
+        assert_eq!(
+            get_time_interval(&matches, &config, 60 * 60 * 1000),
+            Ok(2 * 60 * 1000)
+        );
+
+        assert_eq!(
+            get_default_time_value(&matches, &config, 60 * 60 * 1000),
+            Ok(5 * 60 * 1000)
+        );
+    }
+
+    #[test]
+    fn config_number_times() {
+        let app = crate::clap::build_app();
+        let matches = app.get_matches_from(["btm"]);
+
+        let mut config = Config::default();
+        let flags = ConfigFlags {
+            time_delta: Some("120000".to_string()),
+            default_time_value: Some("300000".to_string()),
+            ..Default::default()
+        };
+
+        config.flags = Some(flags);
+
+        assert_eq!(
+            get_time_interval(&matches, &config, 60 * 60 * 1000),
+            Ok(2 * 60 * 1000)
+        );
+
+        assert_eq!(
+            get_default_time_value(&matches, &config, 60 * 60 * 1000),
+            Ok(5 * 60 * 1000)
+        );
+    }
 
     fn create_app(mut config: Config, matches: ArgMatches) -> App {
         let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();
