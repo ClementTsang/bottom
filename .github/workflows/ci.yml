@@ -97,10 +97,11 @@ jobs:
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # 2.2.1
+        uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # 2.4.0
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
+          cache-all-crates: true
 
       - name: Check cargo fmt
         run: cargo fmt --all -- --check
@@ -241,10 +242,11 @@ jobs:
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f # 2.2.1
+        uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # 2.4.0
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
+          cache-all-crates: true
 
       - name: Try building
         uses: ClementTsang/cargo-action@v0.0.3
