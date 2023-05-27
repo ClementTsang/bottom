@@ -21,7 +21,9 @@ jobs:
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # 2.4.0
         with:
+          cache-targets: false
           cache-all-crates: true
+          cache-on-failure: true
 
       - name: Install cargo-audit
         run: |
