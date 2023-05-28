@@ -342,7 +342,7 @@ pub fn update_data(app: &mut App) {
         FrozenState::Frozen(data) => data,
     };
 
-    for proc in app.proc_state.widget_states.values_mut() {
+    for proc in app.states.proc_state.widget_states.values_mut() {
         if proc.force_update_data {
             proc.ingest_data(data_source);
             proc.force_update_data = false;
@@ -350,23 +350,23 @@ pub fn update_data(app: &mut App) {
     }
 
     // FIXME: Make this CPU force update less terrible.
-    if app.cpu_state.force_update.is_some() {
+    if app.states.cpu_state.force_update.is_some() {
         app.converted_data.ingest_cpu_data(data_source);
         app.converted_data.load_avg_data = data_source.load_avg_harvest;
 
-        app.cpu_state.force_update = None;
+        app.states.cpu_state.force_update = None;
     }
 
     // FIXME: This is a bit of a temp hack to move data over.
     {
         let data = &app.converted_data.cpu_data;
-        for cpu in app.cpu_state.widget_states.values_mut() {
+        for cpu in app.states.cpu_state.widget_states.values_mut() {
             cpu.update_table(data);
         }
     }
     {
         let data = &app.converted_data.temp_data;
-        for temp in app.temp_state.widget_states.values_mut() {
+        for temp in app.states.temp_state.widget_states.values_mut() {
             if temp.force_update_data {
                 temp.ingest_data(data);
                 temp.force_update_data = false;
@@ -375,7 +375,7 @@ pub fn update_data(app: &mut App) {
     }
     {
         let data = &app.converted_data.disk_data;
-        for disk in app.disk_state.widget_states.values_mut() {
+        for disk in app.states.disk_state.widget_states.values_mut() {
             if disk.force_update_data {
                 disk.ingest_data(data);
                 disk.force_update_data = false;
@@ -384,7 +384,7 @@ pub fn update_data(app: &mut App) {
     }
 
     // TODO: [OPT] Prefer reassignment over new vectors?
-    if app.mem_state.force_update.is_some() {
+    if app.states.mem_state.force_update.is_some() {
         app.converted_data.mem_data = convert_mem_data_points(data_source);
         #[cfg(not(target_os = "windows"))]
         {
@@ -400,10 +400,10 @@ pub fn update_data(app: &mut App) {
         {
             app.converted_data.gpu_data = convert_gpu_data(data_source);
         }
-        app.mem_state.force_update = None;
+        app.states.mem_state.force_update = None;
     }
 
-    if app.net_state.force_update.is_some() {
+    if app.states.net_state.force_update.is_some() {
         let (rx, tx) = get_rx_tx_data_points(
             data_source,
             &app.app_config_fields.network_scale_type,
@@ -412,7 +412,7 @@ pub fn update_data(app: &mut App) {
         );
         app.converted_data.network_data_rx = rx;
         app.converted_data.network_data_tx = tx;
-        app.net_state.force_update = None;
+        app.states.net_state.force_update = None;
     }
 }
 

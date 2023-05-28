@@ -20,7 +20,8 @@ impl Painter {
         const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
         const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
 
-        if let Some(mem_widget_state) = app_state.mem_state.widget_states.get_mut(&widget_id) {
+        if let Some(mem_widget_state) = app_state.states.mem_state.widget_states.get_mut(&widget_id)
+        {
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let x_bounds = [0, mem_widget_state.current_display_time];
             let hide_x_labels = should_hide_x_label(

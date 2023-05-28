@@ -10,7 +10,6 @@ use filter::*;
 use hashbrown::HashMap;
 use layout_manager::*;
 pub use states::*;
-use typed_builder::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::widgets::{ProcWidgetColumn, ProcWidgetMode};
@@ -79,70 +78,6 @@ pub struct DataFilters {
     pub net_filter: Option<Filter>,
 }
 
-#[derive(TypedBuilder)]
-pub struct App {
-    #[builder(default = false, setter(skip))]
-    awaiting_second_char: bool,
-
-    #[builder(default, setter(skip))]
-    second_char: Option<char>,
-
-    // FIXME: The way we do deletes is really gross.
-    #[builder(default, setter(skip))]
-    pub dd_err: Option<String>,
-
-    #[builder(default, setter(skip))]
-    to_delete_process_list: Option<(String, Vec<Pid>)>,
-
-    #[builder(default, setter(skip))]
-    pub frozen_state: FrozenState,
-
-    #[builder(default = Instant::now(), setter(skip))]
-    last_key_press: Instant,
-
-    #[builder(default, setter(skip))]
-    pub converted_data: ConvertedData,
-
-    #[builder(default, setter(skip))]
-    pub data_collection: DataCollection,
-
-    #[builder(default, setter(skip))]
-    pub delete_dialog_state: AppDeleteDialogState,
-
-    #[builder(default, setter(skip))]
-    pub help_dialog_state: AppHelpDialogState,
-
-    #[builder(default = false)]
-    pub is_expanded: bool,
-
-    #[builder(default = false, setter(skip))]
-    pub is_force_redraw: bool,
-
-    #[builder(default = false, setter(skip))]
-    pub is_determining_widget_boundary: bool,
-
-    #[builder(default = false, setter(skip))]
-    pub basic_mode_use_percent: bool,
-
-    #[cfg(target_family = "unix")]
-    #[builder(default, setter(skip))]
-    pub user_table: data_harvester::processes::UserTable,
-
-    pub cpu_state: CpuState,
-    pub mem_state: MemState,
-    pub net_state: NetState,
-    pub proc_state: ProcState,
-    pub temp_state: TempState,
-    pub disk_state: DiskState,
-    pub battery_state: BatteryState,
-    pub basic_table_widget_state: Option<BasicTableWidgetState>,
-    pub app_config_fields: AppConfigFields,
-    pub widget_map: HashMap<u64, BottomWidget>,
-    pub current_widget: BottomWidget,
-    pub used_widgets: UsedWidgets,
-    pub filters: DataFilters,
-}
-
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
         /// The max signal we can send to a process on Linux.
@@ -164,7 +99,63 @@ cfg_if::cfg_if! {
     }
 }
 
+pub struct App {
+    awaiting_second_char: bool,
+    second_char: Option<char>,
+    pub dd_err: Option<String>, // FIXME: The way we do deletes is really gross.
+    to_delete_process_list: Option<(String, Vec<Pid>)>,
+    pub frozen_state: FrozenState,
+    last_key_press: Instant,
+    pub converted_data: ConvertedData,
+    pub data_collection: DataCollection,
+    pub delete_dialog_state: AppDeleteDialogState,
+    pub help_dialog_state: AppHelpDialogState,
+    pub is_expanded: bool,
+    pub is_force_redraw: bool,
+    pub is_determining_widget_boundary: bool,
+    pub basic_mode_use_percent: bool,
+    #[cfg(target_family = "unix")]
+    pub user_table: data_harvester::processes::UserTable,
+    pub states: AppWidgetStates,
+    pub app_config_fields: AppConfigFields,
+    pub widget_map: HashMap<u64, BottomWidget>,
+    pub current_widget: BottomWidget,
+    pub used_widgets: UsedWidgets,
+    pub filters: DataFilters,
+}
+
 impl App {
+    pub fn new(
+        app_config_fields: AppConfigFields, states: AppWidgetStates,
+        widget_map: HashMap<u64, BottomWidget>, current_widget: BottomWidget,
+        used_widgets: UsedWidgets, filters: DataFilters, is_expanded: bool,
+    ) -> Self {
+        Self {
+            awaiting_second_char: false,
+            second_char: None,
+            dd_err: None,
+            to_delete_process_list: None,
+            frozen_state: FrozenState::default(),
+            last_key_press: Instant::now(),
+            converted_data: ConvertedData::default(),
+            data_collection: DataCollection::default(),
+            delete_dialog_state: AppDeleteDialogState::default(),
+            help_dialog_state: AppHelpDialogState::default(),
+            is_expanded,
+            is_force_redraw: false,
+            is_determining_widget_boundary: false,
+            basic_mode_use_percent: false,
+            #[cfg(target_family = "unix")]
+            user_table: data_harvester::processes::UserTable::default(),
+            states,
+            app_config_fields,
+            widget_map,
+            current_widget,
+            used_widgets,
+            filters,
+        }
+    }
+
     pub fn reset(&mut self) {
         // Reset multi
         self.reset_multi_tap_keys();
@@ -174,7 +165,8 @@ impl App {
         self.delete_dialog_state.is_showing_dd = false;
 
         // Close all searches and reset it
-        self.proc_state
+        self.states
+            .proc_state
             .widget_states
             .values_mut()
             .for_each(|state| {
@@ -224,6 +216,7 @@ impl App {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     if let Some(pws) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
@@ -237,6 +230,7 @@ impl App {
                 }
                 BottomWidgetType::ProcSearch => {
                     if let Some(pws) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
@@ -250,6 +244,7 @@ impl App {
                 }
                 BottomWidgetType::ProcSort => {
                     if let Some(pws) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
@@ -297,6 +292,7 @@ impl App {
         if !self.ignore_normal_keybinds() {
             if let BottomWidgetType::Proc = self.current_widget.widget_type {
                 if let Some(proc_widget_state) = self
+                    .states
                     .proc_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
@@ -311,7 +307,7 @@ impl App {
             match &self.current_widget.widget_type {
                 BottomWidgetType::Proc | BottomWidgetType::ProcSort => {
                     // Toggle on
-                    if let Some(proc_widget_state) = self.proc_state.get_mut_widget_state(
+                    if let Some(proc_widget_state) = self.states.proc_state.get_mut_widget_state(
                         self.current_widget.widget_id
                             - match &self.current_widget.widget_type {
                                 BottomWidgetType::ProcSort => 2,
@@ -336,7 +332,7 @@ impl App {
                 _ => 0,
             };
 
-        if let Some(pws) = self.proc_state.get_mut_widget_state(widget_id) {
+        if let Some(pws) = self.states.proc_state.get_mut_widget_state(widget_id) {
             pws.is_sort_open = !pws.is_sort_open;
             pws.force_rerender = true;
 
@@ -361,7 +357,7 @@ impl App {
                         _ => 0,
                     };
 
-                if let Some(pws) = self.proc_state.get_mut_widget_state(widget_id) {
+                if let Some(pws) = self.states.proc_state.get_mut_widget_state(widget_id) {
                     pws.table.toggle_order();
                     pws.force_data_update();
                 }
@@ -377,6 +373,7 @@ impl App {
             }
             BottomWidgetType::Proc => {
                 if let Some(proc_widget_state) = self
+                    .states
                     .proc_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
@@ -392,6 +389,7 @@ impl App {
     pub fn toggle_ignore_case(&mut self) {
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
+            .states
             .proc_state
             .widget_states
             .get_mut(&(self.current_widget.widget_id - 1))
@@ -406,6 +404,7 @@ impl App {
     pub fn toggle_search_whole_word(&mut self) {
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
+            .states
             .proc_state
             .widget_states
             .get_mut(&(self.current_widget.widget_id - 1))
@@ -420,6 +419,7 @@ impl App {
     pub fn toggle_search_regex(&mut self) {
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
+            .states
             .proc_state
             .widget_states
             .get_mut(&(self.current_widget.widget_id - 1))
@@ -433,6 +433,7 @@ impl App {
 
     pub fn toggle_tree_mode(&mut self) {
         if let Some(proc_widget_state) = self
+            .states
             .proc_state
             .widget_states
             .get_mut(&(self.current_widget.widget_id))
@@ -482,6 +483,7 @@ impl App {
         } else if !self.is_in_dialog() {
             if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
                 if let Some(proc_widget_state) = self
+                    .states
                     .proc_state
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 2))
@@ -498,6 +500,7 @@ impl App {
         if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             let is_in_search_widget = self.is_in_search_widget();
             if let Some(proc_widget_state) = self
+                .states
                 .proc_state
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
@@ -544,6 +547,7 @@ impl App {
         if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             let is_in_search_widget = self.is_in_search_widget();
             if let Some(proc_widget_state) = self
+                .states
                 .proc_state
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
@@ -583,7 +587,7 @@ impl App {
     }
 
     pub fn get_process_filter(&self, widget_id: u64) -> &Option<query::Query> {
-        if let Some(process_widget_state) = self.proc_state.widget_states.get(&widget_id) {
+        if let Some(process_widget_state) = self.states.proc_state.widget_states.get(&widget_id) {
             &process_widget_state.proc_search.search_state.query
         } else {
             &None
@@ -672,6 +676,7 @@ impl App {
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
@@ -688,6 +693,7 @@ impl App {
                 BottomWidgetType::Battery => {
                     if !self.converted_data.battery_data.is_empty() {
                         if let Some(battery_widget_state) = self
+                            .states
                             .battery_state
                             .get_mut_widget_state(self.current_widget.widget_id)
                         {
@@ -731,6 +737,7 @@ impl App {
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
@@ -748,6 +755,7 @@ impl App {
                     if !self.converted_data.battery_data.is_empty() {
                         let battery_count = self.converted_data.battery_data.len();
                         if let Some(battery_widget_state) = self
+                            .states
                             .battery_state
                             .get_mut_widget_state(self.current_widget.widget_id)
                         {
@@ -888,6 +896,7 @@ impl App {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
+                    .states
                     .proc_state
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 1))
@@ -917,6 +926,7 @@ impl App {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
+                    .states
                     .proc_state
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 1))
@@ -941,6 +951,7 @@ impl App {
     pub fn clear_search(&mut self) {
         if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             if let Some(proc_widget_state) = self
+                .states
                 .proc_state
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
@@ -953,6 +964,7 @@ impl App {
     pub fn clear_previous_word(&mut self) {
         if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             if let Some(proc_widget_state) = self
+                .states
                 .proc_state
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
@@ -1011,6 +1023,7 @@ impl App {
         self.reset_multi_tap_keys();
 
         if let Some(pws) = self
+            .states
             .proc_state
             .widget_states
             .get(&self.current_widget.widget_id)
@@ -1055,6 +1068,7 @@ impl App {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
+                    .states
                     .proc_state
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 1))
@@ -1159,6 +1173,7 @@ impl App {
                         self.second_char = Some('d');
                     }
                 } else if let Some(disk) = self
+                    .states
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
@@ -1190,6 +1205,7 @@ impl App {
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
@@ -1200,12 +1216,14 @@ impl App {
             'm' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         proc_widget_state.select_column(ProcWidgetColumn::Mem);
                     }
                 } else if let Some(disk) = self
+                    .states
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
@@ -1215,12 +1233,14 @@ impl App {
             'p' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         proc_widget_state.select_column(ProcWidgetColumn::PidOrCount);
                     }
                 } else if let Some(disk) = self
+                    .states
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
@@ -1230,6 +1250,7 @@ impl App {
             'P' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
@@ -1240,12 +1261,14 @@ impl App {
             'n' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         proc_widget_state.select_column(ProcWidgetColumn::ProcNameOrCommand);
                     }
                 } else if let Some(disk) = self
+                    .states
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
@@ -1264,12 +1287,14 @@ impl App {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     self.toggle_tree_mode()
                 } else if let Some(temp) = self
+                    .states
                     .temp_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
                     temp.table.set_sort_index(1);
                     temp.force_data_update();
                 } else if let Some(disk) = self
+                    .states
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
@@ -1284,6 +1309,7 @@ impl App {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     self.toggle_sort_menu()
                 } else if let Some(temp) = self
+                    .states
                     .temp_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
@@ -1294,6 +1320,7 @@ impl App {
             }
             'u' => {
                 if let Some(disk) = self
+                    .states
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
@@ -1302,6 +1329,7 @@ impl App {
             }
             'r' => {
                 if let Some(disk) = self
+                    .states
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
@@ -1310,6 +1338,7 @@ impl App {
             }
             'w' => {
                 if let Some(disk) = self
+                    .states
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
@@ -1418,14 +1447,17 @@ impl App {
                         | BottomWidgetType::ProcSort
                         | BottomWidgetType::Disk
                         | BottomWidgetType::Battery
-                            if self.basic_table_widget_state.is_some()
+                            if self.states.basic_table_widget_state.is_some()
                                 && (*direction == WidgetDirection::Left
                                     || *direction == WidgetDirection::Right) =>
                         {
                             // Gotta do this for the sort widget
                             if let BottomWidgetType::ProcSort = new_widget.widget_type {
-                                if let Some(proc_widget_state) =
-                                    self.proc_state.widget_states.get(&(new_widget_id - 2))
+                                if let Some(proc_widget_state) = self
+                                    .states
+                                    .proc_state
+                                    .widget_states
+                                    .get(&(new_widget_id - 2))
                                 {
                                     if proc_widget_state.is_sort_open {
                                         self.current_widget = new_widget.clone();
@@ -1445,7 +1477,7 @@ impl App {
                             }
 
                             if let Some(basic_table_widget_state) =
-                                &mut self.basic_table_widget_state
+                                &mut self.states.basic_table_widget_state
                             {
                                 basic_table_widget_state.currently_displayed_widget_id =
                                     self.current_widget.widget_id;
@@ -1474,7 +1506,7 @@ impl App {
                                     // Assuming we're in basic mode (BasicTables), then
                                     // we want to move DOWN to the currently shown widget.
                                     if let Some(basic_table_widget_state) =
-                                        &mut self.basic_table_widget_state
+                                        &mut self.states.basic_table_widget_state
                                     {
                                         // We also want to move towards Proc if we had set it to ProcSort.
                                         if let BottomWidgetType::ProcSort =
@@ -1512,6 +1544,7 @@ impl App {
                                     match &new_widget.widget_type {
                                         BottomWidgetType::CpuLegend => {
                                             if let Some(cpu_widget_state) = self
+                                                .states
                                                 .cpu_state
                                                 .widget_states
                                                 .get(&(new_widget_id - *offset))
@@ -1535,6 +1568,7 @@ impl App {
                                         BottomWidgetType::ProcSearch
                                         | BottomWidgetType::ProcSort => {
                                             if let Some(proc_widget_state) = self
+                                                .states
                                                 .proc_state
                                                 .widget_states
                                                 .get(&(new_widget_id - *offset))
@@ -1593,6 +1627,7 @@ impl App {
                                     match &new_widget.widget_type {
                                         BottomWidgetType::CpuLegend => {
                                             if let Some(cpu_widget_state) = self
+                                                .states
                                                 .cpu_state
                                                 .widget_states
                                                 .get(&(new_widget_id - *offset))
@@ -1613,6 +1648,7 @@ impl App {
                                         BottomWidgetType::ProcSearch
                                         | BottomWidgetType::ProcSort => {
                                             if let Some(proc_widget_state) = self
+                                                .states
                                                 .proc_state
                                                 .widget_states
                                                 .get(&(new_widget_id - *offset))
@@ -1671,6 +1707,7 @@ impl App {
                         match &self.current_widget.widget_type {
                             BottomWidgetType::CpuLegend => {
                                 if let Some(cpu_widget_state) = self
+                                    .states
                                     .cpu_state
                                     .widget_states
                                     .get(&(self.current_widget.widget_id - *offset))
@@ -1682,6 +1719,7 @@ impl App {
                             }
                             BottomWidgetType::ProcSearch | BottomWidgetType::ProcSort => {
                                 if let Some(proc_widget_state) = self
+                                    .states
                                     .proc_state
                                     .widget_states
                                     .get(&(self.current_widget.widget_id - *offset))
@@ -1738,7 +1776,7 @@ impl App {
                             if let Some(new_widget_id) = current_widget.down_neighbour {
                                 if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                                     if let Some(proc_widget_state) =
-                                        self.proc_state.get_widget_state(widget_id)
+                                        self.states.proc_state.get_widget_state(widget_id)
                                     {
                                         if proc_widget_state.is_search_enabled() {
                                             self.current_widget = new_widget.clone();
@@ -1758,6 +1796,7 @@ impl App {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
             if let Some(new_widget_id) = self.current_widget.left_neighbour {
                 if let Some(proc_widget_state) = self
+                    .states
                     .proc_state
                     .widget_states
                     .get(&self.current_widget.widget_id)
@@ -1773,6 +1812,7 @@ impl App {
             if let BottomWidgetType::Cpu = self.current_widget.widget_type {
                 if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                     if let Some(cpu_widget_state) = self
+                        .states
                         .cpu_state
                         .widget_states
                         .get(&self.current_widget.widget_id)
@@ -1818,6 +1858,7 @@ impl App {
         } else if let BottomWidgetType::Cpu = self.current_widget.widget_type {
             if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                 if let Some(cpu_widget_state) = self
+                    .states
                     .cpu_state
                     .widget_states
                     .get(&self.current_widget.widget_id)
@@ -1839,6 +1880,7 @@ impl App {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
@@ -1847,6 +1889,7 @@ impl App {
                 }
                 BottomWidgetType::ProcSort => {
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
@@ -1855,6 +1898,7 @@ impl App {
                 }
                 BottomWidgetType::Temp => {
                     if let Some(temp_widget_state) = self
+                        .states
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
@@ -1863,6 +1907,7 @@ impl App {
                 }
                 BottomWidgetType::Disk => {
                     if let Some(disk_widget_state) = self
+                        .states
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
@@ -1871,6 +1916,7 @@ impl App {
                 }
                 BottomWidgetType::CpuLegend => {
                     if let Some(cpu_widget_state) = self
+                        .states
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
@@ -1893,6 +1939,7 @@ impl App {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
@@ -1901,6 +1948,7 @@ impl App {
                 }
                 BottomWidgetType::ProcSort => {
                     if let Some(proc_widget_state) = self
+                        .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
@@ -1909,6 +1957,7 @@ impl App {
                 }
                 BottomWidgetType::Temp => {
                     if let Some(temp_widget_state) = self
+                        .states
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
@@ -1917,6 +1966,7 @@ impl App {
                 }
                 BottomWidgetType::Disk => {
                     if let Some(disk_widget_state) = self
+                        .states
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
@@ -1927,6 +1977,7 @@ impl App {
                 }
                 BottomWidgetType::CpuLegend => {
                     if let Some(cpu_widget_state) = self
+                        .states
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
@@ -1969,6 +2020,7 @@ impl App {
 
     fn change_process_sort_position(&mut self, num_to_change_by: i64) {
         if let Some(proc_widget_state) = self
+            .states
             .proc_state
             .get_mut_widget_state(self.current_widget.widget_id - 2)
         {
@@ -1980,6 +2032,7 @@ impl App {
 
     fn change_cpu_legend_position(&mut self, num_to_change_by: i64) {
         if let Some(cpu_widget_state) = self
+            .states
             .cpu_state
             .widget_states
             .get_mut(&(self.current_widget.widget_id - 1))
@@ -1991,6 +2044,7 @@ impl App {
     /// Returns the new position.
     fn change_process_position(&mut self, num_to_change_by: i64) -> Option<usize> {
         if let Some(proc_widget_state) = self
+            .states
             .proc_state
             .get_mut_widget_state(self.current_widget.widget_id)
         {
@@ -2002,6 +2056,7 @@ impl App {
 
     fn change_temp_position(&mut self, num_to_change_by: i64) {
         if let Some(temp_widget_state) = self
+            .states
             .temp_state
             .widget_states
             .get_mut(&self.current_widget.widget_id)
@@ -2012,6 +2067,7 @@ impl App {
 
     fn change_disk_position(&mut self, num_to_change_by: i64) {
         if let Some(disk_widget_state) = self
+            .states
             .disk_state
             .widget_states
             .get_mut(&self.current_widget.widget_id)
@@ -2097,6 +2153,7 @@ impl App {
 
     fn toggle_collapsing_process_branch(&mut self) {
         if let Some(pws) = self
+            .states
             .proc_state
             .widget_states
             .get_mut(&self.current_widget.widget_id)
@@ -2109,6 +2166,7 @@ impl App {
         match self.current_widget.widget_type {
             BottomWidgetType::Cpu => {
                 if let Some(cpu_widget_state) = self
+                    .states
                     .cpu_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
@@ -2117,7 +2175,7 @@ impl App {
                         + self.app_config_fields.time_interval;
                     if new_time <= self.app_config_fields.retention_ms {
                         cpu_widget_state.current_display_time = new_time;
-                        self.cpu_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2125,7 +2183,7 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         cpu_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.cpu_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2134,6 +2192,7 @@ impl App {
             }
             BottomWidgetType::Mem => {
                 if let Some(mem_widget_state) = self
+                    .states
                     .mem_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
@@ -2142,7 +2201,7 @@ impl App {
                         + self.app_config_fields.time_interval;
                     if new_time <= self.app_config_fields.retention_ms {
                         mem_widget_state.current_display_time = new_time;
-                        self.mem_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2150,7 +2209,7 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         mem_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.mem_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2159,6 +2218,7 @@ impl App {
             }
             BottomWidgetType::Net => {
                 if let Some(net_widget_state) = self
+                    .states
                     .net_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
@@ -2167,7 +2227,7 @@ impl App {
                         + self.app_config_fields.time_interval;
                     if new_time <= self.app_config_fields.retention_ms {
                         net_widget_state.current_display_time = new_time;
-                        self.net_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2175,7 +2235,7 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         net_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.net_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2190,6 +2250,7 @@ impl App {
         match self.current_widget.widget_type {
             BottomWidgetType::Cpu => {
                 if let Some(cpu_widget_state) = self
+                    .states
                     .cpu_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
@@ -2198,7 +2259,7 @@ impl App {
                         - self.app_config_fields.time_interval;
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         cpu_widget_state.current_display_time = new_time;
-                        self.cpu_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2206,7 +2267,7 @@ impl App {
                         != constants::STALE_MIN_MILLISECONDS
                     {
                         cpu_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.cpu_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2215,6 +2276,7 @@ impl App {
             }
             BottomWidgetType::Mem => {
                 if let Some(mem_widget_state) = self
+                    .states
                     .mem_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
@@ -2223,7 +2285,7 @@ impl App {
                         - self.app_config_fields.time_interval;
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         mem_widget_state.current_display_time = new_time;
-                        self.mem_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2231,7 +2293,7 @@ impl App {
                         != constants::STALE_MIN_MILLISECONDS
                     {
                         mem_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.mem_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2240,6 +2302,7 @@ impl App {
             }
             BottomWidgetType::Net => {
                 if let Some(net_widget_state) = self
+                    .states
                     .net_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
@@ -2248,7 +2311,7 @@ impl App {
                         - self.app_config_fields.time_interval;
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         net_widget_state.current_display_time = new_time;
-                        self.net_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2256,7 +2319,7 @@ impl App {
                         != constants::STALE_MIN_MILLISECONDS
                     {
                         net_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.net_state.force_update = Some(self.current_widget.widget_id);
+                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2269,12 +2332,13 @@ impl App {
 
     fn reset_cpu_zoom(&mut self) {
         if let Some(cpu_widget_state) = self
+            .states
             .cpu_state
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
             cpu_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.cpu_state.force_update = Some(self.current_widget.widget_id);
+            self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 cpu_widget_state.autohide_timer = Some(Instant::now());
             }
@@ -2283,12 +2347,13 @@ impl App {
 
     fn reset_mem_zoom(&mut self) {
         if let Some(mem_widget_state) = self
+            .states
             .mem_state
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
             mem_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.mem_state.force_update = Some(self.current_widget.widget_id);
+            self.states.mem_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 mem_widget_state.autohide_timer = Some(Instant::now());
             }
@@ -2297,12 +2362,13 @@ impl App {
 
     fn reset_net_zoom(&mut self) {
         if let Some(net_widget_state) = self
+            .states
             .net_state
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
             net_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.net_state.force_update = Some(self.current_widget.widget_id);
+            self.states.net_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 net_widget_state.autohide_timer = Some(Instant::now());
             }
@@ -2333,7 +2399,7 @@ impl App {
         // Short circuit if we're in basic table... we might have to handle the basic table arrow
         // case here...
 
-        if let Some(bt) = &mut self.basic_table_widget_state {
+        if let Some(bt) = &mut self.states.basic_table_widget_state {
             if let (
                 Some((left_tlc_x, left_tlc_y)),
                 Some((left_brc_x, left_brc_y)),
@@ -2350,8 +2416,10 @@ impl App {
                         self.current_widget = new_widget.clone();
 
                         if let BottomWidgetType::Proc = &new_widget.widget_type {
-                            if let Some(proc_widget_state) =
-                                self.proc_state.get_widget_state(new_widget.widget_id)
+                            if let Some(proc_widget_state) = self
+                                .states
+                                .proc_state
+                                .get_widget_state(new_widget.widget_id)
                             {
                                 if proc_widget_state.is_sort_open {
                                     self.move_widget_selection(&WidgetDirection::Left);
@@ -2372,8 +2440,10 @@ impl App {
                         self.current_widget = new_widget.clone();
 
                         if let BottomWidgetType::ProcSort = &new_widget.widget_type {
-                            if let Some(proc_widget_state) =
-                                self.proc_state.get_widget_state(new_widget.widget_id - 2)
+                            if let Some(proc_widget_state) = self
+                                .states
+                                .proc_state
+                                .get_widget_state(new_widget.widget_id - 2)
                             {
                                 if proc_widget_state.is_sort_open {
                                     self.move_widget_selection(&WidgetDirection::Right);
@@ -2429,7 +2499,7 @@ impl App {
                             | BottomWidgetType::Disk
                             | BottomWidgetType::Battery => {
                                 if let Some(basic_table_widget_state) =
-                                    &mut self.basic_table_widget_state
+                                    &mut self.states.basic_table_widget_state
                                 {
                                     basic_table_widget_state.currently_displayed_widget_id =
                                         self.current_widget.widget_id;
@@ -2475,6 +2545,7 @@ impl App {
                             match &self.current_widget.widget_type {
                                 BottomWidgetType::Proc => {
                                     if let Some(proc_widget_state) = self
+                                        .states
                                         .proc_state
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
@@ -2502,6 +2573,7 @@ impl App {
                                 BottomWidgetType::ProcSort => {
                                     // TODO: [Feature] This could sort if you double click!
                                     if let Some(proc_widget_state) = self
+                                        .states
                                         .proc_state
                                         .get_widget_state(self.current_widget.widget_id - 2)
                                     {
@@ -2516,6 +2588,7 @@ impl App {
                                 }
                                 BottomWidgetType::CpuLegend => {
                                     if let Some(cpu_widget_state) = self
+                                        .states
                                         .cpu_state
                                         .get_widget_state(self.current_widget.widget_id - 1)
                                     {
@@ -2530,6 +2603,7 @@ impl App {
                                 }
                                 BottomWidgetType::Temp => {
                                     if let Some(temp_widget_state) = self
+                                        .states
                                         .temp_state
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
@@ -2544,6 +2618,7 @@ impl App {
                                 }
                                 BottomWidgetType::Disk => {
                                     if let Some(disk_widget_state) = self
+                                        .states
                                         .disk_state
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
@@ -2565,6 +2640,7 @@ impl App {
                                 match &self.current_widget.widget_type {
                                     BottomWidgetType::Proc => {
                                         if let Some(state) = self
+                                            .states
                                             .proc_state
                                             .get_mut_widget_state(self.current_widget.widget_id)
                                         {
@@ -2575,6 +2651,7 @@ impl App {
                                     }
                                     BottomWidgetType::Temp => {
                                         if let Some(temp) = self
+                                            .states
                                             .temp_state
                                             .get_mut_widget_state(self.current_widget.widget_id)
                                         {
@@ -2585,6 +2662,7 @@ impl App {
                                     }
                                     BottomWidgetType::Disk => {
                                         if let Some(disk) = self
+                                            .states
                                             .disk_state
                                             .get_mut_widget_state(self.current_widget.widget_id)
                                         {
@@ -2600,6 +2678,7 @@ impl App {
                     }
                     BottomWidgetType::Battery => {
                         if let Some(battery_widget_state) = self
+                            .states
                             .battery_state
                             .get_mut_widget_state(self.current_widget.widget_id)
                         {
@@ -2648,6 +2727,7 @@ impl App {
         // In particular, encapsulate this entire logic and add some tests to make it less potentially error-prone.
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
+            .states
             .proc_state
             .widget_states
             .get_mut(&(self.current_widget.widget_id - 1))

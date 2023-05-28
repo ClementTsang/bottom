@@ -38,7 +38,9 @@ impl Painter {
                 }
             }
             self.draw_cpu_graph(f, app_state, draw_loc, widget_id);
-            if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
+            if let Some(cpu_widget_state) =
+                app_state.states.cpu_state.widget_states.get_mut(&widget_id)
+            {
                 cpu_widget_state.is_legend_hidden = true;
             }
 
@@ -180,7 +182,8 @@ impl Painter {
         const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
         const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
 
-        if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
+        if let Some(cpu_widget_state) = app_state.states.cpu_state.widget_states.get_mut(&widget_id)
+        {
             let cpu_data = &app_state.converted_data.cpu_data;
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let x_bounds = [0, cpu_widget_state.current_display_time];
@@ -237,7 +240,11 @@ impl Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let recalculate_column_widths = app_state.should_get_widget_bounds();
-        if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&(widget_id - 1))
+        if let Some(cpu_widget_state) = app_state
+            .states
+            .cpu_state
+            .widget_states
+            .get_mut(&(widget_id - 1))
         {
             // TODO: This line (and the one above, see caller) is pretty dumb but I guess needed for now. Refactor if possible!
             cpu_widget_state.is_legend_hidden = false;

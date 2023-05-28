@@ -24,7 +24,7 @@ impl Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
-        if let Some(proc_widget_state) = app_state.proc_state.widget_states.get(&widget_id) {
+        if let Some(proc_widget_state) = app_state.states.proc_state.widget_states.get(&widget_id) {
             let search_height = if draw_border { 5 } else { 3 };
             let is_sort_open = proc_widget_state.is_sort_open;
 
@@ -58,7 +58,12 @@ impl Painter {
             self.draw_processes_table(f, app_state, proc_draw_loc, widget_id);
         }
 
-        if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
+        if let Some(proc_widget_state) = app_state
+            .states
+            .proc_state
+            .widget_states
+            .get_mut(&widget_id)
+        {
             // Reset redraw marker.
             if proc_widget_state.force_rerender {
                 proc_widget_state.force_rerender = false;
@@ -72,7 +77,12 @@ impl Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
-        if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
+        if let Some(proc_widget_state) = app_state
+            .states
+            .proc_state
+            .widget_states
+            .get_mut(&widget_id)
+        {
             let recalculate_column_widths =
                 should_get_widget_bounds || proc_widget_state.force_rerender;
 
@@ -145,8 +155,11 @@ impl Painter {
             }
         }
 
-        if let Some(proc_widget_state) =
-            app_state.proc_state.widget_states.get_mut(&(widget_id - 1))
+        if let Some(proc_widget_state) = app_state
+            .states
+            .proc_state
+            .widget_states
+            .get_mut(&(widget_id - 1))
         {
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let num_columns = usize::from(draw_loc.width);
@@ -298,7 +311,12 @@ impl Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
-        if let Some(pws) = app_state.proc_state.widget_states.get_mut(&(widget_id - 2)) {
+        if let Some(pws) = app_state
+            .states
+            .proc_state
+            .widget_states
+            .get_mut(&(widget_id - 2))
+        {
             let recalculate_column_widths = should_get_widget_bounds || pws.force_rerender;
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;

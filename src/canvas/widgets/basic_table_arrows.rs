@@ -140,7 +140,7 @@ impl Painter {
                 //   actually too large - so, we assume all of them are one too big and check via < (see
                 //   https://github.com/ClementTsang/bottom/pull/459 for details).
                 // - So in other words, to make it simple, we keep this to a standard and overshoot by one here.
-                if let Some(basic_table) = &mut app_state.basic_table_widget_state {
+                if let Some(basic_table) = &mut app_state.states.basic_table_widget_state {
                     basic_table.left_tlc =
                         Some((margined_draw_loc[0].x, margined_draw_loc[0].y + 1));
                     basic_table.left_brc = Some((

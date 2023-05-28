@@ -32,6 +32,7 @@ impl Painter {
                 return Some(Text::from(vec![
                     Spans::from(""),
                     if app_state
+                        .states
                         .proc_state
                         .widget_states
                         .get(&app_state.current_widget.widget_id)
