@@ -233,7 +233,7 @@ fn main() -> Result<()> {
                         if app.used_widgets.use_disk {
                             app.converted_data.ingest_disk_data(&app.data_collection);
 
-                            for disk in app.disk_state.widget_states.values_mut() {
+                            for disk in app.states.disk_state.widget_states.values_mut() {
                                 disk.force_data_update();
                             }
                         }
@@ -245,7 +245,7 @@ fn main() -> Result<()> {
                                 app.app_config_fields.temperature_type,
                             );
 
-                            for temp in app.temp_state.widget_states.values_mut() {
+                            for temp in app.states.temp_state.widget_states.values_mut() {
                                 temp.force_data_update();
                             }
                         }
@@ -297,7 +297,7 @@ fn main() -> Result<()> {
 
                         // Processes
                         if app.used_widgets.use_proc {
-                            for proc in app.proc_state.widget_states.values_mut() {
+                            for proc in app.states.proc_state.widget_states.values_mut() {
                                 proc.force_data_update();
                             }
                         }

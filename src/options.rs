@@ -428,27 +428,35 @@ pub fn build_app(
     let net_filter =
         get_ignore_list(&config.net_filter).context("Update 'net_filter' in your config file")?;
 
-    Ok(App::builder()
-        .app_config_fields(app_config_fields)
-        .cpu_state(CpuState::init(cpu_state_map))
-        .mem_state(MemState::init(mem_state_map))
-        .net_state(NetState::init(net_state_map))
-        .proc_state(ProcState::init(proc_state_map))
-        .disk_state(DiskState::init(disk_state_map))
-        .temp_state(TempState::init(temp_state_map))
-        .battery_state(BatteryState::init(battery_state_map))
-        .basic_table_widget_state(basic_table_widget_state)
-        .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // TODO: [UNWRAP] - many of the unwraps are fine (like this one) but do a once-over and/or switch to expect?
-        .widget_map(widget_map)
-        .used_widgets(used_widgets)
-        .is_expanded(expanded_upon_startup && !use_basic_mode)
-        .filters(DataFilters {
-            disk_filter,
-            mount_filter,
-            temp_filter,
-            net_filter,
-        })
-        .build())
+    let states = AppWidgetStates {
+        cpu_state: CpuState::init(cpu_state_map),
+        mem_state: MemState::init(mem_state_map),
+        net_state: NetState::init(net_state_map),
+        proc_state: ProcState::init(proc_state_map),
+        temp_state: TempState::init(temp_state_map),
+        disk_state: DiskState::init(disk_state_map),
+        battery_state: BatteryState::init(battery_state_map),
+        basic_table_widget_state,
+    };
+
+    let current_widget = widget_map.get(&initial_widget_id).unwrap().clone();
+    let filters = DataFilters {
+        disk_filter,
+        mount_filter,
+        temp_filter,
+        net_filter,
+    };
+    let is_expanded = expanded_upon_startup && !use_basic_mode;
+
+    Ok(App::new(
+        app_config_fields,
+        states,
+        widget_map,
+        current_widget,
+        used_widgets,
+        filters,
+        is_expanded,
+    ))
 }
 
 pub fn get_widget_layout(
@@ -1048,10 +1056,11 @@ mod test {
                 if (default_app.app_config_fields == testing_app.app_config_fields)
                     && default_app.is_expanded == testing_app.is_expanded
                     && default_app
+                        .states
                         .proc_state
                         .widget_states
                         .iter()
-                        .zip(testing_app.proc_state.widget_states.iter())
+                        .zip(testing_app.states.proc_state.widget_states.iter())
                         .all(|(a, b)| (a.1.test_equality(b.1)))
                 {
                     panic!("failed on {arg_name}");

@@ -14,6 +14,17 @@ use crate::{
     },
 };
 
+pub struct AppWidgetStates {
+    pub cpu_state: CpuState,
+    pub mem_state: MemState,
+    pub net_state: NetState,
+    pub proc_state: ProcState,
+    pub temp_state: TempState,
+    pub disk_state: DiskState,
+    pub battery_state: BatteryState,
+    pub basic_table_widget_state: Option<BasicTableWidgetState>,
+}
+
 #[derive(Debug)]
 pub enum CursorDirection {
     Left,

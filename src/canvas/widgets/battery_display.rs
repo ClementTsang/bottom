@@ -20,8 +20,11 @@ impl Painter {
         widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
-        if let Some(battery_widget_state) =
-            app_state.battery_state.widget_states.get_mut(&widget_id)
+        if let Some(battery_widget_state) = app_state
+            .states
+            .battery_state
+            .widget_states
+            .get_mut(&widget_id)
         {
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let border_style = if is_on_widget {

@@ -55,7 +55,9 @@ impl Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
         hide_legend: bool,
     ) {
-        if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
+        if let Some(network_widget_state) =
+            app_state.states.net_state.widget_states.get_mut(&widget_id)
+        {
             let network_data_rx = &app_state.converted_data.network_data_rx;
             let network_data_tx = &app_state.converted_data.network_data_tx;
             let time_start = -(network_widget_state.current_display_time as f64);

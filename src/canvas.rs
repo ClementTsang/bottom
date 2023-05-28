@@ -264,7 +264,7 @@ impl Painter {
                 app_state.delete_dialog_state.button_positions = vec![];
 
                 // Reset battery dialog...
-                for battery_widget in app_state.battery_state.widget_states.values_mut() {
+                for battery_widget in app_state.states.battery_state.widget_states.values_mut() {
                     battery_widget.tab_click_locs = None;
                 }
             }
@@ -480,7 +480,7 @@ impl Painter {
                 }
 
                 let mut later_widget_id: Option<u64> = None;
-                if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
+                if let Some(basic_table_widget_state) = &app_state.states.basic_table_widget_state {
                     let widget_id = basic_table_widget_state.currently_displayed_widget_id;
                     later_widget_id = Some(widget_id);
                     if vertical_chunks[3].width >= 2 {
