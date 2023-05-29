@@ -3,7 +3,7 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
     terminal::Frame,
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
 };
 use unicode_segmentation::UnicodeSegmentation;
@@ -185,7 +185,7 @@ impl Painter {
                 self.colours.text_style,
             );
 
-            let mut search_text = vec![Spans::from({
+            let mut search_text = vec![Line::from({
                 let mut search_vec = vec![Span::styled(
                     SEARCH_TITLE,
                     if is_on_widget {
@@ -225,7 +225,7 @@ impl Painter {
             } else {
                 ("Case(Alt+C)", "Whole(Alt+W)", "Regex(Alt+R)")
             };
-            let option_text = Spans::from(vec![
+            let option_text = Line::from(vec![
                 Span::styled(case, case_style),
                 Span::raw("  "),
                 Span::styled(whole, whole_word_style),
@@ -233,7 +233,7 @@ impl Painter {
                 Span::styled(regex, regex_style),
             ]);
 
-            search_text.push(Spans::from(Span::styled(
+            search_text.push(Line::from(Span::styled(
                 if let Some(err) = &proc_widget_state.proc_search.search_state.error_message {
                     err.as_str()
                 } else {

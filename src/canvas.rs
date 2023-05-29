@@ -5,7 +5,7 @@ use itertools::izip;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::Paragraph,
     Frame, Terminal,
 };
@@ -62,7 +62,7 @@ pub struct Painter {
     pub colours: CanvasStyling,
     height: u16,
     width: u16,
-    styled_help_text: Vec<Spans<'static>>,
+    styled_help_text: Vec<Line<'static>>,
     is_mac_os: bool, // TODO: This feels out of place...
 
     // TODO: Redo this entire thing.
@@ -212,7 +212,7 @@ impl Painter {
             }
         });
 
-        self.styled_help_text = styled_help_spans.into_iter().map(Spans::from).collect();
+        self.styled_help_text = styled_help_spans.into_iter().map(Line::from).collect();
     }
 
     fn draw_frozen_indicator<B: Backend>(&self, f: &mut Frame<'_, B>, draw_loc: Rect) {

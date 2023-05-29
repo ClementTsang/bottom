@@ -6,7 +6,7 @@ use tui::{
     layout::{Constraint, Rect},
     style::Style,
     symbols::Marker,
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Borders, GraphType},
     Frame,
 };
@@ -96,10 +96,10 @@ impl<'a> TimeGraph<'a> {
     }
 
     /// Generates a title for the [`TimeGraph`] widget, given the available space.
-    fn generate_title(&self, draw_loc: Rect) -> Spans<'_> {
+    fn generate_title(&self, draw_loc: Rect) -> Line<'_> {
         if self.is_expanded {
             let title_base = concat_string!(self.title, "── Esc to go back ");
-            Spans::from(vec![
+            Line::from(vec![
                 Span::styled(self.title.as_ref(), self.title_style),
                 Span::styled(
                     concat_string!(
@@ -113,7 +113,7 @@ impl<'a> TimeGraph<'a> {
                 ),
             ])
         } else {
-            Spans::from(Span::styled(self.title.as_ref(), self.title_style))
+            Line::from(Span::styled(self.title.as_ref(), self.title_style))
         }
     }
 
@@ -182,7 +182,7 @@ mod test {
         layout::Rect,
         style::{Color, Style},
         symbols::Marker,
-        text::{Span, Spans},
+        text::{Line, Span},
     };
 
     use super::TimeGraph;
@@ -253,14 +253,14 @@ mod test {
         let title = time_graph.generate_title(draw_loc);
         assert_eq!(
             title,
-            Spans::from(Span::styled(" Network ", Style::default().fg(Color::Cyan)))
+            Line::from(Span::styled(" Network ", Style::default().fg(Color::Cyan)))
         );
 
         time_graph.is_expanded = true;
         let title = time_graph.generate_title(draw_loc);
         assert_eq!(
             title,
-            Spans::from(vec![
+            Line::from(vec![
                 Span::styled(" Network ", Style::default().fg(Color::Cyan)),
                 Span::styled("───── Esc to go back ", Style::default().fg(Color::Blue))
             ])
