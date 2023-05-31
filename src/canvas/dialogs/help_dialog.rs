@@ -4,8 +4,8 @@ use tui::{
     backend::Backend,
     layout::{Alignment, Rect},
     terminal::Frame,
+    text::Line,
     text::Span,
-    text::Spans,
     widgets::{Block, Borders, Paragraph, Wrap},
 };
 use unicode_width::UnicodeWidthStr;
@@ -19,7 +19,7 @@ impl Painter {
     pub fn draw_help_dialog<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
-        let help_title = Spans::from(vec![
+        let help_title = Line::from(vec![
             Span::styled(" Help ", self.colours.widget_title_style),
             Span::styled(
                 format!(

@@ -8,9 +8,9 @@ use tui::{
     layout::{Constraint, Rect},
     style::{Color, Style},
     symbols::{self, Marker},
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{
-        canvas::{Line, Points},
+        canvas::{Line as CanvasLine, Points},
         Block, Borders, GraphType, Widget,
     },
 };
@@ -25,7 +25,7 @@ pub type Point = (f64, f64);
 #[derive(Debug, Clone)]
 pub struct Axis<'a> {
     /// Title displayed next to axis end
-    pub title: Option<Spans<'a>>,
+    pub title: Option<Line<'a>>,
     /// Bounds for the axis (all data points outside these limits will not be represented)
     pub bounds: [f64; 2],
     /// A list of labels to put to the left or below the axis
@@ -49,7 +49,7 @@ impl<'a> Default for Axis<'a> {
 impl<'a> Axis<'a> {
     pub fn title<T>(mut self, title: T) -> Axis<'a>
     where
-        T: Into<Spans<'a>>,
+        T: Into<Line<'a>>,
     {
         self.title = Some(title.into());
         self
@@ -460,7 +460,7 @@ impl<'a> Widget for TimeChart<'a> {
                             );
 
                             if let GraphType::Line = dataset.graph_type {
-                                ctx.draw(&Line {
+                                ctx.draw(&CanvasLine {
                                     x1: interpolated_point.0,
                                     y1: interpolated_point.1,
                                     x2: newer_point.0,
@@ -478,7 +478,7 @@ impl<'a> Widget for TimeChart<'a> {
 
                     if let GraphType::Line = dataset.graph_type {
                         for data in data_slice.windows(2) {
-                            ctx.draw(&Line {
+                            ctx.draw(&CanvasLine {
                                 x1: data[0].0,
                                 y1: data[0].1,
                                 x2: data[1].0,
@@ -504,7 +504,7 @@ impl<'a> Widget for TimeChart<'a> {
                             );
 
                             if let GraphType::Line = dataset.graph_type {
-                                ctx.draw(&Line {
+                                ctx.draw(&CanvasLine {
                                     x1: older_point.0,
                                     y1: older_point.1,
                                     x2: interpolated_point.0,
@@ -551,7 +551,7 @@ impl<'a> Widget for TimeChart<'a> {
                 },
                 original_style,
             );
-            buf.set_spans(x, y, &title, width);
+            buf.set_line(x, y, &title, width);
         }
 
         if let Some((x, y)) = layout.title_y {
@@ -566,7 +566,7 @@ impl<'a> Widget for TimeChart<'a> {
                 },
                 original_style,
             );
-            buf.set_spans(x, y, &title, width);
+            buf.set_line(x, y, &title, width);
         }
     }
 }

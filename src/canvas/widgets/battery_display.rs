@@ -2,7 +2,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Borders, Cell, Paragraph, Row, Table, Tabs},
 };
 use unicode_segmentation::UnicodeSegmentation;
@@ -40,7 +40,7 @@ impl Painter {
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Battery ── Esc to go back ";
-                Spans::from(vec![
+                Line::from(vec![
                     Span::styled(" Battery ", self.colours.widget_title_style),
                     Span::styled(
                         format!(
@@ -53,7 +53,7 @@ impl Painter {
                     ),
                 ])
             } else {
-                Spans::from(Span::styled(" Battery ", self.colours.widget_title_style))
+                Line::from(Span::styled(" Battery ", self.colours.widget_title_style))
             };
 
             let battery_block = if draw_border {
@@ -89,7 +89,7 @@ impl Painter {
                 Tabs::new(
                     battery_names
                         .iter()
-                        .map(|name| Spans::from((*name).clone()))
+                        .map(|name| Line::from((*name).clone()))
                         .collect::<Vec<_>>(),
                 )
                 .block(Block::default())
@@ -227,9 +227,9 @@ impl Painter {
                     margined_draw_loc,
                 );
             } else {
-                let mut contents = vec![Spans::default(); table_gap.into()];
+                let mut contents = vec![Line::default(); table_gap.into()];
 
-                contents.push(Spans::from(Span::styled(
+                contents.push(Line::from(Span::styled(
                     "No data found for this battery",
                     self.colours.text_style,
                 )));

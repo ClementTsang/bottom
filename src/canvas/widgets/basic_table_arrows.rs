@@ -2,8 +2,8 @@ use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
+    text::Line,
     text::Span,
-    text::Spans,
     widgets::{Block, Paragraph},
 };
 
@@ -93,16 +93,16 @@ impl Painter {
                 usize::from(draw_loc.width).saturating_sub(6 + left_name.len() + right_name.len());
 
             let left_arrow_text = vec![
-                Spans::default(),
-                Spans::from(Span::styled(
+                Line::default(),
+                Line::from(Span::styled(
                     format!("◄ {}", left_name),
                     self.colours.text_style,
                 )),
             ];
 
             let right_arrow_text = vec![
-                Spans::default(),
-                Spans::from(Span::styled(
+                Line::default(),
+                Line::from(Span::styled(
                     format!("{} ►", right_name),
                     self.colours.text_style,
                 )),

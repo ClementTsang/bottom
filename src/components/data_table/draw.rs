@@ -7,7 +7,7 @@ use concat_string::concat_string;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    text::{Span, Spans, Text},
+    text::{Line, Span, Text},
     widgets::{Block, Borders, Row, Table},
     Frame,
 };
@@ -98,7 +98,7 @@ where
     /// Generates a title, given the available space.
     pub fn generate_title<'a>(
         &self, draw_info: &'a DrawInfo, total_items: usize,
-    ) -> Option<Spans<'a>> {
+    ) -> Option<Line<'a>> {
         self.props.title.as_ref().map(|title| {
             let current_index = self.state.current_index.saturating_add(1);
             let draw_loc = draw_info.loc;
@@ -129,12 +129,12 @@ where
                     UnicodeSegmentation::graphemes(title_base.as_str(), true).count() + 2,
                 ));
                 let esc = concat_string!("─", lines, "─ Esc to go back ");
-                Spans::from(vec![
+                Line::from(vec![
                     Span::styled(title, title_style),
                     Span::styled(esc, border_style),
                 ])
             } else {
-                Spans::from(Span::styled(title, title_style))
+                Line::from(Span::styled(title, title_style))
             }
         })
     }

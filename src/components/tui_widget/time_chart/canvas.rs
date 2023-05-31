@@ -10,9 +10,9 @@ use tui::{
     layout::Rect,
     style::{Color, Style},
     symbols,
-    text::Spans,
+    text::Line,
     widgets::{
-        canvas::{Line, Points},
+        canvas::{Line as CanvasLine, Points},
         Block, Widget,
     },
 };
@@ -22,7 +22,7 @@ pub trait Shape {
     fn draw(&self, painter: &mut Painter<'_, '_>);
 }
 
-impl Shape for Line {
+impl Shape for CanvasLine {
     fn draw(&self, painter: &mut Painter<'_, '_>) {
         let (x1, y1) = match painter.get_point(self.x1, self.y1) {
             Some(c) => c,
@@ -122,7 +122,7 @@ impl Shape for Points<'_> {
 pub struct Label<'a> {
     x: f64,
     y: f64,
-    spans: Spans<'a>,
+    spans: Line<'a>,
 }
 
 #[derive(Debug, Clone)]
@@ -365,6 +365,7 @@ impl<'a> Context<'a> {
             symbols::Marker::Dot => Box::new(CharGrid::new(width, height, '•')),
             symbols::Marker::Block => Box::new(CharGrid::new(width, height, '▄')),
             symbols::Marker::Braille => Box::new(BrailleGrid::new(width, height)),
+            symbols::Marker::Bar => Box::new(CharGrid::new(width, height, '▄')),
         };
         Context {
             x_bounds,
@@ -542,7 +543,7 @@ where
         {
             let x = ((label.x - left) * resolution.0 / width) as u16 + canvas_area.left();
             let y = ((top - label.y) * resolution.1 / height) as u16 + canvas_area.top();
-            buf.set_spans(x, y, &label.spans, canvas_area.right() - x);
+            buf.set_line(x, y, &label.spans, canvas_area.right() - x);
         }
     }
 }
