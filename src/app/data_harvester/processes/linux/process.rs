@@ -165,7 +165,7 @@ impl Io {
                     }
                 }
 
-                // Quick short circuit if we read all required fields.
+                // Quick short circuit if we have already read all the required fields.
                 if read_fields == NUM_FIELDS {
                     break;
                 }
