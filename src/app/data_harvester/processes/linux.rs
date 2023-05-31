@@ -11,7 +11,6 @@ use hashbrown::{HashMap, HashSet};
 use sysinfo::{ProcessStatus, System};
 
 use super::{ProcessHarvest, UserTable};
-use crate::components::tui_widget::time_chart::Point;
 use crate::utils::error::{self, BottomError};
 use crate::Pid;
 
@@ -26,8 +25,11 @@ pub struct PrevProcDetails {
     cpu_time: u64,
 }
 
-fn calculate_idle_values(line: &str) -> Point {
-    /// Converts a `Option<&str>` value to an f64. If it fails to parse or is `None`, then it will return `0_f64`.
+/// Given `/proc/stat` file contents, determine the idle and non-idle values of the CPU
+/// used to calculate CPU usage.
+fn fetch_cpu_usage(line: &str) -> (f64, f64) {
+    /// Converts a `Option<&str>` value to an f64. If it fails to parse or is `None`, it
+    /// will return `0_f64`.
     fn str_to_f64(val: Option<&str>) -> f64 {
         val.and_then(|v| v.parse::<f64>().ok()).unwrap_or(0_f64)
     }
@@ -44,7 +46,6 @@ fn calculate_idle_values(line: &str) -> Point {
 
     // Note we do not get guest/guest_nice, as they are calculated as part of user/nice respectively
     // See https://github.com/htop-dev/htop/blob/main/linux/LinuxProcessList.c
-
     let idle = idle + iowait;
     let non_idle = user + nice + system + irq + softirq + steal;
 
@@ -62,11 +63,16 @@ struct CpuUsage {
 fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error::Result<CpuUsage> {
     let (idle, non_idle) = {
         // From SO answer: https://stackoverflow.com/a/23376195
-        let mut reader = BufReader::new(File::open("/proc/stat")?);
-        let mut first_line = String::new();
-        reader.read_line(&mut first_line)?;
+        let first_line = {
+            // We just need a single line from this file. Read it and return it.
+            let mut reader = BufReader::new(File::open("/proc/stat")?);
+            let mut buffer = String::new();
+            reader.read_line(&mut buffer)?;
 
-        calculate_idle_values(&first_line)
+            buffer
+        };
+
+        fetch_cpu_usage(&first_line)
     };
 
     let total = idle + non_idle;
@@ -349,37 +355,37 @@ mod tests {
     fn test_proc_cpu_parse() {
         assert_eq!(
             (100_f64, 200_f64),
-            calculate_idle_values("100 0 100 100"),
+            fetch_cpu_usage("100 0 100 100"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 4 values"
         );
         assert_eq!(
             (120_f64, 200_f64),
-            calculate_idle_values("100 0 100 100 20"),
+            fetch_cpu_usage("100 0 100 100 20"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 5 values"
         );
         assert_eq!(
             (120_f64, 230_f64),
-            calculate_idle_values("100 0 100 100 20 30"),
+            fetch_cpu_usage("100 0 100 100 20 30"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 6 values"
         );
         assert_eq!(
             (120_f64, 270_f64),
-            calculate_idle_values("100 0 100 100 20 30 40"),
+            fetch_cpu_usage("100 0 100 100 20 30 40"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 7 values"
         );
         assert_eq!(
             (120_f64, 320_f64),
-            calculate_idle_values("100 0 100 100 20 30 40 50"),
+            fetch_cpu_usage("100 0 100 100 20 30 40 50"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 8 values"
         );
         assert_eq!(
             (120_f64, 320_f64),
-            calculate_idle_values("100 0 100 100 20 30 40 50 100"),
+            fetch_cpu_usage("100 0 100 100 20 30 40 50 100"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 9 values"
         );
         assert_eq!(
             (120_f64, 320_f64),
-            calculate_idle_values("100 0 100 100 20 30 40 50 100 200"),
+            fetch_cpu_usage("100 0 100 100 20 30 40 50 100 200"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 10 values"
         );
     }
