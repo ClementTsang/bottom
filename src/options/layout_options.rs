@@ -218,11 +218,9 @@ impl Row {
             }
         }
 
-        Ok(BottomRow::builder()
+        Ok(BottomRow::new(children)
             .total_col_ratio(total_col_ratio)
-            .row_height_ratio(row_ratio)
-            .children(children)
-            .build())
+            .row_height_ratio(row_ratio))
     }
 }
 
