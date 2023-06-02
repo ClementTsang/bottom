@@ -13,7 +13,7 @@ use tui::{
 use crate::{
     app::{
         self,
-        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType},
+        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType, ElementSizing},
         App,
     },
     constants::*,
@@ -131,16 +131,12 @@ impl Painter {
 
                     let mut new_new_new_widget_constraints = Vec::new();
                     col_row.children.iter().for_each(|widget| {
-                        if widget.canvas_handle_width {
-                            new_new_new_widget_constraints.push(LayoutConstraint::CanvasHandled);
-                        } else if widget.flex_grow {
-                            new_new_new_widget_constraints.push(LayoutConstraint::Grow);
-                        } else {
-                            new_new_new_widget_constraints.push(LayoutConstraint::Ratio(
-                                widget.width_ratio,
-                                col_row.total_widget_ratio,
-                            ));
-                        }
+                        new_new_new_widget_constraints.push(match widget.sizing {
+                            ElementSizing::Ratio { lhs, rhs } => LayoutConstraint::Ratio(lhs, rhs),
+                            ElementSizing::FlexGrow => LayoutConstraint::Grow,
+                            ElementSizing::CanvasHandled => LayoutConstraint::CanvasHandled,
+                            ElementSizing::Fill => LayoutConstraint::Ratio(1, 1),
+                        });
                     });
                     new_new_widget_constraints.push(new_new_new_widget_constraints);
                 });
