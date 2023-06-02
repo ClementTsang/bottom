@@ -102,7 +102,6 @@ thiserror = "1.0.40"
 time = { version = "0.3.21", features = ["formatting", "macros"] }
 toml_edit = { version = "0.19.10", features = ["serde"] }
 tui = { version = "0.21.0", package = "ratatui" }
-typed-builder = "0.14.0"
 unicode-segmentation = "1.10.1"
 unicode-width = "0.1.10"
 

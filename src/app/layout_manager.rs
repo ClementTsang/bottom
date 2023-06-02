@@ -1,7 +1,5 @@
 use std::collections::BTreeMap;
 
-use typed_builder::*;
-
 use crate::constants::DEFAULT_WIDGET_ID;
 use crate::error::{BottomError, Result};
 
@@ -675,32 +673,23 @@ impl BottomLayout {
         BottomLayout {
             total_row_height_ratio: 3,
             rows: vec![
-                BottomRow::builder()
-                    .canvas_handle_height(true)
-                    .children(vec![BottomCol::new(vec![
-                        BottomColRow::new(vec![cpu]).canvas_handle_height(true)
-                    ])
-                    .canvas_handle_width(true)])
-                    .build(),
-                BottomRow::builder()
-                    .canvas_handle_height(true)
-                    .children(vec![BottomCol::new(vec![BottomColRow::new(vec![
-                        mem, net,
-                    ])
-                    .canvas_handle_height(true)])
-                    .canvas_handle_width(true)])
-                    .build(),
-                BottomRow::builder()
-                    .canvas_handle_height(true)
-                    .children(vec![BottomCol::new(vec![
-                        BottomColRow::new(vec![table]).canvas_handle_height(true)
-                    ])
-                    .canvas_handle_width(true)])
-                    .build(),
-                BottomRow::builder()
-                    .canvas_handle_height(true)
-                    .children(table_widgets)
-                    .build(),
+                BottomRow::new(vec![BottomCol::new(vec![
+                    BottomColRow::new(vec![cpu]).canvas_handle_height(true)
+                ])
+                .canvas_handle_width(true)])
+                .canvas_handle_height(true),
+                BottomRow::new(vec![BottomCol::new(vec![BottomColRow::new(vec![
+                    mem, net,
+                ])
+                .canvas_handle_height(true)])
+                .canvas_handle_width(true)])
+                .canvas_handle_height(true),
+                BottomRow::new(vec![BottomCol::new(vec![
+                    BottomColRow::new(vec![table]).canvas_handle_height(true)
+                ])
+                .canvas_handle_width(true)])
+                .canvas_handle_height(true),
+                BottomRow::new(table_widgets).canvas_handle_height(true),
             ],
         }
     }
@@ -729,21 +718,45 @@ impl BottomLayout {
 // }
 
 /// Represents a single row in the layout.
-#[derive(Clone, Debug, TypedBuilder)]
+#[derive(Clone, Debug)]
 pub struct BottomRow {
     pub children: Vec<BottomCol>,
-
-    #[builder(default = 1)]
     pub total_col_ratio: u32,
-
-    #[builder(default = 1)]
     pub row_height_ratio: u32,
-
-    #[builder(default = false)]
     pub canvas_handle_height: bool,
-
-    #[builder(default = false)]
     pub flex_grow: bool,
+}
+
+impl BottomRow {
+    pub fn new(children: Vec<BottomCol>) -> Self {
+        Self {
+            children,
+            total_col_ratio: 1,
+            row_height_ratio: 1,
+            canvas_handle_height: false,
+            flex_grow: false,
+        }
+    }
+
+    pub fn total_col_ratio(mut self, total_col_ratio: u32) -> Self {
+        self.total_col_ratio = total_col_ratio;
+        self
+    }
+
+    pub fn row_height_ratio(mut self, row_height_ratio: u32) -> Self {
+        self.row_height_ratio = row_height_ratio;
+        self
+    }
+
+    pub fn canvas_handle_height(mut self, canvas_handle_height: bool) -> Self {
+        self.canvas_handle_height = canvas_handle_height;
+        self
+    }
+
+    pub fn flex_grow(mut self, flex_grow: bool) -> Self {
+        self.flex_grow = flex_grow;
+        self
+    }
 }
 
 /// Represents a single column in the layout.  We assume that even if the column
