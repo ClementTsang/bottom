@@ -11,7 +11,7 @@ pub struct BottomLayout {
     pub total_row_height_ratio: u32,
 }
 
-// Represents a start and end coordinate in some dimension.
+/// Represents a start and end coordinate in some dimension.
 type LineSegment = (u32, u32);
 
 type WidgetMappings = (u32, BTreeMap<LineSegment, u64>);
@@ -695,27 +695,44 @@ impl BottomLayout {
     }
 }
 
-// pub enum BottomLayoutNode {
-//     Container(BottomContainer),
-//     Widget(BottomWidget),
-// }
+pub(crate) enum BottomLayoutNode {
+    /// A container type, containing more [`BottomLayoutNode`] children.
+    Container(BottomContainer),
 
-// pub struct BottomContainer {
-//     children: Vec<BottomLayoutNode>,
-//     root_ratio: u32,
-//     growth_type: BottomLayoutNodeSizing,
-// }
+    /// A leaf node, containing a [`BottomWidget`].
+    Widget(BottomWidget),
+}
 
-// pub enum BottomContainerType {
-//     Row,
-//     Col,
-// }
+/// A "container" that contains more [`BottomLayoutNode`]s.
+pub(crate) struct BottomContainer {
+    /// The children elements.
+    pub(crate) children: Vec<BottomLayoutNode>,
 
-// pub enum BottomLayoutNodeSizing {
-//     Ratio(u32),
-//     CanvasHandles,
-//     FlexGrow,
-// }
+    /// How the container should be sized.
+    pub(crate) growth_type: BottomElementSizing,
+}
+
+/// The direction in which children in a [`BottomContainer`] will be laid out.
+pub(crate) enum BottomContainerType {
+    /// Lay out all children horizontally.
+    Row,
+
+    /// Lay out all children vertically.
+    Col,
+}
+
+/// How the element sizing should be determined.
+pub(crate) enum BottomElementSizing {
+    /// Denotes that the canvas should follow the given ratio of `lhs:rhs` to determine spacing for the element.
+    Ratio { lhs: u32, rhs: u32 },
+
+    /// Denotes that the canvas should let this element grow to take up whatever remaining space is left after
+    /// sizing the other sibling elements.
+    FlexGrow,
+
+    /// Denotes that the canvas can do whatever it likes to determine spacing for the element.
+    CanvasHandles,
+}
 
 /// Represents a single row in the layout.
 #[derive(Clone, Debug)]
@@ -803,7 +820,7 @@ impl BottomCol {
     }
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct BottomColRow {
     pub children: Vec<BottomWidget>,
     pub total_widget_ratio: u32,
