@@ -1,4 +1,4 @@
-//! Vendored from https://github.com/fdehau/tui-rs/blob/fafad6c96109610825aad89c4bba5253e01101ed/src/widgets/canvas/mod.rs.
+//! Vendored from <https://github.com/fdehau/tui-rs/blob/fafad6c96109610825aad89c4bba5253e01101ed/src/widgets/canvas/mod.rs>.
 //! Main difference is in the Braille rendering, which can now effectively be done in a single layer without the effects
 //! of doing it all in a single layer via the normal tui-rs crate. This means you can do it all in a single pass, with
 //! just one string alloc and no resets.
