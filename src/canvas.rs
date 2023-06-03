@@ -63,7 +63,6 @@ pub struct Painter {
     height: u16,
     width: u16,
     styled_help_text: Vec<Line<'static>>,
-    is_mac_os: bool, // TODO: This feels out of place...
 
     // TODO: Redo this entire thing.
     row_constraints: Vec<LayoutConstraint>,
@@ -157,7 +156,6 @@ impl Painter {
             height: 0,
             width: 0,
             styled_help_text: Vec::default(),
-            is_mac_os: cfg!(target_os = "macos"),
             row_constraints,
             col_constraints,
             col_row_constraints,
