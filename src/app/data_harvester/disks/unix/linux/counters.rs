@@ -16,24 +16,24 @@ use crate::app::data_harvester::disks::IoCounters;
 /// via /sys/block/{DISK}/queue/hw_sector_size and results may vary
 /// between 1k, 2k, or 4k... 512 appears to be a magic constant used
 /// throughout Linux source code:
-/// * https://stackoverflow.com/a/38136179/376587
-/// * https://lists.gt.net/linux/kernel/2241060
-/// * https://github.com/giampaolo/psutil/issues/1305
-/// * https://github.com/torvalds/linux/blob/4f671fe2f9523a1ea206f63fe60a7c7b3a56d5c7/include/linux/bio.h#L99
-/// * https://lkml.org/lkml/2015/8/17/234
+/// * <https://stackoverflow.com/a/38136179/376587>
+/// * <https://lists.gt.net/linux/kernel/2241060>
+/// * <https://github.com/giampaolo/psutil/issues/1305>
+/// * <https://github.com/torvalds/linux/blob/4f671fe2f9523a1ea206f63fe60a7c7b3a56d5c7/include/linux/bio.h#L99>
+/// * <https://lkml.org/lkml/2015/8/17/234>
 const DISK_SECTOR_SIZE: u64 = 512;
 
 impl FromStr for IoCounters {
     type Err = anyhow::Error;
 
-    /// Converts a `&str` to an [`IoStats`].
+    /// Converts a `&str` to an [`IoCounters`].
     ///
     /// Follows the format used in Linux 2.6+. Note that this completely ignores the following stats:
     /// - Discard stats from 4.18+
     /// - Flush stats from 5.5+
     ///
-    /// https://www.kernel.org/doc/Documentation/iostats.txt
-    /// https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
+    /// <https://www.kernel.org/doc/Documentation/iostats.txt>
+    /// <https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats>
     fn from_str(s: &str) -> anyhow::Result<IoCounters> {
         fn next_part<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Result<&'a str, io::Error> {
             iter.next()
