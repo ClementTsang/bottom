@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use canvas_styling::*;
-use itertools::izip;
+use hashbrown::HashMap;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -13,7 +13,7 @@ use tui::{
 use crate::{
     app::{
         self,
-        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType, ElementSizing},
+        layout_manager::{BottomColRow, BottomLayout, BottomWidget, BottomWidgetType, Node},
         App,
     },
     constants::*,
@@ -63,22 +63,23 @@ pub struct Painter {
     height: u16,
     width: u16,
     styled_help_text: Vec<Line<'static>>,
-    is_mac_os: bool, // TODO: This feels out of place...
 
-    // TODO: Redo this entire thing.
-    row_constraints: Vec<LayoutConstraint>,
-    col_constraints: Vec<Vec<LayoutConstraint>>,
-    col_row_constraints: Vec<Vec<Vec<LayoutConstraint>>>,
-    layout_constraints: Vec<Vec<Vec<Vec<LayoutConstraint>>>>,
-    derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
+    derived_widget_draw_locs: HashMap<usize, Rect>,
     widget_layout: BottomLayout,
 }
 
 // Part of a temporary fix for https://github.com/ClementTsang/bottom/issues/896
-enum LayoutConstraint {
+#[derive(Debug, Clone, Copy)]
+pub enum LayoutConstraint {
+    /// Denotes that the canvas should follow the given ratio of `lhs:rhs` to determine spacing for the element.
+    Ratio { lhs: u32, rhs: u32 },
+
+    /// Denotes that the canvas should let this element grow to take up whatever remaining space is left after
+    /// sizing the other sibling elements.
+    FlexGrow,
+
+    /// Denotes that the canvas can do whatever it likes to determine spacing for the element.
     CanvasHandled,
-    Grow,
-    Ratio(u32, u32),
 }
 
 impl Painter {
@@ -87,77 +88,11 @@ impl Painter {
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
 
-        let mut row_constraints = Vec::new();
-        let mut col_constraints = Vec::new();
-        let mut col_row_constraints = Vec::new();
-        let mut layout_constraints = Vec::new();
-
-        widget_layout.rows.iter().for_each(|row| {
-            if row.canvas_handle_height {
-                row_constraints.push(LayoutConstraint::CanvasHandled);
-            } else {
-                row_constraints.push(LayoutConstraint::Ratio(
-                    row.row_height_ratio,
-                    widget_layout.total_row_height_ratio,
-                ));
-            }
-
-            let mut new_col_constraints = Vec::new();
-            let mut new_widget_constraints = Vec::new();
-            let mut new_col_row_constraints = Vec::new();
-            row.children.iter().for_each(|col| {
-                if col.canvas_handle_width {
-                    new_col_constraints.push(LayoutConstraint::CanvasHandled);
-                } else {
-                    new_col_constraints.push(LayoutConstraint::Ratio(
-                        col.col_width_ratio,
-                        row.total_col_ratio,
-                    ));
-                }
-
-                let mut new_new_col_row_constraints = Vec::new();
-                let mut new_new_widget_constraints = Vec::new();
-                col.children.iter().for_each(|col_row| {
-                    if col_row.canvas_handle_height {
-                        new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
-                    } else if col_row.flex_grow {
-                        new_new_col_row_constraints.push(LayoutConstraint::Grow);
-                    } else {
-                        new_new_col_row_constraints.push(LayoutConstraint::Ratio(
-                            col_row.col_row_height_ratio,
-                            col.total_col_row_ratio,
-                        ));
-                    }
-
-                    let mut new_new_new_widget_constraints = Vec::new();
-                    col_row.children.iter().for_each(|widget| {
-                        new_new_new_widget_constraints.push(match widget.sizing {
-                            ElementSizing::Ratio { lhs, rhs } => LayoutConstraint::Ratio(lhs, rhs),
-                            ElementSizing::FlexGrow => LayoutConstraint::Grow,
-                            ElementSizing::CanvasHandled => LayoutConstraint::CanvasHandled,
-                            ElementSizing::Fill => LayoutConstraint::Ratio(1, 1),
-                        });
-                    });
-                    new_new_widget_constraints.push(new_new_new_widget_constraints);
-                });
-                new_col_row_constraints.push(new_new_col_row_constraints);
-                new_widget_constraints.push(new_new_widget_constraints);
-            });
-            col_row_constraints.push(new_col_row_constraints);
-            layout_constraints.push(new_widget_constraints);
-            col_constraints.push(new_col_constraints);
-        });
-
         let mut painter = Painter {
             colours: styling,
             height: 0,
             width: 0,
             styled_help_text: Vec::default(),
-            is_mac_os: cfg!(target_os = "macos"),
-            row_constraints,
-            col_constraints,
-            col_row_constraints,
-            layout_constraints,
             widget_layout,
             derived_widget_draw_locs: Vec::default(),
         };
@@ -525,8 +460,8 @@ impl Painter {
                 }
 
                 if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
-                    fn get_constraints(
-                        direction: Direction, constraints: &[LayoutConstraint], area: Rect,
+                    fn get_rects<I: ExactSizeIterator<Item = LayoutConstraint>>(
+                        direction: Direction, constraints: I, area: Rect,
                     ) -> Vec<Rect> {
                         // Order of operations:
                         // - Ratios first + canvas-handled (which is just zero)
@@ -558,21 +493,20 @@ impl Painter {
                         let mut num_non_ch = 0;
 
                         for (itx, (constraint, size)) in
-                            constraints.iter().zip(sizes.iter_mut()).enumerate()
+                            constraints.zip(sizes.iter_mut()).enumerate()
                         {
                             match constraint {
-                                LayoutConstraint::Ratio(a, b) => {
+                                LayoutConstraint::Ratio { lhs, rhs } => {
                                     match direction {
                                         Direction::Horizontal => {
-                                            let amount =
-                                                (((area.width as u32) * (*a)) / (*b)) as u16;
+                                            let amount = (((area.width as u32) * lhs) / rhs) as u16;
                                             bounds.shrink_width(amount);
                                             size.width = amount;
                                             size.height = area.height;
                                         }
                                         Direction::Vertical => {
                                             let amount =
-                                                (((area.height as u32) * (*a)) / (*b)) as u16;
+                                                (((area.height as u32) * lhs) / rhs) as u16;
                                             bounds.shrink_height(amount);
                                             size.width = area.width;
                                             size.height = amount;
@@ -580,7 +514,7 @@ impl Painter {
                                     }
                                     num_non_ch += 1;
                                 }
-                                LayoutConstraint::Grow => {
+                                LayoutConstraint::FlexGrow => {
                                     // Mark it as grow in the vector and handle in second pass.
                                     grow.push(itx);
                                     num_non_ch += 1;
@@ -624,8 +558,8 @@ impl Painter {
                                     for (size, constraint) in sizes.iter_mut().zip(constraints) {
                                         match constraint {
                                             LayoutConstraint::CanvasHandled => {}
-                                            LayoutConstraint::Grow
-                                            | LayoutConstraint::Ratio(_, _) => {
+                                            LayoutConstraint::FlexGrow
+                                            | LayoutConstraint::Ratio { .. } => {
                                                 if remaining_width > 0 {
                                                     size.width += per_item + 1;
                                                     remaining_width -= 1;
@@ -642,8 +576,8 @@ impl Painter {
                                     for (size, constraint) in sizes.iter_mut().zip(constraints) {
                                         match constraint {
                                             LayoutConstraint::CanvasHandled => {}
-                                            LayoutConstraint::Grow
-                                            | LayoutConstraint::Ratio(_, _) => {
+                                            LayoutConstraint::FlexGrow
+                                            | LayoutConstraint::Ratio { .. } => {
                                                 if remaining_height > 0 {
                                                     size.height += per_item + 1;
                                                     remaining_height -= 1;
@@ -677,79 +611,53 @@ impl Painter {
                             .collect()
                     }
 
-                    let draw_locs =
-                        get_constraints(Direction::Vertical, &self.row_constraints, terminal_size);
+                    // Do a preorder traversal through the tree in, and calculate the draw [`Rect`]s for each widget.
+                    let root_id = self.widget_layout.len().saturating_sub(1);
+                    let mut queue = vec![(root_id, terminal_size)];
+                    while let Some((current_id, rect)) = queue.pop() {
+                        if let Some(widget) = self.widget_layout.get_node(current_id) {
+                            match widget {
+                                Node::Container(container) => {
+                                    let constraints = container.children.iter().map(|child| {
+                                        if let Some(node) = self.widget_layout.get_node(*child) {
+                                            node.constraint()
+                                        } else {
+                                            LayoutConstraint::FlexGrow
+                                        }
+                                    });
 
-                    self.derived_widget_draw_locs = izip!(
-                        draw_locs,
-                        &self.col_constraints,
-                        &self.col_row_constraints,
-                        &self.layout_constraints,
-                        &self.widget_layout.rows
-                    )
-                    .map(
-                        |(
-                            draw_loc,
-                            col_constraint,
-                            col_row_constraint,
-                            row_constraint_vec,
-                            cols,
-                        )| {
-                            izip!(
-                                get_constraints(Direction::Horizontal, col_constraint, draw_loc),
-                                col_row_constraint,
-                                row_constraint_vec,
-                                &cols.children
-                            )
-                            .map(|(split_loc, constraint, col_constraint_vec, col_rows)| {
-                                izip!(
-                                    get_constraints(
-                                        Direction::Vertical,
-                                        constraint.as_slice(),
-                                        split_loc
-                                    ),
-                                    col_constraint_vec,
-                                    &col_rows.children
-                                )
-                                .map(|(draw_loc, col_row_constraint_vec, widgets)| {
-                                    // Note that col_row_constraint_vec CONTAINS the widget constraints
-                                    let widget_draw_locs = get_constraints(
-                                        Direction::Horizontal,
-                                        col_row_constraint_vec.as_slice(),
-                                        draw_loc,
-                                    );
+                                    let rects =
+                                        get_rects(container.direction().into(), constraints, rect);
 
-                                    // Side effect, draw here.
-                                    self.draw_widgets_with_constraints(
-                                        f,
-                                        app_state,
-                                        widgets,
-                                        &widget_draw_locs,
-                                    );
-
-                                    widget_draw_locs
-                                })
-                                .collect()
-                            })
-                            .collect()
-                        },
-                    )
-                    .collect();
+                                    // If it's a container, push in reverse order to the stack.
+                                    for child in container
+                                        .children
+                                        .iter()
+                                        .cloned()
+                                        .zip(rects.into_iter())
+                                        .rev()
+                                    {
+                                        queue.push(child);
+                                    }
+                                }
+                                Node::Widget(widget) => {
+                                    // If we're instead on a widget, we can instead assign the rect to the widget.
+                                    self.derived_widget_draw_locs.insert(current_id, rect);
+                                }
+                            }
+                        }
+                    }
                 } else {
-                    self.widget_layout
-                        .rows
-                        .iter()
-                        .flat_map(|row| &row.children)
-                        .flat_map(|col| &col.children)
-                        .zip(self.derived_widget_draw_locs.iter().flatten().flatten())
-                        .for_each(|(widgets, widget_draw_locs)| {
-                            self.draw_widgets_with_constraints(
-                                f,
-                                app_state,
-                                widgets,
-                                widget_draw_locs,
-                            );
-                        });
+                    for (id, rect) in &self.derived_widget_draw_locs {
+                        match &self.widget_layout.get_node(*id) {
+                            Some(Node::Widget(widget)) => {
+                                self.draw_widget(f, app_state, widget, *rect);
+                            }
+                            _ => {
+                                // This should never happen, but if it does, do nothing.
+                            }
+                        }
+                    }
                 }
             }
         })?;
@@ -797,6 +705,25 @@ impl Painter {
                     ),
                     _ => {}
                 }
+            }
+        }
+    }
+
+    fn draw_widget<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, widget: &BottomWidget, rect: Rect,
+    ) {
+        use BottomWidgetType::*;
+        if rect.width >= 2 && rect.height >= 2 {
+            match &widget.widget_type {
+                Empty => {}
+                Cpu => self.draw_cpu(f, app_state, rect, widget.widget_id),
+                Mem => self.draw_memory_graph(f, app_state, rect, widget.widget_id),
+                Net => self.draw_network(f, app_state, rect, widget.widget_id),
+                Temp => self.draw_temp_table(f, app_state, rect, widget.widget_id),
+                Disk => self.draw_disk_table(f, app_state, rect, widget.widget_id),
+                Proc => self.draw_process_widget(f, app_state, rect, true, widget.widget_id),
+                Battery => self.draw_battery_display(f, app_state, rect, true, widget.widget_id),
+                _ => {}
             }
         }
     }

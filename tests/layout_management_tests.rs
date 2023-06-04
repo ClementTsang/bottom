@@ -8,7 +8,7 @@ use bottom::options::{layout_options::Row, Config};
 use bottom::utils::error;
 use toml_edit::de::from_str;
 
-// TODO: Could move these into the library files rather than external tbh.
+// FIXME: Move these into the library!
 
 const PROC_LAYOUT: &str = r##"
 [[row]]

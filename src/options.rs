@@ -471,7 +471,7 @@ pub fn get_widget_layout(
     let bottom_layout = if is_flag_enabled!(basic, matches, config) {
         default_widget_id = DEFAULT_WIDGET_ID;
 
-        BottomLayout::init_basic_default(get_use_battery(matches, config))
+        BottomLayout::new_basic(get_use_battery(matches, config))
     } else {
         let ref_row: Vec<Row>; // Required to handle reference
         let rows = match &config.row {
@@ -492,34 +492,24 @@ pub fn get_widget_layout(
         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
         let mut total_height_ratio = 0;
 
-        let mut ret_bottom_layout = BottomLayout {
-            rows: rows
-                .iter()
-                .map(|row| {
-                    row.convert_row_to_bottom_row(
-                        &mut iter_id,
-                        &mut total_height_ratio,
-                        &mut default_widget_id,
-                        &default_widget_type,
-                        &mut default_widget_count,
-                        left_legend,
-                    )
-                })
-                .collect::<error::Result<Vec<_>>>()?,
-            total_row_height_ratio: total_height_ratio,
-        };
+        // let mut ret_bottom_layout = BottomLayout {
+        // arena: todo!(),
+        // arena: rows
+        //     .iter()
+        //     .map(|row| {
+        //         row.convert_row_to_bottom_row(
+        //             &mut iter_id,
+        //             &mut total_height_ratio,
+        //             &mut default_widget_id,
+        //             &default_widget_type,
+        //             &mut default_widget_count,
+        //             left_legend,
+        //         )
+        //     })
+        //     .collect::<error::Result<Vec<_>>>()?,
+        // };
 
-        // Confirm that we have at least ONE widget left - if not, error out!
-        if iter_id > 0 {
-            ret_bottom_layout.get_movement_mappings();
-            // debug!("Bottom layout: {:#?}", ret_bottom_layout);
-
-            ret_bottom_layout
-        } else {
-            return Err(error::BottomError::ConfigError(
-                "please have at least one widget under the '[[row]]' section.".to_string(),
-            ));
-        }
+        BottomLayout::from_rows(rows)?
     };
 
     Ok((bottom_layout, default_widget_id, default_widget_type))
