@@ -220,10 +220,14 @@ impl Painter {
 
             // TODO: [MOUSE] Mouse support for these in search
             // TODO: [MOVEMENT] Movement support for these in search
-            let (case, whole, regex) = if self.is_mac_os {
-                ("Case(F1)", "Whole(F2)", "Regex(F3)")
-            } else {
-                ("Case(Alt+C)", "Whole(Alt+W)", "Regex(Alt+R)")
+            let (case, whole, regex) = {
+                cfg_if::cfg_if! {
+                    if #[cfg(target_os = "macos")] {
+                        ("Case(F1)", "Whole(F2)", "Regex(F3)")
+                    } else {
+                        ("Case(Alt+C)", "Whole(Alt+W)", "Regex(Alt+R)")
+                    }
+                }
             };
             let option_text = Line::from(vec![
                 Span::styled(case, case_style),
