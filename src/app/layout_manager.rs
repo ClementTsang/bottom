@@ -5,7 +5,7 @@ use tui::layout::Direction;
 use crate::canvas::LayoutConstraint;
 use crate::constants::DEFAULT_WIDGET_ID;
 use crate::error::{BottomError, Result};
-use crate::options::layout_options::Row;
+use crate::options::layout_options::{Row, RowChildren};
 use crate::utils::error;
 
 /// Represents a start and end coordinate in some dimension.
@@ -15,29 +15,11 @@ type WidgetMappings = (u32, BTreeMap<LineSegment, u64>);
 type ColumnRowMappings = (u32, BTreeMap<LineSegment, WidgetMappings>);
 type ColumnMappings = (u32, BTreeMap<LineSegment, ColumnRowMappings>);
 
-#[derive(Clone, Debug)]
-pub enum Node {
-    /// A container type, containing more [`Node`] children.
-    Container(Container),
-
-    /// A leaf node, containing a [`BottomWidget`].
-    Widget(BottomWidget),
-}
-
-impl Node {
-    pub fn constraint(&self) -> LayoutConstraint {
-        match self {
-            Node::Container(c) => c.constraint,
-            Node::Widget(w) => w.constraint,
-        }
-    }
-}
-
 /// A "container" that contains more [`Node`]s.
 #[derive(Debug, Clone)]
 pub(crate) struct Container {
     /// The children elements.
-    pub(crate) children: Vec<usize>,
+    pub(crate) children: Vec<NodeId>,
 
     /// How the container should be sized.
     pub(crate) constraint: LayoutConstraint,
@@ -47,7 +29,7 @@ pub(crate) struct Container {
 }
 
 impl Container {
-    pub(crate) fn row(children: Vec<usize>, sizing: LayoutConstraint) -> Self {
+    pub(crate) fn row(children: Vec<NodeId>, sizing: LayoutConstraint) -> Self {
         Self {
             children,
             constraint: sizing,
@@ -55,7 +37,7 @@ impl Container {
         }
     }
 
-    pub(crate) fn col(children: Vec<usize>, constraint: LayoutConstraint) -> Self {
+    pub(crate) fn col(children: Vec<NodeId>, constraint: LayoutConstraint) -> Self {
         Self {
             children,
             constraint,
@@ -88,42 +70,301 @@ impl From<ContainerDirection> for Direction {
     }
 }
 
+/// An ID for a node in a [`BottomLayout`].
+#[derive(Clone, Copy, Debug)]
+pub enum NodeId {
+    /// The ID for a [`Container`].
+    Container(usize),
+
+    /// The ID for a [`BottomWidget`].
+    Widget(usize),
+}
+
+fn new_cpu(
+    layout: &mut BottomLayout, left_legend: bool, iter_id: &mut u64, width: u32, total: u32,
+) -> NodeId {
+    let cpu_id = *iter_id;
+    *iter_id += 1;
+    let legend_id = *iter_id;
+
+    if left_legend {
+        let cpu_legend = layout.add_widget(
+            BottomWidget::new_handled(BottomWidgetType::CpuLegend, legend_id)
+                .parent_reflector(Some((WidgetDirection::Right, 1))),
+        );
+        let cpu = layout.add_widget(BottomWidget::new_handled(BottomWidgetType::Cpu, cpu_id));
+
+        layout.add_container(Container::row(
+            vec![cpu_legend, cpu],
+            LayoutConstraint::Ratio { a: width, b: total },
+        ))
+    } else {
+        let cpu = layout.add_widget(BottomWidget::new_handled(BottomWidgetType::Cpu, cpu_id));
+        let cpu_legend = layout.add_widget(
+            BottomWidget::new_handled(BottomWidgetType::CpuLegend, legend_id)
+                .parent_reflector(Some((WidgetDirection::Left, 1))),
+        );
+
+        layout.add_container(Container::row(
+            vec![cpu, cpu_legend],
+            LayoutConstraint::Ratio { a: width, b: total },
+        ))
+    }
+}
+
+fn new_proc(layout: &mut BottomLayout, iter_id: &mut u64, width: u32, total: u32) -> NodeId {
+    let main_id = *iter_id;
+    let search_id = *iter_id + 1;
+    *iter_id += 2;
+    let sort_id = *iter_id;
+
+    let main = layout.add_widget(BottomWidget::new_fill(BottomWidgetType::Proc, main_id));
+
+    let search = layout.add_widget(
+        BottomWidget::new_fill(BottomWidgetType::ProcSearch, search_id)
+            .parent_reflector(Some((WidgetDirection::Up, 1))),
+    );
+
+    let sort = layout.add_widget(
+        BottomWidget::new_handled(BottomWidgetType::ProcSort, sort_id)
+            .parent_reflector(Some((WidgetDirection::Right, 2))),
+    );
+
+    let top = layout.add_container(Container::row(
+        vec![sort, main],
+        LayoutConstraint::CanvasHandled,
+    ));
+
+    layout.add_container(Container::col(
+        vec![top, search],
+        LayoutConstraint::Ratio { a: width, b: total },
+    ))
+}
+
+fn new_widget(
+    layout: &mut BottomLayout, widget_type: BottomWidgetType, iter_id: &mut u64, width: u32,
+    total_ratio: u32, left_legend: bool,
+) -> NodeId {
+    *iter_id += 1;
+
+    match widget_type {
+        BottomWidgetType::Cpu => new_cpu(layout, left_legend, iter_id, width, total_ratio),
+        BottomWidgetType::Proc => new_proc(layout, iter_id, width, total_ratio),
+        _ => layout.add_widget(BottomWidget::new(
+            widget_type,
+            *iter_id,
+            LayoutConstraint::Ratio {
+                a: width,
+                b: total_ratio,
+            },
+        )),
+    }
+}
+
 /// Represents a more usable representation of the layout, derived from the
 /// config.
 ///
 /// Internally represented by an arena-backed tree.
 #[derive(Clone, Debug, Default)]
 pub struct BottomLayout {
-    arena: Vec<Node>,
+    containers: Vec<Container>,
+    widgets: Vec<BottomWidget>,
 }
 
 impl BottomLayout {
-    /// Add a node to the layout arena. The ID is returned.
-    pub fn add_node(&mut self, node: Node) -> usize {
-        let id = self.arena.len();
-        self.arena.push(node);
+    /// Add a container to the layout arena. The ID is returned.
+    pub fn add_container(&mut self, container: Container) -> NodeId {
+        let id = self.containers.len();
+        self.containers.push(container);
 
-        id
+        NodeId::Container(id)
+    }
+
+    /// Add a node to the layout arena. The ID is returned.
+    pub fn add_widget(&mut self, widget: BottomWidget) -> NodeId {
+        let id = self.widgets.len();
+        self.widgets.push(widget);
+
+        NodeId::Widget(id)
     }
 
     /// Get the node with the corresponding ID.
-    pub fn get_node(&self, id: usize) -> Option<&Node> {
-        self.arena.get(id)
+    pub fn get_container(&self, id: usize) -> Option<&Container> {
+        self.containers.get(id)
     }
 
-    /// Returns the number of elements in the layout.
+    /// Get the node with the corresponding ID.
+    pub fn get_widget(&self, id: usize) -> Option<&BottomWidget> {
+        self.widgets.get(id)
+    }
+
+    /// Returns an iterator of all widgets.
+    pub fn widgets_iter(&self) -> impl Iterator<Item = &BottomWidget> {
+        self.widgets.iter()
+    }
+
+    /// Returns the root ID if there is one. If there are no nodes, it will return [`None`].
+    pub fn root_id(&self) -> Option<NodeId> {
+        if self.containers.is_empty() {
+            if self.widgets.is_empty() {
+                None
+            } else {
+                Some(NodeId::Widget(self.widgets.len() - 1))
+            }
+        } else {
+            Some(NodeId::Container(self.containers.len() - 1))
+        }
+    }
+
+    /// Returns the number of elements (widgets + containers) in the layout.
     pub fn len(&self) -> usize {
-        self.arena.len()
+        self.widgets.len() + self.containers.len()
     }
 
-    /// Creates a new [`BottomLayout`] given a slice of [`Row`]s.
-    pub fn from_rows(rows: &[Row]) -> error::Result<Self> {
-        let mut num_widgets = 0;
+    /// Returns the number of widgets in the layout.
+    pub fn widgets_len(&self) -> usize {
+        self.widgets.len()
+    }
 
-        // TODO: Create the thing; use num_widgets to count how many widgets were inserted.
+    /// Creates a new [`BottomLayout`] given a slice of [`Row`]s, as well as the default widget ID.
+    pub fn from_rows(
+        rows: &[Row], default_widget_type: Option<BottomWidgetType>, mut default_widget_count: u64,
+        left_legend: bool,
+    ) -> error::Result<(Self, u64)> {
+        let mut layout = Self::default();
+        let mut default_widget_id = 1;
+        let mut iter_id = 0; // TODO: In the future, remove this in favour of using the layout's ID system.
 
-        if num_widgets > 0 {
-            todo!()
+        let outer_col_total_ratio = rows.iter().map(|row| row.ratio.unwrap_or(1)).sum();
+        let mut outer_col_children = Vec::with_capacity(rows.len());
+
+        for row in rows {
+            // This code is all ported from the old row-to-bottom_row code, and converted
+            // to work with our new system.
+
+            // TODO: In the future we want to also add percentages.
+            // But for MVP, we aren't going to bother.
+
+            let row_ratio = row.ratio.unwrap_or(1);
+
+            if let Some(children) = &row.child {
+                let mut row_children = Vec::with_capacity(children.len());
+
+                let rows_total_ratio = children
+                    .iter()
+                    .map(|c| match c {
+                        RowChildren::Widget(w) => w.ratio.unwrap_or(1),
+                        RowChildren::Col { ratio, .. } => ratio.unwrap_or(1),
+                    })
+                    .sum();
+
+                for child in children {
+                    match child {
+                        RowChildren::Widget(widget) => {
+                            let width = widget.ratio.unwrap_or(1);
+                            let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
+
+                            if let Some(default_widget_type_val) = default_widget_type {
+                                if default_widget_type_val == widget_type
+                                    && default_widget_count > 0
+                                {
+                                    default_widget_count -= 1;
+                                    if default_widget_count == 0 {
+                                        default_widget_id = iter_id;
+                                    }
+                                }
+                            } else {
+                                // Check default flag
+                                if let Some(default_widget_flag) = widget.default {
+                                    if default_widget_flag {
+                                        default_widget_id = iter_id;
+                                    }
+                                }
+                            }
+
+                            let widget = new_widget(
+                                &mut layout,
+                                widget_type,
+                                &mut iter_id,
+                                width,
+                                rows_total_ratio,
+                                left_legend,
+                            );
+
+                            row_children.push(widget);
+                        }
+                        RowChildren::Col {
+                            ratio,
+                            child: children,
+                        } => {
+                            let col_ratio = ratio.unwrap_or(1);
+                            let mut col_children = vec![];
+
+                            let inner_col_total_ratio =
+                                children.iter().map(|w| w.ratio.unwrap_or(1)).sum();
+                            for widget in children {
+                                let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
+                                let height = widget.ratio.unwrap_or(1);
+
+                                if let Some(default_widget_type_val) = default_widget_type {
+                                    if default_widget_type_val == widget_type
+                                        && default_widget_count > 0
+                                    {
+                                        default_widget_count -= 1;
+                                        if default_widget_count == 0 {
+                                            default_widget_id = iter_id;
+                                        }
+                                    }
+                                } else {
+                                    // Check default flag
+                                    if let Some(default_widget_flag) = widget.default {
+                                        if default_widget_flag {
+                                            default_widget_id = iter_id;
+                                        }
+                                    }
+                                }
+
+                                let widget = new_widget(
+                                    &mut layout,
+                                    widget_type,
+                                    &mut iter_id,
+                                    height,
+                                    inner_col_total_ratio,
+                                    left_legend,
+                                );
+
+                                col_children.push(widget);
+                            }
+
+                            row_children.push(layout.add_container(Container::col(
+                                col_children,
+                                LayoutConstraint::Ratio {
+                                    a: col_ratio,
+                                    b: rows_total_ratio,
+                                },
+                            )));
+                        }
+                    }
+                }
+
+                outer_col_children.push(layout.add_container(Container::row(
+                    row_children,
+                    LayoutConstraint::Ratio {
+                        a: row_ratio,
+                        b: outer_col_total_ratio,
+                    },
+                )));
+            };
+        }
+
+        layout.add_container(Container::col(
+            outer_col_children,
+            LayoutConstraint::FlexGrow,
+        ));
+
+        if layout.widgets_len() > 0 {
+            layout.get_movement_mappings();
+            Ok((layout, default_widget_id))
         } else {
             Err(error::BottomError::ConfigError(
                 "please have at least one widget under the '[[row]]' section.".to_string(),
@@ -133,153 +374,162 @@ impl BottomLayout {
 
     /// Creates a new [`BottomLayout`] following the basic layout.
     pub fn new_basic(use_battery: bool) -> Self {
+        let mut layout = BottomLayout::default();
+
         let table_widgets = if use_battery {
-            let disk_widget = BottomWidget::new_handled(BottomWidgetType::Disk, 4)
-                .up_neighbour(Some(100))
-                .left_neighbour(Some(8))
-                .right_neighbour(Some(DEFAULT_WIDGET_ID + 2));
-
-            let proc_sort =
-                BottomWidget::new_handled(BottomWidgetType::ProcSort, DEFAULT_WIDGET_ID + 2)
+            let disk = layout.add_widget(
+                BottomWidget::new_handled(BottomWidgetType::Disk, 4)
                     .up_neighbour(Some(100))
-                    .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                    .left_neighbour(Some(4))
-                    .right_neighbour(Some(DEFAULT_WIDGET_ID))
-                    .parent_reflector(Some((WidgetDirection::Right, 2)));
+                    .left_neighbour(Some(8))
+                    .right_neighbour(Some(DEFAULT_WIDGET_ID + 2)),
+            );
 
-            let proc = BottomWidget::new_handled(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
-                .up_neighbour(Some(100))
-                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
-                .right_neighbour(Some(7));
+            let proc = {
+                let proc_sort = layout.add_widget(
+                    BottomWidget::new_handled(BottomWidgetType::ProcSort, DEFAULT_WIDGET_ID + 2)
+                        .up_neighbour(Some(100))
+                        .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                        .left_neighbour(Some(4))
+                        .right_neighbour(Some(DEFAULT_WIDGET_ID))
+                        .parent_reflector(Some((WidgetDirection::Right, 2))),
+                );
 
-            let proc_search =
-                BottomWidget::new_handled(BottomWidgetType::ProcSearch, DEFAULT_WIDGET_ID + 1)
-                    .up_neighbour(Some(DEFAULT_WIDGET_ID))
-                    .left_neighbour(Some(4))
-                    .right_neighbour(Some(7))
-                    .parent_reflector(Some((WidgetDirection::Up, 1)));
+                let main_proc = layout.add_widget(
+                    BottomWidget::new_handled(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
+                        .up_neighbour(Some(100))
+                        .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                        .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
+                        .right_neighbour(Some(7)),
+                );
 
-            let temp = BottomWidget::new_handled(BottomWidgetType::Temp, 7)
-                .up_neighbour(Some(100))
-                .left_neighbour(Some(DEFAULT_WIDGET_ID))
-                .right_neighbour(Some(8));
+                let proc_search = layout.add_widget(
+                    BottomWidget::new_handled(BottomWidgetType::ProcSearch, DEFAULT_WIDGET_ID + 1)
+                        .up_neighbour(Some(DEFAULT_WIDGET_ID))
+                        .left_neighbour(Some(4))
+                        .right_neighbour(Some(7))
+                        .parent_reflector(Some((WidgetDirection::Up, 1))),
+                );
 
-            let battery = BottomWidget::new_handled(BottomWidgetType::Battery, 8)
-                .up_neighbour(Some(100))
-                .left_neighbour(Some(7))
-                .right_neighbour(Some(4));
+                let top = layout.add_container(Container::row(
+                    vec![proc_sort, main_proc],
+                    LayoutConstraint::CanvasHandled,
+                ));
+                layout.add_container(Container::col(
+                    vec![top, proc_search],
+                    LayoutConstraint::CanvasHandled,
+                ))
+            };
 
-            vec![
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![disk_widget]).canvas_handle_height(true)
-                ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![proc_sort, proc])
-                        .canvas_handle_height(true)
-                        .total_widget_ratio(3),
-                    BottomColRow::new(vec![proc_search]).canvas_handle_height(true),
-                ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![temp]).canvas_handle_height(true)
-                ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![battery]).canvas_handle_height(true)
-                ])
-                .canvas_handle_width(true),
-            ]
+            let temp = layout.add_widget(
+                BottomWidget::new_handled(BottomWidgetType::Temp, 7)
+                    .up_neighbour(Some(100))
+                    .left_neighbour(Some(DEFAULT_WIDGET_ID))
+                    .right_neighbour(Some(8)),
+            );
+
+            let battery = layout.add_widget(
+                BottomWidget::new_handled(BottomWidgetType::Battery, 8)
+                    .up_neighbour(Some(100))
+                    .left_neighbour(Some(7))
+                    .right_neighbour(Some(4)),
+            );
+
+            layout.add_container(Container::row(
+                vec![disk, proc, temp, battery],
+                LayoutConstraint::CanvasHandled,
+            ))
         } else {
-            let disk = BottomWidget::new_handled(BottomWidgetType::Disk, 4)
-                .up_neighbour(Some(100))
-                .left_neighbour(Some(7))
-                .right_neighbour(Some(DEFAULT_WIDGET_ID + 2));
-
-            let proc_sort =
-                BottomWidget::new_handled(BottomWidgetType::ProcSort, DEFAULT_WIDGET_ID + 2)
+            let disk = layout.add_widget(
+                BottomWidget::new_handled(BottomWidgetType::Disk, 4)
                     .up_neighbour(Some(100))
-                    .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                    .left_neighbour(Some(4))
-                    .right_neighbour(Some(DEFAULT_WIDGET_ID))
-                    .parent_reflector(Some((WidgetDirection::Right, 2)));
+                    .left_neighbour(Some(7))
+                    .right_neighbour(Some(DEFAULT_WIDGET_ID + 2)),
+            );
 
-            let proc = BottomWidget::new_handled(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
-                .up_neighbour(Some(100))
-                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
-                .right_neighbour(Some(7));
+            let proc = {
+                let proc_sort = layout.add_widget(
+                    BottomWidget::new_handled(BottomWidgetType::ProcSort, DEFAULT_WIDGET_ID + 2)
+                        .up_neighbour(Some(100))
+                        .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                        .left_neighbour(Some(4))
+                        .right_neighbour(Some(DEFAULT_WIDGET_ID))
+                        .parent_reflector(Some((WidgetDirection::Right, 2))),
+                );
 
-            let proc_search =
-                BottomWidget::new_handled(BottomWidgetType::ProcSearch, DEFAULT_WIDGET_ID + 1)
-                    .up_neighbour(Some(DEFAULT_WIDGET_ID))
-                    .left_neighbour(Some(4))
-                    .right_neighbour(Some(7))
-                    .parent_reflector(Some((WidgetDirection::Up, 1)));
+                let main_proc = layout.add_widget(
+                    BottomWidget::new_handled(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
+                        .up_neighbour(Some(100))
+                        .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                        .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
+                        .right_neighbour(Some(7)),
+                );
 
-            let temp = BottomWidget::new_handled(BottomWidgetType::Temp, 7)
-                .up_neighbour(Some(100))
-                .left_neighbour(Some(DEFAULT_WIDGET_ID))
-                .right_neighbour(Some(4));
+                let proc_search = layout.add_widget(
+                    BottomWidget::new_handled(BottomWidgetType::ProcSearch, DEFAULT_WIDGET_ID + 1)
+                        .up_neighbour(Some(DEFAULT_WIDGET_ID))
+                        .left_neighbour(Some(4))
+                        .right_neighbour(Some(7))
+                        .parent_reflector(Some((WidgetDirection::Up, 1))),
+                );
 
-            vec![
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![disk]).canvas_handle_height(true)
-                ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![proc_sort, proc]).canvas_handle_height(true),
-                    BottomColRow::new(vec![proc_search]).canvas_handle_height(true),
-                ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![temp]).canvas_handle_height(true)
-                ])
-                .canvas_handle_width(true),
-            ]
+                let top = layout.add_container(Container::row(
+                    vec![proc_sort, main_proc],
+                    LayoutConstraint::CanvasHandled,
+                ));
+                layout.add_container(Container::col(
+                    vec![top, proc_search],
+                    LayoutConstraint::CanvasHandled,
+                ))
+            };
+
+            let temp = layout.add_widget(
+                BottomWidget::new_handled(BottomWidgetType::Temp, 7)
+                    .up_neighbour(Some(100))
+                    .left_neighbour(Some(DEFAULT_WIDGET_ID))
+                    .right_neighbour(Some(4)),
+            );
+
+            layout.add_container(Container::row(
+                vec![disk, proc, temp],
+                LayoutConstraint::CanvasHandled,
+            ))
         };
 
-        let cpu = BottomWidget::new_handled(BottomWidgetType::BasicCpu, 1).down_neighbour(Some(2));
+        let cpu = layout.add_widget(
+            BottomWidget::new_handled(BottomWidgetType::BasicCpu, 1).down_neighbour(Some(2)),
+        );
 
-        let mem = BottomWidget::new_handled(BottomWidgetType::BasicMem, 2)
-            .up_neighbour(Some(1))
-            .down_neighbour(Some(100))
-            .right_neighbour(Some(3));
+        let mem = layout.add_widget(
+            BottomWidget::new_handled(BottomWidgetType::BasicMem, 2)
+                .up_neighbour(Some(1))
+                .down_neighbour(Some(100))
+                .right_neighbour(Some(3)),
+        );
 
-        let net = BottomWidget::new_handled(BottomWidgetType::BasicNet, 3)
-            .up_neighbour(Some(1))
-            .down_neighbour(Some(100))
-            .left_neighbour(Some(2));
+        let net = layout.add_widget(
+            BottomWidget::new_handled(BottomWidgetType::BasicNet, 3)
+                .up_neighbour(Some(1))
+                .down_neighbour(Some(100))
+                .left_neighbour(Some(2)),
+        );
 
-        let table =
-            BottomWidget::new_handled(BottomWidgetType::BasicTables, 100).up_neighbour(Some(2));
+        let net = layout.add_widget(
+            BottomWidget::new_handled(BottomWidgetType::BasicTables, 100).up_neighbour(Some(2)),
+        );
 
-        let mut layout = BottomLayout::default();
-        // TODO: Add nodes; should we instead back with a hashmap?
+        let middle_bars = layout.add_container(Container::row(
+            vec![mem, net],
+            LayoutConstraint::CanvasHandled,
+        ));
 
-        // BottomLayout {
-        //     total_row_height_ratio: 3,
-        //     rows: vec![
-        //         BottomRow::new(vec![BottomCol::new(vec![
-        //             BottomColRow::new(vec![cpu]).canvas_handle_height(true)
-        //         ])
-        //         .canvas_handle_width(true)])
-        //         .canvas_handle_height(true),
-        //         BottomRow::new(vec![BottomCol::new(vec![BottomColRow::new(vec![
-        //             mem, net,
-        //         ])
-        //         .canvas_handle_height(true)])
-        //         .canvas_handle_width(true)])
-        //         .canvas_handle_height(true),
-        //         BottomRow::new(vec![BottomCol::new(vec![
-        //             BottomColRow::new(vec![table]).canvas_handle_height(true)
-        //         ])
-        //         .canvas_handle_width(true)])
-        //         .canvas_handle_height(true),
-        //         BottomRow::new(table_widgets).canvas_handle_height(true),
-        //     ],
-        // }
+        let table = layout.add_widget(
+            BottomWidget::new_handled(BottomWidgetType::BasicTables, 100).up_neighbour(Some(2)),
+        );
+
+        layout.add_container(Container::col(
+            vec![cpu, middle_bars, table, table_widgets],
+            LayoutConstraint::CanvasHandled,
+        ));
 
         layout
     }
@@ -1000,7 +1250,7 @@ impl BottomWidget {
         Self::new(
             widget_type,
             widget_id,
-            LayoutConstraint::Ratio { lhs: 1, rhs: 1 },
+            LayoutConstraint::Ratio { a: 1, b: 1 },
         )
     }
 
@@ -1036,7 +1286,7 @@ impl BottomWidget {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
 pub enum BottomWidgetType {
     #[default]
     Empty,

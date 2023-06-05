@@ -274,116 +274,110 @@ pub fn build_app(
         is_command: is_default_command,
     };
 
-    for row in &widget_layout.rows {
-        for col in &row.children {
-            for col_row in &col.children {
-                for widget in &col_row.children {
-                    widget_map.insert(widget.widget_id, widget.clone());
-                    if let Some(default_widget_type) = &default_widget_type_option {
-                        if !is_custom_layout || use_basic_mode {
-                            match widget.widget_type {
-                                BasicCpu => {
-                                    if let Cpu = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
-                                }
-                                BasicMem => {
-                                    if let Mem = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
-                                }
-                                BasicNet => {
-                                    if let Net = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
-                                }
-                                _ => {
-                                    if *default_widget_type == widget.widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = widget.widget_type.clone();
-                                    }
-                                }
-                            }
+    // Determine the initial widget ID/type + initialize states.
+    for widget in widget_layout.widgets_iter() {
+        widget_map.insert(widget.widget_id, widget.clone());
+        if let Some(default_widget_type) = &default_widget_type_option {
+            if !is_custom_layout || use_basic_mode {
+                match widget.widget_type {
+                    BasicCpu => {
+                        if let Cpu = *default_widget_type {
+                            initial_widget_id = widget.widget_id;
+                            initial_widget_type = Cpu;
                         }
                     }
-
-                    used_widget_set.insert(widget.widget_type.clone());
-
-                    match widget.widget_type {
-                        Cpu => {
-                            cpu_state_map.insert(
-                                widget.widget_id,
-                                CpuWidgetState::new(
-                                    &app_config_fields,
-                                    default_time_value,
-                                    autohide_timer,
-                                    styling,
-                                ),
-                            );
+                    BasicMem => {
+                        if let Mem = *default_widget_type {
+                            initial_widget_id = widget.widget_id;
+                            initial_widget_type = Cpu;
                         }
-                        Mem => {
-                            mem_state_map.insert(
-                                widget.widget_id,
-                                MemWidgetState::init(default_time_value, autohide_timer),
-                            );
+                    }
+                    BasicNet => {
+                        if let Net = *default_widget_type {
+                            initial_widget_id = widget.widget_id;
+                            initial_widget_type = Cpu;
                         }
-                        Net => {
-                            net_state_map.insert(
-                                widget.widget_id,
-                                NetWidgetState::init(default_time_value, autohide_timer),
-                            );
+                    }
+                    _ => {
+                        if *default_widget_type == widget.widget_type {
+                            initial_widget_id = widget.widget_id;
+                            initial_widget_type = widget.widget_type.clone();
                         }
-                        Proc => {
-                            let mode = if is_grouped {
-                                ProcWidgetMode::Grouped
-                            } else if is_default_tree {
-                                ProcWidgetMode::Tree {
-                                    collapsed_pids: Default::default(),
-                                }
-                            } else {
-                                ProcWidgetMode::Normal
-                            };
-
-                            proc_state_map.insert(
-                                widget.widget_id,
-                                ProcWidgetState::new(
-                                    &app_config_fields,
-                                    mode,
-                                    table_config,
-                                    styling,
-                                    &proc_columns,
-                                ),
-                            );
-                        }
-                        Disk => {
-                            disk_state_map.insert(
-                                widget.widget_id,
-                                DiskTableWidget::new(&app_config_fields, styling),
-                            );
-                        }
-                        Temp => {
-                            temp_state_map.insert(
-                                widget.widget_id,
-                                TempWidgetState::new(&app_config_fields, styling),
-                            );
-                        }
-                        Battery => {
-                            battery_state_map
-                                .insert(widget.widget_id, BatteryWidgetState::default());
-                        }
-                        _ => {}
                     }
                 }
             }
+        }
+
+        used_widget_set.insert(widget.widget_type.clone());
+
+        match widget.widget_type {
+            Cpu => {
+                cpu_state_map.insert(
+                    widget.widget_id,
+                    CpuWidgetState::new(
+                        &app_config_fields,
+                        default_time_value,
+                        autohide_timer,
+                        styling,
+                    ),
+                );
+            }
+            Mem => {
+                mem_state_map.insert(
+                    widget.widget_id,
+                    MemWidgetState::init(default_time_value, autohide_timer),
+                );
+            }
+            Net => {
+                net_state_map.insert(
+                    widget.widget_id,
+                    NetWidgetState::init(default_time_value, autohide_timer),
+                );
+            }
+            Proc => {
+                let mode = if is_grouped {
+                    ProcWidgetMode::Grouped
+                } else if is_default_tree {
+                    ProcWidgetMode::Tree {
+                        collapsed_pids: Default::default(),
+                    }
+                } else {
+                    ProcWidgetMode::Normal
+                };
+
+                proc_state_map.insert(
+                    widget.widget_id,
+                    ProcWidgetState::new(
+                        &app_config_fields,
+                        mode,
+                        table_config,
+                        styling,
+                        &proc_columns,
+                    ),
+                );
+            }
+            Disk => {
+                disk_state_map.insert(
+                    widget.widget_id,
+                    DiskTableWidget::new(&app_config_fields, styling),
+                );
+            }
+            Temp => {
+                temp_state_map.insert(
+                    widget.widget_id,
+                    TempWidgetState::new(&app_config_fields, styling),
+                );
+            }
+            Battery => {
+                battery_state_map.insert(widget.widget_id, BatteryWidgetState::default());
+            }
+            _ => {}
         }
     }
 
     let basic_table_widget_state = if use_basic_mode {
         Some(match initial_widget_type {
-            Proc | Disk | Temp => BasicTableWidgetState {
+            Proc | Disk | Temp | Battery => BasicTableWidgetState {
                 currently_displayed_widget_type: initial_widget_type,
                 currently_displayed_widget_id: initial_widget_id,
                 widget_id: 100,
@@ -464,14 +458,15 @@ pub fn get_widget_layout(
 ) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
     let left_legend = is_flag_enabled!(left_legend, matches, config);
 
-    let (default_widget_type, mut default_widget_count) =
+    let (default_widget_type, default_widget_count) =
         get_default_widget_and_count(matches, config)?;
-    let mut default_widget_id = 1;
 
-    let bottom_layout = if is_flag_enabled!(basic, matches, config) {
-        default_widget_id = DEFAULT_WIDGET_ID;
-
-        BottomLayout::new_basic(get_use_battery(matches, config))
+    if is_flag_enabled!(basic, matches, config) {
+        Ok((
+            BottomLayout::new_basic(get_use_battery(matches, config)),
+            DEFAULT_WIDGET_ID,
+            default_widget_type,
+        ))
     } else {
         let ref_row: Vec<Row>; // Required to handle reference
         let rows = match &config.row {
@@ -489,30 +484,11 @@ pub fn get_widget_layout(
             }
         };
 
-        let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
-        let mut total_height_ratio = 0;
+        let (layout, default_widget_id) =
+            BottomLayout::from_rows(rows, default_widget_type, default_widget_count, left_legend)?;
 
-        // let mut ret_bottom_layout = BottomLayout {
-        // arena: todo!(),
-        // arena: rows
-        //     .iter()
-        //     .map(|row| {
-        //         row.convert_row_to_bottom_row(
-        //             &mut iter_id,
-        //             &mut total_height_ratio,
-        //             &mut default_widget_id,
-        //             &default_widget_type,
-        //             &mut default_widget_count,
-        //             left_legend,
-        //         )
-        //     })
-        //     .collect::<error::Result<Vec<_>>>()?,
-        // };
-
-        BottomLayout::from_rows(rows)?
-    };
-
-    Ok((bottom_layout, default_widget_id, default_widget_type))
+        Ok((layout, default_widget_id, default_widget_type))
+    }
 }
 
 fn get_update_rate_in_milliseconds(matches: &ArgMatches, config: &Config) -> error::Result<u64> {

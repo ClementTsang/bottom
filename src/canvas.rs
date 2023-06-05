@@ -13,7 +13,7 @@ use tui::{
 use crate::{
     app::{
         self,
-        layout_manager::{BottomColRow, BottomLayout, BottomWidget, BottomWidgetType, Node},
+        layout_manager::{BottomColRow, BottomLayout, BottomWidget, BottomWidgetType, NodeId},
         App,
     },
     constants::*,
@@ -72,7 +72,7 @@ pub struct Painter {
 #[derive(Debug, Clone, Copy)]
 pub enum LayoutConstraint {
     /// Denotes that the canvas should follow the given ratio of `lhs:rhs` to determine spacing for the element.
-    Ratio { lhs: u32, rhs: u32 },
+    Ratio { a: u32, b: u32 },
 
     /// Denotes that the canvas should let this element grow to take up whatever remaining space is left after
     /// sizing the other sibling elements.
@@ -94,7 +94,7 @@ impl Painter {
             width: 0,
             styled_help_text: Vec::default(),
             widget_layout,
-            derived_widget_draw_locs: Vec::default(),
+            derived_widget_draw_locs: HashMap::default(),
         };
 
         painter.complete_painter_init();
@@ -496,7 +496,7 @@ impl Painter {
                             constraints.zip(sizes.iter_mut()).enumerate()
                         {
                             match constraint {
-                                LayoutConstraint::Ratio { lhs, rhs } => {
+                                LayoutConstraint::Ratio { a: lhs, b: rhs } => {
                                     match direction {
                                         Direction::Horizontal => {
                                             let amount = (((area.width as u32) * lhs) / rhs) as u16;
@@ -612,45 +612,60 @@ impl Painter {
                     }
 
                     // Do a preorder traversal through the tree in, and calculate the draw [`Rect`]s for each widget.
-                    let root_id = self.widget_layout.len().saturating_sub(1);
-                    let mut queue = vec![(root_id, terminal_size)];
-                    while let Some((current_id, rect)) = queue.pop() {
-                        if let Some(widget) = self.widget_layout.get_node(current_id) {
-                            match widget {
-                                Node::Container(container) => {
-                                    let constraints = container.children.iter().map(|child| {
-                                        if let Some(node) = self.widget_layout.get_node(*child) {
-                                            node.constraint()
-                                        } else {
-                                            LayoutConstraint::FlexGrow
-                                        }
-                                    });
-
-                                    let rects =
-                                        get_rects(container.direction().into(), constraints, rect);
-
-                                    // If it's a container, push in reverse order to the stack.
-                                    for child in container
-                                        .children
-                                        .iter()
-                                        .cloned()
-                                        .zip(rects.into_iter())
-                                        .rev()
+                    if let Some(root_id) = self.widget_layout.root_id() {
+                        let mut queue = vec![(root_id, terminal_size)];
+                        while let Some((current_id, rect)) = queue.pop() {
+                            match current_id {
+                                NodeId::Container(current_id) => {
+                                    if let Some(container) =
+                                        self.widget_layout.get_container(current_id)
                                     {
-                                        queue.push(child);
+                                        let constraints = container.children.iter().map(|child| {
+                                            match child {
+                                                NodeId::Container(child) => self
+                                                    .widget_layout
+                                                    .get_container(*child)
+                                                    .map(|c| c.constraint),
+                                                NodeId::Widget(child) => self
+                                                    .widget_layout
+                                                    .get_widget(*child)
+                                                    .map(|w| w.constraint),
+                                            }
+                                            .unwrap_or(LayoutConstraint::FlexGrow)
+                                        });
+
+                                        let rects = get_rects(
+                                            container.direction().into(),
+                                            constraints,
+                                            rect,
+                                        );
+
+                                        // If it's a container, push in reverse order to the stack.
+                                        for child in container
+                                            .children
+                                            .iter()
+                                            .cloned()
+                                            .zip(rects.into_iter())
+                                            .rev()
+                                        {
+                                            queue.push(child);
+                                        }
                                     }
                                 }
-                                Node::Widget(widget) => {
-                                    // If we're instead on a widget, we can instead assign the rect to the widget.
-                                    self.derived_widget_draw_locs.insert(current_id, rect);
+                                NodeId::Widget(current_id) => {
+                                    if let Some(widget) = self.widget_layout.get_widget(current_id)
+                                    {
+                                        // If we're instead on a widget, we can instead assign the rect to the widget.
+                                        self.derived_widget_draw_locs.insert(current_id, rect);
+                                    }
                                 }
                             }
                         }
                     }
                 } else {
                     for (id, rect) in &self.derived_widget_draw_locs {
-                        match &self.widget_layout.get_node(*id) {
-                            Some(Node::Widget(widget)) => {
+                        match self.widget_layout.get_widget(*id) {
+                            Some(widget) => {
                                 self.draw_widget(f, app_state, widget, *rect);
                             }
                             _ => {
