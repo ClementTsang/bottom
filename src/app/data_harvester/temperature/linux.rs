@@ -238,11 +238,12 @@ fn get_from_thermal_zone(
 pub fn get_temperature_data(
     temp_type: &TemperatureType, filter: &Option<Filter>,
 ) -> Result<Option<Vec<TempHarvest>>> {
-    let mut temperature_vec: Vec<TempHarvest> = get_from_hwmon(temp_type, filter)?;
+    let mut temperature_vec: Vec<TempHarvest> =
+        get_from_hwmon(temp_type, filter).unwrap_or_default();
 
     if temperature_vec.is_empty() {
-        // If it's empty, fall back to checking `thermal_zone*`.
-        temperature_vec = get_from_thermal_zone(temp_type, filter)?;
+        // If it's empty, try to fall back to checking `thermal_zone*`.
+        temperature_vec = get_from_thermal_zone(temp_type, filter).unwrap_or_default();
     }
 
     #[cfg(feature = "nvidia")]
