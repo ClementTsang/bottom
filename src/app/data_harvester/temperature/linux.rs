@@ -11,8 +11,9 @@ use crate::app::{
 };
 
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon`.
-/// See [here](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-hwmon) for
-/// details.
+///
+/// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-hwmon)
+/// for more details.
 ///
 /// This method will return `0` as the temperature for devices, such as GPUs,
 /// that support power management features and power themselves off.
@@ -191,8 +192,10 @@ fn get_from_hwmon(
 }
 
 /// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
-/// [`get_from_hwmon`] doesn't return anything. See
-/// [here](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal) for details.
+/// [`get_from_hwmon`] doesn't return anything.
+///
+/// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
+/// for more details.
 fn get_from_thermal_zone(
     temp_type: &TemperatureType, filter: &Option<Filter>,
 ) -> Result<Vec<TempHarvest>> {
