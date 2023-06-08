@@ -6,13 +6,14 @@ use super::{
 };
 use crate::app::Filter;
 use crate::data_harvester::nvidia::NVML_DATA;
+use crate::utils::error;
 
 pub fn add_nvidia_data(
     temperature_vec: &mut Vec<TempHarvest>, temp_type: &TemperatureType, filter: &Option<Filter>,
-) -> crate::utils::error::Result<()> {
+) -> error::Result<()> {
     if let Ok(nvml) = &*NVML_DATA {
-        if let Ok(ngpu) = nvml.device_count() {
-            for i in 0..ngpu {
+        if let Ok(gpu_num) = nvml.device_count() {
+            for i in 0..gpu_num {
                 if let Ok(device) = nvml.device_by_index(i) {
                     if let (Ok(name), Ok(temperature)) =
                         (device.name(), device.temperature(TemperatureSensor::Gpu))

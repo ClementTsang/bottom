@@ -1,9 +1,12 @@
 //! Gets temperature sensor data for Linux platforms.
 
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{anyhow, Result};
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 
 use super::{is_temp_filtered, TempHarvest, TemperatureType};
 use crate::app::{
@@ -11,14 +14,24 @@ use crate::app::{
     Filter,
 };
 
-/// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon`.
+/// Parses and reads temperatures that were in millidegree Celsius, and if successful, returns a temperature in Celsius.
+fn read_temp(path: &Path) -> Result<f32> {
+    Ok(fs::read_to_string(path)?
+        .trim_end()
+        .parse::<f32>()
+        .map_err(|e| crate::utils::error::BottomError::ConversionError(e.to_string()))?
+        / 1_000.0)
+}
+
+/// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon` and
+/// `/sys/devices/platform/coretemp.*`.
 ///
-/// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-hwmon)
-/// for more details.
+/// For more details, see the relevant Linux kernel documentation:
+/// - [`/sys/class/hwmon`](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-hwmon)
+/// - [`/sys/devices/platform/coretemp.*`](https://www.kernel.org/doc/html/v5.14/hwmon/coretemp.html)
 ///
 /// This method will return `0` as the temperature for devices, such as GPUs,
-/// that support power management features and power themselves off.
-///
+/// that support power management features that have powered themselves off.
 /// Specifically, in laptops with iGPUs and dGPUs, if the dGPU is capable of
 /// entering ACPI D3cold, reading the temperature sensors will wake it,
 /// and keep it awake, wasting power.
@@ -30,8 +43,60 @@ use crate::app::{
 fn get_from_hwmon(
     temp_type: &TemperatureType, filter: &Option<Filter>,
 ) -> Result<Vec<TempHarvest>> {
-    let mut temperature_vec: Vec<TempHarvest> = vec![];
-    let path = Path::new("/sys/class/hwmon");
+    let mut temperatures: Vec<TempHarvest> = vec![];
+
+    fn add_hwmon(dirs: &mut HashSet<PathBuf>) {
+        if let Ok(read_dir) = Path::new("/sys/class/hwmon").read_dir() {
+            for entry in read_dir.flatten() {
+                let mut path = entry.path();
+
+                // hwmon includes many sensors, we only want ones with at least one temperature sensor
+                // Reading this file will wake the device, but we're only checking existence, so it should be fine.
+                if !path.join("temp1_input").exists() {
+                    // Note we also check for a `device` subdirectory (e.g. `/sys/class/hwmon/hwmon*/device/`).
+                    // This is needed for CentOS, which adds this extra `/device` directory. See:
+                    // - https://github.com/nicolargo/glances/issues/1060
+                    // - https://github.com/giampaolo/psutil/issues/971
+                    // - https://github.com/giampaolo/psutil/blob/642438375e685403b4cd60b0c0e25b80dd5a813d/psutil/_pslinux.py#L1316
+                    //
+                    // If it does match, then add the `device/` directory to the path.
+                    if path.join("device/temp1_input").exists() {
+                        path.push("device");
+                    }
+                }
+
+                dirs.insert(path);
+            }
+        }
+    }
+
+    fn add_coretemp(dirs: &mut HashSet<PathBuf>) {
+        if let Ok(read_dir) = Path::new("/sys/devices/platform").read_dir() {
+            for entry in read_dir.flatten() {
+                if entry.file_name().to_string_lossy().starts_with("coretemp.") {
+                    if let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
+                        for entry in read_dir.flatten() {
+                            let path = entry.path();
+
+                            if path.join("temp1_input").exists() {
+                                if let Some(child) = path.file_name() {
+                                    let to_check_path = Path::new("/sys/class/hwmon").join(child);
+
+                                    if !dirs.contains(&to_check_path) {
+                                        dirs.insert(path);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let mut dirs = HashSet::default();
+    add_hwmon(&mut dirs);
+    add_coretemp(&mut dirs);
 
     // Note that none of this is async if we ever go back to it, but sysfs is in
     // memory, so in theory none of this should block if we're slightly careful.
@@ -43,28 +108,8 @@ fn get_from_hwmon(
     // will not wake the device, and thus not block,
     // and meaning no sensors have to be hidden depending on `power_state`
     //
-    // It would probably be more ideal to use a proper async runtime..
-    for entry in path.read_dir()? {
-        let file = entry?;
-        let mut file_path = file.path();
-
-        // hwmon includes many sensors, we only want ones with at least one temperature sensor
-        // Reading this file will wake the device, but we're only checking existence.
-        if !file_path.join("temp1_input").exists() {
-            // Note we also check for a `device` subdirectory (e.g. `/sys/class/hwmon/hwmon*/device/`).
-            // This is needed for CentOS, which adds this extra `/device` directory. See:
-            // - https://github.com/nicolargo/glances/issues/1060
-            // - https://github.com/giampaolo/psutil/issues/971
-            // - https://github.com/giampaolo/psutil/blob/642438375e685403b4cd60b0c0e25b80dd5a813d/psutil/_pslinux.py#L1316
-            //
-            // If it does match, then add the `device/` directory to the path.
-            if file_path.join("device/temp1_input").exists() {
-                file_path.push("device");
-            } else {
-                continue;
-            }
-        }
-
+    // It would probably be more ideal to use a proper async runtime; this would also allow easy cancellation/timeouts.
+    for file_path in dirs {
         let hwmon_name = file_path.join("name");
         let hwmon_name = Some(fs::read_to_string(hwmon_name)?);
 
@@ -100,7 +145,7 @@ fn get_from_hwmon(
             if !(name.starts_with("temp") && name.ends_with("input")) {
                 continue;
             }
-            let temp = file.path();
+            let temp_path = file.path();
             let temp_label = file_path.join(name.replace("input", "label"));
             let temp_label = fs::read_to_string(temp_label).ok();
 
@@ -163,77 +208,13 @@ fn get_from_hwmon(
 
             if is_temp_filtered(filter, &name) {
                 let temp = if should_read_temp {
-                    if let Ok(temp) = fs::read_to_string(temp) {
-                        let temp = temp.trim_end().parse::<f32>().map_err(|e| {
-                            crate::utils::error::BottomError::ConversionError(e.to_string())
-                        })?;
-                        temp / 1_000.0
+                    if let Ok(temp) = read_temp(&temp_path) {
+                        temp
                     } else {
-                        // For some devices (e.g. iwlwifi), this file becomes empty when the device
-                        // is disabled. In this case we skip the device.
                         continue;
                     }
                 } else {
                     0.0
-                };
-
-                temperature_vec.push(TempHarvest {
-                    name,
-                    temperature: match temp_type {
-                        TemperatureType::Celsius => temp,
-                        TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
-                        TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
-                    },
-                });
-            }
-        }
-    }
-
-    Ok(temperature_vec)
-}
-
-/// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
-/// [`get_from_hwmon`] doesn't return anything.
-///
-/// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
-/// for more details.
-fn get_from_thermal_zone(
-    temp_type: &TemperatureType, filter: &Option<Filter>,
-) -> Result<Vec<TempHarvest>> {
-    let mut temperatures = vec![];
-    let path = Path::new("/sys/class/thermal");
-
-    let mut seen_names: HashMap<String, u32> = HashMap::new();
-
-    for entry in path.read_dir()? {
-        let file = entry?;
-        if file
-            .file_name()
-            .to_string_lossy()
-            .starts_with("thermal_zone")
-        {
-            let file_path = file.path();
-            let name_path = file_path.join("type");
-
-            let name = fs::read_to_string(name_path)?;
-            let name = name.trim_end();
-
-            if is_temp_filtered(filter, name) {
-                let temp_path = file_path.join("temp");
-                let temp = fs::read_to_string(temp_path)?
-                    .trim_end()
-                    .parse::<f32>()
-                    .map_err(|e| {
-                        crate::utils::error::BottomError::ConversionError(e.to_string())
-                    })?
-                    / 1_000.0;
-
-                let name = if let Some(count) = seen_names.get_mut(name) {
-                    *count += 1;
-                    format!("{name} ({})", *count)
-                } else {
-                    seen_names.insert(name.to_string(), 0);
-                    name.to_string()
                 };
 
                 temperatures.push(TempHarvest {
@@ -251,22 +232,74 @@ fn get_from_thermal_zone(
     Ok(temperatures)
 }
 
+/// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
+/// [`get_from_hwmon`] doesn't return anything.
+///
+/// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
+/// for more details.
+fn get_from_thermal_zone(
+    temperatures: &mut Vec<TempHarvest>, temp_type: &TemperatureType, filter: &Option<Filter>,
+) {
+    let path = Path::new("/sys/class/thermal");
+    let Ok(read_dir) = path.read_dir() else {
+        return
+    };
+
+    let mut seen_names: HashMap<String, u32> = HashMap::new();
+
+    for entry in read_dir.flatten() {
+        if entry
+            .file_name()
+            .to_string_lossy()
+            .starts_with("thermal_zone")
+        {
+            let file_path = entry.path();
+            let name_path = file_path.join("type");
+
+            if let Ok(name) = fs::read_to_string(name_path) {
+                let name = name.trim_end();
+
+                if is_temp_filtered(filter, name) {
+                    let temp_path = file_path.join("temp");
+                    if let Ok(temp) = read_temp(&temp_path) {
+                        let name = if let Some(count) = seen_names.get_mut(name) {
+                            *count += 1;
+                            format!("{name} ({})", *count)
+                        } else {
+                            seen_names.insert(name.to_string(), 0);
+                            name.to_string()
+                        };
+
+                        temperatures.push(TempHarvest {
+                            name,
+                            temperature: match temp_type {
+                                TemperatureType::Celsius => temp,
+                                TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
+                                TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
+                            },
+                        });
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Gets temperature sensors and data.
 pub fn get_temperature_data(
     temp_type: &TemperatureType, filter: &Option<Filter>,
 ) -> Result<Option<Vec<TempHarvest>>> {
-    let mut temperature_vec: Vec<TempHarvest> =
-        get_from_hwmon(temp_type, filter).unwrap_or_default();
+    let mut temperatures: Vec<TempHarvest> = get_from_hwmon(temp_type, filter).unwrap_or_default();
 
-    if temperature_vec.is_empty() {
-        // If it's empty or it fails, try to fall back to checking `thermal_zone*`.
-        temperature_vec = get_from_thermal_zone(temp_type, filter).unwrap_or_default();
+    // If it's empty, try to fall back to simpler methods.
+    if temperatures.is_empty() {
+        get_from_thermal_zone(&mut temperatures, temp_type, filter);
     }
 
     #[cfg(feature = "nvidia")]
     {
-        super::nvidia::add_nvidia_data(&mut temperature_vec, temp_type, filter)?;
+        super::nvidia::add_nvidia_data(&mut temperatures, temp_type, filter)?;
     }
 
-    Ok(Some(temperature_vec))
+    Ok(Some(temperatures))
 }
