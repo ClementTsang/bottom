@@ -4,9 +4,13 @@
 #![deny(clippy::missing_safety_doc)]
 
 // Primarily used for debug purposes.
-#[cfg(feature = "log")]
-#[macro_use]
-extern crate log;
+cfg_if::cfg_if! {
+    if #[cfg(feature = "log")] {
+        #[allow(unused_imports)]
+        #[macro_use]
+        extern crate log;
+    }
+}
 
 use std::{
     boxed::Box,
