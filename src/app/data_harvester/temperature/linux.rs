@@ -17,7 +17,6 @@ use crate::app::{
 #[derive(Default)]
 struct HwmonResults {
     temperatures: Vec<TempHarvest>,
-    // thermal_types: HashSet<String>,
 }
 
 /// Parses and reads temperatures that were in millidegree Celsius, and if successful, returns a temperature in Celsius.
@@ -113,8 +112,6 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
     let mut dirs = HashSet::default();
     add_hwmon(&mut dirs);
     add_coretemp(&mut dirs);
-
-    // let mut thermal_types = HashSet::default();
 
     // Note that none of this is async if we ever go back to it, but sysfs is in
     // memory, so in theory none of this should block if we're slightly careful.
@@ -239,10 +236,7 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
         }
     }
 
-    Ok(HwmonResults {
-        temperatures,
-        // thermal_types,
-    })
+    Ok(HwmonResults { temperatures })
 }
 
 /// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
