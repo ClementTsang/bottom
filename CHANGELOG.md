@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.9.2] - Unreleased
 
+## Bug Fixes
+
+- [#1186](https://github.com/ClementTsang/bottom/pull/1186): Fix for temperature sensor data gathering on Linux immediately halting if any method failed.
+
 ## Features
 
 - [#1172](https://github.com/ClementTsang/bottom/pull/1172): Support human times for `time_delta` and `default_time_value`.
+- [#1187](https://github.com/ClementTsang/bottom/pull/1187): Use better names for duplicate temp sensors found by `/sys/class/thermal`.
 
 ## [0.9.1] - 2023-05-14
 
