@@ -24,7 +24,8 @@ fn read_temp(path: &Path) -> Result<f32> {
 }
 
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon` and
-/// `/sys/devices/platform/coretemp.*`.
+/// `/sys/devices/platform/coretemp.*`. It returns all found temperature sensors, and the number
+/// of checked hwmon directories (not coretemp directories).
 ///
 /// For more details, see the relevant Linux kernel documentation:
 /// - [`/sys/class/hwmon`](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-hwmon)
@@ -42,7 +43,7 @@ fn read_temp(path: &Path) -> Result<f32> {
 /// reading, and not be able to re-enter ACPI D3cold.
 fn get_from_hwmon(
     temp_type: &TemperatureType, filter: &Option<Filter>,
-) -> Result<Vec<TempHarvest>> {
+) -> Result<(Vec<TempHarvest>, usize)> {
     let mut temperatures: Vec<TempHarvest> = vec![];
 
     fn add_hwmon(dirs: &mut HashSet<PathBuf>) {
@@ -99,6 +100,9 @@ fn get_from_hwmon(
 
     let mut dirs = HashSet::default();
     add_hwmon(&mut dirs);
+
+    let num_original_hwmon = dirs.len();
+
     add_coretemp(&mut dirs);
 
     // Note that none of this is async if we ever go back to it, but sysfs is in
@@ -232,7 +236,7 @@ fn get_from_hwmon(
         }
     }
 
-    Ok(temperatures)
+    Ok((temperatures, num_original_hwmon))
 }
 
 /// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
@@ -292,10 +296,10 @@ fn get_from_thermal_zone(
 pub fn get_temperature_data(
     temp_type: &TemperatureType, filter: &Option<Filter>,
 ) -> Result<Option<Vec<TempHarvest>>> {
-    let mut temperatures: Vec<TempHarvest> = get_from_hwmon(temp_type, filter).unwrap_or_default();
+    let (mut temperatures, checked_dirs) = get_from_hwmon(temp_type, filter).unwrap_or_default();
 
     // If it's empty, try to fall back to simpler methods.
-    if temperatures.is_empty() {
+    if checked_dirs == 0 {
         get_from_thermal_zone(&mut temperatures, temp_type, filter);
     }
 
