@@ -75,6 +75,7 @@ pub type Pid = usize;
 #[cfg(target_family = "unix")]
 pub type Pid = libc::pid_t;
 
+/// Events sent to the main thread.
 #[derive(Debug)]
 pub enum BottomEvent {
     Resize,
@@ -86,6 +87,7 @@ pub enum BottomEvent {
     Terminate,
 }
 
+/// Events sent to the collection thread.
 #[derive(Debug)]
 pub enum ThreadEvent {
     Reset,
@@ -245,19 +247,17 @@ pub fn read_config(config_location: Option<&String>) -> error::Result<Option<Pat
 pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Config> {
     if let Some(path) = config_path {
         if let Ok(config_string) = fs::read_to_string(path) {
-            // We found a config file!
             Ok(toml_edit::de::from_str(config_string.as_str())?)
         } else {
-            // Config file DNE...
             if let Some(parent_path) = path.parent() {
                 fs::create_dir_all(parent_path)?;
             }
-            // fs::File::create(path)?.write_all(CONFIG_TOP_HEAD.as_bytes())?;
+
             fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
             Ok(Config::default())
         }
     } else {
-        // Don't write, the config path was somehow None...
+        // Don't write...
         Ok(Config::default())
     }
 }
@@ -268,10 +268,10 @@ pub fn try_drawing(
 ) -> error::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
-        return Err(err);
+        Err(err)
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }
 
 pub fn cleanup_terminal(
@@ -327,7 +327,7 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     )
     .unwrap();
 
-    // Print stack trace.  Must be done after!
+    // Print stack trace. Must be done after!
     execute!(
         stdout,
         Print(format!(
