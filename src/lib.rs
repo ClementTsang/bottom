@@ -89,10 +89,8 @@ pub enum BottomEvent {
 
 /// Events sent to the collection thread.
 #[derive(Debug)]
-pub enum ThreadEvent {
+pub enum CollectionThreadEvent {
     Reset,
-    UpdateConfig(Box<AppConfigFields>),
-    UpdateUsedWidgets(Box<UsedWidgets>),
 }
 
 pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
@@ -117,7 +115,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 }
 
 pub fn handle_key_event_or_break(
-    event: KeyEvent, app: &mut App, reset_sender: &Sender<ThreadEvent>,
+    event: KeyEvent, app: &mut App, reset_sender: &Sender<CollectionThreadEvent>,
 ) -> bool {
     // debug!("KeyEvent: {:?}", event);
 
@@ -174,7 +172,7 @@ pub fn handle_key_event_or_break(
                 KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
                 KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
                 KeyCode::Char('r') => {
-                    if reset_sender.send(ThreadEvent::Reset).is_ok() {
+                    if reset_sender.send(CollectionThreadEvent::Reset).is_ok() {
                         app.reset();
                     }
                 }
@@ -487,7 +485,7 @@ pub fn create_input_thread(
 }
 
 pub fn create_collection_thread(
-    sender: Sender<BottomEvent>, control_receiver: Receiver<ThreadEvent>,
+    sender: Sender<BottomEvent>, control_receiver: Receiver<CollectionThreadEvent>,
     termination_lock: Arc<Mutex<bool>>, termination_cvar: Arc<Condvar>,
     app_config_fields: &AppConfigFields, filters: DataFilters, used_widget_set: UsedWidgets,
 ) -> JoinHandle<()> {
@@ -520,18 +518,8 @@ pub fn create_collection_thread(
             if let Ok(message) = control_receiver.try_recv() {
                 // trace!("Received message in collection thread: {:?}", message);
                 match message {
-                    ThreadEvent::Reset => {
+                    CollectionThreadEvent::Reset => {
                         data_state.data.cleanup();
-                    }
-                    ThreadEvent::UpdateConfig(app_config_fields) => {
-                        data_state.set_temperature_type(app_config_fields.temperature_type);
-                        data_state
-                            .set_use_current_cpu_total(app_config_fields.use_current_cpu_total);
-                        data_state.set_unnormalized_cpu(unnormalized_cpu);
-                        data_state.set_show_average_cpu(app_config_fields.show_average_cpu);
-                    }
-                    ThreadEvent::UpdateUsedWidgets(used_widget_set) => {
-                        data_state.set_data_collection(*used_widget_set);
                     }
                 }
             }
