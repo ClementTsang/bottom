@@ -79,6 +79,9 @@ fn get_from_hwmon(
                             let path = entry.path();
 
                             if path.join("temp1_input").exists() {
+                                // It's possible that there are dupes (represented by symlinks) - the easy
+                                // way is to just substitute the parent directory and check if the hwmon
+                                // variant exists already in a set.
                                 if let Some(child) = path.file_name() {
                                     let to_check_path = Path::new("/sys/class/hwmon").join(child);
 
