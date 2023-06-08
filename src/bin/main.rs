@@ -1,13 +1,16 @@
-#![warn(rust_2018_idioms)]
+#![deny(rust_2018_idioms)]
 #![deny(clippy::todo)]
 #![deny(clippy::unimplemented)]
 #![deny(clippy::missing_safety_doc)]
-#[allow(unused_imports)] // TODO: Deny unused imports.
 
 // Primarily used for debug purposes.
-#[cfg(feature = "log")]
-#[macro_use]
-extern crate log;
+cfg_if::cfg_if! {
+    if #[cfg(feature = "log")] {
+        #[allow(unused_imports)]
+        #[macro_use]
+        extern crate log;
+    }
+}
 
 use std::{
     boxed::Box,
