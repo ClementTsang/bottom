@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Bug Fixes
 
 - [#1186](https://github.com/ClementTsang/bottom/pull/1186): Fix for temperature sensor data gathering on Linux immediately halting if any method failed.
+- [#1191](https://github.com/ClementTsang/bottom/pull/1191): Fix ntfs3 mounts not being counted as a physical drive type.
 
 ## Features
 
