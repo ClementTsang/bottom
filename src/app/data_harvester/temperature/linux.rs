@@ -17,7 +17,7 @@ use crate::app::{
 #[derive(Default)]
 struct HwmonResults {
     temperatures: Vec<TempHarvest>,
-    thermal_types: HashSet<String>,
+    // thermal_types: HashSet<String>,
 }
 
 /// Parses and reads temperatures that were in millidegree Celsius, and if successful, returns a temperature in Celsius.
@@ -114,7 +114,7 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
     add_hwmon(&mut dirs);
     add_coretemp(&mut dirs);
 
-    let mut thermal_types = HashSet::default();
+    // let mut thermal_types = HashSet::default();
 
     // Note that none of this is async if we ever go back to it, but sysfs is in
     // memory, so in theory none of this should block if we're slightly careful.
@@ -184,9 +184,7 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
                         let name = card.file_name().to_str().unwrap_or_default().to_owned();
                         if name.starts_with("card") {
                             if let Some(hwmon_name) = hwmon_name.as_ref() {
-                                let hwmon_name = hwmon_name.trim();
-                                thermal_types.insert(hwmon_name.to_string());
-                                gpu = Some(format!("{name} ({hwmon_name})"));
+                                gpu = Some(format!("{} ({})", name, hwmon_name.trim()));
                             } else {
                                 gpu = Some(name)
                             }
@@ -205,9 +203,7 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
                         .unwrap();
                     if link.as_bytes()[0].is_ascii_alphabetic() {
                         if let Some(hwmon_name) = hwmon_name.as_ref() {
-                            let hwmon_name = hwmon_name.trim();
-                            thermal_types.insert(hwmon_name.to_string());
-                            Some(format!("{link} ({hwmon_name})"))
+                            Some(format!("{} ({})", link, hwmon_name.trim()))
                         } else {
                             Some(link)
                         }
@@ -245,17 +241,17 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
 
     Ok(HwmonResults {
         temperatures,
-        thermal_types,
+        // thermal_types,
     })
 }
 
-/// Gets data from `/sys/class/thermal/thermal_zone*`. This will avoid duplicates with hwmon results.
+/// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
+/// [`get_from_hwmon`] doesn't return anything.
 ///
 /// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
 /// for more details.
 fn get_from_thermal_zone(
-    temperatures: &mut Vec<TempHarvest>, seen_thermal_types: &HashSet<String>,
-    temp_type: &TemperatureType, filter: &Option<Filter>,
+    temperatures: &mut Vec<TempHarvest>, temp_type: &TemperatureType, filter: &Option<Filter>,
 ) {
     let path = Path::new("/sys/class/thermal");
     let Ok(read_dir) = path.read_dir() else {
@@ -275,9 +271,6 @@ fn get_from_thermal_zone(
 
             if let Ok(name) = fs::read_to_string(name_path) {
                 let name = name.trim_end();
-                if seen_thermal_types.contains(name) {
-                    continue;
-                }
 
                 if is_temp_filtered(filter, name) {
                     let temp_path = file_path.join("temp");
@@ -307,12 +300,7 @@ pub fn get_temperature_data(
 ) -> Result<Option<Vec<TempHarvest>>> {
     let mut results = get_from_hwmon(temp_type, filter).unwrap_or_default();
 
-    get_from_thermal_zone(
-        &mut results.temperatures,
-        &results.thermal_types,
-        temp_type,
-        filter,
-    );
+    get_from_thermal_zone(&mut results.temperatures, temp_type, filter);
 
     #[cfg(feature = "nvidia")]
     {
