@@ -5,12 +5,12 @@
 //! than the actual usage of the application. If you are instead looking for documentation regarding the *usage* of
 //! bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
 
-#![warn(rust_2018_idioms)]
+#![deny(rust_2018_idioms)]
 #![deny(clippy::todo)]
 #![deny(clippy::unimplemented)]
 #![deny(clippy::missing_safety_doc)]
-#[allow(unused_imports)] // TODO: Deny unused imports.
-// Only used for builds not intended for release.
+
+// Primarily used for debug purposes.
 #[cfg(feature = "log")]
 #[macro_use]
 extern crate log;
