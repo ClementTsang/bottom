@@ -245,7 +245,7 @@ pub fn get_temperature_data(
         get_from_hwmon(temp_type, filter).unwrap_or_default();
 
     if temperature_vec.is_empty() {
-        // If it's empty, try to fall back to checking `thermal_zone*`.
+        // If it's empty or it fails, try to fall back to checking `thermal_zone*`.
         temperature_vec = get_from_thermal_zone(temp_type, filter).unwrap_or_default();
     }
 
