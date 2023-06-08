@@ -17,6 +17,7 @@ use crate::app::{
 #[derive(Default)]
 struct HwmonResults {
     temperatures: Vec<TempHarvest>,
+    num_hwmon: usize,
 }
 
 /// Parses and reads temperatures that were in millidegree Celsius, and if successful, returns a temperature in Celsius.
@@ -94,6 +95,8 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
                                 // It's possible that there are dupes (represented by symlinks) - the easy
                                 // way is to just substitute the parent directory and check if the hwmon
                                 // variant exists already in a set.
+                                //
+                                // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
                                 if let Some(child) = path.file_name() {
                                     let to_check_path = Path::new("/sys/class/hwmon").join(child);
 
@@ -111,7 +114,10 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
 
     let mut dirs = HashSet::default();
     add_hwmon(&mut dirs);
+    let num_hwmon = dirs.len();
     add_coretemp(&mut dirs);
+
+    // let mut thermal_types = HashSet::default();
 
     // Note that none of this is async if we ever go back to it, but sysfs is in
     // memory, so in theory none of this should block if we're slightly careful.
@@ -236,7 +242,10 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
         }
     }
 
-    Ok(HwmonResults { temperatures })
+    Ok(HwmonResults {
+        temperatures,
+        num_hwmon,
+    })
 }
 
 /// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
@@ -294,7 +303,9 @@ pub fn get_temperature_data(
 ) -> Result<Option<Vec<TempHarvest>>> {
     let mut results = get_from_hwmon(temp_type, filter).unwrap_or_default();
 
-    get_from_thermal_zone(&mut results.temperatures, temp_type, filter);
+    if results.num_hwmon == 0 {
+        get_from_thermal_zone(&mut results.temperatures, temp_type, filter);
+    }
 
     #[cfg(feature = "nvidia")]
     {
