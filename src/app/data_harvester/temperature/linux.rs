@@ -3,6 +3,7 @@
 use std::{fs, path::Path};
 
 use anyhow::{anyhow, Result};
+use hashbrown::HashMap;
 
 use super::{is_temp_filtered, TempHarvest, TemperatureType};
 use crate::app::{
@@ -201,6 +202,9 @@ fn get_from_thermal_zone(
 ) -> Result<Vec<TempHarvest>> {
     let mut temperatures = vec![];
     let path = Path::new("/sys/class/thermal");
+
+    let mut seen_names: HashMap<String, u32> = HashMap::new();
+
     for entry in path.read_dir()? {
         let file = entry?;
         if file
@@ -211,9 +215,10 @@ fn get_from_thermal_zone(
             let file_path = file.path();
             let name_path = file_path.join("type");
 
-            let name = fs::read_to_string(name_path)?.trim_end().to_string();
+            let name = fs::read_to_string(name_path)?;
+            let name = name.trim_end();
 
-            if is_temp_filtered(filter, &name) {
+            if is_temp_filtered(filter, name) {
                 let temp_path = file_path.join("temp");
                 let temp = fs::read_to_string(temp_path)?
                     .trim_end()
@@ -222,6 +227,15 @@ fn get_from_thermal_zone(
                         crate::utils::error::BottomError::ConversionError(e.to_string())
                     })?
                     / 1_000.0;
+
+                let name = if let Some(count) = seen_names.get_mut(name) {
+                    *count += 1;
+                    format!("{name} ({})", *count)
+                } else {
+                    seen_names.insert(name.to_string(), 0);
+                    name.to_string()
+                };
+
                 temperatures.push(TempHarvest {
                     name,
                     temperature: match temp_type {
