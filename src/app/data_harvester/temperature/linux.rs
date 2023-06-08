@@ -14,6 +14,12 @@ use crate::app::{
     Filter,
 };
 
+#[derive(Default)]
+struct HwmonResults {
+    temperatures: Vec<TempHarvest>,
+    // thermal_types: HashSet<String>,
+}
+
 /// Parses and reads temperatures that were in millidegree Celsius, and if successful, returns a temperature in Celsius.
 fn read_temp(path: &Path) -> Result<f32> {
     Ok(fs::read_to_string(path)?
@@ -21,6 +27,14 @@ fn read_temp(path: &Path) -> Result<f32> {
         .parse::<f32>()
         .map_err(|e| crate::utils::error::BottomError::ConversionError(e.to_string()))?
         / 1_000.0)
+}
+
+fn convert_temp_unit(temp: f32, temp_type: &TemperatureType) -> f32 {
+    match temp_type {
+        TemperatureType::Celsius => temp,
+        TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
+        TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
+    }
 }
 
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon` and
@@ -41,9 +55,7 @@ fn read_temp(path: &Path) -> Result<f32> {
 /// the device is already in ACPI D0. This has the notable issue that
 /// once this happens, the device will be *kept* on through the sensor
 /// reading, and not be able to re-enter ACPI D3cold.
-fn get_from_hwmon(
-    temp_type: &TemperatureType, filter: &Option<Filter>,
-) -> Result<(Vec<TempHarvest>, usize)> {
+fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Result<HwmonResults> {
     let mut temperatures: Vec<TempHarvest> = vec![];
 
     fn add_hwmon(dirs: &mut HashSet<PathBuf>) {
@@ -100,10 +112,9 @@ fn get_from_hwmon(
 
     let mut dirs = HashSet::default();
     add_hwmon(&mut dirs);
-
-    let num_original_hwmon = dirs.len();
-
     add_coretemp(&mut dirs);
+
+    // let mut thermal_types = HashSet::default();
 
     // Note that none of this is async if we ever go back to it, but sysfs is in
     // memory, so in theory none of this should block if we're slightly careful.
@@ -117,8 +128,7 @@ fn get_from_hwmon(
     //
     // It would probably be more ideal to use a proper async runtime; this would also allow easy cancellation/timeouts.
     for file_path in dirs {
-        let hwmon_name = file_path.join("name");
-        let hwmon_name = Some(fs::read_to_string(hwmon_name)?);
+        let hwmon_name = fs::read_to_string(file_path.join("name")).ok();
 
         // Whether the temperature should *actually* be read during enumeration
         // Set to false if the device is in ACPI D3cold.
@@ -129,11 +139,10 @@ fn get_from_hwmon(
             if power_state.exists() {
                 let state = fs::read_to_string(power_state)?;
                 let state = state.trim();
-                // The zenpower3 kernel module (incorrectly?) reports "unknown"
-                // causing this check to fail and temperatures to appear as zero
-                // instead of having the file not exist..
-                // their self-hosted git instance has disabled sign up,
-                // so this bug cant be reported either.
+                // The zenpower3 kernel module (incorrectly?) reports "unknown", causing this check
+                // to fail and temperatures to appear as zero instead of having the file not exist.
+                //
+                // Their self-hosted git instance has disabled sign up, so this bug cant be reported either.
                 state == "D0" || state == "unknown"
             } else {
                 true
@@ -144,20 +153,20 @@ fn get_from_hwmon(
         for entry in file_path.read_dir()? {
             let file = entry?;
             let name = file.file_name();
-            // This should always be ASCII
             let name = name
                 .to_str()
                 .ok_or_else(|| anyhow!("temperature device filenames should be ASCII"))?;
+
             // We only want temperature sensors, skip others early
             if !(name.starts_with("temp") && name.ends_with("input")) {
                 continue;
             }
+
             let temp_path = file.path();
             let temp_label = file_path.join(name.replace("input", "label"));
             let temp_label = fs::read_to_string(temp_label).ok();
 
-            // Do some messing around to get a more sensible name for sensors
-            //
+            // Do some messing around to get a more sensible name for sensors:
             // - For GPUs, this will use the kernel device name, ex `card0`
             // - For nvme drives, this will also use the kernel name, ex `nvme0`.
             //   This is found differently than for GPUs
@@ -165,8 +174,7 @@ fn get_from_hwmon(
             // - For k10temp, this will still be k10temp, but it has to be handled special.
             let human_hwmon_name = {
                 let device = file_path.join("device");
-                // This will exist for GPUs but not others, this is how
-                // we find their kernel name
+                // This will exist for GPUs but not others, this is how we find their kernel name.
                 let drm = device.join("drm");
                 if drm.exists() {
                     // This should never actually be empty
@@ -185,11 +193,10 @@ fn get_from_hwmon(
                     }
                     gpu
                 } else {
-                    // This little mess is to account for stuff like k10temp
-                    // This is needed because the `device` symlink
-                    // points to `nvme*` for nvme drives, but to PCI buses for anything else
-                    // If the first character is alphabetic,
-                    // its an actual name like k10temp or nvme0, not a PCI bus
+                    // This little mess is to account for stuff like k10temp. This is needed because the
+                    // `device` symlink points to `nvme*` for nvme drives, but to PCI buses for anything
+                    // else. If the first character is alphabetic, it's an actual name like k10temp or
+                    // nvme0, not a PCI bus.
                     let link = fs::read_link(device)?
                         .file_name()
                         .map(|f| f.to_str().unwrap_or_default().to_owned())
@@ -226,17 +233,16 @@ fn get_from_hwmon(
 
                 temperatures.push(TempHarvest {
                     name,
-                    temperature: match temp_type {
-                        TemperatureType::Celsius => temp,
-                        TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
-                        TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
-                    },
+                    temperature: convert_temp_unit(temp, temp_type),
                 });
             }
         }
     }
 
-    Ok((temperatures, num_original_hwmon))
+    Ok(HwmonResults {
+        temperatures,
+        // thermal_types,
+    })
 }
 
 /// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
@@ -279,11 +285,7 @@ fn get_from_thermal_zone(
 
                         temperatures.push(TempHarvest {
                             name,
-                            temperature: match temp_type {
-                                TemperatureType::Celsius => temp,
-                                TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
-                                TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
-                            },
+                            temperature: convert_temp_unit(temp, temp_type),
                         });
                     }
                 }
@@ -296,17 +298,14 @@ fn get_from_thermal_zone(
 pub fn get_temperature_data(
     temp_type: &TemperatureType, filter: &Option<Filter>,
 ) -> Result<Option<Vec<TempHarvest>>> {
-    let (mut temperatures, checked_dirs) = get_from_hwmon(temp_type, filter).unwrap_or_default();
+    let mut results = get_from_hwmon(temp_type, filter).unwrap_or_default();
 
-    // If it's empty, try to fall back to simpler methods.
-    if checked_dirs == 0 {
-        get_from_thermal_zone(&mut temperatures, temp_type, filter);
-    }
+    get_from_thermal_zone(&mut results.temperatures, temp_type, filter);
 
     #[cfg(feature = "nvidia")]
     {
-        super::nvidia::add_nvidia_data(&mut temperatures, temp_type, filter)?;
+        super::nvidia::add_nvidia_data(&mut results.temperatures, temp_type, filter)?;
     }
 
-    Ok(Some(temperatures))
+    Ok(Some(results.temperatures))
 }
