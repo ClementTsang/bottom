@@ -398,6 +398,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "WenqingZong",
+      "name": "Wenqing Zong",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43934749?v=4",
+      "profile": "http://zongwenqing.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
@@ -406,5 +415,6 @@
   "repoType": "github",
   "repoHost": "https://github.com",
   "skipCi": true,
-  "commitConvention": "angular"
+  "commitConvention": "angular",
+  "commitType": "docs"
 }
