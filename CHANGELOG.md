@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1186](https://github.com/ClementTsang/bottom/pull/1186): Fix for temperature sensor data gathering on Linux immediately halting if any method failed.
 - [#1191](https://github.com/ClementTsang/bottom/pull/1191): Fix ntfs3 mounts not being counted as a physical drive type.
+- [#1195](https://github.com/ClementTsang/bottom/pull/1195): Fix battery health being incorrectly reported on M1 macOS.
 
 ## Features
 
