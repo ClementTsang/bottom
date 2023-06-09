@@ -72,6 +72,10 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
                 if let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
                     for entry in read_dir.flatten() {
                         let path = entry.path();
+                        #[cfg(feature = "log")]
+                        {
+                            log::debug!("Getting coretemp candidates - going to check: {path:?}");
+                        }
 
                         if path.join("temp1_input").exists() {
                             // It's possible that there are dupes (represented by symlinks) - the easy
@@ -118,6 +122,11 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
     let mut temperatures: Vec<TempHarvest> = vec![];
 
     let (dirs, num_hwmon) = get_hwmon_candidates();
+
+    #[cfg(feature = "log")]
+    {
+        log::debug!("Candidate dirs: {dirs:?}, num_hwmon: {num_hwmon}.");
+    }
 
     // Note that none of this is async if we ever go back to it, but sysfs is in
     // memory, so in theory none of this should block if we're slightly careful.
