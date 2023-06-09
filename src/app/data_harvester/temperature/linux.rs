@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
 use super::{is_temp_filtered, TempHarvest, TemperatureType};
@@ -37,6 +37,65 @@ fn convert_temp_unit(temp: f32, temp_type: &TemperatureType) -> f32 {
     }
 }
 
+/// Get all candidates from hwmon and coretemp. It will also return the number of entries from hwmon.
+fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
+    let mut dirs = HashSet::default();
+
+    if let Ok(read_dir) = Path::new("/sys/class/hwmon").read_dir() {
+        for entry in read_dir.flatten() {
+            let mut path = entry.path();
+
+            // hwmon includes many sensors, we only want ones with at least one temperature sensor
+            // Reading this file will wake the device, but we're only checking existence, so it should be fine.
+            if !path.join("temp1_input").exists() {
+                // Note we also check for a `device` subdirectory (e.g. `/sys/class/hwmon/hwmon*/device/`).
+                // This is needed for CentOS, which adds this extra `/device` directory. See:
+                // - https://github.com/nicolargo/glances/issues/1060
+                // - https://github.com/giampaolo/psutil/issues/971
+                // - https://github.com/giampaolo/psutil/blob/642438375e685403b4cd60b0c0e25b80dd5a813d/psutil/_pslinux.py#L1316
+                //
+                // If it does match, then add the `device/` directory to the path.
+                if path.join("device/temp1_input").exists() {
+                    path.push("device");
+                }
+            }
+
+            dirs.insert(path);
+        }
+    }
+
+    let num_hwmon = dirs.len();
+
+    if let Ok(read_dir) = Path::new("/sys/devices/platform").read_dir() {
+        for entry in read_dir.flatten() {
+            if entry.file_name().to_string_lossy().starts_with("coretemp.") {
+                if let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
+                    for entry in read_dir.flatten() {
+                        let path = entry.path();
+
+                        if path.join("temp1_input").exists() {
+                            // It's possible that there are dupes (represented by symlinks) - the easy
+                            // way is to just substitute the parent directory and check if the hwmon
+                            // variant exists already in a set.
+                            //
+                            // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
+                            if let Some(child) = path.file_name() {
+                                let to_check_path = Path::new("/sys/class/hwmon").join(child);
+
+                                if !dirs.contains(&to_check_path) {
+                                    dirs.insert(path);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    (dirs, num_hwmon)
+}
+
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon` and
 /// `/sys/devices/platform/coretemp.*`. It returns all found temperature sensors, and the number
 /// of checked hwmon directories (not coretemp directories).
@@ -55,69 +114,10 @@ fn convert_temp_unit(temp: f32, temp_type: &TemperatureType) -> f32 {
 /// the device is already in ACPI D0. This has the notable issue that
 /// once this happens, the device will be *kept* on through the sensor
 /// reading, and not be able to re-enter ACPI D3cold.
-fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Result<HwmonResults> {
+fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> HwmonResults {
     let mut temperatures: Vec<TempHarvest> = vec![];
 
-    fn add_hwmon(dirs: &mut HashSet<PathBuf>) {
-        if let Ok(read_dir) = Path::new("/sys/class/hwmon").read_dir() {
-            for entry in read_dir.flatten() {
-                let mut path = entry.path();
-
-                // hwmon includes many sensors, we only want ones with at least one temperature sensor
-                // Reading this file will wake the device, but we're only checking existence, so it should be fine.
-                if !path.join("temp1_input").exists() {
-                    // Note we also check for a `device` subdirectory (e.g. `/sys/class/hwmon/hwmon*/device/`).
-                    // This is needed for CentOS, which adds this extra `/device` directory. See:
-                    // - https://github.com/nicolargo/glances/issues/1060
-                    // - https://github.com/giampaolo/psutil/issues/971
-                    // - https://github.com/giampaolo/psutil/blob/642438375e685403b4cd60b0c0e25b80dd5a813d/psutil/_pslinux.py#L1316
-                    //
-                    // If it does match, then add the `device/` directory to the path.
-                    if path.join("device/temp1_input").exists() {
-                        path.push("device");
-                    }
-                }
-
-                dirs.insert(path);
-            }
-        }
-    }
-
-    fn add_coretemp(dirs: &mut HashSet<PathBuf>) {
-        if let Ok(read_dir) = Path::new("/sys/devices/platform").read_dir() {
-            for entry in read_dir.flatten() {
-                if entry.file_name().to_string_lossy().starts_with("coretemp.") {
-                    if let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
-                        for entry in read_dir.flatten() {
-                            let path = entry.path();
-
-                            if path.join("temp1_input").exists() {
-                                // It's possible that there are dupes (represented by symlinks) - the easy
-                                // way is to just substitute the parent directory and check if the hwmon
-                                // variant exists already in a set.
-                                //
-                                // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
-                                if let Some(child) = path.file_name() {
-                                    let to_check_path = Path::new("/sys/class/hwmon").join(child);
-
-                                    if !dirs.contains(&to_check_path) {
-                                        dirs.insert(path);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    let mut dirs = HashSet::default();
-    add_hwmon(&mut dirs);
-    let num_hwmon = dirs.len();
-    add_coretemp(&mut dirs);
-
-    // let mut thermal_types = HashSet::default();
+    let (dirs, num_hwmon) = get_hwmon_candidates();
 
     // Note that none of this is async if we ever go back to it, but sysfs is in
     // memory, so in theory none of this should block if we're slightly careful.
@@ -140,112 +140,119 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
             let device = file_path.join("device");
             let power_state = device.join("power_state");
             if power_state.exists() {
-                let state = fs::read_to_string(power_state)?;
-                let state = state.trim();
-                // The zenpower3 kernel module (incorrectly?) reports "unknown", causing this check
-                // to fail and temperatures to appear as zero instead of having the file not exist.
-                //
-                // Their self-hosted git instance has disabled sign up, so this bug cant be reported either.
-                state == "D0" || state == "unknown"
+                if let Ok(state) = fs::read_to_string(power_state) {
+                    let state = state.trim();
+                    // The zenpower3 kernel module (incorrectly?) reports "unknown", causing this check
+                    // to fail and temperatures to appear as zero instead of having the file not exist.
+                    //
+                    // Their self-hosted git instance has disabled sign up, so this bug cant be reported either.
+                    state == "D0" || state == "unknown"
+                } else {
+                    true
+                }
             } else {
                 true
             }
         };
 
-        // Enumerate the devices temperature sensors
-        for entry in file_path.read_dir()? {
-            let file = entry?;
-            let name = file.file_name();
-            let name = name
-                .to_str()
-                .ok_or_else(|| anyhow!("temperature device filenames should be ASCII"))?;
+        if let Ok(dir_entries) = file_path.read_dir() {
+            // Enumerate the devices temperature sensors
+            for file in dir_entries.flatten() {
+                let name = file.file_name();
+                let name = name.to_string_lossy();
 
-            // We only want temperature sensors, skip others early
-            if !(name.starts_with("temp") && name.ends_with("input")) {
-                continue;
-            }
-
-            let temp_path = file.path();
-            let temp_label = file_path.join(name.replace("input", "label"));
-            let temp_label = fs::read_to_string(temp_label).ok();
-
-            // Do some messing around to get a more sensible name for sensors:
-            // - For GPUs, this will use the kernel device name, ex `card0`
-            // - For nvme drives, this will also use the kernel name, ex `nvme0`.
-            //   This is found differently than for GPUs
-            // - For whatever acpitz is, on my machine this is now `thermal_zone0`.
-            // - For k10temp, this will still be k10temp, but it has to be handled special.
-            let human_hwmon_name = {
-                let device = file_path.join("device");
-                // This will exist for GPUs but not others, this is how we find their kernel name.
-                let drm = device.join("drm");
-                if drm.exists() {
-                    // This should never actually be empty
-                    let mut gpu = None;
-                    for card in drm.read_dir()? {
-                        let card = card?;
-                        let name = card.file_name().to_str().unwrap_or_default().to_owned();
-                        if name.starts_with("card") {
-                            if let Some(hwmon_name) = hwmon_name.as_ref() {
-                                gpu = Some(format!("{} ({})", name, hwmon_name.trim()));
-                            } else {
-                                gpu = Some(name)
-                            }
-                            break;
-                        }
-                    }
-                    gpu
-                } else {
-                    // This little mess is to account for stuff like k10temp. This is needed because the
-                    // `device` symlink points to `nvme*` for nvme drives, but to PCI buses for anything
-                    // else. If the first character is alphabetic, it's an actual name like k10temp or
-                    // nvme0, not a PCI bus.
-                    let link = fs::read_link(device)?
-                        .file_name()
-                        .map(|f| f.to_str().unwrap_or_default().to_owned())
-                        .unwrap();
-                    if link.as_bytes()[0].is_ascii_alphabetic() {
-                        if let Some(hwmon_name) = hwmon_name.as_ref() {
-                            Some(format!("{} ({})", link, hwmon_name.trim()))
-                        } else {
-                            Some(link)
-                        }
-                    } else {
-                        hwmon_name.clone()
-                    }
+                // We only want temperature sensors, skip others early
+                if !(name.starts_with("temp") && name.ends_with("input")) {
+                    continue;
                 }
-            };
 
-            let name = match (&human_hwmon_name, &temp_label) {
-                (Some(name), Some(label)) => format!("{}: {}", name.trim(), label.trim()),
-                (None, Some(label)) => label.to_string(),
-                (Some(name), None) => name.to_string(),
-                (None, None) => String::default(),
-            };
+                let temp_path = file.path();
+                let temp_label = file_path.join(name.replace("input", "label"));
+                let temp_label = fs::read_to_string(temp_label).ok();
 
-            if is_temp_filtered(filter, &name) {
-                let temp = if should_read_temp {
-                    if let Ok(temp) = read_temp(&temp_path) {
-                        temp
+                // Do some messing around to get a more sensible name for sensors:
+                // - For GPUs, this will use the kernel device name, ex `card0`
+                // - For nvme drives, this will also use the kernel name, ex `nvme0`.
+                //   This is found differently than for GPUs
+                // - For whatever acpitz is, on my machine this is now `thermal_zone0`.
+                // - For k10temp, this will still be k10temp, but it has to be handled special.
+                let human_hwmon_name = {
+                    let device = file_path.join("device");
+                    // This will exist for GPUs but not others, this is how we find their kernel name.
+                    let drm = device.join("drm");
+                    if drm.exists() {
+                        // This should never actually be empty.
+                        let mut gpu = None;
+
+                        if let Ok(cards) = drm.read_dir() {
+                            for card in cards.flatten() {
+                                let name = card.file_name().to_str().unwrap_or_default().to_owned();
+                                if name.starts_with("card") {
+                                    if let Some(hwmon_name) = hwmon_name.as_ref() {
+                                        gpu = Some(format!("{} ({})", name, hwmon_name.trim()));
+                                    } else {
+                                        gpu = Some(name)
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        gpu
                     } else {
-                        continue;
+                        // This little mess is to account for stuff like k10temp. This is needed because the
+                        // `device` symlink points to `nvme*` for nvme drives, but to PCI buses for anything
+                        // else. If the first character is alphabetic, it's an actual name like k10temp or
+                        // nvme0, not a PCI bus.
+                        fs::read_link(device).ok().and_then(|link| {
+                            let link = link
+                                .file_name()
+                                .map(|f| f.to_str().unwrap_or_default().to_owned())
+                                .unwrap();
+
+                            if link.as_bytes()[0].is_ascii_alphabetic() {
+                                if let Some(hwmon_name) = hwmon_name.as_ref() {
+                                    Some(format!("{} ({})", link, hwmon_name.trim()))
+                                } else {
+                                    Some(link)
+                                }
+                            } else {
+                                hwmon_name.clone()
+                            }
+                        })
                     }
-                } else {
-                    0.0
                 };
 
-                temperatures.push(TempHarvest {
-                    name,
-                    temperature: convert_temp_unit(temp, temp_type),
-                });
+                let name = match (&human_hwmon_name, &temp_label) {
+                    (Some(name), Some(label)) => format!("{}: {}", name.trim(), label.trim()),
+                    (None, Some(label)) => label.to_string(),
+                    (Some(name), None) => name.to_string(),
+                    (None, None) => String::default(),
+                };
+
+                if is_temp_filtered(filter, &name) {
+                    let temp = if should_read_temp {
+                        if let Ok(temp) = read_temp(&temp_path) {
+                            temp
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        0.0
+                    };
+
+                    temperatures.push(TempHarvest {
+                        name,
+                        temperature: convert_temp_unit(temp, temp_type),
+                    });
+                }
             }
         }
     }
 
-    Ok(HwmonResults {
+    HwmonResults {
         temperatures,
         num_hwmon,
-    })
+    }
 }
 
 /// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
@@ -253,7 +260,7 @@ fn get_from_hwmon(temp_type: &TemperatureType, filter: &Option<Filter>) -> Resul
 ///
 /// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
 /// for more details.
-fn get_from_thermal_zone(
+fn add_thermal_zone_temperatures(
     temperatures: &mut Vec<TempHarvest>, temp_type: &TemperatureType, filter: &Option<Filter>,
 ) {
     let path = Path::new("/sys/class/thermal");
@@ -301,10 +308,10 @@ fn get_from_thermal_zone(
 pub fn get_temperature_data(
     temp_type: &TemperatureType, filter: &Option<Filter>,
 ) -> Result<Option<Vec<TempHarvest>>> {
-    let mut results = get_from_hwmon(temp_type, filter).unwrap_or_default();
+    let mut results = hwmon_temperatures(temp_type, filter);
 
     if results.num_hwmon == 0 {
-        get_from_thermal_zone(&mut results.temperatures, temp_type, filter);
+        add_thermal_zone_temperatures(&mut results.temperatures, temp_type, filter);
     }
 
     #[cfg(feature = "nvidia")]
