@@ -46,7 +46,7 @@ pub struct IoData {
 pub type IoHarvest = HashMap<String, Option<IoData>>;
 
 cfg_if! {
-    if #[cfg(not(target_os = "freebsd"))] {
+    if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))] {
         mod io_counters;
         pub use io_counters::IoCounters;
 
@@ -67,6 +67,10 @@ cfg_if! {
             }
 
             Ok(io_hash)
+        }
+    } else if #[cfg(not(target_os = "freebsd"))] {
+        pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
+            anyhow::bail!("Unsupported OS");
         }
     }
 }
