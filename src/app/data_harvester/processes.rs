@@ -1,7 +1,7 @@
 //! Data collection for processes.
 //!
 //! For Linux, this is handled by a custom set of functions.
-//! For Windows and macOS, this is handled by sysinfo.
+//! For Windows, macOS, FreeBSD, Android, and Linux, this is handled by sysinfo.
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
@@ -9,15 +9,13 @@ cfg_if::cfg_if! {
         pub use self::linux::*;
     } else if #[cfg(target_os = "macos")] {
         pub mod macos;
-        mod macos_freebsd;
-        pub use self::macos::*;
+        pub(crate) use self::macos::*;
     } else if #[cfg(target_os = "windows")] {
         pub mod windows;
         pub use self::windows::*;
     } else if #[cfg(target_os = "freebsd")] {
         pub mod freebsd;
-        mod macos_freebsd;
-        pub use self::freebsd::*;
+        pub(crate) use self::freebsd::*;
     }
 }
 
@@ -30,7 +28,11 @@ cfg_if::cfg_if! {
 
 use std::{borrow::Cow, time::Duration};
 
-use crate::Pid;
+use sysinfo::SystemExt;
+
+use crate::{utils::error, Pid};
+
+use super::DataCollector;
 
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
@@ -94,5 +96,55 @@ impl ProcessHarvest {
         self.total_read_bytes += rhs.total_read_bytes;
         self.total_write_bytes += rhs.total_write_bytes;
         self.time += rhs.time;
+    }
+}
+
+impl DataCollector {
+    pub(crate) fn get_processes(&mut self) -> error::Result<Vec<ProcessHarvest>> {
+        let total_memory = if let Some(memory) = &self.data.memory {
+            memory.total_bytes
+        } else {
+            self.sys.total_memory()
+        };
+
+        #[cfg(target_os = "linux")]
+        {
+            let current_instant = self.data.collection_time;
+
+            let prev_proc = PrevProc {
+                prev_idle: &mut self.prev_idle,
+                prev_non_idle: &mut self.prev_non_idle,
+            };
+
+            let proc_harvest_options = ProcHarvestOptions {
+                use_current_cpu_total: self.use_current_cpu_total,
+                unnormalized_cpu: self.unnormalized_cpu,
+            };
+
+            let time_diff = current_instant
+                .duration_since(self.last_collection_time)
+                .as_secs();
+
+            get_process_data(
+                &self.sys,
+                prev_proc,
+                &mut self.pid_mapping,
+                proc_harvest_options,
+                time_diff,
+                total_memory,
+                &mut self.user_table,
+            )
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            get_process_data(
+                &self.sys,
+                self.use_current_cpu_total,
+                self.unnormalized_cpu,
+                total_memory,
+                #[cfg(target_family = "unix")]
+                &mut self.user_table,
+            )
+        }
     }
 }

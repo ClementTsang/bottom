@@ -204,7 +204,7 @@ impl DataCollection {
     }
 
     pub fn eat_data(&mut self, harvested_data: Box<Data>) {
-        let harvested_time = harvested_data.last_collection_time;
+        let harvested_time = harvested_data.collection_time;
         let mut new_entry = TimedData::default();
 
         // Network
