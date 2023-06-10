@@ -119,7 +119,6 @@ impl DataCollector {
                     .duration_since(self.last_collection_time)
                     .as_secs();
 
-
                 linux_process_data(
                     &self.sys,
                     prev_proc,

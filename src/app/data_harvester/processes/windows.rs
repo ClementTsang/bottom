@@ -1,18 +1,20 @@
-//! Process data collection for Windows.  Uses sysinfo.
+//! Process data collection for Windows. Uses sysinfo.
 
 use std::time::Duration;
 
-use sysinfo::{CpuExt, PidExt, ProcessExt, System, SystemExt, UserExt};
+use sysinfo::{CpuExt, PidExt, ProcessExt, SystemExt, UserExt};
 
 use super::ProcessHarvest;
+
+use crate::data_harvester::DataCollector;
 
 pub fn sysinfo_process_data(
     collector: &mut DataCollector,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
-    let sys = &self.sys;
-    let use_current_cpu_total = self.use_current_cpu_total;
-    let unnormalized_cpu = self.unnormalized_cpu;
-    let total_memory = self.total_memory();
+    let sys = &collector.sys;
+    let use_current_cpu_total = collector.use_current_cpu_total;
+    let unnormalized_cpu = collector.unnormalized_cpu;
+    let total_memory = collector.total_memory();
 
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
