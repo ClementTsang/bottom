@@ -6,7 +6,7 @@ use std::process::Command;
 use hashbrown::HashMap;
 use serde::{Deserialize, Deserializer};
 
-use crate::data_harvester::deserialize_xo;
+use crate::data_harvester::{deserialize_xo, processes::UnixProcessExt};
 use crate::Pid;
 
 #[derive(Deserialize, Debug, Default)]

@@ -102,31 +102,13 @@ impl DataCollector {
     pub(crate) fn get_processes(&mut self) -> error::Result<Vec<ProcessHarvest>> {
         cfg_if! {
             if #[cfg(target_os = "linux")] {
-                let total_memory = self.total_memory();
-                let current_instant = self.data.collection_time;
-
-                let prev_proc = PrevProc {
-                    prev_idle: &mut self.prev_idle,
-                    prev_non_idle: &mut self.prev_non_idle,
-                };
-
-                let proc_harvest_options = ProcHarvestOptions {
-                    use_current_cpu_total: self.use_current_cpu_total,
-                    unnormalized_cpu: self.unnormalized_cpu,
-                };
-
-                let time_diff = current_instant
+                let time_diff = self.data.collection_time
                     .duration_since(self.last_collection_time)
                     .as_secs();
 
                 linux_process_data(
-                    &self.sys,
-                    prev_proc,
-                    &mut self.pid_mapping,
-                    proc_harvest_options,
+                    self,
                     time_diff,
-                    total_memory,
-                    &mut self.user_table,
                 )
             } else if #[cfg(any(target_os = "freebsd", target_os = "macos", target_os = "windows", target_os = "android", target_os = "ios"))] {
                 sysinfo_process_data(self)

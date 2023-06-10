@@ -8,6 +8,7 @@ use itertools::Itertools;
 use sysinfo::{PidExt, ProcessExt};
 
 use super::UnixProcessExt;
+
 use crate::Pid;
 mod sysctl_bindings;
 
