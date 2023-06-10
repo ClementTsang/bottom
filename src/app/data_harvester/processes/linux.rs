@@ -269,7 +269,7 @@ pub(crate) fn get_process_data(
     sys: &System, prev_proc: PrevProc<'_>, pid_mapping: &mut HashMap<Pid, PrevProcDetails>,
     proc_harvest_options: ProcHarvestOptions, time_difference_in_secs: u64, total_memory: u64,
     user_table: &mut UserTable,
-) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+) -> error::Result<Vec<ProcessHarvest>> {
     let ProcHarvestOptions {
         use_current_cpu_total,
         unnormalized_cpu,

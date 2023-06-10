@@ -7,13 +7,13 @@ use hashbrown::HashMap;
 use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System, SystemExt};
 
 use super::ProcessHarvest;
-use crate::{data_harvester::processes::UserTable, utils::error::Result, Pid};
+use crate::{data_harvester::processes::UserTable, utils::error, Pid};
 
 pub(crate) trait UnixProcessExt {
     fn get_process_data(
         sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
         user_table: &mut UserTable,
-    ) -> Result<Vec<ProcessHarvest>> {
+    ) -> error::Result<Vec<ProcessHarvest>> {
         let mut process_vector: Vec<ProcessHarvest> = Vec::new();
         let process_hashmap = sys.processes();
         let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;

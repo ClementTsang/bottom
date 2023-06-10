@@ -3,7 +3,7 @@
 //! For Linux, this is handled by a custom set of functions.
 //! For Windows, macOS, FreeBSD, Android, and Linux, this is handled by sysinfo.
 
-cfg_if::cfg_if! {
+cfg_if! {
     if #[cfg(target_os = "linux")] {
         pub mod linux;
         pub use self::linux::*;
@@ -19,7 +19,7 @@ cfg_if::cfg_if! {
     }
 }
 
-cfg_if::cfg_if! {
+cfg_if! {
     if #[cfg(target_family = "unix")] {
         pub mod unix;
         pub use self::unix::*;
@@ -28,6 +28,7 @@ cfg_if::cfg_if! {
 
 use std::{borrow::Cow, time::Duration};
 
+use cfg_if::cfg_if;
 use sysinfo::SystemExt;
 
 use crate::{utils::error, Pid};
@@ -107,44 +108,45 @@ impl DataCollector {
             self.sys.total_memory()
         };
 
-        #[cfg(target_os = "linux")]
-        {
-            let current_instant = self.data.collection_time;
+        cfg_if! {
+            if #[cfg(target_os = "linux")] {
+                let current_instant = self.data.collection_time;
 
-            let prev_proc = PrevProc {
-                prev_idle: &mut self.prev_idle,
-                prev_non_idle: &mut self.prev_non_idle,
-            };
+                let prev_proc = PrevProc {
+                    prev_idle: &mut self.prev_idle,
+                    prev_non_idle: &mut self.prev_non_idle,
+                };
 
-            let proc_harvest_options = ProcHarvestOptions {
-                use_current_cpu_total: self.use_current_cpu_total,
-                unnormalized_cpu: self.unnormalized_cpu,
-            };
+                let proc_harvest_options = ProcHarvestOptions {
+                    use_current_cpu_total: self.use_current_cpu_total,
+                    unnormalized_cpu: self.unnormalized_cpu,
+                };
 
-            let time_diff = current_instant
-                .duration_since(self.last_collection_time)
-                .as_secs();
+                let time_diff = current_instant
+                    .duration_since(self.last_collection_time)
+                    .as_secs();
 
-            get_process_data(
-                &self.sys,
-                prev_proc,
-                &mut self.pid_mapping,
-                proc_harvest_options,
-                time_diff,
-                total_memory,
-                &mut self.user_table,
-            )
-        }
-        #[cfg(not(target_os = "linux"))]
-        {
-            get_process_data(
-                &self.sys,
-                self.use_current_cpu_total,
-                self.unnormalized_cpu,
-                total_memory,
-                #[cfg(target_family = "unix")]
-                &mut self.user_table,
-            )
+                get_process_data(
+                    &self.sys,
+                    prev_proc,
+                    &mut self.pid_mapping,
+                    proc_harvest_options,
+                    time_diff,
+                    total_memory,
+                    &mut self.user_table,
+                )
+            } else if #[cfg(any(target_os = "freebsd", target_os = "macos", target_os = "windows", target_os = "android", target_os = "ios"))] {
+                get_process_data(
+                    &self.sys,
+                    self.use_current_cpu_total,
+                    self.unnormalized_cpu,
+                    total_memory,
+                    #[cfg(target_family = "unix")]
+                    &mut self.user_table,
+                )
+            } else {
+                Err(error::BottomError::GenericError("Unsupported OS".to_string()))
+            }
         }
     }
 }
