@@ -12,7 +12,6 @@ cfg_if! {
     } else if #[cfg(target_os = "windows")] {
         mod windows;
         pub(crate) use self::windows::*;
-
     } else if #[cfg(target_os = "linux")] {
         mod unix;
         pub(crate) use self::unix::*;
