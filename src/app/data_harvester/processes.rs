@@ -3,6 +3,13 @@
 //! For Linux, this is handled by a custom set of functions.
 //! For Windows, macOS, FreeBSD, Android, and Linux, this is handled by sysinfo.
 
+use cfg_if::cfg_if;
+use std::{borrow::Cow, time::Duration};
+
+use super::DataCollector;
+
+use crate::{utils::error, Pid};
+
 cfg_if! {
     if #[cfg(target_os = "linux")] {
         pub mod linux;
@@ -25,15 +32,6 @@ cfg_if! {
         pub use self::unix::*;
     }
 }
-
-use std::{borrow::Cow, time::Duration};
-
-use cfg_if::cfg_if;
-use sysinfo::SystemExt;
-
-use crate::{utils::error, Pid};
-
-use super::DataCollector;
 
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
@@ -102,14 +100,9 @@ impl ProcessHarvest {
 
 impl DataCollector {
     pub(crate) fn get_processes(&mut self) -> error::Result<Vec<ProcessHarvest>> {
-        let total_memory = if let Some(memory) = &self.data.memory {
-            memory.total_bytes
-        } else {
-            self.sys.total_memory()
-        };
-
         cfg_if! {
             if #[cfg(target_os = "linux")] {
+                let total_memory = self.total_memory();
                 let current_instant = self.data.collection_time;
 
                 let prev_proc = PrevProc {
@@ -126,7 +119,8 @@ impl DataCollector {
                     .duration_since(self.last_collection_time)
                     .as_secs();
 
-                get_process_data(
+
+                linux_process_data(
                     &self.sys,
                     prev_proc,
                     &mut self.pid_mapping,
@@ -136,14 +130,7 @@ impl DataCollector {
                     &mut self.user_table,
                 )
             } else if #[cfg(any(target_os = "freebsd", target_os = "macos", target_os = "windows", target_os = "android", target_os = "ios"))] {
-                get_process_data(
-                    &self.sys,
-                    self.use_current_cpu_total,
-                    self.unnormalized_cpu,
-                    total_memory,
-                    #[cfg(target_family = "unix")]
-                    &mut self.user_table,
-                )
+                sysinfo_process_data(self)
             } else {
                 Err(error::BottomError::GenericError("Unsupported OS".to_string()))
             }

@@ -9,25 +9,28 @@ cfg_if! {
         mod process_ext;
         pub(crate) use process_ext::*;
 
-        use sysinfo::System;
         use super::ProcessHarvest;
 
+        use crate::app::data_harvester::DataCollector;
         use crate::utils::error;
 
-        pub fn get_process_data(
-            sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
-            user_table: &mut UserTable,
-        ) -> error::Result<Vec<ProcessHarvest>> {
+        pub fn sysinfo_process_data(collector: &mut DataCollector) -> error::Result<Vec<ProcessHarvest>> {
+            let sys = &collector.sys;
+            let use_current_cpu_total = collector.use_current_cpu_total;
+            let unnormalized_cpu = collector.unnormalized_cpu;
+            let total_memory = collector.total_memory();
+            let user_table = &mut collector.user_table;
+
             cfg_if! {
                 if #[cfg(target_os = "macos")] {
-                    crate::app::data_harvester::processes::MacOSProcessExt::get_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                    crate::app::data_harvester::processes::MacOSProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
                 } else if #[cfg(target_os = "freebsd")] {
-                    crate::app::data_harvester::processes::FreeBSDProcessExt::get_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                    crate::app::data_harvester::processes::FreeBSDProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
                 } else {
                     struct GenericProcessExt;
                     impl UnixProcessExt for GenericProcessExt {}
 
-                    GenericProcessExt::get_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                    GenericProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
                 }
             }
         }

@@ -6,9 +6,14 @@ use sysinfo::{CpuExt, PidExt, ProcessExt, System, SystemExt, UserExt};
 
 use super::ProcessHarvest;
 
-pub fn get_process_data(
-    sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
+pub fn sysinfo_process_data(
+    collector: &mut DataCollector,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+    let sys = &self.sys;
+    let use_current_cpu_total = self.use_current_cpu_total;
+    let unnormalized_cpu = self.unnormalized_cpu;
+    let total_memory = self.total_memory();
+
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
     let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;

@@ -426,6 +426,16 @@ impl DataCollector {
             self.data.io = disks::get_io_usage().ok();
         }
     }
+
+    /// Returns the total memory of the system.
+    #[inline]
+    fn total_memory(&self) -> u64 {
+        if let Some(memory) = &self.data.memory {
+            memory.total_bytes
+        } else {
+            self.sys.total_memory()
+        }
+    }
 }
 
 /// We set a sleep duration between 10ms and 250ms, ideally sysinfo's [`System::MINIMUM_CPU_UPDATE_INTERVAL`] + 1.

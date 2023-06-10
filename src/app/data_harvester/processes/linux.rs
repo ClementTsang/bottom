@@ -265,7 +265,7 @@ fn is_str_numeric(s: &str) -> bool {
     s.chars().all(|c| c.is_ascii_digit())
 }
 
-pub(crate) fn get_process_data(
+pub(crate) fn linux_process_data(
     sys: &System, prev_proc: PrevProc<'_>, pid_mapping: &mut HashMap<Pid, PrevProcDetails>,
     proc_harvest_options: ProcHarvestOptions, time_difference_in_secs: u64, total_memory: u64,
     user_table: &mut UserTable,

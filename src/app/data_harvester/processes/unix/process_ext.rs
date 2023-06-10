@@ -10,7 +10,7 @@ use super::ProcessHarvest;
 use crate::{data_harvester::processes::UserTable, utils::error, Pid};
 
 pub(crate) trait UnixProcessExt {
-    fn get_process_data(
+    fn sysinfo_process_data(
         sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
         user_table: &mut UserTable,
     ) -> error::Result<Vec<ProcessHarvest>> {
