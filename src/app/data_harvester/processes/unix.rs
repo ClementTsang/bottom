@@ -11,7 +11,7 @@ cfg_if! {
 
         use super::ProcessHarvest;
 
-        use crate::app::data_harvester::DataCollector;
+        use crate::app::data_harvester::{DataCollector, processes::*};
         use crate::utils::error;
 
         pub fn sysinfo_process_data(collector: &mut DataCollector) -> error::Result<Vec<ProcessHarvest>> {
@@ -23,13 +23,10 @@ cfg_if! {
 
             cfg_if! {
                 if #[cfg(target_os = "macos")] {
-                    crate::app::data_harvester::processes::MacOSProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                    MacOSProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
                 } else if #[cfg(target_os = "freebsd")] {
-                    crate::app::data_harvester::processes::FreeBSDProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                    FreeBSDProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
                 } else {
-                    struct GenericProcessExt;
-                    impl UnixProcessExt for GenericProcessExt {}
-
                     GenericProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
                 }
             }

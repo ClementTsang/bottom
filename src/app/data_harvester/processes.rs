@@ -23,6 +23,9 @@ cfg_if! {
     } else if #[cfg(target_os = "freebsd")] {
         pub mod freebsd;
         pub(crate) use self::freebsd::*;
+    } else if #[cfg(target_family = "unix")] {
+        pub(crate) struct GenericProcessExt;
+        impl UnixProcessExt for GenericProcessExt {}
     }
 }
 
