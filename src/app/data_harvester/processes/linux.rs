@@ -7,10 +7,11 @@ use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::time::Duration;
 
-use hashbrown::{HashMap, HashSet};
-use sysinfo::{ProcessStatus, System};
+use hashbrown::HashSet;
+use sysinfo::ProcessStatus;
 
 use super::{ProcessHarvest, UserTable};
+use crate::app::data_harvester::DataCollector;
 use crate::utils::error::{self, BottomError};
 use crate::Pid;
 
@@ -265,11 +266,21 @@ fn is_str_numeric(s: &str) -> bool {
     s.chars().all(|c| c.is_ascii_digit())
 }
 
-pub(crate) fn get_process_data(
-    sys: &System, prev_proc: PrevProc<'_>, pid_mapping: &mut HashMap<Pid, PrevProcDetails>,
-    proc_harvest_options: ProcHarvestOptions, time_difference_in_secs: u64, total_memory: u64,
-    user_table: &mut UserTable,
-) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+pub(crate) fn linux_process_data(
+    collector: &mut DataCollector, time_difference_in_secs: u64,
+) -> error::Result<Vec<ProcessHarvest>> {
+    let total_memory = collector.total_memory();
+    let prev_proc = PrevProc {
+        prev_idle: &mut collector.prev_idle,
+        prev_non_idle: &mut collector.prev_non_idle,
+    };
+    let proc_harvest_options = ProcHarvestOptions {
+        use_current_cpu_total: collector.use_current_cpu_total,
+        unnormalized_cpu: collector.unnormalized_cpu,
+    };
+    let pid_mapping = &mut collector.pid_mapping;
+    let user_table = &mut collector.user_table;
+
     let ProcHarvestOptions {
         use_current_cpu_total,
         unnormalized_cpu,
@@ -289,7 +300,7 @@ pub(crate) fn get_process_data(
     {
         if unnormalized_cpu {
             use sysinfo::SystemExt;
-            let num_processors = sys.cpus().len() as f64;
+            let num_processors = collector.sys.cpus().len() as f64;
 
             // Note we *divide* here because the later calculation divides `cpu_usage` - in effect,
             // multiplying over the number of cores.

@@ -1,33 +1,36 @@
 //! Unix-specific parts of process collection.
 
-use hashbrown::HashMap;
+mod user_table;
+use cfg_if::cfg_if;
+pub use user_table::*;
 
-use crate::utils::error;
+cfg_if! {
+    if #[cfg(all(target_family = "unix", not(target_os = "linux")))] {
+        mod process_ext;
+        pub(crate) use process_ext::*;
 
-#[derive(Debug, Default)]
-pub struct UserTable {
-    pub uid_user_mapping: HashMap<libc::uid_t, String>,
-}
+        use super::ProcessHarvest;
 
-impl UserTable {
-    pub fn get_uid_to_username_mapping(&mut self, uid: libc::uid_t) -> error::Result<String> {
-        if let Some(user) = self.uid_user_mapping.get(&uid) {
-            Ok(user.clone())
-        } else {
-            // SAFETY: getpwuid returns a null pointer if no passwd entry is found for the uid
-            let passwd = unsafe { libc::getpwuid(uid) };
+        use crate::app::data_harvester::{DataCollector, processes::*};
+        use crate::utils::error;
 
-            if passwd.is_null() {
-                Err(error::BottomError::QueryError("Missing passwd".into()))
-            } else {
-                // SAFETY: We return early if passwd is null.
-                let username = unsafe { std::ffi::CStr::from_ptr((*passwd).pw_name) }
-                    .to_str()?
-                    .to_string();
-                self.uid_user_mapping.insert(uid, username.clone());
+        pub fn sysinfo_process_data(collector: &mut DataCollector) -> error::Result<Vec<ProcessHarvest>> {
+            let sys = &collector.sys;
+            let use_current_cpu_total = collector.use_current_cpu_total;
+            let unnormalized_cpu = collector.unnormalized_cpu;
+            let total_memory = collector.total_memory();
+            let user_table = &mut collector.user_table;
 
-                Ok(username)
+            cfg_if! {
+                if #[cfg(target_os = "macos")] {
+                    MacOSProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                } else if #[cfg(target_os = "freebsd")] {
+                    FreeBSDProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                } else {
+                    GenericProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                }
             }
         }
+
     }
 }

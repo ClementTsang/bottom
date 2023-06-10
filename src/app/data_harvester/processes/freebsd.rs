@@ -1,14 +1,13 @@
 //! Process data collection for FreeBSD.  Uses sysinfo.
 
 use std::io;
+use std::process::Command;
 
 use hashbrown::HashMap;
 use serde::{Deserialize, Deserializer};
-use sysinfo::System;
 
-use super::ProcessHarvest;
-use crate::data_harvester::deserialize_xo;
-use crate::data_harvester::processes::UserTable;
+use crate::data_harvester::{deserialize_xo, processes::UnixProcessExt};
+use crate::Pid;
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -25,36 +24,34 @@ struct ProcessRow {
     percent_cpu: f64,
 }
 
-pub fn get_process_data(
-    sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
-    user_table: &mut UserTable,
-) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
-    super::macos_freebsd::get_process_data(
-        sys,
-        use_current_cpu_total,
-        unnormalized_cpu,
-        total_memory,
-        user_table,
-        get_freebsd_process_cpu_usage,
-    )
-}
+pub(crate) struct FreeBSDProcessExt;
 
-fn get_freebsd_process_cpu_usage(pids: &[i32]) -> io::Result<HashMap<i32, f64>> {
-    if pids.is_empty() {
-        return Ok(HashMap::new());
+impl UnixProcessExt for FreeBSDProcessExt {
+    #[inline]
+    fn has_backup_proc_cpu_fn() -> bool {
+        true
     }
 
-    let output = std::process::Command::new("ps")
-        .args(["--libxo", "json", "-o", "pid,pcpu", "-p"])
-        .args(pids.iter().map(i32::to_string))
-        .output()?;
-    deserialize_xo("process-information", &output.stdout).map(|process_info: ProcessInformation| {
-        process_info
-            .process
-            .into_iter()
-            .map(|row| (row.pid, row.percent_cpu))
-            .collect()
-    })
+    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<HashMap<Pid, f64>> {
+        if pids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let output = Command::new("ps")
+            .args(["--libxo", "json", "-o", "pid,pcpu", "-p"])
+            .args(pids.iter().map(i32::to_string))
+            .output()?;
+
+        deserialize_xo("process-information", &output.stdout).map(
+            |process_info: ProcessInformation| {
+                process_info
+                    .process
+                    .into_iter()
+                    .map(|row| (row.pid, row.percent_cpu))
+                    .collect()
+            },
+        )
+    }
 }
 
 fn pid<'de, D>(deserializer: D) -> Result<i32, D::Error>
