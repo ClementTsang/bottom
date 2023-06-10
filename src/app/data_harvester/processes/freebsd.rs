@@ -5,11 +5,9 @@ use std::process::Command;
 
 use hashbrown::HashMap;
 use serde::{Deserialize, Deserializer};
-use sysinfo::System;
 
-use super::ProcessHarvest;
 use crate::data_harvester::deserialize_xo;
-use crate::data_harvester::processes::UserTable;
+use crate::Pid;
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -34,7 +32,7 @@ impl UnixProcessExt for FreeBSDProcessExt {
         true
     }
 
-    fn backup_proc_cpu(pids: &[Pid]) -> std::io::Result<HashMap<Pid, f64>> {
+    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<HashMap<Pid, f64>> {
         if pids.is_empty() {
             return Ok(HashMap::new());
         }

@@ -1,5 +1,6 @@
 //! Process data collection for macOS.  Uses sysinfo and custom bindings.
-//!
+
+use std::io;
 use std::process::Command;
 
 use hashbrown::HashMap;
@@ -18,7 +19,7 @@ impl UnixProcessExt for MacOSProcessExt {
         true
     }
 
-    fn backup_proc_cpu(pids: &[Pid]) -> std::io::Result<HashMap<Pid, f64>> {
+    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<HashMap<Pid, f64>> {
         let output = Command::new("ps")
             .args(["-o", "pid=,pcpu=", "-p"])
             .arg(
