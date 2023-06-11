@@ -14,7 +14,9 @@ use crate::app::{
     Filter,
 };
 
-#[derive(Default)]
+const EMPTY_NAME: &str = "Unknown";
+
+/// Returned results from grabbing hwmon/coretemp temperature sensor values/names.
 struct HwmonResults {
     temperatures: Vec<TempHarvest>,
     num_hwmon: usize,
@@ -113,6 +115,12 @@ fn humanize_name(name: String, sensor_name: Option<&String>) -> String {
 
 #[inline]
 fn counted_name(seen_names: &mut HashMap<String, u32>, name: String) -> String {
+    let name = if name.is_empty() {
+        EMPTY_NAME.to_string()
+    } else {
+        name
+    };
+
     if let Some(count) = seen_names.get_mut(&name) {
         *count += 1;
         format!("{name} ({})", *count)
@@ -136,15 +144,11 @@ fn finalize_name(
         (Some(name), None) => name,
         (None, None) => match &fallback_sensor_name {
             Some(sensor_name) => sensor_name.clone(),
-            None => "Unknown".to_string(),
+            None => EMPTY_NAME.to_string(),
         },
     };
 
-    if !candidate_name.is_empty() {
-        counted_name(seen_names, candidate_name)
-    } else {
-        candidate_name
-    }
+    counted_name(seen_names, candidate_name)
 }
 
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon` and
@@ -276,11 +280,6 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                     }
                 };
 
-                #[cfg(feature = "log")]
-                {
-                    log::debug!("hwmon name: {hwmon_name:?}, sensor label: {sensor_label:?}, sensor_name: {sensor_name:?}");
-                }
-
                 let name = finalize_name(hwmon_name, sensor_label, &sensor_name, &mut seen_names);
 
                 if is_temp_filtered(filter, &name) {
@@ -372,7 +371,7 @@ pub fn get_temperature_data(
 mod tests {
     use hashbrown::HashMap;
 
-    use crate::app::data_harvester::temperature::linux::finalize_name;
+    use super::finalize_name;
 
     #[test]
     fn test_finalize_name() {
@@ -428,6 +427,26 @@ mod tests {
         assert_eq!(
             finalize_name(None, None, &Some("test".to_string()), &mut seen_names),
             "test (1)"
+        );
+
+        assert_eq!(
+            finalize_name(None, None, &None, &mut seen_names),
+            "Unknown (1)"
+        );
+
+        assert_eq!(
+            finalize_name(Some(String::default()), None, &None, &mut seen_names),
+            "Unknown (2)"
+        );
+
+        assert_eq!(
+            finalize_name(None, Some(String::default()), &None, &mut seen_names),
+            "Unknown (3)"
+        );
+
+        assert_eq!(
+            finalize_name(None, None, &Some(String::default()), &mut seen_names),
+            "Unknown (4)"
         );
     }
 }
