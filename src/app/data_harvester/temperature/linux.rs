@@ -124,17 +124,17 @@ fn counted_name(seen_names: &mut HashMap<String, u32>, name: String) -> String {
 
 #[inline]
 fn finalize_name(
-    hwmon_name: Option<String>, sensor_label: Option<String>, sensor_name: &Option<String>,
-    seen_names: &mut HashMap<String, u32>,
+    hwmon_name: Option<String>, sensor_label: Option<String>,
+    fallback_sensor_name: &Option<String>, seen_names: &mut HashMap<String, u32>,
 ) -> String {
     let candidate_name = match (hwmon_name, sensor_label) {
         (Some(name), Some(label)) => format!("{name}: {label}"),
-        (None, Some(label)) => match &sensor_name {
+        (None, Some(label)) => match &fallback_sensor_name {
             Some(sensor_name) => format!("{sensor_name}: {label}"),
             None => label,
         },
         (Some(name), None) => name,
-        (None, None) => match &sensor_name {
+        (None, None) => match &fallback_sensor_name {
             Some(sensor_name) => sensor_name.clone(),
             None => "Unknown".to_string(),
         },
@@ -377,6 +377,46 @@ mod tests {
     #[test]
     fn test_finalize_name() {
         let mut seen_names = HashMap::new();
+
+        assert_eq!(
+            finalize_name(
+                Some("hwmon".to_string()),
+                Some("sensor".to_string()),
+                &Some("test".to_string()),
+                &mut seen_names
+            ),
+            "hwmon: sensor"
+        );
+
+        assert_eq!(
+            finalize_name(
+                Some("hwmon".to_string()),
+                None,
+                &Some("test".to_string()),
+                &mut seen_names
+            ),
+            "hwmon"
+        );
+
+        assert_eq!(
+            finalize_name(
+                None,
+                Some("sensor".to_string()),
+                &Some("test".to_string()),
+                &mut seen_names
+            ),
+            "test: sensor"
+        );
+
+        assert_eq!(
+            finalize_name(
+                Some("hwmon".to_string()),
+                Some("sensor".to_string()),
+                &Some("test".to_string()),
+                &mut seen_names
+            ),
+            "hwmon: sensor (1)"
+        );
 
         assert_eq!(
             finalize_name(None, None, &Some("test".to_string()), &mut seen_names),
