@@ -99,15 +99,26 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
 #[inline]
 fn read_to_string_lossy<P: AsRef<Path>>(path: P) -> Option<String> {
     fs::read(path)
-        .map(|v| String::from_utf8_lossy(&v).to_string())
+        .map(|v| String::from_utf8_lossy(&v).trim().to_string())
         .ok()
 }
 
 #[inline]
 fn humanize_name(name: String, sensor_name: Option<&String>) -> String {
     match sensor_name {
-        Some(ty) => format!("{name} ({})", ty.trim()),
+        Some(ty) => format!("{name} ({ty})"),
         None => name,
+    }
+}
+
+#[inline]
+fn counted_name(seen_names: &mut HashMap<String, u32>, name: String) -> String {
+    if let Some(count) = seen_names.get_mut(&name) {
+        *count += 1;
+        format!("{name} ({})", *count)
+    } else {
+        seen_names.insert(name.clone(), 0);
+        name
     }
 }
 
@@ -131,6 +142,7 @@ fn humanize_name(name: String, sensor_name: Option<&String>) -> String {
 /// reading, and not be able to re-enter ACPI D3cold.
 fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> HwmonResults {
     let mut temperatures: Vec<TempHarvest> = vec![];
+    let mut seen_names: HashMap<String, u32> = HashMap::new();
 
     let (dirs, num_hwmon) = get_hwmon_candidates();
 
@@ -199,43 +211,43 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                     // This will exist for GPUs but not others, this is how we find their kernel name.
                     let drm = device.join("drm");
                     if drm.exists() {
-                        // This should never actually be empty. If it is though, we'll fall back to the sensor name.
+                        // This should never actually be empty. If it is though, we'll fall back to the sensor name
+                        // later on.
                         let mut gpu = None;
 
                         if let Ok(cards) = drm.read_dir() {
                             for card in cards.flatten() {
-                                let name = card.file_name().to_str().unwrap_or_default().to_owned();
-                                if name.starts_with("card") {
-                                    gpu = Some(humanize_name(name, sensor_name.as_ref()));
-                                    break;
+                                if let Some(name) = card.file_name().to_str() {
+                                    if name.starts_with("card") {
+                                        gpu = Some(humanize_name(
+                                            name.trim().to_string(),
+                                            sensor_name.as_ref(),
+                                        ));
+                                        break;
+                                    }
                                 }
                             }
                         }
 
-                        if gpu.is_some() {
-                            gpu
-                        } else {
-                            sensor_name.clone()
-                        }
+                        gpu
                     } else {
                         // This little mess is to account for stuff like k10temp. This is needed because the
                         // `device` symlink points to `nvme*` for nvme drives, but to PCI buses for anything
                         // else. If the first character is alphabetic, it's an actual name like k10temp or
                         // nvme0, not a PCI bus.
-                        if let Ok(link) = fs::read_link(device) {
+                        fs::read_link(device).ok().and_then(|link| {
                             let link = link
                                 .file_name()
-                                .map(|f| f.to_str().unwrap_or_default().to_owned());
+                                .and_then(|f| f.to_str())
+                                .map(|s| s.trim().to_owned());
 
                             match link {
                                 Some(link) if link.as_bytes()[0].is_ascii_alphabetic() => {
                                     Some(humanize_name(link, sensor_name.as_ref()))
                                 }
-                                _ => sensor_name.clone(),
+                                _ => None,
                             }
-                        } else {
-                            sensor_name.clone()
-                        }
+                        })
                     }
                 };
 
@@ -244,11 +256,18 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                     log::debug!("hwmon name: {hwmon_name:?}, temp label: {temp_label:?}");
                 }
 
-                let name = match (hwmon_name, temp_label) {
-                    (Some(name), Some(label)) => format!("{}: {}", name.trim(), label.trim()),
-                    (None, Some(label)) => label,
-                    (Some(name), None) => name,
-                    (None, None) => String::default(),
+                let name = {
+                    let name = match (hwmon_name, temp_label) {
+                        (Some(name), Some(label)) => format!("{name}: {label}"),
+                        (None, Some(label)) => match &sensor_name {
+                            Some(sensor_name) => format!("{sensor_name}: {label}"),
+                            None => label,
+                        },
+                        (Some(name), None) => name,
+                        (None, None) => String::default(),
+                    };
+
+                    counted_name(&mut seen_names, name)
                 };
 
                 if is_temp_filtered(filter, &name) {
@@ -278,7 +297,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 }
 
 /// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
-/// [`get_from_hwmon`] doesn't return anything.
+/// [`hwmon_temperatures`] doesn't return anything.
 ///
 /// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
 /// for more details.
@@ -301,19 +320,11 @@ fn add_thermal_zone_temperatures(
             let file_path = entry.path();
             let name_path = file_path.join("type");
 
-            if let Ok(name) = fs::read_to_string(name_path) {
-                let name = name.trim_end();
-
-                if is_temp_filtered(filter, name) {
+            if let Some(name) = read_to_string_lossy(name_path) {
+                if is_temp_filtered(filter, &name) {
                     let temp_path = file_path.join("temp");
                     if let Ok(temp) = read_temp(&temp_path) {
-                        let name = if let Some(count) = seen_names.get_mut(name) {
-                            *count += 1;
-                            format!("{name} ({})", *count)
-                        } else {
-                            seen_names.insert(name.to_string(), 0);
-                            name.to_string()
-                        };
+                        let name = counted_name(&mut seen_names, name);
 
                         temperatures.push(TempHarvest {
                             name,
