@@ -17,7 +17,6 @@ env:
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_DEV_DEBUG: 0
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
-  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
 jobs:
   # TODO: Add a pre-job check to skip if no change; may want to add something to check if there is a new rust version/week limit of skips?

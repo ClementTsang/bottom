@@ -1,6 +1,6 @@
 //! Fallback disk info using sysinfo.
 
-use sysinfo::{DiskExt, System, SystemExt};
+use sysinfo::{DiskExt, SystemExt};
 
 use crate::app::data_harvester::DataCollector;
 
