@@ -278,7 +278,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 
                 #[cfg(feature = "log")]
                 {
-                    log::debug!("hwmon name: {hwmon_name:?}, temp label: {temp_label:?}");
+                    log::debug!("hwmon name: {hwmon_name:?}, sensor label: {sensor_label:?}, sensor_name: {sensor_name:?}");
                 }
 
                 let name = finalize_name(hwmon_name, sensor_label, &sensor_name, &mut seen_names);
