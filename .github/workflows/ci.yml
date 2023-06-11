@@ -86,7 +86,7 @@ jobs:
         features: ["--all-features", "--no-default-features"]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
@@ -241,7 +241,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
@@ -256,7 +256,7 @@ jobs:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      - name: Try building with default features
+      - name: Try building with only default features enabled
         uses: ClementTsang/cargo-action@v0.0.3
         if: ${{ matrix.info.no-default-features != true }}
         with:
@@ -265,7 +265,7 @@ jobs:
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.5
 
-      - name: Try building with no features
+      - name: Try building with no features enabled
         uses: ClementTsang/cargo-action@v0.0.3
         if: ${{ matrix.info.no-default-features == true  }}
         with:
