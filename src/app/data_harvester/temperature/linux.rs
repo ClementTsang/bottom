@@ -72,10 +72,6 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
                 if let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
                     for entry in read_dir.flatten() {
                         let path = entry.path();
-                        #[cfg(feature = "log")]
-                        {
-                            log::debug!("Getting coretemp candidates - going to check: {path:?}");
-                        }
 
                         if path.join("temp1_input").exists() {
                             // It's possible that there are dupes (represented by symlinks) - the easy
@@ -98,6 +94,21 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
     }
 
     (dirs, num_hwmon)
+}
+
+#[inline]
+fn read_to_string_lossy<P: AsRef<Path>>(path: P) -> Option<String> {
+    fs::read(path)
+        .map(|v| String::from_utf8_lossy(&v).to_string())
+        .ok()
+}
+
+#[inline]
+fn humanize_name(name: String, sensor_name: Option<&String>) -> String {
+    match sensor_name {
+        Some(ty) => format!("{name} ({})", ty.trim()),
+        None => name,
+    }
 }
 
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon` and
@@ -123,11 +134,6 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 
     let (dirs, num_hwmon) = get_hwmon_candidates();
 
-    #[cfg(feature = "log")]
-    {
-        log::debug!("Candidate dirs: {dirs:?}, num_hwmon: {num_hwmon}.");
-    }
-
     // Note that none of this is async if we ever go back to it, but sysfs is in
     // memory, so in theory none of this should block if we're slightly careful.
     // Of note is that reading the temperature sensors of a device that has
@@ -140,10 +146,12 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
     //
     // It would probably be more ideal to use a proper async runtime; this would also allow easy cancellation/timeouts.
     for file_path in dirs {
-        let hwmon_name = fs::read_to_string(file_path.join("name")).ok();
+        let sensor_name = read_to_string_lossy(file_path.join("name"));
 
-        // Whether the temperature should *actually* be read during enumeration
+        // Whether the temperature should *actually* be read during enumeration.
         // Set to false if the device is in ACPI D3cold.
+        //
+        // If it is false, then the temperature will be set to 0.0 later down the line.
         let should_read_temp = {
             // Documented at https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power_state
             let device = file_path.join("device");
@@ -177,7 +185,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 
                 let temp_path = file.path();
                 let temp_label = file_path.join(name.replace("input", "label"));
-                let temp_label = fs::read_to_string(temp_label).ok();
+                let temp_label = read_to_string_lossy(temp_label);
 
                 // Do some messing around to get a more sensible name for sensors:
                 // - For GPUs, this will use the kernel device name, ex `card0`
@@ -185,56 +193,61 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                 //   This is found differently than for GPUs
                 // - For whatever acpitz is, on my machine this is now `thermal_zone0`.
                 // - For k10temp, this will still be k10temp, but it has to be handled special.
-                let human_hwmon_name = {
+                let hwmon_name = {
                     let device = file_path.join("device");
+
                     // This will exist for GPUs but not others, this is how we find their kernel name.
                     let drm = device.join("drm");
                     if drm.exists() {
-                        // This should never actually be empty.
+                        // This should never actually be empty. If it is though, we'll fall back to the sensor name.
                         let mut gpu = None;
 
                         if let Ok(cards) = drm.read_dir() {
                             for card in cards.flatten() {
                                 let name = card.file_name().to_str().unwrap_or_default().to_owned();
                                 if name.starts_with("card") {
-                                    if let Some(hwmon_name) = hwmon_name.as_ref() {
-                                        gpu = Some(format!("{} ({})", name, hwmon_name.trim()));
-                                    } else {
-                                        gpu = Some(name)
-                                    }
+                                    gpu = Some(humanize_name(name, sensor_name.as_ref()));
                                     break;
                                 }
                             }
                         }
-                        gpu
+
+                        if gpu.is_some() {
+                            gpu
+                        } else {
+                            sensor_name.clone()
+                        }
                     } else {
                         // This little mess is to account for stuff like k10temp. This is needed because the
                         // `device` symlink points to `nvme*` for nvme drives, but to PCI buses for anything
                         // else. If the first character is alphabetic, it's an actual name like k10temp or
                         // nvme0, not a PCI bus.
-                        fs::read_link(device).ok().and_then(|link| {
+                        if let Ok(link) = fs::read_link(device) {
                             let link = link
                                 .file_name()
-                                .map(|f| f.to_str().unwrap_or_default().to_owned())
-                                .unwrap();
+                                .map(|f| f.to_str().unwrap_or_default().to_owned());
 
-                            if link.as_bytes()[0].is_ascii_alphabetic() {
-                                if let Some(hwmon_name) = hwmon_name.as_ref() {
-                                    Some(format!("{} ({})", link, hwmon_name.trim()))
-                                } else {
-                                    Some(link)
+                            match link {
+                                Some(link) if link.as_bytes()[0].is_ascii_alphabetic() => {
+                                    Some(humanize_name(link, sensor_name.as_ref()))
                                 }
-                            } else {
-                                hwmon_name.clone()
+                                _ => sensor_name.clone(),
                             }
-                        })
+                        } else {
+                            sensor_name.clone()
+                        }
                     }
                 };
 
-                let name = match (&human_hwmon_name, &temp_label) {
+                #[cfg(feature = "log")]
+                {
+                    log::debug!("hwmon name: {hwmon_name:?}, temp label: {temp_label:?}");
+                }
+
+                let name = match (hwmon_name, temp_label) {
                     (Some(name), Some(label)) => format!("{}: {}", name.trim(), label.trim()),
-                    (None, Some(label)) => label.to_string(),
-                    (Some(name), None) => name.to_string(),
+                    (None, Some(label)) => label,
+                    (Some(name), None) => name,
                     (None, None) => String::default(),
                 };
 
