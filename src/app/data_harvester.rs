@@ -407,20 +407,7 @@ impl DataCollector {
     #[inline]
     fn update_disks(&mut self) {
         if self.widgets_to_harvest.use_disk {
-            cfg_if::cfg_if! {
-                if #[cfg(any(target_os = "freebsd", target_os = "linux", target_os = "macos"))] {
-                    let disk_filter = &self.filters.disk_filter;
-                    let mount_filter = &self.filters.mount_filter;
-                    self.data.disks = disks::get_disk_usage(disk_filter, mount_filter).ok();
-                } else {
-                    self.data.disks = Some(disks::get_disk_usage(
-                        &self.sys,
-                        &self.filters.disk_filter,
-                        &self.filters.mount_filter,
-                    ));
-                }
-            }
-
+            self.data.disks = disks::get_disk_usage(self).ok();
             self.data.io = disks::get_io_usage().ok();
         }
     }

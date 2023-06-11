@@ -5,7 +5,8 @@ use std::io;
 use serde::Deserialize;
 
 use super::{keep_disk_entry, DiskHarvest, IoHarvest};
-use crate::{app::Filter, data_harvester::deserialize_xo, utils::error};
+
+use crate::{app::data_harvester::DataCollector, data_harvester::deserialize_xo, utils::error};
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -35,9 +36,9 @@ pub fn get_io_usage() -> error::Result<IoHarvest> {
     Ok(io_harvest)
 }
 
-pub fn get_disk_usage(
-    disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
-) -> error::Result<Vec<DiskHarvest>> {
+pub fn get_disk_usage(collector: &DataCollector) -> error::Result<Vec<DiskHarvest>> {
+    let disk_filter = &collector.filters.disk_filter;
+    let mount_filter = &collector.filters.mount_filter;
     let vec_disks: Vec<DiskHarvest> = get_disk_info().map(|storage_system_information| {
         storage_system_information
             .filesystem

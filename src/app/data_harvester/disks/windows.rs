@@ -1,11 +1,11 @@
 //! Disk stats via sysinfo.
 
 use itertools::Itertools;
-use sysinfo::{DiskExt, System, SystemExt};
+use sysinfo::{DiskExt, SystemExt};
 
 use super::{keep_disk_entry, DiskHarvest};
-use crate::app::data_harvester::disks::IoCounters;
-use crate::app::filter::Filter;
+
+use crate::app::data_harvester::{disks::IoCounters, DataCollector};
 
 mod bindings;
 use bindings::*;
@@ -26,11 +26,12 @@ pub(crate) fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
         .collect::<Vec<_>>())
 }
 
-pub(crate) fn get_disk_usage(
-    sys: &System, disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
-) -> Vec<DiskHarvest> {
-    let disks = sys.disks();
-    disks
+pub(crate) fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<DiskHarvest>> {
+    let disks = collector.sys.disks();
+    let disk_filter = &collector.filters.disk_filter;
+    let mount_filter = &collector.filters.mount_filter;
+
+    Ok(disks
         .iter()
         .filter_map(|disk| {
             let name = {
@@ -71,5 +72,5 @@ pub(crate) fn get_disk_usage(
                 None
             }
         })
-        .collect()
+        .collect())
 }
