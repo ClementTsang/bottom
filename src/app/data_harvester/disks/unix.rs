@@ -25,12 +25,12 @@ cfg_if::cfg_if! {
 }
 
 use super::{keep_disk_entry, DiskHarvest};
-use crate::app::Filter;
+use crate::app::data_harvester::DataCollector;
 
 /// Returns the disk usage of the mounted (and for now, physical) disks.
-pub fn get_disk_usage(
-    disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
-) -> anyhow::Result<Vec<DiskHarvest>> {
+pub fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<DiskHarvest>> {
+    let disk_filter = &collector.filters.disk_filter;
+    let mount_filter = &collector.filters.mount_filter;
     let mut vec_disks: Vec<DiskHarvest> = Vec::new();
 
     for partition in physical_partitions()? {

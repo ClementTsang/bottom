@@ -18,8 +18,10 @@ cfg_if! {
     } else if #[cfg(target_os = "macos")] {
         mod unix;
         pub(crate) use self::unix::*;
+    } else {
+        mod other;
+        pub(crate) use self::other::*;
     }
-    // TODO: Add dummy impls here for other OSes?
 }
 
 #[derive(Debug, Clone, Default)]

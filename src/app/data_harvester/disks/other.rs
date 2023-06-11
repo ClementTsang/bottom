@@ -1,30 +1,10 @@
-//! Disk stats via sysinfo.
+//! Fallback disk info using sysinfo.
 
-use itertools::Itertools;
-use sysinfo::{DiskExt, SystemExt};
+use sysinfo::{DiskExt, System, SystemExt};
+
+use crate::app::data_harvester::DataCollector;
 
 use super::{keep_disk_entry, DiskHarvest};
-
-use crate::app::data_harvester::{disks::IoCounters, DataCollector};
-
-mod bindings;
-use bindings::*;
-
-/// Returns I/O stats.
-pub(crate) fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
-    let volume_io = all_volume_io()?;
-
-    Ok(volume_io
-        .into_iter()
-        .map_ok(|(performance, volume_name)| {
-            let name = volume_name;
-            let read_bytes = performance.BytesRead as u64;
-            let write_bytes = performance.BytesWritten as u64;
-
-            IoCounters::new(name, read_bytes, write_bytes)
-        })
-        .collect::<Vec<_>>())
-}
 
 pub(crate) fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<DiskHarvest>> {
     let disks = collector.sys.disks();
@@ -53,8 +33,6 @@ pub(crate) fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<Di
                 .into_string()
                 .unwrap_or_else(|_| "Mount Unavailable".to_string());
 
-            let volume_name = volume_name_from_mount(&mount_point).ok();
-
             if keep_disk_entry(&name, &mount_point, disk_filter, mount_filter) {
                 let free_space = disk.available_space();
                 let total_space = disk.total_space();
@@ -63,7 +41,6 @@ pub(crate) fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<Di
                 Some(DiskHarvest {
                     name,
                     mount_point,
-                    volume_name,
                     free_space: Some(free_space),
                     used_space: Some(used_space),
                     total_space: Some(total_space),
