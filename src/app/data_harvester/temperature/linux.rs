@@ -122,6 +122,31 @@ fn counted_name(seen_names: &mut HashMap<String, u32>, name: String) -> String {
     }
 }
 
+#[inline]
+fn finalize_name(
+    hwmon_name: Option<String>, sensor_label: Option<String>, sensor_name: &Option<String>,
+    seen_names: &mut HashMap<String, u32>,
+) -> String {
+    let candidate_name = match (hwmon_name, sensor_label) {
+        (Some(name), Some(label)) => format!("{name}: {label}"),
+        (None, Some(label)) => match &sensor_name {
+            Some(sensor_name) => format!("{sensor_name}: {label}"),
+            None => label,
+        },
+        (Some(name), None) => name,
+        (None, None) => match &sensor_name {
+            Some(sensor_name) => sensor_name.clone(),
+            None => "Unknown".to_string(),
+        },
+    };
+
+    if !candidate_name.is_empty() {
+        counted_name(seen_names, candidate_name)
+    } else {
+        candidate_name
+    }
+}
+
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon` and
 /// `/sys/devices/platform/coretemp.*`. It returns all found temperature sensors, and the number
 /// of checked hwmon directories (not coretemp directories).
@@ -196,8 +221,8 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                 }
 
                 let temp_path = file.path();
-                let temp_label = file_path.join(name.replace("input", "label"));
-                let temp_label = read_to_string_lossy(temp_label);
+                let sensor_label_path = file_path.join(name.replace("input", "label"));
+                let sensor_label = read_to_string_lossy(sensor_label_path);
 
                 // Do some messing around to get a more sensible name for sensors:
                 // - For GPUs, this will use the kernel device name, ex `card0`
@@ -256,19 +281,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                     log::debug!("hwmon name: {hwmon_name:?}, temp label: {temp_label:?}");
                 }
 
-                let name = {
-                    let name = match (hwmon_name, temp_label) {
-                        (Some(name), Some(label)) => format!("{name}: {label}"),
-                        (None, Some(label)) => match &sensor_name {
-                            Some(sensor_name) => format!("{sensor_name}: {label}"),
-                            None => label,
-                        },
-                        (Some(name), None) => name,
-                        (None, None) => String::default(),
-                    };
-
-                    counted_name(&mut seen_names, name)
-                };
+                let name = finalize_name(hwmon_name, sensor_label, &sensor_name, &mut seen_names);
 
                 if is_temp_filtered(filter, &name) {
                     let temp = if should_read_temp {
@@ -353,4 +366,28 @@ pub fn get_temperature_data(
     }
 
     Ok(Some(results.temperatures))
+}
+
+#[cfg(test)]
+mod tests {
+    use hashbrown::HashMap;
+
+    use crate::app::data_harvester::temperature::linux::finalize_name;
+
+    #[test]
+    fn test_finalize_name() {
+        let mut seen_names = HashMap::new();
+
+        assert_eq!(
+            finalize_name(None, None, &Some("test".to_string()), &mut seen_names),
+            "test"
+        );
+
+        assert_eq!(finalize_name(None, None, &None, &mut seen_names), "Unknown");
+
+        assert_eq!(
+            finalize_name(None, None, &Some("test".to_string()), &mut seen_names),
+            "test (1)"
+        );
+    }
 }
