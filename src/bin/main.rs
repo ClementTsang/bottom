@@ -3,15 +3,6 @@
 #![deny(clippy::unimplemented)]
 #![deny(clippy::missing_safety_doc)]
 
-// Primarily used for debug purposes.
-cfg_if::cfg_if! {
-    if #[cfg(feature = "log")] {
-        #[allow(unused_imports)]
-        #[macro_use]
-        extern crate log;
-    }
-}
-
 use std::{
     boxed::Box,
     io::stdout,
@@ -44,7 +35,7 @@ fn main() -> Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
 
     let matches = clap::get_matches();
-    #[cfg(all(feature = "fern"))]
+    #[cfg(feature = "logging")]
     {
         if let Err(err) =
             utils::logging::init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log"))

@@ -1,4 +1,4 @@
-#[cfg(feature = "fern")]
+#[cfg(feature = "logging")]
 pub fn init_logger(
     min_level: log::LevelFilter, debug_file_name: &std::ffi::OsStr,
 ) -> Result<(), fern::InitError> {
@@ -27,4 +27,64 @@ pub fn init_logger(
         .apply()?;
 
     Ok(())
+}
+
+#[macro_export]
+macro_rules! c_debug {
+    ($($x:tt)*) => {
+        #[cfg(feature = "logging")]
+        {
+            log::debug!($($x)*)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! c_error {
+    ($($x:tt)*) => {
+        #[cfg(feature = "logging")]
+        {
+            log::error!($($x)*)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! c_info {
+    ($($x:tt)*) => {
+        #[cfg(feature = "logging")]
+        {
+            log::info!($($x)*)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! c_log {
+    ($($x:tt)*) => {
+        #[cfg(feature = "logging")]
+        {
+            log::log!($($x)*)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! c_trace {
+    ($($x:tt)*) => {
+        #[cfg(feature = "logging")]
+        {
+            log::trace!($($x)*)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! c_warn {
+    ($($x:tt)*) => {
+        #[cfg(feature = "logging")]
+        {
+            log::warn!($($x)*)
+        }
+    };
 }

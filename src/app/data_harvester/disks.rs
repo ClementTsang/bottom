@@ -24,7 +24,7 @@ cfg_if! {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct DiskHarvest {
     pub name: String,
     pub mount_point: String,

@@ -13,8 +13,10 @@ const TEMPLATE: &str = "\
 
 const USAGE: &str = "btm [OPTIONS]";
 
-const DEFAULT_WIDGET_TYPE_STR: &str = if cfg!(feature = "battery") {
-    "\
+const DEFAULT_WIDGET_TYPE_STR: &str = {
+    #[cfg(feature = "battery")]
+    {
+        "\
 Sets which widget type to use as the default widget.
 For the default layout, this defaults to the 'process' widget.
 For a custom layout, it defaults to the first widget it sees.
@@ -46,8 +48,10 @@ Supported widget names:
 |       batt, battery      |
 +--------------------------+
 "
-} else {
-    "\
+    }
+    #[cfg(not(feature = "battery"))]
+    {
+        "\
 Sets which widget type to use as the default widget.
 For the default layout, this defaults to the 'process' widget.
 For a custom layout, it defaults to the first widget it sees.
@@ -77,6 +81,7 @@ Supported widget names:
 |           disk           |
 +--------------------------+
 "
+    }
 };
 
 pub fn get_matches() -> clap::ArgMatches {

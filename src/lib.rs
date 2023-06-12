@@ -10,15 +10,6 @@
 #![deny(clippy::unimplemented)]
 #![deny(clippy::missing_safety_doc)]
 
-// Primarily used for debug purposes.
-cfg_if::cfg_if! {
-    if #[cfg(feature = "log")] {
-        #[allow(unused_imports)]
-        #[macro_use]
-        extern crate log;
-    }
-}
-
 use std::{
     boxed::Box,
     fs,
@@ -69,6 +60,8 @@ pub mod options;
 pub mod units;
 pub mod widgets;
 
+pub use utils::logging::*;
+
 #[cfg(target_family = "windows")]
 pub type Pid = usize;
 
@@ -117,7 +110,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 pub fn handle_key_event_or_break(
     event: KeyEvent, app: &mut App, reset_sender: &Sender<CollectionThreadEvent>,
 ) -> bool {
-    // debug!("KeyEvent: {:?}", event);
+    // c_debug!("KeyEvent: {:?}", event);
 
     if event.modifiers.is_empty() {
         // Required catch for searching - otherwise you couldn't search with q.
@@ -154,8 +147,6 @@ pub fn handle_key_event_or_break(
                 KeyCode::Char('c') | KeyCode::Char('C') => app.toggle_ignore_case(),
                 KeyCode::Char('w') | KeyCode::Char('W') => app.toggle_search_whole_word(),
                 KeyCode::Char('r') | KeyCode::Char('R') => app.toggle_search_regex(),
-                // KeyCode::Char('b') | KeyCode::Char('B') => todo!(),
-                // KeyCode::Char('f') | KeyCode::Char('F') => todo!(),
                 KeyCode::Char('h') => app.on_left_key(),
                 KeyCode::Char('l') => app.on_right_key(),
                 _ => {}
