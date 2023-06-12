@@ -148,7 +148,7 @@ cargo +stable install bottom
 
 ### Arch Linux
 
-There is an [official package](https://archlinux.org/packages/community/x86_64/bottom/) that can be installed with
+There is an [official package](https://archlinux.org/packages/extra/x86_64/bottom/) that can be installed with
 `pacman`:
 
 ```bash
