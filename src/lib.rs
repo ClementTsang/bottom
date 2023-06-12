@@ -10,15 +10,6 @@
 #![deny(clippy::unimplemented)]
 #![deny(clippy::missing_safety_doc)]
 
-// Primarily used for debug purposes.
-cfg_if::cfg_if! {
-    if #[cfg(feature = "log")] {
-        #[allow(unused_imports)]
-        #[macro_use]
-        extern crate log;
-    }
-}
-
 use std::{
     boxed::Box,
     fs,
@@ -68,6 +59,8 @@ pub mod data_conversion;
 pub mod options;
 pub mod units;
 pub mod widgets;
+
+pub use utils::logging::*;
 
 #[cfg(target_family = "windows")]
 pub type Pid = usize;
