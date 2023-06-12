@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-use concat_string::concat_string;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -210,7 +209,7 @@ impl Painter {
                         load_avg[0], load_avg[1], load_avg[2]
                     );
 
-                    concat_string!(" CPU ", load_avg_str).into()
+                    concat_string::concat_string!(" CPU ", load_avg_str).into()
                 }
                 #[cfg(not(target_family = "unix"))]
                 {
