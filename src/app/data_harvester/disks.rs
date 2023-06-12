@@ -24,7 +24,7 @@ cfg_if! {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct DiskHarvest {
     pub name: String,
     pub mount_point: String,
@@ -37,36 +37,6 @@ pub struct DiskHarvest {
     pub free_space: Option<u64>,
     pub used_space: Option<u64>,
     pub total_space: Option<u64>,
-}
-
-// Manual implementations because it breaks RA.
-impl Clone for DiskHarvest {
-    fn clone(&self) -> Self {
-        Self {
-            name: self.name.clone(),
-            mount_point: self.mount_point.clone(),
-            #[cfg(target_os = "windows")]
-            volume_name: self.volume_name.clone(),
-            free_space: self.free_space.clone(),
-            used_space: self.used_space.clone(),
-            total_space: self.total_space.clone(),
-        }
-    }
-}
-
-// Manual implementations because it breaks RA.
-impl Default for DiskHarvest {
-    fn default() -> Self {
-        Self {
-            name: Default::default(),
-            mount_point: Default::default(),
-            #[cfg(target_os = "windows")]
-            volume_name: Default::default(),
-            free_space: Default::default(),
-            used_space: Default::default(),
-            total_space: Default::default(),
-        }
-    }
 }
 
 #[derive(Clone, Debug)]

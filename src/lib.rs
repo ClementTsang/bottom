@@ -117,7 +117,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 pub fn handle_key_event_or_break(
     event: KeyEvent, app: &mut App, reset_sender: &Sender<CollectionThreadEvent>,
 ) -> bool {
-    // debug!("KeyEvent: {:?}", event);
+    // c_debug!("KeyEvent: {:?}", event);
 
     if event.modifiers.is_empty() {
         // Required catch for searching - otherwise you couldn't search with q.
