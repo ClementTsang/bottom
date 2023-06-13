@@ -247,6 +247,8 @@ impl Painter {
             );
 
             if app_state.should_get_widget_bounds() {
+                const SIGNAL: usize = if cfg!(target_os = "windows") { 1 } else { 15 };
+
                 // This is kinda weird, but the gist is:
                 // - We have three sections; we put our mouse bounding box for the "yes" button at the very right edge
                 //   of the left section and 3 characters back.  We then give it a buffer size of 1 on the x-coordinate.
@@ -263,7 +265,7 @@ impl Painter {
                         button_layout[0].y,
                         button_layout[0].x + button_layout[0].width,
                         button_layout[0].y,
-                        if cfg!(target_os = "windows") { 1 } else { 15 },
+                        SIGNAL,
                     ),
                     // No
                     (

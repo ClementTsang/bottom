@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-use concat_string::concat_string;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -201,16 +200,21 @@ impl Painter {
             );
 
             // TODO: Maybe hide load avg if too long? Or maybe the CPU part.
-            let title = if cfg!(target_family = "unix") {
-                let load_avg = app_state.converted_data.load_avg_data;
-                let load_avg_str = format!(
-                    "─ {:.2} {:.2} {:.2} ",
-                    load_avg[0], load_avg[1], load_avg[2]
-                );
+            let title = {
+                #[cfg(target_family = "unix")]
+                {
+                    let load_avg = app_state.converted_data.load_avg_data;
+                    let load_avg_str = format!(
+                        "─ {:.2} {:.2} {:.2} ",
+                        load_avg[0], load_avg[1], load_avg[2]
+                    );
 
-                concat_string!(" CPU ", load_avg_str).into()
-            } else {
-                " CPU ".into()
+                    concat_string::concat_string!(" CPU ", load_avg_str).into()
+                }
+                #[cfg(not(target_family = "unix"))]
+                {
+                    " CPU ".into()
+                }
             };
 
             let marker = if app_state.app_config_fields.use_dot {
