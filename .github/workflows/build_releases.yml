@@ -400,3 +400,85 @@ jobs:
           retention-days: 3
           name: release
           path: release
+
+  build-rpm:
+    name: "Build Red Hat .rpm software packages"
+    runs-on: ubuntu-latest
+    container: almalinux:8
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          - { target: "x86_64-unknown-linux-gnu" }
+          - { target: "x86_64-unknown-linux-musl" }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        with:
+          fetch-depth: 1
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
+        with:
+          toolchain: stable
+          target: ${{ matrix.info.target }}
+
+      # TODO: Could I use the previous jobs to skip this call?
+      - name: Build
+        uses: ClementTsang/cargo-action@v0.0.3
+        env:
+          BTM_GENERATE: true
+          BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
+        with:
+          command: build
+          args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
+
+      - name: Move automatically generated completion/manpage
+        shell: bash
+        run: |
+          mv "$COMPLETION_DIR" completion
+          mv "$MANPAGE_DIR" manpage
+
+      - name: Zip manpage
+        run: |
+          gzip ./manpage/btm.1
+
+      - name: Build rpm release
+        if: matrix.info.cross == false
+        env:
+          BTM_GENERATE: true
+        run: |
+          cargo install generate-rpm --version 0.11.0 --locked
+          cargo generate-rpm --target ${{ matrix.info.target }}
+          cp ./target/${{ matrix.info.target }}/generate-rpm/bottom-*.rpm .
+
+      - name: Rename if it is a musl target
+        if: contains(matrix.info.target, 'musl')
+        run: |
+          TMP_NAME=$(find bottom-*.rpm)
+          mv $TMP_NAME $(echo $TMP_NAME | sed "s/bottom/bottom-musl/")
+
+      - name: Verify rpm release
+        id: verify
+        run: |
+          RPM_FILE=$(find bottom-*.rpm)
+          rpm -qip $RPM_FILE
+          echo "RPM_FILE=$RPM_FILE" >> $GITHUB_OUTPUT
+
+      - name: Delete generated rpm folder
+        run: |
+          sudo chown $USER ./target/${{ matrix.info.target }}/generate-rpm/ 2>/dev/null || true
+          rm -r ./target/${{ matrix.info.target }}/generate-rpm/
+
+      - name: Create release directory for artifact, move file
+        shell: bash
+        run: |
+          mkdir release
+          mv ${{ steps.verify.outputs.RPM_FILE }} release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          retention-days: 3
+          name: release
+          path: release
