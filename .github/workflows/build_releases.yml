@@ -404,7 +404,7 @@ jobs:
   build-rpm:
     name: "Build Red Hat .rpm software packages"
     runs-on: ubuntu-latest
-    container: almalinux:8
+    container: ghcr.io/clementtsang/almalinux-8
     strategy:
       fail-fast: false
       matrix:
