@@ -32,7 +32,7 @@
   - [Arch Linux](#arch-linux)
   - [Debian/Ubuntu](#debianubuntu)
   - [Snap](#snap)
-  - [Fedora/CentOS](#fedoracentos)
+  - [Fedora/CentOS/AlmaLinux/Rocky Linux](#fedoracentosalmalinuxrocky-linux)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
   - [Solus](#solus)
@@ -189,13 +189,24 @@ sudo snap connect bottom:system-observe
 sudo snap connect bottom:process-control
 ```
 
-### Fedora/CentOS
+### Fedora/CentOS/AlmaLinux/Rocky Linux
 
-Available in [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
+bottom is available in [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
 
 ```bash
 sudo dnf copr enable atim/bottom -y
 sudo dnf install bottom
+```
+
+<!--FIXME: Update this whenever you release a new stable version after 0.9.2!-->
+
+`.rpm` files are also generated (currently only for [nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly))
+for x86. If you wish to install this way, then you can do something like:
+
+```bash
+# x86-64
+curl -LO https://github.com/ClementTsang/bottom/releases/download/nightly/bottom-0.9.3-1.x86_64.rpm
+sudo rpm -i bottom-0.9.3-1.x86_64.rpm
 ```
 
 ### Gentoo
