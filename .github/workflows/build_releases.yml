@@ -1,6 +1,7 @@
 # Builds the following releases:
 # - Binary releases
-# - Debian releases (.deb)
+# - .deb releases
+# - .rpm releases
 # - MSI installer for Windows (.msi)
 # - Cirrus CI binaries
 #   - FreeBSD (x86_64)
@@ -281,7 +282,7 @@ jobs:
           path: release
 
   build-deb:
-    name: "Build Debian .deb software packages"
+    name: "Build .deb software packages"
     runs-on: "ubuntu-20.04"
     strategy:
       fail-fast: false
@@ -402,7 +403,7 @@ jobs:
           path: release
 
   build-rpm:
-    name: "Build Red Hat .rpm software packages"
+    name: "Build .rpm software packages"
     runs-on: ubuntu-latest
     container: ghcr.io/clementtsang/almalinux-8
     strategy:
