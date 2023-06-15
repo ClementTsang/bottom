@@ -43,7 +43,7 @@ a manpage and shell completions for the following shells:
 - Powershell
 - Elvish
 
-If you want to generate manpages and/or completion files, set the `BTM_GENERATION` env var to a non-empty value. For
+If you want to generate manpages and/or completion files, set the `BTM_GENERATE` env var to a non-empty value. For
 example, run something like this:
 
 ```bash
