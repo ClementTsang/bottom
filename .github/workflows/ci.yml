@@ -106,7 +106,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Build tests
-        uses: ClementTsang/cargo-action@v0.0.3
+        uses: ClementTsang/cargo-action@v0.0.4
         with:
           command: test
           args: --no-run --locked ${{ matrix.features }} --target=${{ matrix.info.target }}
@@ -116,7 +116,7 @@ jobs:
           RUST_BACKTRACE: full
 
       - name: Run tests
-        uses: ClementTsang/cargo-action@v0.0.3
+        uses: ClementTsang/cargo-action@v0.0.4
         with:
           command: test
           args: --no-fail-fast ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
@@ -126,7 +126,7 @@ jobs:
           RUST_BACKTRACE: full
 
       - name: Run clippy
-        uses: ClementTsang/cargo-action@v0.0.3
+        uses: ClementTsang/cargo-action@v0.0.4
         with:
           command: clippy
           args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} -- -D warnings
@@ -257,7 +257,7 @@ jobs:
           cache-all-crates: true
 
       - name: Try building with only default features enabled
-        uses: ClementTsang/cargo-action@v0.0.3
+        uses: ClementTsang/cargo-action@v0.0.4
         if: ${{ matrix.info.no-default-features != true }}
         with:
           command: build
@@ -266,7 +266,7 @@ jobs:
           cross-version: 0.2.5
 
       - name: Try building with no features enabled
-        uses: ClementTsang/cargo-action@v0.0.3
+        uses: ClementTsang/cargo-action@v0.0.4
         if: ${{ matrix.info.no-default-features == true  }}
         with:
           command: build
