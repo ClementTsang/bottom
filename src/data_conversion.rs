@@ -10,7 +10,7 @@ use crate::app::{
     AxisScaling,
 };
 use crate::components::tui_widget::time_chart::Point;
-use crate::units::data_units::DataUnit;
+use crate::utils::data_units::DataUnit;
 use crate::utils::gen_util::*;
 use crate::widgets::{DiskWidgetData, TempWidgetData};
 
