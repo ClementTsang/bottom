@@ -37,6 +37,7 @@ impl FrozenState {
             self.thaw();
             false
         } else {
+            // Could we use an Arc instead? Is it worth it?
             self.freeze(Box::new(data.clone()));
             true
         }
