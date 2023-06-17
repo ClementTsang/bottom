@@ -12,13 +12,15 @@ use layout_manager::*;
 pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
-use crate::widgets::{ProcWidgetColumn, ProcWidgetMode};
 use crate::{
     constants,
     data_conversion::ConvertedData,
-    units::data_units::DataUnit,
     utils::error::{BottomError, Result},
     Pid,
+};
+use crate::{
+    utils::data_units::DataUnit,
+    widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
 
 pub mod data_farmer;

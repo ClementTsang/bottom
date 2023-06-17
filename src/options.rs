@@ -19,8 +19,10 @@ use crate::{
     app::{filter::Filter, layout_manager::*, *},
     canvas::{canvas_styling::CanvasStyling, ColourScheme},
     constants::*,
-    units::data_units::DataUnit,
-    utils::error::{self, BottomError},
+    utils::{
+        data_units::DataUnit,
+        error::{self, BottomError},
+    },
     widgets::*,
 };
 

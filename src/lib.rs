@@ -47,6 +47,7 @@ use utils::error;
 
 pub mod app;
 pub mod utils {
+    pub mod data_units;
     pub mod error;
     pub mod gen_util;
     pub mod logging;
@@ -57,7 +58,6 @@ pub mod components;
 pub mod constants;
 pub mod data_conversion;
 pub mod options;
-pub mod units;
 pub mod widgets;
 
 pub use utils::logging::*;
