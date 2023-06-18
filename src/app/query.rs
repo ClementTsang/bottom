@@ -711,7 +711,12 @@ impl Prefix {
     }
 
     pub fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
-        fn matches_condition(condition: &QueryComparison, lhs: f64, rhs: f64) -> bool {
+        fn matches_condition<I: Into<f64>, J: Into<f64>>(
+            condition: &QueryComparison, lhs: I, rhs: J,
+        ) -> bool {
+            let lhs: f64 = lhs.into();
+            let rhs: f64 = rhs.into();
+
             match condition {
                 QueryComparison::Equal => (lhs - rhs).abs() < std::f64::EPSILON,
                 QueryComparison::Less => lhs < rhs,

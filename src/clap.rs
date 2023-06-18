@@ -257,7 +257,7 @@ pub fn build_app() -> Command {
             If it doesn't exist, one is created.",
         );
 
-    // TODO: Fix this, its broken in the manpage
+    // TODO: File an issue with manpage, it cannot render charts correctly.
     let color = Arg::new("color")
         .long("color")
         .action(ArgAction::Set)

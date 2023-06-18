@@ -45,10 +45,10 @@ pub struct ProcessHarvest {
     pub parent_pid: Option<Pid>,
 
     /// CPU usage as a percentage.
-    pub cpu_usage_percent: f64,
+    pub cpu_usage_percent: f32,
 
     /// Memory usage as a percentage.
-    pub mem_usage_percent: f64,
+    pub mem_usage_percent: f32,
 
     /// Memory usage as bytes.
     pub mem_usage_bytes: u64,

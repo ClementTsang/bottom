@@ -110,7 +110,7 @@ fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error:
 fn get_linux_cpu_usage(
     stat: &Stat, cpu_usage: f64, cpu_fraction: f64, prev_proc_times: u64,
     use_current_cpu_total: bool,
-) -> (f64, u64) {
+) -> (f32, u64) {
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
     let new_proc_times = stat.utime + stat.stime;
     let diff = (new_proc_times - prev_proc_times) as f64; // No try_from for u64 -> f64... oh well.
@@ -118,9 +118,12 @@ fn get_linux_cpu_usage(
     if cpu_usage == 0.0 {
         (0.0, new_proc_times)
     } else if use_current_cpu_total {
-        ((diff / cpu_usage) * 100.0, new_proc_times)
+        (((diff / cpu_usage) * 100.0) as f32, new_proc_times)
     } else {
-        ((diff / cpu_usage) * 100.0 * cpu_fraction, new_proc_times)
+        (
+            ((diff / cpu_usage) * 100.0 * cpu_fraction) as f32,
+            new_proc_times,
+        )
     }
 }
 
@@ -181,7 +184,7 @@ fn read_proc(
     );
     let parent_pid = Some(stat.ppid);
     let mem_usage_bytes = stat.rss_bytes();
-    let mem_usage_percent = mem_usage_bytes as f64 / total_memory as f64 * 100.0;
+    let mem_usage_percent = (mem_usage_bytes as f64 / total_memory as f64 * 100.0) as f32;
 
     // This can fail if permission is denied!
     let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =

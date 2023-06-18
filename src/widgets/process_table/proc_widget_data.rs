@@ -82,10 +82,9 @@ impl Display for Id {
     }
 }
 
-// TODO: Can reduce this to 32 bytes.
 #[derive(PartialEq, Clone, Debug)]
 pub enum MemUsage {
-    Percent(f64),
+    Percent(f32),
     Bytes(u64),
 }
 
@@ -170,7 +169,7 @@ pub struct ProcWidgetData {
     pub pid: Pid,
     pub ppid: Option<Pid>,
     pub id: Id,
-    pub cpu_usage_percent: f64,
+    pub cpu_usage_percent: f32,
     pub mem_usage: MemUsage,
     pub rps: u64,
     pub wps: u64,
