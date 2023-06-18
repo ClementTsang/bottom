@@ -1,4 +1,7 @@
-# Actions to run after releasing a version, like generating documentation via mkdocs or notifying packaging repos.
+# Actions to run after releasing a version, like:
+# - Generating documentation via mkdocs
+# - Notifying packaging repos
+# - Automatically creating winget packages
 
 name: post-release
 
@@ -58,11 +61,7 @@ jobs:
           mike deploy --push --update-aliases ${RELEASE_VERSION} stable
           mike retitle --push ${RELEASE_VERSION} "${RELEASE_VERSION} (stable)"
 
-      # - name: Deploy to CF Pages
-      #   run: |
-      #     curl -X POST ${{ secrets.BOTTOM_CFP_HOOK }}
-
-  packaging:
+  chocolatey:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -93,3 +92,12 @@ jobs:
           -H 'Accept: application/vnd.github.everest-preview+json' \
           -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
           --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
+
+  winget:
+    runs-on: windows-latest
+    steps:
+      - uses: vedantmgoyal2009/winget-releaser@79853c0938cc9946c1ec3cdd1b2e761bb0372b8c # v2
+        with:
+          identifier: Package.Identifier
+          installers-regex: '^bottom_x86_64_installer\.msi$'
+          token: ${{ secrets.WINGET_TOKEN }}
