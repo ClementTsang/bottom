@@ -61,7 +61,7 @@ pub(crate) trait UnixProcessExt {
                 pcu / cpu_usage
             } else {
                 pcu
-            };
+            } as f32;
 
             let disk_usage = process_val.disk_usage();
             let process_state = {
@@ -76,7 +76,7 @@ pub(crate) trait UnixProcessExt {
                 name,
                 command,
                 mem_usage_percent: if total_memory > 0 {
-                    process_val.memory() as f64 * 100.0 / total_memory as f64
+                    (process_val.memory() as f64 * 100.0 / total_memory as f64) as f32
                 } else {
                     0.0
                 },
@@ -114,7 +114,7 @@ pub(crate) trait UnixProcessExt {
                         *cpu_usages.get(&process.pid).unwrap()
                     } else {
                         *cpu_usages.get(&process.pid).unwrap() / num_processors
-                    };
+                    } as f32;
                 }
             }
         }

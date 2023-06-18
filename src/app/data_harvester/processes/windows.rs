@@ -63,7 +63,7 @@ pub fn sysinfo_process_data(
             pcu / cpu_usage
         } else {
             pcu
-        };
+        } as f32;
 
         let disk_usage = process_val.disk_usage();
         let process_state = (process_val.status().to_string(), 'R');
@@ -76,7 +76,7 @@ pub fn sysinfo_process_data(
                 process_val.memory() as f64 * 100.0 / total_memory as f64
             } else {
                 0.0
-            },
+            } as f32,
             mem_usage_bytes: process_val.memory(),
             cpu_usage_percent: process_cpu_usage,
             read_bytes_per_sec: disk_usage.read_bytes,
