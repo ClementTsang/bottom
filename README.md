@@ -30,9 +30,9 @@
 - [Installation](#installation)
   - [Cargo](#cargo)
   - [Arch Linux](#arch-linux)
-  - [Debian/Ubuntu](#debianubuntu)
+  - [Debian / Ubuntu](#debian--ubuntu)
   - [Snap](#snap)
-  - [Fedora/CentOS/AlmaLinux/Rocky Linux](#fedoracentosalmalinuxrocky-linux)
+  - [Fedora / CentOS / AlmaLinux / Rocky Linux](#fedora--centos--almalinux--rocky-linux)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
   - [Solus](#solus)
@@ -155,7 +155,7 @@ There is an [official package](https://archlinux.org/packages/extra/x86_64/botto
 sudo pacman -S bottom
 ```
 
-### Debian/Ubuntu
+### Debian / Ubuntu
 
 A `.deb` file is provided on each [stable release](https://github.com/ClementTsang/bottom/releases/latest) and
 [nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly) for x86, aarch64, and armv7
@@ -189,7 +189,7 @@ sudo snap connect bottom:system-observe
 sudo snap connect bottom:process-control
 ```
 
-### Fedora/CentOS/AlmaLinux/Rocky Linux
+### Fedora / CentOS / AlmaLinux / Rocky Linux
 
 bottom is available in [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
 
