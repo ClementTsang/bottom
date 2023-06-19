@@ -52,8 +52,8 @@ pub mod utils {
     pub mod gen_util;
     pub mod logging;
 }
+pub mod args;
 pub mod canvas;
-pub mod clap;
 pub mod components;
 pub mod constants;
 pub mod data_conversion;

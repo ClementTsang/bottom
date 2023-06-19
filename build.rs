@@ -5,7 +5,7 @@ use std::{
 
 use clap_complete::{generate_to, shells::Shell};
 
-include!("src/clap.rs");
+include!("src/args.rs");
 
 fn create_dir(dir: &Path) -> io::Result<()> {
     let res = fs::create_dir_all(dir);
