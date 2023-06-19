@@ -171,11 +171,14 @@ macro_rules! is_flag_enabled {
 }
 
 pub fn build_app(
-    matches: &ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
-    default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
-    styling: &CanvasStyling,
+    matches: ArgMatches, config: Config, widget_layout: &BottomLayout, default_widget_id: u64,
+    default_widget_type_option: &Option<BottomWidgetType>, styling: &CanvasStyling,
 ) -> Result<App> {
     use BottomWidgetType::*;
+
+    // Since everything takes a reference, but we want to take ownership here to drop matches/config later...
+    let matches = &matches;
+    let config = &config;
 
     let retention_ms =
         get_retention_ms(matches, config).context("Update `retention` in your config file.")?;
@@ -911,7 +914,7 @@ mod test {
     #[test]
     fn matches_human_times() {
         let config = Config::default();
-        let app = crate::clap::build_app();
+        let app = crate::args::build_app();
 
         {
             let app = app.clone();
@@ -938,7 +941,7 @@ mod test {
     #[test]
     fn matches_number_times() {
         let config = Config::default();
-        let app = crate::clap::build_app();
+        let app = crate::args::build_app();
 
         {
             let app = app.clone();
@@ -964,7 +967,7 @@ mod test {
 
     #[test]
     fn config_human_times() {
-        let app = crate::clap::build_app();
+        let app = crate::args::build_app();
         let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
@@ -989,7 +992,7 @@ mod test {
 
     #[test]
     fn config_number_times() {
-        let app = crate::clap::build_app();
+        let app = crate::args::build_app();
         let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
@@ -1012,19 +1015,19 @@ mod test {
         );
     }
 
-    fn create_app(mut config: Config, matches: ArgMatches) -> App {
+    fn create_app(config: Config, matches: ArgMatches) -> App {
         let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();
         let styling =
             CanvasStyling::new(get_color_scheme(&matches, &config).unwrap(), &config).unwrap();
 
-        super::build_app(&matches, &mut config, &layout, id, &ty, &styling).unwrap()
+        super::build_app(matches, config, &layout, id, &ty, &styling).unwrap()
     }
 
     // TODO: There's probably a better way to create clap options AND unify together to avoid the possibility of
     // typos/mixing up. Use proc macros to unify on one struct?
     #[test]
     fn verify_cli_options_build() {
-        let app = crate::clap::build_app();
+        let app = crate::args::build_app();
 
         let default_app = {
             let app = app.clone();
