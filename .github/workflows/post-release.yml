@@ -74,15 +74,9 @@ jobs:
         run: |
           echo $RELEASE_VERSION
 
-      - name: Make sure you're not on master...
+      - name: Make sure you're not on master/main/nightly...
         run: |
-          if [[ $RELEASE_VERSION == "master" ]]; then
-            exit 1
-          fi
-
-      - name: Make sure you're not on nightly...
-        run: |
-          if [[ $RELEASE_VERSION == "nightly" ]]; then
+          if [[ $RELEASE_VERSION == "master" || $RELEASE_VERSION == "main" || $RELEASE_VERSION == "nightly" ]]; then
             exit 1
           fi
 
@@ -96,6 +90,12 @@ jobs:
   winget:
     runs-on: windows-latest
     steps:
+      - name: Make sure you're not on master/main/nightly...
+        run: |
+          if [[ $RELEASE_VERSION == "master" || $RELEASE_VERSION == "main" || $RELEASE_VERSION == "nightly" ]]; then
+            exit 1
+          fi
+
       - uses: vedantmgoyal2009/winget-releaser@79853c0938cc9946c1ec3cdd1b2e761bb0372b8c # v2
         with:
           identifier: Package.Identifier
