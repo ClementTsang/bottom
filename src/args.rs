@@ -271,7 +271,27 @@ pub fn build_app() -> Command {
             "nord",
             "nord-light",
         ]))
-        .help("Use a pre-defined color scheme.");
+        .hide_possible_values(true)
+        .help("Use a color scheme, use --help for info.")
+        .long_help(
+            "\
+Use a pre-defined color scheme. Currently supported values are:
++------------------------------------------------------------+
+| default                                                    |
++------------------------------------------------------------+
+| default-light (default but for use with light backgrounds) |
++------------------------------------------------------------+
+| gruvbox (a bright theme with 'retro groove' colors)        |
++------------------------------------------------------------+
+| gruvbox-light (gruvbox but for use with light backgrounds) |
++------------------------------------------------------------+
+| nord (an arctic, north-bluish color palette)               |
++------------------------------------------------------------+
+| nord-light (nord but for use with light backgrounds)       |
++------------------------------------------------------------+
+Defaults to \"default\".
+",
+        );
 
     let mem_as_value = Arg::new("mem_as_value")
         .long("mem_as_value")
