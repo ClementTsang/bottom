@@ -255,7 +255,8 @@ pub fn build_app() -> Command {
         .long_help(
             "Sets the location of the config file. Expects a config file in the TOML format. \
             If it doesn't exist, one is created.",
-        );
+        )
+        .value_hint(ValueHint::AnyPath);
 
     // TODO: File an issue with manpage, it cannot render charts correctly.
     let color = Arg::new("color")
@@ -270,29 +271,7 @@ pub fn build_app() -> Command {
             "nord",
             "nord-light",
         ]))
-        .hide_possible_values(true)
-        .help("Use a color scheme, use --help for info.")
-        .long_help(
-            "\
-Use a pre-defined color scheme. Currently supported values are:
-
-+------------------------------------------------------------+
-| default                                                    |
-+------------------------------------------------------------+
-| default-light (default but for use with light backgrounds) |
-+------------------------------------------------------------+
-| gruvbox (a bright theme with 'retro groove' colors)        |
-+------------------------------------------------------------+
-| gruvbox-light (gruvbox but for use with light backgrounds) |
-+------------------------------------------------------------+
-| nord (an arctic, north-bluish color palette)               |
-+------------------------------------------------------------+
-| nord-light (nord but for use with light backgrounds)       |
-+------------------------------------------------------------+
-
-Defaults to \"default\".
-",
-        );
+        .help("Use a pre-defined color scheme.");
 
     let mem_as_value = Arg::new("mem_as_value")
         .long("mem_as_value")
@@ -410,8 +389,84 @@ use CPU (3) as the default instead.
         None => crate_version!(),
     };
 
-    #[allow(unused_mut)]
-    let mut app = Command::new(crate_name!())
+    let temperature_group = ArgGroup::new("TEMPERATURE_TYPE").args([
+        kelvin.get_id(),
+        fahrenheit.get_id(),
+        celsius.get_id(),
+    ]);
+
+    let mut args = [
+        version,
+        kelvin,
+        fahrenheit,
+        celsius,
+        autohide_time,
+        basic,
+        case_sensitive,
+        process_command,
+        config_location,
+        color,
+        mem_as_value,
+        default_time_value,
+        default_widget_count,
+        default_widget_type,
+        disable_click,
+        dot_marker,
+        group,
+        hide_avg_cpu,
+        hide_table_gap,
+        hide_time,
+        show_table_scroll_position,
+        left_legend,
+        disable_advanced_kill,
+        rate,
+        regex,
+        time_delta,
+        tree,
+        network_use_bytes,
+        network_use_log,
+        network_use_binary_prefix,
+        current_usage,
+        unnormalized_cpu,
+        use_old_network_legend,
+        whole_word,
+        retention,
+        expanded_on_startup,
+        #[cfg(feature = "battery")]
+        {
+            Arg::new("battery")
+                .long("battery")
+                .action(ArgAction::SetTrue)
+                .help("Shows the battery widget.")
+                .long_help(
+                    "Shows the battery widget in default or basic mode. No effect on custom layouts.",
+                )
+        },
+        #[cfg(feature = "gpu")]
+        {
+            Arg::new("enable_gpu_memory")
+                .long("enable_gpu_memory")
+                .action(ArgAction::SetTrue)
+                .help("Enable collecting and displaying GPU memory usage.")
+        },
+        #[cfg(not(target_os = "windows"))]
+        {
+            Arg::new("enable_cache_memory")
+                .long("enable_cache_memory")
+                .action(ArgAction::SetTrue)
+                .help("Enable collecting and displaying cache and buffer memory.")
+        },
+    ];
+
+    // Manually sort the arguments.
+    args.sort_by(|a, b| {
+        let a = a.get_long().unwrap_or(a.get_id().as_str());
+        let b = b.get_long().unwrap_or(b.get_id().as_str());
+
+        a.cmp(b)
+    });
+
+    Command::new(crate_name!())
         .version(VERSION)
         .author(crate_authors!())
         .about(crate_description!())
@@ -419,75 +474,8 @@ use CPU (3) as the default instead.
         .override_usage(USAGE)
         .help_template(TEMPLATE)
         .disable_version_flag(true)
-        .arg(version)
-        .arg(kelvin)
-        .arg(fahrenheit)
-        .arg(celsius)
-        .group(ArgGroup::new("TEMPERATURE_TYPE").args(["kelvin", "fahrenheit", "celsius"]))
-        .arg(autohide_time)
-        .arg(basic)
-        .arg(case_sensitive)
-        .arg(process_command)
-        .arg(config_location)
-        .arg(color)
-        .arg(mem_as_value)
-        .arg(default_time_value)
-        .arg(default_widget_count)
-        .arg(default_widget_type)
-        .arg(disable_click)
-        .arg(dot_marker)
-        .arg(group)
-        .arg(hide_avg_cpu)
-        .arg(hide_table_gap)
-        .arg(hide_time)
-        .arg(show_table_scroll_position)
-        .arg(left_legend)
-        .arg(disable_advanced_kill)
-        .arg(rate)
-        .arg(regex)
-        .arg(time_delta)
-        .arg(tree)
-        .arg(network_use_bytes)
-        .arg(network_use_log)
-        .arg(network_use_binary_prefix)
-        .arg(current_usage)
-        .arg(unnormalized_cpu)
-        .arg(use_old_network_legend)
-        .arg(whole_word)
-        .arg(retention)
-        .arg(expanded_on_startup);
-
-    #[cfg(feature = "battery")]
-    {
-        let battery = Arg::new("battery")
-            .long("battery")
-            .action(ArgAction::SetTrue)
-            .help("Shows the battery widget.")
-            .long_help(
-                "Shows the battery widget in default or basic mode. No effect on custom layouts.",
-            );
-        app = app.arg(battery);
-    }
-
-    #[cfg(feature = "gpu")]
-    {
-        let enable_gpu_memory = Arg::new("enable_gpu_memory")
-            .long("enable_gpu_memory")
-            .action(ArgAction::SetTrue)
-            .help("Enable collecting and displaying GPU memory usage.");
-        app = app.arg(enable_gpu_memory);
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        let cache = Arg::new("enable_cache_memory")
-            .long("enable_cache_memory")
-            .action(ArgAction::SetTrue)
-            .help("Enable collecting and displaying cache and buffer memory.");
-        app = app.arg(cache);
-    }
-
-    app
+        .args(args)
+        .group(temperature_group)
 }
 
 #[cfg(test)]

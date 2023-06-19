@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.9.3]/[0.10.0] - Unreleased
 
+## Bug Fixes
+
+- [https://github.com/ClementTsang/bottom/pull/1216](https://github.com/ClementTsang/bottom/pull/1216): Fix arguments not being sorted alphabetically.
+
 ## [0.9.2] - 2023-06-11
 
 ## Bug Fixes
