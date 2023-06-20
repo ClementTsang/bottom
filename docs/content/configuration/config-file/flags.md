@@ -8,7 +8,7 @@ Most of the [command line flags](../../command-line-flags) have config file equi
 each time:
 
 | Field                        | Type                                                                                           | Functionality                                                                        |
-|------------------------------|------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| ---------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `hide_avg_cpu`               | Boolean                                                                                        | Hides the average CPU usage.                                                         |
 | `dot_marker`                 | Boolean                                                                                        | Uses a dot marker for graphs.                                                        |
 | `left_legend`                | Boolean                                                                                        | Puts the CPU chart legend to the left side.                                          |
@@ -21,8 +21,8 @@ each time:
 | `use_old_network_legend`     | Boolean                                                                                        | DEPRECATED - uses the older network legend.                                          |
 | `battery`                    | Boolean                                                                                        | Shows the battery widget.                                                            |
 | `rate`                       | Unsigned Int (represents milliseconds)                                                         | Sets a refresh rate in ms.                                                           |
-| `default_time_value`         | Unsigned Int (represents milliseconds)                                                         | Default time value for graphs in ms.                                                 |
-| `time_delta`                 | Unsigned Int (represents milliseconds)                                                         | The amount in ms changed upon zooming.                                               |
+| `default_time_value`         | Unsigned Int (represents milliseconds) or String (represents human time)                       | Default time value for graphs in ms.                                                 |
+| `time_delta`                 | Unsigned Int (represents milliseconds) or String (represents human time)                       | The amount in ms changed upon zooming.                                               |
 | `hide_time`                  | Boolean                                                                                        | Hides the time scale.                                                                |
 | `temperature_type`           | String (one of ["k", "f", "c", "kelvin", "fahrenheit", "celsius"])                             | Sets the temperature unit type.                                                      |
 | `default_widget_type`        | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options)          | Sets the default widget type, use --help for more info.                              |

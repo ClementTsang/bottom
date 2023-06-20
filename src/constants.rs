@@ -543,7 +543,7 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #temperature_type = "fahrenheit"
 #temperature_type = "celsius"
 # The default time interval (in milliseconds).
-#default_time_value = 60000
+#default_time_value = "60s"
 # The time delta on each zoom in/out action (in milliseconds).
 #time_delta = 15000
 # Hides the time scale.

@@ -45,6 +45,25 @@ pub struct Config {
     pub processes: Option<ProcessConfig>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+enum StringOrNum {
+    String(String),
+    Num(u64),
+}
+
+impl From<String> for StringOrNum {
+    fn from(value: String) -> Self {
+        StringOrNum::String(value)
+    }
+}
+
+impl From<u64> for StringOrNum {
+    fn from(value: u64) -> Self {
+        StringOrNum::Num(value)
+    }
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ConfigFlags {
     pub hide_avg_cpu: Option<bool>,
@@ -59,8 +78,8 @@ pub struct ConfigFlags {
     pub whole_word: Option<bool>,
     pub regex: Option<bool>,
     pub basic: Option<bool>,
-    pub default_time_value: Option<String>,
-    pub time_delta: Option<String>,
+    default_time_value: Option<StringOrNum>,
+    time_delta: Option<StringOrNum>,
     pub autohide_time: Option<bool>,
     pub hide_time: Option<bool>,
     pub default_widget_type: Option<String>,
@@ -615,7 +634,10 @@ fn get_default_time_value(
             try_parse_ms(default_time_value)?
         } else if let Some(flags) = &config.flags {
             if let Some(default_time_value) = &flags.default_time_value {
-                try_parse_ms(default_time_value)?
+                match default_time_value {
+                    StringOrNum::String(s) => try_parse_ms(s)?,
+                    StringOrNum::Num(n) => *n,
+                }
             } else {
                 DEFAULT_TIME_MILLISECONDS
             }
@@ -644,7 +666,10 @@ fn get_time_interval(
         try_parse_ms(time_interval)?
     } else if let Some(flags) = &config.flags {
         if let Some(time_interval) = &flags.time_delta {
-            try_parse_ms(time_interval)?
+            match time_interval {
+                StringOrNum::String(s) => try_parse_ms(s)?,
+                StringOrNum::Num(n) => *n,
+            }
         } else {
             TIME_CHANGE_MILLISECONDS
         }
@@ -972,8 +997,8 @@ mod test {
 
         let mut config = Config::default();
         let flags = ConfigFlags {
-            time_delta: Some("2 min".to_string()),
-            default_time_value: Some("300s".to_string()),
+            time_delta: Some("2 min".to_string().into()),
+            default_time_value: Some("300s".to_string().into()),
             ..Default::default()
         };
 
@@ -991,14 +1016,39 @@ mod test {
     }
 
     #[test]
-    fn config_number_times() {
+    fn config_number_times_as_string() {
         let app = crate::args::build_app();
         let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
         let flags = ConfigFlags {
-            time_delta: Some("120000".to_string()),
-            default_time_value: Some("300000".to_string()),
+            time_delta: Some("120000".to_string().into()),
+            default_time_value: Some("300000".to_string().into()),
+            ..Default::default()
+        };
+
+        config.flags = Some(flags);
+
+        assert_eq!(
+            get_time_interval(&matches, &config, 60 * 60 * 1000),
+            Ok(2 * 60 * 1000)
+        );
+
+        assert_eq!(
+            get_default_time_value(&matches, &config, 60 * 60 * 1000),
+            Ok(5 * 60 * 1000)
+        );
+    }
+
+    #[test]
+    fn config_number_times_as_num() {
+        let app = crate::args::build_app();
+        let matches = app.get_matches_from(["btm"]);
+
+        let mut config = Config::default();
+        let flags = ConfigFlags {
+            time_delta: Some(120000.into()),
+            default_time_value: Some(300000.into()),
             ..Default::default()
         };
 
