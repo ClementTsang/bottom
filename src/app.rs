@@ -2173,8 +2173,10 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = cpu_widget_state.current_display_time
-                        + self.app_config_fields.time_interval;
+                    let new_time = cpu_widget_state
+                        .current_display_time
+                        .saturating_add(self.app_config_fields.time_interval);
+
                     if new_time <= self.app_config_fields.retention_ms {
                         cpu_widget_state.current_display_time = new_time;
                         self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
@@ -2199,8 +2201,10 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = mem_widget_state.current_display_time
-                        + self.app_config_fields.time_interval;
+                    let new_time = mem_widget_state
+                        .current_display_time
+                        .saturating_add(self.app_config_fields.time_interval);
+
                     if new_time <= self.app_config_fields.retention_ms {
                         mem_widget_state.current_display_time = new_time;
                         self.states.mem_state.force_update = Some(self.current_widget.widget_id);
@@ -2225,8 +2229,10 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = net_widget_state.current_display_time
-                        + self.app_config_fields.time_interval;
+                    let new_time = net_widget_state
+                        .current_display_time
+                        .saturating_add(self.app_config_fields.time_interval);
+
                     if new_time <= self.app_config_fields.retention_ms {
                         net_widget_state.current_display_time = new_time;
                         self.states.net_state.force_update = Some(self.current_widget.widget_id);
@@ -2257,8 +2263,10 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = cpu_widget_state.current_display_time
-                        - self.app_config_fields.time_interval;
+                    let new_time = cpu_widget_state
+                        .current_display_time
+                        .saturating_sub(self.app_config_fields.time_interval);
+
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         cpu_widget_state.current_display_time = new_time;
                         self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
@@ -2283,8 +2291,10 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = mem_widget_state.current_display_time
-                        - self.app_config_fields.time_interval;
+                    let new_time = mem_widget_state
+                        .current_display_time
+                        .saturating_sub(self.app_config_fields.time_interval);
+
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         mem_widget_state.current_display_time = new_time;
                         self.states.mem_state.force_update = Some(self.current_widget.widget_id);
@@ -2309,8 +2319,10 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = net_widget_state.current_display_time
-                        - self.app_config_fields.time_interval;
+                    let new_time = net_widget_state
+                        .current_display_time
+                        .saturating_sub(self.app_config_fields.time_interval);
+
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         net_widget_state.current_display_time = new_time;
                         self.states.net_state.force_update = Some(self.current_widget.widget_id);
