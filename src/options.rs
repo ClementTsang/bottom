@@ -647,12 +647,12 @@ fn get_default_time_value(
 
     if default_time < 30000 {
         return Err(BottomError::ConfigError(
-            "set your default value to be at least 30000 milliseconds.".to_string(),
+            "set your default value to be at least 30s.".to_string(),
         ));
     } else if default_time > retention_ms {
         return Err(BottomError::ConfigError(format!(
-            "set your default value to be at most {} milliseconds.",
-            retention_ms
+            "set your default value to be at most {}.",
+            humantime::Duration::from(Duration::from_millis(retention_ms))
         )));
     }
 
@@ -679,12 +679,12 @@ fn get_time_interval(
 
     if time_interval < 1000 {
         return Err(BottomError::ConfigError(
-            "set your time delta to be at least 1000 milliseconds.".to_string(),
+            "set your time delta to be at least 1s.".to_string(),
         ));
     } else if time_interval > retention_ms {
         return Err(BottomError::ConfigError(format!(
-            "set your time delta to be at most {} milliseconds.",
-            retention_ms
+            "set your time delta to be at most {}.",
+            humantime::Duration::from(Duration::from_millis(retention_ms))
         )));
     }
 
