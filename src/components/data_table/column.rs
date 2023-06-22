@@ -188,7 +188,6 @@ where
 
                     let soft_limit = max(
                         if let Some(max_percentage) = max_percentage {
-                            // TODO: Rust doesn't have an `into()` or `try_into()` for floats to integers.
                             ((*max_percentage * f32::from(total_width)).ceil()) as u16
                         } else {
                             *desired

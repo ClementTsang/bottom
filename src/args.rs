@@ -88,8 +88,6 @@ pub fn get_matches() -> clap::ArgMatches {
     build_app().get_matches()
 }
 
-// TODO: Refactor this a bit, it's quite messy atm
-// TODO: [DEBUG] Add a proper debugging solution.
 pub fn build_app() -> Command {
     // Temps
     let kelvin = Arg::new("kelvin")
@@ -303,11 +301,13 @@ Defaults to \"default\".
         .short('t')
         .long("default_time_value")
         .action(ArgAction::Set)
-        .value_name("MS")
-        .help("Default time value for graphs in ms.")
-        .long_help("Default time value for graphs in milliseconds. The minimum time is 30s (30000), and the default is 60s (60000).");
+        .value_name("TIME")
+        .help("Default time value for graphs.")
+        .long_help(
+            "Default time value for graphs. The minimum time is 30s, and the default is 60s.",
+        );
 
-    // TODO: Fix this, its broken in the manpage
+    // TODO: Charts are broken in the manpage
     let default_widget_count = Arg::new("default_widget_count")
         .long("default_widget_count")
         .action(ArgAction::Set)
@@ -360,9 +360,9 @@ use CPU (3) as the default instead.
         .short('d')
         .long("time_delta")
         .action(ArgAction::Set)
-        .value_name("MS")
-        .help("The amount in ms changed upon zooming.")
-        .long_help("The amount of time in milliseconds changed when zooming in/out. The minimum is 1s (1000), and defaults to 15s (15000).");
+        .value_name("TIME")
+        .help("The amount of time changed upon zooming.")
+        .long_help("The amount of time changed when zooming in/out. The minimum is 1s, and defaults to 15s.");
 
     let tree = Arg::new("tree")
         .short('T')
@@ -394,7 +394,7 @@ use CPU (3) as the default instead.
     let retention = Arg::new("retention")
         .long("retention")
         .action(ArgAction::Set)
-        .value_name("time")
+        .value_name("TIME")
         .help("The timespan of data kept.")
         .long_help("How much data is stored at once in terms of time. Takes in human-readable time spans (e.g. 10m, 1h), with a minimum of 1 minute. Note higher values will take up more memory. Defaults to 10 minutes.");
 
