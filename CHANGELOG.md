@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1216](https://github.com/ClementTsang/bottom/pull/1216): Fix arguments not being sorted alphabetically.
 - [#1219](https://github.com/ClementTsang/bottom/pull/1219): Fix overflow/underflow in graph timespan zoom.
 
+## Features
+
+- [#1221](https://github.com/ClementTsang/bottom/pull/1221): Support human times for `rate`.
+
 ## [0.9.2] - 2023-06-11
 
 ## Bug Fixes

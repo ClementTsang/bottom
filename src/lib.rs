@@ -484,7 +484,7 @@ pub fn create_collection_thread(
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
     let unnormalized_cpu = app_config_fields.unnormalized_cpu;
     let show_average_cpu = app_config_fields.show_average_cpu;
-    let update_time = app_config_fields.update_rate_in_milliseconds;
+    let update_time = app_config_fields.update_rate;
 
     thread::spawn(move || {
         let mut data_state = data_harvester::DataCollector::new(filters);

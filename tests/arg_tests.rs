@@ -15,7 +15,7 @@ fn test_small_rate() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "set your update rate to be at least 250 milliseconds.",
+            "set your update rate to be at least 250 ms.",
         ));
 }
 

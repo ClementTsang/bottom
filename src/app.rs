@@ -45,7 +45,7 @@ pub enum AxisScaling {
 /// by config files or launch options.
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct AppConfigFields {
-    pub update_rate_in_milliseconds: u64,
+    pub update_rate: u64,
     pub temperature_type: temperature::TemperatureType,
     pub use_dot: bool,
     pub left_legend: bool,
