@@ -395,8 +395,8 @@ use CPU (3) as the default instead.
         .long("retention")
         .action(ArgAction::Set)
         .value_name("TIME")
-        .help("The timespan of data kept.")
-        .long_help("How much data is stored at once in terms of time. Takes in human-readable time spans (e.g. 10m, 1h), with a minimum of 1 minute. Note higher values will take up more memory. Defaults to 10 minutes.");
+        .help("The timespan of data stored.")
+        .long_help("How much data is stored at once in terms of time. Takes a number in milliseconds or a human duration (e.g. 20m), with a minimum of 1 minute. Note higher values will take up more memory. Defaults to 10 minutes.");
 
     let version = Arg::new("version")
         .short('V')

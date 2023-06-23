@@ -36,7 +36,7 @@ see information on these flags by running `btm -h`, or run `btm --help` to displ
 | --process_command                   | Show processes as their commands by default.                          |
 | -r, --rate <TIME>                   | Sets the data refresh rate.                                           |
 | -R, --regex                         | Enables regex by default.                                             |
-| --retention <TIME>                  | The timespan of data kept.                                            |
+| --retention <TIME>                  | The timespan of data stored.                                          |
 | --show_table_scroll_position        | Shows the scroll position tracker in table widgets.                   |
 | -d, --time_delta <TIME>             | The amount of time changed upon zooming.                              |
 | -T, --tree                          | Defaults the process widget be in tree mode.                          |

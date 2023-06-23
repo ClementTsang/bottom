@@ -102,9 +102,7 @@ pub struct ConfigFlags {
     network_use_binary_prefix: Option<bool>,
     enable_gpu_memory: Option<bool>,
     enable_cache_memory: Option<bool>,
-    #[serde(with = "humantime_serde")]
-    #[serde(default)]
-    retention: Option<Duration>,
+    retention: Option<StringOrNum>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -200,7 +198,7 @@ pub fn build_app(
     let config = &config;
 
     let retention_ms =
-        get_retention_ms(matches, config).context("Update `retention` in your config file.")?;
+        get_retention(matches, config).context("Update `retention` in your config file.")?;
     let autohide_time = is_flag_enabled!(autohide_time, matches, config);
     let default_time_value = get_default_time_value(matches, config, retention_ms)
         .context("Update 'default_time_value' in your config file.")?;
@@ -887,16 +885,17 @@ fn get_network_scale_type(matches: &ArgMatches, config: &Config) -> AxisScaling 
     AxisScaling::Linear
 }
 
-fn get_retention_ms(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
+fn get_retention(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
     if let Some(retention) = matches.get_one::<String>("retention") {
-        humantime::parse_duration(retention)
-            .map(|dur| dur.as_millis() as u64)
-            .map_err(|err| BottomError::ConfigError(format!("invalid retention duration: {err:?}")))
+        try_parse_ms(retention)
     } else if let Some(flags) = &config.flags {
-        if let Some(retention) = flags.retention {
-            Ok(retention.as_millis() as u64)
+        if let Some(retention) = &flags.retention {
+            Ok(match retention {
+                StringOrNum::String(s) => try_parse_ms(s)?,
+                StringOrNum::Num(n) => *n,
+            })
         } else {
             Ok(DEFAULT_RETENTION_MS)
         }
@@ -913,7 +912,9 @@ mod test {
     use crate::{
         app::App,
         canvas::canvas_styling::CanvasStyling,
-        options::{get_default_time_value, get_update_rate, try_parse_ms, ConfigFlags},
+        options::{
+            get_default_time_value, get_retention, get_update_rate, try_parse_ms, ConfigFlags,
+        },
     };
 
     #[test]
@@ -999,6 +1000,7 @@ mod test {
             time_delta: Some("2 min".to_string().into()),
             default_time_value: Some("300s".to_string().into()),
             rate: Some("1s".to_string().into()),
+            retention: Some("10m".to_string().into()),
             ..Default::default()
         };
 
@@ -1015,6 +1017,8 @@ mod test {
         );
 
         assert_eq!(get_update_rate(&matches, &config), Ok(1000));
+
+        assert_eq!(get_retention(&matches, &config), Ok(600000));
     }
 
     #[test]
@@ -1027,6 +1031,7 @@ mod test {
             time_delta: Some("120000".to_string().into()),
             default_time_value: Some("300000".to_string().into()),
             rate: Some("1000".to_string().into()),
+            retention: Some("600000".to_string().into()),
             ..Default::default()
         };
 
@@ -1043,6 +1048,8 @@ mod test {
         );
 
         assert_eq!(get_update_rate(&matches, &config), Ok(1000));
+
+        assert_eq!(get_retention(&matches, &config), Ok(600000));
     }
 
     #[test]
@@ -1055,6 +1062,7 @@ mod test {
             time_delta: Some(120000.into()),
             default_time_value: Some(300000.into()),
             rate: Some(1000.into()),
+            retention: Some(600000.into()),
             ..Default::default()
         };
 
@@ -1071,6 +1079,8 @@ mod test {
         );
 
         assert_eq!(get_update_rate(&matches, &config), Ok(1000));
+
+        assert_eq!(get_retention(&matches, &config), Ok(600000));
     }
 
     fn create_app(config: Config, matches: ArgMatches) -> App {
