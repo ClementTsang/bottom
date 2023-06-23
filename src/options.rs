@@ -66,45 +66,45 @@ impl From<u64> for StringOrNum {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ConfigFlags {
-    pub hide_avg_cpu: Option<bool>,
-    pub dot_marker: Option<bool>,
-    pub temperature_type: Option<String>,
-    pub rate: Option<u64>,
-    pub left_legend: Option<bool>,
-    pub current_usage: Option<bool>,
-    pub unnormalized_cpu: Option<bool>,
-    pub group_processes: Option<bool>,
-    pub case_sensitive: Option<bool>,
-    pub whole_word: Option<bool>,
-    pub regex: Option<bool>,
-    pub basic: Option<bool>,
+    hide_avg_cpu: Option<bool>,
+    dot_marker: Option<bool>,
+    temperature_type: Option<String>,
+    rate: Option<StringOrNum>,
+    left_legend: Option<bool>,
+    current_usage: Option<bool>,
+    unnormalized_cpu: Option<bool>,
+    group_processes: Option<bool>,
+    case_sensitive: Option<bool>,
+    whole_word: Option<bool>,
+    regex: Option<bool>,
+    basic: Option<bool>,
     default_time_value: Option<StringOrNum>,
     time_delta: Option<StringOrNum>,
-    pub autohide_time: Option<bool>,
-    pub hide_time: Option<bool>,
-    pub default_widget_type: Option<String>,
-    pub default_widget_count: Option<u64>,
-    pub expanded_on_startup: Option<bool>,
-    pub use_old_network_legend: Option<bool>,
-    pub hide_table_gap: Option<bool>,
-    pub battery: Option<bool>,
-    pub disable_click: Option<bool>,
-    pub no_write: Option<bool>,
+    autohide_time: Option<bool>,
+    hide_time: Option<bool>,
+    default_widget_type: Option<String>,
+    default_widget_count: Option<u64>,
+    expanded_on_startup: Option<bool>,
+    use_old_network_legend: Option<bool>,
+    hide_table_gap: Option<bool>,
+    battery: Option<bool>,
+    disable_click: Option<bool>,
+    no_write: Option<bool>,
     /// For built-in colour palettes.
-    pub color: Option<String>,
-    pub mem_as_value: Option<bool>,
-    pub tree: Option<bool>,
+    color: Option<String>,
+    mem_as_value: Option<bool>,
+    tree: Option<bool>,
     show_table_scroll_position: Option<bool>,
-    pub process_command: Option<bool>,
-    pub disable_advanced_kill: Option<bool>,
-    pub network_use_bytes: Option<bool>,
-    pub network_use_log: Option<bool>,
-    pub network_use_binary_prefix: Option<bool>,
-    pub enable_gpu_memory: Option<bool>,
-    pub enable_cache_memory: Option<bool>,
+    process_command: Option<bool>,
+    disable_advanced_kill: Option<bool>,
+    network_use_bytes: Option<bool>,
+    network_use_log: Option<bool>,
+    network_use_binary_prefix: Option<bool>,
+    enable_gpu_memory: Option<bool>,
+    enable_cache_memory: Option<bool>,
     #[serde(with = "humantime_serde")]
     #[serde(default)]
-    pub retention: Option<Duration>,
+    retention: Option<Duration>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -262,7 +262,7 @@ pub fn build_app(
     };
 
     let app_config_fields = AppConfigFields {
-        update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)
+        update_rate: get_update_rate(matches, config)
             .context("Update 'rate' in your config file.")?,
         temperature_type: get_temperature(matches, config)
             .context("Update 'temperature_type' in your config file.")?,
@@ -549,16 +549,15 @@ pub fn get_widget_layout(
     Ok((bottom_layout, default_widget_id, default_widget_type))
 }
 
-fn get_update_rate_in_milliseconds(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
-    let update_rate_in_milliseconds = if let Some(update_rate) = matches.get_one::<String>("rate") {
-        update_rate.parse::<u64>().map_err(|_| {
-            BottomError::ConfigError(
-                "could not parse as a valid 64-bit unsigned integer".to_string(),
-            )
-        })?
+fn get_update_rate(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
+    let update_rate = if let Some(update_rate) = matches.get_one::<String>("rate") {
+        try_parse_ms(update_rate)?
     } else if let Some(flags) = &config.flags {
-        if let Some(rate) = flags.rate {
-            rate
+        if let Some(rate) = &flags.rate {
+            match rate {
+                StringOrNum::String(s) => try_parse_ms(s)?,
+                StringOrNum::Num(n) => *n,
+            }
         } else {
             DEFAULT_REFRESH_RATE_IN_MILLISECONDS
         }
@@ -566,13 +565,13 @@ fn get_update_rate_in_milliseconds(matches: &ArgMatches, config: &Config) -> err
         DEFAULT_REFRESH_RATE_IN_MILLISECONDS
     };
 
-    if update_rate_in_milliseconds < 250 {
+    if update_rate < 250 {
         return Err(BottomError::ConfigError(
-            "set your update rate to be at least 250 milliseconds.".to_string(),
+            "set your update rate to be at least 250 ms.".to_string(),
         ));
     }
 
-    Ok(update_rate_in_milliseconds)
+    Ok(update_rate)
 }
 
 fn get_temperature(
@@ -914,7 +913,7 @@ mod test {
     use crate::{
         app::App,
         canvas::canvas_styling::CanvasStyling,
-        options::{get_default_time_value, try_parse_ms, ConfigFlags},
+        options::{get_default_time_value, get_update_rate, try_parse_ms, ConfigFlags},
     };
 
     #[test]
@@ -999,6 +998,7 @@ mod test {
         let flags = ConfigFlags {
             time_delta: Some("2 min".to_string().into()),
             default_time_value: Some("300s".to_string().into()),
+            rate: Some("1s".to_string().into()),
             ..Default::default()
         };
 
@@ -1013,6 +1013,8 @@ mod test {
             get_default_time_value(&matches, &config, 60 * 60 * 1000),
             Ok(5 * 60 * 1000)
         );
+
+        assert_eq!(get_update_rate(&matches, &config), Ok(1000));
     }
 
     #[test]
@@ -1024,6 +1026,7 @@ mod test {
         let flags = ConfigFlags {
             time_delta: Some("120000".to_string().into()),
             default_time_value: Some("300000".to_string().into()),
+            rate: Some("1000".to_string().into()),
             ..Default::default()
         };
 
@@ -1038,6 +1041,8 @@ mod test {
             get_default_time_value(&matches, &config, 60 * 60 * 1000),
             Ok(5 * 60 * 1000)
         );
+
+        assert_eq!(get_update_rate(&matches, &config), Ok(1000));
     }
 
     #[test]
@@ -1049,6 +1054,7 @@ mod test {
         let flags = ConfigFlags {
             time_delta: Some(120000.into()),
             default_time_value: Some(300000.into()),
+            rate: Some(1000.into()),
             ..Default::default()
         };
 
@@ -1063,6 +1069,8 @@ mod test {
             get_default_time_value(&matches, &config, 60 * 60 * 1000),
             Ok(5 * 60 * 1000)
         );
+
+        assert_eq!(get_update_rate(&matches, &config), Ok(1000));
     }
 
     fn create_app(config: Config, matches: ArgMatches) -> App {

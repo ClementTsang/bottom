@@ -353,8 +353,8 @@ use CPU (3) as the default instead.
         .long("rate")
         .action(ArgAction::Set)
         .value_name("MS")
-        .help("Sets a refresh rate in ms.")
-        .long_help("Sets a refresh rate in milliseconds. The minimum is 250ms, and defaults to 1000ms. Smaller values may take more computer resources.");
+        .help("Sets the data refresh rate.")
+        .long_help("Sets the data refresh rate. The minimum is 250ms, and defaults to 1000ms. Smaller values may take more computer resources.");
 
     let time_delta = Arg::new("time_delta")
         .short('d')
