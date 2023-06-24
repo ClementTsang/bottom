@@ -20,7 +20,7 @@ each time:
 | `basic`                      | Boolean                                                                                        | Hides graphs and uses a more basic look.                                             |
 | `use_old_network_legend`     | Boolean                                                                                        | DEPRECATED - uses the older network legend.                                          |
 | `battery`                    | Boolean                                                                                        | Shows the battery widget.                                                            |
-| `rate`                       | Unsigned Int (represents milliseconds)                                                         | Sets a refresh rate in ms.                                                           |
+| `rate`                       | Unsigned Int (represents milliseconds) or String (represents human time)                       | Sets a refresh rate in ms.                                                           |
 | `default_time_value`         | Unsigned Int (represents milliseconds) or String (represents human time)                       | Default time value for graphs in ms.                                                 |
 | `time_delta`                 | Unsigned Int (represents milliseconds) or String (represents human time)                       | The amount in ms changed upon zooming.                                               |
 | `hide_time`                  | Boolean                                                                                        | Hides the time scale.                                                                |

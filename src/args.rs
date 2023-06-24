@@ -149,9 +149,9 @@ pub fn build_app() -> Command {
         .short('n')
         .long("unnormalized_cpu")
         .action(ArgAction::SetTrue)
-        .help("Show process CPU% without normalizing over the number of cores.")
+        .help("Show process CPU% usage without normalizing over the number of cores.")
         .long_help(
-            "Shows process CPU usage without averaging over the number of CPU cores in the system.",
+            "Shows all process CPU% usage without averaging over the number of CPU cores in the system.",
         );
 
     let disable_click = Arg::new("disable_click")
@@ -304,7 +304,7 @@ Defaults to \"default\".
         .value_name("TIME")
         .help("Default time value for graphs.")
         .long_help(
-            "Default time value for graphs. The minimum time is 30s, and the default is 60s.",
+            "Default time value for graphs. Takes a number in milliseconds or a human duration (e.g. 60s). The minimum time is 30s, and the default is 60s.",
         );
 
     // TODO: Charts are broken in the manpage
@@ -352,9 +352,9 @@ use CPU (3) as the default instead.
         .short('r')
         .long("rate")
         .action(ArgAction::Set)
-        .value_name("MS")
+        .value_name("TIME")
         .help("Sets the data refresh rate.")
-        .long_help("Sets the data refresh rate. The minimum is 250ms, and defaults to 1000ms. Smaller values may take more computer resources.");
+        .long_help("Sets the data refresh rate. Takes a number in milliseconds or a human duration (e.g. 5s). The minimum is 250ms, and defaults to 1000ms. Smaller values may take more computer resources.");
 
     let time_delta = Arg::new("time_delta")
         .short('d')
@@ -362,7 +362,7 @@ use CPU (3) as the default instead.
         .action(ArgAction::Set)
         .value_name("TIME")
         .help("The amount of time changed upon zooming.")
-        .long_help("The amount of time changed when zooming in/out. The minimum is 1s, and defaults to 15s.");
+        .long_help("The amount of time changed when zooming in/out. Takes a number in milliseconds or a human duration (e.g. 30s). The minimum is 1s, and defaults to 15s.");
 
     let tree = Arg::new("tree")
         .short('T')
@@ -395,8 +395,8 @@ use CPU (3) as the default instead.
         .long("retention")
         .action(ArgAction::Set)
         .value_name("TIME")
-        .help("The timespan of data kept.")
-        .long_help("How much data is stored at once in terms of time. Takes in human-readable time spans (e.g. 10m, 1h), with a minimum of 1 minute. Note higher values will take up more memory. Defaults to 10 minutes.");
+        .help("The timespan of data stored.")
+        .long_help("How much data is stored at once in terms of time. Takes a number in milliseconds or a human duration (e.g. 20m), with a minimum of 1 minute. Note higher values will take up more memory. Defaults to 10 minutes.");
 
     let version = Arg::new("version")
         .short('V')
