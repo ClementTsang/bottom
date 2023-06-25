@@ -20,9 +20,11 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
 
 jobs:
-  initialize-release-job:
-    name: initialize-release-job
+  initialize:
+    name: initialize
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ env.VERSION }}
     steps:
       - name: Get the release version from the tag
         if: env.VERSION == ''
@@ -38,25 +40,15 @@ jobs:
         run: |
           echo "Version being built against is version ${{ env.VERSION }}"!
 
-      - name: Save version number to artifact
-        run: echo "${{ env.VERSION }}" > release-version
-
-      - name: Upload release-version as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
-        with:
-          retention-days: 3
-          name: release-version
-          path: release-version
-
   build-release:
-    needs: [initialize-release-job]
+    needs: [initialize]
     uses: ./.github/workflows/build_releases.yml
     with:
       caller: "deployment"
     secrets: inherit
 
   generate-choco:
-    needs: [build-release]
+    needs: [initialize, build-release]
     name: "Generate Chocolatey files"
     runs-on: ubuntu-latest
     steps:
@@ -65,17 +57,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get release version
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
-        with:
-          name: release-version
-          path: release-version
-
       - name: Set release version
         shell: bash
         run: |
-          release_version="$(cat ./release-version/release-version)"
-          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
 
       - name: Validate release version
         run: |
@@ -107,19 +92,12 @@ jobs:
   upload-release:
     name: upload-release
     runs-on: ubuntu-latest
-    needs: [generate-choco, build-release]
+    needs: [initialize, generate-choco, build-release]
     steps:
-      - name: Get release version
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
-        with:
-          name: release-version
-          path: release-version
-
       - name: Set release version
         shell: bash
         run: |
-          release_version="$(cat ./release-version/release-version)"
-          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
 
       - name: Validate release version
         run: |
