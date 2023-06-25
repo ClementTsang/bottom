@@ -8,6 +8,11 @@ name: post-release
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Which tag to deploy as:"
+        required: true
 
 env:
   # Assign commit authorship to official Github Actions bot when pushing to the `gh-pages` branch:
@@ -15,28 +20,49 @@ env:
   GIT_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
 
 jobs:
+  initialize:
+    name: initialize
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ env.VERSION }}
+    steps:
+      - name: Get the release version from the tag
+        if: env.VERSION == ''
+        run: |
+          if [[ -n "${{ github.event.inputs.tag }}" ]]; then
+            echo "Manual run against a tag; overriding actual tag in the environment..."
+            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+          fi
+
+      - name: Test env
+        run: |
+          echo ${{ env.VERSION }}
+
+      - name: Make sure you're not on master/main/nightly
+        run: |
+          if [[ ${{ env.VERSION }} == "master" || ${{ env.VERSION }} == "main" || ${{ env.VERSION }} == "nightly" ]]; then
+            exit 1
+          fi
+
   docs:
+    needs: [initialize]
     runs-on: ubuntu-latest
     steps:
+      - name: Set release version
+        shell: bash
+        run: |
+          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Validate release version
+        run: |
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
+
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           fetch-depth: 0
-
-      - name: Set env
-        run: |
-          export RELEASE_VERSION=${{ github.event.release.tag_name }}
-          echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
-
-      - name: Test env
-        run: |
-          echo $RELEASE_VERSION
-
-      - name: Make sure you're not on master/main/nightly...
-        run: |
-          if [[ $RELEASE_VERSION == "master" || $RELEASE_VERSION == "main" || $RELEASE_VERSION == "nightly" ]]; then
-            exit 1
-          fi
 
       - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
         with:
@@ -62,24 +88,17 @@ jobs:
           mike retitle --push ${RELEASE_VERSION} "${RELEASE_VERSION} (stable)"
 
   chocolatey:
+    needs: [initialize]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-
-      - name: Set env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
-      - name: Test env
+      - name: Set release version
+        shell: bash
         run: |
-          echo $RELEASE_VERSION
+          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
 
-      - name: Make sure you're not on master/main/nightly...
+      - name: Validate release version
         run: |
-          if [[ $RELEASE_VERSION == "master" || $RELEASE_VERSION == "main" || $RELEASE_VERSION == "nightly" ]]; then
-            exit 1
-          fi
-
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
       - name: Trigger choco
         run: |
           curl -X POST https://api.github.com/repos/ClementTsang/choco-bottom/dispatches \
@@ -88,23 +107,21 @@ jobs:
           --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
 
   winget:
+    needs: [initialize]
     runs-on: windows-latest
     steps:
-      - name: Set env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
-      - name: Test env
+      - name: Set release version
+        shell: bash
         run: |
-          echo $RELEASE_VERSION
+          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
 
-      - name: Make sure you're not on master/main/nightly...
+      - name: Validate release version
         run: |
-          if [[ $RELEASE_VERSION == "master" || $RELEASE_VERSION == "main" || $RELEASE_VERSION == "nightly" ]]; then
-            exit 1
-          fi
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - uses: vedantmgoyal2009/winget-releaser@79853c0938cc9946c1ec3cdd1b2e761bb0372b8c # v2
         with:
           identifier: Package.Identifier
           installers-regex: '^bottom_x86_64_installer\.msi$'
           token: ${{ secrets.WINGET_TOKEN }}
+          version: ${{ env.RELEASE_VERSION }}
