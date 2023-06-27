@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
+- [#1230](https://github.com/ClementTsang/bottom/pull/1230): Fix core dump if the terminal is closed while bottom is open.
+
 ## [0.9.3] - 2023-06-25
 
 ## Bug Fixes
