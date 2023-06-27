@@ -293,7 +293,7 @@ pub fn check_if_terminal() {
 }
 
 /// A panic hook to properly restore the terminal in the case of a panic.
-/// Based on [spotify-tui's implementation](https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs).
+/// Originally based on [spotify-tui's implementation](https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs).
 pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     let mut stdout = stdout();
 
@@ -305,28 +305,25 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
         },
     };
 
-    let stacktrace: String = format!("{:?}", backtrace::Backtrace::new());
+    let stacktrace = format!("{:?}", backtrace::Backtrace::new());
 
-    disable_raw_mode().unwrap();
-    execute!(
+    let _ = disable_raw_mode();
+    let _ = execute!(
         stdout,
         DisableBracketedPaste,
         DisableMouseCapture,
         LeaveAlternateScreen
-    )
-    .unwrap();
+    );
 
     // Print stack trace. Must be done after!
-    execute!(
-        stdout,
-        Print(format!(
-            "thread '<unnamed>' panicked at '{}', {}\n\r{}",
-            msg,
-            panic_info.location().unwrap(),
-            stacktrace
-        )),
-    )
-    .unwrap();
+    if let Some(panic_info) = panic_info.location() {
+        let _ = execute!(
+            stdout,
+            Print(format!(
+                "thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{stacktrace}",
+            )),
+        );
+    }
 }
 
 pub fn update_data(app: &mut App) {

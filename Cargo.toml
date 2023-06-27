@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.9.3"
+version = "0.9.4"
 authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
 edition = "2021"
 repository = "https://github.com/ClementTsang/bottom"
@@ -133,9 +133,7 @@ filedescriptor = "0.8.2"
 
 [dev-dependencies]
 assert_cmd = "2.0.11"
-cargo-husky = { version = "1.5.0", default-features = false, features = [
-    "user-hooks",
-] }
+cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
 predicates = "3.0.3"
 
 [build-dependencies]
