@@ -212,7 +212,7 @@ impl Process {
         // TODO: Pass in a buffer vec/string to share?
 
         let fd = rustix::fs::openat(
-            rustix::fs::cwd(),
+            rustix::fs::CWD,
             &pid_path,
             OFlags::PATH | OFlags::DIRECTORY | OFlags::CLOEXEC,
             Mode::empty(),
@@ -224,7 +224,7 @@ impl Process {
             .last()
             .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             .or_else(|| {
-                rustix::fs::readlinkat(rustix::fs::cwd(), &pid_path, vec![])
+                rustix::fs::readlinkat(rustix::fs::CWD, &pid_path, vec![])
                     .ok()
                     .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             })
