@@ -80,10 +80,10 @@ As (yet another) process/system visualization and management application, bottom
 
 - [Customizable behaviour](https://clementtsang.github.io/bottom/nightly/configuration/command-line-flags/) that can be controlled with command-line flags or a config file, such as:
 
-  - Custom and pre-built colour themes
-  - Changing the default behaviour of some widgets
+  - Custom and built-in colour themes
+  - Customizing widget behaviour
   - Changing the layout of widgets
-  - Filtering out entries in disk and temperature widgets
+  - Filtering out entries in some widgets
 
 - Some other nice stuff, like:
 
