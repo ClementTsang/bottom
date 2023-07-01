@@ -318,7 +318,7 @@ impl DataCollection {
         cpu.iter()
             .for_each(|cpu| new_entry.cpu_data.push(cpu.cpu_usage));
 
-        self.cpu_harvest = cpu.to_vec();
+        self.cpu_harvest = cpu;
     }
 
     fn eat_load_avg(&mut self, load_avg: cpu::LoadAvgHarvest, new_entry: &mut TimedData) {
@@ -328,14 +328,12 @@ impl DataCollection {
     }
 
     fn eat_temp(&mut self, temperature_sensors: Vec<temperature::TempHarvest>) {
-        // TODO: [PO] To implement
-        self.temp_harvest = temperature_sensors.to_vec();
+        self.temp_harvest = temperature_sensors;
     }
 
     fn eat_disks(
         &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IoHarvest, harvested_time: Instant,
     ) {
-        // TODO: [PO] To implement
         let time_since_last_harvest = harvested_time
             .duration_since(self.current_instant)
             .as_secs_f64();
@@ -457,6 +455,6 @@ impl DataCollection {
         gpu.iter().for_each(|data| {
             new_entry.gpu_data.push(data.1.use_percent);
         });
-        self.gpu_harvest = gpu.to_vec();
+        self.gpu_harvest = gpu;
     }
 }
