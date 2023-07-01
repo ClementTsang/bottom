@@ -178,7 +178,7 @@ impl Painter {
         let total_tx_display = &app_state.converted_data.total_tx_display;
 
         // Gross but I need it to work...
-        let total_network = vec![Row::new(vec![
+        let total_network = vec![Row::new([
             Text::styled(rx_display, self.colours.rx_style),
             Text::styled(tx_display, self.colours.tx_style),
             Text::styled(total_rx_display, self.colours.total_rx_style),
@@ -188,7 +188,7 @@ impl Painter {
         // Draw
         f.render_widget(
             Table::new(total_network)
-                .header(Row::new(NETWORK_HEADERS.to_vec()).style(self.colours.table_header_style))
+                .header(Row::new(NETWORK_HEADERS).style(self.colours.table_header_style))
                 .block(Block::default().borders(Borders::ALL).border_style(
                     if app_state.current_widget.widget_id == widget_id {
                         self.colours.highlighted_border_style

@@ -164,7 +164,7 @@ impl Painter {
                 }
 
                 let mut battery_rows = Vec::with_capacity(4);
-                battery_rows.push(Row::new(vec![
+                battery_rows.push(Row::new([
                     Cell::from("Charge %").style(self.colours.text_style),
                     Cell::from(bars).style(if charge_percentage < 10.0 {
                         self.colours.low_battery_colour
@@ -175,12 +175,12 @@ impl Painter {
                     }),
                 ]));
                 battery_rows.push(
-                    Row::new(vec!["Rate", &battery_details.watt_consumption])
+                    Row::new(["Rate", &battery_details.watt_consumption])
                         .style(self.colours.text_style),
                 );
 
                 battery_rows.push(
-                    Row::new(vec!["State", &battery_details.state]).style(self.colours.text_style),
+                    Row::new(["State", &battery_details.state]).style(self.colours.text_style),
                 );
 
                 let mut s: String; // Keep string in scope.
@@ -191,20 +191,20 @@ impl Painter {
                             s = long_time(*secs);
 
                             if half_width as usize > s.len() {
-                                battery_rows.push(Row::new(vec!["Time to empty", &s]).style(style));
+                                battery_rows.push(Row::new(["Time to empty", &s]).style(style));
                             } else {
                                 s = short_time(*secs);
-                                battery_rows.push(Row::new(vec!["To empty", &s]).style(style));
+                                battery_rows.push(Row::new(["To empty", &s]).style(style));
                             }
                         }
                         BatteryDuration::ToFull(secs) => {
                             s = long_time(*secs);
 
                             if half_width as usize > s.len() {
-                                battery_rows.push(Row::new(vec!["Time to full", &s]).style(style));
+                                battery_rows.push(Row::new(["Time to full", &s]).style(style));
                             } else {
                                 s = short_time(*secs);
-                                battery_rows.push(Row::new(vec!["To full", &s]).style(style));
+                                battery_rows.push(Row::new(["To full", &s]).style(style));
                             }
                         }
                         BatteryDuration::Empty
@@ -214,15 +214,14 @@ impl Painter {
                 }
 
                 battery_rows.push(
-                    Row::new(vec!["Health %", &battery_details.health])
-                        .style(self.colours.text_style),
+                    Row::new(["Health %", &battery_details.health]).style(self.colours.text_style),
                 );
 
                 // Draw
                 f.render_widget(
                     Table::new(battery_rows)
                         .block(battery_block)
-                        .header(Row::new(vec![""]).bottom_margin(table_gap))
+                        .header(Row::new([""]).bottom_margin(table_gap))
                         .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]),
                     margined_draw_loc,
                 );
