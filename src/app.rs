@@ -693,7 +693,7 @@ impl App {
                     }
                 }
                 BottomWidgetType::Battery => {
-                    if !self.converted_data.battery_data.is_empty() {
+                    if self.converted_data.battery_data.len() > 1 {
                         if let Some(battery_widget_state) = self
                             .states
                             .battery_state
@@ -754,7 +754,7 @@ impl App {
                     }
                 }
                 BottomWidgetType::Battery => {
-                    if !self.converted_data.battery_data.is_empty() {
+                    if self.converted_data.battery_data.len() > 1 {
                         let battery_count = self.converted_data.battery_data.len();
                         if let Some(battery_widget_state) = self
                             .states
