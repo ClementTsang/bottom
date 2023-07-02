@@ -26,7 +26,6 @@ pub enum BatteryDuration {
 
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {
-    pub battery_name: String,
     pub charge_percentage: f64,
     pub watt_consumption: String,
     pub battery_duration: BatteryDuration,
@@ -520,9 +519,7 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
     current_data
         .battery_harvest
         .iter()
-        .enumerate()
-        .map(|(itx, battery_harvest)| ConvertedBatteryData {
-            battery_name: format!("Battery {}", itx),
+        .map(|battery_harvest| ConvertedBatteryData {
             charge_percentage: battery_harvest.charge_percent,
             watt_consumption: format!("{:.2}W", battery_harvest.power_consumption_rate_watts),
             battery_duration: if let Some(secs) = battery_harvest.secs_until_empty {
