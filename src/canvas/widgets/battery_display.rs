@@ -185,7 +185,7 @@ impl Painter {
 
                 let mut battery_rows = Vec::with_capacity(4);
                 battery_rows.push(Row::new([
-                    Cell::from("Charge %").style(self.colours.text_style),
+                    Cell::from("Charge").style(self.colours.text_style),
                     Cell::from(bars).style(if charge_percentage < 10.0 {
                         self.colours.low_battery_colour
                     } else if charge_percentage < 50.0 {
@@ -234,7 +234,7 @@ impl Painter {
                 }
 
                 battery_rows.push(
-                    Row::new(["Health %", &battery_details.health]).style(self.colours.text_style),
+                    Row::new(["Health", &battery_details.health]).style(self.colours.text_style),
                 );
 
                 let header = if app_state.converted_data.battery_data.len() > 1 {
