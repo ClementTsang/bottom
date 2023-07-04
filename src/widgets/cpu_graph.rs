@@ -46,7 +46,7 @@ impl ColumnHeader for CpuWidgetColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
             CpuWidgetColumn::CPU => "CPU".into(),
-            CpuWidgetColumn::Use => "Use%".into(),
+            CpuWidgetColumn::Use => "Use".into(),
         }
     }
 }
