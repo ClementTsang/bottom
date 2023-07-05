@@ -1,9 +1,8 @@
 //! This file is meant to house (OS specific) implementations on how to kill processes.
 
-use windows::Win32::Foundation::CloseHandle;
 #[cfg(target_os = "windows")]
 use windows::Win32::{
-    Foundation::HANDLE,
+    Foundation::{CloseHandle, HANDLE},
     System::Threading::{
         OpenProcess, TerminateProcess, PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE,
     },
