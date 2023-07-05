@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Bug Fixes
 
 - [#1230](https://github.com/ClementTsang/bottom/pull/1230): Fix core dump if the terminal is closed while bottom is open.
+- [#1245](https://github.com/ClementTsang/bottom/pull/1245): Fix killing processes in Windows leaving a handle open.
 
 ## Changes
 
