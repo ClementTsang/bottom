@@ -53,7 +53,7 @@ pub fn zfs_io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
                     }
                 }
             }
-            Some(Ok(IoCounters::new(ds_name.to_string(), nread, nwrite)))
+            Some(Ok(IoCounters::new(ds_name, nread, nwrite)))
         })
         .collect();
     Ok(results)
