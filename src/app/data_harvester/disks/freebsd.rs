@@ -29,6 +29,7 @@ struct FileSystem {
 }
 
 pub fn get_io_usage() -> error::Result<IoHarvest> {
+    #[allow(unused_mut)]
     let mut io_harvest: HashMap<String, Option<IoData>> =
         get_disk_info().map(|storage_system_information| {
             storage_system_information

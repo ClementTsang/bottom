@@ -18,6 +18,8 @@ cfg_if! {
         pub(crate) use self::windows::*;
     } else if #[cfg(target_os = "linux")] {
         mod unix;
+        #[cfg(feature = "zfs")]
+        mod zfs_io_counters;
         pub(crate) use self::unix::*;
     } else if #[cfg(target_os = "macos")] {
         mod unix;
@@ -55,8 +57,6 @@ cfg_if! {
     if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))] {
         mod io_counters;
         pub use io_counters::IoCounters;
-        #[cfg(feature = "zfs")]
-        mod zfs_io_counters;
 
         /// Returns the I/O usage of certain mount points.
         pub fn get_io_usage() -> anyhow::Result<IoHarvest> {

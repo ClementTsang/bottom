@@ -353,6 +353,8 @@ impl DataCollection {
                         } else {
                             device.name.split('/').last()
                         }
+                        #[cfg(not(feature = "zfs"))]
+                        device.name.split('/').last()
                     }
                 }
             };
