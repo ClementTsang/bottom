@@ -347,7 +347,12 @@ impl DataCollection {
                             None => device.name.split('/').last(),
                         }
                     } else {
-                        device.name.split('/').last()
+                        #[cfg(feature = "zfs")]
+                        if ! device.name.starts_with('/'){
+                            Some(device.name.as_str()) // use the whole zfs dataset name
+                        } else {
+                            device.name.split('/').last()
+                        }
                     }
                 }
             };

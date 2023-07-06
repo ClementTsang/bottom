@@ -81,5 +81,13 @@ pub fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
         }
     }
 
+    #[cfg(feature = "zfs")]
+    {
+        use crate::app::data_harvester::disks::zfs_io_counters;
+        if let Ok(mut zfs_io) = zfs_io_counters::zfs_io_stats() {
+            results.append(&mut zfs_io);
+        }
+    }
+
     Ok(results)
 }

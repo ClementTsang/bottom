@@ -6,7 +6,11 @@ use serde::Deserialize;
 
 use super::{keep_disk_entry, DiskHarvest, IoHarvest};
 
-use crate::{app::data_harvester::DataCollector, data_harvester::deserialize_xo, utils::error};
+use crate::{
+    app::data_harvester::DataCollector, data_harvester::deserialize_xo,
+    data_harvester::disks::IoData, utils::error,
+};
+use hashbrown::HashMap;
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -25,14 +29,31 @@ struct FileSystem {
 }
 
 pub fn get_io_usage() -> error::Result<IoHarvest> {
-    let io_harvest = get_disk_info().map(|storage_system_information| {
-        storage_system_information
-            .filesystem
-            .into_iter()
-            .map(|disk| (disk.name, None))
-            .collect()
-    })?;
+    let mut io_harvest: HashMap<String, Option<IoData>> =
+        get_disk_info().map(|storage_system_information| {
+            storage_system_information
+                .filesystem
+                .into_iter()
+                .map(|disk| (disk.name, None))
+                .collect()
+        })?;
 
+    #[cfg(feature = "zfs")]
+    {
+        use crate::app::data_harvester::disks::zfs_io_counters;
+        if let Ok(zfs_io) = zfs_io_counters::zfs_io_stats() {
+            for io in zfs_io.into_iter().flatten() {
+                let mount_point = io.device_name().to_string_lossy();
+                io_harvest.insert(
+                    mount_point.to_string(),
+                    Some(IoData {
+                        read_bytes: io.read_bytes(),
+                        write_bytes: io.write_bytes(),
+                    }),
+                );
+            }
+        }
+    }
     Ok(io_harvest)
 }
 

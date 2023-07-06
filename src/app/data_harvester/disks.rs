@@ -8,6 +8,10 @@ use crate::app::filter::Filter;
 cfg_if! {
     if #[cfg(target_os = "freebsd")] {
         mod freebsd;
+        mod io_counters;
+        #[cfg(feature = "zfs")]
+        mod zfs_io_counters;
+        pub use io_counters::IoCounters;
         pub(crate) use self::freebsd::*;
     } else if #[cfg(target_os = "windows")] {
         mod windows;
@@ -51,6 +55,8 @@ cfg_if! {
     if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))] {
         mod io_counters;
         pub use io_counters::IoCounters;
+        #[cfg(feature = "zfs")]
+        mod zfs_io_counters;
 
         /// Returns the I/O usage of certain mount points.
         pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
