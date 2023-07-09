@@ -64,6 +64,7 @@ cfg_if! {
         pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
             let mut io_hash: HashMap<String, Option<IoData>> = HashMap::new();
 
+            // TODO: Maybe rewrite this to not do a result of vec of result...
             for io in io_stats()?.into_iter().flatten() {
                 let mount_point = io.device_name().to_string_lossy();
 
