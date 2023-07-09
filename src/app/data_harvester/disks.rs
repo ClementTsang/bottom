@@ -8,12 +8,20 @@ use crate::app::filter::Filter;
 cfg_if! {
     if #[cfg(target_os = "freebsd")] {
         mod freebsd;
+        #[cfg(feature = "zfs")]
+        mod io_counters;
+        #[cfg(feature = "zfs")]
+        mod zfs_io_counters;
+        #[cfg(feature = "zfs")]
+        pub use io_counters::IoCounters;
         pub(crate) use self::freebsd::*;
     } else if #[cfg(target_os = "windows")] {
         mod windows;
         pub(crate) use self::windows::*;
     } else if #[cfg(target_os = "linux")] {
         mod unix;
+        #[cfg(feature = "zfs")]
+        mod zfs_io_counters;
         pub(crate) use self::unix::*;
     } else if #[cfg(target_os = "macos")] {
         mod unix;
