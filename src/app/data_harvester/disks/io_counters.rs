@@ -1,6 +1,5 @@
 use std::ffi::OsStr;
 
-#[allow(dead_code)]
 #[derive(Debug, Default)]
 pub struct IoCounters {
     name: String,
@@ -8,7 +7,6 @@ pub struct IoCounters {
     write_bytes: u64,
 }
 
-#[allow(dead_code)]
 impl IoCounters {
     pub fn new(name: String, read_bytes: u64, write_bytes: u64) -> Self {
         Self {

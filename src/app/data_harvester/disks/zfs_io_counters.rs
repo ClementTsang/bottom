@@ -10,15 +10,12 @@ pub fn zfs_io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
             e.ok().and_then(|ctl| {
                 let name = ctl.name();
                 if let Ok(name) = name {
-                    if name.contains("objset-") {
-                        if name.contains("dataset_name")
+                    if name.contains("objset-")
+                        && (name.contains("dataset_name")
                             || name.contains("nwritten")
-                            || name.contains("nread")
-                        {
-                            Some(ctl)
-                        } else {
-                            None
-                        }
+                            || name.contains("nread"))
+                    {
+                        Some(ctl)
                     } else {
                         None
                     }
