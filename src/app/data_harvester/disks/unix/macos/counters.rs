@@ -44,6 +44,6 @@ fn get_device_io(device: io_kit::IoObject) -> anyhow::Result<IoCounters> {
 }
 
 /// Returns an iterator of disk I/O stats. Pulls data through IOKit.
-pub fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
-    Ok(get_disks()?.map(get_device_io).collect())
+pub fn io_stats() -> anyhow::Result<Vec<IoCounters>> {
+    Ok(get_disks()?.filter_map(|d| get_device_io(d).ok()).collect())
 }

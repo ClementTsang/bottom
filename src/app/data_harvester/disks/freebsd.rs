@@ -29,6 +29,7 @@ struct FileSystem {
 }
 
 pub fn get_io_usage() -> error::Result<IoHarvest> {
+    // TODO: Should this (and other I/O collectors) fail fast? In general, should collection ever fail fast?
     #[allow(unused_mut)]
     let mut io_harvest: HashMap<String, Option<IoData>> =
         get_disk_info().map(|storage_system_information| {
@@ -43,7 +44,7 @@ pub fn get_io_usage() -> error::Result<IoHarvest> {
     {
         use crate::app::data_harvester::disks::zfs_io_counters;
         if let Ok(zfs_io) = zfs_io_counters::zfs_io_stats() {
-            for io in zfs_io.into_iter().flatten() {
+            for io in zfs_io.into_iter() {
                 let mount_point = io.device_name().to_string_lossy();
                 io_harvest.insert(
                     mount_point.to_string(),

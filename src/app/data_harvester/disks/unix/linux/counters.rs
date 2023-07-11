@@ -64,7 +64,7 @@ impl FromStr for IoCounters {
 }
 
 /// Returns an iterator of disk I/O stats. Pulls data from `/proc/diskstats`.
-pub fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
+pub fn io_stats() -> anyhow::Result<Vec<IoCounters>> {
     const PROC_DISKSTATS: &str = "/proc/diskstats";
 
     let mut results = vec![];
@@ -74,7 +74,9 @@ pub fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
     // This saves us from doing a string allocation on each iteration compared to `lines()`.
     while let Ok(bytes) = reader.read_line(&mut line) {
         if bytes > 0 {
-            results.push(IoCounters::from_str(&line));
+            if let Ok(counters) = IoCounters::from_str(&line) {
+                results.push(counters);
+            }
             line.clear();
         } else {
             break;
