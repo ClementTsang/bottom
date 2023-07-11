@@ -2,7 +2,7 @@ use crate::app::data_harvester::disks::IoCounters;
 
 /// Returns zpool I/O stats. Pulls data from `sysctl kstat.zfs.{POOL}.dataset.{objset-*}`
 #[cfg(target_os = "freebsd")]
-pub fn zfs_io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
+pub fn zfs_io_stats() -> anyhow::Result<Vec<IoCounters>> {
     use sysctl::Sysctl;
     let zfs_ctls: Vec<_> = sysctl::Ctl::new("kstat.zfs.")?
         .into_iter()
@@ -27,7 +27,7 @@ pub fn zfs_io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
         .collect();
 
     use itertools::Itertools;
-    let results: Vec<anyhow::Result<IoCounters>> = zfs_ctls
+    let results: Vec<IoCounters> = zfs_ctls
         .iter()
         .chunks(3)
         .into_iter()
@@ -50,7 +50,7 @@ pub fn zfs_io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
                     }
                 }
             }
-            Some(Ok(IoCounters::new(ds_name, nread, nwrite)))
+            Some(IoCounters::new(ds_name, nread, nwrite))
         })
         .collect();
     Ok(results)
@@ -58,7 +58,7 @@ pub fn zfs_io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
 
 /// Returns zpool I/O stats. Pulls data from `/proc/spl/kstat/zfs/*/objset-*`.
 #[cfg(target_os = "linux")]
-pub fn zfs_io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
+pub fn zfs_io_stats() -> anyhow::Result<Vec<IoCounters>> {
     if let Ok(zpools) = std::fs::read_dir("/proc/spl/kstat/zfs") {
         let zpools_vec: Vec<std::path::PathBuf> = zpools
             .filter_map(|e| {
@@ -90,7 +90,7 @@ pub fn zfs_io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
                                 })
                             })
                             .collect();
-                    let io_counters: Vec<anyhow::Result<IoCounters>> = datasets_vec
+                    let io_counters: Vec<IoCounters> = datasets_vec
                         .iter()
                         .filter_map(|ds| {
                             // get io-counter from each dataset
@@ -130,9 +130,9 @@ pub fn zfs_io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
                                         }
                                     }
                                 });
+
                                 let counter = IoCounters::new(name.to_owned(), read, write);
-                                //log::debug!("adding io counter for zfs {:?}", counter);
-                                Some(Ok(counter))
+                                Some(counter)
                             } else {
                                 None
                             }

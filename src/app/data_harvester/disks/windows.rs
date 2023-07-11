@@ -11,7 +11,7 @@ mod bindings;
 use bindings::*;
 
 /// Returns I/O stats.
-pub(crate) fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
+pub(crate) fn io_stats() -> anyhow::Result<Vec<IoCounters>> {
     let volume_io = all_volume_io()?;
 
     Ok(volume_io
@@ -23,6 +23,7 @@ pub(crate) fn io_stats() -> anyhow::Result<Vec<anyhow::Result<IoCounters>>> {
 
             IoCounters::new(name, read_bytes, write_bytes)
         })
+        .flatten()
         .collect::<Vec<_>>())
 }
 
