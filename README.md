@@ -148,8 +148,7 @@ cargo +stable install bottom
 
 ### Arch Linux
 
-There is an [official package](https://archlinux.org/packages/extra/x86_64/bottom/) that can be installed with
-`pacman`:
+bottom is available as an [official package](https://archlinux.org/packages/extra/x86_64/bottom/) that can be installed with `pacman`:
 
 ```bash
 sudo pacman -S bottom
@@ -159,7 +158,7 @@ sudo pacman -S bottom
 
 A `.deb` file is provided on each [stable release](https://github.com/ClementTsang/bottom/releases/latest) and
 [nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly) for x86, aarch64, and armv7
-(note stable ARM builds are only available for 0.6.8 and later). If you want to install this way, do something like:
+(note stable ARM builds are only available for 0.6.8 and later). An example of installing this way:
 
 ```bash
 # x86-64
