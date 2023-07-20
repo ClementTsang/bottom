@@ -67,7 +67,7 @@ jobs:
 
       - name: Install cargo-llvm-cov
         run: |
-          curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/tag/v0.5.23/download/cargo-llvm-cov-${{ matrix.info.target }}.tar.gz | tar xzf - -C $HOME/.cargo/bin
+          curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/download/v0.5.23/cargo-llvm-cov-${{ matrix.info.target }}.tar.gz | tar xzf - -C $HOME/.cargo/bin
 
       - name: Generate code coverage
         run: |
