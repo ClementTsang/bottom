@@ -207,6 +207,7 @@ impl<'a> Widget for PipeGauge<'a> {
                         bg: None,
                         add_modifier: self.gauge_style.add_modifier,
                         sub_modifier: self.gauge_style.sub_modifier,
+                        underline_color: None,
                     });
                 }
 
