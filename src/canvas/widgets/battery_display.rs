@@ -131,9 +131,8 @@ impl Painter {
                 .battery_data
                 .get(battery_widget_state.currently_selected_battery_index)
             {
-                // Assuming a 50/50 split in width
-                let half_width = draw_loc.width.saturating_sub(2) / 2;
-                let bar_length = usize::from(half_width.saturating_sub(8));
+                let full_width = draw_loc.width.saturating_sub(2);
+                let bar_length = usize::from(full_width.saturating_sub(6));
                 let charge_percentage = battery_details.charge_percentage;
                 let num_bars = calculate_basic_use_bars(charge_percentage, bar_length);
                 let bars = format!(
@@ -183,17 +182,22 @@ impl Painter {
                     }
                 }
 
-                let mut battery_rows = Vec::with_capacity(4);
-                battery_rows.push(Row::new([
-                    Cell::from("Charge").style(self.colours.text_style),
-                    Cell::from(bars).style(if charge_percentage < 10.0 {
+                let mut battery_charge_rows = Vec::with_capacity(2);
+                battery_charge_rows.push(Row::new([
+                    Cell::from("Charge").style(self.colours.text_style)
+                ]));
+                battery_charge_rows.push(Row::new([Cell::from(bars).style(
+                    if charge_percentage < 10.0 {
                         self.colours.low_battery_colour
                     } else if charge_percentage < 50.0 {
                         self.colours.medium_battery_colour
                     } else {
                         self.colours.high_battery_colour
-                    }),
-                ]));
+                    },
+                )]));
+
+                let mut battery_rows = Vec::with_capacity(3);
+                battery_rows.push(Row::new([""]).bottom_margin(table_gap * 2));
                 battery_rows.push(
                     Row::new(["Rate", &battery_details.watt_consumption])
                         .style(self.colours.text_style),
@@ -210,7 +214,7 @@ impl Painter {
                         BatteryDuration::ToEmpty(secs) => {
                             time = long_time(*secs);
 
-                            if half_width as usize > time.len() {
+                            if full_width as usize > time.len() {
                                 battery_rows.push(Row::new(["Time to empty", &time]).style(style));
                             } else {
                                 time = short_time(*secs);
@@ -220,7 +224,7 @@ impl Painter {
                         BatteryDuration::ToFull(secs) => {
                             time = long_time(*secs);
 
-                            if half_width as usize > time.len() {
+                            if full_width as usize > time.len() {
                                 battery_rows.push(Row::new(["Time to full", &time]).style(style));
                             } else {
                                 time = short_time(*secs);
@@ -243,7 +247,16 @@ impl Painter {
                     Row::default()
                 };
 
-                // Draw
+                // Draw bar
+                f.render_widget(
+                    Table::new(battery_charge_rows)
+                        .block(battery_block.clone())
+                        .header(header.clone())
+                        .widths(&[Constraint::Percentage(100)]),
+                    margined_draw_loc,
+                );
+
+                // Draw info
                 f.render_widget(
                     Table::new(battery_rows)
                         .block(battery_block)
