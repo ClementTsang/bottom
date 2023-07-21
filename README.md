@@ -105,7 +105,7 @@ bottom _officially_ supports the following operating systems and corresponding a
 - Windows (`x86_64`, `i686`)
 
 These platforms are tested to work for the most part and issues on these platforms will be fixed if possible.
-Furthermore, binaries are expected to be built and tested using the most recent version of stable Rust.
+Furthermore, binaries are expected to be built and tested using the most recent version of stable Rust at the time.
 
 For more details on supported platforms and known problems, check out [the documentation](https://clementtsang.github.io/bottom/nightly/support/official/).
 
