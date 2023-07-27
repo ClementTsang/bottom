@@ -441,6 +441,7 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/yshui"><img src="https://avatars.githubusercontent.com/u/366851?v=4?s=100" width="100px;" alt="Yuxuan Shui"/><br /><sub><b>Yuxuan Shui</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=yshui" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://zongwenqing.com"><img src="https://avatars.githubusercontent.com/u/43934749?v=4?s=100" width="100px;" alt="Wenqing Zong"/><br /><sub><b>Wenqing Zong</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=WenqingZong" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://gabelluardo.github.io"><img src="https://avatars.githubusercontent.com/u/42920247?v=4?s=100" width="100px;" alt="Gabriele Belluardo"/><br /><sub><b>Gabriele Belluardo</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=gabelluardo" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://zebulon.dev/"><img src="https://avatars.githubusercontent.com/u/14242997?v=4?s=100" width="100px;" alt="Zeb Piasecki"/><br /><sub><b>Zeb Piasecki</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=zebp" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
