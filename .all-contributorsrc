@@ -416,6 +416,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "zebp",
+      "name": "Zeb Piasecki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14242997?v=4",
+      "profile": "https://zebulon.dev/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
