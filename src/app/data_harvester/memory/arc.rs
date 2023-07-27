@@ -18,7 +18,7 @@ pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
                         if let Some((label, value)) = line.split_once(' ') {
                             let to_write = match label {
                                 "size" => &mut mem_arc,
-                                "memory_all_bytes" => &mut mem_total,
+                                "c_max" => &mut mem_total,
                                 _ => {
                                     continue;
                                 }
@@ -45,7 +45,7 @@ pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
                 use sysctl::Sysctl;
                 if let (Ok(mem_arc_value), Ok(mem_sys_value)) = (
                     sysctl::Ctl::new("kstat.zfs.misc.arcstats.size"),
-                    sysctl::Ctl::new("hw.physmem"),
+                    sysctl::Ctl::new("kstat.zfs.misc.arcstats.c_max"),
                 ) {
                     if let (Ok(sysctl::CtlValue::U64(arc)), Ok(sysctl::CtlValue::Ulong(mem))) =
                         (mem_arc_value.value(), mem_sys_value.value())
