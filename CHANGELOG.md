@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1230](https://github.com/ClementTsang/bottom/pull/1230): Fix core dump if the terminal is closed while bottom is open.
 - [#1245](https://github.com/ClementTsang/bottom/pull/1245): Fix killing processes in Windows leaving a handle open.
+- [#1264](https://github.com/ClementTsang/bottom/pull/1264): Fix ARC usage showing max system memory instead of max ARC size.
 
 ## Features
 
