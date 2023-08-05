@@ -468,18 +468,18 @@ pub fn get_widget_layout(
             default_widget_type,
         ))
     } else {
-        let ref_row: Vec<Row>; // Required to handle reference
+        let ref_row: Vec<Row>; // Required to handle reference.
         let rows = match &config.row {
             Some(r) => r,
             None => {
-                // This cannot (like it really shouldn't) fail!
                 ref_row = toml_edit::de::from_str::<Config>(if get_use_battery(matches, config) {
                     DEFAULT_BATTERY_LAYOUT
                 } else {
                     DEFAULT_LAYOUT
                 })?
                 .row
-                .unwrap();
+                .expect("parsing the default layouts should never fail!");
+
                 &ref_row
             }
         };

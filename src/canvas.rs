@@ -13,7 +13,7 @@ use tui::{
 use crate::{
     app::{
         self,
-        layout_manager::{BottomColRow, BottomLayout, BottomWidget, BottomWidgetType, NodeId},
+        layout_manager::{BottomLayout, BottomWidget, BottomWidgetType, NodeId},
         App,
     },
     constants::*,
@@ -620,19 +620,20 @@ impl Painter {
                                     if let Some(container) =
                                         self.widget_layout.get_container(current_id)
                                     {
-                                        let constraints = container.children.iter().map(|child| {
-                                            match child {
-                                                NodeId::Container(child) => self
-                                                    .widget_layout
-                                                    .get_container(*child)
-                                                    .map(|c| c.constraint),
-                                                NodeId::Widget(child) => self
-                                                    .widget_layout
-                                                    .get_widget(*child)
-                                                    .map(|w| w.constraint),
-                                            }
-                                            .unwrap_or(LayoutConstraint::FlexGrow)
-                                        });
+                                        let constraints =
+                                            container.children().iter().map(|child| {
+                                                match child {
+                                                    NodeId::Container(child) => self
+                                                        .widget_layout
+                                                        .get_container(*child)
+                                                        .map(|c| c.constraint()),
+                                                    NodeId::Widget(child) => self
+                                                        .widget_layout
+                                                        .get_widget(*child)
+                                                        .map(|w| w.constraint),
+                                                }
+                                                .unwrap_or(LayoutConstraint::FlexGrow)
+                                            });
 
                                         let rects = get_rects(
                                             container.direction().into(),
@@ -642,7 +643,7 @@ impl Painter {
 
                                         // If it's a container, push in reverse order to the stack.
                                         for child in container
-                                            .children
+                                            .children()
                                             .iter()
                                             .cloned()
                                             .zip(rects.into_iter())
@@ -688,40 +689,6 @@ impl Painter {
         app_state.is_determining_widget_boundary = false;
 
         Ok(())
-    }
-
-    fn draw_widgets_with_constraints<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, widgets: &BottomColRow,
-        widget_draw_locs: &[Rect],
-    ) {
-        use BottomWidgetType::*;
-        for (widget, widget_draw_loc) in widgets.children.iter().zip(widget_draw_locs) {
-            if widget_draw_loc.width >= 2 && widget_draw_loc.height >= 2 {
-                match &widget.widget_type {
-                    Empty => {}
-                    Cpu => self.draw_cpu(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Mem => self.draw_memory_graph(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Net => self.draw_network(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Temp => self.draw_temp_table(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Disk => self.draw_disk_table(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Proc => self.draw_process_widget(
-                        f,
-                        app_state,
-                        *widget_draw_loc,
-                        true,
-                        widget.widget_id,
-                    ),
-                    Battery => self.draw_battery_display(
-                        f,
-                        app_state,
-                        *widget_draw_loc,
-                        true,
-                        widget.widget_id,
-                    ),
-                    _ => {}
-                }
-            }
-        }
     }
 
     fn draw_widget<B: Backend>(

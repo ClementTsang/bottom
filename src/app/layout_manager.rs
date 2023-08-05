@@ -15,14 +15,14 @@ type WidgetMappings = (u32, BTreeMap<LineSegment, u64>);
 type ColumnRowMappings = (u32, BTreeMap<LineSegment, WidgetMappings>);
 type ColumnMappings = (u32, BTreeMap<LineSegment, ColumnRowMappings>);
 
-/// A "container" that contains more [`Node`]s.
+/// A "container" that contains more child elements, stored as [`NodeId`]s.
 #[derive(Debug, Clone)]
 pub(crate) struct Container {
     /// The children elements.
-    pub(crate) children: Vec<NodeId>,
+    children: Vec<NodeId>,
 
     /// How the container should be sized.
-    pub(crate) constraint: LayoutConstraint,
+    constraint: LayoutConstraint,
 
     /// The direction.
     direction: ContainerDirection,
@@ -45,7 +45,20 @@ impl Container {
         }
     }
 
+    /// Returns the constraint of the container.
+    #[inline]
+    pub fn constraint(&self) -> LayoutConstraint {
+        self.constraint
+    }
+
+    /// Returns a reference to the children.
+    #[inline]
+    pub fn children(&self) -> &[NodeId] {
+        &self.children
+    }
+
     /// Returns the direction of the container.
+    #[inline]
     pub fn direction(&self) -> ContainerDirection {
         self.direction
     }
@@ -188,14 +201,22 @@ impl BottomLayout {
         NodeId::Widget(id)
     }
 
-    /// Get the node with the corresponding ID.
+    /// Get a reference to the [`Container`] with the corresponding ID if
+    /// it exists.
     pub fn get_container(&self, id: usize) -> Option<&Container> {
         self.containers.get(id)
     }
 
-    /// Get the node with the corresponding ID.
+    /// Get a reference to the [`BottomWidget`] with the corresponding ID if
+    /// it exists.
     pub fn get_widget(&self, id: usize) -> Option<&BottomWidget> {
         self.widgets.get(id)
+    }
+
+    /// Get a mutable reference to the [`BottomWidget`] with the corresponding
+    /// ID if it exists.
+    pub fn get_widget_mut(&mut self, id: usize) -> Option<&mut BottomWidget> {
+        self.widgets.get_mut(id)
     }
 
     /// Returns an iterator of all widgets.
@@ -534,7 +555,64 @@ impl BottomLayout {
         layout
     }
 
+    /// Creates mappings to move from one widget to another.
     fn get_movement_mappings(&mut self) {
+        type LineSegment = (u32, u32);
+
+        // Have to enable this, clippy really doesn't like me doing this with tuples...
+        #[allow(clippy::suspicious_operation_groupings)]
+        fn is_intersecting(a: LineSegment, b: LineSegment) -> bool {
+            a.0 >= b.0 && a.1 <= b.1
+                || a.1 >= b.1 && a.0 <= b.0
+                || a.0 <= b.0 && a.1 >= b.0
+                || a.0 >= b.0 && a.0 < b.1 && a.1 >= b.1
+        }
+
+        fn distance(target: LineSegment, candidate: LineSegment) -> u32 {
+            if candidate.0 < target.0 {
+                candidate.1 - target.0
+            } else if candidate.1 < target.1 {
+                candidate.1 - candidate.0
+            } else {
+                target.1 - candidate.0
+            }
+        }
+
+        if let Some(root_id) = self.root_id() {
+            let mut queue = vec![root_id];
+
+            // Build a k-d tree to have a simple virtual mapping of where each
+            // widget is relative to each other.
+            while let Some(current) = queue.pop() {
+                match current {
+                    NodeId::Container(id) => if let Some(children) = self.get_container(id) {},
+                    NodeId::Widget(id) => if let Some(widget) = self.get_widget(id) {},
+                }
+            }
+
+            // Now traverse the layout tree a second time, assigning any missing
+            // widget mappings where it makes sense.
+            queue.push(root_id);
+            while let Some(current) = queue.pop() {
+                match current {
+                    NodeId::Container(id) => if let Some(children) = self.get_container(id) {},
+                    NodeId::Widget(id) => {
+                        if let Some(widget) = self.get_widget_mut(id) {
+                            if widget.left_neighbour.is_none() {}
+
+                            if widget.right_neighbour.is_none() {}
+
+                            if widget.up_neighbour.is_none() {}
+
+                            if widget.down_neighbour.is_none() {}
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn old_get_movement_mappings(&mut self) {
         #[allow(clippy::suspicious_operation_groupings)] // Have to enable this, clippy really doesn't like me doing this with tuples...
         fn is_intersecting(a: LineSegment, b: LineSegment) -> bool {
             a.0 >= b.0 && a.1 <= b.1
