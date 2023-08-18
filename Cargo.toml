@@ -74,10 +74,10 @@ deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
 
 [dependencies]
-anyhow = "1.0.72"
+anyhow = "1.0.75"
 backtrace = "0.3.68"
 cfg-if = "1.0.0"
-clap = { version = "4.3.21", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.3.23", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 crossterm = "0.27.0"
 ctrlc = { version = "3.4.0", features = ["termination"] }
@@ -89,14 +89,14 @@ humantime = "2.1.0"
 indexmap = "2.0.0"
 itertools = "0.11.0"
 kstring = { version = "2.0.0", features = ["arc"] }
-log = { version = "0.4.19", optional = true }
+log = { version = "0.4.20", optional = true }
 nvml-wrapper = { version = "0.9.0", optional = true }
 once_cell = "1.18.0"
 regex = "1.9.3"
 serde = { version = "<=1.0.171 ", features = ["derive"] }
 starship-battery = { version = "0.8.2", optional = true }
 sysinfo = "=0.29.8"
-thiserror = "1.0.44"
+thiserror = "1.0.47"
 time = { version = "0.3.26", features = ["formatting", "macros"] }
 toml_edit = { version = "0.19.14", features = ["serde"] }
 tui = { version = "0.22.0", package = "ratatui" }
@@ -107,14 +107,14 @@ unicode-width = "0.1.10"
 libc = "0.2.147"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "0.38.7", features = ["fs", "param", "process"] }
+rustix = { version = "0.38.8", features = ["fs", "param", "process"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.9.3"
 mach2 = "0.4.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.48.0", features = [
+windows = { version = "0.51.1", features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_Storage_FileSystem",
@@ -125,7 +125,7 @@ windows = { version = "0.48.0", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.104" }
+serde_json = { version = "1.0.105" }
 sysctl = { version = "0.5.4" }
 filedescriptor = "0.8.2"
 
@@ -137,7 +137,7 @@ cargo-husky = { version = "1.5.0", default-features = false, features = [
 predicates = "3.0.3"
 
 [build-dependencies]
-clap = { version = "4.3.21", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.3.23", features = ["default", "cargo", "wrap_help"] }
 clap_complete = "4.3.2"
 clap_mangen = "0.2.12"
 
