@@ -233,6 +233,11 @@ fn read_proc(
         Duration::ZERO
     };
 
+    #[cfg(feature = "gpu")]
+    let gpu_mem = 0;
+    #[cfg(feature = "gpu")]
+    let gpu_util = 0;
+
     Ok((
         ProcessHarvest {
             pid: process.pid,
@@ -250,6 +255,10 @@ fn read_proc(
             uid,
             user,
             time,
+            #[cfg(feature = "gpu")]
+            gpu_mem,
+            #[cfg(feature = "gpu")]
+            gpu_util,
         },
         new_process_times,
     ))
@@ -326,7 +335,8 @@ pub(crate) fn linux_process_data(
                     let pid = process.pid;
                     let prev_proc_details = pid_mapping.entry(pid).or_default();
 
-                    if let Ok((process_harvest, new_process_times)) = read_proc(
+                    #[allow(unused_mut)]
+                    if let Ok((mut process_harvest, new_process_times)) = read_proc(
                         prev_proc_details,
                         process,
                         cpu_usage,
@@ -336,6 +346,17 @@ pub(crate) fn linux_process_data(
                         total_memory,
                         user_table,
                     ) {
+                        #[cfg(feature = "gpu")]
+                        if let Some(gpus) = &collector.gpu_pids {
+                            gpus.iter().for_each(|gpu| {
+                                // add mem/util for all gpus to pid
+                                if let Some((mem, util)) = gpu.get(&(pid as u32)) {
+                                    process_harvest.gpu_mem += mem;
+                                    process_harvest.gpu_util += util;
+                                }
+                            });
+                        }
+
                         prev_proc_details.cpu_time = new_process_times;
                         prev_proc_details.total_read_bytes = process_harvest.total_read_bytes;
                         prev_proc_details.total_write_bytes = process_harvest.total_write_bytes;

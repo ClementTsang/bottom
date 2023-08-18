@@ -15,9 +15,6 @@ cfg_if::cfg_if! {
     }
 }
 
-#[cfg(feature = "gpu")]
-pub mod gpu;
-
 #[cfg(feature = "zfs")]
 pub mod arc;
 

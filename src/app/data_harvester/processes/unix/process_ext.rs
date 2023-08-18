@@ -97,6 +97,10 @@ pub(crate) trait UnixProcessExt {
                     })
                     .unwrap_or_else(|| "N/A".into()),
                 time: Duration::from_secs(process_val.run_time()),
+                #[cfg(feature = "gpu")]
+                gpu_mem: 0,
+                #[cfg(feature = "gpu")]
+                gpu_util: 0,
             });
         }
 

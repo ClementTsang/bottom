@@ -1,8 +1,4 @@
 //! Data collection for CPU usage and load average.
-//!
-//! For CPU usage, Linux, macOS, and Windows are handled by Heim, FreeBSD by sysinfo.
-//!
-//! For load average, macOS and Linux are supported through Heim, FreeBSD by sysinfo.
 
 pub mod sysinfo;
 pub use self::sysinfo::*;
@@ -13,6 +9,8 @@ pub type LoadAvgHarvest = [f32; 3];
 pub enum CpuDataType {
     Avg,
     Cpu(usize),
+    #[cfg(feature = "gpu")]
+    Gpu(usize),
 }
 
 #[derive(Debug, Clone)]

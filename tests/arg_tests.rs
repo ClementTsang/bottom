@@ -178,10 +178,10 @@ fn test_battery_flag() {
 #[cfg_attr(feature = "gpu", ignore)]
 fn test_gpu_flag() {
     btm_command()
-        .arg("--enable_gpu_memory")
+        .arg("--enable_gpu")
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "unexpected argument '--enable_gpu_memory' found",
+            "unexpected argument '--enable_gpu' found",
         ));
 }

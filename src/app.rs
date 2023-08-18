@@ -60,7 +60,7 @@ pub struct AppConfigFields {
     pub use_old_network_legend: bool,
     pub table_gap: u16,
     pub disable_click: bool,
-    pub enable_gpu_memory: bool,
+    pub enable_gpu: bool,
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,
     pub is_advanced_kill: bool,
@@ -1275,6 +1275,30 @@ impl App {
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
                     disk.set_index(3);
+                }
+            }
+            #[cfg(feature = "gpu")]
+            'M' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        proc_widget_state.select_column(ProcWidgetColumn::GpuMem);
+                    }
+                }
+            }
+            #[cfg(feature = "gpu")]
+            'C' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        proc_widget_state.select_column(ProcWidgetColumn::GpuUtil);
+                    }
                 }
             }
             '?' => {
@@ -2702,7 +2726,14 @@ impl App {
                                 {
                                     if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y)
                                     {
-                                        battery_widget_state.currently_selected_battery_index = itx;
+                                        if itx >= self.converted_data.battery_data.len() {
+                                            // range check to keep within current data
+                                            battery_widget_state.currently_selected_battery_index =
+                                                self.converted_data.battery_data.len() - 1;
+                                        } else {
+                                            battery_widget_state.currently_selected_battery_index =
+                                                itx;
+                                        }
                                         break;
                                     }
                                 }

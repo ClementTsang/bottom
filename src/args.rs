@@ -464,8 +464,8 @@ use CPU (3) as the default instead.
         },
         #[cfg(feature = "gpu")]
         {
-            Arg::new("enable_gpu_memory")
-                .long("enable_gpu_memory")
+            Arg::new("enable_gpu")
+                .long("enable_gpu")
                 .action(ArgAction::SetTrue)
                 .help("Enable collecting and displaying GPU memory usage.")
         },

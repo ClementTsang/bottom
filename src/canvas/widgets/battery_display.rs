@@ -70,13 +70,17 @@ impl Painter {
                 Block::default().borders(Borders::NONE)
             };
 
-            if app_state.converted_data.battery_data.len() > 1 {
+            let show_tabs = {
+                app_state.app_config_fields.enable_gpu
+                    || app_state.converted_data.battery_data.len() > 1
+            };
+
+            if show_tabs {
                 let battery_names = app_state
                     .converted_data
                     .battery_data
                     .iter()
-                    .enumerate()
-                    .map(|(itx, _)| format!("Battery {itx}"))
+                    .map(|bat| &bat.name)
                     .collect::<Vec<_>>();
 
                 let tab_draw_loc = Layout::default()
@@ -241,7 +245,7 @@ impl Painter {
                     Row::new(["Health", &battery_details.health]).style(self.colours.text_style),
                 );
 
-                let header = if app_state.converted_data.battery_data.len() > 1 {
+                let header = if show_tabs {
                     Row::new([""]).bottom_margin(table_gap)
                 } else {
                     Row::default()

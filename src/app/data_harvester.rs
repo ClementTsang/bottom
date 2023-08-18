@@ -2,7 +2,7 @@
 
 use std::time::{Duration, Instant};
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", feature = "gpu"))]
 use hashbrown::HashMap;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
@@ -125,6 +125,9 @@ pub struct DataCollector {
 
     #[cfg(target_family = "unix")]
     user_table: self::processes::UserTable,
+
+    #[cfg(feature = "gpu")]
+    gpu_pids: Option<Vec<HashMap<u32, (u64, u32)>>>,
 }
 
 impl DataCollector {
@@ -153,6 +156,8 @@ impl DataCollector {
             filters,
             #[cfg(target_family = "unix")]
             user_table: Default::default(),
+            #[cfg(feature = "gpu")]
+            gpu_pids: None,
         }
     }
 
@@ -288,16 +293,95 @@ impl DataCollector {
 
         self.update_cpu_usage();
         self.update_memory_usage();
-        self.update_processes();
         self.update_temps();
+        #[cfg(feature = "battery")]
+        self.update_batteries();
+        #[cfg(feature = "gpu")]
+        self.update_gpus(); // update_gpus before procs for gpu_pids but after temp/batteries/cpu_usage for appending
+        self.update_processes();
         self.update_network_usage();
         self.update_disks();
 
-        #[cfg(feature = "battery")]
-        self.update_batteries();
-
         // Update times for future reference.
         self.last_collection_time = self.data.collection_time;
+    }
+    #[cfg(feature = "gpu")]
+    #[inline]
+    fn update_gpus(&mut self) {
+        if self.widgets_to_harvest.use_gpu {
+            let use_temp = self.widgets_to_harvest.use_temp;
+            let use_mem = self.widgets_to_harvest.use_mem;
+            let use_proc = self.widgets_to_harvest.use_proc;
+            let use_cpu = self.widgets_to_harvest.use_cpu;
+            let use_battery = self.widgets_to_harvest.use_battery;
+            #[cfg(feature = "nvidia")]
+            if let Some(data) = nvidia::get_nvidia_vecs(
+                &self.temperature_type,
+                &self.filters.temp_filter,
+                use_temp,
+                use_mem,
+                use_proc,
+                use_cpu,
+                use_battery,
+            ) {
+                if use_temp {
+                    if let Some(mut temp) = data.temperature {
+                        if let Some(ref mut sensors) = self.data.temperature_sensors {
+                            sensors.append(&mut temp);
+                        } else {
+                            self.data.temperature_sensors = Some(temp);
+                        }
+                    }
+                }
+                if use_mem {
+                    if let Some(mem) = data.memory {
+                        self.data.gpu = Some(mem);
+                    }
+                }
+                if use_proc {
+                    if let Some(proc) = data.procs {
+                        self.gpu_pids = Some(proc);
+                    }
+                }
+                if use_cpu {
+                    if let Some(mut cpu) = data.usage {
+                        if let Some(ref mut cpus) = self.data.cpu {
+                            cpus.append(&mut cpu);
+                        } else {
+                            self.data.cpu = Some(cpu);
+                        }
+                    }
+                }
+                #[cfg(all(feature = "battery", target_os = "linux"))]
+                {
+                    use crate::data_harvester::batteries::BatteryHarvest;
+                    use starship_battery::State;
+                    if use_battery {
+                        if let Some(power) = data.battery {
+                            let mut powers: Vec<BatteryHarvest> = power
+                                .into_iter()
+                                .map(|pwr| {
+                                    BatteryHarvest {
+                                        charge_percent: 100.0,
+                                        secs_until_full: None,
+                                        secs_until_empty: None,
+                                        power_consumption_rate_watts: (pwr.1 / 1000) as f64, // convert milliwatts to watts
+                                        health_percent: 100.0,
+                                        state: State::Unknown,
+                                        name: pwr.0,
+                                    }
+                                })
+                                .collect();
+                            if let Some(ref mut batts) = self.data.list_of_batteries {
+                                batts.append(&mut powers);
+                            } else {
+                                self.data.list_of_batteries = Some(powers);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     #[inline]
@@ -364,11 +448,6 @@ impl DataCollector {
             #[cfg(feature = "zfs")]
             {
                 self.data.arc = memory::arc::get_arc_usage();
-            }
-
-            #[cfg(feature = "gpu")]
-            if self.widgets_to_harvest.use_gpu {
-                self.data.gpu = memory::gpu::get_gpu_mem_usage();
             }
         }
     }

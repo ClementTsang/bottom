@@ -359,11 +359,6 @@ pub fn get_temperature_data(
         add_thermal_zone_temperatures(&mut results.temperatures, temp_type, filter);
     }
 
-    #[cfg(feature = "nvidia")]
-    {
-        super::nvidia::add_nvidia_data(&mut results.temperatures, temp_type, filter)?;
-    }
-
     Ok(Some(results.temperatures))
 }
 

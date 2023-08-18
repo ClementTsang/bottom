@@ -13,7 +13,7 @@ If the total RAM or swap available is 0, then it is automatically hidden from th
 
 One can also adjust the displayed time range through either the keyboard or mouse, with a range of 30s to 600s.
 
-This widget can also be configured to display Nvidia GPU memory usage (`--enable_gpu_memory`) or cache memory usage (`--enable_cache_memory`).
+This widget can also be configured to display Nvidia GPU memory usage (`--enable_gpu` on Linux/Windows) or cache memory usage (`--enable_cache_memory`).
 
 ## Key bindings
 

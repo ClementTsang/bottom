@@ -68,6 +68,12 @@ impl Painter {
                                 self.colours.cpu_colour_styles
                                     [index % self.colours.cpu_colour_styles.len()],
                             ),
+                            #[cfg(feature = "gpu")]
+                            CpuDataType::Gpu(index) => (
+                                format!("G{index:<3}",),
+                                self.colours.gpu_colour_styles
+                                    [index % self.colours.gpu_colour_styles.len()],
+                            ),
                         };
                         let inner = format!("{:>3.0}%", last_entry.round());
                         let ratio = last_entry / 100.0;

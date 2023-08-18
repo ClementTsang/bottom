@@ -32,6 +32,12 @@ It can also additionally display the following columns:
 
 - Process running time
 
+With the feature flag (`--enable_gpu` on Linux/Windows) and gpu process columns enabled in the configuration:
+
+- GPU memory
+- GPU core utilization percentage
+
+
 See [the processes configuration page](../../configuration/config-file/processes.md) on how to customize which columns
 are shown.
 
@@ -147,6 +153,8 @@ Note all keywords are case-insensitive. To search for a process/command that col
 | `user`                          | `user=root`                           | Matches by user; supports regex                                                 |
 | `state`                         | `state=running`                       | Matches by state; supports regex                                                |
 | `()`                            | `(<COND 1> AND <COND 2>) OR <COND 3>` | Group together a condition                                                      |
+| `gmem`                          | `gmem > 1000 b`                       | Matches the gpu memory column in terms of bytes; supports comparison operators  |
+| `gpu%`                          | `gpu% > 0`                            | Matches the gpu usage column in terms of percent; supports comparison operators |
 
 #### Comparison operators
 
@@ -207,6 +215,8 @@ Note that key bindings are generally case-sensitive.
 | ++I++                  | Invert the current sort                                          |
 | ++"%"++                | Toggle between values and percentages for memory usage           |
 | ++t++ , ++f5++         | Toggle tree mode                                                 |
+| ++M++                  | Sort by gpu memory usage, press again to reverse sorting order   |
+| ++C++                  | Sort by gpu usage, press again to reverse sorting order          |
 
 ### Sort sub-widget
 

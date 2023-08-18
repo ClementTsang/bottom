@@ -114,6 +114,20 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
 
                                 Some(text)
                             }
+                            #[cfg(feature = "gpu")]
+                            CpuDataType::Gpu(index) => {
+                                let index_str = index.to_string();
+                                let text = if calculated_width < CPU_TRUNCATE_BREAKPOINT {
+                                    truncate_to_text(&index_str, calculated_width)
+                                } else {
+                                    truncate_to_text(
+                                        &concat_string!("GPU", index_str),
+                                        calculated_width,
+                                    )
+                                };
+
+                                Some(text)
+                            }
                         },
                         CpuWidgetColumn::Use => Some(truncate_to_text(
                             &format!("{:.0}%", last_entry.round()),
@@ -137,6 +151,11 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
                 CpuDataType::Cpu(index) => {
                     painter.colours.cpu_colour_styles
                         [index % painter.colours.cpu_colour_styles.len()]
+                }
+                #[cfg(feature = "gpu")]
+                CpuDataType::Gpu(index) => {
+                    painter.colours.gpu_colour_styles
+                        [index % painter.colours.gpu_colour_styles.len()]
                 }
             },
         };

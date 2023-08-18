@@ -327,7 +327,7 @@ pub const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-pub const PROCESS_HELP_TEXT: [&str; 15] = [
+pub const PROCESS_HELP_TEXT: [&str; 17] = [
     "3 - Process widget",
     "dd, F9           Kill the selected process",
     "c                Sort by CPU usage, press again to reverse",
@@ -343,9 +343,11 @@ pub const PROCESS_HELP_TEXT: [&str; 15] = [
     "t, F5            Toggle tree mode",
     "+, -, click      Collapse/expand a branch while in tree mode",
     "click on header  Sorts the entries by that column, click again to invert the sort",
+    "C                Sort by GPU usage, press again to reverse",
+    "M                Sort by GPU memory usage, press again to reverse",
 ];
 
-pub const SEARCH_HELP_TEXT: [&str; 48] = [
+pub const SEARCH_HELP_TEXT: [&str; 50] = [
     "4 - Process search widget",
     "Esc              Close the search widget (retains the filter)",
     "Ctrl-a           Skip to the start of the search query",
@@ -373,6 +375,8 @@ pub const SEARCH_HELP_TEXT: [&str; 48] = [
     "twrite, t.write  ex: twrite = 1",
     "user             ex: user = root",
     "state            ex: state = running",
+    "gpu%             ex: gpu% < 4.2",
+    "gmem             ex: gmem < 100 kb",
     "",
     "Comparison operators:",
     "=                ex: cpu = 1",
@@ -581,8 +585,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #network_use_log = false
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
-# Shows GPU(s) memory
-#enable_gpu_memory = false
+# Shows GPU(s) information
+#enable_gpu = false
 # Shows cache and buffer memory
 #enable_cache_memory = false
 # How much data is stored at once in terms of time.
@@ -591,7 +595,7 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 # These are flags around the process widget.
 
 #[processes]
-#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State"]
+#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMEM", "GPU%"]
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
@@ -611,7 +615,7 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #swap_color="LightYellow"
 # Represents the colour ARC will use in the memory legend and graph.
 #arc_color="LightCyan"
-# Represents the colour the GPU will use in the memory legend and graph.
+# Represents the colour the GPU will use in the legend and graph.
 #gpu_core_colors=["LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
 # Represents the colour rx will use in the network legend and graph.
 #rx_color="LightCyan"

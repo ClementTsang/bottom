@@ -91,6 +91,10 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         User => SortColumn::soft(User, Some(0.05)),
         State => SortColumn::hard(State, 7),
         Time => SortColumn::new(Time),
+        #[cfg(feature = "gpu")]
+        GpuMem => SortColumn::new(GpuMem).default_descending(),
+        #[cfg(feature = "gpu")]
+        GpuUtilPercent => SortColumn::new(GpuUtilPercent).default_descending(),
     }
 }
 
@@ -117,6 +121,10 @@ pub enum ProcWidgetColumn {
     User,
     State,
     Time,
+    #[cfg(feature = "gpu")]
+    GpuMem,
+    #[cfg(feature = "gpu")]
+    GpuUtil,
 }
 
 impl<'de> Deserialize<'de> for ProcWidgetColumn {
@@ -140,6 +148,10 @@ impl<'de> Deserialize<'de> for ProcWidgetColumn {
             "state" => Ok(ProcWidgetColumn::State),
             "user" => Ok(ProcWidgetColumn::User),
             "time" => Ok(ProcWidgetColumn::Time),
+            #[cfg(feature = "gpu")]
+            "gmem" => Ok(ProcWidgetColumn::GpuMem),
+            #[cfg(feature = "gpu")]
+            "gpu%" => Ok(ProcWidgetColumn::GpuUtil),
             _ => Err(D::Error::custom("doesn't match any column type")),
         }
     }
@@ -277,6 +289,10 @@ impl ProcWidgetState {
                             ProcWidgetColumn::User => User,
                             ProcWidgetColumn::State => State,
                             ProcWidgetColumn::Time => Time,
+                            #[cfg(feature = "gpu")]
+                            ProcWidgetColumn::GpuMem => GpuMem,
+                            #[cfg(feature = "gpu")]
+                            ProcWidgetColumn::GpuUtil => GpuUtilPercent,
                         };
 
                         make_column(col)
@@ -318,6 +334,10 @@ impl ProcWidgetState {
                     State => ProcWidgetColumn::State,
                     User => ProcWidgetColumn::User,
                     Time => ProcWidgetColumn::Time,
+                    #[cfg(feature = "gpu")]
+                    GpuMem => ProcWidgetColumn::GpuMem,
+                    #[cfg(feature = "gpu")]
+                    GpuUtilPercent => ProcWidgetColumn::GpuUtil,
                 }
             })
             .collect::<IndexSet<_>>();
@@ -1029,6 +1049,10 @@ mod test {
             num_similar: 0,
             disabled: false,
             time: Duration::from_secs(0),
+            #[cfg(feature = "gpu")]
+            gpu_mem_usage: 0,
+            #[cfg(feature = "gpu")]
+            gpu_usage: 0,
         };
 
         let b = ProcWidgetData {

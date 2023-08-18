@@ -100,7 +100,7 @@ pub struct ConfigFlags {
     network_use_bytes: Option<bool>,
     network_use_log: Option<bool>,
     network_use_binary_prefix: Option<bool>,
-    enable_gpu_memory: Option<bool>,
+    enable_gpu: Option<bool>,
     enable_cache_memory: Option<bool>,
     retention: Option<StringOrNum>,
 }
@@ -278,7 +278,7 @@ pub fn build_app(
         use_old_network_legend: is_flag_enabled!(use_old_network_legend, matches, config),
         table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, matches, config))),
         disable_click: is_flag_enabled!(disable_click, matches, config),
-        enable_gpu_memory: get_enable_gpu_memory(matches, config),
+        enable_gpu: get_enable_gpu(matches, config),
         enable_cache_memory: get_enable_cache_memory(matches, config),
         show_table_scroll_position: is_flag_enabled!(show_table_scroll_position, matches, config),
         is_advanced_kill,
@@ -433,7 +433,7 @@ pub fn build_app(
         use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
         use_mem,
         use_cache: use_mem && get_enable_cache_memory(matches, config),
-        use_gpu: use_mem && get_enable_gpu_memory(matches, config),
+        use_gpu: use_mem && get_enable_gpu(matches, config),
         use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
         use_proc: used_widget_set.get(&Proc).is_some(),
         use_disk: used_widget_set.get(&Disk).is_some(),
@@ -743,19 +743,19 @@ fn get_default_widget_and_count(
 fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
     #[cfg(feature = "battery")]
     {
-        if let Ok(battery_manager) = Manager::new() {
-            if let Ok(batteries) = battery_manager.batteries() {
-                if batteries.count() == 0 {
-                    return false;
-                }
-            }
-        }
-
         if matches.get_flag("battery") {
             return true;
         } else if let Some(flags) = &config.flags {
             if let Some(battery) = flags.battery {
                 return battery;
+            }
+        }
+
+        if let Ok(battery_manager) = Manager::new() {
+            if let Ok(batteries) = battery_manager.batteries() {
+                if batteries.count() == 0 {
+                    return false;
+                }
             }
         }
     }
@@ -764,14 +764,14 @@ fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
 }
 
 #[allow(unused_variables)]
-fn get_enable_gpu_memory(matches: &ArgMatches, config: &Config) -> bool {
+fn get_enable_gpu(matches: &ArgMatches, config: &Config) -> bool {
     #[cfg(feature = "gpu")]
     {
-        if matches.get_flag("enable_gpu_memory") {
+        if matches.get_flag("enable_gpu") {
             return true;
         } else if let Some(flags) = &config.flags {
-            if let Some(enable_gpu_memory) = flags.enable_gpu_memory {
-                return enable_gpu_memory;
+            if let Some(enable_gpu) = flags.enable_gpu {
+                return enable_gpu;
             }
         }
     }

@@ -31,6 +31,7 @@ pub struct ConvertedBatteryData {
     pub battery_duration: BatteryDuration,
     pub health: String,
     pub state: String,
+    pub name: String,
 }
 
 #[derive(Default, Debug)]
@@ -541,6 +542,7 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
                 }
                 s
             },
+            name: battery_harvest.name.to_owned(),
         })
         .collect()
 }
