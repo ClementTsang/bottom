@@ -29,7 +29,7 @@ impl Process {
     fn kill(self) -> Result<(), String> {
         // SAFETY: Windows API call, this is safe as we are passing in the handle.
         let result = unsafe { TerminateProcess(self.0, 1) };
-        if result.0 == 0 {
+        if result.is_err() {
             return Err("process may have already been terminated.".to_string());
         }
 
@@ -42,7 +42,7 @@ impl Drop for Process {
     fn drop(&mut self) {
         // SAFETY: Windows API call, this is safe as we are passing in the handle.
         unsafe {
-            CloseHandle(self.0);
+            let _ = CloseHandle(self.0);
         }
     }
 }
