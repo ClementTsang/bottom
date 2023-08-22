@@ -1,6 +1,5 @@
 use std::mem::{size_of, zeroed};
 
-use windows::Win32::Foundation::TRUE;
 use windows::Win32::System::ProcessStatus::{GetPerformanceInfo, PERFORMANCE_INFORMATION};
 
 use crate::data_harvester::memory::MemHarvest;
@@ -14,7 +13,7 @@ pub(crate) fn get_swap_usage() -> Option<MemHarvest> {
     // the bindings are "safe" to use with how we call them.
     unsafe {
         let mut perf_info: PERFORMANCE_INFORMATION = zeroed();
-        if GetPerformanceInfo(&mut perf_info, size_of::<PERFORMANCE_INFORMATION>() as u32) == TRUE {
+        if GetPerformanceInfo(&mut perf_info, size_of::<PERFORMANCE_INFORMATION>() as u32).is_ok() {
             // Saturating sub by perf_info.PhysicalTotal for what sysinfo does.
             let swap_total = perf_info.PageSize.saturating_mul(perf_info.CommitLimit) as u64;
             let swap_used = perf_info.PageSize.saturating_mul(perf_info.CommitTotal) as u64;

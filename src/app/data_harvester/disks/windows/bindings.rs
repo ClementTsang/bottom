@@ -9,9 +9,9 @@ use std::{
 
 use anyhow::bail;
 use windows::Win32::{
-    Foundation::{self, CloseHandle},
+    Foundation::{self, CloseHandle, HANDLE},
     Storage::FileSystem::{
-        CreateFileW, FindFirstVolumeW, FindNextVolumeW, FindVolumeClose, FindVolumeHandle,
+        CreateFileW, FindFirstVolumeW, FindNextVolumeW, FindVolumeClose,
         GetVolumeNameForVolumeMountPointW, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_READ,
         FILE_SHARE_WRITE, OPEN_EXISTING,
     },
@@ -77,28 +77,12 @@ fn volume_io(volume: &Path) -> anyhow::Result<DISK_PERFORMANCE> {
 
     // SAFETY: This should be safe, we will check the result as well.
     let handle_result = unsafe { CloseHandle(h_device) };
-    if !handle_result.as_bool() {
-        const ERROR_INVALID_FUNCTION: i32 = Foundation::ERROR_INVALID_FUNCTION.0 as i32;
-        const ERROR_NOT_SUPPORTED: i32 = Foundation::ERROR_NOT_SUPPORTED.0 as i32;
-
-        match io::Error::last_os_error().raw_os_error() {
-            Some(ERROR_INVALID_FUNCTION) => {
-                bail!("Handle error: invalid function");
-            }
-            Some(ERROR_NOT_SUPPORTED) => {
-                bail!("Handle error: not supported");
-            }
-            _ => {
-                bail!(
-                    "Unknown handle device result error: {:?}",
-                    io::Error::last_os_error()
-                );
-            }
-        }
+    if let Err(err) = handle_result {
+        bail!("Handle error: {err:?}");
     }
 
-    if !ret.as_bool() {
-        bail!("Device I/O error: {:?}", io::Error::last_os_error());
+    if let Err(err) = ret {
+        bail!("Device I/O error: {err:?}");
     } else {
         Ok(disk_performance)
     }
@@ -111,15 +95,11 @@ fn current_volume(buffer: &[u16]) -> PathBuf {
     PathBuf::from(path_string)
 }
 
-fn close_find_handle(handle: FindVolumeHandle) -> anyhow::Result<()> {
+fn close_find_handle(handle: HANDLE) -> anyhow::Result<()> {
     // Clean up the handle.
     // SAFETY: This should be safe, we will check the result as well.
-    let handle_result = unsafe { FindVolumeClose(handle) };
-    if !handle_result.as_bool() {
-        bail!("Could not close volume handle.");
-    } else {
-        Ok(())
-    }
+    let res = unsafe { FindVolumeClose(handle) };
+    Ok(res?)
 }
 
 /// Returns the I/O for all volumes.
@@ -144,17 +124,18 @@ pub(crate) fn all_volume_io() -> anyhow::Result<Vec<anyhow::Result<(DISK_PERFORM
     }
 
     // Now iterate until there are no more volumes.
-    while unsafe { FindNextVolumeW(handle, &mut buffer) }.as_bool() {
+    while unsafe { FindNextVolumeW(handle, &mut buffer) }.is_ok() {
         let volume = current_volume(&buffer);
         ret.push(volume_io(&volume).map(|res| (res, volume.to_string_lossy().to_string())));
     }
 
     let err = io::Error::last_os_error();
     match err.raw_os_error() {
-        // Iteration completed successfully, continue on.
-        Some(ERROR_NO_MORE_FILES) => {}
-        // Some error occured.
+        Some(ERROR_NO_MORE_FILES) => {
+            // Iteration completed successfully, continue on.
+        }
         _ => {
+            // Some error occured.
             close_find_handle(handle)?;
             bail!("Error while iterating over volumes: {err:?}");
         }
@@ -187,11 +168,8 @@ pub(crate) fn volume_name_from_mount(mount: &str) -> anyhow::Result<String> {
         GetVolumeNameForVolumeMountPointW(windows::core::PCWSTR(mount.as_ptr()), &mut buffer)
     };
 
-    if !result.as_bool() {
-        bail!(
-            "Could not get volume name for mount point: {:?}",
-            io::Error::last_os_error()
-        );
+    if let Err(err) = result {
+        bail!("Could not get volume name for mount point: {err:?}");
     } else {
         Ok(current_volume(&buffer).to_string_lossy().to_string())
     }
