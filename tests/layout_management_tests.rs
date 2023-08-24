@@ -237,7 +237,7 @@ fn test_default_widget_in_layout() {
         [[row.child]]
             type="proc"
     "#;
-    
+
     let rows = from_str::<Config>(proc_layout).unwrap().row.unwrap();
     let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
     let mut total_height_ratio = 0;

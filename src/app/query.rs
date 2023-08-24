@@ -328,7 +328,7 @@ pub fn parse_query(
                                         }),
                                     )),
                                 });
-                            } 
+                            }
                         }
                         _ => {
                             // Assume it's some numerical value.
