@@ -1063,10 +1063,7 @@ mod test {
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Descending);
         assert_eq!(
-            vec![&c, &b, &a, &d]
-                .iter()
-                .map(|d| (d.pid))
-                .collect::<Vec<_>>(),
+            [&c, &b, &a, &d].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
             data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
         );
 
@@ -1074,20 +1071,14 @@ mod test {
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
-            vec![&a, &d, &b, &c]
-                .iter()
-                .map(|d| (d.pid))
-                .collect::<Vec<_>>(),
+            [&a, &d, &b, &c].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
             data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
         );
 
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::MemoryPercent, &mut data, SortOrder::Descending);
         assert_eq!(
-            vec![&b, &a, &c, &d]
-                .iter()
-                .map(|d| (d.pid))
-                .collect::<Vec<_>>(),
+            [&b, &a, &c, &d].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
             data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
         );
 
@@ -1095,10 +1086,7 @@ mod test {
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::MemoryPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
-            vec![&c, &d, &a, &b]
-                .iter()
-                .map(|d| (d.pid))
-                .collect::<Vec<_>>(),
+            [&c, &d, &a, &b].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
             data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
         );
     }
