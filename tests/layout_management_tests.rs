@@ -10,7 +10,7 @@ use toml_edit::de::from_str;
 
 // TODO: Could move these into the library files rather than external tbh.
 
-const PROC_LAYOUT: &str = r##"
+const PROC_LAYOUT: &str = r#"
 [[row]]
     [[row.child]]
         type="proc"
@@ -24,7 +24,7 @@ const PROC_LAYOUT: &str = r##"
         type="proc"
     [[row.child]]
         type="proc"
-"##;
+"#;
 
 fn test_create_layout(
     rows: &[Row], default_widget_id: u64, default_widget_type: Option<BottomWidgetType>,
@@ -221,7 +221,7 @@ fn test_left_legend() {
 #[test]
 /// Tests explicit default widget.
 fn test_default_widget_in_layout() {
-    let proc_layout = r##"
+    let proc_layout = r#"
     [[row]]
         [[row.child]]
             type="proc"
@@ -236,7 +236,8 @@ fn test_default_widget_in_layout() {
             default=true
         [[row.child]]
             type="proc"
-    "##;
+    "#;
+
     let rows = from_str::<Config>(proc_layout).unwrap().row.unwrap();
     let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
     let mut total_height_ratio = 0;

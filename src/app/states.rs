@@ -219,7 +219,7 @@ impl AppSearchState {
                         .next_boundary(chunk, start_position)
                         .unwrap();
                 }
-                _ => Err(err).unwrap(),
+                _ => panic!("{err:?}"),
             },
         }
     }
@@ -239,7 +239,7 @@ impl AppSearchState {
 
                     self.grapheme_cursor.prev_boundary(chunk, 0).unwrap();
                 }
-                _ => Err(err).unwrap(),
+                _ => panic!("{err:?}"),
             },
         }
     }
