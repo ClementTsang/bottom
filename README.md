@@ -139,11 +139,14 @@ rustup update stable
 # Install
 cargo install bottom --locked
 
-# If you use another channel by default, you can specify the stable channel as such:
+# If you use another channel by default, you can specify
+# the stable channel as such:
 cargo +stable install bottom --locked
 
-# --locked may be omitted if you wish to not used locked dependencies, though this may also cause problems:
-cargo +stable install bottom
+# --locked may be omitted if you wish to not used locked
+# dependencies. However, this may cause problems, and
+# is NOT supported if it does!
+cargo install bottom
 ```
 
 ### Arch Linux
