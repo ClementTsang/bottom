@@ -133,19 +133,19 @@ For more details on unsupported platforms and known problems, check out [the doc
 Installation via cargo can be done by installing the [`bottom`](https://crates.io/crates/bottom) crate:
 
 ```bash
-# If required, update Rust to the stable channel first
+# If required, update Rust to the stable channel first:
 rustup update stable
 
 # Install
 cargo install bottom --locked
 
 # If you use another channel by default, you can specify
-# the stable channel as such:
+# the stable channel like so:
 cargo +stable install bottom --locked
 
-# --locked may be omitted if you wish to not used locked
-# dependencies. However, this may cause problems, and
-# is NOT supported if it does!
+# --locked may be omitted if you wish to not use the
+# locked crate versions in Cargo.lock. However, be
+# aware that this may cause problems with dependencies.
 cargo install bottom
 ```
 
