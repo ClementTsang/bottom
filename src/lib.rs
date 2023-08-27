@@ -305,7 +305,7 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
         },
     };
 
-    let stacktrace = format!("{:?}", backtrace::Backtrace::new());
+    let backtrace = format!("{:?}", backtrace::Backtrace::new());
 
     let _ = disable_raw_mode();
     let _ = execute!(
@@ -320,7 +320,7 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
         let _ = execute!(
             stdout,
             Print(format!(
-                "thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{stacktrace}",
+                "thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}",
             )),
         );
     }
