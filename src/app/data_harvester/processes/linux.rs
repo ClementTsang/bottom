@@ -236,6 +236,8 @@ fn read_proc(
     #[cfg(feature = "gpu")]
     let gpu_mem = 0;
     #[cfg(feature = "gpu")]
+    let gpu_mem_percent = 0.0;
+    #[cfg(feature = "gpu")]
     let gpu_util = 0;
 
     Ok((
@@ -257,6 +259,8 @@ fn read_proc(
             time,
             #[cfg(feature = "gpu")]
             gpu_mem,
+            #[cfg(feature = "gpu")]
+            gpu_mem_percent,
             #[cfg(feature = "gpu")]
             gpu_util,
         },
@@ -355,6 +359,12 @@ pub(crate) fn linux_process_data(
                                     process_harvest.gpu_util += util;
                                 }
                             });
+                            if let Some(gpu_total_mem) = &collector.gpus_total_mem {
+                                process_harvest.gpu_mem_percent = (process_harvest.gpu_mem as f64
+                                    / *gpu_total_mem as f64
+                                    * 100.0)
+                                    as f32;
+                            }
                         }
 
                         prev_proc_details.cpu_time = new_process_times;

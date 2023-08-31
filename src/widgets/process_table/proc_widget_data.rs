@@ -182,7 +182,7 @@ pub struct ProcWidgetData {
     pub disabled: bool,
     pub time: Duration,
     #[cfg(feature = "gpu")]
-    pub gpu_mem_usage: u64,
+    pub gpu_mem_usage: MemUsage,
     #[cfg(feature = "gpu")]
     pub gpu_usage: u32,
 }
@@ -221,7 +221,11 @@ impl ProcWidgetData {
             disabled: false,
             time: process.time,
             #[cfg(feature = "gpu")]
-            gpu_mem_usage: process.gpu_mem,
+            gpu_mem_usage: if is_mem_percent {
+                MemUsage::Percent(process.gpu_mem_percent)
+            } else {
+                MemUsage::Bytes(process.gpu_mem)
+            },
             #[cfg(feature = "gpu")]
             gpu_usage: process.gpu_util,
         }
@@ -258,7 +262,14 @@ impl ProcWidgetData {
         self.total_write += other.total_write;
         #[cfg(feature = "gpu")]
         {
-            self.gpu_mem_usage += other.gpu_mem_usage;
+            self.gpu_mem_usage = match (&self.gpu_mem_usage, &other.gpu_mem_usage) {
+                (MemUsage::Percent(a), MemUsage::Percent(b)) => MemUsage::Percent(a + b),
+                (MemUsage::Bytes(a), MemUsage::Bytes(b)) => MemUsage::Bytes(a + b),
+                (MemUsage::Percent(_), MemUsage::Bytes(_))
+                | (MemUsage::Bytes(_), MemUsage::Percent(_)) => {
+                    unreachable!("trying to add together two different memory usage types!")
+                }
+            };
             self.gpu_usage += other.gpu_usage;
         }
     }
@@ -278,7 +289,7 @@ impl ProcWidgetData {
             ProcColumn::User => self.user.clone(),
             ProcColumn::Time => format_time(self.time),
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMem => self.gpu_mem_usage.to_string(),
+            ProcColumn::GpuMem | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage),
         }
@@ -316,7 +327,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                 ProcColumn::User => self.user.clone(),
                 ProcColumn::Time => format_time(self.time),
                 #[cfg(feature = "gpu")]
-                ProcColumn::GpuMem => binary_byte_string(self.gpu_mem_usage),
+                ProcColumn::GpuMem | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
                 #[cfg(feature = "gpu")]
                 ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage),
             },

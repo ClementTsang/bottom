@@ -34,7 +34,7 @@ It can also additionally display the following columns:
 
 With the feature flag (`--enable_gpu` on Linux/Windows) and gpu process columns enabled in the configuration:
 
-- GPU memory
+- GPU memory use percentage
 - GPU core utilization percentage
 
 
@@ -154,6 +154,7 @@ Note all keywords are case-insensitive. To search for a process/command that col
 | `state`                         | `state=running`                       | Matches by state; supports regex                                                |
 | `()`                            | `(<COND 1> AND <COND 2>) OR <COND 3>` | Group together a condition                                                      |
 | `gmem`                          | `gmem > 1000 b`                       | Matches the gpu memory column in terms of bytes; supports comparison operators  |
+| `gmem%`                         | `gmem% < 0.5`                         | Matches the gpu memory column in terms of percent; supports comparison operators|
 | `gpu%`                          | `gpu% > 0`                            | Matches the gpu usage column in terms of percent; supports comparison operators |
 
 #### Comparison operators

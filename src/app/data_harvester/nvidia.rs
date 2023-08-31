@@ -18,7 +18,7 @@ pub static NVML_DATA: Lazy<Result<Nvml, NvmlError>> = Lazy::new(Nvml::init);
 pub struct GpusData {
     pub memory: Option<Vec<(String, MemHarvest)>>,
     pub temperature: Option<Vec<TempHarvest>>,
-    pub procs: Option<Vec<HashMap<u32, (u64, u32)>>>,
+    pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
 }
 
 /// Returns the Gpu data of NVIDIA cards.
@@ -31,7 +31,7 @@ pub fn get_nvidia_vecs(
             let mut temp_vec = Vec::with_capacity(num_gpu as usize);
             let mut mem_vec = Vec::with_capacity(num_gpu as usize);
             let mut proc_vec = Vec::with_capacity(num_gpu as usize);
-
+            let mut total_mem = 0;
             for i in 0..num_gpu {
                 if let Ok(device) = nvml.device_by_index(i) {
                     if let Ok(name) = device.name() {
@@ -71,61 +71,65 @@ pub fn get_nvidia_vecs(
                                 }
                             }
                         }
-                        if widgets_to_harvest.use_proc {
-                            let mut procs = HashMap::new();
-                            if let Ok(gpu_procs) = device.process_utilization_stats(None) {
-                                for proc in gpu_procs {
-                                    let pid = proc.pid;
-                                    let gpu_util = proc.sm_util + proc.enc_util + proc.dec_util;
-                                    procs.insert(pid, (0, gpu_util));
+                    }
+                    if widgets_to_harvest.use_proc {
+                        let mut procs = HashMap::new();
+                        if let Ok(gpu_procs) = device.process_utilization_stats(None) {
+                            for proc in gpu_procs {
+                                let pid = proc.pid;
+                                let gpu_util = proc.sm_util + proc.enc_util + proc.dec_util;
+                                procs.insert(pid, (0, gpu_util));
+                            }
+                        }
+                        if let Ok(compute_procs) = device.running_compute_processes() {
+                            for proc in compute_procs {
+                                let pid = proc.pid;
+                                let gpu_mem = match proc.used_gpu_memory {
+                                    UsedGpuMemory::Used(val) => val,
+                                    UsedGpuMemory::Unavailable => 0,
+                                };
+                                if let Some(prev) = procs.get(&pid) {
+                                    procs.insert(pid, (gpu_mem, prev.1));
+                                } else {
+                                    procs.insert(pid, (gpu_mem, 0));
                                 }
                             }
-                            if let Ok(compute_procs) = device.running_compute_processes() {
-                                for proc in compute_procs {
-                                    let pid = proc.pid;
-                                    let gpu_mem = match proc.used_gpu_memory {
-                                        UsedGpuMemory::Used(val) => val,
-                                        UsedGpuMemory::Unavailable => 0,
-                                    };
-                                    if let Some(prev) = procs.get(&pid) {
-                                        procs.insert(pid, (gpu_mem, prev.1));
-                                    } else {
-                                        procs.insert(pid, (gpu_mem, 0));
-                                    }
+                        }
+                        // Use the legacy API too but prefer newer API results
+                        if let Ok(graphics_procs) = device.running_graphics_processes_v2() {
+                            for proc in graphics_procs {
+                                let pid = proc.pid;
+                                let gpu_mem = match proc.used_gpu_memory {
+                                    UsedGpuMemory::Used(val) => val,
+                                    UsedGpuMemory::Unavailable => 0,
+                                };
+                                if let Some(prev) = procs.get(&pid) {
+                                    procs.insert(pid, (gpu_mem, prev.1));
+                                } else {
+                                    procs.insert(pid, (gpu_mem, 0));
                                 }
                             }
-                            // Use the legacy API too but prefer newer API results
-                            if let Ok(graphics_procs) = device.running_graphics_processes_v2() {
-                                for proc in graphics_procs {
-                                    let pid = proc.pid;
-                                    let gpu_mem = match proc.used_gpu_memory {
-                                        UsedGpuMemory::Used(val) => val,
-                                        UsedGpuMemory::Unavailable => 0,
-                                    };
-                                    if let Some(prev) = procs.get(&pid) {
-                                        procs.insert(pid, (gpu_mem, prev.1));
-                                    } else {
-                                        procs.insert(pid, (gpu_mem, 0));
-                                    }
+                        }
+                        if let Ok(graphics_procs) = device.running_graphics_processes() {
+                            for proc in graphics_procs {
+                                let pid = proc.pid;
+                                let gpu_mem = match proc.used_gpu_memory {
+                                    UsedGpuMemory::Used(val) => val,
+                                    UsedGpuMemory::Unavailable => 0,
+                                };
+                                if let Some(prev) = procs.get(&pid) {
+                                    procs.insert(pid, (gpu_mem, prev.1));
+                                } else {
+                                    procs.insert(pid, (gpu_mem, 0));
                                 }
                             }
-                            if let Ok(graphics_procs) = device.running_graphics_processes() {
-                                for proc in graphics_procs {
-                                    let pid = proc.pid;
-                                    let gpu_mem = match proc.used_gpu_memory {
-                                        UsedGpuMemory::Used(val) => val,
-                                        UsedGpuMemory::Unavailable => 0,
-                                    };
-                                    if let Some(prev) = procs.get(&pid) {
-                                        procs.insert(pid, (gpu_mem, prev.1));
-                                    } else {
-                                        procs.insert(pid, (gpu_mem, 0));
-                                    }
-                                }
-                            }
-                            if !procs.is_empty() {
-                                proc_vec.push(procs);
-                            }
+                        }
+                        if !procs.is_empty() {
+                            proc_vec.push(procs);
+                        }
+                        // running total for proc %
+                        if let Ok(mem) = device.memory_info() {
+                            total_mem += mem.total;
                         }
                     }
                 }
@@ -142,7 +146,7 @@ pub fn get_nvidia_vecs(
                     None
                 },
                 procs: if !proc_vec.is_empty() {
-                    Some(proc_vec)
+                    Some((total_mem, proc_vec))
                 } else {
                     None
                 },

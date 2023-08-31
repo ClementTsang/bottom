@@ -94,6 +94,8 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         #[cfg(feature = "gpu")]
         GpuMem => SortColumn::new(GpuMem).default_descending(),
         #[cfg(feature = "gpu")]
+        GpuMemPercent => SortColumn::new(GpuMemPercent).default_descending(),
+        #[cfg(feature = "gpu")]
         GpuUtilPercent => SortColumn::new(GpuUtilPercent).default_descending(),
     }
 }
@@ -149,7 +151,7 @@ impl<'de> Deserialize<'de> for ProcWidgetColumn {
             "user" => Ok(ProcWidgetColumn::User),
             "time" => Ok(ProcWidgetColumn::Time),
             #[cfg(feature = "gpu")]
-            "gmem" => Ok(ProcWidgetColumn::GpuMem),
+            "gmem" | "gmem%" => Ok(ProcWidgetColumn::GpuMem),
             #[cfg(feature = "gpu")]
             "gpu%" => Ok(ProcWidgetColumn::GpuUtil),
             _ => Err(D::Error::custom("doesn't match any column type")),
@@ -290,7 +292,13 @@ impl ProcWidgetState {
                             ProcWidgetColumn::State => State,
                             ProcWidgetColumn::Time => Time,
                             #[cfg(feature = "gpu")]
-                            ProcWidgetColumn::GpuMem => GpuMem,
+                            ProcWidgetColumn::GpuMem => {
+                                if mem_vals {
+                                    GpuMem
+                                } else {
+                                    GpuMemPercent
+                                }
+                            }
                             #[cfg(feature = "gpu")]
                             ProcWidgetColumn::GpuUtil => GpuUtilPercent,
                         };
@@ -335,7 +343,7 @@ impl ProcWidgetState {
                     User => ProcWidgetColumn::User,
                     Time => ProcWidgetColumn::Time,
                     #[cfg(feature = "gpu")]
-                    GpuMem => ProcWidgetColumn::GpuMem,
+                    GpuMem | GpuMemPercent => ProcWidgetColumn::GpuMem,
                     #[cfg(feature = "gpu")]
                     GpuUtilPercent => ProcWidgetColumn::GpuUtil,
                 }
@@ -767,6 +775,23 @@ impl ProcWidgetState {
                 self.force_data_update();
             }
         }
+        #[cfg(feature = "gpu")]
+        if let Some(index) = self.column_mapping.get_index_of(&ProcWidgetColumn::GpuMem) {
+            if let Some(mem) = self.get_mut_proc_col(index) {
+                match mem {
+                    ProcColumn::GpuMem => {
+                        *mem = ProcColumn::GpuMemPercent;
+                    }
+                    ProcColumn::GpuMemPercent => {
+                        *mem = ProcColumn::GpuMem;
+                    }
+                    _ => unreachable!(),
+                }
+
+                self.sort_table.set_data(self.column_text());
+                self.force_data_update();
+            }
+        }
     }
 
     /// Forces an update of the data stored.
@@ -1050,7 +1075,7 @@ mod test {
             disabled: false,
             time: Duration::from_secs(0),
             #[cfg(feature = "gpu")]
-            gpu_mem_usage: 0,
+            gpu_mem_usage: MemUsage::Percent(1.1),
             #[cfg(feature = "gpu")]
             gpu_usage: 0,
         };

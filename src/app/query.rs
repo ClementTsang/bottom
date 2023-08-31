@@ -124,6 +124,7 @@ pub fn parse_query(
         Ok(And { lhs, rhs })
     }
 
+    #[inline]
     fn process_prefix_units(query: &mut VecDeque<String>, value: &mut f64) {
         // If no unit, assume base.
         // Furthermore, base must be PEEKED at initially, and will
@@ -639,6 +640,8 @@ pub enum PrefixType {
     PGpu,
     #[cfg(feature = "gpu")]
     GMem,
+    #[cfg(feature = "gpu")]
+    PGMem,
     __Nonexhaustive,
 }
 
@@ -665,6 +668,8 @@ impl std::str::FromStr for PrefixType {
             "time" => Ok(Time),
             #[cfg(feature = "gpu")]
             "gmem" => Ok(GMem),
+            #[cfg(feature = "gpu")]
+            "gmem%" => Ok(PGMem),
             #[cfg(feature = "gpu")]
             "gpu%" => Ok(PGpu),
             _ => Ok(Name),
@@ -816,6 +821,12 @@ impl Prefix {
                     PrefixType::GMem => matches_condition(
                         &numerical_query.condition,
                         process.gpu_mem as f64,
+                        numerical_query.value,
+                    ),
+                    #[cfg(feature = "gpu")]
+                    PrefixType::PGMem => matches_condition(
+                        &numerical_query.condition,
+                        process.gpu_mem_percent,
                         numerical_query.value,
                     ),
                     _ => true,

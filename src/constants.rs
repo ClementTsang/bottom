@@ -347,7 +347,7 @@ pub const PROCESS_HELP_TEXT: [&str; 17] = [
     "M                Sort by GPU memory usage, press again to reverse",
 ];
 
-pub const SEARCH_HELP_TEXT: [&str; 50] = [
+pub const SEARCH_HELP_TEXT: [&str; 51] = [
     "4 - Process search widget",
     "Esc              Close the search widget (retains the filter)",
     "Ctrl-a           Skip to the start of the search query",
@@ -377,6 +377,7 @@ pub const SEARCH_HELP_TEXT: [&str; 50] = [
     "state            ex: state = running",
     "gpu%             ex: gpu% < 4.2",
     "gmem             ex: gmem < 100 kb",
+    "gmem%            ex: gmem% < 4.2",
     "",
     "Comparison operators:",
     "=                ex: cpu = 1",
@@ -595,7 +596,7 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 # These are flags around the process widget.
 
 #[processes]
-#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMEM", "GPU%"]
+#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMEM%", "GPU%"]
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.

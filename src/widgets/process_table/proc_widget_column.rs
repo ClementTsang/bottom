@@ -27,6 +27,8 @@ pub enum ProcColumn {
     #[cfg(feature = "gpu")]
     GpuMem,
     #[cfg(feature = "gpu")]
+    GpuMemPercent,
+    #[cfg(feature = "gpu")]
     GpuUtilPercent,
 }
 
@@ -53,6 +55,8 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "time" => Ok(ProcColumn::Time),
             #[cfg(feature = "gpu")]
             "gmem" => Ok(ProcColumn::GpuMem),
+            #[cfg(feature = "gpu")]
+            "gmem%" => Ok(ProcColumn::GpuMemPercent),
             #[cfg(feature = "gpu")]
             "gpu%" => Ok(ProcColumn::GpuUtilPercent),
             _ => Err(D::Error::custom("doesn't match any column type")),
@@ -89,6 +93,8 @@ impl ColumnHeader for ProcColumn {
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMem => "GMEM",
             #[cfg(feature = "gpu")]
+            ProcColumn::GpuMemPercent => "GMEM%",
+            #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => "GPU%",
         }
         .into()
@@ -112,6 +118,8 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::Time => "Time",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMem => "GMEM",
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuMemPercent => "GMEM%",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => "GPU%",
         }
@@ -175,7 +183,7 @@ impl SortsRow for ProcColumn {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.time, b.time));
             }
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMem => {
+            ProcColumn::GpuMem | ProcColumn::GpuMemPercent => {
                 data.sort_by(|a, b| {
                     sort_partial_fn(descending)(&a.gpu_mem_usage, &b.gpu_mem_usage)
                 });

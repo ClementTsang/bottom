@@ -128,6 +128,8 @@ pub struct DataCollector {
 
     #[cfg(feature = "gpu")]
     gpu_pids: Option<Vec<HashMap<u32, (u64, u32)>>>,
+    #[cfg(feature = "gpu")]
+    gpus_total_mem: Option<u64>,
 }
 
 impl DataCollector {
@@ -158,6 +160,8 @@ impl DataCollector {
             user_table: Default::default(),
             #[cfg(feature = "gpu")]
             gpu_pids: None,
+            #[cfg(feature = "gpu")]
+            gpus_total_mem: None,
         }
     }
 
@@ -331,7 +335,8 @@ impl DataCollector {
                 }
                 if self.widgets_to_harvest.use_proc {
                     if let Some(proc) = data.procs {
-                        self.gpu_pids = Some(proc);
+                        self.gpu_pids = Some(proc.1);
+                        self.gpus_total_mem = Some(proc.0);
                     }
                 }
             }

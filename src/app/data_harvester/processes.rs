@@ -88,6 +88,10 @@ pub struct ProcessHarvest {
     #[cfg(feature = "gpu")]
     pub gpu_mem: u64,
 
+    /// Gpu memory usage as percentage.
+    #[cfg(feature = "gpu")]
+    pub gpu_mem_percent: f32,
+
     /// Gpu utilization as a percentage.
     #[cfg(feature = "gpu")]
     pub gpu_util: u32,
@@ -110,6 +114,7 @@ impl ProcessHarvest {
         {
             self.gpu_mem += rhs.gpu_mem;
             self.gpu_util += rhs.gpu_util;
+            self.gpu_mem_percent += rhs.gpu_mem_percent;
         }
     }
 }

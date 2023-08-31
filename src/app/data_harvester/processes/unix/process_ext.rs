@@ -100,6 +100,8 @@ pub(crate) trait UnixProcessExt {
                 #[cfg(feature = "gpu")]
                 gpu_mem: 0,
                 #[cfg(feature = "gpu")]
+                gpu_mem_percent: 0.0,
+                #[cfg(feature = "gpu")]
                 gpu_util: 0,
             });
         }
