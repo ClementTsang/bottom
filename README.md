@@ -133,17 +133,20 @@ For more details on unsupported platforms and known problems, check out [the doc
 Installation via cargo can be done by installing the [`bottom`](https://crates.io/crates/bottom) crate:
 
 ```bash
-# If required, update Rust to the stable channel first
+# If required, update Rust to the stable channel first:
 rustup update stable
 
 # Install
 cargo install bottom --locked
 
-# If you use another channel by default, you can specify the stable channel as such:
+# If you use another channel by default, you can specify
+# the stable channel like so:
 cargo +stable install bottom --locked
 
-# --locked may be omitted if you wish to not used locked dependencies, though this may also cause problems:
-cargo +stable install bottom
+# --locked may be omitted if you wish to not use the
+# locked crate versions in Cargo.lock. However, be
+# aware that this may cause problems with dependencies.
+cargo install bottom
 ```
 
 ### Arch Linux
@@ -162,16 +165,16 @@ A `.deb` file is provided on each [stable release](https://github.com/ClementTsa
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.4/bottom_0.9.4_amd64.deb
-sudo dpkg -i bottom_0.9.4_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.6/bottom_0.9.6_amd64.deb
+sudo dpkg -i bottom_0.9.6_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.4/bottom_0.9.4_arm64.deb
-sudo dpkg -i bottom_0.9.4_arm64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.6/bottom_0.9.6_arm64.deb
+sudo dpkg -i bottom_0.9.6_arm64.deb
 
 # ARM
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.4/bottom_0.9.4_armhf.deb
-sudo dpkg -i bottom_0.9.4_armhf.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.6/bottom_0.9.6_armhf.deb
+sudo dpkg -i bottom_0.9.6_armhf.deb
 ```
 
 ### Snap
@@ -202,12 +205,12 @@ something like:
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.4/bottom-0.9.4-1.x86_64.rpm
-sudo rpm -i bottom-0.9.4-1.x86_64.rpm
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.6/bottom-0.9.6-1.x86_64.rpm
+sudo rpm -i bottom-0.9.6-1.x86_64.rpm
 
 # Nightly x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/nightly/bottom-0.9.4-1.x86_64.rpm
-sudo rpm -i bottom-0.9.4-1.x86_64.rpm
+curl -LO https://github.com/ClementTsang/bottom/releases/download/nightly/bottom-0.9.6-1.x86_64.rpm
+sudo rpm -i bottom-0.9.6-1.x86_64.rpm
 ```
 
 ### Gentoo
@@ -303,8 +306,8 @@ to do so using the most recent version of stable Rust, which is how the binaries
 rustup update stable
 
 # Option 1 - Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.9.4.tar.gz
-tar -xzvf 0.9.4.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.9.6.tar.gz
+tar -xzvf 0.9.6.tar.gz
 cargo install --path . --locked
 
 # Option 2 - Clone from master and install manually

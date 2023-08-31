@@ -5,13 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.5]/[0.10.0] - Unreleased
+## [0.9.6] - 2023-08-26
 
-## Bug Fixes
+## Other
 
-## Features
+- [#1286](https://github.com/ClementTsang/bottom/pull/1286): Pin serde to 1.0.188 to help with potential `cargo install` issues. Note this version should be fine and not pull in binaries.
 
-## Changes
+## [0.9.5] - 2023-08-26
+
+## Other
+
+- [#1278](https://github.com/ClementTsang/bottom/pull/1278): Pin serde to 1.0.171.
 
 ## [0.9.4] - 2023-08-05
 

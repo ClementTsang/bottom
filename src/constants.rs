@@ -452,7 +452,7 @@ pub const HELP_TEXT: [&[&str]; HELP_CONTENTS_TEXT.len()] = [
 ];
 
 // Default layouts
-pub const DEFAULT_LAYOUT: &str = r##"
+pub const DEFAULT_LAYOUT: &str = r#"
 [[row]]
   ratio=30
   [[row.child]]
@@ -475,9 +475,9 @@ pub const DEFAULT_LAYOUT: &str = r##"
   [[row.child]]
     type="proc"
     default=true
-"##;
+"#;
 
-pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
+pub const DEFAULT_BATTERY_LAYOUT: &str = r#"
 [[row]]
   ratio=30
   [[row.child]]
@@ -504,13 +504,13 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
   [[row.child]]
     type="proc"
     default=true
-"##;
+"#;
 
 // Config and flags
 pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
 // TODO: Eventually deprecate this, or grab from a file.
-pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  All of the settings are commented
+pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  All of the settings are commented
 # out by default; if you wish to change them uncomment and modify as you see
 # fit.
 
@@ -699,7 +699,7 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #regex = true
 #case_sensitive = false
 #whole_word = false
-"##;
+"#;
 
 pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
 # Values in this config file will change when changed in the interface.
@@ -710,19 +710,19 @@ pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
 
 "##;
 
-pub const CONFIG_DISPLAY_OPTIONS_HEAD: &str = r##"
+pub const CONFIG_DISPLAY_OPTIONS_HEAD: &str = r#"
 # These options represent settings that affect how bottom functions.
 # If a setting here corresponds to command-line flag, then the flag will temporarily override
 # the setting.
-"##;
+"#;
 
-pub const CONFIG_COLOUR_HEAD: &str = r##"
+pub const CONFIG_COLOUR_HEAD: &str = r#"
 # These options represent colour values for various parts of bottom.  Note that colour support
 # will ultimately depend on the terminal - for example, the Terminal for macOS does NOT like
 # custom colours and it may glitch out.
-"##;
+"#;
 
-pub const CONFIG_LAYOUT_HEAD: &str = r##"
+pub const CONFIG_LAYOUT_HEAD: &str = r#"
 # These options represent how bottom will lay out its widgets.  Layouts follow a pattern like this:
 # [[row]] represents a row in the application.
 # [[row.child]] represents either a widget or a column.
@@ -730,11 +730,11 @@ pub const CONFIG_LAYOUT_HEAD: &str = r##"
 #
 # All widgets must have the valid type value set to one of ["cpu", "mem", "proc", "net", "temp", "disk", "empty"].
 # All layout components have a ratio value - if this is not set, then it defaults to 1.
-"##;
+"#;
 
-pub const CONFIG_FILTER_HEAD: &str = r##"
+pub const CONFIG_FILTER_HEAD: &str = r#"
 # These options represent disabled entries for the temperature and disk widgets.
-"##;
+"#;
 
 #[cfg(test)]
 mod test {

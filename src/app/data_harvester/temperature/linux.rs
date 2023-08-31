@@ -318,7 +318,7 @@ fn add_thermal_zone_temperatures(
 ) {
     let path = Path::new("/sys/class/thermal");
     let Ok(read_dir) = path.read_dir() else {
-        return
+        return;
     };
 
     let mut seen_names: HashMap<String, u32> = HashMap::new();
