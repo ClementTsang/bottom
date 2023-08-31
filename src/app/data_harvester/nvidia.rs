@@ -51,24 +51,22 @@ pub fn get_nvidia_vecs(
                                 ));
                             }
                         }
-                        if widgets_to_harvest.use_temp {
+                        if widgets_to_harvest.use_temp && is_temp_filtered(filter, &name) {
                             if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
-                                if is_temp_filtered(filter, &name) {
-                                    let temperature = temperature as f32;
-                                    let temperature = match temp_type {
-                                        TemperatureType::Celsius => temperature,
-                                        TemperatureType::Kelvin => {
-                                            convert_celsius_to_kelvin(temperature)
-                                        }
-                                        TemperatureType::Fahrenheit => {
-                                            convert_celsius_to_fahrenheit(temperature)
-                                        }
-                                    };
-                                    temp_vec.push(TempHarvest {
-                                        name: name.clone(),
-                                        temperature,
-                                    });
-                                }
+                                let temperature = temperature as f32;
+                                let temperature = match temp_type {
+                                    TemperatureType::Celsius => temperature,
+                                    TemperatureType::Kelvin => {
+                                        convert_celsius_to_kelvin(temperature)
+                                    }
+                                    TemperatureType::Fahrenheit => {
+                                        convert_celsius_to_fahrenheit(temperature)
+                                    }
+                                };
+                                temp_vec.push(TempHarvest {
+                                    name: name.clone(),
+                                    temperature,
+                                });
                             }
                         }
                     }
