@@ -22,14 +22,12 @@ pub struct BatteryHarvest {
     pub power_consumption_rate_watts: f64,
     pub health_percent: f64,
     pub state: State,
-    pub name: String,
 }
 
 pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<BatteryHarvest> {
     batteries
         .iter_mut()
-        .enumerate()
-        .filter_map(|(idx, battery)| {
+        .filter_map(|battery| {
             if manager.refresh(battery).is_ok() {
                 Some(BatteryHarvest {
                     secs_until_full: {
@@ -44,7 +42,6 @@ pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<Ba
                     power_consumption_rate_watts: f64::from(battery.energy_rate().get::<watt>()),
                     health_percent: f64::from(battery.state_of_health().get::<percent>()),
                     state: battery.state(),
-                    name: format!("Battery {}", idx),
                 })
             } else {
                 None

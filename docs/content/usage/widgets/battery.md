@@ -24,8 +24,6 @@ The following data is displayed for batteries:
 
 The battery widget also supports devices with multiple batteries, and you can switch between them using the keyboard or the mouse.
 
-This widget can also be configured to display Nvidia GPU power usage (`--enable_gpu` on Linux).
-
 ## Key bindings
 
 Note that key bindings are generally case-sensitive.

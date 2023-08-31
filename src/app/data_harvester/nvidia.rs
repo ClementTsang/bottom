@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 
 use crate::app::Filter;
 
-use crate::data_harvester::cpu::{CpuData, CpuDataType};
+use crate::app::layout_manager::UsedWidgets;
 use crate::data_harvester::memory::MemHarvest;
 use crate::data_harvester::temperature::{
     convert_celsius_to_fahrenheit, convert_celsius_to_kelvin, is_temp_filtered, TempHarvest,
@@ -18,31 +18,24 @@ pub static NVML_DATA: Lazy<Result<Nvml, NvmlError>> = Lazy::new(Nvml::init);
 pub struct GpusData {
     pub memory: Option<Vec<(String, MemHarvest)>>,
     pub temperature: Option<Vec<TempHarvest>>,
-    pub usage: Option<Vec<CpuData>>,
     pub procs: Option<Vec<HashMap<u32, (u64, u32)>>>,
-    #[cfg(feature = "battery")]
-    pub battery: Option<Vec<(String, u32)>>,
 }
 
 /// Returns the Gpu data of NVIDIA cards.
 #[inline]
 pub fn get_nvidia_vecs(
-    temp_type: &TemperatureType, filter: &Option<Filter>, use_temp: bool, use_mem: bool,
-    use_proc: bool, use_cpu: bool, use_battery: bool,
+    temp_type: &TemperatureType, filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
 ) -> Option<GpusData> {
     if let Ok(nvml) = &*NVML_DATA {
         if let Ok(num_gpu) = nvml.device_count() {
             let mut temp_vec = Vec::with_capacity(num_gpu as usize);
             let mut mem_vec = Vec::with_capacity(num_gpu as usize);
-            let mut util_vec = Vec::with_capacity(num_gpu as usize);
             let mut proc_vec = Vec::with_capacity(num_gpu as usize);
-            #[cfg(feature = "battery")]
-            let mut power_vec = Vec::with_capacity(num_gpu as usize);
 
             for i in 0..num_gpu {
                 if let Ok(device) = nvml.device_by_index(i) {
                     if let Ok(name) = device.name() {
-                        if use_mem {
+                        if widgets_to_harvest.use_mem {
                             if let Ok(mem) = device.memory_info() {
                                 mem_vec.push((
                                     name.clone(),
@@ -58,7 +51,7 @@ pub fn get_nvidia_vecs(
                                 ));
                             }
                         }
-                        if use_temp {
+                        if widgets_to_harvest.use_temp {
                             if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
                                 if is_temp_filtered(filter, &name) {
                                     let temperature = temperature as f32;
@@ -78,15 +71,7 @@ pub fn get_nvidia_vecs(
                                 }
                             }
                         }
-                        if use_cpu {
-                            if let Ok(util) = device.utilization_rates() {
-                                util_vec.push(CpuData {
-                                    cpu_usage: util.gpu as f64,
-                                    data_type: CpuDataType::Gpu(i as usize),
-                                });
-                            }
-                        }
-                        if use_proc {
+                        if widgets_to_harvest.use_proc {
                             let mut procs = HashMap::new();
                             if let Ok(gpu_procs) = device.process_utilization_stats(None) {
                                 for proc in gpu_procs {
@@ -142,13 +127,6 @@ pub fn get_nvidia_vecs(
                                 proc_vec.push(procs);
                             }
                         }
-
-                        #[cfg(feature = "battery")]
-                        if use_battery {
-                            if let Ok(power) = device.power_usage() {
-                                power_vec.push((name, power));
-                            }
-                        }
                     }
                 }
             }
@@ -163,19 +141,8 @@ pub fn get_nvidia_vecs(
                 } else {
                     None
                 },
-                usage: if !util_vec.is_empty() {
-                    Some(util_vec)
-                } else {
-                    None
-                },
                 procs: if !proc_vec.is_empty() {
                     Some(proc_vec)
-                } else {
-                    None
-                },
-                #[cfg(feature = "battery")]
-                battery: if !power_vec.is_empty() {
-                    Some(power_vec)
                 } else {
                     None
                 },

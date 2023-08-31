@@ -18,8 +18,6 @@ at the same time, though this may get a bit hard to follow if you have a large n
 
 One can also adjust the displayed time range through either the keyboard or mouse, with a range of 30s to 600s.
 
-This widget can also be configured to display Nvidia GPU utilization (`--enable_gpu` on Linux/Windows).
-
 ## Key bindings
 
 Note that key bindings are generally case-sensitive.

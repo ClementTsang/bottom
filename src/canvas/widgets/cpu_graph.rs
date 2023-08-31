@@ -7,9 +7,6 @@ use tui::{
     terminal::Frame,
 };
 
-#[cfg(feature = "gpu")]
-use crate::app::data_harvester::cpu::CpuDataType;
-
 use crate::{
     app::{layout_manager::WidgetDirection, App},
     canvas::{drawing_utils::should_hide_x_label, Painter},
@@ -137,27 +134,15 @@ impl Painter {
                 .filter_map(|(itx, cpu)| {
                     match &cpu {
                         CpuWidgetData::All => None,
-                        CpuWidgetData::Entry {
-                            data_type, data, ..
-                        } => {
+                        CpuWidgetData::Entry { data, .. } => {
                             let style = if show_avg_cpu && itx == AVG_POSITION {
                                 self.colours.avg_colour_style
                             } else if itx == ALL_POSITION {
                                 self.colours.all_colour_style
                             } else {
                                 let offset_position = itx - 1; // Because of the all position
-                                match data_type {
-                                    #[cfg(feature = "gpu")]
-                                    CpuDataType::Gpu(idx) => {
-                                        self.colours.gpu_colour_styles
-                                            [idx % self.colours.gpu_colour_styles.len()]
-                                    }
-                                    _ => {
-                                        self.colours.cpu_colour_styles[(offset_position
-                                            - show_avg_offset)
-                                            % self.colours.cpu_colour_styles.len()]
-                                    }
-                                }
+                                self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
+                                    % self.colours.cpu_colour_styles.len()]
                             };
 
                             Some(GraphData {
@@ -169,24 +154,15 @@ impl Painter {
                     }
                 })
                 .collect::<Vec<_>>()
-        } else if let Some(CpuWidgetData::Entry {
-            data_type, data, ..
-        }) = cpu_data.get(current_scroll_position)
+        } else if let Some(CpuWidgetData::Entry { data, .. }) =
+            cpu_data.get(current_scroll_position)
         {
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.colours.avg_colour_style
             } else {
                 let offset_position = current_scroll_position - 1; // Because of the all position
-                match data_type {
-                    #[cfg(feature = "gpu")]
-                    CpuDataType::Gpu(idx) => {
-                        self.colours.gpu_colour_styles[idx % self.colours.gpu_colour_styles.len()]
-                    }
-                    _ => {
-                        self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
-                            % self.colours.cpu_colour_styles.len()]
-                    }
-                }
+                self.colours.cpu_colour_styles
+                    [(offset_position - show_avg_offset) % self.colours.cpu_colour_styles.len()]
             };
 
             vec![GraphData {

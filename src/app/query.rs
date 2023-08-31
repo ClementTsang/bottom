@@ -124,6 +124,54 @@ pub fn parse_query(
         Ok(And { lhs, rhs })
     }
 
+    fn process_prefix_units(query: &mut VecDeque<String>, value: &mut f64) {
+        // If no unit, assume base.
+        // Furthermore, base must be PEEKED at initially, and will
+        // require (likely) prefix_type specific checks
+        // Lastly, if it *is* a unit, remember to POP!
+        if let Some(potential_unit) = query.front() {
+            match potential_unit.to_lowercase().as_str() {
+                "tb" => {
+                    *value *= 1_000_000_000_000.0;
+                    query.pop_front();
+                }
+                "tib" => {
+                    *value *= 1_099_511_627_776.0;
+                    query.pop_front();
+                }
+                "gb" => {
+                    *value *= 1_000_000_000.0;
+                    query.pop_front();
+                }
+                "gib" => {
+                    *value *= 1_073_741_824.0;
+                    query.pop_front();
+                }
+                "mb" => {
+                    *value *= 1_000_000.0;
+                    query.pop_front();
+                }
+                "mib" => {
+                    *value *= 1_048_576.0;
+                    query.pop_front();
+                }
+                "kb" => {
+                    *value *= 1000.0;
+                    query.pop_front();
+                }
+                "kib" => {
+                    *value *= 1024.0;
+                    query.pop_front();
+                }
+                "b" => {
+                    // Just gotta pop.
+                    query.pop_front();
+                }
+                _ => {}
+            }
+        }
+    }
+
     fn process_prefix(query: &mut VecDeque<String>, inside_quotation: bool) -> Result<Prefix> {
         if let Some(queue_top) = query.pop_front() {
             if inside_quotation {
@@ -385,54 +433,12 @@ pub fn parse_query(
                                         | PrefixType::Rps
                                         | PrefixType::Wps
                                         | PrefixType::TRead
-                                        | PrefixType::GMem
                                         | PrefixType::TWrite => {
-                                            // If no unit, assume base.
-                                            // Furthermore, base must be PEEKED at initially, and will
-                                            // require (likely) prefix_type specific checks
-                                            // Lastly, if it *is* a unit, remember to POP!
-
-                                            if let Some(potential_unit) = query.front() {
-                                                match potential_unit.to_lowercase().as_str() {
-                                                    "tb" => {
-                                                        value *= 1_000_000_000_000.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "tib" => {
-                                                        value *= 1_099_511_627_776.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "gb" => {
-                                                        value *= 1_000_000_000.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "gib" => {
-                                                        value *= 1_073_741_824.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "mb" => {
-                                                        value *= 1_000_000.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "mib" => {
-                                                        value *= 1_048_576.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "kb" => {
-                                                        value *= 1000.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "kib" => {
-                                                        value *= 1024.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "b" => {
-                                                        // Just gotta pop.
-                                                        query.pop_front();
-                                                    }
-                                                    _ => {}
-                                                }
-                                            }
+                                            process_prefix_units(query, &mut value);
+                                        }
+                                        #[cfg(feature = "gpu")]
+                                        PrefixType::GMem => {
+                                            process_prefix_units(query, &mut value);
                                         }
                                         _ => {}
                                     }
@@ -631,7 +637,7 @@ pub enum PrefixType {
     Time,
     #[cfg(feature = "gpu")]
     PGpu,
-    //#[cfg(feature = "gpu")]
+    #[cfg(feature = "gpu")]
     GMem,
     __Nonexhaustive,
 }
