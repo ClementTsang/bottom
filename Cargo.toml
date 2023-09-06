@@ -16,11 +16,13 @@ exclude = [
     ".cargo-husky/",
     ".github/",
     "assets/",
+    "desktop/",
     "docs/",
     "sample_configs/",
     "scripts/",
     ".all-contributorsrc",
     ".cirrus.yml",
+    ".gitignore",
     ".markdownlint.json",
     "CHANGELOG.md",
     "clippy.toml",
@@ -174,6 +176,11 @@ assets = [
         "usr/share/zsh/vendor-completions/",
         "644",
     ],
+    [
+        "desktop/bottom.desktop",
+        "usr/share/applications/bottom.desktop",
+        "644",
+    ],
 ]
 extended-description = """
 
@@ -199,4 +206,5 @@ assets = [
     { source = "completion/btm.bash", dest = "/usr/share/bash-completion/completions/btm", mode = "644" },
     { source = "completion/btm.fish", dest = "/usr/share/fish/vendor_completions.d/btm.fish", mode = "644" },
     { source = "completion/_btm", dest = "/usr/share/zsh/vendor-completions/", mode = "644" },
+    { source = "desktop/bottom.desktop", dest = "/usr/share/applications/bottom.desktop", mode = "644" },
 ]
