@@ -140,8 +140,10 @@ predicates = "3.0.3"
 
 [build-dependencies]
 clap = { version = "4.3.23", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "4.3.2"
-clap_mangen = "0.2.12"
+clap_complete = "4.4.1"
+clap_complete_fig = "4.4.0"
+clap_complete_nushell = "4.4.0"
+clap_mangen = "0.2.13"
 
 [package.metadata.deb]
 section = "utility"
