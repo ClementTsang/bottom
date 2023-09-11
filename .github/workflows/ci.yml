@@ -235,7 +235,8 @@ jobs:
               os: "ubuntu-latest",
               target: "aarch64-linux-android",
               cross: true,
-              rust: 1.67.0, # See https://github.com/cross-rs/cross/issues/1222 for more details
+              rust: stable,
+              cross-version: "git:d6511b7b166c18640f81b8f6a74d9eef380f7ded",
               no-default-features: true,
             }
 
@@ -263,7 +264,7 @@ jobs:
           command: build
           args: --all-targets --verbose --target=${{ matrix.info.target }} --locked
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.5
+          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
       - name: Try building with no features enabled
         uses: ClementTsang/cargo-action@v0.0.4
@@ -272,7 +273,7 @@ jobs:
           command: build
           args: --all-targets --verbose --target=${{ matrix.info.target }} --locked --no-default-features
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.5
+          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
   completion:
     name: "CI Pass Check"

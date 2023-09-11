@@ -79,7 +79,7 @@ default = ["deploy"]
 anyhow = "1.0.75"
 backtrace = "0.3.69"
 cfg-if = "1.0.0"
-clap = { version = "4.3.23", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.4.2", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 crossterm = "0.27.0"
 ctrlc = { version = "3.4.0", features = ["termination"] }
@@ -139,7 +139,7 @@ cargo-husky = { version = "1.5.0", default-features = false, features = [
 predicates = "3.0.3"
 
 [build-dependencies]
-clap = { version = "4.3.23", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.4.2", features = ["default", "cargo", "wrap_help"] }
 clap_complete = "4.4.1"
 clap_complete_fig = "4.4.0"
 clap_complete_nushell = "4.4.0"
