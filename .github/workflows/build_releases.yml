@@ -62,7 +62,6 @@ jobs:
               os: "ubuntu-20.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
-              rust: "1.71.0",
             }
           - {
               os: "ubuntu-20.04",
@@ -297,12 +296,7 @@ jobs:
       matrix:
         info:
           - { target: "x86_64-unknown-linux-gnu", cross: false, dpkg: amd64 }
-          - {
-              target: "x86_64-unknown-linux-musl",
-              cross: false,
-              dpkg: amd64,
-              rust: "1.71.0",
-            }
+          - { target: "x86_64-unknown-linux-musl", cross: false, dpkg: amd64 }
           - {
               target: "aarch64-unknown-linux-gnu",
               cross: true,
@@ -424,7 +418,7 @@ jobs:
       matrix:
         info:
           - { target: "x86_64-unknown-linux-gnu" }
-          - { target: "x86_64-unknown-linux-musl", rust: "1.71.0" }
+          - { target: "x86_64-unknown-linux-musl" }
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
