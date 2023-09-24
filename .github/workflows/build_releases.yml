@@ -295,7 +295,7 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          - { target: "x86_64-unknown-linux-gnu", cross: false, dpkg: amd64 }
+          - { target: "x86_64-unknown-linux-gnu", dpkg: amd64 }
           - { target: "x86_64-unknown-linux-musl", cross: true, dpkg: amd64 }
           - {
               target: "aarch64-unknown-linux-gnu",
@@ -342,7 +342,7 @@ jobs:
         with:
           command: build
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
-          use-cross: ${{ matrix.info.cross }}
+          use-cross: ${{ matrix.info.cross || false }}
           cross-version: 0.2.5
 
       - name: Move automatically generated completion/manpage
@@ -441,6 +441,7 @@ jobs:
           command: build
           use-cross: ${{ matrix.info.cross || false }}
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
+          cross-version: 0.2.5
 
       - name: Move automatically generated completion/manpage
         shell: bash
