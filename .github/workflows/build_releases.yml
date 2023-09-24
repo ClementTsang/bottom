@@ -61,8 +61,7 @@ jobs:
           - {
               os: "ubuntu-20.04",
               target: "x86_64-unknown-linux-musl",
-              cross: false,
-              rust: "1.71.0",
+              cross: true,
             }
           - {
               os: "ubuntu-20.04",
@@ -296,13 +295,8 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          - { target: "x86_64-unknown-linux-gnu", cross: false, dpkg: amd64 }
-          - {
-              target: "x86_64-unknown-linux-musl",
-              cross: false,
-              dpkg: amd64,
-              rust: "1.71.0",
-            }
+          - { target: "x86_64-unknown-linux-gnu", dpkg: amd64 }
+          - { target: "x86_64-unknown-linux-musl", cross: true, dpkg: amd64 }
           - {
               target: "aarch64-unknown-linux-gnu",
               cross: true,
@@ -348,7 +342,7 @@ jobs:
         with:
           command: build
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
-          use-cross: ${{ matrix.info.cross }}
+          use-cross: ${{ matrix.info.cross || false }}
           cross-version: 0.2.5
 
       - name: Move automatically generated completion/manpage
@@ -362,7 +356,7 @@ jobs:
           gzip ./manpage/btm.1
 
       - name: Build Debian release (x86-64)
-        if: matrix.info.cross == false
+        if: startsWith(matrix.info.target, 'x86_64')
         env:
           BTM_GENERATE: true
         run: |
@@ -371,7 +365,7 @@ jobs:
           cp ./target/${{ matrix.info.target }}/debian/bottom_*.deb .
 
       - name: Build Debian release (ARM)
-        if: matrix.info.cross == true
+        if: startsWith(matrix.info.target, 'x86_64') != true
         env:
           BTM_GENERATE: true
         run: |
@@ -424,7 +418,7 @@ jobs:
       matrix:
         info:
           - { target: "x86_64-unknown-linux-gnu" }
-          - { target: "x86_64-unknown-linux-musl", rust: "1.71.0" }
+          - { target: "x86_64-unknown-linux-musl", cross: true }
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -443,9 +437,12 @@ jobs:
         env:
           BTM_GENERATE: true
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
+          CROSS_CONTAINER_IN_CONTAINER: true
         with:
           command: build
+          use-cross: ${{ matrix.info.cross || false }}
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
+          cross-version: 0.2.5
 
       - name: Move automatically generated completion/manpage
         shell: bash
@@ -458,7 +455,6 @@ jobs:
           gzip ./manpage/btm.1
 
       - name: Build rpm release
-        if: matrix.info.cross == false
         env:
           BTM_GENERATE: true
         run: |
