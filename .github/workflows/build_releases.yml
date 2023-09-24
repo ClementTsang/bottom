@@ -437,6 +437,7 @@ jobs:
         env:
           BTM_GENERATE: true
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
+          CROSS_CONTAINER_IN_CONTAINER: true
         with:
           command: build
           use-cross: ${{ matrix.info.cross || false }}
