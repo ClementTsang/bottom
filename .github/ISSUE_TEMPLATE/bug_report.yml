@@ -49,6 +49,18 @@ body:
         that are experiencing the issue, as well as their version and any relevant settings (e.g. terminal theme).
       placeholder: kitty 0.25.2
 
+  - type: dropdown
+    id: zfs
+    attributes:
+      label: Are you using ZFS?
+      description: >
+        Are you using ZFS on your system(s)?
+      multiple: false
+      options:
+        - "Yes"
+        - "No"
+        - "Not sure"
+
   - type: input
     id: version
     validations:
@@ -60,7 +72,7 @@ body:
         a nightly/non-release version, please also specify that.
       placeholder: 0.9.6
 
-  - type: input
+  - type: textarea
     id: install
     validations:
       required: true
@@ -84,8 +96,7 @@ body:
         Give a description of the issue. If possible, provide screenshots/videos.
       placeholder: |
         Example:
-        bottom is failing to output information for a mounted encrypted partition on basic mode. It should
-        be able to report this information, but I'm not seeing the entry at all.
+        bottom is failing to output information for a mounted encrypted partition on basic mode. It should be able to report this information, but I'm not seeing the entry at all.
 
   - type: textarea
     id: expected

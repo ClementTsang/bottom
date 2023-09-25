@@ -3,7 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use clap_complete::{generate_to, shells::Shell};
+use clap_complete::{generate_to, shells::Shell, Generator};
+use clap_complete_fig::Fig;
+use clap_complete_nushell::Nushell;
 
 include!("src/args.rs");
 
@@ -17,6 +19,13 @@ fn create_dir(dir: &Path) -> io::Result<()> {
     }
 
     res
+}
+
+fn generate_completions<G>(to_generate: G, cmd: &mut Command, out_dir: &Path) -> io::Result<PathBuf>
+where
+    G: Generator,
+{
+    generate_to(to_generate, cmd, "btm", out_dir)
 }
 
 fn btm_generate() -> io::Result<()> {
@@ -35,11 +44,13 @@ fn btm_generate() -> io::Result<()> {
 
             // Generate completions
             let mut app = build_app();
-            generate_to(Shell::Bash, &mut app, "btm", &completion_out_dir)?;
-            generate_to(Shell::Zsh, &mut app, "btm", &completion_out_dir)?;
-            generate_to(Shell::Fish, &mut app, "btm", &completion_out_dir)?;
-            generate_to(Shell::PowerShell, &mut app, "btm", &completion_out_dir)?;
-            generate_to(Shell::Elvish, &mut app, "btm", &completion_out_dir)?;
+            generate_completions(Shell::Bash, &mut app, &completion_out_dir)?;
+            generate_completions(Shell::Zsh, &mut app, &completion_out_dir)?;
+            generate_completions(Shell::Fish, &mut app, &completion_out_dir)?;
+            generate_completions(Shell::PowerShell, &mut app, &completion_out_dir)?;
+            generate_completions(Shell::Elvish, &mut app, &completion_out_dir)?;
+            generate_completions(Fig, &mut app, &completion_out_dir)?;
+            generate_completions(Nushell, &mut app, &completion_out_dir)?;
 
             // Generate manpage
             let app = app.name("btm");
