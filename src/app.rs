@@ -705,6 +705,9 @@ impl App {
                         }
                     }
                 }
+                BottomWidgetType::Proc => {
+                    self.toggle_collapsing_process_branch(Some(false));
+                }
                 _ => {}
             }
         } else if self.delete_dialog_state.is_showing_dd {
@@ -768,6 +771,9 @@ impl App {
                             }
                         }
                     }
+                }
+                BottomWidgetType::Proc => {
+                    self.toggle_collapsing_process_branch(Some(true));
                 }
                 _ => {}
             }
@@ -2138,7 +2144,7 @@ impl App {
     fn on_plus(&mut self) {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
             // Toggle collapsing if tree
-            self.toggle_collapsing_process_branch();
+            self.toggle_collapsing_process_branch(Some(true));
         } else {
             self.zoom_in();
         }
@@ -2147,20 +2153,20 @@ impl App {
     fn on_minus(&mut self) {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
             // Toggle collapsing if tree
-            self.toggle_collapsing_process_branch();
+            self.toggle_collapsing_process_branch(Some(false));
         } else {
             self.zoom_out();
         }
     }
 
-    fn toggle_collapsing_process_branch(&mut self) {
+    fn toggle_collapsing_process_branch(&mut self, force_expand: Option<bool>) {
         if let Some(pws) = self
             .states
             .proc_state
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
-            pws.toggle_current_tree_branch_entry();
+            pws.toggle_current_tree_branch_entry(force_expand);
         }
     }
 
@@ -2579,7 +2585,7 @@ impl App {
                                             // the same entry as the already selected one - if it is,
                                             // then we minimize.
                                             if is_tree_mode && change == 0 {
-                                                self.toggle_collapsing_process_branch();
+                                                self.toggle_collapsing_process_branch(None);
                                             }
                                         }
                                     }
