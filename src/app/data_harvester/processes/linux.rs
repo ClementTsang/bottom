@@ -144,7 +144,7 @@ fn read_proc(
         let truncated_name = stat.comm.as_str();
         if let Ok(cmdline) = cmdline {
             if cmdline.is_empty() {
-                (format!("[{}]", truncated_name), truncated_name.to_string())
+                (format!("[{truncated_name}]"), truncated_name.to_string())
             } else {
                 (
                     cmdline.join(" "),

@@ -69,7 +69,7 @@ impl DiskWidgetData {
 
     pub fn free_percent_string(&self) -> KString {
         match self.free_percent() {
-            Some(val) => format!("{:.1}%", val).into(),
+            Some(val) => format!("{val:.1}%").into(),
             None => "N/A".into(),
         }
     }
@@ -90,7 +90,7 @@ impl DiskWidgetData {
 
     pub fn used_percent_string(&self) -> KString {
         match self.used_percent() {
-            Some(val) => format!("{:.1}%", val).into(),
+            Some(val) => format!("{val:.1}%").into(),
             None => "N/A".into(),
         }
     }

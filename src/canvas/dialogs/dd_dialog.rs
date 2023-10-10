@@ -195,8 +195,8 @@ impl Painter {
                         }
                     } else {
                         Line::from(format!(
-                            "Kill process \"{}\" with PID {}?  Press ENTER to confirm.",
-                            to_kill_processes.0, first_pid
+                            "Kill process \"{}\" with PID {first_pid}?  Press ENTER to confirm.",
+                            to_kill_processes.0
                         ))
                     },
                 ]));

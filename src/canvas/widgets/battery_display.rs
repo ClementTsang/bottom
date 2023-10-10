@@ -176,9 +176,9 @@ impl Painter {
                     let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
 
                     if num_hours > 0 {
-                        format!("{}h {}m {}s", time.whole_hours(), num_minutes, num_seconds,)
+                        format!("{num_hours}h {num_minutes}m {num_seconds}s")
                     } else {
-                        format!("{}m {}s", num_minutes, num_seconds,)
+                        format!("{num_minutes}m {num_seconds}s")
                     }
                 }
 

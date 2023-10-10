@@ -76,10 +76,10 @@ pub fn get_decimal_bytes(bytes: u64) -> (f64, &'static str) {
 pub fn get_binary_prefix(quantity: u64, unit: &str) -> (f64, String) {
     match quantity {
         b if b < KIBI_LIMIT => (quantity as f64, unit.to_string()),
-        b if b < MEBI_LIMIT => (quantity as f64 / 1024.0, format!("Ki{}", unit)),
-        b if b < GIBI_LIMIT => (quantity as f64 / 1_048_576.0, format!("Mi{}", unit)),
-        b if b < TERA_LIMIT => (quantity as f64 / 1_073_741_824.0, format!("Gi{}", unit)),
-        _ => (quantity as f64 / 1_099_511_627_776.0, format!("Ti{}", unit)),
+        b if b < MEBI_LIMIT => (quantity as f64 / 1024.0, format!("Ki{unit}")),
+        b if b < GIBI_LIMIT => (quantity as f64 / 1_048_576.0, format!("Mi{unit}")),
+        b if b < TERA_LIMIT => (quantity as f64 / 1_073_741_824.0, format!("Gi{unit}")),
+        _ => (quantity as f64 / 1_099_511_627_776.0, format!("Ti{unit}")),
     }
 }
 
@@ -89,10 +89,10 @@ pub fn get_binary_prefix(quantity: u64, unit: &str) -> (f64, String) {
 pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
     match quantity {
         b if b < KILO_LIMIT => (quantity as f64, unit.to_string()),
-        b if b < MEGA_LIMIT => (quantity as f64 / 1000.0, format!("K{}", unit)),
-        b if b < GIGA_LIMIT => (quantity as f64 / 1_000_000.0, format!("M{}", unit)),
-        b if b < TERA_LIMIT => (quantity as f64 / 1_000_000_000.0, format!("G{}", unit)),
-        _ => (quantity as f64 / 1_000_000_000_000.0, format!("T{}", unit)),
+        b if b < MEGA_LIMIT => (quantity as f64 / 1000.0, format!("K{unit}")),
+        b if b < GIGA_LIMIT => (quantity as f64 / 1_000_000.0, format!("M{unit}")),
+        b if b < TERA_LIMIT => (quantity as f64 / 1_000_000_000.0, format!("G{unit}")),
+        _ => (quantity as f64 / 1_000_000_000_000.0, format!("T{unit}")),
     }
 }
 

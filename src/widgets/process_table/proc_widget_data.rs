@@ -101,7 +101,7 @@ impl PartialOrd for MemUsage {
 impl Display for MemUsage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MemUsage::Percent(percent) => f.write_fmt(format_args!("{:.1}%", percent)),
+            MemUsage::Percent(percent) => f.write_fmt(format_args!("{percent:.1}%")),
             MemUsage::Bytes(bytes) => f.write_str(&binary_byte_string(*bytes)),
         }
     }

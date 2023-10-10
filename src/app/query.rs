@@ -54,7 +54,7 @@ pub fn parse_query(
         let mut rhs: Option<Box<And>> = None;
 
         while let Some(queue_top) = query.front() {
-            // debug!("OR QT: {:?}", queue_top);
+            // debug!("OR QT: {queue_top:?}");
             if OR_LIST.contains(&queue_top.to_lowercase().as_str()) {
                 query.pop_front();
                 rhs = Some(Box::new(process_and(query)?));
@@ -90,7 +90,7 @@ pub fn parse_query(
         let mut rhs: Option<Box<Prefix>> = None;
 
         while let Some(queue_top) = query.front() {
-            // debug!("AND QT: {:?}", queue_top);
+            // debug!("AND QT: {queue_top:?}");
             if AND_LIST.contains(&queue_top.to_lowercase().as_str()) {
                 query.pop_front();
 
@@ -810,11 +810,11 @@ impl Prefix {
 impl Debug for Prefix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(or) = &self.or {
-            f.write_fmt(format_args!("{:?}", or))
+            f.write_fmt(format_args!("{or:?}"))
         } else if let Some(regex_prefix) = &self.regex_prefix {
-            f.write_fmt(format_args!("{:?}", regex_prefix))
+            f.write_fmt(format_args!("{regex_prefix:?}"))
         } else if let Some(compare_prefix) = &self.compare_prefix {
-            f.write_fmt(format_args!("{:?}", compare_prefix))
+            f.write_fmt(format_args!("{compare_prefix:?}"))
         } else {
             f.write_fmt(format_args!(""))
         }

@@ -95,7 +95,7 @@ impl Painter {
             let left_arrow_text = vec![
                 Line::default(),
                 Line::from(Span::styled(
-                    format!("◄ {}", left_name),
+                    format!("◄ {left_name}"),
                     self.colours.text_style,
                 )),
             ];
@@ -103,7 +103,7 @@ impl Painter {
             let right_arrow_text = vec![
                 Line::default(),
                 Line::from(Span::styled(
-                    format!("{} ►", right_name),
+                    format!("{right_name} ►"),
                     self.colours.text_style,
                 )),
             ];

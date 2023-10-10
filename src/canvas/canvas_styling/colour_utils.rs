@@ -70,8 +70,7 @@ pub fn str_to_colour(input_val: &str) -> error::Result<Color> {
         }
     } else {
         Err(error::BottomError::ConfigError(format!(
-            "value \"{}\" is not valid.",
-            input_val
+            "value \"{input_val}\" is not valid.",
         )))
     }
 }
@@ -80,8 +79,7 @@ fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
     let rgb_list = rgb_str.split(',').collect::<Vec<&str>>();
     if rgb_list.len() != 3 {
         return Err(error::BottomError::ConfigError(format!(
-            "value \"{}\" is an invalid RGB colour. It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
-            rgb_str
+            "value \"{rgb_str}\" is an invalid RGB colour. It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
         )));
     }
 
@@ -99,8 +97,7 @@ fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
         Ok(Color::Rgb(rgb[0], rgb[1], rgb[2]))
     } else {
         Err(error::BottomError::ConfigError(format!(
-            "value \"{}\" contained invalid RGB values. It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
-            rgb_str
+            "value \"{rgb_str}\" contained invalid RGB values. It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
         )))
     }
 }
@@ -125,7 +122,7 @@ fn convert_name_to_colour(color_name: &str) -> error::Result<Color> {
         "lightcyan" | "light cyan" => Ok(Color::LightCyan),
         "white" => Ok(Color::White),
         _ => Err(error::BottomError::ConfigError(format!(
-            "\"{}\" is an invalid named color.
+            "\"{color_name}\" is an invalid named color.
             
 The following are supported strings: 
 +--------+-------------+---------------------+
@@ -142,7 +139,6 @@ The following are supported strings:
 |  Blue  | Light Green |                     |
 +--------+-------------+---------------------+
         ",
-            color_name
         ))),
     }
 }
