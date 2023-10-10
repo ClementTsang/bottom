@@ -11,7 +11,7 @@ on:
       - ".github/workflows/docs.yml"
 
 env:
-  # Assign commit authorship to official Github Actions bot when pushing to the `gh-pages` branch:
+  # Assign commit authorship to official GitHub Actions bot when pushing to the `gh-pages` branch:
   GIT_USER: "github-actions[bot]"
   GIT_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
 

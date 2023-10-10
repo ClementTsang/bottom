@@ -206,7 +206,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
-- [#637](https://github.com/ClementTsang/bottom/pull/637): Fix process CPU calculation if /proc/stat CPU line has less values than expected
+- [#637](https://github.com/ClementTsang/bottom/pull/637): Fix process CPU calculation if /proc/stat CPU line has fewer values than expected
 
 ## Changes
 
@@ -422,7 +422,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#213](https://github.com/ClementTsang/bottom/pull/213), [#214](https://github.com/ClementTsang/bottom/pull/214): Updated help descriptions, added auto-complete generation.
 
-- [#296](https://github.com/ClementTsang/bottom/pull/296): Changed how we do battery theming. We now only set high, medium, and low colours and we deal with the ratios.
+- [#296](https://github.com/ClementTsang/bottom/pull/296): Changed how we do battery theming. We now only set high, medium, and low colours, and we deal with the ratios.
 
 ### Bug Fixes
 
@@ -505,7 +505,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- [#156](https://github.com/ClementTsang/bottom/issues/156) - Removal of the `/` CPU core showing in the chart. It felt clunky to use, was not really useful, and hard to work with with large core counts.
+- [#156](https://github.com/ClementTsang/bottom/issues/156) - Removal of the `/` CPU core showing in the chart. It felt clunky to use, was not really useful, and hard to work with large core counts.
 
   Furthermore:
 
@@ -651,7 +651,7 @@ is equivalent to:
 
 - [#33](https://github.com/ClementTsang/bottom/issues/33): Fix bug with search and graphemes bigger than a byte crashing due to the cursor.
 
-- [#41](https://github.com/ClementTsang/bottom/issues/41): Fix bug that caused the cursor to go off screen while searching.
+- [#41](https://github.com/ClementTsang/bottom/issues/41): Fix bug that caused the cursor to go off-screen while searching.
 
 - [#61](https://github.com/ClementTsang/bottom/issues/61): Dialog boxes set to be a constant width/height.
 

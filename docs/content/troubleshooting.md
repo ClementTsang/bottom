@@ -55,7 +55,7 @@ Let's say you're installing [Iosevka](https://github.com/be5invis/Iosevka). The 
     <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
 </figure>
 
-1. Then, open the Command Prompt/PowerShell, and right click on the top bar, and open "Properties":
+1. Then, open the Command Prompt/PowerShell, and right-click on the top bar, and open "Properties":
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
@@ -98,7 +98,7 @@ sudo btm
 
 There are measures taken to try to maximize the amount of information obtained without elevated privileges. For example,
 one can modify the instructions found on the [htop wiki](https://github.com/hishamhm/htop/wiki/macOS:-run-without-sudo)
-on how to run htop without sudo for bottom. However **please** understand the potential security risks before doing so!
+on how to run htop without sudo for bottom. However, **please** understand the potential security risks before doing so!
 
 ## My configuration file isn't working
 
