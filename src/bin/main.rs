@@ -38,9 +38,7 @@ fn main() -> Result<()> {
 
     #[cfg(feature = "logging")]
     {
-        if let Err(err) =
-            utils::logging::init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log"))
-        {
+        if let Err(err) = init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log")) {
             println!("Issue initializing logger: {err}");
         }
     }

@@ -51,7 +51,7 @@ impl Partition {
                         .into_string()
                         .unwrap_or_else(|_| "Name Unavailable".to_string())
                 } else {
-                    let mut combined_path = std::path::PathBuf::new();
+                    let mut combined_path = PathBuf::new();
                     combined_path.push(device);
                     combined_path.pop(); // Pop the current file...
                     combined_path.push(path);
@@ -110,7 +110,7 @@ impl FromStr for Partition {
         let mut parts = line.splitn(5, ' ');
 
         let device = match parts.next() {
-            Some(device) if device == "none" => None,
+            Some("none") => None,
             Some(device) => Some(device.to_string()),
             None => {
                 bail!("missing device");
