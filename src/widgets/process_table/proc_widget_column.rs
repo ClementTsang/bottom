@@ -47,7 +47,7 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "state" => Ok(ProcColumn::State),
             "user" => Ok(ProcColumn::User),
             "time" => Ok(ProcColumn::Time),
-            _ => Err(D::Error::custom("doesn't match any column type")),
+            _ => Err(Error::custom("doesn't match any column type")),
         }
     }
 }

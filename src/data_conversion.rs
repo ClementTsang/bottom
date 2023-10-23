@@ -546,9 +546,7 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
 }
 
 #[cfg(feature = "zfs")]
-pub fn convert_arc_labels(
-    current_data: &crate::app::data_farmer::DataCollection,
-) -> Option<(String, String)> {
+pub fn convert_arc_labels(current_data: &DataCollection) -> Option<(String, String)> {
     if current_data.arc_harvest.total_bytes > 0 {
         Some((
             format!(
@@ -572,9 +570,7 @@ pub fn convert_arc_labels(
 }
 
 #[cfg(feature = "zfs")]
-pub fn convert_arc_data_points(
-    current_data: &crate::app::data_farmer::DataCollection,
-) -> Vec<Point> {
+pub fn convert_arc_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = current_data.current_instant;
 
@@ -602,9 +598,7 @@ pub struct ConvertedGpuData {
 }
 
 #[cfg(feature = "gpu")]
-pub fn convert_gpu_data(
-    current_data: &crate::app::data_farmer::DataCollection,
-) -> Option<Vec<ConvertedGpuData>> {
+pub fn convert_gpu_data(current_data: &DataCollection) -> Option<Vec<ConvertedGpuData>> {
     let current_time = current_data.current_instant;
 
     // convert points

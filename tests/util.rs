@@ -24,7 +24,7 @@ fn cross_runner() -> Option<String> {
     const TARGET_RUNNER: &str = "CARGO_TARGET_RUNNER";
     const CROSS_RUNNER: &str = "CROSS_RUNNER";
 
-    let env_mapping = std::env::vars_os()
+    let env_mapping = env::vars_os()
         .filter_map(|(k, v)| {
             let (k, v) = (k.to_string_lossy(), v.to_string_lossy());
 

@@ -10,7 +10,7 @@ use crate::{
 pub struct SortTableColumn;
 
 impl ColumnHeader for SortTableColumn {
-    fn text(&self) -> std::borrow::Cow<'static, str> {
+    fn text(&self) -> Cow<'static, str> {
         "Sort By".into()
     }
 }

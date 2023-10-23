@@ -124,7 +124,7 @@ pub struct DataCollector {
     battery_list: Option<Vec<Battery>>,
 
     #[cfg(target_family = "unix")]
-    user_table: self::processes::UserTable,
+    user_table: processes::UserTable,
 }
 
 impl DataCollector {

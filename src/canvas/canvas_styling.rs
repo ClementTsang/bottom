@@ -91,7 +91,7 @@ impl Default for CanvasStyling {
             high_battery_colour: Style::default().fg(Color::Green),
             medium_battery_colour: Style::default().fg(Color::Yellow),
             low_battery_colour: Style::default().fg(Color::Red),
-            invalid_query_style: Style::default().fg(tui::style::Color::Red),
+            invalid_query_style: Style::default().fg(Color::Red),
             disabled_text_style: Style::default().fg(Color::DarkGray),
         }
     }
