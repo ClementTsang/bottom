@@ -48,8 +48,8 @@ impl From<std::num::ParseIntError> for BottomError {
     }
 }
 
-impl From<std::string::String> for BottomError {
-    fn from(err: std::string::String) -> Self {
+impl From<String> for BottomError {
+    fn from(err: String) -> Self {
         BottomError::GenericError(err)
     }
 }

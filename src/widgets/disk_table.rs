@@ -126,7 +126,7 @@ impl ColumnHeader for DiskWidgetColumn {
 }
 
 impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
-    fn to_cell<'a>(&'a self, column: &DiskWidgetColumn, calculated_width: u16) -> Option<Text<'a>> {
+    fn to_cell(&self, column: &DiskWidgetColumn, calculated_width: u16) -> Option<Text<'_>> {
         if calculated_width == 0 {
             return None;
         }

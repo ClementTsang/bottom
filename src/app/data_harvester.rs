@@ -124,7 +124,7 @@ pub struct DataCollector {
     battery_list: Option<Vec<Battery>>,
 
     #[cfg(target_family = "unix")]
-    user_table: self::processes::UserTable,
+    user_table: processes::UserTable,
 
     #[cfg(feature = "gpu")]
     gpu_pids: Option<Vec<HashMap<u32, (u64, u32)>>>,

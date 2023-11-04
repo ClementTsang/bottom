@@ -57,7 +57,7 @@ fn btm_generate() -> io::Result<()> {
             let man = clap_mangen::Man::new(app);
             let mut buffer: Vec<u8> = Default::default();
             man.render(&mut buffer)?;
-            std::fs::write(manpage_out_dir.join("btm.1"), buffer)?;
+            fs::write(manpage_out_dir.join("btm.1"), buffer)?;
         }
         _ => {}
     }

@@ -154,7 +154,7 @@ impl<'de> Deserialize<'de> for ProcWidgetColumn {
             "gmem" | "gmem%" => Ok(ProcWidgetColumn::GpuMem),
             #[cfg(feature = "gpu")]
             "gpu%" => Ok(ProcWidgetColumn::GpuUtil),
-            _ => Err(D::Error::custom("doesn't match any column type")),
+            _ => Err(Error::custom("doesn't match any column type")),
         }
     }
 }

@@ -359,9 +359,9 @@ mod test {
     }
 
     impl DataToCell<ColumnType> for TestType {
-        fn to_cell<'a>(
-            &'a self, _column: &ColumnType, _calculated_width: u16,
-        ) -> Option<tui::text::Text<'a>> {
+        fn to_cell(
+            &self, _column: &ColumnType, _calculated_width: u16,
+        ) -> Option<tui::text::Text<'_>> {
             None
         }
 

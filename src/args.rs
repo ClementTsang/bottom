@@ -84,7 +84,7 @@ Supported widget names:
     }
 };
 
-pub fn get_matches() -> clap::ArgMatches {
+pub fn get_matches() -> ArgMatches {
     build_app().get_matches()
 }
 

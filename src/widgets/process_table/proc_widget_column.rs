@@ -59,7 +59,7 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "gmem%" => Ok(ProcColumn::GpuMemPercent),
             #[cfg(feature = "gpu")]
             "gpu%" => Ok(ProcColumn::GpuUtilPercent),
-            _ => Err(D::Error::custom("doesn't match any column type")),
+            _ => Err(Error::custom("doesn't match any column type")),
         }
     }
 }
