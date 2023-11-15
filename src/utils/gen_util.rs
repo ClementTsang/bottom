@@ -201,6 +201,16 @@ pub fn partial_ordering_desc<T: PartialOrd>(a: T, b: T) -> Ordering {
     partial_ordering(a, b).reverse()
 }
 
+#[macro_export]
+macro_rules! multi_eq_ignore_ascii_case {
+    ( $lhs:expr, $last:literal ) => {
+        $lhs.eq_ignore_ascii_case($last)
+    };
+    ( $lhs:expr, $head:literal | $($tail:tt)* ) => {
+        $lhs.eq_ignore_ascii_case($head) || multi_eq_ignore_ascii_case!($lhs, $($tail)*)
+    };
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

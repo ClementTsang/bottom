@@ -1,5 +1,7 @@
 use std::str::FromStr;
 
+use crate::multi_eq_ignore_ascii_case;
+
 /// Known filesystems. Original list from
 /// [heim](https://github.com/heim-rs/heim/blob/master/heim-disk/src/filesystem.rs).
 ///
@@ -124,9 +126,9 @@ impl FromStr for FileSystem {
             FileSystem::Ext3
         } else if s.eq_ignore_ascii_case("ext4") {
             FileSystem::Ext4
-        } else if s.eq_ignore_ascii_case("msdos") || s.eq_ignore_ascii_case("vfat") {
+        } else if multi_eq_ignore_ascii_case!(s, "msdos" | "vfat") {
             FileSystem::VFat
-        } else if s.eq_ignore_ascii_case("ntfs3") || s.eq_ignore_ascii_case("ntfs") {
+        } else if multi_eq_ignore_ascii_case!(s, "ntfs3" | "ntfs") {
             FileSystem::Ntfs
         } else if s.eq_ignore_ascii_case("zfs") {
             FileSystem::Zfs
