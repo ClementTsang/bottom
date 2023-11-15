@@ -1,10 +1,13 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Formatter};
 use std::time::Duration;
 use std::{borrow::Cow, collections::VecDeque};
 
 use humantime::parse_duration;
+use regex::Regex;
 
 use super::data_harvester::processes::ProcessHarvest;
+use crate::multi_eq_ignore_ascii_case;
+use crate::utils::data_prefixes::*;
 use crate::utils::error::{
     BottomError::{self, QueryError},
     Result,
@@ -54,8 +57,8 @@ pub fn parse_query(
         let mut rhs: Option<Box<And>> = None;
 
         while let Some(queue_top) = query.front() {
-            // debug!("OR QT: {queue_top:?}");
-            if OR_LIST.contains(&queue_top.to_lowercase().as_str()) {
+            let current_lowercase = queue_top.to_lowercase();
+            if OR_LIST.contains(&current_lowercase.as_str()) {
                 query.pop_front();
                 rhs = Some(Box::new(process_and(query)?));
 
@@ -75,7 +78,7 @@ pub fn parse_query(
                 } else {
                     break;
                 }
-            } else if COMPARISON_LIST.contains(&queue_top.to_lowercase().as_str()) {
+            } else if COMPARISON_LIST.contains(&current_lowercase.as_str()) {
                 return Err(QueryError(Cow::Borrowed("Comparison not valid here")));
             } else {
                 break;
@@ -90,8 +93,8 @@ pub fn parse_query(
         let mut rhs: Option<Box<Prefix>> = None;
 
         while let Some(queue_top) = query.front() {
-            // debug!("AND QT: {queue_top:?}");
-            if AND_LIST.contains(&queue_top.to_lowercase().as_str()) {
+            let current_lowercase = queue_top.to_lowercase();
+            if AND_LIST.contains(&current_lowercase.as_str()) {
                 query.pop_front();
 
                 rhs = Some(Box::new(process_prefix(query, false)?));
@@ -114,7 +117,7 @@ pub fn parse_query(
                 } else {
                     break;
                 }
-            } else if COMPARISON_LIST.contains(&queue_top.to_lowercase().as_str()) {
+            } else if COMPARISON_LIST.contains(&current_lowercase.as_str()) {
                 return Err(QueryError(Cow::Borrowed("Comparison not valid here")));
             } else {
                 break;
@@ -387,49 +390,44 @@ pub fn parse_query(
                                         | PrefixType::TRead
                                         | PrefixType::TWrite => {
                                             // If no unit, assume base.
+                                            //
                                             // Furthermore, base must be PEEKED at initially, and will
                                             // require (likely) prefix_type specific checks
                                             // Lastly, if it *is* a unit, remember to POP!
-
                                             if let Some(potential_unit) = query.front() {
-                                                match potential_unit.to_lowercase().as_str() {
-                                                    "tb" => {
-                                                        value *= 1_000_000_000_000.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "tib" => {
-                                                        value *= 1_099_511_627_776.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "gb" => {
-                                                        value *= 1_000_000_000.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "gib" => {
-                                                        value *= 1_073_741_824.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "mb" => {
-                                                        value *= 1_000_000.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "mib" => {
-                                                        value *= 1_048_576.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "kb" => {
-                                                        value *= 1000.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "kib" => {
-                                                        value *= 1024.0;
-                                                        query.pop_front();
-                                                    }
-                                                    "b" => {
-                                                        // Just gotta pop.
-                                                        query.pop_front();
-                                                    }
-                                                    _ => {}
+                                                if potential_unit.eq_ignore_ascii_case("tb") {
+                                                    value *= TERA_LIMIT_F64;
+                                                    query.pop_front();
+                                                } else if potential_unit.eq_ignore_ascii_case("tib")
+                                                {
+                                                    value *= TEBI_LIMIT_F64;
+                                                    query.pop_front();
+                                                } else if potential_unit.eq_ignore_ascii_case("gb")
+                                                {
+                                                    value *= GIGA_LIMIT_F64;
+                                                    query.pop_front();
+                                                } else if potential_unit.eq_ignore_ascii_case("gib")
+                                                {
+                                                    value *= GIBI_LIMIT_F64;
+                                                    query.pop_front();
+                                                } else if potential_unit.eq_ignore_ascii_case("mb")
+                                                {
+                                                    value *= MEGA_LIMIT_F64;
+                                                    query.pop_front();
+                                                } else if potential_unit.eq_ignore_ascii_case("mib")
+                                                {
+                                                    value *= MEBI_LIMIT_F64;
+                                                    query.pop_front();
+                                                } else if potential_unit.eq_ignore_ascii_case("kb")
+                                                {
+                                                    value *= KILO_LIMIT_F64;
+                                                    query.pop_front();
+                                                } else if potential_unit.eq_ignore_ascii_case("kib")
+                                                {
+                                                    value *= KIBI_LIMIT_F64;
+                                                    query.pop_front();
+                                                } else if potential_unit.eq_ignore_ascii_case("b") {
+                                                    query.pop_front();
                                                 }
                                             }
                                         }
@@ -466,7 +464,7 @@ pub fn parse_query(
     let mut split_query = VecDeque::new();
 
     search_query.split_whitespace().for_each(|s| {
-        // From https://stackoverflow.com/a/56923739 in order to get a split but include the parentheses
+        // From https://stackoverflow.com/a/56923739 in order to get a split, but include the parentheses
         let mut last = 0;
         for (index, matched) in s.match_indices(|x| DELIMITER_LIST.contains(&x)) {
             if last != index {
@@ -519,7 +517,7 @@ impl Query {
 }
 
 impl Debug for Query {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}", self.query))
     }
 }
@@ -561,7 +559,7 @@ impl Or {
 }
 
 impl Debug for Or {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.rhs {
             Some(rhs) => f.write_fmt(format_args!("({:?} OR {:?})", self.lhs, rhs)),
             None => f.write_fmt(format_args!("{:?}", self.lhs)),
@@ -606,7 +604,7 @@ impl And {
 }
 
 impl Debug for And {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.rhs {
             Some(rhs) => f.write_fmt(format_args!("({:?} AND {:?})", self.lhs, rhs)),
             None => f.write_fmt(format_args!("{:?}", self.lhs)),
@@ -637,23 +635,35 @@ impl std::str::FromStr for PrefixType {
     fn from_str(s: &str) -> Result<Self> {
         use PrefixType::*;
 
-        let lower_case = s.to_lowercase();
-        // Didn't add mem_bytes, total_read, and total_write
+        // TODO: Didn't add mem_bytes, total_read, and total_write
         // for now as it causes help to be clogged.
-        match lower_case.as_str() {
-            "cpu" | "cpu%" => Ok(PCpu),
-            "mem" | "mem%" => Ok(PMem),
-            "memb" => Ok(MemBytes),
-            "read" | "r/s" | "rps" => Ok(Rps),
-            "write" | "w/s" | "wps" => Ok(Wps),
-            "tread" | "t.read" => Ok(TRead),
-            "twrite" | "t.write" => Ok(TWrite),
-            "pid" => Ok(Pid),
-            "state" => Ok(State),
-            "user" => Ok(User),
-            "time" => Ok(Time),
-            _ => Ok(Name),
-        }
+        let result = if multi_eq_ignore_ascii_case!(s, "cpu" | "cpu%") {
+            PCpu
+        } else if multi_eq_ignore_ascii_case!(s, "mem" | "mem%") {
+            PMem
+        } else if multi_eq_ignore_ascii_case!(s, "memb") {
+            MemBytes
+        } else if multi_eq_ignore_ascii_case!(s, "read" | "r/s" | "rps") {
+            Rps
+        } else if multi_eq_ignore_ascii_case!(s, "write" | "w/s" | "wps") {
+            Wps
+        } else if multi_eq_ignore_ascii_case!(s, "tread" | "t.read") {
+            TRead
+        } else if multi_eq_ignore_ascii_case!(s, "twrite" | "t.write") {
+            TWrite
+        } else if multi_eq_ignore_ascii_case!(s, "pid") {
+            Pid
+        } else if multi_eq_ignore_ascii_case!(s, "state") {
+            State
+        } else if multi_eq_ignore_ascii_case!(s, "user") {
+            User
+        } else if multi_eq_ignore_ascii_case!(s, "time") {
+            Time
+        } else {
+            Name
+        };
+
+        Ok(result)
     }
 }
 
@@ -698,7 +708,7 @@ impl Prefix {
                     if let Some((taken_pt, _)) = taken_pwc {
                         self.regex_prefix = Some((
                             taken_pt,
-                            StringQuery::Regex(regex::Regex::new(final_regex_string)?),
+                            StringQuery::Regex(Regex::new(final_regex_string)?),
                         ));
                     }
                 }
@@ -808,7 +818,7 @@ impl Prefix {
 }
 
 impl Debug for Prefix {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if let Some(or) = &self.or {
             f.write_fmt(format_args!("{or:?}"))
         } else if let Some(regex_prefix) = &self.regex_prefix {
@@ -816,7 +826,7 @@ impl Debug for Prefix {
         } else if let Some(compare_prefix) = &self.compare_prefix {
             f.write_fmt(format_args!("{compare_prefix:?}"))
         } else {
-            f.write_fmt(format_args!(""))
+            f.write_str("")
         }
     }
 }
@@ -833,7 +843,7 @@ pub enum QueryComparison {
 #[derive(Debug)]
 pub enum StringQuery {
     Value(String),
-    Regex(regex::Regex),
+    Regex(Regex),
 }
 
 #[derive(Debug)]

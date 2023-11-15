@@ -14,7 +14,7 @@ use crate::{
         time_graph::{GraphData, TimeGraph},
         tui_widget::time_chart::Point,
     },
-    utils::{data_units::DataUnit, gen_util::*},
+    utils::{data_prefixes::*, data_units::DataUnit, gen_util::partial_ordering},
 };
 
 impl Painter {
