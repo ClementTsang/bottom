@@ -129,13 +129,6 @@ impl FromStr for Partition {
             }
         };
 
-        // let options = match parts.next() {
-        //     Some(opts) => opts.to_string(),
-        //     None => {
-        //         bail!("missing options");
-        //     }
-        // };
-
         Ok(Partition {
             device,
             mount_point,
