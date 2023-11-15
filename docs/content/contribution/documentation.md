@@ -11,7 +11,7 @@
 There are a few areas where documentation changes are often needed:
 
 - The [`README.md`](https://github.com/ClementTsang/bottom/blob/master/README.md)
-- The help menu inside the application (located [here](https://github.com/ClementTsang/bottom/blob/master/src/constants.rs))
+- The help menu inside of the application (located [here](https://github.com/ClementTsang/bottom/blob/master/src/constants.rs))
 - The [extended documentation](https://clementtsang.github.io/bottom/nightly/) (here)
 - The [`CHANGELOG.md`](https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md)
 
