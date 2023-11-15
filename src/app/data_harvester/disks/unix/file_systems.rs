@@ -83,7 +83,7 @@ impl FileSystem {
     }
 
     #[allow(dead_code)]
-    /// Returns a string identifying this filesystem.
+    /// Returns a string literal identifying this filesystem.
     pub fn as_str(&self) -> &str {
         match self {
             FileSystem::Ext2 => "ext2",
@@ -115,32 +115,47 @@ impl FromStr for FileSystem {
 
     fn from_str(s: &str) -> anyhow::Result<Self> {
         // Done like this as `eq_ignore_ascii_case` avoids a string allocation.
-        match () {
-            _ if s.eq_ignore_ascii_case("ext2") => Ok(FileSystem::Ext2),
-            _ if s.eq_ignore_ascii_case("ext3") => Ok(FileSystem::Ext3),
-            _ if s.eq_ignore_ascii_case("ext4") => Ok(FileSystem::Ext4),
-            _ if s.eq_ignore_ascii_case("msdos") || s.eq_ignore_ascii_case("vfat") => {
-                Ok(FileSystem::VFat)
-            }
-            _ if s.eq_ignore_ascii_case("ntfs3") || s.eq_ignore_ascii_case("ntfs") => {
-                Ok(FileSystem::Ntfs)
-            }
-            _ if s.eq_ignore_ascii_case("zfs") => Ok(FileSystem::Zfs),
-            _ if s.eq_ignore_ascii_case("hfs") => Ok(FileSystem::Hfs),
-            _ if s.eq_ignore_ascii_case("reiserfs") => Ok(FileSystem::Reiser3),
-            _ if s.eq_ignore_ascii_case("reiser4") => Ok(FileSystem::Reiser4),
-            _ if s.eq_ignore_ascii_case("exfat") => Ok(FileSystem::ExFat),
-            _ if s.eq_ignore_ascii_case("f2fs") => Ok(FileSystem::F2fs),
-            _ if s.eq_ignore_ascii_case("hfsplus") => Ok(FileSystem::HfsPlus),
-            _ if s.eq_ignore_ascii_case("jfs") => Ok(FileSystem::Jfs),
-            _ if s.eq_ignore_ascii_case("btrfs") => Ok(FileSystem::Btrfs),
-            _ if s.eq_ignore_ascii_case("minix") => Ok(FileSystem::Minix),
-            _ if s.eq_ignore_ascii_case("nilfs") => Ok(FileSystem::Nilfs),
-            _ if s.eq_ignore_ascii_case("xfs") => Ok(FileSystem::Xfs),
-            _ if s.eq_ignore_ascii_case("apfs") => Ok(FileSystem::Apfs),
-            _ if s.eq_ignore_ascii_case("fuseblk") => Ok(FileSystem::FuseBlk),
-            _ => Ok(FileSystem::Other(s.to_string())),
-        }
+        Ok(if s.eq_ignore_ascii_case("ext2") {
+            FileSystem::Ext2
+        } else if s.eq_ignore_ascii_case("ext3") {
+            FileSystem::Ext3
+        } else if s.eq_ignore_ascii_case("ext4") {
+            FileSystem::Ext4
+        } else if s.eq_ignore_ascii_case("msdos") || s.eq_ignore_ascii_case("vfat") {
+            FileSystem::VFat
+        } else if s.eq_ignore_ascii_case("ntfs3") || s.eq_ignore_ascii_case("ntfs") {
+            FileSystem::Ntfs
+        } else if s.eq_ignore_ascii_case("zfs") {
+            FileSystem::Zfs
+        } else if s.eq_ignore_ascii_case("hfs") {
+            FileSystem::Hfs
+        } else if s.eq_ignore_ascii_case("reiserfs") {
+            FileSystem::Reiser3
+        } else if s.eq_ignore_ascii_case("reiser4") {
+            FileSystem::Reiser4
+        } else if s.eq_ignore_ascii_case("exfat") {
+            FileSystem::ExFat
+        } else if s.eq_ignore_ascii_case("f2fs") {
+            FileSystem::F2fs
+        } else if s.eq_ignore_ascii_case("hfsplus") {
+            FileSystem::HfsPlus
+        } else if s.eq_ignore_ascii_case("jfs") {
+            FileSystem::Jfs
+        } else if s.eq_ignore_ascii_case("btrfs") {
+            FileSystem::Btrfs
+        } else if s.eq_ignore_ascii_case("minix") {
+            FileSystem::Minix
+        } else if s.eq_ignore_ascii_case("nilfs") {
+            FileSystem::Nilfs
+        } else if s.eq_ignore_ascii_case("xfs") {
+            FileSystem::Xfs
+        } else if s.eq_ignore_ascii_case("apfs") {
+            FileSystem::Apfs
+        } else if s.eq_ignore_ascii_case("fuseblk") {
+            FileSystem::FuseBlk
+        } else {
+            FileSystem::Other(s.to_string())
+        })
     }
 }
 
