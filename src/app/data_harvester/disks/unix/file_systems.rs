@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-/// Known filesystems. From [heim](https://github.com/heim-rs/heim/blob/master/heim-disk/src/filesystem.rs).
+/// Known filesystems. Original list from
+/// [heim](https://github.com/heim-rs/heim/blob/master/heim-disk/src/filesystem.rs).
 ///
 /// All physical filesystems should have their own enum element and all virtual filesystems will go into
 /// the [`FileSystem::Other`] element.
@@ -113,27 +114,50 @@ impl FromStr for FileSystem {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> anyhow::Result<Self> {
-        match s.to_ascii_lowercase().as_str() {
-            "ext2" => Ok(FileSystem::Ext2),
-            "ext3" => Ok(FileSystem::Ext3),
-            "ext4" => Ok(FileSystem::Ext4),
-            "vfat" | "msdos" => Ok(FileSystem::VFat),
-            "ntfs" | "ntfs3" => Ok(FileSystem::Ntfs),
-            "zfs" => Ok(FileSystem::Zfs),
-            "hfs" => Ok(FileSystem::Hfs),
-            "reiserfs" => Ok(FileSystem::Reiser3),
-            "reiser4" => Ok(FileSystem::Reiser4),
-            "exfat" => Ok(FileSystem::ExFat),
-            "f2fs" => Ok(FileSystem::F2fs),
-            "hfsplus" => Ok(FileSystem::HfsPlus),
-            "jfs" => Ok(FileSystem::Jfs),
-            "btrfs" => Ok(FileSystem::Btrfs),
-            "minix" => Ok(FileSystem::Minix),
-            "nilfs" => Ok(FileSystem::Nilfs),
-            "xfs" => Ok(FileSystem::Xfs),
-            "apfs" => Ok(FileSystem::Apfs),
-            "fuseblk" => Ok(FileSystem::FuseBlk),
+        // Done like this as `eq_ignore_ascii_case` avoids a string allocation.
+        match () {
+            _ if s.eq_ignore_ascii_case("ext2") => Ok(FileSystem::Ext2),
+            _ if s.eq_ignore_ascii_case("ext3") => Ok(FileSystem::Ext3),
+            _ if s.eq_ignore_ascii_case("ext4") => Ok(FileSystem::Ext4),
+            _ if s.eq_ignore_ascii_case("msdos") || s.eq_ignore_ascii_case("vfat") => {
+                Ok(FileSystem::VFat)
+            }
+            _ if s.eq_ignore_ascii_case("ntfs3") || s.eq_ignore_ascii_case("ntfs") => {
+                Ok(FileSystem::Ntfs)
+            }
+            _ if s.eq_ignore_ascii_case("zfs") => Ok(FileSystem::Zfs),
+            _ if s.eq_ignore_ascii_case("hfs") => Ok(FileSystem::Hfs),
+            _ if s.eq_ignore_ascii_case("reiserfs") => Ok(FileSystem::Reiser3),
+            _ if s.eq_ignore_ascii_case("reiser4") => Ok(FileSystem::Reiser4),
+            _ if s.eq_ignore_ascii_case("exfat") => Ok(FileSystem::ExFat),
+            _ if s.eq_ignore_ascii_case("f2fs") => Ok(FileSystem::F2fs),
+            _ if s.eq_ignore_ascii_case("hfsplus") => Ok(FileSystem::HfsPlus),
+            _ if s.eq_ignore_ascii_case("jfs") => Ok(FileSystem::Jfs),
+            _ if s.eq_ignore_ascii_case("btrfs") => Ok(FileSystem::Btrfs),
+            _ if s.eq_ignore_ascii_case("minix") => Ok(FileSystem::Minix),
+            _ if s.eq_ignore_ascii_case("nilfs") => Ok(FileSystem::Nilfs),
+            _ if s.eq_ignore_ascii_case("xfs") => Ok(FileSystem::Xfs),
+            _ if s.eq_ignore_ascii_case("apfs") => Ok(FileSystem::Apfs),
+            _ if s.eq_ignore_ascii_case("fuseblk") => Ok(FileSystem::FuseBlk),
             _ => Ok(FileSystem::Other(s.to_string())),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::FileSystem;
+    use std::str::FromStr;
+
+    #[test]
+    fn file_system_from_str() {
+        // Something supported
+        assert_eq!(FileSystem::from_str("ext4").unwrap(), FileSystem::Ext4);
+
+        // Something unsupported
+        assert_eq!(
+            FileSystem::from_str("this does not exist").unwrap(),
+            FileSystem::Other("this does not exist".to_owned())
+        );
     }
 }
