@@ -168,6 +168,8 @@ mod test {
     fn file_system_from_str() {
         // Something supported
         assert_eq!(FileSystem::from_str("ext4").unwrap(), FileSystem::Ext4);
+        assert_eq!(FileSystem::from_str("msdos").unwrap(), FileSystem::VFat);
+        assert_eq!(FileSystem::from_str("vfat").unwrap(), FileSystem::VFat);
 
         // Something unsupported
         assert_eq!(
