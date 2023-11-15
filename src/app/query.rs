@@ -7,13 +7,10 @@ use regex::Regex;
 
 use super::data_harvester::processes::ProcessHarvest;
 use crate::multi_eq_ignore_ascii_case;
+use crate::utils::data_prefixes::*;
 use crate::utils::error::{
     BottomError::{self, QueryError},
     Result,
-};
-use crate::utils::gen_util::{
-    GIBI_LIMIT_F64, GIGA_LIMIT_F64, KIBI_LIMIT_F64, KILO_LIMIT_F64, MEBI_LIMIT_F64, MEGA_LIMIT_F64,
-    TEBI_LIMIT_F64, TERA_LIMIT_F64,
 };
 
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
