@@ -392,4 +392,33 @@ mod test {
         assert_eq!(truncate_str(scientist, 1_usize), "…");
         assert_eq!(truncate_str(scientist, 0_usize), "");
     }
+
+    #[test]
+    fn test_multi_eq_ignore_ascii_case() {
+        assert!(
+            multi_eq_ignore_ascii_case!("test", "test"),
+            "single comparison should succeed"
+        );
+        assert!(
+            multi_eq_ignore_ascii_case!("test", "a" | "test"),
+            "double comparison should succeed"
+        );
+        assert!(
+            multi_eq_ignore_ascii_case!("test", "a" | "b" | "test"),
+            "multi comparison should succeed"
+        );
+
+        assert!(
+            !multi_eq_ignore_ascii_case!("test", "a"),
+            "single non-matching should fail"
+        );
+        assert!(
+            !multi_eq_ignore_ascii_case!("test", "a" | "b"),
+            "double non-matching should fail"
+        );
+        assert!(
+            !multi_eq_ignore_ascii_case!("test", "a" | "b" | "c"),
+            "multi non-matching should fail"
+        );
+    }
 }
