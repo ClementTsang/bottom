@@ -5,7 +5,7 @@ and bottom.
 
 ## Pre-built binaries
 
-The latest stable release can be found [here](https://github.com/ClementTsang/bottom/releases/latest), where you ca
+The latest stable release can be found [here](https://github.com/ClementTsang/bottom/releases/latest), where you can
 find pre-built binaries in either a `tar.gz` or `zip` format. Binaries here also include automatically generated shell
 completion files for zsh, bash, fish, and Powershell, which you may want to also install during the packaging
 process.

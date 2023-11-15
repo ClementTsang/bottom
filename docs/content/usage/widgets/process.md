@@ -77,13 +77,13 @@ screen will be shown to confirm whether you want to kill that process/process gr
 
 ### Tree mode
 
-Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, displaying processes in regards to their parent-child process relationships.
+Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, displaying processes in regard to their parent-child process relationships.
 
 <figure>
     <img src="../../../assets/screenshots/process/process_tree.webp" alt="A picture of tree mode in a process widget."/>
 </figure>
 
-A process in tree mode can also be "collapsed", hiding its children and any descendants, using either the ++minus++ or ++plus++ keys, or double clicking on an entry.
+A process in tree mode can also be "collapsed", hiding its children and any descendants, using either the ++minus++ or ++plus++ keys, or double-clicking on an entry.
 
 Lastly, note that in tree mode, processes cannot be grouped together due to the behaviour of the two modes somewhat clashing.
 
