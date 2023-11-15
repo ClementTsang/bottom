@@ -415,7 +415,7 @@ fn adjust_network_data_point(
             let labels: Vec<String> = vec![
                 format!("0{unit_prefix}{unit_type}"),
                 format!("{:.1}", base_unit * 0.5),
-                format!("{base_unit:.1}"),
+                format!("{:.1}", base_unit),
                 format!("{:.1}", base_unit * 1.5),
             ]
             .into_iter()
