@@ -75,14 +75,10 @@ pub fn kill_process_given_pid(pid: Pid, signal: usize) -> crate::utils::error::R
 
         return if let Some(err_code) = err_code {
             Err(BottomError::GenericError(format!(
-                "Error code {} - {}",
-                err_code, err,
+                "Error code {err_code} - {err}"
             )))
         } else {
-            Err(BottomError::GenericError(format!(
-                "Error code ??? - {}",
-                err,
-            )))
+            Err(BottomError::GenericError(format!("Error code ??? - {err}")))
         };
     }
 

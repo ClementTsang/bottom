@@ -1018,7 +1018,7 @@ impl std::str::FromStr for BottomWidgetType {
                 #[cfg(feature = "battery")]
                 {
                     Err(BottomError::ConfigError(format!(
-                        "\"{}\" is an invalid widget name.
+                        "\"{s}\" is an invalid widget name.
         
 Supported widget names:
 +--------------------------+
@@ -1037,13 +1037,12 @@ Supported widget names:
 |       batt, battery      |
 +--------------------------+
                 ",
-                        s
                     )))
                 }
                 #[cfg(not(feature = "battery"))]
                 {
                     Err(BottomError::ConfigError(format!(
-                        "\"{}\" is an invalid widget name.
+                        "\"{s}\" is an invalid widget name.
 
 Supported widget names:
 +--------------------------+
@@ -1060,7 +1059,6 @@ Supported widget names:
 |           disk           |
 +--------------------------+
                 ",
-                        s
                     )))
                 }
             }

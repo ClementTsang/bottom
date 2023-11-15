@@ -123,7 +123,7 @@ fn counted_name(seen_names: &mut HashMap<String, u32>, name: String) -> String {
 
     if let Some(count) = seen_names.get_mut(&name) {
         *count += 1;
-        format!("{name} ({})", *count)
+        format!("{name} ({count})")
     } else {
         seen_names.insert(name.clone(), 0);
         name
