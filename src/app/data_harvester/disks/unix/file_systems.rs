@@ -117,7 +117,9 @@ impl FromStr for FileSystem {
             _ if s.eq_ignore_ascii_case("ext2") => Ok(FileSystem::Ext2),
             _ if s.eq_ignore_ascii_case("ext3") => Ok(FileSystem::Ext3),
             _ if s.eq_ignore_ascii_case("ext4") => Ok(FileSystem::Ext4),
-            _ if s.eq_ignore_ascii_case("vfat") => Ok(FileSystem::VFat),
+            _ if s.eq_ignore_ascii_case("msdos") || s.eq_ignore_ascii_case("vfat") => {
+                Ok(FileSystem::VFat)
+            }
             _ if s == "ntfs3" || s.eq_ignore_ascii_case("ntfs") => Ok(FileSystem::Ntfs),
             _ if s.eq_ignore_ascii_case("zfs") => Ok(FileSystem::Zfs),
             _ if s.eq_ignore_ascii_case("hfs") => Ok(FileSystem::Hfs),

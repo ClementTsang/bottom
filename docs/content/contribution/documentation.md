@@ -38,7 +38,7 @@ There are a few areas where documentation changes are often needed:
    For changes to the extended documentation, you'll probably want Python 3.11 (older versions should be fine though),
    [MkDocs](https://www.mkdocs.org/), [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/),
    `mdx_truly_sane_lists`, and optionally [Mike](https://github.com/jimporter/mike) installed to provide live reloading
-   and preview for your changes. They aren't needed but it'll help with validating your changes.
+   and preview for your changes. They aren't needed, but it'll help with validating your changes.
 
    You can do so through `pip` or your system's package managers. If you use `pip`, you can use venv to cleanly install
    the documentation dependencies:

@@ -717,7 +717,7 @@ impl Prefix {
             let rhs: f64 = rhs.into();
 
             match condition {
-                QueryComparison::Equal => (lhs - rhs).abs() < std::f64::EPSILON,
+                QueryComparison::Equal => (lhs - rhs).abs() < f64::EPSILON,
                 QueryComparison::Less => lhs < rhs,
                 QueryComparison::Greater => lhs > rhs,
                 QueryComparison::LessOrEqual => lhs <= rhs,

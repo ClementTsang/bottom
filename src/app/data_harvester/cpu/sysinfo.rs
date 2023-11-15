@@ -8,9 +8,7 @@ use sysinfo::{CpuExt, LoadAvg, System, SystemExt};
 use super::{CpuData, CpuDataType, CpuHarvest};
 use crate::app::data_harvester::cpu::LoadAvgHarvest;
 
-pub fn get_cpu_data_list(
-    sys: &sysinfo::System, show_average_cpu: bool,
-) -> crate::error::Result<CpuHarvest> {
+pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> crate::error::Result<CpuHarvest> {
     let mut cpu_deque: VecDeque<_> = sys
         .cpus()
         .iter()

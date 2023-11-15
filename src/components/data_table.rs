@@ -155,9 +155,9 @@ mod test {
     }
 
     impl DataToCell<&'static str> for TestType {
-        fn to_cell<'a>(
-            &'a self, _column: &&'static str, _calculated_width: u16,
-        ) -> Option<tui::text::Text<'a>> {
+        fn to_cell(
+            &self, _column: &&'static str, _calculated_width: u16,
+        ) -> Option<tui::text::Text<'_>> {
             None
         }
 

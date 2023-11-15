@@ -12,7 +12,6 @@ use tui::{
 
 use crate::{
     app::{
-        self,
         layout_manager::{BottomColRow, BottomLayout, BottomWidgetType},
         App,
     },
@@ -226,7 +225,7 @@ impl Painter {
     }
 
     pub fn draw_data<B: Backend>(
-        &mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
+        &mut self, terminal: &mut Terminal<B>, app_state: &mut App,
     ) -> error::Result<()> {
         use BottomWidgetType::*;
 

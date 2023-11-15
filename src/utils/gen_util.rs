@@ -178,7 +178,7 @@ fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
 }
 
 #[inline]
-pub const fn sort_partial_fn<T: std::cmp::PartialOrd>(is_descending: bool) -> fn(T, T) -> Ordering {
+pub const fn sort_partial_fn<T: PartialOrd>(is_descending: bool) -> fn(T, T) -> Ordering {
     if is_descending {
         partial_ordering_desc
     } else {
@@ -188,7 +188,7 @@ pub const fn sort_partial_fn<T: std::cmp::PartialOrd>(is_descending: bool) -> fn
 
 /// Returns an [`Ordering`] between two [`PartialOrd`]s.
 #[inline]
-pub fn partial_ordering<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
+pub fn partial_ordering<T: PartialOrd>(a: T, b: T) -> Ordering {
     a.partial_cmp(&b).unwrap_or(Ordering::Equal)
 }
 
@@ -197,7 +197,7 @@ pub fn partial_ordering<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
 /// This is simply a wrapper function around [`partial_ordering`] that reverses
 /// the result.
 #[inline]
-pub fn partial_ordering_desc<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
+pub fn partial_ordering_desc<T: PartialOrd>(a: T, b: T) -> Ordering {
     partial_ordering(a, b).reverse()
 }
 

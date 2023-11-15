@@ -538,7 +538,7 @@ pub fn get_widget_layout(
 
             ret_bottom_layout
         } else {
-            return Err(error::BottomError::ConfigError(
+            return Err(BottomError::ConfigError(
                 "please have at least one widget under the '[[row]]' section.".to_string(),
             ));
         }

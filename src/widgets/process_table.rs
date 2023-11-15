@@ -140,7 +140,7 @@ impl<'de> Deserialize<'de> for ProcWidgetColumn {
             "state" => Ok(ProcWidgetColumn::State),
             "user" => Ok(ProcWidgetColumn::User),
             "time" => Ok(ProcWidgetColumn::Time),
-            _ => Err(D::Error::custom("doesn't match any column type")),
+            _ => Err(Error::custom("doesn't match any column type")),
         }
     }
 }
