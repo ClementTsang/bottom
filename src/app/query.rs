@@ -3,6 +3,7 @@ use std::time::Duration;
 use std::{borrow::Cow, collections::VecDeque};
 
 use humantime::parse_duration;
+use regex::Regex;
 
 use super::data_harvester::processes::ProcessHarvest;
 use crate::utils::error::{
@@ -698,7 +699,7 @@ impl Prefix {
                     if let Some((taken_pt, _)) = taken_pwc {
                         self.regex_prefix = Some((
                             taken_pt,
-                            StringQuery::Regex(regex::Regex::new(final_regex_string)?),
+                            StringQuery::Regex(Regex::new(final_regex_string)?),
                         ));
                     }
                 }
@@ -816,7 +817,7 @@ impl Debug for Prefix {
         } else if let Some(compare_prefix) = &self.compare_prefix {
             f.write_fmt(format_args!("{compare_prefix:?}"))
         } else {
-            f.write_fmt(format_args!(""))
+            f.write_str("")
         }
     }
 }
@@ -833,7 +834,7 @@ pub enum QueryComparison {
 #[derive(Debug)]
 pub enum StringQuery {
     Value(String),
-    Regex(regex::Regex),
+    Regex(Regex),
 }
 
 #[derive(Debug)]
