@@ -83,6 +83,7 @@ impl FileSystem {
     }
 
     #[allow(dead_code)]
+    #[inline]
     /// Returns a string literal identifying this filesystem.
     pub fn as_str(&self) -> &str {
         match self {
@@ -112,6 +113,8 @@ impl FileSystem {
 
 impl FromStr for FileSystem {
     type Err = anyhow::Error;
+
+    #[inline]
 
     fn from_str(s: &str) -> anyhow::Result<Self> {
         // Done like this as `eq_ignore_ascii_case` avoids a string allocation.
