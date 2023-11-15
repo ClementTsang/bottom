@@ -51,7 +51,7 @@ impl Partition {
                         .into_string()
                         .unwrap_or_else(|_| "Name Unavailable".to_string())
                 } else {
-                    let mut combined_path = std::path::PathBuf::new();
+                    let mut combined_path = PathBuf::new();
                     combined_path.push(device);
                     combined_path.pop(); // Pop the current file...
                     combined_path.push(path);

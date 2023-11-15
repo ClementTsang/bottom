@@ -10,13 +10,13 @@ use crate::{
 pub struct SortTableColumn;
 
 impl ColumnHeader for SortTableColumn {
-    fn text(&self) -> std::borrow::Cow<'static, str> {
+    fn text(&self) -> Cow<'static, str> {
         "Sort By".into()
     }
 }
 
 impl DataToCell<SortTableColumn> for &'static str {
-    fn to_cell<'a>(&'a self, _column: &SortTableColumn, calculated_width: u16) -> Option<Text<'a>> {
+    fn to_cell(&self, _column: &SortTableColumn, calculated_width: u16) -> Option<Text<'_>> {
         if calculated_width == 0 {
             return None;
         }
@@ -33,7 +33,7 @@ impl DataToCell<SortTableColumn> for &'static str {
 }
 
 impl DataToCell<SortTableColumn> for Cow<'static, str> {
-    fn to_cell<'a>(&'a self, _column: &SortTableColumn, calculated_width: u16) -> Option<Text<'a>> {
+    fn to_cell(&self, _column: &SortTableColumn, calculated_width: u16) -> Option<Text<'_>> {
         if calculated_width == 0 {
             return None;
         }
