@@ -8,7 +8,7 @@ You can hide specific disks, temperature sensors, and networks by name in the co
 
 For example, here's the disk widget with no filter:
 
-![Disk no filter](../../../assets/screenshots/config/disk-filtering/disk_no_filter.webp)
+![Disk no filter](../../assets/screenshots/config/disk-filtering/disk_no_filter.webp)
 
 The following in the config file would filter out some entries by disk name:
 
@@ -21,7 +21,7 @@ case_sensitive = false
 whole_word = false
 ```
 
-![Disk widget with just disk name filter](../../../assets/screenshots/config/disk-filtering/disk_name_filter.webp)
+![Disk widget with just disk name filter](../../assets/screenshots/config/disk-filtering/disk_name_filter.webp)
 
 If there are two potentially conflicting filters (i.e. when you are using both a disk and mount filter), the filter that explicitly allows an entry takes precedence over a filter that explicitly denies one. So for example, let's say we set a disk filter accepting anything with `/dev/sda`, but deny anything with `/mnt/.*` or `/`. So to do so, we write in the config file:
 
@@ -43,4 +43,4 @@ whole_word = true
 
 This gives us:
 
-![Disk widget with disk name and mount filter](../../../assets/screenshots/config/disk-filtering/disk_name_mount_filter.webp)
+![Disk widget with disk name and mount filter](../../assets/screenshots/config/disk-filtering/disk_name_mount_filter.webp)
