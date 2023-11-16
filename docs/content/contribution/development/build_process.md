@@ -36,7 +36,7 @@ Binaries are built currently for various targets. Note that not all of these are
     - `COMPLETION_DIR: "target/tmp/bottom/completion/"`
     - `MANPAGE_DIR: "target/tmp/bottom/manpage/"`
 
-    These generate the manpages and shell completions (see [Packaging](packaging-and-distribution.md) for some more information).
+    These generate the manpages and shell completions (see [Packaging](../packaging-and-distribution.md) for some more information).
 
 - Bundle the binaries and manpage/completions.
 - Cleanup.

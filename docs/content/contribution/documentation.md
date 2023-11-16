@@ -61,4 +61,4 @@ There are a few areas where documentation changes are often needed:
    This will serve a local version of the docs that you can open on your browser. It will update as you make changes.
 
 3. Once you have your documentation changes done, submit it as a pull request. For more information regarding that,
-   refer to [Issues, Pull Requests, and Discussions](../issues-and-pull-requests/).
+   refer to [Issues, Pull Requests, and Discussions](issues-and-pull-requests.md).

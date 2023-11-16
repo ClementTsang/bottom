@@ -64,4 +64,4 @@ the installation method and any details to the [`README.md`](https://github.com/
 file under the [Installation](https://github.com/ClementTsang/bottom#installation) section, as well as a corresponding
 table of contents entry. Once that's done, open a pull request - these will usually be approved of very quickly.
 
-You can find more info on the contribution process [here](../issues-and-pull-requests/#pull-requests).
+You can find more info on the contribution process [here](issues-and-pull-requests.md#pull-requests).
