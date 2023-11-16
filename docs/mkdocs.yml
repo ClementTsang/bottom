@@ -113,6 +113,8 @@ markdown_extensions:
 plugins:
   - tags
   - search
+  - mike:
+      canonical_version: stable
 
 extra:
   # Versioning
