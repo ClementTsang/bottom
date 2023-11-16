@@ -12,7 +12,7 @@
         <meta name="author" content="Clement Tsang">
       
       
-        <link rel="canonical" href="https://clementtsang.github.io/bottom/nightly/contribution/documentation/">
+        <link rel="canonical" href="https://clementtsang.github.io/bottom/stable/contribution/documentation/">
       
       
         <link rel="prev" href="../issues-and-pull-requests/">
@@ -1383,27 +1383,20 @@
  well as link to the relevant PR or issue.</p>
 <h3>Help menu</h3>
 
-<p>For changes to the help menu, try to refer to the existing code within <code>src/constants.rs</code> on how the help menu is generated.</p>
+<p>For changes to the help menu, try to refer to the existing code within <a href="https://github.com/ClementTsang/bottom/blob/master/src/constants.rs"><code>src/constants.rs</code></a> on how the help menu is generated.</p>
 <h3>Extended documentation</h3>
 
-<p>For changes to the extended documentation, you'll probably want Python 3.11 (older versions should be fine though),
- <a href="https://www.mkdocs.org/">MkDocs</a>, <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a>,
- <code>mdx_truly_sane_lists</code>, and optionally <a href="https://github.com/jimporter/mike">Mike</a> installed to provide live reloading
- and preview for your changes. They aren't needed, but it'll help with validating your changes.</p>
+<p>For changes to the extended documentation, you'll probably want at least Python 3.11 (older versions should be fine
+ though), <a href="https://www.mkdocs.org/">MkDocs</a>, <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a>,
+ <code>mdx_truly_sane_lists</code>, and optionally <a href="https://github.com/jimporter/mike">Mike</a> installed. These can help with
+ validating your changes locally.</p>
 <p>You can do so through <code>pip</code> or your system's package managers. If you use <code>pip</code>, you can use venv to cleanly install
  the documentation dependencies:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Change directories to the documentation.</span>
 <span class="nb">cd</span><span class="w"> </span>docs/
 
-<span class="c1"># Create and activate venv.</span>
-python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
-<span class="nb">source</span><span class="w"> </span>venv/bin/activate
-
-<span class="c1"># Install requirements</span>
-pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-
-<span class="c1"># Run mkdocs</span>
-venv/bin/mkdocs<span class="w"> </span>serve
+<span class="w"> </span><span class="c1"># Create venv, install the dependencies, and serve the page.</span>
+./serve.sh
 </code></pre></div>
 <p>This will serve a local version of the docs that you can open on your browser. It will update as you make changes.</p>
 </li>

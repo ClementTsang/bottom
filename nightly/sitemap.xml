@@ -1,142 +1,142 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/troubleshooting/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/troubleshooting/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/configuration/command-line-flags/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/configuration/command-line-flags/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/configuration/config-file/data-filtering/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/configuration/config-file/data-filtering/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/configuration/config-file/default-config/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/configuration/config-file/default-config/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/configuration/config-file/flags/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/configuration/config-file/flags/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/configuration/config-file/layout/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/configuration/config-file/layout/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/configuration/config-file/processes/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/configuration/config-file/processes/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/configuration/config-file/theming/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/configuration/config-file/theming/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/contribution/documentation/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/contribution/documentation/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/contribution/issues-and-pull-requests/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/contribution/issues-and-pull-requests/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/contribution/packaging-and-distribution/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/contribution/development/build_process/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/contribution/development/build_process/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/contribution/development/deploy_process/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/contribution/development/deploy_process/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/contribution/development/dev_env/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/contribution/development/dev_env/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/contribution/development/logging/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/contribution/development/logging/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/contribution/development/testing/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/contribution/development/testing/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/support/official/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/support/official/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/support/unofficial/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/support/unofficial/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/usage/basic-mode/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/usage/basic-mode/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/usage/general-usage/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/usage/general-usage/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/usage/widgets/battery/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/usage/widgets/battery/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/usage/widgets/cpu/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/usage/widgets/cpu/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/usage/widgets/disk/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/usage/widgets/disk/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/usage/widgets/memory/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/usage/widgets/memory/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/usage/widgets/network/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/usage/widgets/network/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/usage/widgets/process/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/usage/widgets/process/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://clementtsang.github.io/bottom/nightly/usage/widgets/temperature/</loc>
+         <loc>https://clementtsang.github.io/bottom/stable/usage/widgets/temperature/</loc>
          <lastmod>2023-11-16</lastmod>
          <changefreq>daily</changefreq>
     </url>
