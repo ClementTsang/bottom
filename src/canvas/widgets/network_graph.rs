@@ -14,7 +14,7 @@ use crate::{
         time_graph::{GraphData, TimeGraph},
         tui_widget::time_chart::Point,
     },
-    utils::{data_units::DataUnit, gen_util::*},
+    utils::{data_prefixes::*, data_units::DataUnit, gen_util::partial_ordering},
 };
 
 impl Painter {
@@ -413,13 +413,13 @@ fn adjust_network_data_point(
 
             let base_unit = max_value_scaled;
             let labels: Vec<String> = vec![
-                format!("0{}{}", unit_prefix, unit_type),
+                format!("0{unit_prefix}{unit_type}"),
                 format!("{:.1}", base_unit * 0.5),
                 format!("{:.1}", base_unit),
                 format!("{:.1}", base_unit * 1.5),
             ]
             .into_iter()
-            .map(|s| format!("{:>5}", s)) // Pull 5 as the longest legend value is generally going to be 5 digits (if they somehow hit over 5 terabits per second)
+            .map(|s| format!("{s:>5}")) // Pull 5 as the longest legend value is generally going to be 5 digits (if they somehow hit over 5 terabits per second)
             .collect();
 
             (bumped_max_entry, labels)

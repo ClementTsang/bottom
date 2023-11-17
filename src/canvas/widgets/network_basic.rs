@@ -38,10 +38,10 @@ impl Painter {
             );
         }
 
-        let rx_label = format!("RX: {}", &app_state.converted_data.rx_display);
-        let tx_label = format!("TX: {}", &app_state.converted_data.tx_display);
-        let total_rx_label = format!("Total RX: {}", &app_state.converted_data.total_rx_display);
-        let total_tx_label = format!("Total TX: {}", &app_state.converted_data.total_tx_display);
+        let rx_label = format!("RX: {}", app_state.converted_data.rx_display);
+        let tx_label = format!("TX: {}", app_state.converted_data.tx_display);
+        let total_rx_label = format!("Total RX: {}", app_state.converted_data.total_rx_display);
+        let total_tx_label = format!("Total TX: {}", app_state.converted_data.total_tx_display);
 
         let net_text = vec![
             Line::from(Span::styled(rx_label, self.colours.rx_style)),

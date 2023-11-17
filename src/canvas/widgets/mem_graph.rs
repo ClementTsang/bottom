@@ -50,7 +50,7 @@ impl Painter {
 
                 let mut points = Vec::with_capacity(size);
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.mem_labels {
-                    let mem_label = format!("RAM:{}{}", label_percent, label_frac);
+                    let mem_label = format!("RAM:{label_percent}{label_frac}");
                     points.push(GraphData {
                         points: &app_state.converted_data.mem_data,
                         style: self.colours.ram_style,
@@ -59,7 +59,7 @@ impl Painter {
                 }
                 #[cfg(not(target_os = "windows"))]
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.cache_labels {
-                    let cache_label = format!("CHE:{}{}", label_percent, label_frac);
+                    let cache_label = format!("CHE:{label_percent}{label_frac}");
                     points.push(GraphData {
                         points: &app_state.converted_data.cache_data,
                         style: self.colours.cache_style,
@@ -67,7 +67,7 @@ impl Painter {
                     });
                 }
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.swap_labels {
-                    let swap_label = format!("SWP:{}{}", label_percent, label_frac);
+                    let swap_label = format!("SWP:{label_percent}{label_frac}");
                     points.push(GraphData {
                         points: &app_state.converted_data.swap_data,
                         style: self.colours.swap_style,
@@ -76,7 +76,7 @@ impl Painter {
                 }
                 #[cfg(feature = "zfs")]
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.arc_labels {
-                    let arc_label = format!("ARC:{}{}", label_percent, label_frac);
+                    let arc_label = format!("ARC:{label_percent}{label_frac}");
                     points.push(GraphData {
                         points: &app_state.converted_data.arc_data,
                         style: self.colours.arc_style,

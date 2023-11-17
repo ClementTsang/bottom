@@ -5,7 +5,7 @@ and bottom.
 
 ## Pre-built binaries
 
-The latest stable release can be found [here](https://github.com/ClementTsang/bottom/releases/latest), where you ca
+The latest stable release can be found [here](https://github.com/ClementTsang/bottom/releases/latest), where you can
 find pre-built binaries in either a `tar.gz` or `zip` format. Binaries here also include automatically generated shell
 completion files for zsh, bash, fish, and Powershell, which you may want to also install during the packaging
 process.
@@ -64,4 +64,4 @@ the installation method and any details to the [`README.md`](https://github.com/
 file under the [Installation](https://github.com/ClementTsang/bottom#installation) section, as well as a corresponding
 table of contents entry. Once that's done, open a pull request - these will usually be approved of very quickly.
 
-You can find more info on the contribution process [here](../issues-and-pull-requests/#pull-requests).
+You can find more info on the contribution process [here](issues-and-pull-requests.md#pull-requests).

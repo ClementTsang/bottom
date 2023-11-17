@@ -534,7 +534,7 @@ pub fn get_widget_layout(
         // Confirm that we have at least ONE widget left - if not, error out!
         if iter_id > 0 {
             ret_bottom_layout.get_movement_mappings();
-            // debug!("Bottom layout: {:#?}", ret_bottom_layout);
+            // debug!("Bottom layout: {ret_bottom_layout:#?}");
 
             ret_bottom_layout
         } else {
@@ -589,8 +589,7 @@ fn get_temperature(
                 "kelvin" | "k" => Ok(data_harvester::temperature::TemperatureType::Kelvin),
                 "celsius" | "c" => Ok(data_harvester::temperature::TemperatureType::Celsius),
                 _ => Err(BottomError::ConfigError(format!(
-                    "\"{}\" is an invalid temperature type, use \"<kelvin|k|celsius|c|fahrenheit|f>\".",
-                    temp_type
+                    "\"{temp_type}\" is an invalid temperature type, use \"<kelvin|k|celsius|c|fahrenheit|f>\"."
                 ))),
             };
         }

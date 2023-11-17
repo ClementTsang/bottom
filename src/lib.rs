@@ -47,6 +47,7 @@ use utils::error;
 
 pub mod app;
 pub mod utils {
+    pub mod data_prefixes;
     pub mod data_units;
     pub mod error;
     pub mod gen_util;
@@ -110,7 +111,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 pub fn handle_key_event_or_break(
     event: KeyEvent, app: &mut App, reset_sender: &Sender<CollectionThreadEvent>,
 ) -> bool {
-    // c_debug!("KeyEvent: {:?}", event);
+    // c_debug!("KeyEvent: {event:?}");
 
     if event.modifiers.is_empty() {
         // Required catch for searching - otherwise you couldn't search with q.
@@ -504,7 +505,7 @@ pub fn create_collection_thread(
             }
 
             if let Ok(message) = control_receiver.try_recv() {
-                // trace!("Received message in collection thread: {:?}", message);
+                // trace!("Received message in collection thread: {message:?}");
                 match message {
                     CollectionThreadEvent::Reset => {
                         data_state.data.cleanup();

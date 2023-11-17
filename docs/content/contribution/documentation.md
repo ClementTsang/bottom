@@ -31,14 +31,14 @@ There are a few areas where documentation changes are often needed:
 
    <h3>Help menu</h3>
 
-   For changes to the help menu, try to refer to the existing code within `src/constants.rs` on how the help menu is generated.
+   For changes to the help menu, try to refer to the existing code within [`src/constants.rs`](https://github.com/ClementTsang/bottom/blob/master/src/constants.rs) on how the help menu is generated.
 
    <h3>Extended documentation</h3>
 
-   For changes to the extended documentation, you'll probably want Python 3.11 (older versions should be fine though),
-   [MkDocs](https://www.mkdocs.org/), [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/),
-   `mdx_truly_sane_lists`, and optionally [Mike](https://github.com/jimporter/mike) installed to provide live reloading
-   and preview for your changes. They aren't needed but it'll help with validating your changes.
+   For changes to the extended documentation, you'll probably want at least Python 3.11 (older versions should be fine
+   though), [MkDocs](https://www.mkdocs.org/), [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/),
+   `mdx_truly_sane_lists`, and optionally [Mike](https://github.com/jimporter/mike) installed. These can help with
+   validating your changes locally.
 
    You can do so through `pip` or your system's package managers. If you use `pip`, you can use venv to cleanly install
    the documentation dependencies:
@@ -47,18 +47,11 @@ There are a few areas where documentation changes are often needed:
    # Change directories to the documentation.
    cd docs/
 
-   # Create and activate venv.
-   python -m venv venv
-   source venv/bin/activate
-
-   # Install requirements
-   pip install -r requirements.txt
-
-   # Run mkdocs
-   venv/bin/mkdocs serve
+    # Create venv, install the dependencies, and serve the page.
+   ./serve.sh
    ```
 
    This will serve a local version of the docs that you can open on your browser. It will update as you make changes.
 
 3. Once you have your documentation changes done, submit it as a pull request. For more information regarding that,
-   refer to [Issues, Pull Requests, and Discussions](../issues-and-pull-requests/).
+   refer to [Issues, Pull Requests, and Discussions](issues-and-pull-requests.md).

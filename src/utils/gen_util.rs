@@ -4,45 +4,7 @@ use tui::text::{Line, Span, Text};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-pub const KILO_LIMIT: u64 = 1000;
-pub const MEGA_LIMIT: u64 = 1_000_000;
-pub const GIGA_LIMIT: u64 = 1_000_000_000;
-pub const TERA_LIMIT: u64 = 1_000_000_000_000;
-pub const KIBI_LIMIT: u64 = 1024;
-pub const MEBI_LIMIT: u64 = 1024 * 1024;
-pub const GIBI_LIMIT: u64 = 1024 * 1024 * 1024;
-pub const TEBI_LIMIT: u64 = 1024 * 1024 * 1024 * 1024;
-
-pub const KILO_LIMIT_F64: f64 = 1000.0;
-pub const MEGA_LIMIT_F64: f64 = 1_000_000.0;
-pub const GIGA_LIMIT_F64: f64 = 1_000_000_000.0;
-pub const TERA_LIMIT_F64: f64 = 1_000_000_000_000.0;
-pub const KIBI_LIMIT_F64: f64 = 1024.0;
-pub const MEBI_LIMIT_F64: f64 = 1024.0 * 1024.0;
-pub const GIBI_LIMIT_F64: f64 = 1024.0 * 1024.0 * 1024.0;
-pub const TEBI_LIMIT_F64: f64 = 1024.0 * 1024.0 * 1024.0 * 1024.0;
-
-pub const LOG_KILO_LIMIT: f64 = 3.0;
-pub const LOG_MEGA_LIMIT: f64 = 6.0;
-pub const LOG_GIGA_LIMIT: f64 = 9.0;
-pub const LOG_TERA_LIMIT: f64 = 12.0;
-pub const LOG_PETA_LIMIT: f64 = 15.0;
-
-pub const LOG_KIBI_LIMIT: f64 = 10.0;
-pub const LOG_MEBI_LIMIT: f64 = 20.0;
-pub const LOG_GIBI_LIMIT: f64 = 30.0;
-pub const LOG_TEBI_LIMIT: f64 = 40.0;
-pub const LOG_PEBI_LIMIT: f64 = 50.0;
-
-pub const LOG_KILO_LIMIT_U32: u32 = 3;
-pub const LOG_MEGA_LIMIT_U32: u32 = 6;
-pub const LOG_GIGA_LIMIT_U32: u32 = 9;
-pub const LOG_TERA_LIMIT_U32: u32 = 12;
-
-pub const LOG_KIBI_LIMIT_U32: u32 = 10;
-pub const LOG_MEBI_LIMIT_U32: u32 = 20;
-pub const LOG_GIBI_LIMIT_U32: u32 = 30;
-pub const LOG_TEBI_LIMIT_U32: u32 = 40;
+use super::data_prefixes::*;
 
 /// Returns a tuple containing the value and the unit in bytes.  In units of 1024.
 /// This only supports up to a tebi.  Note the "single" unit will have a space appended to match the others if
@@ -76,10 +38,10 @@ pub fn get_decimal_bytes(bytes: u64) -> (f64, &'static str) {
 pub fn get_binary_prefix(quantity: u64, unit: &str) -> (f64, String) {
     match quantity {
         b if b < KIBI_LIMIT => (quantity as f64, unit.to_string()),
-        b if b < MEBI_LIMIT => (quantity as f64 / 1024.0, format!("Ki{}", unit)),
-        b if b < GIBI_LIMIT => (quantity as f64 / 1_048_576.0, format!("Mi{}", unit)),
-        b if b < TERA_LIMIT => (quantity as f64 / 1_073_741_824.0, format!("Gi{}", unit)),
-        _ => (quantity as f64 / 1_099_511_627_776.0, format!("Ti{}", unit)),
+        b if b < MEBI_LIMIT => (quantity as f64 / 1024.0, format!("Ki{unit}")),
+        b if b < GIBI_LIMIT => (quantity as f64 / 1_048_576.0, format!("Mi{unit}")),
+        b if b < TERA_LIMIT => (quantity as f64 / 1_073_741_824.0, format!("Gi{unit}")),
+        _ => (quantity as f64 / 1_099_511_627_776.0, format!("Ti{unit}")),
     }
 }
 
@@ -89,10 +51,10 @@ pub fn get_binary_prefix(quantity: u64, unit: &str) -> (f64, String) {
 pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
     match quantity {
         b if b < KILO_LIMIT => (quantity as f64, unit.to_string()),
-        b if b < MEGA_LIMIT => (quantity as f64 / 1000.0, format!("K{}", unit)),
-        b if b < GIGA_LIMIT => (quantity as f64 / 1_000_000.0, format!("M{}", unit)),
-        b if b < TERA_LIMIT => (quantity as f64 / 1_000_000_000.0, format!("G{}", unit)),
-        _ => (quantity as f64 / 1_000_000_000_000.0, format!("T{}", unit)),
+        b if b < MEGA_LIMIT => (quantity as f64 / 1000.0, format!("K{unit}")),
+        b if b < GIGA_LIMIT => (quantity as f64 / 1_000_000.0, format!("M{unit}")),
+        b if b < TERA_LIMIT => (quantity as f64 / 1_000_000_000.0, format!("G{unit}")),
+        _ => (quantity as f64 / 1_000_000_000_000.0, format!("T{unit}")),
     }
 }
 
@@ -199,6 +161,29 @@ pub fn partial_ordering<T: PartialOrd>(a: T, b: T) -> Ordering {
 #[inline]
 pub fn partial_ordering_desc<T: PartialOrd>(a: T, b: T) -> Ordering {
     partial_ordering(a, b).reverse()
+}
+
+/// Checks that the first string is equal to any of the other ones in a ASCII case-insensitive match.
+///
+/// The generated code is the same as writing:
+/// `to_ascii_lowercase(a) == to_ascii_lowercase(b) || to_ascii_lowercase(a) == to_ascii_lowercase(c)`,
+/// but without allocating and copying temporaries.
+///
+/// # Examples
+///
+/// ```ignore
+/// assert!(multi_eq_ignore_ascii_case!("test", "test"));
+/// assert!(multi_eq_ignore_ascii_case!("test", "a" | "b" | "test"));
+/// assert!(!multi_eq_ignore_ascii_case!("test", "a" | "b" | "c"));
+/// ```
+#[macro_export]
+macro_rules! multi_eq_ignore_ascii_case {
+    ( $lhs:expr, $last:literal ) => {
+        $lhs.eq_ignore_ascii_case($last)
+    };
+    ( $lhs:expr, $head:literal | $($tail:tt)* ) => {
+        $lhs.eq_ignore_ascii_case($head) || multi_eq_ignore_ascii_case!($lhs, $($tail)*)
+    };
 }
 
 #[cfg(test)]
@@ -381,5 +366,34 @@ mod test {
         assert_eq!(truncate_str(scientist, 2_usize), scientist);
         assert_eq!(truncate_str(scientist, 1_usize), "…");
         assert_eq!(truncate_str(scientist, 0_usize), "");
+    }
+
+    #[test]
+    fn test_multi_eq_ignore_ascii_case() {
+        assert!(
+            multi_eq_ignore_ascii_case!("test", "test"),
+            "single comparison should succeed"
+        );
+        assert!(
+            multi_eq_ignore_ascii_case!("test", "a" | "test"),
+            "double comparison should succeed"
+        );
+        assert!(
+            multi_eq_ignore_ascii_case!("test", "a" | "b" | "test"),
+            "multi comparison should succeed"
+        );
+
+        assert!(
+            !multi_eq_ignore_ascii_case!("test", "a"),
+            "single non-matching should fail"
+        );
+        assert!(
+            !multi_eq_ignore_ascii_case!("test", "a" | "b"),
+            "double non-matching should fail"
+        );
+        assert!(
+            !multi_eq_ignore_ascii_case!("test", "a" | "b" | "c"),
+            "multi non-matching should fail"
+        );
     }
 }

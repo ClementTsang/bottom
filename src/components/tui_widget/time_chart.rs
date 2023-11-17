@@ -696,7 +696,7 @@ mod test {
         for case in &cases {
             let datasets = (0..10)
                 .map(|i| {
-                    let name = format!("Dataset #{}", i);
+                    let name = format!("Dataset #{i}");
                     Dataset::default().name(name).data(&data)
                 })
                 .collect::<Vec<_>>();

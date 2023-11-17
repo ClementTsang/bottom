@@ -21,7 +21,8 @@ use hashbrown::HashMap;
 use crate::data_harvester::batteries;
 use crate::{
     data_harvester::{cpu, disks, memory, network, processes::ProcessHarvest, temperature, Data},
-    utils::gen_util::{get_decimal_bytes, GIGA_LIMIT},
+    utils::data_prefixes::*,
+    utils::gen_util::get_decimal_bytes,
     Pid,
 };
 
