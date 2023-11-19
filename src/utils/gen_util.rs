@@ -186,6 +186,41 @@ macro_rules! multi_eq_ignore_ascii_case {
     };
 }
 
+/// A trait for additional clamping functions on numeric types.
+pub trait ClampExt {
+    /// Restrict a value by a lower bound.
+    fn clamp_lower(&self, lower_bound: Self) -> Self;
+
+    /// Restrict a value by an upper bound.
+    fn clamp_upper(&self, upper_bound: Self) -> Self;
+}
+
+macro_rules! clamp_num_impl {
+    ( $($NumType:ty),+ $(,)? ) => {
+        $(
+            impl ClampExt for $NumType {
+                fn clamp_lower(&self, lower_bound: Self) -> Self {
+                    if *self < lower_bound {
+                        lower_bound
+                    } else {
+                        *self
+                    }
+                }
+
+                fn clamp_upper(&self, upper_bound: Self) -> Self {
+                    if *self > upper_bound {
+                        upper_bound
+                    } else {
+                        *self
+                    }
+                }
+            }
+        )*
+    };
+}
+
+clamp_num_impl!(u8, u16, u32, u64, usize);
+
 #[cfg(test)]
 mod test {
     use super::*;
