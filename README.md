@@ -123,6 +123,7 @@ A non-comprehensive list of some currently unofficially supported platforms that
 
 - FreeBSD (`x86_64`)
 - Linux (`armv6`, `armv7`, `powerpc64le`, `riscv64gc`)
+- Android (`arm64`)
 
 For more details on unsupported platforms and known problems, check out [the documentation](https://clementtsang.github.io/bottom/nightly/support/unofficial/).
 
