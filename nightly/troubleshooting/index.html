@@ -1513,11 +1513,11 @@ on how to run htop without sudo for bottom. However, <strong>please</strong> und
 The config files also follow the <a href="https://toml.io/en/">TOML</a> format.</p>
 <p>Also make sure your config options are under the right table - for example, to set your temperature type, you must set it under the <code>[flags]</code> table:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[flags]</span>
-<span class="n">temperature_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;f&quot;</span>
+<span class="n">temperature_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;f&quot;</span>
 </code></pre></div>
 <p>Meanwhile, if you want to set a custom color scheme, it would be under the <code>[colors]</code> table:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[colors]</span>
-<span class="n">table_header_color</span><span class="o">=</span><span class="s">&quot;LightBlue&quot;</span>
+<span class="n">table_header_color</span><span class="o">=</span><span class="s2">&quot;LightBlue&quot;</span>
 </code></pre></div>
 <h3 id="check-the-configuration-file-location"><a class="toclink" href="#check-the-configuration-file-location">Check the configuration file location</a></h3>
 <p>Make sure bottom is reading the right configuration file. By default, bottom looks for config files at these locations:</p>

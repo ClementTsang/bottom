@@ -1311,18 +1311,18 @@
 <p>For example, given the sample layout:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[[row]]</span>
 <span class="w">  </span><span class="k">[[row.child]]</span>
-<span class="w">  </span><span class="n">type</span><span class="o">=</span><span class="s">&quot;cpu&quot;</span>
+<span class="w">  </span><span class="n">type</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span>
 <span class="k">[[row]]</span>
 <span class="w">    </span><span class="n">ratio</span><span class="o">=</span><span class="mi">2</span>
 <span class="w">    </span><span class="k">[[row.child]]</span>
 <span class="w">      </span><span class="n">ratio</span><span class="o">=</span><span class="mi">4</span>
-<span class="w">      </span><span class="n">type</span><span class="o">=</span><span class="s">&quot;mem&quot;</span>
+<span class="w">      </span><span class="n">type</span><span class="o">=</span><span class="s2">&quot;mem&quot;</span>
 <span class="w">    </span><span class="k">[[row.child]]</span>
 <span class="w">      </span><span class="n">ratio</span><span class="o">=</span><span class="mi">3</span>
 <span class="w">      </span><span class="k">[[row.child.child]]</span>
-<span class="w">        </span><span class="n">type</span><span class="o">=</span><span class="s">&quot;temp&quot;</span>
+<span class="w">        </span><span class="n">type</span><span class="o">=</span><span class="s2">&quot;temp&quot;</span>
 <span class="w">      </span><span class="k">[[row.child.child]]</span>
-<span class="w">        </span><span class="n">type</span><span class="o">=</span><span class="s">&quot;disk&quot;</span>
+<span class="w">        </span><span class="n">type</span><span class="o">=</span><span class="s2">&quot;disk&quot;</span>
 </code></pre></div>
 <p>This would give a layout that has two rows, with a 1:2 ratio. The first row has only the CPU widget.
 The second row is split into two columns with a 4:3 ratio. The first column contains the memory widget.

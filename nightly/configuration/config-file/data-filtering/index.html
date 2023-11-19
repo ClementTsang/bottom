@@ -1313,7 +1313,7 @@
 <p>The following in the config file would filter out some entries by disk name:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[disk_filter]</span>
 <span class="n">is_list_ignored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;/dev/sda&quot;</span><span class="p">]</span>
+<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;/dev/sda&quot;</span><span class="p">]</span>
 <span class="n">regex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">case_sensitive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="n">whole_word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
@@ -1322,14 +1322,14 @@
 <p>If there are two potentially conflicting filters (i.e. when you are using both a disk and mount filter), the filter that explicitly allows an entry takes precedence over a filter that explicitly denies one. So for example, let's say we set a disk filter accepting anything with <code>/dev/sda</code>, but deny anything with <code>/mnt/.*</code> or <code>/</code>. So to do so, we write in the config file:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[disk_filter]</span>
 <span class="n">is_list_ignored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
-<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;/dev/sda&quot;</span><span class="p">]</span>
+<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;/dev/sda&quot;</span><span class="p">]</span>
 <span class="n">regex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">case_sensitive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="n">whole_word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 
 <span class="k">[mount_filter]</span>
 <span class="n">is_list_ignored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;/mnt/.*&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/&quot;</span><span class="p">]</span>
+<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;/mnt/.*&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;/&quot;</span><span class="p">]</span>
 <span class="n">regex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">case_sensitive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="n">whole_word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
