@@ -190,7 +190,7 @@ impl SortsRow for ProcColumn {
             }
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(&a.gpu_usage, &b.gpu_usage));
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.gpu_usage, b.gpu_usage));
             }
         }
     }

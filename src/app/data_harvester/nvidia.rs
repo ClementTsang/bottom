@@ -9,8 +9,7 @@ use crate::app::Filter;
 use crate::app::layout_manager::UsedWidgets;
 use crate::data_harvester::memory::MemHarvest;
 use crate::data_harvester::temperature::{
-    convert_celsius_to_fahrenheit, convert_celsius_to_kelvin, is_temp_filtered, TempHarvest,
-    TemperatureType,
+    convert_temp_unit, is_temp_filtered, TempHarvest, TemperatureType,
 };
 
 pub static NVML_DATA: Lazy<Result<Nvml, NvmlError>> = Lazy::new(Nvml::init);
@@ -21,7 +20,7 @@ pub struct GpusData {
     pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
 }
 
-/// Returns the Gpu data of NVIDIA cards.
+/// Returns the GPU data from NVIDIA cards.
 #[inline]
 pub fn get_nvidia_vecs(
     temp_type: &TemperatureType, filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
@@ -54,15 +53,7 @@ pub fn get_nvidia_vecs(
                         if widgets_to_harvest.use_temp && is_temp_filtered(filter, &name) {
                             if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
                                 let temperature = temperature as f32;
-                                let temperature = match temp_type {
-                                    TemperatureType::Celsius => temperature,
-                                    TemperatureType::Kelvin => {
-                                        convert_celsius_to_kelvin(temperature)
-                                    }
-                                    TemperatureType::Fahrenheit => {
-                                        convert_celsius_to_fahrenheit(temperature)
-                                    }
-                                };
+                                let temperature = convert_temp_unit(temperature, temp_type);
                                 temp_vec.push(TempHarvest {
                                     name: name.clone(),
                                     temperature,

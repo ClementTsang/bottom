@@ -29,12 +29,20 @@ pub enum TemperatureType {
     Fahrenheit,
 }
 
-pub fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
+fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
     celsius + 273.15
 }
 
-pub fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
+fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
     (celsius * (9.0 / 5.0)) + 32.0
+}
+
+pub fn convert_temp_unit(temp: f32, temp_type: &TemperatureType) -> f32 {
+    match temp_type {
+        TemperatureType::Celsius => temp,
+        TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
+        TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
+    }
 }
 
 pub fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {

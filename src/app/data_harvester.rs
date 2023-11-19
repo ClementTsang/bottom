@@ -309,6 +309,7 @@ impl DataCollector {
         // Update times for future reference.
         self.last_collection_time = self.data.collection_time;
     }
+
     #[cfg(feature = "gpu")]
     #[inline]
     fn update_gpus(&mut self) {
@@ -319,25 +320,19 @@ impl DataCollector {
                 &self.filters.temp_filter,
                 &self.widgets_to_harvest,
             ) {
-                if self.widgets_to_harvest.use_temp {
-                    if let Some(mut temp) = data.temperature {
-                        if let Some(ref mut sensors) = self.data.temperature_sensors {
-                            sensors.append(&mut temp);
-                        } else {
-                            self.data.temperature_sensors = Some(temp);
-                        }
+                if let Some(mut temp) = data.temperature {
+                    if let Some(sensors) = &mut self.data.temperature_sensors {
+                        sensors.append(&mut temp);
+                    } else {
+                        self.data.temperature_sensors = Some(temp);
                     }
                 }
-                if self.widgets_to_harvest.use_mem {
-                    if let Some(mem) = data.memory {
-                        self.data.gpu = Some(mem);
-                    }
+                if let Some(mem) = data.memory {
+                    self.data.gpu = Some(mem);
                 }
-                if self.widgets_to_harvest.use_proc {
-                    if let Some(proc) = data.procs {
-                        self.gpu_pids = Some(proc.1);
-                        self.gpus_total_mem = Some(proc.0);
-                    }
+                if let Some(proc) = data.procs {
+                    self.gpu_pids = Some(proc.1);
+                    self.gpus_total_mem = Some(proc.0);
                 }
             }
         }

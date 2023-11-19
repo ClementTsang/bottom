@@ -467,7 +467,7 @@ use CPU (3) as the default instead.
             Arg::new("enable_gpu")
                 .long("enable_gpu")
                 .action(ArgAction::SetTrue)
-                .help("Enable collecting and displaying GPU memory usage.")
+                .help("Enable collecting and displaying GPU usage.")
         },
         #[cfg(not(target_os = "windows"))]
         {

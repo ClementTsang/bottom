@@ -233,13 +233,6 @@ fn read_proc(
         Duration::ZERO
     };
 
-    #[cfg(feature = "gpu")]
-    let gpu_mem = 0;
-    #[cfg(feature = "gpu")]
-    let gpu_mem_percent = 0.0;
-    #[cfg(feature = "gpu")]
-    let gpu_util = 0;
-
     Ok((
         ProcessHarvest {
             pid: process.pid,
@@ -258,11 +251,11 @@ fn read_proc(
             user,
             time,
             #[cfg(feature = "gpu")]
-            gpu_mem,
+            gpu_mem: 0,
             #[cfg(feature = "gpu")]
-            gpu_mem_percent,
+            gpu_mem_percent: 0.0,
             #[cfg(feature = "gpu")]
-            gpu_util,
+            gpu_util: 0,
         },
         new_process_times,
     ))

@@ -9,10 +9,7 @@ use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
 use super::{is_temp_filtered, TempHarvest, TemperatureType};
-use crate::app::{
-    data_harvester::temperature::{convert_celsius_to_fahrenheit, convert_celsius_to_kelvin},
-    Filter,
-};
+use crate::app::{data_harvester::temperature::convert_temp_unit, Filter};
 
 const EMPTY_NAME: &str = "Unknown";
 
@@ -29,14 +26,6 @@ fn read_temp(path: &Path) -> Result<f32> {
         .parse::<f32>()
         .map_err(|e| crate::utils::error::BottomError::ConversionError(e.to_string()))?
         / 1_000.0)
-}
-
-fn convert_temp_unit(temp: f32, temp_type: &TemperatureType) -> f32 {
-    match temp_type {
-        TemperatureType::Celsius => temp,
-        TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
-        TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
-    }
 }
 
 /// Get all candidates from hwmon and coretemp. It will also return the number of entries from hwmon.
