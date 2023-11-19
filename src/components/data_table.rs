@@ -21,6 +21,8 @@ pub use data_type::*;
 pub mod sortable;
 pub use sortable::*;
 
+use crate::utils::gen_util::ClampExt;
+
 /// A [`DataTable`] is a component that displays data in a tabular form.
 ///
 /// Note that [`DataTable`] takes a generic type `S`, bounded by [`SortType`]. This controls whether this table
@@ -120,7 +122,7 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     /// Updates the scroll position to a selected index.
     #[allow(clippy::comparison_chain)]
     pub fn set_position(&mut self, new_index: usize) {
-        let new_index = new_index.clamp(0, self.data.len().saturating_sub(1));
+        let new_index = new_index.clamp_upper(self.data.len().saturating_sub(1));
         if self.state.current_index < new_index {
             self.state.scroll_direction = ScrollDirection::Down;
         } else if self.state.current_index > new_index {

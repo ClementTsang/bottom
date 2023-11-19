@@ -188,10 +188,12 @@ macro_rules! multi_eq_ignore_ascii_case {
 
 /// A trait for additional clamping functions on numeric types.
 pub trait ClampExt {
-    /// Restrict a value by a lower bound.
+    /// Restrict a value by a lower bound. If the current value is _lower_ than `lower_bound`,
+    /// it will be set to `_lower_bound`.
     fn clamp_lower(&self, lower_bound: Self) -> Self;
 
-    /// Restrict a value by an upper bound.
+    /// Restrict a value by an upper bound. If the current value is _greater_ than `upper_bound`,
+    /// it will be set to `upper_bound`.
     fn clamp_upper(&self, upper_bound: Self) -> Self;
 }
 
@@ -244,7 +246,7 @@ mod test {
     }
 
     #[test]
-    fn test_truncate() {
+    fn test_truncate_str() {
         let cpu_header = "CPU(c)▲";
 
         assert_eq!(
@@ -267,7 +269,7 @@ mod test {
     }
 
     #[test]
-    fn test_truncate_cjk() {
+    fn truncate_cjk() {
         let cjk = "施氏食獅史";
 
         assert_eq!(
@@ -290,7 +292,7 @@ mod test {
     }
 
     #[test]
-    fn test_truncate_mixed() {
+    fn truncate_mixed() {
         let test = "Test (施氏食獅史) Test";
 
         assert_eq!(
@@ -323,7 +325,7 @@ mod test {
     }
 
     #[test]
-    fn test_truncate_flags() {
+    fn truncate_flags() {
         let flag = "🇨🇦";
         assert_eq!(truncate_str(flag, 3_usize), flag);
         assert_eq!(truncate_str(flag, 2_usize), flag);
@@ -366,7 +368,7 @@ mod test {
 
     /// This might not be the best way to handle it, but this at least tests that it doesn't crash...
     #[test]
-    fn test_truncate_hindi() {
+    fn truncate_hindi() {
         // cSpell:disable
         let test = "हिन्दी";
         assert_eq!(truncate_str(test, 10_usize), test);
@@ -381,7 +383,7 @@ mod test {
     }
 
     #[test]
-    fn test_truncate_emoji() {
+    fn truncate_emoji() {
         let heart = "❤️";
         assert_eq!(truncate_str(heart, 2_usize), heart);
         assert_eq!(truncate_str(heart, 1_usize), heart);
@@ -430,5 +432,29 @@ mod test {
             !multi_eq_ignore_ascii_case!("test", "a" | "b" | "c"),
             "multi non-matching should fail"
         );
+    }
+
+    #[test]
+    fn test_clamp_upper() {
+        let val: usize = 100;
+        assert_eq!(val.clamp_upper(150), 100);
+
+        let val: usize = 100;
+        assert_eq!(val.clamp_upper(100), 100);
+
+        let val: usize = 100;
+        assert_eq!(val.clamp_upper(50), 50);
+    }
+
+    #[test]
+    fn test_clamp_lower() {
+        let val: usize = 100;
+        assert_eq!(val.clamp_lower(150), 150);
+
+        let val: usize = 100;
+        assert_eq!(val.clamp_lower(100), 100);
+
+        let val: usize = 100;
+        assert_eq!(val.clamp_lower(50), 100);
     }
 }
