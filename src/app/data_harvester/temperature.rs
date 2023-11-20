@@ -62,3 +62,23 @@ pub fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {
         true
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::app::data_harvester::temperature::TemperatureType;
+
+    #[test]
+    fn temp_conversions() {
+        const TEMP: f32 = 100.0;
+
+        assert_eq!(
+            TemperatureType::Celsius.convert_temp_unit(TEMP),
+            TEMP,
+            "celsius to celsius is the same"
+        );
+
+        assert_eq!(TemperatureType::Kelvin.convert_temp_unit(TEMP), 373.15);
+
+        assert_eq!(TemperatureType::Fahrenheit.convert_temp_unit(TEMP), 212.0);
+    }
+}
