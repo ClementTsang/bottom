@@ -38,7 +38,7 @@ each time:
 | `network_use_binary_prefix`  | Boolean                                                                                        | Displays the network widget with binary prefixes.                                    |
 | `network_use_bytes`          | Boolean                                                                                        | Displays the network widget using bytes.                                             |
 | `network_use_log`            | Boolean                                                                                        | Displays the network widget with a log scale.                                        |
-| `enable_gpu_memory`          | Boolean                                                                                        | Shows the GPU memory widget.                                                         |
+| `enable_gpu`                 | Boolean                                                                                        | Shows the GPU widgets.                                                               |
 | `retention`                  | String (human readable time, such as "10m", "1h", etc.)                                        | How much data is stored at once in terms of time.                                    |
 | `unnormalized_cpu`           | Boolean                                                                                        | Show process CPU% without normalizing over the number of cores.                      |
 | `expanded_on_startup`        | Boolean                                                                                        | Expand the default widget upon starting the app.                                     |

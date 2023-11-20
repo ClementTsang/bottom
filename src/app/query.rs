@@ -127,6 +127,44 @@ pub fn parse_query(
         Ok(And { lhs, rhs })
     }
 
+    #[inline]
+    fn process_prefix_units(query: &mut VecDeque<String>, value: &mut f64) {
+        // If no unit, assume base.
+        //
+        // Furthermore, base must be PEEKED at initially, and will
+        // require (likely) prefix_type specific checks
+        // Lastly, if it *is* a unit, remember to POP!
+        if let Some(potential_unit) = query.front() {
+            if potential_unit.eq_ignore_ascii_case("tb") {
+                *value *= TERA_LIMIT_F64;
+                query.pop_front();
+            } else if potential_unit.eq_ignore_ascii_case("tib") {
+                *value *= TEBI_LIMIT_F64;
+                query.pop_front();
+            } else if potential_unit.eq_ignore_ascii_case("gb") {
+                *value *= GIGA_LIMIT_F64;
+                query.pop_front();
+            } else if potential_unit.eq_ignore_ascii_case("gib") {
+                *value *= GIBI_LIMIT_F64;
+                query.pop_front();
+            } else if potential_unit.eq_ignore_ascii_case("mb") {
+                *value *= MEGA_LIMIT_F64;
+                query.pop_front();
+            } else if potential_unit.eq_ignore_ascii_case("mib") {
+                *value *= MEBI_LIMIT_F64;
+                query.pop_front();
+            } else if potential_unit.eq_ignore_ascii_case("kb") {
+                *value *= KILO_LIMIT_F64;
+                query.pop_front();
+            } else if potential_unit.eq_ignore_ascii_case("kib") {
+                *value *= KIBI_LIMIT_F64;
+                query.pop_front();
+            } else if potential_unit.eq_ignore_ascii_case("b") {
+                query.pop_front();
+            }
+        }
+    }
+
     fn process_prefix(query: &mut VecDeque<String>, inside_quotation: bool) -> Result<Prefix> {
         if let Some(queue_top) = query.pop_front() {
             if inside_quotation {
@@ -389,47 +427,11 @@ pub fn parse_query(
                                         | PrefixType::Wps
                                         | PrefixType::TRead
                                         | PrefixType::TWrite => {
-                                            // If no unit, assume base.
-                                            //
-                                            // Furthermore, base must be PEEKED at initially, and will
-                                            // require (likely) prefix_type specific checks
-                                            // Lastly, if it *is* a unit, remember to POP!
-                                            if let Some(potential_unit) = query.front() {
-                                                if potential_unit.eq_ignore_ascii_case("tb") {
-                                                    value *= TERA_LIMIT_F64;
-                                                    query.pop_front();
-                                                } else if potential_unit.eq_ignore_ascii_case("tib")
-                                                {
-                                                    value *= TEBI_LIMIT_F64;
-                                                    query.pop_front();
-                                                } else if potential_unit.eq_ignore_ascii_case("gb")
-                                                {
-                                                    value *= GIGA_LIMIT_F64;
-                                                    query.pop_front();
-                                                } else if potential_unit.eq_ignore_ascii_case("gib")
-                                                {
-                                                    value *= GIBI_LIMIT_F64;
-                                                    query.pop_front();
-                                                } else if potential_unit.eq_ignore_ascii_case("mb")
-                                                {
-                                                    value *= MEGA_LIMIT_F64;
-                                                    query.pop_front();
-                                                } else if potential_unit.eq_ignore_ascii_case("mib")
-                                                {
-                                                    value *= MEBI_LIMIT_F64;
-                                                    query.pop_front();
-                                                } else if potential_unit.eq_ignore_ascii_case("kb")
-                                                {
-                                                    value *= KILO_LIMIT_F64;
-                                                    query.pop_front();
-                                                } else if potential_unit.eq_ignore_ascii_case("kib")
-                                                {
-                                                    value *= KIBI_LIMIT_F64;
-                                                    query.pop_front();
-                                                } else if potential_unit.eq_ignore_ascii_case("b") {
-                                                    query.pop_front();
-                                                }
-                                            }
+                                            process_prefix_units(query, &mut value);
+                                        }
+                                        #[cfg(feature = "gpu")]
+                                        PrefixType::GMem => {
+                                            process_prefix_units(query, &mut value);
                                         }
                                         _ => {}
                                     }
@@ -626,6 +628,12 @@ pub enum PrefixType {
     State,
     User,
     Time,
+    #[cfg(feature = "gpu")]
+    PGpu,
+    #[cfg(feature = "gpu")]
+    GMem,
+    #[cfg(feature = "gpu")]
+    PGMem,
     __Nonexhaustive,
 }
 
@@ -637,32 +645,41 @@ impl std::str::FromStr for PrefixType {
 
         // TODO: Didn't add mem_bytes, total_read, and total_write
         // for now as it causes help to be clogged.
-        let result = if multi_eq_ignore_ascii_case!(s, "cpu" | "cpu%") {
-            PCpu
-        } else if multi_eq_ignore_ascii_case!(s, "mem" | "mem%") {
-            PMem
-        } else if multi_eq_ignore_ascii_case!(s, "memb") {
-            MemBytes
-        } else if multi_eq_ignore_ascii_case!(s, "read" | "r/s" | "rps") {
-            Rps
-        } else if multi_eq_ignore_ascii_case!(s, "write" | "w/s" | "wps") {
-            Wps
-        } else if multi_eq_ignore_ascii_case!(s, "tread" | "t.read") {
-            TRead
-        } else if multi_eq_ignore_ascii_case!(s, "twrite" | "t.write") {
-            TWrite
-        } else if multi_eq_ignore_ascii_case!(s, "pid") {
-            Pid
-        } else if multi_eq_ignore_ascii_case!(s, "state") {
-            State
-        } else if multi_eq_ignore_ascii_case!(s, "user") {
-            User
-        } else if multi_eq_ignore_ascii_case!(s, "time") {
-            Time
-        } else {
-            Name
-        };
 
+        let mut result = Name;
+        if multi_eq_ignore_ascii_case!(s, "cpu" | "cpu%") {
+            result = PCpu;
+        } else if multi_eq_ignore_ascii_case!(s, "mem" | "mem%") {
+            result = PMem;
+        } else if multi_eq_ignore_ascii_case!(s, "memb") {
+            result = MemBytes;
+        } else if multi_eq_ignore_ascii_case!(s, "read" | "r/s" | "rps") {
+            result = Rps;
+        } else if multi_eq_ignore_ascii_case!(s, "write" | "w/s" | "wps") {
+            result = Wps;
+        } else if multi_eq_ignore_ascii_case!(s, "tread" | "t.read") {
+            result = TRead;
+        } else if multi_eq_ignore_ascii_case!(s, "twrite" | "t.write") {
+            result = TWrite;
+        } else if multi_eq_ignore_ascii_case!(s, "pid") {
+            result = Pid;
+        } else if multi_eq_ignore_ascii_case!(s, "state") {
+            result = State;
+        } else if multi_eq_ignore_ascii_case!(s, "user") {
+            result = User;
+        } else if multi_eq_ignore_ascii_case!(s, "time") {
+            result = Time;
+        }
+        #[cfg(feature = "gpu")]
+        {
+            if multi_eq_ignore_ascii_case!(s, "gmem") {
+                result = GMem;
+            } else if multi_eq_ignore_ascii_case!(s, "gmem%") {
+                result = PGMem;
+            } else if multi_eq_ignore_ascii_case!(s, "gpu%") {
+                result = PGpu;
+            }
+        }
         Ok(result)
     }
 }
@@ -799,6 +816,24 @@ impl Prefix {
                     PrefixType::TWrite => matches_condition(
                         &numerical_query.condition,
                         process.total_write_bytes as f64,
+                        numerical_query.value,
+                    ),
+                    #[cfg(feature = "gpu")]
+                    PrefixType::PGpu => matches_condition(
+                        &numerical_query.condition,
+                        process.gpu_util,
+                        numerical_query.value,
+                    ),
+                    #[cfg(feature = "gpu")]
+                    PrefixType::GMem => matches_condition(
+                        &numerical_query.condition,
+                        process.gpu_mem as f64,
+                        numerical_query.value,
+                    ),
+                    #[cfg(feature = "gpu")]
+                    PrefixType::PGMem => matches_condition(
+                        &numerical_query.condition,
+                        process.gpu_mem_percent,
                         numerical_query.value,
                     ),
                     _ => true,

@@ -24,6 +24,12 @@ pub enum ProcColumn {
     State,
     User,
     Time,
+    #[cfg(feature = "gpu")]
+    GpuMem,
+    #[cfg(feature = "gpu")]
+    GpuMemPercent,
+    #[cfg(feature = "gpu")]
+    GpuUtilPercent,
 }
 
 impl<'de> Deserialize<'de> for ProcColumn {
@@ -47,6 +53,12 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "state" => Ok(ProcColumn::State),
             "user" => Ok(ProcColumn::User),
             "time" => Ok(ProcColumn::Time),
+            #[cfg(feature = "gpu")]
+            "gmem" => Ok(ProcColumn::GpuMem),
+            #[cfg(feature = "gpu")]
+            "gmem%" => Ok(ProcColumn::GpuMemPercent),
+            #[cfg(feature = "gpu")]
+            "gpu%" => Ok(ProcColumn::GpuUtilPercent),
             _ => Err(Error::custom("doesn't match any column type")),
         }
     }
@@ -78,6 +90,12 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::State => "State",
             ProcColumn::User => "User",
             ProcColumn::Time => "Time",
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuMem => "GMEM",
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuMemPercent => "GMEM%",
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuUtilPercent => "GPU%",
         }
         .into()
     }
@@ -98,6 +116,12 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::State => "State",
             ProcColumn::User => "User",
             ProcColumn::Time => "Time",
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuMem => "GMEM",
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuMemPercent => "GMEM%",
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuUtilPercent => "GPU%",
         }
         .into()
     }
@@ -157,6 +181,16 @@ impl SortsRow for ProcColumn {
             }
             ProcColumn::Time => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.time, b.time));
+            }
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuMem | ProcColumn::GpuMemPercent => {
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(&a.gpu_mem_usage, &b.gpu_mem_usage)
+                });
+            }
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuUtilPercent => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.gpu_usage, b.gpu_usage));
             }
         }
     }

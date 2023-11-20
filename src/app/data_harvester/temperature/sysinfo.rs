@@ -33,11 +33,6 @@ pub fn get_temperature_data(
         }
     }
 
-    #[cfg(feature = "nvidia")]
-    {
-        super::nvidia::add_nvidia_data(&mut temperature_vec, temp_type, filter)?;
-    }
-
     // For RockPro64 boards on FreeBSD, they apparently use "hw.temperature" for sensors.
     #[cfg(target_os = "freebsd")]
     {

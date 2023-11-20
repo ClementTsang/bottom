@@ -13,9 +13,6 @@ cfg_if::cfg_if! {
     }
 }
 
-#[cfg(feature = "nvidia")]
-pub mod nvidia;
-
 use crate::app::Filter;
 
 #[derive(Default, Debug, Clone)]
@@ -40,7 +37,15 @@ fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
     (celsius * (9.0 / 5.0)) + 32.0
 }
 
-fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {
+pub fn convert_temp_unit(temp: f32, temp_type: &TemperatureType) -> f32 {
+    match temp_type {
+        TemperatureType::Celsius => temp,
+        TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
+        TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
+    }
+}
+
+pub fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {
     if let Some(filter) = filter {
         let mut ret = filter.is_list_ignored;
         for r in &filter.list {

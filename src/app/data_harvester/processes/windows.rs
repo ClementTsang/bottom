@@ -67,6 +67,26 @@ pub fn sysinfo_process_data(
 
         let disk_usage = process_val.disk_usage();
         let process_state = (process_val.status().to_string(), 'R');
+
+        #[cfg(feature = "gpu")]
+        let (gpu_mem, gpu_util, gpu_mem_percent) = {
+            let mut gpu_mem = 0;
+            let mut gpu_util = 0;
+            let mut gpu_mem_percent = 0.0;
+            if let Some(gpus) = &collector.gpu_pids {
+                gpus.iter().for_each(|gpu| {
+                    // add mem/util for all gpus to pid
+                    if let Some((mem, util)) = gpu.get(&process_val.pid().as_u32()) {
+                        gpu_mem += mem;
+                        gpu_util += util;
+                    }
+                });
+            }
+            if let Some(gpu_total_mem) = &collector.gpus_total_mem {
+                gpu_mem_percent = (gpu_mem as f64 / *gpu_total_mem as f64 * 100.0) as f32;
+            }
+            (gpu_mem, gpu_util, gpu_mem_percent)
+        };
         process_vector.push(ProcessHarvest {
             pid: process_val.pid().as_u32() as _,
             parent_pid: process_val.parent().map(|p| p.as_u32() as _),
@@ -95,6 +115,12 @@ pub fn sysinfo_process_data(
             } else {
                 Duration::from_secs(process_val.run_time())
             },
+            #[cfg(feature = "gpu")]
+            gpu_mem,
+            #[cfg(feature = "gpu")]
+            gpu_util,
+            #[cfg(feature = "gpu")]
+            gpu_mem_percent,
         });
     }
 

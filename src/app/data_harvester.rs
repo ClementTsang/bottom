@@ -2,7 +2,7 @@
 
 use std::time::{Duration, Instant};
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", feature = "gpu"))]
 use hashbrown::HashMap;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
@@ -125,6 +125,11 @@ pub struct DataCollector {
 
     #[cfg(target_family = "unix")]
     user_table: processes::UserTable,
+
+    #[cfg(feature = "gpu")]
+    gpu_pids: Option<Vec<HashMap<u32, (u64, u32)>>>,
+    #[cfg(feature = "gpu")]
+    gpus_total_mem: Option<u64>,
 }
 
 impl DataCollector {
@@ -153,6 +158,10 @@ impl DataCollector {
             filters,
             #[cfg(target_family = "unix")]
             user_table: Default::default(),
+            #[cfg(feature = "gpu")]
+            gpu_pids: None,
+            #[cfg(feature = "gpu")]
+            gpus_total_mem: None,
         }
     }
 
@@ -288,16 +297,45 @@ impl DataCollector {
 
         self.update_cpu_usage();
         self.update_memory_usage();
-        self.update_processes();
         self.update_temps();
+        #[cfg(feature = "battery")]
+        self.update_batteries();
+        #[cfg(feature = "gpu")]
+        self.update_gpus(); // update_gpus before procs for gpu_pids but after temps for appending
+        self.update_processes();
         self.update_network_usage();
         self.update_disks();
 
-        #[cfg(feature = "battery")]
-        self.update_batteries();
-
         // Update times for future reference.
         self.last_collection_time = self.data.collection_time;
+    }
+
+    #[cfg(feature = "gpu")]
+    #[inline]
+    fn update_gpus(&mut self) {
+        if self.widgets_to_harvest.use_gpu {
+            #[cfg(feature = "nvidia")]
+            if let Some(data) = nvidia::get_nvidia_vecs(
+                &self.temperature_type,
+                &self.filters.temp_filter,
+                &self.widgets_to_harvest,
+            ) {
+                if let Some(mut temp) = data.temperature {
+                    if let Some(sensors) = &mut self.data.temperature_sensors {
+                        sensors.append(&mut temp);
+                    } else {
+                        self.data.temperature_sensors = Some(temp);
+                    }
+                }
+                if let Some(mem) = data.memory {
+                    self.data.gpu = Some(mem);
+                }
+                if let Some(proc) = data.procs {
+                    self.gpu_pids = Some(proc.1);
+                    self.gpus_total_mem = Some(proc.0);
+                }
+            }
+        }
     }
 
     #[inline]
@@ -364,11 +402,6 @@ impl DataCollector {
             #[cfg(feature = "zfs")]
             {
                 self.data.arc = memory::arc::get_arc_usage();
-            }
-
-            #[cfg(feature = "gpu")]
-            if self.widgets_to_harvest.use_gpu {
-                self.data.gpu = memory::gpu::get_gpu_mem_usage();
             }
         }
     }
