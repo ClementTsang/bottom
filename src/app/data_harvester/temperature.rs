@@ -29,19 +29,22 @@ pub enum TemperatureType {
     Fahrenheit,
 }
 
-fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
-    celsius + 273.15
-}
+impl TemperatureType {
+    /// Given a temperature in Celsius, covert it if necessary for a different unit.
+    pub fn convert_temp_unit(&self, temp_celsius: f32) -> f32 {
+        fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
+            celsius + 273.15
+        }
 
-fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
-    (celsius * (9.0 / 5.0)) + 32.0
-}
+        fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
+            (celsius * (9.0 / 5.0)) + 32.0
+        }
 
-pub fn convert_temp_unit(temp: f32, temp_type: &TemperatureType) -> f32 {
-    match temp_type {
-        TemperatureType::Celsius => temp,
-        TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
-        TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
+        match self {
+            TemperatureType::Celsius => temp_celsius,
+            TemperatureType::Kelvin => convert_celsius_to_kelvin(temp_celsius),
+            TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp_celsius),
+        }
     }
 }
 
