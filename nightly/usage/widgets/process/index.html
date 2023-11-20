@@ -1513,6 +1513,11 @@ searching, and process control features.</p>
 <ul>
 <li>Process running time</li>
 </ul>
+<p>With the feature flag (<code>--enable_gpu</code> on Linux/Windows) and gpu process columns enabled in the configuration:</p>
+<ul>
+<li>GPU memory use percentage</li>
+<li>GPU core utilization percentage</li>
+</ul>
 <p>See <a href="../../../configuration/config-file/processes/">the processes configuration page</a> on how to customize which columns
 are shown.</p>
 <h3 id="sorting"><a class="toclink" href="#sorting">Sorting</a></h3>
@@ -1657,6 +1662,21 @@ screen will be shown to confirm whether you want to kill that process/process gr
 <td><code>()</code></td>
 <td><code>(&lt;COND 1&gt; AND &lt;COND 2&gt;) OR &lt;COND 3&gt;</code></td>
 <td>Group together a condition</td>
+</tr>
+<tr>
+<td><code>gmem</code></td>
+<td><code>gmem &gt; 1000 b</code></td>
+<td>Matches the gpu memory column in terms of bytes; supports comparison operators</td>
+</tr>
+<tr>
+<td><code>gmem%</code></td>
+<td><code>gmem% &lt; 0.5</code></td>
+<td>Matches the gpu memory column in terms of percent; supports comparison operators</td>
+</tr>
+<tr>
+<td><code>gpu%</code></td>
+<td><code>gpu% &gt; 0</code></td>
+<td>Matches the gpu usage column in terms of percent; supports comparison operators</td>
 </tr>
 </tbody>
 </table>
@@ -1836,6 +1856,14 @@ screen will be shown to confirm whether you want to kill that process/process gr
 <tr>
 <td><span class="keys"><kbd class="key-t">t</kbd></span> , <span class="keys"><kbd class="key-f5">F5</kbd></span></td>
 <td>Toggle tree mode</td>
+</tr>
+<tr>
+<td><span class="keys"><kbd class="key-M">M</kbd></span></td>
+<td>Sort by gpu memory usage, press again to reverse sorting order</td>
+</tr>
+<tr>
+<td><span class="keys"><kbd class="key-C">C</kbd></span></td>
+<td>Sort by gpu usage, press again to reverse sorting order</td>
 </tr>
 </tbody>
 </table>
