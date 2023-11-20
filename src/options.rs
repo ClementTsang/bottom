@@ -433,7 +433,7 @@ pub fn build_app(
         use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
         use_mem,
         use_cache: use_mem && get_enable_cache_memory(matches, config),
-        use_gpu: use_mem && get_enable_gpu(matches, config),
+        use_gpu: get_enable_gpu(matches, config),
         use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
         use_proc: used_widget_set.get(&Proc).is_some(),
         use_disk: used_widget_set.get(&Disk).is_some(),
