@@ -29,19 +29,22 @@ pub enum TemperatureType {
     Fahrenheit,
 }
 
-fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
-    celsius + 273.15
-}
+impl TemperatureType {
+    /// Given a temperature in Celsius, covert it if necessary for a different unit.
+    pub fn convert_temp_unit(&self, temp_celsius: f32) -> f32 {
+        fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
+            celsius + 273.15
+        }
 
-fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
-    (celsius * (9.0 / 5.0)) + 32.0
-}
+        fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
+            (celsius * (9.0 / 5.0)) + 32.0
+        }
 
-pub fn convert_temp_unit(temp: f32, temp_type: &TemperatureType) -> f32 {
-    match temp_type {
-        TemperatureType::Celsius => temp,
-        TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
-        TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
+        match self {
+            TemperatureType::Celsius => temp_celsius,
+            TemperatureType::Kelvin => convert_celsius_to_kelvin(temp_celsius),
+            TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp_celsius),
+        }
     }
 }
 
@@ -57,5 +60,25 @@ pub fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {
         ret
     } else {
         true
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::app::data_harvester::temperature::TemperatureType;
+
+    #[test]
+    fn temp_conversions() {
+        const TEMP: f32 = 100.0;
+
+        assert_eq!(
+            TemperatureType::Celsius.convert_temp_unit(TEMP),
+            TEMP,
+            "celsius to celsius is the same"
+        );
+
+        assert_eq!(TemperatureType::Kelvin.convert_temp_unit(TEMP), 373.15);
+
+        assert_eq!(TemperatureType::Fahrenheit.convert_temp_unit(TEMP), 212.0);
     }
 }

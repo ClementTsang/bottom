@@ -2,10 +2,7 @@
 
 use anyhow::Result;
 
-use super::{
-    convert_celsius_to_fahrenheit, convert_celsius_to_kelvin, is_temp_filtered, TempHarvest,
-    TemperatureType,
-};
+use super::{is_temp_filtered, TempHarvest, TemperatureType};
 use crate::app::Filter;
 
 pub fn get_temperature_data(
@@ -22,13 +19,7 @@ pub fn get_temperature_data(
         if is_temp_filtered(filter, &name) {
             temperature_vec.push(TempHarvest {
                 name,
-                temperature: match temp_type {
-                    TemperatureType::Celsius => component.temperature(),
-                    TemperatureType::Kelvin => convert_celsius_to_kelvin(component.temperature()),
-                    TemperatureType::Fahrenheit => {
-                        convert_celsius_to_fahrenheit(component.temperature())
-                    }
-                },
+                temperature: temp_type.convert_temp_unit(component.temperature()),
             });
         }
     }

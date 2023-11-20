@@ -8,9 +8,7 @@ use crate::app::Filter;
 
 use crate::app::layout_manager::UsedWidgets;
 use crate::data_harvester::memory::MemHarvest;
-use crate::data_harvester::temperature::{
-    convert_temp_unit, is_temp_filtered, TempHarvest, TemperatureType,
-};
+use crate::data_harvester::temperature::{is_temp_filtered, TempHarvest, TemperatureType};
 
 pub static NVML_DATA: Lazy<Result<Nvml, NvmlError>> = Lazy::new(Nvml::init);
 
@@ -52,8 +50,8 @@ pub fn get_nvidia_vecs(
                         }
                         if widgets_to_harvest.use_temp && is_temp_filtered(filter, &name) {
                             if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
-                                let temperature = temperature as f32;
-                                let temperature = convert_temp_unit(temperature, temp_type);
+                                let temperature = temp_type.convert_temp_unit(temperature as f32);
+
                                 temp_vec.push(TempHarvest {
                                     name: name.clone(),
                                     temperature,

@@ -9,7 +9,7 @@ use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
 use super::{is_temp_filtered, TempHarvest, TemperatureType};
-use crate::app::{data_harvester::temperature::convert_temp_unit, Filter};
+use crate::app::Filter;
 
 const EMPTY_NAME: &str = "Unknown";
 
@@ -272,7 +272,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                 let name = finalize_name(hwmon_name, sensor_label, &sensor_name, &mut seen_names);
 
                 if is_temp_filtered(filter, &name) {
-                    let temp = if should_read_temp {
+                    let temp_celsius = if should_read_temp {
                         if let Ok(temp) = read_temp(&temp_path) {
                             temp
                         } else {
@@ -284,7 +284,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 
                     temperatures.push(TempHarvest {
                         name,
-                        temperature: convert_temp_unit(temp, temp_type),
+                        temperature: temp_type.convert_temp_unit(temp_celsius),
                     });
                 }
             }
@@ -324,12 +324,12 @@ fn add_thermal_zone_temperatures(
             if let Some(name) = read_to_string_lossy(name_path) {
                 if is_temp_filtered(filter, &name) {
                     let temp_path = file_path.join("temp");
-                    if let Ok(temp) = read_temp(&temp_path) {
+                    if let Ok(temp_celsius) = read_temp(&temp_path) {
                         let name = counted_name(&mut seen_names, name);
 
                         temperatures.push(TempHarvest {
                             name,
-                            temperature: convert_temp_unit(temp, temp_type),
+                            temperature: temp_type.convert_temp_unit(temp_celsius),
                         });
                     }
                 }
