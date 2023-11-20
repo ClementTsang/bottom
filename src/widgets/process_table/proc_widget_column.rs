@@ -91,9 +91,9 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::User => "User",
             ProcColumn::Time => "Time",
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMem => "GMEM",
+            ProcColumn::GpuMem => "GMem",
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMemPercent => "GMEM%",
+            ProcColumn::GpuMemPercent => "GMem%",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => "GPU%",
         }
@@ -117,9 +117,9 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::User => "User",
             ProcColumn::Time => "Time",
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMem => "GMEM",
+            ProcColumn::GpuMem => "GMem",
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMemPercent => "GMEM%",
+            ProcColumn::GpuMemPercent => "GMem%",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => "GPU%",
         }
