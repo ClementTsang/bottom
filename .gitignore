@@ -42,3 +42,6 @@ dhat/
 
 # cargo vet
 supply-chain/
+
+# samply profiling
+profile.json
