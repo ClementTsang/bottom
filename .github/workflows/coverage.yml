@@ -55,7 +55,7 @@ jobs:
           toolchain: stable
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # 2.4.0
+        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43 # 2.7.0
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
