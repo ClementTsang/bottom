@@ -100,43 +100,59 @@ fn grapheme_width(g: &str) -> usize {
 #[inline]
 fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
     let width = width.into();
-    let mut text = String::with_capacity(width);
 
     if width > 0 {
-        let mut curr_width = 0;
-        let mut early_break = false;
+        if content.is_ascii() {
+            // If the entire string is ASCII, we can use a much simpler approach.
 
-        // This tracks the length of the last added string - note this does NOT match the grapheme *width*.
-        let mut last_added_str_len = 0;
-
-        // Cases to handle:
-        // - Completes adding the entire string.
-        // - Adds a character up to the boundary, then fails.
-        // - Adds a character not up to the boundary, then fails.
-        // Inspired by https://tomdebruijn.com/posts/rust-string-length-width-calculations/
-        for g in UnicodeSegmentation::graphemes(content, true) {
-            let g_width = grapheme_width(g);
-
-            if curr_width + g_width <= width {
-                curr_width += g_width;
-                last_added_str_len = g.len();
-                text.push_str(g);
+            if content.len() <= width {
+                content.to_owned()
             } else {
-                early_break = true;
-                break;
-            }
-        }
+                let mut text = String::with_capacity(width);
+                let (keep, _throw) = content.split_at(width - 1);
+                text.push_str(keep);
+                text.push('…');
 
-        if early_break {
-            if curr_width == width {
-                // Remove the last grapheme cluster added.
-                text.truncate(text.len() - last_added_str_len);
+                text
             }
-            text.push('…');
+        } else {
+            let mut text = String::with_capacity(width);
+            let mut curr_width = 0;
+            let mut early_break = false;
+
+            // This tracks the length of the last added string - note this does NOT match the grapheme *width*.
+            let mut last_added_str_len = 0;
+
+            // Cases to handle:
+            // - Completes adding the entire string.
+            // - Adds a character up to the boundary, then fails.
+            // - Adds a character not up to the boundary, then fails.
+            // Inspired by https://tomdebruijn.com/posts/rust-string-length-width-calculations/
+            for g in UnicodeSegmentation::graphemes(content, true) {
+                let g_width = grapheme_width(g);
+
+                if curr_width + g_width <= width {
+                    curr_width += g_width;
+                    last_added_str_len = g.len();
+                    text.push_str(g);
+                } else {
+                    early_break = true;
+                    break;
+                }
+            }
+
+            if early_break {
+                if curr_width == width {
+                    // Remove the last grapheme cluster added.
+                    text.truncate(text.len() - last_added_str_len);
+                }
+                text.push('…');
+            }
+            text
         }
+    } else {
+        String::default()
     }
-
-    text
 }
 
 #[inline]
@@ -252,7 +268,7 @@ mod test {
         assert_eq!(
             truncate_str(cpu_header, 8_usize),
             cpu_header,
-            "should match base string as there is enough room"
+            "should match base string as there is extra room"
         );
 
         assert_eq!(
@@ -269,13 +285,36 @@ mod test {
     }
 
     #[test]
-    fn truncate_cjk() {
+    fn test_truncate_ascii() {
+        let content = "0123456";
+
+        assert_eq!(
+            truncate_str(content, 8_usize),
+            content,
+            "should match base string as there is extra room"
+        );
+
+        assert_eq!(
+            truncate_str(content, 7_usize),
+            content,
+            "should match base string as there is enough room"
+        );
+
+        assert_eq!(truncate_str(content, 6_usize), "01234…");
+        assert_eq!(truncate_str(content, 5_usize), "0123…");
+        assert_eq!(truncate_str(content, 4_usize), "012…");
+        assert_eq!(truncate_str(content, 1_usize), "…");
+        assert_eq!(truncate_str(content, 0_usize), "");
+    }
+
+    #[test]
+    fn test_truncate_cjk() {
         let cjk = "施氏食獅史";
 
         assert_eq!(
             truncate_str(cjk, 11_usize),
             cjk,
-            "should match base string as there is enough room"
+            "should match base string as there is extra room"
         );
 
         assert_eq!(
@@ -292,13 +331,13 @@ mod test {
     }
 
     #[test]
-    fn truncate_mixed() {
+    fn test_truncate_mixed() {
         let test = "Test (施氏食獅史) Test";
 
         assert_eq!(
             truncate_str(test, 30_usize),
             test,
-            "should match base string as there is enough room"
+            "should match base string as there is extra room"
         );
 
         assert_eq!(
@@ -325,7 +364,7 @@ mod test {
     }
 
     #[test]
-    fn truncate_flags() {
+    fn test_truncate_flags() {
         let flag = "🇨🇦";
         assert_eq!(truncate_str(flag, 3_usize), flag);
         assert_eq!(truncate_str(flag, 2_usize), flag);
@@ -368,7 +407,7 @@ mod test {
 
     /// This might not be the best way to handle it, but this at least tests that it doesn't crash...
     #[test]
-    fn truncate_hindi() {
+    fn test_truncate_hindi() {
         // cSpell:disable
         let test = "हिन्दी";
         assert_eq!(truncate_str(test, 10_usize), test);
