@@ -102,11 +102,14 @@ fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
     let width = width.into();
 
     if content.len() <= width {
-        // If the entire string fits in the width, it'll definitely fit.
+        // If the entire string fits in the width, then we just
+        // need to copy the entire string over.
+
         content.to_owned()
     } else if width > 0 {
         if content.is_ascii() {
-            // If the entire string is ASCII, we can use a much simpler approach.
+            // If the entire string is ASCII, we can use a much simpler approach
+            // in regards to what we truncate.
 
             let mut text = String::with_capacity(width);
             let (keep, _throw) = content.split_at(width - 1);
@@ -115,6 +118,9 @@ fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
 
             text
         } else {
+            // Otherwise iterate by grapheme and greedily fit as many graphemes
+            // as width will allow.
+
             let mut text = String::with_capacity(width);
             let mut curr_width = 0;
             let mut early_break = false;
