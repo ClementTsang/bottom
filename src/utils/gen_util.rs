@@ -106,8 +106,7 @@ enum AsciiIterationResult {
 fn greedy_ascii_add(content: &str, width: NonZeroUsize) -> (String, AsciiIterationResult) {
     let width: usize = width.into();
 
-    const SIZE_OF_CHAR: usize = std::mem::size_of::<char>();
-    let mut text = Vec::with_capacity(width + SIZE_OF_CHAR);
+    let mut text = Vec::with_capacity(width);
 
     let s = content.as_bytes();
 
@@ -395,7 +394,7 @@ mod test {
     }
 
     #[test]
-    fn test_truncate_mixed() {
+    fn test_truncate_mixed_one() {
         let test = "Test (施氏食獅史) Test";
 
         assert_eq!(
@@ -416,6 +415,8 @@ mod test {
             "should truncate the t and replace the s with ellipsis"
         );
 
+        assert_eq!(truncate_str(test, 20_usize), "Test (施氏食獅史) T…");
+        assert_eq!(truncate_str(test, 19_usize), "Test (施氏食獅史) …");
         assert_eq!(truncate_str(test, 18_usize), "Test (施氏食獅史)…");
         assert_eq!(truncate_str(test, 17_usize), "Test (施氏食獅史…");
         assert_eq!(truncate_str(test, 16_usize), "Test (施氏食獅…");
@@ -425,6 +426,34 @@ mod test {
         assert_eq!(truncate_str(test, 8_usize), "Test (…");
         assert_eq!(truncate_str(test, 7_usize), "Test (…");
         assert_eq!(truncate_str(test, 6_usize), "Test …");
+        assert_eq!(truncate_str(test, 5_usize), "Test…");
+        assert_eq!(truncate_str(test, 4_usize), "Tes…");
+    }
+
+    #[test]
+    fn test_truncate_mixed_two() {
+        let test = "Test (施氏abc食abc獅史) Test";
+
+        assert_eq!(
+            truncate_str(test, 30_usize),
+            test,
+            "should match base string as there is extra room"
+        );
+
+        assert_eq!(
+            truncate_str(test, 28_usize),
+            test,
+            "should match base string as there is just enough room"
+        );
+
+        assert_eq!(truncate_str(test, 26_usize), "Test (施氏abc食abc獅史) T…");
+        assert_eq!(truncate_str(test, 21_usize), "Test (施氏abc食abc獅…");
+        assert_eq!(truncate_str(test, 20_usize), "Test (施氏abc食abc…");
+        assert_eq!(truncate_str(test, 16_usize), "Test (施氏abc食…");
+        assert_eq!(truncate_str(test, 15_usize), "Test (施氏abc…");
+        assert_eq!(truncate_str(test, 14_usize), "Test (施氏abc…");
+        assert_eq!(truncate_str(test, 11_usize), "Test (施氏…");
+        assert_eq!(truncate_str(test, 10_usize), "Test (施…");
     }
 
     #[test]
