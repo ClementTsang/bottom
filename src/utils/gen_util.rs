@@ -100,43 +100,54 @@ enum AsciiIterationResult {
     Remaining(usize),
 }
 
-/// Greedily add characters to the output until a non-ASCII grapheme is found, or
-/// the output is `width` long.
+const SIZE_OF_USIZE: usize = std::mem::size_of::<usize>();
+
+/// Returns `true` if any byte in the word `v` is nonascii (>= 128).
+/// Taken from the slice code for determining non_ascii.
 #[inline]
-fn greedy_ascii_add(content: &str, width: NonZeroUsize) -> (String, AsciiIterationResult) {
+const fn contains_nonascii(v: usize) -> bool {
+    const NONASCII_MASK: usize = usize::from_ne_bytes([0x80; SIZE_OF_USIZE]);
+    (NONASCII_MASK & v) != 0
+}
+
+/// This should only be called if `width` is smaller than `bytes`, assuming bytes
+/// is fully ASCII. If it is not all ASCII, then it doesn't matter.
+#[inline]
+fn simple_build_ascii_str(bytes: &[u8], width: NonZeroUsize) -> (String, AsciiIterationResult) {
     let width: usize = width.into();
 
-    let mut text = Vec::with_capacity(width);
-
-    let s = content.as_bytes();
+    let mut raw_text = Vec::with_capacity(width);
 
     let mut current_index = 0;
 
     while current_index < width - 1 {
-        let current_byte = s[current_index];
+        let current_byte = bytes[current_index];
         if current_byte.is_ascii() {
-            text.push(current_byte);
+            raw_text.push(current_byte);
             current_index += 1;
         } else {
-            debug_assert!(text.is_ascii());
+            debug_assert!(raw_text.is_ascii());
 
             let current_index = AsciiIterationResult::Remaining(current_index);
 
-            // SAFETY: This conversion is safe to do unchecked, we only push ASCII characters up to
-            // this point.
-            let current_text = unsafe { String::from_utf8_unchecked(text) };
+            // SAFETY: This conversion is safe to do unchecked, we only push ASCII characters
+            // up to this point.
+            let text = unsafe { String::from_utf8_unchecked(raw_text) };
 
-            return (current_text, current_index);
+            return (text, current_index);
         }
     }
 
-    // If we made it all the way through, then we probably hit the width limit.
-    debug_assert!(text.is_ascii());
+    debug_assert!(raw_text.is_ascii());
 
-    let current_index = if s[current_index].is_ascii() {
+    // If the next character is not ASCII, then we may need to still check it.
+    // Otherwise, we always want to put the ellipsis as the while loop exited after
+    // the second last character was put, and we know this string is too wide for
+    // width.
+    let current_index = if bytes[current_index].is_ascii() {
         let mut ellipsis = [0; 3];
         '…'.encode_utf8(&mut ellipsis);
-        text.extend_from_slice(&ellipsis);
+        raw_text.extend_from_slice(&ellipsis);
         AsciiIterationResult::Complete
     } else {
         AsciiIterationResult::Remaining(current_index)
@@ -144,9 +155,122 @@ fn greedy_ascii_add(content: &str, width: NonZeroUsize) -> (String, AsciiIterati
 
     // SAFETY: This conversion is safe to do unchecked, we only push ASCII characters up to
     // this point.
-    let current_text = unsafe { String::from_utf8_unchecked(text) };
+    let text = unsafe { String::from_utf8_unchecked(raw_text) };
 
-    (current_text, current_index)
+    (text, current_index)
+}
+
+/// Read one usize at a time. Based on the `is_ascii` for slices in core.
+fn usize_build_ascii_str(
+    bytes: &[u8], width: NonZeroUsize, align_offset: usize,
+) -> (String, AsciiIterationResult) {
+    let width: usize = width.into();
+    let mut raw_text: Vec<u8>;
+    let len = bytes.len();
+
+    // We always read the first word unaligned, which means `align_offset` is
+    // 0, we'd read the same value again for the aligned read.
+    let offset_to_aligned = if align_offset == 0 {
+        SIZE_OF_USIZE
+    } else {
+        align_offset
+    };
+
+    const BYTES_PER_WORD: usize = SIZE_OF_USIZE / std::mem::size_of::<u8>();
+
+    let start = bytes.as_ptr();
+
+    {
+        // SAFETY: We verify `len < SIZE_OF_USIZE` above.
+        let first_word = unsafe { (start as *const usize).read_unaligned() };
+        if contains_nonascii(first_word) {
+            return (String::default(), AsciiIterationResult::Remaining(0));
+        } else {
+            // Only bother initializing if the first check succeeds.
+            raw_text = Vec::with_capacity(width);
+
+            for i in 0..BYTES_PER_WORD {
+                let c = unsafe { (start as *const u8).add(i).read_unaligned() };
+                raw_text.push(c);
+            }
+        }
+    }
+
+    debug_assert!(offset_to_aligned <= len);
+
+    // SAFETY: word_ptr is the (properly aligned) usize ptr we use to read the
+    // middle chunk of the slice.
+    let mut word_ptr = unsafe { start.add(offset_to_aligned) as *const usize };
+
+    // `byte_pos` is the byte index of `word_ptr`, used for loop end checks.
+    let mut byte_pos = offset_to_aligned;
+
+    while byte_pos < len - SIZE_OF_USIZE {
+        // Sanity check that the read is in bounds
+        debug_assert!(byte_pos + SIZE_OF_USIZE <= len);
+
+        // SAFETY: We know `word_ptr` is properly aligned (because of `align_offset`),
+        // and we know that we have enough bytes between `word_ptr` and the end
+        let word: usize = unsafe { word_ptr.read() };
+
+        if contains_nonascii(word) {
+            // SAFETY: We've only added ASCII characters so this is safe.
+            let text = unsafe { String::from_utf8_unchecked(raw_text) };
+            return (text, AsciiIterationResult::Remaining(byte_pos));
+        } else {
+            for i in 0..BYTES_PER_WORD {
+                let c = unsafe { (word as *const u8).add(i).read_unaligned() };
+                raw_text.push(c);
+            }
+        }
+
+        byte_pos += SIZE_OF_USIZE;
+
+        // SAFETY: We know that `byte_pos <= len - SIZE_OF_USIZE`, which means that
+        // after this `add`, `word_ptr` will be at most one-past-the-end.
+        word_ptr = unsafe { word_ptr.add(1) };
+    }
+
+    // Sanity check to ensure there really is only one `usize` left. This should
+    // be guaranteed by our loop condition.
+    debug_assert!(byte_pos <= len && len - byte_pos <= SIZE_OF_USIZE);
+
+    let last_index = len - SIZE_OF_USIZE;
+
+    // SAFETY: This relies on `len >= SIZE_OF_USIZE`, which we check at the start.
+    let last_word = unsafe { (start.add(last_index) as *const usize).read_unaligned() };
+
+    let current_index = if contains_nonascii(last_word) {
+        AsciiIterationResult::Remaining(last_index)
+    } else {
+        for i in 0..BYTES_PER_WORD {
+            let c = unsafe { (last_word as *const u8).add(i).read_unaligned() };
+            raw_text.push(c);
+        }
+        AsciiIterationResult::Complete
+    };
+
+    // SAFETY: We've only added ASCII characters so this is safe.
+    let text = unsafe { String::from_utf8_unchecked(raw_text) };
+
+    (text, current_index)
+}
+
+/// Continuously add characters to the output until a non-ASCII grapheme is found, or
+/// the output is `width` long.
+#[inline]
+fn build_ascii_str(content: &str, width: NonZeroUsize) -> (String, AsciiIterationResult) {
+    let bytes = content.as_bytes();
+    let len = bytes.len();
+    let align_offset = bytes.as_ptr().align_offset(SIZE_OF_USIZE);
+
+    // If we wouldn't gain anything from the word-at-a-time implementation, fall
+    // back to a scalar loop.
+    if len < SIZE_OF_USIZE || len < align_offset || SIZE_OF_USIZE < std::mem::align_of::<usize>() {
+        simple_build_ascii_str(bytes, width)
+    } else {
+        usize_build_ascii_str(bytes, width, align_offset)
+    }
 }
 
 /// Truncates a string to the specified width with an ellipsis character.
@@ -173,12 +297,11 @@ fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
         //
         // If we didn't get a complete truncated string, then continue on treating the rest as graphemes.
 
-        let (mut text, res) = greedy_ascii_add(content, nz_width);
+        let (mut text, res) = build_ascii_str(content, nz_width);
         match res {
             AsciiIterationResult::Complete => text,
             AsciiIterationResult::Remaining(current_index) => {
                 let mut curr_width = text.len();
-                let mut early_break = false;
 
                 // This tracks the length of the last added string - note this does NOT match the grapheme *width*.
                 // Since the previous characters are always ASCII, this is always initialized as 1, unless the string
@@ -198,18 +321,16 @@ fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
                         last_added_str_len = g.len();
                         text.push_str(g);
                     } else {
-                        early_break = true;
+                        if curr_width == width {
+                            // Remove the last grapheme cluster added.
+                            text.truncate(text.len() - last_added_str_len);
+                        }
+                        text.push('…');
+
                         break;
                     }
                 }
 
-                if early_break {
-                    if curr_width == width {
-                        // Remove the last grapheme cluster added.
-                        text.truncate(text.len() - last_added_str_len);
-                    }
-                    text.push('…');
-                }
                 text
             }
         }
