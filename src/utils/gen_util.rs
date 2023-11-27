@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, num::NonZeroUsize};
 
 use tui::text::{Line, Span, Text};
 use unicode_segmentation::UnicodeSegmentation;
@@ -59,6 +59,8 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
 }
 
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
+///
+/// TODO: Maybe cache results from this function for some cases? e.g. columns
 pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
     Text {
         lines: vec![Line::from(vec![Span::raw(truncate_str(content, width))])],
@@ -93,10 +95,66 @@ fn grapheme_width(g: &str) -> usize {
     }
 }
 
-/// Truncates a string with an ellipsis character.
+enum AsciiIterationResult {
+    Complete,
+    Remaining(usize),
+}
+
+/// Greedily add characters to the output until a non-ASCII grapheme is found, or
+/// the output is `width` long.
+#[inline]
+fn greedy_ascii_add(content: &str, width: NonZeroUsize) -> (String, AsciiIterationResult) {
+    let width: usize = width.into();
+
+    let mut text = Vec::with_capacity(width);
+
+    let s = content.as_bytes();
+
+    let mut current_index = 0;
+
+    while current_index < width - 1 {
+        let current_byte = s[current_index];
+        if current_byte.is_ascii() {
+            text.push(current_byte);
+            current_index += 1;
+        } else {
+            debug_assert!(text.is_ascii());
+
+            let current_index = AsciiIterationResult::Remaining(current_index);
+
+            // SAFETY: This conversion is safe to do unchecked, we only push ASCII characters up to
+            // this point.
+            let current_text = unsafe { String::from_utf8_unchecked(text) };
+
+            return (current_text, current_index);
+        }
+    }
+
+    // If we made it all the way through, then we probably hit the width limit.
+    debug_assert!(text.is_ascii());
+
+    let current_index = if s[current_index].is_ascii() {
+        let mut ellipsis = [0; 3];
+        '…'.encode_utf8(&mut ellipsis);
+        text.extend_from_slice(&ellipsis);
+        AsciiIterationResult::Complete
+    } else {
+        AsciiIterationResult::Remaining(current_index)
+    };
+
+    // SAFETY: This conversion is safe to do unchecked, we only push ASCII characters up to
+    // this point.
+    let current_text = unsafe { String::from_utf8_unchecked(text) };
+
+    (current_text, current_index)
+}
+
+/// Truncates a string to the specified width with an ellipsis character.
 ///
 /// NB: This probably does not handle EVERY case, but I think it handles most cases
 /// we will use this function for fine... hopefully.
+///
+/// TODO: Maybe fuzz this function?
 #[inline]
 fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
     let width = width.into();
@@ -106,54 +164,54 @@ fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
         // need to copy the entire string over.
 
         content.to_owned()
-    } else if width > 0 {
-        if content.is_ascii() {
-            // If the entire string is ASCII, we can use a much simpler approach
-            // in regards to what we truncate.
+    } else if let Some(nz_width) = NonZeroUsize::new(width) {
+        // What we are essentially doing is optimizing for the case that
+        // most, if not all of the string is ASCII. As such:
+        // - Step through each byte until (width - 1) is hit or we find a non-ascii
+        //   byte.
+        // - If the byte is ascii, then add it.
+        //
+        // If we didn't get a complete truncated string, then continue on treating the rest as graphemes.
 
-            let mut text = String::with_capacity(width);
-            let (keep, _throw) = content.split_at(width - 1);
-            text.push_str(keep);
-            text.push('…');
+        let (mut text, res) = greedy_ascii_add(content, nz_width);
+        match res {
+            AsciiIterationResult::Complete => text,
+            AsciiIterationResult::Remaining(current_index) => {
+                let mut curr_width = text.len();
+                let mut early_break = false;
 
-            text
-        } else {
-            // Otherwise iterate by grapheme and greedily fit as many graphemes
-            // as width will allow.
+                // This tracks the length of the last added string - note this does NOT match the grapheme *width*.
+                // Since the previous characters are always ASCII, this is always initialized as 1, unless the string
+                // is empty.
+                let mut last_added_str_len = if text.is_empty() { 0 } else { 1 };
 
-            let mut text = String::with_capacity(width);
-            let mut curr_width = 0;
-            let mut early_break = false;
+                // Cases to handle:
+                // - Completes adding the entire string.
+                // - Adds a character up to the boundary, then fails.
+                // - Adds a character not up to the boundary, then fails.
+                // Inspired by https://tomdebruijn.com/posts/rust-string-length-width-calculations/
+                for g in UnicodeSegmentation::graphemes(&content[current_index..], true) {
+                    let g_width = grapheme_width(g);
 
-            // This tracks the length of the last added string - note this does NOT match the grapheme *width*.
-            let mut last_added_str_len = 0;
-
-            // Cases to handle:
-            // - Completes adding the entire string.
-            // - Adds a character up to the boundary, then fails.
-            // - Adds a character not up to the boundary, then fails.
-            // Inspired by https://tomdebruijn.com/posts/rust-string-length-width-calculations/
-            for g in UnicodeSegmentation::graphemes(content, true) {
-                let g_width = grapheme_width(g);
-
-                if curr_width + g_width <= width {
-                    curr_width += g_width;
-                    last_added_str_len = g.len();
-                    text.push_str(g);
-                } else {
-                    early_break = true;
-                    break;
+                    if curr_width + g_width <= width {
+                        curr_width += g_width;
+                        last_added_str_len = g.len();
+                        text.push_str(g);
+                    } else {
+                        early_break = true;
+                        break;
+                    }
                 }
-            }
 
-            if early_break {
-                if curr_width == width {
-                    // Remove the last grapheme cluster added.
-                    text.truncate(text.len() - last_added_str_len);
+                if early_break {
+                    if curr_width == width {
+                        // Remove the last grapheme cluster added.
+                        text.truncate(text.len() - last_added_str_len);
+                    }
+                    text.push('…');
                 }
-                text.push('…');
+                text
             }
-            text
         }
     } else {
         String::default()
@@ -336,7 +394,7 @@ mod test {
     }
 
     #[test]
-    fn test_truncate_mixed() {
+    fn test_truncate_mixed_one() {
         let test = "Test (施氏食獅史) Test";
 
         assert_eq!(
@@ -357,6 +415,8 @@ mod test {
             "should truncate the t and replace the s with ellipsis"
         );
 
+        assert_eq!(truncate_str(test, 20_usize), "Test (施氏食獅史) T…");
+        assert_eq!(truncate_str(test, 19_usize), "Test (施氏食獅史) …");
         assert_eq!(truncate_str(test, 18_usize), "Test (施氏食獅史)…");
         assert_eq!(truncate_str(test, 17_usize), "Test (施氏食獅史…");
         assert_eq!(truncate_str(test, 16_usize), "Test (施氏食獅…");
@@ -366,6 +426,34 @@ mod test {
         assert_eq!(truncate_str(test, 8_usize), "Test (…");
         assert_eq!(truncate_str(test, 7_usize), "Test (…");
         assert_eq!(truncate_str(test, 6_usize), "Test …");
+        assert_eq!(truncate_str(test, 5_usize), "Test…");
+        assert_eq!(truncate_str(test, 4_usize), "Tes…");
+    }
+
+    #[test]
+    fn test_truncate_mixed_two() {
+        let test = "Test (施氏abc食abc獅史) Test";
+
+        assert_eq!(
+            truncate_str(test, 30_usize),
+            test,
+            "should match base string as there is extra room"
+        );
+
+        assert_eq!(
+            truncate_str(test, 28_usize),
+            test,
+            "should match base string as there is just enough room"
+        );
+
+        assert_eq!(truncate_str(test, 26_usize), "Test (施氏abc食abc獅史) T…");
+        assert_eq!(truncate_str(test, 21_usize), "Test (施氏abc食abc獅…");
+        assert_eq!(truncate_str(test, 20_usize), "Test (施氏abc食abc…");
+        assert_eq!(truncate_str(test, 16_usize), "Test (施氏abc食…");
+        assert_eq!(truncate_str(test, 15_usize), "Test (施氏abc…");
+        assert_eq!(truncate_str(test, 14_usize), "Test (施氏abc…");
+        assert_eq!(truncate_str(test, 11_usize), "Test (施氏…");
+        assert_eq!(truncate_str(test, 10_usize), "Test (施…");
     }
 
     #[test]
