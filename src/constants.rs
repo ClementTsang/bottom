@@ -518,7 +518,6 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 # This group of options represents a command-line flag/option.  Flags explicitly
 # added when running (ie: btm -a) will override this config file if an option
 # is also set here.
-
 [flags]
 # Whether to hide the average cpu entry.
 #hide_avg_cpu = false
@@ -594,13 +593,13 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #retention = "10m"
 
 # These are flags around the process widget.
-
 #[processes]
+# The columns shown by the process widget. The following columns are supported:
+#   PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
 #columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMEM%", "GPU%"]
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
-
 #[colors] # Uncomment if you want to use custom colors
 # Represents the colour of table headers (processes, CPU, disks, temperature).
 #table_header_color="LightBlue"
