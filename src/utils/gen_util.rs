@@ -106,7 +106,8 @@ enum AsciiIterationResult {
 fn greedy_ascii_add(content: &str, width: NonZeroUsize) -> (String, AsciiIterationResult) {
     let width: usize = width.into();
 
-    let mut text = Vec::with_capacity(width);
+    const SIZE_OF_ELLIPSIS: usize = 3;
+    let mut text = Vec::with_capacity(width - 1 + SIZE_OF_ELLIPSIS);
 
     let s = content.as_bytes();
 
@@ -134,7 +135,7 @@ fn greedy_ascii_add(content: &str, width: NonZeroUsize) -> (String, AsciiIterati
     debug_assert!(text.is_ascii());
 
     let current_index = if s[current_index].is_ascii() {
-        let mut ellipsis = [0; 3];
+        let mut ellipsis = [0; SIZE_OF_ELLIPSIS];
         '…'.encode_utf8(&mut ellipsis);
         text.extend_from_slice(&ellipsis);
         AsciiIterationResult::Complete
