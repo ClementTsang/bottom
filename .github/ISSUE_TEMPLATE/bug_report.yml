@@ -19,7 +19,7 @@ body:
     attributes:
       label: What operating system and version are you using?
       description: >
-        Please provide what operating system(s) and version(s) you are running that experiences the described issue.
+        Please provide what operating system(s) and version(s) you are running that experiences the problem.
         Note that operating systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
         may not be prioritized/resolved.
       placeholder: Arch Linux 6.6.2
@@ -29,7 +29,7 @@ body:
     attributes:
       label: What architecture are you using?
       description: >
-        Please select the architecture(s) that are experiencing the described issue.
+        Please select the architecture(s) that are experiencing the problem.
         Note that systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
         may not be prioritized/resolved.
       multiple: true
@@ -38,12 +38,12 @@ body:
         - arm64
         - x86
         - arm32
-        - Other (*lease specify in the Additional Information area at the end*
+        - Other (please specify in the Additional Information area at the end)
 
   - type: textarea
     id: terminal
     attributes:
-      label: What terminal(s) are you running bottom on?
+      label: What terminal(s) are you running bottom on that is experiencing the problem?
       description: >
         Please provide what terminal(s) you are running `bottom` on (e.g. Konsole, kitty)
         that are experiencing the issue, as well as their version and any relevant settings (e.g. terminal theme).
@@ -54,17 +54,17 @@ body:
     attributes:
       label: What filesystem are you using?
       description: >
-        If you happen to know, select what filesystem(s) you are experiencing the described problem on.
+        If you happen to know, select what filesystem(s) you're experiencing the problem on.
       multiple: true
       options:
-        - "ext4"
-        - "NTFS"
-        - "exFAT"
-        - "FAT"
-        - "ZFS"
-        - "Btrfs"
-        - "APFS"
-        - "Other (*lease specify in the Additional Information area at the end*"
+        - ext4
+        - NTFS
+        - exFAT
+        - FAT
+        - ZFS
+        - Btrfs
+        - APFS
+        - Other (please specify in the Additional Information area at the end)"
 
   - type: input
     id: version
@@ -73,8 +73,8 @@ body:
     attributes:
       label: What version of bottom are you running?
       description: >
-        Please provide which version of `bottom` you're running, which you can find with `btm -V`. If you are using
-        a nightly/non-release version, please also specify that.
+        Please specify which version of `bottom` you're running that is causing problems. You can find this with
+        `btm -V`. If you are using a nightly/non-release version, please also specify that.
 
         It would also be helpful if you are not running [the latest version](https://github.com/ClementTsang/bottom/releases/latest)
         to try that as well to see if the issue is still there.
