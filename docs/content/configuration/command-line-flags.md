@@ -23,7 +23,7 @@ see information on these flags by running `btm -h`, or run `btm --help` to displ
 | --enable_gpu                        | Enable collecting and displaying GPU usage.                           |
 | -e, --expanded                      | Expand the default widget upon starting the app.                      |
 | -f, --fahrenheit                    | Sets the temperature type to Fahrenheit.                              |
-| -g, --group                         | Groups processes with the same name by default.                       |
+| -g, --group_processes               | Groups processes with the same name by default.                       |
 | -a, --hide_avg_cpu                  | Hides the average CPU usage.                                          |
 | --hide_table_gap                    | Hides spacing between table headers and entries.                      |
 | --hide_time                         | Hides the time scale.                                                 |
