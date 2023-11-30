@@ -22,7 +22,7 @@ body:
         Please provide what operating system(s) and version(s) you are running that experiences the described issue.
         Note that operating systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
         may not be prioritized/resolved.
-      placeholder: Arch Linux 5.18.15
+      placeholder: Arch Linux 6.6.2
 
   - type: dropdown
     id: architecture
@@ -34,11 +34,11 @@ body:
         may not be prioritized/resolved.
       multiple: true
       options:
-        - x86_64 / AMD64
+        - x86_64/AMD64
         - arm64
-        - arm32
         - x86
-        - Other (*please specify in the Additional Information area at the end*)
+        - arm32
+        - Other (*lease specify in the Additional Information area at the end*
 
   - type: textarea
     id: terminal
@@ -64,8 +64,7 @@ body:
         - "ZFS"
         - "Btrfs"
         - "APFS"
-        - "Other (*please specify in the Additional Information area at the end*)"
-        - "Not sure"
+        - "Other (*lease specify in the Additional Information area at the end*"
 
   - type: input
     id: version
@@ -88,7 +87,7 @@ body:
     attributes:
       label: How did you install bottom?
       description: >
-        Please mention how you installed `bottom`. If you manually compiled it, please also mention your _Rust version_.
+        Please describe how you installed `bottom`. If you manually compiled it, please also mention your _Rust version_.
 
         **Note: if you installed from `bottom` from cargo, please ensure that you installed the right crate (https://crates.io/crates/bottom).**
       placeholder: Installed bottom through the Arch official repos.
