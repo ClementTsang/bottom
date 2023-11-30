@@ -8,8 +8,8 @@ body:
       label: Checklist
       options:
         - label: >
-            I've looked through [troubleshooting](https://clementtsang.github.io/bottom/nightly/troubleshooting),
-            [known problems](https://clementtsang.github.io/bottom/nightly/support/official/#known-problems), and 
+            I've looked through the [troubleshooting docs](https://clementtsang.github.io/bottom/nightly/troubleshooting),
+            [the known problems list](https://clementtsang.github.io/bottom/nightly/support/official/#known-problems), and 
             [existing open issues](https://github.com/ClementTsang/bottom/issues?q=is%3Aopen+is%3Aissue) for similar
             issues.
           required: true
@@ -19,8 +19,8 @@ body:
     attributes:
       label: What operating system and version are you using?
       description: >
-        Please provide what operating system(s) and version(s) you are running that experiences the problem.
-        Note that operating systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
+        Please provide the operating system(s) and version(s) that are experiencing the problem.
+        Note that issues on operating systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
         may not be prioritized/resolved.
       placeholder: Arch Linux 6.6.2
 
@@ -43,9 +43,9 @@ body:
   - type: textarea
     id: terminal
     attributes:
-      label: What terminal(s) are you running bottom on that is experiencing the problem?
+      label: What terminal(s) are you running bottom on that are experiencing the problem?
       description: >
-        Please provide what terminal(s) you are running `bottom` on (e.g. Konsole, kitty)
+        Please provide what terminal(s) you are running `bottom` on (e.g. Konsole, kitty, urxvt)
         that are experiencing the issue, as well as their version and any relevant settings (e.g. terminal theme).
       placeholder: kitty 0.25.2
 
@@ -54,7 +54,7 @@ body:
     attributes:
       label: What filesystem are you using?
       description: >
-        If you happen to know, select what filesystem(s) you're experiencing the problem on.
+        If you know, select what filesystem(s) you're experiencing the problem on.
       multiple: true
       options:
         - ext4
@@ -77,7 +77,7 @@ body:
         `btm -V`. If you are using a nightly/non-release version, please also specify that.
 
         It would also be helpful if you are not running [the latest version](https://github.com/ClementTsang/bottom/releases/latest)
-        to try that as well to see if the issue is still there.
+        to try that as well to see if the issue has already been resolved.
       placeholder: 0.9.6
 
   - type: textarea
@@ -89,7 +89,7 @@ body:
       description: >
         Please describe how you installed `bottom`. If you manually compiled it, please also mention your _Rust version_.
 
-        **Note: if you installed from `bottom` from cargo, please ensure that you installed the right crate (https://crates.io/crates/bottom).**
+        **Note: if you installed `bottom` from cargo, please ensure that you installed the right crate (https://crates.io/crates/bottom).**
       placeholder: Installed bottom through the Arch official repos.
 
   # TODO: After some point also add in a `btm check` invocation
