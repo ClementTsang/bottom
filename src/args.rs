@@ -167,9 +167,9 @@ pub fn build_app() -> Command {
         .help("Uses a dot marker for graphs.")
         .long_help("Uses a dot marker for graphs as opposed to the default braille marker.");
 
-    let group = Arg::new("group") // TODO: Rename this to something like "group_process", would be "breaking" though.
+    let group_processes = Arg::new("group_processes")
         .short('g')
-        .long("group")
+        .long("group_processes")
         .action(ArgAction::SetTrue)
         .help("Groups processes with the same name by default.")
         .long_help("Groups processes with the same name by default.");
@@ -432,7 +432,7 @@ use CPU (3) as the default instead.
         default_widget_type,
         disable_click,
         dot_marker,
-        group,
+        group_processes,
         hide_avg_cpu,
         hide_table_gap,
         hide_time,
