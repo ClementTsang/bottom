@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1276](https://github.com/ClementTsang/bottom/pull/1276): Add GPU process info.
 
+### Changes
+
+- [#1344](https://github.com/ClementTsang/bottom/pull/1344): Change the `group` command line argument to `group_processes` for consistency with the config file option.
+
 ### Bug Fixes
 
 - [#1314](https://github.com/ClementTsang/bottom/pull/1314): Fix fat32 mounts not showing up in macOS.
