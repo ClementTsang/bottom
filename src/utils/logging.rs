@@ -6,6 +6,10 @@ pub static OFFSET: once_cell::sync::Lazy<time::UtcOffset> = once_cell::sync::Laz
     // We also should only ever hit this logging at all in a debug context which is generally fine,
     // release builds should have this logging disabled entirely for now.
     unsafe {
+        // XXX: If we ever DO add general logging as a release feature, evaluate this again and whether this is
+        // something we want enabled in release builds! What might be safe is falling back to the non-set-soundness
+        // mode when specifically using certain feature flags (e.g. dev-logging feature enables this behaviour).
+
         time::util::local_offset::set_soundness(Soundness::Unsound);
         let res = time::UtcOffset::current_local_offset().unwrap_or(time::UtcOffset::UTC);
         time::util::local_offset::set_soundness(Soundness::Sound);
