@@ -69,7 +69,7 @@ nvidia = ["nvml-wrapper"]
 zfs = []
 
 # Including logging for debugging purposes.
-logging = ["fern", "log"]
+logging = ["fern", "log", "time/local-offset"]
 
 # The features we use on deploy. Logging is not included as that is primarily (for now) just for debugging locally.
 deploy = ["battery", "gpu", "zfs"]
