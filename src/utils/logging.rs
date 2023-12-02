@@ -1,16 +1,33 @@
 #[cfg(feature = "logging")]
+pub static OFFSET: once_cell::sync::Lazy<time::UtcOffset> = once_cell::sync::Lazy::new(|| {
+    use time::util::local_offset::Soundness;
+
+    // SAFETY: We only invoke this once, quickly, and it should be invoked in a single-thread context.
+    // We also should only ever hit this logging at all in a debug context which is generally fine,
+    // release builds should have this logging disabled entirely for now.
+    unsafe {
+        time::util::local_offset::set_soundness(Soundness::Unsound);
+        let res = time::UtcOffset::current_local_offset().unwrap_or(time::UtcOffset::UTC);
+        time::util::local_offset::set_soundness(Soundness::Sound);
+
+        res
+    }
+});
+
+#[cfg(feature = "logging")]
 pub fn init_logger(
     min_level: log::LevelFilter, debug_file_name: &std::ffi::OsStr,
 ) -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
-            // Note we aren't using local time since it only works on single-threaded processes.
-            // If that ever does get patched in again, enable the "local-offset" feature.
-            let offset = time::OffsetDateTime::now_utc();
+            let offset_time = {
+                let utc = time::OffsetDateTime::now_utc();
+                utc.checked_to_offset(*OFFSET).unwrap_or(utc)
+            };
 
             out.finish(format_args!(
                 "{}[{}][{}] {}",
-                offset
+                offset_time
                     .format(&time::macros::format_description!(
                         // The weird "[[[" is because we need to escape a bracket ("[[") to show one "[".
                         // See https://time-rs.github.io/book/api/format-description.html
