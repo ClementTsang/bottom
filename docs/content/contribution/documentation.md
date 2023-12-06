@@ -26,8 +26,8 @@ There are a few areas where documentation changes are often needed:
    For changes to [`README.md`](https://github.com/ClementTsang/bottom/blob/main/README.md) and [`CHANGELOG.md`](https://github.com/ClementTsang/bottom/blob/main/CHANGELOG.md), just follow the formatting provided and use any editor.
 
    Generally, changes to [`CHANGELOG.md`](https://github.com/ClementTsang/bottom/blob/main/CHANGELOG.md) will be handled
-   by a maintainer, and changes should follow the [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format, as
-   well as link to the relevant PR or issue.
+   by a maintainer, and the contents of the file should follow the [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+   format, as well as link to the relevant PR or issues.
 
    <h3>Help menu</h3>
 
@@ -35,8 +35,8 @@ There are a few areas where documentation changes are often needed:
 
    <h3>Extended documentation</h3>
 
-   For changes to the extended documentation, you'll probably want at least Python 3.11 (older versions should be fine
-   though), [MkDocs](https://www.mkdocs.org/), [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/),
+   For changes to the extended documentation, you'll probably want at least Python 3.11 (older and newer versions
+   should be fine), [MkDocs](https://www.mkdocs.org/), [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/),
    `mdx_truly_sane_lists`, and optionally [Mike](https://github.com/jimporter/mike) installed. These can help with
    validating your changes locally.
 
