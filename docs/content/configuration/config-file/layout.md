@@ -54,4 +54,4 @@ Each component of the layout accepts a `ratio` value. If this is not set, it def
 
 Furthermore, you can have duplicate widgets.
 
-For an example, look at the [default config](https://github.com/ClementTsang/bottom/blob/master/sample_configs/default_config.toml), which contains the default layout.
+For an example, look at the [default config](https://github.com/ClementTsang/bottom/blob/main/sample_configs/default_config.toml), which contains the default layout.

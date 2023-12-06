@@ -30,9 +30,9 @@ jobs:
       - name: Clear cache
         run: |
           if [[ -n "${{ github.event.schedule }}" ]]; then
-            python ./scripts/clear_cache.py keep-master
+            python ./scripts/clear_cache.py keep-main
             sleep 5
-            python ./scripts/clear_cache.py keep-master
+            python ./scripts/clear_cache.py keep-main
           elif [[ -z "${{ github.event.inputs.id }}" ]]; then
             python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
             sleep 5
