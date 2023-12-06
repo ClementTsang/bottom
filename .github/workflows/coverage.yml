@@ -10,7 +10,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
 
 env:
   CARGO_INCREMENTAL: 0

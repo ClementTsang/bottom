@@ -41,7 +41,7 @@ env:
 
 test_task:
   auto_cancellation: false
-  only_if: $CIRRUS_BUILD_SOURCE != "api" && ($CIRRUS_BRANCH == "master" || $CIRRUS_PR != "")
+  only_if: $CIRRUS_BUILD_SOURCE != "api" && ($CIRRUS_BRANCH == "main" || $CIRRUS_PR != "")
   skip: "!changesInclude('.cargo/**', '.cirrus.yml', 'sample_configs/**', 'src/**', 'tests/**', 'build.rs', 'Cargo.lock', 'Cargo.toml', 'clippy.toml', 'rustfmt.toml')"
   matrix:
     - name: "FreeBSD 13 Test"

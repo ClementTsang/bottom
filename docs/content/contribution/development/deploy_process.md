@@ -12,8 +12,8 @@
 
 bottom currently has two main deploy processes to worry about:
 
-- [Nightly](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/nightly.yml): a daily (00:00 UTC) GitHub action to build binary/installer files, and upload them to the [nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly). It can also be triggered manually as either a proper nightly release or a mock release.
-- [Stable](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/deployment.yml): a stable deployment, triggered manually or upon creation of a valid tag. This is a GitHub action that builds binary/installer files and uploads them to a new GitHub release.
+- [Nightly](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/nightly.yml): a daily (00:00 UTC) GitHub action to build binary/installer files, and upload them to the [nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly). It can also be triggered manually as either a proper nightly release or a mock release.
+- [Stable](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/deployment.yml): a stable deployment, triggered manually or upon creation of a valid tag. This is a GitHub action that builds binary/installer files and uploads them to a new GitHub release.
 
   Furthermore, this workflow does not handle the following deployments, which must be manually handled:
 
@@ -40,7 +40,7 @@ Furthermore, there are some deployments that are handled by maintainers of botto
 
 ### Chocolatey
 
-Upon releasing on GitHub, [choco-bottom](https://github.com/ClementTsang/choco-bottom) will automatically be updated with a new PR with the correct deployment files for Chocolatey. Check the PR, merge it if it is correct, then pull locally and deploy following the instructions in the [README](https://github.com/ClementTsang/choco-bottom/blob/master/README.md). Make sure to test installation and running at least once before deploying!
+Upon releasing on GitHub, [choco-bottom](https://github.com/ClementTsang/choco-bottom) will automatically be updated with a new PR with the correct deployment files for Chocolatey. Check the PR, merge it if it is correct, then pull locally and deploy following the instructions in the [README](https://github.com/ClementTsang/choco-bottom/blob/main/README.md). Make sure to test installation and running at least once before deploying!
 
 If done correctly, there should be a new build on Chocolatey, which will take some time to validate.
 
