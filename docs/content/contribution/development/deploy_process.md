@@ -40,7 +40,7 @@ Furthermore, there are some deployments that are handled by maintainers of botto
 
 ### Chocolatey
 
-Upon releasing on GitHub, [choco-bottom](https://github.com/ClementTsang/choco-bottom) will automatically be updated with a new PR with the correct deployment files for Chocolatey. Check the PR, merge it if it is correct, then pull locally and deploy following the instructions in the [README](https://github.com/ClementTsang/choco-bottom/blob/main/README.md). Make sure to test installation and running at least once before deploying!
+Upon releasing on GitHub, [choco-bottom](https://github.com/ClementTsang/choco-bottom) will automatically be updated with a new PR with the correct deployment files for Chocolatey. Check the PR, merge it if it is correct, then pull locally and deploy following the instructions in the [README](https://github.com/ClementTsang/choco-bottom/blob/master/README.md). Make sure to test installation and running at least once before deploying!
 
 If done correctly, there should be a new build on Chocolatey, which will take some time to validate.
 
