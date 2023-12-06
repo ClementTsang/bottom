@@ -52,9 +52,10 @@ body:
   - type: dropdown
     id: filesystem
     attributes:
-      label: What filesystem are you using?
+      label: What filesystem(s) are you using?
       description: >
-        If you know, select what filesystem(s) you're experiencing the problem on.
+        If you know, please select what filesystem(s) you are using on the system that is experiencing the problem. This
+        can be especially helpful if the issue is related to either the disk or memory widgets.
       multiple: true
       options:
         - ext4
