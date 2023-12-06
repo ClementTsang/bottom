@@ -10,7 +10,7 @@
 
 ## Overview
 
-bottom manages its own binary builds for nightly and stable release purposes. The core build workflow is handled by [`build_releases.yml`](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml), called by a wrapper workflow for [nightly](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/nightly.yml) and [stable](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/deployment.yml) releases. Builds take place via GitHub Actions.
+bottom manages its own binary builds for nightly and stable release purposes. The core build workflow is handled by [`build_releases.yml`](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml), called by a wrapper workflow for [nightly](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/nightly.yml) and [stable](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/deployment.yml) releases. Builds take place via GitHub Actions.
 
 The main things built are:
 
@@ -18,7 +18,7 @@ The main things built are:
 - MSI installer for Windows
 - `.deb` package for Debian and its derivatives
 
-This documentation gives a high-level overview of the build process for each part. For the most up-to-date and detailed reference, definitely refer back to the [`build_releases.yml`](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml) file.
+This documentation gives a high-level overview of the build process for each part. For the most up-to-date and detailed reference, definitely refer back to the [`build_releases.yml`](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml) file.
 
 ## Binaries
 

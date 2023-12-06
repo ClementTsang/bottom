@@ -8,7 +8,7 @@ docs_dir: "content/"
 # Project information
 repo_name: ClementTsang/bottom
 repo_url: https://github.com/ClementTsang/bottom
-edit_uri: "edit/master/docs/content/"
+edit_uri: "edit/main/docs/content/"
 
 # Theming
 theme:

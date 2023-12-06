@@ -11,10 +11,10 @@ completion files for zsh, bash, fish, and Powershell, which you may want to also
 process.
 
 You can also find a nightly build in the [releases page](https://github.com/ClementTsang/bottom/releases), built every
-day at 00:00 UTC off of the master branch.
+day at 00:00 UTC off of the `main` branch.
 
 In both cases, we use a combination of GitHub Actions and CirrusCI (mainly for FreeBSD and macOS M1) to create our
-release binaries. [`build_releases.yml`](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml)
+release binaries. [`build_releases.yml`](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml)
 contains the GitHub Action workflow used to do both of these, if reference is needed.
 
 ## Building manually
@@ -34,7 +34,7 @@ cargo build --release --locked
 
 ### Manpage and completion generation
 
-bottom uses a [`build.rs`](https://github.com/ClementTsang/bottom/blob/master/build.rs) script to automatically generate
+bottom uses a [`build.rs`](https://github.com/ClementTsang/bottom/blob/main/build.rs) script to automatically generate
 a manpage and shell completions for the following shells:
 
 - Bash
@@ -54,13 +54,13 @@ This will automatically generate completion and manpage files in `target/tmp/bot
 files, modify/delete either these files or set `BTM_GENERATE` to some other non-empty value to retrigger the build
 script.
 
-For more information, you may want to look at either the [`build.rs`](https://github.com/ClementTsang/bottom/blob/master/build.rs)
-file or the [binary build CI workflow](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml).
+For more information, you may want to look at either the [`build.rs`](https://github.com/ClementTsang/bottom/blob/main/build.rs)
+file or the [binary build CI workflow](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml).
 
 ## Adding an installation source
 
 Once you've finished your installation source, if you want to mention it in the main bottom repo, fork the repo and add
-the installation method and any details to the [`README.md`](https://github.com/ClementTsang/bottom/blob/master/README.md)
+the installation method and any details to the [`README.md`](https://github.com/ClementTsang/bottom/blob/main/README.md)
 file under the [Installation](https://github.com/ClementTsang/bottom#installation) section, as well as a corresponding
 table of contents entry. Once that's done, open a pull request - these will usually be approved of very quickly.
 

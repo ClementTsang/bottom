@@ -106,7 +106,7 @@ If your configuration files aren't working, here are a few things to try:
 
 ### Check the formatting
 
-It may be handy to refer to the automatically generated config files or the [sample configuration files](https://github.com/ClementTsang/bottom/tree/master/sample_configs).
+It may be handy to refer to the automatically generated config files or the [sample configuration files](https://github.com/ClementTsang/bottom/tree/main/sample_configs).
 The config files also follow the [TOML](https://toml.io/en/) format.
 
 Also make sure your config options are under the right table - for example, to set your temperature type, you must set it under the `[flags]` table:

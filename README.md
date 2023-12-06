@@ -5,7 +5,7 @@
   A customizable cross-platform graphical process/system monitor for the terminal.<br />Supports Linux, macOS, and Windows. Inspired by <a href=https://github.com/aksakalli/gtop>gtop</a>, <a href=https://github.com/xxxserxxx/gotop>gotop</a>, and <a href=https://github.com/htop-dev/htop/>htop</a>.
   </p>
 
-[<img src="https://img.shields.io/github/actions/workflow/status/ClementTsang/bottom/ci.yml?branch=master&style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%3Amaster)
+[<img src="https://img.shields.io/github/actions/workflow/status/ClementTsang/bottom/ci.yml?branch=main&style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%main)
 [<img src="https://img.shields.io/crates/v/bottom.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/bottom)
 [<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://clementtsang.github.io/bottom/stable)
 [<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://clementtsang.github.io/bottom/nightly)
@@ -310,7 +310,7 @@ curl -LO https://github.com/ClementTsang/bottom/archive/0.9.6.tar.gz
 tar -xzvf 0.9.6.tar.gz
 cargo install --path . --locked
 
-# Option 2 - Clone from master and install manually
+# Option 2 - Clone the repo and install manually
 git clone https://github.com/ClementTsang/bottom
 cd bottom
 cargo install --path . --locked
@@ -328,7 +328,7 @@ RUSTFLAGS="-C target-cpu=native" cargo install --path . --locked
 You can also use the pre-built release binaries manually:
 
 - [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), generated off of the release branch
-- [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated daily off of the master branch at 00:00 UTC
+- [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated off of the `main` branch at 00:00 UTC daily
 
 To use, download and extract the binary that matches your system. You can then run by doing:
 
