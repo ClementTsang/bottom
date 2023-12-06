@@ -1385,9 +1385,9 @@
 <h2 id="overview"><a class="toclink" href="#overview">Overview</a></h2>
 <p>bottom currently has two main deploy processes to worry about:</p>
 <ul>
-<li><a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/nightly.yml">Nightly</a>: a daily (00:00 UTC) GitHub action to build binary/installer files, and upload them to the <a href="https://github.com/ClementTsang/bottom/releases/tag/nightly">nightly release</a>. It can also be triggered manually as either a proper nightly release or a mock release.</li>
+<li><a href="https://github.com/ClementTsang/bottom/blob/main/.github/workflows/nightly.yml">Nightly</a>: a daily (00:00 UTC) GitHub action to build binary/installer files, and upload them to the <a href="https://github.com/ClementTsang/bottom/releases/tag/nightly">nightly release</a>. It can also be triggered manually as either a proper nightly release or a mock release.</li>
 <li>
-<p><a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/deployment.yml">Stable</a>: a stable deployment, triggered manually or upon creation of a valid tag. This is a GitHub action that builds binary/installer files and uploads them to a new GitHub release.</p>
+<p><a href="https://github.com/ClementTsang/bottom/blob/main/.github/workflows/deployment.yml">Stable</a>: a stable deployment, triggered manually or upon creation of a valid tag. This is a GitHub action that builds binary/installer files and uploads them to a new GitHub release.</p>
 <p>Furthermore, this workflow does not handle the following deployments, which must be manually handled:</p>
 <ul>
 <li><a href="https://community.chocolatey.org/packages/bottom">Chocolatey</a></li>

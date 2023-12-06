@@ -1375,9 +1375,9 @@ find pre-built binaries in either a <code>tar.gz</code> or <code>zip</code> form
 completion files for zsh, bash, fish, and Powershell, which you may want to also install during the packaging
 process.</p>
 <p>You can also find a nightly build in the <a href="https://github.com/ClementTsang/bottom/releases">releases page</a>, built every
-day at 00:00 UTC off of the master branch.</p>
+day at 00:00 UTC off of the <code>main</code> branch.</p>
 <p>In both cases, we use a combination of GitHub Actions and CirrusCI (mainly for FreeBSD and macOS M1) to create our
-release binaries. <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml"><code>build_releases.yml</code></a>
+release binaries. <a href="https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml"><code>build_releases.yml</code></a>
 contains the GitHub Action workflow used to do both of these, if reference is needed.</p>
 <h2 id="building-manually"><a class="toclink" href="#building-manually">Building manually</a></h2>
 <p>If you want to manually build bottom rather than distributing a pre-built binary, you'll need the most recent version
@@ -1388,7 +1388,7 @@ of stable Rust, which you can get with:</p>
 <div class="highlight"><pre><span></span><code>cargo<span class="w"> </span>build<span class="w"> </span>--release<span class="w"> </span>--locked
 </code></pre></div>
 <h3 id="manpage-and-completion-generation"><a class="toclink" href="#manpage-and-completion-generation">Manpage and completion generation</a></h3>
-<p>bottom uses a <a href="https://github.com/ClementTsang/bottom/blob/master/build.rs"><code>build.rs</code></a> script to automatically generate
+<p>bottom uses a <a href="https://github.com/ClementTsang/bottom/blob/main/build.rs"><code>build.rs</code></a> script to automatically generate
 a manpage and shell completions for the following shells:</p>
 <ul>
 <li>Bash</li>
@@ -1404,11 +1404,11 @@ example, run something like this:</p>
 <p>This will automatically generate completion and manpage files in <code>target/tmp/bottom/</code>. If you wish to regenerate the
 files, modify/delete either these files or set <code>BTM_GENERATE</code> to some other non-empty value to retrigger the build
 script.</p>
-<p>For more information, you may want to look at either the <a href="https://github.com/ClementTsang/bottom/blob/master/build.rs"><code>build.rs</code></a>
-file or the <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml">binary build CI workflow</a>.</p>
+<p>For more information, you may want to look at either the <a href="https://github.com/ClementTsang/bottom/blob/main/build.rs"><code>build.rs</code></a>
+file or the <a href="https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml">binary build CI workflow</a>.</p>
 <h2 id="adding-an-installation-source"><a class="toclink" href="#adding-an-installation-source">Adding an installation source</a></h2>
 <p>Once you've finished your installation source, if you want to mention it in the main bottom repo, fork the repo and add
-the installation method and any details to the <a href="https://github.com/ClementTsang/bottom/blob/master/README.md"><code>README.md</code></a>
+the installation method and any details to the <a href="https://github.com/ClementTsang/bottom/blob/main/README.md"><code>README.md</code></a>
 file under the <a href="https://github.com/ClementTsang/bottom#installation">Installation</a> section, as well as a corresponding
 table of contents entry. Once that's done, open a pull request - these will usually be approved of very quickly.</p>
 <p>You can find more info on the contribution process <a href="../issues-and-pull-requests/#pull-requests">here</a>.</p>

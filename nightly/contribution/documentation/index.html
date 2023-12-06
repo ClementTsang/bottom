@@ -1363,10 +1363,10 @@
 <h2 id="what-pages-need-documentation"><a class="toclink" href="#what-pages-need-documentation">What pages need documentation?</a></h2>
 <p>There are a few areas where documentation changes are often needed:</p>
 <ul>
-<li>The <a href="https://github.com/ClementTsang/bottom/blob/master/README.md"><code>README.md</code></a></li>
-<li>The help menu inside of the application (located <a href="https://github.com/ClementTsang/bottom/blob/master/src/constants.rs">here</a>)</li>
+<li>The <a href="https://github.com/ClementTsang/bottom/blob/main/README.md"><code>README.md</code></a></li>
+<li>The help menu inside of the application (located <a href="https://github.com/ClementTsang/bottom/blob/main/src/constants.rs">here</a>)</li>
 <li>The <a href="https://clementtsang.github.io/bottom/nightly/">extended documentation</a> (here)</li>
-<li>The <a href="https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md"><code>CHANGELOG.md</code></a></li>
+<li>The <a href="https://github.com/ClementTsang/bottom/blob/main/CHANGELOG.md"><code>CHANGELOG.md</code></a></li>
 </ul>
 <h2 id="how-should-i-addupdate-documentation"><a class="toclink" href="#how-should-i-addupdate-documentation">How should I add/update documentation?</a></h2>
 <ol>
@@ -1377,17 +1377,17 @@
 <p>Where you're adding documentation will probably affect what you need to do:</p>
 <h3><code>README.md</code> or <code>CHANGELOG.md</code></h3>
 
-<p>For changes to <a href="https://github.com/ClementTsang/bottom/blob/master/README.md"><code>README.md</code></a> and <a href="https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md"><code>CHANGELOG.md</code></a>, just follow the formatting provided and use any editor.</p>
-<p>Generally, changes to <a href="https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md"><code>CHANGELOG.md</code></a> will be handled
- by a maintainer, and changes should follow the <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a> format, as
- well as link to the relevant PR or issue.</p>
+<p>For changes to <a href="https://github.com/ClementTsang/bottom/blob/main/README.md"><code>README.md</code></a> and <a href="https://github.com/ClementTsang/bottom/blob/main/CHANGELOG.md"><code>CHANGELOG.md</code></a>, just follow the formatting provided and use any editor.</p>
+<p>Generally, changes to <a href="https://github.com/ClementTsang/bottom/blob/main/CHANGELOG.md"><code>CHANGELOG.md</code></a> will be handled
+ by a maintainer, and the contents of the file should follow the <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>
+ format, as well as link to the relevant PR or issues.</p>
 <h3>Help menu</h3>
 
-<p>For changes to the help menu, try to refer to the existing code within <a href="https://github.com/ClementTsang/bottom/blob/master/src/constants.rs"><code>src/constants.rs</code></a> on how the help menu is generated.</p>
+<p>For changes to the help menu, try to refer to the existing code within <a href="https://github.com/ClementTsang/bottom/blob/main/src/constants.rs"><code>src/constants.rs</code></a> on how the help menu is generated.</p>
 <h3>Extended documentation</h3>
 
-<p>For changes to the extended documentation, you'll probably want at least Python 3.11 (older versions should be fine
- though), <a href="https://www.mkdocs.org/">MkDocs</a>, <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a>,
+<p>For changes to the extended documentation, you'll probably want at least Python 3.11 (older and newer versions
+ should be fine), <a href="https://www.mkdocs.org/">MkDocs</a>, <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a>,
  <code>mdx_truly_sane_lists</code>, and optionally <a href="https://github.com/jimporter/mike">Mike</a> installed. These can help with
  validating your changes locally.</p>
 <p>You can do so through <code>pip</code> or your system's package managers. If you use <code>pip</code>, you can use venv to cleanly install

@@ -1370,14 +1370,14 @@
 <p>This section is intended for people who wish to work on/build/distribute bottom, not general users.</p>
 </div>
 <h2 id="overview"><a class="toclink" href="#overview">Overview</a></h2>
-<p>bottom manages its own binary builds for nightly and stable release purposes. The core build workflow is handled by <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml"><code>build_releases.yml</code></a>, called by a wrapper workflow for <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/nightly.yml">nightly</a> and <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/deployment.yml">stable</a> releases. Builds take place via GitHub Actions.</p>
+<p>bottom manages its own binary builds for nightly and stable release purposes. The core build workflow is handled by <a href="https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml"><code>build_releases.yml</code></a>, called by a wrapper workflow for <a href="https://github.com/ClementTsang/bottom/blob/main/.github/workflows/nightly.yml">nightly</a> and <a href="https://github.com/ClementTsang/bottom/blob/main/.github/workflows/deployment.yml">stable</a> releases. Builds take place via GitHub Actions.</p>
 <p>The main things built are:</p>
 <ul>
 <li>Binaries for various platforms</li>
 <li>MSI installer for Windows</li>
 <li><code>.deb</code> package for Debian and its derivatives</li>
 </ul>
-<p>This documentation gives a high-level overview of the build process for each part. For the most up-to-date and detailed reference, definitely refer back to the <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml"><code>build_releases.yml</code></a> file.</p>
+<p>This documentation gives a high-level overview of the build process for each part. For the most up-to-date and detailed reference, definitely refer back to the <a href="https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml"><code>build_releases.yml</code></a> file.</p>
 <h2 id="binaries"><a class="toclink" href="#binaries">Binaries</a></h2>
 <p>Binaries are built currently for various targets. Note that not all of these are officially supported. The following general steps are performed:</p>
 <ul>
