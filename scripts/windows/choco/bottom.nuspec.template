@@ -41,7 +41,7 @@ This is a nuspec. It mostly adheres to https://docs.nuget.org/create/Nuspec-Refe
     **Usage**
     To use, run `btm` in a terminal.
     
-    For more [documentation and usage](https://github.com/ClementTsang/bottom/blob/main/README.md), see the [official repo](https://github.com/ClementTsang/bottom).
+    For more documentation and usage information, go to the [official repo](https://github.com/ClementTsang/bottom).
 
     Please report any issues with the Chocolatey package [here](https://github.com/ClementTsang/choco-bottom).
     
