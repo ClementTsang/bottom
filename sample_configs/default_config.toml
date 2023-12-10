@@ -85,6 +85,10 @@
 #[processes]
 #columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMEM%", "GPU%"]
 
+# [cpu]
+# One of "all" (default), "average"/"avg"
+# default = "average"
+
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
 

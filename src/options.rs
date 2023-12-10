@@ -28,8 +28,11 @@ use crate::{
 
 pub mod layout_options;
 
-pub mod process_columns;
-use self::process_columns::ProcessConfig;
+mod process_columns;
+pub use process_columns::ProcessConfig;
+
+mod cpu;
+pub use cpu::{CpuConfig, CpuDefault};
 
 use anyhow::{Context, Result};
 
@@ -43,6 +46,7 @@ pub struct Config {
     pub temp_filter: Option<IgnoreList>,
     pub net_filter: Option<IgnoreList>,
     pub processes: Option<ProcessConfig>,
+    pub cpu: Option<CpuConfig>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -340,6 +344,11 @@ pub fn build_app(
                                 widget.widget_id,
                                 CpuWidgetState::new(
                                     &app_config_fields,
+                                    config
+                                        .cpu
+                                        .as_ref()
+                                        .map(|cfg| cfg.default)
+                                        .unwrap_or_default(),
                                     default_time_value,
                                     autohide_timer,
                                     styling,

@@ -11,6 +11,7 @@ use crate::{
         DataToCell,
     },
     data_conversion::CpuWidgetData,
+    options::CpuDefault,
     utils::gen_util::truncate_to_text,
 };
 
@@ -165,8 +166,8 @@ pub struct CpuWidgetState {
 
 impl CpuWidgetState {
     pub fn new(
-        config: &AppConfigFields, current_display_time: u64, autohide_timer: Option<Instant>,
-        colours: &CanvasStyling,
+        config: &AppConfigFields, default_selection: CpuDefault, current_display_time: u64,
+        autohide_timer: Option<Instant>, colours: &CanvasStyling,
     ) -> Self {
         const COLUMNS: [Column<CpuWidgetColumn>; 2] = [
             Column::soft(CpuWidgetColumn::CPU, Some(0.5)),
@@ -183,13 +184,21 @@ impl CpuWidgetState {
         };
 
         let styling = DataTableStyling::from_colours(colours);
+        let mut table = DataTable::new(COLUMNS, props, styling);
+        match default_selection {
+            CpuDefault::All => {}
+            CpuDefault::Average if !config.show_average_cpu => {}
+            CpuDefault::Average => {
+                table = table.first_draw_index(1);
+            }
+        }
 
         CpuWidgetState {
             current_display_time,
             is_legend_hidden: false,
             show_avg: config.show_average_cpu,
             autohide_timer,
-            table: DataTable::new(COLUMNS, props, styling),
+            table,
             styling: CpuWidgetStyling::from_colours(colours),
         }
     }

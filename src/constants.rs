@@ -598,6 +598,10 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #   PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
 #columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMEM%", "GPU%"]
 
+# [cpu]
+# One of "all" (default), "average"/"avg"
+# default = "average"
+
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
 #[colors] # Uncomment if you want to use custom colors

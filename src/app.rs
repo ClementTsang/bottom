@@ -49,7 +49,7 @@ pub struct AppConfigFields {
     pub temperature_type: temperature::TemperatureType,
     pub use_dot: bool,
     pub left_legend: bool,
-    pub show_average_cpu: bool,
+    pub show_average_cpu: bool, // TODO: Unify this in CPU options
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
     pub use_basic_mode: bool,
@@ -1910,7 +1910,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.table.set_first();
+                        proc_widget_state.table.to_first();
                     }
                 }
                 BottomWidgetType::ProcSort => {
@@ -1919,7 +1919,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table.set_first();
+                        proc_widget_state.sort_table.to_first();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -1928,7 +1928,7 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        temp_widget_state.table.set_first();
+                        temp_widget_state.table.to_first();
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -1937,7 +1937,7 @@ impl App {
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        disk_widget_state.table.set_first();
+                        disk_widget_state.table.to_first();
                     }
                 }
                 BottomWidgetType::CpuLegend => {
@@ -1946,7 +1946,7 @@ impl App {
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
-                        cpu_widget_state.table.set_first();
+                        cpu_widget_state.table.to_first();
                     }
                 }
 
@@ -1969,7 +1969,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.table.set_last();
+                        proc_widget_state.table.to_last();
                     }
                 }
                 BottomWidgetType::ProcSort => {
@@ -1978,7 +1978,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table.set_last();
+                        proc_widget_state.sort_table.to_last();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -1987,7 +1987,7 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        temp_widget_state.table.set_last();
+                        temp_widget_state.table.to_last();
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -1997,7 +1997,7 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         if !self.converted_data.disk_data.is_empty() {
-                            disk_widget_state.table.set_last();
+                            disk_widget_state.table.to_last();
                         }
                     }
                 }
@@ -2007,7 +2007,7 @@ impl App {
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
-                        cpu_widget_state.table.set_last();
+                        cpu_widget_state.table.to_last();
                     }
                 }
                 _ => {}
