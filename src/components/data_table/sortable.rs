@@ -260,6 +260,7 @@ where
                 order: props.order,
             },
             first_draw: true,
+            first_index: None,
             data: vec![],
             _pd: PhantomData,
         }

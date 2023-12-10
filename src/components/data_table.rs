@@ -40,6 +40,7 @@ pub struct DataTable<DataType, Header, S = Unsortable, C = Column<Header>> {
     data: Vec<DataType>,
     sort_type: S,
     first_draw: bool,
+    first_index: Option<usize>,
     _pd: PhantomData<(DataType, S, Header)>,
 }
 
@@ -55,6 +56,7 @@ impl<DataType: DataToCell<H>, H: ColumnHeader> DataTable<DataType, H, Unsortable
             data: vec![],
             sort_type: Unsortable,
             first_draw: true,
+            first_index: None,
             _pd: PhantomData,
         }
     }
@@ -63,14 +65,20 @@ impl<DataType: DataToCell<H>, H: ColumnHeader> DataTable<DataType, H, Unsortable
 impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H>>
     DataTable<DataType, H, S, C>
 {
+    /// Sets the default value selected on first initialization, if possible.
+    pub fn first_draw_index(mut self, first_index: usize) -> Self {
+        self.first_index = Some(first_index);
+        self
+    }
+
     /// Sets the scroll position to the first value.
-    pub fn set_first(&mut self) {
+    pub fn to_first(&mut self) {
         self.state.current_index = 0;
         self.state.scroll_direction = ScrollDirection::Up;
     }
 
     /// Sets the scroll position to the last value.
-    pub fn set_last(&mut self) {
+    pub fn to_last(&mut self) {
         self.state.current_index = self.data.len().saturating_sub(1);
         self.state.scroll_direction = ScrollDirection::Down;
     }
@@ -189,11 +197,11 @@ mod test {
         let mut table = DataTable::new(columns, props, styling);
         table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
 
-        table.set_last();
+        table.to_last();
         assert_eq!(table.current_index(), 4);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
 
-        table.set_first();
+        table.to_first();
         assert_eq!(table.current_index(), 0);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Up);
 
