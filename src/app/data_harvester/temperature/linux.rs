@@ -9,7 +9,7 @@ use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
 use super::{is_temp_filtered, TempHarvest, TemperatureType};
-use crate::app::Filter;
+use crate::{app::Filter, utils::error::BottomError};
 
 const EMPTY_NAME: &str = "Unknown";
 
@@ -24,7 +24,7 @@ fn read_temp(path: &Path) -> Result<f32> {
     Ok(fs::read_to_string(path)?
         .trim_end()
         .parse::<f32>()
-        .map_err(|e| crate::utils::error::BottomError::ConversionError(e.to_string()))?
+        .map_err(|e| BottomError::ConversionError(e.to_string()))?
         / 1_000.0)
 }
 
@@ -202,6 +202,10 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
             }
         };
 
+        if !should_read_temp {
+            continue;
+        }
+
         if let Ok(dir_entries) = file_path.read_dir() {
             // Enumerate the devices temperature sensors
             for file in dir_entries.flatten() {
@@ -272,14 +276,10 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                 let name = finalize_name(hwmon_name, sensor_label, &sensor_name, &mut seen_names);
 
                 if is_temp_filtered(filter, &name) {
-                    let temp_celsius = if should_read_temp {
-                        if let Ok(temp) = read_temp(&temp_path) {
-                            temp
-                        } else {
-                            continue;
-                        }
+                    let temp_celsius = if let Ok(temp) = read_temp(&temp_path) {
+                        temp
                     } else {
-                        0.0
+                        continue;
                     };
 
                     temperatures.push(TempHarvest {
