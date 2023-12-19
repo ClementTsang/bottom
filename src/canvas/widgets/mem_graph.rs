@@ -15,7 +15,7 @@ use crate::{
 
 impl Painter {
     pub fn draw_memory_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
         const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
@@ -134,7 +134,7 @@ impl Painter {
                 legend_constraints: Some((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
                 marker,
             }
-            .draw_time_graph(f, draw_loc, &points);
+            .draw_time_graph::<B>(f, draw_loc, &points);
         }
 
         if app_state.should_get_widget_bounds() {

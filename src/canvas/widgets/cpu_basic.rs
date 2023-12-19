@@ -18,7 +18,7 @@ use crate::{
 impl Painter {
     /// Inspired by htop.
     pub fn draw_basic_cpu<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         // Skip the first element, it's the "all" element
         if app_state.converted_data.cpu_data.len() > 1 {

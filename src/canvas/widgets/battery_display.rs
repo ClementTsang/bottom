@@ -17,7 +17,7 @@ use crate::{
 
 impl Painter {
     pub fn draw_battery_display<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
@@ -249,19 +249,20 @@ impl Painter {
 
                 // Draw bar
                 f.render_widget(
-                    Table::new(battery_charge_rows)
+                    Table::new(battery_charge_rows, [Constraint::Percentage(100)])
                         .block(battery_block.clone())
-                        .header(header.clone())
-                        .widths(&[Constraint::Percentage(100)]),
+                        .header(header.clone()),
                     margined_draw_loc,
                 );
 
                 // Draw info
                 f.render_widget(
-                    Table::new(battery_rows)
-                        .block(battery_block)
-                        .header(header)
-                        .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]),
+                    Table::new(
+                        battery_rows,
+                        [Constraint::Percentage(50), Constraint::Percentage(50)],
+                    )
+                    .block(battery_block)
+                    .header(header),
                     margined_draw_loc,
                 );
             } else {

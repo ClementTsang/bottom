@@ -125,7 +125,7 @@ impl<'a> TimeGraph<'a> {
     /// - Expects a [`TimeGraph`] to be passed in, which details how to draw the graph.
     /// - Expects `graph_data`, which represents *what* data to draw, and various details like style and optional legends.
     pub fn draw_time_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, draw_loc: Rect, graph_data: &[GraphData<'_>],
+        &self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: &[GraphData<'_>],
     ) {
         let x_axis = self.generate_x_axis();
         let y_axis = self.generate_y_axis();

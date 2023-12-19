@@ -140,7 +140,7 @@ where
     }
 
     pub fn draw<B: Backend>(
-        &mut self, f: &mut Frame<'_, B>, draw_info: &DrawInfo, widget: Option<&mut BottomWidget>,
+        &mut self, f: &mut Frame<'_>, draw_info: &DrawInfo, widget: Option<&mut BottomWidget>,
         painter: &Painter,
     ) {
         let draw_horizontal = !self.props.is_basic || draw_info.is_on_widget();
@@ -248,21 +248,8 @@ where
                     } else {
                         self.styling.text_style
                     };
-                    let mut table = Table::new(rows)
-                        .block(block)
-                        .highlight_style(highlight_style)
-                        .style(self.styling.text_style);
-
-                    if show_header {
-                        table = table.header(headers);
-                    }
-
-                    table
-                };
-
-                let table_state = &mut self.state.table_state;
-                f.render_stateful_widget(
-                    widget.widths(
+                    let mut table = Table::new(
+                        rows,
                         &(self
                             .state
                             .calculated_widths
@@ -275,15 +262,27 @@ where
                                 }
                             })
                             .collect::<Vec<_>>()),
-                    ),
-                    margined_draw_loc,
-                    table_state,
-                );
-            } else {
-                let table = Table::new(once(Row::new(Text::raw("No data"))))
+                    )
                     .block(block)
-                    .style(self.styling.text_style)
-                    .widths(&[Constraint::Percentage(100)]);
+                    .highlight_style(highlight_style)
+                    .style(self.styling.text_style);
+
+                    if show_header {
+                        table = table.header(headers);
+                    }
+
+                    table
+                };
+
+                let table_state = &mut self.state.table_state;
+                f.render_stateful_widget(widget, margined_draw_loc, table_state);
+            } else {
+                let table = Table::new(
+                    once(Row::new(Text::raw("No data"))),
+                    [Constraint::Percentage(100)],
+                )
+                .block(block)
+                .style(self.styling.text_style);
                 f.render_widget(table, margined_draw_loc);
             }
         }

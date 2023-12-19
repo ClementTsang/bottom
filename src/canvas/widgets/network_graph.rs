@@ -19,7 +19,7 @@ use crate::{
 
 impl Painter {
     pub fn draw_network<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if app_state.app_config_fields.use_old_network_legend {
             const LEGEND_HEIGHT: u16 = 4;
@@ -32,10 +32,10 @@ impl Painter {
                 ])
                 .split(draw_loc);
 
-            self.draw_network_graph(f, app_state, network_chunk[0], widget_id, true);
+            self.draw_network_graph::<B>(f, app_state, network_chunk[0], widget_id, true);
             self.draw_network_labels(f, app_state, network_chunk[1], widget_id);
         } else {
-            self.draw_network_graph(f, app_state, draw_loc, widget_id, false);
+            self.draw_network_graph::<B>(f, app_state, draw_loc, widget_id, false);
         }
 
         if app_state.should_get_widget_bounds() {
@@ -51,7 +51,7 @@ impl Painter {
     }
 
     pub fn draw_network_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
         hide_legend: bool,
     ) {
         if let Some(network_widget_state) =
@@ -163,12 +163,12 @@ impl Painter {
                 legend_constraints: Some(legend_constraints),
                 marker,
             }
-            .draw_time_graph(f, draw_loc, &points);
+            .draw_time_graph::<B>(f, draw_loc, &points);
         }
     }
 
-    fn draw_network_labels<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    fn draw_network_labels(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 
@@ -187,22 +187,22 @@ impl Painter {
 
         // Draw
         f.render_widget(
-            Table::new(total_network)
-                .header(Row::new(NETWORK_HEADERS).style(self.colours.table_header_style))
-                .block(Block::default().borders(Borders::ALL).border_style(
-                    if app_state.current_widget.widget_id == widget_id {
-                        self.colours.highlighted_border_style
-                    } else {
-                        self.colours.border_style
-                    },
-                ))
-                .style(self.colours.text_style)
-                .widths(
-                    &((std::iter::repeat(draw_loc.width.saturating_sub(2) / 4))
-                        .take(4)
-                        .map(Constraint::Length)
-                        .collect::<Vec<_>>()),
-                ),
+            Table::new(
+                total_network,
+                &((std::iter::repeat(draw_loc.width.saturating_sub(2) / 4))
+                    .take(4)
+                    .map(Constraint::Length)
+                    .collect::<Vec<_>>()),
+            )
+            .header(Row::new(NETWORK_HEADERS).style(self.colours.table_header_style))
+            .block(Block::default().borders(Borders::ALL).border_style(
+                if app_state.current_widget.widget_id == widget_id {
+                    self.colours.highlighted_border_style
+                } else {
+                    self.colours.border_style
+                },
+            ))
+            .style(self.colours.text_style),
             draw_loc,
         );
     }

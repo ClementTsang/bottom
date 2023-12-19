@@ -206,8 +206,8 @@ impl Painter {
         None
     }
 
-    fn draw_dd_confirm_buttons<B: Backend>(
-        &self, f: &mut Frame<'_, B>, button_draw_loc: &Rect, app_state: &mut App,
+    fn draw_dd_confirm_buttons(
+        &self, f: &mut Frame<'_>, button_draw_loc: &Rect, app_state: &mut App,
     ) {
         if MAX_PROCESS_SIGNAL == 1 || !app_state.app_config_fields.is_advanced_kill {
             let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
@@ -352,7 +352,7 @@ impl Painter {
     }
 
     pub fn draw_dd_dialog<B: Backend>(
-        &self, f: &mut Frame<'_, B>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
     ) -> bool {
         if let Some(dd_text) = dd_text {
             let dd_title = if app_state.dd_err.is_some() {
