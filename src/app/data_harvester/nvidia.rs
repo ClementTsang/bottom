@@ -54,7 +54,7 @@ pub fn get_nvidia_vecs(
 
                                 temp_vec.push(TempHarvest {
                                     name: name.clone(),
-                                    temperature,
+                                    temperature: Some(temperature),
                                 });
                             }
                         }

@@ -131,8 +131,8 @@ fn finalize_name(
             None => label,
         },
         (Some(name), None) => name,
-        (None, None) => match &fallback_sensor_name {
-            Some(sensor_name) => sensor_name.clone(),
+        (None, None) => match fallback_sensor_name {
+            Some(sensor_name) => sensor_name.to_owned(),
             None => EMPTY_NAME.to_string(),
         },
     };
@@ -204,6 +204,12 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
         let sensor_name = read_to_string_lossy(file_path.join("name"));
 
         if !is_device_awake(&file_path) {
+            if let Some(sensor_name) = sensor_name {
+                temperatures.push(TempHarvest {
+                    name: sensor_name,
+                    temperature: None,
+                });
+            }
             continue;
         }
 
@@ -285,7 +291,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 
                     temperatures.push(TempHarvest {
                         name,
-                        temperature: temp_type.convert_temp_unit(temp_celsius),
+                        temperature: Some(temp_type.convert_temp_unit(temp_celsius)),
                     });
                 }
             }
@@ -330,7 +336,7 @@ fn add_thermal_zone_temperatures(
 
                         temperatures.push(TempHarvest {
                             name,
-                            temperature: temp_type.convert_temp_unit(temp_celsius),
+                            temperature: Some(temp_type.convert_temp_unit(temp_celsius)),
                         });
                     }
                 }

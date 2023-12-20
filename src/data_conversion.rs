@@ -132,7 +132,7 @@ impl ConvertedData {
         data.temp_harvest.iter().for_each(|temp_harvest| {
             self.temp_data.push(TempWidgetData {
                 sensor: KString::from_ref(&temp_harvest.name),
-                temperature_value: temp_harvest.temperature.ceil() as u64,
+                temperature_value: temp_harvest.temperature.map(|temp| temp.ceil() as u64),
                 temperature_type,
             });
         });
