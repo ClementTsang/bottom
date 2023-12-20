@@ -17,7 +17,7 @@ use crate::{
 #[derive(Clone, Debug)]
 pub struct TempWidgetData {
     pub sensor: KString,
-    pub temperature_value: u64,
+    pub temperature_value: Option<u64>,
     pub temperature_type: TemperatureType,
 }
 
@@ -37,13 +37,17 @@ impl ColumnHeader for TempWidgetColumn {
 
 impl TempWidgetData {
     pub fn temperature(&self) -> KString {
-        let temp_val = self.temperature_value.to_string();
-        let temp_type = match self.temperature_type {
-            TemperatureType::Celsius => "°C",
-            TemperatureType::Kelvin => "K",
-            TemperatureType::Fahrenheit => "°F",
-        };
-        concat_string!(temp_val, temp_type).into()
+        match self.temperature_value {
+            Some(temp_val) => {
+                let temp_type = match self.temperature_type {
+                    TemperatureType::Celsius => "°C",
+                    TemperatureType::Kelvin => "K",
+                    TemperatureType::Fahrenheit => "°F",
+                };
+                concat_string!(temp_val.to_string(), temp_type).into()
+            }
+            None => "N/A".to_string().into(),
+        }
     }
 }
 

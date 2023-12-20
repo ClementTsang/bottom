@@ -18,7 +18,7 @@ use crate::app::Filter;
 #[derive(Default, Debug, Clone)]
 pub struct TempHarvest {
     pub name: String,
-    pub temperature: f32,
+    pub temperature: Option<f32>,
 }
 
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Default)]
