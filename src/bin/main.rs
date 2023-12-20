@@ -21,10 +21,14 @@ use crossterm::{
 use tui::{backend::CrosstermBackend, Terminal};
 
 use bottom::{
+    args,
     canvas::{self, canvas_styling::CanvasStyling},
+    check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,
+    create_or_get_config,
     data_conversion::*,
+    handle_key_event_or_break, handle_mouse_event,
     options::*,
-    *,
+    panic_hook, read_config, try_drawing, update_data, BottomEvent,
 };
 
 // Used for heap allocation debugging purposes.
@@ -38,7 +42,10 @@ fn main() -> Result<()> {
 
     #[cfg(feature = "logging")]
     {
-        if let Err(err) = init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log")) {
+        if let Err(err) = bottom::init_logger(
+            log::LevelFilter::Debug,
+            Some(std::ffi::OsStr::new("debug.log")),
+        ) {
             println!("Issue initializing logger: {err}");
         }
     }

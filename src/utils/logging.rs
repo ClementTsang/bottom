@@ -20,9 +20,9 @@ pub static OFFSET: once_cell::sync::Lazy<time::UtcOffset> = once_cell::sync::Laz
 
 #[cfg(feature = "logging")]
 pub fn init_logger(
-    min_level: log::LevelFilter, debug_file_name: &std::ffi::OsStr,
+    min_level: log::LevelFilter, debug_file_name: Option<&std::ffi::OsStr>,
 ) -> Result<(), fern::InitError> {
-    fern::Dispatch::new()
+    let dispatch = fern::Dispatch::new()
         .format(|out, message, record| {
             let offset_time = {
                 let utc = time::OffsetDateTime::now_utc();
@@ -43,25 +43,19 @@ pub fn init_logger(
                 message
             ))
         })
-        .level(min_level)
-        .chain(fern::log_file(debug_file_name)?)
-        .apply()?;
+        .level(min_level);
+
+    if let Some(debug_file_name) = debug_file_name {
+        dispatch.chain(fern::log_file(debug_file_name)?).apply()?;
+    } else {
+        dispatch.chain(std::io::stdout()).apply()?;
+    }
 
     Ok(())
 }
 
 #[macro_export]
-macro_rules! c_debug {
-    ($($x:tt)*) => {
-        #[cfg(feature = "logging")]
-        {
-            log::debug!($($x)*)
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! c_error {
+macro_rules! error {
     ($($x:tt)*) => {
         #[cfg(feature = "logging")]
         {
@@ -71,7 +65,17 @@ macro_rules! c_error {
 }
 
 #[macro_export]
-macro_rules! c_info {
+macro_rules! warn {
+    ($($x:tt)*) => {
+        #[cfg(feature = "logging")]
+        {
+            log::warn!($($x)*)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! info {
     ($($x:tt)*) => {
         #[cfg(feature = "logging")]
         {
@@ -81,17 +85,17 @@ macro_rules! c_info {
 }
 
 #[macro_export]
-macro_rules! c_log {
+macro_rules! debug {
     ($($x:tt)*) => {
         #[cfg(feature = "logging")]
         {
-            log::log!($($x)*)
+            log::debug!($($x)*)
         }
     };
 }
 
 #[macro_export]
-macro_rules! c_trace {
+macro_rules! trace {
     ($($x:tt)*) => {
         #[cfg(feature = "logging")]
         {
@@ -101,11 +105,34 @@ macro_rules! c_trace {
 }
 
 #[macro_export]
-macro_rules! c_warn {
+macro_rules! log {
     ($($x:tt)*) => {
         #[cfg(feature = "logging")]
         {
-            log::warn!($($x)*)
+            log::log!(log::Level::Trace, $($x)*)
         }
     };
+    ($level:expr, $($x:tt)*) => {
+        #[cfg(feature = "logging")]
+        {
+            log::log!($level, $($x)*)
+        }
+    };
+}
+
+#[cfg(test)]
+mod test {
+
+    #[cfg(feature = "logging")]
+    #[test]
+    fn test_logging_macros() {
+        super::init_logger(log::LevelFilter::Trace, None)
+            .expect("initializing the logger should succeed");
+
+        error!("This is an error.");
+        warn!("This is a warning.");
+        info!("This is an info.");
+        debug!("This is a debug.");
+        info!("This is a trace.");
+    }
 }
