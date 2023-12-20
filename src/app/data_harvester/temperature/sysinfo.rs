@@ -19,7 +19,7 @@ pub fn get_temperature_data(
         if is_temp_filtered(filter, &name) {
             temperature_vec.push(TempHarvest {
                 name,
-                temperature: temp_type.convert_temp_unit(component.temperature()),
+                temperature: Some(temp_type.convert_temp_unit(component.temperature())),
             });
         }
     }
@@ -36,11 +36,11 @@ pub fn get_temperature_data(
                     if let Some(temp) = temp.as_temperature() {
                         temperature_vec.push(TempHarvest {
                             name,
-                            temperature: match temp_type {
+                            temperature: Some(match temp_type {
                                 TemperatureType::Celsius => temp.celsius(),
                                 TemperatureType::Kelvin => temp.kelvin(),
                                 TemperatureType::Fahrenheit => temp.fahrenheit(),
-                            },
+                            }),
                         });
                     }
                 }
