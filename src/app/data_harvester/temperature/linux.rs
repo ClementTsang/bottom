@@ -20,7 +20,7 @@ struct HwmonResults {
 }
 
 /// Parses and reads temperatures that were in millidegree Celsius, and if successful, returns a temperature in Celsius.
-fn read_temp(path: &Path) -> Result<f32> {
+fn parse_temp(path: &Path) -> Result<f32> {
     Ok(fs::read_to_string(path)?
         .trim_end()
         .parse::<f32>()
@@ -104,12 +104,6 @@ fn humanize_name(name: String, sensor_name: Option<&String>) -> String {
 
 #[inline]
 fn counted_name(seen_names: &mut HashMap<String, u32>, name: String) -> String {
-    let name = if name.is_empty() {
-        EMPTY_NAME.to_string()
-    } else {
-        name
-    };
-
     if let Some(count) = seen_names.get_mut(&name) {
         *count += 1;
         format!("{name} ({count})")
@@ -125,15 +119,55 @@ fn finalize_name(
     fallback_sensor_name: &Option<String>, seen_names: &mut HashMap<String, u32>,
 ) -> String {
     let candidate_name = match (hwmon_name, sensor_label) {
-        (Some(name), Some(label)) => format!("{name}: {label}"),
-        (None, Some(label)) => match &fallback_sensor_name {
-            Some(sensor_name) => format!("{sensor_name}: {label}"),
-            None => label,
+        (Some(name), Some(label)) => match (name.is_empty(), label.is_empty()) {
+            (false, false) => {
+                format!("{name}: {label}")
+            }
+            (true, false) => match fallback_sensor_name {
+                Some(fallback) if !fallback.is_empty() => {
+                    if label.is_empty() {
+                        fallback.to_owned()
+                    } else {
+                        format!("{fallback}: {label}")
+                    }
+                }
+                _ => {
+                    if label.is_empty() {
+                        EMPTY_NAME.to_string()
+                    } else {
+                        label
+                    }
+                }
+            },
+            (false, true) => name.to_owned(),
+            (true, true) => EMPTY_NAME.to_string(),
         },
-        (Some(name), None) => name,
+        (None, Some(label)) => match fallback_sensor_name {
+            Some(fallback) if !fallback.is_empty() => {
+                if label.is_empty() {
+                    fallback.to_owned()
+                } else {
+                    format!("{fallback}: {label}")
+                }
+            }
+            _ => {
+                if label.is_empty() {
+                    EMPTY_NAME.to_string()
+                } else {
+                    label
+                }
+            }
+        },
+        (Some(name), None) => {
+            if name.is_empty() {
+                EMPTY_NAME.to_string()
+            } else {
+                name
+            }
+        }
         (None, None) => match fallback_sensor_name {
-            Some(sensor_name) => sensor_name.to_owned(),
-            None => EMPTY_NAME.to_string(),
+            Some(sensor_name) if !sensor_name.is_empty() => sensor_name.to_owned(),
+            _ => EMPTY_NAME.to_string(),
         },
     };
 
@@ -204,12 +238,12 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
         let sensor_name = read_to_string_lossy(file_path.join("name"));
 
         if !is_device_awake(&file_path) {
-            if let Some(sensor_name) = sensor_name {
-                temperatures.push(TempHarvest {
-                    name: sensor_name,
-                    temperature: None,
-                });
-            }
+            let name = finalize_name(None, None, &sensor_name, &mut seen_names);
+            temperatures.push(TempHarvest {
+                name,
+                temperature: None,
+            });
+
             continue;
         }
 
@@ -282,17 +316,14 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 
                 let name = finalize_name(hwmon_name, sensor_label, &sensor_name, &mut seen_names);
 
+                // TODO: It's possible we may want to move the filter check further up to avoid probing hwmon if not needed?
                 if is_temp_filtered(filter, &name) {
-                    let temp_celsius = if let Ok(temp) = read_temp(&temp_path) {
-                        temp
-                    } else {
-                        continue;
-                    };
-
-                    temperatures.push(TempHarvest {
-                        name,
-                        temperature: Some(temp_type.convert_temp_unit(temp_celsius)),
-                    });
+                    if let Ok(temp_celsius) = parse_temp(&temp_path) {
+                        temperatures.push(TempHarvest {
+                            name,
+                            temperature: Some(temp_type.convert_temp_unit(temp_celsius)),
+                        });
+                    }
                 }
             }
         }
@@ -305,7 +336,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 }
 
 /// Gets data from `/sys/class/thermal/thermal_zone*`. This should only be used if
-/// [`hwmon_temperatures`] doesn't return anything.
+/// [`hwmon_temperatures`] doesn't return anything to avoid duplicate sensor results.
 ///
 /// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
 /// for more details.
@@ -329,9 +360,15 @@ fn add_thermal_zone_temperatures(
             let name_path = file_path.join("type");
 
             if let Some(name) = read_to_string_lossy(name_path) {
+                let name = if name.is_empty() {
+                    EMPTY_NAME.to_string()
+                } else {
+                    name
+                };
+
                 if is_temp_filtered(filter, &name) {
                     let temp_path = file_path.join("temp");
-                    if let Ok(temp_celsius) = read_temp(&temp_path) {
+                    if let Ok(temp_celsius) = parse_temp(&temp_path) {
                         let name = counted_name(&mut seen_names, name);
 
                         temperatures.push(TempHarvest {
