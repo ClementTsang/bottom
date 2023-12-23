@@ -1,8 +1,9 @@
+use std::sync::OnceLock;
+
 use hashbrown::HashMap;
 use nvml_wrapper::enum_wrappers::device::TemperatureSensor;
 use nvml_wrapper::enums::device::UsedGpuMemory;
 use nvml_wrapper::{error::NvmlError, Nvml};
-use once_cell::sync::Lazy;
 
 use crate::app::Filter;
 
@@ -10,7 +11,7 @@ use crate::app::layout_manager::UsedWidgets;
 use crate::data_harvester::memory::MemHarvest;
 use crate::data_harvester::temperature::{is_temp_filtered, TempHarvest, TemperatureType};
 
-pub static NVML_DATA: Lazy<Result<Nvml, NvmlError>> = Lazy::new(Nvml::init);
+pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
 
 pub struct GpusData {
     pub memory: Option<Vec<(String, MemHarvest)>>,
@@ -23,7 +24,7 @@ pub struct GpusData {
 pub fn get_nvidia_vecs(
     temp_type: &TemperatureType, filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
 ) -> Option<GpusData> {
-    if let Ok(nvml) = &*NVML_DATA {
+    if let Ok(nvml) = NVML_DATA.get_or_init(Nvml::init) {
         if let Ok(num_gpu) = nvml.device_count() {
             let mut temp_vec = Vec::with_capacity(num_gpu as usize);
             let mut mem_vec = Vec::with_capacity(num_gpu as usize);

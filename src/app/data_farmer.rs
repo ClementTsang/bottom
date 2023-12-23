@@ -364,13 +364,12 @@ impl DataCollection {
                 let io_device = {
                     cfg_if::cfg_if! {
                         if #[cfg(target_os = "macos")] {
-                            use once_cell::sync::Lazy;
+                            use std::sync::OnceLock;
                             use regex::Regex;
 
                             // Must trim one level further for macOS!
-                            static DISK_REGEX: Lazy<Regex> =
-                                Lazy::new(|| Regex::new(r"disk\d+").unwrap());
-                            if let Some(new_name) = DISK_REGEX.find(checked_name) {
+                            static DISK_REGEX: OnceLock<Regex> = OnceLock::new();
+                            if let Some(new_name) = DISK_REGEX.get_or_init(|| Regex::new(r"disk\d+").unwrap()).find(checked_name) {
                                 io.get(new_name.as_str())
                             } else {
                                 None

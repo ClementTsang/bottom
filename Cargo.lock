@@ -176,7 +176,6 @@ dependencies = [
  "log",
  "mach2",
  "nvml-wrapper",
- "once_cell",
  "predicates",
  "ratatui",
  "regex",

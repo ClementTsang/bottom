@@ -93,10 +93,7 @@ indexmap = "2.1.0"
 itertools = "0.12.0"
 kstring = { version = "2.0.0", features = ["arc"] }
 log = { version = "0.4.20", optional = true }
-nvml-wrapper = { version = "0.9.0", optional = true, features = [
-    "legacy-functions",
-] }
-once_cell = "1.18.0"
+nvml-wrapper = { version = "0.9.0", optional = true, features = ["legacy-functions"] }
 regex = "1.10.2"
 serde = { version = "=1.0.193", features = ["derive"] }
 starship-battery = { version = "0.8.2", optional = true }
@@ -136,9 +133,7 @@ filedescriptor = "0.8.2"
 
 [dev-dependencies]
 assert_cmd = "2.0.12"
-cargo-husky = { version = "1.5.0", default-features = false, features = [
-    "user-hooks",
-] }
+cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
 predicates = "3.0.3"
 
 [build-dependencies]

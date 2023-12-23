@@ -5,11 +5,11 @@ use std::{
     fs::File,
     io::{self, BufRead, BufReader, Read},
     path::PathBuf,
+    sync::OnceLock,
 };
 
 use anyhow::anyhow;
 use libc::uid_t;
-use once_cell::sync::Lazy;
 use rustix::{
     fd::OwnedFd,
     fs::{Mode, OFlags},
@@ -18,7 +18,7 @@ use rustix::{
 
 use crate::Pid;
 
-static PAGESIZE: Lazy<u64> = Lazy::new(|| rustix::param::page_size() as u64);
+static PAGESIZE: OnceLock<u64> = OnceLock::new();
 
 #[inline]
 fn next_part<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Result<&'a str, io::Error> {
@@ -103,7 +103,7 @@ impl Stat {
     /// Returns the Resident Set Size in bytes.
     #[inline]
     pub fn rss_bytes(&self) -> u64 {
-        self.rss * *PAGESIZE
+        self.rss * PAGESIZE.get_or_init(|| rustix::param::page_size() as u64)
     }
 }
 
