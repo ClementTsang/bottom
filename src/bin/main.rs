@@ -287,7 +287,8 @@ fn main() -> Result<()> {
 
                             #[cfg(feature = "zfs")]
                             {
-                                let arc_labels = convert_arc_labels(&app.data_collection);
+                                let arc_labels =
+                                    convert_mem_label(&app.data_collection.arc_harvest);
                                 app.converted_data.arc_labels = arc_labels;
                             }
                         }

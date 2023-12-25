@@ -211,7 +211,7 @@ impl Painter {
         self.styled_help_text = styled_help_spans.into_iter().map(Line::from).collect();
     }
 
-    fn draw_frozen_indicator<B: Backend>(&self, f: &mut Frame<'_, B>, draw_loc: Rect) {
+    fn draw_frozen_indicator(&self, f: &mut Frame<'_>, draw_loc: Rect) {
         f.render_widget(
             Paragraph::new(Span::styled(
                 "Frozen, press 'f' to unfreeze",
@@ -767,8 +767,8 @@ impl Painter {
         Ok(())
     }
 
-    fn draw_widgets_with_constraints<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, widgets: &BottomColRow,
+    fn draw_widgets_with_constraints(
+        &self, f: &mut Frame<'_>, app_state: &mut App, widgets: &BottomColRow,
         widget_draw_locs: &[Rect],
     ) {
         use BottomWidgetType::*;

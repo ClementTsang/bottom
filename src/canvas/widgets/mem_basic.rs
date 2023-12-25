@@ -1,5 +1,4 @@
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     widgets::Block,
@@ -10,8 +9,8 @@ use crate::{
 };
 
 impl Painter {
-    pub fn draw_basic_memory<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    pub fn draw_basic_memory(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let mem_data = &app_state.converted_data.mem_data;
         let mut draw_widgets: Vec<PipeGauge<'_>> = Vec::new();

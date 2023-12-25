@@ -1,5 +1,4 @@
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::{Line, Span},
@@ -9,8 +8,8 @@ use tui::{
 use crate::{app::App, canvas::Painter, constants::*};
 
 impl Painter {
-    pub fn draw_basic_network<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    pub fn draw_basic_network(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let divided_loc = Layout::default()
             .direction(Direction::Horizontal)

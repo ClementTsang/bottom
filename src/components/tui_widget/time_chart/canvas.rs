@@ -363,9 +363,10 @@ impl<'a> Context<'a> {
     ) -> Context<'a> {
         let grid: Box<dyn Grid> = match marker {
             symbols::Marker::Dot => Box::new(CharGrid::new(width, height, '•')),
-            symbols::Marker::Block => Box::new(CharGrid::new(width, height, '▄')),
-            symbols::Marker::Braille => Box::new(BrailleGrid::new(width, height)),
+            symbols::Marker::Block => Box::new(CharGrid::new(width, height, '█')),
             symbols::Marker::Bar => Box::new(CharGrid::new(width, height, '▄')),
+            symbols::Marker::Braille => Box::new(BrailleGrid::new(width, height)),
+            symbols::Marker::HalfBlock => Box::new(CharGrid::new(width, height, '▀')),
         };
         Context {
             x_bounds,

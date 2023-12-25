@@ -547,30 +547,6 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
 }
 
 #[cfg(feature = "zfs")]
-pub fn convert_arc_labels(current_data: &DataCollection) -> Option<(String, String)> {
-    if current_data.arc_harvest.total_bytes > 0 {
-        Some((
-            format!(
-                "{:3.0}%",
-                current_data.arc_harvest.use_percent.unwrap_or(0.0)
-            ),
-            {
-                let (unit, denominator) =
-                    get_mem_binary_unit_and_denominator(current_data.arc_harvest.total_bytes);
-
-                format!(
-                    "   {:.1}{unit}/{:.1}{unit}",
-                    current_data.arc_harvest.used_bytes as f64 / denominator,
-                    (current_data.arc_harvest.total_bytes as f64 / denominator),
-                )
-            },
-        ))
-    } else {
-        None
-    }
-}
-
-#[cfg(feature = "zfs")]
 pub fn convert_arc_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = current_data.current_instant;

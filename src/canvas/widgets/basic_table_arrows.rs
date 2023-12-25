@@ -1,5 +1,4 @@
 use tui::{
-    backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::Line,
@@ -13,8 +12,8 @@ use crate::{
 };
 
 impl Painter {
-    pub fn draw_basic_table_arrows<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    pub fn draw_basic_table_arrows(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if let Some(current_table) = app_state.widget_map.get(&widget_id) {
             let current_table = if let BottomWidgetType::ProcSort = current_table.widget_type {

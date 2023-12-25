@@ -1,5 +1,4 @@
 use tui::{
-    backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
     terminal::Frame,
@@ -20,8 +19,8 @@ const SORT_MENU_WIDTH: u16 = 7;
 impl Painter {
     /// Draws and handles all process-related drawing.  Use this.
     /// - `widget_id` here represents the widget ID of the process widget itself!
-    pub fn draw_process_widget<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+    pub fn draw_process_widget(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         if let Some(proc_widget_state) = app_state.states.proc_state.widget_states.get(&widget_id) {
@@ -73,8 +72,8 @@ impl Painter {
 
     /// Draws the process sort box.
     /// - `widget_id` represents the widget ID of the process widget itself.an
-    fn draw_processes_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    fn draw_processes_table(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(proc_widget_state) = app_state
@@ -107,8 +106,8 @@ impl Painter {
     /// Draws the process search field.
     /// - `widget_id` represents the widget ID of the search box itself --- NOT the process widget
     /// state that is stored.
-    fn draw_search_field<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+    fn draw_search_field(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         fn build_query_span(
@@ -311,8 +310,8 @@ impl Painter {
     /// Draws the process sort box.
     /// - `widget_id` represents the widget ID of the sort box itself --- NOT the process widget
     /// state that is stored.
-    fn draw_sort_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    fn draw_sort_table(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(pws) = app_state
