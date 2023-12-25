@@ -341,20 +341,25 @@ impl DataCollection {
 
         for (itx, device) in disks.iter().enumerate() {
             let checked_name = {
-                cfg_if::cfg_if! {
-                    if #[cfg(target_os = "windows")] {
-                        match &device.volume_name {
-                            Some(volume_name) => Some(volume_name.as_str()),
-                            None => device.name.split('/').last(),
-                        }
-                    } else {
-                        #[cfg(feature = "zfs")]
-                        if ! device.name.starts_with('/'){
+                #[cfg(target_os = "windows")]
+                {
+                    match &device.volume_name {
+                        Some(volume_name) => Some(volume_name.as_str()),
+                        None => device.name.split('/').last(),
+                    }
+                }
+                #[cfg(not(target_os = "windows"))]
+                {
+                    #[cfg(feature = "zfs")]
+                    {
+                        if !device.name.starts_with('/') {
                             Some(device.name.as_str()) // use the whole zfs dataset name
                         } else {
                             device.name.split('/').last()
                         }
-                        #[cfg(not(feature = "zfs"))]
+                    }
+                    #[cfg(not(feature = "zfs"))]
+                    {
                         device.name.split('/').last()
                     }
                 }
@@ -362,21 +367,25 @@ impl DataCollection {
 
             if let Some(checked_name) = checked_name {
                 let io_device = {
-                    cfg_if::cfg_if! {
-                        if #[cfg(target_os = "macos")] {
-                            use std::sync::OnceLock;
-                            use regex::Regex;
+                    #[cfg(target_os = "macos")]
+                    {
+                        use regex::Regex;
+                        use std::sync::OnceLock;
 
-                            // Must trim one level further for macOS!
-                            static DISK_REGEX: OnceLock<Regex> = OnceLock::new();
-                            if let Some(new_name) = DISK_REGEX.get_or_init(|| Regex::new(r"disk\d+").unwrap()).find(checked_name) {
-                                io.get(new_name.as_str())
-                            } else {
-                                None
-                            }
+                        // Must trim one level further for macOS!
+                        static DISK_REGEX: OnceLock<Regex> = OnceLock::new();
+                        if let Some(new_name) = DISK_REGEX
+                            .get_or_init(|| Regex::new(r"disk\d+").unwrap())
+                            .find(checked_name)
+                        {
+                            io.get(new_name.as_str())
                         } else {
-                            io.get(checked_name)
+                            None
                         }
+                    }
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        io.get(checked_name)
                     }
                 };
 
