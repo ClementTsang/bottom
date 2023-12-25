@@ -1,7 +1,6 @@
 use std::cmp::min;
 
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     widgets::Block,
@@ -17,7 +16,7 @@ use crate::{
 
 impl Painter {
     /// Inspired by htop.
-    pub fn draw_basic_cpu<B: Backend>(
+    pub fn draw_basic_cpu(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         // Skip the first element, it's the "all" element

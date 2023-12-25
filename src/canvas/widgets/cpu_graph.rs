@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
     terminal::Frame,
@@ -22,9 +21,7 @@ const AVG_POSITION: usize = 1;
 const ALL_POSITION: usize = 0;
 
 impl Painter {
-    pub fn draw_cpu<B: Backend>(
-        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    ) {
+    pub fn draw_cpu(&self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64) {
         let legend_width = (draw_loc.width as f64 * 0.15) as u16;
 
         if legend_width < 6 {
@@ -36,7 +33,7 @@ impl Painter {
                     app_state.move_widget_selection(&WidgetDirection::Left);
                 }
             }
-            self.draw_cpu_graph::<B>(f, app_state, draw_loc, widget_id);
+            self.draw_cpu_graph(f, app_state, draw_loc, widget_id);
             if let Some(cpu_widget_state) =
                 app_state.states.cpu_state.widget_states.get_mut(&widget_id)
             {
@@ -80,8 +77,8 @@ impl Painter {
                 .constraints(constraints)
                 .split(draw_loc);
 
-            self.draw_cpu_graph::<B>(f, app_state, partitioned_draw_loc[graph_index], widget_id);
-            self.draw_cpu_legend::<B>(
+            self.draw_cpu_graph(f, app_state, partitioned_draw_loc[graph_index], widget_id);
+            self.draw_cpu_legend(
                 f,
                 app_state,
                 partitioned_draw_loc[legend_index],
@@ -175,7 +172,7 @@ impl Painter {
         }
     }
 
-    fn draw_cpu_graph<B: Backend>(
+    fn draw_cpu_graph(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
@@ -236,11 +233,11 @@ impl Painter {
                 legend_constraints: None,
                 marker,
             }
-            .draw_time_graph::<B>(f, draw_loc, &points);
+            .draw_time_graph(f, draw_loc, &points);
         }
     }
 
-    fn draw_cpu_legend<B: Backend>(
+    fn draw_cpu_legend(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let recalculate_column_widths = app_state.should_get_widget_bounds();
@@ -262,7 +259,7 @@ impl Painter {
                 selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
             };
 
-            cpu_widget_state.table.draw::<B>(
+            cpu_widget_state.table.draw(
                 f,
                 &draw_info,
                 app_state.widget_map.get_mut(&widget_id),

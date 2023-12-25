@@ -5,7 +5,6 @@ use std::{
 
 use concat_string::concat_string;
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span, Text},
     widgets::{Block, Borders, Row, Table},
@@ -139,7 +138,7 @@ where
         })
     }
 
-    pub fn draw<B: Backend>(
+    pub fn draw(
         &mut self, f: &mut Frame<'_>, draw_info: &DrawInfo, widget: Option<&mut BottomWidget>,
         painter: &Painter,
     ) {

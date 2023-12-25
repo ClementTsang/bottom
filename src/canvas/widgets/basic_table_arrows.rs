@@ -1,5 +1,4 @@
 use tui::{
-    backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::Line,
@@ -13,7 +12,7 @@ use crate::{
 };
 
 impl Painter {
-    pub fn draw_basic_table_arrows<B: Backend>(
+    pub fn draw_basic_table_arrows(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if let Some(current_table) = app_state.widget_map.get(&widget_id) {

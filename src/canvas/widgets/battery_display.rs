@@ -1,5 +1,4 @@
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::{Line, Span},
@@ -16,7 +15,7 @@ use crate::{
 };
 
 impl Painter {
-    pub fn draw_battery_display<B: Backend>(
+    pub fn draw_battery_display(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {

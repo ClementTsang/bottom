@@ -1,5 +1,4 @@
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
     terminal::Frame,
@@ -18,7 +17,7 @@ use crate::{
 };
 
 impl Painter {
-    pub fn draw_network<B: Backend>(
+    pub fn draw_network(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if app_state.app_config_fields.use_old_network_legend {
@@ -32,10 +31,10 @@ impl Painter {
                 ])
                 .split(draw_loc);
 
-            self.draw_network_graph::<B>(f, app_state, network_chunk[0], widget_id, true);
+            self.draw_network_graph(f, app_state, network_chunk[0], widget_id, true);
             self.draw_network_labels(f, app_state, network_chunk[1], widget_id);
         } else {
-            self.draw_network_graph::<B>(f, app_state, draw_loc, widget_id, false);
+            self.draw_network_graph(f, app_state, draw_loc, widget_id, false);
         }
 
         if app_state.should_get_widget_bounds() {
@@ -50,7 +49,7 @@ impl Painter {
         }
     }
 
-    pub fn draw_network_graph<B: Backend>(
+    pub fn draw_network_graph(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
         hide_legend: bool,
     ) {
@@ -163,7 +162,7 @@ impl Painter {
                 legend_constraints: Some(legend_constraints),
                 marker,
             }
-            .draw_time_graph::<B>(f, draw_loc, &points);
+            .draw_time_graph(f, draw_loc, &points);
         }
     }
 

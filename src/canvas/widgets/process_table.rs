@@ -1,5 +1,4 @@
 use tui::{
-    backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
     terminal::Frame,
@@ -20,7 +19,7 @@ const SORT_MENU_WIDTH: u16 = 7;
 impl Painter {
     /// Draws and handles all process-related drawing.  Use this.
     /// - `widget_id` here represents the widget ID of the process widget itself!
-    pub fn draw_process_widget<B: Backend>(
+    pub fn draw_process_widget(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
@@ -52,10 +51,10 @@ impl Painter {
                     .split(proc_draw_loc);
                 proc_draw_loc = processes_chunk[1];
 
-                self.draw_sort_table::<B>(f, app_state, processes_chunk[0], widget_id + 2);
+                self.draw_sort_table(f, app_state, processes_chunk[0], widget_id + 2);
             }
 
-            self.draw_processes_table::<B>(f, app_state, proc_draw_loc, widget_id);
+            self.draw_processes_table(f, app_state, proc_draw_loc, widget_id);
         }
 
         if let Some(proc_widget_state) = app_state
@@ -73,7 +72,7 @@ impl Painter {
 
     /// Draws the process sort box.
     /// - `widget_id` represents the widget ID of the process widget itself.an
-    fn draw_processes_table<B: Backend>(
+    fn draw_processes_table(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
@@ -95,7 +94,7 @@ impl Painter {
                 selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
             };
 
-            proc_widget_state.table.draw::<B>(
+            proc_widget_state.table.draw(
                 f,
                 &draw_info,
                 app_state.widget_map.get_mut(&widget_id),
@@ -311,7 +310,7 @@ impl Painter {
     /// Draws the process sort box.
     /// - `widget_id` represents the widget ID of the sort box itself --- NOT the process widget
     /// state that is stored.
-    fn draw_sort_table<B: Backend>(
+    fn draw_sort_table(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
@@ -332,7 +331,7 @@ impl Painter {
                 selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
             };
 
-            pws.sort_table.draw::<B>(
+            pws.sort_table.draw(
                 f,
                 &draw_info,
                 app_state.widget_map.get_mut(&widget_id),

@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use concat_string::concat_string;
 use tui::{
-    backend::Backend,
     layout::{Constraint, Rect},
     style::Style,
     symbols::Marker,
@@ -124,9 +123,7 @@ impl<'a> TimeGraph<'a> {
     /// - Draws with the higher time value on the left, and lower on the right.
     /// - Expects a [`TimeGraph`] to be passed in, which details how to draw the graph.
     /// - Expects `graph_data`, which represents *what* data to draw, and various details like style and optional legends.
-    pub fn draw_time_graph<B: Backend>(
-        &self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: &[GraphData<'_>],
-    ) {
+    pub fn draw_time_graph(&self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: &[GraphData<'_>]) {
         let x_axis = self.generate_x_axis();
         let y_axis = self.generate_y_axis();
 

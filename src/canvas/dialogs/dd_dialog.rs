@@ -2,7 +2,6 @@
 use std::cmp::min;
 
 use tui::{
-    backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::{Line, Span, Text},
@@ -351,7 +350,7 @@ impl Painter {
         }
     }
 
-    pub fn draw_dd_dialog<B: Backend>(
+    pub fn draw_dd_dialog(
         &self, f: &mut Frame<'_>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
     ) -> bool {
         if let Some(dd_text) = dd_text {
