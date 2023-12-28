@@ -80,7 +80,7 @@ default = ["deploy"]
 anyhow = "1.0.75"
 backtrace = "0.3.69"
 cfg-if = "1.0.0"
-clap = { version = "4.4.10", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.4.11", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 crossterm = "0.27.0"
 ctrlc = { version = "3.4.1", features = ["termination"] }
@@ -98,7 +98,7 @@ regex = "1.10.2"
 serde = { version = "=1.0.193", features = ["derive"] }
 starship-battery = { version = "0.8.2", optional = true }
 sysinfo = "=0.29.11"
-thiserror = "1.0.50"
+thiserror = "1.0.52"
 time = { version = "0.3.30", features = ["formatting", "macros"] }
 toml_edit = { version = "0.21.0", features = ["serde"] }
 tui = { version = "0.25.0", package = "ratatui" }
@@ -137,8 +137,8 @@ cargo-husky = { version = "1.5.0", default-features = false, features = ["user-h
 predicates = "3.0.3"
 
 [build-dependencies]
-clap = { version = "4.4.10", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "4.4.4"
+clap = { version = "4.4.11", features = ["default", "cargo", "wrap_help"] }
+clap_complete = "4.4.5"
 clap_complete_fig = "4.4.2"
 clap_complete_nushell = "4.4.2"
 clap_mangen = "0.2.15"
