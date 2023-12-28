@@ -7,10 +7,11 @@ use tui::{
 };
 
 use crate::{
-    app::{data_harvester::cpu::CpuDataType, App},
+    app::App,
     canvas::Painter,
     components::tui_widget::pipe_gauge::{LabelLimit, PipeGauge},
     constants::*,
+    data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,
 };
 

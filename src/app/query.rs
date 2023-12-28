@@ -5,7 +5,7 @@ use std::{borrow::Cow, collections::VecDeque};
 use humantime::parse_duration;
 use regex::Regex;
 
-use super::data_harvester::processes::ProcessHarvest;
+use crate::data_collection::processes::ProcessHarvest;
 use crate::multi_eq_ignore_ascii_case;
 use crate::utils::data_prefixes::*;
 use crate::utils::error::{

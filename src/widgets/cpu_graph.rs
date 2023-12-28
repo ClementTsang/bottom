@@ -4,12 +4,13 @@ use concat_string::concat_string;
 use tui::{style::Style, text::Text, widgets::Row};
 
 use crate::{
-    app::{data_harvester::cpu::CpuDataType, AppConfigFields},
+    app::AppConfigFields,
     canvas::{canvas_styling::CanvasStyling, Painter},
     components::data_table::{
         Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
         DataToCell,
     },
+    data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,
     options::CpuDefault,
     utils::gen_util::truncate_to_text,

@@ -5,7 +5,6 @@ use std::{
 
 use concat_string::concat_string;
 use data_farmer::*;
-use data_harvester::temperature;
 use filter::*;
 use hashbrown::HashMap;
 use layout_manager::*;
@@ -14,6 +13,7 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
     constants,
+    data_collection::temperature,
     data_conversion::ConvertedData,
     utils::error::{BottomError, Result},
     Pid,
@@ -24,7 +24,6 @@ use crate::{
 };
 
 pub mod data_farmer;
-pub mod data_harvester;
 pub mod filter;
 pub mod frozen_state;
 pub mod layout_manager;
@@ -117,7 +116,7 @@ pub struct App {
     pub is_determining_widget_boundary: bool,
     pub basic_mode_use_percent: bool,
     #[cfg(target_family = "unix")]
-    pub user_table: data_harvester::processes::UserTable,
+    pub user_table: crate::data_collection::processes::UserTable,
     pub states: AppWidgetStates,
     pub app_config_fields: AppConfigFields,
     pub widget_map: HashMap<u64, BottomWidget>,
@@ -148,7 +147,7 @@ impl App {
             is_determining_widget_boundary: false,
             basic_mode_use_percent: false,
             #[cfg(target_family = "unix")]
-            user_table: data_harvester::processes::UserTable::default(),
+            user_table: crate::data_collection::processes::UserTable::default(),
             states,
             app_config_fields,
             widget_map,
