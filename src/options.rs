@@ -19,6 +19,7 @@ use crate::{
     app::{filter::Filter, layout_manager::*, *},
     canvas::{canvas_styling::CanvasStyling, ColourScheme},
     constants::*,
+    data_collection::temperature::TemperatureType,
     utils::{
         data_units::DataUnit,
         error::{self, BottomError},
@@ -581,29 +582,27 @@ fn get_update_rate(matches: &ArgMatches, config: &Config) -> error::Result<u64> 
     Ok(update_rate)
 }
 
-fn get_temperature(
-    matches: &ArgMatches, config: &Config,
-) -> error::Result<data_harvester::temperature::TemperatureType> {
+fn get_temperature(matches: &ArgMatches, config: &Config) -> error::Result<TemperatureType> {
     if matches.get_flag("fahrenheit") {
-        return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
+        return Ok(TemperatureType::Fahrenheit);
     } else if matches.get_flag("kelvin") {
-        return Ok(data_harvester::temperature::TemperatureType::Kelvin);
+        return Ok(TemperatureType::Kelvin);
     } else if matches.get_flag("celsius") {
-        return Ok(data_harvester::temperature::TemperatureType::Celsius);
+        return Ok(TemperatureType::Celsius);
     } else if let Some(flags) = &config.flags {
         if let Some(temp_type) = &flags.temperature_type {
             // Give lowest priority to config.
             return match temp_type.as_str() {
-                "fahrenheit" | "f" => Ok(data_harvester::temperature::TemperatureType::Fahrenheit),
-                "kelvin" | "k" => Ok(data_harvester::temperature::TemperatureType::Kelvin),
-                "celsius" | "c" => Ok(data_harvester::temperature::TemperatureType::Celsius),
+                "fahrenheit" | "f" => Ok(TemperatureType::Fahrenheit),
+                "kelvin" | "k" => Ok(TemperatureType::Kelvin),
+                "celsius" | "c" => Ok(TemperatureType::Celsius),
                 _ => Err(BottomError::ConfigError(format!(
                     "\"{temp_type}\" is an invalid temperature type, use \"<kelvin|k|celsius|c|fahrenheit|f>\"."
                 ))),
             };
         }
     }
-    Ok(data_harvester::temperature::TemperatureType::Celsius)
+    Ok(TemperatureType::Celsius)
 }
 
 /// Yes, this function gets whether to show average CPU (true) or not (false)

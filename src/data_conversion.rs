@@ -3,13 +3,9 @@
 
 use kstring::KString;
 
-use crate::app::data_harvester::memory::MemHarvest;
-use crate::app::{
-    data_farmer::DataCollection,
-    data_harvester::{cpu::CpuDataType, temperature::TemperatureType},
-    AxisScaling,
-};
+use crate::app::{data_farmer::DataCollection, AxisScaling};
 use crate::components::tui_widget::time_chart::Point;
+use crate::data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType};
 use crate::utils::data_prefixes::*;
 use crate::utils::data_units::DataUnit;
 use crate::utils::gen_util::*;

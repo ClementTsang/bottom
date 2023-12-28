@@ -13,14 +13,15 @@
 //! memory usage and higher CPU usage - you will be trying to process more and
 //! more points as this is used!
 
+use crate::data_collection::processes::ProcessHarvest;
 use std::{collections::BTreeMap, time::Instant, vec::Vec};
 
 use hashbrown::HashMap;
 
 #[cfg(feature = "battery")]
-use crate::data_harvester::batteries;
+use crate::data_collection::batteries;
 use crate::{
-    data_harvester::{cpu, disks, memory, network, processes::ProcessHarvest, temperature, Data},
+    data_collection::{cpu, disks, memory, network, temperature, Data},
     utils::data_prefixes::*,
     utils::gen_util::get_decimal_bytes,
     Pid,

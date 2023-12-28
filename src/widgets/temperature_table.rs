@@ -5,12 +5,13 @@ use kstring::KString;
 use tui::text::Text;
 
 use crate::{
-    app::{data_harvester::temperature::TemperatureType, AppConfigFields},
+    app::AppConfigFields,
     canvas::canvas_styling::CanvasStyling,
     components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
+    data_collection::temperature::TemperatureType,
     utils::gen_util::{sort_partial_fn, truncate_to_text},
 };
 

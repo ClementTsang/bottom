@@ -8,7 +8,6 @@ use serde::{de::Error, Deserialize};
 use crate::{
     app::{
         data_farmer::{DataCollection, ProcessData},
-        data_harvester::processes::ProcessHarvest,
         query::*,
         AppConfigFields, AppSearchState,
     },
@@ -17,6 +16,7 @@ use crate::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
+    data_collection::processes::ProcessHarvest,
     Pid,
 };
 

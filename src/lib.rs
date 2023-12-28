@@ -26,7 +26,6 @@ use std::{
 };
 
 use app::{
-    data_harvester,
     frozen_state::FrozenState,
     layout_manager::{UsedWidgets, WidgetDirection},
     App, AppConfigFields, DataFilters,
@@ -57,6 +56,7 @@ pub mod args;
 pub mod canvas;
 pub mod components;
 pub mod constants;
+pub mod data_collection;
 pub mod data_conversion;
 pub mod options;
 pub mod widgets;
@@ -76,7 +76,7 @@ pub enum BottomEvent {
     KeyInput(KeyEvent),
     MouseInput(MouseEvent),
     PasteEvent(String),
-    Update(Box<data_harvester::Data>),
+    Update(Box<data_collection::Data>),
     Clean,
     Terminate,
 }
@@ -485,7 +485,7 @@ pub fn create_collection_thread(
     let update_time = app_config_fields.update_rate;
 
     thread::spawn(move || {
-        let mut data_state = data_harvester::DataCollector::new(filters);
+        let mut data_state = data_collection::DataCollector::new(filters);
 
         data_state.set_data_collection(used_widget_set);
         data_state.set_temperature_type(temp_type);
@@ -524,7 +524,7 @@ pub fn create_collection_thread(
             }
 
             let event = BottomEvent::Update(Box::from(data_state.data));
-            data_state.data = data_harvester::Data::default();
+            data_state.data = data_collection::Data::default();
             if sender.send(event).is_err() {
                 break;
             }
