@@ -3,7 +3,7 @@
 use anyhow::Result;
 
 use super::{is_temp_filtered, TempHarvest, TemperatureType};
-use crate::app::Filter;
+use crate::app::filter::Filter;
 
 pub fn get_temperature_data(
     sys: &sysinfo::System, temp_type: &TemperatureType, filter: &Option<Filter>,
