@@ -61,6 +61,7 @@ pub mod data_conversion;
 pub mod options;
 pub mod widgets;
 
+#[allow(unused_imports)]
 pub use utils::logging::*;
 
 #[cfg(target_family = "windows")]
