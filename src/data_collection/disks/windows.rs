@@ -4,7 +4,6 @@ use itertools::Itertools;
 use sysinfo::{DiskExt, SystemExt};
 
 use super::{keep_disk_entry, DiskHarvest};
-
 use crate::data_collection::{disks::IoCounters, DataCollector};
 
 mod bindings;

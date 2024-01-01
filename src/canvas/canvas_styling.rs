@@ -235,9 +235,10 @@ impl CanvasStyling {
 
 #[cfg(test)]
 mod test {
+    use tui::style::{Color, Style};
+
     use super::{CanvasStyling, ColourScheme};
     use crate::Config;
-    use tui::style::{Color, Style};
 
     #[test]
     fn default_selected_colour_works() {

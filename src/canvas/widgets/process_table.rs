@@ -9,8 +9,10 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{App, AppSearchState},
-    canvas::Painter,
-    components::data_table::{DrawInfo, SelectionState},
+    canvas::{
+        custom_tui::data_table::{DrawInfo, SelectionState},
+        Painter,
+    },
     constants::*,
 };
 

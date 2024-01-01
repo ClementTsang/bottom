@@ -1,8 +1,7 @@
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::Line,
-    text::Span,
+    text::{Line, Span},
     widgets::{Block, Paragraph},
 };
 

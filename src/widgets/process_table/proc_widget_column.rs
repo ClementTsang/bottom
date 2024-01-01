@@ -4,7 +4,7 @@ use serde::{de::Error, Deserialize, Serialize};
 
 use super::ProcWidgetData;
 use crate::{
-    components::data_table::{ColumnHeader, SortsRow},
+    canvas::custom_tui::data_table::{ColumnHeader, SortsRow},
     utils::gen_util::sort_partial_fn,
 };
 

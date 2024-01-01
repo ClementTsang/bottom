@@ -2,8 +2,10 @@ use tui::{layout::Rect, terminal::Frame};
 
 use crate::{
     app,
-    canvas::Painter,
-    components::data_table::{DrawInfo, SelectionState},
+    canvas::{
+        custom_tui::data_table::{DrawInfo, SelectionState},
+        Painter,
+    },
 };
 
 impl Painter {

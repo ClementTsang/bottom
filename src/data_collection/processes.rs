@@ -3,11 +3,11 @@
 //! For Linux, this is handled by a custom set of functions.
 //! For Windows, macOS, FreeBSD, Android, and Linux, this is handled by sysinfo.
 
-use cfg_if::cfg_if;
 use std::{borrow::Cow, time::Duration};
 
-use super::DataCollector;
+use cfg_if::cfg_if;
 
+use super::DataCollector;
 use crate::{utils::error, Pid};
 
 cfg_if! {

@@ -11,7 +11,6 @@ use indexmap::IndexSet;
 use layout_options::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
 
@@ -33,9 +32,8 @@ mod process_columns;
 pub use process_columns::ProcessConfig;
 
 mod cpu;
-pub use cpu::{CpuConfig, CpuDefault};
-
 use anyhow::{Context, Result};
+pub use cpu::{CpuConfig, CpuDefault};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Config {

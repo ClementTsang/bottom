@@ -1,13 +1,14 @@
 //! Process data collection for FreeBSD.  Uses sysinfo.
 
-use std::io;
-use std::process::Command;
+use std::{io, process::Command};
 
 use hashbrown::HashMap;
 use serde::{Deserialize, Deserializer};
 
-use crate::data_collection::{deserialize_xo, processes::UnixProcessExt};
-use crate::Pid;
+use crate::{
+    data_collection::{deserialize_xo, processes::UnixProcessExt},
+    Pid,
+};
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]

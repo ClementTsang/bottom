@@ -1,16 +1,23 @@
-use std::fmt::{Debug, Formatter};
-use std::time::Duration;
-use std::{borrow::Cow, collections::VecDeque};
+use std::{
+    borrow::Cow,
+    collections::VecDeque,
+    fmt::{Debug, Formatter},
+    time::Duration,
+};
 
 use humantime::parse_duration;
 use regex::Regex;
 
-use crate::data_collection::processes::ProcessHarvest;
-use crate::multi_eq_ignore_ascii_case;
-use crate::utils::data_prefixes::*;
-use crate::utils::error::{
-    BottomError::{self, QueryError},
-    Result,
+use crate::{
+    data_collection::processes::ProcessHarvest,
+    multi_eq_ignore_ascii_case,
+    utils::{
+        data_prefixes::*,
+        error::{
+            BottomError::{self, QueryError},
+            Result,
+        },
+    },
 };
 
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];

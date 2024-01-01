@@ -15,12 +15,12 @@ use crate::{
     constants,
     data_collection::temperature,
     data_conversion::ConvertedData,
-    utils::error::{BottomError, Result},
-    Pid,
-};
-use crate::{
-    utils::data_units::DataUnit,
+    utils::{
+        data_units::DataUnit,
+        error::{BottomError, Result},
+    },
     widgets::{ProcWidgetColumn, ProcWidgetMode},
+    Pid,
 };
 
 pub mod data_farmer;

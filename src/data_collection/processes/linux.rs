@@ -1,19 +1,22 @@
 //! Process data collection for Linux.
 
 mod process;
-use process::*;
-
-use std::fs::{self, File};
-use std::io::{BufRead, BufReader};
-use std::time::Duration;
+use std::{
+    fs::{self, File},
+    io::{BufRead, BufReader},
+    time::Duration,
+};
 
 use hashbrown::HashSet;
+use process::*;
 use sysinfo::ProcessStatus;
 
 use super::{ProcessHarvest, UserTable};
-use crate::data_collection::DataCollector;
-use crate::utils::error::{self, BottomError};
-use crate::Pid;
+use crate::{
+    data_collection::DataCollector,
+    utils::error::{self, BottomError},
+    Pid,
+};
 
 /// Maximum character length of a /proc/<PID>/stat process name.
 /// If it's equal or greater, then we instead refer to the command for the name.

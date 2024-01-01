@@ -2,9 +2,8 @@
 
 use sysinfo::{DiskExt, SystemExt};
 
-use crate::data_collection::DataCollector;
-
 use super::{keep_disk_entry, DiskHarvest};
+use crate::data_collection::DataCollector;
 
 pub(crate) fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<DiskHarvest>> {
     let disks = collector.sys.disks();

@@ -10,9 +10,8 @@ pub struct ProcessConfig {
 
 #[cfg(test)]
 mod test {
-    use crate::widgets::ProcWidgetColumn;
-
     use super::ProcessConfig;
+    use crate::widgets::ProcWidgetColumn;
 
     #[test]
     fn empty_column_setting() {

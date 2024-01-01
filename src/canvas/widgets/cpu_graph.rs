@@ -8,10 +8,13 @@ use tui::{
 
 use crate::{
     app::{layout_manager::WidgetDirection, App},
-    canvas::{drawing_utils::should_hide_x_label, Painter},
-    components::{
-        data_table::{DrawInfo, SelectionState},
-        time_graph::{GraphData, TimeGraph},
+    canvas::{
+        custom_tui::{
+            data_table::{DrawInfo, SelectionState},
+            time_graph::{GraphData, TimeGraph},
+        },
+        drawing_utils::should_hide_x_label,
+        Painter,
     },
     data_conversion::CpuWidgetData,
     widgets::CpuWidgetState,

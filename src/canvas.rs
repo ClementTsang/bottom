@@ -16,11 +16,11 @@ use crate::{
         App,
     },
     constants::*,
-    utils::error,
-    utils::error::BottomError,
+    utils::{error, error::BottomError},
 };
 
 pub mod canvas_styling;
+pub mod custom_tui;
 mod dialogs;
 mod drawing_utils;
 mod widgets;

@@ -4,13 +4,15 @@
 use std::mem;
 
 use anyhow::{anyhow, bail};
-use core_foundation::base::{kCFAllocatorDefault, CFType, TCFType, ToVoid};
-use core_foundation::dictionary::{
-    CFDictionary, CFDictionaryGetTypeID, CFDictionaryRef, CFMutableDictionary,
-    CFMutableDictionaryRef,
+use core_foundation::{
+    base::{kCFAllocatorDefault, CFType, TCFType, ToVoid},
+    dictionary::{
+        CFDictionary, CFDictionaryGetTypeID, CFDictionaryRef, CFMutableDictionary,
+        CFMutableDictionaryRef,
+    },
+    number::{CFNumber, CFNumberGetTypeID},
+    string::{CFString, CFStringGetTypeID},
 };
-use core_foundation::number::{CFNumber, CFNumberGetTypeID};
-use core_foundation::string::{CFString, CFStringGetTypeID};
 use mach2::kern_return;
 
 use super::bindings::*;

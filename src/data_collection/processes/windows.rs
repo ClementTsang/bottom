@@ -5,7 +5,6 @@ use std::time::Duration;
 use sysinfo::{CpuExt, PidExt, ProcessExt, SystemExt, UserExt};
 
 use super::ProcessHarvest;
-
 use crate::data_collection::DataCollector;
 
 pub fn sysinfo_process_data(
