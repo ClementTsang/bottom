@@ -1,3 +1,9 @@
+mod dialogs;
+mod drawing_utils;
+pub mod styling;
+pub mod tui_widgets;
+mod widgets;
+
 use std::str::FromStr;
 
 use itertools::izip;
@@ -18,12 +24,6 @@ use crate::{
     constants::*,
     utils::{error, error::BottomError},
 };
-
-mod dialogs;
-mod drawing_utils;
-pub mod styling;
-pub mod tui_widgets;
-mod widgets;
 
 #[derive(Debug)]
 pub enum ColourScheme {

@@ -1,3 +1,11 @@
+pub mod data_farmer;
+pub mod filter;
+pub mod frozen_state;
+pub mod layout_manager;
+mod process_killer;
+pub mod query;
+pub mod states;
+
 use std::{
     cmp::{max, min},
     time::Instant,
@@ -6,6 +14,7 @@ use std::{
 use concat_string::concat_string;
 use data_farmer::*;
 use filter::*;
+use frozen_state::FrozenState;
 use hashbrown::HashMap;
 use layout_manager::*;
 pub use states::*;
@@ -22,16 +31,6 @@ use crate::{
     widgets::{ProcWidgetColumn, ProcWidgetMode},
     Pid,
 };
-
-pub mod data_farmer;
-pub mod filter;
-pub mod frozen_state;
-pub mod layout_manager;
-mod process_killer;
-pub mod query;
-pub mod states;
-
-use frozen_state::FrozenState;
 
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub enum AxisScaling {

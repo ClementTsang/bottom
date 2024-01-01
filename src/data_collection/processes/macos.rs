@@ -1,5 +1,7 @@
 //! Process data collection for macOS.  Uses sysinfo and custom bindings.
 
+mod sysctl_bindings;
+
 use std::{io, process::Command};
 
 use hashbrown::HashMap;
@@ -8,7 +10,6 @@ use sysinfo::{PidExt, ProcessExt};
 
 use super::UnixProcessExt;
 use crate::Pid;
-mod sysctl_bindings;
 
 pub(crate) struct MacOSProcessExt;
 

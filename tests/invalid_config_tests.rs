@@ -1,7 +1,7 @@
+mod util;
+
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-
-mod util;
 use util::*;
 
 // These tests are for testing some config file-specific options.

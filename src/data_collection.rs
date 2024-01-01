@@ -1,17 +1,5 @@
 //! This is the main file to house data collection functions.
 
-use std::time::{Duration, Instant};
-
-#[cfg(any(target_os = "linux", feature = "gpu"))]
-use hashbrown::HashMap;
-#[cfg(feature = "battery")]
-use starship_battery::{Battery, Manager};
-use sysinfo::{System, SystemExt};
-
-use self::temperature::TemperatureType;
-use super::DataFilters;
-use crate::app::layout_manager::UsedWidgets;
-
 #[cfg(feature = "nvidia")]
 pub mod nvidia;
 
@@ -24,6 +12,18 @@ pub mod memory;
 pub mod network;
 pub mod processes;
 pub mod temperature;
+
+use std::time::{Duration, Instant};
+
+#[cfg(any(target_os = "linux", feature = "gpu"))]
+use hashbrown::HashMap;
+#[cfg(feature = "battery")]
+use starship_battery::{Battery, Manager};
+use sysinfo::{System, SystemExt};
+
+use self::temperature::TemperatureType;
+use super::DataFilters;
+use crate::app::layout_manager::UsedWidgets;
 
 #[derive(Clone, Debug)]
 pub struct Data {

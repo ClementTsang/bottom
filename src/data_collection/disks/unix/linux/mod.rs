@@ -1,5 +1,5 @@
-mod partition;
-pub(crate) use partition::*;
-
 mod counters;
+mod partition;
+
 pub use counters::*;
+pub(crate) use partition::*;

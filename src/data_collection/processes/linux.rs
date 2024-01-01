@@ -1,6 +1,7 @@
 //! Process data collection for Linux.
 
 mod process;
+
 use std::{
     fs::{self, File},
     io::{BufRead, BufReader},

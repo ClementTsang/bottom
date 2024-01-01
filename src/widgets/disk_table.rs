@@ -12,7 +12,7 @@ use crate::{
             SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
         },
     },
-    utils::gen_util::{get_decimal_bytes, sort_partial_fn, truncate_to_text},
+    utils::general::{get_decimal_bytes, sort_partial_fn, truncate_to_text},
 };
 
 #[derive(Clone, Debug)]

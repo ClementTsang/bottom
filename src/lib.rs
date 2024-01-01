@@ -14,6 +14,21 @@
 #![deny(clippy::unimplemented)]
 #![deny(clippy::missing_safety_doc)]
 
+pub mod app;
+pub mod utils {
+    pub mod data_prefixes;
+    pub mod data_units;
+    pub mod error;
+    pub mod general;
+    pub mod logging;
+}
+pub mod canvas;
+pub mod constants;
+pub mod data_collection;
+pub mod data_conversion;
+pub mod options;
+pub mod widgets;
+
 use std::{
     boxed::Box,
     fs,
@@ -44,25 +59,9 @@ use crossterm::{
     terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
 use data_conversion::*;
-use options::*;
+pub use options::args;
+use options::config::Config;
 use utils::error;
-
-pub mod app;
-pub mod utils {
-    pub mod data_prefixes;
-    pub mod data_units;
-    pub mod error;
-    pub mod gen_util;
-    pub mod logging;
-}
-pub mod args;
-pub mod canvas;
-pub mod constants;
-pub mod data_collection;
-pub mod data_conversion;
-pub mod options;
-pub mod widgets;
-
 #[allow(unused_imports)]
 pub use utils::logging::*;
 

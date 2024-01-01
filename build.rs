@@ -7,7 +7,7 @@ use clap_complete::{generate_to, shells::Shell, Generator};
 use clap_complete_fig::Fig;
 use clap_complete_nushell::Nushell;
 
-include!("src/args.rs");
+include!("src/options/args.rs");
 
 fn create_dir(dir: &Path) -> io::Result<()> {
     let res = fs::create_dir_all(dir);

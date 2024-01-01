@@ -1,7 +1,7 @@
 use tui::{layout::Rect, terminal::Frame};
 
 use crate::{
-    app::{self},
+    app,
     canvas::{
         tui_widgets::data_table::{DrawInfo, SelectionState},
         Painter,

@@ -3,10 +3,7 @@
 
 mod file_systems;
 
-use file_systems::*;
-
 mod usage;
-use usage::*;
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
@@ -23,6 +20,9 @@ cfg_if::cfg_if! {
         use other::*;
     }
 }
+
+use file_systems::*;
+use usage::*;
 
 use super::{keep_disk_entry, DiskHarvest};
 use crate::data_collection::DataCollector;

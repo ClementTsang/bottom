@@ -14,7 +14,7 @@ use crate::{
         },
     },
     data_collection::temperature::TemperatureType,
-    utils::gen_util::{sort_partial_fn, truncate_to_text},
+    utils::general::{sort_partial_fn, truncate_to_text},
 };
 
 #[derive(Clone, Debug)]
