@@ -11,7 +11,7 @@ use tui::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::components::time_chart::{Axis, Dataset, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS};
+use super::time_chart::{Axis, Dataset, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS};
 
 /// Represents the data required by the [`TimeGraph`].
 pub struct GraphData<'a> {
