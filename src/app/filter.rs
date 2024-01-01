@@ -1,7 +1,13 @@
+/// Filters used by widgets to filter out certain entries.
+/// TODO: Move this out maybe?
 #[derive(Debug, Clone)]
 pub struct Filter {
-    // TODO: Maybe change to "ignore_matches"?
-    pub is_list_ignored: bool,
+    /// Whether the filter _accepts_ all entries that match `list`,
+    /// or _denies_ any entries that match it.
+    pub is_list_ignored: bool, // TODO: Maybe change to "ignore_matches"?
+
+    /// The list of regexes to match against. Whether it goes through
+    /// the filter or not depends on `is_list_ignored`.
     pub list: Vec<regex::Regex>,
 }
 
