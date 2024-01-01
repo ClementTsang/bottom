@@ -23,10 +23,10 @@ pub mod utils {
     pub mod logging;
 }
 pub mod canvas;
-pub mod configuration;
 pub mod constants;
 pub mod data_collection;
 pub mod data_conversion;
+pub mod options;
 pub mod widgets;
 
 use std::{
@@ -48,8 +48,6 @@ use app::{
     layout_manager::{UsedWidgets, WidgetDirection},
     App, AppConfigFields, DataFilters,
 };
-pub use configuration::args;
-use configuration::*;
 use constants::*;
 use crossterm::{
     event::{
@@ -61,6 +59,8 @@ use crossterm::{
     terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
 use data_conversion::*;
+pub use options::args;
+use options::config::Config;
 use utils::error;
 #[allow(unused_imports)]
 pub use utils::logging::*;

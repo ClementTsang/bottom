@@ -4,8 +4,8 @@ use tui::style::{Color, Style};
 
 use super::ColourScheme;
 use crate::{
-    configuration::{Config, ConfigColours},
     constants::*,
+    options::config::{Config, ConfigColours},
     utils::error,
 };
 mod colour_utils;

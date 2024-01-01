@@ -1,6 +1,5 @@
-pub mod args;
 mod cpu;
-pub mod layout_options;
+pub mod layout;
 mod process_columns;
 
 use std::{
@@ -15,7 +14,7 @@ use clap::ArgMatches;
 pub use cpu::{CpuConfig, CpuDefault};
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
-use layout_options::*;
+use layout::*;
 pub use process_columns::ProcessConfig;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -189,7 +188,7 @@ macro_rules! is_flag_enabled {
     };
 }
 
-pub fn build_app(
+pub fn init_app(
     matches: ArgMatches, config: Config, widget_layout: &BottomLayout, default_widget_id: u64,
     default_widget_type_option: &Option<BottomWidgetType>, styling: &CanvasStyling,
 ) -> Result<App> {
@@ -916,7 +915,7 @@ mod test {
     use crate::{
         app::App,
         canvas::styling::CanvasStyling,
-        configuration::{
+        options::config::{
             get_default_time_value, get_retention, get_update_rate, try_parse_ms, ConfigFlags,
         },
     };
@@ -1092,7 +1091,7 @@ mod test {
         let styling =
             CanvasStyling::new(get_color_scheme(&matches, &config).unwrap(), &config).unwrap();
 
-        super::build_app(matches, config, &layout, id, &ty, &styling).unwrap()
+        super::init_app(matches, config, &layout, id, &ty, &styling).unwrap()
     }
 
     // TODO: There's probably a better way to create clap options AND unify together to avoid the possibility of
