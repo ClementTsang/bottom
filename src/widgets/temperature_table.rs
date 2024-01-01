@@ -7,11 +7,11 @@ use tui::text::Text;
 use crate::{
     app::AppConfigFields,
     canvas::{
-        canvas_styling::CanvasStyling,
         custom_tui::data_table::{
             ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell,
             SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
         },
+        styling::CanvasStyling,
     },
     data_collection::temperature::TemperatureType,
     utils::gen_util::{sort_partial_fn, truncate_to_text},

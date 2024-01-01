@@ -16,7 +16,7 @@ use anyhow::{Context, Result};
 use bottom::{
     args,
     canvas::{
-        canvas_styling::CanvasStyling,
+        styling::CanvasStyling,
         {self},
     },
     check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,

@@ -12,11 +12,11 @@ use crate::{
         AppConfigFields, AppSearchState,
     },
     canvas::{
-        canvas_styling::CanvasStyling,
         custom_tui::data_table::{
             Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
             DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
         },
+        styling::CanvasStyling,
     },
     data_collection::processes::ProcessHarvest,
     Pid,

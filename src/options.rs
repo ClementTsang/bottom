@@ -16,7 +16,7 @@ use starship_battery::Manager;
 
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::{canvas_styling::CanvasStyling, ColourScheme},
+    canvas::{styling::CanvasStyling, ColourScheme},
     constants::*,
     data_collection::temperature::TemperatureType,
     utils::{
@@ -916,7 +916,7 @@ mod test {
     use super::{get_color_scheme, get_time_interval, get_widget_layout, Config};
     use crate::{
         app::App,
-        canvas::canvas_styling::CanvasStyling,
+        canvas::styling::CanvasStyling,
         options::{
             get_default_time_value, get_retention, get_update_rate, try_parse_ms, ConfigFlags,
         },
