@@ -19,10 +19,10 @@ use crate::{
     utils::{error, error::BottomError},
 };
 
-pub mod tui_widgets;
 mod dialogs;
 mod drawing_utils;
 pub mod styling;
+pub mod tui_widgets;
 mod widgets;
 
 #[derive(Debug)]

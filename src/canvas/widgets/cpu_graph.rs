@@ -9,11 +9,11 @@ use tui::{
 use crate::{
     app::{layout_manager::WidgetDirection, App},
     canvas::{
+        drawing_utils::should_hide_x_label,
         tui_widgets::{
             data_table::{DrawInfo, SelectionState},
             time_graph::{GraphData, TimeGraph},
         },
-        drawing_utils::should_hide_x_label,
         Painter,
     },
     data_conversion::CpuWidgetData,

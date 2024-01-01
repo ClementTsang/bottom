@@ -6,11 +6,11 @@ use tui::text::Text;
 use crate::{
     app::AppConfigFields,
     canvas::{
+        styling::CanvasStyling,
         tui_widgets::data_table::{
             ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell,
             SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
         },
-        styling::CanvasStyling,
     },
     utils::gen_util::{get_decimal_bytes, sort_partial_fn, truncate_to_text},
 };
