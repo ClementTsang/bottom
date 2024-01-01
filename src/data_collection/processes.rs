@@ -3,12 +3,7 @@
 //! For Linux, this is handled by a custom set of functions.
 //! For Windows, macOS, FreeBSD, Android, and Linux, this is handled by sysinfo.
 
-use std::{borrow::Cow, time::Duration};
-
 use cfg_if::cfg_if;
-
-use super::DataCollector;
-use crate::{utils::error, Pid};
 
 cfg_if! {
     if #[cfg(target_os = "linux")] {
@@ -35,6 +30,11 @@ cfg_if! {
         pub use self::unix::*;
     }
 }
+
+use std::{borrow::Cow, time::Duration};
+
+use super::DataCollector;
+use crate::{utils::error, Pid};
 
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {

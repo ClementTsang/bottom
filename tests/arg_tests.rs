@@ -1,8 +1,8 @@
 //! These tests are mostly here just to ensure that invalid results will be caught when passing arguments.
+mod util;
+
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-
-mod util;
 use util::*;
 
 #[test]

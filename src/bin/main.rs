@@ -19,12 +19,12 @@ use bottom::{
         styling::CanvasStyling,
         {self},
     },
-    check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,
-    create_or_get_config,
+    check_if_terminal, cleanup_terminal,
+    configuration::*,
+    create_collection_thread, create_input_thread, create_or_get_config,
     data_conversion::*,
-    handle_key_event_or_break, handle_mouse_event,
-    options::*,
-    panic_hook, read_config, try_drawing, update_data, BottomEvent,
+    handle_key_event_or_break, handle_mouse_event, panic_hook, read_config, try_drawing,
+    update_data, BottomEvent,
 };
 use crossterm::{
     event::{EnableBracketedPaste, EnableMouseCapture},

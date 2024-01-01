@@ -1,3 +1,8 @@
+pub mod args;
+mod cpu;
+pub mod layout_options;
+mod process_columns;
+
 use std::{
     borrow::Cow,
     convert::TryInto,
@@ -5,10 +10,13 @@ use std::{
     time::{Duration, Instant},
 };
 
+use anyhow::{Context, Result};
 use clap::ArgMatches;
+pub use cpu::{CpuConfig, CpuDefault};
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use layout_options::*;
+pub use process_columns::ProcessConfig;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "battery")]
@@ -25,15 +33,6 @@ use crate::{
     },
     widgets::*,
 };
-
-pub mod layout_options;
-
-mod process_columns;
-pub use process_columns::ProcessConfig;
-
-mod cpu;
-use anyhow::{Context, Result};
-pub use cpu::{CpuConfig, CpuDefault};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Config {
@@ -917,7 +916,7 @@ mod test {
     use crate::{
         app::App,
         canvas::styling::CanvasStyling,
-        options::{
+        configuration::{
             get_default_time_value, get_retention, get_update_rate, try_parse_ms, ConfigFlags,
         },
     };

@@ -4,8 +4,8 @@
 use bottom::constants::DEFAULT_BATTERY_LAYOUT;
 use bottom::{
     app::layout_manager::{BottomLayout, BottomWidgetType},
+    configuration::{layout_options::Row, Config},
     constants::{DEFAULT_LAYOUT, DEFAULT_WIDGET_ID},
-    options::{layout_options::Row, Config},
     utils::error,
 };
 use toml_edit::de::from_str;

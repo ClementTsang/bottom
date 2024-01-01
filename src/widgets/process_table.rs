@@ -1,9 +1,16 @@
+pub mod proc_widget_column;
+pub mod proc_widget_data;
+mod sort_table;
+
 use std::{borrow::Cow, collections::BTreeMap};
 
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use itertools::Itertools;
+pub use proc_widget_column::*;
+pub use proc_widget_data::*;
 use serde::{de::Error, Deserialize};
+use sort_table::SortTableColumn;
 
 use crate::{
     app::{
@@ -21,15 +28,6 @@ use crate::{
     data_collection::processes::ProcessHarvest,
     Pid,
 };
-
-pub mod proc_widget_column;
-pub use proc_widget_column::*;
-
-pub mod proc_widget_data;
-pub use proc_widget_data::*;
-
-mod sort_table;
-use sort_table::SortTableColumn;
 
 /// ProcessSearchState only deals with process' search's current settings and state.
 pub struct ProcessSearchState {

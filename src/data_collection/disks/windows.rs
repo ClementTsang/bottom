@@ -1,13 +1,13 @@
 //! Disk stats via sysinfo.
 
+mod bindings;
+
+use bindings::*;
 use itertools::Itertools;
 use sysinfo::{DiskExt, SystemExt};
 
 use super::{keep_disk_entry, DiskHarvest};
 use crate::data_collection::{disks::IoCounters, DataCollector};
-
-mod bindings;
-use bindings::*;
 
 /// Returns I/O stats.
 pub(crate) fn io_stats() -> anyhow::Result<Vec<IoCounters>> {

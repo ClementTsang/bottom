@@ -1,6 +1,8 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
+// TODO: Split this up!
+
 use kstring::KString;
 
 use crate::{

@@ -13,9 +13,9 @@ use crate::{
         },
         Painter,
     },
+    configuration::CpuDefault,
     data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,
-    options::CpuDefault,
     utils::general::truncate_to_text,
 };
 

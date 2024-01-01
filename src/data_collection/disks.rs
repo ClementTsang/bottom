@@ -1,10 +1,5 @@
 //! Data collection about disks (e.g. I/O, usage, space).
 
-use cfg_if::cfg_if;
-use hashbrown::HashMap;
-
-use crate::app::filter::Filter;
-
 cfg_if! {
     if #[cfg(target_os = "freebsd")] {
         mod freebsd;
@@ -31,6 +26,11 @@ cfg_if! {
         pub(crate) use self::other::*;
     }
 }
+
+use cfg_if::cfg_if;
+use hashbrown::HashMap;
+
+use crate::app::filter::Filter;
 
 #[derive(Clone, Debug, Default)]
 pub struct DiskHarvest {

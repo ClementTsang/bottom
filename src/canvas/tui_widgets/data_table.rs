@@ -1,25 +1,20 @@
+pub mod column;
+pub mod data_type;
+pub mod draw;
+pub mod props;
+pub mod sortable;
+pub mod state;
+pub mod styling;
+
 use std::{convert::TryInto, marker::PhantomData};
 
-pub mod column;
 pub use column::*;
-
-pub mod styling;
-pub use styling::*;
-
-pub mod props;
-pub use props::DataTableProps;
-
-pub mod state;
-pub use state::{DataTableState, ScrollDirection};
-
-pub mod draw;
-pub use draw::*;
-
-pub mod data_type;
 pub use data_type::*;
-
-pub mod sortable;
+pub use draw::*;
+pub use props::DataTableProps;
 pub use sortable::*;
+pub use state::{DataTableState, ScrollDirection};
+pub use styling::*;
 
 use crate::utils::general::ClampExt;
 

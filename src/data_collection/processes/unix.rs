@@ -1,6 +1,7 @@
 //! Unix-specific parts of process collection.
 
 mod user_table;
+
 use cfg_if::cfg_if;
 pub use user_table::*;
 
