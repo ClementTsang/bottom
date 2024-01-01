@@ -15,10 +15,7 @@ use std::{
 use anyhow::{Context, Result};
 use bottom::{
     args,
-    canvas::{
-        styling::CanvasStyling,
-        {self},
-    },
+    canvas::{self, styling::CanvasStyling},
     check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,
     create_or_get_config,
     data_conversion::*,
