@@ -11,7 +11,7 @@ use crate::{
     canvas::{
         custom_tui::{
             time_graph::{GraphData, TimeGraph},
-            tui_widget::time_chart::Point,
+            components::time_chart::Point,
         },
         drawing_utils::should_hide_x_label,
         Painter,

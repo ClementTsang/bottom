@@ -1,3 +1,4 @@
-pub mod data_table;
+pub mod components;
 pub mod time_graph;
-pub mod tui_widget;
+
+pub use components::*;

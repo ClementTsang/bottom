@@ -11,7 +11,7 @@ use tui::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::tui_widget::time_chart::{Axis, Dataset, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS};
+use super::components::time_chart::{Axis, Dataset, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS};
 
 /// Represents the data required by the [`TimeGraph`].
 pub struct GraphData<'a> {
@@ -183,7 +183,7 @@ mod test {
     };
 
     use super::TimeGraph;
-    use crate::canvas::custom_tui::tui_widget::time_chart::Axis;
+    use crate::canvas::custom_tui::time_chart::Axis;
 
     const Y_LABELS: [Cow<'static, str>; 3] = [
         Cow::Borrowed("0%"),

@@ -5,7 +5,7 @@ use kstring::KString;
 
 use crate::{
     app::{data_farmer::DataCollection, AxisScaling},
-    canvas::custom_tui::tui_widget::time_chart::Point,
+    canvas::custom_tui::time_chart::Point,
     data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
     utils::{data_prefixes::*, data_units::DataUnit, gen_util::*},
     widgets::{DiskWidgetData, TempWidgetData},
