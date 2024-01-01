@@ -5,7 +5,7 @@ use tui::style::{Color, Style};
 use super::ColourScheme;
 use crate::{
     constants::*,
-    options::config::{Config, ConfigColours},
+    options::{Config, ConfigColours},
     utils::error,
 };
 mod colour_utils;
@@ -238,7 +238,7 @@ mod test {
     use tui::style::{Color, Style};
 
     use super::{CanvasStyling, ColourScheme};
-    use crate::Config;
+    use crate::options::Config;
 
     #[test]
     fn default_selected_colour_works() {

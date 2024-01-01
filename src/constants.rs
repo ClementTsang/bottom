@@ -1,6 +1,6 @@
 use tui::widgets::Borders;
 
-use crate::options::config::ConfigColours;
+use crate::options::ConfigColours;
 
 // Default widget ID
 pub const DEFAULT_WIDGET_ID: u64 = 56709;

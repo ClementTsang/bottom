@@ -60,7 +60,7 @@ use crossterm::{
 };
 use data_conversion::*;
 pub use options::args;
-use options::config::Config;
+use options::Config;
 use utils::error;
 #[allow(unused_imports)]
 pub use utils::logging::*;

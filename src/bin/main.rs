@@ -20,7 +20,7 @@ use bottom::{
     create_or_get_config,
     data_conversion::*,
     handle_key_event_or_break, handle_mouse_event,
-    options::config::{get_color_scheme, get_widget_layout, init_app},
+    options::{get_color_scheme, get_widget_layout, init_app},
     panic_hook, read_config, try_drawing, update_data, BottomEvent,
 };
 use crossterm::{
