@@ -15,7 +15,7 @@ use crate::{
     },
     data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,
-    options::config::CpuDefault,
+    options::config::cpu::CpuDefault,
     utils::general::truncate_to_text,
 };
 
