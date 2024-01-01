@@ -11,13 +11,12 @@ use indexmap::IndexSet;
 use layout_options::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
 
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::{canvas_styling::CanvasStyling, ColourScheme},
+    canvas::{styling::CanvasStyling, ColourScheme},
     constants::*,
     data_collection::temperature::TemperatureType,
     utils::{
@@ -33,9 +32,8 @@ mod process_columns;
 pub use process_columns::ProcessConfig;
 
 mod cpu;
-pub use cpu::{CpuConfig, CpuDefault};
-
 use anyhow::{Context, Result};
+pub use cpu::{CpuConfig, CpuDefault};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Config {
@@ -918,7 +916,7 @@ mod test {
     use super::{get_color_scheme, get_time_interval, get_widget_layout, Config};
     use crate::{
         app::App,
-        canvas::canvas_styling::CanvasStyling,
+        canvas::styling::CanvasStyling,
         options::{
             get_default_time_value, get_retention, get_update_rate, try_parse_ms, ConfigFlags,
         },

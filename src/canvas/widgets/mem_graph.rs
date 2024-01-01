@@ -8,8 +8,11 @@ use tui::{
 
 use crate::{
     app::App,
-    canvas::{drawing_utils::should_hide_x_label, Painter},
-    components::time_graph::{GraphData, TimeGraph},
+    canvas::{
+        drawing_utils::should_hide_x_label,
+        tui_widgets::time_graph::{GraphData, TimeGraph},
+        Painter,
+    },
 };
 
 impl Painter {

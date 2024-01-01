@@ -2,15 +2,14 @@
 
 use std::io;
 
+use hashbrown::HashMap;
 use serde::Deserialize;
 
 use super::{keep_disk_entry, DiskHarvest, IoHarvest};
-
 use crate::{
-    data_collection::deserialize_xo, data_collection::disks::IoData,
-    data_collection::DataCollector, utils::error,
+    data_collection::{deserialize_xo, disks::IoData, DataCollector},
+    utils::error,
 };
-use hashbrown::HashMap;
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]

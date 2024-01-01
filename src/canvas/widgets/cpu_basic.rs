@@ -8,8 +8,10 @@ use tui::{
 
 use crate::{
     app::App,
-    canvas::Painter,
-    components::tui_widget::pipe_gauge::{LabelLimit, PipeGauge},
+    canvas::{
+        tui_widgets::pipe_gauge::{LabelLimit, PipeGauge},
+        Painter,
+    },
     constants::*,
     data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,

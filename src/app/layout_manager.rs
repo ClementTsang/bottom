@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 
-use crate::constants::DEFAULT_WIDGET_ID;
-use crate::error::{BottomError, Result};
+use crate::{
+    constants::DEFAULT_WIDGET_ID,
+    error::{BottomError, Result},
+};
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.

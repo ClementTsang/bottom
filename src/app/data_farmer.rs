@@ -13,7 +13,6 @@
 //! memory usage and higher CPU usage - you will be trying to process more and
 //! more points as this is used!
 
-use crate::data_collection::processes::ProcessHarvest;
 use std::{collections::BTreeMap, time::Instant, vec::Vec};
 
 use hashbrown::HashMap;
@@ -21,9 +20,8 @@ use hashbrown::HashMap;
 #[cfg(feature = "battery")]
 use crate::data_collection::batteries;
 use crate::{
-    data_collection::{cpu, disks, memory, network, temperature, Data},
-    utils::data_prefixes::*,
-    utils::gen_util::get_decimal_bytes,
+    data_collection::{cpu, disks, memory, network, processes::ProcessHarvest, temperature, Data},
+    utils::{data_prefixes::*, gen_util::get_decimal_bytes},
     Pid,
 };
 
@@ -370,8 +368,9 @@ impl DataCollection {
                 let io_device = {
                     #[cfg(target_os = "macos")]
                     {
-                        use regex::Regex;
                         use std::sync::OnceLock;
+
+                        use regex::Regex;
 
                         // Must trim one level further for macOS!
                         static DISK_REGEX: OnceLock<Regex> = OnceLock::new();

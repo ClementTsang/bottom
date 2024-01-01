@@ -9,8 +9,10 @@ use tui::{text::Text, widgets::Row};
 
 use super::proc_widget_column::ProcColumn;
 use crate::{
-    canvas::Painter,
-    components::data_table::{DataTableColumn, DataToCell},
+    canvas::{
+        tui_widgets::data_table::{DataTableColumn, DataToCell},
+        Painter,
+    },
     data_collection::processes::ProcessHarvest,
     data_conversion::{binary_byte_string, dec_bytes_per_second_string, dec_bytes_string},
     utils::gen_util::truncate_to_text,

@@ -166,8 +166,9 @@ impl FromStr for FileSystem {
 
 #[cfg(test)]
 mod test {
-    use super::FileSystem;
     use std::str::FromStr;
+
+    use super::FileSystem;
 
     #[test]
     fn file_system_from_str() {

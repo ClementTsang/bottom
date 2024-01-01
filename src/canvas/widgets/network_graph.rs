@@ -8,10 +8,13 @@ use tui::{
 
 use crate::{
     app::{App, AxisScaling},
-    canvas::{drawing_utils::should_hide_x_label, Painter},
-    components::{
-        time_graph::{GraphData, TimeGraph},
-        tui_widget::time_chart::Point,
+    canvas::{
+        drawing_utils::should_hide_x_label,
+        tui_widgets::{
+            time_chart::Point,
+            time_graph::{GraphData, TimeGraph},
+        },
+        Painter,
     },
     utils::{data_prefixes::*, data_units::DataUnit, gen_util::partial_ordering},
 };

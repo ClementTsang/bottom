@@ -13,16 +13,12 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use crossterm::{
-    event::{EnableBracketedPaste, EnableMouseCapture},
-    execute,
-    terminal::{enable_raw_mode, EnterAlternateScreen},
-};
-use tui::{backend::CrosstermBackend, Terminal};
-
 use bottom::{
     args,
-    canvas::{self, canvas_styling::CanvasStyling},
+    canvas::{
+        styling::CanvasStyling,
+        {self},
+    },
     check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,
     create_or_get_config,
     data_conversion::*,
@@ -30,6 +26,12 @@ use bottom::{
     options::*,
     panic_hook, read_config, try_drawing, update_data, BottomEvent,
 };
+use crossterm::{
+    event::{EnableBracketedPaste, EnableMouseCapture},
+    execute,
+    terminal::{enable_raw_mode, EnterAlternateScreen},
+};
+use tui::{backend::CrosstermBackend, Terminal};
 
 // Used for heap allocation debugging purposes.
 // #[global_allocator]
@@ -151,8 +153,9 @@ fn main() -> Result<()> {
     let _stderr_fd = {
         // A really ugly band-aid to suppress stderr warnings on FreeBSD due to sysinfo.
         // For more information, see https://github.com/ClementTsang/bottom/issues/798.
-        use filedescriptor::{FileDescriptor, StdioDescriptor};
         use std::fs::OpenOptions;
+
+        use filedescriptor::{FileDescriptor, StdioDescriptor};
 
         let path = OpenOptions::new().write(true).open("/dev/null")?;
         FileDescriptor::redirect_stdio(&path, StdioDescriptor::Stderr)?

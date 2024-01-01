@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::app::layout_manager::*;
-use crate::error::Result;
+use crate::{app::layout_manager::*, error::Result};
 
 /// Represents a row.  This has a length of some sort (optional) and a vector
 /// of children.

@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
-use canvas_styling::*;
 use itertools::izip;
+use styling::*;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -16,13 +16,13 @@ use crate::{
         App,
     },
     constants::*,
-    utils::error,
-    utils::error::BottomError,
+    utils::{error, error::BottomError},
 };
 
-pub mod canvas_styling;
 mod dialogs;
 mod drawing_utils;
+pub mod styling;
+pub mod tui_widgets;
 mod widgets;
 
 #[derive(Debug)]

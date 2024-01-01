@@ -1,5 +1,4 @@
-use clap::builder::PossibleValuesParser;
-use clap::*;
+use clap::{builder::PossibleValuesParser, *};
 
 const TEMPLATE: &str = "\
 {name} {version}

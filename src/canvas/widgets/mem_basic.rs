@@ -5,7 +5,9 @@ use tui::{
 };
 
 use crate::{
-    app::App, canvas::Painter, components::tui_widget::pipe_gauge::PipeGauge, constants::*,
+    app::App,
+    canvas::{tui_widgets::pipe_gauge::PipeGauge, Painter},
+    constants::*,
 };
 
 impl Painter {

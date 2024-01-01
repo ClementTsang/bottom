@@ -1,15 +1,17 @@
 use std::sync::OnceLock;
 
 use hashbrown::HashMap;
-use nvml_wrapper::enum_wrappers::device::TemperatureSensor;
-use nvml_wrapper::enums::device::UsedGpuMemory;
-use nvml_wrapper::{error::NvmlError, Nvml};
+use nvml_wrapper::{
+    enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError, Nvml,
+};
 
-use crate::app::filter::Filter;
-
-use crate::app::layout_manager::UsedWidgets;
-use crate::data_collection::memory::MemHarvest;
-use crate::data_collection::temperature::{is_temp_filtered, TempHarvest, TemperatureType};
+use crate::{
+    app::{filter::Filter, layout_manager::UsedWidgets},
+    data_collection::{
+        memory::MemHarvest,
+        temperature::{is_temp_filtered, TempHarvest, TemperatureType},
+    },
+};
 
 pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
 

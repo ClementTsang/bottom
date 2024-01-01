@@ -16,10 +16,9 @@ use std::{
     io::{stderr, stdout, Write},
     panic::PanicInfo,
     path::PathBuf,
-    sync::Mutex,
     sync::{
         mpsc::{Receiver, Sender},
-        Arc, Condvar,
+        Arc, Condvar, Mutex,
     },
     thread::{self, JoinHandle},
     time::{Duration, Instant},
@@ -54,7 +53,6 @@ pub mod utils {
 }
 pub mod args;
 pub mod canvas;
-pub mod components;
 pub mod constants;
 pub mod data_collection;
 pub mod data_conversion;

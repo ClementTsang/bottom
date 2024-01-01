@@ -5,10 +5,13 @@ use tui::{style::Style, text::Text, widgets::Row};
 
 use crate::{
     app::AppConfigFields,
-    canvas::{canvas_styling::CanvasStyling, Painter},
-    components::data_table::{
-        Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
-        DataToCell,
+    canvas::{
+        styling::CanvasStyling,
+        tui_widgets::data_table::{
+            Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
+            DataToCell,
+        },
+        Painter,
     },
     data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,

@@ -1,11 +1,13 @@
 //! Mocks layout management, so we can check if we broke anything.
 
-use bottom::app::layout_manager::{BottomLayout, BottomWidgetType};
 #[cfg(feature = "battery")]
 use bottom::constants::DEFAULT_BATTERY_LAYOUT;
-use bottom::constants::{DEFAULT_LAYOUT, DEFAULT_WIDGET_ID};
-use bottom::options::{layout_options::Row, Config};
-use bottom::utils::error;
+use bottom::{
+    app::layout_manager::{BottomLayout, BottomWidgetType},
+    constants::{DEFAULT_LAYOUT, DEFAULT_WIDGET_ID},
+    options::{layout_options::Row, Config},
+    utils::error,
+};
 use toml_edit::de::from_str;
 
 // TODO: Could move these into the library files rather than external tbh.

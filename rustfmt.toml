@@ -7,6 +7,7 @@ tab_spaces = 4
 max_width = 100
 
 # Unstable options, disabled by default.
+# imports_granularity = "Crate"
 # group_imports = "StdExternalCrate"
 # wrap_comments = true
 # format_code_in_doc_comments = true

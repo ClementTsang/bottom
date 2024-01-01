@@ -5,11 +5,12 @@
 //!
 //! Ideally, we can remove this if sysinfo ever gains disk I/O capabilities.
 
-use core_foundation::base::{mach_port_t, CFAllocatorRef};
-use core_foundation::dictionary::CFMutableDictionaryRef;
+use core_foundation::{
+    base::{mach_port_t, CFAllocatorRef},
+    dictionary::CFMutableDictionaryRef,
+};
 use libc::c_char;
-use mach2::kern_return::kern_return_t;
-use mach2::port::MACH_PORT_NULL;
+use mach2::{kern_return::kern_return_t, port::MACH_PORT_NULL};
 
 #[allow(non_camel_case_types)]
 pub type io_object_t = mach_port_t;

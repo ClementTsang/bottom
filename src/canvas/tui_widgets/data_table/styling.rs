@@ -1,6 +1,6 @@
 use tui::style::Style;
 
-use crate::canvas::canvas_styling::CanvasStyling;
+use crate::canvas::styling::CanvasStyling;
 
 #[derive(Default)]
 pub struct DataTableStyling {

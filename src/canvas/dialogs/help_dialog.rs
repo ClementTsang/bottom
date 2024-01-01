@@ -3,8 +3,7 @@ use std::cmp::{max, min};
 use tui::{
     layout::{Alignment, Rect},
     terminal::Frame,
-    text::Line,
-    text::Span,
+    text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Wrap},
 };
 use unicode_width::UnicodeWidthStr;
