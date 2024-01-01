@@ -7,7 +7,7 @@ use tui::text::Text;
 use crate::{
     app::AppConfigFields,
     canvas::{
-        custom_tui::data_table::{
+        tui_widgets::data_table::{
             ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell,
             SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
         },

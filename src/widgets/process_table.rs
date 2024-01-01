@@ -12,7 +12,7 @@ use crate::{
         AppConfigFields, AppSearchState,
     },
     canvas::{
-        custom_tui::data_table::{
+        tui_widgets::data_table::{
             Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
             DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
         },

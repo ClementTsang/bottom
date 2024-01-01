@@ -19,7 +19,7 @@ use crate::{
     utils::{error, error::BottomError},
 };
 
-pub mod custom_tui;
+pub mod tui_widgets;
 mod dialogs;
 mod drawing_utils;
 pub mod styling;

@@ -9,7 +9,7 @@ use tui::{
 use crate::{
     app::App,
     canvas::{
-        custom_tui::time_graph::{GraphData, TimeGraph},
+        tui_widgets::time_graph::{GraphData, TimeGraph},
         drawing_utils::should_hide_x_label,
         Painter,
     },

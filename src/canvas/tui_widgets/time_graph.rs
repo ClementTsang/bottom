@@ -183,7 +183,7 @@ mod test {
     };
 
     use super::TimeGraph;
-    use crate::canvas::custom_tui::time_chart::Axis;
+    use crate::canvas::tui_widgets::time_chart::Axis;
 
     const Y_LABELS: [Cow<'static, str>; 3] = [
         Cow::Borrowed("0%"),

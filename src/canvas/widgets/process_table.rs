@@ -10,7 +10,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::{
     app::{App, AppSearchState},
     canvas::{
-        custom_tui::data_table::{DrawInfo, SelectionState},
+        tui_widgets::data_table::{DrawInfo, SelectionState},
         Painter,
     },
     constants::*,

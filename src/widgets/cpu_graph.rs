@@ -6,7 +6,7 @@ use tui::{style::Style, text::Text, widgets::Row};
 use crate::{
     app::AppConfigFields,
     canvas::{
-        custom_tui::data_table::{
+        tui_widgets::data_table::{
             Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
             DataToCell,
         },

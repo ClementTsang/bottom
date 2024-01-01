@@ -9,7 +9,7 @@ use tui::{
 use crate::{
     app::{layout_manager::WidgetDirection, App},
     canvas::{
-        custom_tui::{
+        tui_widgets::{
             data_table::{DrawInfo, SelectionState},
             time_graph::{GraphData, TimeGraph},
         },

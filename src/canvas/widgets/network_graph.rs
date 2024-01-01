@@ -9,7 +9,7 @@ use tui::{
 use crate::{
     app::{App, AxisScaling},
     canvas::{
-        custom_tui::{
+        tui_widgets::{
             time_chart::Point,
             time_graph::{GraphData, TimeGraph},
         },
