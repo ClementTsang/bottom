@@ -21,7 +21,7 @@ pub use data_type::*;
 pub mod sortable;
 pub use sortable::*;
 
-use crate::utils::gen_util::ClampExt;
+use crate::utils::general::ClampExt;
 
 /// A [`DataTable`] is a component that displays data in a tabular form.
 ///

@@ -4,7 +4,7 @@ use tui::text::Text;
 
 use crate::{
     canvas::tui_widgets::data_table::{ColumnHeader, DataTableColumn, DataToCell},
-    utils::gen_util::truncate_to_text,
+    utils::general::truncate_to_text,
 };
 
 pub struct SortTableColumn;

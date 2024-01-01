@@ -5,7 +5,7 @@ use serde::{de::Error, Deserialize, Serialize};
 use super::ProcWidgetData;
 use crate::{
     canvas::tui_widgets::data_table::{ColumnHeader, SortsRow},
-    utils::gen_util::sort_partial_fn,
+    utils::general::sort_partial_fn,
 };
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]

@@ -16,7 +16,7 @@ use crate::{
         },
         Painter,
     },
-    utils::{data_prefixes::*, data_units::DataUnit, gen_util::partial_ordering},
+    utils::{data_prefixes::*, data_units::DataUnit, general::partial_ordering},
 };
 
 impl Painter {

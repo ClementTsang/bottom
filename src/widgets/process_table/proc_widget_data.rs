@@ -15,7 +15,7 @@ use crate::{
     },
     data_collection::processes::ProcessHarvest,
     data_conversion::{binary_byte_string, dec_bytes_per_second_string, dec_bytes_string},
-    utils::gen_util::truncate_to_text,
+    utils::general::truncate_to_text,
     Pid,
 };
 

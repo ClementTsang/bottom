@@ -16,7 +16,7 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::utils::gen_util::partial_ordering;
+use crate::utils::general::partial_ordering;
 
 /// A single graph point.
 pub type Point = (f64, f64);

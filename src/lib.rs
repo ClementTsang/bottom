@@ -52,7 +52,7 @@ pub mod utils {
     pub mod data_prefixes;
     pub mod data_units;
     pub mod error;
-    pub mod gen_util;
+    pub mod general;
     pub mod logging;
 }
 pub mod args;
