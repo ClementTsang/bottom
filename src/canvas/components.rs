@@ -1,7 +1,10 @@
-//! Cstom ratatui widgets used by the rest of bottom as lower-level components.
+//! Lower-level components used throughout bottom.
 
+pub mod column;
 pub mod data_table;
-pub mod pipe_gauge;
-pub mod time_chart;
+pub mod row;
 pub mod time_graph;
+mod tui;
 pub mod widget_carousel;
+
+pub use tui::*;

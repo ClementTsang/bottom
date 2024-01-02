@@ -9,8 +9,8 @@ use tui::{
 use crate::{
     app::App,
     canvas::{
-        drawing_utils::should_hide_x_label,
         components::time_graph::{GraphData, TimeGraph},
+        drawing_utils::should_hide_x_label,
         Painter,
     },
 };
