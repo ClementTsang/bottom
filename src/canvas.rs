@@ -49,7 +49,7 @@ impl FromStr for ColourScheme {
             "nord" => Ok(ColourScheme::Nord),
             "nord-light" => Ok(ColourScheme::NordLight),
             _ => Err(BottomError::ConfigError(format!(
-                "\"{s}\" is an invalid built-in color scheme."
+                "`{s}` is an invalid built-in color scheme."
             ))),
         }
     }
