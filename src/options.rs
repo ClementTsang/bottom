@@ -24,7 +24,7 @@ use starship_battery::Manager;
 use self::config::{cpu::CpuConfig, layout::Row, process_columns::ProcessConfig};
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::{styling::CanvasStyling, ColourScheme},
+    canvas::{styling::CanvasStyling, ColourScheme, LayoutConstraint},
     constants::*,
     data_collection::temperature::TemperatureType,
     utils::{
@@ -503,7 +503,7 @@ pub fn get_widget_layout(
         BottomLayout::init_basic_default(get_use_battery(matches, config))
     } else {
         let ref_row: Vec<Row>; // Required to handle reference
-        let rows = match &config.row {
+        let config_rows = match &config.row {
             Some(r) => r,
             None => {
                 // This cannot (like it really shouldn't) fail!
@@ -519,15 +519,15 @@ pub fn get_widget_layout(
         };
 
         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
-        let mut total_height_ratio = 0;
+        let total_height_ratio = config_rows.iter().map(|row| row.ratio.unwrap_or(1)).sum();
 
-        let mut ret_bottom_layout = BottomLayout {
-            rows: rows
+        let rows = BottomContainer::column(
+            config_rows
                 .iter()
                 .map(|row| {
-                    row.convert_row_to_bottom_row(
+                    row.create_row_layout(
                         &mut iter_id,
-                        &mut total_height_ratio,
+                        total_height_ratio,
                         &mut default_widget_id,
                         &default_widget_type,
                         &mut default_widget_count,
@@ -535,8 +535,10 @@ pub fn get_widget_layout(
                     )
                 })
                 .collect::<error::Result<Vec<_>>>()?,
-            total_row_height_ratio: total_height_ratio,
-        };
+            LayoutConstraint::Grow,
+        );
+
+        let mut ret_bottom_layout = BottomLayout { rows };
 
         // Confirm that we have at least ONE widget left - if not, error out!
         if iter_id > 0 {

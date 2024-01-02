@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{app::layout_manager::*, error::Result};
+use crate::{app::layout_manager::*, canvas::LayoutConstraint, error::Result};
 
 /// Represents a row.  This has a length of some sort (optional) and a vector
 /// of children.
@@ -11,33 +11,48 @@ pub struct Row {
     pub child: Option<Vec<RowChildren>>,
 }
 
-fn new_cpu(left_legend: bool, iter_id: &mut u64) -> BottomColRow {
+fn new_cpu(
+    left_legend: bool, iter_id: &mut u64, second_ratio: u32, second_total: u32,
+) -> BottomElement {
     let cpu_id = *iter_id;
     *iter_id += 1;
     let legend_id = *iter_id;
-
-    if left_legend {
-        BottomColRow::new(vec![
-            BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
-                .width_ratio(3)
-                .canvas_handle_width(true)
+    let constraint = LayoutConstraint::Ratio(second_ratio, second_total);
+    let children = if left_legend {
+        vec![
+            BottomElement::Widget(
+                BottomWidget::new(
+                    BottomWidgetType::CpuLegend,
+                    legend_id,
+                    LayoutConstraint::CanvasHandled,
+                )
                 .parent_reflector(Some((WidgetDirection::Right, 1))),
-            BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
-                .width_ratio(17)
-                .flex_grow(true),
-        ])
+            ),
+            BottomElement::Widget(BottomWidget::new(
+                BottomWidgetType::Cpu,
+                cpu_id,
+                LayoutConstraint::Grow,
+            )),
+        ]
     } else {
-        BottomColRow::new(vec![
-            BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
-                .width_ratio(17)
-                .flex_grow(true),
-            BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
-                .width_ratio(3)
-                .canvas_handle_width(true)
+        vec![
+            BottomElement::Widget(BottomWidget::new(
+                BottomWidgetType::Cpu,
+                cpu_id,
+                LayoutConstraint::Grow,
+            )),
+            BottomElement::Widget(
+                BottomWidget::new(
+                    BottomWidgetType::CpuLegend,
+                    legend_id,
+                    LayoutConstraint::CanvasHandled,
+                )
                 .parent_reflector(Some((WidgetDirection::Left, 1))),
-        ])
-    }
-    .total_widget_ratio(20)
+            ),
+        ]
+    };
+
+    BottomElement::Container(BottomContainer::row(children, constraint))
 }
 
 fn new_proc_sort(sort_id: u64) -> BottomWidget {
@@ -57,26 +72,24 @@ fn new_proc_search(search_id: u64) -> BottomWidget {
 }
 
 impl Row {
-    pub fn convert_row_to_bottom_row(
-        &self, iter_id: &mut u64, total_height_ratio: &mut u32, default_widget_id: &mut u64,
+    pub fn create_row_layout(
+        &self, iter_id: &mut u64, first_total: u32, default_widget_id: &mut u64,
         default_widget_type: &Option<BottomWidgetType>, default_widget_count: &mut u64,
         left_legend: bool,
-    ) -> Result<BottomRow> {
+    ) -> Result<BottomElement> {
         // TODO: In the future we want to also add percentages.
         // But for MVP, we aren't going to bother.
-        let row_ratio = self.ratio.unwrap_or(1);
+        let first_ratio = self.ratio.unwrap_or(1);
         let mut children = Vec::new();
 
-        *total_height_ratio += row_ratio;
-
-        let mut total_col_ratio = 0;
+        let mut second_total = 0;
         if let Some(row_children) = &self.child {
             for row_child in row_children {
                 match row_child {
                     RowChildren::Widget(widget) => {
                         *iter_id += 1;
-                        let width_ratio = widget.ratio.unwrap_or(1);
-                        total_col_ratio += width_ratio;
+                        let second_ratio = widget.ratio.unwrap_or(1);
+                        second_total += second_ratio;
                         let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
 
                         if let Some(default_widget_type_val) = default_widget_type {
@@ -98,8 +111,7 @@ impl Row {
 
                         children.push(match widget_type {
                             BottomWidgetType::Cpu => {
-                                BottomCol::new(vec![new_cpu(left_legend, iter_id)])
-                                    .col_width_ratio(width_ratio)
+                                new_cpu(left_legend, iter_id, second_ratio, second_total)
                             }
                             BottomWidgetType::Proc => {
                                 let proc_id = *iter_id;
@@ -183,13 +195,16 @@ impl Row {
                                             .col_row_height_ratio(col_row_height_ratio),
                                     );
                                 }
-                                _ => col_row_children.push(
-                                    BottomColRow::new(vec![BottomWidget::new(
+                                _ => col_row_children.push(BottomColRow::new(vec![
+                                    BottomWidget::new(
                                         widget_type,
                                         *iter_id,
-                                    )])
-                                    .col_row_height_ratio(col_row_height_ratio),
-                                ),
+                                        LayoutConstraint::Ratio(
+                                            col_row_height_ratio,
+                                            total_col_row_ratio,
+                                        ),
+                                    ),
+                                ])),
                             }
                         }
 
@@ -217,9 +232,10 @@ impl Row {
             }
         }
 
-        Ok(BottomRow::new(children)
-            .total_col_ratio(total_col_ratio)
-            .row_height_ratio(row_ratio))
+        Ok(BottomElement::Container(BottomContainer::row(
+            children,
+            LayoutConstraint::Ratio(first_ratio, first_total),
+        )))
     }
 }
 

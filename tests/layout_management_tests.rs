@@ -41,7 +41,7 @@ fn test_create_layout(
         rows: rows
             .iter()
             .map(|row| {
-                row.convert_row_to_bottom_row(
+                row.create_row_layout(
                     &mut iter_id,
                     &mut total_height_ratio,
                     &mut default_widget_id,
@@ -252,7 +252,7 @@ fn test_default_widget_in_layout() {
         rows: rows
             .iter()
             .map(|row| {
-                row.convert_row_to_bottom_row(
+                row.create_row_layout(
                     &mut iter_id,
                     &mut total_height_ratio,
                     &mut default_widget_id,
@@ -285,7 +285,7 @@ fn test_default_widget_by_option() {
         rows: rows
             .iter()
             .map(|row| {
-                row.convert_row_to_bottom_row(
+                row.create_row_layout(
                     &mut iter_id,
                     &mut total_height_ratio,
                     &mut default_widget_id,
