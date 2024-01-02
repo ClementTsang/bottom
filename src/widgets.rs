@@ -13,7 +13,6 @@ pub use mem_graph::*;
 pub use net_graph::*;
 pub use process_table::*;
 pub use temperature_table::*;
-
 use tui::{layout::Rect, Frame};
 
 /// A [`Widget`] converts raw data into something that a user can see and interact with.
