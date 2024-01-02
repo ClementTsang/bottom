@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use tui::text::Text;
 
 use crate::{
-    canvas::tui_widgets::data_table::{ColumnHeader, DataTableColumn, DataToCell},
+    canvas::components::data_table::{ColumnHeader, DataTableColumn, DataToCell},
     utils::general::truncate_to_text,
 };
 

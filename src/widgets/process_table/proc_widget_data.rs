@@ -10,7 +10,7 @@ use tui::{text::Text, widgets::Row};
 use super::proc_widget_column::ProcColumn;
 use crate::{
     canvas::{
-        tui_widgets::data_table::{DataTableColumn, DataToCell},
+        components::data_table::{DataTableColumn, DataToCell},
         Painter,
     },
     data_collection::processes::ProcessHarvest,

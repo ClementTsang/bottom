@@ -1,7 +1,7 @@
+pub mod components;
 mod dialogs;
 mod drawing_utils;
 pub mod styling;
-pub mod tui_widgets;
 mod widgets;
 
 use std::str::FromStr;
@@ -49,7 +49,7 @@ impl FromStr for ColourScheme {
             "nord" => Ok(ColourScheme::Nord),
             "nord-light" => Ok(ColourScheme::NordLight),
             _ => Err(BottomError::ConfigError(format!(
-                "\"{s}\" is an invalid built-in color scheme."
+                "`{s}` is an invalid built-in color scheme."
             ))),
         }
     }
@@ -71,8 +71,10 @@ pub struct Painter {
     widget_layout: BottomLayout,
 }
 
-// Part of a temporary fix for https://github.com/ClementTsang/bottom/issues/896
-enum LayoutConstraint {
+/// The constraints of a widget relative to its parent.
+///
+/// This is used over ratatui's internal representation due to https://github.com/ClementTsang/bottom/issues/896.
+pub enum LayoutConstraint {
     CanvasHandled,
     Grow,
     Ratio(u32, u32),

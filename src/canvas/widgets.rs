@@ -1,4 +1,3 @@
-pub mod basic_table_arrows;
 pub mod battery_display;
 pub mod cpu_basic;
 pub mod cpu_graph;
