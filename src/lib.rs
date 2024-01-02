@@ -27,6 +27,7 @@ pub mod constants;
 pub mod data_collection;
 pub mod data_conversion;
 pub mod options;
+pub mod tuine;
 pub mod widgets;
 
 use std::{

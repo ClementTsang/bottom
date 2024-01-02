@@ -55,11 +55,12 @@ impl FromStr for ColourScheme {
     }
 }
 
-/// Handles the canvas' state.
+/// Handles some state used while painting.
 pub struct Painter {
     pub colours: CanvasStyling,
-    height: u16,
-    width: u16,
+
+    prev_height: u16,
+    prev_width: u16,
     styled_help_text: Vec<Line<'static>>,
 
     // TODO: Redo this entire thing.
@@ -153,8 +154,8 @@ impl Painter {
 
         let mut painter = Painter {
             colours: styling,
-            height: 0,
-            width: 0,
+            prev_height: 0,
+            prev_width: 0,
             styled_help_text: Vec::default(),
             row_constraints,
             col_constraints,
@@ -244,12 +245,12 @@ impl Painter {
             let terminal_height = terminal_size.height;
             let terminal_width = terminal_size.width;
 
-            if (self.height == 0 && self.width == 0)
-                || (self.height != terminal_height || self.width != terminal_width)
+            if (self.prev_height == 0 && self.prev_width == 0)
+                || (self.prev_height != terminal_height || self.prev_width != terminal_width)
             {
                 app_state.is_force_redraw = true;
-                self.height = terminal_height;
-                self.width = terminal_width;
+                self.prev_height = terminal_height;
+                self.prev_width = terminal_width;
             }
 
             if app_state.should_get_widget_bounds() {

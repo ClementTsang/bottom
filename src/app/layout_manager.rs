@@ -697,28 +697,6 @@ impl BottomLayout {
     }
 }
 
-// pub enum BottomLayoutNode {
-//     Container(BottomContainer),
-//     Widget(BottomWidget),
-// }
-
-// pub struct BottomContainer {
-//     children: Vec<BottomLayoutNode>,
-//     root_ratio: u32,
-//     growth_type: BottomLayoutNodeSizing,
-// }
-
-// pub enum BottomContainerType {
-//     Row,
-//     Col,
-// }
-
-// pub enum BottomLayoutNodeSizing {
-//     Ratio(u32),
-//     CanvasHandles,
-//     FlexGrow,
-// }
-
 /// Represents a single row in the layout.
 #[derive(Clone, Debug)]
 pub struct BottomRow {
