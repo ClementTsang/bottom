@@ -9,7 +9,7 @@ use tui::{
 use crate::{
     app::App,
     canvas::{
-        tui_widgets::pipe_gauge::{LabelLimit, PipeGauge},
+        components::pipe_gauge::{LabelLimit, PipeGauge},
         Painter,
     },
     constants::*,

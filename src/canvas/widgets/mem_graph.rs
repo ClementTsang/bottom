@@ -10,7 +10,7 @@ use crate::{
     app::App,
     canvas::{
         drawing_utils::should_hide_x_label,
-        tui_widgets::time_graph::{GraphData, TimeGraph},
+        components::time_graph::{GraphData, TimeGraph},
         Painter,
     },
 };

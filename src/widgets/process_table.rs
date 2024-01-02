@@ -20,7 +20,7 @@ use crate::{
     },
     canvas::{
         styling::CanvasStyling,
-        tui_widgets::data_table::{
+        components::data_table::{
             Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
             DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
         },

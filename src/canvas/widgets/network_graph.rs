@@ -10,7 +10,7 @@ use crate::{
     app::{App, AxisScaling},
     canvas::{
         drawing_utils::should_hide_x_label,
-        tui_widgets::{
+        components::{
             time_chart::Point,
             time_graph::{GraphData, TimeGraph},
         },

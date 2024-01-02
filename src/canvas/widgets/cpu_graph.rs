@@ -10,7 +10,7 @@ use crate::{
     app::{layout_manager::WidgetDirection, App},
     canvas::{
         drawing_utils::should_hide_x_label,
-        tui_widgets::{
+        components::{
             data_table::{DrawInfo, SelectionState},
             time_graph::{GraphData, TimeGraph},
         },

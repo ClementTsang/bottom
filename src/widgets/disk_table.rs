@@ -7,7 +7,7 @@ use crate::{
     app::AppConfigFields,
     canvas::{
         styling::CanvasStyling,
-        tui_widgets::data_table::{
+        components::data_table::{
             ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell,
             SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
         },

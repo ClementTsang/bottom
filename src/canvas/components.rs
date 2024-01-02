@@ -1,4 +1,4 @@
-//! Cstom ratatui widgets used by the rest of bottom.
+//! Cstom ratatui widgets used by the rest of bottom as lower-level components.
 
 pub mod data_table;
 pub mod pipe_gauge;
