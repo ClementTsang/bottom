@@ -52,6 +52,9 @@ pub enum FileSystem {
     /// Btrfs (https://en.wikipedia.org/wiki/Btrfs)
     Btrfs,
 
+    /// Bcachefs (https://en.wikipedia.org/wiki/Bcachefs)
+    Bcachefs,
+
     /// MINIX FS (https://en.wikipedia.org/wiki/MINIX_file_system)
     Minix,
 
@@ -104,6 +107,7 @@ impl FileSystem {
             FileSystem::HfsPlus => "hfs+",
             FileSystem::Jfs => "jfs",
             FileSystem::Btrfs => "btrfs",
+            FileSystem::Bcachefs => "bcachefs",
             FileSystem::Minix => "minix",
             FileSystem::Nilfs => "nilfs",
             FileSystem::Xfs => "xfs",
@@ -148,6 +152,8 @@ impl FromStr for FileSystem {
             FileSystem::Jfs
         } else if s.eq_ignore_ascii_case("btrfs") {
             FileSystem::Btrfs
+        } else if s.eq_ignore_ascii_case("bcachefs") {
+            FileSystem::Bcachefs
         } else if s.eq_ignore_ascii_case("minix") {
             FileSystem::Minix
         } else if s.eq_ignore_ascii_case("nilfs") {
