@@ -8,7 +8,7 @@ use std::{
 use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
-use super::{is_temp_filtered, TempHarvest, TemperatureReading, TemperatureType};
+use super::{TempHarvest, TemperatureReading, TemperatureType};
 use crate::{app::filter::Filter, utils::error::BottomError};
 
 const EMPTY_NAME: &str = "Unknown";
@@ -184,8 +184,12 @@ fn finalize_name(
 /// If neither are found, it will always return true and be treated as "awake".
 #[inline]
 fn is_device_awake(path: &Path) -> bool {
+    // XXX: Should we initialize all devices that support runtime_status_path here,
+    // in a map, and take `power/autosuspend_delay_ms` into account?
+
     // Try checking `power/runtime_status` if it exists! For more information, see
-    // https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power
+    // https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power and
+    // https://gitlab.com/mission-center-devs/mission-center/-/issues/30#note_1697130114
     let runtime_status_path = path.join("power/runtime_status");
     if runtime_status_path.exists() {
         if let Ok(status) = fs::read_to_string(runtime_status_path) {
@@ -337,15 +341,18 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                 let name = finalize_name(hwmon_name, sensor_label, &sensor_name, &mut seen_names);
 
                 // TODO: It's possible we may want to move the filter check further up to avoid probing hwmon if not needed?
-                if is_temp_filtered(filter, &name) {
-                    if let Ok(temp_celsius) = parse_temp(&temp_path) {
-                        temperatures.push(TempHarvest {
-                            name,
-                            temperature: TemperatureReading::Value(
-                                temp_type.convert_temp_unit(temp_celsius),
-                            ),
-                        });
-                    }
+                if filter
+                    .as_ref()
+                    .map(|filter| filter.keep_entry(&name))
+                    .unwrap_or(true)
+                {
+                    let temperature = if let Ok(temp_celsius) = parse_temp(&temp_path) {
+                        TemperatureReading::Value(temp_type.convert_temp_unit(temp_celsius))
+                    } else {
+                        TemperatureReading::Unavailable
+                    };
+
+                    temperatures.push(TempHarvest { name, temperature });
                 }
             }
         }
@@ -388,7 +395,11 @@ fn add_thermal_zone_temperatures(
                     name
                 };
 
-                if is_temp_filtered(filter, &name) {
+                if filter
+                    .as_ref()
+                    .map(|filter| filter.keep_entry(&name))
+                    .unwrap_or(true)
+                {
                     let temp_path = file_path.join("temp");
                     if let Ok(temp_celsius) = parse_temp(&temp_path) {
                         let name = counted_name(&mut seen_names, name);

@@ -2,14 +2,17 @@ use std::sync::OnceLock;
 
 use hashbrown::HashMap;
 use nvml_wrapper::{
-    enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError, Nvml,
+    enum_wrappers::device::{PerformanceState, TemperatureSensor},
+    enums::device::UsedGpuMemory,
+    error::NvmlError,
+    Nvml,
 };
 
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
     data_collection::{
         memory::MemHarvest,
-        temperature::{is_temp_filtered, TempHarvest, TemperatureType},
+        temperature::{TempHarvest, TemperatureType},
     },
 };
 
@@ -53,17 +56,42 @@ pub fn get_nvidia_vecs(
                                 ));
                             }
                         }
-                        if widgets_to_harvest.use_temp && is_temp_filtered(filter, &name) {
-                            if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
-                                let temperature = temp_type.convert_temp_unit(temperature as f32);
 
-                                temp_vec.push(TempHarvest {
-                                    name: name.clone(),
-                                    temperature: TemperatureReading::Value(temperature),
-                                });
+                        if widgets_to_harvest.use_temp
+                            && filter
+                                .as_ref()
+                                .map(|filter| filter.keep_entry(&name))
+                                .unwrap_or(true)
+                        {
+                            // Following https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/group__gpupstate.html,
+                            // it seems like performance state 12 and lower are "minimum idle power consumption".
+                            match device.performance_state() {
+                                Ok(PerformanceState::Fifteen)
+                                | Ok(PerformanceState::Fourteen)
+                                | Ok(PerformanceState::Thirteen)
+                                | Ok(PerformanceState::Twelve) => {
+                                    temp_vec.push(TempHarvest {
+                                        name,
+                                        temperature: TemperatureReading::Off,
+                                    });
+                                }
+                                _ => {
+                                    if let Ok(temperature) =
+                                        device.temperature(TemperatureSensor::Gpu)
+                                    {
+                                        let temperature =
+                                            temp_type.convert_temp_unit(temperature as f32);
+
+                                        temp_vec.push(TempHarvest {
+                                            name,
+                                            temperature: TemperatureReading::Value(temperature),
+                                        });
+                                    }
+                                }
                             }
                         }
                     }
+
                     if widgets_to_harvest.use_proc {
                         let mut procs = HashMap::new();
                         if let Ok(gpu_procs) = device.process_utilization_stats(None) {
@@ -73,6 +101,7 @@ pub fn get_nvidia_vecs(
                                 procs.insert(pid, (0, gpu_util));
                             }
                         }
+
                         if let Ok(compute_procs) = device.running_compute_processes() {
                             for proc in compute_procs {
                                 let pid = proc.pid;
@@ -87,7 +116,8 @@ pub fn get_nvidia_vecs(
                                 }
                             }
                         }
-                        // Use the legacy API too but prefer newer API results
+
+                        // Use the legacy API too, but prefer newer API results
                         if let Ok(graphics_procs) = device.running_graphics_processes_v2() {
                             for proc in graphics_procs {
                                 let pid = proc.pid;
@@ -102,6 +132,7 @@ pub fn get_nvidia_vecs(
                                 }
                             }
                         }
+
                         if let Ok(graphics_procs) = device.running_graphics_processes() {
                             for proc in graphics_procs {
                                 let pid = proc.pid;
@@ -116,9 +147,11 @@ pub fn get_nvidia_vecs(
                                 }
                             }
                         }
+
                         if !procs.is_empty() {
                             proc_vec.push(procs);
                         }
+
                         // running total for proc %
                         if let Ok(mem) = device.memory_info() {
                             total_mem += mem.total;
