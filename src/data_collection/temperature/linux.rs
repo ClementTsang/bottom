@@ -3,35 +3,15 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    sync::OnceLock,
-    time::Instant,
 };
 
 use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
-use humantime::Duration;
 
 use super::{is_temp_filtered, TempHarvest, TemperatureReading, TemperatureType};
 use crate::{app::filter::Filter, utils::error::BottomError};
 
 const EMPTY_NAME: &str = "Unknown";
-
-/// Holds some data about the power states of certain devices.
-struct PowerStateInfo {
-    autosuspend: Option<Duration>,
-    last_read: Instant,
-}
-
-impl PowerStateInfo {
-    fn new(autosuspend: Option<Duration>) -> Self {
-        Self {
-            autosuspend,
-            last_read: Instant::now(),
-        }
-    }
-}
-
-static POWER_STATE_MAP: OnceLock<HashMap<String, PowerStateInfo>> = OnceLock::new();
 
 /// Returned results from grabbing hwmon/coretemp temperature sensor values/names.
 struct HwmonResults {
@@ -57,7 +37,8 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
             let mut path = entry.path();
 
             // hwmon includes many sensors, we only want ones with at least one temperature sensor
-            // Reading this file will wake the device, but we're only checking existence, so it should be fine.
+            // _Reading_ this file will wake the device, but we're only checking _existence_, so
+            // this shouldn't wake up the device.
             if !path.join("temp1_input").exists() {
                 // Note we also check for a `device` subdirectory (e.g. `/sys/class/hwmon/hwmon*/device/`).
                 // This is needed for CentOS, which adds this extra `/device` directory. See:
@@ -194,18 +175,37 @@ fn finalize_name(
     counted_name(seen_names, candidate_name)
 }
 
-/// Whether the temperature should *actually* be read during enumeration.
-/// Will return false if the state is not D0/unknown, or if it does not support `device/power_state`.
+/// Whether the temperature should *actually* be read during enumeration. Uses a combination of
+/// `power/runtime_status` if it is supported, and `device/power_state` as a fallback.
+///
+/// If `runtime_status` is supported, then it will return true only if it is in the "active" state.
+/// If it is not supported, and we fall back to `device/power_state`, then it will return true
+/// only if in D0 or unknown states.
+/// If neither are found, it will always return true and be treated as "awake".
 #[inline]
 fn is_device_awake(path: &Path) -> bool {
-    // Whether the temperature should *actually* be read during enumeration.
-    // Set to false if the device is in ACPI D3cold.
+    // Try checking `power/runtime_status` if it exists! For more information, see
+    // https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power
+    let runtime_status_path = path.join("power/runtime_status");
+    if runtime_status_path.exists() {
+        if let Ok(status) = fs::read_to_string(runtime_status_path) {
+            match status.as_str() {
+                "suspended" | "suspending" | "resuming" => {
+                    return false;
+                }
+                "active" => {
+                    return true;
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // Otherwise, check if the device is in ACPI D3Cold.
     // Documented at https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power_state
-    let device = path.join("device");
-    let power_state = device.join("power_state");
+    let power_state = path.join("device/power_state");
     if power_state.exists() {
         if let Ok(state) = fs::read_to_string(power_state) {
-            let state = state.trim();
             // The zenpower3 kernel module (incorrectly?) reports "unknown", causing this check
             // to fail and temperatures to appear as zero instead of having the file not exist.
             //
