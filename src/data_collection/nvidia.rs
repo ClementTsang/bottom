@@ -13,6 +13,8 @@ use crate::{
     },
 };
 
+use super::temperature::TemperatureReading;
+
 pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
 
 pub struct GpusData {
@@ -57,7 +59,7 @@ pub fn get_nvidia_vecs(
 
                                 temp_vec.push(TempHarvest {
                                     name: name.clone(),
-                                    temperature: Some(temperature),
+                                    temperature: TemperatureReading::Value(temperature),
                                 });
                             }
                         }

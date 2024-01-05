@@ -1,4 +1,7 @@
-use std::{borrow::Cow, cmp::max};
+use std::{
+    borrow::Cow,
+    cmp::{max, Ordering},
+};
 
 use concat_string::concat_string;
 use kstring::KString;
@@ -17,10 +20,34 @@ use crate::{
     utils::general::{sort_partial_fn, truncate_to_text},
 };
 
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
+pub enum TempWidgetReading {
+    Value(u32),
+    #[default]
+    Unavailable,
+    Off,
+}
+
+impl PartialOrd for TempWidgetReading {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (self, other) {
+            (TempWidgetReading::Value(a), TempWidgetReading::Value(b)) => a.partial_cmp(b),
+            (TempWidgetReading::Value(_), _) => Some(Ordering::Greater),
+            (_, TempWidgetReading::Value(_)) => Some(Ordering::Less),
+            (TempWidgetReading::Unavailable, TempWidgetReading::Unavailable) => {
+                Some(Ordering::Equal)
+            }
+            (TempWidgetReading::Unavailable, TempWidgetReading::Off) => Some(Ordering::Greater),
+            (TempWidgetReading::Off, TempWidgetReading::Unavailable) => Some(Ordering::Less),
+            (TempWidgetReading::Off, TempWidgetReading::Off) => Some(Ordering::Equal),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct TempWidgetData {
     pub sensor: KString,
-    pub temperature_value: Option<u64>,
+    pub temperature_value: TempWidgetReading,
     pub temperature_type: TemperatureType,
 }
 
@@ -41,15 +68,16 @@ impl ColumnHeader for TempWidgetColumn {
 impl TempWidgetData {
     pub fn temperature(&self) -> KString {
         match self.temperature_value {
-            Some(temp_val) => {
+            TempWidgetReading::Value(val) => {
                 let temp_type = match self.temperature_type {
                     TemperatureType::Celsius => "°C",
                     TemperatureType::Kelvin => "K",
                     TemperatureType::Fahrenheit => "°F",
                 };
-                concat_string!(temp_val.to_string(), temp_type).into()
+                concat_string!(val.to_string(), temp_type).into()
             }
-            None => "N/A".to_string().into(),
+            TempWidgetReading::Unavailable => "N/A".to_string().into(),
+            TempWidgetReading::Off => "Off".to_string().into(),
         }
     }
 }

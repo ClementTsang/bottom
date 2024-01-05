@@ -16,9 +16,17 @@ cfg_if::cfg_if! {
 use crate::app::filter::Filter;
 
 #[derive(Default, Debug, Clone)]
+pub enum TemperatureReading {
+    Value(f32),
+    #[default]
+    Unavailable,
+    Off,
+}
+
+#[derive(Default, Debug, Clone)]
 pub struct TempHarvest {
     pub name: String,
-    pub temperature: Option<f32>,
+    pub temperature: TemperatureReading,
 }
 
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Default)]

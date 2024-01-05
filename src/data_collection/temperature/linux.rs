@@ -3,15 +3,35 @@
 use std::{
     fs,
     path::{Path, PathBuf},
+    sync::OnceLock,
+    time::Instant,
 };
 
 use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
+use humantime::Duration;
 
-use super::{is_temp_filtered, TempHarvest, TemperatureType};
+use super::{is_temp_filtered, TempHarvest, TemperatureReading, TemperatureType};
 use crate::{app::filter::Filter, utils::error::BottomError};
 
 const EMPTY_NAME: &str = "Unknown";
+
+/// Holds some data about the power states of certain devices.
+struct PowerStateInfo {
+    autosuspend: Option<Duration>,
+    last_read: Instant,
+}
+
+impl PowerStateInfo {
+    fn new(autosuspend: Option<Duration>) -> Self {
+        Self {
+            autosuspend,
+            last_read: Instant::now(),
+        }
+    }
+}
+
+static POWER_STATE_MAP: OnceLock<HashMap<String, PowerStateInfo>> = OnceLock::new();
 
 /// Returned results from grabbing hwmon/coretemp temperature sensor values/names.
 struct HwmonResults {
@@ -241,7 +261,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
             let name = finalize_name(None, None, &sensor_name, &mut seen_names);
             temperatures.push(TempHarvest {
                 name,
-                temperature: None,
+                temperature: TemperatureReading::Off,
             });
 
             continue;
@@ -321,7 +341,9 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                     if let Ok(temp_celsius) = parse_temp(&temp_path) {
                         temperatures.push(TempHarvest {
                             name,
-                            temperature: Some(temp_type.convert_temp_unit(temp_celsius)),
+                            temperature: TemperatureReading::Value(
+                                temp_type.convert_temp_unit(temp_celsius),
+                            ),
                         });
                     }
                 }
@@ -373,7 +395,9 @@ fn add_thermal_zone_temperatures(
 
                         temperatures.push(TempHarvest {
                             name,
-                            temperature: Some(temp_type.convert_temp_unit(temp_celsius)),
+                            temperature: TemperatureReading::Value(
+                                temp_type.convert_temp_unit(temp_celsius),
+                            ),
                         });
                     }
                 }

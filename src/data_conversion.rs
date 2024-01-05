@@ -8,9 +8,13 @@ use kstring::KString;
 use crate::{
     app::{data_farmer::DataCollection, AxisScaling},
     canvas::components::time_chart::Point,
-    data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
+    data_collection::{
+        cpu::CpuDataType,
+        memory::MemHarvest,
+        temperature::{TemperatureReading, TemperatureType},
+    },
     utils::{data_prefixes::*, data_units::DataUnit, general::*},
-    widgets::{DiskWidgetData, TempWidgetData},
+    widgets::{DiskWidgetData, TempWidgetData, TempWidgetReading},
 };
 
 #[derive(Debug, Default)]
@@ -130,7 +134,11 @@ impl ConvertedData {
         data.temp_harvest.iter().for_each(|temp_harvest| {
             self.temp_data.push(TempWidgetData {
                 sensor: KString::from_ref(&temp_harvest.name),
-                temperature_value: temp_harvest.temperature.map(|temp| temp.ceil() as u64),
+                temperature_value: match temp_harvest.temperature {
+                    TemperatureReading::Value(val) => TempWidgetReading::Value(val.ceil() as u32),
+                    TemperatureReading::Unavailable => TempWidgetReading::Unavailable,
+                    TemperatureReading::Off => TempWidgetReading::Off,
+                },
                 temperature_type,
             });
         });

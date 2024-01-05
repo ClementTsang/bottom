@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 
-use super::{is_temp_filtered, TempHarvest, TemperatureType};
+use super::{is_temp_filtered, TempHarvest, TemperatureReading, TemperatureType};
 use crate::app::filter::Filter;
 
 pub fn get_temperature_data(
@@ -19,7 +19,9 @@ pub fn get_temperature_data(
         if is_temp_filtered(filter, &name) {
             temperature_vec.push(TempHarvest {
                 name,
-                temperature: Some(temp_type.convert_temp_unit(component.temperature())),
+                temperature: TemperatureReading::Value(
+                    temp_type.convert_temp_unit(component.temperature()),
+                ),
             });
         }
     }
@@ -36,7 +38,7 @@ pub fn get_temperature_data(
                     if let Some(temp) = temp.as_temperature() {
                         temperature_vec.push(TempHarvest {
                             name,
-                            temperature: Some(match temp_type {
+                            temperature: TemperatureReading::Value(match temp_type {
                                 TemperatureType::Celsius => temp.celsius(),
                                 TemperatureType::Kelvin => temp.kelvin(),
                                 TemperatureType::Fahrenheit => temp.fahrenheit(),
