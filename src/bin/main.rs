@@ -275,20 +275,28 @@ fn main() -> Result<()> {
                                     convert_gpu_data(&app.data_collection);
                             }
 
-                            app.converted_data.mem_labels =
-                                convert_mem_label(&app.data_collection.memory_harvest, app.app_config_fields.memory_use_mega_prefix);
-                            app.converted_data.swap_labels =
-                                convert_mem_label(&app.data_collection.swap_harvest, app.app_config_fields.memory_use_mega_prefix);
+                            app.converted_data.mem_labels = convert_mem_label(
+                                &app.data_collection.memory_harvest,
+                                app.app_config_fields.memory_use_mega_prefix
+                            );
+                            app.converted_data.swap_labels = convert_mem_label(
+                                &app.data_collection.swap_harvest,
+                                app.app_config_fields.memory_use_mega_prefix
+                            );
                             #[cfg(not(target_os = "windows"))]
                             {
-                                app.converted_data.cache_labels =
-                                    convert_mem_label(&app.data_collection.cache_harvest);
+                                app.converted_data.cache_labels = convert_mem_label(
+                                    &app.data_collection.cache_harvest,
+                                    app.app_config_fields.memory_use_mega_prefix
+                                );
                             }
 
                             #[cfg(feature = "zfs")]
                             {
-                                let arc_labels =
-                                    convert_mem_label(&app.data_collection.arc_harvest, app.app_config_fields.memory_use_mega_prefix);
+                                let arc_labels = convert_mem_label(
+                                    &app.data_collection.arc_harvest,
+                                    app.app_config_fields.memory_use_mega_prefix
+                                );
                                 app.converted_data.arc_labels = arc_labels;
                             }
                         }
