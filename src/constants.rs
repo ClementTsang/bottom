@@ -545,6 +545,8 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #whole_word = false
 # Whether to make process searching use regex by default.
 #regex = false
+# Whether to display memory usage in megabibytes (MiB) or gigabibytes (GiB).
+#memory_use_mega_prefix = false
 # Defaults to Celsius.  Temperature is one of:
 #temperature_type = "k"
 #temperature_type = "f"
