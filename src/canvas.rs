@@ -352,9 +352,9 @@ impl Painter {
                                 _ => 0,
                             };
 
-                        self.draw_process_widget(f, app_state, rect[0], true, widget_id);
+                        self.draw_process(f, app_state, rect[0], true, widget_id);
                     }
-                    Battery => self.draw_battery_display(
+                    Battery => self.draw_battery(
                         f,
                         app_state,
                         rect[0],
@@ -458,18 +458,12 @@ impl Painter {
                                         ProcSort => 2,
                                         _ => 0,
                                     };
-                                self.draw_process_widget(
-                                    f,
-                                    app_state,
-                                    vertical_chunks[3],
-                                    false,
-                                    wid,
-                                );
+                                self.draw_process(f, app_state, vertical_chunks[3], false, wid);
                             }
                             Temp => {
                                 self.draw_temp_table(f, app_state, vertical_chunks[3], widget_id)
                             }
-                            Battery => self.draw_battery_display(
+                            Battery => self.draw_battery(
                                 f,
                                 app_state,
                                 vertical_chunks[3],
@@ -738,29 +732,16 @@ impl Painter {
         widget_draw_locs: &[Rect],
     ) {
         use BottomWidgetType::*;
-        for (widget, widget_draw_loc) in widgets.children.iter().zip(widget_draw_locs) {
-            if widget_draw_loc.width >= 2 && widget_draw_loc.height >= 2 {
+        for (widget, draw_loc) in widgets.children.iter().zip(widget_draw_locs) {
+            if draw_loc.width >= 2 && draw_loc.height >= 2 {
                 match &widget.widget_type {
-                    Empty => {}
-                    Cpu => self.draw_cpu(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Mem => self.draw_memory_graph(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Net => self.draw_network(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Temp => self.draw_temp_table(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Disk => self.draw_disk_table(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Proc => self.draw_process_widget(
-                        f,
-                        app_state,
-                        *widget_draw_loc,
-                        true,
-                        widget.widget_id,
-                    ),
-                    Battery => self.draw_battery_display(
-                        f,
-                        app_state,
-                        *widget_draw_loc,
-                        true,
-                        widget.widget_id,
-                    ),
+                    Cpu => self.draw_cpu(f, app_state, *draw_loc, widget.widget_id),
+                    Mem => self.draw_memory_graph(f, app_state, *draw_loc, widget.widget_id),
+                    Net => self.draw_network(f, app_state, *draw_loc, widget.widget_id),
+                    Temp => self.draw_temp_table(f, app_state, *draw_loc, widget.widget_id),
+                    Disk => self.draw_disk_table(f, app_state, *draw_loc, widget.widget_id),
+                    Proc => self.draw_process(f, app_state, *draw_loc, true, widget.widget_id),
+                    Battery => self.draw_battery(f, app_state, *draw_loc, true, widget.widget_id),
                     _ => {}
                 }
             }

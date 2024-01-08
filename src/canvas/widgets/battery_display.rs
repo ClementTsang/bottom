@@ -15,7 +15,7 @@ use crate::{
 };
 
 impl Painter {
-    pub fn draw_battery_display(
+    pub fn draw_battery(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {

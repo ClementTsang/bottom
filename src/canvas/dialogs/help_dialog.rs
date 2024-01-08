@@ -27,16 +27,14 @@ impl Painter {
 
             if itx > 0 {
                 if let Some(header) = section.next() {
-                    styled_help_spans.push(Span::raw(""));
+                    styled_help_spans.push(Span::default());
                     styled_help_spans.push(Span::styled(*header, self.colours.table_header_style));
                 }
             }
 
-            styled_help_spans.extend(
-                section
-                    .map(|&text| Span::styled(text, self.colours.text_style))
-                    .collect::<Vec<_>>(),
-            );
+            section.for_each(|&text| {
+                styled_help_spans.push(Span::styled(text, self.colours.text_style))
+            });
         });
 
         styled_help_spans.into_iter().map(Line::from).collect()
@@ -65,10 +63,10 @@ impl Painter {
             .border_style(self.colours.border_style);
 
         if app_state.should_get_widget_bounds() {
-            app_state.help_dialog_state.height = block.inner(draw_loc).height;
-
             // We must also recalculate how many lines are wrapping to properly get scrolling to work on
             // small terminal sizes... oh joy.
+
+            app_state.help_dialog_state.height = block.inner(draw_loc).height;
 
             let mut overflow_buffer = 0;
             let paragraph_width = max(draw_loc.width.saturating_sub(2), 1);
@@ -106,7 +104,7 @@ impl Painter {
             *max_scroll_index = (styled_help_text.len() as u16 + 3 + overflow_buffer)
                 .saturating_sub(draw_loc.height + 1);
 
-            // Fix if over-scrolled
+            // Fix the scroll index if it is over-scrolled
             let index = &mut app_state
                 .help_dialog_state
                 .scroll_state
