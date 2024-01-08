@@ -8,13 +8,51 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::{app::App, canvas::Painter, constants};
+use crate::{
+    app::App,
+    canvas::Painter,
+    constants::{self, HELP_TEXT},
+};
 
 const HELP_BASE: &str = " Help ── Esc to close ";
 
 // TODO: [REFACTOR] Make generic dialog boxes to build off of instead?
 impl Painter {
+    fn help_text_lines(&self) -> Vec<Line<'_>> {
+        let mut styled_help_spans = Vec::new();
+
+        // Init help text:
+        HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
+            if itx == 0 {
+                styled_help_spans.extend(
+                    section
+                        .iter()
+                        .map(|&text| Span::styled(text, self.colours.text_style))
+                        .collect::<Vec<_>>(),
+                );
+            } else {
+                // Not required check but it runs only a few times... so whatever ig, prevents me from
+                // being dumb and leaving a help text section only one line long.
+                if section.len() > 1 {
+                    styled_help_spans.push(Span::raw(""));
+                    styled_help_spans
+                        .push(Span::styled(section[0], self.colours.table_header_style));
+                    styled_help_spans.extend(
+                        section[1..]
+                            .iter()
+                            .map(|&text| Span::styled(text, self.colours.text_style))
+                            .collect::<Vec<_>>(),
+                    );
+                }
+            }
+        });
+
+        styled_help_spans.into_iter().map(Line::from).collect()
+    }
+
     pub fn draw_help_dialog(&self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect) {
+        let styled_help_text = self.help_text_lines();
+
         let help_title = Line::from(vec![
             Span::styled(" Help ", self.colours.widget_title_style),
             Span::styled(
@@ -73,7 +111,7 @@ impl Painter {
                 });
 
             let max_scroll_index = &mut app_state.help_dialog_state.scroll_state.max_scroll_index;
-            *max_scroll_index = (self.styled_help_text.len() as u16 + 3 + overflow_buffer)
+            *max_scroll_index = (styled_help_text.len() as u16 + 3 + overflow_buffer)
                 .saturating_sub(draw_loc.height + 1);
 
             // Fix if over-scrolled
@@ -86,7 +124,7 @@ impl Painter {
         }
 
         f.render_widget(
-            Paragraph::new(self.styled_help_text.clone())
+            Paragraph::new(styled_help_text.clone())
                 .block(block)
                 .style(self.colours.text_style)
                 .alignment(Alignment::Left)

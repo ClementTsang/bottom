@@ -11,7 +11,7 @@ use styling::*;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    text::{Line, Span},
+    text::Span,
     widgets::Paragraph,
     Frame, Terminal,
 };
@@ -58,9 +58,8 @@ impl FromStr for ColourScheme {
 /// Handles the canvas' state.
 pub struct Painter {
     pub colours: CanvasStyling,
-    height: u16,
-    width: u16,
-    styled_help_text: Vec<Line<'static>>,
+    previous_height: u16,
+    previous_width: u16,
 
     // TODO: Redo this entire thing.
     row_constraints: Vec<LayoutConstraint>,
@@ -151,11 +150,10 @@ impl Painter {
             col_constraints.push(new_col_constraints);
         });
 
-        let mut painter = Painter {
+        let painter = Painter {
             colours: styling,
-            height: 0,
-            width: 0,
-            styled_help_text: Vec::default(),
+            previous_height: 0,
+            previous_width: 0,
             row_constraints,
             col_constraints,
             col_row_constraints,
@@ -163,8 +161,6 @@ impl Painter {
             widget_layout,
             derived_widget_draw_locs: Vec::default(),
         };
-
-        painter.complete_painter_init();
 
         Ok(painter)
     }
@@ -177,40 +173,6 @@ impl Painter {
         } else {
             self.colours.border_style
         }
-    }
-
-    /// Must be run once before drawing, but after setting colours.
-    /// This is to set some remaining styles and text.
-    fn complete_painter_init(&mut self) {
-        let mut styled_help_spans = Vec::new();
-
-        // Init help text:
-        HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
-            if itx == 0 {
-                styled_help_spans.extend(
-                    section
-                        .iter()
-                        .map(|&text| Span::styled(text, self.colours.text_style))
-                        .collect::<Vec<_>>(),
-                );
-            } else {
-                // Not required check but it runs only a few times... so whatever ig, prevents me from
-                // being dumb and leaving a help text section only one line long.
-                if section.len() > 1 {
-                    styled_help_spans.push(Span::raw(""));
-                    styled_help_spans
-                        .push(Span::styled(section[0], self.colours.table_header_style));
-                    styled_help_spans.extend(
-                        section[1..]
-                            .iter()
-                            .map(|&text| Span::styled(text, self.colours.text_style))
-                            .collect::<Vec<_>>(),
-                    );
-                }
-            }
-        });
-
-        self.styled_help_text = styled_help_spans.into_iter().map(Line::from).collect();
     }
 
     fn draw_frozen_indicator(&self, f: &mut Frame<'_>, draw_loc: Rect) {
@@ -244,12 +206,13 @@ impl Painter {
             let terminal_height = terminal_size.height;
             let terminal_width = terminal_size.width;
 
-            if (self.height == 0 && self.width == 0)
-                || (self.height != terminal_height || self.width != terminal_width)
+            if (self.previous_height == 0 && self.previous_width == 0)
+                || (self.previous_height != terminal_height
+                    || self.previous_width != terminal_width)
             {
                 app_state.is_force_redraw = true;
-                self.height = terminal_height;
-                self.width = terminal_width;
+                self.previous_height = terminal_height;
+                self.previous_width = terminal_width;
             }
 
             if app_state.should_get_widget_bounds() {
