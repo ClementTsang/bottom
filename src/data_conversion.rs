@@ -266,13 +266,9 @@ pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
 ///
 /// The expected usage is to divide out the given value with the returned denominator in order to be able to use it
 /// with the returned binary unit (e.g. divide 3000 bytes by 1024 to have a value in KiB).
-<<<<<<< HEAD
 fn get_mem_binary_unit_and_denominator(
     bytes: u64, memory_use_mega_prefix: bool,
 ) -> (&'static str, f64) {
-=======
-fn get_mem_binary_unit_and_denominator(bytes: u64, memory_use_mega_prefix: bool) -> (&'static str, f64) {
->>>>>>> 16bcf7d8 (added a feature)
     if memory_use_mega_prefix {
         if bytes < KIBI_LIMIT {
             // Stick with bytes if under a kibibyte.
@@ -283,7 +279,6 @@ fn get_mem_binary_unit_and_denominator(bytes: u64, memory_use_mega_prefix: bool)
             // Otherwise just use mebibytes, which is probably safe for most use cases.
             ("MiB", MEBI_LIMIT_F64)
         }
-<<<<<<< HEAD
     } else if bytes < KIBI_LIMIT {
         // Stick with bytes if under a kibibyte.
         ("B", 1.0)
@@ -293,27 +288,22 @@ fn get_mem_binary_unit_and_denominator(bytes: u64, memory_use_mega_prefix: bool)
         ("MiB", MEBI_LIMIT_F64)
     } else if bytes < TEBI_LIMIT {
         ("GiB", GIBI_LIMIT_F64)
-=======
->>>>>>> 16bcf7d8 (added a feature)
+    } else if bytes < KIBI_LIMIT {
+        // Stick with bytes if under a kibibyte.
+        ("B", 1.0)
+    } else if bytes < MEBI_LIMIT {
+        ("KiB", KIBI_LIMIT_F64)
+    } else if bytes < GIBI_LIMIT {
+        ("MiB", MEBI_LIMIT_F64)
+    } else if bytes < TEBI_LIMIT {
+        ("GiB", GIBI_LIMIT_F64)
     } else {
-        if bytes < KIBI_LIMIT {
-            // Stick with bytes if under a kibibyte.
-            ("B", 1.0)
-        } else if bytes < MEBI_LIMIT {
-            ("KiB", KIBI_LIMIT_F64)
-        } else if bytes < GIBI_LIMIT {
-            ("MiB", MEBI_LIMIT_F64)
-        } else if bytes < TEBI_LIMIT {
-            ("GiB", GIBI_LIMIT_F64)
-        } else {
-            // Otherwise just use tebibytes, which is probably safe for most use cases.
-            ("TiB", TEBI_LIMIT_F64)
-        }
+        // Otherwise just use tebibytes, which is probably safe for most use cases.
+        ("TiB", TEBI_LIMIT_F64)
     }
 }
 
 /// Returns the unit type and denominator for given total amount of memory in kibibytes.
-<<<<<<< HEAD
 pub fn convert_mem_label(
     harvest: &MemHarvest, memory_use_mega_prefix: bool,
 ) -> Option<(String, String)> {
@@ -321,12 +311,6 @@ pub fn convert_mem_label(
         Some((format!("{:3.0}%", harvest.use_percent.unwrap_or(0.0)), {
             let (unit, denominator) =
                 get_mem_binary_unit_and_denominator(harvest.total_bytes, memory_use_mega_prefix);
-=======
-pub fn convert_mem_label(harvest: &MemHarvest, memory_use_mega_prefix: bool) -> Option<(String, String)> {
-    if harvest.total_bytes > 0 {
-        Some((format!("{:3.0}%", harvest.use_percent.unwrap_or(0.0)), {
-            let (unit, denominator) = get_mem_binary_unit_and_denominator(harvest.total_bytes, memory_use_mega_prefix);
->>>>>>> 16bcf7d8 (added a feature)
 
             format!(
                 "   {:.1}{}/{:.1}{}",
