@@ -288,15 +288,6 @@ fn get_mem_binary_unit_and_denominator(
         ("MiB", MEBI_LIMIT_F64)
     } else if bytes < TEBI_LIMIT {
         ("GiB", GIBI_LIMIT_F64)
-    } else if bytes < KIBI_LIMIT {
-        // Stick with bytes if under a kibibyte.
-        ("B", 1.0)
-    } else if bytes < MEBI_LIMIT {
-        ("KiB", KIBI_LIMIT_F64)
-    } else if bytes < GIBI_LIMIT {
-        ("MiB", MEBI_LIMIT_F64)
-    } else if bytes < TEBI_LIMIT {
-        ("GiB", GIBI_LIMIT_F64)
     } else {
         // Otherwise just use tebibytes, which is probably safe for most use cases.
         ("TiB", TEBI_LIMIT_F64)
