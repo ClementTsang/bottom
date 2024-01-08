@@ -752,11 +752,22 @@ mod test {
 
     #[test]
     fn help_menu_matches_entry_len() {
+        // The two match since HELP_TEXT contains HELP_CONTENTS_TEXT as an entry
         assert_eq!(
             HELP_CONTENTS_TEXT.len(),
             HELP_TEXT.len(),
             "the two should be equal, or this test should be updated"
         )
+    }
+
+    #[test]
+    fn help_menu_text_has_sections() {
+        for (itx, line) in HELP_TEXT.iter().enumerate() {
+            if itx > 0 {
+                assert!(line.len() >= 2, "each section should be at least 2 lines");
+                assert!(line[0].contains(" - "), "each section should have a header");
+            }
+        }
     }
 
     /// This test exists because previously, [`SIDE_BORDERS`] was set incorrectly after I moved from

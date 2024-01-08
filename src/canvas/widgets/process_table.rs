@@ -21,7 +21,7 @@ const SORT_MENU_WIDTH: u16 = 7;
 impl Painter {
     /// Draws and handles all process-related drawing.  Use this.
     /// - `widget_id` here represents the widget ID of the process widget itself!
-    pub fn draw_process_widget(
+    pub fn draw_process(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
