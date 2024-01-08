@@ -23,28 +23,20 @@ impl Painter {
 
         // Init help text:
         HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
-            if itx == 0 {
-                styled_help_spans.extend(
-                    section
-                        .iter()
-                        .map(|&text| Span::styled(text, self.colours.text_style))
-                        .collect::<Vec<_>>(),
-                );
-            } else {
-                // Not required check but it runs only a few times... so whatever ig, prevents me from
-                // being dumb and leaving a help text section only one line long.
-                if section.len() > 1 {
+            let mut section = section.iter();
+
+            if itx > 0 {
+                if let Some(header) = section.next() {
                     styled_help_spans.push(Span::raw(""));
-                    styled_help_spans
-                        .push(Span::styled(section[0], self.colours.table_header_style));
-                    styled_help_spans.extend(
-                        section[1..]
-                            .iter()
-                            .map(|&text| Span::styled(text, self.colours.text_style))
-                            .collect::<Vec<_>>(),
-                    );
+                    styled_help_spans.push(Span::styled(*header, self.colours.table_header_style));
                 }
             }
+
+            styled_help_spans.extend(
+                section
+                    .map(|&text| Span::styled(text, self.colours.text_style))
+                    .collect::<Vec<_>>(),
+            );
         });
 
         styled_help_spans.into_iter().map(Line::from).collect()
