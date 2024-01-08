@@ -267,7 +267,7 @@ pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
 /// The expected usage is to divide out the given value with the returned denominator in order to be able to use it
 /// with the returned binary unit (e.g. divide 3000 bytes by 1024 to have a value in KiB).
 fn get_mem_binary_unit_and_denominator(
-    bytes: u64, memory_use_mega_prefix: bool
+    bytes: u64, memory_use_mega_prefix: bool,
 ) -> (&'static str, f64) {
     if memory_use_mega_prefix {
         if bytes < KIBI_LIMIT {
@@ -298,11 +298,11 @@ fn get_mem_binary_unit_and_denominator(
 
 /// Returns the unit type and denominator for given total amount of memory in kibibytes.
 pub fn convert_mem_label(
-    harvest: &MemHarvest, memory_use_mega_prefix: bool
+    harvest: &MemHarvest, memory_use_mega_prefix: bool,
 ) -> Option<(String, String)> {
     if harvest.total_bytes > 0 {
         Some((format!("{:3.0}%", harvest.use_percent.unwrap_or(0.0)), {
-            let (unit, denominator) = 
+            let (unit, denominator) =
                 get_mem_binary_unit_and_denominator(harvest.total_bytes, memory_use_mega_prefix);
 
             format!(
