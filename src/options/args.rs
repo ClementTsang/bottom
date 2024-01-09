@@ -1,15 +1,11 @@
+//! Argument parsing via clap.
+//!
+//! Note that you probably want to keep this as a single file so the build script doesn't
+//! trip all over itself.
+
 use clap::{builder::PossibleValuesParser, *};
 
-const TEMPLATE: &str = "\
-{name} {version}
-{author}
-
-{about}
-
-{usage-heading} {usage}
-
-{all-args}";
-
+const TEMPLATE: &str = include_str!("./args.template");
 const USAGE: &str = "btm [OPTIONS]";
 
 const DEFAULT_WIDGET_TYPE_STR: &str = {
@@ -88,20 +84,17 @@ pub fn get_matches() -> ArgMatches {
 }
 
 pub fn build_app() -> Command {
-    // Temps
     let kelvin = Arg::new("kelvin")
         .short('k')
         .long("kelvin")
         .action(ArgAction::SetTrue)
-        .help("Sets the temperature type to Kelvin.")
-        .long_help("Sets the temperature type to Kelvin.");
+        .help("Sets the temperature type to Kelvin.");
 
     let fahrenheit = Arg::new("fahrenheit")
         .short('f')
         .long("fahrenheit")
         .action(ArgAction::SetTrue)
-        .help("Sets the temperature type to Fahrenheit.")
-        .long_help("Sets the temperature type to Fahrenheit.");
+        .help("Sets the temperature type to Fahrenheit.");
 
     let celsius = Arg::new("celsius")
         .short('c')
@@ -110,7 +103,6 @@ pub fn build_app() -> Command {
         .help("Sets the temperature type to Celsius.")
         .long_help("Sets the temperature type to Celsius. This is the default option.");
 
-    // All flags. These are in alphabetical order
     let autohide_time = Arg::new("autohide_time")
         .long("autohide_time")
         .action(ArgAction::SetTrue)
