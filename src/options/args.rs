@@ -5,9 +5,6 @@
 
 use clap::{builder::PossibleValuesParser, *};
 
-const TEMPLATE: &str = include_str!("./args.template");
-const USAGE: &str = "btm [OPTIONS]";
-
 const DEFAULT_WIDGET_TYPE_STR: &str = {
     #[cfg(feature = "battery")]
     {
@@ -575,16 +572,10 @@ pub fn build_app() -> Command {
         Some(nightly_version) => nightly_version,
         None => crate_version!(),
     };
+    const TEMPLATE: &str = include_str!("./args.template");
+    const USAGE: &str = "btm [OPTIONS]";
 
-    let cmd = Command::new(crate_name!())
-        .version(VERSION)
-        .author(crate_authors!())
-        .about(crate_description!())
-        .disable_help_flag(true)
-        .color(ColorChoice::Auto)
-        .override_usage(USAGE)
-        .help_template(TEMPLATE)
-        .disable_version_flag(true);
+    let cmd = Command::new(crate_name!());
 
     let cmd = general_args(cmd);
     let cmd = style_args(cmd);
@@ -599,7 +590,14 @@ pub fn build_app() -> Command {
     let cmd = gpu_args(cmd);
     let cmd = other(cmd);
 
-    cmd
+    cmd.author(crate_authors!())
+        .about(crate_description!())
+        .version(VERSION)
+        .disable_help_flag(true)
+        .disable_version_flag(true)
+        .color(ColorChoice::Auto)
+        .override_usage(USAGE)
+        .help_template(TEMPLATE)
 }
 
 #[cfg(test)]
