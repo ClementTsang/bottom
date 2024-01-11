@@ -175,10 +175,7 @@ fn general_args(cmd: Command) -> Command {
         .action(ArgAction::Set)
         .value_name("CONFIG PATH")
         .help("Sets the location of the config file.")
-        .long_help(
-            "Sets the location of the config file. Expects a config file in the TOML format. \
-                If it doesn't exist, one is created.",
-        )
+        .long_help("Sets the location of the config file. Expects a config file in the TOML format. If it doesn't exist, one is created.")
         .value_hint(ValueHint::AnyPath);
 
     let default_time_value = Arg::new("default_time_value")
@@ -187,9 +184,7 @@ fn general_args(cmd: Command) -> Command {
             .action(ArgAction::Set)
             .value_name("TIME")
             .help("Default time value for graphs.")
-            .long_help(
-                "Default time value for graphs. Takes a number in milliseconds or a human duration (e.g. 60s). The minimum time is 30s, and the default is 60s.",
-            );
+            .long_help("Default time value for graphs. Takes a number in milliseconds or a human duration (e.g. 60s). The minimum time is 30s, and the default is 60s.");
 
     // TODO: Charts are broken in the manpage
     let default_widget_count = Arg::new("default_widget_count")
@@ -226,34 +221,34 @@ use CPU (3) as the default instead.
         .long_help(DEFAULT_WIDGET_TYPE_STR);
 
     let expanded_on_startup = Arg::new("expanded_on_startup")
-            .short('e')
-            .long("expanded")
-            .action(ArgAction::SetTrue)
-            .help("Expand the default widget upon starting the app.")
-            .long_help("Expand the default widget upon starting the app. Same as pressing \"e\" inside the app. Use with \"default_widget_type\" and \"default_widget_count\" to select desired expanded widget. This flag has no effect in basic mode (--basic)");
+        .short('e')
+        .long("expanded")
+        .action(ArgAction::SetTrue)
+        .help("Expand the default widget upon starting the app.")
+        .long_help("Expand the default widget upon starting the app. Same as pressing \"e\" inside the app. Use with \"default_widget_type\" and \"default_widget_count\" to select desired expanded widget. This flag has no effect in basic mode (--basic).");
 
     let rate = Arg::new("rate")
-            .short('r')
-            .long("rate")
-            .action(ArgAction::Set)
-            .value_name("TIME")
-            .help("Sets the data refresh rate.")
-            .long_help("Sets the data refresh rate. Takes a number in milliseconds or a human duration (e.g. 5s). The minimum is 250ms, and defaults to 1000ms. Smaller values may take more computer resources.");
+        .short('r')
+        .long("rate")
+        .action(ArgAction::Set)
+        .value_name("TIME")
+        .help("Sets the data refresh rate.")
+        .long_help("Sets the data refresh rate. Takes a number in milliseconds or a human duration (e.g. 5s). The minimum is 250ms, and defaults to 1000ms. Smaller values may take more computer resources.");
 
     let time_delta = Arg::new("time_delta")
-            .short('d')
-            .long("time_delta")
-            .action(ArgAction::Set)
-            .value_name("TIME")
-            .help("The amount of time changed upon zooming.")
-            .long_help("The amount of time changed when zooming in/out. Takes a number in milliseconds or a human duration (e.g. 30s). The minimum is 1s, and defaults to 15s.");
+        .short('d')
+        .long("time_delta")
+        .action(ArgAction::Set)
+        .value_name("TIME")
+        .help("The amount of time changed upon zooming.")
+        .long_help("The amount of time changed when zooming in/out. Takes a number in milliseconds or a human duration (e.g. 30s). The minimum is 1s, and defaults to 15s.");
 
     let retention = Arg::new("retention")
-            .long("retention")
-            .action(ArgAction::Set)
-            .value_name("TIME")
-            .help("The timespan of data stored.")
-            .long_help("How much data is stored at once in terms of time. Takes a number in milliseconds or a human duration (e.g. 20m), with a minimum of 1 minute. Note higher values will take up more memory. Defaults to 10 minutes.");
+        .long("retention")
+        .action(ArgAction::Set)
+        .value_name("TIME")
+        .help("The timespan of data stored.")
+        .long_help("How much data is stored at once in terms of time. Takes a number in milliseconds or a human duration (e.g. 20m), with a minimum of 1 minute. Note higher values will take up more memory. Defaults to 10 minutes.");
 
     cmd.args(args![
         autohide_time,
@@ -359,20 +354,18 @@ fn process_args(cmd: Command) -> Command {
         .long_help("When searching for a process, enables case sensitivity by default.");
 
     let current_usage = Arg::new("current_usage")
-            .short('u')
-            .long("current_usage")
-            .action(ArgAction::SetTrue)
-            .help("Sets process CPU% to be based on current CPU%.")
-            .long_help("Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage.");
+        .short('u')
+        .long("current_usage")
+        .action(ArgAction::SetTrue)
+        .help("Sets process CPU% to be based on current CPU%.")
+        .long_help("Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage.");
 
     let unnormalized_cpu = Arg::new("unnormalized_cpu")
-            .short('n')
-            .long("unnormalized_cpu")
-            .action(ArgAction::SetTrue)
-            .help("Show process CPU% usage without normalizing over the number of cores.")
-            .long_help(
-                "Shows all process CPU% usage without averaging over the number of CPU cores in the system.",
-            );
+        .short('n')
+        .long("unnormalized_cpu")
+        .action(ArgAction::SetTrue)
+        .help("Show process CPU% usage without normalizing over the number of cores.")
+        .long_help("Shows all process CPU% usage without averaging over the number of CPU cores in the system.");
 
     let group_processes = Arg::new("group_processes")
         .short('g')
@@ -395,10 +388,10 @@ fn process_args(cmd: Command) -> Command {
         .long_help("When searching for a process, enables regex by default.");
 
     let disable_advanced_kill = Arg::new("disable_advanced_kill")
-            .long("disable_advanced_kill")
-            .action(ArgAction::SetTrue)
-            .help("Hides advanced process killing.")
-            .long_help("Hides advanced options to stop a process on Unix-like systems. The only option shown is 15 (TERM).");
+        .long("disable_advanced_kill")
+        .action(ArgAction::SetTrue)
+        .help("Hides advanced process killing.")
+        .long_help("Hides advanced options to stop a process on Unix-like systems. The only option shown is 15 (TERM).");
 
     let whole_word = Arg::new("whole_word")
         .short('W')
@@ -450,10 +443,10 @@ fn mem_args(cmd: Command) -> Command {
     let cmd = cmd.next_help_heading("Memory Options");
 
     let mem_as_value = Arg::new("mem_as_value")
-            .long("mem_as_value")
-            .action(ArgAction::SetTrue)
-            .help("Defaults to showing process memory usage by value.")
-            .long_help("Defaults to showing process memory usage by value. Otherwise, it defaults to showing it by percentage.");
+        .long("mem_as_value")
+        .action(ArgAction::SetTrue)
+        .help("Defaults to showing process memory usage by value.")
+        .long_help("Defaults to showing process memory usage by value. Otherwise, it defaults to showing it by percentage.");
 
     #[cfg(not(target_os = "windows"))]
     {
@@ -474,13 +467,10 @@ fn network_args(cmd: Command) -> Command {
     let cmd = cmd.next_help_heading("Network Options");
 
     let use_old_network_legend = Arg::new("use_old_network_legend")
-            .long("use_old_network_legend")
-            .action(ArgAction::SetTrue)
-            .help("DEPRECATED - uses a separate network legend.")
-            .long_help(
-                "DEPRECATED - uses an older (pre-0.4), separate network widget legend. This display is not \
-                tested anymore and could be broken.",
-            );
+        .long("use_old_network_legend")
+        .action(ArgAction::SetTrue)
+        .help("DEPRECATED - uses a separate network legend.")
+        .long_help("DEPRECATED - uses an older (pre-0.4), separate network widget legend. This display is not tested anymore and may be broken.");
 
     let network_use_bytes = Arg::new("network_use_bytes")
         .long("network_use_bytes")
@@ -495,12 +485,10 @@ fn network_args(cmd: Command) -> Command {
         .long_help("Displays the network widget with a log scale. Defaults to a non-log scale.");
 
     let network_use_binary_prefix = Arg::new("network_use_binary_prefix")
-            .long("network_use_binary_prefix")
-            .action(ArgAction::SetTrue)
-            .help("Displays the network widget with binary prefixes.")
-            .long_help(
-                "Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rather than a decimal prefix (i.e. kilobits, megabits). Defaults to decimal prefixes.",
-            );
+        .long("network_use_binary_prefix")
+        .action(ArgAction::SetTrue)
+        .help("Displays the network widget with binary prefixes.")
+        .long_help("Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rather than a decimal prefix (i.e. kilobits, megabits). Defaults to decimal prefixes.");
 
     cmd.args(args![
         use_old_network_legend,
