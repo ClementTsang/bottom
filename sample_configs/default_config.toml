@@ -2,7 +2,7 @@
 # out by default; if you wish to change them uncomment and modify as you see
 # fit.
 
-# This group of options represents a command-line flag/option.  Flags explicitly
+# This group of options represents a command-line option.  Flags explicitly
 # added when running (ie: btm -a) will override this config file if an option
 # is also set here.
 

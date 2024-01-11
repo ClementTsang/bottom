@@ -521,7 +521,7 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 # out by default; if you wish to change them uncomment and modify as you see
 # fit.
 
-# This group of options represents a command-line flag/option.  Flags explicitly
+# This group of options represents a command-line option.  Flags explicitly
 # added when running (ie: btm -a) will override this config file if an option
 # is also set here.
 [flags]
@@ -722,7 +722,7 @@ pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
 
 pub const CONFIG_DISPLAY_OPTIONS_HEAD: &str = r#"
 # These options represent settings that affect how bottom functions.
-# If a setting here corresponds to command-line flag, then the flag will temporarily override
+# If a setting here corresponds to command-line option, then the flag will temporarily override
 # the setting.
 "#;
 
