@@ -575,9 +575,8 @@ pub fn build_app() -> Command {
 
     [
         general_args,
-        style_args,
-        temperature_args,
         process_args,
+        temperature_args,
         cpu_args,
         mem_args,
         network_args,
@@ -585,6 +584,7 @@ pub fn build_app() -> Command {
         battery_args,
         #[cfg(feature = "gpu")]
         gpu_args,
+        style_args,
         other_args,
     ]
     .into_iter()
@@ -601,7 +601,7 @@ mod test {
     }
 
     #[test]
-    fn help_heading_no_default() {
+    fn no_default_help_heading() {
         let mut app = build_app();
         let help_str = app.render_help();
 
