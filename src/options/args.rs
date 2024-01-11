@@ -3,6 +3,8 @@
 //! Note that you probably want to keep this as a single file so the build script doesn't
 //! trip all over itself.
 
+use std::cmp::Ordering;
+
 use clap::{builder::PossibleValuesParser, *};
 
 const DEFAULT_WIDGET_TYPE_STR: &str = {
@@ -80,6 +82,18 @@ pub fn get_matches() -> ArgMatches {
     build_app().get_matches()
 }
 
+/// Returns an [`Ordering`] for two [`Arg`] values.
+///
+/// Note this assumes that they both have a _long_ name, and will
+/// panic if either are missing!
+fn sort_args(a: &Arg, b: &Arg) -> Ordering {
+    let a = a.get_long().unwrap();
+    let b = b.get_long().unwrap();
+
+    a.cmp(b)
+}
+
+/// Quick trait to add builder methods.
 trait CommandBuilder {
     fn general_args(self) -> Self;
 
@@ -100,6 +114,8 @@ trait CommandBuilder {
     fn gpu_args(self) -> Self;
 
     fn other(self) -> Self;
+
+    fn add_args(self) -> Self;
 }
 
 impl CommandBuilder for Command {
@@ -285,7 +301,7 @@ use CPU (3) as the default instead.
             time_delta,
             retention,
         ];
-        args.sort_unstable();
+        args.sort_unstable_by(sort_args);
 
         self.args(args)
     }
@@ -456,7 +472,7 @@ Defaults to \"default\".
             disable_advanced_kill,
             tree,
         ];
-        args.sort_unstable();
+        args.sort_unstable_by(sort_args);
 
         self.args(args)
     }
@@ -472,7 +488,12 @@ Defaults to \"default\".
             .long_help("Hides the average CPU usage from being shown.")
             .help_heading(HEADING);
 
-        self.arg(hide_avg_cpu)
+        // let default_avg_cpu = Arg::new("");
+
+        let mut args = [hide_avg_cpu];
+        args.sort_unstable_by(sort_args);
+
+        self.args(args)
     }
 
     fn mem_args(self) -> Command {
@@ -544,7 +565,7 @@ Defaults to \"default\".
             network_use_binary_prefix,
         ];
 
-        args.sort_unstable();
+        args.sort_unstable_by(sort_args);
 
         self.args(args)
     }
@@ -589,13 +610,6 @@ Defaults to \"default\".
     fn other(self) -> Command {
         const HEADING: &str = "Other Options";
 
-        let version = Arg::new("version")
-            .short('V')
-            .long("version")
-            .action(ArgAction::Version)
-            .help("Prints version information.")
-            .help_heading(HEADING);
-
         let help = Arg::new("help")
             .short('h')
             .long("help")
@@ -603,7 +617,27 @@ Defaults to \"default\".
             .help("Prints help (see more with '--help').")
             .help_heading(HEADING);
 
-        self.args([version, help])
+        let version = Arg::new("version")
+            .short('V')
+            .long("version")
+            .action(ArgAction::Version)
+            .help("Prints version information.")
+            .help_heading(HEADING);
+
+        self.args([help, version])
+    }
+
+    fn add_args(self) -> Self {
+        self.general_args()
+            .style_args()
+            .temperature_args()
+            .process_args()
+            .cpu_args()
+            .mem_args()
+            .network_args()
+            .battery_args()
+            .gpu_args()
+            .other()
     }
 }
 
@@ -624,16 +658,7 @@ pub fn build_app() -> Command {
         .help_template(TEMPLATE)
         .override_usage(USAGE)
         .version(VERSION)
-        .general_args()
-        .style_args()
-        .temperature_args()
-        .process_args()
-        .cpu_args()
-        .mem_args()
-        .network_args()
-        .battery_args()
-        .gpu_args()
-        .other()
+        .add_args()
 }
 
 #[cfg(test)]
