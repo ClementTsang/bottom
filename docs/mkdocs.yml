@@ -9,32 +9,42 @@ docs_dir: "content/"
 repo_name: ClementTsang/bottom
 repo_url: https://github.com/ClementTsang/bottom
 edit_uri: "edit/main/docs/content/"
+copyright: Copyright &copy; 2019 - 2024 Clement Tsang
 
 # Theming
 theme:
   name: material
   features:
+    - content.action.edit
     - navigation.tabs
     - navigation.top
     - navigation.expand
     - navigation.instant
     - navigation.sections
+    - navigation.footer
     - toc.integrate
     - search.suggest
     - search.highlight
+  icon:
+    edit: material/pencil
   palette:
-    # Light mode
-    - media: "(prefers-color-scheme: light)"
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
       scheme: default
       toggle:
-        icon: material/weather-night
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      toggle:
+        icon: material/weather-sunny
         name: Switch to dark mode
     # Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
+        icon: material/weather-night
+        name: Switch to system preference
   custom_dir: "content/overrides"
 extra_css:
   - stylesheets/extra.css
@@ -115,6 +125,8 @@ plugins:
   - search
   - mike:
       canonical_version: stable
+  - git-revision-date-localized:
+      type: date
 
 extra:
   # Versioning

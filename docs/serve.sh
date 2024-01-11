@@ -11,10 +11,12 @@ if [ ! -d $VENV_PATH ]; then
     source ./venv/bin/activate;
     pip install --upgrade pip;
     pip install -r requirements.txt;
-    ./venv/bin/mike serve;
+    ./venv/bin/mkdocs serve;
 else
     echo "venv already found.";
     source ./venv/bin/activate;
-    ./venv/bin/mike serve;
+    pip install --upgrade pip;
+    pip install -r requirements.txt;
+    ./venv/bin/mkdocs serve;
 fi;
 

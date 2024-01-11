@@ -18,7 +18,7 @@ This site serves as extended documentation for bottom alongside the [`README.md`
 
 !!! Tip
 
-    It is a good idea to first check out the [Support](support/official.md) page to see if your system is officially supported!
+    It's as good idea to first check out the [Support](support/official.md) page to see if your system is officially supported!
 
 !!! Tip
 
