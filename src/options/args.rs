@@ -585,19 +585,20 @@ pub fn build_app() -> Command {
         .override_usage(USAGE)
         .version(VERSION);
 
-    let cmd = general_args(cmd);
-    let cmd = style_args(cmd);
-    let cmd = temperature_args(cmd);
-    let cmd = process_args(cmd);
-    let cmd = cpu_args(cmd);
-    let cmd = mem_args(cmd);
-    let cmd = network_args(cmd);
-    let cmd = battery_args(cmd);
-    let cmd = gpu_args(cmd);
-    let cmd = other_args(cmd);
-
-    #[allow(clippy::let_and_return)]
-    cmd
+    [
+        general_args,
+        style_args,
+        temperature_args,
+        process_args,
+        cpu_args,
+        mem_args,
+        network_args,
+        battery_args,
+        gpu_args,
+        other_args,
+    ]
+    .into_iter()
+    .fold(cmd, |c, f| f(c))
 }
 
 #[cfg(test)]
