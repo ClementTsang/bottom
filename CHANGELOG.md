@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- [#1344](https://github.com/ClementTsang/bottom/pull/1344): Change the `group` command line argument to `group_processes` for consistency with the config file option.
+- [#1344](https://github.com/ClementTsang/bottom/pull/1344): Change the `group` command line-argument to `group_processes` for consistency with the config file option.
+- [#1376](https://github.com/ClementTsang/bottom/pull/1376): Group together related command-line arguments in `-h` and `--help`.
 
 ### Bug Fixes
 
