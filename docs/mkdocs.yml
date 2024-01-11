@@ -14,17 +14,20 @@ copyright: Copyright &copy; 2019 - 2024 Clement Tsang
 # Theming
 theme:
   name: material
+  font:
+    code: IBM Plex Mono
   features:
     - content.action.edit
+    - navigation.expand
+    - navigation.footer
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.sections
     - navigation.tabs
     - navigation.top
-    - navigation.expand
-    - navigation.instant
-    - navigation.sections
-    - navigation.footer
-    - toc.integrate
-    - search.suggest
     - search.highlight
+    - search.suggest
+    - toc.integrate
   icon:
     edit: material/pencil
   palette:
@@ -127,6 +130,7 @@ plugins:
       canonical_version: stable
   - git-revision-date-localized:
       type: date
+  - privacy
 
 extra:
   # Versioning
