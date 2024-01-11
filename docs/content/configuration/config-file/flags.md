@@ -4,7 +4,7 @@
 
     This section is in progress, and is just copied from the old documentation.
 
-Most of the [command line flags](../command-line-flags.md) have config file equivalents to avoid having to type them out
+Most of the [command line flags](../command-line-options.md) have config file equivalents to avoid having to type them out
 each time:
 
 | Field                        | Type                                                                                           | Functionality                                                                        |

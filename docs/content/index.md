@@ -31,7 +31,7 @@ which contains a list of all the installation methods.
 
 You can refer to the [usage](usage/general-usage.md) pages on how to use bottom (e.g. keybinds, some features, a general overview of what each widget does).
 
-To configure bottom, refer to the [configuration](configuration/command-line-flags.md) pages (e.g. how it behaves, how it looks).
+To configure bottom, refer to the [configuration](configuration/command-line-options.md) pages (e.g. how it behaves, how it looks).
 
 ## Contribution
 
