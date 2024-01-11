@@ -556,7 +556,7 @@ fn other_args(cmd: Command) -> Command {
         .short('h')
         .long("help")
         .action(ArgAction::Help)
-        .help("Prints help (see more with '--help').");
+        .help("Prints help (see more info with '--help').");
 
     let version = Arg::new("version")
         .short('V')
