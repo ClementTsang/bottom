@@ -140,7 +140,7 @@ nav:
           - "Temperature Widget": usage/widgets/temperature.md
           - "Battery Widget": usage/widgets/battery.md
   - "Configuration":
-      - "Command-line Flags": configuration/command-line-options.md
+      - "Command-line Options": configuration/command-line-options.md
       - "Config File":
           - "Default Config": configuration/config-file/default-config.md
           - "Flags": configuration/config-file/flags.md
