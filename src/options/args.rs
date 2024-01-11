@@ -510,43 +510,31 @@ fn network_args(cmd: Command) -> Command {
     ])
 }
 
+#[cfg(feature = "battery")]
 fn battery_args(cmd: Command) -> Command {
-    #[cfg(feature = "battery")]
-    {
-        let cmd = cmd.next_help_heading("Battery Options");
+    let cmd = cmd.next_help_heading("Battery Options");
 
-        let battery = Arg::new("battery")
-            .long("battery")
-            .action(ArgAction::SetTrue)
-            .help("Shows the battery widget.")
-            .long_help(
-                "Shows the battery widget in default or basic mode. No effect on custom layouts.",
-            );
+    let battery = Arg::new("battery")
+        .long("battery")
+        .action(ArgAction::SetTrue)
+        .help("Shows the battery widget.")
+        .long_help(
+            "Shows the battery widget in default or basic mode. No effect on custom layouts.",
+        );
 
-        cmd.arg(battery)
-    }
-    #[cfg(not(feature = "battery"))]
-    {
-        cmd
-    }
+    cmd.arg(battery)
 }
 
+#[cfg(feature = "gpu")]
 fn gpu_args(cmd: Command) -> Command {
-    #[cfg(feature = "gpu")]
-    {
-        let cmd = cmd.next_help_heading("GPU Options");
+    let cmd = cmd.next_help_heading("GPU Options");
 
-        let enable_gpu = Arg::new("enable_gpu")
-            .long("enable_gpu")
-            .action(ArgAction::SetTrue)
-            .help("Enable collecting and displaying GPU usage.");
+    let enable_gpu = Arg::new("enable_gpu")
+        .long("enable_gpu")
+        .action(ArgAction::SetTrue)
+        .help("Enable collecting and displaying GPU usage.");
 
-        cmd.arg(enable_gpu)
-    }
-    #[cfg(not(feature = "gpu"))]
-    {
-        cmd
-    }
+    cmd.arg(enable_gpu)
 }
 
 fn other_args(cmd: Command) -> Command {
@@ -593,7 +581,9 @@ pub fn build_app() -> Command {
         cpu_args,
         mem_args,
         network_args,
+        #[cfg(feature = "battery")]
         battery_args,
+        #[cfg(feature = "gpu")]
         gpu_args,
         other_args,
     ]
