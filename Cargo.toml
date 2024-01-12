@@ -67,11 +67,9 @@ battery = ["starship-battery"]
 nvidia = ["nvml-wrapper"]
 gpu = ["nvidia"]
 zfs = []
-
-# Logging for debugging performance.
 logging = ["fern", "log", "time/local-offset"]
-
-default = ["battery", "gpu", "zfs"]
+deploy = ["battery", "gpu", "zfs"]
+default = ["deploy"]
 
 [dependencies]
 anyhow = "1.0.75"
