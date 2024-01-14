@@ -125,15 +125,17 @@ impl Painter {
                 let mut new_new_col_row_constraints = Vec::new();
                 let mut new_new_widget_constraints = Vec::new();
                 col.children.iter().for_each(|col_row| {
-                    if col_row.canvas_handle_height {
-                        new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
-                    } else if col_row.flex_grow {
-                        new_new_col_row_constraints.push(LayoutConstraint::Grow);
-                    } else {
-                        new_new_col_row_constraints.push(LayoutConstraint::Ratio(
-                            col_row.col_row_height_ratio,
-                            col.total_col_row_ratio,
-                        ));
+                    match col_row.constraint {
+                        IntermediaryConstraint::PartialRatio(val) => {
+                            new_new_col_row_constraints
+                                .push(LayoutConstraint::Ratio(val, col.total_col_row_ratio));
+                        }
+                        IntermediaryConstraint::CanvasHandles => {
+                            new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
+                        }
+                        IntermediaryConstraint::Grow => {
+                            new_new_col_row_constraints.push(LayoutConstraint::Grow);
+                        }
                     }
 
                     let mut new_new_new_widget_constraints = Vec::new();

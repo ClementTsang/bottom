@@ -79,7 +79,7 @@ impl BottomLayout {
                         col_mapping.insert(
                             (
                                 col_row_height * 100 / col.total_col_row_ratio,
-                                (col_row_height + col_row.col_row_height_ratio) * 100
+                                (col_row_height + col_row.constraint.ratio()) * 100
                                     / col.total_col_row_ratio,
                             ),
                             (col.total_col_row_ratio, col_row_mapping),
@@ -87,7 +87,7 @@ impl BottomLayout {
                         is_valid_col = true;
                     }
 
-                    col_row_height += col_row.col_row_height_ratio;
+                    col_row_height += col_row.constraint.ratio();
                 }
                 if is_valid_col {
                     row_mapping.insert(
@@ -134,7 +134,7 @@ impl BottomLayout {
                     let col_row_height_percentage_start =
                         col_row_cursor * 100 / col.total_col_row_ratio;
                     let col_row_height_percentage_end =
-                        (col_row_cursor + col_row.col_row_height_ratio) * 100
+                        (col_row_cursor + col_row.constraint.ratio()) * 100
                             / col.total_col_row_ratio;
                     let col_row_children_len = col_row.children.len();
 
@@ -525,7 +525,7 @@ impl BottomLayout {
                         }
                         widget_cursor += widget.width_ratio;
                     }
-                    col_row_cursor += col_row.col_row_height_ratio;
+                    col_row_cursor += col_row.constraint.ratio();
                 }
                 col_cursor += col.constraint.ratio();
             }
@@ -579,25 +579,19 @@ impl BottomLayout {
                 .right_neighbour(Some(4));
 
             vec![
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![disk_widget]).canvas_handle_height(true)
-                ])
-                .canvas_handles(),
+                BottomCol::new(vec![BottomColRow::new(vec![disk_widget]).canvas_handles()])
+                    .canvas_handles(),
                 BottomCol::new(vec![
                     BottomColRow::new(vec![proc_sort, proc])
-                        .canvas_handle_height(true)
+                        .canvas_handles()
                         .total_widget_ratio(3),
-                    BottomColRow::new(vec![proc_search]).canvas_handle_height(true),
+                    BottomColRow::new(vec![proc_search]).canvas_handles(),
                 ])
                 .canvas_handles(),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![temp]).canvas_handle_height(true)
-                ])
-                .canvas_handles(),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![battery]).canvas_handle_height(true)
-                ])
-                .canvas_handles(),
+                BottomCol::new(vec![BottomColRow::new(vec![temp]).canvas_handles()])
+                    .canvas_handles(),
+                BottomCol::new(vec![BottomColRow::new(vec![battery]).canvas_handles()])
+                    .canvas_handles(),
             ]
         } else {
             let disk = BottomWidget::new(BottomWidgetType::Disk, 4)
@@ -636,19 +630,15 @@ impl BottomLayout {
                 .right_neighbour(Some(4));
 
             vec![
+                BottomCol::new(vec![BottomColRow::new(vec![disk]).canvas_handles()])
+                    .canvas_handles(),
                 BottomCol::new(vec![
-                    BottomColRow::new(vec![disk]).canvas_handle_height(true)
+                    BottomColRow::new(vec![proc_sort, proc]).canvas_handles(),
+                    BottomColRow::new(vec![proc_search]).canvas_handles(),
                 ])
                 .canvas_handles(),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![proc_sort, proc]).canvas_handle_height(true),
-                    BottomColRow::new(vec![proc_search]).canvas_handle_height(true),
-                ])
-                .canvas_handles(),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![temp]).canvas_handle_height(true)
-                ])
-                .canvas_handles(),
+                BottomCol::new(vec![BottomColRow::new(vec![temp]).canvas_handles()])
+                    .canvas_handles(),
             ]
         };
 
@@ -676,18 +666,18 @@ impl BottomLayout {
             total_row_height_ratio: 3,
             rows: vec![
                 BottomRow::new(vec![BottomCol::new(vec![
-                    BottomColRow::new(vec![cpu]).canvas_handle_height(true)
+                    BottomColRow::new(vec![cpu]).canvas_handles()
                 ])
                 .canvas_handles()])
                 .canvas_handles(),
                 BottomRow::new(vec![BottomCol::new(vec![BottomColRow::new(vec![
                     mem, net,
                 ])
-                .canvas_handle_height(true)])
+                .canvas_handles()])
                 .canvas_handles()])
                 .canvas_handles(),
                 BottomRow::new(vec![BottomCol::new(vec![
-                    BottomColRow::new(vec![table]).canvas_handle_height(true)
+                    BottomColRow::new(vec![table]).canvas_handles()
                 ])
                 .canvas_handles()])
                 .canvas_handles(),
@@ -801,9 +791,7 @@ impl BottomCol {
 pub struct BottomColRow {
     pub children: Vec<BottomWidget>,
     pub total_widget_ratio: u32,
-    pub col_row_height_ratio: u32,
-    pub canvas_handle_height: bool,
-    pub flex_grow: bool,
+    pub constraint: IntermediaryConstraint,
 }
 
 impl BottomColRow {
@@ -811,9 +799,7 @@ impl BottomColRow {
         Self {
             children,
             total_widget_ratio: 1,
-            col_row_height_ratio: 1,
-            canvas_handle_height: false,
-            flex_grow: false,
+            constraint: IntermediaryConstraint::default(),
         }
     }
 
@@ -822,18 +808,18 @@ impl BottomColRow {
         self
     }
 
-    pub(crate) fn col_row_height_ratio(mut self, col_row_height_ratio: u32) -> Self {
-        self.col_row_height_ratio = col_row_height_ratio;
+    pub fn col_row_height_ratio(mut self, col_row_height_ratio: u32) -> Self {
+        self.constraint = IntermediaryConstraint::PartialRatio(col_row_height_ratio);
         self
     }
 
-    pub(crate) fn canvas_handle_height(mut self, canvas_handle_height: bool) -> Self {
-        self.canvas_handle_height = canvas_handle_height;
+    pub fn canvas_handles(mut self) -> Self {
+        self.constraint = IntermediaryConstraint::CanvasHandles;
         self
     }
 
-    pub(crate) fn flex_grow(mut self, flex_grow: bool) -> Self {
-        self.flex_grow = flex_grow;
+    pub fn grow(mut self) -> Self {
+        self.constraint = IntermediaryConstraint::Grow;
         self
     }
 }

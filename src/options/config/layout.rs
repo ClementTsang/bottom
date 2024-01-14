@@ -111,9 +111,9 @@ impl Row {
                                         new_proc(proc_id),
                                     ])
                                     .total_widget_ratio(3)
-                                    .flex_grow(true),
+                                    .grow(),
                                     BottomColRow::new(vec![new_proc_search(proc_search_id)])
-                                        .canvas_handle_height(true),
+                                        .canvas_handles(),
                                 ])
                                 .total_col_row_ratio(2)
                                 .col_width_ratio(width_ratio)
@@ -129,7 +129,6 @@ impl Row {
                         let col_width_ratio = ratio.unwrap_or(1);
                         total_col_ratio += col_width_ratio;
                         let mut total_col_row_ratio = 0;
-                        let mut contains_proc = false;
 
                         let mut col_row_children: Vec<BottomColRow> = Vec::new();
 
@@ -165,7 +164,6 @@ impl Row {
                                     );
                                 }
                                 BottomWidgetType::Proc => {
-                                    contains_proc = true;
                                     let proc_id = *iter_id;
                                     let proc_search_id = *iter_id + 1;
                                     *iter_id += 2;
@@ -179,7 +177,7 @@ impl Row {
                                     );
                                     col_row_children.push(
                                         BottomColRow::new(vec![new_proc_search(proc_search_id)])
-                                            .canvas_handle_height(true)
+                                            .canvas_handles()
                                             .col_row_height_ratio(col_row_height_ratio),
                                     );
                                 }
@@ -190,20 +188,6 @@ impl Row {
                                     )])
                                     .col_row_height_ratio(col_row_height_ratio),
                                 ),
-                            }
-                        }
-
-                        if contains_proc {
-                            // Must adjust ratios to work with proc
-                            total_col_row_ratio *= 2;
-                            for child in &mut col_row_children {
-                                // Multiply all non-proc or proc-search ratios by 2
-                                if !child.children.is_empty() {
-                                    match child.children[0].widget_type {
-                                        BottomWidgetType::ProcSearch => {}
-                                        _ => child.col_row_height_ratio *= 2,
-                                    }
-                                }
                             }
                         }
 
