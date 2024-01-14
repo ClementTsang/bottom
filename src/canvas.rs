@@ -98,7 +98,7 @@ impl Painter {
                         widget_layout.total_row_height_ratio,
                     ));
                 }
-                IntermediaryConstraint::CanvasHandles => {
+                IntermediaryConstraint::CanvasHandled => {
                     row_constraints.push(LayoutConstraint::CanvasHandled);
                 }
                 IntermediaryConstraint::Grow => {
@@ -114,7 +114,7 @@ impl Painter {
                     IntermediaryConstraint::PartialRatio(val) => {
                         new_col_constraints.push(LayoutConstraint::Ratio(val, row.total_col_ratio));
                     }
-                    IntermediaryConstraint::CanvasHandles => {
+                    IntermediaryConstraint::CanvasHandled => {
                         new_col_constraints.push(LayoutConstraint::CanvasHandled);
                     }
                     IntermediaryConstraint::Grow => {
@@ -130,7 +130,7 @@ impl Painter {
                             new_new_col_row_constraints
                                 .push(LayoutConstraint::Ratio(val, col.total_col_row_ratio));
                         }
-                        IntermediaryConstraint::CanvasHandles => {
+                        IntermediaryConstraint::CanvasHandled => {
                             new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
                         }
                         IntermediaryConstraint::Grow => {
@@ -139,18 +139,22 @@ impl Painter {
                     }
 
                     let mut new_new_new_widget_constraints = Vec::new();
-                    col_row.children.iter().for_each(|widget| {
-                        if widget.canvas_handle_width {
-                            new_new_new_widget_constraints.push(LayoutConstraint::CanvasHandled);
-                        } else if widget.flex_grow {
-                            new_new_new_widget_constraints.push(LayoutConstraint::Grow);
-                        } else {
-                            new_new_new_widget_constraints.push(LayoutConstraint::Ratio(
-                                widget.width_ratio,
-                                col_row.total_widget_ratio,
-                            ));
-                        }
-                    });
+                    col_row
+                        .children
+                        .iter()
+                        .for_each(|widget| match widget.constraint {
+                            IntermediaryConstraint::PartialRatio(val) => {
+                                new_new_new_widget_constraints
+                                    .push(LayoutConstraint::Ratio(val, col_row.total_widget_ratio));
+                            }
+                            IntermediaryConstraint::CanvasHandled => {
+                                new_new_new_widget_constraints
+                                    .push(LayoutConstraint::CanvasHandled);
+                            }
+                            IntermediaryConstraint::Grow => {
+                                new_new_new_widget_constraints.push(LayoutConstraint::Grow);
+                            }
+                        });
                     new_new_widget_constraints.push(new_new_new_widget_constraints);
                 });
                 new_col_row_constraints.push(new_new_col_row_constraints);

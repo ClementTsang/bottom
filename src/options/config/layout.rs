@@ -20,20 +20,20 @@ fn new_cpu(left_legend: bool, iter_id: &mut u64) -> BottomColRow {
         BottomColRow::new(vec![
             BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
                 .width_ratio(3)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .parent_reflector(Some((WidgetDirection::Right, 1))),
             BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
                 .width_ratio(17)
-                .flex_grow(true),
+                .grow(),
         ])
     } else {
         BottomColRow::new(vec![
             BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
                 .width_ratio(17)
-                .flex_grow(true),
+                .grow(),
             BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
                 .width_ratio(3)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .parent_reflector(Some((WidgetDirection::Left, 1))),
         ])
     }
@@ -42,7 +42,7 @@ fn new_cpu(left_legend: bool, iter_id: &mut u64) -> BottomColRow {
 
 fn new_proc_sort(sort_id: u64) -> BottomWidget {
     BottomWidget::new(BottomWidgetType::ProcSort, sort_id)
-        .canvas_handle_width(true)
+        .canvas_handled()
         .parent_reflector(Some((WidgetDirection::Right, 2)))
         .width_ratio(1)
 }
@@ -113,7 +113,7 @@ impl Row {
                                     .total_widget_ratio(3)
                                     .grow(),
                                     BottomColRow::new(vec![new_proc_search(proc_search_id)])
-                                        .canvas_handles(),
+                                        .canvas_handled(),
                                 ])
                                 .total_col_row_ratio(2)
                                 .col_width_ratio(width_ratio)
@@ -177,7 +177,7 @@ impl Row {
                                     );
                                     col_row_children.push(
                                         BottomColRow::new(vec![new_proc_search(proc_search_id)])
-                                            .canvas_handles()
+                                            .canvas_handled()
                                             .col_row_height_ratio(col_row_height_ratio),
                                     );
                                 }
