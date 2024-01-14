@@ -41,7 +41,7 @@ fn new_proc_sort(sort_id: u64) -> BottomWidget {
 }
 
 fn new_proc(proc_id: u64) -> BottomWidget {
-    BottomWidget::new(BottomWidgetType::Proc, proc_id).width_ratio(2)
+    BottomWidget::new(BottomWidgetType::Proc, proc_id).ratio(2)
 }
 
 fn new_proc_search(search_id: u64) -> BottomWidget {
@@ -92,7 +92,7 @@ impl Row {
                         children.push(match widget_type {
                             BottomWidgetType::Cpu => {
                                 BottomCol::new(vec![new_cpu(left_legend, iter_id)])
-                                    .col_width_ratio(width_ratio)
+                                    .ratio(width_ratio)
                             }
                             BottomWidgetType::Proc => {
                                 let proc_id = *iter_id;
@@ -109,13 +109,13 @@ impl Row {
                                         .canvas_handled(),
                                 ])
                                 .total_col_row_ratio(2)
-                                .col_width_ratio(width_ratio)
+                                .ratio(width_ratio)
                             }
                             _ => BottomCol::new(vec![BottomColRow::new(vec![BottomWidget::new(
                                 widget_type,
                                 *iter_id,
                             )])])
-                            .col_width_ratio(width_ratio),
+                            .ratio(width_ratio),
                         });
                     }
                     RowChildren::Col { ratio, child } => {
@@ -152,8 +152,7 @@ impl Row {
                             match widget_type {
                                 BottomWidgetType::Cpu => {
                                     col_row_children.push(
-                                        new_cpu(left_legend, iter_id)
-                                            .col_row_height_ratio(col_row_height_ratio),
+                                        new_cpu(left_legend, iter_id).ratio(col_row_height_ratio),
                                     );
                                 }
                                 BottomWidgetType::Proc => {
@@ -165,13 +164,13 @@ impl Row {
                                             new_proc_sort(*iter_id),
                                             new_proc(proc_id),
                                         ])
-                                        .col_row_height_ratio(col_row_height_ratio)
+                                        .ratio(col_row_height_ratio)
                                         .total_widget_ratio(3),
                                     );
                                     col_row_children.push(
                                         BottomColRow::new(vec![new_proc_search(proc_search_id)])
                                             .canvas_handled()
-                                            .col_row_height_ratio(col_row_height_ratio),
+                                            .ratio(col_row_height_ratio),
                                     );
                                 }
                                 _ => col_row_children.push(
@@ -179,7 +178,7 @@ impl Row {
                                         widget_type,
                                         *iter_id,
                                     )])
-                                    .col_row_height_ratio(col_row_height_ratio),
+                                    .ratio(col_row_height_ratio),
                                 ),
                             }
                         }
@@ -187,7 +186,7 @@ impl Row {
                         children.push(
                             BottomCol::new(col_row_children)
                                 .total_col_row_ratio(total_col_row_ratio)
-                                .col_width_ratio(col_width_ratio),
+                                .ratio(col_width_ratio),
                         );
                     }
                 }
@@ -196,7 +195,7 @@ impl Row {
 
         Ok(BottomRow::new(children)
             .total_col_ratio(total_col_ratio)
-            .row_height_ratio(row_ratio))
+            .ratio(row_ratio))
     }
 }
 

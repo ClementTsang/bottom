@@ -548,7 +548,7 @@ impl BottomLayout {
                 .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                 .left_neighbour(Some(4))
                 .right_neighbour(Some(DEFAULT_WIDGET_ID))
-                .width_ratio(1)
+                .ratio(1)
                 .parent_reflector(Some((WidgetDirection::Right, 2)));
 
             let proc = BottomWidget::new(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
@@ -557,7 +557,7 @@ impl BottomLayout {
                 .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                 .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
                 .right_neighbour(Some(7))
-                .width_ratio(2);
+                .ratio(2);
 
             let proc_search =
                 BottomWidget::new(BottomWidgetType::ProcSearch, DEFAULT_WIDGET_ID + 1)
@@ -739,7 +739,7 @@ impl BottomRow {
         self
     }
 
-    pub fn row_height_ratio(mut self, row_height_ratio: u32) -> Self {
+    pub fn ratio(mut self, row_height_ratio: u32) -> Self {
         self.constraint = IntermediaryConstraint::PartialRatio(row_height_ratio);
         self
     }
@@ -779,7 +779,7 @@ impl BottomCol {
         self
     }
 
-    pub fn col_width_ratio(mut self, col_width_ratio: u32) -> Self {
+    pub fn ratio(mut self, col_width_ratio: u32) -> Self {
         self.constraint = IntermediaryConstraint::PartialRatio(col_width_ratio);
         self
     }
@@ -816,7 +816,7 @@ impl BottomColRow {
         self
     }
 
-    pub fn col_row_height_ratio(mut self, col_row_height_ratio: u32) -> Self {
+    pub fn ratio(mut self, col_row_height_ratio: u32) -> Self {
         self.constraint = IntermediaryConstraint::PartialRatio(col_row_height_ratio);
         self
     }
@@ -890,11 +890,6 @@ impl BottomWidget {
         }
     }
 
-    pub(crate) fn width_ratio(mut self, width_ratio: u32) -> Self {
-        self.constraint = IntermediaryConstraint::PartialRatio(width_ratio);
-        self
-    }
-
     pub(crate) fn left_neighbour(mut self, left_neighbour: Option<u64>) -> Self {
         self.left_neighbour = left_neighbour;
         self
@@ -912,6 +907,11 @@ impl BottomWidget {
 
     pub(crate) fn down_neighbour(mut self, down_neighbour: Option<u64>) -> Self {
         self.down_neighbour = down_neighbour;
+        self
+    }
+
+    pub(crate) fn ratio(mut self, width_ratio: u32) -> Self {
+        self.constraint = IntermediaryConstraint::PartialRatio(width_ratio);
         self
     }
 

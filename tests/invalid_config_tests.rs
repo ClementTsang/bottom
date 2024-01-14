@@ -1,10 +1,10 @@
+//! These tests are for testing some invalid config-file-specific options.
+
 mod util;
 
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use util::*;
-
-// These tests are for testing some config file-specific options.
 
 #[test]
 fn test_toml_mismatch_type() {
