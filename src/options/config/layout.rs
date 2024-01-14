@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{app::layout_manager::*, error::Result};
 
-/// Represents a row.  This has a length of some sort (optional) and a vector
+/// Represents a row. This has a length of some sort (optional) and a vector
 /// of children.
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(rename = "row")]

@@ -106,12 +106,12 @@ impl BottomLayout {
                 layout_mapping.insert(
                     (
                         total_height * 100 / self.total_row_height_ratio,
-                        (total_height + row.row_height_ratio) * 100 / self.total_row_height_ratio,
+                        (total_height + row.constraint.ratio()) * 100 / self.total_row_height_ratio,
                     ),
                     (self.total_row_height_ratio, row_mapping),
                 );
             }
-            total_height += row.row_height_ratio;
+            total_height += row.constraint.ratio();
         }
 
         // Now pass through a second time; this time we want to build up
@@ -121,7 +121,7 @@ impl BottomLayout {
             let mut col_cursor = 0;
             let row_height_percentage_start = height_cursor * 100 / self.total_row_height_ratio;
             let row_height_percentage_end =
-                (height_cursor + row.row_height_ratio) * 100 / self.total_row_height_ratio;
+                (height_cursor + row.constraint.ratio()) * 100 / self.total_row_height_ratio;
 
             for col in &mut row.children {
                 let mut col_row_cursor = 0;
@@ -529,7 +529,7 @@ impl BottomLayout {
                 }
                 col_cursor += col.col_width_ratio;
             }
-            height_cursor += row.row_height_ratio;
+            height_cursor += row.constraint.ratio();
         }
     }
 
@@ -679,54 +679,52 @@ impl BottomLayout {
                     BottomColRow::new(vec![cpu]).canvas_handle_height(true)
                 ])
                 .canvas_handle_width(true)])
-                .canvas_handle_height(true),
+                .canvas_handles(),
                 BottomRow::new(vec![BottomCol::new(vec![BottomColRow::new(vec![
                     mem, net,
                 ])
                 .canvas_handle_height(true)])
                 .canvas_handle_width(true)])
-                .canvas_handle_height(true),
+                .canvas_handles(),
                 BottomRow::new(vec![BottomCol::new(vec![
                     BottomColRow::new(vec![table]).canvas_handle_height(true)
                 ])
                 .canvas_handle_width(true)])
-                .canvas_handle_height(true),
-                BottomRow::new(table_widgets).canvas_handle_height(true),
+                .canvas_handles(),
+                BottomRow::new(table_widgets).canvas_handles(),
             ],
         }
     }
 }
 
-// pub enum BottomLayoutNode {
-//     Container(BottomContainer),
-//     Widget(BottomWidget),
-// }
+#[derive(Clone, Debug)]
+pub enum IntermediaryConstraint {
+    PartialRatio(u32),
+    CanvasHandles,
+    Grow,
+}
 
-// pub struct BottomContainer {
-//     children: Vec<BottomLayoutNode>,
-//     root_ratio: u32,
-//     growth_type: BottomLayoutNodeSizing,
-// }
+impl Default for IntermediaryConstraint {
+    fn default() -> Self {
+        IntermediaryConstraint::PartialRatio(1)
+    }
+}
 
-// pub enum BottomContainerType {
-//     Row,
-//     Col,
-// }
-
-// pub enum BottomLayoutNodeSizing {
-//     Ratio(u32),
-//     CanvasHandles,
-//     FlexGrow,
-// }
+impl IntermediaryConstraint {
+    pub fn ratio(&self) -> u32 {
+        match self {
+            IntermediaryConstraint::PartialRatio(val) => *val,
+            _ => 1,
+        }
+    }
+}
 
 /// Represents a single row in the layout.
 #[derive(Clone, Debug)]
 pub struct BottomRow {
     pub children: Vec<BottomCol>,
     pub total_col_ratio: u32,
-    pub row_height_ratio: u32,
-    pub canvas_handle_height: bool,
-    pub flex_grow: bool,
+    pub constraint: IntermediaryConstraint,
 }
 
 impl BottomRow {
@@ -734,9 +732,7 @@ impl BottomRow {
         Self {
             children,
             total_col_ratio: 1,
-            row_height_ratio: 1,
-            canvas_handle_height: false,
-            flex_grow: false,
+            constraint: IntermediaryConstraint::default(),
         }
     }
 
@@ -746,17 +742,17 @@ impl BottomRow {
     }
 
     pub fn row_height_ratio(mut self, row_height_ratio: u32) -> Self {
-        self.row_height_ratio = row_height_ratio;
+        self.constraint = IntermediaryConstraint::PartialRatio(row_height_ratio);
         self
     }
 
-    pub fn canvas_handle_height(mut self, canvas_handle_height: bool) -> Self {
-        self.canvas_handle_height = canvas_handle_height;
+    pub fn canvas_handles(mut self) -> Self {
+        self.constraint = IntermediaryConstraint::CanvasHandles;
         self
     }
 
-    pub fn flex_grow(mut self, flex_grow: bool) -> Self {
-        self.flex_grow = flex_grow;
+    pub fn grow(mut self) -> Self {
+        self.constraint = IntermediaryConstraint::Grow;
         self
     }
 }

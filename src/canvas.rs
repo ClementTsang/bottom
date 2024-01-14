@@ -18,7 +18,7 @@ use tui::{
 
 use crate::{
     app::{
-        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType},
+        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType, IntermediaryConstraint},
         App,
     },
     constants::*,
@@ -91,13 +91,19 @@ impl Painter {
         let mut layout_constraints = Vec::new();
 
         widget_layout.rows.iter().for_each(|row| {
-            if row.canvas_handle_height {
-                row_constraints.push(LayoutConstraint::CanvasHandled);
-            } else {
-                row_constraints.push(LayoutConstraint::Ratio(
-                    row.row_height_ratio,
-                    widget_layout.total_row_height_ratio,
-                ));
+            match row.constraint {
+                IntermediaryConstraint::PartialRatio(a) => {
+                    row_constraints.push(LayoutConstraint::Ratio(
+                        a,
+                        widget_layout.total_row_height_ratio,
+                    ));
+                }
+                IntermediaryConstraint::CanvasHandles => {
+                    row_constraints.push(LayoutConstraint::CanvasHandled);
+                }
+                IntermediaryConstraint::Grow => {
+                    row_constraints.push(LayoutConstraint::Grow);
+                }
             }
 
             let mut new_col_constraints = Vec::new();
