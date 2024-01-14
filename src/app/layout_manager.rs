@@ -692,7 +692,7 @@ impl BottomLayout {
 pub enum IntermediaryConstraint {
     PartialRatio(u32),
     CanvasHandled,
-    Grow,
+    Grow { minimum: Option<u32> },
 }
 
 impl Default for IntermediaryConstraint {
@@ -705,7 +705,11 @@ impl IntermediaryConstraint {
     pub fn ratio(&self) -> u32 {
         match self {
             IntermediaryConstraint::PartialRatio(val) => *val,
-            _ => 1,
+            IntermediaryConstraint::Grow { minimum } => match minimum {
+                Some(val) => *val,
+                None => 1,
+            },
+            IntermediaryConstraint::CanvasHandled => 1,
         }
     }
 }
@@ -742,8 +746,8 @@ impl BottomRow {
         self
     }
 
-    pub fn grow(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::Grow;
+    pub fn grow(mut self, minimum: Option<u32>) -> Self {
+        self.constraint = IntermediaryConstraint::Grow { minimum };
         self
     }
 }
@@ -782,8 +786,8 @@ impl BottomCol {
         self
     }
 
-    pub fn grow(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::Grow;
+    pub fn grow(mut self, minimum: Option<u32>) -> Self {
+        self.constraint = IntermediaryConstraint::Grow { minimum };
         self
     }
 }
@@ -819,8 +823,8 @@ impl BottomColRow {
         self
     }
 
-    pub fn grow(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::Grow;
+    pub fn grow(mut self, minimum: Option<u32>) -> Self {
+        self.constraint = IntermediaryConstraint::Grow { minimum };
         self
     }
 }
@@ -913,8 +917,8 @@ impl BottomWidget {
         self
     }
 
-    pub fn grow(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::Grow;
+    pub fn grow(mut self, minimum: Option<u32>) -> Self {
+        self.constraint = IntermediaryConstraint::Grow { minimum };
         self
     }
 

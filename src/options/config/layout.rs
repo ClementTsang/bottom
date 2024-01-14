@@ -19,20 +19,14 @@ fn new_cpu(left_legend: bool, iter_id: &mut u64) -> BottomColRow {
     if left_legend {
         BottomColRow::new(vec![
             BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
-                .width_ratio(3)
                 .canvas_handled()
                 .parent_reflector(Some((WidgetDirection::Right, 1))),
-            BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
-                .width_ratio(17)
-                .grow(),
+            BottomWidget::new(BottomWidgetType::Cpu, cpu_id).grow(Some(17)),
         ])
     } else {
         BottomColRow::new(vec![
-            BottomWidget::new(BottomWidgetType::Cpu, cpu_id)
-                .width_ratio(17)
-                .grow(),
+            BottomWidget::new(BottomWidgetType::Cpu, cpu_id).grow(Some(17)),
             BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
-                .width_ratio(3)
                 .canvas_handled()
                 .parent_reflector(Some((WidgetDirection::Left, 1))),
         ])
@@ -44,7 +38,6 @@ fn new_proc_sort(sort_id: u64) -> BottomWidget {
     BottomWidget::new(BottomWidgetType::ProcSort, sort_id)
         .canvas_handled()
         .parent_reflector(Some((WidgetDirection::Right, 2)))
-        .width_ratio(1)
 }
 
 fn new_proc(proc_id: u64) -> BottomWidget {
@@ -110,8 +103,8 @@ impl Row {
                                         new_proc_sort(*iter_id),
                                         new_proc(proc_id),
                                     ])
-                                    .total_widget_ratio(3)
-                                    .grow(),
+                                    .grow(None)
+                                    .total_widget_ratio(3),
                                     BottomColRow::new(vec![new_proc_search(proc_search_id)])
                                         .canvas_handled(),
                                 ])

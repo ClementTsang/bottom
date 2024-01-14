@@ -80,7 +80,7 @@ pub enum LayoutConstraint {
 }
 
 impl Painter {
-    pub fn init(widget_layout: BottomLayout, styling: CanvasStyling) -> anyhow::Result<Self> {
+    pub fn init(layout: BottomLayout, styling: CanvasStyling) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -90,18 +90,16 @@ impl Painter {
         let mut col_row_constraints = Vec::new();
         let mut layout_constraints = Vec::new();
 
-        widget_layout.rows.iter().for_each(|row| {
+        layout.rows.iter().for_each(|row| {
             match row.constraint {
                 IntermediaryConstraint::PartialRatio(val) => {
-                    row_constraints.push(LayoutConstraint::Ratio(
-                        val,
-                        widget_layout.total_row_height_ratio,
-                    ));
+                    row_constraints
+                        .push(LayoutConstraint::Ratio(val, layout.total_row_height_ratio));
                 }
                 IntermediaryConstraint::CanvasHandled => {
                     row_constraints.push(LayoutConstraint::CanvasHandled);
                 }
-                IntermediaryConstraint::Grow => {
+                IntermediaryConstraint::Grow { .. } => {
                     row_constraints.push(LayoutConstraint::Grow);
                 }
             }
@@ -117,7 +115,7 @@ impl Painter {
                     IntermediaryConstraint::CanvasHandled => {
                         new_col_constraints.push(LayoutConstraint::CanvasHandled);
                     }
-                    IntermediaryConstraint::Grow => {
+                    IntermediaryConstraint::Grow { .. } => {
                         new_col_constraints.push(LayoutConstraint::Grow);
                     }
                 }
@@ -133,7 +131,7 @@ impl Painter {
                         IntermediaryConstraint::CanvasHandled => {
                             new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
                         }
-                        IntermediaryConstraint::Grow => {
+                        IntermediaryConstraint::Grow { .. } => {
                             new_new_col_row_constraints.push(LayoutConstraint::Grow);
                         }
                     }
@@ -151,7 +149,7 @@ impl Painter {
                                 new_new_new_widget_constraints
                                     .push(LayoutConstraint::CanvasHandled);
                             }
-                            IntermediaryConstraint::Grow => {
+                            IntermediaryConstraint::Grow { .. } => {
                                 new_new_new_widget_constraints.push(LayoutConstraint::Grow);
                             }
                         });
@@ -173,7 +171,7 @@ impl Painter {
             col_constraints,
             col_row_constraints,
             layout_constraints,
-            widget_layout,
+            widget_layout: layout,
             derived_widget_draw_locs: Vec::default(),
         };
 
