@@ -8,12 +8,13 @@ use util::*;
 
 fn run_and_kill(args: &[&str]) {
     let mut handle = btm_command()
-        .stdout(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .args(args)
         .spawn()
         .unwrap();
 
-    thread::sleep(Duration::from_millis(2000));
+    thread::sleep(Duration::from_millis(3000));
 
     match handle.try_wait() {
         Ok(Some(exit)) => panic!("program terminated before it should have - exit code {exit:?}"),
