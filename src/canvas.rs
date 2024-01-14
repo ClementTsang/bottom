@@ -96,7 +96,7 @@ impl Painter {
                     row_constraints
                         .push(LayoutConstraint::Ratio(val, layout.total_row_height_ratio));
                 }
-                IntermediaryConstraint::CanvasHandled => {
+                IntermediaryConstraint::CanvasHandled { .. } => {
                     row_constraints.push(LayoutConstraint::CanvasHandled);
                 }
                 IntermediaryConstraint::Grow { .. } => {
@@ -112,7 +112,7 @@ impl Painter {
                     IntermediaryConstraint::PartialRatio(val) => {
                         new_col_constraints.push(LayoutConstraint::Ratio(val, row.total_col_ratio));
                     }
-                    IntermediaryConstraint::CanvasHandled => {
+                    IntermediaryConstraint::CanvasHandled { .. } => {
                         new_col_constraints.push(LayoutConstraint::CanvasHandled);
                     }
                     IntermediaryConstraint::Grow { .. } => {
@@ -128,7 +128,7 @@ impl Painter {
                             new_new_col_row_constraints
                                 .push(LayoutConstraint::Ratio(val, col.total_col_row_ratio));
                         }
-                        IntermediaryConstraint::CanvasHandled => {
+                        IntermediaryConstraint::CanvasHandled { .. } => {
                             new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
                         }
                         IntermediaryConstraint::Grow { .. } => {
@@ -145,7 +145,7 @@ impl Painter {
                                 new_new_new_widget_constraints
                                     .push(LayoutConstraint::Ratio(val, col_row.total_widget_ratio));
                             }
-                            IntermediaryConstraint::CanvasHandled => {
+                            IntermediaryConstraint::CanvasHandled { .. } => {
                                 new_new_new_widget_constraints
                                     .push(LayoutConstraint::CanvasHandled);
                             }

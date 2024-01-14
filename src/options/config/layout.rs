@@ -19,7 +19,7 @@ fn new_cpu(left_legend: bool, iter_id: &mut u64) -> BottomColRow {
     if left_legend {
         BottomColRow::new(vec![
             BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
-                .canvas_handled()
+                .canvas_with_ratio(3)
                 .parent_reflector(Some((WidgetDirection::Right, 1))),
             BottomWidget::new(BottomWidgetType::Cpu, cpu_id).grow(Some(17)),
         ])
@@ -27,7 +27,7 @@ fn new_cpu(left_legend: bool, iter_id: &mut u64) -> BottomColRow {
         BottomColRow::new(vec![
             BottomWidget::new(BottomWidgetType::Cpu, cpu_id).grow(Some(17)),
             BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
-                .canvas_handled()
+                .canvas_with_ratio(3)
                 .parent_reflector(Some((WidgetDirection::Left, 1))),
         ])
     }

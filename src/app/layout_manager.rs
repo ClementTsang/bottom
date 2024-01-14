@@ -691,7 +691,7 @@ impl BottomLayout {
 #[derive(Clone, Debug)]
 pub enum IntermediaryConstraint {
     PartialRatio(u32),
-    CanvasHandled,
+    CanvasHandled { ratio: Option<u32> },
     Grow { minimum: Option<u32> },
 }
 
@@ -709,7 +709,10 @@ impl IntermediaryConstraint {
                 Some(val) => *val,
                 None => 1,
             },
-            IntermediaryConstraint::CanvasHandled => 1,
+            IntermediaryConstraint::CanvasHandled { ratio } => match ratio {
+                Some(val) => *val,
+                None => 1,
+            },
         }
     }
 }
@@ -742,7 +745,7 @@ impl BottomRow {
     }
 
     pub fn canvas_handled(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::CanvasHandled;
+        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
         self
     }
 
@@ -782,7 +785,7 @@ impl BottomCol {
     }
 
     pub fn canvas_handled(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::CanvasHandled;
+        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
         self
     }
 
@@ -819,7 +822,7 @@ impl BottomColRow {
     }
 
     pub fn canvas_handled(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::CanvasHandled;
+        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
         self
     }
 
@@ -913,7 +916,12 @@ impl BottomWidget {
     }
 
     pub fn canvas_handled(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::CanvasHandled;
+        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
+        self
+    }
+
+    pub fn canvas_with_ratio(mut self, ratio: u32) -> Self {
+        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: Some(ratio) };
         self
     }
 
