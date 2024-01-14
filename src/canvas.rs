@@ -92,9 +92,9 @@ impl Painter {
 
         widget_layout.rows.iter().for_each(|row| {
             match row.constraint {
-                IntermediaryConstraint::PartialRatio(a) => {
+                IntermediaryConstraint::PartialRatio(val) => {
                     row_constraints.push(LayoutConstraint::Ratio(
-                        a,
+                        val,
                         widget_layout.total_row_height_ratio,
                     ));
                 }
@@ -110,13 +110,16 @@ impl Painter {
             let mut new_widget_constraints = Vec::new();
             let mut new_col_row_constraints = Vec::new();
             row.children.iter().for_each(|col| {
-                if col.canvas_handle_width {
-                    new_col_constraints.push(LayoutConstraint::CanvasHandled);
-                } else {
-                    new_col_constraints.push(LayoutConstraint::Ratio(
-                        col.col_width_ratio,
-                        row.total_col_ratio,
-                    ));
+                match col.constraint {
+                    IntermediaryConstraint::PartialRatio(val) => {
+                        new_col_constraints.push(LayoutConstraint::Ratio(val, row.total_col_ratio));
+                    }
+                    IntermediaryConstraint::CanvasHandles => {
+                        new_col_constraints.push(LayoutConstraint::CanvasHandled);
+                    }
+                    IntermediaryConstraint::Grow => {
+                        new_col_constraints.push(LayoutConstraint::Grow);
+                    }
                 }
 
                 let mut new_new_col_row_constraints = Vec::new();
