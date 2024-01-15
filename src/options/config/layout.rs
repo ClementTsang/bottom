@@ -128,8 +128,6 @@ impl Row {
                         for widget in child {
                             let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
                             *iter_id += 1;
-                            let col_row_height_ratio = widget.ratio.unwrap_or(1);
-                            total_col_row_ratio += col_row_height_ratio;
 
                             if let Some(default_widget_type_val) = default_widget_type {
                                 if *default_widget_type_val == widget_type
@@ -151,11 +149,17 @@ impl Row {
 
                             match widget_type {
                                 BottomWidgetType::Cpu => {
+                                    let col_row_height_ratio = widget.ratio.unwrap_or(1);
+                                    total_col_row_ratio += col_row_height_ratio;
+
                                     col_row_children.push(
                                         new_cpu(left_legend, iter_id).ratio(col_row_height_ratio),
                                     );
                                 }
                                 BottomWidgetType::Proc => {
+                                    let col_row_height_ratio = widget.ratio.unwrap_or(1) + 1;
+                                    total_col_row_ratio += col_row_height_ratio;
+
                                     let proc_id = *iter_id;
                                     let proc_search_id = *iter_id + 1;
                                     *iter_id += 2;
@@ -169,17 +173,21 @@ impl Row {
                                     );
                                     col_row_children.push(
                                         BottomColRow::new(vec![new_proc_search(proc_search_id)])
-                                            .canvas_handled()
-                                            .ratio(col_row_height_ratio),
+                                            .canvas_handled(),
                                     );
                                 }
-                                _ => col_row_children.push(
-                                    BottomColRow::new(vec![BottomWidget::new(
-                                        widget_type,
-                                        *iter_id,
-                                    )])
-                                    .ratio(col_row_height_ratio),
-                                ),
+                                _ => {
+                                    let col_row_height_ratio = widget.ratio.unwrap_or(1);
+                                    total_col_row_ratio += col_row_height_ratio;
+
+                                    col_row_children.push(
+                                        BottomColRow::new(vec![BottomWidget::new(
+                                            widget_type,
+                                            *iter_id,
+                                        )])
+                                        .ratio(col_row_height_ratio),
+                                    )
+                                }
                             }
                         }
 
