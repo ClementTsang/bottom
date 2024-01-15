@@ -70,11 +70,15 @@ jobs:
         run: |
           cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --locked --target=${{ matrix.info.target }}
 
-      # TODO: Might be good to allow this to retry.
+      # The token is generally not needed, but sometimes the default shared token hits limits.
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # 3.1.4
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         with:
-          files: lcov.info
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }} # This is generally not needed, but sometimes the default shared token hits limits.
-          flags: ${{ matrix.info.os }}
+          action: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # 3.1.4
+          with: |
+            files: lcov.info
+            fail_ci_if_error: true
+            token: ${{ secrets.CODECOV_TOKEN }}
+            flags: ${{ matrix.info.os }}
+          attempt_limit: 5
+          attempt_delay: 1500
