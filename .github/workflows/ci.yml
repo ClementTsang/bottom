@@ -146,13 +146,7 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          # x86 or x64
-          - {
-              os: "ubuntu-latest",
-              target: "x86_64-unknown-linux-musl",
-              cross: false,
-              rust: stable,
-            }
+          # x86 or x86-64
           - {
               os: "ubuntu-latest",
               target: "i686-unknown-linux-gnu",
@@ -161,19 +155,26 @@ jobs:
             }
           - {
               os: "ubuntu-latest",
+              target: "x86_64-unknown-linux-musl",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "ubuntu-latest",
               target: "i686-unknown-linux-musl",
               cross: true,
               rust: stable,
             }
+
           - {
               os: "windows-2019",
-              target: "x86_64-pc-windows-gnu",
+              target: "i686-pc-windows-msvc",
               cross: false,
               rust: stable,
             }
           - {
               os: "windows-2019",
-              target: "i686-pc-windows-msvc",
+              target: "x86_64-pc-windows-gnu",
               cross: false,
               rust: stable,
             }
