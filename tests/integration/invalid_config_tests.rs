@@ -1,10 +1,9 @@
 //! These tests are for testing some invalid config-file-specific options.
 
-mod util;
-
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use util::*;
+
+use crate::util::btm_command;
 
 #[test]
 fn test_toml_mismatch_type() {

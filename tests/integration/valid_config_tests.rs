@@ -1,10 +1,8 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
-mod util;
-
 use std::{thread, time::Duration};
 
-use util::*;
+use crate::util::spawn_btm_in_pty;
 
 fn run_and_kill(args: &[&str]) {
     let (master, mut handle) = spawn_btm_in_pty(args);
@@ -37,6 +35,11 @@ fn test_basic() {
 #[should_panic]
 fn test_bad_basic() {
     run_and_kill(&["--this_does_not_exist"]);
+}
+
+#[test]
+fn test_empty() {
+    run_and_kill(&["-C", "./tests/valid_configs/empty_config.toml"]);
 }
 
 #[test]

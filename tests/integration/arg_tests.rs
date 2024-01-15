@@ -1,15 +1,15 @@
 //! These tests are mostly here just to ensure that invalid results will be caught when passing arguments.
-mod util;
 
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use util::*;
+
+use crate::util::btm_command;
 
 #[test]
 fn test_small_rate() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("-r")
         .arg("249")
         .assert()
@@ -23,7 +23,7 @@ fn test_small_rate() {
 fn test_large_default_time() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("-t")
         .arg("18446744073709551616")
         .assert()
@@ -35,7 +35,7 @@ fn test_large_default_time() {
 fn test_small_default_time() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("-t")
         .arg("900")
         .assert()
@@ -49,7 +49,7 @@ fn test_small_default_time() {
 fn test_large_delta_time() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("-d")
         .arg("18446744073709551616")
         .assert()
@@ -61,7 +61,7 @@ fn test_large_delta_time() {
 fn test_small_delta_time() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("-d")
         .arg("900")
         .assert()
@@ -75,7 +75,7 @@ fn test_small_delta_time() {
 fn test_large_rate() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("-r")
         .arg("18446744073709551616")
         .assert()
@@ -88,7 +88,7 @@ fn test_negative_rate() {
     // This test should auto fail due to how clap works
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("-r")
         .arg("-1000")
         .assert()
@@ -100,7 +100,7 @@ fn test_negative_rate() {
 fn test_invalid_rate() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("-r")
         .arg("100-1000")
         .assert()
@@ -112,7 +112,7 @@ fn test_invalid_rate() {
 fn test_conflicting_temps() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("-c")
         .arg("-f")
         .assert()
@@ -124,7 +124,7 @@ fn test_conflicting_temps() {
 fn test_invalid_default_widget_1() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("--default_widget_type")
         .arg("fake_widget")
         .assert()
@@ -136,7 +136,7 @@ fn test_invalid_default_widget_1() {
 fn test_invalid_default_widget_2() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("--default_widget_type")
         .arg("cpu")
         .arg("--default_widget_count")
@@ -152,7 +152,7 @@ fn test_invalid_default_widget_2() {
 fn test_missing_default_widget_type() {
     btm_command()
         .arg("-C")
-        .arg("./tests/empty_config.toml")
+        .arg("./tests/valid_configs/empty_config.toml")
         .arg("--default_widget_count")
         .arg("3")
         .assert()
