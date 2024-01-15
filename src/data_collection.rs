@@ -467,7 +467,7 @@ impl DataCollector {
 const fn get_sleep_duration() -> Duration {
     const MIN_SLEEP: u64 = 10;
     const MAX_SLEEP: u64 = 250;
-    const INTERVAL: u64 = System::MINIMUM_CPU_UPDATE_INTERVAL.as_millis() as u64;
+    const INTERVAL: u64 = sysinfo::MINIMUM_CPU_UPDATE_INTERVAL.as_millis() as u64;
 
     if INTERVAL < MIN_SLEEP {
         Duration::from_millis(MIN_SLEEP)
