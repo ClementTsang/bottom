@@ -286,7 +286,6 @@ impl DataCollector {
                 if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
                     self.sys.users.refresh_list();
                 }
-                self.sys.users.refresh();
             }
 
             if self.widgets_to_harvest.use_temp {
