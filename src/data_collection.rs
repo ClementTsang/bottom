@@ -408,7 +408,7 @@ impl DataCollector {
         if self.widgets_to_harvest.use_temp {
             #[cfg(not(target_os = "linux"))]
             if let Ok(data) = temperature::get_temperature_data(
-                &self.sys,
+                &self.sys.temps,
                 &self.temperature_type,
                 &self.filters.temp_filter,
             ) {

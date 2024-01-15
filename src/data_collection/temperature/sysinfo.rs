@@ -6,14 +6,13 @@ use super::{is_temp_filtered, TempHarvest, TemperatureType};
 use crate::app::filter::Filter;
 
 pub fn get_temperature_data(
-    sys: &sysinfo::System, temp_type: &TemperatureType, filter: &Option<Filter>,
+    components: &sysinfo::Components, temp_type: &TemperatureType, filter: &Option<Filter>,
 ) -> Result<Option<Vec<TempHarvest>>> {
     use sysinfo::ComponentExt;
 
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();
 
-    let sensor_data = sys.components();
-    for component in sensor_data {
+    for component in components {
         let name = component.label().to_string();
 
         if is_temp_filtered(filter, &name) {
