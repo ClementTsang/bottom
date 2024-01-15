@@ -3,13 +3,11 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 
-use crate::util::btm_command;
+use crate::util::{btm_command, no_cfg_btm_command};
 
 #[test]
 fn test_small_rate() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    btm_command(&["-C", "./tests/valid_configs/empty_config.toml"])
         .arg("-r")
         .arg("249")
         .assert()
@@ -21,9 +19,7 @@ fn test_small_rate() {
 
 #[test]
 fn test_large_default_time() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("-t")
         .arg("18446744073709551616")
         .assert()
@@ -33,9 +29,7 @@ fn test_large_default_time() {
 
 #[test]
 fn test_small_default_time() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("-t")
         .arg("900")
         .assert()
@@ -47,9 +41,7 @@ fn test_small_default_time() {
 
 #[test]
 fn test_large_delta_time() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("-d")
         .arg("18446744073709551616")
         .assert()
@@ -59,9 +51,7 @@ fn test_large_delta_time() {
 
 #[test]
 fn test_small_delta_time() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("-d")
         .arg("900")
         .assert()
@@ -73,9 +63,7 @@ fn test_small_delta_time() {
 
 #[test]
 fn test_large_rate() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("-r")
         .arg("18446744073709551616")
         .assert()
@@ -86,9 +74,7 @@ fn test_large_rate() {
 #[test]
 fn test_negative_rate() {
     // This test should auto fail due to how clap works
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("-r")
         .arg("-1000")
         .assert()
@@ -98,9 +84,7 @@ fn test_negative_rate() {
 
 #[test]
 fn test_invalid_rate() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("-r")
         .arg("100-1000")
         .assert()
@@ -110,9 +94,7 @@ fn test_invalid_rate() {
 
 #[test]
 fn test_conflicting_temps() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("-c")
         .arg("-f")
         .assert()
@@ -122,9 +104,7 @@ fn test_conflicting_temps() {
 
 #[test]
 fn test_invalid_default_widget_1() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("--default_widget_type")
         .arg("fake_widget")
         .assert()
@@ -134,9 +114,7 @@ fn test_invalid_default_widget_1() {
 
 #[test]
 fn test_invalid_default_widget_2() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("--default_widget_type")
         .arg("cpu")
         .arg("--default_widget_count")
@@ -150,9 +128,7 @@ fn test_invalid_default_widget_2() {
 
 #[test]
 fn test_missing_default_widget_type() {
-    btm_command()
-        .arg("-C")
-        .arg("./tests/valid_configs/empty_config.toml")
+    no_cfg_btm_command()
         .arg("--default_widget_count")
         .arg("3")
         .assert()
@@ -165,7 +141,7 @@ fn test_missing_default_widget_type() {
 #[test]
 #[cfg_attr(feature = "battery", ignore)]
 fn test_battery_flag() {
-    btm_command()
+    no_cfg_btm_command()
         .arg("--battery")
         .assert()
         .failure()
@@ -177,7 +153,7 @@ fn test_battery_flag() {
 #[test]
 #[cfg_attr(feature = "gpu", ignore)]
 fn test_gpu_flag() {
-    btm_command()
+    no_cfg_btm_command()
         .arg("--enable_gpu")
         .assert()
         .failure()

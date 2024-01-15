@@ -1,8 +1,12 @@
-use std::{env, process::Command};
+use std::{env, ffi::OsString, path::Path, process::Command};
 
 use hashbrown::HashMap;
 
 use portable_pty::{native_pty_system, Child, CommandBuilder, MasterPty, PtySize};
+
+pub fn abs_path(path: &str) -> OsString {
+    Path::new(path).canonicalize().unwrap().into_os_string()
+}
 
 /// Returns a QEMU runner target given an architecture.
 fn get_qemu_target(arch: &str) -> &str {
@@ -45,13 +49,7 @@ fn cross_runner() -> Option<String> {
             env_mapping.get(TARGET_RUNNER).map(|target_runner| {
                 format!(
                     "qemu-{}",
-                    get_qemu_target(
-                        target_runner
-                            .split_ascii_whitespace()
-                            .collect::<Vec<_>>()
-                            .last()
-                            .unwrap()
-                    )
+                    get_qemu_target(target_runner.split_ascii_whitespace().last().unwrap())
                 )
             })
         } else {
@@ -64,11 +62,12 @@ fn cross_runner() -> Option<String> {
 
 const BTM_EXE_PATH: &str = env!("CARGO_BIN_EXE_btm");
 const RUNNER_ENV_VARS: [(&str, &str); 1] = [("NO_COLOR", "1")];
+const DEFAULT_CFG: [&str; 2] = ["-C", "./tests/valid_configs/empty_config.toml"];
 
 /// Returns the [`Command`] of a binary invocation of bottom, alongside
 /// any required env variables.
-pub fn btm_command() -> Command {
-    match cross_runner() {
+pub fn btm_command(args: &[&str]) -> Command {
+    let mut cmd = match cross_runner() {
         None => Command::new(BTM_EXE_PATH),
         Some(runner) => {
             let mut cmd = Command::new(runner);
@@ -76,7 +75,27 @@ pub fn btm_command() -> Command {
             cmd.arg(BTM_EXE_PATH);
             cmd
         }
+    };
+
+    let mut prev = "";
+    for arg in args.iter() {
+        if prev == "-C" {
+            // This is the config file; make sure we set it to absolute path!
+            cmd.arg(abs_path(arg));
+        } else {
+            cmd.arg(arg);
+        }
+
+        prev = arg;
     }
+
+    cmd
+}
+
+/// Returns the [`Command`] of a binary invocation of bottom, alongside
+/// any required env variables, and with the default, empty config file.
+pub fn no_cfg_btm_command() -> Command {
+    btm_command(&DEFAULT_CFG)
 }
 
 /// Spawns `btm` in a pty, returning the pair alongside a handle to the child.
@@ -105,7 +124,19 @@ pub fn spawn_btm_in_pty(args: &[&str]) -> (Box<dyn MasterPty>, Box<dyn Child>) {
             cmd
         }
     };
-    cmd.args(args);
+
+    let args = if args.is_empty() { &DEFAULT_CFG } else { args };
+    let mut prev = "";
+    for arg in args.iter() {
+        if prev == "-C" {
+            // This is the config file; make sure we set it to absolute path!
+            cmd.arg(abs_path(arg));
+        } else {
+            cmd.arg(arg);
+        }
+
+        prev = arg;
+    }
 
     (pair.master, pair.slave.spawn_command(cmd).unwrap())
 }

@@ -1,13 +1,20 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
-use std::{thread, time::Duration};
+use std::{io::Read, thread, time::Duration};
 
 use crate::util::spawn_btm_in_pty;
 
+fn reader_to_string(mut reader: Box<dyn Read>) -> String {
+    let mut buf = String::default();
+    reader.read_to_string(&mut buf).unwrap();
+
+    buf
+}
+
 fn run_and_kill(args: &[&str]) {
     let (master, mut handle) = spawn_btm_in_pty(args);
-    let _ = master.try_clone_reader();
-    let _ = master.take_writer();
+    let reader = master.try_clone_reader().unwrap();
+    let _ = master.take_writer().unwrap();
 
     const TIMES_CHECKED: u64 = 6; // Check 6 times, once every 500ms, for 3 seconds total.
 
@@ -15,9 +22,13 @@ fn run_and_kill(args: &[&str]) {
         thread::sleep(Duration::from_millis(500));
         match handle.try_wait() {
             Ok(Some(exit)) => {
-                panic!("program terminated before it should have - exit code {exit:?}")
+                println!("output: {}", reader_to_string(reader));
+                panic!("program terminated unexpectedly (exit status: {exit:?})");
             }
-            Err(e) => panic!("error while trying to wait: {e}"),
+            Err(e) => {
+                println!("output: {}", reader_to_string(reader));
+                panic!("error while trying to wait: {e}")
+            }
             _ => {}
         }
     }
