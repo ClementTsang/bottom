@@ -62,7 +62,7 @@ fn cross_runner() -> Option<String> {
     }
 }
 
-const BTM_EXE_PATH: &'static str = env!("CARGO_BIN_EXE_btm");
+const BTM_EXE_PATH: &str = env!("CARGO_BIN_EXE_btm");
 const RUNNER_ENV_VARS: [(&str, &str); 1] = [("NO_COLOR", "1")];
 
 /// Returns the [`Command`] of a binary invocation of bottom, alongside
