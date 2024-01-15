@@ -31,7 +31,7 @@ exclude = [
     "Cross.toml",
     "rustfmt.toml",
 ]
-rust-version = "1.70.0"
+rust-version = "1.70.0" # The oldest version I've tested that should still build bottom - note this is not an MSRV!
 
 [[bin]]
 name = "btm"

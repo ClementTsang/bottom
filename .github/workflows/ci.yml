@@ -89,14 +89,14 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
+        uses: dtolnay/rust-toolchain@be73d7920c329f220ce78e0234b8f96b7ae60248
         with:
           toolchain: stable
           components: rustfmt, clippy
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43 # 2.7.0
+        uses: Swatinem/rust-cache@378c8285a4eaf12899d11bea686a763e906956af # 2.7.3
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
@@ -136,7 +136,7 @@ jobs:
           RUST_BACKTRACE: full
 
   # Try running cargo build on all other platforms.
-  # TODO: Maybe some of these should be allowed to fail.
+  # TODO: Maybe some of these should be allowed to fail?
   other-check:
     needs: pre-job
     runs-on: ${{ matrix.info.os }}
@@ -149,14 +149,14 @@ jobs:
           # x86 or x64
           - {
               os: "ubuntu-latest",
-              target: "i686-unknown-linux-gnu",
-              cross: true,
+              target: "x86_64-unknown-linux-musl",
+              cross: false,
               rust: stable,
             }
           - {
               os: "ubuntu-latest",
-              target: "x86_64-unknown-linux-musl",
-              cross: false,
+              target: "i686-unknown-linux-gnu",
+              cross: true,
               rust: stable,
             }
           - {
@@ -167,23 +167,15 @@ jobs:
             }
           - {
               os: "windows-2019",
-              target: "i686-pc-windows-msvc",
+              target: "x86_64-pc-windows-gnu",
               cross: false,
               rust: stable,
             }
           - {
               os: "windows-2019",
-              target: "x86_64-pc-windows-gnu",
+              target: "i686-pc-windows-msvc",
               cross: false,
               rust: stable,
-            }
-
-          # The unofficial MSRV.
-          - {
-              os: "ubuntu-latest",
-              target: "x86_64-unknown-linux-gnu",
-              cross: false,
-              rust: "1.70.0",
             }
 
           # Beta
@@ -253,13 +245,13 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
+        uses: dtolnay/rust-toolchain@be73d7920c329f220ce78e0234b8f96b7ae60248
         with:
           toolchain: ${{ matrix.info.rust }}
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43 # 2.7.0
+        uses: Swatinem/rust-cache@378c8285a4eaf12899d11bea686a763e906956af # 2.7.3
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
