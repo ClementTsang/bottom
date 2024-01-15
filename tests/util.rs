@@ -60,10 +60,14 @@ fn cross_runner() -> Option<String> {
     }
 }
 
+pub fn btm_exe_path() -> &'static str {
+    env!("CARGO_BIN_EXE_btm")
+}
+
 /// Returns the [`Command`] of a binary invocation of bottom, alongside
 /// any required env variables.
 pub fn btm_command() -> Command {
-    let btm_exe = env!("CARGO_BIN_EXE_btm");
+    let btm_exe = btm_exe_path();
     match cross_runner() {
         None => Command::new(btm_exe),
         Some(runner) => {

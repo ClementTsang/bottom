@@ -1,5 +1,7 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
+#![cfg(all(target_os = "linux", target_arch = "x86_64"))]
+
 mod util;
 
 use std::{process::Stdio, thread, time::Duration};
