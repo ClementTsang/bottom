@@ -19,7 +19,6 @@ use std::time::{Duration, Instant};
 use hashbrown::HashMap;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
-use sysinfo::System;
 
 use self::temperature::TemperatureType;
 use super::DataFilters;
@@ -97,10 +96,46 @@ impl Data {
     }
 }
 
+/// A wrapper around the sysinfo data source. We use sysinfo for the following data:
+/// - CPU usage
+/// - Memory usage
+/// - Network usage
+/// - Processes (non-Linux)
+/// - Disk (Windows)
+/// - Temperatures (non-Linux)
+#[derive(Debug)]
+pub struct SysinfoSource {
+    /// Handles CPU, memory, and processes.
+    pub(crate) system: sysinfo::System,
+    pub(crate) network: sysinfo::Networks,
+    #[cfg(not(target_os = "linux"))]
+    pub(crate) temps: sysinfo::Components,
+    #[cfg(target_os = "windows")]
+    pub(crate) disk: sysinfo::Disks,
+    #[cfg(target_os = "windows")]
+    pub(crate) users: sysinfo::Users,
+}
+
+impl Default for SysinfoSource {
+    fn default() -> Self {
+        use sysinfo::*;
+        Self {
+            system: System::new_with_specifics(RefreshKind::new()),
+            network: Networks::new(),
+            #[cfg(not(target_os = "linux"))]
+            temps: Components::new(),
+            #[cfg(target_os = "windows")]
+            disk: Disks::new(),
+            #[cfg(target_os = "windows")]
+            users: Users::new(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct DataCollector {
     pub data: Data,
-    sys: System,
+    sys: SysinfoSource,
     temperature_type: TemperatureType,
     use_current_cpu_total: bool,
     unnormalized_cpu: bool,
@@ -136,7 +171,7 @@ impl DataCollector {
     pub fn new(filters: DataFilters) -> Self {
         DataCollector {
             data: Data::default(),
-            sys: System::new_with_specifics(sysinfo::RefreshKind::new()),
+            sys: SysinfoSource::default(),
             #[cfg(target_os = "linux")]
             pid_mapping: HashMap::default(),
             #[cfg(target_os = "linux")]
@@ -183,11 +218,12 @@ impl DataCollector {
 
         // Sysinfo-related list refreshing.
         if self.widgets_to_harvest.use_net {
-            self.sys.refresh_networks_list();
+            self.sys.network.refresh_list();
         }
 
+        #[cfg(not(target_os = "linux"))]
         if self.widgets_to_harvest.use_temp {
-            self.sys.refresh_components_list();
+            self.sys.temps.refresh_list();
         }
 
         #[cfg(target_os = "windows")]
@@ -243,18 +279,18 @@ impl DataCollector {
         let refresh_start = Instant::now();
 
         if self.widgets_to_harvest.use_cpu || self.widgets_to_harvest.use_proc {
-            self.sys.refresh_cpu();
+            self.sys.system.refresh_cpu();
         }
 
         if self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_proc {
-            self.sys.refresh_memory();
+            self.sys.system.refresh_memory();
         }
 
         if self.widgets_to_harvest.use_net {
             if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
-                self.sys.refresh_networks_list();
+                self.sys.network.refresh_list();
             }
-            self.sys.refresh_networks();
+            self.sys.network.refresh();
         }
 
         // sysinfo is used on non-Linux systems for the following:
@@ -264,20 +300,21 @@ impl DataCollector {
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
+                self.sys.system.refresh_processes();
+
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
                 if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
-                    self.sys.refresh_users_list();
+                    self.sys.users.refresh_list();
                 }
-
-                self.sys.refresh_processes();
+                self.sys.users.refresh();
             }
 
             if self.widgets_to_harvest.use_temp {
                 if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
-                    self.sys.refresh_components_list();
+                    self.sys.temps.refresh_list();
                 }
-                self.sys.refresh_components();
+                self.sys.temps.refresh();
             }
         }
 
@@ -298,10 +335,13 @@ impl DataCollector {
         self.update_cpu_usage();
         self.update_memory_usage();
         self.update_temps();
+
         #[cfg(feature = "battery")]
         self.update_batteries();
+
         #[cfg(feature = "gpu")]
         self.update_gpus(); // update_gpus before procs for gpu_pids but after temps for appending
+
         self.update_processes();
         self.update_network_usage();
         self.update_disks();
@@ -341,7 +381,7 @@ impl DataCollector {
     #[inline]
     fn update_cpu_usage(&mut self) {
         if self.widgets_to_harvest.use_cpu {
-            self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu).ok();
+            self.data.cpu = cpu::get_cpu_data_list(&self.sys.system, self.show_average_cpu).ok();
 
             #[cfg(target_family = "unix")]
             {
@@ -387,16 +427,16 @@ impl DataCollector {
     #[inline]
     fn update_memory_usage(&mut self) {
         if self.widgets_to_harvest.use_mem {
-            self.data.memory = memory::get_ram_usage(&self.sys);
+            self.data.memory = memory::get_ram_usage(&self.sys.system);
 
             #[cfg(not(target_os = "windows"))]
             if self.widgets_to_harvest.use_cache {
-                self.data.cache = memory::get_cache_usage(&self.sys);
+                self.data.cache = memory::get_cache_usage(&self.sys.system);
             }
 
             self.data.swap = memory::get_swap_usage(
                 #[cfg(not(target_os = "windows"))]
-                &self.sys,
+                &self.sys.system,
             );
 
             #[cfg(feature = "zfs")]
@@ -412,7 +452,7 @@ impl DataCollector {
 
         if self.widgets_to_harvest.use_net {
             let net_data = network::get_network_data(
-                &self.sys,
+                &self.sys.network,
                 self.last_collection_time,
                 &mut self.total_rx,
                 &mut self.total_tx,
@@ -451,7 +491,7 @@ impl DataCollector {
         if let Some(memory) = &self.data.memory {
             memory.total_bytes
         } else {
-            self.sys.total_memory()
+            self.sys.system.total_memory()
         }
     }
 }
