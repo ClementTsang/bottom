@@ -747,19 +747,19 @@ fn get_default_widget_and_count(
 fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
     #[cfg(feature = "battery")]
     {
-        if matches.get_flag("battery") {
-            return true;
-        } else if let Some(flags) = &config.flags {
-            if let Some(battery) = flags.battery {
-                return battery;
-            }
-        }
-
         if let Ok(battery_manager) = Manager::new() {
             if let Ok(batteries) = battery_manager.batteries() {
                 if batteries.count() == 0 {
                     return false;
                 }
+            }
+        }
+
+        if matches.get_flag("battery") {
+            return true;
+        } else if let Some(flags) = &config.flags {
+            if let Some(battery) = flags.battery {
+                return battery;
             }
         }
     }

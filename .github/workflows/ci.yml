@@ -236,7 +236,7 @@ jobs:
               target: "aarch64-linux-android",
               cross: true,
               rust: stable,
-              cross-version: "git:d6511b7b166c18640f81b8f6a74d9eef380f7ded",
+              cross-version: "git:cabfc3b02d1edec03869fabdabf6a7f8b0519160",
               no-default-features: true,
             }
 

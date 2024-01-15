@@ -135,6 +135,9 @@ cargo-husky = { version = "1.5.0", default-features = false, features = [
 ] }
 predicates = "3.0.3"
 
+[target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
+portable-pty = "0.8.1"
+
 [build-dependencies]
 clap = { version = "4.4.14", features = ["default", "cargo", "wrap_help"] }
 clap_complete = "4.4.6"

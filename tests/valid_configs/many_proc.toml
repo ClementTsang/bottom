@@ -1,0 +1,22 @@
+[[row]]
+ratio = 30
+[[row.child]]
+type = "cpu"
+[[row]]
+ratio = 40
+[[row.child]]
+ratio = 4
+type = "mem"
+[[row.child]]
+ratio = 3
+[[row.child.child]]
+type = "proc"
+[[row.child.child]]
+type = "proc"
+[[row]]
+ratio = 30
+[[row.child]]
+type = "net"
+[[row.child]]
+type = "proc"
+default = true

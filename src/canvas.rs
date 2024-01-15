@@ -18,7 +18,7 @@ use tui::{
 
 use crate::{
     app::{
-        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType},
+        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType, IntermediaryConstraint},
         App,
     },
     constants::*,
@@ -80,7 +80,7 @@ pub enum LayoutConstraint {
 }
 
 impl Painter {
-    pub fn init(widget_layout: BottomLayout, styling: CanvasStyling) -> anyhow::Result<Self> {
+    pub fn init(layout: BottomLayout, styling: CanvasStyling) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -90,56 +90,69 @@ impl Painter {
         let mut col_row_constraints = Vec::new();
         let mut layout_constraints = Vec::new();
 
-        widget_layout.rows.iter().for_each(|row| {
-            if row.canvas_handle_height {
-                row_constraints.push(LayoutConstraint::CanvasHandled);
-            } else {
-                row_constraints.push(LayoutConstraint::Ratio(
-                    row.row_height_ratio,
-                    widget_layout.total_row_height_ratio,
-                ));
+        layout.rows.iter().for_each(|row| {
+            match row.constraint {
+                IntermediaryConstraint::PartialRatio(val) => {
+                    row_constraints
+                        .push(LayoutConstraint::Ratio(val, layout.total_row_height_ratio));
+                }
+                IntermediaryConstraint::CanvasHandled { .. } => {
+                    row_constraints.push(LayoutConstraint::CanvasHandled);
+                }
+                IntermediaryConstraint::Grow { .. } => {
+                    row_constraints.push(LayoutConstraint::Grow);
+                }
             }
 
             let mut new_col_constraints = Vec::new();
             let mut new_widget_constraints = Vec::new();
             let mut new_col_row_constraints = Vec::new();
             row.children.iter().for_each(|col| {
-                if col.canvas_handle_width {
-                    new_col_constraints.push(LayoutConstraint::CanvasHandled);
-                } else {
-                    new_col_constraints.push(LayoutConstraint::Ratio(
-                        col.col_width_ratio,
-                        row.total_col_ratio,
-                    ));
+                match col.constraint {
+                    IntermediaryConstraint::PartialRatio(val) => {
+                        new_col_constraints.push(LayoutConstraint::Ratio(val, row.total_col_ratio));
+                    }
+                    IntermediaryConstraint::CanvasHandled { .. } => {
+                        new_col_constraints.push(LayoutConstraint::CanvasHandled);
+                    }
+                    IntermediaryConstraint::Grow { .. } => {
+                        new_col_constraints.push(LayoutConstraint::Grow);
+                    }
                 }
 
                 let mut new_new_col_row_constraints = Vec::new();
                 let mut new_new_widget_constraints = Vec::new();
                 col.children.iter().for_each(|col_row| {
-                    if col_row.canvas_handle_height {
-                        new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
-                    } else if col_row.flex_grow {
-                        new_new_col_row_constraints.push(LayoutConstraint::Grow);
-                    } else {
-                        new_new_col_row_constraints.push(LayoutConstraint::Ratio(
-                            col_row.col_row_height_ratio,
-                            col.total_col_row_ratio,
-                        ));
+                    match col_row.constraint {
+                        IntermediaryConstraint::PartialRatio(val) => {
+                            new_new_col_row_constraints
+                                .push(LayoutConstraint::Ratio(val, col.total_col_row_ratio));
+                        }
+                        IntermediaryConstraint::CanvasHandled { .. } => {
+                            new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
+                        }
+                        IntermediaryConstraint::Grow { .. } => {
+                            new_new_col_row_constraints.push(LayoutConstraint::Grow);
+                        }
                     }
 
                     let mut new_new_new_widget_constraints = Vec::new();
-                    col_row.children.iter().for_each(|widget| {
-                        if widget.canvas_handle_width {
-                            new_new_new_widget_constraints.push(LayoutConstraint::CanvasHandled);
-                        } else if widget.flex_grow {
-                            new_new_new_widget_constraints.push(LayoutConstraint::Grow);
-                        } else {
-                            new_new_new_widget_constraints.push(LayoutConstraint::Ratio(
-                                widget.width_ratio,
-                                col_row.total_widget_ratio,
-                            ));
-                        }
-                    });
+                    col_row
+                        .children
+                        .iter()
+                        .for_each(|widget| match widget.constraint {
+                            IntermediaryConstraint::PartialRatio(val) => {
+                                new_new_new_widget_constraints
+                                    .push(LayoutConstraint::Ratio(val, col_row.total_widget_ratio));
+                            }
+                            IntermediaryConstraint::CanvasHandled { .. } => {
+                                new_new_new_widget_constraints
+                                    .push(LayoutConstraint::CanvasHandled);
+                            }
+                            IntermediaryConstraint::Grow { .. } => {
+                                new_new_new_widget_constraints.push(LayoutConstraint::Grow);
+                            }
+                        });
                     new_new_widget_constraints.push(new_new_new_widget_constraints);
                 });
                 new_col_row_constraints.push(new_new_col_row_constraints);
@@ -158,7 +171,7 @@ impl Painter {
             col_constraints,
             col_row_constraints,
             layout_constraints,
-            widget_layout,
+            widget_layout: layout,
             derived_widget_draw_locs: Vec::default(),
         };
 
