@@ -2,6 +2,7 @@ use std::{env, ffi::OsString, path::Path, process::Command};
 
 use hashbrown::HashMap;
 
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 use portable_pty::{native_pty_system, Child, CommandBuilder, MasterPty, PtySize};
 
 pub fn abs_path(path: &str) -> OsString {
@@ -99,6 +100,7 @@ pub fn no_cfg_btm_command() -> Command {
 }
 
 /// Spawns `btm` in a pty, returning the pair alongside a handle to the child.
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 pub fn spawn_btm_in_pty(args: &[&str]) -> (Box<dyn MasterPty>, Box<dyn Child>) {
     let native_pty = native_pty_system();
 
