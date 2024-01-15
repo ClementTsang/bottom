@@ -4,7 +4,7 @@ mod bindings;
 
 use bindings::*;
 use itertools::Itertools;
-use sysinfo::{DiskExt, SystemExt};
+use sysinfo::DiskExt;
 
 use super::{keep_disk_entry, DiskHarvest};
 use crate::data_collection::{disks::IoCounters, DataCollector};

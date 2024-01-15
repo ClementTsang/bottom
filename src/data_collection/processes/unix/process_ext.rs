@@ -3,7 +3,7 @@
 use std::{io, time::Duration};
 
 use hashbrown::HashMap;
-use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System, SystemExt};
+use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System};
 
 use super::ProcessHarvest;
 use crate::{data_collection::processes::UserTable, utils::error, Pid};

@@ -3,7 +3,7 @@
 
 use std::collections::VecDeque;
 
-use sysinfo::{CpuExt, LoadAvg, System, SystemExt};
+use sysinfo::{CpuExt, LoadAvg, System};
 
 use super::{CpuData, CpuDataType, CpuHarvest};
 use crate::data_collection::cpu::LoadAvgHarvest;

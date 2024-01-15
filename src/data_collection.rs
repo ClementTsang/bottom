@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 use hashbrown::HashMap;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
-use sysinfo::{System, SystemExt};
+use sysinfo::System;
 
 use self::temperature::TemperatureType;
 use super::DataFilters;

@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use sysinfo::{CpuExt, PidExt, ProcessExt, SystemExt, UserExt};
+use sysinfo::{CpuExt, PidExt, ProcessExt, UserExt};
 
 use super::ProcessHarvest;
 use crate::data_collection::DataCollector;
