@@ -2,6 +2,8 @@ use std::{env, process::Command};
 
 use hashbrown::HashMap;
 
+use portable_pty::{native_pty_system, Child, CommandBuilder, MasterPty, PtySize};
+
 /// Returns a QEMU runner target given an architecture.
 fn get_qemu_target(arch: &str) -> &str {
     match arch {
@@ -60,21 +62,50 @@ fn cross_runner() -> Option<String> {
     }
 }
 
-pub fn btm_exe_path() -> &'static str {
-    env!("CARGO_BIN_EXE_btm")
-}
+const BTM_EXE_PATH: &'static str = env!("CARGO_BIN_EXE_btm");
+const RUNNER_ENV_VARS: [(&str, &str); 1] = [("NO_COLOR", "1")];
 
 /// Returns the [`Command`] of a binary invocation of bottom, alongside
 /// any required env variables.
 pub fn btm_command() -> Command {
-    let btm_exe = btm_exe_path();
     match cross_runner() {
-        None => Command::new(btm_exe),
+        None => Command::new(BTM_EXE_PATH),
         Some(runner) => {
             let mut cmd = Command::new(runner);
-            cmd.env("NO_COLOR", "1");
-            cmd.arg(btm_exe);
+            cmd.envs(RUNNER_ENV_VARS);
+            cmd.arg(BTM_EXE_PATH);
             cmd
         }
     }
+}
+
+/// Spawns `btm` in a pty, returning the pair alongside a handle to the child.
+pub fn spawn_btm_in_pty(args: &[&str]) -> (Box<dyn MasterPty>, Box<dyn Child>) {
+    let native_pty = native_pty_system();
+
+    let pair = native_pty
+        .openpty(PtySize {
+            rows: 100,
+            cols: 100,
+            pixel_width: 1,
+            pixel_height: 1,
+        })
+        .unwrap();
+
+    let btm_exe = BTM_EXE_PATH;
+    let mut cmd = match cross_runner() {
+        None => CommandBuilder::new(btm_exe),
+        Some(runner) => {
+            let mut cmd = CommandBuilder::new(runner);
+            for (env, val) in RUNNER_ENV_VARS {
+                cmd.env(env, val);
+            }
+            cmd.arg(BTM_EXE_PATH);
+
+            cmd
+        }
+    };
+    cmd.args(args);
+
+    (pair.master, pair.slave.spawn_command(cmd).unwrap())
 }
