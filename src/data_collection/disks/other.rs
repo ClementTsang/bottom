@@ -1,12 +1,10 @@
 //! Fallback disk info using sysinfo.
 
-use sysinfo::DiskExt;
-
 use super::{keep_disk_entry, DiskHarvest};
 use crate::data_collection::DataCollector;
 
 pub(crate) fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<DiskHarvest>> {
-    let disks = collector.sys.disks();
+    let disks = &collector.sys.disks;
     let disk_filter = &collector.filters.disk_filter;
     let mount_filter = &collector.filters.mount_filter;
 

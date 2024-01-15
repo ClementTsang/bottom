@@ -2,15 +2,15 @@
 
 use std::time::Duration;
 
-use sysinfo::{CpuExt, PidExt, ProcessExt, UserExt};
-
 use super::ProcessHarvest;
 use crate::data_collection::DataCollector;
 
+// TODO: There's a lot of shared code with this and the unix impl.
 pub fn sysinfo_process_data(
     collector: &mut DataCollector,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
-    let sys = &collector.sys;
+    let sys = &collector.sys.system;
+    let users = &collector.sys.users;
     let use_current_cpu_total = collector.use_current_cpu_total;
     let unnormalized_cpu = collector.unnormalized_cpu;
     let total_memory = collector.total_memory();
@@ -26,17 +26,12 @@ pub fn sysinfo_process_data(
             if process_cmd.len() > 1 {
                 process_cmd[0].clone()
             } else {
-                let process_exe = process_val.exe().file_stem();
-                if let Some(exe) = process_exe {
-                    let process_exe_opt = exe.to_str();
-                    if let Some(exe_name) = process_exe_opt {
-                        exe_name.to_string()
-                    } else {
-                        "".to_string()
-                    }
-                } else {
-                    "".to_string()
-                }
+                process_val
+                    .exe()
+                    .and_then(|exe| exe.file_stem())
+                    .and_then(|stem| stem.to_str())
+                    .map(|s| s.to_string())
+                    .unwrap_or(String::new())
             }
         } else {
             process_val.name().to_string()
@@ -105,7 +100,7 @@ pub fn sysinfo_process_data(
             process_state,
             user: process_val
                 .user_id()
-                .and_then(|uid| sys.get_user_by_id(uid))
+                .and_then(|uid| users.get_user_by_id(uid))
                 .map_or_else(|| "N/A".into(), |user| user.name().to_owned().into()),
             time: if process_val.start_time() == 0 {
                 // Workaround for Windows occasionally returning a start time equal to UNIX epoch, giving a run time

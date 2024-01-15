@@ -101,7 +101,7 @@ impl Data {
 /// - Memory usage
 /// - Network usage
 /// - Processes (non-Linux)
-/// - Disk (Windows)
+/// - Disk (anything outside of Linux, macOS, and FreeBSD)
 /// - Temperatures (non-Linux)
 #[derive(Debug)]
 pub struct SysinfoSource {
@@ -110,7 +110,7 @@ pub struct SysinfoSource {
     pub(crate) network: sysinfo::Networks,
     #[cfg(not(target_os = "linux"))]
     pub(crate) temps: sysinfo::Components,
-    #[cfg(target_os = "windows")]
+    #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "freebsd")))]
     pub(crate) disks: sysinfo::Disks,
     #[cfg(target_os = "windows")]
     pub(crate) users: sysinfo::Users,
@@ -124,7 +124,7 @@ impl Default for SysinfoSource {
             network: Networks::new(),
             #[cfg(not(target_os = "linux"))]
             temps: Components::new(),
-            #[cfg(target_os = "windows")]
+            #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "freebsd")))]
             disks: Disks::new(),
             #[cfg(target_os = "windows")]
             users: Users::new(),
@@ -181,7 +181,7 @@ impl DataCollector {
             temperature_type: TemperatureType::Celsius,
             use_current_cpu_total: false,
             unnormalized_cpu: false,
-            last_collection_time: Instant::now(),
+            last_collection_time: Instant::now() - Duration::from_secs(600), // Initialize it to the past to force it to load on initialization.
             total_rx: 0,
             total_tx: 0,
             show_average_cpu: false,
@@ -253,7 +253,7 @@ impl DataCollector {
     /// - Disk (Windows)
     /// - Temperatures (non-Linux)
     fn refresh_sysinfo_data(&mut self) {
-        // Refresh once every minute. If it's too frequent it can cause segfaults.
+        // Refresh the list of objects once every minute. If it's too frequent it can cause segfaults.
         const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
         let refresh_start = Instant::now();
 
@@ -301,7 +301,7 @@ impl DataCollector {
             if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
                 self.sys.disks.refresh_list();
             }
-            self.sys.disks.refresh_disks();
+            self.sys.disks.refresh();
         }
     }
 

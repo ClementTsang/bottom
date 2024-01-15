@@ -3,7 +3,7 @@
 use std::{io, time::Duration};
 
 use hashbrown::HashMap;
-use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System};
+use sysinfo::{ProcessStatus, System};
 
 use super::ProcessHarvest;
 use crate::{data_collection::processes::UserTable, utils::error, Pid};
@@ -24,17 +24,12 @@ pub(crate) trait UnixProcessExt {
                 if process_cmd.len() > 1 {
                     process_cmd[0].clone()
                 } else {
-                    let process_exe = process_val.exe().file_stem();
-                    if let Some(exe) = process_exe {
-                        let process_exe_opt = exe.to_str();
-                        if let Some(exe_name) = process_exe_opt {
-                            exe_name.to_string()
-                        } else {
-                            "".to_string()
-                        }
-                    } else {
-                        "".to_string()
-                    }
+                    process_val
+                        .exe()
+                        .and_then(|exe| exe.file_stem())
+                        .and_then(|stem| stem.to_str())
+                        .map(|s| s.to_string())
+                        .unwrap_or(String::new())
                 }
             } else {
                 process_val.name().to_string()

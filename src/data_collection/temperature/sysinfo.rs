@@ -8,8 +8,6 @@ use crate::app::filter::Filter;
 pub fn get_temperature_data(
     components: &sysinfo::Components, temp_type: &TemperatureType, filter: &Option<Filter>,
 ) -> Result<Option<Vec<TempHarvest>>> {
-    use sysinfo::ComponentExt;
-
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();
 
     for component in components {
