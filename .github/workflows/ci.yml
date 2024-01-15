@@ -136,7 +136,8 @@ jobs:
           RUST_BACKTRACE: full
 
   # Try running cargo build on all other platforms.
-  # TODO: Maybe some of these should be allowed to fail?
+  # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
+  # I would also put android there.
   other-check:
     needs: pre-job
     runs-on: ${{ matrix.info.os }}
