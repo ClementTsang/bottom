@@ -6,7 +6,6 @@ use std::{io, process::Command};
 
 use hashbrown::HashMap;
 use itertools::Itertools;
-use sysinfo::{PidExt, ProcessExt};
 
 use super::UnixProcessExt;
 use crate::Pid;

@@ -312,8 +312,7 @@ pub(crate) fn linux_process_data(
     }) = cpu_usage_calculation(prev_idle, prev_non_idle)
     {
         if unnormalized_cpu {
-            use sysinfo::SystemExt;
-            let num_processors = collector.sys.cpus().len() as f64;
+            let num_processors = collector.sys.system.cpus().len() as f64;
 
             // Note we *divide* here because the later calculation divides `cpu_usage` - in effect,
             // multiplying over the number of cores.

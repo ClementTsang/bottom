@@ -16,7 +16,7 @@ cfg_if! {
         use crate::utils::error;
 
         pub fn sysinfo_process_data(collector: &mut DataCollector) -> error::Result<Vec<ProcessHarvest>> {
-            let sys = &collector.sys;
+            let sys = &collector.sys.system;
             let use_current_cpu_total = collector.use_current_cpu_total;
             let unnormalized_cpu = collector.unnormalized_cpu;
             let total_memory = collector.total_memory();
