@@ -235,13 +235,12 @@ pub struct FinalWidget {
 mod test {
     use toml_edit::de::from_str;
 
+    use super::*;
     use crate::{
         constants::{DEFAULT_LAYOUT, DEFAULT_WIDGET_ID},
         options::Config,
         utils::error,
     };
-
-    use super::*;
 
     const PROC_LAYOUT: &str = r#"
     [[row]]

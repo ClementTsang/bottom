@@ -1,14 +1,12 @@
+mod colour_utils;
+
 use anyhow::Context;
 use colour_utils::*;
 use tui::style::{Color, Style};
 
 use super::ColourScheme;
-use crate::{
-    constants::*,
-    options::{Config, ConfigColours},
-    utils::error,
-};
-mod colour_utils;
+pub use crate::options::Config;
+use crate::{constants::*, options::colours::ConfigColours, utils::error};
 
 pub struct CanvasStyling {
     pub currently_selected_text_colour: Color,
