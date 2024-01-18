@@ -3,10 +3,10 @@
 // TODO: Break this apart or do something a bit smarter.
 
 pub mod args;
+pub mod colours;
 pub mod config;
 
 use std::{
-    borrow::Cow,
     convert::TryInto,
     str::FromStr,
     time::{Duration, Instant},
@@ -14,14 +14,14 @@ use std::{
 
 use anyhow::{Context, Result};
 use clap::ArgMatches;
+pub use colours::ConfigColours;
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
 
-use self::config::{cpu::CpuConfig, layout::Row, process_columns::ProcessConfig};
+use self::config::{layout::Row, IgnoreList, StringOrNum};
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
     canvas::{styling::CanvasStyling, ColourScheme},
@@ -33,139 +33,7 @@ use crate::{
     },
     widgets::*,
 };
-
-#[derive(Clone, Debug, Default, Deserialize)]
-pub struct Config {
-    pub flags: Option<ConfigFlags>,
-    pub colors: Option<ConfigColours>,
-    pub row: Option<Vec<Row>>,
-    pub disk_filter: Option<IgnoreList>,
-    pub mount_filter: Option<IgnoreList>,
-    pub temp_filter: Option<IgnoreList>,
-    pub net_filter: Option<IgnoreList>,
-    pub processes: Option<ProcessConfig>,
-    pub cpu: Option<CpuConfig>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(untagged)]
-enum StringOrNum {
-    String(String),
-    Num(u64),
-}
-
-impl From<String> for StringOrNum {
-    fn from(value: String) -> Self {
-        StringOrNum::String(value)
-    }
-}
-
-impl From<u64> for StringOrNum {
-    fn from(value: u64) -> Self {
-        StringOrNum::Num(value)
-    }
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct ConfigFlags {
-    hide_avg_cpu: Option<bool>,
-    dot_marker: Option<bool>,
-    temperature_type: Option<String>,
-    rate: Option<StringOrNum>,
-    left_legend: Option<bool>,
-    current_usage: Option<bool>,
-    unnormalized_cpu: Option<bool>,
-    group_processes: Option<bool>,
-    case_sensitive: Option<bool>,
-    whole_word: Option<bool>,
-    regex: Option<bool>,
-    basic: Option<bool>,
-    default_time_value: Option<StringOrNum>,
-    time_delta: Option<StringOrNum>,
-    autohide_time: Option<bool>,
-    hide_time: Option<bool>,
-    default_widget_type: Option<String>,
-    default_widget_count: Option<u64>,
-    expanded_on_startup: Option<bool>,
-    use_old_network_legend: Option<bool>,
-    hide_table_gap: Option<bool>,
-    battery: Option<bool>,
-    disable_click: Option<bool>,
-    no_write: Option<bool>,
-    /// For built-in colour palettes.
-    color: Option<String>,
-    mem_as_value: Option<bool>,
-    tree: Option<bool>,
-    show_table_scroll_position: Option<bool>,
-    process_command: Option<bool>,
-    disable_advanced_kill: Option<bool>,
-    network_use_bytes: Option<bool>,
-    network_use_log: Option<bool>,
-    network_use_binary_prefix: Option<bool>,
-    enable_gpu: Option<bool>,
-    enable_cache_memory: Option<bool>,
-    retention: Option<StringOrNum>,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct ConfigColours {
-    pub table_header_color: Option<Cow<'static, str>>,
-    pub all_cpu_color: Option<Cow<'static, str>>,
-    pub avg_cpu_color: Option<Cow<'static, str>>,
-    pub cpu_core_colors: Option<Vec<Cow<'static, str>>>,
-    pub ram_color: Option<Cow<'static, str>>,
-    #[cfg(not(target_os = "windows"))]
-    pub cache_color: Option<Cow<'static, str>>,
-    pub swap_color: Option<Cow<'static, str>>,
-    pub arc_color: Option<Cow<'static, str>>,
-    pub gpu_core_colors: Option<Vec<Cow<'static, str>>>,
-    pub rx_color: Option<Cow<'static, str>>,
-    pub tx_color: Option<Cow<'static, str>>,
-    pub rx_total_color: Option<Cow<'static, str>>, // These only affect basic mode.
-    pub tx_total_color: Option<Cow<'static, str>>, // These only affect basic mode.
-    pub border_color: Option<Cow<'static, str>>,
-    pub highlighted_border_color: Option<Cow<'static, str>>,
-    pub disabled_text_color: Option<Cow<'static, str>>,
-    pub text_color: Option<Cow<'static, str>>,
-    pub selected_text_color: Option<Cow<'static, str>>,
-    pub selected_bg_color: Option<Cow<'static, str>>,
-    pub widget_title_color: Option<Cow<'static, str>>,
-    pub graph_color: Option<Cow<'static, str>>,
-    pub high_battery_color: Option<Cow<'static, str>>,
-    pub medium_battery_color: Option<Cow<'static, str>>,
-    pub low_battery_color: Option<Cow<'static, str>>,
-}
-
-impl ConfigColours {
-    /// Returns `true` if there is a [`ConfigColours`] that is empty or there isn't one at all.
-    pub fn is_empty(&self) -> bool {
-        if let Ok(serialized_string) = toml_edit::ser::to_string(self) {
-            return serialized_string.is_empty();
-        }
-
-        true
-    }
-}
-
-/// Workaround as per https://github.com/serde-rs/serde/issues/1030
-fn default_as_true() -> bool {
-    true
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct IgnoreList {
-    #[serde(default = "default_as_true")]
-    // TODO: Deprecate and/or rename, current name sounds awful.
-    // Maybe to something like "deny_entries"?  Currently it defaults to a denylist anyways, so maybe "allow_entries"?
-    pub is_list_ignored: bool,
-    pub list: Vec<String>,
-    #[serde(default)]
-    pub regex: bool,
-    #[serde(default)]
-    pub case_sensitive: bool,
-    #[serde(default)]
-    pub whole_word: bool,
-}
+pub use config::Config;
 
 macro_rules! is_flag_enabled {
     ($flag_name:ident, $matches:expr, $config:expr) => {
@@ -261,6 +129,7 @@ pub fn init_app(
         }
     };
 
+    // TODO: Can probably just reuse the options struct.
     let app_config_fields = AppConfigFields {
         update_rate: get_update_rate(matches, config)
             .context("Update 'rate' in your config file.")?,
@@ -917,7 +786,8 @@ mod test {
         app::App,
         canvas::styling::CanvasStyling,
         options::{
-            get_default_time_value, get_retention, get_update_rate, try_parse_ms, ConfigFlags,
+            config::ConfigFlags, get_default_time_value, get_retention, get_update_rate,
+            try_parse_ms,
         },
     };
 
