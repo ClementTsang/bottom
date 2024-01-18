@@ -159,11 +159,11 @@ pub struct IgnoreList {
     // Maybe to something like "deny_entries"?  Currently it defaults to a denylist anyways, so maybe "allow_entries"?
     pub is_list_ignored: bool,
     pub list: Vec<String>,
-    #[serde(default = "bool::default")]
+    #[serde(default)]
     pub regex: bool,
-    #[serde(default = "bool::default")]
+    #[serde(default)]
     pub case_sensitive: bool,
-    #[serde(default = "bool::default")]
+    #[serde(default)]
     pub whole_word: bool,
 }
 
