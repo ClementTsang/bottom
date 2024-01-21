@@ -10,6 +10,18 @@ use self::{cpu::CpuConfig, layout::Row, process_columns::ProcessConfig};
 
 use super::ConfigColours;
 
+// #[derive(Debug, Deserialize)]
+// pub struct NewConfig {
+//     pub(crate) disk_filter: Option<IgnoreList>,
+//     pub(crate) mount_filter: Option<IgnoreList>,
+//     pub(crate) temp_filter: Option<IgnoreList>,
+//     pub(crate) net_filter: Option<IgnoreList>,
+//     #[serde(default)]
+//     pub(crate) processes: ProcessConfig,
+//     #[serde(default)]
+//     pub(crate) cpu: CpuConfig,
+// }
+
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Config {
     pub(crate) flags: Option<ConfigFlags>,
