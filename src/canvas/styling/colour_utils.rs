@@ -148,6 +148,21 @@ mod test {
     use super::*;
 
     #[test]
+    fn general_str_to_colour() {
+        assert_eq!(str_to_colour("red").unwrap(), Color::Red);
+        assert!(str_to_colour("r ed").is_err());
+
+        assert_eq!(str_to_colour("#ffffff").unwrap(), Color::Rgb(255, 255, 255));
+        assert!(str_to_colour("#fff fff").is_err());
+
+        assert_eq!(
+            str_to_colour("255, 255, 255").unwrap(),
+            Color::Rgb(255, 255, 255)
+        );
+        assert!(str_to_colour("255, 256, 255").is_err());
+    }
+
+    #[test]
     fn invalid_colour_names() {
         // Test invalid spacing in single word.
         assert!(convert_name_to_colour("bl ack").is_err());
