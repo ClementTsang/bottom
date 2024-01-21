@@ -280,4 +280,21 @@ mod test {
 
         assert!(convert_hex_to_color("#हिन्दी").is_err());
     }
+
+    #[test]
+    fn test_rgb_colours() {
+        assert_eq!(
+            convert_rgb_to_color("0, 0, 0").unwrap(),
+            Color::Rgb(0, 0, 0)
+        );
+        assert_eq!(
+            convert_rgb_to_color("255, 255, 255").unwrap(),
+            Color::Rgb(255, 255, 255)
+        );
+        assert!(convert_rgb_to_color("255, 256, 255").is_err());
+        assert!(convert_rgb_to_color("256, 0, 256").is_err());
+        assert!(convert_rgb_to_color("1, -1, 1").is_err());
+        assert!(convert_rgb_to_color("1, -100000, 1").is_err());
+        assert!(convert_rgb_to_color("1, -100000, 100000").is_err());
+    }
 }
