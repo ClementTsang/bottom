@@ -112,10 +112,7 @@ pub fn init_app(
     let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, matches, config);
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
-        let columns = config
-            .processes
-            .as_ref()
-            .and_then(|cfg| cfg.columns.clone());
+        let columns = config.processes.as_ref().map(|cfg| cfg.columns.clone());
 
         match columns {
             Some(columns) => {
@@ -410,8 +407,6 @@ pub fn get_widget_layout(
         // Confirm that we have at least ONE widget left - if not, error out!
         if iter_id > 0 {
             ret_bottom_layout.get_movement_mappings();
-            // debug!("Bottom layout: {ret_bottom_layout:#?}");
-
             ret_bottom_layout
         } else {
             return Err(BottomError::ConfigError(

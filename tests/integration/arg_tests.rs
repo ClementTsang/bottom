@@ -109,7 +109,7 @@ fn test_invalid_default_widget_1() {
         .arg("fake_widget")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid widget name"));
+        .stderr(predicate::str::contains("invalid value"));
 }
 
 #[test]
