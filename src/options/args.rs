@@ -260,7 +260,7 @@ fn style_args(cmd: Command) -> Command {
     let color = Arg::new("color")
         .long("color")
         .action(ArgAction::Set)
-        .value_name("COLOR SCHEME")
+        .value_name("SCHEME")
         .value_parser([
             "default",
             "default-light",
@@ -539,7 +539,16 @@ fn other_args(cmd: Command) -> Command {
 }
 
 pub fn build_app() -> Command {
-    const TEMPLATE: &str = include_str!("./args.template");
+    const TEMPLATE: &str = indoc! {
+        "{name} {version}
+        {author}
+
+        {about}
+
+        {usage-heading} {usage}
+
+        {all-args}"
+    };
     const USAGE: &str = "btm [OPTIONS]";
     const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
         Some(nightly_version) => nightly_version,
