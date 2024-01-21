@@ -131,8 +131,8 @@ fn general_args(cmd: Command) -> Command {
         .requires_all(["default_widget_type"])
         .value_name("INT")
         .help("Sets the n'th selected widget type as the default.")
-        .long_help(indoc! {"
-            Sets the n'th selected widget type to use as the default widget.
+        .long_help(indoc! {
+            "Sets the n'th selected widget type to use as the default widget.
             Requires 'default_widget_type' to also be set, and defaults to 1.
 
             This reads from left to right, top to bottom. For example, suppose
@@ -146,16 +146,16 @@ fn general_args(cmd: Command) -> Command {
             And we set our default widget type to 'CPU'. If we set
             '--default_widget_count 1', then it would use the CPU (1) as
             the default widget. If we set '--default_widget_count 3', it would
-            use CPU (3) as the default instead.
-        "});
+            use CPU (3) as the default instead."
+        });
 
     let default_widget_type = Arg::new("default_widget_type")
         .long("default_widget_type")
         .action(ArgAction::Set)
         .value_name("WIDGET TYPE")
         .help("Sets the default widget type, use --help for info.")
-        .long_help(indoc!{"
-            Sets which widget type to use as the default widget. For the default \
+        .long_help(indoc!{
+            "Sets which widget type to use as the default widget. For the default \
             layout, this defaults to the 'process' widget. For a custom layout, it defaults \
             to the first widget it sees.
 
@@ -166,8 +166,8 @@ fn general_args(cmd: Command) -> Command {
             | Process | CPU (3) | Temperature | CPU (4) |
             +---------+---------+-------------+---------+
 
-            Setting '--default_widget_type Temp' will make the temperature widget selected by default.
-        "})
+            Setting '--default_widget_type Temp' will make the temperature widget selected by default."
+        })
         .value_parser([
             "cpu",
             "mem",
@@ -270,20 +270,19 @@ fn style_args(cmd: Command) -> Command {
             "nord-light",
         ])
         .hide_possible_values(true)
-        .default_value("default")
         .help(
             "Use a color scheme, use --help for info on the colors. \
             [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
         )
-        .long_help(indoc! {"
-            Use a pre-defined color scheme. Currently supported values are:
+        .long_help(indoc! {
+            "Use a pre-defined color scheme. Currently supported values are:
             - default
             - default-light (default but adjusted for lighter backgrounds)
             - gruvbox       (a bright theme with 'retro groove' colors)
             - gruvbox-light (gruvbox but adjusted for lighter backgrounds)
             - nord          (an arctic, north-bluish color palette)
-            - nord-light    (nord but adjusted for lighter backgrounds)
-        "});
+            - nord-light    (nord but adjusted for lighter backgrounds)"
+        });
 
     cmd.arg(color)
 }
