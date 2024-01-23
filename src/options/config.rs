@@ -1,41 +1,55 @@
+pub mod battery;
 pub mod cpu;
-mod ignore_list;
+pub mod general;
+pub mod gpu;
 pub mod layout;
-pub mod process_columns;
+pub mod memory;
+pub mod network;
+pub mod process;
+mod style;
+pub mod temperature;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+pub use style::*;
 
-pub use self::ignore_list::IgnoreList;
-use self::{cpu::CpuConfig, layout::Row, process_columns::ProcessConfig};
+use self::{colours::ColourConfig, cpu::CpuConfig, layout::Row, process::ProcessConfig};
 
-use super::ConfigColours;
-
-// #[derive(Debug, Deserialize)]
-// pub struct NewConfig {
-//     pub(crate) disk_filter: Option<IgnoreList>,
-//     pub(crate) mount_filter: Option<IgnoreList>,
-//     pub(crate) temp_filter: Option<IgnoreList>,
-//     pub(crate) net_filter: Option<IgnoreList>,
-//     #[serde(default)]
-//     pub(crate) processes: ProcessConfig,
-//     #[serde(default)]
-//     pub(crate) cpu: CpuConfig,
-// }
-
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct Config {
-    pub(crate) flags: Option<ConfigFlags>,
-    pub(crate) colors: Option<ConfigColours>,
+    // #[serde(default)]
+    // pub(crate) general_options: GeneralOptions,
+    // #[serde(default)]
+    // pub(crate) process_options: ProcessOptions,
+    // #[serde(default)]
+    // pub(crate) temperature_options: TemperatureOptions,
+    // #[serde(default)]
+    // pub(crate) cpu_options: CpuOptions,
+    // #[serde(default)]
+    // pub(crate) memory_options: MemoryOptions,
+    // #[serde(default)]
+    // pub(crate) network_options: NetworkOptions,
+    // #[serde(default)]
+    // pub(crate) battery_options: BatteryOptions,
+    // #[serde(default)]
+    // pub(crate) gpu_options: GpuOptions,
+    // #[serde(default)]
+    // pub(crate) style_options: StyleOptions,
+    pub flags: Option<ConfigFlags>,
+
+    // TODO: Merge these into above!
+    pub(crate) colors: Option<ColourConfig>,
     pub(crate) row: Option<Vec<Row>>,
     pub(crate) disk_filter: Option<IgnoreList>,
     pub(crate) mount_filter: Option<IgnoreList>,
     pub(crate) temp_filter: Option<IgnoreList>,
     pub(crate) net_filter: Option<IgnoreList>,
-    pub(crate) processes: Option<ProcessConfig>,
-    pub(crate) cpu: Option<CpuConfig>,
+    #[serde(default)]
+    pub(crate) processes: ProcessConfig,
+    #[serde(default)]
+    pub(crate) cpu: CpuConfig,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(untagged)]
 pub(crate) enum StringOrNum {
     String(String),
@@ -54,8 +68,28 @@ impl From<u64> for StringOrNum {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub(crate) struct ConfigFlags {
+/// Workaround as per https://github.com/serde-rs/serde/issues/1030
+fn default_as_true() -> bool {
+    true
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct IgnoreList {
+    #[serde(default = "default_as_true")]
+    // TODO: Deprecate and/or rename, current name sounds awful.
+    // Maybe to something like "deny_entries"?  Currently it defaults to a denylist anyways, so maybe "allow_entries"?
+    pub is_list_ignored: bool,
+    pub list: Vec<String>,
+    #[serde(default)]
+    pub regex: bool,
+    #[serde(default)]
+    pub case_sensitive: bool,
+    #[serde(default)]
+    pub whole_word: bool,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct ConfigFlags {
     pub(crate) hide_avg_cpu: Option<bool>,
     pub(crate) dot_marker: Option<bool>,
     pub(crate) temperature_type: Option<String>,
@@ -79,8 +113,6 @@ pub(crate) struct ConfigFlags {
     pub(crate) hide_table_gap: Option<bool>,
     pub(crate) battery: Option<bool>,
     pub(crate) disable_click: Option<bool>,
-    pub(crate) no_write: Option<bool>,
-    /// For built-in colour palettes.
     pub(crate) color: Option<String>,
     pub(crate) mem_as_value: Option<bool>,
     pub(crate) tree: Option<bool>,

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct ConfigColours {
+pub struct ColourConfig {
     pub table_header_color: Option<Cow<'static, str>>,
     pub all_cpu_color: Option<Cow<'static, str>>,
     pub avg_cpu_color: Option<Cow<'static, str>>,
@@ -31,7 +31,7 @@ pub struct ConfigColours {
     pub low_battery_color: Option<Cow<'static, str>>,
 }
 
-impl ConfigColours {
+impl ColourConfig {
     /// Returns `true` if there is a [`ConfigColours`] that is empty or there isn't one at all.
     pub fn is_empty(&self) -> bool {
         if let Ok(serialized_string) = toml_edit::ser::to_string(self) {

@@ -11,10 +11,12 @@ pub enum CpuDefault {
 }
 
 /// Process column settings.
+
 #[derive(Clone, Debug, Default, Deserialize)]
-pub struct CpuConfig {
+pub(crate) struct CpuConfig {
+    pub(crate) hide_avg_cpu: Option<bool>,
     #[serde(default)]
-    pub default: CpuDefault,
+    pub(crate) default: CpuDefault,
 }
 
 #[cfg(test)]

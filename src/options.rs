@@ -3,7 +3,6 @@
 // TODO: Break this apart or do something a bit smarter.
 
 pub mod args;
-pub mod colours;
 pub mod config;
 
 use std::{
@@ -14,7 +13,6 @@ use std::{
 
 use anyhow::{Context, Result};
 use clap::ArgMatches;
-pub use colours::ConfigColours;
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use regex::Regex;
@@ -112,14 +110,14 @@ pub fn init_app(
     let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, matches, config);
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
-        let columns = config.processes.as_ref().map(|cfg| cfg.columns.clone());
+        let columns = config.processes.columns.as_ref();
 
         match columns {
             Some(columns) => {
                 if columns.is_empty() {
                     None
                 } else {
-                    Some(IndexSet::from_iter(columns))
+                    Some(IndexSet::from_iter(columns.clone()))
                 }
             }
             None => None,
@@ -208,11 +206,7 @@ pub fn init_app(
                                 widget.widget_id,
                                 CpuWidgetState::new(
                                     &app_config_fields,
-                                    config
-                                        .cpu
-                                        .as_ref()
-                                        .map(|cfg| cfg.default)
-                                        .unwrap_or_default(),
+                                    config.cpu.default,
                                     default_time_value,
                                     autohide_timer,
                                     styling,
