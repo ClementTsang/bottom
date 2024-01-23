@@ -403,9 +403,9 @@ use CPU (3) as the default instead.
         .action(ArgAction::Version)
         .help("Prints version information.");
 
-    let memory_use_mega_prefix = Arg::new("memory_use_mega_prefix")
-        .long("memory_use_mega_prefix")
-        .action(ArgAction::SetTrue)
+    let change_memory_prefix = Arg::new("change_memory_prefix")
+        .long("change_memory_prefix")
+        .action(ArgAction::Set)
         .help("Displays the memory widget with a mega prefix.")
         .long_help("Displays the memory widget in megabibytes instead of rounding it to the nearest prefix. Defaults to rounding it to the nearest prefix. Example: 1.2GiB will be displayed as 1228MiB.");
 
@@ -432,7 +432,7 @@ use CPU (3) as the default instead.
         config_location,
         color,
         mem_as_value,
-        memory_use_mega_prefix,
+        change_memory_prefix,
         default_time_value,
         default_widget_count,
         default_widget_type,

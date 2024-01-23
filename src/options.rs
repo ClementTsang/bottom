@@ -71,11 +71,12 @@ pub struct ConfigFlags {
     hide_avg_cpu: Option<bool>,
     dot_marker: Option<bool>,
     temperature_type: Option<String>,
+    change_memory: Option<String>,
     rate: Option<StringOrNum>,
     left_legend: Option<bool>,
     current_usage: Option<bool>,
     unnormalized_cpu: Option<bool>,
-    memory_use_mega_prefix: Option<bool>,
+    change_memory_prefix: Option<String>,
     group_processes: Option<bool>,
     case_sensitive: Option<bool>,
     whole_word: Option<bool>,
@@ -272,7 +273,8 @@ pub fn init_app(
         left_legend: is_flag_enabled!(left_legend, matches, config),
         use_current_cpu_total: is_flag_enabled!(current_usage, matches, config),
         unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, matches, config),
-        memory_use_mega_prefix: is_flag_enabled!(memory_use_mega_prefix, matches, config),
+        change_memory_prefix: get_change_memory_prefix(matches, config)
+            .context("Update 'change_memory_prefix' in your config file.")?,
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(matches, config, retention_ms)
@@ -617,6 +619,19 @@ fn get_show_average_cpu(matches: &ArgMatches, config: &Config) -> bool {
     true
 }
 
+fn get_change_memory_prefix(matches: &ArgMatches, config: &Config) -> error::Result<String> {
+    if let Some(change_memory_prefix) = matches.get_one::<String>("change_memory_prefix") {
+        Ok(change_memory_prefix.to_string())
+    } else if let Some(flags) = &config.flags {
+        if let Some(prefix) = &flags.change_memory_prefix {
+            Ok(prefix.clone())
+        } else {
+            Ok("auto".to_string())
+        }
+    } else {
+        Ok("auto".to_string())
+    }
+}
 fn try_parse_ms(s: &str) -> error::Result<u64> {
     if let Ok(val) = humantime::parse_duration(s) {
         Ok(val.as_millis().try_into()?)

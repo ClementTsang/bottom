@@ -104,7 +104,7 @@ pub struct DataCollector {
     temperature_type: TemperatureType,
     use_current_cpu_total: bool,
     unnormalized_cpu: bool,
-    memory_use_mega_prefix: bool,
+    change_memory_prefix: String,
     last_collection_time: Instant,
     total_rx: u64,
     total_tx: u64,
@@ -147,7 +147,7 @@ impl DataCollector {
             temperature_type: TemperatureType::Celsius,
             use_current_cpu_total: false,
             unnormalized_cpu: false,
-            memory_use_mega_prefix: false,
+            change_memory_prefix: String::from("auto"),
             last_collection_time: Instant::now(),
             total_rx: 0,
             total_tx: 0,
@@ -228,8 +228,8 @@ impl DataCollector {
         self.unnormalized_cpu = unnormalized_cpu;
     }
 
-    pub fn set_memory_use_mega_prefix(&mut self, memory_use_mega_prefix: bool) {
-        self.memory_use_mega_prefix = memory_use_mega_prefix;
+    pub fn set_change_memory_prefix(&mut self, change_memory_prefix: String) {
+        self.change_memory_prefix = change_memory_prefix;
     }
 
     pub fn set_show_average_cpu(&mut self, show_average_cpu: bool) {

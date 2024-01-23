@@ -275,40 +275,28 @@ fn main() -> Result<()> {
                                     convert_gpu_data(&app.data_collection);
                             }
 
-<<<<<<< HEAD
                             app.converted_data.mem_labels = convert_mem_label(
                                 &app.data_collection.memory_harvest,
-                                app.app_config_fields.memory_use_mega_prefix,
+                                app.app_config_fields.change_memory_prefix.clone(),
                             );
                             app.converted_data.swap_labels = convert_mem_label(
                                 &app.data_collection.swap_harvest,
-                                app.app_config_fields.memory_use_mega_prefix,
+                                app.app_config_fields.change_memory_prefix.clone(),
                             );
-=======
-                            app.converted_data.mem_labels =
-                                convert_mem_label(&app.data_collection.memory_harvest, app.app_config_fields.memory_use_mega_prefix);
-                            app.converted_data.swap_labels =
-                                convert_mem_label(&app.data_collection.swap_harvest, app.app_config_fields.memory_use_mega_prefix);
->>>>>>> 16bcf7d8 (added a feature)
                             #[cfg(not(target_os = "windows"))]
                             {
                                 app.converted_data.cache_labels = convert_mem_label(
                                     &app.data_collection.cache_harvest,
-                                    app.app_config_fields.memory_use_mega_prefix,
+                                    app.app_config_fields.change_memory_prefix.clone(),
                                 );
                             }
 
                             #[cfg(feature = "zfs")]
                             {
-<<<<<<< HEAD
                                 let arc_labels = convert_mem_label(
                                     &app.data_collection.arc_harvest,
-                                    app.app_config_fields.memory_use_mega_prefix,
+                                    app.app_config_fields.change_memory_prefix.clone(),
                                 );
-=======
-                                let arc_labels =
-                                    convert_mem_label(&app.data_collection.arc_harvest, app.app_config_fields.memory_use_mega_prefix);
->>>>>>> 16bcf7d8 (added a feature)
                                 app.converted_data.arc_labels = arc_labels;
                             }
                         }

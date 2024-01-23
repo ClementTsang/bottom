@@ -27,6 +27,12 @@
 #whole_word = false
 # Whether to make process searching use regex by default.
 #regex = false
+# What prefix should be used for memory. Defaults to "auto". Prefix is one of:
+#change_memory_prefix = "auto"
+#change_memory_prefix = "KiB"
+#change_memory_prefix = "MiB"
+#change_memory_prefix = "GiB"
+#change_memory_prefix = "TiB"
 # Defaults to Celsius.  Temperature is one of:
 #temperature_type = "k"
 #temperature_type = "f"

@@ -50,7 +50,6 @@ pub struct AppConfigFields {
     pub show_average_cpu: bool, // TODO: Unify this in CPU options
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
-    pub memory_use_mega_prefix: bool,
     pub use_basic_mode: bool,
     pub default_time_value: u64,
     pub time_interval: u64,
@@ -63,6 +62,7 @@ pub struct AppConfigFields {
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,
     pub is_advanced_kill: bool,
+    pub change_memory_prefix: String,
     // TODO: Remove these, move network details state-side.
     pub network_unit_type: DataUnit,
     pub network_scale_type: AxisScaling,
