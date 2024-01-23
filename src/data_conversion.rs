@@ -724,24 +724,3 @@ mod test {
         );
     }
 }
-s_per_second_string(GIGA_LIMIT),
-            "1.0GB/s".to_string()
-        );
-        assert_eq!(
-            dec_bytes_per_second_string(2 * GIGA_LIMIT),
-            "2.0GB/s".to_string()
-        );
-        assert_eq!(
-            dec_bytes_per_second_string((2.5 * GIGA_LIMIT as f64) as u64),
-            "2.5GB/s".to_string()
-        );
-        assert_eq!(
-            dec_bytes_per_second_string((10.34 * TERA_LIMIT as f64) as u64),
-            "10.3TB/s".to_string()
-        );
-        assert_eq!(
-            dec_bytes_per_second_string((10.36 * TERA_LIMIT as f64) as u64),
-            "10.4TB/s".to_string()
-        );
-    }
-}
