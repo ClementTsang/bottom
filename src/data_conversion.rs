@@ -288,7 +288,7 @@ fn get_mem_binary_unit_and_denominator(
                 } else {
                     ("TiB", TEBI_LIMIT_F64)
                 }
-            },
+            }
         };
     } else if bytes < KIBI_LIMIT {
         // Stick with bytes if under a kibibyte.
@@ -638,8 +638,10 @@ pub fn convert_gpu_data(current_data: &DataCollection) -> Option<Vec<ConvertedGp
                 points,
                 mem_percent: format!("{:3.0}%", gpu.1.use_percent.unwrap_or(0.0)),
                 mem_total: {
-                    let (unit, denominator) =
-                        get_mem_binary_unit_and_denominator(gpu.1.total_bytes, String::from("auto"));
+                    let (unit, denominator) = get_mem_binary_unit_and_denominator(
+                        gpu.1.total_bytes,
+                        String::from("auto"),
+                    );
 
                     format!(
                         "   {:.1}{unit}/{:.1}{unit}",
