@@ -9,7 +9,6 @@ pub struct ColourConfig {
     pub avg_cpu_color: Option<Cow<'static, str>>,
     pub cpu_core_colors: Option<Vec<Cow<'static, str>>>,
     pub ram_color: Option<Cow<'static, str>>,
-    #[cfg(not(target_os = "windows"))]
     pub cache_color: Option<Cow<'static, str>>,
     pub swap_color: Option<Cow<'static, str>>,
     pub arc_color: Option<Cow<'static, str>>,

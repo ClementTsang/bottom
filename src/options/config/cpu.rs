@@ -14,7 +14,8 @@ pub enum CpuDefault {
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub(crate) struct CpuConfig {
-    pub(crate) hide_avg_cpu: Option<bool>,
+    #[serde(default)]
+    pub(crate) hide_avg_cpu: bool,
     #[serde(default)]
     pub(crate) default: CpuDefault,
 }

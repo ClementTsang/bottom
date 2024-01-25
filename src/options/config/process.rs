@@ -5,15 +5,24 @@ use crate::widgets::ProcWidgetColumn;
 /// Process column settings.
 #[derive(Clone, Debug, Default, Deserialize)]
 pub(crate) struct ProcessConfig {
-    pub(crate) case_sensitive: Option<bool>,
-    pub(crate) current_usage: Option<bool>,
-    pub(crate) disable_advanced_kill: Option<bool>,
-    pub(crate) group_processes: Option<bool>,
-    pub(crate) process_command: Option<bool>,
-    pub(crate) regex: Option<bool>,
-    pub(crate) tree: Option<bool>,
-    pub(crate) unnormalized_cpu: Option<bool>,
-    pub(crate) whole_word: Option<bool>,
+    #[serde(default)]
+    pub(crate) case_sensitive: bool,
+    #[serde(default)]
+    pub(crate) current_usage: bool,
+    #[serde(default)]
+    pub(crate) disable_advanced_kill: bool,
+    #[serde(default)]
+    pub(crate) group_processes: bool,
+    #[serde(default)]
+    pub(crate) process_command: bool,
+    #[serde(default)]
+    pub(crate) regex: bool,
+    #[serde(default)]
+    pub(crate) tree: bool,
+    #[serde(default)]
+    pub(crate) unnormalized_cpu: bool,
+    #[serde(default)]
+    pub(crate) whole_word: bool,
     pub(crate) columns: Option<Vec<ProcWidgetColumn>>,
 }
 
@@ -56,7 +65,7 @@ mod test {
 
     #[test]
     fn process_column_settings_2() {
-        let config = r#"columns = ["MEM", "TWrite", "Cpuz", "read", "wps"]"#;
+        let config = r#"columns = ["MEM", "TWrite", "fake", "read", "wps"]"#;
         toml_edit::de::from_str::<ProcessConfig>(config).expect_err("Should error out!");
     }
 

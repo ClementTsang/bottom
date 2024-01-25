@@ -37,7 +37,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 fn main() -> Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
 
-    let matches = args::get_matches();
+    let matches = args::build_app().get_matches();
 
     #[cfg(feature = "logging")]
     {
