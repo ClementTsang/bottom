@@ -12,7 +12,7 @@ use clap_complete::{generate_to, shells::Shell, Generator};
 use clap_complete_fig::Fig;
 use clap_complete_nushell::Nushell;
 
-use crate::args::Args;
+use crate::args::BottomArgs;
 
 fn create_dir(dir: &Path) -> io::Result<()> {
     let res = fs::create_dir_all(dir);
@@ -48,7 +48,7 @@ fn btm_generate() -> io::Result<()> {
             create_dir(&manpage_out_dir)?;
 
             // Generate completions
-            let mut app = Args::command();
+            let mut app = BottomArgs::command();
             generate_completions(Shell::Bash, &mut app, &completion_out_dir)?;
             generate_completions(Shell::Zsh, &mut app, &completion_out_dir)?;
             generate_completions(Shell::Fish, &mut app, &completion_out_dir)?;

@@ -8,7 +8,3 @@ pub(crate) struct GeneralConfig {
     #[serde(flatten)]
     pub(crate) args: GeneralArgs,
 }
-
-impl GeneralConfig {
-    pub(crate) fn merge_with_args(&mut self, args: &ArgMatches) {}
-}

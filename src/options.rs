@@ -19,7 +19,7 @@ use regex::Regex;
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
 
-use self::config::{layout::Row, IgnoreList, StringOrNum};
+use self::config::{layout::Row, IgnoreList, NewConfig};
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
     canvas::{styling::CanvasStyling, ColourScheme},
@@ -31,42 +31,14 @@ use crate::{
     },
     widgets::*,
 };
-pub use config::Config;
-
-macro_rules! is_flag_enabled {
-    ($flag_name:ident, $matches:expr, $config:expr) => {
-        if $matches.get_flag(stringify!($flag_name)) {
-            true
-        } else if let Some(flags) = &$config.flags {
-            flags.$flag_name.unwrap_or(false)
-        } else {
-            false
-        }
-    };
-
-    ($cmd_flag:literal, $cfg_flag:ident, $matches:expr, $config:expr) => {
-        if $matches.get_flag($cmd_flag) {
-            true
-        } else if let Some(flags) = &$config.flags {
-            flags.$cfg_flag.unwrap_or(false)
-        } else {
-            false
-        }
-    };
-}
 
 pub fn init_app(
-    matches: ArgMatches, config: Config, widget_layout: &BottomLayout, default_widget_id: u64,
+    config: NewConfig, widget_layout: &BottomLayout, default_widget_id: u64,
     default_widget_type_option: &Option<BottomWidgetType>, styling: &CanvasStyling,
 ) -> Result<App> {
     use BottomWidgetType::*;
 
-    // Since everything takes a reference, but we want to take ownership here to drop matches/config later...
-    let matches = &matches;
-    let config = &config;
-
-    let retention_ms =
-        get_retention(matches, config).context("Update `retention` in your config file.")?;
+    let retention_ms = get_retention(&config).context("Update `retention` in your config file.")?;
     let autohide_time = is_flag_enabled!(autohide_time, matches, config);
     let default_time_value = get_default_time_value(matches, config, retention_ms)
         .context("Update 'default_time_value' in your config file.")?;
@@ -349,9 +321,9 @@ pub fn init_app(
 }
 
 pub fn get_widget_layout(
-    matches: &ArgMatches, config: &Config,
+    config: &NewConfig,
 ) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
-    let left_legend = is_flag_enabled!(left_legend, matches, config);
+    let left_legend = config.cpu.args.left_legend;
 
     let (default_widget_type, mut default_widget_count) =
         get_default_widget_and_count(matches, config)?;
@@ -694,29 +666,18 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Fil
     }
 }
 
-pub fn get_color_scheme(matches: &ArgMatches, config: &Config) -> error::Result<ColourScheme> {
-    if let Some(color) = matches.get_one::<String>("color") {
-        // Highest priority is always command line flags...
-        return ColourScheme::from_str(color);
-    } else if let Some(colors) = &config.colors {
+pub fn get_color_scheme(config: &NewConfig) -> error::Result<ColourScheme> {
+    if let Some(colors) = &config.colors {
         if !colors.is_empty() {
-            // Then, give priority to custom colours...
             return Ok(ColourScheme::Custom);
-        } else if let Some(flags) = &config.flags {
-            // Last priority is config file flags...
-            if let Some(color) = &flags.color {
-                return ColourScheme::from_str(color);
-            }
-        }
-    } else if let Some(flags) = &config.flags {
-        // Last priority is config file flags...
-        if let Some(color) = &flags.color {
-            return ColourScheme::from_str(color);
         }
     }
 
-    // And lastly, the final case is just "default".
-    Ok(ColourScheme::Default)
+    if let Some(color) = &config.style.args.color {
+        ColourScheme::from_str(color)
+    } else {
+        Ok(ColourScheme::Default)
+    }
 }
 
 fn get_network_unit_type(matches: &ArgMatches, config: &Config) -> DataUnit {
@@ -747,20 +708,14 @@ fn get_network_scale_type(matches: &ArgMatches, config: &Config) -> AxisScaling 
     AxisScaling::Linear
 }
 
-fn get_retention(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
+fn get_retention(config: &NewConfig) -> error::Result<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
-    if let Some(retention) = matches.get_one::<String>("retention") {
-        try_parse_ms(retention)
-    } else if let Some(flags) = &config.flags {
-        if let Some(retention) = &flags.retention {
-            Ok(match retention {
-                StringOrNum::String(s) => try_parse_ms(s)?,
-                StringOrNum::Num(n) => *n,
-            })
-        } else {
-            Ok(DEFAULT_RETENTION_MS)
-        }
+    if let Some(retention) = config.general.args.retention {
+        Ok(match retention {
+            StringOrNum::String(s) => try_parse_ms(s)?,
+            StringOrNum::Num(n) => *n,
+        })
     } else {
         Ok(DEFAULT_RETENTION_MS)
     }

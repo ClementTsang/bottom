@@ -27,6 +27,12 @@ impl From<&str> for StringOrNum {
     }
 }
 
+impl From<u64> for StringOrNum {
+    fn from(value: u64) -> Self {
+        StringOrNum::Num(value)
+    }
+}
+
 /// Returns an [`Ordering`] for two [`Arg`] values.
 ///
 /// Note this assumes that _both have a long_ name, and will
@@ -72,7 +78,7 @@ const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
     None => crate_version!(),
 };
 
-/// The arguments for bottom.
+/// Represents the arguments that can be passed in to bottom.
 #[derive(Parser, Debug)]
 #[command(
     name = crate_name!(),
@@ -85,40 +91,46 @@ const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
     help_template = TEMPLATE,
     override_usage = USAGE,
 )]
-
-/// Represents the arguments that can be passed in to bottom.
-pub struct Args {
+pub struct BottomArgs {
     #[command(flatten)]
-    pub(crate) general_args: GeneralArgs,
+    pub(crate) general: GeneralArgs,
 
     #[command(flatten)]
-    pub(crate) process_args: ProcessArgs,
+    pub(crate) process: ProcessArgs,
 
     #[command(flatten)]
-    pub(crate) temperature_args: TemperatureArgs,
+    pub(crate) temperature: TemperatureArgs,
 
     #[command(flatten)]
-    pub(crate) cpu_args: CpuArgs,
+    pub(crate) cpu: CpuArgs,
 
     #[command(flatten)]
-    pub(crate) mem_args: MemoryArgs,
+    pub(crate) memory: MemoryArgs,
 
     #[command(flatten)]
-    pub(crate) network_args: NetworkArgs,
+    pub(crate) network: NetworkArgs,
 
     #[cfg(feature = "battery")]
     #[command(flatten)]
-    pub(crate) battery_args: BatteryArgs,
+    pub(crate) battery: BatteryArgs,
 
     #[cfg(feature = "gpu")]
     #[command(flatten)]
-    pub(crate) gpu_args: GpuArgs,
+    pub(crate) gpu: GpuArgs,
 
     #[command(flatten)]
-    pub(crate) style_args: StyleArgs,
+    pub(crate) style: StyleArgs,
 
     #[command(flatten)]
-    pub(crate) other_args: OtherArgs,
+    pub(crate) other: OtherArgs,
+}
+
+impl BottomArgs {
+    /// Returns the config path if it is set.
+    #[inline]
+    pub fn config_path(&self) -> Option<&str> {
+        self.general.config_location.as_ref().map(|p| p.as_str())
+    }
 }
 
 #[derive(Args, Clone, Debug, Default, Deserialize)]
@@ -130,7 +142,7 @@ pub(crate) struct GeneralArgs {
         long_help = "Automatically hides the time scale in graphs after being shown for a brief moment when zoomed \
                     in/out. If time is disabled via --hide_time then this will have no effect."
     )]
-    pub(crate) autohide_time: bool,
+    pub(crate) autohide_time: Option<bool>,
 
     #[arg(
         short = 'b',
@@ -138,7 +150,7 @@ pub(crate) struct GeneralArgs {
         help = "Hides graphs and uses a more basic look.",
         long_help = "Hides graphs and uses a more basic look. Design is largely inspired by htop's."
     )]
-    pub(crate) basic: bool,
+    pub(crate) basic: Option<bool>,
 
     #[arg(
         short = 'C',
@@ -185,7 +197,7 @@ pub(crate) struct GeneralArgs {
             use CPU (3) as the default instead."
         }
     )]
-    pub(crate) default_widget_count: u32,
+    pub(crate) default_widget_count: Option<u32>,
 
     #[arg(
         long,
@@ -229,7 +241,7 @@ pub(crate) struct GeneralArgs {
         help = "Disables mouse clicks.",
         long_help = "Disables mouse clicks from interacting with bottom."
     )]
-    pub(crate) disable_click: bool,
+    pub(crate) disable_click: Option<bool>,
 
     #[arg(
         short = 'm',
@@ -237,7 +249,7 @@ pub(crate) struct GeneralArgs {
         help = "Uses a dot marker for graphs.",
         long_help = "Uses a dot marker for graphs as opposed to the default braille marker."
     )]
-    pub(crate) dot_marker: bool,
+    pub(crate) dot_marker: Option<bool>,
 
     #[arg(
         short = 'e',
@@ -245,17 +257,17 @@ pub(crate) struct GeneralArgs {
         help = "Expand the default widget upon starting the app.",
         long_help = "Expand the default widget upon starting the app. This flag has no effect in basic mode (--basic)."
     )]
-    pub(crate) expanded: bool,
+    pub(crate) expanded: Option<bool>,
 
     #[arg(long, help = "Hides spacing between table headers and entries.")]
-    pub(crate) hide_table_gap: bool,
+    pub(crate) hide_table_gap: Option<bool>,
 
     #[arg(
         long,
         help = "Hides the time scale.",
         long_help = "Completely hides the time scale from being shown."
     )]
-    pub(crate) hide_time: bool,
+    pub(crate) hide_time: Option<bool>,
 
     #[arg(
         short = 'r',
@@ -283,7 +295,7 @@ pub(crate) struct GeneralArgs {
         help = "Shows the scroll position tracker in table widgets.",
         long_help = "Shows the list scroll position tracker in the widget title for table widgets."
     )]
-    pub(crate) show_table_scroll_position: bool,
+    pub(crate) show_table_scroll_position: Option<bool>,
 
     #[arg(
         short = 'd',
@@ -296,6 +308,33 @@ pub(crate) struct GeneralArgs {
     pub(crate) time_delta: Option<StringOrNum>,
 }
 
+macro_rules! set_if_some {
+    ($name:ident, $curr:expr, $new:expr) => {
+        if $new.$name.is_some() {
+            $curr.$name = $new.$name.clone();
+        }
+    };
+}
+
+impl GeneralArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(autohide_time, self, other);
+        set_if_some!(basic, self, other);
+        set_if_some!(config_location, self, other);
+        set_if_some!(default_time_value, self, other);
+        set_if_some!(default_widget_count, self, other);
+        set_if_some!(default_widget_type, self, other);
+        set_if_some!(disable_click, self, other);
+        set_if_some!(dot_marker, self, other);
+        set_if_some!(expanded, self, other);
+        set_if_some!(hide_time, self, other);
+        set_if_some!(rate, self, other);
+        set_if_some!(retention, self, other);
+        set_if_some!(show_table_scroll_position, self, other);
+        set_if_some!(time_delta, self, other);
+    }
+}
+
 #[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "Process Options")]
 pub(crate) struct ProcessArgs {
@@ -305,7 +344,7 @@ pub(crate) struct ProcessArgs {
         help = "Enables case sensitivity by default.",
         long_help = "When searching for a process, enables case sensitivity by default."
     )]
-    pub(crate) case_sensitive: bool,
+    pub(crate) case_sensitive: Option<bool>,
 
     // TODO: Rename this.
     #[arg(
@@ -314,7 +353,7 @@ pub(crate) struct ProcessArgs {
         help = "Sets process CPU% to be based on current CPU%.",
         long_help = "Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage."
     )]
-    pub(crate) current_usage: bool,
+    pub(crate) current_usage: Option<bool>,
 
     // TODO: Disable this on Windows?
     #[arg(
@@ -323,27 +362,27 @@ pub(crate) struct ProcessArgs {
         long_help = "Hides advanced options to stop a process on Unix-like systems. The only \
                     option shown is 15 (TERM)."
     )]
-    pub(crate) disable_advanced_kill: bool,
+    pub(crate) disable_advanced_kill: Option<bool>,
 
     #[arg(
         short = 'g',
         long,
         help = "Groups processes with the same name by default."
     )]
-    pub(crate) group_processes: bool,
+    pub(crate) group_processes: Option<bool>,
 
     #[arg(long, help = "Show processes as their commands by default.")]
-    pub(crate) process_command: bool,
+    pub(crate) process_command: Option<bool>,
 
     #[arg(short = 'R', long, help = "Enables regex by default while searching.")]
-    pub(crate) regex: bool,
+    pub(crate) regex: Option<bool>,
 
     #[arg(
         short = 'T',
         long,
         help = "Defaults the process widget be in tree mode."
     )]
-    pub(crate) tree: bool,
+    pub(crate) tree: Option<bool>,
 
     #[arg(
         short = 'n',
@@ -351,14 +390,28 @@ pub(crate) struct ProcessArgs {
         help = "Show process CPU% usage without normalizing over the number of cores.",
         long_help = "Shows all process CPU% usage without averaging over the number of CPU cores in the system."
     )]
-    pub(crate) unnormalized_cpu: bool,
+    pub(crate) unnormalized_cpu: Option<bool>,
 
     #[arg(
         short = 'W',
         long,
         help = "Enables whole-word matching by default while searching."
     )]
-    pub(crate) whole_word: bool,
+    pub(crate) whole_word: Option<bool>,
+}
+
+impl ProcessArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(case_sensitive, self, other);
+        set_if_some!(current_usage, self, other);
+        set_if_some!(disable_advanced_kill, self, other);
+        set_if_some!(group_processes, self, other);
+        set_if_some!(process_command, self, other);
+        set_if_some!(regex, self, other);
+        set_if_some!(tree, self, other);
+        set_if_some!(unnormalized_cpu, self, other);
+        set_if_some!(whole_word, self, other);
+    }
 }
 
 #[derive(Args, Clone, Debug, Default, Deserialize)]
@@ -372,7 +425,7 @@ pub(crate) struct TemperatureArgs {
         help = "Use Celsius as the temperature unit. Default.",
         long_help = "Use Celsius as the temperature unit. This is the default option."
     )]
-    pub(crate) celsius: bool,
+    pub(crate) celsius: Option<bool>,
 
     #[arg(
         short = 'f',
@@ -380,7 +433,7 @@ pub(crate) struct TemperatureArgs {
         group = "temperature_unit",
         help = "Use Fahrenheit as the temperature unit. Default."
     )]
-    pub(crate) fahrenheit: bool,
+    pub(crate) fahrenheit: Option<bool>,
 
     #[arg(
         short = 'k',
@@ -388,19 +441,22 @@ pub(crate) struct TemperatureArgs {
         group = "temperature_unit",
         help = "Use Kelvin as the temperature unit."
     )]
-    pub(crate) kelvin: bool,
+    pub(crate) kelvin: Option<bool>,
 }
 
 #[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "CPU Options")]
 pub(crate) struct CpuArgs {
+    #[arg(long, help = "Defaults to selecting the average CPU entry.")]
+    pub(crate) default_avg_cpu: Option<bool>,
+
     #[arg(
         short = 'a',
         long,
         help = "Hides the average CPU usage entry.",
         long = "Hides the average CPU usage entry from being shown."
     )]
-    pub(crate) hide_avg_cpu: bool,
+    pub(crate) hide_avg_cpu: Option<bool>,
 
     // TODO: Maybe rename this or fix this? Should this apply to all "left legends"?
     #[arg(
@@ -409,7 +465,15 @@ pub(crate) struct CpuArgs {
         help = "Puts the CPU chart legend to the left side.",
         long_help = "Puts the CPU chart legend to the left side rather than the right side."
     )]
-    pub(crate) left_legend: bool,
+    pub(crate) left_legend: Option<bool>,
+}
+
+impl CpuArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(default_avg_cpu, self, other);
+        set_if_some!(hide_avg_cpu, self, other);
+        set_if_some!(left_legend, self, other);
+    }
 }
 
 #[derive(Args, Clone, Debug, Default, Deserialize)]
@@ -420,14 +484,21 @@ pub(crate) struct MemoryArgs {
         long,
         help = "Enables collecting and displaying cache and buffer memory."
     )]
-    pub(crate) enable_cache_memory: bool,
+    pub(crate) enable_cache_memory: Option<bool>,
 
     #[arg(
         long,
         help = "Defaults to showing process memory usage by value.",
         long_help = "Defaults to showing process memory usage by value. Otherwise, it defaults to showing it by percentage."
     )]
-    pub(crate) mem_as_value: bool,
+    pub(crate) mem_as_value: Option<bool>,
+}
+
+impl MemoryArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(enable_cache_memory, self, other);
+        set_if_some!(mem_as_value, self, other);
+    }
 }
 
 #[derive(Args, Clone, Debug, Default, Deserialize)]
@@ -438,7 +509,7 @@ pub(crate) struct NetworkArgs {
         help = "Displays the network widget using bytes.",
         long_help = "Displays the network widget using bytes. Defaults to bits."
     )]
-    pub(crate) network_use_bytes: bool,
+    pub(crate) network_use_bytes: Option<bool>,
 
     #[arg(
         long,
@@ -446,21 +517,30 @@ pub(crate) struct NetworkArgs {
         long_help = "Displays the network widget with binary prefixes (e.g. kibibits, mebibits) rather than a decimal \
                     prefixes (e.g. kilobits, megabits). Defaults to decimal prefixes."
     )]
-    pub(crate) network_use_binary_prefix: bool,
+    pub(crate) network_use_binary_prefix: Option<bool>,
 
     #[arg(
         long,
         help = "Displays the network widget with a log scale.",
         long_help = "Displays the network widget with a log scale. Defaults to a non-log scale."
     )]
-    pub(crate) network_use_log: bool,
+    pub(crate) network_use_log: Option<bool>,
 
     #[arg(
         long,
         help = "(DEPRECATED) Uses a separate network legend.",
         long_help = "(DEPRECATED) Uses separate network widget legend. This display is not tested and may be broken."
     )]
-    pub(crate) use_old_network_legend: bool,
+    pub(crate) use_old_network_legend: Option<bool>,
+}
+
+impl NetworkArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(network_use_bytes, self, other);
+        set_if_some!(network_use_binary_prefix, self, other);
+        set_if_some!(network_use_log, self, other);
+        set_if_some!(use_old_network_legend, self, other);
+    }
 }
 
 #[cfg(feature = "battery")]
@@ -474,7 +554,15 @@ pub(crate) struct BatteryArgs {
                     has no effect on custom layouts; if the battery widget is desired for a custom layout, explicitly \
                     specify it."
     )]
-    pub(crate) battery: bool,
+    pub(crate) battery: Option<bool>,
+}
+
+#[cfg(feature = "battery")]
+
+impl BatteryArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(battery, self, other);
+    }
 }
 
 #[cfg(feature = "gpu")]
@@ -482,7 +570,14 @@ pub(crate) struct BatteryArgs {
 #[command(next_help_heading = "GPU Options")]
 pub(crate) struct GpuArgs {
     #[arg(long, help = "Enables collecting and displaying GPU usage.")]
-    pub(crate) enable_gpu: bool,
+    pub(crate) enable_gpu: Option<bool>,
+}
+
+#[cfg(feature = "gpu")]
+impl GpuArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(enable_gpu, self, other);
+    }
 }
 
 #[derive(Args, Clone, Debug, Default, Deserialize)]
@@ -514,6 +609,13 @@ pub(crate) struct StyleArgs {
         }
     )]
     pub(crate) color: Option<String>,
+}
+
+impl StyleArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(color, self, other);
+
+    }
 }
 
 #[derive(Args, Clone, Debug)]
@@ -1053,8 +1155,8 @@ pub fn build_app() -> Command {
 }
 
 /// Returns an [`Args`].
-pub fn new_build_app() -> Args {
-    Args::parse()
+pub fn new_build_app() -> BottomArgs {
+    BottomArgs::parse()
 }
 
 #[cfg(test)]

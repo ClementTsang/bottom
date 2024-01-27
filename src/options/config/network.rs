@@ -7,7 +7,3 @@ pub(crate) struct NetworkConfig {
     #[serde(flatten)]
     pub(crate) args: NetworkArgs,
 }
-
-impl NetworkConfig {
-    
-}

@@ -9,62 +9,71 @@ pub mod process;
 mod style;
 pub mod temperature;
 
+use std::{fs, io::Write, path::PathBuf};
+
 use serde::Deserialize;
 pub use style::*;
 
-use self::{colours::ColourConfig, cpu::CpuConfig, layout::Row, process::ProcessConfig};
+use crate::{
+    args::BottomArgs,
+    constants::{CONFIG_TEXT, DEFAULT_CONFIG_FILE_PATH},
+    error,
+};
+
+use self::{
+    battery::BatteryConfig, colours::ColourConfig, cpu::CpuConfig, general::GeneralConfig,
+    gpu::GpuConfig, layout::Row, memory::MemoryConfig, network::NetworkConfig,
+    process::ProcessConfig, temperature::TemperatureConfig,
+};
 
 #[derive(Debug, Default, Deserialize)]
-pub struct Config {
-    // #[serde(default)]
-    // pub(crate) general_options: GeneralOptions,
-    // #[serde(default)]
-    // pub(crate) process_options: ProcessOptions,
-    // #[serde(default)]
-    // pub(crate) temperature_options: TemperatureOptions,
-    // #[serde(default)]
-    // pub(crate) cpu_options: CpuOptions,
-    // #[serde(default)]
-    // pub(crate) memory_options: MemoryOptions,
-    // #[serde(default)]
-    // pub(crate) network_options: NetworkOptions,
-    // #[serde(default)]
-    // pub(crate) battery_options: BatteryOptions,
-    // #[serde(default)]
-    // pub(crate) gpu_options: GpuOptions,
-    // #[serde(default)]
-    // pub(crate) style_options: StyleOptions,
-    pub flags: Option<ConfigFlags>,
+pub struct NewConfig {
+    #[serde(default)]
+    pub(crate) general: GeneralConfig,
+    #[serde(default)]
+    pub(crate) process: ProcessConfig,
+    #[serde(default)]
+    pub(crate) temperature: TemperatureConfig,
+    #[serde(default)]
+    pub(crate) cpu: CpuConfig,
+    #[serde(default)]
+    pub(crate) memory: MemoryConfig,
+    #[serde(default)]
+    pub(crate) network: NetworkConfig,
+    #[cfg(feature = "battery")]
+    #[serde(default)]
+    pub(crate) battery: BatteryConfig,
+    #[cfg(feature = "gpu")]
+    #[serde(default)]
+    pub(crate) gpu: GpuConfig,
+    #[serde(default)]
+    pub(crate) style: StyleConfig,
 
-    // TODO: Merge these into above!
+    // TODO: Merge these into above...
     pub(crate) colors: Option<ColourConfig>,
     pub(crate) row: Option<Vec<Row>>,
     pub(crate) disk_filter: Option<IgnoreList>,
     pub(crate) mount_filter: Option<IgnoreList>,
     pub(crate) temp_filter: Option<IgnoreList>,
     pub(crate) net_filter: Option<IgnoreList>,
-    #[serde(default)]
-    pub(crate) processes: ProcessConfig,
-    #[serde(default)]
-    pub(crate) cpu: CpuConfig,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum StringOrNum {
-    String(String),
-    Num(u64),
-}
-
-impl From<String> for StringOrNum {
-    fn from(value: String) -> Self {
-        StringOrNum::String(value)
-    }
-}
-
-impl From<u64> for StringOrNum {
-    fn from(value: u64) -> Self {
-        StringOrNum::Num(value)
+impl NewConfig {
+    /// Merges a [`BottomArgs`] with the internal shared "args" of the config file.
+    ///
+    /// In general, we favour whatever is set in `args` if it is set, then fall
+    /// back to config value if set.
+    pub fn merge(&mut self, args: BottomArgs) {
+        self.general.args.merge(&args.general);
+        self.process.args.merge(&args.process);
+        self.cpu.args.merge(&args.cpu);
+        self.memory.args.merge(&args.memory);
+        self.network.args.merge(&args.network);
+        #[cfg(feature = "battery")]
+        self.battery.args.merge(&args.battery);
+        #[cfg(feature = "gpu")]
+        self.gpu.args.merge(&args.gpu);
+        self.style.args.merge(&args.style);
     }
 }
 
@@ -88,41 +97,57 @@ pub struct IgnoreList {
     pub whole_word: bool,
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
-pub struct ConfigFlags {
-    pub(crate) hide_avg_cpu: Option<bool>,
-    pub(crate) dot_marker: Option<bool>,
-    pub(crate) temperature_type: Option<String>,
-    pub(crate) rate: Option<StringOrNum>,
-    pub(crate) left_legend: Option<bool>,
-    pub(crate) current_usage: Option<bool>,
-    pub(crate) unnormalized_cpu: Option<bool>,
-    pub(crate) group_processes: Option<bool>,
-    pub(crate) case_sensitive: Option<bool>,
-    pub(crate) whole_word: Option<bool>,
-    pub(crate) regex: Option<bool>,
-    pub(crate) basic: Option<bool>,
-    pub(crate) default_time_value: Option<StringOrNum>,
-    pub(crate) time_delta: Option<StringOrNum>,
-    pub(crate) autohide_time: Option<bool>,
-    pub(crate) hide_time: Option<bool>,
-    pub(crate) default_widget_type: Option<String>,
-    pub(crate) default_widget_count: Option<u64>,
-    pub(crate) expanded_on_startup: Option<bool>,
-    pub(crate) use_old_network_legend: Option<bool>,
-    pub(crate) hide_table_gap: Option<bool>,
-    pub(crate) battery: Option<bool>,
-    pub(crate) disable_click: Option<bool>,
-    pub(crate) color: Option<String>,
-    pub(crate) mem_as_value: Option<bool>,
-    pub(crate) tree: Option<bool>,
-    pub(crate) show_table_scroll_position: Option<bool>,
-    pub(crate) process_command: Option<bool>,
-    pub(crate) disable_advanced_kill: Option<bool>,
-    pub(crate) network_use_bytes: Option<bool>,
-    pub(crate) network_use_log: Option<bool>,
-    pub(crate) network_use_binary_prefix: Option<bool>,
-    pub(crate) enable_gpu: Option<bool>,
-    pub(crate) enable_cache_memory: Option<bool>,
-    pub(crate) retention: Option<StringOrNum>,
+/// Get either the specified config path string or return the default one, if it exists.
+pub fn get_config_path(override_path: Option<&str>) -> error::Result<Option<PathBuf>> {
+    let config_path = if let Some(conf_loc) = override_path {
+        Some(PathBuf::from(conf_loc))
+    } else if cfg!(target_os = "windows") {
+        if let Some(home_path) = dirs::config_dir() {
+            let mut path = home_path;
+            path.push(DEFAULT_CONFIG_FILE_PATH);
+            Some(path)
+        } else {
+            None
+        }
+    } else if let Some(home_path) = dirs::home_dir() {
+        let mut path = home_path;
+        path.push(".config/");
+        path.push(DEFAULT_CONFIG_FILE_PATH);
+        if path.exists() {
+            // If it already exists, use the old one.
+            Some(path)
+        } else {
+            // If it does not, use the new one!
+            if let Some(config_path) = dirs::config_dir() {
+                let mut path = config_path;
+                path.push(DEFAULT_CONFIG_FILE_PATH);
+                Some(path)
+            } else {
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    Ok(config_path)
+}
+
+/// Either get an existing config or create a new one, and parse it.
+pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<NewConfig> {
+    if let Some(path) = config_path {
+        if let Ok(config_string) = fs::read_to_string(path) {
+            Ok(toml_edit::de::from_str(config_string.as_str())?)
+        } else {
+            if let Some(parent_path) = path.parent() {
+                fs::create_dir_all(parent_path)?;
+            }
+
+            fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
+            Ok(NewConfig::default())
+        }
+    } else {
+        // Don't write anything, just assume the default.
+        Ok(NewConfig::default())
+    }
 }
