@@ -1,6 +1,9 @@
 use serde::Deserialize;
 
+use crate::args::TemperatureArgs;
+
 #[derive(Clone, Debug, Default, Deserialize)]
 pub(crate) struct TemperatureConfig {
-    pub(crate) temperature_type: Option<String>,
+    #[serde(flatten)]
+    pub(crate) args: TemperatureArgs,
 }

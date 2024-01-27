@@ -143,6 +143,7 @@ clap_complete_fig = "4.5.0"
 clap_complete_nushell = "4.5.0"
 clap_mangen = "0.2.20"
 indoc = "2.0.4"
+serde = { version = "=1.0.196", features = ["derive"] }
 
 [package.metadata.deb]
 section = "utility"

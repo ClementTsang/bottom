@@ -3,7 +3,11 @@ pub mod palettes;
 
 use serde::Deserialize;
 
+use crate::args::StyleArgs;
+
 #[derive(Clone, Debug, Default, Deserialize)]
 pub(crate) struct StyleConfig {
-    pub(crate) color: Option<String>, // TODO: parse enum instead? And how should this react with colour schemes?
+    #[serde(flatten)]
+    pub(crate) args: StyleArgs,
+    // TODO: Maybe also put colours here?
 }

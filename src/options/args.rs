@@ -9,6 +9,23 @@ use std::cmp::Ordering;
 
 use clap::*;
 use indoc::indoc;
+use serde::Deserialize;
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(untagged)]
+pub(crate) enum StringOrNum {
+    String(String),
+    Num(u64),
+}
+
+impl From<&str> for StringOrNum {
+    fn from(value: &str) -> Self {
+        match value.parse::<u64>() {
+            Ok(parsed) => StringOrNum::Num(parsed),
+            Err(_) => StringOrNum::String(value.to_owned()),
+        }
+    }
+}
 
 /// Returns an [`Ordering`] for two [`Arg`] values.
 ///
@@ -68,7 +85,9 @@ const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
     help_template = TEMPLATE,
     override_usage = USAGE,
 )]
-pub(crate) struct Args {
+
+/// Represents the arguments that can be passed in to bottom.
+pub struct Args {
     #[command(flatten)]
     pub(crate) general_args: GeneralArgs,
 
@@ -82,7 +101,7 @@ pub(crate) struct Args {
     pub(crate) cpu_args: CpuArgs,
 
     #[command(flatten)]
-    pub(crate) mem_args: MemArgs,
+    pub(crate) mem_args: MemoryArgs,
 
     #[command(flatten)]
     pub(crate) network_args: NetworkArgs,
@@ -102,7 +121,7 @@ pub(crate) struct Args {
     pub(crate) other_args: OtherArgs,
 }
 
-#[derive(Args, Clone, Debug)]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "General Options")]
 pub(crate) struct GeneralArgs {
     #[arg(
@@ -127,9 +146,10 @@ pub(crate) struct GeneralArgs {
         value_name = "PATH",
         help = "Sets the location of the config file.",
         long_help = "Sets the location of the config file. Expects a config file in the TOML format. \
-                    If it doesn't exist, a default config file is created at the path."
+                    If it doesn't exist, a default config file is created at the path. If no path is provided,
+                    the default config location will be used."
     )]
-    pub(crate) config_location: String,
+    pub(crate) config_location: Option<String>,
 
     #[arg(
         short = 't',
@@ -139,7 +159,7 @@ pub(crate) struct GeneralArgs {
         long_help = "The default time value for graphs. Takes a number in milliseconds or a human \
                     duration (e.g. 60s). The minimum time is 30s, and the default is 60s."
     )]
-    pub(crate) default_time_value: String,
+    pub(crate) default_time_value: Option<StringOrNum>,
 
     // TODO: Charts are broken in the manpage
     #[arg(
@@ -202,7 +222,7 @@ pub(crate) struct GeneralArgs {
             Setting '--default_widget_type Temp' will make the temperature widget selected by default."
         }
     )]
-    pub(crate) default_widget_type: String,
+    pub(crate) default_widget_type: Option<String>,
 
     #[arg(
         long,
@@ -246,7 +266,7 @@ pub(crate) struct GeneralArgs {
                     (e.g. 5s). The minimum is 250ms, and defaults to 1000ms. Smaller values may result in higher \
                     system usage by bottom."
     )]
-    pub(crate) rate: String,
+    pub(crate) rate: Option<StringOrNum>,
 
     #[arg(
         long,
@@ -256,7 +276,7 @@ pub(crate) struct GeneralArgs {
                     human-readable duration (e.g. 20m), with a minimum of 1 minute. Note that higher values \
                     will take up more memory. Defaults to 10 minutes."
     )]
-    pub(crate) retention: String,
+    pub(crate) retention: Option<StringOrNum>,
 
     #[arg(
         long,
@@ -273,10 +293,10 @@ pub(crate) struct GeneralArgs {
         long_help = "The amount of time changed when zooming in/out. Takes a number in milliseconds or a \
                     human-readable duration (e.g. 30s). The minimum is 1s, and defaults to 15s."
     )]
-    pub(crate) time_delta: String,
+    pub(crate) time_delta: Option<StringOrNum>,
 }
 
-#[derive(Args, Clone, Debug)]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "Process Options")]
 pub(crate) struct ProcessArgs {
     #[arg(
@@ -341,7 +361,7 @@ pub(crate) struct ProcessArgs {
     pub(crate) whole_word: bool,
 }
 
-#[derive(Args, Clone, Debug)]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "Temperature Options")]
 #[group(multiple = false)]
 pub(crate) struct TemperatureArgs {
@@ -371,7 +391,7 @@ pub(crate) struct TemperatureArgs {
     pub(crate) kelvin: bool,
 }
 
-#[derive(Args, Clone, Debug)]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "CPU Options")]
 pub(crate) struct CpuArgs {
     #[arg(
@@ -392,9 +412,9 @@ pub(crate) struct CpuArgs {
     pub(crate) left_legend: bool,
 }
 
-#[derive(Args, Clone, Debug)]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "Memory Options")]
-pub(crate) struct MemArgs {
+pub(crate) struct MemoryArgs {
     #[cfg(not(target_os = "windows"))]
     #[arg(
         long,
@@ -410,7 +430,7 @@ pub(crate) struct MemArgs {
     pub(crate) mem_as_value: bool,
 }
 
-#[derive(Args, Clone, Debug)]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "Network Options")]
 pub(crate) struct NetworkArgs {
     #[arg(
@@ -444,7 +464,7 @@ pub(crate) struct NetworkArgs {
 }
 
 #[cfg(feature = "battery")]
-#[derive(Args, Clone, Debug)]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "Battery Options")]
 pub(crate) struct BatteryArgs {
     #[arg(
@@ -458,14 +478,14 @@ pub(crate) struct BatteryArgs {
 }
 
 #[cfg(feature = "gpu")]
-#[derive(Args, Clone, Debug)]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "GPU Options")]
 pub(crate) struct GpuArgs {
     #[arg(long, help = "Enables collecting and displaying GPU usage.")]
     pub(crate) enable_gpu: bool,
 }
 
-#[derive(Args, Clone, Debug)]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "Style Options")]
 pub(crate) struct StyleArgs {
     #[arg(
@@ -493,7 +513,7 @@ pub(crate) struct StyleArgs {
             - nord-light    (nord but adjusted for lighter backgrounds)"
         }
     )]
-    pub(crate) color: String,
+    pub(crate) color: Option<String>,
 }
 
 #[derive(Args, Clone, Debug)]

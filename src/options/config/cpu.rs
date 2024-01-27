@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use crate::args::CpuArgs;
+
 /// The default selection of the CPU widget. If the given selection is invalid, we will fall back to all.
 #[derive(Clone, Copy, Debug, Default, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -14,8 +16,8 @@ pub enum CpuDefault {
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub(crate) struct CpuConfig {
-    #[serde(default)]
-    pub(crate) hide_avg_cpu: bool,
+    #[serde(flatten)]
+    pub(crate) args: CpuArgs,
     #[serde(default)]
     pub(crate) default: CpuDefault,
 }

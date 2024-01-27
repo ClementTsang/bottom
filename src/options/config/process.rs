@@ -1,28 +1,12 @@
 use serde::Deserialize;
 
-use crate::widgets::ProcWidgetColumn;
+use crate::{args::ProcessArgs, widgets::ProcWidgetColumn};
 
 /// Process column settings.
 #[derive(Clone, Debug, Default, Deserialize)]
 pub(crate) struct ProcessConfig {
-    #[serde(default)]
-    pub(crate) case_sensitive: bool,
-    #[serde(default)]
-    pub(crate) current_usage: bool,
-    #[serde(default)]
-    pub(crate) disable_advanced_kill: bool,
-    #[serde(default)]
-    pub(crate) group_processes: bool,
-    #[serde(default)]
-    pub(crate) process_command: bool,
-    #[serde(default)]
-    pub(crate) regex: bool,
-    #[serde(default)]
-    pub(crate) tree: bool,
-    #[serde(default)]
-    pub(crate) unnormalized_cpu: bool,
-    #[serde(default)]
-    pub(crate) whole_word: bool,
+    #[serde(flatten)]
+    pub(crate) args: ProcessArgs,
     pub(crate) columns: Option<Vec<ProcWidgetColumn>>,
 }
 
