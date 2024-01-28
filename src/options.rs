@@ -757,7 +757,7 @@ mod test {
     #[test]
     fn matches_human_times() {
         let config = Config::default();
-        let app = crate::args::build_app();
+        let app = crate::args::get_args();
 
         {
             let app = app.clone();
@@ -784,7 +784,7 @@ mod test {
     #[test]
     fn matches_number_times() {
         let config = Config::default();
-        let app = crate::args::build_app();
+        let app = crate::args::get_args();
 
         {
             let app = app.clone();
@@ -810,7 +810,7 @@ mod test {
 
     #[test]
     fn config_human_times() {
-        let app = crate::args::build_app();
+        let app = crate::args::get_args();
         let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
@@ -841,7 +841,7 @@ mod test {
 
     #[test]
     fn config_number_times_as_string() {
-        let app = crate::args::build_app();
+        let app = crate::args::get_args();
         let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
@@ -872,7 +872,7 @@ mod test {
 
     #[test]
     fn config_number_times_as_num() {
-        let app = crate::args::build_app();
+        let app = crate::args::get_args();
         let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
@@ -913,7 +913,7 @@ mod test {
     // typos/mixing up. Use proc macros to unify on one struct?
     #[test]
     fn verify_cli_options_build() {
-        let app = crate::args::build_app();
+        let app = crate::args::get_args();
 
         let default_app = {
             let app = app.clone();

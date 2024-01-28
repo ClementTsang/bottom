@@ -1,4 +1,3 @@
-use clap::ArgMatches;
 use serde::Deserialize;
 
 use crate::args::GeneralArgs;
