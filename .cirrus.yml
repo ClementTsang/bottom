@@ -15,7 +15,12 @@ cache_template: &CACHE_TEMPLATE
     folder: $HOME/.cargo/registry
     reupload_on_changes: "true"
     fingerprint_script:
-      - md5 Cargo.lock
+      - |
+        if ! command -v md5 &> /dev/null; then
+          md5sum Cargo.lock
+        else
+          md5 Cargo.lock
+        fi
       - echo $CIRRUS_OS
       - echo $CIRRUS_TASK_NAME
   target_cache:
@@ -23,7 +28,12 @@ cache_template: &CACHE_TEMPLATE
     reupload_on_changes: "true"
     fingerprint_script:
       - . $HOME/.cargo/env && rustc --version
-      - md5 Cargo.lock
+      - |
+        if ! command -v md5 &> /dev/null; then
+          md5sum Cargo.lock
+        else
+          md5 Cargo.lock
+        fi
       - echo $CIRRUS_OS
       - echo $CIRRUS_TASK_NAME
 
