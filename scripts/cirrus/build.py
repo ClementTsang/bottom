@@ -4,6 +4,8 @@
 # through Cirrus CI's GraphQL interface.
 #
 # Expects the Cirrus CI API key to be set in the CIRRUS_KEY environment variable.
+#
+# TODO: Explain this in docs how the heck this works.
 
 import os
 import json
@@ -18,8 +20,8 @@ from urllib.request import Request, urlopen, urlretrieve
 
 URL = "https://api.cirrus-ci.com/graphql"
 TASKS = [
-    ("freebsd_12_3_build", "bottom_x86_64-unknown-freebsd-13-2.tar.gz"),
-    ("freebsd_13_1_build", "bottom_x86_64-unknown-freebsd-14-0.tar.gz"),
+    ("freebsd_13_2_build", "bottom_x86_64-unknown-freebsd-13-2.tar.gz"),
+    ("freebsd_14_0_build", "bottom_x86_64-unknown-freebsd-14-0.tar.gz"),
     ("macos_build", "bottom_aarch64-apple-darwin.tar.gz"),
 ]
 DL_URL_TEMPLATE = "https://api.cirrus-ci.com/v1/artifact/build/%s/%s/binaries/%s"
