@@ -100,6 +100,13 @@ build_task:
       env:
         TARGET: "aarch64-apple-darwin"
         NAME: "aarch64-apple-darwin"
+    - name: "Legacy Linux (2.17)"
+      alias: "linux_2_17_build"
+      container:
+        image: quay.io/pypa/manylinux2014_x86_64
+      env:
+        TARGET: "x86_64-unknown-linux-gnu"
+        NAME: "x86_64-unknown-linux-gnu-2-17"
   <<: *SETUP_TEMPLATE
   <<: *CACHE_TEMPLATE
   build_script:

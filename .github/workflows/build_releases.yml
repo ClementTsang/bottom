@@ -48,13 +48,6 @@ jobs:
             }
           - {
               os: "ubuntu-20.04",
-              target: "x86_64-unknown-linux-gnu",
-              cross: false,
-              container: quay.io/pypa/manylinux2014_x86_64,
-              suffix: "2-17",
-            }
-          - {
-              os: "ubuntu-20.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
             }
@@ -210,16 +203,7 @@ jobs:
         run: |
           cp ./desktop/bottom.desktop release/
 
-      - name: Save release as artifact (Old)
-        if: matrix.info.container == 'quay.io/pypa/manylinux2014_x86_64'
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
-        with:
-          retention-days: 3
-          name: "release-${{ matrix.info.target }}${{ matrix.info.suffix }}"
-          path: release
-
       - name: Save release as artifact
-        if: matrix.info.container != 'quay.io/pypa/manylinux2014_x86_64'
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
