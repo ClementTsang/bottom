@@ -18,8 +18,8 @@ from urllib.request import Request, urlopen, urlretrieve
 
 URL = "https://api.cirrus-ci.com/graphql"
 TASKS = [
-    ("freebsd_12_3_build", "bottom_x86_64-unknown-freebsd-12-3.tar.gz"),
-    ("freebsd_13_1_build", "bottom_x86_64-unknown-freebsd-13-1.tar.gz"),
+    ("freebsd_12_3_build", "bottom_x86_64-unknown-freebsd-13-2.tar.gz"),
+    ("freebsd_13_1_build", "bottom_x86_64-unknown-freebsd-14-0.tar.gz"),
     ("macos_build", "bottom_aarch64-apple-darwin.tar.gz"),
 ]
 DL_URL_TEMPLATE = "https://api.cirrus-ci.com/v1/artifact/build/%s/%s/binaries/%s"
@@ -31,9 +31,7 @@ def make_query_request(key: str, branch: str, build_type: str):
 
     # Dumb but if it works...
     config_override = (
-        Path(".cirrus.yml")
-        .read_text()
-        .replace("# -PLACEHOLDER FOR CI-", 'BTM_BUILD_RELEASE_CALLER: "nightly"')
+        Path(".cirrus.yml").read_text().replace("# -PLACEHOLDER FOR CI-", 'BTM_BUILD_RELEASE_CALLER: "nightly"')
     )
     query = """
         mutation CreateCirrusCIBuild (
@@ -192,11 +190,7 @@ def main():
                         # Sleep for a minute if something went wrong, just in case.
                         sleep(60)
                 else:
-                    print(
-                        "Build failed to complete after {} minutes, bailing.".format(
-                            MINUTES
-                        )
-                    )
+                    print("Build failed to complete after {} minutes, bailing.".format(MINUTES))
 
         if not success:
             exit(2)
