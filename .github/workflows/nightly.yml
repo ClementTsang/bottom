@@ -60,12 +60,9 @@ jobs:
           echo "Generated $(ls ./release | wc -l) files:"
           du -h -d 0 ./release/*
 
-      - name: Delete tag and release
-        uses: ClementTsang/delete-tag-and-release@v0.3.1
+      - name: Delete tag and release if not mock
         if: github.event.inputs.isMock != 'mock'
-        with:
-          delete_release: true
-          tag_name: nightly
+        run: gh release delete nightly --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -73,7 +70,7 @@ jobs:
         run: sleep 10
         if: github.event.inputs.isMock != 'mock'
 
-      - name: Add all release files to nightly release if not mock
+      - name: Add all release files and create nightly release if not mock
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # 0.1.15
         if: github.event.inputs.isMock != 'mock'
         with:
