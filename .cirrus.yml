@@ -1,10 +1,9 @@
 %YAML 1.1
 ---
 # Configuration for CirrusCI. This is primarily used for testing and building FreeBSD and macOS M1, since other
-# CI platforms don't seem to support these platforms as of writing.
+# CI platforms don't seem to support these platforms as of writing (GH may support M1 soon though).
 #
-# Note that we set the YAML directive above to prevent some linting errors around the
-# templates.
+# Note that we set the YAML directive above to prevent some linting errors around the templates.
 
 setup_template: &SETUP_TEMPLATE
   setup_script:
