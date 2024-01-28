@@ -48,13 +48,6 @@ jobs:
             }
           - {
               os: "ubuntu-20.04",
-              target: "x86_64-unknown-linux-gnu",
-              cross: false,
-              container: quay.io/pypa/manylinux2014_x86_64,
-              suffix: "2-17",
-            }
-          - {
-              os: "ubuntu-20.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
             }
@@ -211,15 +204,16 @@ jobs:
           cp ./desktop/bottom.desktop release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: "release-${{ matrix.info.target }}${{ matrix.info.suffix }}"
           path: release
 
   build-msi:
     name: "Build MSI installer"
     runs-on: "windows-2019"
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -257,15 +251,16 @@ jobs:
           mv bottom_x86_64_installer.msi release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: "release-build-msi"
           path: release
 
   build-cirrus:
     name: "Build using Cirrus CI"
     runs-on: "ubuntu-latest"
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -289,15 +284,16 @@ jobs:
           python ./scripts/cirrus/build.py "$BRANCH" "release/" "${{ inputs.caller }}"
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-build-cirrus
           path: release
 
   build-deb:
     name: "Build .deb software packages"
     runs-on: "ubuntu-20.04"
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -410,16 +406,17 @@ jobs:
           mv ${{ steps.verify.outputs.DEB_FILE }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-build-deb-${{ matrix.info.target }}
           path: release
 
   build-rpm:
     name: "Build .rpm software packages"
     runs-on: ubuntu-latest
     container: ghcr.io/clementtsang/almalinux-8
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -494,8 +491,8 @@ jobs:
           mv ${{ steps.verify.outputs.RPM_FILE }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-build-rpm-${{ matrix.info.target }}
           path: release

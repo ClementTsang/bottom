@@ -4,6 +4,8 @@
 # through Cirrus CI's GraphQL interface.
 #
 # Expects the Cirrus CI API key to be set in the CIRRUS_KEY environment variable.
+#
+# TODO: Explain this in docs how the heck this works.
 
 import os
 import json
@@ -12,16 +14,18 @@ import traceback
 from textwrap import dedent
 from time import sleep, time
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from urllib.request import Request, urlopen, urlretrieve
 
-URL = "https://api.cirrus-ci.com/graphql"
-TASKS = [
-    ("freebsd_12_3_build", "bottom_x86_64-unknown-freebsd-13-2.tar.gz"),
-    ("freebsd_13_1_build", "bottom_x86_64-unknown-freebsd-14-0.tar.gz"),
+# Form of each task is (TASK_ALIAS, FILE_NAME).
+TASKS: List[Tuple[str, str]] = [
+    ("freebsd_13_2_build", "bottom_x86_64-unknown-freebsd-13-2.tar.gz"),
+    ("freebsd_14_0_build", "bottom_x86_64-unknown-freebsd-14-0.tar.gz"),
     ("macos_build", "bottom_aarch64-apple-darwin.tar.gz"),
+    ("linux_2_17_build", "bottom_x86_64-unknown-linux-gnu-2-17.tar.gz"),
 ]
+URL = "https://api.cirrus-ci.com/graphql"
 DL_URL_TEMPLATE = "https://api.cirrus-ci.com/v1/artifact/build/%s/%s/binaries/%s"
 
 
@@ -104,7 +108,7 @@ def check_build_status(key: str, id: str) -> Optional[str]:
 def try_download(build_id: str, dl_path: Path):
     for task, file in TASKS:
         url = DL_URL_TEMPLATE % (build_id, task, file)
-        out = dl_path / file
+        out = os.path.join(dl_path, file)
         print("Downloading {} to {}".format(file, out))
         urlretrieve(url, out)
 

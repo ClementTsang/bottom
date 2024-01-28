@@ -15,15 +15,16 @@ cache_template: &CACHE_TEMPLATE
     folder: $HOME/.cargo/registry
     reupload_on_changes: "true"
     fingerprint_script:
-      - md5 Cargo.lock
+      - $HOME/.cargo/bin/rustc --version
+      - cat Cargo.lock
       - echo $CIRRUS_OS
       - echo $CIRRUS_TASK_NAME
   target_cache:
     folder: target
     reupload_on_changes: "true"
     fingerprint_script:
-      - . $HOME/.cargo/env && rustc --version
-      - md5 Cargo.lock
+      - $HOME/.cargo/bin/rustc --version
+      - cat Cargo.lock
       - echo $CIRRUS_OS
       - echo $CIRRUS_TASK_NAME
 
@@ -39,7 +40,7 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: "true"
 
 test_task:
-  auto_cancellation: $CIRRUS_BRANCH != "main"
+  auto_cancellation: "false" # We set this to false to prevent nightly builds from affecting this
   only_if: $CIRRUS_BUILD_SOURCE != "api" && ($CIRRUS_BRANCH == "main" || $CIRRUS_PR != "")
   timeout_in: "20m"
   skip: "!changesInclude('.cargo/**', '.cirrus.yml', 'sample_configs/**', 'src/**', 'tests/**', 'build.rs', 'Cargo.lock', 'Cargo.toml', 'clippy.toml', 'rustfmt.toml')"
@@ -100,6 +101,13 @@ build_task:
       env:
         TARGET: "aarch64-apple-darwin"
         NAME: "aarch64-apple-darwin"
+    - name: "Legacy Linux (2.17)"
+      alias: "linux_2_17_build"
+      container:
+        image: quay.io/pypa/manylinux2014_x86_64
+      env:
+        TARGET: "x86_64-unknown-linux-gnu"
+        NAME: "x86_64-unknown-linux-gnu-2-17"
   <<: *SETUP_TEMPLATE
   <<: *CACHE_TEMPLATE
   build_script:
