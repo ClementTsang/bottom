@@ -1,6 +1,7 @@
 # How we deploy a release. Covers binary builds. Also manages packaging for choco.
 #
-# Based on https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
+# Binaries are primarily built by GHA, though some Linux, M1 macOS, and FreeBSD builds are
+# handled by CirrusCI.
 
 name: deployment
 
