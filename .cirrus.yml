@@ -14,14 +14,14 @@ setup_template: &SETUP_TEMPLATE
 cache_template: &CACHE_TEMPLATE
   registry_cache:
     folder: $HOME/.cargo/registry
-    reupload_on_changes: true
+    reupload_on_changes: "true"
     fingerprint_script:
       - md5 Cargo.lock
       - echo $CIRRUS_OS
       - echo $CIRRUS_TASK_NAME
   target_cache:
     folder: target
-    reupload_on_changes: true
+    reupload_on_changes: "true"
     fingerprint_script:
       - . $HOME/.cargo/env && rustc --version
       - md5 Cargo.lock
@@ -35,13 +35,14 @@ cleanup_template: &CLEANUP_TEMPLATE
     - rm -f ./target/.rustc_info.json
 
 env:
-  CARGO_INCREMENTAL: 0
-  CARGO_PROFILE_DEV_DEBUG: 0
-  CARGO_HUSKY_DONT_INSTALL_HOOKS: true
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: "0"
+  CARGO_HUSKY_DONT_INSTALL_HOOKS: "true"
 
 test_task:
   auto_cancellation: $CIRRUS_BRANCH != "main"
   only_if: $CIRRUS_BUILD_SOURCE != "api" && ($CIRRUS_BRANCH == "main" || $CIRRUS_PR != "")
+  timeout_in: "20m"
   skip: "!changesInclude('.cargo/**', '.cirrus.yml', 'sample_configs/**', 'src/**', 'tests/**', 'build.rs', 'Cargo.lock', 'Cargo.toml', 'clippy.toml', 'rustfmt.toml')"
   matrix:
     - name: "FreeBSD 13 Test"
@@ -70,10 +71,11 @@ test_task:
   <<: *CLEANUP_TEMPLATE
 
 build_task:
-  auto_cancellation: false
+  auto_cancellation: "false"
   only_if: $CIRRUS_BUILD_SOURCE == "api"
+  timeout_in: "30m"
   env:
-    BTM_GENERATE: true
+    BTM_GENERATE: "true"
     COMPLETION_DIR: "target/tmp/bottom/completion/"
     MANPAGE_DIR: "target/tmp/bottom/manpage/"
     # -PLACEHOLDER FOR CI-
