@@ -51,7 +51,7 @@ jobs:
       - name: Get release artifacts
         uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4.1.1
         with:
-          name: release-*
+          pattern: release-*
           path: release
           merge-multiple: true
 
@@ -73,7 +73,7 @@ jobs:
         run: sleep 10
         if: github.event.inputs.isMock != 'mock'
 
-      - name: Upload all saved release files if not mock
+      - name: Add all release files to nightly release if not mock
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # 0.1.15
         if: github.event.inputs.isMock != 'mock'
         with:
