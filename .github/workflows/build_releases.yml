@@ -211,10 +211,10 @@ jobs:
           cp ./desktop/bottom.desktop release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: "release-${{ matrix.info.target }}${{ matrix.info.suffix }}"
           path: release
 
   build-msi:
@@ -257,10 +257,10 @@ jobs:
           mv bottom_x86_64_installer.msi release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: "release-build-msi"
           path: release
 
   build-cirrus:
@@ -289,10 +289,10 @@ jobs:
           python ./scripts/cirrus/build.py "$BRANCH" "release/" "${{ inputs.caller }}"
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-build-cirrus
           path: release
 
   build-deb:
@@ -410,10 +410,10 @@ jobs:
           mv ${{ steps.verify.outputs.DEB_FILE }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-build-deb
           path: release
 
   build-rpm:
@@ -494,8 +494,8 @@ jobs:
           mv ${{ steps.verify.outputs.RPM_FILE }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-build-rpm
           path: release

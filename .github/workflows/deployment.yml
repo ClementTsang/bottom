@@ -67,10 +67,11 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Get release artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4.1.1
         with:
-          name: release
+          name: release-*
           path: release
+          merge-multiple: true
 
       - name: Execute choco packaging script
         run: |
@@ -83,10 +84,10 @@ jobs:
           mv choco.zip release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-choco
           path: release
 
   upload-release:
@@ -104,10 +105,11 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Get release artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4.1.1
         with:
-          name: release
+          name: release-*
           path: release
+          merge-multiple: true
 
       - name: Print out all release files
         run: |
