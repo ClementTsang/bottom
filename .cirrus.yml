@@ -45,12 +45,12 @@ test_task:
   timeout_in: "20m"
   skip: "!changesInclude('.cargo/**', '.cirrus.yml', 'sample_configs/**', 'src/**', 'tests/**', 'build.rs', 'Cargo.lock', 'Cargo.toml', 'clippy.toml', 'rustfmt.toml')"
   matrix:
+    - name: "FreeBSD 14 Test"
+      freebsd_instance:
+        image_family: freebsd-14-0
     - name: "FreeBSD 13 Test"
       freebsd_instance:
-        image_family: freebsd-13-1
-    - name: "FreeBSD 12 Test"
-      freebsd_instance:
-        image_family: freebsd-12-3
+        image_family: freebsd-13-2
     - name: "macOS M1 Test"
       macos_instance:
         image: ghcr.io/cirruslabs/macos-monterey-base:latest
@@ -80,20 +80,20 @@ build_task:
     MANPAGE_DIR: "target/tmp/bottom/manpage/"
     # -PLACEHOLDER FOR CI-
   matrix:
+    - name: "FreeBSD 14 Build"
+      alias: "freebsd_14_0_build"
+      freebsd_instance:
+        image_family: freebsd-14-0
+      env:
+        TARGET: "x86_64-unknown-freebsd"
+        NAME: "x86_64-unknown-freebsd-14-0"
     - name: "FreeBSD 13 Build"
-      alias: "freebsd_13_1_build"
+      alias: "freebsd_13_2_build"
       freebsd_instance:
-        image_family: freebsd-13-1
+        image_family: freebsd-13-2
       env:
         TARGET: "x86_64-unknown-freebsd"
-        NAME: "x86_64-unknown-freebsd-13-1"
-    - name: "FreeBSD 12 Build"
-      alias: "freebsd_12_3_build"
-      freebsd_instance:
-        image_family: freebsd-12-3
-      env:
-        TARGET: "x86_64-unknown-freebsd"
-        NAME: "x86_64-unknown-freebsd-12-3"
+        NAME: "x86_64-unknown-freebsd-13-2"
     - name: "macOS M1 Build"
       alias: "macos_build"
       macos_instance:
