@@ -213,6 +213,7 @@ jobs:
   build-msi:
     name: "Build MSI installer"
     runs-on: "windows-2019"
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -259,6 +260,7 @@ jobs:
   build-cirrus:
     name: "Build using Cirrus CI"
     runs-on: "ubuntu-latest"
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -291,6 +293,7 @@ jobs:
   build-deb:
     name: "Build .deb software packages"
     runs-on: "ubuntu-20.04"
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -413,6 +416,7 @@ jobs:
     name: "Build .rpm software packages"
     runs-on: ubuntu-latest
     container: ghcr.io/clementtsang/almalinux-8
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
