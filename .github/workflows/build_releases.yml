@@ -225,7 +225,7 @@ jobs:
         run: Install-WindowsFeature Net-Framework-Core
 
       - name: Install wixtoolset
-        uses: crazy-max/ghaction-chocolatey@5a5864861ce2c988001531e48993aa687c51f6c8 # 2.2.0
+        uses: crazy-max/ghaction-chocolatey@0e015857dd851f84fcb7fb53380eb5c4c8202333 # v3.0.0
         with:
           args: install -y wixtoolset
 
