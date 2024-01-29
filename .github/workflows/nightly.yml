@@ -61,8 +61,11 @@ jobs:
           du -h -d 0 ./release/*
 
       - name: Delete tag and release if not mock
+        uses: ClementTsang/delete-tag-and-release@v0.4.0
         if: github.event.inputs.isMock != 'mock'
-        run: gh release delete nightly --cleanup-tag
+        with:
+          delete_release: true
+          tag_name: nightly
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
