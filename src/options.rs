@@ -666,15 +666,26 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Fil
     }
 }
 
+/// Get the colour scheme from the config if valid.
 pub fn get_color_scheme(config: &NewConfig) -> error::Result<ColourScheme> {
-    if let Some(colors) = &config.colors {
-        if !colors.is_empty() {
-            return Ok(ColourScheme::Custom);
-        }
-    }
-
     if let Some(color) = &config.style.args.color {
-        ColourScheme::from_str(color)
+        match ColourScheme::from_str(color) {
+            Ok(scheme) => match scheme {
+                ColourScheme::Custom => {
+                    if let Some(colors) = &config.colors {
+                        if !colors.is_empty() {
+                            return Ok(ColourScheme::Custom);
+                        }
+                    }
+
+                    Err(error::BottomError::ConfigError(
+                        "invalid custom color scheme defined".into(),
+                    ))
+                }
+                _ => Ok(scheme),
+            },
+            Err(err) => Err(err),
+        }
     } else {
         Ok(ColourScheme::Default)
     }

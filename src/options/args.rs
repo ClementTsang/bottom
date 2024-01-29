@@ -5,11 +5,27 @@
 
 // TODO: New sections are misaligned! See if we can get that fixed.
 
-use std::cmp::Ordering;
-
 use clap::*;
 use indoc::indoc;
 use serde::Deserialize;
+
+const TEMPLATE: &str = indoc! {
+    "{name} {version}
+    {author}
+
+    {about}
+
+    {usage-heading} {usage}
+
+    {all-args}"
+};
+
+const USAGE: &str = "btm [OPTIONS]";
+
+const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
+    Some(nightly_version) => nightly_version,
+    None => crate_version!(),
+};
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(untagged)]
@@ -32,51 +48,6 @@ impl From<u64> for StringOrNum {
         StringOrNum::Num(value)
     }
 }
-
-/// Returns an [`Ordering`] for two [`Arg`] values.
-///
-/// Note this assumes that _both have a long_ name, and will
-/// panic if either are missing!
-fn sort_args(a: &Arg, b: &Arg) -> Ordering {
-    let a = a.get_long().unwrap();
-    let b = b.get_long().unwrap();
-
-    a.cmp(b)
-}
-
-/// Create an array of [`Arg`] values. If there is more than one value, then
-/// they will be sorted by their long name. Note this sort will panic if
-/// any [`Arg`] does not have a long name!
-macro_rules! args {
-    ( $arg:expr $(,)?) => {
-        [$arg]
-    };
-    ( $( $arg:expr ),+ $(,)? ) => {
-        {
-            let mut args = [ $( $arg, )* ];
-            args.sort_unstable_by(sort_args);
-            args
-        }
-    };
-}
-
-const TEMPLATE: &str = indoc! {
-    "{name} {version}
-    {author}
-
-    {about}
-
-    {usage-heading} {usage}
-
-    {all-args}"
-};
-
-const USAGE: &str = "btm [OPTIONS]";
-
-const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
-    Some(nightly_version) => nightly_version,
-    None => crate_version!(),
-};
 
 /// Represents the arguments that can be passed in to bottom.
 #[derive(Parser, Debug)]
@@ -593,6 +564,7 @@ pub(crate) struct StyleArgs {
             "gruvbox-light",
             "nord",
             "nord-light",
+            "custom",
 
         ],
         hide_possible_values=true,
@@ -605,7 +577,8 @@ pub(crate) struct StyleArgs {
             - gruvbox       (a bright theme with 'retro groove' colors)
             - gruvbox-light (gruvbox but adjusted for lighter backgrounds)
             - nord          (an arctic, north-bluish color palette)
-            - nord-light    (nord but adjusted for lighter backgrounds)"
+            - nord-light    (nord but adjusted for lighter backgrounds)
+            - custom        (use a custom color scheme defined in the config file)"
         }
     )]
     pub(crate) color: Option<String>,
