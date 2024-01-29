@@ -1,4 +1,4 @@
-[flags]
+[temperature]
 temperature_type = "k"
 temperature_type = "f"
 temperature_type = "c"

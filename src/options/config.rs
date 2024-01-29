@@ -1,6 +1,8 @@
+#[cfg(feature = "battery")]
 pub mod battery;
 pub mod cpu;
 pub mod general;
+#[cfg(feature = "gpu")]
 pub mod gpu;
 pub mod layout;
 pub mod memory;
@@ -14,20 +16,25 @@ use std::{fs, io::Write, path::PathBuf};
 use serde::Deserialize;
 pub use style::*;
 
+#[cfg(feature = "battery")]
+use self::battery::BatteryConfig;
+
+#[cfg(feature = "gpu")]
+use self::gpu::GpuConfig;
+
+use self::{
+    colours::ColourConfig, cpu::CpuConfig, general::GeneralConfig, layout::Row,
+    memory::MemoryConfig, network::NetworkConfig, process::ProcessConfig,
+    temperature::TemperatureConfig,
+};
 use crate::{
     args::BottomArgs,
     constants::{CONFIG_TEXT, DEFAULT_CONFIG_FILE_PATH},
     error,
 };
 
-use self::{
-    battery::BatteryConfig, colours::ColourConfig, cpu::CpuConfig, general::GeneralConfig,
-    gpu::GpuConfig, layout::Row, memory::MemoryConfig, network::NetworkConfig,
-    process::ProcessConfig, temperature::TemperatureConfig,
-};
-
 #[derive(Debug, Default, Deserialize)]
-pub struct NewConfig {
+pub struct ConfigV2 {
     #[serde(default)]
     pub(crate) general: GeneralConfig,
     #[serde(default)]
@@ -58,7 +65,7 @@ pub struct NewConfig {
     pub(crate) net_filter: Option<IgnoreList>,
 }
 
-impl NewConfig {
+impl ConfigV2 {
     /// Merges a [`BottomArgs`] with the internal shared "args" of the config file.
     ///
     /// In general, we favour whatever is set in `args` if it is set, then fall
@@ -66,6 +73,7 @@ impl NewConfig {
     pub fn merge(&mut self, args: BottomArgs) {
         self.general.args.merge(&args.general);
         self.process.args.merge(&args.process);
+        self.temperature.args.merge(&args.temperature);
         self.cpu.args.merge(&args.cpu);
         self.memory.args.merge(&args.memory);
         self.network.args.merge(&args.network);
@@ -134,7 +142,7 @@ pub fn get_config_path(override_path: Option<&str>) -> error::Result<Option<Path
 }
 
 /// Either get an existing config or create a new one, and parse it.
-pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<NewConfig> {
+pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<ConfigV2> {
     if let Some(path) = config_path {
         if let Ok(config_string) = fs::read_to_string(path) {
             Ok(toml_edit::de::from_str(config_string.as_str())?)
@@ -144,10 +152,10 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<NewC
             }
 
             fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
-            Ok(NewConfig::default())
+            Ok(ConfigV2::default())
         }
     } else {
         // Don't write anything, just assume the default.
-        Ok(NewConfig::default())
+        Ok(ConfigV2::default())
     }
 }

@@ -12,7 +12,6 @@ pub fn default_light_mode_colour_palette() -> ColourConfig {
         graph_color: Some("black".into()),
         disabled_text_color: Some("gray".into()),
         ram_color: Some("blue".into()),
-        #[cfg(not(target_os = "windows"))]
         cache_color: Some("LightRed".into()),
         swap_color: Some("red".into()),
         arc_color: Some("LightBlue".into()),
@@ -70,7 +69,6 @@ pub fn gruvbox_colour_palette() -> ColourConfig {
             "#af3a03".into(),
         ]),
         ram_color: Some("#8ec07c".into()),
-        #[cfg(not(target_os = "windows"))]
         cache_color: Some("#b16286".into()),
         swap_color: Some("#fabd2f".into()),
         arc_color: Some("#689d6a".into()),
@@ -129,7 +127,6 @@ pub fn gruvbox_light_colour_palette() -> ColourConfig {
             "#af3a03".into(),
         ]),
         ram_color: Some("#427b58".into()),
-        #[cfg(not(target_os = "windows"))]
         cache_color: Some("#d79921".into()),
         swap_color: Some("#cc241d".into()),
         arc_color: Some("#689d6a".into()),
@@ -176,7 +173,6 @@ pub fn nord_colour_palette() -> ColourConfig {
             "#bf616a".into(),
         ]),
         ram_color: Some("#88c0d0".into()),
-        #[cfg(not(target_os = "windows"))]
         cache_color: Some("#d8dee9".into()),
         swap_color: Some("#d08770".into()),
         arc_color: Some("#5e81ac".into()),
@@ -223,7 +219,6 @@ pub fn nord_light_colour_palette() -> ColourConfig {
             "#bf616a".into(),
         ]),
         ram_color: Some("#81a1c1".into()),
-        #[cfg(not(target_os = "windows"))]
         cache_color: Some("#4c566a".into()),
         swap_color: Some("#d08770".into()),
         arc_color: Some("#5e81ac".into()),

@@ -1,9 +1,12 @@
-//! Argument parsing via clap.
+//! Argument parsing via clap + config files.
 //!
 //! Note that you probably want to keep this as a single file so the build script doesn't
 //! trip all over itself.
 
 // TODO: New sections are misaligned! See if we can get that fixed.
+// TODO: This might need some more work when we do config screens. For example, we can't just merge args + config,
+// since we need to know the state of the config, the overwriting args, and adjust the calculated app settings as
+// they change.
 
 use clap::*;
 use indoc::indoc;
@@ -100,12 +103,13 @@ impl BottomArgs {
     /// Returns the config path if it is set.
     #[inline]
     pub fn config_path(&self) -> Option<&str> {
-        self.general.config_location.as_ref().map(|p| p.as_str())
+        self.general.config_location.as_deref()
     }
 }
 
+/// General arguments/config options.
 #[derive(Args, Clone, Debug, Default, Deserialize)]
-#[command(next_help_heading = "General Options")]
+#[command(next_help_heading = "General Options", rename_all = "snake_case")]
 pub(crate) struct GeneralArgs {
     #[arg(
         long,
@@ -306,8 +310,9 @@ impl GeneralArgs {
     }
 }
 
+/// Process arguments/config options.
 #[derive(Args, Clone, Debug, Default, Deserialize)]
-#[command(next_help_heading = "Process Options")]
+#[command(next_help_heading = "Process Options", rename_all = "snake_case")]
 pub(crate) struct ProcessArgs {
     #[arg(
         short = 'S',
@@ -341,6 +346,13 @@ pub(crate) struct ProcessArgs {
         help = "Groups processes with the same name by default."
     )]
     pub(crate) group_processes: Option<bool>,
+
+    #[arg(
+        long,
+        help = "Defaults to showing process memory usage by value.",
+        long_help = "Defaults to showing process memory usage by value. Otherwise, it defaults to showing it by percentage."
+    )]
+    pub(crate) mem_as_value: Option<bool>,
 
     #[arg(long, help = "Show processes as their commands by default.")]
     pub(crate) process_command: Option<bool>,
@@ -377,6 +389,7 @@ impl ProcessArgs {
         set_if_some!(current_usage, self, other);
         set_if_some!(disable_advanced_kill, self, other);
         set_if_some!(group_processes, self, other);
+        set_if_some!(mem_as_value, self, other);
         set_if_some!(process_command, self, other);
         set_if_some!(regex, self, other);
         set_if_some!(tree, self, other);
@@ -385,9 +398,10 @@ impl ProcessArgs {
     }
 }
 
+/// Temperature arguments/config options.
 #[derive(Args, Clone, Debug, Default, Deserialize)]
-#[command(next_help_heading = "Temperature Options")]
-#[group(multiple = false)]
+#[command(next_help_heading = "Temperature Options", rename_all = "snake_case")]
+#[group(id = "temperature_unit", multiple = false)]
 pub(crate) struct TemperatureArgs {
     #[arg(
         short = 'c',
@@ -396,15 +410,17 @@ pub(crate) struct TemperatureArgs {
         help = "Use Celsius as the temperature unit. Default.",
         long_help = "Use Celsius as the temperature unit. This is the default option."
     )]
-    pub(crate) celsius: Option<bool>,
+    #[serde(skip)]
+    pub(crate) celsius: bool,
 
     #[arg(
         short = 'f',
         long,
         group = "temperature_unit",
-        help = "Use Fahrenheit as the temperature unit. Default."
+        help = "Use Fahrenheit as the temperature unit."
     )]
-    pub(crate) fahrenheit: Option<bool>,
+    #[serde(skip)]
+    pub(crate) fahrenheit: bool,
 
     #[arg(
         short = 'k',
@@ -412,11 +428,21 @@ pub(crate) struct TemperatureArgs {
         group = "temperature_unit",
         help = "Use Kelvin as the temperature unit."
     )]
-    pub(crate) kelvin: Option<bool>,
+    #[serde(skip)]
+    pub(crate) kelvin: bool,
 }
 
+impl TemperatureArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        self.celsius |= other.celsius;
+        self.fahrenheit |= other.fahrenheit;
+        self.kelvin |= other.kelvin;
+    }
+}
+
+/// CPU arguments/config options.
 #[derive(Args, Clone, Debug, Default, Deserialize)]
-#[command(next_help_heading = "CPU Options")]
+#[command(next_help_heading = "CPU Options", rename_all = "snake_case")]
 pub(crate) struct CpuArgs {
     #[arg(long, help = "Defaults to selecting the average CPU entry.")]
     pub(crate) default_avg_cpu: Option<bool>,
@@ -447,8 +473,9 @@ impl CpuArgs {
     }
 }
 
+/// Memory argument/config options.
 #[derive(Args, Clone, Debug, Default, Deserialize)]
-#[command(next_help_heading = "Memory Options")]
+#[command(next_help_heading = "Memory Options", rename_all = "snake_case")]
 pub(crate) struct MemoryArgs {
     #[cfg(not(target_os = "windows"))]
     #[arg(
@@ -456,25 +483,22 @@ pub(crate) struct MemoryArgs {
         help = "Enables collecting and displaying cache and buffer memory."
     )]
     pub(crate) enable_cache_memory: Option<bool>,
-
-    #[arg(
-        long,
-        help = "Defaults to showing process memory usage by value.",
-        long_help = "Defaults to showing process memory usage by value. Otherwise, it defaults to showing it by percentage."
-    )]
-    pub(crate) mem_as_value: Option<bool>,
 }
 
 impl MemoryArgs {
+    // Lint needed because of target_os.
+    #[allow(unused_variables)]
     pub(crate) fn merge(&mut self, other: &Self) {
+        #[cfg(not(target_os = "windows"))]
         set_if_some!(enable_cache_memory, self, other);
-        set_if_some!(mem_as_value, self, other);
     }
 }
 
+/// Network arguments/config options.
 #[derive(Args, Clone, Debug, Default, Deserialize)]
-#[command(next_help_heading = "Network Options")]
+#[command(next_help_heading = "Network Options", rename_all = "snake_case")]
 pub(crate) struct NetworkArgs {
+    // TODO: Rename some of these to remove the network prefix for serde.
     #[arg(
         long,
         help = "Displays the network widget using bytes.",
@@ -514,9 +538,10 @@ impl NetworkArgs {
     }
 }
 
+/// Battery arguments/config options.
 #[cfg(feature = "battery")]
 #[derive(Args, Clone, Debug, Default, Deserialize)]
-#[command(next_help_heading = "Battery Options")]
+#[command(next_help_heading = "Battery Options", rename_all = "snake_case")]
 pub(crate) struct BatteryArgs {
     #[arg(
         long,
@@ -536,9 +561,10 @@ impl BatteryArgs {
     }
 }
 
+/// GPU arguments/config options.
 #[cfg(feature = "gpu")]
 #[derive(Args, Clone, Debug, Default, Deserialize)]
-#[command(next_help_heading = "GPU Options")]
+#[command(next_help_heading = "GPU Options", rename_all = "snake_case")]
 pub(crate) struct GpuArgs {
     #[arg(long, help = "Enables collecting and displaying GPU usage.")]
     pub(crate) enable_gpu: Option<bool>,
@@ -551,13 +577,14 @@ impl GpuArgs {
     }
 }
 
+/// Style arguments/config options.
 #[derive(Args, Clone, Debug, Default, Deserialize)]
-#[command(next_help_heading = "Style Options")]
+#[command(next_help_heading = "Style Options", rename_all = "snake_case")]
 pub(crate) struct StyleArgs {
     #[arg(
         long,
-        value_name="SCHEME",
-        value_parser=[
+        value_name = "SCHEME",
+        value_parser = [
             "default",
             "default-light",
             "gruvbox",
@@ -567,10 +594,10 @@ pub(crate) struct StyleArgs {
             "custom",
 
         ],
-        hide_possible_values=true,
+        hide_possible_values = true,
         help = "Use a color scheme, use --help for info on the colors.\n
                 [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
-        long_help=indoc! {
+        long_help = indoc! {
             "Use a pre-defined color scheme. Currently supported values are:
             - default
             - default-light (default but adjusted for lighter backgrounds)
@@ -590,13 +617,14 @@ impl StyleArgs {
     }
 }
 
+/// Other arguments. This just handle options that are for help/version displaying.
 #[derive(Args, Clone, Debug)]
-#[command(next_help_heading = "Other Options")]
+#[command(next_help_heading = "Other Options", rename_all = "snake_case")]
 pub(crate) struct OtherArgs {
-    #[arg(short='h', long, action=ArgAction::Help, help="Prints help info (for more details use `--help`.")]
+    #[arg(short = 'h', long, action = ArgAction::Help, help = "Prints help info (for more details use `--help`.")]
     help: (),
 
-    #[arg(short='v', long, action=ArgAction::Version, help="Prints version information.")]
+    #[arg(short = 'v', long, action = ArgAction::Version, help = "Prints version information.")]
     version: (),
 }
 
@@ -606,7 +634,8 @@ pub fn get_args() -> BottomArgs {
 }
 
 /// Returns an [`Command`] based off of [`BottomArgs`].
-fn build_cmd() -> Command {
+#[allow(dead_code)]
+pub(crate) fn build_cmd() -> Command {
     BottomArgs::command()
 }
 

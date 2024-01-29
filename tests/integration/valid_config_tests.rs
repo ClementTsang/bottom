@@ -67,3 +67,13 @@ fn test_all_proc() {
 fn test_cpu_doughnut() {
     run_and_kill(&["-C", "./tests/valid_configs/cpu_doughnut.toml"]);
 }
+
+#[test]
+fn test_default() {
+    run_and_kill(&["-C", "./sample_configs/default_config.toml"]);
+}
+
+#[test]
+fn test_demo() {
+    run_and_kill(&["-C", "./sample_configs/demo_config.toml"]);
+}

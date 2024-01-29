@@ -1,15 +1,19 @@
-[flags]
-avg_cpu = true
+[general]
+rate = 1000
+default_widget_type = "cpu"
+default_widget_count = 1
 
+[cpu]
+avg_cpu = true
+left_legend = false
+
+[temperature]
 # Temperature is one of:
 temperature_type = "c"
 
-rate = 1000
-left_legend = false
+[process]
 current_usage = false
 group_processes = false
 case_sensitive = false
 whole_word = false
 regex = true
-default_widget_type = "cpu"
-default_widget_count = 1

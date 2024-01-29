@@ -1,2 +1,2 @@
-[processes]
+[process]
 columns = ["cpu", "fake"]

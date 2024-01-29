@@ -6,7 +6,7 @@ use tui::style::{Color, Style};
 
 use super::ColourScheme;
 use crate::{
-    options::config::{colours::ColourConfig, palettes::*, NewConfig},
+    options::config::{colours::ColourConfig, palettes::*, ConfigV2},
     utils::error,
 };
 
@@ -16,7 +16,6 @@ pub struct CanvasStyling {
     pub currently_selected_text_style: Style,
     pub table_header_style: Style,
     pub ram_style: Style,
-    #[cfg(not(target_os = "windows"))]
     pub cache_style: Style,
     pub swap_style: Style,
     pub arc_style: Style,
@@ -54,7 +53,6 @@ impl Default for CanvasStyling {
                 .bg(currently_selected_bg_colour),
             table_header_style: Style::default().fg(HIGHLIGHT_COLOUR),
             ram_style: Style::default().fg(FIRST_COLOUR),
-            #[cfg(not(target_os = "windows"))]
             cache_style: Style::default().fg(FIFTH_COLOUR),
             swap_style: Style::default().fg(SECOND_COLOUR),
             arc_style: Style::default().fg(THIRD_COLOUR),
@@ -126,7 +124,7 @@ macro_rules! try_set_colour_list {
 }
 
 impl CanvasStyling {
-    pub fn new(colour_scheme: ColourScheme, config: &NewConfig) -> anyhow::Result<Self> {
+    pub fn new(colour_scheme: ColourScheme, config: &ConfigV2) -> anyhow::Result<Self> {
         let mut canvas_colours = Self::default();
 
         match colour_scheme {
@@ -237,9 +235,8 @@ impl CanvasStyling {
 mod test {
     use tui::style::{Color, Style};
 
-    use crate::options::config::NewConfig;
-
     use super::{CanvasStyling, ColourScheme};
+    use crate::options::config::ConfigV2;
 
     #[test]
     fn default_selected_colour_works() {
@@ -285,7 +282,7 @@ mod test {
 
     #[test]
     fn built_in_colour_schemes_work() {
-        let config = NewConfig::default();
+        let config = ConfigV2::default();
         CanvasStyling::new(ColourScheme::Default, &config).unwrap();
         CanvasStyling::new(ColourScheme::DefaultLight, &config).unwrap();
         CanvasStyling::new(ColourScheme::Gruvbox, &config).unwrap();

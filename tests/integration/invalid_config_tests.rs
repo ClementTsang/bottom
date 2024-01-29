@@ -1,13 +1,22 @@
 //! These tests are for testing some invalid config-file-specific options.
 
-use assert_cmd::prelude::*;
+use std::time::Duration;
+
+use assert_cmd::Command;
 use predicates::prelude::*;
 
-use crate::util::btm_command;
+use crate::util::btm_cmd;
+
+fn timeout_btm_cmd(args: &[&str]) -> Command {
+    let mut cmd = Command::from_std(btm_cmd(args));
+    cmd.timeout(Duration::from_millis(1000));
+
+    cmd
+}
 
 #[test]
 fn test_toml_mismatch_type() {
-    btm_command(&["-C", "./tests/invalid_configs/toml_mismatch_type.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/toml_mismatch_type.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid type"));
@@ -15,7 +24,7 @@ fn test_toml_mismatch_type() {
 
 #[test]
 fn test_empty_layout() {
-    btm_command(&["-C", "./tests/invalid_configs/empty_layout.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/empty_layout.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("at least one widget"));
@@ -23,7 +32,7 @@ fn test_empty_layout() {
 
 #[test]
 fn test_invalid_layout_widget_type() {
-    btm_command(&[
+    timeout_btm_cmd(&[
         "-C",
         "./tests/invalid_configs/invalid_layout_widget_type.toml",
     ])
@@ -36,7 +45,7 @@ fn test_invalid_layout_widget_type() {
 /// However, I feel like it's worth checking anyways - not like it takes long.
 #[test]
 fn test_duplicate_temp_type() {
-    btm_command(&["-C", "./tests/invalid_configs/duplicate_temp_type.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/duplicate_temp_type.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("duplicate key"));
@@ -45,7 +54,7 @@ fn test_duplicate_temp_type() {
 /// Checks for if a hex is valid
 #[test]
 fn test_invalid_colour_hex() {
-    btm_command(&["-C", "./tests/invalid_configs/invalid_colour_hex.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/invalid_colour_hex.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid hex color"));
@@ -54,7 +63,7 @@ fn test_invalid_colour_hex() {
 /// Checks for if a hex is too long
 #[test]
 fn test_invalid_colour_hex_2() {
-    btm_command(&["-C", "./tests/invalid_configs/invalid_colour_hex_2.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/invalid_colour_hex_2.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid hex color"));
@@ -64,7 +73,7 @@ fn test_invalid_colour_hex_2() {
 /// boundary errors!
 #[test]
 fn test_invalid_colour_hex_3() {
-    btm_command(&["-C", "./tests/invalid_configs/invalid_colour_hex_3.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/invalid_colour_hex_3.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid hex color"));
@@ -72,7 +81,7 @@ fn test_invalid_colour_hex_3() {
 
 #[test]
 fn test_invalid_colour_name() {
-    btm_command(&["-C", "./tests/invalid_configs/invalid_colour_name.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/invalid_colour_name.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid named color"));
@@ -80,7 +89,7 @@ fn test_invalid_colour_name() {
 
 #[test]
 fn test_invalid_colour_rgb() {
-    btm_command(&["-C", "./tests/invalid_configs/invalid_colour_rgb.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/invalid_colour_rgb.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid RGB"));
@@ -88,7 +97,7 @@ fn test_invalid_colour_rgb() {
 
 #[test]
 fn test_invalid_colour_rgb_2() {
-    btm_command(&["-C", "./tests/invalid_configs/invalid_colour_rgb_2.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/invalid_colour_rgb_2.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid RGB"));
@@ -96,7 +105,7 @@ fn test_invalid_colour_rgb_2() {
 
 #[test]
 fn test_invalid_colour_string() {
-    btm_command(&["-C", "./tests/invalid_configs/invalid_colour_string.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/invalid_colour_string.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid named color"));
@@ -104,7 +113,7 @@ fn test_invalid_colour_string() {
 
 #[test]
 fn test_lone_default_widget_count() {
-    btm_command(&[
+    timeout_btm_cmd(&[
         "-C",
         "./tests/invalid_configs/lone_default_widget_count.toml",
     ])
@@ -115,7 +124,7 @@ fn test_lone_default_widget_count() {
 
 #[test]
 fn test_invalid_default_widget_count() {
-    btm_command(&[
+    timeout_btm_cmd(&[
         "-C",
         "./tests/invalid_configs/invalid_default_widget_count.toml",
     ])
@@ -126,7 +135,7 @@ fn test_invalid_default_widget_count() {
 
 #[test]
 fn test_invalid_process_column() {
-    btm_command(&["-C", "./tests/invalid_configs/invalid_process_column.toml"])
+    timeout_btm_cmd(&["-C", "./tests/invalid_configs/invalid_process_column.toml"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("doesn't match"));
