@@ -1,7 +1,9 @@
 {
-  "$id": "https://json.schemastore.org/bottom-schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$comment": "https://clementtsang.github.io/bottom/nightly/configuration/config-file/default-config/",
+  "$id": "https://github.com/ClementTsang/bottom/tree/main/schema/nightly/schema.json",
+  "$comment": "https://clementtsang.github.io/bottom/nightly/configuration/config-file",
+  "title": "Bottom Config Schema (nightly)",
+  "type": "object",
   "definitions": {
     "row": {
       "items": {
@@ -379,7 +381,5 @@
     "net_filter": {
       "$ref": "#/definitions/filter"
     }
-  },
-  "title": "JSON schema for bottom",
-  "type": "object"
+  }
 }
