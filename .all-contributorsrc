@@ -425,6 +425,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Freed-Wu",
+      "name": "wzy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32936898?v=4",
+      "profile": "https://freed-wu.github.io/",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
