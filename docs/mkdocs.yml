@@ -20,6 +20,7 @@ theme:
     - content.action.edit
     - navigation.expand
     - navigation.footer
+    - navigation.indexes
     - navigation.instant
     - navigation.instant.progress
     - navigation.sections
@@ -28,6 +29,7 @@ theme:
     - search.highlight
     - search.suggest
     - toc.integrate
+    - toc.follow
   icon:
     edit: material/pencil
   palette:
@@ -39,12 +41,16 @@ theme:
         name: Switch to light mode
     # Light mode
     - media: "(prefers-color-scheme: light)"
+      primary: indigo
+      accent: indigo
       toggle:
         icon: material/weather-sunny
         name: Switch to dark mode
     # Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
+      primary: black
+      accent: indigo
       toggle:
         icon: material/weather-night
         name: Switch to system preference
@@ -158,7 +164,7 @@ nav:
   - "Configuration":
       - "Command-line Options": configuration/command-line-options.md
       - "Config File":
-          - "Default Config": configuration/config-file/default-config.md
+          - configuration/config-file/index.md
           - "Flags": configuration/config-file/flags.md
           - "Theming": configuration/config-file/theming.md
           - "Layout": configuration/config-file/layout.md

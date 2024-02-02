@@ -365,18 +365,6 @@ You can find more information on usage in the [documentation](https://clementtsa
 bottom accepts a number of command-line arguments to change the behaviour of the application as desired. Additionally, bottom will automatically
 generate a configuration file on the first launch, which one can change as appropriate.
 
-`bottom.toml`, the configuration of `bottom`, supports [json schema](https://json-schema.org/).
-So if your editor supports
-[LSP](https://microsoft.github.io/language-server-protocol/implementors/servers/),
-you can get completions, diagnostics and more:
-
-![completion](https://github.com/ClementTsang/bottom/assets/32936898/cefd2037-d741-4def-98ee-4f77c1713e30)
-
-![diagnostic](https://github.com/ClementTsang/bottom/assets/32936898/4bb5750b-1a07-418e-8b69-8ec30ecf8f82)
-
-The pictures are [neovim](https://neovim.org/) with the plugin
-[coc-toml](https://github.com/kkiyama117/coc-toml).
-
 More details on configuration can be found [in the documentation](https://clementtsang.github.io/bottom/nightly/configuration/config-file/default-config/).
 
 ## Troubleshooting
