@@ -12,28 +12,28 @@
         <meta name="author" content="Clement Tsang">
       
       
-        <link rel="canonical" href="https://clementtsang.github.io/bottom/stable/configuration/config-file/default-config/">
+        <link rel="canonical" href="https://clementtsang.github.io/bottom/stable/configuration/config-file/">
       
       
-        <link rel="prev" href="../../command-line-options/">
+        <link rel="prev" href="../command-line-options/">
       
       
-        <link rel="next" href="../flags/">
+        <link rel="next" href="flags/">
       
       
-      <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.6">
     
     
       
-        <title>Default Config - bottom</title>
+        <title>Index - bottom</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.50c56a3b.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.50c56a3b.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -47,14 +47,14 @@
         
         
         
-        <link rel="stylesheet" href="../../../assets/external/fonts.googleapis.com/css.5be84a27.css">
+        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.5be84a27.css">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"IBM Plex Mono"}</style>
       
     
     
-      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#default-config" class="md-skip">
+        <a href="#config-file" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../.." title="bottom" class="md-header__button md-logo" aria-label="bottom" data-md-component="logo">
+    <a href="../.." title="bottom" class="md-header__button md-logo" aria-label="bottom" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Default Config
+              Index
             
           </span>
         </div>
@@ -151,7 +151,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
     
       <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31Z"/></svg>
@@ -237,7 +237,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../.." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
     
@@ -256,8 +256,10 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../support/official/" class="md-tabs__link">
+        <a href="../../support/official/" class="md-tabs__link">
           
+  
+    
   
   Support
 
@@ -274,8 +276,10 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../usage/general-usage/" class="md-tabs__link">
+        <a href="../../usage/general-usage/" class="md-tabs__link">
           
+  
+    
   
   Usage
 
@@ -294,8 +298,10 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../command-line-options/" class="md-tabs__link">
+        <a href="../command-line-options/" class="md-tabs__link">
           
+  
+    
   
   Configuration
 
@@ -312,8 +318,10 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../contribution/issues-and-pull-requests/" class="md-tabs__link">
+        <a href="../../contribution/issues-and-pull-requests/" class="md-tabs__link">
           
+  
+    
   
   Contribution
 
@@ -328,7 +336,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../troubleshooting/" class="md-tabs__link">
+      <a href="../../troubleshooting/" class="md-tabs__link">
         
   
     
@@ -364,7 +372,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../.." title="bottom" class="md-nav__button md-logo" aria-label="bottom" data-md-component="logo">
+    <a href="../.." title="bottom" class="md-nav__button md-logo" aria-label="bottom" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -394,7 +402,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../.." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -414,6 +422,12 @@
   
   
     
+    
+      
+        
+      
+        
+      
     
     
     
@@ -456,7 +470,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../support/official/" class="md-nav__link">
+      <a href="../../support/official/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -477,7 +491,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../support/unofficial/" class="md-nav__link">
+      <a href="../../support/unofficial/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -505,6 +519,14 @@
   
   
     
+    
+      
+        
+      
+        
+      
+        
+      
     
     
     
@@ -547,7 +569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/general-usage/" class="md-nav__link">
+      <a href="../../usage/general-usage/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -568,7 +590,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/basic-mode/" class="md-nav__link">
+      <a href="../../usage/basic-mode/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -589,6 +611,22 @@
   
   
     
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
     
     
     
@@ -631,7 +669,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/widgets/cpu/" class="md-nav__link">
+      <a href="../../usage/widgets/cpu/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -652,7 +690,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/widgets/memory/" class="md-nav__link">
+      <a href="../../usage/widgets/memory/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -673,7 +711,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/widgets/network/" class="md-nav__link">
+      <a href="../../usage/widgets/network/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -694,7 +732,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/widgets/process/" class="md-nav__link">
+      <a href="../../usage/widgets/process/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -715,7 +753,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/widgets/disk/" class="md-nav__link">
+      <a href="../../usage/widgets/disk/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -736,7 +774,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/widgets/temperature/" class="md-nav__link">
+      <a href="../../usage/widgets/temperature/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -757,7 +795,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/widgets/battery/" class="md-nav__link">
+      <a href="../../usage/widgets/battery/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -795,6 +833,12 @@
   
   
     
+    
+      
+        
+      
+        
+      
     
     
     
@@ -835,7 +879,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../command-line-options/" class="md-nav__link">
+      <a href="../command-line-options/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -859,6 +903,22 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
     
@@ -873,16 +933,24 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="./" class="md-nav__link md-nav__link--active">
+              
   
   <span class="md-ellipsis">
     Config File
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link md-nav__link--active" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4_2">
@@ -892,35 +960,6 @@
           <ul class="md-nav__list" data-md-scrollfix>
             
               
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  <span class="md-ellipsis">
-    Default Config
-  </span>
-  
-
-      </a>
-      
-    </li>
-  
-
-              
             
               
                 
@@ -929,7 +968,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../flags/" class="md-nav__link">
+      <a href="flags/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -950,7 +989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../theming/" class="md-nav__link">
+      <a href="theming/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -971,7 +1010,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../layout/" class="md-nav__link">
+      <a href="layout/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -992,7 +1031,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../data-filtering/" class="md-nav__link">
+      <a href="data-filtering/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1013,7 +1052,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../processes/" class="md-nav__link">
+      <a href="processes/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1049,6 +1088,16 @@
   
   
     
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
     
     
     
@@ -1091,7 +1140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../contribution/issues-and-pull-requests/" class="md-nav__link">
+      <a href="../../contribution/issues-and-pull-requests/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1112,7 +1161,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../contribution/documentation/" class="md-nav__link">
+      <a href="../../contribution/documentation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1133,7 +1182,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../contribution/packaging-and-distribution/" class="md-nav__link">
+      <a href="../../contribution/packaging-and-distribution/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1154,6 +1203,18 @@
   
   
     
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
     
     
     
@@ -1196,7 +1257,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../contribution/development/dev_env/" class="md-nav__link">
+      <a href="../../contribution/development/dev_env/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1217,7 +1278,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../contribution/development/testing/" class="md-nav__link">
+      <a href="../../contribution/development/testing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1238,7 +1299,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../contribution/development/logging/" class="md-nav__link">
+      <a href="../../contribution/development/logging/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1259,7 +1320,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../contribution/development/build_process/" class="md-nav__link">
+      <a href="../../contribution/development/build_process/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1280,7 +1341,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../contribution/development/deploy_process/" class="md-nav__link">
+      <a href="../../contribution/development/deploy_process/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1316,7 +1377,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../troubleshooting/" class="md-nav__link">
+      <a href="../../troubleshooting/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1344,7 +1405,7 @@
                   
 
   
-    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/configuration/config-file/default-config.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/configuration/config-file/index.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
     </a>
@@ -1352,8 +1413,10 @@
   
 
 
-<h1 id="default-config"><a class="toclink" href="#default-config">Default Config</a></h1>
-<p>A default config file is automatically generated at the following locations that bottom checks by default:</p>
+<h1 id="config-file"><a class="toclink" href="#config-file">Config File</a></h1>
+<p>For persistent configuration, and for certain configuration options, bottom supports config files.</p>
+<h2 id="default-config-file"><a class="toclink" href="#default-config-file">Default Config File</a></h2>
+<p>If no config file argument is given, it will automatically look for a config file at these locations:</p>
 <table>
 <thead>
 <tr>
@@ -1376,7 +1439,11 @@
 </tr>
 </tbody>
 </table>
-<p>Furthermore, if a custom config path that does not exist is given (using <code>-C</code> or <code>--config</code>), bottom will attempt to create a default config file at that location.</p>
+<p>Like if a path is passed with <code>-C</code>/<code>--config</code>, if a file doesn't exist at the path, bottom will automatically create a
+new, default config file at that location.</p>
+<h2 id="json-schema"><a class="toclink" href="#json-schema">JSON Schema</a></h2>
+<p>The configuration file also has <a href="https://json-schema.org/">JSON Schema</a> support to make it easier to manage, if your
+IDE/editor supports it.</p>
 
 
 
@@ -1397,7 +1464,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">June 21, 2021</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 2, 2024</span>
   </span>
 
     
@@ -1433,7 +1500,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../../command-line-options/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Command-line Options">
+          <a href="../command-line-options/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Command-line Options">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -1450,7 +1517,7 @@
         
         
           
-          <a href="../flags/" class="md-footer__link md-footer__link--next" aria-label="Next: Flags">
+          <a href="flags/" class="md-footer__link md-footer__link--next" aria-label="Next: Flags">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
@@ -1496,10 +1563,10 @@
       <div class="md-progress" data-md-component="progress" role="progressbar"></div>
     
     
-    <script id="__config" type="application/json">{"base": "../../..", "features": ["content.action.edit", "navigation.expand", "navigation.footer", "navigation.instant", "navigation.instant.progress", "navigation.sections", "navigation.tabs", "navigation.top", "search.highlight", "search.suggest", "toc.integrate"], "search": "../../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.action.edit", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.sections", "navigation.tabs", "navigation.top", "search.highlight", "search.suggest", "toc.integrate", "toc.follow"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      <script src="../../assets/javascripts/bundle.e1c3ead8.min.js"></script>
       
     
   </body>
