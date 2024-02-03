@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
     cmp::{max, min},
+    num::NonZeroU16,
 };
 
 /// A bound on the width of a column.
@@ -151,7 +152,7 @@ pub trait CalculateColumnWidths<H> {
     ///
     /// * `total_width` is the total width on the canvas that the columns can try and work with.
     /// * `left_to_right` is whether to size from left-to-right (`true`) or right-to-left (`false`).
-    fn calculate_column_widths(&self, total_width: u16, left_to_right: bool) -> Vec<u16>;
+    fn calculate_column_widths(&self, total_width: u16, left_to_right: bool) -> Vec<NonZeroU16>;
 }
 
 impl<H, C> CalculateColumnWidths<H> for [C]
@@ -159,7 +160,7 @@ where
     H: ColumnHeader,
     C: DataTableColumn<H>,
 {
-    fn calculate_column_widths(&self, total_width: u16, left_to_right: bool) -> Vec<u16> {
+    fn calculate_column_widths(&self, total_width: u16, left_to_right: bool) -> Vec<NonZeroU16> {
         use itertools::Either;
 
         const COLUMN_SPACING: u16 = 1;
@@ -170,15 +171,14 @@ where
         }
 
         let mut total_width_left = total_width;
-        let mut calculated_widths = vec![0; self.len()];
+        let mut calculated_widths = vec![];
         let columns = if left_to_right {
-            Either::Left(self.iter().zip(calculated_widths.iter_mut()))
+            Either::Left(self.iter())
         } else {
-            Either::Right(self.iter().zip(calculated_widths.iter_mut()).rev())
+            Either::Right(self.iter().rev())
         };
 
-        let mut num_columns = 0;
-        for (column, calculated_width) in columns {
+        for column in columns {
             if column.is_hidden() {
                 continue;
             }
@@ -208,8 +208,12 @@ where
                     } else {
                         total_width_left =
                             total_width_left.saturating_sub(space_taken + COLUMN_SPACING);
-                        *calculated_width = space_taken;
-                        num_columns += 1;
+
+                        // SAFETY: This is safe as we call `stop_allocating_space` which checks that
+                        // the value pushed is greater than zero.
+                        unsafe {
+                            calculated_widths.push(NonZeroU16::new_unchecked(space_taken));
+                        }
                     }
                 }
                 ColumnWidthBounds::Hard(width) => {
@@ -219,8 +223,12 @@ where
                     } else {
                         total_width_left =
                             total_width_left.saturating_sub(min_width + COLUMN_SPACING);
-                        *calculated_width = min_width;
-                        num_columns += 1;
+
+                        // SAFETY: This is safe as we call `stop_allocating_space` which checks that
+                        // the value pushed is greater than zero.
+                        unsafe {
+                            calculated_widths.push(NonZeroU16::new_unchecked(min_width));
+                        }
                     }
                 }
                 ColumnWidthBounds::FollowHeader => {
@@ -230,17 +238,25 @@ where
                     } else {
                         total_width_left =
                             total_width_left.saturating_sub(min_width + COLUMN_SPACING);
-                        *calculated_width = min_width;
-                        num_columns += 1;
+
+                        // SAFETY: This is safe as we call `stop_allocating_space` which checks that
+                        // the value pushed is greater than zero.
+                        unsafe {
+                            calculated_widths.push(NonZeroU16::new_unchecked(min_width));
+                        }
                     }
                 }
             }
         }
 
-        if num_columns > 0 {
+        if !calculated_widths.is_empty() {
+            if !left_to_right {
+                calculated_widths.reverse();
+            }
+
             // Redistribute remaining space.
-            let mut num_dist = num_columns;
-            let amount_per_slot = total_width_left / num_dist;
+            let mut num_dist = calculated_widths.len() as u16;
+            let amount_per_slot = total_width_left / num_dist; // Safe from DBZ by above empty check.
             total_width_left %= num_dist;
 
             for width in calculated_widths.iter_mut() {
@@ -248,16 +264,14 @@ where
                     break;
                 }
 
-                if *width > 0 {
-                    if total_width_left > 0 {
-                        *width += amount_per_slot + 1;
-                        total_width_left -= 1;
-                    } else {
-                        *width += amount_per_slot;
-                    }
-
-                    num_dist -= 1;
+                if total_width_left > 0 {
+                    *width = width.saturating_add(amount_per_slot + 1);
+                    total_width_left -= 1;
+                } else {
+                    *width = width.saturating_add(amount_per_slot);
                 }
+
+                num_dist -= 1;
             }
         }
 

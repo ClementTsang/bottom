@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cmp::max};
+use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use concat_string::concat_string;
 use kstring::KString;
@@ -55,14 +55,10 @@ impl TempWidgetData {
 }
 
 impl DataToCell<TempWidgetColumn> for TempWidgetData {
-    fn to_cell(&self, column: &TempWidgetColumn, calculated_width: u16) -> Option<Text<'_>> {
-        if calculated_width == 0 {
-            return None;
-        }
-
+    fn to_cell(&self, column: &TempWidgetColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
         Some(match column {
-            TempWidgetColumn::Sensor => truncate_to_text(&self.sensor, calculated_width),
-            TempWidgetColumn::Temp => truncate_to_text(&self.temperature(), calculated_width),
+            TempWidgetColumn::Sensor => truncate_to_text(&self.sensor, calculated_width.get()),
+            TempWidgetColumn::Temp => truncate_to_text(&self.temperature(), calculated_width.get()),
         })
     }
 

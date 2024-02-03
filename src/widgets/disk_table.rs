@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cmp::max};
+use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use kstring::KString;
 use tui::text::Text;
@@ -128,11 +128,8 @@ impl ColumnHeader for DiskWidgetColumn {
 }
 
 impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
-    fn to_cell(&self, column: &DiskWidgetColumn, calculated_width: u16) -> Option<Text<'_>> {
-        if calculated_width == 0 {
-            return None;
-        }
-
+    fn to_cell(&self, column: &DiskWidgetColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
+        let calculated_width = calculated_width.get();
         let text = match column {
             DiskWidgetColumn::Disk => truncate_to_text(&self.name, calculated_width),
             DiskWidgetColumn::Mount => truncate_to_text(&self.mount_point, calculated_width),

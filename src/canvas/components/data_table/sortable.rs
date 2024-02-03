@@ -1,4 +1,4 @@
-use std::{borrow::Cow, marker::PhantomData};
+use std::{borrow::Cow, marker::PhantomData, num::NonZeroU16};
 
 use concat_string::concat_string;
 use itertools::Itertools;
@@ -52,18 +52,17 @@ pub struct Sortable {
 /// and therefore only [`Unsortable`] and [`Sortable`] can implement it.
 pub trait SortType: private::Sealed {
     /// Constructs the table header.
-    fn build_header<H, C>(&self, columns: &[C], widths: &[u16]) -> Row<'_>
+    fn build_header<H, C>(&self, columns: &[C], widths: &[NonZeroU16]) -> Row<'_>
     where
         H: ColumnHeader,
         C: DataTableColumn<H>,
     {
-        Row::new(columns.iter().zip(widths).filter_map(|(c, &width)| {
-            if width == 0 {
-                None
-            } else {
-                Some(truncate_to_text(&c.header(), width))
-            }
-        }))
+        Row::new(
+            columns
+                .iter()
+                .zip(widths)
+                .map(|(c, &width)| truncate_to_text(&c.header(), width.get())),
+        )
     }
 }
 
@@ -79,7 +78,7 @@ mod private {
 impl SortType for Unsortable {}
 
 impl SortType for Sortable {
-    fn build_header<H, C>(&self, columns: &[C], widths: &[u16]) -> Row<'_>
+    fn build_header<H, C>(&self, columns: &[C], widths: &[NonZeroU16]) -> Row<'_>
     where
         H: ColumnHeader,
         C: DataTableColumn<H>,
@@ -92,17 +91,15 @@ impl SortType for Sortable {
                 .iter()
                 .zip(widths)
                 .enumerate()
-                .filter_map(|(index, (c, &width))| {
-                    if width == 0 {
-                        None
-                    } else if index == self.sort_index {
+                .map(|(index, (c, &width))| {
+                    if index == self.sort_index {
                         let arrow = match self.order {
                             SortOrder::Ascending => UP_ARROW,
                             SortOrder::Descending => DOWN_ARROW,
                         };
-                        Some(truncate_to_text(&concat_string!(c.header(), arrow), width))
+                        truncate_to_text(&concat_string!(c.header(), arrow), width.get())
                     } else {
-                        Some(truncate_to_text(&c.header(), width))
+                        truncate_to_text(&c.header(), width.get())
                     }
                 }),
         )
@@ -331,7 +328,7 @@ where
             .iter()
             .map(|width| {
                 let entry_start = start;
-                start += width + 1; // +1 for the gap b/w cols.
+                start += width.get() + 1; // +1 for the gap b/w cols.
 
                 entry_start
             })
@@ -361,7 +358,7 @@ mod test {
 
     impl DataToCell<ColumnType> for TestType {
         fn to_cell(
-            &self, _column: &ColumnType, _calculated_width: u16,
+            &self, _column: &ColumnType, _calculated_width: NonZeroU16,
         ) -> Option<tui::text::Text<'_>> {
             None
         }

@@ -249,18 +249,7 @@ where
                     };
                     let mut table = Table::new(
                         rows,
-                        &(self
-                            .state
-                            .calculated_widths
-                            .iter()
-                            .filter_map(|&width| {
-                                if width == 0 {
-                                    None
-                                } else {
-                                    Some(Constraint::Length(width))
-                                }
-                            })
-                            .collect::<Vec<_>>()),
+                        self.state.calculated_widths.iter().map(|nzu| nzu.get()),
                     )
                     .block(block)
                     .highlight_style(highlight_style)

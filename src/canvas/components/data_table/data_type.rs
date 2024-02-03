@@ -1,3 +1,5 @@
+use std::num::NonZeroU16;
+
 use tui::{text::Text, widgets::Row};
 
 use super::{ColumnHeader, DataTableColumn};
@@ -8,7 +10,7 @@ where
     H: ColumnHeader,
 {
     /// Given data, a column, and its corresponding width, return what should be displayed in the [`DataTable`](super::DataTable).
-    fn to_cell(&self, column: &H, calculated_width: u16) -> Option<Text<'_>>;
+    fn to_cell(&self, column: &H, calculated_width: NonZeroU16) -> Option<Text<'_>>;
 
     /// Apply styling to the generated [`Row`] of cells.
     ///

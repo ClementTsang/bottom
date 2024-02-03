@@ -1,4 +1,4 @@
-use std::{borrow::Cow, time::Instant};
+use std::{borrow::Cow, num::NonZeroU16, time::Instant};
 
 use concat_string::concat_string;
 use tui::{style::Style, text::Text, widgets::Row};
@@ -81,8 +81,10 @@ impl CpuWidgetTableData {
 }
 
 impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
-    fn to_cell(&self, column: &CpuWidgetColumn, calculated_width: u16) -> Option<Text<'_>> {
+    fn to_cell(&self, column: &CpuWidgetColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
         const CPU_TRUNCATE_BREAKPOINT: u16 = 5;
+
+        let calculated_width = calculated_width.get();
 
         // This is a bit of a hack, but apparently we can avoid having to do any fancy checks
         // of showing the "All" on a specific column if the other is hidden by just always
