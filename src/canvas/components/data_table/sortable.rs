@@ -97,6 +97,8 @@ impl SortType for Sortable {
                             SortOrder::Ascending => UP_ARROW,
                             SortOrder::Descending => DOWN_ARROW,
                         };
+                        // TODO: I think I can get away with removing the truncate_to_text call since
+                        // I almost always bind to at least the header size...
                         truncate_to_text(&concat_string!(c.header(), arrow), width.get())
                     } else {
                         truncate_to_text(&c.header(), width.get())
