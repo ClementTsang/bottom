@@ -144,8 +144,8 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
         self.data.get(self.state.current_index)
     }
 
-    /// Returns tui-rs' internal selection.
-    pub fn tui_selected(&self) -> Option<usize> {
+    /// Returns ratatui's internal selection.
+    pub fn ratatui_selected(&self) -> Option<usize> {
         self.state.table_state.selected()
     }
 }

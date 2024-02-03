@@ -21,7 +21,7 @@ pub struct DataTableState {
     /// The direction of the last attempted scroll.
     pub scroll_direction: ScrollDirection,
 
-    /// tui-rs' internal table state.
+    /// ratatui's internal table state.
     pub table_state: TableState,
 
     /// The calculated widths.

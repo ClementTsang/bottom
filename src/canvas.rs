@@ -72,7 +72,8 @@ pub struct Painter {
 
 /// The constraints of a widget relative to its parent.
 ///
-/// This is used over ratatui's internal representation due to https://github.com/ClementTsang/bottom/issues/896.
+/// This is used over ratatui's internal representation due to
+/// <https://github.com/ClementTsang/bottom/issues/896>.
 pub enum LayoutConstraint {
     CanvasHandled,
     Grow,

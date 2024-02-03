@@ -51,8 +51,8 @@ pub struct TimeGraph<'a> {
     /// Any legend constraints.
     pub legend_constraints: Option<(Constraint, Constraint)>,
 
-    /// The marker type. Unlike tui-rs' native charts, we assume
-    /// only a single type of market.
+    /// The marker type. Unlike ratatui's native charts, we assume
+    /// only a single type of marker.
     pub marker: Marker,
 }
 

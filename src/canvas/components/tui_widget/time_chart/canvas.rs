@@ -1,10 +1,12 @@
-//! Vendored from <https://github.com/fdehau/tui-rs/blob/fafad6c96109610825aad89c4bba5253e01101ed/src/widgets/canvas/mod.rs>.
+//! Vendored from <https://github.com/fdehau/tui-rs/blob/fafad6c96109610825aad89c4bba5253e01101ed/src/widgets/canvas/mod.rs>
+//! and <https://github.com/ratatui-org/ratatui/blob/c8dd87918d44fff6d4c3c78e1fc821a3275db1ae/src/widgets/canvas.rs>.
 //! Main difference is in the Braille rendering, which can now effectively be done in a single layer without the effects
-//! of doing it all in a single layer via the normal tui-rs crate. This means you can do it all in a single pass, with
+//! of doing it all in a single layer via the normal ratatui crate. This means you can do it all in a single pass, with
 //! just one string alloc and no resets.
 
-use std::fmt::Debug;
+use std::{fmt::Debug, iter::zip};
 
+use itertools::Itertools;
 use tui::{
     buffer::Buffer,
     layout::Rect,
@@ -128,7 +130,7 @@ pub struct Label<'a> {
 #[derive(Debug, Clone)]
 struct Layer {
     string: String,
-    colors: Vec<Color>,
+    colors: Vec<(Color, Color)>,
 }
 
 trait Grid: Debug {
@@ -179,7 +181,7 @@ impl Grid for BrailleGrid {
     fn save(&self) -> Layer {
         Layer {
             string: String::from_utf16(&self.cells).unwrap(),
-            colors: self.colors.clone(),
+            colors: self.colors.iter().map(|c| (*c, Color::Reset)).collect(),
         }
     }
 
@@ -247,7 +249,7 @@ impl Grid for CharGrid {
     fn save(&self) -> Layer {
         Layer {
             string: self.cells.iter().collect(),
-            colors: self.colors.clone(),
+            colors: self.colors.iter().map(|c| (*c, Color::Reset)).collect(),
         }
     }
 
@@ -275,6 +277,99 @@ impl Grid for CharGrid {
 pub struct Painter<'a, 'b> {
     context: &'a mut Context<'b>,
     resolution: (f64, f64),
+}
+
+/// The HalfBlockGrid is a grid made up of cells each containing a half block character.
+///
+/// In terminals, each character is usually twice as tall as it is wide. Unicode has a couple of
+/// vertical half block characters, the upper half block '▀' and lower half block '▄' which take up
+/// half the height of a normal character but the full width. Together with an empty space ' ' and a
+/// full block '█', we can effectively double the resolution of a single cell. In addition, because
+/// each character can have a foreground and background color, we can control the color of the upper
+/// and lower half of each cell. This allows us to draw shapes with a resolution of 1x2 "pixels" per
+/// cell.
+///
+/// This allows for more flexibility than the BrailleGrid which only supports a single
+/// foreground color for each 2x4 dots cell, and the CharGrid which only supports a single
+/// character for each cell.
+#[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
+struct HalfBlockGrid {
+    /// width of the grid in number of terminal columns
+    width: u16,
+    /// height of the grid in number of terminal rows
+    height: u16,
+    /// represents a single color for each "pixel" arranged in column, row order
+    pixels: Vec<Vec<Color>>,
+}
+
+impl Grid for HalfBlockGrid {
+    fn width(&self) -> u16 {
+        self.width
+    }
+
+    fn height(&self) -> u16 {
+        self.height
+    }
+
+    fn resolution(&self) -> (f64, f64) {
+        (f64::from(self.width), f64::from(self.height) * 2.0)
+    }
+
+    fn save(&self) -> Layer {
+        // Given that we store the pixels in a grid, and that we want to use 2 pixels arranged
+        // vertically to form a single terminal cell, which can be either empty, upper half block,
+        // lower half block or full block, we need examine the pixels in vertical pairs to decide
+        // what character to print in each cell. So these are the 4 states we use to represent each
+        // cell:
+        //
+        // 1. upper: reset, lower: reset => ' ' fg: reset / bg: reset
+        // 2. upper: reset, lower: color => '▄' fg: lower color / bg: reset
+        // 3. upper: color, lower: reset => '▀' fg: upper color / bg: reset
+        // 4. upper: color, lower: color => '▀' fg: upper color / bg: lower color
+        //
+        // Note that because the foreground reset color (i.e. default foreground color) is usually
+        // not the same as the background reset color (i.e. default background color), we need to
+        // swap around the colors for that state (2 reset/color).
+        //
+        // When the upper and lower colors are the same, we could continue to use an upper half
+        // block, but we choose to use a full block instead. This allows us to write unit tests that
+        // treat the cell as a single character instead of two half block characters.
+
+        // Note we implement this slightly differently to what is done in ratatui's repo,
+        // since their version doesn't seem to compile for me...
+
+        // Join the upper and lower rows, and emit a tuple vector of strings to print, and their colours.
+        let (string, colors) = self
+            .pixels
+            .iter()
+            .tuples()
+            .flat_map(|(upper_row, lower_row)| zip(upper_row, lower_row))
+            .map(|(upper, lower)| match (upper, lower) {
+                (Color::Reset, Color::Reset) => (' ', (Color::Reset, Color::Reset)),
+                (Color::Reset, &lower) => (symbols::half_block::LOWER, (Color::Reset, lower)),
+                (&upper, Color::Reset) => (symbols::half_block::UPPER, (upper, Color::Reset)),
+                (&upper, &lower) => {
+                    let c = if lower == upper {
+                        symbols::half_block::FULL
+                    } else {
+                        symbols::half_block::UPPER
+                    };
+
+                    (c, (upper, lower))
+                }
+            })
+            .unzip();
+
+        Layer { string, colors }
+    }
+
+    fn reset(&mut self) {
+        self.pixels.fill(vec![Color::Reset; self.width as usize]);
+    }
+
+    fn paint(&mut self, x: usize, y: usize, color: Color) {
+        self.pixels[y][x] = color;
+    }
 }
 
 impl<'a, 'b> Painter<'a, 'b> {
@@ -507,7 +602,7 @@ where
         // Paint whatever is in the ctx.
         let layer = ctx.grid.save();
 
-        for (i, (ch, color)) in layer
+        for (i, (ch, (fg, bg))) in layer
             .string
             .chars()
             .zip(layer.colors.into_iter())
@@ -517,7 +612,8 @@ where
                 let (x, y) = (i % width, i / width);
                 buf.get_mut(x as u16 + canvas_area.left(), y as u16 + canvas_area.top())
                     .set_char(ch)
-                    .set_fg(color);
+                    .set_fg(fg)
+                    .set_bg(bg);
             }
         }
 

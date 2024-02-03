@@ -1,6 +1,9 @@
 use std::{cmp::Ordering, num::NonZeroUsize};
 
-use tui::text::{Line, Span, Text};
+use tui::{
+    style::Style,
+    text::{Line, Span, Text},
+};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
@@ -64,6 +67,8 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
 pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
     Text {
         lines: vec![Line::from(vec![Span::raw(truncate_str(content, width))])],
+        style: Style::default(),
+        alignment: None,
     }
 }
 

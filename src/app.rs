@@ -2586,7 +2586,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
                                         if let Some(visual_index) =
-                                            proc_widget_state.table.tui_selected()
+                                            proc_widget_state.table.ratatui_selected()
                                         {
                                             let is_tree_mode = matches!(
                                                 proc_widget_state.mode,
@@ -2614,7 +2614,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id - 2)
                                     {
                                         if let Some(visual_index) =
-                                            proc_widget_state.sort_table.tui_selected()
+                                            proc_widget_state.sort_table.ratatui_selected()
                                         {
                                             self.change_process_sort_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,
@@ -2629,7 +2629,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id - 1)
                                     {
                                         if let Some(visual_index) =
-                                            cpu_widget_state.table.tui_selected()
+                                            cpu_widget_state.table.ratatui_selected()
                                         {
                                             self.change_cpu_legend_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,
@@ -2644,7 +2644,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
                                         if let Some(visual_index) =
-                                            temp_widget_state.table.tui_selected()
+                                            temp_widget_state.table.ratatui_selected()
                                         {
                                             self.change_temp_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,
@@ -2659,7 +2659,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
                                         if let Some(visual_index) =
-                                            disk_widget_state.table.tui_selected()
+                                            disk_widget_state.table.ratatui_selected()
                                         {
                                             self.change_disk_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,
