@@ -1,8 +1,14 @@
 //! Vendored from <https://github.com/fdehau/tui-rs/blob/fafad6c96109610825aad89c4bba5253e01101ed/src/widgets/canvas/mod.rs>
 //! and <https://github.com/ratatui-org/ratatui/blob/c8dd87918d44fff6d4c3c78e1fc821a3275db1ae/src/widgets/canvas.rs>.
-//! Main difference is in the Braille rendering, which can now effectively be done in a single layer without the effects
-//! of doing it all in a single layer via the normal ratatui crate. This means you can do it all in a single pass, with
-//! just one string alloc and no resets.
+//!
+//! The main thing this is pulled in for is overriding how `BrailleGrid`'s draw logic works, as changing it is
+//! needed in order to draw all datasets in only one layer back in [`super::TimeChart::render`]. More specifically,
+//! the current implementation in ratatui `|=`s all the cells together if they overlap, but since we are smashing
+//! all the layers together which may have different colours, we instead just _replace_ whatever was in that cell
+//! with the newer colour + character.
+//!
+//! See <https://github.com/ClementTsang/bottom/pull/918> and <https://github.com/ClementTsang/bottom/pull/937> for the
+//! original motivation.
 
 use std::{fmt::Debug, iter::zip};
 
@@ -302,6 +308,18 @@ struct HalfBlockGrid {
     pixels: Vec<Vec<Color>>,
 }
 
+impl HalfBlockGrid {
+    /// Create a new [`HalfBlockGrid`] with the given width and height measured in terminal columns
+    /// and rows respectively.
+    fn new(width: u16, height: u16) -> HalfBlockGrid {
+        HalfBlockGrid {
+            width,
+            height,
+            pixels: vec![vec![Color::Reset; width as usize]; height as usize * 2],
+        }
+    }
+}
+
 impl Grid for HalfBlockGrid {
     fn width(&self) -> u16 {
         self.width
@@ -337,6 +355,8 @@ impl Grid for HalfBlockGrid {
 
         // Note we implement this slightly differently to what is done in ratatui's repo,
         // since their version doesn't seem to compile for me...
+        // TODO: Whenever I add this as a valid marker, make sure this works fine with the overriden
+        // time_chart drawing-layer-thing.
 
         // Join the upper and lower rows, and emit a tuple vector of strings to print, and their colours.
         let (string, colors) = self
@@ -461,7 +481,7 @@ impl<'a> Context<'a> {
             symbols::Marker::Block => Box::new(CharGrid::new(width, height, '█')),
             symbols::Marker::Bar => Box::new(CharGrid::new(width, height, '▄')),
             symbols::Marker::Braille => Box::new(BrailleGrid::new(width, height)),
-            symbols::Marker::HalfBlock => Box::new(CharGrid::new(width, height, '▀')),
+            symbols::Marker::HalfBlock => Box::new(HalfBlockGrid::new(width, height)),
         };
         Context {
             x_bounds,

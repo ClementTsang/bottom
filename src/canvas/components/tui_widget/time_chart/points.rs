@@ -14,10 +14,19 @@ impl TimeChart<'_> {
     pub(crate) fn draw_points(&self, ctx: &mut Context<'_>) {
         // Idea is to:
         // - Go over all datasets, determine *where* a point will be drawn.
-        // - We take the topmost (last) point first.
-        // - After we determine all points, then we paint them all.
-        // This helps relieve the issue where normally, braille grids are painted via |=, when we want
-        // an exclusive replacement.
+        // - Last point wins for what gets drawn.
+        // - We set _all_ points for all datasets before actually rendering.
+        //
+        // By doing this, it's a bit more efficient from my experience than looping
+        // over each dataset and rendering a new layer each time.
+        //
+        // See <https://github.com/ClementTsang/bottom/pull/918> and <https://github.com/ClementTsang/bottom/pull/937>
+        // for the original motivation.
+        //
+        // We also additionally do some interpolation logic because we may get caught missing some points
+        // when drawing, but we generally want to avoid jarring gaps between the edges when there's
+        // a point that is off screen and so a line isn't drawn (right edge generally won't have this issue
+        // issue but it can happen in some cases).
 
         for dataset in &self.datasets {
             let color = dataset.style.fg.unwrap_or(Color::Reset);
