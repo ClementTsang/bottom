@@ -6,7 +6,7 @@ use std::{
 /// A bound on the width of a column.
 #[derive(Clone, Copy, Debug)]
 pub enum ColumnWidthBounds {
-    /// A width of this type is either as long as `min`, but can otherwise shrink and grow up to a point.
+    /// A width of this type is as long as `desired`, but can otherwise shrink and grow up to a point.
     Soft {
         /// The desired, calculated width. Take this if possible as the base starting width.
         desired: u16,
@@ -162,6 +162,13 @@ where
     fn calculate_column_widths(&self, total_width: u16, left_to_right: bool) -> Vec<u16> {
         use itertools::Either;
 
+        const COLUMN_SPACING: u16 = 1;
+
+        #[inline]
+        fn stop_allocating_space(desired: u16, available: u16) -> bool {
+            desired > available || desired == 0
+        }
+
         let mut total_width_left = total_width;
         let mut calculated_widths = vec![0; self.len()];
         let columns = if left_to_right {
@@ -196,30 +203,33 @@ where
                     );
                     let space_taken = min(min(soft_limit, *desired), total_width_left);
 
-                    if min_width > space_taken || min_width == 0 {
+                    if stop_allocating_space(space_taken, total_width_left) {
                         break;
-                    } else if space_taken > 0 {
-                        total_width_left = total_width_left.saturating_sub(space_taken + 1);
+                    } else {
+                        total_width_left =
+                            total_width_left.saturating_sub(space_taken + COLUMN_SPACING);
                         *calculated_width = space_taken;
                         num_columns += 1;
                     }
                 }
                 ColumnWidthBounds::Hard(width) => {
                     let min_width = *width;
-                    if min_width > total_width_left || min_width == 0 {
+                    if stop_allocating_space(min_width, total_width_left) {
                         break;
-                    } else if min_width > 0 {
-                        total_width_left = total_width_left.saturating_sub(min_width + 1);
+                    } else {
+                        total_width_left =
+                            total_width_left.saturating_sub(min_width + COLUMN_SPACING);
                         *calculated_width = min_width;
                         num_columns += 1;
                     }
                 }
                 ColumnWidthBounds::FollowHeader => {
                     let min_width = column.header_len() as u16;
-                    if min_width > total_width_left || min_width == 0 {
+                    if stop_allocating_space(min_width, total_width_left) {
                         break;
-                    } else if min_width > 0 {
-                        total_width_left = total_width_left.saturating_sub(min_width + 1);
+                    } else {
+                        total_width_left =
+                            total_width_left.saturating_sub(min_width + COLUMN_SPACING);
                         *calculated_width = min_width;
                         num_columns += 1;
                     }
@@ -228,7 +238,7 @@ where
         }
 
         if num_columns > 0 {
-            // Redistribute remaining.
+            // Redistribute remaining space.
             let mut num_dist = num_columns;
             let amount_per_slot = total_width_left / num_dist;
             total_width_left %= num_dist;

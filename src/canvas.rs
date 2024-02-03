@@ -499,6 +499,8 @@ impl Painter {
                 }
 
                 if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
+                    // TODO: Can I remove this? Does ratatui's layout constraints work properly for fixing
+                    // https://github.com/ClementTsang/bottom/issues/896 now?
                     fn get_constraints(
                         direction: Direction, constraints: &[LayoutConstraint], area: Rect,
                     ) -> Vec<Rect> {
