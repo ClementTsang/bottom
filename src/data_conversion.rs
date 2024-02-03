@@ -634,7 +634,7 @@ pub fn convert_gpu_data(
     let results = current_data
         .gpu_harvest
         .iter()
-        .zip(point_vec.into_iter())
+        .zip(point_vec)
         .map(|(gpu, points)| {
             let short_name = {
                 let last_words = gpu.0.split_whitespace().rev().take(2).collect::<Vec<_>>();

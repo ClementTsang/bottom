@@ -45,7 +45,7 @@ fn main() -> Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
 
     let matches = clap::get_matches();
-    #[cfg(all(feature = "fern"))]
+    #[cfg(feature = "fern")]
     {
         if let Err(err) =
             utils::logging::init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log"))

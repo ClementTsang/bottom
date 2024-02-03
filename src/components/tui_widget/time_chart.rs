@@ -282,10 +282,12 @@ impl<'a> TimeChart<'a> {
             let legend_height = self.datasets.len() as u16 + 2;
             // TODO constraints.apply will be removed in a future ratatui version, replace this
             // code with calls to Layout instead.
+            #[allow(deprecated)]
             let max_legend_width = self
                 .hidden_legend_constraints
                 .0
                 .apply(layout.graph_area.width);
+            #[allow(deprecated)]
             let max_legend_height = self
                 .hidden_legend_constraints
                 .1

@@ -328,7 +328,6 @@ pub fn parse_query(
                                         }),
                                     )),
                                 });
-                            } else {
                             }
                         }
                         _ => {

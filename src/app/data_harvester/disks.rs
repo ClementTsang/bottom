@@ -82,7 +82,7 @@ cfg_if! {
 /// 2. Is the entry denied through any filter? That is, does it match an entry in a
 ///    filter where `is_list_ignored` is `true`? If so, we always deny this entry.
 /// 3. Anything else is allowed.
-pub(self) fn keep_disk_entry(
+fn keep_disk_entry(
     disk_name: &str, mount_point: &str, disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
 ) -> bool {
     match (disk_filter, mount_filter) {

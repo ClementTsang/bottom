@@ -77,7 +77,7 @@ impl Painter {
 
                 // Very ugly way to sync the gauge limit across all gauges.
                 let hide_parts = columns
-                    .get(0)
+                    .first()
                     .map(|col| {
                         if col.width >= 12 {
                             LabelLimit::None

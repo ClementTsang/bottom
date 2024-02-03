@@ -231,7 +231,7 @@ pub fn build_app(
                 if columns.is_empty() {
                     None
                 } else {
-                    Some(IndexSet::from_iter(columns.into_iter()))
+                    Some(IndexSet::from_iter(columns))
                 }
             }
             None => None,
