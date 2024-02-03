@@ -8,7 +8,7 @@ use tui::{
     layout::{Constraint, Rect},
     style::{Color, Style},
     symbols::{self, Marker},
-    text::{Span, Spans},
+    text::{self, Span},
     widgets::{
         canvas::{Line, Points},
         Block, Borders, GraphType, Widget,
@@ -25,7 +25,7 @@ pub type Point = (f64, f64);
 #[derive(Debug, Clone)]
 pub struct Axis<'a> {
     /// Title displayed next to axis end
-    pub title: Option<Spans<'a>>,
+    pub title: Option<text::Line<'a>>,
     /// Bounds for the axis (all data points outside these limits will not be represented)
     pub bounds: [f64; 2],
     /// A list of labels to put to the left or below the axis
@@ -49,7 +49,7 @@ impl<'a> Default for Axis<'a> {
 impl<'a> Axis<'a> {
     pub fn title<T>(mut self, title: T) -> Axis<'a>
     where
-        T: Into<Spans<'a>>,
+        T: Into<text::Line<'a>>,
     {
         self.title = Some(title.into());
         self
@@ -280,6 +280,8 @@ impl<'a> TimeChart<'a> {
         if let Some(inner_width) = self.datasets.iter().map(|d| d.name.width() as u16).max() {
             let legend_width = inner_width + 2;
             let legend_height = self.datasets.len() as u16 + 2;
+            // TODO constraints.apply will be removed in a future ratatui version, replace this
+            // code with calls to Layout instead.
             let max_legend_width = self
                 .hidden_legend_constraints
                 .0
@@ -551,7 +553,7 @@ impl<'a> Widget for TimeChart<'a> {
                 },
                 original_style,
             );
-            buf.set_spans(x, y, &title, width);
+            buf.set_line(x, y, &title, width);
         }
 
         if let Some((x, y)) = layout.title_y {
@@ -566,7 +568,7 @@ impl<'a> Widget for TimeChart<'a> {
                 },
                 original_style,
             );
-            buf.set_spans(x, y, &title, width);
+            buf.set_line(x, y, &title, width);
         }
     }
 }

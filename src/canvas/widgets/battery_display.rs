@@ -1,8 +1,7 @@
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Borders, Cell, Paragraph, Row, Table, Tabs},
 };
 use unicode_segmentation::UnicodeSegmentation;
@@ -15,8 +14,8 @@ use crate::{
 };
 
 impl Painter {
-    pub fn draw_battery_display<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+    pub fn draw_battery_display(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
@@ -37,7 +36,7 @@ impl Painter {
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Battery ── Esc to go back ";
-                Spans::from(vec![
+                Line::from(vec![
                     Span::styled(" Battery ", self.colours.widget_title_style),
                     Span::styled(
                         format!(
@@ -50,7 +49,7 @@ impl Painter {
                     ),
                 ])
             } else {
-                Spans::from(Span::styled(" Battery ", self.colours.widget_title_style))
+                Line::from(Span::styled(" Battery ", self.colours.widget_title_style))
             };
 
             let battery_block = if draw_border {
@@ -86,7 +85,7 @@ impl Painter {
                 Tabs::new(
                     battery_names
                         .iter()
-                        .map(|name| Spans::from((*name).clone()))
+                        .map(|name| Line::from((*name).clone()))
                         .collect::<Vec<_>>(),
                 )
                 .block(Block::default())
@@ -217,16 +216,18 @@ impl Painter {
 
                 // Draw
                 f.render_widget(
-                    Table::new(battery_rows)
-                        .block(battery_block)
-                        .header(Row::new(vec![""]).bottom_margin(table_gap))
-                        .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]),
+                    Table::new(
+                        battery_rows,
+                        [Constraint::Percentage(50), Constraint::Percentage(50)],
+                    )
+                    .block(battery_block)
+                    .header(Row::new(vec![""]).bottom_margin(table_gap)),
                     margined_draw_loc,
                 );
             } else {
-                let mut contents = vec![Spans::default(); table_gap.into()];
+                let mut contents = vec![Line::default(); table_gap.into()];
 
-                contents.push(Spans::from(Span::styled(
+                contents.push(Line::from(Span::styled(
                     "No data found for this battery",
                     self.colours.text_style,
                 )));

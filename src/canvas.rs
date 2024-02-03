@@ -5,7 +5,7 @@ use itertools::izip;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::Paragraph,
     Frame, Terminal,
 };
@@ -62,7 +62,7 @@ pub struct Painter {
     pub colours: CanvasColours,
     height: u16,
     width: u16,
-    styled_help_text: Vec<Spans<'static>>,
+    styled_help_text: Vec<Line<'static>>,
     is_mac_os: bool, // TODO: This feels out of place...
 
     // TODO: Redo this entire thing.
@@ -212,10 +212,10 @@ impl Painter {
             }
         });
 
-        self.styled_help_text = styled_help_spans.into_iter().map(Spans::from).collect();
+        self.styled_help_text = styled_help_spans.into_iter().map(Line::from).collect();
     }
 
-    fn draw_frozen_indicator<B: Backend>(&self, f: &mut Frame<'_, B>, draw_loc: Rect) {
+    fn draw_frozen_indicator(&self, f: &mut Frame<'_>, draw_loc: Rect) {
         f.render_widget(
             Paragraph::new(Span::styled(
                 "Frozen, press 'f' to unfreeze",
@@ -228,8 +228,8 @@ impl Painter {
         )
     }
 
-    pub fn draw_data<B: Backend>(
-        &mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
+    pub fn draw_data(
+        &mut self, terminal: &mut Terminal<impl Backend>, app_state: &mut app::App,
     ) -> error::Result<()> {
         use BottomWidgetType::*;
 
@@ -771,8 +771,8 @@ impl Painter {
         Ok(())
     }
 
-    fn draw_widgets_with_constraints<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, widgets: &BottomColRow,
+    fn draw_widgets_with_constraints(
+        &self, f: &mut Frame<'_>, app_state: &mut App, widgets: &BottomColRow,
         widget_draw_locs: &[Rect],
     ) {
         use BottomWidgetType::*;

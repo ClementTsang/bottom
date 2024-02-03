@@ -1,9 +1,8 @@
 use tui::{
-    backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
     terminal::Frame,
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
 };
 use unicode_segmentation::UnicodeSegmentation;
@@ -20,8 +19,8 @@ const SORT_MENU_WIDTH: u16 = 7;
 impl Painter {
     /// Draws and handles all process-related drawing.  Use this.
     /// - `widget_id` here represents the widget ID of the process widget itself!
-    pub fn draw_process_widget<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+    pub fn draw_process_widget(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         if let Some(proc_widget_state) = app_state.proc_state.widget_states.get(&widget_id) {
@@ -68,8 +67,8 @@ impl Painter {
 
     /// Draws the process sort box.
     /// - `widget_id` represents the widget ID of the process widget itself.an
-    fn draw_processes_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    fn draw_processes_table(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
@@ -97,8 +96,8 @@ impl Painter {
     /// Draws the process search field.
     /// - `widget_id` represents the widget ID of the search box itself --- NOT the process widget
     /// state that is stored.
-    fn draw_search_field<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+    fn draw_search_field(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         fn build_query_span(
@@ -172,7 +171,7 @@ impl Painter {
                 self.colours.text_style,
             );
 
-            let mut search_text = vec![Spans::from({
+            let mut search_text = vec![Line::from({
                 let mut search_vec = vec![Span::styled(
                     SEARCH_TITLE,
                     if is_on_widget {
@@ -212,7 +211,7 @@ impl Painter {
             } else {
                 ("Case(Alt+C)", "Whole(Alt+W)", "Regex(Alt+R)")
             };
-            let option_text = Spans::from(vec![
+            let option_text = Line::from(vec![
                 Span::styled(case, case_style),
                 Span::raw("  "),
                 Span::styled(whole, whole_word_style),
@@ -220,7 +219,7 @@ impl Painter {
                 Span::styled(regex, regex_style),
             ]);
 
-            search_text.push(Spans::from(Span::styled(
+            search_text.push(Line::from(Span::styled(
                 if let Some(err) = &proc_widget_state.proc_search.search_state.error_message {
                     err.as_str()
                 } else {
@@ -294,8 +293,8 @@ impl Painter {
     /// Draws the process sort box.
     /// - `widget_id` represents the widget ID of the sort box itself --- NOT the process widget
     /// state that is stored.
-    fn draw_sort_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    fn draw_sort_table(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(pws) = app_state.proc_state.widget_states.get_mut(&(widget_id - 2)) {

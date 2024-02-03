@@ -1,16 +1,15 @@
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Paragraph},
 };
 
 use crate::{app::App, canvas::Painter, constants::*};
 
 impl Painter {
-    pub fn draw_basic_network<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    pub fn draw_basic_network(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let divided_loc = Layout::default()
             .direction(Direction::Horizontal)
@@ -44,13 +43,13 @@ impl Painter {
         let total_tx_label = format!("Total TX: {}", &app_state.converted_data.total_tx_display);
 
         let net_text = vec![
-            Spans::from(Span::styled(rx_label, self.colours.rx_style)),
-            Spans::from(Span::styled(tx_label, self.colours.tx_style)),
+            Line::from(Span::styled(rx_label, self.colours.rx_style)),
+            Line::from(Span::styled(tx_label, self.colours.tx_style)),
         ];
 
         let total_net_text = vec![
-            Spans::from(Span::styled(total_rx_label, self.colours.total_rx_style)),
-            Spans::from(Span::styled(total_tx_label, self.colours.total_tx_style)),
+            Line::from(Span::styled(total_rx_label, self.colours.total_rx_style)),
+            Line::from(Span::styled(total_tx_label, self.colours.total_tx_style)),
         ];
 
         f.render_widget(Paragraph::new(net_text).block(Block::default()), net_loc[0]);

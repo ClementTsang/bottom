@@ -1,4 +1,4 @@
-use tui::{backend::Backend, layout::Rect, terminal::Frame};
+use tui::{layout::Rect, terminal::Frame};
 
 use crate::{
     app,
@@ -7,8 +7,8 @@ use crate::{
 };
 
 impl Painter {
-    pub fn draw_temp_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, widget_id: u64,
+    pub fn draw_temp_table(
+        &self, f: &mut Frame<'_>, app_state: &mut app::App, draw_loc: Rect, widget_id: u64,
     ) {
         let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(temp_widget_state) = app_state.temp_state.widget_states.get_mut(&widget_id) {

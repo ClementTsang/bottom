@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use tui::text::{Span, Spans, Text};
+use tui::text::{Span, Text};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
@@ -98,9 +98,7 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
 
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
 pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
-    Text {
-        lines: vec![Spans(vec![Span::raw(truncate_str(content, width))])],
-    }
+    Span::raw(truncate_str(content, width)).into()
 }
 
 /// Returns the width of a str `s`. This takes into account some things like

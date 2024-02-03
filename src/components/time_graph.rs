@@ -2,11 +2,10 @@ use std::borrow::Cow;
 
 use concat_string::concat_string;
 use tui::{
-    backend::Backend,
     layout::{Constraint, Rect},
     style::Style,
     symbols::Marker,
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Borders, GraphType},
     Frame,
 };
@@ -96,10 +95,10 @@ impl<'a> TimeGraph<'a> {
     }
 
     /// Generates a title for the [`TimeGraph`] widget, given the available space.
-    fn generate_title(&self, draw_loc: Rect) -> Spans<'_> {
+    fn generate_title(&self, draw_loc: Rect) -> Line<'_> {
         if self.is_expanded {
             let title_base = concat_string!(self.title, "── Esc to go back ");
-            Spans::from(vec![
+            Line::from(vec![
                 Span::styled(self.title.as_ref(), self.title_style),
                 Span::styled(
                     concat_string!(
@@ -113,7 +112,7 @@ impl<'a> TimeGraph<'a> {
                 ),
             ])
         } else {
-            Spans::from(Span::styled(self.title.as_ref(), self.title_style))
+            Line::from(Span::styled(self.title.as_ref(), self.title_style))
         }
     }
 
@@ -124,9 +123,7 @@ impl<'a> TimeGraph<'a> {
     /// - Draws with the higher time value on the left, and lower on the right.
     /// - Expects a [`TimeGraph`] to be passed in, which details how to draw the graph.
     /// - Expects `graph_data`, which represents *what* data to draw, and various details like style and optional legends.
-    pub fn draw_time_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, draw_loc: Rect, graph_data: &[GraphData<'_>],
-    ) {
+    pub fn draw_time_graph(&self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: &[GraphData<'_>]) {
         let x_axis = self.generate_x_axis();
         let y_axis = self.generate_y_axis();
 
@@ -182,7 +179,7 @@ mod test {
         layout::Rect,
         style::{Color, Style},
         symbols::Marker,
-        text::{Span, Spans},
+        text::{Line, Span},
     };
 
     use super::TimeGraph;
@@ -253,14 +250,14 @@ mod test {
         let title = time_graph.generate_title(draw_loc);
         assert_eq!(
             title,
-            Spans::from(Span::styled(" Network ", Style::default().fg(Color::Cyan)))
+            Line::from(Span::styled(" Network ", Style::default().fg(Color::Cyan)))
         );
 
         time_graph.is_expanded = true;
         let title = time_graph.generate_title(draw_loc);
         assert_eq!(
             title,
-            Spans::from(vec![
+            Line::from(vec![
                 Span::styled(" Network ", Style::default().fg(Color::Cyan)),
                 Span::styled("───── Esc to go back ", Style::default().fg(Color::Blue))
             ])

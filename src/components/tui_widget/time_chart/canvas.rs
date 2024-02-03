@@ -9,8 +9,7 @@ use tui::{
     buffer::Buffer,
     layout::Rect,
     style::{Color, Style},
-    symbols,
-    text::Spans,
+    symbols, text,
     widgets::{
         canvas::{Line, Points},
         Block, Widget,
@@ -122,7 +121,7 @@ impl Shape for Points<'_> {
 pub struct Label<'a> {
     x: f64,
     y: f64,
-    spans: Spans<'a>,
+    line: text::Line<'a>,
 }
 
 #[derive(Debug, Clone)]
@@ -363,8 +362,13 @@ impl<'a> Context<'a> {
     ) -> Context<'a> {
         let grid: Box<dyn Grid> = match marker {
             symbols::Marker::Dot => Box::new(CharGrid::new(width, height, '•')),
-            symbols::Marker::Block => Box::new(CharGrid::new(width, height, '▄')),
+            symbols::Marker::Block => Box::new(CharGrid::new(width, height, '█')),
             symbols::Marker::Braille => Box::new(BrailleGrid::new(width, height)),
+            symbols::Marker::Bar => Box::new(CharGrid::new(width, height, '▄')),
+            #[allow(clippy::unimplemented)]
+            symbols::Marker::HalfBlock => {
+                unimplemented!("HalfBlock marker not implemented in this vendored version")
+            }
         };
         Context {
             x_bounds,
@@ -542,7 +546,7 @@ where
         {
             let x = ((label.x - left) * resolution.0 / width) as u16 + canvas_area.left();
             let y = ((top - label.y) * resolution.1 / height) as u16 + canvas_area.top();
-            buf.set_spans(x, y, &label.spans, canvas_area.right() - x);
+            buf.set_line(x, y, &label.line, canvas_area.right() - x);
         }
     }
 }

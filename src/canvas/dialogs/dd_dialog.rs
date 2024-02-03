@@ -2,10 +2,9 @@
 use std::cmp::min;
 
 use tui::{
-    backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::{Span, Spans, Text},
+    text::{Line, Span, Text},
     widgets::{Block, Borders, Paragraph, Wrap},
 };
 
@@ -22,15 +21,15 @@ impl Painter {
     pub fn get_dd_spans(&self, app_state: &App) -> Option<Text<'_>> {
         if let Some(dd_err) = &app_state.dd_err {
             return Some(Text::from(vec![
-                Spans::default(),
-                Spans::from("Failed to kill process."),
-                Spans::from(dd_err.clone()),
-                Spans::from("Please press ENTER or ESC to close this dialog."),
+                Line::default(),
+                Line::from("Failed to kill process."),
+                Line::from(dd_err.clone()),
+                Line::from("Please press ENTER or ESC to close this dialog."),
             ]));
         } else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
             if let Some(first_pid) = to_kill_processes.1.first() {
                 return Some(Text::from(vec![
-                    Spans::from(""),
+                    Line::from(""),
                     if app_state
                         .proc_state
                         .widget_states
@@ -39,19 +38,19 @@ impl Painter {
                         .unwrap_or(false)
                     {
                         if to_kill_processes.1.len() != 1 {
-                            Spans::from(format!(
+                            Line::from(format!(
                                 "Kill {} processes with the name \"{}\"?  Press ENTER to confirm.",
                                 to_kill_processes.1.len(),
                                 to_kill_processes.0
                             ))
                         } else {
-                            Spans::from(format!(
+                            Line::from(format!(
                                 "Kill 1 process with the name \"{}\"?  Press ENTER to confirm.",
                                 to_kill_processes.0
                             ))
                         }
                     } else {
-                        Spans::from(format!(
+                        Line::from(format!(
                             "Kill process \"{}\" with PID {}?  Press ENTER to confirm.",
                             to_kill_processes.0, first_pid
                         ))
@@ -63,8 +62,8 @@ impl Painter {
         None
     }
 
-    fn draw_dd_confirm_buttons<B: Backend>(
-        &self, f: &mut Frame<'_, B>, button_draw_loc: &Rect, app_state: &mut App,
+    fn draw_dd_confirm_buttons(
+        &self, f: &mut Frame<'_>, button_draw_loc: &Rect, app_state: &mut App,
     ) {
         if MAX_PROCESS_SIGNAL == 1 || !app_state.app_config_fields.is_advanced_kill {
             let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
@@ -352,12 +351,12 @@ impl Painter {
         }
     }
 
-    pub fn draw_dd_dialog<B: Backend>(
-        &self, f: &mut Frame<'_, B>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
+    pub fn draw_dd_dialog(
+        &self, f: &mut Frame<'_>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
     ) -> bool {
         if let Some(dd_text) = dd_text {
             let dd_title = if app_state.dd_err.is_some() {
-                Spans::from(vec![
+                Line::from(vec![
                     Span::styled(" Error ", self.colours.widget_title_style),
                     Span::styled(
                         format!(
@@ -371,7 +370,7 @@ impl Painter {
                     ),
                 ])
             } else {
-                Spans::from(vec![
+                Line::from(vec![
                     Span::styled(" Confirm Kill Process ", self.colours.widget_title_style),
                     Span::styled(
                         format!(

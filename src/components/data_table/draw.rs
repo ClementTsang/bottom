@@ -1,13 +1,9 @@
-use std::{
-    cmp::{max, min},
-    iter::once,
-};
+use std::cmp::{max, min};
 
 use concat_string::concat_string;
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    text::{Span, Spans, Text},
+    text::{Line, Span, Text},
     widgets::{Block, Borders, Row, Table},
     Frame,
 };
@@ -98,7 +94,7 @@ where
     /// Generates a title, given the available space.
     pub fn generate_title<'a>(
         &self, draw_info: &'a DrawInfo, total_items: usize,
-    ) -> Option<Spans<'a>> {
+    ) -> Option<Line<'a>> {
         self.props.title.as_ref().map(|title| {
             let current_index = self.state.current_index.saturating_add(1);
             let draw_loc = draw_info.loc;
@@ -129,18 +125,18 @@ where
                     UnicodeSegmentation::graphemes(title_base.as_str(), true).count() + 2,
                 ));
                 let esc = concat_string!("─", lines, "─ Esc to go back ");
-                Spans::from(vec![
+                Line::from(vec![
                     Span::styled(title, title_style),
                     Span::styled(esc, border_style),
                 ])
             } else {
-                Spans::from(Span::styled(title, title_style))
+                Line::from(Span::styled(title, title_style))
             }
         })
     }
 
-    pub fn draw<B: Backend>(
-        &mut self, f: &mut Frame<'_, B>, draw_info: &DrawInfo, widget: Option<&mut BottomWidget>,
+    pub fn draw(
+        &mut self, f: &mut Frame<'_>, draw_info: &DrawInfo, widget: Option<&mut BottomWidget>,
         painter: &Painter,
     ) {
         let draw_horizontal = !self.props.is_basic || draw_info.is_on_widget();
@@ -243,7 +239,8 @@ where
                     } else {
                         self.styling.text_style
                     };
-                    let mut table = Table::new(rows)
+                    let mut table = Table::default()
+                        .rows(rows)
                         .block(block)
                         .highlight_style(highlight_style)
                         .style(self.styling.text_style);
@@ -275,10 +272,12 @@ where
                     table_state,
                 );
             } else {
-                let table = Table::new(once(Row::new(Text::raw("No data"))))
-                    .block(block)
-                    .style(self.styling.text_style)
-                    .widths(&[Constraint::Percentage(100)]);
+                let table = Table::new(
+                    [Row::new(Text::raw("No data"))],
+                    [Constraint::Percentage(100)],
+                )
+                .block(block)
+                .style(self.styling.text_style);
                 f.render_widget(table, margined_draw_loc);
             }
         }
