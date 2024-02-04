@@ -1,0 +1,56 @@
+# Workflow to validate the latest schema.
+
+name: "validate schema"
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths:
+      - "schema/**"
+      - ".github/workflows/validate_schema.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.repository != 'ClementTsang/bottom' }}
+
+jobs:
+  pre-job:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
+        with:
+          skip_after_successful_duplicate: "true"
+          paths: '["schema/**", ".github/workflows/validate_schema.yml"]'
+          do_not_skip: '["workflow_dispatch"]'
+
+  test-build-documentation:
+    name: Test validating schema
+    needs: pre-job
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: 3.11
+
+      - name: Install Python dependencies
+        run: pip install -r scripts/schema/requirements.txt
+
+      - name: Test nightly validates on valid sample configs
+        run: |
+          python3 scripts/schema/validator.py -s ./schema/nightly/bottom.json -f ./sample_configs/default_config.toml
+          python3 scripts/schema/validator.py -s ./schema/nightly/bottom.json -f ./sample_configs/demo_config.toml
+
+      - name: Test nightly catches on a bad sample config
+        run: |
+          python3 scripts/schema/validator.py -s ./schema/nightly/bottom.json -f scripts/schema/bad_file.toml --should_fail
