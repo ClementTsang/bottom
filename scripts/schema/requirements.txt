@@ -1,0 +1,2 @@
+jsonschema-rs == 0.17.1
+toml == 0.10.2

@@ -45,3 +45,5 @@ supply-chain/
 
 # samply profiling
 profile.json
+
+**/venv/

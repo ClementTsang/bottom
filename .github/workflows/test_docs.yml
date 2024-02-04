@@ -19,7 +19,7 @@ jobs:
         uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
         with:
           skip_after_successful_duplicate: "true"
-          paths: '["docs/**", ".github/workflows/docs.yml", ".github/workflows/test-docs.yml"]'
+          paths: '["docs/**", ".github/workflows/docs.yml", ".github/workflows/test_docs.yml"]'
           do_not_skip: '["workflow_dispatch"]'
 
   test-build-documentation:
