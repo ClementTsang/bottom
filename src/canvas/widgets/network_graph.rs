@@ -345,8 +345,8 @@ fn adjust_network_data_point(
     // So for example, let's say I use 390 Mb/s.  If I drew 4 segments, it would be 97.5, 195, 292.5, 390, and
     // probably something like 438.75?
     //
-    // So, how do we do this in tui-rs?  Well, if we  are using intervals that tie in perfectly to the max
-    // value we want... then it's actually not that hard.  Since tui-rs accepts a vector as labels and will
+    // So, how do we do this in ratatui?  Well, if we  are using intervals that tie in perfectly to the max
+    // value we want... then it's actually not that hard.  Since ratatui accepts a vector as labels and will
     // properly space them all out... we just work with that and space it out properly.
     //
     // Dynamic chart idea based off of FreeNAS's chart design.

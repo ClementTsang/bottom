@@ -144,14 +144,16 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
         self.data.get(self.state.current_index)
     }
 
-    /// Returns tui-rs' internal selection.
-    pub fn tui_selected(&self) -> Option<usize> {
+    /// Returns ratatui's internal selection.
+    pub fn ratatui_selected(&self) -> Option<usize> {
         self.state.table_state.selected()
     }
 }
 
 #[cfg(test)]
 mod test {
+    use std::num::NonZeroU16;
+
     use super::*;
 
     #[derive(Clone, PartialEq, Eq, Debug)]
@@ -161,7 +163,7 @@ mod test {
 
     impl DataToCell<&'static str> for TestType {
         fn to_cell(
-            &self, _column: &&'static str, _calculated_width: u16,
+            &self, _column: &&'static str, _calculated_width: NonZeroU16,
         ) -> Option<tui::text::Text<'_>> {
             None
         }

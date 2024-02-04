@@ -89,7 +89,7 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         TotalRead => SortColumn::hard(TotalRead, 8).default_descending(),
         TotalWrite => SortColumn::hard(TotalWrite, 8).default_descending(),
         User => SortColumn::soft(User, Some(0.05)),
-        State => SortColumn::hard(State, 7),
+        State => SortColumn::hard(State, 9),
         Time => SortColumn::new(Time),
         #[cfg(feature = "gpu")]
         GpuMem => SortColumn::new(GpuMem).default_descending(),

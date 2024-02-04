@@ -1,3 +1,5 @@
+use std::num::NonZeroU16;
+
 use tui::{layout::Rect, widgets::TableState};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
@@ -21,11 +23,11 @@ pub struct DataTableState {
     /// The direction of the last attempted scroll.
     pub scroll_direction: ScrollDirection,
 
-    /// tui-rs' internal table state.
+    /// ratatui's internal table state.
     pub table_state: TableState,
 
     /// The calculated widths.
-    pub calculated_widths: Vec<u16>,
+    pub calculated_widths: Vec<NonZeroU16>,
 
     /// The current inner [`Rect`].
     pub inner_rect: Rect,

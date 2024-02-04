@@ -72,7 +72,8 @@ pub struct Painter {
 
 /// The constraints of a widget relative to its parent.
 ///
-/// This is used over ratatui's internal representation due to https://github.com/ClementTsang/bottom/issues/896.
+/// This is used over ratatui's internal representation due to
+/// <https://github.com/ClementTsang/bottom/issues/896>.
 pub enum LayoutConstraint {
     CanvasHandled,
     Grow,
@@ -498,6 +499,8 @@ impl Painter {
                 }
 
                 if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
+                    // TODO: Can I remove this? Does ratatui's layout constraints work properly for fixing
+                    // https://github.com/ClementTsang/bottom/issues/896 now?
                     fn get_constraints(
                         direction: Direction, constraints: &[LayoutConstraint], area: Rect,
                     ) -> Vec<Rect> {

@@ -1,6 +1,7 @@
 use std::{
     cmp::{max, Ordering},
     fmt::Display,
+    num::NonZeroU16,
     time::Duration,
 };
 
@@ -299,10 +300,8 @@ impl ProcWidgetData {
 }
 
 impl DataToCell<ProcColumn> for ProcWidgetData {
-    fn to_cell(&self, column: &ProcColumn, calculated_width: u16) -> Option<Text<'_>> {
-        if calculated_width == 0 {
-            return None;
-        }
+    fn to_cell(&self, column: &ProcColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
+        let calculated_width = calculated_width.get();
 
         // TODO: Optimize the string allocations here...
         // TODO: Also maybe just pull in the to_string call but add a variable for the differences.
