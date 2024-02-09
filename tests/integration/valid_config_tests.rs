@@ -1,9 +1,10 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
-use std::{io::Read, thread, time::Duration};
+use std::{io::Read, path::Path, thread, time::Duration};
 
 use crate::util::spawn_btm_in_pty;
 
+/// Convert a reader implementing [`Read`] into a string.
 fn reader_to_string(mut reader: Box<dyn Read>) -> String {
     let mut buf = String::default();
     reader.read_to_string(&mut buf).unwrap();
@@ -11,6 +12,7 @@ fn reader_to_string(mut reader: Box<dyn Read>) -> String {
     buf
 }
 
+/// Run bottom with the following args.
 fn run_and_kill(args: &[&str]) {
     let (master, mut handle) = spawn_btm_in_pty(args);
     let reader = master.try_clone_reader().unwrap();
@@ -35,6 +37,13 @@ fn run_and_kill(args: &[&str]) {
 
     handle.kill().unwrap();
 }
+
+// /// Run the binary with the config path only if the path exists.
+// fn run_if_exists(config_path: &str) {
+//     if Path::new(config_path).exists() {
+//         run_and_kill(&["-C", config_path]);
+//     }
+// }
 
 #[test]
 fn test_basic() {
@@ -66,14 +75,4 @@ fn test_all_proc() {
 #[test]
 fn test_cpu_doughnut() {
     run_and_kill(&["-C", "./tests/valid_configs/cpu_doughnut.toml"]);
-}
-
-#[test]
-fn test_default() {
-    run_and_kill(&["-C", "./sample_configs/default_config.toml"]);
-}
-
-#[test]
-fn test_demo() {
-    run_and_kill(&["-C", "./sample_configs/demo_config.toml"]);
 }

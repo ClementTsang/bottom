@@ -13,6 +13,7 @@ pub mod temperature;
 
 use std::{fs, io::Write, path::PathBuf};
 
+use indoc::indoc;
 use serde::Deserialize;
 pub use style::*;
 
@@ -27,11 +28,13 @@ use self::{
     memory::MemoryConfig, network::NetworkConfig, process::ProcessConfig,
     temperature::TemperatureConfig,
 };
-use crate::{
-    args::BottomArgs,
-    constants::{CONFIG_TEXT, DEFAULT_CONFIG_FILE_PATH},
-    error,
-};
+use crate::{args::BottomArgs, error};
+
+pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
+
+pub(crate) trait DefaultConfig {
+    fn default_config() -> String;
+}
 
 #[derive(Debug, Default, Deserialize)]
 pub struct ConfigV2 {
@@ -82,6 +85,34 @@ impl ConfigV2 {
         #[cfg(feature = "gpu")]
         self.gpu.args.merge(&args.gpu);
         self.style.args.merge(&args.style);
+    }
+}
+
+impl DefaultConfig for ConfigV2 {
+    fn default_config() -> String {
+        let mut str = String::default();
+
+        pub const CONFIG_TOP_HEAD: &str = indoc! {"
+            # This is bottom's config file. All of the settings are commented
+            # out by default; if you wish to change them, uncomment and modify the
+            # setting. Make sure to also comment out the relevant section header!
+
+        "};
+
+        str.push_str(CONFIG_TOP_HEAD);
+        str.push_str(&GeneralConfig::default_config());
+        str.push_str(&ProcessConfig::default_config());
+        str.push_str(&TemperatureConfig::default_config());
+        str.push_str(&CpuConfig::default_config());
+        str.push_str(&MemoryConfig::default_config());
+        str.push_str(&NetworkConfig::default_config());
+        #[cfg(feature = "battery")]
+        str.push_str(&BatteryConfig::default_config());
+        #[cfg(feature = "gpu")]
+        str.push_str(&GpuConfig::default_config());
+        str.push_str(&StyleConfig::default_config());
+
+        str
     }
 }
 
@@ -151,7 +182,8 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
                 fs::create_dir_all(parent_path)?;
             }
 
-            fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
+            // TODO: Should this only create if we are on the default path?
+            fs::File::create(path)?.write_all(ConfigV2::default_config().as_bytes())?;
             Ok(ConfigV2::default())
         }
     } else {

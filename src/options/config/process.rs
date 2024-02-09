@@ -1,6 +1,9 @@
+use indoc::indoc;
 use serde::Deserialize;
 
 use crate::{args::ProcessArgs, widgets::ProcWidgetColumn};
+
+use super::DefaultConfig;
 
 /// Process column settings.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -8,6 +11,17 @@ pub(crate) struct ProcessConfig {
     #[serde(flatten)]
     pub(crate) args: ProcessArgs,
     pub(crate) columns: Option<Vec<ProcWidgetColumn>>,
+}
+
+impl DefaultConfig for ProcessConfig {
+    fn default_config() -> String {
+        let s = indoc! {r##"
+            # Enables case sensitivity by default when searching for a process.
+            # case_sensitive = false
+        "##};
+
+        s.to_string()
+    }
 }
 
 #[cfg(test)]

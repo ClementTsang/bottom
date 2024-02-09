@@ -30,6 +30,14 @@ const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
     None => crate_version!(),
 };
 
+macro_rules! set_if_some {
+    ($name:ident, $curr:expr, $new:expr) => {
+        if $new.$name.is_some() {
+            $curr.$name = $new.$name.clone();
+        }
+    };
+}
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(untagged)]
 pub(crate) enum StringOrNum {
@@ -136,6 +144,7 @@ pub(crate) struct GeneralArgs {
                     If it doesn't exist, a default config file is created at the path. If no path is provided,
                     the default config location will be used."
     )]
+    #[serde(skip)]
     pub(crate) config_location: Option<String>,
 
     #[arg(
@@ -143,8 +152,8 @@ pub(crate) struct GeneralArgs {
         long,
         value_name = "TIME",
         help = "Default time value for graphs.",
-        long_help = "The default time value for graphs. Takes a number in milliseconds or a human \
-                    duration (e.g. 60s). The minimum time is 30s, and the default is 60s."
+        long_help = "Default time value for graphs. Either a number in milliseconds or a 'human duration' \
+                    (e.g. 60s, 10m). Defaults to 60s, must be at least 30s."
     )]
     pub(crate) default_time_value: Option<StringOrNum>,
 
@@ -177,6 +186,21 @@ pub(crate) struct GeneralArgs {
     #[arg(
         long,
         value_name = "WIDGET",
+        help = "Sets the default widget type. Use --help for more info.\n", // Newline to force the possible values to be on the next line.
+        long_help = indoc!{
+            "Sets which widget type to use as the default widget. For the default \
+            layout, this defaults to the 'process' widget. For a custom layout, it defaults \
+            to the first widget it sees.
+
+            For example, suppose we have a layout that looks like:
+            +-------------------+-----------------------+
+            |      CPU (1)      |        CPU (2)        |
+            +---------+---------+-------------+---------+
+            | Process | CPU (3) | Temperature | CPU (4) |
+            +---------+---------+-------------+---------+
+
+            Setting '--default_widget_type Temp' will make the temperature widget selected by default."
+        },
         value_parser = [
             "cpu",
             "mem",
@@ -193,21 +217,6 @@ pub(crate) struct GeneralArgs {
             #[cfg(feature = "battery")]
             "battery",
         ],
-        help = "Sets the default widget type. Use --help for more info.\n", // Newline to force the possible values to be on the next line.
-        long_help = indoc!{
-            "Sets which widget type to use as the default widget. For the default \
-            layout, this defaults to the 'process' widget. For a custom layout, it defaults \
-            to the first widget it sees.
-
-            For example, suppose we have a layout that looks like:
-            +-------------------+-----------------------+
-            |      CPU (1)      |        CPU (2)        |
-            +---------+---------+-------------+---------+
-            | Process | CPU (3) | Temperature | CPU (4) |
-            +---------+---------+-------------+---------+
-
-            Setting '--default_widget_type Temp' will make the temperature widget selected by default."
-        }
     )]
     pub(crate) default_widget_type: Option<String>,
 
@@ -237,11 +246,7 @@ pub(crate) struct GeneralArgs {
     #[arg(long, help = "Hides spacing between table headers and entries.")]
     pub(crate) hide_table_gap: Option<bool>,
 
-    #[arg(
-        long,
-        help = "Hides the time scale.",
-        long_help = "Completely hides the time scale from being shown."
-    )]
+    #[arg(long, help = "Hides the time scale from being shown.")]
     pub(crate) hide_time: Option<bool>,
 
     #[arg(
@@ -249,27 +254,23 @@ pub(crate) struct GeneralArgs {
         long,
         value_name = "TIME",
         help = "Sets how often data is refreshed.",
-        long_help = "Sets how often data is refreshed. Takes a number in milliseconds or a human-readable duration \
-                    (e.g. 5s). The minimum is 250ms, and defaults to 1000ms. Smaller values may result in higher \
-                    system usage by bottom."
+        long_help = "Sets how often data is refreshed. Either a number in milliseconds or a 'human duration' \
+                    (e.g. 1s, 1m). Defaults to 1s, must be at least 250ms. Smaller values may result in \
+                    higher system resource usage."
     )]
     pub(crate) rate: Option<StringOrNum>,
 
     #[arg(
         long,
         value_name = "TIME",
-        help = "The timespan of data stored.",
-        long_help = "How much data is stored at once in terms of time. Takes a number in milliseconds or a \
-                    human-readable duration (e.g. 20m), with a minimum of 1 minute. Note that higher values \
-                    will take up more memory. Defaults to 10 minutes."
+        help = "How far back data will be stored up to.",
+        long_help = "How far back data will be stored up to. Either a number in milliseconds or a 'human duration' \
+                    (e.g. 10m, 1h). Defaults to 10 minutes, and must be at least  1 minute. Larger values \
+                    may result in higher memory usage."
     )]
     pub(crate) retention: Option<StringOrNum>,
 
-    #[arg(
-        long,
-        help = "Shows the scroll position tracker in table widgets.",
-        long_help = "Shows the list scroll position tracker in the widget title for table widgets."
-    )]
+    #[arg(long, help = "Show the current item entry position for table widgets.")]
     pub(crate) show_table_scroll_position: Option<bool>,
 
     #[arg(
@@ -277,18 +278,10 @@ pub(crate) struct GeneralArgs {
         long,
         value_name = "TIME",
         help = "The amount of time changed upon zooming.",
-        long_help = "The amount of time changed when zooming in/out. Takes a number in milliseconds or a \
-                    human-readable duration (e.g. 30s). The minimum is 1s, and defaults to 15s."
+        long_help = "How much time the x-axis shifts by each time you zoom in or out. Either a number in milliseconds \
+                    or a 'human duration' (e.g. 15s, 1m). Defaults to 15 seconds."
     )]
     pub(crate) time_delta: Option<StringOrNum>,
-}
-
-macro_rules! set_if_some {
-    ($name:ident, $curr:expr, $new:expr) => {
-        if $new.$name.is_some() {
-            $curr.$name = $new.$name.clone();
-        }
-    };
 }
 
 impl GeneralArgs {
@@ -318,7 +311,7 @@ pub(crate) struct ProcessArgs {
         short = 'S',
         long,
         help = "Enables case sensitivity by default.",
-        long_help = "When searching for a process, enables case sensitivity by default."
+        long_help = "Enables case sensitivity by default when searching for a process."
     )]
     pub(crate) case_sensitive: Option<bool>,
 
