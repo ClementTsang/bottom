@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1344](https://github.com/ClementTsang/bottom/pull/1344): Change the `group` command line-argument to `group_processes` for consistency with the config file option.
 - [#1376](https://github.com/ClementTsang/bottom/pull/1376): Group together related command-line arguments in `-h` and `--help`.
+- [#1411](https://github.com/ClementTsang/bottom/pull/1411): Add `time` as a default column.
 
 ### Bug Fixes
 

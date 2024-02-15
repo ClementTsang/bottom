@@ -27,16 +27,12 @@ By default, the main process table displays the following information for each p
 - Total amount written
 - User
 - Process state
-
-It can also additionally display the following columns:
-
-- Process running time
+- Process uptime
 
 With the feature flag (`--enable_gpu` on Linux/Windows) and gpu process columns enabled in the configuration:
 
 - GPU memory use percentage
 - GPU core utilization percentage
-
 
 See [the processes configuration page](../../configuration/config-file/processes.md) on how to customize which columns
 are shown.

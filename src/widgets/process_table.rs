@@ -318,6 +318,7 @@ impl ProcWidgetState {
                         TotalWrite,
                         User,
                         State,
+                        Time,
                     ];
 
                     default_columns.into_iter().map(make_column).collect()
