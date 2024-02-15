@@ -75,7 +75,7 @@ default = ["deploy"]
 anyhow = "1.0.79"
 backtrace = "0.3.69"
 cfg-if = "1.0.0"
-clap = { version = "4.4.18", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.5.0", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 crossterm = "0.27.0"
 ctrlc = { version = "3.4.2", features = ["termination"] }
@@ -84,30 +84,28 @@ dirs = "5.0.1"
 fern = { version = "0.6.2", optional = true }
 hashbrown = "0.14.3"
 humantime = "2.1.0"
-indexmap = "2.1.0"
+indexmap = "2.2.3"
 indoc = "2.0.4"
-itertools = "0.12.0"
+itertools = "0.12.1"
 kstring = { version = "2.0.0", features = ["arc"] }
 log = { version = "0.4.20", optional = true }
-nvml-wrapper = { version = "0.9.0", optional = true, features = [
-    "legacy-functions",
-] }
-regex = "1.10.2"
-serde = { version = "=1.0.195", features = ["derive"] }
+nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
+regex = "1.10.3"
+serde = { version = "=1.0.196", features = ["derive"] }
 starship-battery = { version = "0.8.2", optional = true }
 sysinfo = "=0.30.5"
-thiserror = "1.0.56"
-time = { version = "0.3.30", features = ["formatting", "macros"] }
-toml_edit = { version = "0.21.0", features = ["serde"] }
-tui = { version = "0.26.0", package = "ratatui" }
-unicode-segmentation = "1.10.1"
+thiserror = "1.0.57"
+time = { version = "0.3.34", features = ["formatting", "macros"] }
+toml_edit = { version = "0.22.5", features = ["serde"] }
+tui = { version = "0.26.1", package = "ratatui" }
+unicode-segmentation = "1.11.0"
 unicode-width = "0.1.11"
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.152"
+libc = "0.2.153"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "0.38.30", features = ["fs", "param", "process"] }
+rustix = { version = "0.38.31", features = ["fs", "param", "process"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.9.4"
@@ -125,26 +123,24 @@ windows = { version = "0.52.0", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.111" }
+serde_json = { version = "1.0.113" }
 sysctl = { version = "0.5.5" }
 filedescriptor = "0.8.2"
 
 [dev-dependencies]
 assert_cmd = "2.0.13"
-cargo-husky = { version = "1.5.0", default-features = false, features = [
-    "user-hooks",
-] }
-predicates = "3.0.4"
+cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
+predicates = "3.1.0"
 
 [target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
 portable-pty = "0.8.1"
 
 [build-dependencies]
-clap = { version = "4.4.18", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "4.4.8"
-clap_complete_fig = "4.4.2"
-clap_complete_nushell = "4.4.2"
-clap_mangen = "0.2.17"
+clap = { version = "4.5.0", features = ["default", "cargo", "wrap_help"] }
+clap_complete = "4.5.0"
+clap_complete_fig = "4.5.0"
+clap_complete_nushell = "4.5.0"
+clap_mangen = "0.2.20"
 indoc = "2.0.4"
 
 [package.metadata.deb]
