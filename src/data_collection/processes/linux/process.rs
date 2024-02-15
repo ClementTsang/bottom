@@ -26,7 +26,8 @@ fn next_part<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Result<&'a str, io
         .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidData))
 }
 
-/// A wrapper around the data in `/proc/<PID>/stat`. For documentation, see [here](https://man7.org/linux/man-pages/man5/proc.5.html).
+/// A wrapper around the data in `/proc/<PID>/stat`. For documentation, see
+/// [here](https://man7.org/linux/man-pages/man5/proc.5.html).
 ///
 /// Note this does not necessarily get all fields, only the ones we use in bottom.
 pub(crate) struct Stat {
@@ -47,6 +48,9 @@ pub(crate) struct Stat {
 
     /// The resident set size, or the number of pages the process has in real memory.
     pub rss: u64,
+
+    /// The start time of the process, represented in clock ticks.
+    pub start_time: u64,
 }
 
 impl Stat {
@@ -76,18 +80,19 @@ impl Stat {
             .chars()
             .next()
             .ok_or_else(|| anyhow!("missing state"))?;
-
         let ppid: Pid = next_part(&mut rest)?.parse()?;
 
         // Skip 9 fields until utime (pgrp, session, tty_nr, tpgid, flags, minflt, cminflt, majflt, cmajflt).
         let mut rest = rest.skip(9);
-
         let utime: u64 = next_part(&mut rest)?.parse()?;
         let stime: u64 = next_part(&mut rest)?.parse()?;
 
-        // Skip 8 fields until rss (cutime, cstime, priority, nice, num_threads, itrealvalue, starttime, vsize).
-        let mut rest = rest.skip(8);
+        // Skip 6 fields until starttime (cutime, cstime, priority, nice, num_threads, itrealvalue).
+        let mut rest = rest.skip(6);
+        let start_time: u64 = next_part(&mut rest)?.parse()?;
 
+        // Skip one field until rss (vsize)
+        let mut rest = rest.skip(1);
         let rss: u64 = next_part(&mut rest)?.parse()?;
 
         Ok(Stat {
@@ -97,6 +102,7 @@ impl Stat {
             utime,
             stime,
             rss,
+            start_time,
         })
     }
 

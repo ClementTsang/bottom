@@ -134,7 +134,7 @@ fn get_linux_cpu_usage(
 fn read_proc(
     prev_proc: &PrevProcDetails, process: Process, cpu_usage: f64, cpu_fraction: f64,
     use_current_cpu_total: bool, time_difference_in_secs: u64, total_memory: u64,
-    user_table: &mut UserTable,
+    user_table: &mut UserTable, uptime: u64,
 ) -> error::Result<(ProcessHarvest, u64)> {
     let Process {
         pid: _,
@@ -231,7 +231,7 @@ fn read_proc(
         if ticks_per_sec == 0 {
             Duration::ZERO
         } else {
-            Duration::from_secs(stat.utime + stat.stime) / ticks_per_sec
+            Duration::from_secs(uptime.saturating_sub(stat.start_time / ticks_per_sec as u64))
         }
     } else {
         Duration::ZERO
@@ -329,6 +329,7 @@ pub(crate) fn linux_process_data(
             }
         });
 
+        let uptime = sysinfo::System::uptime();
         let process_vector: Vec<ProcessHarvest> = pids
             .filter_map(|pid_path| {
                 if let Ok(process) = Process::from_path(pid_path) {
@@ -345,6 +346,7 @@ pub(crate) fn linux_process_data(
                         time_difference_in_secs,
                         total_memory,
                         user_table,
+                        uptime,
                     ) {
                         #[cfg(feature = "gpu")]
                         if let Some(gpus) = &collector.gpu_pids {
