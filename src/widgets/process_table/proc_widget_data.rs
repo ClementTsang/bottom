@@ -263,6 +263,7 @@ impl ProcWidgetData {
         self.wps += other.wps;
         self.total_read += other.total_read;
         self.total_write += other.total_write;
+        self.time = self.time.max(other.time);
         #[cfg(feature = "gpu")]
         {
             self.gpu_mem_usage = match (&self.gpu_mem_usage, &other.gpu_mem_usage) {

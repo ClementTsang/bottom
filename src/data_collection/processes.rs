@@ -74,7 +74,7 @@ pub struct ProcessHarvest {
     /// The current state of the process (e.g. zombie, asleep).
     pub process_state: (String, char),
 
-    /// Cumulative total CPU time used.
+    /// Cumulative process uptime.
     pub time: Duration,
 
     /// This is the *effective* user ID of the process. This is only used on Unix platforms.
@@ -109,7 +109,7 @@ impl ProcessHarvest {
         self.write_bytes_per_sec += rhs.write_bytes_per_sec;
         self.total_read_bytes += rhs.total_read_bytes;
         self.total_write_bytes += rhs.total_write_bytes;
-        self.time += rhs.time;
+        self.time = self.time.max(rhs.time);
         #[cfg(feature = "gpu")]
         {
             self.gpu_mem += rhs.gpu_mem;

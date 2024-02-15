@@ -132,9 +132,7 @@ fn get_linux_cpu_usage(
 }
 
 fn read_proc(
-    prev_proc: &PrevProcDetails, process: Process, cpu_usage: f64, cpu_fraction: f64,
-    use_current_cpu_total: bool, time_difference_in_secs: u64, total_memory: u64,
-    user_table: &mut UserTable,
+    prev_proc: &PrevProcDetails, process: Process, args: ReadProcArgs, user_table: &mut UserTable,
 ) -> error::Result<(ProcessHarvest, u64)> {
     let Process {
         pid: _,
@@ -143,6 +141,15 @@ fn read_proc(
         io,
         cmdline,
     } = process;
+
+    let ReadProcArgs {
+        use_current_cpu_total,
+        cpu_usage,
+        cpu_fraction,
+        total_memory,
+        time_difference_in_secs,
+        uptime,
+    } = args;
 
     let (command, name) = {
         let truncated_name = stat.comm.as_str();
@@ -231,7 +238,7 @@ fn read_proc(
         if ticks_per_sec == 0 {
             Duration::ZERO
         } else {
-            Duration::from_secs(stat.utime + stat.stime) / ticks_per_sec
+            Duration::from_secs(uptime.saturating_sub(stat.start_time / ticks_per_sec as u64))
         }
     } else {
         Duration::ZERO
@@ -277,6 +284,17 @@ pub(crate) struct ProcHarvestOptions {
 
 fn is_str_numeric(s: &str) -> bool {
     s.chars().all(|c| c.is_ascii_digit())
+}
+
+/// General args to keep around for reading proc data.
+#[derive(Copy, Clone)]
+pub(crate) struct ReadProcArgs {
+    pub(crate) use_current_cpu_total: bool,
+    pub(crate) cpu_usage: f64,
+    pub(crate) cpu_fraction: f64,
+    pub(crate) total_memory: u64,
+    pub(crate) time_difference_in_secs: u64,
+    pub(crate) uptime: u64,
 }
 
 pub(crate) fn linux_process_data(
@@ -329,6 +347,15 @@ pub(crate) fn linux_process_data(
             }
         });
 
+        let args = ReadProcArgs {
+            use_current_cpu_total,
+            cpu_usage,
+            cpu_fraction,
+            total_memory,
+            time_difference_in_secs,
+            uptime: sysinfo::System::uptime(),
+        };
+
         let process_vector: Vec<ProcessHarvest> = pids
             .filter_map(|pid_path| {
                 if let Ok(process) = Process::from_path(pid_path) {
@@ -336,16 +363,9 @@ pub(crate) fn linux_process_data(
                     let prev_proc_details = pid_mapping.entry(pid).or_default();
 
                     #[allow(unused_mut)]
-                    if let Ok((mut process_harvest, new_process_times)) = read_proc(
-                        prev_proc_details,
-                        process,
-                        cpu_usage,
-                        cpu_fraction,
-                        use_current_cpu_total,
-                        time_difference_in_secs,
-                        total_memory,
-                        user_table,
-                    ) {
+                    if let Ok((mut process_harvest, new_process_times)) =
+                        read_proc(prev_proc_details, process, args, user_table)
+                    {
                         #[cfg(feature = "gpu")]
                         if let Some(gpus) = &collector.gpu_pids {
                             gpus.iter().for_each(|gpu| {
