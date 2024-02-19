@@ -365,7 +365,7 @@ You can find more information on usage in the [documentation](https://clementtsa
 bottom accepts a number of command-line arguments to change the behaviour of the application as desired. Additionally, bottom will automatically
 generate a configuration file on the first launch, which one can change as appropriate.
 
-More details on configuration can be found [in the documentation](https://clementtsang.github.io/bottom/nightly/configuration/config-file/default-config/).
+More details on configuration can be found [in the documentation](https://clementtsang.github.io/bottom/nightly/configuration/config-file/).
 
 ## Troubleshooting
 
