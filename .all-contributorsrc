@@ -435,6 +435,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "john-s-lin",
+      "name": "john-s-lin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66440371?v=4",
+      "profile": "https://johnlin.ca/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
