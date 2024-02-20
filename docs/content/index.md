@@ -29,9 +29,11 @@ which contains a list of all the installation methods.
 
 ## Usage and configuration
 
-You can refer to the [usage](usage/general-usage.md) pages on how to use bottom (e.g. keybinds, some features, a general overview of what each widget does).
+The command to run bottom is `btm`.
 
-To configure bottom, refer to the [configuration](configuration/command-line-options.md) pages (e.g. how it behaves, how it looks).
+You can refer to the [usage](usage/general-usage.md) pages for more details on using bottom (e.g. keybinds, some features, a general overview of what each widget does).
+
+To configure bottom (e.g. how it behaves, how it looks, etc.) refer to the [command-line options page](configuration/command-line-options.md) for temporary settings, or [the config file page](configuration/config-file) for more permanent settings.
 
 ## Contribution
 
