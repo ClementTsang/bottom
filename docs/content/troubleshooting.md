@@ -55,13 +55,13 @@ Let's say you're installing [Iosevka](https://github.com/be5invis/Iosevka). The 
     <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
 </figure>
 
-1. Then, open the Command Prompt/PowerShell, and right-click on the top bar, and open "Properties":
+5. Then, open the Command Prompt/PowerShell, and right-click on the top bar, and open "Properties":
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
 </figure>
 
-1. From here, go to "Font", and set the font to your new font (so in this example, Iosevka):
+6. From here, go to "Font", and set the font to your new font (so in this example, Iosevka):
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
