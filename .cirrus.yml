@@ -94,13 +94,6 @@ build_task:
       env:
         TARGET: "x86_64-unknown-freebsd"
         NAME: "x86_64-unknown-freebsd-13-2"
-    - name: "macOS M1 Build"
-      alias: "macos_build"
-      macos_instance:
-        image: ghcr.io/cirruslabs/macos-monterey-base:latest
-      env:
-        TARGET: "aarch64-apple-darwin"
-        NAME: "aarch64-apple-darwin"
     - name: "Legacy Linux (2.17)"
       alias: "linux_2_17_build"
       container:
