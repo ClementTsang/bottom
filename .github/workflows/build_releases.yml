@@ -39,7 +39,7 @@ jobs:
       matrix:
         info:
           # ======= Supported targets =======
-          # Linux (x64, x86, aarch64)
+          # Linux (x86-64, x86, aarch64)
           - {
               os: "ubuntu-20.04",
               target: "x86_64-unknown-linux-gnu",
@@ -72,10 +72,11 @@ jobs:
               cross: true,
             }
 
-          # macOS (x64), M1 is built via CirrusCI.
+          # macOS (x86-64 and aarch64)
           - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
 
-          # Windows (x64, x86)
+          # Windows (x86-64, x86)
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",

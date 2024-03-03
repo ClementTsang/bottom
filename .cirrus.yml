@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
-# Configuration for CirrusCI. This is primarily used for testing and building FreeBSD and macOS M1, since other
-# CI platforms don't seem to support these platforms as of writing (GH may support M1 soon though).
+# Configuration for CirrusCI. This is primarily used for testing and building FreeBSD and old versions of Linux,
+# since other CI platforms don't support build jobs for these configurations.
 #
 # Note that we set the YAML directive above to prevent some linting errors around the templates.
 
@@ -50,10 +50,7 @@ test_task:
         image_family: freebsd-14-0
     - name: "FreeBSD 13 Test"
       freebsd_instance:
-        image_family: freebsd-13-2
-    - name: "macOS M1 Test"
-      macos_instance:
-        image: ghcr.io/cirruslabs/macos-monterey-base:latest
+        image_family: freebsd-13-3
   <<: *SETUP_TEMPLATE
   <<: *CACHE_TEMPLATE
   test_no_feature_script:
@@ -88,19 +85,12 @@ build_task:
         TARGET: "x86_64-unknown-freebsd"
         NAME: "x86_64-unknown-freebsd-14-0"
     - name: "FreeBSD 13 Build"
-      alias: "freebsd_13_2_build"
+      alias: "freebsd_13_3_build"
       freebsd_instance:
-        image_family: freebsd-13-2
+        image_family: freebsd-13-3
       env:
         TARGET: "x86_64-unknown-freebsd"
-        NAME: "x86_64-unknown-freebsd-13-2"
-    - name: "macOS M1 Build"
-      alias: "macos_build"
-      macos_instance:
-        image: ghcr.io/cirruslabs/macos-monterey-base:latest
-      env:
-        TARGET: "aarch64-apple-darwin"
-        NAME: "aarch64-apple-darwin"
+        NAME: "x86_64-unknown-freebsd-13-3"
     - name: "Legacy Linux (2.17)"
       alias: "linux_2_17_build"
       container:
