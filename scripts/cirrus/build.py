@@ -20,9 +20,8 @@ from urllib.request import Request, urlopen, urlretrieve
 
 # Form of each task is (TASK_ALIAS, FILE_NAME).
 TASKS: List[Tuple[str, str]] = [
-    ("freebsd_13_2_build", "bottom_x86_64-unknown-freebsd-13-2.tar.gz"),
+    ("freebsd_13_3_build", "bottom_x86_64-unknown-freebsd-13-3.tar.gz"),
     ("freebsd_14_0_build", "bottom_x86_64-unknown-freebsd-14-0.tar.gz"),
-    ("macos_build", "bottom_aarch64-apple-darwin.tar.gz"),
     ("linux_2_17_build", "bottom_x86_64-unknown-linux-gnu-2-17.tar.gz"),
 ]
 URL = "https://api.cirrus-ci.com/graphql"
