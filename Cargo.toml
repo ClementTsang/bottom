@@ -72,10 +72,10 @@ deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
 
 [dependencies]
-anyhow = "1.0.79"
+anyhow = "1.0.80"
 backtrace = "0.3.69"
 cfg-if = "1.0.0"
-clap = { version = "4.5.0", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.5.1", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 crossterm = "0.27.0"
 ctrlc = { version = "3.4.2", features = ["termination"] }
@@ -84,19 +84,19 @@ dirs = "5.0.1"
 fern = { version = "0.6.2", optional = true }
 hashbrown = "0.14.3"
 humantime = "2.1.0"
-indexmap = "2.2.3"
+indexmap = "2.2.5"
 indoc = "2.0.4"
 itertools = "0.12.1"
 kstring = { version = "2.0.0", features = ["arc"] }
-log = { version = "0.4.20", optional = true }
+log = { version = "0.4.21", optional = true }
 nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
 regex = "1.10.3"
-serde = { version = "=1.0.196", features = ["derive"] }
+serde = { version = "1.0.197", features = ["derive"] }
 starship-battery = { version = "0.8.2", optional = true }
 sysinfo = "=0.30.6"
 thiserror = "1.0.57"
 time = { version = "0.3.34", features = ["formatting", "macros"] }
-toml_edit = { version = "0.22.5", features = ["serde"] }
+toml_edit = { version = "0.22.6", features = ["serde"] }
 tui = { version = "0.26.1", package = "ratatui" }
 unicode-segmentation = "1.11.0"
 unicode-width = "0.1.11"
@@ -112,7 +112,7 @@ core-foundation = "0.9.4"
 mach2 = "0.4.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.52.0", features = [
+windows = { version = "0.54.0", features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_Storage_FileSystem",
@@ -123,12 +123,12 @@ windows = { version = "0.52.0", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.113" }
+serde_json = { version = "1.0.114" }
 sysctl = { version = "0.5.5" }
 filedescriptor = "0.8.2"
 
 [dev-dependencies]
-assert_cmd = "2.0.13"
+assert_cmd = "2.0.14"
 cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
 predicates = "3.1.0"
 
@@ -136,10 +136,10 @@ predicates = "3.1.0"
 portable-pty = "0.8.1"
 
 [build-dependencies]
-clap = { version = "4.5.0", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "4.5.0"
+clap = { version = "4.5.1", features = ["default", "cargo", "wrap_help"] }
+clap_complete = "4.5.1"
 clap_complete_fig = "4.5.0"
-clap_complete_nushell = "4.5.0"
+clap_complete_nushell = "4.5.1"
 clap_mangen = "0.2.20"
 indoc = "2.0.4"
 
