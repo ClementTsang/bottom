@@ -19,7 +19,7 @@ btm --basic
 or through the config:
 
 ```toml
-[flags]
+[general]
 basic = true
 ```
 

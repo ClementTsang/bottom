@@ -1,137 +1,169 @@
-//! Argument parsing via clap.
+//! Argument parsing via clap + config files.
 //!
 //! Note that you probably want to keep this as a single file so the build script doesn't
 //! trip all over itself.
 
 // TODO: New sections are misaligned! See if we can get that fixed.
-
-use std::cmp::Ordering;
+// TODO: This might need some more work when we do config screens. For example, we can't just merge args + config,
+// since we need to know the state of the config, the overwriting args, and adjust the calculated app settings as
+// they change.
 
 use clap::*;
 use indoc::indoc;
+use serde::Deserialize;
 
-pub fn get_matches() -> ArgMatches {
-    build_app().get_matches()
-}
+const TEMPLATE: &str = indoc! {
+    "{name} {version}
+    {author}
 
-/// Returns an [`Ordering`] for two [`Arg`] values.
-///
-/// Note this assumes that they both have a _long_ name, and will
-/// panic if either are missing!
-fn sort_args(a: &Arg, b: &Arg) -> Ordering {
-    let a = a.get_long().unwrap();
-    let b = b.get_long().unwrap();
+    {about}
 
-    a.cmp(b)
-}
+    {usage-heading} {usage}
 
-/// Create an array of [`Arg`] values. If there is more than one value, then
-/// they will be sorted by their long name. Note this sort will panic if
-/// any [`Arg`] does not have a long name!
-macro_rules! args {
-    ( $arg:expr $(,)?) => {
-        [$arg]
-    };
-    ( $( $arg:expr ),+ $(,)? ) => {
-        {
-            let mut args = [ $( $arg, )* ];
-            args.sort_unstable_by(sort_args);
-            args
+    {all-args}"
+};
+
+const USAGE: &str = "btm [OPTIONS]";
+
+const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
+    Some(nightly_version) => nightly_version,
+    None => crate_version!(),
+};
+
+macro_rules! set_if_some {
+    ($name:ident, $curr:expr, $new:expr) => {
+        if $new.$name.is_some() {
+            $curr.$name = $new.$name.clone();
         }
     };
 }
 
-fn general_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("General Options");
+#[derive(Clone, Debug, Deserialize)]
+#[serde(untagged)]
+pub(crate) enum StringOrNum {
+    String(String),
+    Num(u64),
+}
 
-    let autohide_time = Arg::new("autohide_time")
-        .long("autohide_time")
-        .action(ArgAction::SetTrue)
-        .help("Temporarily shows the time scale in graphs.")
-        .long_help(
-            "Automatically hides the time scale in graphs after being shown for \
-            a brief moment when zoomed in/out. If time is disabled via --hide_time \
-            then this will have no effect.",
-        );
+impl From<&str> for StringOrNum {
+    fn from(value: &str) -> Self {
+        match value.parse::<u64>() {
+            Ok(parsed) => StringOrNum::Num(parsed),
+            Err(_) => StringOrNum::String(value.to_owned()),
+        }
+    }
+}
 
-    let basic = Arg::new("basic")
-        .short('b')
-        .long("basic")
-        .action(ArgAction::SetTrue)
-        .help("Hides graphs and uses a more basic look.")
-        .long_help(
-            "Hides graphs and uses a more basic look. Design is largely inspired by htop's.",
-        );
+impl From<u64> for StringOrNum {
+    fn from(value: u64) -> Self {
+        StringOrNum::Num(value)
+    }
+}
 
-    let disable_click = Arg::new("disable_click")
-        .long("disable_click")
-        .action(ArgAction::SetTrue)
-        .help("Disables mouse clicks.")
-        .long_help("Disables mouse clicks from interacting with the program.");
+/// Represents the arguments that can be passed in to bottom.
+#[derive(Parser, Debug)]
+#[command(
+    name = crate_name!(),
+    version = VERSION,
+    author = crate_authors!(),
+    about = crate_description!(),
+    disable_help_flag = true,
+    disable_version_flag = true,
+    color = ColorChoice::Auto,
+    help_template = TEMPLATE,
+    override_usage = USAGE,
+)]
+pub struct BottomArgs {
+    #[command(flatten)]
+    pub(crate) general: GeneralArgs,
 
-    let dot_marker = Arg::new("dot_marker")
-        .short('m')
-        .long("dot_marker")
-        .action(ArgAction::SetTrue)
-        .help("Uses a dot marker for graphs.")
-        .long_help("Uses a dot marker for graphs as opposed to the default braille marker.");
+    #[command(flatten)]
+    pub(crate) process: ProcessArgs,
 
-    let hide_table_gap = Arg::new("hide_table_gap")
-        .long("hide_table_gap")
-        .action(ArgAction::SetTrue)
-        .help("Hides spacing between table headers and entries.")
-        .long_help("Hides the spacing between table headers and entries.");
+    #[command(flatten)]
+    pub(crate) temperature: TemperatureArgs,
 
-    let hide_time = Arg::new("hide_time")
-        .long("hide_time")
-        .action(ArgAction::SetTrue)
-        .help("Hides the time scale.")
-        .long_help("Completely hides the time scale from being shown.");
+    #[command(flatten)]
+    pub(crate) cpu: CpuArgs,
 
-    let left_legend = Arg::new("left_legend")
-        .short('l')
-        .long("left_legend")
-        .action(ArgAction::SetTrue)
-        .help("Puts the CPU chart legend to the left side.")
-        .long_help("Puts the CPU chart legend to the left side rather than the right side.");
+    #[command(flatten)]
+    pub(crate) memory: MemoryArgs,
 
-    let show_table_scroll_position = Arg::new("show_table_scroll_position")
-        .long("show_table_scroll_position")
-        .action(ArgAction::SetTrue)
-        .help("Shows the scroll position tracker in table widgets.")
-        .long_help("Shows the list scroll position tracker in the widget title for table widgets.");
+    #[command(flatten)]
+    pub(crate) network: NetworkArgs,
 
-    let config_location = Arg::new("config_location")
-        .short('C')
-        .long("config")
-        .action(ArgAction::Set)
-        .value_name("CONFIG PATH")
-        .help("Sets the location of the config file.")
-        .long_help(
-            "Sets the location of the config file. Expects a config file in the TOML format.\
-            If it doesn't exist, one is created.",
-        )
-        .value_hint(ValueHint::AnyPath);
+    #[cfg(feature = "battery")]
+    #[command(flatten)]
+    pub(crate) battery: BatteryArgs,
 
-    let default_time_value = Arg::new("default_time_value")
-        .short('t')
-        .long("default_time_value")
-        .action(ArgAction::Set)
-        .value_name("TIME")
-        .help("Default time value for graphs.")
-        .long_help(
-            "Default time value for graphs. Takes a number in milliseconds or a human \
-            duration (e.g. 60s). The minimum time is 30s, and the default is 60s.",
-        );
+    #[cfg(feature = "gpu")]
+    #[command(flatten)]
+    pub(crate) gpu: GpuArgs,
+
+    #[command(flatten)]
+    pub(crate) style: StyleArgs,
+
+    #[command(flatten)]
+    pub(crate) other: OtherArgs,
+}
+
+impl BottomArgs {
+    /// Returns the config path if it is set.
+    #[inline]
+    pub fn config_path(&self) -> Option<&str> {
+        self.general.config_location.as_deref()
+    }
+}
+
+/// General arguments/config options.
+#[derive(Args, Clone, Debug, Default, Deserialize)]
+#[command(next_help_heading = "General Options", rename_all = "snake_case")]
+pub(crate) struct GeneralArgs {
+    #[arg(
+        long,
+        help = "Temporarily shows the time scale in graphs.",
+        long_help = "Automatically hides the time scale in graphs after being shown for a brief moment when zoomed \
+                    in/out. If time is disabled via --hide_time then this will have no effect."
+    )]
+    pub(crate) autohide_time: Option<bool>,
+
+    #[arg(
+        short = 'b',
+        long,
+        help = "Hides graphs and uses a more basic look.",
+        long_help = "Hides graphs and uses a more basic look. Design is largely inspired by htop's."
+    )]
+    pub(crate) basic: Option<bool>,
+
+    #[arg(
+        short = 'C',
+        long,
+        value_name = "PATH",
+        help = "Sets the location of the config file.",
+        long_help = "Sets the location of the config file. Expects a config file in the TOML format. \
+                    If it doesn't exist, a default config file is created at the path. If no path is provided,
+                    the default config location will be used."
+    )]
+    #[serde(skip)]
+    pub(crate) config_location: Option<String>,
+
+    #[arg(
+        short = 't',
+        long,
+        value_name = "TIME",
+        help = "Default time value for graphs.",
+        long_help = "Default time value for graphs. Either a number in milliseconds or a 'human duration' \
+                    (e.g. 60s, 10m). Defaults to 60s, must be at least 30s."
+    )]
+    pub(crate) default_time_value: Option<StringOrNum>,
 
     // TODO: Charts are broken in the manpage
-    let default_widget_count = Arg::new("default_widget_count")
-        .long("default_widget_count")
-        .action(ArgAction::Set)
-        .requires_all(["default_widget_type"])
-        .value_name("INT")
-        .help("Sets the n'th selected widget type as the default.")
-        .long_help(indoc! {
+    #[arg(
+        long,
+        requires_all = ["default_widget_type"],
+        value_name = "N",
+        help = "Sets the n'th selected widget type as the default. Use --help for more info.",
+        long_help = indoc! {
             "Sets the n'th selected widget type to use as the default widget.
             Requires 'default_widget_type' to also be set, and defaults to 1.
 
@@ -147,14 +179,15 @@ fn general_args(cmd: Command) -> Command {
             '--default_widget_count 1', then it would use the CPU (1) as
             the default widget. If we set '--default_widget_count 3', it would
             use CPU (3) as the default instead."
-        });
+        }
+    )]
+    pub(crate) default_widget_count: Option<u32>,
 
-    let default_widget_type = Arg::new("default_widget_type")
-        .long("default_widget_type")
-        .action(ArgAction::Set)
-        .value_name("WIDGET TYPE")
-        .help("Sets the default widget type, use --help for info.")
-        .long_help(indoc!{
+    #[arg(
+        long,
+        value_name = "WIDGET",
+        help = "Sets the default widget type. Use --help for more info.\n", // Newline to force the possible values to be on the next line.
+        long_help = indoc!{
             "Sets which widget type to use as the default widget. For the default \
             layout, this defaults to the 'process' widget. For a custom layout, it defaults \
             to the first widget it sees.
@@ -167,8 +200,8 @@ fn general_args(cmd: Command) -> Command {
             +---------+---------+-------------+---------+
 
             Setting '--default_widget_type Temp' will make the temperature widget selected by default."
-        })
-        .value_parser([
+        },
+        value_parser = [
             "cpu",
             "mem",
             "net",
@@ -179,399 +212,424 @@ fn general_args(cmd: Command) -> Command {
             "temp",
             "temperature",
             "disk",
-            #[cfg(not(feature = "battery"))]
+            #[cfg(feature = "battery")]
             "batt",
-            #[cfg(not(feature = "battery"))]
+            #[cfg(feature = "battery")]
             "battery",
-        ]);
+        ],
+    )]
+    pub(crate) default_widget_type: Option<String>,
 
-    let expanded_on_startup = Arg::new("expanded_on_startup")
-        .short('e')
-        .long("expanded")
-        .action(ArgAction::SetTrue)
-        .help("Expand the default widget upon starting the app.")
-        .long_help(
-            "Expand the default widget upon starting the app. \
-            Same as pressing \"e\" inside the app. Use with \"default_widget_type\" \
-            and \"default_widget_count\" to select the desired expanded widget. This \
-            flag has no effect in basic mode (--basic).",
-        );
+    #[arg(
+        long,
+        help = "Disables mouse clicks.",
+        long_help = "Disables mouse clicks from interacting with bottom."
+    )]
+    pub(crate) disable_click: Option<bool>,
 
-    let rate = Arg::new("rate")
-        .short('r')
-        .long("rate")
-        .action(ArgAction::Set)
-        .value_name("TIME")
-        .help("Sets the data refresh rate.")
-        .long_help(
-            "Sets the data refresh rate. Takes a number in milliseconds or a human\
-            duration (e.g. 5s). The minimum is 250ms, and defaults to 1000ms. Smaller \
-            values may take more computer resources.",
-        );
+    #[arg(
+        short = 'm',
+        long,
+        help = "Uses a dot marker for graphs.",
+        long_help = "Uses a dot marker for graphs as opposed to the default braille marker."
+    )]
+    pub(crate) dot_marker: Option<bool>,
 
-    let time_delta = Arg::new("time_delta")
-        .short('d')
-        .long("time_delta")
-        .action(ArgAction::Set)
-        .value_name("TIME")
-        .help("The amount of time changed upon zooming.")
-        .long_help(
-            "The amount of time changed when zooming in/out. Takes a number in \
-            milliseconds or a human duration (e.g. 30s). The minimum is 1s, and \
-            defaults to 15s.",
-        );
+    #[arg(
+        short = 'e',
+        long,
+        help = "Expand the default widget upon starting the app.",
+        long_help = "Expand the default widget upon starting the app. This flag has no effect in basic mode (--basic)."
+    )]
+    pub(crate) expanded: Option<bool>,
 
-    // TODO: Unify how we do defaults.
-    let retention = Arg::new("retention")
-        .long("retention")
-        .action(ArgAction::Set)
-        .value_name("TIME")
-        .help("The timespan of data stored.")
-        .long_help(
-            "How much data is stored at once in terms of time. Takes a number \
-            in milliseconds or a human duration (e.g. 20m), with a minimum of 1 minute. \
-            Note that higher values will take up more memory. Defaults to 10 minutes.",
-        );
+    #[arg(long, help = "Hides spacing between table headers and entries.")]
+    pub(crate) hide_table_gap: Option<bool>,
 
-    cmd.args(args![
-        autohide_time,
-        basic,
-        disable_click,
-        dot_marker,
-        hide_table_gap,
-        hide_time,
-        left_legend,
-        show_table_scroll_position,
-        config_location,
-        default_time_value,
-        default_widget_count,
-        default_widget_type,
-        expanded_on_startup,
-        rate,
-        time_delta,
-        retention,
-    ])
+    #[arg(long, help = "Hides the time scale from being shown.")]
+    pub(crate) hide_time: Option<bool>,
+
+    #[arg(
+        short = 'r',
+        long,
+        value_name = "TIME",
+        help = "Sets how often data is refreshed.",
+        long_help = "Sets how often data is refreshed. Either a number in milliseconds or a 'human duration' \
+                    (e.g. 1s, 1m). Defaults to 1s, must be at least 250ms. Smaller values may result in \
+                    higher system resource usage."
+    )]
+    pub(crate) rate: Option<StringOrNum>,
+
+    #[arg(
+        long,
+        value_name = "TIME",
+        help = "How far back data will be stored up to.",
+        long_help = "How far back data will be stored up to. Either a number in milliseconds or a 'human duration' \
+                    (e.g. 10m, 1h). Defaults to 10 minutes, and must be at least  1 minute. Larger values \
+                    may result in higher memory usage."
+    )]
+    pub(crate) retention: Option<StringOrNum>,
+
+    #[arg(long, help = "Show the current item entry position for table widgets.")]
+    pub(crate) show_table_scroll_position: Option<bool>,
+
+    #[arg(
+        short = 'd',
+        long,
+        value_name = "TIME",
+        help = "The amount of time changed upon zooming.",
+        long_help = "How much time the x-axis shifts by each time you zoom in or out. Either a number in milliseconds \
+                    or a 'human duration' (e.g. 15s, 1m). Defaults to 15 seconds."
+    )]
+    pub(crate) time_delta: Option<StringOrNum>,
 }
 
-fn style_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("Style Options");
+impl GeneralArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(autohide_time, self, other);
+        set_if_some!(basic, self, other);
+        set_if_some!(config_location, self, other);
+        set_if_some!(default_time_value, self, other);
+        set_if_some!(default_widget_count, self, other);
+        set_if_some!(default_widget_type, self, other);
+        set_if_some!(disable_click, self, other);
+        set_if_some!(dot_marker, self, other);
+        set_if_some!(expanded, self, other);
+        set_if_some!(hide_time, self, other);
+        set_if_some!(rate, self, other);
+        set_if_some!(retention, self, other);
+        set_if_some!(show_table_scroll_position, self, other);
+        set_if_some!(time_delta, self, other);
+    }
+}
 
-    // TODO: File an issue with manpage, it cannot render charts correctly.
-    let color = Arg::new("color")
-        .long("color")
-        .action(ArgAction::Set)
-        .value_name("COLOR SCHEME")
-        .value_parser([
+/// Process arguments/config options.
+#[derive(Args, Clone, Debug, Default, Deserialize)]
+#[command(next_help_heading = "Process Options", rename_all = "snake_case")]
+pub(crate) struct ProcessArgs {
+    #[arg(
+        short = 'S',
+        long,
+        help = "Enables case sensitivity by default.",
+        long_help = "Enables case sensitivity by default when searching for a process."
+    )]
+    pub(crate) case_sensitive: Option<bool>,
+
+    // TODO: Rename this.
+    #[arg(
+        short = 'u',
+        long,
+        help = "Sets process CPU% to be based on current CPU%.",
+        long_help = "Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage."
+    )]
+    pub(crate) current_usage: Option<bool>,
+
+    // TODO: Disable this on Windows?
+    #[arg(
+        long,
+        help = "Hides advanced process killing options.",
+        long_help = "Hides advanced options to stop a process on Unix-like systems. The only \
+                    option shown is 15 (TERM)."
+    )]
+    pub(crate) disable_advanced_kill: Option<bool>,
+
+    #[arg(
+        short = 'g',
+        long,
+        help = "Groups processes with the same name by default."
+    )]
+    pub(crate) group_processes: Option<bool>,
+
+    #[arg(
+        long,
+        help = "Defaults to showing process memory usage by value.",
+        long_help = "Defaults to showing process memory usage by value. Otherwise, it defaults to showing it by percentage."
+    )]
+    pub(crate) mem_as_value: Option<bool>,
+
+    #[arg(long, help = "Show processes as their commands by default.")]
+    pub(crate) process_command: Option<bool>,
+
+    #[arg(short = 'R', long, help = "Enables regex by default while searching.")]
+    pub(crate) regex: Option<bool>,
+
+    #[arg(
+        short = 'T',
+        long,
+        help = "Defaults the process widget be in tree mode."
+    )]
+    pub(crate) tree: Option<bool>,
+
+    #[arg(
+        short = 'n',
+        long,
+        help = "Show process CPU% usage without normalizing over the number of cores.",
+        long_help = "Shows all process CPU% usage without averaging over the number of CPU cores in the system."
+    )]
+    pub(crate) unnormalized_cpu: Option<bool>,
+
+    #[arg(
+        short = 'W',
+        long,
+        help = "Enables whole-word matching by default while searching."
+    )]
+    pub(crate) whole_word: Option<bool>,
+}
+
+impl ProcessArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(case_sensitive, self, other);
+        set_if_some!(current_usage, self, other);
+        set_if_some!(disable_advanced_kill, self, other);
+        set_if_some!(group_processes, self, other);
+        set_if_some!(mem_as_value, self, other);
+        set_if_some!(process_command, self, other);
+        set_if_some!(regex, self, other);
+        set_if_some!(tree, self, other);
+        set_if_some!(unnormalized_cpu, self, other);
+        set_if_some!(whole_word, self, other);
+    }
+}
+
+/// Temperature arguments/config options.
+#[derive(Args, Clone, Debug, Default, Deserialize)]
+#[command(next_help_heading = "Temperature Options", rename_all = "snake_case")]
+#[group(id = "temperature_unit", multiple = false)]
+pub(crate) struct TemperatureArgs {
+    #[arg(
+        short = 'c',
+        long,
+        group = "temperature_unit",
+        help = "Use Celsius as the temperature unit. Default.",
+        long_help = "Use Celsius as the temperature unit. This is the default option."
+    )]
+    #[serde(skip)]
+    pub(crate) celsius: bool,
+
+    #[arg(
+        short = 'f',
+        long,
+        group = "temperature_unit",
+        help = "Use Fahrenheit as the temperature unit."
+    )]
+    #[serde(skip)]
+    pub(crate) fahrenheit: bool,
+
+    #[arg(
+        short = 'k',
+        long,
+        group = "temperature_unit",
+        help = "Use Kelvin as the temperature unit."
+    )]
+    #[serde(skip)]
+    pub(crate) kelvin: bool,
+}
+
+impl TemperatureArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        self.celsius |= other.celsius;
+        self.fahrenheit |= other.fahrenheit;
+        self.kelvin |= other.kelvin;
+    }
+}
+
+/// CPU arguments/config options.
+#[derive(Args, Clone, Debug, Default, Deserialize)]
+#[command(next_help_heading = "CPU Options", rename_all = "snake_case")]
+pub(crate) struct CpuArgs {
+    #[arg(long, help = "Defaults to selecting the average CPU entry.")]
+    pub(crate) default_avg_cpu: Option<bool>,
+
+    #[arg(
+        short = 'a',
+        long,
+        help = "Hides the average CPU usage entry.",
+        long = "Hides the average CPU usage entry from being shown."
+    )]
+    pub(crate) hide_avg_cpu: Option<bool>,
+
+    // TODO: Maybe rename this or fix this? Should this apply to all "left legends"?
+    #[arg(
+        short = 'l',
+        long,
+        help = "Puts the CPU chart legend to the left side.",
+        long_help = "Puts the CPU chart legend to the left side rather than the right side."
+    )]
+    pub(crate) left_legend: Option<bool>,
+}
+
+impl CpuArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(default_avg_cpu, self, other);
+        set_if_some!(hide_avg_cpu, self, other);
+        set_if_some!(left_legend, self, other);
+    }
+}
+
+/// Memory argument/config options.
+#[derive(Args, Clone, Debug, Default, Deserialize)]
+#[command(next_help_heading = "Memory Options", rename_all = "snake_case")]
+pub(crate) struct MemoryArgs {
+    #[cfg(not(target_os = "windows"))]
+    #[arg(
+        long,
+        help = "Enables collecting and displaying cache and buffer memory."
+    )]
+    pub(crate) enable_cache_memory: Option<bool>,
+}
+
+impl MemoryArgs {
+    // Lint needed because of target_os.
+    #[allow(unused_variables)]
+    pub(crate) fn merge(&mut self, other: &Self) {
+        #[cfg(not(target_os = "windows"))]
+        set_if_some!(enable_cache_memory, self, other);
+    }
+}
+
+/// Network arguments/config options.
+#[derive(Args, Clone, Debug, Default, Deserialize)]
+#[command(next_help_heading = "Network Options", rename_all = "snake_case")]
+pub(crate) struct NetworkArgs {
+    // TODO: Rename some of these to remove the network prefix for serde.
+    #[arg(
+        long,
+        help = "Displays the network widget using bytes.",
+        long_help = "Displays the network widget using bytes. Defaults to bits."
+    )]
+    pub(crate) network_use_bytes: Option<bool>,
+
+    #[arg(
+        long,
+        help = "Displays the network widget with binary prefixes.",
+        long_help = "Displays the network widget with binary prefixes (e.g. kibibits, mebibits) rather than a decimal \
+                    prefixes (e.g. kilobits, megabits). Defaults to decimal prefixes."
+    )]
+    pub(crate) network_use_binary_prefix: Option<bool>,
+
+    #[arg(
+        long,
+        help = "Displays the network widget with a log scale.",
+        long_help = "Displays the network widget with a log scale. Defaults to a non-log scale."
+    )]
+    pub(crate) network_use_log: Option<bool>,
+
+    #[arg(
+        long,
+        help = "(DEPRECATED) Uses a separate network legend.",
+        long_help = "(DEPRECATED) Uses separate network widget legend. This display is not tested and may be broken."
+    )]
+    pub(crate) use_old_network_legend: Option<bool>,
+}
+
+impl NetworkArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(network_use_bytes, self, other);
+        set_if_some!(network_use_binary_prefix, self, other);
+        set_if_some!(network_use_log, self, other);
+        set_if_some!(use_old_network_legend, self, other);
+    }
+}
+
+/// Battery arguments/config options.
+#[cfg(feature = "battery")]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
+#[command(next_help_heading = "Battery Options", rename_all = "snake_case")]
+pub(crate) struct BatteryArgs {
+    #[arg(
+        long,
+        help = "Shows the battery widget in default/basic mode.",
+        long_help = "Shows the battery widget in default or basic mode, if there is as battery available. This \
+                    has no effect on custom layouts; if the battery widget is desired for a custom layout, explicitly \
+                    specify it."
+    )]
+    pub(crate) battery: Option<bool>,
+}
+
+#[cfg(feature = "battery")]
+
+impl BatteryArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(battery, self, other);
+    }
+}
+
+/// GPU arguments/config options.
+#[cfg(feature = "gpu")]
+#[derive(Args, Clone, Debug, Default, Deserialize)]
+#[command(next_help_heading = "GPU Options", rename_all = "snake_case")]
+pub(crate) struct GpuArgs {
+    #[arg(long, help = "Enables collecting and displaying GPU usage.")]
+    pub(crate) enable_gpu: Option<bool>,
+}
+
+#[cfg(feature = "gpu")]
+impl GpuArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(enable_gpu, self, other);
+    }
+}
+
+/// Style arguments/config options.
+#[derive(Args, Clone, Debug, Default, Deserialize)]
+#[command(next_help_heading = "Style Options", rename_all = "snake_case")]
+pub(crate) struct StyleArgs {
+    #[arg(
+        long,
+        value_name = "SCHEME",
+        value_parser = [
             "default",
             "default-light",
             "gruvbox",
             "gruvbox-light",
             "nord",
             "nord-light",
-        ])
-        .hide_possible_values(true)
-        .help(
-            "Use a color scheme, use --help for info on the colors. \
-            [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
-        )
-        .long_help(indoc! {
+            "custom",
+
+        ],
+        hide_possible_values = true,
+        help = "Use a color scheme, use --help for info on the colors.\n
+                [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
+        long_help = indoc! {
             "Use a pre-defined color scheme. Currently supported values are:
             - default
             - default-light (default but adjusted for lighter backgrounds)
             - gruvbox       (a bright theme with 'retro groove' colors)
             - gruvbox-light (gruvbox but adjusted for lighter backgrounds)
             - nord          (an arctic, north-bluish color palette)
-            - nord-light    (nord but adjusted for lighter backgrounds)"
-        });
-
-    cmd.arg(color)
+            - nord-light    (nord but adjusted for lighter backgrounds)
+            - custom        (use a custom color scheme defined in the config file)"
+        }
+    )]
+    pub(crate) color: Option<String>,
 }
 
-fn temperature_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("Temperature Options");
-
-    let celsius = Arg::new("celsius")
-        .short('c')
-        .long("celsius")
-        .action(ArgAction::SetTrue)
-        .help("Use Celsius as the temperature unit.")
-        .long_help("Use Celsius as the temperature unit. This is the default option.");
-
-    let fahrenheit = Arg::new("fahrenheit")
-        .short('f')
-        .long("fahrenheit")
-        .action(ArgAction::SetTrue)
-        .help("Use Fahrenheit as the temperature unit.");
-
-    let kelvin = Arg::new("kelvin")
-        .short('k')
-        .long("kelvin")
-        .action(ArgAction::SetTrue)
-        .help("Use Kelvin as the temperature unit.");
-
-    let temperature_group = ArgGroup::new("TEMPERATURE_TYPE").args([
-        celsius.get_id(),
-        fahrenheit.get_id(),
-        kelvin.get_id(),
-    ]);
-
-    cmd.args(args![celsius, fahrenheit, kelvin])
-        .group(temperature_group)
-}
-
-fn process_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("Process Options");
-
-    let case_sensitive = Arg::new("case_sensitive")
-        .short('S')
-        .long("case_sensitive")
-        .action(ArgAction::SetTrue)
-        .help("Enables case sensitivity by default.")
-        .long_help("When searching for a process, enables case sensitivity by default.");
-
-    let current_usage = Arg::new("current_usage")
-        .short('u')
-        .long("current_usage")
-        .action(ArgAction::SetTrue)
-        .help("Sets process CPU% to be based on current CPU%.")
-        .long_help(
-            "Sets process CPU% usage to be based on the current system CPU% usage rather \
-            than total CPU usage.",
-        );
-
-    let unnormalized_cpu = Arg::new("unnormalized_cpu")
-        .short('n')
-        .long("unnormalized_cpu")
-        .action(ArgAction::SetTrue)
-        .help("Show process CPU% usage without normalizing over the number of cores.")
-        .long_help(
-            "Shows all process CPU% usage without averaging over the number of CPU cores \
-            in the system.",
-        );
-
-    let group_processes = Arg::new("group_processes")
-        .short('g')
-        .long("group_processes")
-        .action(ArgAction::SetTrue)
-        .help("Groups processes with the same name by default.")
-        .long_help("Groups processes with the same name by default.");
-
-    let process_command = Arg::new("process_command")
-        .long("process_command")
-        .action(ArgAction::SetTrue)
-        .help("Show processes as their commands by default.")
-        .long_help("Show processes as their commands by default in the process widget.");
-
-    let regex = Arg::new("regex")
-        .short('R')
-        .long("regex")
-        .action(ArgAction::SetTrue)
-        .help("Enables regex by default.")
-        .long_help("When searching for a process, enables regex by default.");
-
-    let disable_advanced_kill = Arg::new("disable_advanced_kill")
-        .long("disable_advanced_kill")
-        .action(ArgAction::SetTrue)
-        .help("Hides advanced process killing.")
-        .long_help(
-            "Hides advanced options to stop a process on Unix-like systems. The only \
-            option shown is 15 (TERM).",
-        );
-
-    let whole_word = Arg::new("whole_word")
-        .short('W')
-        .long("whole_word")
-        .action(ArgAction::SetTrue)
-        .help("Enables whole-word matching by default.")
-        .long_help(
-            "When searching for a process, return results that match the entire query by default.",
-        );
-
-    let tree = Arg::new("tree")
-        .short('T')
-        .long("tree")
-        .action(ArgAction::SetTrue)
-        .help("Defaults the process widget be in tree mode.")
-        .long_help("Defaults to showing the process widget in tree mode.");
-
-    let args = args![
-        case_sensitive,
-        current_usage,
-        unnormalized_cpu,
-        group_processes,
-        process_command,
-        regex,
-        whole_word,
-        disable_advanced_kill,
-        tree,
-    ];
-
-    cmd.args(args)
-}
-
-fn cpu_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("CPU Options");
-
-    let hide_avg_cpu = Arg::new("hide_avg_cpu")
-        .short('a')
-        .long("hide_avg_cpu")
-        .action(ArgAction::SetTrue)
-        .help("Hides the average CPU usage.")
-        .long_help("Hides the average CPU usage from being shown.");
-
-    // let default_avg_cpu = Arg::new("");
-
-    cmd.args(args![hide_avg_cpu])
-}
-
-fn mem_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("Memory Options");
-
-    let mem_as_value = Arg::new("mem_as_value")
-        .long("mem_as_value")
-        .action(ArgAction::SetTrue)
-        .help("Defaults to showing process memory usage by value.")
-        .long_help(
-            "Defaults to showing process memory usage by value. Otherwise, it defaults \
-            to showing it by percentage.",
-        );
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        let enable_cache_memory = Arg::new("enable_cache_memory")
-            .long("enable_cache_memory")
-            .action(ArgAction::SetTrue)
-            .help("Enable collecting and displaying cache and buffer memory.");
-
-        cmd.args(args![mem_as_value, enable_cache_memory])
-    }
-    #[cfg(target_os = "windows")]
-    {
-        cmd.arg(mem_as_value)
+impl StyleArgs {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        set_if_some!(color, self, other);
     }
 }
 
-fn network_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("Network Options");
+/// Other arguments. This just handle options that are for help/version displaying.
+#[derive(Args, Clone, Debug)]
+#[command(next_help_heading = "Other Options", rename_all = "snake_case")]
+pub(crate) struct OtherArgs {
+    #[arg(short = 'h', long, action = ArgAction::Help, help = "Prints help info (for more details use `--help`.")]
+    help: (),
 
-    // TODO: Change this to be configured as network graph type?
-    let use_old_network_legend = Arg::new("use_old_network_legend")
-        .long("use_old_network_legend")
-        .action(ArgAction::SetTrue)
-        .help("DEPRECATED - uses a separate network legend.")
-        .long_help(
-            "DEPRECATED - uses an older (pre-0.4), separate network widget legend. This \
-            display is not tested anymore and may be broken.",
-        );
-
-    let network_use_bytes = Arg::new("network_use_bytes")
-        .long("network_use_bytes")
-        .action(ArgAction::SetTrue)
-        .help("Displays the network widget using bytes.")
-        .long_help("Displays the network widget using bytes. Defaults to bits.");
-
-    let network_use_log = Arg::new("network_use_log")
-        .long("network_use_log")
-        .action(ArgAction::SetTrue)
-        .help("Displays the network widget with a log scale.")
-        .long_help("Displays the network widget with a log scale. Defaults to a non-log scale.");
-
-    let network_use_binary_prefix = Arg::new("network_use_binary_prefix")
-        .long("network_use_binary_prefix")
-        .action(ArgAction::SetTrue)
-        .help("Displays the network widget with binary prefixes.")
-        .long_help(
-            "Displays the network widget with binary prefixes (i.e. kibibits, mebibits) \
-            rather than a decimal prefix (i.e. kilobits, megabits). Defaults to decimal prefixes.",
-        );
-
-    cmd.args(args![
-        use_old_network_legend,
-        network_use_bytes,
-        network_use_log,
-        network_use_binary_prefix,
-    ])
+    #[arg(short = 'v', long, action = ArgAction::Version, help = "Prints version information.")]
+    version: (),
 }
 
-#[cfg(feature = "battery")]
-fn battery_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("Battery Options");
-
-    let battery = Arg::new("battery")
-        .long("battery")
-        .action(ArgAction::SetTrue)
-        .help("Shows the battery widget.")
-        .long_help(
-            "Shows the battery widget in default or basic mode. No effect on custom layouts.",
-        );
-
-    cmd.arg(battery)
+/// Returns a [`BottomArgs`].
+pub fn get_args() -> BottomArgs {
+    BottomArgs::parse()
 }
 
-#[cfg(feature = "gpu")]
-fn gpu_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("GPU Options");
-
-    let enable_gpu = Arg::new("enable_gpu")
-        .long("enable_gpu")
-        .action(ArgAction::SetTrue)
-        .help("Enable collecting and displaying GPU usage.");
-
-    cmd.arg(enable_gpu)
-}
-
-fn other_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("Other Options");
-
-    let help = Arg::new("help")
-        .short('h')
-        .long("help")
-        .action(ArgAction::Help)
-        .help("Prints help (see more info with '--help').");
-
-    let version = Arg::new("version")
-        .short('V')
-        .long("version")
-        .action(ArgAction::Version)
-        .help("Prints version information.");
-
-    cmd.args([help, version])
-}
-
-pub fn build_app() -> Command {
-    const TEMPLATE: &str = include_str!("./args.template");
-    const USAGE: &str = "btm [OPTIONS]";
-    const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
-        Some(nightly_version) => nightly_version,
-        None => crate_version!(),
-    };
-
-    let cmd = Command::new(crate_name!())
-        .author(crate_authors!())
-        .about(crate_description!())
-        .disable_help_flag(true)
-        .disable_version_flag(true)
-        .color(ColorChoice::Auto)
-        .help_template(TEMPLATE)
-        .override_usage(USAGE)
-        .version(VERSION);
-
-    [
-        general_args,
-        process_args,
-        temperature_args,
-        cpu_args,
-        mem_args,
-        network_args,
-        #[cfg(feature = "battery")]
-        battery_args,
-        #[cfg(feature = "gpu")]
-        gpu_args,
-        style_args,
-        other_args,
-    ]
-    .into_iter()
-    .fold(cmd, |c, f| f(c))
+/// Returns an [`Command`] based off of [`BottomArgs`].
+#[allow(dead_code)]
+pub(crate) fn build_cmd() -> Command {
+    BottomArgs::command()
 }
 
 #[cfg(test)]
@@ -580,13 +638,13 @@ mod test {
 
     #[test]
     fn verify_cli() {
-        build_app().debug_assert();
+        build_cmd().debug_assert();
     }
 
     #[test]
     fn no_default_help_heading() {
-        let mut app = build_app();
-        let help_str = app.render_help();
+        let mut cmd = build_cmd();
+        let help_str = cmd.render_help();
 
         assert!(
             !help_str.to_string().contains("\nOptions:\n"),

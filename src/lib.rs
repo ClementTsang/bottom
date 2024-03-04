@@ -31,10 +31,8 @@ pub mod widgets;
 
 use std::{
     boxed::Box,
-    fs,
     io::{stderr, stdout, Write},
     panic::PanicInfo,
-    path::PathBuf,
     sync::{
         mpsc::{Receiver, Sender},
         Arc, Condvar, Mutex,
@@ -48,7 +46,6 @@ use app::{
     layout_manager::{UsedWidgets, WidgetDirection},
     App, AppConfigFields, DataFilters,
 };
-use constants::*;
 use crossterm::{
     event::{
         poll, read, DisableBracketedPaste, DisableMouseCapture, Event, KeyCode, KeyEvent,
@@ -60,7 +57,6 @@ use crossterm::{
 };
 use data_conversion::*;
 pub use options::args;
-use options::Config;
 use utils::error;
 #[allow(unused_imports)]
 pub use utils::logging::*;
@@ -199,59 +195,6 @@ pub fn handle_key_event_or_break(
     }
 
     false
-}
-
-pub fn read_config(config_location: Option<&String>) -> error::Result<Option<PathBuf>> {
-    let config_path = if let Some(conf_loc) = config_location {
-        Some(PathBuf::from(conf_loc.as_str()))
-    } else if cfg!(target_os = "windows") {
-        if let Some(home_path) = dirs::config_dir() {
-            let mut path = home_path;
-            path.push(DEFAULT_CONFIG_FILE_PATH);
-            Some(path)
-        } else {
-            None
-        }
-    } else if let Some(home_path) = dirs::home_dir() {
-        let mut path = home_path;
-        path.push(".config/");
-        path.push(DEFAULT_CONFIG_FILE_PATH);
-        if path.exists() {
-            // If it already exists, use the old one.
-            Some(path)
-        } else {
-            // If it does not, use the new one!
-            if let Some(config_path) = dirs::config_dir() {
-                let mut path = config_path;
-                path.push(DEFAULT_CONFIG_FILE_PATH);
-                Some(path)
-            } else {
-                None
-            }
-        }
-    } else {
-        None
-    };
-
-    Ok(config_path)
-}
-
-pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Config> {
-    if let Some(path) = config_path {
-        if let Ok(config_string) = fs::read_to_string(path) {
-            Ok(toml_edit::de::from_str(config_string.as_str())?)
-        } else {
-            if let Some(parent_path) = path.parent() {
-                fs::create_dir_all(parent_path)?;
-            }
-
-            fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
-            Ok(Config::default())
-        }
-    } else {
-        // Don't write...
-        Ok(Config::default())
-    }
 }
 
 pub fn try_drawing(

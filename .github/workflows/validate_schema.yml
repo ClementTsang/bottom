@@ -25,7 +25,7 @@ jobs:
         uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
         with:
           skip_after_successful_duplicate: "true"
-          paths: '["schema/**", ".github/workflows/validate_schema.yml"]'
+          paths: '["schema/**", ".github/workflows/validate_schema.yml", "sample_configs/**", "scripts/schema/**"]'
           do_not_skip: '["workflow_dispatch"]'
 
   test-build-documentation:

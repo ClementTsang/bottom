@@ -3,11 +3,11 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 
-use crate::util::{btm_command, no_cfg_btm_command};
+use crate::util::{btm_cmd, no_cfg_btm_command};
 
 #[test]
 fn test_small_rate() {
-    btm_command(&["-C", "./tests/valid_configs/empty_config.toml"])
+    btm_cmd(&["-C", "./tests/valid_configs/empty_config.toml"])
         .arg("-r")
         .arg("249")
         .assert()
@@ -121,9 +121,7 @@ fn test_invalid_default_widget_2() {
         .arg("18446744073709551616")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "set your widget count to be at most unsigned INT_MAX",
-        ));
+        .stderr(predicate::str::contains("number too large to fit"));
 }
 
 #[test]

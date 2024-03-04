@@ -5,7 +5,10 @@ use hashbrown::HashMap;
 use portable_pty::{native_pty_system, Child, CommandBuilder, MasterPty, PtySize};
 
 pub fn abs_path(path: &str) -> OsString {
-    Path::new(path).canonicalize().unwrap().into_os_string()
+    Path::new(path)
+        .canonicalize()
+        .expect("invalid path!")
+        .into_os_string()
 }
 
 /// Returns a QEMU runner target given an architecture.
@@ -66,7 +69,7 @@ const DEFAULT_CFG: [&str; 2] = ["-C", "./tests/valid_configs/empty_config.toml"]
 
 /// Returns the [`Command`] of a binary invocation of bottom, alongside
 /// any required env variables.
-pub fn btm_command(args: &[&str]) -> Command {
+pub fn btm_cmd(args: &[&str]) -> Command {
     let mut cmd = match cross_runner() {
         None => Command::new(BTM_EXE_PATH),
         Some(runner) => {
@@ -95,7 +98,7 @@ pub fn btm_command(args: &[&str]) -> Command {
 /// Returns the [`Command`] of a binary invocation of bottom, alongside
 /// any required env variables, and with the default, empty config file.
 pub fn no_cfg_btm_command() -> Command {
-    btm_command(&DEFAULT_CFG)
+    btm_cmd(&DEFAULT_CFG)
 }
 
 /// Spawns `btm` in a pty, returning the pair alongside a handle to the child.
@@ -140,4 +143,20 @@ pub fn spawn_btm_in_pty(args: &[&str]) -> (Box<dyn MasterPty>, Box<dyn Child>) {
     }
 
     (pair.master, pair.slave.spawn_command(cmd).unwrap())
+}
+
+#[cfg(test)]
+mod test {
+    use crate::util::abs_path;
+
+    #[test]
+    fn test_abs() {
+        println!("{:?}", abs_path("./Cargo.toml"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_abs_path_panic() {
+        println!("{:?}", abs_path("this-is-a-fake-path-lol"));
+    }
 }
