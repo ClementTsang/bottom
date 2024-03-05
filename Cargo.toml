@@ -31,7 +31,7 @@ exclude = [
     "Cross.toml",
     "rustfmt.toml",
 ]
-rust-version = "1.70.0" # The oldest version I've tested that should still build bottom - note this is not an MSRV!
+rust-version = "1.70.0" # The oldest version I've tested that should still build bottom - note this is not an official MSRV!
 
 [[bin]]
 name = "btm"
@@ -75,7 +75,7 @@ default = ["deploy"]
 anyhow = "1.0.80"
 backtrace = "0.3.69"
 cfg-if = "1.0.0"
-clap = { version = "4.5.1", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "=4.4.18", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 crossterm = "0.27.0"
 ctrlc = { version = "3.4.2", features = ["termination"] }
@@ -136,11 +136,11 @@ predicates = "3.1.0"
 portable-pty = "0.8.1"
 
 [build-dependencies]
-clap = { version = "4.5.1", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "4.5.1"
-clap_complete_fig = "4.5.0"
-clap_complete_nushell = "4.5.1"
-clap_mangen = "0.2.20"
+clap = { version = "=4.4.18", features = ["default", "cargo", "wrap_help"] }
+clap_complete = "=4.4.10"
+clap_complete_fig = "=4.4.2"
+clap_complete_nushell = "=4.4.2"
+clap_mangen = "=0.2.19"
 indoc = "2.0.4"
 
 [package.metadata.deb]
