@@ -93,7 +93,7 @@ nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functi
 regex = "1.10.3"
 serde = { version = "=1.0.196", features = ["derive"] }
 starship-battery = { version = "0.8.2", optional = true }
-sysinfo = "=0.30.5"
+sysinfo = "=0.30.6"
 thiserror = "1.0.57"
 time = { version = "0.3.34", features = ["formatting", "macros"] }
 toml_edit = { version = "0.22.5", features = ["serde"] }
