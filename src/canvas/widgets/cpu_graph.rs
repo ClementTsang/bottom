@@ -233,6 +233,7 @@ impl Painter {
                 title,
                 is_expanded: app_state.is_expanded,
                 title_style: self.colours.widget_title_style,
+                legend_position: None,
                 legend_constraints: None,
                 marker,
             }

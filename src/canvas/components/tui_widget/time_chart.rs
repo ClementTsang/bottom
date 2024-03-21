@@ -7,7 +7,7 @@
 mod canvas;
 mod points;
 
-use std::cmp::max;
+use std::{cmp::max, str::FromStr};
 
 use canvas::*;
 use tui::{
@@ -122,7 +122,6 @@ pub enum LegendPosition {
     /// Legend is in the bottom-left corner
     BottomLeft,
 }
-
 impl LegendPosition {
     fn layout(
         &self, area: Rect, legend_width: u16, legend_height: u16, x_title_width: u16,
@@ -210,6 +209,27 @@ impl LegendPosition {
         };
 
         Some(Rect::new(x, y, legend_width, legend_height))
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ParseLegendPositionError;
+
+impl FromStr for LegendPosition {
+    type Err = ParseLegendPositionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "top" => Ok(Self::Top),
+            "topleft" => Ok(Self::TopLeft),
+            "topright" => Ok(Self::TopRight),
+            "left" => Ok(Self::Left),
+            "right" => Ok(Self::Right),
+            "bottom" => Ok(Self::Bottom),
+            "bottomleft" => Ok(Self::BottomLeft),
+            "bottomright" => Ok(Self::BottomRight),
+            _ => Err(ParseLegendPositionError),
+        }
     }
 }
 
