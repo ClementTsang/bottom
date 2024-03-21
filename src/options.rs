@@ -24,7 +24,7 @@ use starship_battery::Manager;
 use self::config::{layout::Row, IgnoreList, StringOrNum};
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::{styling::CanvasStyling, ColourScheme},
+    canvas::{components::time_chart::LegendPosition, styling::CanvasStyling, ColourScheme},
     constants::*,
     data_collection::temperature::TemperatureType,
     utils::{
@@ -126,6 +126,9 @@ pub fn init_app(
         }
     };
 
+    let network_legend_position = get_network_legend(matches, config)?;
+    let memory_legend_position = get_memory_legend(matches, config)?;
+
     // TODO: Can probably just reuse the options struct.
     let app_config_fields = AppConfigFields {
         update_rate: get_update_rate(matches, config)
@@ -150,6 +153,8 @@ pub fn init_app(
         enable_cache_memory: get_enable_cache_memory(matches, config),
         show_table_scroll_position: is_flag_enabled!(show_table_scroll_position, matches, config),
         is_advanced_kill,
+        memory_legend_position,
+        network_legend_position,
         network_scale_type,
         network_unit_type,
         network_use_binary_prefix,
@@ -769,6 +774,50 @@ fn get_retention(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
         }
     } else {
         Ok(DEFAULT_RETENTION_MS)
+    }
+}
+
+fn get_network_legend(
+    matches: &ArgMatches, config: &Config,
+) -> error::Result<Option<LegendPosition>> {
+    let error = |_| {
+        BottomError::ConfigError("cannot set the network legend position, it must be one of: ['top', 'topleft', 'topright', 'left', 'right', 'bottom', 'bottomright', 'bottomleft', 'none']".to_string())
+    };
+    if let Some(s) = matches.get_one::<String>("network_legend") {
+        match s.to_ascii_lowercase().trim() {
+            "none" | "" => Ok(None),
+            position => Ok(Some(position.parse::<LegendPosition>().map_err(error)?)),
+        }
+    } else if let Some(flags) = &config.flags {
+        if let Some(legend) = &flags.network_legend {
+            Ok(Some(legend.parse::<LegendPosition>().map_err(error)?))
+        } else {
+            Ok(Some(LegendPosition::default()))
+        }
+    } else {
+        Ok(Some(LegendPosition::default()))
+    }
+}
+
+fn get_memory_legend(
+    matches: &ArgMatches, config: &Config,
+) -> error::Result<Option<LegendPosition>> {
+    let error = |_| {
+        BottomError::ConfigError("cannot set the memory legend position, it must be one of values ['top', 'topleft', 'topright', 'left', 'right', 'bottom', 'bottomright', 'bottomleft', 'none]'".to_string())
+    };
+    if let Some(s) = matches.get_one::<String>("memory_legend") {
+        match s.to_ascii_lowercase().trim() {
+            "none" | "" => Ok(None),
+            position => Ok(Some(position.parse::<LegendPosition>().map_err(error)?)),
+        }
+    } else if let Some(flags) = &config.flags {
+        if let Some(legend) = &flags.memory_legend {
+            Ok(Some(legend.parse::<LegendPosition>().map_err(error)?))
+        } else {
+            Ok(Some(LegendPosition::default()))
+        }
+    } else {
+        Ok(Some(LegendPosition::default()))
     }
 }
 

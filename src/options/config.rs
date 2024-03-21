@@ -68,6 +68,8 @@ pub(crate) struct ConfigFlags {
     pub(crate) battery: Option<bool>,
     pub(crate) disable_click: Option<bool>,
     pub(crate) no_write: Option<bool>,
+    pub(crate) network_legend: Option<String>,
+    pub(crate) memory_legend: Option<String>,
     /// For built-in colour palettes.
     pub(crate) color: Option<String>,
     pub(crate) mem_as_value: Option<bool>,
