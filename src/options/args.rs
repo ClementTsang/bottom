@@ -284,8 +284,6 @@ fn style_args(cmd: Command) -> Command {
             - nord-light    (nord but adjusted for lighter backgrounds)"
         });
 
-    // let memory_legend_position = Arg::new("memory_legend").long("mem_legend").action(ArgAction::Set)
-
     cmd.arg(color)
 }
 
@@ -440,6 +438,14 @@ fn mem_args(cmd: Command) -> Command {
 
     let memory_legend = Arg::new("memory_legend")
         .long("memory_legend")
+        .action(ArgAction::Set)
+        .value_name("POSITION")
+        .ignore_case(true)
+        .help(
+            "Where to render the legend in memory widget. \
+            [possible values: none, topleft, top, topright, left, right, bottom, bottomleft, bottomright]",
+        )
+        .hide_possible_values(true)
         .value_parser([
             "none",
             "topleft",
@@ -483,6 +489,14 @@ fn network_args(cmd: Command) -> Command {
 
     let network_legend = Arg::new("network_legend")
         .long("network_legend")
+        .action(ArgAction::Set)
+        .value_name("POSITION")
+        .ignore_case(true)
+        .help(
+            "Where to render the legend in network widget. \
+            [possible values: none, topleft, top, topright, left, right, bottom, bottomleft, bottomright]"
+        )
+        .hide_possible_values(true)
         .value_parser([
             "none",
             "topleft",
