@@ -436,6 +436,29 @@ fn mem_args(cmd: Command) -> Command {
             to showing it by percentage.",
         );
 
+    let memory_legend = Arg::new("memory_legend")
+        .long("memory_legend")
+        .action(ArgAction::Set)
+        .value_name("POSITION")
+        .ignore_case(true)
+        .help(
+            "Where to render the legend in memory widget. \
+            [possible values: none, topleft, top, topright, left, right, bottom, bottomleft, bottomright]",
+        )
+        .hide_possible_values(true)
+        .value_parser([
+            "none",
+            "topleft",
+            "top",
+            "topright",
+            "left",
+            "right",
+            "bottom",
+            "bottomleft",
+            "bottomright",
+            "",
+        ]);
+
     #[cfg(not(target_os = "windows"))]
     {
         let enable_cache_memory = Arg::new("enable_cache_memory")
@@ -443,11 +466,11 @@ fn mem_args(cmd: Command) -> Command {
             .action(ArgAction::SetTrue)
             .help("Enable collecting and displaying cache and buffer memory.");
 
-        cmd.args(args![mem_as_value, enable_cache_memory])
+        cmd.args(args![mem_as_value, memory_legend, enable_cache_memory])
     }
     #[cfg(target_os = "windows")]
     {
-        cmd.arg(mem_as_value)
+        cmd.args(args![mem_as_value, memory_legend])
     }
 }
 
@@ -463,6 +486,29 @@ fn network_args(cmd: Command) -> Command {
             "DEPRECATED - uses an older (pre-0.4), separate network widget legend. This \
             display is not tested anymore and may be broken.",
         );
+
+    let network_legend = Arg::new("network_legend")
+        .long("network_legend")
+        .action(ArgAction::Set)
+        .value_name("POSITION")
+        .ignore_case(true)
+        .help(
+            "Where to render the legend in network widget. \
+            [possible values: none, topleft, top, topright, left, right, bottom, bottomleft, bottomright]"
+        )
+        .hide_possible_values(true)
+        .value_parser([
+            "none",
+            "topleft",
+            "top",
+            "topright",
+            "left",
+            "right",
+            "bottom",
+            "bottomleft",
+            "bottomright",
+            "",
+        ]);
 
     let network_use_bytes = Arg::new("network_use_bytes")
         .long("network_use_bytes")
@@ -487,6 +533,7 @@ fn network_args(cmd: Command) -> Command {
 
     cmd.args(args![
         use_old_network_legend,
+        network_legend,
         network_use_bytes,
         network_use_log,
         network_use_binary_prefix,

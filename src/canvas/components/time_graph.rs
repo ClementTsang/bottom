@@ -11,7 +11,9 @@ use tui::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::time_chart::{Axis, Dataset, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS};
+use super::time_chart::{
+    Axis, Dataset, LegendPosition, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS,
+};
 
 /// Represents the data required by the [`TimeGraph`].
 pub struct GraphData<'a> {
@@ -47,6 +49,9 @@ pub struct TimeGraph<'a> {
 
     /// The title style.
     pub title_style: Style,
+
+    /// The legend position.
+    pub legend_position: Option<LegendPosition>,
 
     /// Any legend constraints.
     pub legend_constraints: Option<(Constraint, Constraint)>,
@@ -142,6 +147,7 @@ impl<'a> TimeGraph<'a> {
                 .y_axis(y_axis)
                 .marker(self.marker)
                 .legend_style(self.graph_style)
+                .legend_position(self.legend_position)
                 .hidden_legend_constraints(
                     self.legend_constraints
                         .unwrap_or(DEFAULT_LEGEND_CONSTRAINTS),
@@ -202,6 +208,7 @@ mod test {
             border_style: Style::default().fg(Color::Blue),
             is_expanded: false,
             title_style: Style::default().fg(Color::Cyan),
+            legend_position: None,
             legend_constraints: None,
             marker: Marker::Braille,
         }
