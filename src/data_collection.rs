@@ -412,10 +412,7 @@ impl DataCollector {
                 self.data.cache = memory::get_cache_usage(&self.sys.system);
             }
 
-            self.data.swap = memory::get_swap_usage(
-                #[cfg(not(target_os = "windows"))]
-                &self.sys.system,
-            );
+            self.data.swap = memory::get_swap_usage(&self.sys.system);
 
             #[cfg(feature = "zfs")]
             {
