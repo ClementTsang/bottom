@@ -4,6 +4,8 @@ use windows::Win32::System::ProcessStatus::{GetPerformanceInfo, PERFORMANCE_INFO
 
 use crate::data_collection::memory::MemHarvest;
 
+const PERFORMANCE_INFORMATION_SIZE: u32 = size_of::<PERFORMANCE_INFORMATION>() as _;
+
 // TODO: Note this actually calculates the total *committed* usage. Rename and change label for accuracy!
 /// Get the committed memory usage.
 ///
@@ -13,7 +15,7 @@ pub(crate) fn get_swap_usage() -> Option<MemHarvest> {
     // the bindings are "safe" to use with how we call them.
     unsafe {
         let mut perf_info: PERFORMANCE_INFORMATION = zeroed();
-        if GetPerformanceInfo(&mut perf_info, size_of::<PERFORMANCE_INFORMATION>() as u32).is_ok() {
+        if GetPerformanceInfo(&mut perf_info, PERFORMANCE_INFORMATION_SIZE).is_ok() {
             // Saturating sub by perf_info.PhysicalTotal for what sysinfo does.
             let swap_total = perf_info.PageSize.saturating_mul(perf_info.CommitLimit) as u64;
             let swap_used = perf_info.PageSize.saturating_mul(perf_info.CommitTotal) as u64;
