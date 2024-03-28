@@ -2,18 +2,15 @@
 
 #[cfg(not(target_os = "windows"))]
 pub(crate) use self::sysinfo::get_cache_usage;
-pub(crate) use self::sysinfo::get_ram_usage;
+pub(crate) use self::sysinfo::{get_ram_usage, get_swap_usage};
 
 pub mod sysinfo;
-cfg_if::cfg_if! {
-    if #[cfg(target_os = "windows")] {
-        pub mod windows;
-        pub(crate) use self::windows::get_swap_usage;
-    } else {
-        pub(crate) use self::sysinfo::get_swap_usage;
-
-    }
-}
+// cfg_if::cfg_if! {
+//     if #[cfg(target_os = "windows")] {
+//         mod windows;
+//         pub(crate) use self::windows::get_committed_usage;
+//     }
+// }
 
 #[cfg(feature = "zfs")]
 pub mod arc;

@@ -21,7 +21,6 @@ pub(crate) fn get_ram_usage(sys: &System) -> Option<MemHarvest> {
 }
 
 /// Returns SWAP usage.
-#[cfg(not(target_os = "windows"))]
 pub(crate) fn get_swap_usage(sys: &System) -> Option<MemHarvest> {
     let mem_used = sys.used_swap();
     let mem_total = sys.total_swap();
