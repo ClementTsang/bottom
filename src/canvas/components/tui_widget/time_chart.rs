@@ -7,7 +7,7 @@
 mod canvas;
 mod points;
 
-use std::cmp::max;
+use std::{cmp::max, str::FromStr};
 
 use canvas::*;
 use tui::{
@@ -210,6 +210,27 @@ impl LegendPosition {
         };
 
         Some(Rect::new(x, y, legend_width, legend_height))
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ParseLegendPositionError;
+
+impl FromStr for LegendPosition {
+    type Err = ParseLegendPositionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "top" => Ok(Self::Top),
+            "top-left" => Ok(Self::TopLeft),
+            "top-right" => Ok(Self::TopRight),
+            "left" => Ok(Self::Left),
+            "right" => Ok(Self::Right),
+            "bottom-left" => Ok(Self::BottomLeft),
+            "bottom" => Ok(Self::Bottom),
+            "bottom-right" => Ok(Self::BottomRight),
+            _ => Err(ParseLegendPositionError),
+        }
     }
 }
 

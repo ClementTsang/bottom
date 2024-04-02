@@ -58,6 +58,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | ----------------------- | --------------------------------------------------------- |
 | `--enable_cache_memory` | Enable collecting and displaying cache and buffer memory. |
 | `--mem_as_value`        | Defaults to showing process memory usage by value.        |
+| `--memory_legend`       | Where to place the legend for the memory widget.          |
 
 ## Network Options
 
@@ -66,6 +67,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `--network_use_binary_prefix` | Displays the network widget with binary prefixes. |
 | `--network_use_bytes`         | Displays the network widget using bytes.          |
 | `--network_use_log`           | Displays the network widget with a log scale.     |
+| `--network_legend`            | Where to place the legend for the network widget. |
 | `--use_old_network_legend`    | DEPRECATED - uses a separate network legend.      |
 
 ## Battery Options

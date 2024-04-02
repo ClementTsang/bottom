@@ -133,6 +133,7 @@ impl Painter {
                 title: " Memory ".into(),
                 is_expanded: app_state.is_expanded,
                 title_style: self.colours.widget_title_style,
+                legend_position: app_state.app_config_fields.memory_legend_position,
                 legend_constraints: Some((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
                 marker,
             }
