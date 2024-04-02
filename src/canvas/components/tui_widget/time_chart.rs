@@ -122,6 +122,7 @@ pub enum LegendPosition {
     /// Legend is in the bottom-left corner
     BottomLeft,
 }
+
 impl LegendPosition {
     fn layout(
         &self, area: Rect, legend_width: u16, legend_height: u16, x_title_width: u16,
@@ -221,13 +222,13 @@ impl FromStr for LegendPosition {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_ascii_lowercase().as_str() {
             "top" => Ok(Self::Top),
-            "topleft" => Ok(Self::TopLeft),
-            "topright" => Ok(Self::TopRight),
+            "top-left" => Ok(Self::TopLeft),
+            "top-right" => Ok(Self::TopRight),
             "left" => Ok(Self::Left),
             "right" => Ok(Self::Right),
+            "bottom-left" => Ok(Self::BottomLeft),
             "bottom" => Ok(Self::Bottom),
-            "bottomleft" => Ok(Self::BottomLeft),
-            "bottomright" => Ok(Self::BottomRight),
+            "bottom-right" => Ok(Self::BottomRight),
             _ => Err(ParseLegendPositionError),
         }
     }

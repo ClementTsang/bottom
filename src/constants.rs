@@ -573,7 +573,7 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #battery = false
 # Disable mouse clicks
 #disable_click = false
-# Built-in themes.  Valid values are "default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"
+# Built-in themes. Valid values are "default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"
 #color = "default"
 # Show memory values in the processes widget as values by default
 #mem_as_value = false
@@ -597,6 +597,10 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #enable_cache_memory = false
 # How much data is stored at once in terms of time.
 #retention = "10m"
+# Where to place the legend for the memory widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
+#memory_legend = "TopRight".
+# Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
+#network_legend = "TopRight".
 
 # These are flags around the process widget.
 #[processes]

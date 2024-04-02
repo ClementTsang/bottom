@@ -780,12 +780,11 @@ fn get_retention(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
 fn get_network_legend(
     matches: &ArgMatches, config: &Config,
 ) -> error::Result<Option<LegendPosition>> {
-    let error = |_| {
-        BottomError::ConfigError("cannot set the network legend position, it must be one of: ['top', 'topleft', 'topright', 'left', 'right', 'bottom', 'bottomright', 'bottomleft', 'none']".to_string())
-    };
+    let error =
+        |_| BottomError::ConfigError("network_legend is set to an invalid value".to_string());
     if let Some(s) = matches.get_one::<String>("network_legend") {
         match s.to_ascii_lowercase().trim() {
-            "none" | "" => Ok(None),
+            "none" => Ok(None),
             position => Ok(Some(position.parse::<LegendPosition>().map_err(error)?)),
         }
     } else if let Some(flags) = &config.flags {
@@ -802,12 +801,11 @@ fn get_network_legend(
 fn get_memory_legend(
     matches: &ArgMatches, config: &Config,
 ) -> error::Result<Option<LegendPosition>> {
-    let error = |_| {
-        BottomError::ConfigError("cannot set the memory legend position, it must be one of values ['top', 'topleft', 'topright', 'left', 'right', 'bottom', 'bottomright', 'bottomleft', 'none]'".to_string())
-    };
+    let error =
+        |_| BottomError::ConfigError("memory_legend is set to an invalid value".to_string());
     if let Some(s) = matches.get_one::<String>("memory_legend") {
         match s.to_ascii_lowercase().trim() {
-            "none" | "" => Ok(None),
+            "none" => Ok(None),
             position => Ok(Some(position.parse::<LegendPosition>().map_err(error)?)),
         }
     } else if let Some(flags) = &config.flags {

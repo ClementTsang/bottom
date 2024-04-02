@@ -152,8 +152,6 @@ impl Painter {
                 Marker::Braille
             };
 
-            let legend_position = app_state.app_config_fields.network_legend_position;
-
             TimeGraph {
                 x_bounds,
                 hide_x_labels,
@@ -164,7 +162,7 @@ impl Painter {
                 title: " Network ".into(),
                 is_expanded: app_state.is_expanded,
                 title_style: self.colours.widget_title_style,
-                legend_position,
+                legend_position: app_state.app_config_fields.network_legend_position,
                 legend_constraints: Some(legend_constraints),
                 marker,
             }

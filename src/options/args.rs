@@ -441,22 +441,17 @@ fn mem_args(cmd: Command) -> Command {
         .action(ArgAction::Set)
         .value_name("POSITION")
         .ignore_case(true)
-        .help(
-            "Where to render the legend in memory widget. \
-            [possible values: none, topleft, top, topright, left, right, bottom, bottomleft, bottomright]",
-        )
-        .hide_possible_values(true)
+        .help("Where to place the legend for the memory widget.")
         .value_parser([
             "none",
-            "topleft",
+            "top-left",
             "top",
-            "topright",
+            "top-right",
             "left",
             "right",
+            "bottom-left",
             "bottom",
-            "bottomleft",
-            "bottomright",
-            "",
+            "bottom-right",
         ]);
 
     #[cfg(not(target_os = "windows"))]
@@ -492,22 +487,17 @@ fn network_args(cmd: Command) -> Command {
         .action(ArgAction::Set)
         .value_name("POSITION")
         .ignore_case(true)
-        .help(
-            "Where to render the legend in network widget. \
-            [possible values: none, topleft, top, topright, left, right, bottom, bottomleft, bottomright]"
-        )
-        .hide_possible_values(true)
+        .help("Where to place the legend for the network widget.")
         .value_parser([
             "none",
-            "topleft",
+            "top-left",
             "top",
-            "topright",
+            "top-right",
             "left",
             "right",
+            "bottom-left",
             "bottom",
-            "bottomleft",
-            "bottomright",
-            "",
+            "bottom-right",
         ]);
 
     let network_use_bytes = Arg::new("network_use_bytes")
