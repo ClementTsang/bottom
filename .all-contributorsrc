@@ -444,6 +444,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "lyuha",
+      "name": "Lee Wonjoon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4014016?v=4",
+      "profile": "https://github.com/lyuha",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
