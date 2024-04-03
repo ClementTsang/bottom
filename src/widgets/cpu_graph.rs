@@ -5,6 +5,7 @@ use tui::{style::Style, text::Text, widgets::Row};
 
 use crate::{
     app::AppConfigFields,
+    args::CpuDefault,
     canvas::{
         components::data_table::{
             Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
@@ -15,7 +16,6 @@ use crate::{
     },
     data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,
-    options::config::cpu::CpuDefault,
     utils::general::truncate_to_text,
 };
 

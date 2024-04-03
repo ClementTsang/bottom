@@ -1,3 +1,4 @@
+use indoc::indoc;
 use serde::Deserialize;
 
 use crate::args::TemperatureArgs;
@@ -13,6 +14,11 @@ pub(crate) struct TemperatureConfig {
 
 impl DefaultConfig for TemperatureConfig {
     fn default_config() -> String {
-        todo!()
+        let s = indoc! {r##"
+            # The temperature unit. Supported values are "[c]elsius", "[f]ahrenheit", and "[k]elvin".
+            # temperature_type = "celsius"
+        "##};
+
+        s.to_string()
     }
 }

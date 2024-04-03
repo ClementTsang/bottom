@@ -319,17 +319,16 @@ pub(crate) struct ProcessArgs {
     #[arg(
         short = 'u',
         long,
-        help = "Sets process CPU% to be based on current CPU%.",
-        long_help = "Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage."
+        help = "Calculates process CPU usage as a percentage of current usage rather than total usage."
     )]
     pub(crate) current_usage: Option<bool>,
 
     // TODO: Disable this on Windows?
     #[arg(
         long,
-        help = "Hides advanced process killing options.",
-        long_help = "Hides advanced options to stop a process on Unix-like systems. The only \
-                    option shown is 15 (TERM)."
+        help = "Hides additional stopping options Unix-like systems.",
+        long_help = "Hides additional stopping options Unix-like systems. Signal 15 (TERM) will be sent when \
+                    stopping a process."
     )]
     pub(crate) disable_advanced_kill: Option<bool>,
 
@@ -347,7 +346,10 @@ pub(crate) struct ProcessArgs {
     )]
     pub(crate) mem_as_value: Option<bool>,
 
-    #[arg(long, help = "Show processes as their commands by default.")]
+    #[arg(
+        long,
+        help = "Shows the full command name instead of just the process name by default."
+    )]
     pub(crate) process_command: Option<bool>,
 
     #[arg(short = 'R', long, help = "Enables regex by default while searching.")]
@@ -356,15 +358,14 @@ pub(crate) struct ProcessArgs {
     #[arg(
         short = 'T',
         long,
-        help = "Defaults the process widget be in tree mode."
+        help = "Makes the process widget use tree mode by default."
     )]
     pub(crate) tree: Option<bool>,
 
     #[arg(
         short = 'n',
         long,
-        help = "Show process CPU% usage without normalizing over the number of cores.",
-        long_help = "Shows all process CPU% usage without averaging over the number of CPU cores in the system."
+        help = "Show process CPU% usage without averaging over the number of CPU cores."
     )]
     pub(crate) unnormalized_cpu: Option<bool>,
 
@@ -433,34 +434,56 @@ impl TemperatureArgs {
     }
 }
 
+/// The default selection of the CPU widget. If the given selection is invalid,
+/// we will fall back to all.
+#[derive(Clone, Copy, Debug, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum CpuDefault {
+    #[default]
+    All,
+    #[serde(alias = "avg")]
+    Average,
+}
+
+impl From<&str> for CpuDefault {
+    fn from(value: &str) -> Self {
+        match value.to_ascii_lowercase().as_str() {
+            "all" => CpuDefault::All,
+            "avg" | "average" => CpuDefault::Average,
+            _ => CpuDefault::All,
+        }
+    }
+}
+
 /// CPU arguments/config options.
 #[derive(Args, Clone, Debug, Default, Deserialize)]
 #[command(next_help_heading = "CPU Options", rename_all = "snake_case")]
 pub(crate) struct CpuArgs {
-    #[arg(long, help = "Defaults to selecting the average CPU entry.")]
-    pub(crate) default_avg_cpu: Option<bool>,
-
     #[arg(
-        short = 'a',
         long,
-        help = "Hides the average CPU usage entry.",
-        long = "Hides the average CPU usage entry from being shown."
+        help = "Sets which CPU entry is selected by default.",
+        value_name = "ENTRY",
+        value_parser = ["all", "avg"],
+        default_value = "all"
     )]
+    #[serde(default)]
+    pub(crate) default_cpu_entry: CpuDefault,
+
+    #[arg(short = 'a', long, help = "Hides the average CPU usage entry.")]
     pub(crate) hide_avg_cpu: Option<bool>,
 
     // TODO: Maybe rename this or fix this? Should this apply to all "left legends"?
     #[arg(
         short = 'l',
         long,
-        help = "Puts the CPU chart legend to the left side.",
-        long_help = "Puts the CPU chart legend to the left side rather than the right side."
+        help = "Puts the CPU chart legend on the left side."
     )]
     pub(crate) left_legend: Option<bool>,
 }
 
 impl CpuArgs {
     pub(crate) fn merge(&mut self, other: &Self) {
-        set_if_some!(default_avg_cpu, self, other);
+        // set_if_some!(default_cpu_entry, self, other);
         set_if_some!(hide_avg_cpu, self, other);
         set_if_some!(left_legend, self, other);
     }

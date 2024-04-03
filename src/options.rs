@@ -186,7 +186,7 @@ pub fn init_app(
                                 widget.widget_id,
                                 CpuWidgetState::new(
                                     &app_config_fields,
-                                    config.cpu.default,
+                                    config.cpu.args.default_cpu_entry,
                                     default_time_value,
                                     autohide_timer,
                                     styling,

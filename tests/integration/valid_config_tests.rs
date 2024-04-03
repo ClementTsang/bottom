@@ -1,6 +1,6 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
-use std::{io::Read, path::Path, thread, time::Duration};
+use std::{io::Read, thread, time::Duration};
 
 use crate::util::spawn_btm_in_pty;
 

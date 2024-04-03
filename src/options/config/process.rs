@@ -18,6 +18,33 @@ impl DefaultConfig for ProcessConfig {
         let s = indoc! {r##"
             # Enables case sensitivity by default when searching for a process.
             # case_sensitive = false
+
+            # Calculates process CPU usage as a percentage of current usage rather than total usage.
+            # current_usage = false
+
+            # Hides advanced process stopping options on Unix-like systems. Signal 15 (TERM) will be sent when stopping a process.
+            # disable_advanced_kill = false
+
+            # Groups processes with the same name by default.
+            # group_processes = false
+
+            # Defaults to showing process memory usage by value. Otherwise, it defaults to showing it by percentage.
+            # mem_as_value = false
+
+            # Shows the full command name instead of just the process name by default.
+            # process_command = false
+
+            # Enables regex by default while searching.
+            # regex = false
+
+            # Makes the process widget use tree mode by default.
+            # tree = false
+
+            # Show process CPU% usage without averaging over the number of CPU cores.
+            # unnormalized_cpu = false
+
+            # Enables whole-word matching by default while searching.
+            # whole_word = false
         "##};
 
         s.to_string()

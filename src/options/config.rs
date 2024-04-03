@@ -10,6 +10,7 @@ pub mod network;
 pub mod process;
 mod style;
 pub mod temperature;
+mod versions;
 
 use std::{fs, io::Write, path::PathBuf};
 
