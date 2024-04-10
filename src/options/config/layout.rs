@@ -11,12 +11,12 @@ pub struct Row {
     pub child: Option<Vec<RowChildren>>,
 }
 
-fn new_cpu(left_legend: bool, iter_id: &mut u64) -> BottomColRow {
+fn new_cpu(cpu_left_legend: bool, iter_id: &mut u64) -> BottomColRow {
     let cpu_id = *iter_id;
     *iter_id += 1;
     let legend_id = *iter_id;
 
-    if left_legend {
+    if cpu_left_legend {
         BottomColRow::new(vec![
             BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
                 .canvas_with_ratio(3)
@@ -53,7 +53,7 @@ impl Row {
     pub fn convert_row_to_bottom_row(
         &self, iter_id: &mut u64, total_height_ratio: &mut u32, default_widget_id: &mut u64,
         default_widget_type: &Option<BottomWidgetType>, default_widget_count: &mut u64,
-        left_legend: bool,
+        cpu_left_legend: bool,
     ) -> Result<BottomRow> {
         // TODO: In the future we want to also add percentages.
         // But for MVP, we aren't going to bother.
@@ -91,7 +91,7 @@ impl Row {
 
                         children.push(match widget_type {
                             BottomWidgetType::Cpu => {
-                                BottomCol::new(vec![new_cpu(left_legend, iter_id)])
+                                BottomCol::new(vec![new_cpu(cpu_left_legend, iter_id)])
                                     .ratio(width_ratio)
                             }
                             BottomWidgetType::Proc => {
@@ -153,7 +153,8 @@ impl Row {
                                     total_col_row_ratio += col_row_height_ratio;
 
                                     col_row_children.push(
-                                        new_cpu(left_legend, iter_id).ratio(col_row_height_ratio),
+                                        new_cpu(cpu_left_legend, iter_id)
+                                            .ratio(col_row_height_ratio),
                                     );
                                 }
                                 BottomWidgetType::Proc => {
@@ -410,8 +411,8 @@ mod test {
     }
 
     #[test]
-    /// Tests using left_legend.
-    fn test_left_legend() {
+    /// Tests using cpu_left_legend.
+    fn test_cpu_left_legend() {
         let rows = from_str::<Config>(DEFAULT_LAYOUT).unwrap().row.unwrap();
         let ret_bottom_layout = test_create_layout(&rows, DEFAULT_WIDGET_ID, None, 1, true);
 
@@ -478,7 +479,7 @@ mod test {
         let mut default_widget_count = 1;
         let mut default_widget_id = DEFAULT_WIDGET_ID;
         let default_widget_type = None;
-        let left_legend = false;
+        let cpu_left_legend = false;
 
         let mut ret_bottom_layout = BottomLayout {
             rows: rows
@@ -490,7 +491,7 @@ mod test {
                         &mut default_widget_id,
                         &default_widget_type,
                         &mut default_widget_count,
-                        left_legend,
+                        cpu_left_legend,
                     )
                 })
                 .collect::<error::Result<Vec<_>>>()
@@ -511,7 +512,7 @@ mod test {
         let mut default_widget_count = 3;
         let mut default_widget_id = DEFAULT_WIDGET_ID;
         let default_widget_type = Some(BottomWidgetType::Proc);
-        let left_legend = false;
+        let cpu_left_legend = false;
 
         let mut ret_bottom_layout = BottomLayout {
             rows: rows
@@ -523,7 +524,7 @@ mod test {
                         &mut default_widget_id,
                         &default_widget_type,
                         &mut default_widget_count,
-                        left_legend,
+                        cpu_left_legend,
                     )
                 })
                 .collect::<error::Result<Vec<_>>>()

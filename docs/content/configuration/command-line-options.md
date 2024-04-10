@@ -18,7 +18,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `-e`, `--expanded`                    | Expand the default widget upon starting the app.    |
 | `--hide_table_gap`                    | Hides spacing between table headers and entries.    |
 | `--hide_time`                         | Hides the time scale.                               |
-| `-l`, `--left_legend`                 | Puts the CPU chart legend to the left side.         |
+| `--cpu_left_legend`                 | Puts the CPU chart legend to the left side.         |
 | `-r`, `--rate <TIME>`                 | Sets the data refresh rate.                         |
 | `--retention <TIME>`                  | The timespan of data stored.                        |
 | `--show_table_scroll_position`        | Shows the scroll position tracker in table widgets. |

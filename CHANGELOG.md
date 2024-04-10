@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1376](https://github.com/ClementTsang/bottom/pull/1376): Group together related command-line arguments in `-h` and `--help`.
 - [#1411](https://github.com/ClementTsang/bottom/pull/1411): Add `time` as a default column.
 - [#1436](https://github.com/ClementTsang/bottom/pull/1436): Use actual "swap" value for Windows.
+- [](): The following arguments have changed names:
+  - `--left_legend/-l` is now `--cpu_left_legend`.
+- [](): The following config arguments have changed names:
+  - `expanded_on_startup` is now `expanded`.
+  - `left_legend` is now `cpu_left_legend`.
 
 ### Bug Fixes
 

@@ -74,7 +74,7 @@ pub fn init_app(
         .context("Update 'default_time_value' in your config file.")?;
 
     let use_basic_mode = is_flag_enabled!(basic, matches, config);
-    let expanded_upon_startup = is_flag_enabled!(expanded_on_startup, matches, config);
+    let expanded = is_flag_enabled!(expanded, matches, config);
 
     // For processes
     let is_grouped = is_flag_enabled!(group_processes, matches, config);
@@ -137,7 +137,7 @@ pub fn init_app(
             .context("Update 'temperature_type' in your config file.")?,
         show_average_cpu: get_show_average_cpu(matches, config),
         use_dot: is_flag_enabled!(dot_marker, matches, config),
-        left_legend: is_flag_enabled!(left_legend, matches, config),
+        cpu_left_legend: is_flag_enabled!(cpu_left_legend, matches, config),
         use_current_cpu_total: is_flag_enabled!(current_usage, matches, config),
         unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, matches, config),
         use_basic_mode,
@@ -346,7 +346,7 @@ pub fn init_app(
         temp_filter,
         net_filter,
     };
-    let is_expanded = expanded_upon_startup && !use_basic_mode;
+    let is_expanded = expanded && !use_basic_mode;
 
     Ok(App::new(
         app_config_fields,
@@ -362,7 +362,7 @@ pub fn init_app(
 pub fn get_widget_layout(
     matches: &ArgMatches, config: &Config,
 ) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
-    let left_legend = is_flag_enabled!(left_legend, matches, config);
+    let cpu_left_legend = is_flag_enabled!(cpu_left_legend, matches, config);
 
     let (default_widget_type, mut default_widget_count) =
         get_default_widget_and_count(matches, config)?;
@@ -402,7 +402,7 @@ pub fn get_widget_layout(
                         &mut default_widget_id,
                         &default_widget_type,
                         &mut default_widget_count,
-                        left_legend,
+                        cpu_left_legend,
                     )
                 })
                 .collect::<error::Result<Vec<_>>>()?,
