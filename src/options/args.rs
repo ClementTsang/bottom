@@ -80,7 +80,7 @@ fn general_args(cmd: Command) -> Command {
         .help("Sets the location of the config file.")
         .long_help(
             "Sets the location of the config file. Expects a config file in the TOML format. \
-            If it doesn't exist, a default config file is created at the path. If no path is provided,
+            If it doesn't exist, a default config file is created at the path. If no path is provided, \
             the default config location will be used."
         )
         .value_hint(ValueHint::AnyPath);
@@ -104,28 +104,26 @@ fn general_args(cmd: Command) -> Command {
         .value_name("N")
         .help("Sets the N'th selected widget type as the default.")
         .long_help(indoc! {
-            "Sets the N'th selected widget type to use as the default widget.
-            Requires 'default_widget_type' to also be set, and defaults to 1.
+            "Sets the N'th selected widget type to use as the default widget. Requires 'default_widget_type' to also be \
+            set, and defaults to 1.
 
-            This reads from left to right, top to bottom. For example, suppose
-            we have a layout that looks like:
+            This reads from left to right, top to bottom. For example, suppose we have a layout that looks like:
             +-------------------+-----------------------+
             |      CPU (1)      |        CPU (2)        |
             +---------+---------+-------------+---------+
             | Process | CPU (3) | Temperature | CPU (4) |
             +---------+---------+-------------+---------+
 
-            And we set our default widget type to 'CPU'. If we set
-            '--default_widget_count 1', then it would use the CPU (1) as
-            the default widget. If we set '--default_widget_count 3', it would
-            use CPU (3) as the default instead."
+            And we set our default widget type to 'CPU'. If we set '--default_widget_count 1', then it would use the \
+            CPU (1) as the default widget. If we set '--default_widget_count 3', it would use CPU (3) as the default \
+            instead."
         });
 
     let default_widget_type = Arg::new("default_widget_type")
         .long("default_widget_type")
         .action(ArgAction::Set)
         .value_name("WIDGET")
-        .help("Sets the default widget type, use --help for info.")
+        .help("Sets the default widget type, use `--help` for info.")
         .long_help(indoc!{
             "Sets which widget type to use as the default widget. For the default \
             layout, this defaults to the 'process' widget. For a custom layout, it defaults \
@@ -138,7 +136,7 @@ fn general_args(cmd: Command) -> Command {
             | Process | CPU (3) | Temperature | CPU (4) |
             +---------+---------+-------------+---------+
 
-            Setting '--default_widget_type Temp' will make the temperature widget selected by default."
+            Setting '--default_widget_type temperature' will make the temperature widget selected by default."
         })
         .value_parser([
             "cpu",
@@ -504,10 +502,9 @@ fn style_args(cmd: Command) -> Command {
             "nord-light",
         ])
         .hide_possible_values(true)
-        .help(
-            "Use a color scheme, use --help for info on the colors.\n
-            [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
-        )
+        .help(indoc! {
+            "Use a color scheme, use `--help` for info on the colors. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
+        })
         .long_help(indoc! {
             "Use a pre-defined color scheme. Currently supported values are:
             - default
