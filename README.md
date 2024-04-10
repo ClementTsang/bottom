@@ -32,6 +32,7 @@
   - [Arch Linux](#arch-linux)
   - [Debian / Ubuntu](#debian--ubuntu)
   - [Snap](#snap)
+  - [Exherbo Linux](#exherbo-linux)
   - [Fedora / CentOS / AlmaLinux / Rocky Linux](#fedora--centos--almalinux--rocky-linux)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
@@ -190,6 +191,15 @@ sudo snap connect bottom:mount-observe
 sudo snap connect bottom:hardware-observe
 sudo snap connect bottom:system-observe
 sudo snap connect bottom:process-control
+```
+
+### Exherbo Linux
+
+bottom is available as a [rust package](https://gitlab.exherbo.org/exherbo/rust/-/tree/master/packages/sys-process/bottom) that can be installed with `cave`:
+
+```bash
+cave resolve -x repository/rust
+cave resolve -x bottom
 ```
 
 ### Fedora / CentOS / AlmaLinux / Rocky Linux
