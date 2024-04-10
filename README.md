@@ -460,6 +460,9 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://johnlin.ca/"><img src="https://avatars.githubusercontent.com/u/66440371?v=4?s=100" width="100px;" alt="john-s-lin"/><br /><sub><b>john-s-lin</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=john-s-lin" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lyuha"><img src="https://avatars.githubusercontent.com/u/4014016?v=4?s=100" width="100px;" alt="Lee Wonjoon"/><br /><sub><b>Lee Wonjoon</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=lyuha" title="Code">💻</a> <a href="https://github.com/ClementTsang/bottom/commits?author=lyuha" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.davlgd.fr"><img src="https://avatars.githubusercontent.com/u/1110600?v=4?s=100" width="100px;" alt="David Legrand"/><br /><sub><b>David Legrand</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=davlgd" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 

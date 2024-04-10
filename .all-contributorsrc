@@ -454,6 +454,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "davlgd",
+      "name": "David Legrand",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1110600?v=4",
+      "profile": "https://www.davlgd.fr",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
