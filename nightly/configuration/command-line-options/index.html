@@ -1566,35 +1566,35 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 <td>Temporarily shows the time scale in graphs.</td>
 </tr>
 <tr>
-<td><code>-b</code>, <code>--basic</code></td>
+<td><code>-b, --basic</code></td>
 <td>Hides graphs and uses a more basic look.</td>
 </tr>
 <tr>
-<td><code>-C</code>, <code>--config &lt;CONFIG PATH&gt;</code></td>
+<td><code>-C, --config &lt;CONFIG PATH&gt;</code></td>
 <td>Sets the location of the config file.</td>
 </tr>
 <tr>
-<td><code>-t</code>, <code>--default_time_value &lt;TIME&gt;</code></td>
+<td><code>-t, --default_time_value &lt;TIME&gt;</code></td>
 <td>Default time value for graphs.</td>
 </tr>
 <tr>
-<td><code>--default_widget_count &lt;INT&gt;</code></td>
-<td>Sets the n'th selected widget type as the default.</td>
+<td><code>--default_widget_count &lt;N&gt;</code></td>
+<td>Sets the N'th selected widget type as the default.</td>
 </tr>
 <tr>
-<td><code>--default_widget_type &lt;WIDGET TYPE&gt;</code></td>
-<td>Sets the default widget type, use --help for info.</td>
+<td><code>--default_widget_type &lt;WIDGET&gt;</code></td>
+<td>Sets the default widget type, use <code>--help</code> for info.</td>
 </tr>
 <tr>
 <td><code>--disable_click</code></td>
 <td>Disables mouse clicks.</td>
 </tr>
 <tr>
-<td><code>-m</code>, <code>--dot_marker</code></td>
+<td><code>-m, --dot_marker</code></td>
 <td>Uses a dot marker for graphs.</td>
 </tr>
 <tr>
-<td><code>-e</code>, <code>--expanded</code></td>
+<td><code>-e, --expanded</code></td>
 <td>Expand the default widget upon starting the app.</td>
 </tr>
 <tr>
@@ -1603,26 +1603,22 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 </tr>
 <tr>
 <td><code>--hide_time</code></td>
-<td>Hides the time scale.</td>
+<td>Hides the time scale from being shown.</td>
 </tr>
 <tr>
-<td><code>-l</code>, <code>--left_legend</code></td>
-<td>Puts the CPU chart legend to the left side.</td>
-</tr>
-<tr>
-<td><code>-r</code>, <code>--rate &lt;TIME&gt;</code></td>
-<td>Sets the data refresh rate.</td>
+<td><code>-r, --rate &lt;TIME&gt;</code></td>
+<td>Sets how often data is refreshed.</td>
 </tr>
 <tr>
 <td><code>--retention &lt;TIME&gt;</code></td>
-<td>The timespan of data stored.</td>
+<td>How far back data will be stored up to.</td>
 </tr>
 <tr>
 <td><code>--show_table_scroll_position</code></td>
 <td>Shows the scroll position tracker in table widgets.</td>
 </tr>
 <tr>
-<td><code>-d</code>, <code>--time_delta &lt;TIME&gt;</code></td>
+<td><code>-d, --time_delta &lt;TIME&gt;</code></td>
 <td>The amount of time changed upon zooming.</td>
 </tr>
 </tbody>
@@ -1637,40 +1633,44 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 </thead>
 <tbody>
 <tr>
-<td><code>-S</code>, <code>--case_sensitive</code></td>
+<td><code>-S, --case_sensitive</code></td>
 <td>Enables case sensitivity by default.</td>
 </tr>
 <tr>
-<td><code>-u</code>, <code>--current_usage</code></td>
-<td>Sets process CPU% to be based on current CPU%.</td>
+<td><code>-u, --current_usage</code></td>
+<td>Calculates process CPU usage as a percentage of current usage rather than total usage.</td>
 </tr>
 <tr>
 <td><code>--disable_advanced_kill</code></td>
-<td>Hides advanced process killing.</td>
+<td>Hides additional stopping options Unix-like systems.</td>
 </tr>
 <tr>
-<td><code>-g</code>, <code>--group_processes</code></td>
+<td><code>-g, --group_processes</code></td>
 <td>Groups processes with the same name by default.</td>
 </tr>
 <tr>
+<td><code>--mem_as_value</code></td>
+<td>Defaults to showing process memory usage by value.</td>
+</tr>
+<tr>
 <td><code>--process_command</code></td>
-<td>Show processes as their commands by default.</td>
+<td>Shows the full command name instead of the process name by default.</td>
 </tr>
 <tr>
-<td><code>-R</code>, <code>--regex</code></td>
-<td>Enables regex by default.</td>
+<td><code>-R, --regex</code></td>
+<td>Enables regex by default while searching.</td>
 </tr>
 <tr>
-<td><code>-T</code>, <code>--tree</code></td>
-<td>Defaults the process widget be in tree mode.</td>
+<td><code>-T, --tree</code></td>
+<td>Makes the process widget use tree mode by default.</td>
 </tr>
 <tr>
-<td><code>-n</code>, <code>--unnormalized_cpu</code></td>
-<td>Show process CPU% usage without normalizing over the number of cores.</td>
+<td><code>-n, --unnormalized_cpu</code></td>
+<td>Show process CPU% usage without averaging over the number of CPU cores.</td>
 </tr>
 <tr>
-<td><code>-W</code>, <code>--whole_word</code></td>
-<td>Enables whole-word matching by default.</td>
+<td><code>-W, --whole_word</code></td>
+<td>Enables whole-word matching by default while searching.</td>
 </tr>
 </tbody>
 </table>
@@ -1684,15 +1684,15 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 </thead>
 <tbody>
 <tr>
-<td><code>-c</code>, <code>--celsius</code></td>
-<td>Use Celsius as the temperature unit.</td>
+<td><code>-c, --celsius</code></td>
+<td>Use Celsius as the temperature unit. Default.</td>
 </tr>
 <tr>
-<td><code>-f</code>, <code>--fahrenheit</code></td>
+<td><code>-f, --fahrenheit</code></td>
 <td>Use Fahrenheit as the temperature unit.</td>
 </tr>
 <tr>
-<td><code>-k</code>, <code>--kelvin</code></td>
+<td><code>-k, --kelvin</code></td>
 <td>Use Kelvin as the temperature unit.</td>
 </tr>
 </tbody>
@@ -1707,8 +1707,12 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 </thead>
 <tbody>
 <tr>
-<td><code>-a</code>, <code>--hide_avg_cpu</code></td>
-<td>Hides the average CPU usage.</td>
+<td><code>--cpu_left_legend</code></td>
+<td>Puts the CPU chart legend on the left side.</td>
+</tr>
+<tr>
+<td><code>-a, --hide_avg_cpu</code></td>
+<td>Hides the average CPU usage entry.</td>
 </tr>
 </tbody>
 </table>
@@ -1726,12 +1730,8 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 <td>Enable collecting and displaying cache and buffer memory.</td>
 </tr>
 <tr>
-<td><code>--mem_as_value</code></td>
-<td>Defaults to showing process memory usage by value.</td>
-</tr>
-<tr>
-<td><code>--memory_legend</code></td>
-<td>Where to place the legend for the memory widget.</td>
+<td><code>--memory_legend &lt;POSITION&gt;</code></td>
+<td>Where to place the legend for the memory chart widget.</td>
 </tr>
 </tbody>
 </table>
@@ -1745,6 +1745,10 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 </thead>
 <tbody>
 <tr>
+<td><code>--network_legend &lt;POSITION&gt;</code></td>
+<td>Where to place the legend for the network chart widget.</td>
+</tr>
+<tr>
 <td><code>--network_use_binary_prefix</code></td>
 <td>Displays the network widget with binary prefixes.</td>
 </tr>
@@ -1757,12 +1761,8 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 <td>Displays the network widget with a log scale.</td>
 </tr>
 <tr>
-<td><code>--network_legend</code></td>
-<td>Where to place the legend for the network widget.</td>
-</tr>
-<tr>
 <td><code>--use_old_network_legend</code></td>
-<td>DEPRECATED - uses a separate network legend.</td>
+<td>(DEPRECATED) Uses a separated network legend.</td>
 </tr>
 </tbody>
 </table>
@@ -1777,7 +1777,7 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 <tbody>
 <tr>
 <td><code>--battery</code></td>
-<td>Shows the battery widget.</td>
+<td>Shows the battery widget in non-custom layouts.</td>
 </tr>
 </tbody>
 </table>
@@ -1807,7 +1807,7 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 <tbody>
 <tr>
 <td><code>--color &lt;COLOR SCHEME&gt;</code></td>
-<td>Use a color scheme, use --help for info.</td>
+<td>Use a color scheme, use <code>--help</code> for info.</td>
 </tr>
 </tbody>
 </table>
@@ -1822,7 +1822,7 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
 <tbody>
 <tr>
 <td><code>-h</code>, <code>--help</code></td>
-<td>Prints help (see more info with '--help').</td>
+<td>Prints help info (for more details use <code>--help</code>.)</td>
 </tr>
 <tr>
 <td><code>-V</code>, <code>--version</code></td>
@@ -1850,7 +1850,7 @@ see information on these options by running <code>btm -h</code>, or run <code>bt
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">April 2, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">April 11, 2024</span>
   </span>
 
     
