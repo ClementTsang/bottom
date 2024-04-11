@@ -72,7 +72,7 @@ deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
 
 [dependencies]
-anyhow = "1.0.81"
+anyhow = "1.0.82"
 backtrace = "0.3.71"
 cfg-if = "1.0.0"
 clap = { version = "=4.4.18", features = ["default", "cargo", "wrap_help"] }
@@ -91,10 +91,10 @@ log = { version = "0.4.21", optional = true }
 nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
 regex = "1.10.4"
 serde = { version = "1.0.197", features = ["derive"] }
-starship-battery = { version = "0.8.2", optional = true }
-sysinfo = "=0.30.7"
+starship-battery = { version = "0.8.3", optional = true }
+sysinfo = "=0.30.10"
 thiserror = "1.0.58"
-time = { version = "0.3.34", features = ["formatting", "macros"] }
+time = { version = "0.3.36", features = ["formatting", "macros"] }
 toml_edit = { version = "0.22.9", features = ["serde"] }
 tui = { version = "0.26.1", package = "ratatui" }
 unicode-segmentation = "1.11.0"
@@ -122,7 +122,7 @@ windows = { version = "0.54.0", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.114" }
+serde_json = { version = "1.0.115" }
 sysctl = { version = "0.5.5" }
 filedescriptor = "0.8.2"
 
