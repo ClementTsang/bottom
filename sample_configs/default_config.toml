@@ -14,7 +14,7 @@
 # The update rate of the application.
 #rate = "1s"
 # Whether to put the CPU legend to the left.
-#left_legend = false
+#cpu_left_legend = false
 # Whether to set CPU% on a process to be based on the total CPU or just current usage.
 #current_usage = false
 # Whether to set CPU% on a process to be based on the total CPU or per-core CPU% (not divided by the number of cpus).
@@ -44,7 +44,7 @@
 #default_widget_type = "proc"
 #default_widget_count = 1
 # Expand selected widget upon starting the app
-#expanded_on_startup = true
+#expanded = true
 # Use basic mode
 #basic = false
 # Use the old network legend style

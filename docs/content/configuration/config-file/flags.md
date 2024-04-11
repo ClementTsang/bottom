@@ -11,7 +11,7 @@ each time:
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
 | `hide_avg_cpu`               | Boolean                                                                                                            | Hides the average CPU usage.                                     |
 | `dot_marker`                 | Boolean                                                                                                            | Uses a dot marker for graphs.                                    |
-| `left_legend`                | Boolean                                                                                                            | Puts the CPU chart legend to the left side.                      |
+| `cpu_left_legend`                | Boolean                                                                                                            | Puts the CPU chart legend to the left side.                      |
 | `current_usage`              | Boolean                                                                                                            | Sets process CPU% to be based on current CPU%.                   |
 | `group_processes`            | Boolean                                                                                                            | Groups processes with the same name by default.                  |
 | `case_sensitive`             | Boolean                                                                                                            | Enables case sensitivity by default.                             |
@@ -41,6 +41,6 @@ each time:
 | `enable_gpu`                 | Boolean                                                                                                            | Shows the GPU widgets.                                           |
 | `retention`                  | String (human readable time, such as "10m", "1h", etc.)                                                            | How much data is stored at once in terms of time.                |
 | `unnormalized_cpu`           | Boolean                                                                                                            | Show process CPU% without normalizing over the number of cores.  |
-| `expanded_on_startup`        | Boolean                                                                                                            | Expand the default widget upon starting the app.                 |
+| `expanded`        | Boolean                                                                                                            | Expand the default widget upon starting the app.                 |
 | `memory_legend`              | String (one of ["none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"]) | Where to place the legend for the memory widget.                 |
 | `network_legend`             | String (one of ["none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"]) | Where to place the legend for the network widget.                |

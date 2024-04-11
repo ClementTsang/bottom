@@ -75,7 +75,7 @@
           "description": "The update rate of the application",
           "type": "integer"
         },
-        "left_legend": {
+        "cpu_left_legend": {
           "default": false,
           "description": "Whether to put the CPU legend to the left",
           "type": "boolean"
@@ -141,7 +141,7 @@
           "description": "Override layout default widget",
           "type": "integer"
         },
-        "expanded_on_startup": {
+        "expanded": {
           "default": true,
           "description": "Expand selected widget upon starting the app",
           "type": "boolean"

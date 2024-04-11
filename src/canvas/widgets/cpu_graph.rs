@@ -30,7 +30,7 @@ impl Painter {
         if legend_width < 6 {
             // Skip drawing legend
             if app_state.current_widget.widget_id == (widget_id + 1) {
-                if app_state.app_config_fields.left_legend {
+                if app_state.app_config_fields.cpu_left_legend {
                     app_state.move_widget_selection(&WidgetDirection::Right);
                 } else {
                     app_state.move_widget_selection(&WidgetDirection::Left);
@@ -54,7 +54,7 @@ impl Painter {
         } else {
             let graph_width = draw_loc.width - legend_width;
             let (graph_index, legend_index, constraints) =
-                if app_state.app_config_fields.left_legend {
+                if app_state.app_config_fields.cpu_left_legend {
                     (
                         1,
                         0,

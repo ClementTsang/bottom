@@ -47,7 +47,7 @@ pub struct AppConfigFields {
     pub update_rate: u64,
     pub temperature_type: temperature::TemperatureType,
     pub use_dot: bool,
-    pub left_legend: bool,
+    pub cpu_left_legend: bool,
     pub show_average_cpu: bool, // TODO: Unify this in CPU options
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
@@ -1835,7 +1835,7 @@ impl App {
                     }
                 }
             }
-        } else if self.app_config_fields.left_legend {
+        } else if self.app_config_fields.cpu_left_legend {
             if let BottomWidgetType::Cpu = self.current_widget.widget_type {
                 if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                     if let Some(cpu_widget_state) = self
@@ -1872,7 +1872,7 @@ impl App {
                     self.current_widget = proc_sort_widget.clone();
                 }
             }
-        } else if self.app_config_fields.left_legend {
+        } else if self.app_config_fields.cpu_left_legend {
             if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {
                 if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                     if let Some(new_widget_id) = current_widget.right_neighbour {

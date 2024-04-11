@@ -5,7 +5,7 @@ avg_cpu = true
 temperature_type = "c"
 
 rate = 1000
-left_legend = false
+cpu_left_legend = false
 current_usage = false
 group_processes = false
 case_sensitive = false
