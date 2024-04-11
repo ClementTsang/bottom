@@ -31,17 +31,17 @@
   - [Cargo](#cargo)
   - [Arch Linux](#arch-linux)
   - [Debian / Ubuntu](#debian--ubuntu)
-  - [Snap](#snap)
   - [Exherbo Linux](#exherbo-linux)
   - [Fedora / CentOS / AlmaLinux / Rocky Linux](#fedora--centos--almalinux--rocky-linux)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
   - [Solus](#solus)
+  - [Snap](#snap)
   - [Void](#void)
   - [Homebrew](#homebrew)
   - [MacPorts](#macports)
-  - [Scoop](#scoop)
   - [Chocolatey](#chocolatey)
+  - [Scoop](#scoop)
   - [winget](#winget)
   - [Windows installer](#windows-installer)
   - [Manual installation](#manual-installation)
@@ -159,6 +159,8 @@ bottom is available as an [official package](https://archlinux.org/packages/extr
 sudo pacman -S bottom
 ```
 
+If you want the latest changes that are not yet stable, you can also install `bottom-git` [from the AUR](https://aur.archlinux.org/packages/bottom-git).
+
 ### Debian / Ubuntu
 
 A `.deb` file is provided on each [stable release](https://github.com/ClementTsang/bottom/releases/latest) and
@@ -177,20 +179,6 @@ sudo dpkg -i bottom_0.9.6_arm64.deb
 # ARM
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.6/bottom_0.9.6_armhf.deb
 sudo dpkg -i bottom_0.9.6_armhf.deb
-```
-
-### Snap
-
-bottom is available as a [snap](https://snapcraft.io/install/bottom/ubuntu):
-
-```bash
-sudo snap install bottom
-
-# To allow the program to run as intended
-sudo snap connect bottom:mount-observe
-sudo snap connect bottom:hardware-observe
-sudo snap connect bottom:system-observe
-sudo snap connect bottom:process-control
 ```
 
 ### Exherbo Linux
@@ -248,6 +236,20 @@ Available [in the Solus repos](https://dev.getsol.us/source/bottom/):
 sudo eopkg it bottom
 ```
 
+### Snap
+
+bottom is available as a [snap](https://snapcraft.io/install/bottom/ubuntu):
+
+```bash
+sudo snap install bottom
+
+# To allow the program to run as intended
+sudo snap connect bottom:mount-observe
+sudo snap connect bottom:hardware-observe
+sudo snap connect bottom:system-observe
+sudo snap connect bottom:process-control
+```
+
 ### Void
 
 Available [in the void-packages repo](https://github.com/void-linux/void-packages/tree/master/srcpkgs/bottom):
@@ -273,20 +275,20 @@ sudo port selfupdate
 sudo port install bottom
 ```
 
-### Scoop
-
-Available in the [Main bucket](https://github.com/ScoopInstaller/Main):
-
-```bash
-scoop install bottom
-```
-
 ### Chocolatey
 
 Chocolatey packages are located [here](https://chocolatey.org/packages/bottom):
 
 ```bash
 choco install bottom
+```
+
+### Scoop
+
+Available in the [Main bucket](https://github.com/ScoopInstaller/Main):
+
+```bash
+scoop install bottom
 ```
 
 ### winget
