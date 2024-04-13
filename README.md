@@ -106,7 +106,7 @@ bottom _officially_ supports the following operating systems and corresponding a
 - Windows (`x86_64`, `i686`)
 
 These platforms are tested to work for the most part and issues on these platforms will be fixed if possible.
-Furthermore, binaries are expected to be built and tested using the most recent version of stable Rust at the time.
+Furthermore, binaries are built and tested using the most recent version of stable Rust at the time.
 
 For more details on supported platforms and known problems, check out [the documentation](https://clementtsang.github.io/bottom/nightly/support/official/).
 
@@ -135,14 +135,15 @@ For more details on unsupported platforms and known problems, check out [the doc
 Installation via cargo can be done by installing the [`bottom`](https://crates.io/crates/bottom) crate:
 
 ```bash
-# If required, update Rust to the stable channel first:
+# You might need to update the stable version of Rust first.
+# Other versions might work, but this is not guaranteed.
 rustup update stable
 
-# Install
+# Install the binary from crates.io.
 cargo install bottom --locked
 
 # If you use another channel by default, you can specify
-# the stable channel like so:
+# the what channel to use like so:
 cargo +stable install bottom --locked
 
 # --locked may be omitted if you wish to not use the
@@ -160,6 +161,11 @@ sudo pacman -S bottom
 ```
 
 If you want the latest changes that are not yet stable, you can also install `bottom-git` [from the AUR](https://aur.archlinux.org/packages/bottom-git).
+For example, to install with `paru`:
+
+```bash
+sudo paru -S bottom-git
+```
 
 ### Debian / Ubuntu
 
@@ -315,7 +321,8 @@ There are a few ways to go about doing this manually. Note that you probably wan
 to do so using the most recent version of stable Rust, which is how the binaries are built:
 
 ```bash
-# If required, update Rust on the stable channel first
+# You might need to update the stable version of Rust first.
+# Other versions might work, but this is not guaranteed.
 rustup update stable
 
 # Option 1 - Download from releases and install
@@ -340,8 +347,8 @@ RUSTFLAGS="-C target-cpu=native" cargo install --path . --locked
 
 You can also use the pre-built release binaries manually:
 
-- [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), generated off of the release branch
-- [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated off of the `main` branch at 00:00 UTC daily
+- [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), built using the release branch
+- [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), built using the `main` branch at 00:00 UTC daily
 
 To use, download and extract the binary that matches your system. You can then run by doing:
 
@@ -381,8 +388,9 @@ More details on configuration can be found [in the documentation](https://clemen
 
 ## Troubleshooting
 
-If some things aren't working, give the [troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting) a look. If things still aren't
-working, then consider opening [a question](https://github.com/ClementTsang/bottom/discussions) or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose).
+If some things aren't working, give the [troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting) a look.
+If things still aren't working, then consider opening [a question](https://github.com/ClementTsang/bottom/discussions)
+or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose).
 
 ## Contribution
 
