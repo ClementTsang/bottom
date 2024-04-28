@@ -161,6 +161,8 @@ fn greedy_ascii_add(content: &str, width: NonZeroUsize) -> (String, AsciiIterati
 /// we will use this function for fine... hopefully.
 ///
 /// TODO: Maybe fuzz this function?
+/// TODO: Maybe release this as a lib? Testing against Fish's script [here](https://github.com/ridiculousfish/widecharwidth)
+/// might be useful.
 #[inline]
 fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
     let width = width.into();
@@ -522,10 +524,23 @@ mod test {
 
     #[test]
     fn truncate_emoji() {
-        let heart = "❤️";
-        assert_eq!(truncate_str(heart, 2_usize), heart);
-        assert_eq!(truncate_str(heart, 1_usize), heart);
-        assert_eq!(truncate_str(heart, 0_usize), "");
+        let heart_1 = "♥";
+        assert_eq!(truncate_str(heart_1, 2_usize), heart_1);
+        assert_eq!(truncate_str(heart_1, 1_usize), heart_1);
+        assert_eq!(truncate_str(heart_1, 0_usize), "");
+
+        let heart_2 = "❤";
+        assert_eq!(truncate_str(heart_2, 2_usize), heart_2);
+        assert_eq!(truncate_str(heart_2, 1_usize), heart_2);
+        assert_eq!(truncate_str(heart_2, 0_usize), "");
+
+        // This one has a U+FE0F modifier at the end, and is thus considered "emoji-presentation",
+        // see https://github.com/fish-shell/fish-shell/issues/10461#issuecomment-2079624670.
+        // This shouldn't really be a common issue in a terminal but eh.
+        let heart_emoji_pres = "❤️";
+        assert_eq!(truncate_str(heart_emoji_pres, 2_usize), heart_emoji_pres);
+        assert_eq!(truncate_str(heart_emoji_pres, 1_usize), "…");
+        assert_eq!(truncate_str(heart_emoji_pres, 0_usize), "");
 
         let emote = "💎";
         assert_eq!(truncate_str(emote, 2_usize), emote);
