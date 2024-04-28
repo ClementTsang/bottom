@@ -399,6 +399,14 @@ mod test {
         assert_eq!(truncate_str(cjk, 2_usize), "…");
         assert_eq!(truncate_str(cjk, 1_usize), "…");
         assert_eq!(truncate_str(cjk, 0_usize), "");
+
+        let cjk_2 = "你好嗎";
+        assert_eq!(truncate_str(cjk_2, 5_usize), "你好…");
+        assert_eq!(truncate_str(cjk_2, 4_usize), "你…");
+        assert_eq!(truncate_str(cjk_2, 3_usize), "你…");
+        assert_eq!(truncate_str(cjk_2, 2_usize), "…");
+        assert_eq!(truncate_str(cjk_2, 1_usize), "…");
+        assert_eq!(truncate_str(cjk_2, 0_usize), "");
     }
 
     #[test]
