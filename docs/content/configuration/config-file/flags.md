@@ -4,6 +4,13 @@
 
     This section is in progress, and is just copied from the old documentation.
 
+You can configure flags by putting them in `[flags]` table. Example:
+
+```toml
+[flags]
+color = "nord-light"
+```
+
 Most of the [command line flags](../command-line-options.md) have config file equivalents to avoid having to type them out
 each time:
 
