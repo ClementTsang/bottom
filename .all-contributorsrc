@@ -463,6 +463,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "MichalBryxi",
+      "name": "Michal Bryxí",
+      "avatar_url": "https://avatars.githubusercontent.com/u/847473?v=4",
+      "profile": "https://github.com/MichalBryxi",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
