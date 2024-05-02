@@ -27,6 +27,11 @@ env:
   COMPLETION_DIR: "target/tmp/bottom/completion/"
   MANPAGE_DIR: "target/tmp/bottom/manpage/"
 
+permissions:
+  id-token: write
+  contents: read
+  attestations: write
+
 # TODO: Maybe add retry job in case of timeouts?
 jobs:
   build-binaries:
@@ -176,6 +181,11 @@ jobs:
           cp target/${{ matrix.info.target }}/release/btm ./btm
           tar -czvf bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz btm completion
           echo "ASSET=bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: ${{ env.ASSET }}
 
       - name: Create release directory for artifact, move file
         shell: bash
