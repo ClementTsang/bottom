@@ -140,8 +140,8 @@ struct Layer {
 }
 
 trait Grid: Debug {
-    fn width(&self) -> u16;
-    fn height(&self) -> u16;
+    // fn width(&self) -> u16;
+    // fn height(&self) -> u16;
     fn resolution(&self) -> (f64, f64);
     fn paint(&mut self, x: usize, y: usize, color: Color);
     fn save(&self) -> Layer;
@@ -169,13 +169,13 @@ impl BrailleGrid {
 }
 
 impl Grid for BrailleGrid {
-    fn width(&self) -> u16 {
-        self.width
-    }
+    // fn width(&self) -> u16 {
+    //     self.width
+    // }
 
-    fn height(&self) -> u16 {
-        self.height
-    }
+    // fn height(&self) -> u16 {
+    //     self.height
+    // }
 
     fn resolution(&self) -> (f64, f64) {
         (
@@ -240,13 +240,13 @@ impl CharGrid {
 }
 
 impl Grid for CharGrid {
-    fn width(&self) -> u16 {
-        self.width
-    }
+    // fn width(&self) -> u16 {
+    //     self.width
+    // }
 
-    fn height(&self) -> u16 {
-        self.height
-    }
+    // fn height(&self) -> u16 {
+    //     self.height
+    // }
 
     fn resolution(&self) -> (f64, f64) {
         (f64::from(self.width) - 1.0, f64::from(self.height) - 1.0)
@@ -321,13 +321,13 @@ impl HalfBlockGrid {
 }
 
 impl Grid for HalfBlockGrid {
-    fn width(&self) -> u16 {
-        self.width
-    }
+    // fn width(&self) -> u16 {
+    //     self.width
+    // }
 
-    fn height(&self) -> u16 {
-        self.height
-    }
+    // fn height(&self) -> u16 {
+    //     self.height
+    // }
 
     fn resolution(&self) -> (f64, f64) {
         (f64::from(self.width), f64::from(self.height) * 2.0)
