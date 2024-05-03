@@ -196,7 +196,7 @@ impl Painter {
                 )]));
 
                 let mut battery_rows = Vec::with_capacity(3);
-                battery_rows.push(Row::new([""]).bottom_margin(table_gap * 2));
+                battery_rows.push(Row::new([""]).bottom_margin(table_gap + 1));
                 battery_rows.push(
                     Row::new(["Rate", &battery_details.watt_consumption])
                         .style(self.colours.text_style),
