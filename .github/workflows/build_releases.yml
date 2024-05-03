@@ -255,6 +255,11 @@ jobs:
           cargo wix init
           cargo wix
 
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: "bottom_x86_64_installer.msi"
+
       - name: Create release directory for artifact, move files
         shell: bash
         run: |
@@ -293,6 +298,11 @@ jobs:
             BRANCH=${raw##*/};
           fi
           python ./scripts/cirrus/build.py "$BRANCH" "release/" "${{ inputs.caller }}"
+
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: "release/**/*.tar.gz"
 
       - name: Save release as artifact
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
@@ -410,6 +420,11 @@ jobs:
           sudo chown $USER ./target/${{ matrix.info.target }}/debian/ 2>/dev/null || true
           rm -r ./target/${{ matrix.info.target }}/debian/
 
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: ${{ steps.verify.outputs.DEB_FILE }}
+
       - name: Create release directory for artifact, move file
         shell: bash
         run: |
@@ -494,6 +509,11 @@ jobs:
         run: |
           sudo chown $USER ./target/${{ matrix.info.target }}/generate-rpm/ 2>/dev/null || true
           rm -r ./target/${{ matrix.info.target }}/generate-rpm/
+
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: ${{ steps.verify.outputs.RPM_FILE }}
 
       - name: Create release directory for artifact, move file
         shell: bash
