@@ -8,7 +8,7 @@ use super::{
     ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,
     DataTableStyling, DataToCell,
 };
-use crate::utils::general::truncate_to_text;
+use crate::utils::strings::truncate_to_text;
 
 /// Denotes the sort order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

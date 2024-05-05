@@ -7,7 +7,7 @@ use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete, UnicodeSegmentati
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
     constants,
-    utils::general::str_width,
+    utils::strings::str_width,
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
         ProcWidgetState, TempWidgetState,

@@ -14,7 +14,7 @@ use crate::{
         styling::CanvasStyling,
     },
     data_collection::temperature::TemperatureType,
-    utils::general::{sort_partial_fn, truncate_to_text},
+    utils::{general::sort_partial_fn, strings::truncate_to_text},
 };
 
 #[derive(Clone, Debug)]

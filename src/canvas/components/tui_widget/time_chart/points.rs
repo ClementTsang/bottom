@@ -6,9 +6,8 @@ use tui::{
     },
 };
 
-use crate::utils::general::partial_ordering;
-
 use super::{Context, Dataset, Point, TimeChart};
+use crate::utils::general::partial_ordering;
 
 impl TimeChart<'_> {
     pub(crate) fn draw_points(&self, ctx: &mut Context<'_>) {

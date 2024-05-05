@@ -21,6 +21,7 @@ pub mod utils {
     pub mod error;
     pub mod general;
     pub mod logging;
+    pub mod strings;
 }
 pub mod canvas;
 pub mod constants;

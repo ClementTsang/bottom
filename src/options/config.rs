@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 
 pub use self::ignore_list::IgnoreList;
 use self::{cpu::CpuConfig, layout::Row, process_columns::ProcessConfig};
-
 use super::ConfigColours;
 
 #[derive(Clone, Debug, Default, Deserialize)]

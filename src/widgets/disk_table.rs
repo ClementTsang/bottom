@@ -12,7 +12,9 @@ use crate::{
         },
         styling::CanvasStyling,
     },
-    utils::general::{get_decimal_bytes, sort_partial_fn, truncate_to_text},
+    utils::{
+        data_prefixes::get_decimal_bytes, general::sort_partial_fn, strings::truncate_to_text,
+    },
 };
 
 #[derive(Clone, Debug)]
@@ -28,7 +30,7 @@ pub struct DiskWidgetData {
 }
 
 impl DiskWidgetData {
-    pub fn total_space(&self) -> KString {
+    fn total_space(&self) -> KString {
         if let Some(total_bytes) = self.total_bytes {
             let converted_total_space = get_decimal_bytes(total_bytes);
             format!(
@@ -41,7 +43,7 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn free_space(&self) -> KString {
+    fn free_space(&self) -> KString {
         if let Some(free_bytes) = self.free_bytes {
             let converted_free_space = get_decimal_bytes(free_bytes);
             format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
@@ -50,7 +52,7 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn used_space(&self) -> KString {
+    fn used_space(&self) -> KString {
         if let Some(used_bytes) = self.used_bytes {
             let converted_free_space = get_decimal_bytes(used_bytes);
             format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
@@ -59,7 +61,7 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn free_percent(&self) -> Option<f64> {
+    fn free_percent(&self) -> Option<f64> {
         if let (Some(free_bytes), Some(summed_total_bytes)) =
             (self.free_bytes, self.summed_total_bytes)
         {
@@ -69,14 +71,14 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn free_percent_string(&self) -> KString {
+    fn free_percent_string(&self) -> KString {
         match self.free_percent() {
             Some(val) => format!("{val:.1}%").into(),
             None => "N/A".into(),
         }
     }
 
-    pub fn used_percent(&self) -> Option<f64> {
+    fn used_percent(&self) -> Option<f64> {
         if let (Some(used_bytes), Some(summed_total_bytes)) =
             (self.used_bytes, self.summed_total_bytes)
         {
@@ -90,7 +92,7 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn used_percent_string(&self) -> KString {
+    fn used_percent_string(&self) -> KString {
         match self.used_percent() {
             Some(val) => format!("{val:.1}%").into(),
             None => "N/A".into(),
