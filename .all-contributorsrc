@@ -472,6 +472,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "TheSkyentist",
+      "name": "Raphael Erik Hviding",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17031860?v=4",
+      "profile": "http://mpia.de/~hviding/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
