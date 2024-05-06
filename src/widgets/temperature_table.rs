@@ -1,7 +1,6 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use concat_string::concat_string;
-use kstring::KString;
 use tui::text::Text;
 
 use crate::{
@@ -19,7 +18,7 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct TempWidgetData {
-    pub sensor: KString,
+    pub sensor: Cow<'static, str>,
     pub temperature_value: Option<u64>,
     pub temperature_type: TemperatureType,
 }
@@ -39,7 +38,7 @@ impl ColumnHeader for TempWidgetColumn {
 }
 
 impl TempWidgetData {
-    pub fn temperature(&self) -> KString {
+    pub fn temperature(&self) -> Cow<'static, str> {
         match self.temperature_value {
             Some(temp_val) => {
                 let temp_type = match self.temperature_type {

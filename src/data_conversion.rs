@@ -3,7 +3,7 @@
 
 // TODO: Split this up!
 
-use kstring::KString;
+use std::borrow::Cow;
 
 use crate::{
     app::{data_farmer::DataCollection, AxisScaling},
@@ -110,14 +110,14 @@ impl ConvertedData {
                 };
 
                 self.disk_data.push(DiskWidgetData {
-                    name: KString::from_ref(&disk.name),
-                    mount_point: KString::from_ref(&disk.mount_point),
+                    name: Cow::Owned(disk.name.to_string()),
+                    mount_point: Cow::Owned(disk.mount_point.to_string()),
                     free_bytes: disk.free_space,
                     used_bytes: disk.used_space,
                     total_bytes: disk.total_space,
                     summed_total_bytes,
-                    io_read: io_read.into(),
-                    io_write: io_write.into(),
+                    io_read: Cow::Owned(io_read.to_string()),
+                    io_write: Cow::Owned(io_write.to_string()),
                 });
             });
 
@@ -129,7 +129,7 @@ impl ConvertedData {
 
         data.temp_harvest.iter().for_each(|temp_harvest| {
             self.temp_data.push(TempWidgetData {
-                sensor: KString::from_ref(&temp_harvest.name),
+                sensor: Cow::Owned(temp_harvest.name.to_string()),
                 temperature_value: temp_harvest.temperature.map(|temp| temp.ceil() as u64),
                 temperature_type,
             });

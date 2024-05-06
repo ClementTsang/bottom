@@ -1,6 +1,5 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
-use kstring::KString;
 use tui::text::Text;
 
 use crate::{
@@ -19,18 +18,18 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct DiskWidgetData {
-    pub name: KString,
-    pub mount_point: KString,
+    pub name: Cow<'static, str>,
+    pub mount_point: Cow<'static, str>,
     pub free_bytes: Option<u64>,
     pub used_bytes: Option<u64>,
     pub total_bytes: Option<u64>,
     pub summed_total_bytes: Option<u64>,
-    pub io_read: KString,
-    pub io_write: KString,
+    pub io_read: Cow<'static, str>,
+    pub io_write: Cow<'static, str>,
 }
 
 impl DiskWidgetData {
-    fn total_space(&self) -> KString {
+    fn total_space(&self) -> Cow<'static, str> {
         if let Some(total_bytes) = self.total_bytes {
             let converted_total_space = get_decimal_bytes(total_bytes);
             format!(
@@ -43,7 +42,7 @@ impl DiskWidgetData {
         }
     }
 
-    fn free_space(&self) -> KString {
+    fn free_space(&self) -> Cow<'static, str> {
         if let Some(free_bytes) = self.free_bytes {
             let converted_free_space = get_decimal_bytes(free_bytes);
             format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
@@ -52,7 +51,7 @@ impl DiskWidgetData {
         }
     }
 
-    fn used_space(&self) -> KString {
+    fn used_space(&self) -> Cow<'static, str> {
         if let Some(used_bytes) = self.used_bytes {
             let converted_free_space = get_decimal_bytes(used_bytes);
             format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
@@ -71,7 +70,7 @@ impl DiskWidgetData {
         }
     }
 
-    fn free_percent_string(&self) -> KString {
+    fn free_percent_string(&self) -> Cow<'static, str> {
         match self.free_percent() {
             Some(val) => format!("{val:.1}%").into(),
             None => "N/A".into(),
@@ -92,7 +91,7 @@ impl DiskWidgetData {
         }
     }
 
-    fn used_percent_string(&self) -> KString {
+    fn used_percent_string(&self) -> Cow<'static, str> {
         match self.used_percent() {
             Some(val) => format!("{val:.1}%").into(),
             None => "N/A".into(),
