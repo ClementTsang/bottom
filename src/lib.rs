@@ -345,7 +345,7 @@ pub fn update_data(app: &mut App) {
 
     // FIXME: Make this CPU force update less terrible.
     if app.states.cpu_state.force_update.is_some() {
-        app.converted_data.ingest_cpu_data(data_source);
+        app.converted_data.convert_cpu_data(data_source);
         app.converted_data.load_avg_data = data_source.load_avg_harvest;
 
         app.states.cpu_state.force_update = None;
@@ -398,7 +398,7 @@ pub fn update_data(app: &mut App) {
     }
 
     if app.states.net_state.force_update.is_some() {
-        let (rx, tx) = get_rx_tx_data_points(
+        let (rx, tx) = get_network_points(
             data_source,
             &app.app_config_fields.network_scale_type,
             &app.app_config_fields.network_unit_type,

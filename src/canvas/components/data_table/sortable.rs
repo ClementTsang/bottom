@@ -345,6 +345,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use tui::text::Text;
+
     use super::*;
 
     #[derive(Clone, PartialEq, Eq, Debug)]
@@ -359,9 +361,7 @@ mod test {
     }
 
     impl DataToCell<ColumnType> for TestType {
-        fn to_cell(
-            &self, _column: &ColumnType, _calculated_width: NonZeroU16,
-        ) -> Option<tui::text::Text<'_>> {
+        fn to_cell(&self, _column: &ColumnType, _calculated_width: NonZeroU16) -> Option<Text<'_>> {
             None
         }
 

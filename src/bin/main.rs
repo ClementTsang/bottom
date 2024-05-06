@@ -208,11 +208,10 @@ fn main() -> Result<()> {
                     }
 
                     if !app.frozen_state.is_frozen() {
-                        // Convert all data into tui-compliant components
+                        // Convert all data into data for the displayed widgets.
 
-                        // Network
                         if app.used_widgets.use_net {
-                            let network_data = convert_network_data_points(
+                            let network_data = convert_network_points(
                                 &app.data_collection,
                                 app.app_config_fields.use_basic_mode
                                     || app.app_config_fields.use_old_network_legend,
@@ -232,18 +231,16 @@ fn main() -> Result<()> {
                             }
                         }
 
-                        // Disk
                         if app.used_widgets.use_disk {
-                            app.converted_data.ingest_disk_data(&app.data_collection);
+                            app.converted_data.convert_disk_data(&app.data_collection);
 
                             for disk in app.states.disk_state.widget_states.values_mut() {
                                 disk.force_data_update();
                             }
                         }
 
-                        // Temperatures
                         if app.used_widgets.use_temp {
-                            app.converted_data.ingest_temp_data(
+                            app.converted_data.convert_temp_data(
                                 &app.data_collection,
                                 app.app_config_fields.temperature_type,
                             );
@@ -253,22 +250,25 @@ fn main() -> Result<()> {
                             }
                         }
 
-                        // Memory
                         if app.used_widgets.use_mem {
                             app.converted_data.mem_data =
                                 convert_mem_data_points(&app.data_collection);
+
                             #[cfg(not(target_os = "windows"))]
                             {
                                 app.converted_data.cache_data =
                                     convert_cache_data_points(&app.data_collection);
                             }
+
                             app.converted_data.swap_data =
                                 convert_swap_data_points(&app.data_collection);
+
                             #[cfg(feature = "zfs")]
                             {
                                 app.converted_data.arc_data =
                                     convert_arc_data_points(&app.data_collection);
                             }
+
                             #[cfg(feature = "gpu")]
                             {
                                 app.converted_data.gpu_data =
@@ -277,8 +277,10 @@ fn main() -> Result<()> {
 
                             app.converted_data.mem_labels =
                                 convert_mem_label(&app.data_collection.memory_harvest);
+
                             app.converted_data.swap_labels =
                                 convert_mem_label(&app.data_collection.swap_harvest);
+
                             #[cfg(not(target_os = "windows"))]
                             {
                                 app.converted_data.cache_labels =
@@ -287,26 +289,22 @@ fn main() -> Result<()> {
 
                             #[cfg(feature = "zfs")]
                             {
-                                let arc_labels =
+                                app.converted_data.arc_labels =
                                     convert_mem_label(&app.data_collection.arc_harvest);
-                                app.converted_data.arc_labels = arc_labels;
                             }
                         }
 
-                        // CPU
                         if app.used_widgets.use_cpu {
-                            app.converted_data.ingest_cpu_data(&app.data_collection);
+                            app.converted_data.convert_cpu_data(&app.data_collection);
                             app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;
                         }
 
-                        // Processes
                         if app.used_widgets.use_proc {
                             for proc in app.states.proc_state.widget_states.values_mut() {
                                 proc.force_data_update();
                             }
                         }
 
-                        // Battery
                         #[cfg(feature = "battery")]
                         {
                             if app.used_widgets.use_battery {
