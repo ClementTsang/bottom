@@ -1,6 +1,6 @@
-use std::num::NonZeroU16;
+use std::{borrow::Cow, num::NonZeroU16};
 
-use tui::{text::Text, widgets::Row};
+use tui::widgets::Row;
 
 use super::{ColumnHeader, DataTableColumn};
 use crate::canvas::Painter;
@@ -9,8 +9,9 @@ pub trait DataToCell<H>
 where
     H: ColumnHeader,
 {
-    /// Given data, a column, and its corresponding width, return what should be displayed in the [`DataTable`](super::DataTable).
-    fn to_cell(&self, column: &H, calculated_width: NonZeroU16) -> Option<Text<'_>>;
+    /// Given data, a column, and its corresponding width, return the string in the cell that will
+    /// be displayed in the [`DataTable`](super::DataTable).
+    fn to_cell(&self, column: &H, calculated_width: NonZeroU16) -> Option<Cow<'static, str>>;
 
     /// Apply styling to the generated [`Row`] of cells.
     ///

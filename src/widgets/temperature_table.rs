@@ -1,7 +1,6 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use concat_string::concat_string;
-use tui::text::Text;
 
 use crate::{
     app::AppConfigFields,
@@ -13,7 +12,7 @@ use crate::{
         styling::CanvasStyling,
     },
     data_collection::temperature::TemperatureType,
-    utils::{general::sort_partial_fn, strings::truncate_to_text},
+    utils::general::sort_partial_fn,
 };
 
 #[derive(Clone, Debug)]
@@ -54,10 +53,12 @@ impl TempWidgetData {
 }
 
 impl DataToCell<TempWidgetColumn> for TempWidgetData {
-    fn to_cell(&self, column: &TempWidgetColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
+    fn to_cell(
+        &self, column: &TempWidgetColumn, _calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
         Some(match column {
-            TempWidgetColumn::Sensor => truncate_to_text(&self.sensor, calculated_width.get()),
-            TempWidgetColumn::Temp => truncate_to_text(&self.temperature(), calculated_width.get()),
+            TempWidgetColumn::Sensor => self.sensor.clone(),
+            TempWidgetColumn::Temp => self.temperature(),
         })
     }
 

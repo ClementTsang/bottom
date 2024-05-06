@@ -1,7 +1,5 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
-use tui::text::Text;
-
 use crate::{
     app::AppConfigFields,
     canvas::{
@@ -11,9 +9,7 @@ use crate::{
         },
         styling::CanvasStyling,
     },
-    utils::{
-        data_prefixes::get_decimal_bytes, general::sort_partial_fn, strings::truncate_to_text,
-    },
+    utils::{data_prefixes::get_decimal_bytes, general::sort_partial_fn},
 };
 
 #[derive(Clone, Debug)]
@@ -129,22 +125,19 @@ impl ColumnHeader for DiskWidgetColumn {
 }
 
 impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
-    fn to_cell(&self, column: &DiskWidgetColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
-        let calculated_width = calculated_width.get();
+    fn to_cell(
+        &self, column: &DiskWidgetColumn, _calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
         let text = match column {
-            DiskWidgetColumn::Disk => truncate_to_text(&self.name, calculated_width),
-            DiskWidgetColumn::Mount => truncate_to_text(&self.mount_point, calculated_width),
-            DiskWidgetColumn::Used => truncate_to_text(&self.used_space(), calculated_width),
-            DiskWidgetColumn::Free => truncate_to_text(&self.free_space(), calculated_width),
-            DiskWidgetColumn::UsedPercent => {
-                truncate_to_text(&self.used_percent_string(), calculated_width)
-            }
-            DiskWidgetColumn::FreePercent => {
-                truncate_to_text(&self.free_percent_string(), calculated_width)
-            }
-            DiskWidgetColumn::Total => truncate_to_text(&self.total_space(), calculated_width),
-            DiskWidgetColumn::IoRead => truncate_to_text(&self.io_read, calculated_width),
-            DiskWidgetColumn::IoWrite => truncate_to_text(&self.io_write, calculated_width),
+            DiskWidgetColumn::Disk => self.name.clone(),
+            DiskWidgetColumn::Mount => self.mount_point.clone(),
+            DiskWidgetColumn::Used => self.used_space(),
+            DiskWidgetColumn::Free => self.free_space(),
+            DiskWidgetColumn::UsedPercent => self.used_percent_string(),
+            DiskWidgetColumn::FreePercent => self.free_percent_string(),
+            DiskWidgetColumn::Total => self.total_space(),
+            DiskWidgetColumn::IoRead => self.io_read.clone(),
+            DiskWidgetColumn::IoWrite => self.io_write.clone(),
         };
 
         Some(text)

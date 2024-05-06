@@ -1,25 +1,20 @@
 use std::num::NonZeroUsize;
 
-use tui::{
-    style::Style,
-    text::{Line, Span, Text},
-};
+use tui::text::Text;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
 ///
 /// TODO: Maybe cache results from this function for some cases? e.g. columns
+#[inline]
 pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
-    Text {
-        lines: vec![Line::from(vec![Span::raw(truncate_str(content, width))])],
-        style: Style::default(),
-        alignment: None,
-    }
+    Text::raw(truncate_str(content, width))
 }
 
 /// Returns the width of a str `s`. This takes into account some things like
 /// joiners when calculating width.
+#[inline]
 pub fn str_width(s: &str) -> usize {
     UnicodeSegmentation::graphemes(s, true)
         .map(|g| {
@@ -107,8 +102,7 @@ fn greedy_ascii_add(content: &str, width: NonZeroUsize) -> (String, AsciiIterati
 /// we will use this function for fine... hopefully.
 ///
 /// TODO: Maybe fuzz this function?
-/// TODO: Maybe release this as a lib? Testing against Fish's script [here](https://github.com/ridiculousfish/widecharwidth)
-/// might be useful.
+/// TODO: Maybe release this as a lib? Testing against Fish's script [here](https://github.com/ridiculousfish/widecharwidth) might be useful.
 #[inline]
 fn truncate_str<U: Into<usize>>(content: &str, width: U) -> String {
     let width = width.into();

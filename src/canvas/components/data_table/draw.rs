@@ -20,6 +20,7 @@ use crate::{
     app::layout_manager::BottomWidget,
     canvas::Painter,
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
+    utils::strings::truncate_to_text,
 };
 
 pub enum SelectionState {
@@ -225,7 +226,9 @@ where
                                 .iter()
                                 .zip(&self.state.calculated_widths)
                                 .filter_map(|(column, &width)| {
-                                    data_row.to_cell(column.inner(), width)
+                                    data_row
+                                        .to_cell(column.inner(), width)
+                                        .map(|content| truncate_to_text(&content, width.get()))
                                 }),
                         );
 

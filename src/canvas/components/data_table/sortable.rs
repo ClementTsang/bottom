@@ -99,6 +99,7 @@ impl SortType for Sortable {
                         };
                         // TODO: I think I can get away with removing the truncate_to_text call since
                         // I almost always bind to at least the header size...
+                        // TODO: Or should we instead truncate but ALWAYS leave the arrow at the end?
                         truncate_to_text(&concat_string!(c.header(), arrow), width.get())
                     } else {
                         truncate_to_text(&c.header(), width.get())
@@ -345,8 +346,6 @@ where
 
 #[cfg(test)]
 mod test {
-    use tui::text::Text;
-
     use super::*;
 
     #[derive(Clone, PartialEq, Eq, Debug)]
@@ -361,7 +360,9 @@ mod test {
     }
 
     impl DataToCell<ColumnType> for TestType {
-        fn to_cell(&self, _column: &ColumnType, _calculated_width: NonZeroU16) -> Option<Text<'_>> {
+        fn to_cell(
+            &self, _column: &ColumnType, _calculated_width: NonZeroU16,
+        ) -> Option<Cow<'static, str>> {
             None
         }
 
