@@ -19,10 +19,22 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
 
 jobs:
-  # TODO: Add a pre-job check to skip if no change; may want to add something to check if there is a new rust version/week limit of skips?
+  # Check if things should be skipped.
+  pre-job:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - name: Check if this action should be skipped
+        id: skip_check
+        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
+        with:
+          skip_after_successful_duplicate: "true"
+          do_not_skip: '["workflow_dispatch"]'
 
   initialize-job:
     name: initialize-job
+    needs: pre-job
     runs-on: ubuntu-latest
     steps:
       - name: Check if mock
@@ -37,7 +49,7 @@ jobs:
           fi
 
   build-release:
-    needs: [initialize-job]
+    needs: initialize-job
     uses: ./.github/workflows/build_releases.yml
     with:
       caller: "nightly"
@@ -45,8 +57,8 @@ jobs:
 
   upload-release:
     name: upload-release
+    needs: build-release
     runs-on: ubuntu-latest
-    needs: [build-release]
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
