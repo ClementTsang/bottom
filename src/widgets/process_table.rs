@@ -421,9 +421,11 @@ impl ProcWidgetState {
         }
     }
 
+    /// Update the current table data.
+    ///
     /// This function *only* updates the displayed process data. If there is a need to update the actual *stored* data,
     /// call it before this function.
-    pub fn ingest_data(&mut self, data_collection: &DataCollection) {
+    pub fn set_table_data(&mut self, data_collection: &DataCollection) {
         let data = match &self.mode {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
                 self.get_normal_data(&data_collection.process_data.process_harvest)

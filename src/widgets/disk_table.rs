@@ -252,7 +252,8 @@ impl DiskTableWidget {
         self.force_update_data = true;
     }
 
-    pub fn ingest_data(&mut self, data: &[DiskWidgetData]) {
+    /// Update the current table data.
+    pub fn set_table_data(&mut self, data: &[DiskWidgetData]) {
         let mut data = data.to_vec();
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
             column.sort_by(&mut data, self.table.order());

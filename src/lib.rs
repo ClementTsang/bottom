@@ -338,7 +338,7 @@ pub fn update_data(app: &mut App) {
 
     for proc in app.states.proc_state.widget_states.values_mut() {
         if proc.force_update_data {
-            proc.ingest_data(data_source);
+            proc.set_table_data(data_source);
             proc.force_update_data = false;
         }
     }
@@ -362,7 +362,7 @@ pub fn update_data(app: &mut App) {
         let data = &app.converted_data.temp_data;
         for temp in app.states.temp_state.widget_states.values_mut() {
             if temp.force_update_data {
-                temp.ingest_data(data);
+                temp.set_table_data(data);
                 temp.force_update_data = false;
             }
         }
@@ -371,7 +371,7 @@ pub fn update_data(app: &mut App) {
         let data = &app.converted_data.disk_data;
         for disk in app.states.disk_state.widget_states.values_mut() {
             if disk.force_update_data {
-                disk.ingest_data(data);
+                disk.set_table_data(data);
                 disk.force_update_data = false;
             }
         }

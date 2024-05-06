@@ -134,7 +134,8 @@ impl TempWidgetState {
         self.force_update_data = true;
     }
 
-    pub fn ingest_data(&mut self, data: &[TempWidgetData]) {
+    /// Update the current table data.
+    pub fn set_table_data(&mut self, data: &[TempWidgetData]) {
         let mut data = data.to_vec();
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
             column.sort_by(&mut data, self.table.order());
