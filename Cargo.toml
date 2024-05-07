@@ -207,17 +207,15 @@ assets = [
     { source = "desktop/bottom.desktop", dest = "/usr/share/applications/bottom.desktop", mode = "644" },
 ]
 
-# Activate whenever we bump the unofficial MSRV to 1.74, I guess?
-# [lints.rust]
-# rust_2018_idioms = "deny"
+[lints.rust]
+rust_2018_idioms = "deny"
 # missing_docs = "deny"
-# unused_extern_crates = "deny"
 
-# [lints.rustdoc]
-# broken_intra_doc_links = "deny"
-# missing_crate_level_docs = "deny"
+[lints.rustdoc]
+broken_intra_doc_links = "deny"
+missing_crate_level_docs = "deny"
 
-# [lints.clippy]
-# todo = "deny"
-# unimplemented = "deny"
-# missing_safety_doc = "deny"
+[lints.clippy]
+todo = "deny"
+unimplemented = "deny"
+missing_safety_doc = "deny"
