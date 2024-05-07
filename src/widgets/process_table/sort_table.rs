@@ -1,11 +1,6 @@
 use std::{borrow::Cow, num::NonZeroU16};
 
-use tui::text::Text;
-
-use crate::{
-    canvas::components::data_table::{ColumnHeader, DataTableColumn, DataToCell},
-    utils::general::truncate_to_text,
-};
+use crate::canvas::components::data_table::{ColumnHeader, DataTableColumn, DataToCell};
 
 pub struct SortTableColumn;
 
@@ -16,8 +11,10 @@ impl ColumnHeader for SortTableColumn {
 }
 
 impl DataToCell<SortTableColumn> for &'static str {
-    fn to_cell(&self, _column: &SortTableColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
-        Some(truncate_to_text(self, calculated_width.get()))
+    fn to_cell(
+        &self, _column: &SortTableColumn, _calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
+        Some(Cow::Borrowed(self))
     }
 
     fn column_widths<C: DataTableColumn<SortTableColumn>>(data: &[Self], _columns: &[C]) -> Vec<u16>
@@ -29,8 +26,10 @@ impl DataToCell<SortTableColumn> for &'static str {
 }
 
 impl DataToCell<SortTableColumn> for Cow<'static, str> {
-    fn to_cell(&self, _column: &SortTableColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
-        Some(truncate_to_text(self, calculated_width.get()))
+    fn to_cell(
+        &self, _column: &SortTableColumn, _calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
+        Some(self.clone())
     }
 
     fn column_widths<C: DataTableColumn<SortTableColumn>>(data: &[Self], _columns: &[C]) -> Vec<u16>

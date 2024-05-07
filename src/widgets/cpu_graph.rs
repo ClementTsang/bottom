@@ -1,7 +1,7 @@
 use std::{borrow::Cow, num::NonZeroU16, time::Instant};
 
 use concat_string::concat_string;
-use tui::{style::Style, text::Text, widgets::Row};
+use tui::{style::Style, widgets::Row};
 
 use crate::{
     app::AppConfigFields,
@@ -16,7 +16,6 @@ use crate::{
     data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,
     options::config::cpu::CpuDefault,
-    utils::general::truncate_to_text,
 };
 
 #[derive(Default)]
@@ -81,7 +80,9 @@ impl CpuWidgetTableData {
 }
 
 impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
-    fn to_cell(&self, column: &CpuWidgetColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
+    fn to_cell(
+        &self, column: &CpuWidgetColumn, calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
         const CPU_TRUNCATE_BREAKPOINT: u16 = 5;
 
         let calculated_width = calculated_width.get();
@@ -107,25 +108,19 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
                 } else {
                     match column {
                         CpuWidgetColumn::CPU => match data_type {
-                            CpuDataType::Avg => Some(truncate_to_text("AVG", calculated_width)),
+                            CpuDataType::Avg => Some("AVG".into()),
                             CpuDataType::Cpu(index) => {
                                 let index_str = index.to_string();
                                 let text = if calculated_width < CPU_TRUNCATE_BREAKPOINT {
-                                    truncate_to_text(&index_str, calculated_width)
+                                    index_str.into()
                                 } else {
-                                    truncate_to_text(
-                                        &concat_string!("CPU", index_str),
-                                        calculated_width,
-                                    )
+                                    concat_string!("CPU", index_str).into()
                                 };
 
                                 Some(text)
                             }
                         },
-                        CpuWidgetColumn::Use => Some(truncate_to_text(
-                            &format!("{:.0}%", last_entry.round()),
-                            calculated_width,
-                        )),
+                        CpuWidgetColumn::Use => Some(format!("{:.0}%", last_entry.round()).into()),
                     }
                 }
             }

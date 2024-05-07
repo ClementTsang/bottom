@@ -1,8 +1,6 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use concat_string::concat_string;
-use kstring::KString;
-use tui::text::Text;
 
 use crate::{
     app::AppConfigFields,
@@ -14,12 +12,12 @@ use crate::{
         styling::CanvasStyling,
     },
     data_collection::temperature::TemperatureType,
-    utils::general::{sort_partial_fn, truncate_to_text},
+    utils::general::sort_partial_fn,
 };
 
 #[derive(Clone, Debug)]
 pub struct TempWidgetData {
-    pub sensor: KString,
+    pub sensor: Cow<'static, str>,
     pub temperature_value: Option<u64>,
     pub temperature_type: TemperatureType,
 }
@@ -39,7 +37,7 @@ impl ColumnHeader for TempWidgetColumn {
 }
 
 impl TempWidgetData {
-    pub fn temperature(&self) -> KString {
+    pub fn temperature(&self) -> Cow<'static, str> {
         match self.temperature_value {
             Some(temp_val) => {
                 let temp_type = match self.temperature_type {
@@ -55,10 +53,12 @@ impl TempWidgetData {
 }
 
 impl DataToCell<TempWidgetColumn> for TempWidgetData {
-    fn to_cell(&self, column: &TempWidgetColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
+    fn to_cell(
+        &self, column: &TempWidgetColumn, _calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
         Some(match column {
-            TempWidgetColumn::Sensor => truncate_to_text(&self.sensor, calculated_width.get()),
-            TempWidgetColumn::Temp => truncate_to_text(&self.temperature(), calculated_width.get()),
+            TempWidgetColumn::Sensor => self.sensor.clone(),
+            TempWidgetColumn::Temp => self.temperature(),
         })
     }
 
@@ -135,7 +135,8 @@ impl TempWidgetState {
         self.force_update_data = true;
     }
 
-    pub fn ingest_data(&mut self, data: &[TempWidgetData]) {
+    /// Update the current table data.
+    pub fn set_table_data(&mut self, data: &[TempWidgetData]) {
         let mut data = data.to_vec();
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
             column.sort_by(&mut data, self.table.order());

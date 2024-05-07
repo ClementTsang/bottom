@@ -1,8 +1,5 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
-use kstring::KString;
-use tui::text::Text;
-
 use crate::{
     app::AppConfigFields,
     canvas::{
@@ -12,23 +9,23 @@ use crate::{
         },
         styling::CanvasStyling,
     },
-    utils::general::{get_decimal_bytes, sort_partial_fn, truncate_to_text},
+    utils::{data_prefixes::get_decimal_bytes, general::sort_partial_fn},
 };
 
 #[derive(Clone, Debug)]
 pub struct DiskWidgetData {
-    pub name: KString,
-    pub mount_point: KString,
+    pub name: Cow<'static, str>,
+    pub mount_point: Cow<'static, str>,
     pub free_bytes: Option<u64>,
     pub used_bytes: Option<u64>,
     pub total_bytes: Option<u64>,
     pub summed_total_bytes: Option<u64>,
-    pub io_read: KString,
-    pub io_write: KString,
+    pub io_read: Cow<'static, str>,
+    pub io_write: Cow<'static, str>,
 }
 
 impl DiskWidgetData {
-    pub fn total_space(&self) -> KString {
+    fn total_space(&self) -> Cow<'static, str> {
         if let Some(total_bytes) = self.total_bytes {
             let converted_total_space = get_decimal_bytes(total_bytes);
             format!(
@@ -41,7 +38,7 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn free_space(&self) -> KString {
+    fn free_space(&self) -> Cow<'static, str> {
         if let Some(free_bytes) = self.free_bytes {
             let converted_free_space = get_decimal_bytes(free_bytes);
             format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
@@ -50,7 +47,7 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn used_space(&self) -> KString {
+    fn used_space(&self) -> Cow<'static, str> {
         if let Some(used_bytes) = self.used_bytes {
             let converted_free_space = get_decimal_bytes(used_bytes);
             format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
@@ -59,7 +56,7 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn free_percent(&self) -> Option<f64> {
+    fn free_percent(&self) -> Option<f64> {
         if let (Some(free_bytes), Some(summed_total_bytes)) =
             (self.free_bytes, self.summed_total_bytes)
         {
@@ -69,14 +66,14 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn free_percent_string(&self) -> KString {
+    fn free_percent_string(&self) -> Cow<'static, str> {
         match self.free_percent() {
             Some(val) => format!("{val:.1}%").into(),
             None => "N/A".into(),
         }
     }
 
-    pub fn used_percent(&self) -> Option<f64> {
+    fn used_percent(&self) -> Option<f64> {
         if let (Some(used_bytes), Some(summed_total_bytes)) =
             (self.used_bytes, self.summed_total_bytes)
         {
@@ -90,7 +87,7 @@ impl DiskWidgetData {
         }
     }
 
-    pub fn used_percent_string(&self) -> KString {
+    fn used_percent_string(&self) -> Cow<'static, str> {
         match self.used_percent() {
             Some(val) => format!("{val:.1}%").into(),
             None => "N/A".into(),
@@ -128,22 +125,19 @@ impl ColumnHeader for DiskWidgetColumn {
 }
 
 impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
-    fn to_cell(&self, column: &DiskWidgetColumn, calculated_width: NonZeroU16) -> Option<Text<'_>> {
-        let calculated_width = calculated_width.get();
+    fn to_cell(
+        &self, column: &DiskWidgetColumn, _calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
         let text = match column {
-            DiskWidgetColumn::Disk => truncate_to_text(&self.name, calculated_width),
-            DiskWidgetColumn::Mount => truncate_to_text(&self.mount_point, calculated_width),
-            DiskWidgetColumn::Used => truncate_to_text(&self.used_space(), calculated_width),
-            DiskWidgetColumn::Free => truncate_to_text(&self.free_space(), calculated_width),
-            DiskWidgetColumn::UsedPercent => {
-                truncate_to_text(&self.used_percent_string(), calculated_width)
-            }
-            DiskWidgetColumn::FreePercent => {
-                truncate_to_text(&self.free_percent_string(), calculated_width)
-            }
-            DiskWidgetColumn::Total => truncate_to_text(&self.total_space(), calculated_width),
-            DiskWidgetColumn::IoRead => truncate_to_text(&self.io_read, calculated_width),
-            DiskWidgetColumn::IoWrite => truncate_to_text(&self.io_write, calculated_width),
+            DiskWidgetColumn::Disk => self.name.clone(),
+            DiskWidgetColumn::Mount => self.mount_point.clone(),
+            DiskWidgetColumn::Used => self.used_space(),
+            DiskWidgetColumn::Free => self.free_space(),
+            DiskWidgetColumn::UsedPercent => self.used_percent_string(),
+            DiskWidgetColumn::FreePercent => self.free_percent_string(),
+            DiskWidgetColumn::Total => self.total_space(),
+            DiskWidgetColumn::IoRead => self.io_read.clone(),
+            DiskWidgetColumn::IoWrite => self.io_write.clone(),
         };
 
         Some(text)
@@ -251,7 +245,8 @@ impl DiskTableWidget {
         self.force_update_data = true;
     }
 
-    pub fn ingest_data(&mut self, data: &[DiskWidgetData]) {
+    /// Update the current table data.
+    pub fn set_table_data(&mut self, data: &[DiskWidgetData]) {
         let mut data = data.to_vec();
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
             column.sort_by(&mut data, self.table.order());

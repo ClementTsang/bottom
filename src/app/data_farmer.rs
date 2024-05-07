@@ -21,7 +21,7 @@ use hashbrown::HashMap;
 use crate::data_collection::batteries;
 use crate::{
     data_collection::{cpu, disks, memory, network, processes::ProcessHarvest, temperature, Data},
-    utils::{data_prefixes::*, general::get_decimal_bytes},
+    utils::data_prefixes::*,
     Pid,
 };
 

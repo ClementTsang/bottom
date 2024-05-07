@@ -15,6 +15,7 @@ use std::{
 use anyhow::{Context, Result};
 use clap::ArgMatches;
 pub use colours::ConfigColours;
+pub use config::Config;
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use regex::Regex;
@@ -33,7 +34,6 @@ use crate::{
     },
     widgets::*,
 };
-pub use config::Config;
 
 macro_rules! is_flag_enabled {
     ($flag_name:ident, $matches:expr, $config:expr) => {

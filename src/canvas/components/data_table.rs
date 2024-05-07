@@ -152,7 +152,7 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
 
 #[cfg(test)]
 mod test {
-    use std::num::NonZeroU16;
+    use std::{borrow::Cow, num::NonZeroU16};
 
     use super::*;
 
@@ -164,7 +164,7 @@ mod test {
     impl DataToCell<&'static str> for TestType {
         fn to_cell(
             &self, _column: &&'static str, _calculated_width: NonZeroU16,
-        ) -> Option<tui::text::Text<'_>> {
+        ) -> Option<Cow<'static, str>> {
             None
         }
 

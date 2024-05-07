@@ -8,7 +8,7 @@ use super::{
     ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,
     DataTableStyling, DataToCell,
 };
-use crate::utils::general::truncate_to_text;
+use crate::utils::strings::truncate_to_text;
 
 /// Denotes the sort order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -99,6 +99,7 @@ impl SortType for Sortable {
                         };
                         // TODO: I think I can get away with removing the truncate_to_text call since
                         // I almost always bind to at least the header size...
+                        // TODO: Or should we instead truncate but ALWAYS leave the arrow at the end?
                         truncate_to_text(&concat_string!(c.header(), arrow), width.get())
                     } else {
                         truncate_to_text(&c.header(), width.get())
@@ -361,7 +362,7 @@ mod test {
     impl DataToCell<ColumnType> for TestType {
         fn to_cell(
             &self, _column: &ColumnType, _calculated_width: NonZeroU16,
-        ) -> Option<tui::text::Text<'_>> {
+        ) -> Option<Cow<'static, str>> {
             None
         }
 

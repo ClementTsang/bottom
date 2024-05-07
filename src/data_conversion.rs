@@ -3,13 +3,13 @@
 
 // TODO: Split this up!
 
-use kstring::KString;
+use std::borrow::Cow;
 
 use crate::{
     app::{data_farmer::DataCollection, AxisScaling},
     canvas::components::time_chart::Point,
     data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
-    utils::{data_prefixes::*, data_units::DataUnit, general::*},
+    utils::{data_prefixes::*, data_units::DataUnit},
     widgets::{DiskWidgetData, TempWidgetData},
 };
 
@@ -96,7 +96,7 @@ pub struct ConvertedData {
 
 impl ConvertedData {
     // TODO: Can probably heavily reduce this step to avoid clones.
-    pub fn ingest_disk_data(&mut self, data: &DataCollection) {
+    pub fn convert_disk_data(&mut self, data: &DataCollection) {
         self.disk_data.clear();
 
         data.disk_harvest
@@ -110,26 +110,26 @@ impl ConvertedData {
                 };
 
                 self.disk_data.push(DiskWidgetData {
-                    name: KString::from_ref(&disk.name),
-                    mount_point: KString::from_ref(&disk.mount_point),
+                    name: Cow::Owned(disk.name.to_string()),
+                    mount_point: Cow::Owned(disk.mount_point.to_string()),
                     free_bytes: disk.free_space,
                     used_bytes: disk.used_space,
                     total_bytes: disk.total_space,
                     summed_total_bytes,
-                    io_read: io_read.into(),
-                    io_write: io_write.into(),
+                    io_read: Cow::Owned(io_read.to_string()),
+                    io_write: Cow::Owned(io_write.to_string()),
                 });
             });
 
         self.disk_data.shrink_to_fit();
     }
 
-    pub fn ingest_temp_data(&mut self, data: &DataCollection, temperature_type: TemperatureType) {
+    pub fn convert_temp_data(&mut self, data: &DataCollection, temperature_type: TemperatureType) {
         self.temp_data.clear();
 
         data.temp_harvest.iter().for_each(|temp_harvest| {
             self.temp_data.push(TempWidgetData {
-                sensor: KString::from_ref(&temp_harvest.name),
+                sensor: Cow::Owned(temp_harvest.name.to_string()),
                 temperature_value: temp_harvest.temperature.map(|temp| temp.ceil() as u64),
                 temperature_type,
             });
@@ -138,7 +138,7 @@ impl ConvertedData {
         self.temp_data.shrink_to_fit();
     }
 
-    pub fn ingest_cpu_data(&mut self, current_data: &DataCollection) {
+    pub fn convert_cpu_data(&mut self, current_data: &DataCollection) {
         let current_time = current_data.current_instant;
 
         // (Re-)initialize the vector if the lengths don't match...
@@ -207,11 +207,11 @@ impl ConvertedData {
     }
 }
 
-pub fn convert_mem_data_points(current_data: &DataCollection) -> Vec<Point> {
+pub fn convert_mem_data_points(data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = current_data.current_instant;
+    let current_time = data.current_instant;
 
-    for (time, data) in &current_data.timed_data_vec {
+    for (time, data) in &data.timed_data_vec {
         if let Some(mem_data) = data.mem_data {
             let time_from_start: f64 =
                 (current_time.duration_since(*time).as_millis() as f64).floor();
@@ -226,11 +226,11 @@ pub fn convert_mem_data_points(current_data: &DataCollection) -> Vec<Point> {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn convert_cache_data_points(current_data: &DataCollection) -> Vec<Point> {
+pub fn convert_cache_data_points(data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = current_data.current_instant;
+    let current_time = data.current_instant;
 
-    for (time, data) in &current_data.timed_data_vec {
+    for (time, data) in &data.timed_data_vec {
         if let Some(cache_data) = data.cache_data {
             let time_from_start: f64 =
                 (current_time.duration_since(*time).as_millis() as f64).floor();
@@ -244,11 +244,11 @@ pub fn convert_cache_data_points(current_data: &DataCollection) -> Vec<Point> {
     result
 }
 
-pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
+pub fn convert_swap_data_points(data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = current_data.current_instant;
+    let current_time = data.current_instant;
 
-    for (time, data) in &current_data.timed_data_vec {
+    for (time, data) in &data.timed_data_vec {
         if let Some(swap_data) = data.swap_data {
             let time_from_start: f64 =
                 (current_time.duration_since(*time).as_millis() as f64).floor();
@@ -266,19 +266,14 @@ pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
 ///
 /// The expected usage is to divide out the given value with the returned denominator in order to be able to use it
 /// with the returned binary unit (e.g. divide 3000 bytes by 1024 to have a value in KiB).
-fn get_mem_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
-    if bytes < KIBI_LIMIT {
-        // Stick with bytes if under a kibibyte.
-        ("B", 1.0)
-    } else if bytes < MEBI_LIMIT {
-        ("KiB", KIBI_LIMIT_F64)
-    } else if bytes < GIBI_LIMIT {
-        ("MiB", MEBI_LIMIT_F64)
-    } else if bytes < TEBI_LIMIT {
-        ("GiB", GIBI_LIMIT_F64)
-    } else {
-        // Otherwise just use tebibytes, which is probably safe for most use cases.
-        ("TiB", TEBI_LIMIT_F64)
+#[inline]
+fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
+    match bytes {
+        b if b < KIBI_LIMIT => ("B", 1.0),
+        b if b < MEBI_LIMIT => ("KiB", KIBI_LIMIT_F64),
+        b if b < GIBI_LIMIT => ("MiB", MEBI_LIMIT_F64),
+        b if b < TEBI_LIMIT => ("GiB", GIBI_LIMIT_F64),
+        _ => ("TiB", TEBI_LIMIT_F64),
     }
 }
 
@@ -286,7 +281,7 @@ fn get_mem_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
 pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
     if harvest.total_bytes > 0 {
         Some((format!("{:3.0}%", harvest.use_percent.unwrap_or(0.0)), {
-            let (unit, denominator) = get_mem_binary_unit_and_denominator(harvest.total_bytes);
+            let (unit, denominator) = get_binary_unit_and_denominator(harvest.total_bytes);
 
             format!(
                 "   {:.1}{}/{:.1}{}",
@@ -301,7 +296,7 @@ pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
     }
 }
 
-pub fn get_rx_tx_data_points(
+pub fn get_network_points(
     data: &DataCollection, scale_type: &AxisScaling, unit_type: &DataUnit, use_binary_prefix: bool,
 ) -> (Vec<Point>, Vec<Point>) {
     let mut rx: Vec<Point> = Vec::new();
@@ -347,11 +342,11 @@ pub fn get_rx_tx_data_points(
     (rx, tx)
 }
 
-pub fn convert_network_data_points(
+pub fn convert_network_points(
     data: &DataCollection, need_four_points: bool, scale_type: &AxisScaling, unit_type: &DataUnit,
     use_binary_prefix: bool,
 ) -> ConvertedNetworkData {
-    let (rx, tx) = get_rx_tx_data_points(data, scale_type, unit_type, use_binary_prefix);
+    let (rx, tx) = get_network_points(data, scale_type, unit_type, use_binary_prefix);
 
     let unit = match unit_type {
         DataUnit::Byte => "B/s",
@@ -613,8 +608,7 @@ pub fn convert_gpu_data(current_data: &DataCollection) -> Option<Vec<ConvertedGp
                 points,
                 mem_percent: format!("{:3.0}%", gpu.1.use_percent.unwrap_or(0.0)),
                 mem_total: {
-                    let (unit, denominator) =
-                        get_mem_binary_unit_and_denominator(gpu.1.total_bytes);
+                    let (unit, denominator) = get_binary_unit_and_denominator(gpu.1.total_bytes);
 
                     format!(
                         "   {:.1}{unit}/{:.1}{unit}",
