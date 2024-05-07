@@ -35,6 +35,7 @@ jobs:
   initialize-job:
     name: initialize-job
     needs: pre-job
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check if mock
