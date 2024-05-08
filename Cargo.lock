@@ -189,6 +189,7 @@ dependencies = [
  "thiserror",
  "time",
  "toml_edit",
+ "unicode-ellipsis",
  "unicode-segmentation",
  "unicode-width",
  "windows 0.56.0",
@@ -1475,6 +1476,16 @@ name = "typenum"
 version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
+
+[[package]]
+name = "unicode-ellipsis"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b089bfb8c3294905a62dd7f40fb02b0c56e3b770448ca0c85caf19a3704ce76"
+dependencies = [
+ "unicode-segmentation",
+ "unicode-width",
+]
 
 [[package]]
 name = "unicode-ident"

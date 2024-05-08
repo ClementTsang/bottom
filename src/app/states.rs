@@ -2,12 +2,12 @@ use std::{ops::Range, time::Instant};
 
 use hashbrown::HashMap;
 use indexmap::IndexMap;
+use unicode_ellipsis::grapheme_width;
 use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete, UnicodeSegmentation};
 
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
     constants,
-    utils::strings::str_width,
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
         ProcWidgetState, TempWidgetState,
@@ -250,7 +250,7 @@ impl AppSearchState {
         for (index, grapheme) in
             UnicodeSegmentation::grapheme_indices(self.current_search_query.as_str(), true)
         {
-            let width = str_width(grapheme);
+            let width = grapheme_width(grapheme);
             let end = curr_offset + width;
 
             self.size_mappings.insert(index, curr_offset..end);

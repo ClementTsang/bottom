@@ -88,4 +88,22 @@ mod test {
         let val: usize = 100;
         assert_eq!(val.clamp_lower(50), 100);
     }
+
+    #[test]
+    fn test_sort_partial_fn() {
+        let mut x = vec![9, 5, 20, 15, 10, 5];
+        let mut y = vec![1.0, 15.0, -1.0, -100.0, -100.1, 16.15, -100.0];
+
+        x.sort_by(|a, b| sort_partial_fn(false)(a, b));
+        assert_eq!(x, vec![5, 5, 9, 10, 15, 20]);
+
+        x.sort_by(|a, b| sort_partial_fn(true)(a, b));
+        assert_eq!(x, vec![20, 15, 10, 9, 5, 5]);
+
+        y.sort_by(|a, b| sort_partial_fn(false)(a, b));
+        assert_eq!(y, vec![-100.1, -100.0, -100.0, -1.0, 1.0, 15.0, 16.15]);
+
+        y.sort_by(|a, b| sort_partial_fn(true)(a, b));
+        assert_eq!(y, vec![16.15, 15.0, 1.0, -1.0, -100.0, -100.0, -100.1]);
+    }
 }
