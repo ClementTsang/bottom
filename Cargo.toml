@@ -96,6 +96,7 @@ thiserror = "1.0.59"
 time = { version = "0.3.36", features = ["formatting", "macros"] }
 toml_edit = { version = "0.22.12", features = ["serde"] }
 tui = { version = "0.26.2", package = "ratatui" }
+unicode-ellipsis = "0.1.4"
 unicode-segmentation = "1.11.0"
 unicode-width = "0.1.12"
 
