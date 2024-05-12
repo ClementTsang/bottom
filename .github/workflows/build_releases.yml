@@ -251,8 +251,7 @@ jobs:
         env:
           BTM_GENERATE: ""
         run: |
-          cargo install cargo-wix --version 0.3.1 --locked
-          cargo wix init
+          cargo install cargo-wix --version 0.3.8 --locked
           cargo wix
 
       - name: Generate artifact attestation for file
