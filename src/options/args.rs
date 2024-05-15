@@ -80,30 +80,6 @@ fn general_args(cmd: Command) -> Command {
             "Hides borders and use a cleaner look. Keeping only the separator borders visible.",
         );
 
-    let disable_click = Arg::new("disable_click")
-        .long("disable_click")
-        .action(ArgAction::SetTrue)
-        .help("Disables mouse clicks.")
-        .long_help("Disables mouse clicks from interacting with the program.");
-
-    let hide_table_gap = Arg::new("hide_table_gap")
-        .long("hide_table_gap")
-        .action(ArgAction::SetTrue)
-        .help("Hides spacing between table headers and entries.")
-        .long_help("Hides the spacing between table headers and entries.");
-
-    let hide_time = Arg::new("hide_time")
-        .long("hide_time")
-        .action(ArgAction::SetTrue)
-        .help("Hides the time scale.")
-        .long_help("Completely hides the time scale from being shown.");
-
-    let show_table_scroll_position = Arg::new("show_table_scroll_position")
-        .long("show_table_scroll_position")
-        .action(ArgAction::SetTrue)
-        .help("Shows the scroll position tracker in table widgets.")
-        .long_help("Shows the list scroll position tracker in the widget title for table widgets.");
-
     let config_location = Arg::new("config_location")
         .short('C')
         .long("config")
@@ -116,6 +92,12 @@ fn general_args(cmd: Command) -> Command {
             the default config location will be used."
         )
         .value_hint(ValueHint::AnyPath);
+
+    let disable_click = Arg::new("disable_click")
+        .long("disable_click")
+        .action(ArgAction::SetTrue)
+        .help("Disables mouse clicks.")
+        .long_help("Disables mouse clicks from interacting with bottom.");
 
     let default_time_value = Arg::new("default_time_value")
         .short('t')
@@ -202,6 +184,16 @@ fn general_args(cmd: Command) -> Command {
         .help("Expand the default widget upon starting the app.")
         .long_help("Expand the default widget upon starting the app. This flag has no effect in basic mode (--basic).");
 
+    let hide_table_gap = Arg::new("hide_table_gap")
+        .long("hide_table_gap")
+        .action(ArgAction::SetTrue)
+        .help("Hides spacing between table headers and entries.");
+
+    let hide_time = Arg::new("hide_time")
+        .long("hide_time")
+        .action(ArgAction::SetTrue)
+        .help("Hides the time scale from being shown.");
+
     let rate = Arg::new("rate")
         .short('r')
         .long("rate")
@@ -225,6 +217,12 @@ fn general_args(cmd: Command) -> Command {
             (e.g. 10m, 1h). Defaults to 10 minutes, and must be at least  1 minute. Larger values \
             may result in higher memory usage."
         );
+
+    let show_table_scroll_position = Arg::new("show_table_scroll_position")
+        .long("show_table_scroll_position")
+        .action(ArgAction::SetTrue)
+        .help("Shows the scroll position tracker in table widgets.")
+        .long_help("Shows the list scroll position tracker in the widget title for table widgets.");
 
     let time_delta = Arg::new("time_delta")
         .short('d')
