@@ -98,7 +98,6 @@ fn general_args(cmd: Command) -> Command {
         .help("Hides the time scale.")
         .long_help("Completely hides the time scale from being shown.");
 
-
     let show_table_scroll_position = Arg::new("show_table_scroll_position")
         .long("show_table_scroll_position")
         .action(ArgAction::SetTrue)
