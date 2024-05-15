@@ -180,6 +180,7 @@ impl CpuWidgetState {
             table_gap: config.table_gap,
             left_to_right: false,
             is_basic: false,
+            is_clean: config.use_clean_mode,
             show_table_scroll_position: false, // TODO: Should this be possible?
             show_current_entry_when_unfocused: true,
         };

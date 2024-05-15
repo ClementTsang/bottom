@@ -131,6 +131,7 @@ impl Painter {
                 graph_style: self.colours.graph_style,
                 border_style,
                 title: " Memory ".into(),
+                is_clean: app_state.app_config_fields.use_clean_mode,
                 is_expanded: app_state.is_expanded,
                 title_style: self.colours.widget_title_style,
                 legend_position: app_state.app_config_fields.memory_legend_position,

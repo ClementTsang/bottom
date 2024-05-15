@@ -13,6 +13,9 @@ pub struct DataTableProps {
     /// Whether this table is a basic table. This affects the borders.
     pub is_basic: bool,
 
+    /// Whether this table is a clean table. This affects the borders.
+    pub is_clean: bool,
+
     /// Whether to show the table scroll position.
     pub show_table_scroll_position: bool,
 

@@ -75,7 +75,9 @@ where
             }
         };
 
-        if !self.props.is_basic {
+        if self.props.is_clean {
+            Block::default().borders(Borders::NONE)
+        } else if !self.props.is_basic {
             let block = Block::default()
                 .borders(Borders::ALL)
                 .border_style(border_style);

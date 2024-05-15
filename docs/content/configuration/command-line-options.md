@@ -9,6 +9,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | --------------------------------- | ---------------------------------------------------- |
 | `--autohide_time`                 | Temporarily shows the time scale in graphs.          |
 | `-b, --basic`                     | Hides graphs and uses a more basic look.             |
+| `--clean`                         | Hides borders and use a cleaner look.                |
 | `-C, --config <CONFIG PATH>`      | Sets the location of the config file.                |
 | `-t, --default_time_value <TIME>` | Default time value for graphs.                       |
 | `--default_widget_count <N>`      | Sets the N'th selected widget type as the default.   |

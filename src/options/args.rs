@@ -72,6 +72,14 @@ fn general_args(cmd: Command) -> Command {
         .help("Hides graphs and uses a more basic look.")
         .long_help("Hides graphs and uses a more basic look, largely inspired by htop's design.");
 
+    let clean = Arg::new("clean")
+        .long("clean")
+        .action(ArgAction::SetTrue)
+        .help("Hides borders and use a cleaner look.")
+        .long_help(
+            "Hides borders and use a cleaner look. Keeping only the separator borders visible.",
+        );
+
     let config_location = Arg::new("config_location")
         .short('C')
         .long("config")
@@ -84,6 +92,12 @@ fn general_args(cmd: Command) -> Command {
             the default config location will be used."
         )
         .value_hint(ValueHint::AnyPath);
+
+    let disable_click = Arg::new("disable_click")
+        .long("disable_click")
+        .action(ArgAction::SetTrue)
+        .help("Disables mouse clicks.")
+        .long_help("Disables mouse clicks from interacting with bottom.");
 
     let default_time_value = Arg::new("default_time_value")
         .short('t')
@@ -155,12 +169,6 @@ fn general_args(cmd: Command) -> Command {
             "battery",
         ]);
 
-    let disable_click = Arg::new("disable_click")
-        .long("disable_click")
-        .action(ArgAction::SetTrue)
-        .help("Disables mouse clicks.")
-        .long_help("Disables mouse clicks from interacting with bottom.");
-
     // TODO: Change this to accept a string with the type of marker.
     let dot_marker = Arg::new("dot_marker")
         .short('m')
@@ -231,6 +239,7 @@ fn general_args(cmd: Command) -> Command {
     cmd.args(args![
         autohide_time,
         basic,
+        clean,
         config_location,
         default_widget_count,
         default_time_value,
@@ -540,11 +549,11 @@ pub fn build_app() -> Command {
     const TEMPLATE: &str = indoc! {
         "{name} {version}
         {author}
-    
+
         {about}
-    
+
         {usage-heading} {usage}
-    
+
         {all-args}"
     };
     const USAGE: &str = "btm [OPTIONS]";
