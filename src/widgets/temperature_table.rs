@@ -114,6 +114,7 @@ impl TempWidgetState {
                 table_gap: config.table_gap,
                 left_to_right: false,
                 is_basic: config.use_basic_mode,
+                is_clean: config.use_clean_mode,
                 show_table_scroll_position: config.show_table_scroll_position,
                 show_current_entry_when_unfocused: false,
             },

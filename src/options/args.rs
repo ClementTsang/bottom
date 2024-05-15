@@ -72,6 +72,39 @@ fn general_args(cmd: Command) -> Command {
         .help("Hides graphs and uses a more basic look.")
         .long_help("Hides graphs and uses a more basic look, largely inspired by htop's design.");
 
+    let clean = Arg::new("clean")
+        .long("clean")
+        .action(ArgAction::SetTrue)
+        .help("Hides borders and use a cleaner look.")
+        .long_help(
+            "Hides borders and use a cleaner look. Keeping only the separator borders visible.",
+        );
+
+    let disable_click = Arg::new("disable_click")
+        .long("disable_click")
+        .action(ArgAction::SetTrue)
+        .help("Disables mouse clicks.")
+        .long_help("Disables mouse clicks from interacting with the program.");
+
+    let hide_table_gap = Arg::new("hide_table_gap")
+        .long("hide_table_gap")
+        .action(ArgAction::SetTrue)
+        .help("Hides spacing between table headers and entries.")
+        .long_help("Hides the spacing between table headers and entries.");
+
+    let hide_time = Arg::new("hide_time")
+        .long("hide_time")
+        .action(ArgAction::SetTrue)
+        .help("Hides the time scale.")
+        .long_help("Completely hides the time scale from being shown.");
+
+
+    let show_table_scroll_position = Arg::new("show_table_scroll_position")
+        .long("show_table_scroll_position")
+        .action(ArgAction::SetTrue)
+        .help("Shows the scroll position tracker in table widgets.")
+        .long_help("Shows the list scroll position tracker in the widget title for table widgets.");
+
     let config_location = Arg::new("config_location")
         .short('C')
         .long("config")
@@ -155,12 +188,6 @@ fn general_args(cmd: Command) -> Command {
             "battery",
         ]);
 
-    let disable_click = Arg::new("disable_click")
-        .long("disable_click")
-        .action(ArgAction::SetTrue)
-        .help("Disables mouse clicks.")
-        .long_help("Disables mouse clicks from interacting with bottom.");
-
     // TODO: Change this to accept a string with the type of marker.
     let dot_marker = Arg::new("dot_marker")
         .short('m')
@@ -175,16 +202,6 @@ fn general_args(cmd: Command) -> Command {
         .action(ArgAction::SetTrue)
         .help("Expand the default widget upon starting the app.")
         .long_help("Expand the default widget upon starting the app. This flag has no effect in basic mode (--basic).");
-
-    let hide_table_gap = Arg::new("hide_table_gap")
-        .long("hide_table_gap")
-        .action(ArgAction::SetTrue)
-        .help("Hides spacing between table headers and entries.");
-
-    let hide_time = Arg::new("hide_time")
-        .long("hide_time")
-        .action(ArgAction::SetTrue)
-        .help("Hides the time scale from being shown.");
 
     let rate = Arg::new("rate")
         .short('r')
@@ -210,12 +227,6 @@ fn general_args(cmd: Command) -> Command {
             may result in higher memory usage."
         );
 
-    let show_table_scroll_position = Arg::new("show_table_scroll_position")
-        .long("show_table_scroll_position")
-        .action(ArgAction::SetTrue)
-        .help("Shows the scroll position tracker in table widgets.")
-        .long_help("Shows the list scroll position tracker in the widget title for table widgets.");
-
     let time_delta = Arg::new("time_delta")
         .short('d')
         .long("time_delta")
@@ -231,6 +242,7 @@ fn general_args(cmd: Command) -> Command {
     cmd.args(args![
         autohide_time,
         basic,
+        clean,
         config_location,
         default_widget_count,
         default_time_value,
@@ -540,11 +552,11 @@ pub fn build_app() -> Command {
     const TEMPLATE: &str = indoc! {
         "{name} {version}
         {author}
-    
+
         {about}
-    
+
         {usage-heading} {usage}
-    
+
         {all-args}"
     };
     const USAGE: &str = "btm [OPTIONS]";

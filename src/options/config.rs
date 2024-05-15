@@ -55,6 +55,7 @@ pub(crate) struct ConfigFlags {
     pub(crate) whole_word: Option<bool>,
     pub(crate) regex: Option<bool>,
     pub(crate) basic: Option<bool>,
+    pub(crate) clean: Option<bool>,
     pub(crate) default_time_value: Option<StringOrNum>,
     pub(crate) time_delta: Option<StringOrNum>,
     pub(crate) autohide_time: Option<bool>,

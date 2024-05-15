@@ -47,6 +47,9 @@ pub struct TimeGraph<'a> {
     /// Whether this graph is expanded.
     pub is_expanded: bool,
 
+    /// Whether this graph is clean. Without borders.
+    pub is_clean: bool,
+
     /// The title style.
     pub title_style: Style,
 
@@ -135,9 +138,16 @@ impl<'a> TimeGraph<'a> {
         // This is some ugly manual loop unswitching. Maybe unnecessary.
         // TODO: Optimize this step. Cut out unneeded points.
         let data = graph_data.iter().map(create_dataset).collect();
+
+        let borders = if self.is_clean {
+            Borders::RIGHT
+        } else {
+            Borders::ALL
+        };
+
         let block = Block::default()
             .title(self.generate_title(draw_loc))
-            .borders(Borders::ALL)
+            .borders(borders)
             .border_style(self.border_style);
 
         f.render_widget(
@@ -207,6 +217,7 @@ mod test {
             graph_style: Style::default().fg(Color::Red),
             border_style: Style::default().fg(Color::Blue),
             is_expanded: false,
+            is_clean: false,
             title_style: Style::default().fg(Color::Cyan),
             legend_position: None,
             legend_constraints: None,

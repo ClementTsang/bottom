@@ -159,6 +159,7 @@ impl Painter {
                 y_labels: &y_labels,
                 graph_style: self.colours.graph_style,
                 border_style,
+                is_clean: app_state.app_config_fields.use_clean_mode,
                 title: " Network ".into(),
                 is_expanded: app_state.is_expanded,
                 title_style: self.colours.widget_title_style,

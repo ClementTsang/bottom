@@ -75,6 +75,7 @@ pub fn init_app(
 
     let use_basic_mode = is_flag_enabled!(basic, matches, config);
     let expanded = is_flag_enabled!(expanded, matches, config);
+    let use_clean_mode = is_flag_enabled!(clean, matches, config);
 
     // For processes
     let is_grouped = is_flag_enabled!(group_processes, matches, config);
@@ -141,6 +142,7 @@ pub fn init_app(
         use_current_cpu_total: is_flag_enabled!(current_usage, matches, config),
         unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, matches, config),
         use_basic_mode,
+        use_clean_mode,
         default_time_value,
         time_interval: get_time_interval(matches, config, retention_ms)
             .context("Update 'time_delta' in your config file.")?,

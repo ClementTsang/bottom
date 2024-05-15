@@ -186,6 +186,7 @@ mod test {
             table_gap: 1,
             left_to_right: false,
             is_basic: false,
+            is_clean: false,
             show_table_scroll_position: true,
             show_current_entry_when_unfocused: false,
         };
