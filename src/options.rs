@@ -22,7 +22,10 @@ use regex::Regex;
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
 
-use self::config::{layout::Row, IgnoreList, StringOrNum};
+use self::{
+    args::BottomArgs,
+    config::{layout::Row, IgnoreList, StringOrNum},
+};
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
     canvas::{components::time_chart::LegendPosition, styling::CanvasStyling, ColourScheme},
@@ -41,6 +44,16 @@ macro_rules! is_flag_enabled {
             true
         } else if let Some(flags) = &$config.flags {
             flags.$flag_name.unwrap_or(false)
+        } else {
+            false
+        }
+    };
+
+    ($arg:expr, $config:expr, $cfg_flag:ident) => {
+        if let Some(flag) = $arg {
+            flag
+        } else if let Some(flags) = &$config.flags {
+            flags.$cfg_flag.unwrap_or(false)
         } else {
             false
         }
@@ -360,9 +373,9 @@ pub fn init_app(
 }
 
 pub fn get_widget_layout(
-    matches: &ArgMatches, config: &Config,
+    args: &BottomArgs, config: &Config,
 ) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
-    let cpu_left_legend = is_flag_enabled!(cpu_left_legend, matches, config);
+    let cpu_left_legend = is_flag_enabled!(args.cpu.left_legend, config, cpu_left_legend);
 
     let (default_widget_type, mut default_widget_count) =
         get_default_widget_and_count(matches, config)?;
@@ -855,7 +868,7 @@ mod test {
     #[test]
     fn matches_human_times() {
         let config = Config::default();
-        let app = crate::args::build_app();
+        let app = crate::args::build_cmd();
 
         {
             let app = app.clone();
@@ -882,7 +895,7 @@ mod test {
     #[test]
     fn matches_number_times() {
         let config = Config::default();
-        let app = crate::args::build_app();
+        let app = crate::args::build_cmd();
 
         {
             let app = app.clone();
@@ -908,7 +921,7 @@ mod test {
 
     #[test]
     fn config_human_times() {
-        let app = crate::args::build_app();
+        let app = crate::args::build_cmd();
         let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
@@ -939,7 +952,7 @@ mod test {
 
     #[test]
     fn config_number_times_as_string() {
-        let app = crate::args::build_app();
+        let app = crate::args::build_cmd();
         let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
@@ -970,7 +983,7 @@ mod test {
 
     #[test]
     fn config_number_times_as_num() {
-        let app = crate::args::build_app();
+        let app = crate::args::build_cmd();
         let matches = app.get_matches_from(["btm"]);
 
         let mut config = Config::default();
@@ -1011,7 +1024,7 @@ mod test {
     // typos/mixing up. Use proc macros to unify on one struct?
     #[test]
     fn verify_cli_options_build() {
-        let app = crate::args::build_app();
+        let app = crate::args::build_cmd();
 
         let default_app = {
             let app = app.clone();

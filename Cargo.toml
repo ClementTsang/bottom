@@ -19,7 +19,9 @@ exclude = [
     "desktop/",
     "docs/",
     "sample_configs/",
+    "schema",
     "scripts/",
+    "wix/",
     ".all-contributorsrc",
     ".cirrus.yml",
     ".gitignore",
@@ -29,6 +31,9 @@ exclude = [
     "codecov.yml",
     "CONTRIBUTING.md",
     "Cross.toml",
+    "debug.log",
+    "flamegraph.svg",
+    "perf.data",
     "rustfmt.toml",
 ]
 rust-version = "1.74.0" # The oldest version I've tested that should still build - note this is not an official MSRV!

@@ -35,7 +35,7 @@ use std::{
     fs,
     io::{stderr, stdout, Write},
     panic::PanicInfo,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
         mpsc::{Receiver, Sender},
         Arc, Condvar, Mutex,
@@ -202,9 +202,9 @@ pub fn handle_key_event_or_break(
     false
 }
 
-pub fn read_config(config_location: Option<&String>) -> error::Result<Option<PathBuf>> {
+pub fn read_config(config_location: Option<&Path>) -> error::Result<Option<PathBuf>> {
     let config_path = if let Some(conf_loc) = config_location {
-        Some(PathBuf::from(conf_loc.as_str()))
+        Some(conf_loc.to_path_buf())
     } else if cfg!(target_os = "windows") {
         if let Some(home_path) = dirs::config_dir() {
             let mut path = home_path;

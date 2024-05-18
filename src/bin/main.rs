@@ -37,7 +37,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 fn main() -> Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
 
-    let matches = args::get_matches();
+    let args = args::get_args();
 
     #[cfg(feature = "logging")]
     {
@@ -51,27 +51,29 @@ fn main() -> Result<()> {
 
     // Read from config file.
     let config = {
-        let config_path = read_config(matches.get_one::<String>("config_location"))
+        let config_path = read_config(args.general.config_location.as_deref())
             .context("Unable to access the given config file location.")?;
 
         create_or_get_config(&config_path)
             .context("Unable to properly parse or create the config file.")?
     };
 
+    // TODO: merge config and args
+
     // Get widget layout separately
     let (widget_layout, default_widget_id, default_widget_type_option) =
-        get_widget_layout(&matches, &config)
+        get_widget_layout(&args, &config)
             .context("Found an issue while trying to build the widget layout.")?;
 
     // FIXME: Should move this into build app or config
     let styling = {
-        let colour_scheme = get_color_scheme(&matches, &config)?;
+        let colour_scheme = get_color_scheme(&args, &config)?;
         CanvasStyling::new(colour_scheme, &config)?
     };
 
     // Create an "app" struct, which will control most of the program and store settings/state
     let mut app = init_app(
-        matches,
+        args,
         config,
         &widget_layout,
         default_widget_id,
