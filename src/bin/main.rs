@@ -19,9 +19,9 @@ use bottom::{
     check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,
     create_or_get_config,
     data_conversion::*,
-    handle_key_event_or_break, handle_mouse_event,
+    get_config_path, handle_key_event_or_break, handle_mouse_event,
     options::{get_color_scheme, get_widget_layout, init_app},
-    panic_hook, read_config, try_drawing, update_data, BottomEvent,
+    panic_hook, try_drawing, update_data, BottomEvent,
 };
 use crossterm::{
     event::{EnableBracketedPaste, EnableMouseCapture},
@@ -50,13 +50,8 @@ fn main() -> Result<()> {
     }
 
     // Read from config file.
-    let config = {
-        let config_path = read_config(args.general.config_location.as_deref())
-            .context("Unable to access the given config file location.")?;
-
-        create_or_get_config(&config_path)
-            .context("Unable to properly parse or create the config file.")?
-    };
+    let config = create_or_get_config(args.general.config_location.as_deref())
+        .context("Unable to parse or create the config file.")?;
 
     // TODO: merge config and args
 

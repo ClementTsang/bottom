@@ -202,8 +202,8 @@ pub fn handle_key_event_or_break(
     false
 }
 
-pub fn read_config(config_location: Option<&Path>) -> error::Result<Option<PathBuf>> {
-    let config_path = if let Some(conf_loc) = config_location {
+pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
+    let config_path = if let Some(conf_loc) = override_config_path {
         Some(conf_loc.to_path_buf())
     } else if cfg!(target_os = "windows") {
         if let Some(home_path) = dirs::config_dir() {
@@ -234,11 +234,13 @@ pub fn read_config(config_location: Option<&Path>) -> error::Result<Option<PathB
         None
     };
 
-    Ok(config_path)
+    config_path
 }
 
-pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Config> {
-    if let Some(path) = config_path {
+pub fn create_or_get_config(override_config_path: Option<&Path>) -> error::Result<Config> {
+    let config_path = get_config_path(override_config_path);
+
+    if let Some(path) = &config_path {
         if let Ok(config_string) = fs::read_to_string(path) {
             Ok(toml_edit::de::from_str(config_string.as_str())?)
         } else {
@@ -250,7 +252,7 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
             Ok(Config::default())
         }
     } else {
-        // Don't write...
+        // If we somehow don't have any config path, then just assume the default config but don't write to any file.
         Ok(Config::default())
     }
 }
