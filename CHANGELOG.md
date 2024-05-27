@@ -24,9 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1441](https://github.com/ClementTsang/bottom/pull/1441): The following config fields have changed names:
   - `expanded_on_startup` is now `expanded`.
   - `left_legend` is now `cpu_left_legend`.
-- [#](): The following arguments have changed names:
+- [#1472](https://github.com/ClementTsang/bottom/pull/1472): The following arguments have changed names:
   - `mem_as_value` is now `process_memory_as_value`.
-- [#](): The following config fields have changed names:
+- [#1472](https://github.com/ClementTsang/bottom/pull/1472): The following config fields have changed names:
   - `mem_as_value` is now `process_memory_as_value`.
 
 ### Bug Fixes
