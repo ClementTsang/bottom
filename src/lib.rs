@@ -35,7 +35,7 @@ use std::{
     fs,
     io::{stderr, stdout, Write},
     panic::PanicInfo,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
         mpsc::{Receiver, Sender},
         Arc, Condvar, Mutex,
@@ -61,7 +61,7 @@ use crossterm::{
 };
 use data_conversion::*;
 pub use options::args;
-use options::Config;
+use options::ConfigV1;
 use utils::error;
 #[allow(unused_imports)]
 pub use utils::logging::*;
@@ -202,9 +202,9 @@ pub fn handle_key_event_or_break(
     false
 }
 
-pub fn read_config(config_location: Option<&String>) -> error::Result<Option<PathBuf>> {
-    let config_path = if let Some(conf_loc) = config_location {
-        Some(PathBuf::from(conf_loc.as_str()))
+pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
+    if let Some(conf_loc) = override_config_path {
+        Some(conf_loc.to_path_buf())
     } else if cfg!(target_os = "windows") {
         if let Some(home_path) = dirs::config_dir() {
             let mut path = home_path;
@@ -232,13 +232,13 @@ pub fn read_config(config_location: Option<&String>) -> error::Result<Option<Pat
         }
     } else {
         None
-    };
-
-    Ok(config_path)
+    }
 }
 
-pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Config> {
-    if let Some(path) = config_path {
+pub fn get_or_create_config(override_config_path: Option<&Path>) -> error::Result<ConfigV1> {
+    let config_path = get_config_path(override_config_path);
+
+    if let Some(path) = &config_path {
         if let Ok(config_string) = fs::read_to_string(path) {
             Ok(toml_edit::de::from_str(config_string.as_str())?)
         } else {
@@ -247,11 +247,11 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
             }
 
             fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
-            Ok(Config::default())
+            Ok(ConfigV1::default())
         }
     } else {
-        // Don't write...
-        Ok(Config::default())
+        // If we somehow don't have any config path, then just assume the default config but don't write to any file.
+        Ok(ConfigV1::default())
     }
 }
 

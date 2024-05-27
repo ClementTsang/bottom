@@ -17,21 +17,22 @@ pub enum BottomError {
     /// An error to represent generic errors.
     #[error("Error, {0}")]
     GenericError(String),
+    #[cfg(feature = "fern")]
     /// An error to represent errors with fern.
     #[error("Fern error, {0}")]
     FernError(String),
+    /// An error to represent invalid command-line arguments.
+    #[error("Invalid argument, {0}")]
+    ArgumentError(String),
     /// An error to represent errors with the config.
     #[error("Configuration file error, {0}")]
     ConfigError(String),
     /// An error to represent errors with converting between data types.
     #[error("Conversion error, {0}")]
     ConversionError(String),
-    /// An error to represent errors with querying.
+    /// An error to represent errors with a query.
     #[error("Query error, {0}")]
     QueryError(Cow<'static, str>),
-    /// An error that just signifies something minor went wrong; no message.
-    #[error("Minor error.")]
-    MinorError,
     #[error("Error casting integers {0}")]
     TryFromIntError(#[from] std::num::TryFromIntError),
 }

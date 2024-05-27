@@ -24,7 +24,9 @@ fn test_large_default_time() {
         .arg("18446744073709551616")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("could not parse"));
+        .stderr(predicate::str::contains(
+            "set your default time to be valid",
+        ));
 }
 
 #[test]
@@ -35,7 +37,7 @@ fn test_small_default_time() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "set your default value to be at least",
+            "set your default time to be at least",
         ));
 }
 
@@ -46,7 +48,7 @@ fn test_large_delta_time() {
         .arg("18446744073709551616")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("could not parse"));
+        .stderr(predicate::str::contains("set your time delta to be valid"));
 }
 
 #[test]
@@ -68,7 +70,7 @@ fn test_large_rate() {
         .arg("18446744073709551616")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("could not parse"));
+        .stderr(predicate::str::contains("set your update rate"));
 }
 
 #[test]
@@ -89,7 +91,7 @@ fn test_invalid_rate() {
         .arg("100-1000")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("could not parse"));
+        .stderr(predicate::str::contains("set your update rate"));
 }
 
 #[test]
@@ -121,9 +123,7 @@ fn test_invalid_default_widget_2() {
         .arg("18446744073709551616")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "set your widget count to be at most unsigned INT_MAX",
-        ));
+        .stderr(predicate::str::contains("number too large"));
 }
 
 #[test]

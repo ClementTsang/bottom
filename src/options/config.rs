@@ -10,7 +10,7 @@ use self::{cpu::CpuConfig, layout::Row, process_columns::ProcessConfig};
 use super::ConfigColours;
 
 #[derive(Clone, Debug, Default, Deserialize)]
-pub struct Config {
+pub struct ConfigV1 {
     pub(crate) flags: Option<ConfigFlags>,
     pub(crate) colors: Option<ConfigColours>,
     pub(crate) row: Option<Vec<Row>>,
@@ -71,7 +71,7 @@ pub(crate) struct ConfigFlags {
     pub(crate) memory_legend: Option<String>,
     /// For built-in colour palettes.
     pub(crate) color: Option<String>,
-    pub(crate) mem_as_value: Option<bool>,
+    pub(crate) process_memory_as_value: Option<bool>,
     pub(crate) tree: Option<bool>,
     pub(crate) show_table_scroll_position: Option<bool>,
     pub(crate) process_command: Option<bool>,

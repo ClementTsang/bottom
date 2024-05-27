@@ -19,7 +19,9 @@ exclude = [
     "desktop/",
     "docs/",
     "sample_configs/",
+    "schema",
     "scripts/",
+    "wix/",
     ".all-contributorsrc",
     ".cirrus.yml",
     ".gitignore",
@@ -29,6 +31,9 @@ exclude = [
     "codecov.yml",
     "CONTRIBUTING.md",
     "Cross.toml",
+    "debug.log",
+    "flamegraph.svg",
+    "perf.data",
     "rustfmt.toml",
 ]
 rust-version = "1.74.0" # The oldest version I've tested that should still build - note this is not an official MSRV!
@@ -75,7 +80,7 @@ default = ["deploy"]
 anyhow = "1.0.86"
 backtrace = "0.3.71"
 cfg-if = "1.0.0"
-clap = { version = "4.5.4", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.5.4", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
 crossterm = "0.27.0"
 ctrlc = { version = "3.4.4", features = ["termination"] }
@@ -135,7 +140,7 @@ predicates = "3.1.0"
 portable-pty = "0.8.1"
 
 [build-dependencies]
-clap = { version = "4.5.4", features = ["default", "cargo", "wrap_help"] }
+clap = { version = "4.5.4", features = ["default", "cargo", "wrap_help", "derive"] }
 clap_complete = "4.5.2"
 clap_complete_nushell = "4.5.1"
 clap_complete_fig = "4.5.0"

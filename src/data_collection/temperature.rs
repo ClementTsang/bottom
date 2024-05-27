@@ -13,6 +13,8 @@ cfg_if::cfg_if! {
     }
 }
 
+use std::str::FromStr;
+
 use crate::app::filter::Filter;
 
 #[derive(Default, Debug, Clone)]
@@ -27,6 +29,21 @@ pub enum TemperatureType {
     Celsius,
     Kelvin,
     Fahrenheit,
+}
+
+impl FromStr for TemperatureType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "fahrenheit" | "f" => Ok(TemperatureType::Fahrenheit),
+            "kelvin" | "k" => Ok(TemperatureType::Kelvin),
+            "celsius" | "c" => Ok(TemperatureType::Celsius),
+            _ => Err(format!(
+                "\"{s}\" is an invalid temperature type, use \"<kelvin|k|celsius|c|fahrenheit|f>\"."
+            )),
+        }
+    }
 }
 
 impl TemperatureType {

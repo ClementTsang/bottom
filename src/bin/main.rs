@@ -17,11 +17,10 @@ use bottom::{
     args,
     canvas::{self, styling::CanvasStyling},
     check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,
-    create_or_get_config,
     data_conversion::*,
-    handle_key_event_or_break, handle_mouse_event,
-    options::{get_color_scheme, get_widget_layout, init_app},
-    panic_hook, read_config, try_drawing, update_data, BottomEvent,
+    get_or_create_config, handle_key_event_or_break, handle_mouse_event,
+    options::{get_color_scheme, init_app},
+    panic_hook, try_drawing, update_data, BottomEvent,
 };
 use crossterm::{
     event::{EnableBracketedPaste, EnableMouseCapture},
@@ -37,7 +36,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 fn main() -> Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
 
-    let matches = args::get_matches();
+    let args = args::get_args();
 
     #[cfg(feature = "logging")]
     {
@@ -50,34 +49,17 @@ fn main() -> Result<()> {
     }
 
     // Read from config file.
-    let config = {
-        let config_path = read_config(matches.get_one::<String>("config_location"))
-            .context("Unable to access the given config file location.")?;
-
-        create_or_get_config(&config_path)
-            .context("Unable to properly parse or create the config file.")?
-    };
-
-    // Get widget layout separately
-    let (widget_layout, default_widget_id, default_widget_type_option) =
-        get_widget_layout(&matches, &config)
-            .context("Found an issue while trying to build the widget layout.")?;
+    let config = get_or_create_config(args.general.config_location.as_deref())
+        .context("Unable to parse or create the config file.")?;
 
     // FIXME: Should move this into build app or config
     let styling = {
-        let colour_scheme = get_color_scheme(&matches, &config)?;
+        let colour_scheme = get_color_scheme(&args, &config)?;
         CanvasStyling::new(colour_scheme, &config)?
     };
 
     // Create an "app" struct, which will control most of the program and store settings/state
-    let mut app = init_app(
-        matches,
-        config,
-        &widget_layout,
-        default_widget_id,
-        &default_widget_type_option,
-        &styling,
-    )?;
+    let (mut app, widget_layout) = init_app(args, config, &styling)?;
 
     // Create painter and set colours.
     let mut painter = canvas::Painter::init(widget_layout, styling)?;

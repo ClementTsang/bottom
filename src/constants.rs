@@ -576,7 +576,7 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 # Built-in themes. Valid values are "default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"
 #color = "default"
 # Show memory values in the processes widget as values by default
-#mem_as_value = false
+#process_memory_as_value = false
 # Show tree mode by default in the processes widget.
 #tree = false
 # Shows an indicator in table widgets tracking where in the list you are.
