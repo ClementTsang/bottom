@@ -72,7 +72,7 @@ deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
 
 [dependencies]
-anyhow = "1.0.82"
+anyhow = "1.0.86"
 backtrace = "0.3.71"
 cfg-if = "1.0.0"
 clap = { version = "4.5.4", features = ["default", "cargo", "wrap_help"] }
@@ -81,27 +81,27 @@ crossterm = "0.27.0"
 ctrlc = { version = "3.4.4", features = ["termination"] }
 dirs = "5.0.1"
 fern = { version = "0.6.2", optional = true }
-hashbrown = "0.14.3"
+hashbrown = "0.14.5"
 humantime = "2.1.0"
 indexmap = "2.2.6"
 indoc = "2.0.5"
-itertools = "0.12.1"
+itertools = "0.13.0"
 log = { version = "0.4.21", optional = true }
 nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
 regex = "1.10.4"
-serde = { version = "1.0.199", features = ["derive"] }
+serde = { version = "1.0.203", features = ["derive"] }
 starship-battery = { version = "0.8.3", optional = true }
-sysinfo = "=0.30.11"
-thiserror = "1.0.59"
+sysinfo = "=0.30.12"
+thiserror = "1.0.61"
 time = { version = "0.3.36", features = ["formatting", "macros"] }
-toml_edit = { version = "0.22.12", features = ["serde"] }
-tui = { version = "0.26.2", package = "ratatui" }
+toml_edit = { version = "0.22.13", features = ["serde"] }
+tui = { version = "0.26.3", package = "ratatui" }
 unicode-ellipsis = "0.1.4"
 unicode-segmentation = "1.11.0"
 unicode-width = "0.1.12"
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.153"
+libc = "0.2.155"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 rustix = { version = "0.38.34", features = ["fs", "param", "process"] }
@@ -122,7 +122,7 @@ windows = { version = "0.56.0", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.116" }
+serde_json = { version = "1.0.117" }
 sysctl = { version = "0.5.5" }
 filedescriptor = "0.8.2"
 
