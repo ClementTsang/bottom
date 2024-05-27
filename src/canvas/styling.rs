@@ -5,7 +5,7 @@ use colour_utils::*;
 use tui::style::{Color, Style};
 
 use super::ColourScheme;
-pub use crate::options::Config;
+pub use crate::options::ConfigV1;
 use crate::{constants::*, options::colours::ConfigColours, utils::error};
 
 pub struct CanvasStyling {
@@ -124,7 +124,7 @@ macro_rules! try_set_colour_list {
 }
 
 impl CanvasStyling {
-    pub fn new(colour_scheme: ColourScheme, config: &Config) -> anyhow::Result<Self> {
+    pub fn new(colour_scheme: ColourScheme, config: &ConfigV1) -> anyhow::Result<Self> {
         let mut canvas_colours = Self::default();
 
         match colour_scheme {
@@ -236,7 +236,7 @@ mod test {
     use tui::style::{Color, Style};
 
     use super::{CanvasStyling, ColourScheme};
-    use crate::options::Config;
+    use crate::options::ConfigV1;
 
     #[test]
     fn default_selected_colour_works() {
@@ -282,7 +282,7 @@ mod test {
 
     #[test]
     fn built_in_colour_schemes_work() {
-        let config = Config::default();
+        let config = ConfigV1::default();
         CanvasStyling::new(ColourScheme::Default, &config).unwrap();
         CanvasStyling::new(ColourScheme::DefaultLight, &config).unwrap();
         CanvasStyling::new(ColourScheme::Gruvbox, &config).unwrap();

@@ -17,10 +17,9 @@ use bottom::{
     args,
     canvas::{self, styling::CanvasStyling},
     check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,
-    create_or_get_config,
     data_conversion::*,
-    get_config_path, handle_key_event_or_break, handle_mouse_event,
-    options::{get_color_scheme, get_widget_layout, init_app},
+    get_or_create_config, handle_key_event_or_break, handle_mouse_event,
+    options::{get_color_scheme, init_app},
     panic_hook, try_drawing, update_data, BottomEvent,
 };
 use crossterm::{
@@ -50,15 +49,8 @@ fn main() -> Result<()> {
     }
 
     // Read from config file.
-    let config = create_or_get_config(args.general.config_location.as_deref())
+    let config = get_or_create_config(args.general.config_location.as_deref())
         .context("Unable to parse or create the config file.")?;
-
-    // TODO: merge config and args
-
-    // Get widget layout separately
-    let (widget_layout, default_widget_id, default_widget_type_option) =
-        get_widget_layout(&args, &config)
-            .context("Found an issue while trying to build the widget layout.")?;
 
     // FIXME: Should move this into build app or config
     let styling = {
@@ -67,14 +59,7 @@ fn main() -> Result<()> {
     };
 
     // Create an "app" struct, which will control most of the program and store settings/state
-    let mut app = init_app(
-        args,
-        config,
-        &widget_layout,
-        default_widget_id,
-        &default_widget_type_option,
-        &styling,
-    )?;
+    let (mut app, widget_layout) = init_app(args, config, &styling)?;
 
     // Create painter and set colours.
     let mut painter = canvas::Painter::init(widget_layout, styling)?;

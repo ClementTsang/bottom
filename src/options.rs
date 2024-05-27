@@ -13,9 +13,8 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use clap::ArgMatches;
 pub use colours::ConfigColours;
-pub use config::Config;
+pub use config::ConfigV1;
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use regex::Regex;
@@ -39,21 +38,11 @@ use crate::{
 };
 
 macro_rules! is_flag_enabled {
-    ($flag_name:ident, $matches:expr, $config:expr) => {
-        if $matches.get_flag(stringify!($flag_name)) {
+    ($flag_name:ident, $arg:expr, $config:expr) => {
+        if $arg.$flag_name {
             true
         } else if let Some(flags) = &$config.flags {
             flags.$flag_name.unwrap_or(false)
-        } else {
-            false
-        }
-    };
-
-    ($arg:expr, $config:expr, $cfg_flag:ident) => {
-        if let Some(flag) = $arg {
-            flag
-        } else if let Some(flags) = &$config.flags {
-            flags.$cfg_flag.unwrap_or(false)
         } else {
             false
         }
@@ -71,29 +60,34 @@ macro_rules! is_flag_enabled {
 }
 
 pub fn init_app(
-    matches: ArgMatches, config: Config, widget_layout: &BottomLayout, default_widget_id: u64,
-    default_widget_type_option: &Option<BottomWidgetType>, styling: &CanvasStyling,
-) -> Result<App> {
+    args: BottomArgs, config: ConfigV1, styling: &CanvasStyling,
+) -> Result<(App, BottomLayout)> {
     use BottomWidgetType::*;
 
     // Since everything takes a reference, but we want to take ownership here to drop matches/config later...
-    let matches = &matches;
+    let args = &args;
     let config = &config;
 
-    let retention_ms =
-        get_retention(matches, config).context("Update `retention` in your config file.")?;
-    let autohide_time = is_flag_enabled!(autohide_time, matches, config);
-    let default_time_value = get_default_time_value(matches, config, retention_ms)
-        .context("Update 'default_time_value' in your config file.")?;
+    let (widget_layout, default_widget_id, default_widget_type_option) =
+        get_widget_layout(args, config)
+            .context("Found an issue while trying to build the widget layout.")?;
 
-    let use_basic_mode = is_flag_enabled!(basic, matches, config);
-    let expanded = is_flag_enabled!(expanded, matches, config);
+    let retention_ms = get_retention(args, config)?;
+    let autohide_time = is_flag_enabled!(autohide_time, args.general, config);
+    let default_time_value = get_default_time_value(args, config, retention_ms)?;
+
+    let use_basic_mode = is_flag_enabled!(basic, args.general, config);
+    let expanded = is_flag_enabled!(expanded, args.general, config);
 
     // For processes
-    let is_grouped = is_flag_enabled!(group_processes, matches, config);
-    let is_case_sensitive = is_flag_enabled!(case_sensitive, matches, config);
-    let is_match_whole_word = is_flag_enabled!(whole_word, matches, config);
-    let is_use_regex = is_flag_enabled!(regex, matches, config);
+    let is_grouped = is_flag_enabled!(group_processes, args.process, config);
+    let is_case_sensitive = is_flag_enabled!(case_sensitive, args.process, config);
+    let is_match_whole_word = is_flag_enabled!(whole_word, args.process, config);
+    let is_use_regex = is_flag_enabled!(regex, args.process, config);
+    let is_default_tree = is_flag_enabled!(tree, args.process, config);
+    let is_default_command = is_flag_enabled!(process_command, args.process, config);
+    let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, args.process, config));
+    let process_memory_as_value = is_flag_enabled!(process_memory_as_value, args.process, config);
 
     let mut widget_map = HashMap::new();
     let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
@@ -115,14 +109,10 @@ pub fn init_app(
     let is_custom_layout = config.row.is_some();
     let mut used_widget_set = HashSet::new();
 
-    let show_memory_as_values = is_flag_enabled!(mem_as_value, matches, config);
-    let is_default_tree = is_flag_enabled!(tree, matches, config);
-    let is_default_command = is_flag_enabled!(process_command, matches, config);
-    let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, matches, config));
-
-    let network_unit_type = get_network_unit_type(matches, config);
-    let network_scale_type = get_network_scale_type(matches, config);
-    let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, matches, config);
+    let network_unit_type = get_network_unit_type(args, config);
+    let network_scale_type = get_network_scale_type(args, config);
+    let network_use_binary_prefix =
+        is_flag_enabled!(network_use_binary_prefix, args.network, config);
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
         let columns = config.processes.as_ref().map(|cfg| cfg.columns.clone());
@@ -139,32 +129,34 @@ pub fn init_app(
         }
     };
 
-    let network_legend_position = get_network_legend(matches, config)?;
-    let memory_legend_position = get_memory_legend(matches, config)?;
+    let network_legend_position = get_network_legend_position(args, config)?;
+    let memory_legend_position = get_memory_legend_position(args, config)?;
 
     // TODO: Can probably just reuse the options struct.
     let app_config_fields = AppConfigFields {
-        update_rate: get_update_rate(matches, config)
-            .context("Update 'rate' in your config file.")?,
-        temperature_type: get_temperature(matches, config)
+        update_rate: get_update_rate(args, config)?,
+        temperature_type: get_temperature(args, config)
             .context("Update 'temperature_type' in your config file.")?,
-        show_average_cpu: get_show_average_cpu(matches, config),
-        use_dot: is_flag_enabled!(dot_marker, matches, config),
-        cpu_left_legend: is_flag_enabled!(cpu_left_legend, matches, config),
-        use_current_cpu_total: is_flag_enabled!(current_usage, matches, config),
-        unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, matches, config),
+        show_average_cpu: get_show_average_cpu(args, config),
+        use_dot: is_flag_enabled!(dot_marker, args.general, config),
+        cpu_left_legend: is_flag_enabled!(cpu_left_legend, args.cpu, config),
+        use_current_cpu_total: is_flag_enabled!(current_usage, args.process, config),
+        unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, args.process, config),
         use_basic_mode,
         default_time_value,
-        time_interval: get_time_interval(matches, config, retention_ms)
-            .context("Update 'time_delta' in your config file.")?,
-        hide_time: is_flag_enabled!(hide_time, matches, config),
+        time_interval: get_time_interval(args, config, retention_ms)?,
+        hide_time: is_flag_enabled!(hide_time, args.general, config),
         autohide_time,
-        use_old_network_legend: is_flag_enabled!(use_old_network_legend, matches, config),
-        table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, matches, config))),
-        disable_click: is_flag_enabled!(disable_click, matches, config),
-        enable_gpu: get_enable_gpu(matches, config),
-        enable_cache_memory: get_enable_cache_memory(matches, config),
-        show_table_scroll_position: is_flag_enabled!(show_table_scroll_position, matches, config),
+        use_old_network_legend: is_flag_enabled!(use_old_network_legend, args.network, config),
+        table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, args.general, config))),
+        disable_click: is_flag_enabled!(disable_click, args.general, config),
+        enable_gpu: get_enable_gpu(args, config),
+        enable_cache_memory: get_enable_cache_memory(args, config),
+        show_table_scroll_position: is_flag_enabled!(
+            show_table_scroll_position,
+            args.general,
+            config
+        ),
         is_advanced_kill,
         memory_legend_position,
         network_legend_position,
@@ -178,7 +170,7 @@ pub fn init_app(
         is_case_sensitive,
         is_match_whole_word,
         is_use_regex,
-        show_memory_as_values,
+        show_memory_as_values: process_memory_as_value,
         is_command: is_default_command,
     };
 
@@ -323,8 +315,8 @@ pub fn init_app(
     let used_widgets = UsedWidgets {
         use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
         use_mem,
-        use_cache: use_mem && get_enable_cache_memory(matches, config),
-        use_gpu: get_enable_gpu(matches, config),
+        use_cache: use_mem && get_enable_cache_memory(args, config),
+        use_gpu: get_enable_gpu(args, config),
         use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
         use_proc: used_widget_set.get(&Proc).is_some(),
         use_disk: used_widget_set.get(&Disk).is_some(),
@@ -361,37 +353,40 @@ pub fn init_app(
     };
     let is_expanded = expanded && !use_basic_mode;
 
-    Ok(App::new(
-        app_config_fields,
-        states,
-        widget_map,
-        current_widget,
-        used_widgets,
-        filters,
-        is_expanded,
+    Ok((
+        App::new(
+            app_config_fields,
+            states,
+            widget_map,
+            current_widget,
+            used_widgets,
+            filters,
+            is_expanded,
+        ),
+        widget_layout,
     ))
 }
 
 pub fn get_widget_layout(
-    args: &BottomArgs, config: &Config,
+    args: &BottomArgs, config: &ConfigV1,
 ) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
-    let cpu_left_legend = is_flag_enabled!(args.cpu.left_legend, config, cpu_left_legend);
+    let cpu_left_legend = is_flag_enabled!(cpu_left_legend, args.cpu, config);
 
     let (default_widget_type, mut default_widget_count) =
-        get_default_widget_and_count(matches, config)?;
+        get_default_widget_and_count(args, config)?;
     let mut default_widget_id = 1;
 
-    let bottom_layout = if is_flag_enabled!(basic, matches, config) {
+    let bottom_layout = if is_flag_enabled!(basic, args.general, config) {
         default_widget_id = DEFAULT_WIDGET_ID;
 
-        BottomLayout::init_basic_default(get_use_battery(matches, config))
+        BottomLayout::init_basic_default(get_use_battery(args, config))
     } else {
         let ref_row: Vec<Row>; // Required to handle reference
         let rows = match &config.row {
             Some(r) => r,
             None => {
                 // This cannot (like it really shouldn't) fail!
-                ref_row = toml_edit::de::from_str::<Config>(if get_use_battery(matches, config) {
+                ref_row = toml_edit::de::from_str::<ConfigV1>(if get_use_battery(args, config) {
                     DEFAULT_BATTERY_LAYOUT
                 } else {
                     DEFAULT_LAYOUT
@@ -436,13 +431,17 @@ pub fn get_widget_layout(
     Ok((bottom_layout, default_widget_id, default_widget_type))
 }
 
-fn get_update_rate(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
-    let update_rate = if let Some(update_rate) = matches.get_one::<String>("rate") {
-        try_parse_ms(update_rate)?
+fn get_update_rate(args: &BottomArgs, config: &ConfigV1) -> error::Result<u64> {
+    let update_rate = if let Some(update_rate) = &args.general.rate {
+        try_parse_ms(update_rate).map_err(|_| {
+            BottomError::ArgumentError("set your update rate to be valid".to_string())
+        })?
     } else if let Some(flags) = &config.flags {
         if let Some(rate) = &flags.rate {
             match rate {
-                StringOrNum::String(s) => try_parse_ms(s)?,
+                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
+                    BottomError::ConfigError("set your update rate to be valid".to_string())
+                })?,
                 StringOrNum::Num(n) => *n,
             }
         } else {
@@ -461,32 +460,24 @@ fn get_update_rate(matches: &ArgMatches, config: &Config) -> error::Result<u64> 
     Ok(update_rate)
 }
 
-fn get_temperature(matches: &ArgMatches, config: &Config) -> error::Result<TemperatureType> {
-    if matches.get_flag("fahrenheit") {
+fn get_temperature(args: &BottomArgs, config: &ConfigV1) -> error::Result<TemperatureType> {
+    if args.temperature.fahrenheit {
         return Ok(TemperatureType::Fahrenheit);
-    } else if matches.get_flag("kelvin") {
+    } else if args.temperature.kelvin {
         return Ok(TemperatureType::Kelvin);
-    } else if matches.get_flag("celsius") {
+    } else if args.temperature.celsius {
         return Ok(TemperatureType::Celsius);
     } else if let Some(flags) = &config.flags {
         if let Some(temp_type) = &flags.temperature_type {
-            // Give lowest priority to config.
-            return match temp_type.as_str() {
-                "fahrenheit" | "f" => Ok(TemperatureType::Fahrenheit),
-                "kelvin" | "k" => Ok(TemperatureType::Kelvin),
-                "celsius" | "c" => Ok(TemperatureType::Celsius),
-                _ => Err(BottomError::ConfigError(format!(
-                    "\"{temp_type}\" is an invalid temperature type, use \"<kelvin|k|celsius|c|fahrenheit|f>\"."
-                ))),
-            };
+            return TemperatureType::from_str(temp_type).map_err(BottomError::ConfigError);
         }
     }
     Ok(TemperatureType::Celsius)
 }
 
-/// Yes, this function gets whether to show average CPU (true) or not (false)
-fn get_show_average_cpu(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.get_flag("hide_avg_cpu") {
+/// Yes, this function gets whether to show average CPU (true) or not (false).
+fn get_show_average_cpu(args: &BottomArgs, config: &ConfigV1) -> bool {
+    if args.cpu.hide_avg_cpu {
         return false;
     } else if let Some(flags) = &config.flags {
         if let Some(avg_cpu) = flags.hide_avg_cpu {
@@ -510,31 +501,34 @@ fn try_parse_ms(s: &str) -> error::Result<u64> {
 }
 
 fn get_default_time_value(
-    matches: &ArgMatches, config: &Config, retention_ms: u64,
+    args: &BottomArgs, config: &ConfigV1, retention_ms: u64,
 ) -> error::Result<u64> {
-    let default_time =
-        if let Some(default_time_value) = matches.get_one::<String>("default_time_value") {
-            try_parse_ms(default_time_value)?
-        } else if let Some(flags) = &config.flags {
-            if let Some(default_time_value) = &flags.default_time_value {
-                match default_time_value {
-                    StringOrNum::String(s) => try_parse_ms(s)?,
-                    StringOrNum::Num(n) => *n,
-                }
-            } else {
-                DEFAULT_TIME_MILLISECONDS
+    let default_time = if let Some(default_time_value) = &args.general.default_time_value {
+        try_parse_ms(default_time_value).map_err(|_| {
+            BottomError::ArgumentError("set your default time to be valid".to_string())
+        })?
+    } else if let Some(flags) = &config.flags {
+        if let Some(default_time_value) = &flags.default_time_value {
+            match default_time_value {
+                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
+                    BottomError::ConfigError("set your default time to be valid".to_string())
+                })?,
+                StringOrNum::Num(n) => *n,
             }
         } else {
             DEFAULT_TIME_MILLISECONDS
-        };
+        }
+    } else {
+        DEFAULT_TIME_MILLISECONDS
+    };
 
     if default_time < 30000 {
         return Err(BottomError::ConfigError(
-            "set your default value to be at least 30s.".to_string(),
+            "set your default time to be at least 30s.".to_string(),
         ));
     } else if default_time > retention_ms {
         return Err(BottomError::ConfigError(format!(
-            "set your default value to be at most {}.",
+            "set your default time to be at most {}.",
             humantime::Duration::from(Duration::from_millis(retention_ms))
         )));
     }
@@ -543,14 +537,18 @@ fn get_default_time_value(
 }
 
 fn get_time_interval(
-    matches: &ArgMatches, config: &Config, retention_ms: u64,
+    args: &BottomArgs, config: &ConfigV1, retention_ms: u64,
 ) -> error::Result<u64> {
-    let time_interval = if let Some(time_interval) = matches.get_one::<String>("time_delta") {
-        try_parse_ms(time_interval)?
+    let time_interval = if let Some(time_interval) = &args.general.time_delta {
+        try_parse_ms(time_interval).map_err(|_| {
+            BottomError::ArgumentError("set your time delta to be valid".to_string())
+        })?
     } else if let Some(flags) = &config.flags {
         if let Some(time_interval) = &flags.time_delta {
             match time_interval {
-                StringOrNum::String(s) => try_parse_ms(s)?,
+                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
+                    BottomError::ArgumentError("set your time delta to be valid".to_string())
+                })?,
                 StringOrNum::Num(n) => *n,
             }
         } else {
@@ -575,9 +573,9 @@ fn get_time_interval(
 }
 
 fn get_default_widget_and_count(
-    matches: &ArgMatches, config: &Config,
+    args: &BottomArgs, config: &ConfigV1,
 ) -> error::Result<(Option<BottomWidgetType>, u64)> {
-    let widget_type = if let Some(widget_type) = matches.get_one::<String>("default_widget_type") {
+    let widget_type = if let Some(widget_type) = &args.general.default_widget_type {
         let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
         if let BottomWidgetType::Empty = parsed_widget {
             None
@@ -599,21 +597,20 @@ fn get_default_widget_and_count(
         None
     };
 
-    let widget_count = if let Some(widget_count) = matches.get_one::<String>("default_widget_count")
-    {
-        Some(widget_count.parse::<u128>()?)
-    } else if let Some(flags) = &config.flags {
-        flags
-            .default_widget_count
-            .map(|widget_count| widget_count.into())
+    let widget_count: Option<u128> = if let Some(widget_count) = args.general.default_widget_count {
+        Some(widget_count.into())
     } else {
-        None
+        config.flags.as_ref().and_then(|flags| {
+            flags
+                .default_widget_count
+                .map(|widget_count| widget_count.into())
+        })
     };
 
     match (widget_type, widget_count) {
         (Some(widget_type), Some(widget_count)) => {
             let widget_count = widget_count.try_into().map_err(|_| BottomError::ConfigError(
-                "set your widget count to be at most unsigned INT_MAX.".to_string()
+                "set your widget count to be at most 18446744073709551615.".to_string()
             ))?;
             Ok((Some(widget_type), widget_count))
         }
@@ -626,9 +623,10 @@ fn get_default_widget_and_count(
 }
 
 #[allow(unused_variables)]
-fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
+fn get_use_battery(args: &BottomArgs, config: &ConfigV1) -> bool {
     #[cfg(feature = "battery")]
     {
+        // TODO: Move this so it's dynamic in the app itself and automatically hide if there are no batteries?
         if let Ok(battery_manager) = Manager::new() {
             if let Ok(batteries) = battery_manager.batteries() {
                 if batteries.count() == 0 {
@@ -637,7 +635,7 @@ fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
             }
         }
 
-        if matches.get_flag("battery") {
+        if args.battery.battery {
             return true;
         } else if let Some(flags) = &config.flags {
             if let Some(battery) = flags.battery {
@@ -650,10 +648,10 @@ fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
 }
 
 #[allow(unused_variables)]
-fn get_enable_gpu(matches: &ArgMatches, config: &Config) -> bool {
+fn get_enable_gpu(args: &BottomArgs, config: &ConfigV1) -> bool {
     #[cfg(feature = "gpu")]
     {
-        if matches.get_flag("enable_gpu") {
+        if args.gpu.enable_gpu {
             return true;
         } else if let Some(flags) = &config.flags {
             if let Some(enable_gpu) = flags.enable_gpu {
@@ -666,10 +664,10 @@ fn get_enable_gpu(matches: &ArgMatches, config: &Config) -> bool {
 }
 
 #[allow(unused_variables)]
-fn get_enable_cache_memory(matches: &ArgMatches, config: &Config) -> bool {
+fn get_enable_cache_memory(args: &BottomArgs, config: &ConfigV1) -> bool {
     #[cfg(not(target_os = "windows"))]
     {
-        if matches.get_flag("enable_cache_memory") {
+        if args.memory.enable_cache_memory {
             return true;
         } else if let Some(flags) = &config.flags {
             if let Some(enable_cache_memory) = flags.enable_cache_memory {
@@ -718,8 +716,8 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Fil
     }
 }
 
-pub fn get_color_scheme(matches: &ArgMatches, config: &Config) -> error::Result<ColourScheme> {
-    if let Some(color) = matches.get_one::<String>("color") {
+pub fn get_color_scheme(args: &BottomArgs, config: &ConfigV1) -> error::Result<ColourScheme> {
+    if let Some(color) = &args.style.color {
         // Highest priority is always command line flags...
         return ColourScheme::from_str(color);
     } else if let Some(colors) = &config.colors {
@@ -743,8 +741,8 @@ pub fn get_color_scheme(matches: &ArgMatches, config: &Config) -> error::Result<
     Ok(ColourScheme::Default)
 }
 
-fn get_network_unit_type(matches: &ArgMatches, config: &Config) -> DataUnit {
-    if matches.get_flag("network_use_bytes") {
+fn get_network_unit_type(args: &BottomArgs, config: &ConfigV1) -> DataUnit {
+    if args.network.network_use_bytes {
         return DataUnit::Byte;
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_bytes) = flags.network_use_bytes {
@@ -757,8 +755,8 @@ fn get_network_unit_type(matches: &ArgMatches, config: &Config) -> DataUnit {
     DataUnit::Bit
 }
 
-fn get_network_scale_type(matches: &ArgMatches, config: &Config) -> AxisScaling {
-    if matches.get_flag("network_use_log") {
+fn get_network_scale_type(args: &BottomArgs, config: &ConfigV1) -> AxisScaling {
+    if args.network.network_use_log {
         return AxisScaling::Log;
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_log) = flags.network_use_log {
@@ -771,15 +769,18 @@ fn get_network_scale_type(matches: &ArgMatches, config: &Config) -> AxisScaling 
     AxisScaling::Linear
 }
 
-fn get_retention(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
+fn get_retention(args: &BottomArgs, config: &ConfigV1) -> error::Result<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
-    if let Some(retention) = matches.get_one::<String>("retention") {
+    if let Some(retention) = &args.general.retention {
         try_parse_ms(retention)
+            .map_err(|_| BottomError::ArgumentError("`retention` is an invalid value".to_string()))
     } else if let Some(flags) = &config.flags {
         if let Some(retention) = &flags.retention {
             Ok(match retention {
-                StringOrNum::String(s) => try_parse_ms(s)?,
+                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
+                    BottomError::ConfigError("`retention` is an invalid value".to_string())
+                })?,
                 StringOrNum::Num(n) => *n,
             })
         } else {
@@ -790,19 +791,21 @@ fn get_retention(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
     }
 }
 
-fn get_network_legend(
-    matches: &ArgMatches, config: &Config,
+fn get_network_legend_position(
+    args: &BottomArgs, config: &ConfigV1,
 ) -> error::Result<Option<LegendPosition>> {
-    let error =
-        |_| BottomError::ConfigError("network_legend is set to an invalid value".to_string());
-    if let Some(s) = matches.get_one::<String>("network_legend") {
+    if let Some(s) = &args.network.network_legend {
         match s.to_ascii_lowercase().trim() {
             "none" => Ok(None),
-            position => Ok(Some(position.parse::<LegendPosition>().map_err(error)?)),
+            position => Ok(Some(position.parse::<LegendPosition>().map_err(|_| {
+                BottomError::ArgumentError("`network_legend` is an invalid value".to_string())
+            })?)),
         }
     } else if let Some(flags) = &config.flags {
         if let Some(legend) = &flags.network_legend {
-            Ok(Some(legend.parse::<LegendPosition>().map_err(error)?))
+            Ok(Some(legend.parse::<LegendPosition>().map_err(|_| {
+                BottomError::ConfigError("`network_legend` is an invalid value".to_string())
+            })?))
         } else {
             Ok(Some(LegendPosition::default()))
         }
@@ -811,19 +814,21 @@ fn get_network_legend(
     }
 }
 
-fn get_memory_legend(
-    matches: &ArgMatches, config: &Config,
+fn get_memory_legend_position(
+    args: &BottomArgs, config: &ConfigV1,
 ) -> error::Result<Option<LegendPosition>> {
-    let error =
-        |_| BottomError::ConfigError("memory_legend is set to an invalid value".to_string());
-    if let Some(s) = matches.get_one::<String>("memory_legend") {
+    if let Some(s) = &args.memory.memory_legend {
         match s.to_ascii_lowercase().trim() {
             "none" => Ok(None),
-            position => Ok(Some(position.parse::<LegendPosition>().map_err(error)?)),
+            position => Ok(Some(position.parse::<LegendPosition>().map_err(|_| {
+                BottomError::ArgumentError("`memory_legend` is an invalid value".to_string())
+            })?)),
         }
     } else if let Some(flags) = &config.flags {
         if let Some(legend) = &flags.memory_legend {
-            Ok(Some(legend.parse::<LegendPosition>().map_err(error)?))
+            Ok(Some(legend.parse::<LegendPosition>().map_err(|_| {
+                BottomError::ConfigError("`memory_legend` is an invalid value".to_string())
+            })?))
         } else {
             Ok(Some(LegendPosition::default()))
         }
@@ -834,11 +839,12 @@ fn get_memory_legend(
 
 #[cfg(test)]
 mod test {
-    use clap::ArgMatches;
+    use clap::Parser;
 
-    use super::{get_color_scheme, get_time_interval, get_widget_layout, Config};
+    use super::{get_color_scheme, get_time_interval, ConfigV1};
     use crate::{
         app::App,
+        args::BottomArgs,
         canvas::styling::CanvasStyling,
         options::{
             config::ConfigFlags, get_default_time_value, get_retention, get_update_rate,
@@ -867,26 +873,24 @@ mod test {
 
     #[test]
     fn matches_human_times() {
-        let config = Config::default();
-        let app = crate::args::build_cmd();
+        let config = ConfigV1::default();
 
         {
-            let app = app.clone();
             let delta_args = vec!["btm", "--time_delta", "2 min"];
-            let matches = app.get_matches_from(delta_args);
+            let args = BottomArgs::parse_from(delta_args);
 
             assert_eq!(
-                get_time_interval(&matches, &config, 60 * 60 * 1000),
+                get_time_interval(&args, &config, 60 * 60 * 1000),
                 Ok(2 * 60 * 1000)
             );
         }
 
         {
             let default_time_args = vec!["btm", "--default_time_value", "300s"];
-            let matches = app.get_matches_from(default_time_args);
+            let args = BottomArgs::parse_from(default_time_args);
 
             assert_eq!(
-                get_default_time_value(&matches, &config, 60 * 60 * 1000),
+                get_default_time_value(&args, &config, 60 * 60 * 1000),
                 Ok(5 * 60 * 1000)
             );
         }
@@ -894,26 +898,24 @@ mod test {
 
     #[test]
     fn matches_number_times() {
-        let config = Config::default();
-        let app = crate::args::build_cmd();
+        let config = ConfigV1::default();
 
         {
-            let app = app.clone();
             let delta_args = vec!["btm", "--time_delta", "120000"];
-            let matches = app.get_matches_from(delta_args);
+            let args = BottomArgs::parse_from(delta_args);
 
             assert_eq!(
-                get_time_interval(&matches, &config, 60 * 60 * 1000),
+                get_time_interval(&args, &config, 60 * 60 * 1000),
                 Ok(2 * 60 * 1000)
             );
         }
 
         {
             let default_time_args = vec!["btm", "--default_time_value", "300000"];
-            let matches = app.get_matches_from(default_time_args);
+            let args = BottomArgs::parse_from(default_time_args);
 
             assert_eq!(
-                get_default_time_value(&matches, &config, 60 * 60 * 1000),
+                get_default_time_value(&args, &config, 60 * 60 * 1000),
                 Ok(5 * 60 * 1000)
             );
         }
@@ -921,10 +923,9 @@ mod test {
 
     #[test]
     fn config_human_times() {
-        let app = crate::args::build_cmd();
-        let matches = app.get_matches_from(["btm"]);
+        let args = BottomArgs::parse_from(["btm"]);
 
-        let mut config = Config::default();
+        let mut config = ConfigV1::default();
         let flags = ConfigFlags {
             time_delta: Some("2 min".to_string().into()),
             default_time_value: Some("300s".to_string().into()),
@@ -936,26 +937,25 @@ mod test {
         config.flags = Some(flags);
 
         assert_eq!(
-            get_time_interval(&matches, &config, 60 * 60 * 1000),
+            get_time_interval(&args, &config, 60 * 60 * 1000),
             Ok(2 * 60 * 1000)
         );
 
         assert_eq!(
-            get_default_time_value(&matches, &config, 60 * 60 * 1000),
+            get_default_time_value(&args, &config, 60 * 60 * 1000),
             Ok(5 * 60 * 1000)
         );
 
-        assert_eq!(get_update_rate(&matches, &config), Ok(1000));
+        assert_eq!(get_update_rate(&args, &config), Ok(1000));
 
-        assert_eq!(get_retention(&matches, &config), Ok(600000));
+        assert_eq!(get_retention(&args, &config), Ok(600000));
     }
 
     #[test]
     fn config_number_times_as_string() {
-        let app = crate::args::build_cmd();
-        let matches = app.get_matches_from(["btm"]);
+        let args = BottomArgs::parse_from(["btm"]);
 
-        let mut config = Config::default();
+        let mut config = ConfigV1::default();
         let flags = ConfigFlags {
             time_delta: Some("120000".to_string().into()),
             default_time_value: Some("300000".to_string().into()),
@@ -967,26 +967,25 @@ mod test {
         config.flags = Some(flags);
 
         assert_eq!(
-            get_time_interval(&matches, &config, 60 * 60 * 1000),
+            get_time_interval(&args, &config, 60 * 60 * 1000),
             Ok(2 * 60 * 1000)
         );
 
         assert_eq!(
-            get_default_time_value(&matches, &config, 60 * 60 * 1000),
+            get_default_time_value(&args, &config, 60 * 60 * 1000),
             Ok(5 * 60 * 1000)
         );
 
-        assert_eq!(get_update_rate(&matches, &config), Ok(1000));
+        assert_eq!(get_update_rate(&args, &config), Ok(1000));
 
-        assert_eq!(get_retention(&matches, &config), Ok(600000));
+        assert_eq!(get_retention(&args, &config), Ok(600000));
     }
 
     #[test]
     fn config_number_times_as_num() {
-        let app = crate::args::build_cmd();
-        let matches = app.get_matches_from(["btm"]);
+        let args = BottomArgs::parse_from(["btm"]);
 
-        let mut config = Config::default();
+        let mut config = ConfigV1::default();
         let flags = ConfigFlags {
             time_delta: Some(120000.into()),
             default_time_value: Some(300000.into()),
@@ -998,26 +997,26 @@ mod test {
         config.flags = Some(flags);
 
         assert_eq!(
-            get_time_interval(&matches, &config, 60 * 60 * 1000),
+            get_time_interval(&args, &config, 60 * 60 * 1000),
             Ok(2 * 60 * 1000)
         );
 
         assert_eq!(
-            get_default_time_value(&matches, &config, 60 * 60 * 1000),
+            get_default_time_value(&args, &config, 60 * 60 * 1000),
             Ok(5 * 60 * 1000)
         );
 
-        assert_eq!(get_update_rate(&matches, &config), Ok(1000));
+        assert_eq!(get_update_rate(&args, &config), Ok(1000));
 
-        assert_eq!(get_retention(&matches, &config), Ok(600000));
+        assert_eq!(get_retention(&args, &config), Ok(600000));
     }
 
-    fn create_app(config: Config, matches: ArgMatches) -> App {
-        let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();
+    fn create_app(args: BottomArgs) -> App {
+        let config = ConfigV1::default();
         let styling =
-            CanvasStyling::new(get_color_scheme(&matches, &config).unwrap(), &config).unwrap();
+            CanvasStyling::new(get_color_scheme(&args, &config).unwrap(), &config).unwrap();
 
-        super::init_app(matches, config, &layout, id, &ty, &styling).unwrap()
+        super::init_app(args, config, &styling).unwrap().0
     }
 
     // TODO: There's probably a better way to create clap options AND unify together to avoid the possibility of
@@ -1026,13 +1025,7 @@ mod test {
     fn verify_cli_options_build() {
         let app = crate::args::build_cmd();
 
-        let default_app = {
-            let app = app.clone();
-            let config = Config::default();
-            let matches = app.get_matches_from([""]);
-
-            create_app(config, matches)
-        };
+        let default_app = create_app(BottomArgs::parse_from(["btm"]));
 
         // Skip battery since it's tricky to test depending on the platform/features we're testing with.
         let skip = ["help", "version", "celsius", "battery"];
@@ -1049,11 +1042,8 @@ mod test {
                 let arg = format!("--{arg_name}");
 
                 let arguments = vec!["btm", &arg];
-                let app = app.clone();
-                let config = Config::default();
-                let matches = app.get_matches_from(arguments);
-
-                let testing_app = create_app(config, matches);
+                let args = BottomArgs::parse_from(arguments);
+                let testing_app = create_app(args);
 
                 if (default_app.app_config_fields == testing_app.app_config_fields)
                     && default_app.is_expanded == testing_app.is_expanded

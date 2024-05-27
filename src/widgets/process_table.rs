@@ -255,7 +255,7 @@ impl ProcWidgetState {
 
             let is_count = matches!(mode, ProcWidgetMode::Grouped);
             let is_command = table_config.is_command;
-            let mem_vals = table_config.show_memory_as_values;
+            let mem_as_values = table_config.show_memory_as_values;
 
             match config_columns {
                 Some(columns) if !columns.is_empty() => columns
@@ -278,7 +278,7 @@ impl ProcWidgetState {
                             }
                             ProcWidgetColumn::Cpu => CpuPercent,
                             ProcWidgetColumn::Mem => {
-                                if mem_vals {
+                                if mem_as_values {
                                     MemoryVal
                                 } else {
                                     MemoryPercent
@@ -293,7 +293,7 @@ impl ProcWidgetState {
                             ProcWidgetColumn::Time => Time,
                             #[cfg(feature = "gpu")]
                             ProcWidgetColumn::GpuMem => {
-                                if mem_vals {
+                                if mem_as_values {
                                     GpuMem
                                 } else {
                                     GpuMemPercent
@@ -311,7 +311,11 @@ impl ProcWidgetState {
                         if is_count { Count } else { Pid },
                         if is_command { Command } else { Name },
                         CpuPercent,
-                        if mem_vals { MemoryVal } else { MemoryPercent },
+                        if mem_as_values {
+                            MemoryVal
+                        } else {
+                            MemoryPercent
+                        },
                         ReadPerSecond,
                         WritePerSecond,
                         TotalRead,

@@ -18,7 +18,7 @@ each time:
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
 | `hide_avg_cpu`               | Boolean                                                                                                            | Hides the average CPU usage.                                     |
 | `dot_marker`                 | Boolean                                                                                                            | Uses a dot marker for graphs.                                    |
-| `cpu_left_legend`                | Boolean                                                                                                            | Puts the CPU chart legend to the left side.                      |
+| `cpu_left_legend`            | Boolean                                                                                                            | Puts the CPU chart legend to the left side.                      |
 | `current_usage`              | Boolean                                                                                                            | Sets process CPU% to be based on current CPU%.                   |
 | `group_processes`            | Boolean                                                                                                            | Groups processes with the same name by default.                  |
 | `case_sensitive`             | Boolean                                                                                                            | Enables case sensitivity by default.                             |
@@ -37,7 +37,7 @@ each time:
 | `disable_click`              | Boolean                                                                                                            | Disables mouse clicks.                                           |
 | `color`                      | String (one of ["default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"])                     | Use a color scheme, use --help for supported values.             |
 | `enable_cache_memory`        | Boolean                                                                                                            | Enable cache and buffer memory stats (not available on Windows). |
-| `mem_as_value`               | Boolean                                                                                                            | Defaults to showing process memory usage by value.               |
+| `process_memory_as_value`    | Boolean                                                                                                            | Defaults to showing process memory usage by value.               |
 | `tree`                       | Boolean                                                                                                            | Defaults to showing the process widget in tree mode.             |
 | `show_table_scroll_position` | Boolean                                                                                                            | Shows the scroll position tracker in table widgets.              |
 | `process_command`            | Boolean                                                                                                            | Show processes as their commands by default.                     |
@@ -48,6 +48,6 @@ each time:
 | `enable_gpu`                 | Boolean                                                                                                            | Shows the GPU widgets.                                           |
 | `retention`                  | String (human readable time, such as "10m", "1h", etc.)                                                            | How much data is stored at once in terms of time.                |
 | `unnormalized_cpu`           | Boolean                                                                                                            | Show process CPU% without normalizing over the number of cores.  |
-| `expanded`        | Boolean                                                                                                            | Expand the default widget upon starting the app.                 |
+| `expanded`                   | Boolean                                                                                                            | Expand the default widget upon starting the app.                 |
 | `memory_legend`              | String (one of ["none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"]) | Where to place the legend for the memory widget.                 |
 | `network_legend`             | String (one of ["none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"]) | Where to place the legend for the network widget.                |

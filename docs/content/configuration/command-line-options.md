@@ -25,18 +25,18 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## Process Options
 
-| Option                    | Behaviour                                                                              |
-| ------------------------- | -------------------------------------------------------------------------------------- |
-| `-S, --case_sensitive`    | Enables case sensitivity by default.                                                   |
-| `-u, --current_usage`     | Calculates process CPU usage as a percentage of current usage rather than total usage. |
-| `--disable_advanced_kill` | Hides additional stopping options Unix-like systems.                                   |
-| `-g, --group_processes`   | Groups processes with the same name by default.                                        |
-| `--mem_as_value`          | Defaults to showing process memory usage by value.                                     |
-| `--process_command`       | Shows the full command name instead of the process name by default.                    |
-| `-R, --regex`             | Enables regex by default while searching.                                              |
-| `-T, --tree`              | Makes the process widget use tree mode by default.                                     |
-| `-n, --unnormalized_cpu`  | Show process CPU% usage without averaging over the number of CPU cores.                |
-| `-W, --whole_word`        | Enables whole-word matching by default while searching.                                |
+| Option                      | Behaviour                                                                              |
+| --------------------------- | -------------------------------------------------------------------------------------- |
+| `-S, --case_sensitive`      | Enables case sensitivity by default.                                                   |
+| `-u, --current_usage`       | Calculates process CPU usage as a percentage of current usage rather than total usage. |
+| `--disable_advanced_kill`   | Hides additional stopping options Unix-like systems.                                   |
+| `-g, --group_processes`     | Groups processes with the same name by default.                                        |
+| `--process_memory_as_value` | Defaults to showing process memory usage by value.                                     |
+| `--process_command`         | Shows the full command name instead of the process name by default.                    |
+| `-R, --regex`               | Enables regex by default while searching.                                              |
+| `-T, --tree`                | Makes the process widget use tree mode by default.                                     |
+| `-n, --unnormalized_cpu`    | Show process CPU% usage without averaging over the number of CPU cores.                |
+| `-W, --whole_word`          | Enables whole-word matching by default while searching.                                |
 
 ## Temperature Options
 

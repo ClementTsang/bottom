@@ -184,7 +184,7 @@
           "description": "Built-in themes",
           "type": "string"
         },
-        "mem_as_value": {
+        "process_memory_as_value": {
           "default": false,
           "description": "Show memory values in the processes widget as values by default",
           "type": "boolean"

@@ -7,7 +7,7 @@
 
 use std::path::PathBuf;
 
-use clap::*;
+use clap::{builder::PossibleValue, *};
 use indoc::indoc;
 
 const TEMPLATE: &str = indoc! {
@@ -93,19 +93,21 @@ pub struct BottomArgs {
 pub struct GeneralArgs {
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Temporarily shows the time scale in graphs.",
         long = "Automatically hides the time scale in graphs after being shown for a brief moment when zoomed \
                 in/out. If time is disabled using --hide_time then this will have no effect."
     )]
-    pub autohide_time: Option<bool>,
+    pub autohide_time: bool,
 
     #[arg(
         short = 'b',
         long,
+        action = ArgAction::SetTrue,
         help = "Hides graphs and uses a more basic look.",
         long_help = "Hides graphs and uses a more basic look, largely inspired by htop's design."
     )]
-    pub basic: Option<bool>,
+    pub basic: bool,
 
     #[arg(
         short = 'C',
@@ -151,7 +153,7 @@ pub struct GeneralArgs {
             instead."
         }
     )]
-    pub default_widget_count: Option<u32>,
+    pub default_widget_count: Option<u64>,
 
     #[arg(
         long,
@@ -192,33 +194,36 @@ pub struct GeneralArgs {
 
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Disables mouse clicks.",
         long_help = "Disables mouse clicks from interacting with bottom."
     )]
-    pub disable_click: Option<bool>,
+    pub disable_click: bool,
 
     // TODO: Change this to accept a string with the type of marker.
     #[arg(
         short = 'm',
         long,
+        action = ArgAction::SetTrue,
         help = "Uses a dot marker for graphs.",
         long_help = "Uses a dot marker for graphs as opposed to the default braille marker."
     )]
-    pub dot_marker: Option<bool>,
+    pub dot_marker: bool,
 
     #[arg(
         short = 'e',
         long,
+        action = ArgAction::SetTrue,
         help = "Expand the default widget upon starting the app.",
         long_help = "Expand the default widget upon starting the app. This flag has no effect in basic mode (--basic)."
     )]
-    pub expanded: Option<bool>,
+    pub expanded: bool,
 
-    #[arg(long, help = "Hides spacing between table headers and entries.")]
-    pub hide_table_gap: Option<bool>,
+    #[arg(long, action = ArgAction::SetTrue, help = "Hides spacing between table headers and entries.")]
+    pub hide_table_gap: bool,
 
-    #[arg(long, help = "Hides the time scale from being shown.")]
-    pub hide_time: Option<bool>,
+    #[arg(long, action = ArgAction::SetTrue, help = "Hides the time scale from being shown.")]
+    pub hide_time: bool,
 
     #[arg(
         short = 'r',
@@ -243,9 +248,10 @@ pub struct GeneralArgs {
 
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Shows the list scroll position tracker in the widget title for table widgets."
     )]
-    pub show_table_scroll_position: Option<bool>,
+    pub show_table_scroll_position: bool,
 
     #[arg(
         short = 'd',
@@ -266,71 +272,80 @@ pub struct ProcessArgs {
     #[arg(
         short = 'S',
         long,
+        action = ArgAction::SetTrue,
         help = "Enables case sensitivity by default.",
         long_help = "Enables case sensitivity by default when searching for a process."
     )]
-    pub case_sensitive: Option<bool>,
+    pub case_sensitive: bool,
 
     // TODO: Rename this.
     #[arg(
         short = 'u',
         long,
+        action = ArgAction::SetTrue,
         help = "Calculates process CPU usage as a percentage of current usage rather than total usage."
     )]
-    pub current_usage: Option<bool>,
+    pub current_usage: bool,
 
     // TODO: Disable this on Windows?
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Hides additional stopping options Unix-like systems.",
         long_help = "Hides additional stopping options Unix-like systems. Signal 15 (TERM) will be sent when \
                     stopping a process."
     )]
-    pub disable_advanced_kill: Option<bool>,
+    pub disable_advanced_kill: bool,
 
     #[arg(
         short = 'g',
         long,
+        action = ArgAction::SetTrue,
         help = "Groups processes with the same name by default."
     )]
-    pub group_processes: Option<bool>,
+    pub group_processes: bool,
 
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Defaults to showing process memory usage by value.",
         long_help = "Defaults to showing process memory usage by value. Otherwise, it defaults to showing it by percentage."
     )]
-    pub mem_as_value: Option<bool>,
+    pub process_memory_as_value: bool,
 
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Shows the full command name instead of the process name by default."
     )]
-    pub process_command: Option<bool>,
+    pub process_command: bool,
 
-    #[arg(short = 'R', long, help = "Enables regex by default while searching.")]
-    pub regex: Option<bool>,
+    #[arg(short = 'R', long, action = ArgAction::SetTrue, help = "Enables regex by default while searching.")]
+    pub regex: bool,
 
     #[arg(
         short = 'T',
         long,
+        action = ArgAction::SetTrue,
         help = "Makes the process widget use tree mode by default."
     )]
-    pub tree: Option<bool>,
+    pub tree: bool,
 
     #[arg(
         short = 'n',
         long,
+        action = ArgAction::SetTrue,
         help = "Show process CPU% usage without averaging over the number of CPU cores."
     )]
-    pub unnormalized_cpu: Option<bool>,
+    pub unnormalized_cpu: bool,
 
     #[arg(
         short = 'W',
         long,
+        action = ArgAction::SetTrue,
         help = "Enables whole-word matching by default while searching."
     )]
-    pub whole_word: Option<bool>,
+    pub whole_word: bool,
 }
 
 /// Temperature arguments/config options.
@@ -341,6 +356,7 @@ pub struct TemperatureArgs {
     #[arg(
         short = 'c',
         long,
+        action = ArgAction::SetTrue,
         group = "temperature_unit",
         help = "Use Celsius as the temperature unit. Default.",
         long_help = "Use Celsius as the temperature unit. This is the default option."
@@ -350,6 +366,7 @@ pub struct TemperatureArgs {
     #[arg(
         short = 'f',
         long,
+        action = ArgAction::SetTrue,
         group = "temperature_unit",
         help = "Use Fahrenheit as the temperature unit."
     )]
@@ -358,6 +375,7 @@ pub struct TemperatureArgs {
     #[arg(
         short = 'k',
         long,
+        action = ArgAction::SetTrue,
         group = "temperature_unit",
         help = "Use Kelvin as the temperature unit."
     )]
@@ -373,12 +391,15 @@ pub enum CpuDefault {
     Average,
 }
 
-impl From<&str> for CpuDefault {
-    fn from(value: &str) -> Self {
-        match value.to_ascii_lowercase().as_str() {
-            "all" => CpuDefault::All,
-            "avg" | "average" => CpuDefault::Average,
-            _ => CpuDefault::All,
+impl ValueEnum for CpuDefault {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[CpuDefault::All, CpuDefault::Average]
+    }
+
+    fn to_possible_value(&self) -> Option<PossibleValue> {
+        match self {
+            CpuDefault::All => Some(PossibleValue::new("all")),
+            CpuDefault::Average => Some(PossibleValue::new("avg").alias("average")),
         }
     }
 }
@@ -391,21 +412,22 @@ pub struct CpuArgs {
         long,
         help = "Sets which CPU entry type is selected by default.",
         value_name = "ENTRY",
-        value_parser = ["all", "avg"],
+        value_parser = value_parser!(CpuDefault),
         default_value = "all"
     )]
     pub default_cpu_entry: CpuDefault,
 
-    #[arg(short = 'a', long, help = "Hides the average CPU usage entry.")]
-    pub hide_avg_cpu: Option<bool>,
+    #[arg(short = 'a', long, action = ArgAction::SetTrue, help = "Hides the average CPU usage entry.")]
+    pub hide_avg_cpu: bool,
 
     // TODO: Maybe rename this or fix this? Should this apply to all "left legends"?
     #[arg(
         short = 'l',
         long,
+        action = ArgAction::SetTrue,
         help = "Puts the CPU chart legend on the left side."
     )]
-    pub left_legend: Option<bool>,
+    pub cpu_left_legend: bool,
 }
 
 /// Memory argument/config options.
@@ -424,9 +446,10 @@ pub struct MemoryArgs {
     #[cfg(not(target_os = "windows"))]
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Enables collecting and displaying cache and buffer memory."
     )]
-    pub enable_cache_memory: Option<bool>,
+    pub enable_cache_memory: bool,
 }
 
 /// Network arguments/config options.
@@ -445,32 +468,36 @@ pub struct NetworkArgs {
     // TODO: Rename some of these to remove the network prefix for serde.
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Displays the network widget using bytes.",
         long_help = "Displays the network widget using bytes. Defaults to bits."
     )]
-    pub network_use_bytes: Option<bool>,
+    pub network_use_bytes: bool,
 
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Displays the network widget with binary prefixes.",
         long_help = "Displays the network widget with binary prefixes (e.g. kibibits, mebibits) rather than a decimal \
                     prefixes (e.g. kilobits, megabits). Defaults to decimal prefixes."
     )]
-    pub network_use_binary_prefix: Option<bool>,
+    pub network_use_binary_prefix: bool,
 
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Displays the network widget with a log scale.",
         long_help = "Displays the network widget with a log scale. Defaults to a non-log scale."
     )]
-    pub network_use_log: Option<bool>,
+    pub network_use_log: bool,
 
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "(DEPRECATED) Uses a separate network legend.",
         long_help = "(DEPRECATED) Uses separate network widget legend. This display is not tested and may be broken."
     )]
-    pub use_old_network_legend: Option<bool>,
+    pub use_old_network_legend: bool,
 }
 
 /// Battery arguments/config options.
@@ -480,12 +507,13 @@ pub struct NetworkArgs {
 pub struct BatteryArgs {
     #[arg(
         long,
+        action = ArgAction::SetTrue,
         help = "Shows the battery widget in non-custom layouts.",
         long_help = "Shows the battery widget in default or basic mode, if there is as battery available. This \
                     has no effect on custom layouts; if the battery widget is desired for a custom layout, explicitly \
                     specify it."
     )]
-    pub battery: Option<bool>,
+    pub battery: bool,
 }
 
 /// GPU arguments/config options.
@@ -493,8 +521,8 @@ pub struct BatteryArgs {
 #[derive(Args, Clone, Debug, Default)]
 #[command(next_help_heading = "GPU Options", rename_all = "snake_case")]
 pub struct GpuArgs {
-    #[arg(long, help = "Enable collecting and displaying GPU usage.")]
-    pub enable_gpu: Option<bool>,
+    #[arg(long, action = ArgAction::SetTrue, help = "Enable collecting and displaying GPU usage.")]
+    pub enable_gpu: bool,
 }
 
 /// Style arguments/config options.
@@ -538,24 +566,6 @@ pub struct OtherArgs {
 
     #[arg(short = 'v', long, action = ArgAction::Version, help = "Prints version information.")]
     version: (),
-}
-
-fn other_args(cmd: Command) -> Command {
-    let cmd = cmd.next_help_heading("Other Options");
-
-    let help = Arg::new("help")
-        .short('h')
-        .long("help")
-        .action(ArgAction::Help)
-        .help("Prints help info (for more details use `--help`.");
-
-    let version = Arg::new("version")
-        .short('V')
-        .long("version")
-        .action(ArgAction::Version)
-        .help("Prints version information.");
-
-    cmd.args([help, version])
 }
 
 /// Returns a [`BottomArgs`].

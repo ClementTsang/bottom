@@ -239,7 +239,7 @@ mod test {
     use super::*;
     use crate::{
         constants::{DEFAULT_LAYOUT, DEFAULT_WIDGET_ID},
-        options::Config,
+        options::ConfigV1,
         utils::error,
     };
 
@@ -293,7 +293,7 @@ mod test {
     #[test]
     /// Tests the default setup.
     fn test_default_movement() {
-        let rows = from_str::<Config>(DEFAULT_LAYOUT).unwrap().row.unwrap();
+        let rows = from_str::<ConfigV1>(DEFAULT_LAYOUT).unwrap().row.unwrap();
         let ret_bottom_layout = test_create_layout(&rows, DEFAULT_WIDGET_ID, None, 1, false);
 
         // Simple tests for the top CPU widget
@@ -367,7 +367,7 @@ mod test {
     fn test_default_battery_movement() {
         use crate::constants::DEFAULT_BATTERY_LAYOUT;
 
-        let rows = from_str::<Config>(DEFAULT_BATTERY_LAYOUT)
+        let rows = from_str::<ConfigV1>(DEFAULT_BATTERY_LAYOUT)
             .unwrap()
             .row
             .unwrap();
@@ -413,7 +413,7 @@ mod test {
     #[test]
     /// Tests using cpu_left_legend.
     fn test_cpu_left_legend() {
-        let rows = from_str::<Config>(DEFAULT_LAYOUT).unwrap().row.unwrap();
+        let rows = from_str::<ConfigV1>(DEFAULT_LAYOUT).unwrap().row.unwrap();
         let ret_bottom_layout = test_create_layout(&rows, DEFAULT_WIDGET_ID, None, 1, true);
 
         // Legend
@@ -473,7 +473,7 @@ mod test {
             type="proc"
     "#;
 
-        let rows = from_str::<Config>(proc_layout).unwrap().row.unwrap();
+        let rows = from_str::<ConfigV1>(proc_layout).unwrap().row.unwrap();
         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
         let mut total_height_ratio = 0;
         let mut default_widget_count = 1;
@@ -506,7 +506,7 @@ mod test {
     #[test]
     /// Tests default widget by setting type and count.
     fn test_default_widget_by_option() {
-        let rows = from_str::<Config>(PROC_LAYOUT).unwrap().row.unwrap();
+        let rows = from_str::<ConfigV1>(PROC_LAYOUT).unwrap().row.unwrap();
         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
         let mut total_height_ratio = 0;
         let mut default_widget_count = 3;
@@ -538,7 +538,7 @@ mod test {
 
     #[test]
     fn test_proc_custom_layout() {
-        let rows = from_str::<Config>(PROC_LAYOUT).unwrap().row.unwrap();
+        let rows = from_str::<ConfigV1>(PROC_LAYOUT).unwrap().row.unwrap();
         let ret_bottom_layout = test_create_layout(&rows, DEFAULT_WIDGET_ID, None, 1, false);
 
         // First proc widget
