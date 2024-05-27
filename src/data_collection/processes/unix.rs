@@ -25,8 +25,6 @@ cfg_if! {
             cfg_if! {
                 if #[cfg(target_os = "macos")] {
                     MacOSProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
-                } else if #[cfg(target_os = "freebsd")] {
-                    FreeBSDProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
                 } else {
                     GenericProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
                 }
