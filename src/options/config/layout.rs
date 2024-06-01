@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{app::layout_manager::*, error::Result};
+use crate::{app::layout_manager::*, utils::error::ConfigResult};
 
 /// Represents a row. This has a length of some sort (optional) and a vector
 /// of children.
@@ -54,7 +54,7 @@ impl Row {
         &self, iter_id: &mut u64, total_height_ratio: &mut u32, default_widget_id: &mut u64,
         default_widget_type: &Option<BottomWidgetType>, default_widget_count: &mut u64,
         cpu_left_legend: bool,
-    ) -> Result<BottomRow> {
+    ) -> ConfigResult<BottomRow> {
         // TODO: In the future we want to also add percentages.
         // But for MVP, we aren't going to bother.
         let row_ratio = self.ratio.unwrap_or(1);
@@ -240,7 +240,6 @@ mod test {
     use crate::{
         constants::{DEFAULT_LAYOUT, DEFAULT_WIDGET_ID},
         options::ConfigV1,
-        utils::error,
     };
 
     const PROC_LAYOUT: &str = r#"
@@ -281,7 +280,7 @@ mod test {
                         left_legend,
                     )
                 })
-                .collect::<error::Result<Vec<_>>>()
+                .collect::<ConfigResult<Vec<_>>>()
                 .unwrap(),
             total_row_height_ratio: total_height_ratio,
         };
@@ -494,7 +493,7 @@ mod test {
                         cpu_left_legend,
                     )
                 })
-                .collect::<error::Result<Vec<_>>>()
+                .collect::<ConfigResult<Vec<_>>>()
                 .unwrap(),
             total_row_height_ratio: total_height_ratio,
         };
@@ -527,7 +526,7 @@ mod test {
                         cpu_left_legend,
                     )
                 })
-                .collect::<error::Result<Vec<_>>>()
+                .collect::<ConfigResult<Vec<_>>>()
                 .unwrap(),
             total_row_height_ratio: total_height_ratio,
         };

@@ -2,6 +2,7 @@ use std::{
     ffi::{CStr, CString},
     os::unix::prelude::OsStrExt,
     path::{Path, PathBuf},
+    std::mem::MaybeUninit,
     str::FromStr,
 };
 
@@ -32,7 +33,7 @@ impl Partition {
     /// Returns the usage stats for this partition.
     pub fn usage(&self) -> anyhow::Result<Usage> {
         let path = CString::new(self.mount_point().as_os_str().as_bytes())?;
-        let mut vfs = std::mem::MaybeUninit::<libc::statvfs>::uninit();
+        let mut vfs = MaybeUninit::<libc::statvfs>::uninit();
 
         // SAFETY: System API call. Arguments should be correct.
         let result = unsafe { libc::statvfs(path.as_ptr(), vfs.as_mut_ptr()) };

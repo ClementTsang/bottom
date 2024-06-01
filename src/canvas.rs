@@ -48,7 +48,7 @@ impl FromStr for ColourScheme {
             "gruvbox-light" => Ok(ColourScheme::GruvboxLight),
             "nord" => Ok(ColourScheme::Nord),
             "nord-light" => Ok(ColourScheme::NordLight),
-            _ => Err(BottomError::ConfigError(format!(
+            _ => Err(BottomError::config(format!(
                 "`{s}` is an invalid built-in color scheme."
             ))),
         }
@@ -81,7 +81,7 @@ pub enum LayoutConstraint {
 }
 
 impl Painter {
-    pub fn init(layout: BottomLayout, styling: CanvasStyling) -> anyhow::Result<Self> {
+    pub fn init(layout: BottomLayout, styling: CanvasStyling) -> error::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -204,7 +204,7 @@ impl Painter {
 
     pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut App,
-    ) -> error::Result<()> {
+    ) -> error::DrawResult<()> {
         use BottomWidgetType::*;
 
         terminal.draw(|f| {

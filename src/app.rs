@@ -1406,9 +1406,8 @@ impl App {
             self.to_delete_process_list = None;
             Ok(())
         } else {
-            Err(BottomError::GenericError(
-                "Cannot kill processes if the current widget is not the Process widget!"
-                    .to_string(),
+            Err(BottomError::user(
+                "Cannot kill processes if the current widget is not the Process widget!",
             ))
         }
     }

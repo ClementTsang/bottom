@@ -3,7 +3,7 @@ use itertools::Itertools;
 use tui::style::{Color, Style};
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::utils::error;
+use crate::utils::error::{self, BottomError};
 
 pub const FIRST_COLOUR: Color = Color::LightMagenta;
 pub const SECOND_COLOUR: Color = Color::LightYellow;
@@ -19,14 +19,14 @@ pub const ALL_COLOUR: Color = Color::Green;
 fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
     fn hex_component_to_int(hex: &str, first: &str, second: &str) -> error::Result<u8> {
         u8::from_str_radix(&concat_string!(first, second), 16).map_err(|_| {
-            error::BottomError::ConfigError(format!(
+            BottomError::config(format!(
                 "\"{hex}\" is an invalid hex color, could not decode."
             ))
         })
     }
 
-    fn invalid_hex_format(hex: &str) -> error::BottomError {
-        error::BottomError::ConfigError(format!(
+    fn invalid_hex_format(hex: &str) -> BottomError {
+        BottomError::config(format!(
             "\"{hex}\" is an invalid hex color. It must be either a 7 character hex string of the form \"#12ab3c\" or a 3 character hex string of the form \"#1a2\".",
         ))
     }
@@ -69,7 +69,7 @@ pub fn str_to_colour(input_val: &str) -> error::Result<Color> {
             convert_name_to_colour(input_val)
         }
     } else {
-        Err(error::BottomError::ConfigError(format!(
+        Err(BottomError::config(format!(
             "value \"{input_val}\" is not valid.",
         )))
     }
@@ -78,7 +78,7 @@ pub fn str_to_colour(input_val: &str) -> error::Result<Color> {
 fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
     let rgb_list = rgb_str.split(',').collect::<Vec<&str>>();
     if rgb_list.len() != 3 {
-        return Err(error::BottomError::ConfigError(format!(
+        return Err(BottomError::config(format!(
             "value \"{rgb_str}\" is an invalid RGB colour. It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
         )));
     }
@@ -96,7 +96,7 @@ fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
     if rgb.len() == 3 {
         Ok(Color::Rgb(rgb[0], rgb[1], rgb[2]))
     } else {
-        Err(error::BottomError::ConfigError(format!(
+        Err(BottomError::config(format!(
             "value \"{rgb_str}\" contained invalid RGB values. It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
         )))
     }
@@ -121,7 +121,7 @@ fn convert_name_to_colour(color_name: &str) -> error::Result<Color> {
         "lightmagenta" | "light magenta" => Ok(Color::LightMagenta),
         "lightcyan" | "light cyan" => Ok(Color::LightCyan),
         "white" => Ok(Color::White),
-        _ => Err(error::BottomError::ConfigError(format!(
+        _ => Err(BottomError::config(format!(
             "\"{color_name}\" is an invalid named color.
             
 The following are supported strings: 
@@ -177,35 +177,41 @@ mod test {
     #[test]
     fn valid_colour_names() {
         // Standard color should work
-        assert_eq!(convert_name_to_colour("red"), Ok(Color::Red));
+        assert_eq!(convert_name_to_colour("red").unwrap(), Color::Red);
 
         // Capitalizing should be fine.
-        assert_eq!(convert_name_to_colour("RED"), Ok(Color::Red));
+        assert_eq!(convert_name_to_colour("RED").unwrap(), Color::Red);
 
         // Spacing shouldn't be an issue now.
-        assert_eq!(convert_name_to_colour(" red "), Ok(Color::Red));
+        assert_eq!(convert_name_to_colour(" red ").unwrap(), Color::Red);
 
         // The following are all equivalent.
-        assert_eq!(convert_name_to_colour("darkgray"), Ok(Color::DarkGray));
-        assert_eq!(convert_name_to_colour("darkgrey"), Ok(Color::DarkGray));
-        assert_eq!(convert_name_to_colour("dark grey"), Ok(Color::DarkGray));
-        assert_eq!(convert_name_to_colour("dark gray"), Ok(Color::DarkGray));
+        assert_eq!(convert_name_to_colour("darkgray").unwrap(), Color::DarkGray);
+        assert_eq!(convert_name_to_colour("darkgrey").unwrap(), Color::DarkGray);
+        assert_eq!(
+            convert_name_to_colour("dark grey").unwrap(),
+            Color::DarkGray
+        );
+        assert_eq!(
+            convert_name_to_colour("dark gray").unwrap(),
+            Color::DarkGray
+        );
 
-        assert_eq!(convert_name_to_colour("grey"), Ok(Color::Gray));
-        assert_eq!(convert_name_to_colour("gray"), Ok(Color::Gray));
+        assert_eq!(convert_name_to_colour("grey").unwrap(), Color::Gray);
+        assert_eq!(convert_name_to_colour("gray").unwrap(), Color::Gray);
 
         // One more test with spacing.
         assert_eq!(
-            convert_name_to_colour(" lightmagenta "),
-            Ok(Color::LightMagenta)
+            convert_name_to_colour(" lightmagenta ").unwrap(),
+            Color::LightMagenta
         );
         assert_eq!(
-            convert_name_to_colour("light magenta"),
-            Ok(Color::LightMagenta)
+            convert_name_to_colour("light magenta").unwrap(),
+            Color::LightMagenta
         );
         assert_eq!(
-            convert_name_to_colour(" light magenta "),
-            Ok(Color::LightMagenta)
+            convert_name_to_colour(" light magenta ").unwrap(),
+            Color::LightMagenta
         );
     }
 
