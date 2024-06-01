@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     collections::VecDeque,
     fmt::{Debug, Formatter},
     time::Duration,
@@ -13,10 +12,7 @@ use crate::{
     multi_eq_ignore_ascii_case,
     utils::{
         data_prefixes::*,
-        error::{
-            BottomError::{self, QueryError},
-            Result,
-        },
+        error::{BottomError, Result},
     },
 };
 
@@ -86,7 +82,7 @@ pub fn parse_query(
                     break;
                 }
             } else if COMPARISON_LIST.contains(&current_lowercase.as_str()) {
-                return Err(QueryError(Cow::Borrowed("Comparison not valid here")));
+                return Err(BottomError::user("Comparison not valid here"));
             } else {
                 break;
             }
@@ -125,7 +121,7 @@ pub fn parse_query(
                     break;
                 }
             } else if COMPARISON_LIST.contains(&current_lowercase.as_str()) {
-                return Err(QueryError(Cow::Borrowed("Comparison not valid here")));
+                return Err(BottomError::user("Comparison not valid here"));
             } else {
                 break;
             }
@@ -206,7 +202,7 @@ pub fn parse_query(
                 }
             } else if queue_top == "(" {
                 if query.is_empty() {
-                    return Err(QueryError(Cow::Borrowed("Missing closing parentheses")));
+                    return Err(BottomError::user("Missing closing parentheses"));
                 }
 
                 let mut list_of_ors = VecDeque::new();
@@ -221,7 +217,7 @@ pub fn parse_query(
 
                 // Ensure not empty
                 if list_of_ors.is_empty() {
-                    return Err(QueryError("No values within parentheses group".into()));
+                    return Err(BottomError::user("No values within parentheses group"));
                 }
 
                 // Now convert this back to a OR...
@@ -260,13 +256,13 @@ pub fn parse_query(
                             compare_prefix: None,
                         });
                     } else {
-                        return Err(QueryError("Missing closing parentheses".into()));
+                        return Err(BottomError::user("Missing closing parentheses"));
                     }
                 } else {
-                    return Err(QueryError("Missing closing parentheses".into()));
+                    return Err(BottomError::user("Missing closing parentheses"));
                 }
             } else if queue_top == ")" {
-                return Err(QueryError("Missing opening parentheses".into()));
+                return Err(BottomError::user("Missing opening parentheses"));
             } else if queue_top == "\"" {
                 // Similar to parentheses, trap and check for missing closing quotes.  Note, however, that we
                 // will DIRECTLY call another process_prefix call...
@@ -276,10 +272,10 @@ pub fn parse_query(
                     if close_paren == "\"" {
                         return Ok(prefix);
                     } else {
-                        return Err(QueryError("Missing closing quotation".into()));
+                        return Err(BottomError::user("Missing closing quotation"));
                     }
                 } else {
-                    return Err(QueryError("Missing closing quotation".into()));
+                    return Err(BottomError::user("Missing closing quotation"));
                 }
             } else {
                 //  Get prefix type...
@@ -355,15 +351,15 @@ pub fn parse_query(
                                         duration_string = Some(queue_next);
                                     }
                                 } else {
-                                    return Err(QueryError("Missing value".into()));
+                                    return Err(BottomError::user("Missing value"));
                                 }
                             }
 
                             if let Some(condition) = condition {
                                 let duration = parse_duration(
-                                    &duration_string.ok_or(QueryError("Missing value".into()))?,
+                                    &duration_string.ok_or(BottomError::user("Missing value"))?,
                                 )
-                                .map_err(|err| QueryError(err.to_string().into()))?;
+                                .map_err(|err| BottomError::user(err.to_string()))?;
 
                                 return Ok(Prefix {
                                     or: None,
@@ -392,7 +388,7 @@ pub fn parse_query(
                                 if let Some(queue_next) = query.pop_front() {
                                     value = queue_next.parse::<f64>().ok();
                                 } else {
-                                    return Err(QueryError("Missing value".into()));
+                                    return Err(BottomError::user("Missing value"));
                                 }
                             } else if content == ">" || content == "<" {
                                 // We also have to check if the next string is an "="...
@@ -406,7 +402,7 @@ pub fn parse_query(
                                         if let Some(queue_next_next) = query.pop_front() {
                                             value = queue_next_next.parse::<f64>().ok();
                                         } else {
-                                            return Err(QueryError("Missing value".into()));
+                                            return Err(BottomError::user("Missing value"));
                                         }
                                     } else {
                                         condition = Some(if content == ">" {
@@ -417,7 +413,7 @@ pub fn parse_query(
                                         value = queue_next.parse::<f64>().ok();
                                     }
                                 } else {
-                                    return Err(QueryError("Missing value".into()));
+                                    return Err(BottomError::user("Missing value"));
                                 }
                             }
 
@@ -459,15 +455,15 @@ pub fn parse_query(
                         }
                     }
                 } else {
-                    return Err(QueryError("Missing argument for search prefix".into()));
+                    return Err(BottomError::user("Missing argument for search prefix"));
                 }
             }
         } else if inside_quotation {
             // Uh oh, it's empty with quotes!
-            return Err(QueryError("Missing closing quotation".into()));
+            return Err(BottomError::user("Missing closing quotation"));
         }
 
-        Err(QueryError("Invalid query".into()))
+        Err(BottomError::user("Invalid query"))
     }
 
     let mut split_query = VecDeque::new();

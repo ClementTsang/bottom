@@ -62,7 +62,7 @@ use crossterm::{
 use data_conversion::*;
 pub use options::args;
 use options::ConfigV1;
-use utils::error;
+use utils::error::{self, ConfigResult};
 #[allow(unused_imports)]
 pub use utils::logging::*;
 
@@ -235,7 +235,7 @@ pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
     }
 }
 
-pub fn get_or_create_config(override_config_path: Option<&Path>) -> error::Result<ConfigV1> {
+pub fn get_or_create_config(override_config_path: Option<&Path>) -> ConfigResult<ConfigV1> {
     let config_path = get_config_path(override_config_path);
 
     if let Some(path) = &config_path {
@@ -258,7 +258,7 @@ pub fn get_or_create_config(override_config_path: Option<&Path>) -> error::Resul
 pub fn try_drawing(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
     app: &mut App, painter: &mut canvas::Painter,
-) -> error::Result<()> {
+) -> error::DrawResult<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
         Err(err)
@@ -269,7 +269,7 @@ pub fn try_drawing(
 
 pub fn cleanup_terminal(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-) -> error::Result<()> {
+) -> error::DrawResult<()> {
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),

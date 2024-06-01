@@ -15,7 +15,7 @@ use sysinfo::ProcessStatus;
 use super::{ProcessHarvest, UserTable};
 use crate::{
     data_collection::DataCollector,
-    utils::error::{self, BottomError},
+    utils::error::{self, CollectionError},
     Pid,
 };
 
@@ -65,7 +65,9 @@ struct CpuUsage {
     cpu_fraction: f64,
 }
 
-fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error::Result<CpuUsage> {
+fn cpu_usage_calculation(
+    prev_idle: &mut f64, prev_non_idle: &mut f64,
+) -> error::CollectionResult<CpuUsage> {
     let (idle, non_idle) = {
         // From SO answer: https://stackoverflow.com/a/23376195
         let first_line = {
@@ -299,7 +301,7 @@ pub(crate) struct ReadProcArgs {
 
 pub(crate) fn linux_process_data(
     collector: &mut DataCollector, time_difference_in_secs: u64,
-) -> error::Result<Vec<ProcessHarvest>> {
+) -> error::CollectionResult<Vec<ProcessHarvest>> {
     let total_memory = collector.total_memory();
     let prev_proc = PrevProc {
         prev_idle: &mut collector.prev_idle,
@@ -402,8 +404,9 @@ pub(crate) fn linux_process_data(
 
         Ok(process_vector)
     } else {
-        Err(BottomError::GenericError(
-            "Could not calculate CPU usage.".to_string(),
+        Err(CollectionError::other(
+            "Process",
+            "Could not calculate CPU usage.",
         ))
     }
 }

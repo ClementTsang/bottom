@@ -32,7 +32,7 @@ use crate::{
     data_collection::temperature::TemperatureType,
     utils::{
         data_units::DataUnit,
-        error::{self, BottomError},
+        error::{self, BottomError, ConfigError, ConfigResult},
     },
     widgets::*,
 };
@@ -369,7 +369,7 @@ pub fn init_app(
 
 pub fn get_widget_layout(
     args: &BottomArgs, config: &ConfigV1,
-) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
+) -> ConfigResult<(BottomLayout, u64, Option<BottomWidgetType>)> {
     let cpu_left_legend = is_flag_enabled!(cpu_left_legend, args.cpu, config);
 
     let (default_widget_type, mut default_widget_count) =
@@ -413,7 +413,7 @@ pub fn get_widget_layout(
                         cpu_left_legend,
                     )
                 })
-                .collect::<error::Result<Vec<_>>>()?,
+                .collect::<ConfigResult<Vec<_>>>()?,
             total_row_height_ratio: total_height_ratio,
         };
 
@@ -422,8 +422,8 @@ pub fn get_widget_layout(
             ret_bottom_layout.get_movement_mappings();
             ret_bottom_layout
         } else {
-            return Err(BottomError::ConfigError(
-                "please have at least one widget under the '[[row]]' section.".to_string(),
+            return Err(ConfigError::other(
+                "please have at least one widget under the '[[row]]' section.",
             ));
         }
     };
@@ -433,15 +433,13 @@ pub fn get_widget_layout(
 
 fn get_update_rate(args: &BottomArgs, config: &ConfigV1) -> error::Result<u64> {
     let update_rate = if let Some(update_rate) = &args.general.rate {
-        try_parse_ms(update_rate).map_err(|_| {
-            BottomError::ArgumentError("set your update rate to be valid".to_string())
-        })?
+        try_parse_ms(update_rate)
+            .map_err(|_| BottomError::config("set your update rate to be valid"))?
     } else if let Some(flags) = &config.flags {
         if let Some(rate) = &flags.rate {
             match rate {
-                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
-                    BottomError::ConfigError("set your update rate to be valid".to_string())
-                })?,
+                StringOrNum::String(s) => try_parse_ms(s)
+                    .map_err(|_| BottomError::config("set your update rate to be valid"))?,
                 StringOrNum::Num(n) => *n,
             }
         } else {
@@ -452,8 +450,8 @@ fn get_update_rate(args: &BottomArgs, config: &ConfigV1) -> error::Result<u64> {
     };
 
     if update_rate < 250 {
-        return Err(BottomError::ConfigError(
-            "set your update rate to be at least 250 ms.".to_string(),
+        return Err(BottomError::config(
+            "set your update rate to be at least 250 ms.",
         ));
     }
 
@@ -469,7 +467,7 @@ fn get_temperature(args: &BottomArgs, config: &ConfigV1) -> error::Result<Temper
         return Ok(TemperatureType::Celsius);
     } else if let Some(flags) = &config.flags {
         if let Some(temp_type) = &flags.temperature_type {
-            return TemperatureType::from_str(temp_type).map_err(BottomError::ConfigError);
+            return TemperatureType::from_str(temp_type).map_err(BottomError::config);
         }
     }
     Ok(TemperatureType::Celsius)
@@ -494,8 +492,8 @@ fn try_parse_ms(s: &str) -> error::Result<u64> {
     } else if let Ok(val) = s.parse::<u64>() {
         Ok(val)
     } else {
-        Err(BottomError::ConfigError(
-            "could not parse as a valid 64-bit unsigned integer or a human time".to_string(),
+        Err(BottomError::config(
+            "could not parse as a valid 64-bit unsigned integer or a human time",
         ))
     }
 }
@@ -504,15 +502,13 @@ fn get_default_time_value(
     args: &BottomArgs, config: &ConfigV1, retention_ms: u64,
 ) -> error::Result<u64> {
     let default_time = if let Some(default_time_value) = &args.general.default_time_value {
-        try_parse_ms(default_time_value).map_err(|_| {
-            BottomError::ArgumentError("set your default time to be valid".to_string())
-        })?
+        try_parse_ms(default_time_value)
+            .map_err(|_| BottomError::config("set your default time to be valid"))?
     } else if let Some(flags) = &config.flags {
         if let Some(default_time_value) = &flags.default_time_value {
             match default_time_value {
-                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
-                    BottomError::ConfigError("set your default time to be valid".to_string())
-                })?,
+                StringOrNum::String(s) => try_parse_ms(s)
+                    .map_err(|_| BottomError::config("set your default time to be valid"))?,
                 StringOrNum::Num(n) => *n,
             }
         } else {
@@ -523,11 +519,11 @@ fn get_default_time_value(
     };
 
     if default_time < 30000 {
-        return Err(BottomError::ConfigError(
-            "set your default time to be at least 30s.".to_string(),
+        return Err(BottomError::config(
+            "set your default time to be at least 30s.",
         ));
     } else if default_time > retention_ms {
-        return Err(BottomError::ConfigError(format!(
+        return Err(BottomError::config(format!(
             "set your default time to be at most {}.",
             humantime::Duration::from(Duration::from_millis(retention_ms))
         )));
@@ -540,15 +536,13 @@ fn get_time_interval(
     args: &BottomArgs, config: &ConfigV1, retention_ms: u64,
 ) -> error::Result<u64> {
     let time_interval = if let Some(time_interval) = &args.general.time_delta {
-        try_parse_ms(time_interval).map_err(|_| {
-            BottomError::ArgumentError("set your time delta to be valid".to_string())
-        })?
+        try_parse_ms(time_interval)
+            .map_err(|_| BottomError::config("set your time delta to be valid"))?
     } else if let Some(flags) = &config.flags {
         if let Some(time_interval) = &flags.time_delta {
             match time_interval {
-                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
-                    BottomError::ArgumentError("set your time delta to be valid".to_string())
-                })?,
+                StringOrNum::String(s) => try_parse_ms(s)
+                    .map_err(|_| BottomError::config("set your time delta to be valid"))?,
                 StringOrNum::Num(n) => *n,
             }
         } else {
@@ -559,22 +553,22 @@ fn get_time_interval(
     };
 
     if time_interval < 1000 {
-        return Err(BottomError::ConfigError(
-            "set your time delta to be at least 1s.".to_string(),
-        ));
+        Err(BottomError::config(
+            "set your time delta to be at least 1s.",
+        ))
     } else if time_interval > retention_ms {
-        return Err(BottomError::ConfigError(format!(
+        Err(BottomError::config(format!(
             "set your time delta to be at most {}.",
             humantime::Duration::from(Duration::from_millis(retention_ms))
-        )));
+        )))
+    } else {
+        Ok(time_interval)
     }
-
-    Ok(time_interval)
 }
 
 fn get_default_widget_and_count(
     args: &BottomArgs, config: &ConfigV1,
-) -> error::Result<(Option<BottomWidgetType>, u64)> {
+) -> ConfigResult<(Option<BottomWidgetType>, u64)> {
     let widget_type = if let Some(widget_type) = &args.general.default_widget_type {
         let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
         if let BottomWidgetType::Empty = parsed_widget {
@@ -609,14 +603,14 @@ fn get_default_widget_and_count(
 
     match (widget_type, widget_count) {
         (Some(widget_type), Some(widget_count)) => {
-            let widget_count = widget_count.try_into().map_err(|_| BottomError::ConfigError(
-                "set your widget count to be at most 18446744073709551615.".to_string()
+            let widget_count = widget_count.try_into().map_err(|_| ConfigError::other(
+                "set your widget count to be at most 18446744073709551615."
             ))?;
             Ok((Some(widget_type), widget_count))
         }
         (Some(widget_type), None) => Ok((Some(widget_type), 1)),
-        (None, Some(_widget_count)) =>  Err(BottomError::ConfigError(
-            "cannot set 'default_widget_count' by itself, it must be used with 'default_widget_type'.".to_string(),
+        (None, Some(_widget_count)) =>  Err(ConfigError::other(
+            "cannot set 'default_widget_count' by itself, it must be used with 'default_widget_type'.",
         )),
         (None, None) => Ok((None, 1))
     }
@@ -773,14 +767,12 @@ fn get_retention(args: &BottomArgs, config: &ConfigV1) -> error::Result<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
     if let Some(retention) = &args.general.retention {
-        try_parse_ms(retention)
-            .map_err(|_| BottomError::ArgumentError("`retention` is an invalid value".to_string()))
+        try_parse_ms(retention).map_err(|_| BottomError::config("`retention` is an invalid value"))
     } else if let Some(flags) = &config.flags {
         if let Some(retention) = &flags.retention {
             Ok(match retention {
-                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
-                    BottomError::ConfigError("`retention` is an invalid value".to_string())
-                })?,
+                StringOrNum::String(s) => try_parse_ms(s)
+                    .map_err(|_| BottomError::config("`retention` is an invalid value"))?,
                 StringOrNum::Num(n) => *n,
             })
         } else {
@@ -798,13 +790,13 @@ fn get_network_legend_position(
         match s.to_ascii_lowercase().trim() {
             "none" => Ok(None),
             position => Ok(Some(position.parse::<LegendPosition>().map_err(|_| {
-                BottomError::ArgumentError("`network_legend` is an invalid value".to_string())
+                BottomError::config("`network_legend` is an invalid value")
             })?)),
         }
     } else if let Some(flags) = &config.flags {
         if let Some(legend) = &flags.network_legend {
             Ok(Some(legend.parse::<LegendPosition>().map_err(|_| {
-                BottomError::ConfigError("`network_legend` is an invalid value".to_string())
+                BottomError::config("`network_legend` is an invalid value")
             })?))
         } else {
             Ok(Some(LegendPosition::default()))
@@ -821,13 +813,13 @@ fn get_memory_legend_position(
         match s.to_ascii_lowercase().trim() {
             "none" => Ok(None),
             position => Ok(Some(position.parse::<LegendPosition>().map_err(|_| {
-                BottomError::ArgumentError("`memory_legend` is an invalid value".to_string())
+                BottomError::config("`memory_legend` is an invalid value")
             })?)),
         }
     } else if let Some(flags) = &config.flags {
         if let Some(legend) = &flags.memory_legend {
             Ok(Some(legend.parse::<LegendPosition>().map_err(|_| {
-                BottomError::ConfigError("`memory_legend` is an invalid value".to_string())
+                BottomError::config("`memory_legend` is an invalid value")
             })?))
         } else {
             Ok(Some(LegendPosition::default()))
@@ -859,10 +851,10 @@ mod test {
         let c = "1 min";
         let d = "1 hour 1 min";
 
-        assert_eq!(try_parse_ms(a), Ok(100 * 1000));
-        assert_eq!(try_parse_ms(b), Ok(100));
-        assert_eq!(try_parse_ms(c), Ok(60 * 1000));
-        assert_eq!(try_parse_ms(d), Ok(3660 * 1000));
+        assert_eq!(try_parse_ms(a).unwrap(), 100 * 1000);
+        assert_eq!(try_parse_ms(b).unwrap(), 100);
+        assert_eq!(try_parse_ms(c).unwrap(), 60 * 1000);
+        assert_eq!(try_parse_ms(d).unwrap(), 3660 * 1000);
 
         let a_bad = "1 test";
         let b_bad = "-100";
@@ -880,8 +872,8 @@ mod test {
             let args = BottomArgs::parse_from(delta_args);
 
             assert_eq!(
-                get_time_interval(&args, &config, 60 * 60 * 1000),
-                Ok(2 * 60 * 1000)
+                get_time_interval(&args, &config, 60 * 60 * 1000).unwrap(),
+                2 * 60 * 1000
             );
         }
 
@@ -890,8 +882,8 @@ mod test {
             let args = BottomArgs::parse_from(default_time_args);
 
             assert_eq!(
-                get_default_time_value(&args, &config, 60 * 60 * 1000),
-                Ok(5 * 60 * 1000)
+                get_default_time_value(&args, &config, 60 * 60 * 1000).unwrap(),
+                5 * 60 * 1000
             );
         }
     }
@@ -905,8 +897,8 @@ mod test {
             let args = BottomArgs::parse_from(delta_args);
 
             assert_eq!(
-                get_time_interval(&args, &config, 60 * 60 * 1000),
-                Ok(2 * 60 * 1000)
+                get_time_interval(&args, &config, 60 * 60 * 1000).unwrap(),
+                2 * 60 * 1000
             );
         }
 
@@ -915,8 +907,8 @@ mod test {
             let args = BottomArgs::parse_from(default_time_args);
 
             assert_eq!(
-                get_default_time_value(&args, &config, 60 * 60 * 1000),
-                Ok(5 * 60 * 1000)
+                get_default_time_value(&args, &config, 60 * 60 * 1000).unwrap(),
+                5 * 60 * 1000
             );
         }
     }
@@ -937,18 +929,15 @@ mod test {
         config.flags = Some(flags);
 
         assert_eq!(
-            get_time_interval(&args, &config, 60 * 60 * 1000),
-            Ok(2 * 60 * 1000)
+            get_time_interval(&args, &config, 60 * 60 * 1000).unwrap(),
+            2 * 60 * 1000
         );
-
         assert_eq!(
-            get_default_time_value(&args, &config, 60 * 60 * 1000),
-            Ok(5 * 60 * 1000)
+            get_default_time_value(&args, &config, 60 * 60 * 1000).unwrap(),
+            5 * 60 * 1000
         );
-
-        assert_eq!(get_update_rate(&args, &config), Ok(1000));
-
-        assert_eq!(get_retention(&args, &config), Ok(600000));
+        assert_eq!(get_update_rate(&args, &config).unwrap(), 1000);
+        assert_eq!(get_retention(&args, &config).unwrap(), 600000);
     }
 
     #[test]
@@ -967,18 +956,15 @@ mod test {
         config.flags = Some(flags);
 
         assert_eq!(
-            get_time_interval(&args, &config, 60 * 60 * 1000),
-            Ok(2 * 60 * 1000)
+            get_time_interval(&args, &config, 60 * 60 * 1000).unwrap(),
+            2 * 60 * 1000
         );
-
         assert_eq!(
-            get_default_time_value(&args, &config, 60 * 60 * 1000),
-            Ok(5 * 60 * 1000)
+            get_default_time_value(&args, &config, 60 * 60 * 1000).unwrap(),
+            5 * 60 * 1000
         );
-
-        assert_eq!(get_update_rate(&args, &config), Ok(1000));
-
-        assert_eq!(get_retention(&args, &config), Ok(600000));
+        assert_eq!(get_update_rate(&args, &config).unwrap(), 1000);
+        assert_eq!(get_retention(&args, &config).unwrap(), 600000);
     }
 
     #[test]
@@ -997,18 +983,15 @@ mod test {
         config.flags = Some(flags);
 
         assert_eq!(
-            get_time_interval(&args, &config, 60 * 60 * 1000),
-            Ok(2 * 60 * 1000)
+            get_time_interval(&args, &config, 60 * 60 * 1000).unwrap(),
+            2 * 60 * 1000
         );
-
         assert_eq!(
-            get_default_time_value(&args, &config, 60 * 60 * 1000),
-            Ok(5 * 60 * 1000)
+            get_default_time_value(&args, &config, 60 * 60 * 1000).unwrap(),
+            5 * 60 * 1000
         );
-
-        assert_eq!(get_update_rate(&args, &config), Ok(1000));
-
-        assert_eq!(get_retention(&args, &config), Ok(600000));
+        assert_eq!(get_update_rate(&args, &config).unwrap(), 1000);
+        assert_eq!(get_retention(&args, &config).unwrap(), 600000);
     }
 
     fn create_app(args: BottomArgs) -> App {

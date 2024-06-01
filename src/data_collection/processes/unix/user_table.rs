@@ -1,6 +1,6 @@
 use hashbrown::HashMap;
 
-use crate::utils::error;
+use crate::utils::error::{CollectionError, CollectionResult};
 
 #[derive(Debug, Default)]
 pub struct UserTable {
@@ -8,7 +8,7 @@ pub struct UserTable {
 }
 
 impl UserTable {
-    pub fn get_uid_to_username_mapping(&mut self, uid: libc::uid_t) -> error::Result<String> {
+    pub fn get_uid_to_username_mapping(&mut self, uid: libc::uid_t) -> CollectionResult<String> {
         if let Some(user) = self.uid_user_mapping.get(&uid) {
             Ok(user.clone())
         } else {
@@ -16,7 +16,7 @@ impl UserTable {
             let passwd = unsafe { libc::getpwuid(uid) };
 
             if passwd.is_null() {
-                Err(error::BottomError::QueryError("Missing passwd".into()))
+                Err(CollectionError::other("processes", "Missing passwd"))
             } else {
                 // SAFETY: We return early if passwd is null.
                 let username = unsafe { std::ffi::CStr::from_ptr((*passwd).pw_name) }

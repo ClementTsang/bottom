@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use crate::{
     constants::DEFAULT_WIDGET_ID,
-    error::{BottomError, Result},
+    utils::error::{ConfigError, ConfigResult},
 };
 
 /// Represents a more usable representation of the layout, derived from the
@@ -985,9 +985,9 @@ impl BottomWidgetType {
 }
 
 impl std::str::FromStr for BottomWidgetType {
-    type Err = BottomError;
+    type Err = ConfigError;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> ConfigResult<Self> {
         let lower_case = s.to_lowercase();
         match lower_case.as_str() {
             "cpu" => Ok(BottomWidgetType::Cpu),
@@ -1002,7 +1002,7 @@ impl std::str::FromStr for BottomWidgetType {
             _ => {
                 #[cfg(feature = "battery")]
                 {
-                    Err(BottomError::ConfigError(format!(
+                    Err(ConfigError::other(format!(
                         "\"{s}\" is an invalid widget name.
         
 Supported widget names:
@@ -1028,7 +1028,7 @@ Supported widget names:
                 }
                 #[cfg(not(feature = "battery"))]
                 {
-                    Err(BottomError::ConfigError(format!(
+                    Err(BottomError::config(format!(
                         "\"{s}\" is an invalid widget name.
 
 Supported widget names:
