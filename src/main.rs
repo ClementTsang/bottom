@@ -1,46 +1,287 @@
-#![deny(rust_2018_idioms)]
-#![deny(clippy::todo)]
-#![deny(clippy::unimplemented)]
-#![deny(clippy::missing_safety_doc)]
+//! A customizable cross-platform graphical process/system monitor for the terminal.
+//! Supports Linux, macOS, and Windows. Inspired by gtop, gotop, and htop.
+//!
+//! **Note:** The following documentation is primarily intended for people to refer to for development purposes rather
+//! than the actual usage of the application. If you are instead looking for documentation regarding the *usage* of
+//! bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
+
+pub mod app;
+pub mod utils {
+    pub mod data_prefixes;
+    pub mod data_units;
+    pub mod error;
+    pub mod general;
+    pub mod logging;
+    pub mod strings;
+}
+pub mod canvas;
+pub mod constants;
+pub mod data_collection;
+pub mod data_conversion;
+pub mod event;
+pub mod options;
+pub mod widgets;
 
 use std::{
     boxed::Box,
-    io::stdout,
-    panic,
-    sync::{mpsc, Arc, Condvar, Mutex},
-    thread,
-    time::Duration,
+    io::{stderr, stdout, Write},
+    panic::{self, PanicInfo},
+    sync::{
+        mpsc::{self, Receiver, Sender},
+        Arc, Condvar, Mutex,
+    },
+    thread::{self, JoinHandle},
+    time::{Duration, Instant},
 };
 
-use anyhow::{Context, Result};
-use bottom::{
-    args,
-    canvas::{self, styling::CanvasStyling},
-    check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,
-    data_conversion::*,
-    get_or_create_config, handle_key_event_or_break, handle_mouse_event,
-    options::{get_color_scheme, init_app},
-    panic_hook, try_drawing, update_data, BottomEvent,
-};
+use anyhow::Context;
+use app::{layout_manager::UsedWidgets, App, AppConfigFields, DataFilters};
+use canvas::styling::CanvasStyling;
 use crossterm::{
-    event::{EnableBracketedPaste, EnableMouseCapture},
+    event::{
+        poll, read, DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste,
+        EnableMouseCapture, Event, KeyEventKind, MouseEventKind,
+    },
     execute,
-    terminal::{enable_raw_mode, EnterAlternateScreen},
+    style::Print,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use data_conversion::*;
+use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, CollectionThreadEvent};
+use options::args;
+use options::{get_color_scheme, get_config_path, get_or_create_config, init_app};
 use tui::{backend::CrosstermBackend, Terminal};
+use utils::error;
+#[allow(unused_imports)]
+use utils::logging::*;
 
 // Used for heap allocation debugging purposes.
 // #[global_allocator]
 // static ALLOC: dhat::Alloc = dhat::Alloc;
 
-fn main() -> Result<()> {
+/// Try drawing. If not, clean up the terminal and return an error.
+fn try_drawing(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App,
+    painter: &mut canvas::Painter,
+) -> error::Result<()> {
+    if let Err(err) = painter.draw_data(terminal, app) {
+        cleanup_terminal(terminal)?;
+        Err(err)
+    } else {
+        Ok(())
+    }
+}
+
+/// Clean up the terminal before returning it to the user.
+fn cleanup_terminal(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+) -> error::Result<()> {
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        DisableBracketedPaste,
+        DisableMouseCapture,
+        LeaveAlternateScreen
+    )?;
+    terminal.show_cursor()?;
+
+    Ok(())
+}
+
+/// Check and report to the user if the current environment is not a terminal.
+fn check_if_terminal() {
+    use crossterm::tty::IsTty;
+
+    if !stdout().is_tty() {
+        eprintln!(
+            "Warning: bottom is not being output to a terminal. Things might not work properly."
+        );
+        eprintln!("If you're stuck, press 'q' or 'Ctrl-c' to quit the program.");
+        stderr().flush().unwrap();
+        thread::sleep(Duration::from_secs(1));
+    }
+}
+
+/// A panic hook to properly restore the terminal in the case of a panic.
+/// Originally based on [spotify-tui's implementation](https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs).
+fn panic_hook(panic_info: &PanicInfo<'_>) {
+    let mut stdout = stdout();
+
+    let msg = match panic_info.payload().downcast_ref::<&'static str>() {
+        Some(s) => *s,
+        None => match panic_info.payload().downcast_ref::<String>() {
+            Some(s) => &s[..],
+            None => "Box<Any>",
+        },
+    };
+
+    let backtrace = format!("{:?}", backtrace::Backtrace::new());
+
+    let _ = disable_raw_mode();
+    let _ = execute!(
+        stdout,
+        DisableBracketedPaste,
+        DisableMouseCapture,
+        LeaveAlternateScreen
+    );
+
+    // Print stack trace. Must be done after!
+    if let Some(panic_info) = panic_info.location() {
+        let _ = execute!(
+            stdout,
+            Print(format!(
+                "thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}",
+            )),
+        );
+    }
+}
+
+/// Create a thread to poll for user inputs and forward them to the main thread.
+fn create_input_thread(
+    sender: Sender<BottomEvent>, termination_ctrl_lock: Arc<Mutex<bool>>,
+) -> JoinHandle<()> {
+    thread::spawn(move || {
+        let mut mouse_timer = Instant::now();
+
+        loop {
+            if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
+                // We don't block.
+                if *is_terminated {
+                    drop(is_terminated);
+                    break;
+                }
+            }
+            if let Ok(poll) = poll(Duration::from_millis(20)) {
+                if poll {
+                    if let Ok(event) = read() {
+                        match event {
+                            Event::Resize(_, _) => {
+                                // TODO: Might want to debounce this in the future, or take into account the actual resize
+                                // values. Maybe we want to keep the current implementation in case the resize event might
+                                // not fire... not sure.
+
+                                if sender.send(BottomEvent::Resize).is_err() {
+                                    break;
+                                }
+                            }
+                            Event::Paste(paste) => {
+                                if sender.send(BottomEvent::PasteEvent(paste)).is_err() {
+                                    break;
+                                }
+                            }
+                            Event::Key(key) if key.kind == KeyEventKind::Press => {
+                                // For now, we only care about key down events. This may change in the future.
+                                if sender.send(BottomEvent::KeyInput(key)).is_err() {
+                                    break;
+                                }
+                            }
+                            Event::Mouse(mouse) => match mouse.kind {
+                                MouseEventKind::Moved | MouseEventKind::Drag(..) => {}
+                                MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
+                                    if Instant::now().duration_since(mouse_timer).as_millis() >= 20
+                                    {
+                                        if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                            break;
+                                        }
+                                        mouse_timer = Instant::now();
+                                    }
+                                }
+                                _ => {
+                                    if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                        break;
+                                    }
+                                }
+                            },
+                            Event::Key(_) => {}
+                            Event::FocusGained => {}
+                            Event::FocusLost => {}
+                        }
+                    }
+                }
+            }
+        }
+    })
+}
+
+/// Create a thread to handle data collection.
+fn create_collection_thread(
+    sender: Sender<BottomEvent>, control_receiver: Receiver<CollectionThreadEvent>,
+    termination_lock: Arc<Mutex<bool>>, termination_cvar: Arc<Condvar>,
+    app_config_fields: &AppConfigFields, filters: DataFilters, used_widget_set: UsedWidgets,
+) -> JoinHandle<()> {
+    let temp_type = app_config_fields.temperature_type;
+    let use_current_cpu_total = app_config_fields.use_current_cpu_total;
+    let unnormalized_cpu = app_config_fields.unnormalized_cpu;
+    let show_average_cpu = app_config_fields.show_average_cpu;
+    let update_time = app_config_fields.update_rate;
+
+    thread::spawn(move || {
+        let mut data_state = data_collection::DataCollector::new(filters);
+
+        data_state.set_data_collection(used_widget_set);
+        data_state.set_temperature_type(temp_type);
+        data_state.set_use_current_cpu_total(use_current_cpu_total);
+        data_state.set_unnormalized_cpu(unnormalized_cpu);
+        data_state.set_show_average_cpu(show_average_cpu);
+
+        data_state.init();
+
+        loop {
+            // Check once at the very top... don't block though.
+            if let Ok(is_terminated) = termination_lock.try_lock() {
+                if *is_terminated {
+                    drop(is_terminated);
+                    break;
+                }
+            }
+
+            if let Ok(message) = control_receiver.try_recv() {
+                // trace!("Received message in collection thread: {message:?}");
+                match message {
+                    CollectionThreadEvent::Reset => {
+                        data_state.data.cleanup();
+                    }
+                }
+            }
+
+            data_state.update_data();
+
+            // Yet another check to bail if needed... do not block!
+            if let Ok(is_terminated) = termination_lock.try_lock() {
+                if *is_terminated {
+                    drop(is_terminated);
+                    break;
+                }
+            }
+
+            let event = BottomEvent::Update(Box::from(data_state.data));
+            data_state.data = data_collection::Data::default();
+            if sender.send(event).is_err() {
+                break;
+            }
+
+            // This is actually used as a "sleep" that can be interrupted by another thread.
+            if let Ok((is_terminated, _)) = termination_cvar.wait_timeout(
+                termination_lock.lock().unwrap(),
+                Duration::from_millis(update_time),
+            ) {
+                if *is_terminated {
+                    drop(is_terminated);
+                    break;
+                }
+            }
+        }
+    })
+}
+
+fn main() -> anyhow::Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
 
     let args = args::get_args();
 
     #[cfg(feature = "logging")]
     {
-        if let Err(err) = bottom::init_logger(
+        if let Err(err) = init_logger(
             log::LevelFilter::Debug,
             Some(std::ffi::OsStr::new("debug.log")),
         ) {
@@ -49,8 +290,11 @@ fn main() -> Result<()> {
     }
 
     // Read from config file.
-    let config = get_or_create_config(args.general.config_location.as_deref())
-        .context("Unable to parse or create the config file.")?;
+    let config = {
+        let config_path = get_config_path(args.general.config_location.as_deref());
+        get_or_create_config(config_path.as_deref())
+            .context("Unable to parse or create the config file.")?
+    };
 
     // FIXME: Should move this into build app or config
     let styling = {
@@ -166,17 +410,17 @@ fn main() -> Result<()> {
                     if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
                         break;
                     }
-                    update_data(&mut app);
+                    app.update_data();
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::MouseInput(event) => {
                     handle_mouse_event(event, &mut app);
-                    update_data(&mut app);
+                    app.update_data();
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::PasteEvent(paste) => {
                     app.handle_paste(paste);
-                    update_data(&mut app);
+                    app.update_data();
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::Update(data) => {
@@ -295,7 +539,7 @@ fn main() -> Result<()> {
                             }
                         }
 
-                        update_data(&mut app);
+                        app.update_data();
                         try_drawing(&mut terminal, &mut app, &mut painter)?;
                     }
                 }

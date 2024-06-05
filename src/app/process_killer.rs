@@ -8,9 +8,9 @@ use windows::Win32::{
     },
 };
 
+use crate::data_collection::processes::Pid;
 #[cfg(target_family = "unix")]
 use crate::utils::error::BottomError;
-use crate::Pid;
 
 /// Based from [this SO answer](https://stackoverflow.com/a/55231715).
 #[cfg(target_os = "windows")]
@@ -58,10 +58,11 @@ pub fn kill_process_given_pid(pid: Pid) -> crate::utils::error::Result<()> {
     Ok(())
 }
 
-/// Kills a process, given a PID, for unix.
+/// Kills a process, given a PID, for UNIX.
 #[cfg(target_family = "unix")]
 pub fn kill_process_given_pid(pid: Pid, signal: usize) -> crate::utils::error::Result<()> {
     // SAFETY: the signal should be valid, and we act properly on an error (exit code not 0).
+
     let output = unsafe { libc::kill(pid, signal as i32) };
     if output != 0 {
         // We had an error...

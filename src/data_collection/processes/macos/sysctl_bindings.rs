@@ -10,7 +10,7 @@ use libc::{
 };
 use mach2::vm_types::user_addr_t;
 
-use crate::Pid;
+use crate::data_collection::Pid;
 
 #[allow(non_camel_case_types)]
 #[repr(C)]

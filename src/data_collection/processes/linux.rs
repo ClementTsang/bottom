@@ -12,14 +12,13 @@ use hashbrown::HashSet;
 use process::*;
 use sysinfo::ProcessStatus;
 
-use super::{ProcessHarvest, UserTable};
+use super::{Pid, ProcessHarvest, UserTable};
 use crate::{
     data_collection::DataCollector,
     utils::error::{self, BottomError},
-    Pid,
 };
 
-/// Maximum character length of a /proc/<PID>/stat process name.
+/// Maximum character length of a `/proc/<PID>/stat`` process name.
 /// If it's equal or greater, then we instead refer to the command for the name.
 const MAX_STAT_NAME_LEN: usize = 15;
 

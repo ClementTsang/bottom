@@ -8,7 +8,7 @@ use hashbrown::HashMap;
 use itertools::Itertools;
 
 use super::UnixProcessExt;
-use crate::Pid;
+use crate::data_collection::Pid;
 
 pub(crate) struct MacOSProcessExt;
 

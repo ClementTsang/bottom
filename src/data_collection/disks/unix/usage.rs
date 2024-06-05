@@ -13,7 +13,7 @@ impl Usage {
         u64::from(self.0.f_blocks) * u64::from(self.0.f_frsize)
     }
 
-    /// Returns the available number of bytes used. Note this is not necessarily the same as [`free`].
+    /// Returns the available number of bytes used. Note this is not necessarily the same as [`Usage::free`].
     pub fn available(&self) -> u64 {
         u64::from(self.0.f_bfree) * u64::from(self.0.f_frsize)
     }
@@ -25,7 +25,7 @@ impl Usage {
         self.total() - avail_to_root
     }
 
-    /// Returns the total number of bytes free. Note this is not necessarily the same as [`available`].
+    /// Returns the total number of bytes free. Note this is not necessarily the same as [`Usage::available`].
     pub fn free(&self) -> u64 {
         u64::from(self.0.f_bavail) * u64::from(self.0.f_frsize)
     }

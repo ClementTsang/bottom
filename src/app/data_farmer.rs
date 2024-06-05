@@ -20,9 +20,12 @@ use hashbrown::HashMap;
 #[cfg(feature = "battery")]
 use crate::data_collection::batteries;
 use crate::{
-    data_collection::{cpu, disks, memory, network, processes::ProcessHarvest, temperature, Data},
+    data_collection::{
+        cpu, disks, memory, network,
+        processes::{Pid, ProcessHarvest},
+        temperature, Data,
+    },
     utils::data_prefixes::*,
-    Pid,
 };
 
 pub type TimeOffset = f64;

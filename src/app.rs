@@ -22,15 +22,15 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
     canvas::components::time_chart::LegendPosition,
-    constants,
-    data_collection::temperature,
+    constants, convert_mem_data_points, convert_swap_data_points,
+    data_collection::{processes::Pid, temperature},
     data_conversion::ConvertedData,
+    get_network_points,
     utils::{
         data_units::DataUnit,
         error::{BottomError, Result},
     },
     widgets::{ProcWidgetColumn, ProcWidgetMode},
-    Pid,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
@@ -128,6 +128,7 @@ pub struct App {
 }
 
 impl App {
+    /// Create a new [`App`].
     pub fn new(
         app_config_fields: AppConfigFields, states: AppWidgetStates,
         widget_map: HashMap<u64, BottomWidget>, current_widget: BottomWidget,
@@ -156,6 +157,87 @@ impl App {
             current_widget,
             used_widgets,
             filters,
+        }
+    }
+
+    /// Update the data in the [`App`].
+    pub fn update_data(&mut self) {
+        let data_source = match &self.frozen_state {
+            FrozenState::NotFrozen => &self.data_collection,
+            FrozenState::Frozen(data) => data,
+        };
+
+        for proc in self.states.proc_state.widget_states.values_mut() {
+            if proc.force_update_data {
+                proc.set_table_data(data_source);
+                proc.force_update_data = false;
+            }
+        }
+
+        // FIXME: Make this CPU force update less terrible.
+        if self.states.cpu_state.force_update.is_some() {
+            self.converted_data.convert_cpu_data(data_source);
+            self.converted_data.load_avg_data = data_source.load_avg_harvest;
+
+            self.states.cpu_state.force_update = None;
+        }
+
+        // FIXME: This is a bit of a temp hack to move data over.
+        {
+            let data = &self.converted_data.cpu_data;
+            for cpu in self.states.cpu_state.widget_states.values_mut() {
+                cpu.update_table(data);
+            }
+        }
+        {
+            let data = &self.converted_data.temp_data;
+            for temp in self.states.temp_state.widget_states.values_mut() {
+                if temp.force_update_data {
+                    temp.set_table_data(data);
+                    temp.force_update_data = false;
+                }
+            }
+        }
+        {
+            let data = &self.converted_data.disk_data;
+            for disk in self.states.disk_state.widget_states.values_mut() {
+                if disk.force_update_data {
+                    disk.set_table_data(data);
+                    disk.force_update_data = false;
+                }
+            }
+        }
+
+        // TODO: [OPT] Prefer reassignment over new vectors?
+        if self.states.mem_state.force_update.is_some() {
+            self.converted_data.mem_data = convert_mem_data_points(data_source);
+            #[cfg(not(target_os = "windows"))]
+            {
+                self.converted_data.cache_data = crate::convert_cache_data_points(data_source);
+            }
+            self.converted_data.swap_data = convert_swap_data_points(data_source);
+            #[cfg(feature = "zfs")]
+            {
+                self.converted_data.arc_data = crate::convert_arc_data_points(data_source);
+            }
+
+            #[cfg(feature = "gpu")]
+            {
+                self.converted_data.gpu_data = crate::convert_gpu_data(data_source);
+            }
+            self.states.mem_state.force_update = None;
+        }
+
+        if self.states.net_state.force_update.is_some() {
+            let (rx, tx) = get_network_points(
+                data_source,
+                &self.app_config_fields.network_scale_type,
+                &self.app_config_fields.network_unit_type,
+                self.app_config_fields.network_use_binary_prefix,
+            );
+            self.converted_data.network_data_rx = rx;
+            self.converted_data.network_data_tx = tx;
+            self.states.net_state.force_update = None;
         }
     }
 

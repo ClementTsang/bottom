@@ -16,7 +16,7 @@ use rustix::{
     path::Arg,
 };
 
-use crate::Pid;
+use crate::data_collection::processes::Pid;
 
 static PAGESIZE: OnceLock<u64> = OnceLock::new();
 

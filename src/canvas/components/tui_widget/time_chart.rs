@@ -287,8 +287,7 @@ impl<'a> Dataset<'a> {
     /// You can use dots (`•`), blocks (`█`), bars (`▄`), braille (`⠓`, `⣇`, `⣿`) or half-blocks
     /// (`█`, `▄`, and `▀`). See [symbols::Marker] for more details.
     ///
-    /// Note [`Marker::Braille`](symbols::Marker::Braille) requires a font that supports Unicode
-    /// Braille Patterns.
+    /// Note [`Marker::Braille`] requires a font that supports Unicode Braille Patterns.
     ///
     /// This is a fluent setter method which must be chained or used as it consumes self
     #[must_use = "method moves the value of self and returns the modified value"]

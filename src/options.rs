@@ -8,6 +8,9 @@ pub mod config;
 
 use std::{
     convert::TryInto,
+    fs,
+    io::Write,
+    path::{Path, PathBuf},
     str::FromStr,
     time::{Duration, Instant},
 };
@@ -57,6 +60,63 @@ macro_rules! is_flag_enabled {
             false
         }
     };
+}
+
+/// Returns the config path to use. If `override_config_path` is specified, then we will use
+/// that. If not, then return the "default" config path, which is:
+/// - If a path already exists at `<HOME>/bottom/bottom.toml`, then use that for legacy reasons.
+/// - Otherwise, use `<SYSTEM_CONFIG_FOLDER>/bottom/bottom.toml`.
+///
+/// For more details on this, see [dirs](https://docs.rs/dirs/latest/dirs/fn.config_dir.html)'
+/// documentation.
+pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
+    const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
+
+    if let Some(conf_loc) = override_config_path {
+        return Some(conf_loc.to_path_buf());
+    } else if let Some(home_path) = dirs::home_dir() {
+        let mut old_home_path = home_path;
+        old_home_path.push(".config/");
+        old_home_path.push(DEFAULT_CONFIG_FILE_PATH);
+        if old_home_path.exists() {
+            // We used to create it at `<HOME>/DEFAULT_CONFIG_FILE_PATH`, but changed it
+            // to be more correct later. However, for legacy reasons, if it already exists,
+            // use the old one.
+            return Some(old_home_path);
+        }
+    }
+
+    // Otherwise, return the "correct" path based on the config dir.
+    dirs::config_dir().map(|mut path| {
+        path.push(DEFAULT_CONFIG_FILE_PATH);
+        path
+    })
+}
+
+/// Get the config at `config_path`. If there is no config file at the specified path, it will
+/// try to create a new file with the default settings, and return the default config. If bottom
+/// fails to write a new config, it will silently just return the default config.
+pub fn get_or_create_config(config_path: Option<&Path>) -> error::Result<ConfigV1> {
+    match &config_path {
+        Some(path) => {
+            if let Ok(config_string) = fs::read_to_string(path) {
+                Ok(toml_edit::de::from_str(config_string.as_str())?)
+            } else {
+                if let Some(parent_path) = path.parent() {
+                    fs::create_dir_all(parent_path)?;
+                }
+
+                fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
+                Ok(ConfigV1::default())
+            }
+        }
+        None => {
+            // If we somehow don't have any config path, then just assume the default config but don't write to any file.
+            //
+            // TODO: Maybe make this "show" an error, but don't crash.
+            Ok(ConfigV1::default())
+        }
+    }
 }
 
 pub fn init_app(
