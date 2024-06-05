@@ -472,12 +472,12 @@ impl DataCollector {
     }
 }
 
-/// We set a sleep duration between 10ms and 250ms, ideally sysinfo's [`System::MINIMUM_CPU_UPDATE_INTERVAL`] + 1.
+/// We set a sleep duration between 10ms and 250ms, ideally sysinfo's [`sysinfo::MINIMUM_CPU_UPDATE_INTERVAL`] + 1.
 ///
 /// We bound the upper end to avoid waiting too long (e.g. FreeBSD is 1s, which I'm fine with losing
 /// accuracy on for the first refresh), and we bound the lower end just to avoid the off-chance that
 /// refreshing too quickly causes problems. This second case should only happen on unsupported
-/// systems via sysinfo, in which case [`System::MINIMUM_CPU_UPDATE_INTERVAL`] is defined as 0.
+/// systems via sysinfo, in which case [`sysinfo::MINIMUM_CPU_UPDATE_INTERVAL`] is defined as 0.
 ///
 /// We also do `INTERVAL + 1` for some wiggle room, just in case.
 const fn get_sleep_duration() -> Duration {

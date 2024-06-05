@@ -1011,7 +1011,7 @@ impl ProcWidgetState {
         self.table.columns.iter().filter(|c| !c.is_hidden).count()
     }
 
-    /// Sets the [`ProcWidget`]'s current sort index to whatever was in the sort table if possible, then closes the
+    /// Sets the [`ProcWidgetState`]'s current sort index to whatever was in the sort table if possible, then closes the
     /// sort table.
     pub(crate) fn use_sort_table_value(&mut self) {
         self.table.set_sort_index(self.sort_table.current_index());

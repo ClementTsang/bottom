@@ -45,11 +45,6 @@ test = true
 doctest = true
 doc = true
 
-[lib]
-test = true
-doctest = true
-doc = true
-
 [profile.dev.package."*"]
 opt-level = 3 # Compile dependencies with optimizations on even in debug mode.
 

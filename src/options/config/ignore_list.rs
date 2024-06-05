@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-/// Workaround as per https://github.com/serde-rs/serde/issues/1030
+/// Workaround as per <https://github.com/serde-rs/serde/issues/1030>.
 fn default_as_true() -> bool {
     true
 }

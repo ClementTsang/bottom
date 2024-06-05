@@ -10,64 +10,64 @@ use crate::multi_eq_ignore_ascii_case;
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 #[non_exhaustive]
 pub enum FileSystem {
-    /// ext2 (https://en.wikipedia.org/wiki/Ext2)
+    /// ext2 (<https://en.wikipedia.org/wiki/Ext2>)
     Ext2,
 
-    /// ext3 (https://en.wikipedia.org/wiki/Ext3)
+    /// ext3 (<https://en.wikipedia.org/wiki/Ext3>)
     Ext3,
 
-    /// ext4 (https://en.wikipedia.org/wiki/Ext4)
+    /// ext4 (<https://en.wikipedia.org/wiki/Ext4>)
     Ext4,
 
-    /// FAT (https://en.wikipedia.org/wiki/File_Allocation_Table)
+    /// FAT (<https://en.wikipedia.org/wiki/File_Allocation_Table>)
     VFat,
 
-    /// exFAT (https://en.wikipedia.org/wiki/ExFAT)
+    /// exFAT (<https://en.wikipedia.org/wiki/ExFAT>)
     ExFat,
 
-    /// F2FS (https://en.wikipedia.org/wiki/F2FS)
+    /// F2FS (<https://en.wikipedia.org/wiki/F2FS>)
     F2fs,
 
-    /// NTFS (https://en.wikipedia.org/wiki/NTFS)
+    /// NTFS (<https://en.wikipedia.org/wiki/NTFS>)
     Ntfs,
 
-    /// ZFS (https://en.wikipedia.org/wiki/ZFS)
+    /// ZFS (<https://en.wikipedia.org/wiki/ZFS>)
     Zfs,
 
-    /// HFS (https://en.wikipedia.org/wiki/Hierarchical_File_System)
+    /// HFS (<https://en.wikipedia.org/wiki/Hierarchical_File_System>)
     Hfs,
 
-    /// HFS+ (https://en.wikipedia.org/wiki/HFS_Plus)
+    /// HFS+ (<https://en.wikipedia.org/wiki/HFS_Plus>)
     HfsPlus,
 
-    /// JFS (https://en.wikipedia.org/wiki/JFS_(file_system))
+    /// JFS (<https://en.wikipedia.org/wiki/JFS_(file_system)>)
     Jfs,
 
-    /// ReiserFS 3 (https://en.wikipedia.org/wiki/ReiserFS)
+    /// ReiserFS 3 (<https://en.wikipedia.org/wiki/ReiserFS>)
     Reiser3,
 
-    /// ReiserFS 4 (https://en.wikipedia.org/wiki/Reiser4)
+    /// ReiserFS 4 (<https://en.wikipedia.org/wiki/Reiser4>)
     Reiser4,
 
-    /// Btrfs (https://en.wikipedia.org/wiki/Btrfs)
+    /// Btrfs (<https://en.wikipedia.org/wiki/Btrfs>)
     Btrfs,
 
-    /// Bcachefs (https://en.wikipedia.org/wiki/Bcachefs)
+    /// Bcachefs (<https://en.wikipedia.org/wiki/Bcachefs>)
     Bcachefs,
 
-    /// MINIX FS (https://en.wikipedia.org/wiki/MINIX_file_system)
+    /// MINIX FS (<https://en.wikipedia.org/wiki/MINIX_file_system>)
     Minix,
 
-    /// NILFS (https://en.wikipedia.org/wiki/NILFS)
+    /// NILFS (<https://en.wikipedia.org/wiki/NILFS>)
     Nilfs,
 
-    /// XFS (https://en.wikipedia.org/wiki/XFS)
+    /// XFS (<https://en.wikipedia.org/wiki/XFS>)
     Xfs,
 
-    /// APFS (https://en.wikipedia.org/wiki/Apple_File_System)
+    /// APFS (<https://en.wikipedia.org/wiki/Apple_File_System>)
     Apfs,
 
-    /// FUSE (https://en.wikipedia.org/wiki/Filesystem_in_Userspace)
+    /// FUSE (<https://en.wikipedia.org/wiki/Filesystem_in_Userspace>)
     FuseBlk,
 
     /// Some unspecified filesystem.
