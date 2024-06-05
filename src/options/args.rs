@@ -588,6 +588,7 @@ mod test {
         build_cmd().debug_assert();
     }
 
+    /// Sanity test due to <https://github.com/ClementTsang/bottom/pull/1478>.
     #[test]
     fn test_version() {
         BottomArgs::parse_from(["btm", "--version"]);
