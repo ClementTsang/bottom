@@ -17,6 +17,7 @@ use std::time::{Duration, Instant};
 
 #[cfg(any(target_os = "linux", feature = "gpu"))]
 use hashbrown::HashMap;
+use processes::Pid;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
 
@@ -147,7 +148,7 @@ pub struct DataCollector {
     filters: DataFilters,
 
     #[cfg(target_os = "linux")]
-    pid_mapping: HashMap<crate::Pid, processes::PrevProcDetails>,
+    pid_mapping: HashMap<Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
     prev_idle: f64,
     #[cfg(target_os = "linux")]

@@ -25,8 +25,7 @@ use crate::{
         },
         styling::CanvasStyling,
     },
-    data_collection::processes::ProcessHarvest,
-    Pid,
+    data_collection::processes::{Pid, ProcessHarvest},
 };
 
 /// ProcessSearchState only deals with process' search's current settings and state.

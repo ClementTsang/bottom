@@ -15,9 +15,8 @@ use crate::{
         components::data_table::{DataTableColumn, DataToCell},
         Painter,
     },
-    data_collection::processes::ProcessHarvest,
+    data_collection::processes::{Pid, ProcessHarvest},
     data_conversion::{binary_byte_string, dec_bytes_per_second_string, dec_bytes_string},
-    Pid,
 };
 
 #[derive(Clone, Debug)]

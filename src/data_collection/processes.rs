@@ -34,7 +34,17 @@ cfg_if! {
 use std::{borrow::Cow, time::Duration};
 
 use super::DataCollector;
-use crate::{utils::error, Pid};
+use crate::utils::error;
+
+cfg_if! {
+    if #[cfg(target_family = "windows")] {
+        /// A Windows process ID.
+        pub type Pid = usize;
+    } else if #[cfg(target_family = "unix")] {
+        /// A UNIX process ID.
+        pub type Pid = libc::pid_t;
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {

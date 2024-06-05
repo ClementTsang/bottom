@@ -52,12 +52,6 @@ use utils::error;
 #[allow(unused_imports)]
 pub use utils::logging::*;
 
-#[cfg(target_family = "windows")]
-pub type Pid = usize;
-
-#[cfg(target_family = "unix")]
-pub type Pid = libc::pid_t;
-
 pub fn try_drawing(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
     app: &mut App, painter: &mut canvas::Painter,

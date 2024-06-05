@@ -23,14 +23,13 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 use crate::{
     canvas::components::time_chart::LegendPosition,
     constants,
-    data_collection::temperature,
+    data_collection::{processes::Pid, temperature},
     data_conversion::ConvertedData,
     utils::{
         data_units::DataUnit,
         error::{BottomError, Result},
     },
     widgets::{ProcWidgetColumn, ProcWidgetMode},
-    Pid,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
