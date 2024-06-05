@@ -564,7 +564,7 @@ pub struct OtherArgs {
     #[arg(short = 'h', long, action = ArgAction::Help, help = "Prints help info (for more details use `--help`.")]
     help: (),
 
-    #[arg(short = 'v', long, action = ArgAction::Version, help = "Prints version information.")]
+    #[arg(short = 'V', long, action = ArgAction::Version, help = "Prints version information.")]
     version: (),
 }
 

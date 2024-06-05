@@ -161,3 +161,17 @@ fn test_gpu_flag() {
             "unexpected argument '--enable_gpu' found",
         ));
 }
+
+/// Sanity test due to <https://github.com/ClementTsang/bottom/pull/1478>.
+#[test]
+fn test_version() {
+    btm_command(&["--version"]).assert().success();
+    btm_command(&["-V"]).assert().success();
+}
+
+/// Sanity test due to <https://github.com/ClementTsang/bottom/pull/1478>.
+#[test]
+fn test_help() {
+    btm_command(&["--help"]).assert().success();
+    btm_command(&["-h"]).assert().success();
+}
