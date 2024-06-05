@@ -14,8 +14,7 @@ use bottom::{
     check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,
     data_conversion::*,
     event::{handle_key_event_or_break, handle_mouse_event, BottomEvent},
-    get_or_create_config,
-    options::{get_color_scheme, init_app},
+    options::{get_color_scheme, get_config_path, get_or_create_config, init_app},
     panic_hook, try_drawing, update_data,
 };
 use crossterm::{
@@ -45,8 +44,11 @@ fn main() -> Result<()> {
     }
 
     // Read from config file.
-    let config = get_or_create_config(args.general.config_location.as_deref())
-        .context("Unable to parse or create the config file.")?;
+    let config = {
+        let config_path = get_config_path(args.general.config_location.as_deref());
+        get_or_create_config(config_path.as_deref())
+            .context("Unable to parse or create the config file.")?
+    };
 
     // FIXME: Should move this into build app or config
     let styling = {

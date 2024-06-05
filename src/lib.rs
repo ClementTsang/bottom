@@ -24,10 +24,8 @@ pub mod widgets;
 
 use std::{
     boxed::Box,
-    fs,
     io::{stderr, stdout, Write},
     panic::PanicInfo,
-    path::{Path, PathBuf},
     sync::{
         mpsc::{Receiver, Sender},
         Arc, Condvar, Mutex,
@@ -39,7 +37,6 @@ use std::{
 use app::{
     frozen_state::FrozenState, layout_manager::UsedWidgets, App, AppConfigFields, DataFilters,
 };
-use constants::*;
 use crossterm::{
     event::{
         poll, read, DisableBracketedPaste, DisableMouseCapture, Event, KeyEventKind, MouseEventKind,
@@ -51,7 +48,6 @@ use crossterm::{
 use data_conversion::*;
 use event::{BottomEvent, CollectionThreadEvent};
 pub use options::args;
-use options::ConfigV1;
 use utils::error;
 #[allow(unused_imports)]
 pub use utils::logging::*;
@@ -61,59 +57,6 @@ pub type Pid = usize;
 
 #[cfg(target_family = "unix")]
 pub type Pid = libc::pid_t;
-
-pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
-    if let Some(conf_loc) = override_config_path {
-        Some(conf_loc.to_path_buf())
-    } else if cfg!(target_os = "windows") {
-        if let Some(home_path) = dirs::config_dir() {
-            let mut path = home_path;
-            path.push(DEFAULT_CONFIG_FILE_PATH);
-            Some(path)
-        } else {
-            None
-        }
-    } else if let Some(home_path) = dirs::home_dir() {
-        let mut path = home_path;
-        path.push(".config/");
-        path.push(DEFAULT_CONFIG_FILE_PATH);
-        if path.exists() {
-            // If it already exists, use the old one.
-            Some(path)
-        } else {
-            // If it does not, use the new one!
-            if let Some(config_path) = dirs::config_dir() {
-                let mut path = config_path;
-                path.push(DEFAULT_CONFIG_FILE_PATH);
-                Some(path)
-            } else {
-                None
-            }
-        }
-    } else {
-        None
-    }
-}
-
-pub fn get_or_create_config(override_config_path: Option<&Path>) -> error::Result<ConfigV1> {
-    let config_path = get_config_path(override_config_path);
-
-    if let Some(path) = &config_path {
-        if let Ok(config_string) = fs::read_to_string(path) {
-            Ok(toml_edit::de::from_str(config_string.as_str())?)
-        } else {
-            if let Some(parent_path) = path.parent() {
-                fs::create_dir_all(parent_path)?;
-            }
-
-            fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
-            Ok(ConfigV1::default())
-        }
-    } else {
-        // If we somehow don't have any config path, then just assume the default config but don't write to any file.
-        Ok(ConfigV1::default())
-    }
-}
 
 pub fn try_drawing(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
