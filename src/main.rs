@@ -281,7 +281,7 @@ fn main() -> anyhow::Result<()> {
 
     #[cfg(feature = "logging")]
     {
-        if let Err(err) = bottom::init_logger(
+        if let Err(err) = init_logger(
             log::LevelFilter::Debug,
             Some(std::ffi::OsStr::new("debug.log")),
         ) {
