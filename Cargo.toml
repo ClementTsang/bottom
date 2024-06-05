@@ -40,8 +40,10 @@ rust-version = "1.74.0" # The oldest version I've tested that should still build
 
 [[bin]]
 name = "btm"
-path = "src/bin/main.rs"
-doc = false
+path = "src/main.rs"
+test = true
+doctest = true
+doc = true
 
 [lib]
 test = true

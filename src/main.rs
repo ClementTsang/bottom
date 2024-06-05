@@ -13,9 +13,10 @@ use bottom::{
     canvas::{self, styling::CanvasStyling},
     check_if_terminal, cleanup_terminal, create_collection_thread, create_input_thread,
     data_conversion::*,
-    get_or_create_config, handle_key_event_or_break, handle_mouse_event,
+    event::{handle_key_event_or_break, handle_mouse_event, BottomEvent},
+    get_or_create_config,
     options::{get_color_scheme, init_app},
-    panic_hook, try_drawing, update_data, BottomEvent,
+    panic_hook, try_drawing, update_data,
 };
 use crossterm::{
     event::{EnableBracketedPaste, EnableMouseCapture},
