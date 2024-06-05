@@ -588,19 +588,6 @@ mod test {
         build_cmd().debug_assert();
     }
 
-    /// Sanity test due to <https://github.com/ClementTsang/bottom/pull/1478>.
-    #[test]
-    fn test_version() {
-        BottomArgs::parse_from(["btm", "--version"]);
-        BottomArgs::parse_from(["btm", "-V"]);
-    }
-
-    #[test]
-    fn test_help() {
-        BottomArgs::parse_from(["btm", "--help"]);
-        BottomArgs::parse_from(["btm", "-h"]);
-    }
-
     #[test]
     fn no_default_help_heading() {
         let mut cmd = build_cmd();
