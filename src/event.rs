@@ -1,3 +1,5 @@
+//! Some code around handling events.
+
 use std::sync::mpsc::Sender;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
@@ -25,6 +27,7 @@ pub enum CollectionThreadEvent {
     Reset,
 }
 
+/// Handle a [`MouseEvent`].
 pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
     match event.kind {
         MouseEventKind::ScrollUp => app.handle_scroll_up(),
@@ -46,6 +49,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
     };
 }
 
+/// Handle a [`KeyEvent`].
 pub fn handle_key_event_or_break(
     event: KeyEvent, app: &mut App, reset_sender: &Sender<CollectionThreadEvent>,
 ) -> bool {

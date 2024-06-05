@@ -35,9 +35,7 @@ use std::{
 };
 
 use anyhow::Context;
-use app::{
-    frozen_state::FrozenState, layout_manager::UsedWidgets, App, AppConfigFields, DataFilters,
-};
+use app::{layout_manager::UsedWidgets, App, AppConfigFields, DataFilters};
 use canvas::styling::CanvasStyling;
 use crossterm::{
     event::{
@@ -61,9 +59,10 @@ use utils::logging::*;
 // #[global_allocator]
 // static ALLOC: dhat::Alloc = dhat::Alloc;
 
-pub fn try_drawing(
-    terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-    app: &mut App, painter: &mut canvas::Painter,
+/// Try drawing. If not, clean up the terminal and return an error.
+fn try_drawing(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App,
+    painter: &mut canvas::Painter,
 ) -> error::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
@@ -73,8 +72,9 @@ pub fn try_drawing(
     }
 }
 
-pub fn cleanup_terminal(
-    terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
+/// Clean up the terminal before returning it to the user.
+fn cleanup_terminal(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
 ) -> error::Result<()> {
     disable_raw_mode()?;
     execute!(
@@ -89,7 +89,7 @@ pub fn cleanup_terminal(
 }
 
 /// Check and report to the user if the current environment is not a terminal.
-pub fn check_if_terminal() {
+fn check_if_terminal() {
     use crossterm::tty::IsTty;
 
     if !stdout().is_tty() {
@@ -104,7 +104,7 @@ pub fn check_if_terminal() {
 
 /// A panic hook to properly restore the terminal in the case of a panic.
 /// Originally based on [spotify-tui's implementation](https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs).
-pub fn panic_hook(panic_info: &PanicInfo<'_>) {
+fn panic_hook(panic_info: &PanicInfo<'_>) {
     let mut stdout = stdout();
 
     let msg = match panic_info.payload().downcast_ref::<&'static str>() {
@@ -136,87 +136,8 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     }
 }
 
-pub fn update_data(app: &mut App) {
-    let data_source = match &app.frozen_state {
-        FrozenState::NotFrozen => &app.data_collection,
-        FrozenState::Frozen(data) => data,
-    };
-
-    for proc in app.states.proc_state.widget_states.values_mut() {
-        if proc.force_update_data {
-            proc.set_table_data(data_source);
-            proc.force_update_data = false;
-        }
-    }
-
-    // FIXME: Make this CPU force update less terrible.
-    if app.states.cpu_state.force_update.is_some() {
-        app.converted_data.convert_cpu_data(data_source);
-        app.converted_data.load_avg_data = data_source.load_avg_harvest;
-
-        app.states.cpu_state.force_update = None;
-    }
-
-    // FIXME: This is a bit of a temp hack to move data over.
-    {
-        let data = &app.converted_data.cpu_data;
-        for cpu in app.states.cpu_state.widget_states.values_mut() {
-            cpu.update_table(data);
-        }
-    }
-    {
-        let data = &app.converted_data.temp_data;
-        for temp in app.states.temp_state.widget_states.values_mut() {
-            if temp.force_update_data {
-                temp.set_table_data(data);
-                temp.force_update_data = false;
-            }
-        }
-    }
-    {
-        let data = &app.converted_data.disk_data;
-        for disk in app.states.disk_state.widget_states.values_mut() {
-            if disk.force_update_data {
-                disk.set_table_data(data);
-                disk.force_update_data = false;
-            }
-        }
-    }
-
-    // TODO: [OPT] Prefer reassignment over new vectors?
-    if app.states.mem_state.force_update.is_some() {
-        app.converted_data.mem_data = convert_mem_data_points(data_source);
-        #[cfg(not(target_os = "windows"))]
-        {
-            app.converted_data.cache_data = convert_cache_data_points(data_source);
-        }
-        app.converted_data.swap_data = convert_swap_data_points(data_source);
-        #[cfg(feature = "zfs")]
-        {
-            app.converted_data.arc_data = convert_arc_data_points(data_source);
-        }
-
-        #[cfg(feature = "gpu")]
-        {
-            app.converted_data.gpu_data = convert_gpu_data(data_source);
-        }
-        app.states.mem_state.force_update = None;
-    }
-
-    if app.states.net_state.force_update.is_some() {
-        let (rx, tx) = get_network_points(
-            data_source,
-            &app.app_config_fields.network_scale_type,
-            &app.app_config_fields.network_unit_type,
-            app.app_config_fields.network_use_binary_prefix,
-        );
-        app.converted_data.network_data_rx = rx;
-        app.converted_data.network_data_tx = tx;
-        app.states.net_state.force_update = None;
-    }
-}
-
-pub fn create_input_thread(
+/// Create a thread to poll for user inputs and forward them to the main thread.
+fn create_input_thread(
     sender: Sender<BottomEvent>, termination_ctrl_lock: Arc<Mutex<bool>>,
 ) -> JoinHandle<()> {
     thread::spawn(move || {
@@ -282,7 +203,8 @@ pub fn create_input_thread(
     })
 }
 
-pub fn create_collection_thread(
+/// Create a thread to handle data collection.
+fn create_collection_thread(
     sender: Sender<BottomEvent>, control_receiver: Receiver<CollectionThreadEvent>,
     termination_lock: Arc<Mutex<bool>>, termination_cvar: Arc<Condvar>,
     app_config_fields: &AppConfigFields, filters: DataFilters, used_widget_set: UsedWidgets,
@@ -488,17 +410,17 @@ fn main() -> anyhow::Result<()> {
                     if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
                         break;
                     }
-                    update_data(&mut app);
+                    app.update_data();
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::MouseInput(event) => {
                     handle_mouse_event(event, &mut app);
-                    update_data(&mut app);
+                    app.update_data();
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::PasteEvent(paste) => {
                     app.handle_paste(paste);
-                    update_data(&mut app);
+                    app.update_data();
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::Update(data) => {
@@ -617,7 +539,7 @@ fn main() -> anyhow::Result<()> {
                             }
                         }
 
-                        update_data(&mut app);
+                        app.update_data();
                         try_drawing(&mut terminal, &mut app, &mut painter)?;
                     }
                 }
