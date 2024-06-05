@@ -564,7 +564,7 @@ pub struct OtherArgs {
     #[arg(short = 'h', long, action = ArgAction::Help, help = "Prints help info (for more details use `--help`.")]
     help: (),
 
-    #[arg(short = 'v', long, action = ArgAction::Version, help = "Prints version information.")]
+    #[arg(short = 'V', long, action = ArgAction::Version, help = "Prints version information.")]
     version: (),
 }
 
@@ -586,6 +586,18 @@ mod test {
     #[test]
     fn verify_cli() {
         build_cmd().debug_assert();
+    }
+
+    #[test]
+    fn test_version() {
+        BottomArgs::parse_from(["btm", "--version"]);
+        BottomArgs::parse_from(["btm", "-V"]);
+    }
+
+    #[test]
+    fn test_help() {
+        BottomArgs::parse_from(["btm", "--help"]);
+        BottomArgs::parse_from(["btm", "-h"]);
     }
 
     #[test]
