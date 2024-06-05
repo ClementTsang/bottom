@@ -22,7 +22,7 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
     canvas::components::time_chart::LegendPosition,
-    constants, convert_cache_data_points, convert_mem_data_points, convert_swap_data_points,
+    constants, convert_mem_data_points, convert_swap_data_points,
     data_collection::{processes::Pid, temperature},
     data_conversion::ConvertedData,
     get_network_points,
@@ -213,7 +213,7 @@ impl App {
             self.converted_data.mem_data = convert_mem_data_points(data_source);
             #[cfg(not(target_os = "windows"))]
             {
-                self.converted_data.cache_data = convert_cache_data_points(data_source);
+                self.converted_data.cache_data = crate::convert_cache_data_points(data_source);
             }
             self.converted_data.swap_data = convert_swap_data_points(data_source);
             #[cfg(feature = "zfs")]

@@ -17,6 +17,7 @@ use std::time::{Duration, Instant};
 
 #[cfg(any(target_os = "linux", feature = "gpu"))]
 use hashbrown::HashMap;
+#[cfg(not(target_os = "windows"))]
 use processes::Pid;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
