@@ -78,7 +78,7 @@ default = ["deploy"]
 
 [dependencies]
 anyhow = "1.0.86"
-backtrace = "0.3.71"
+backtrace = "0.3.72"
 cfg-if = "1.0.0"
 clap = { version = "4.5.4", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
@@ -99,7 +99,7 @@ starship-battery = { version = "0.8.3", optional = true }
 sysinfo = "=0.30.12"
 thiserror = "1.0.61"
 time = { version = "0.3.36", features = ["formatting", "macros"] }
-toml_edit = { version = "0.22.13", features = ["serde"] }
+toml_edit = { version = "0.22.14", features = ["serde"] }
 tui = { version = "0.26.3", package = "ratatui" }
 unicode-ellipsis = "0.1.4"
 unicode-segmentation = "1.11.0"
