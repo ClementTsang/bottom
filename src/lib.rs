@@ -5,15 +5,6 @@
 //! than the actual usage of the application. If you are instead looking for documentation regarding the *usage* of
 //! bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
 
-#![deny(rust_2018_idioms)]
-// #![deny(missing_docs)]
-#![deny(unused_extern_crates)]
-#![deny(rustdoc::broken_intra_doc_links)]
-#![deny(rustdoc::missing_crate_level_docs)]
-#![deny(clippy::todo)]
-#![deny(clippy::unimplemented)]
-#![deny(clippy::missing_safety_doc)]
-
 pub mod app;
 pub mod utils {
     pub mod data_prefixes;

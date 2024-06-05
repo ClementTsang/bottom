@@ -1,8 +1,3 @@
-#![deny(rust_2018_idioms)]
-#![deny(clippy::todo)]
-#![deny(clippy::unimplemented)]
-#![deny(clippy::missing_safety_doc)]
-
 use std::{
     boxed::Box,
     io::stdout,
