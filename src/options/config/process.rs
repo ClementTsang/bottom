@@ -4,6 +4,7 @@ use crate::widgets::ProcWidgetColumn;
 
 /// Process configuration.
 #[derive(Clone, Debug, Default, Deserialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub struct ProcessesConfig {
     /// A list of process widget columns.
     #[serde(default)]

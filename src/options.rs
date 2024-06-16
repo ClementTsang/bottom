@@ -1105,7 +1105,7 @@ mod test {
 
         // Skip battery since it's tricky to test depending on the platform/features
         // we're testing with.
-        let skip = ["help", "version", "celsius", "battery"];
+        let skip = ["help", "version", "celsius", "battery", "generate_schema"];
 
         for arg in app.get_arguments().collect::<Vec<_>>() {
             let arg_name = arg

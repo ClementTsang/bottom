@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub struct ColoursConfig {
     pub table_header_color: Option<Cow<'static, str>>,
     pub all_cpu_color: Option<Cow<'static, str>>,

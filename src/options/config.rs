@@ -16,6 +16,11 @@ use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
 use super::ColoursConfig;
 
 #[derive(Clone, Debug, Default, Deserialize)]
+#[cfg_attr(
+    feature = "generate_schema",
+    derive(schemars::JsonSchema),
+    schemars(title = "Schema for bottom's configs (nightly)")
+)]
 pub struct ConfigV1 {
     pub(crate) flags: Option<FlagConfig>,
     pub(crate) colors: Option<ColoursConfig>,
@@ -29,6 +34,7 @@ pub struct ConfigV1 {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub(crate) enum StringOrNum {
     String(String),
     Num(u64),
@@ -47,6 +53,7 @@ impl From<u64> for StringOrNum {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub(crate) struct FlagConfig {
     pub(crate) hide_avg_cpu: Option<bool>,
     pub(crate) dot_marker: Option<bool>,

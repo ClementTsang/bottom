@@ -6,6 +6,7 @@ fn default_as_true() -> bool {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub struct IgnoreList {
     #[serde(default = "default_as_true")]
     // TODO: Deprecate and/or rename, current name sounds awful.
