@@ -283,6 +283,25 @@ fn main() -> anyhow::Result<()> {
 
     let args = args::get_args();
 
+    #[cfg(feature = "generate_schema")]
+    {
+        if args.other.generate_schema {
+            let mut schema = schemars::schema_for!(crate::options::config::ConfigV1);
+            let metadata = schema.schema.metadata.as_mut().unwrap();
+            metadata.id = Some(
+                "https://github.com/ClementTsang/bottom/blob/main/schema/nightly/bottom.json"
+                    .to_string(),
+            );
+            metadata.description = Some(
+                "https://clementtsang.github.io/bottom/nightly/configuration/config-file"
+                    .to_string(),
+            );
+            println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+
+            return Ok(());
+        }
+    }
+
     #[cfg(feature = "logging")]
     {
         if let Err(err) = init_logger(

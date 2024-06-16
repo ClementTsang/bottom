@@ -15,11 +15,13 @@ build = "build.rs"
 exclude = [
     ".cargo-husky/",
     ".github/",
+    ".vscode/",
     "assets/",
     "desktop/",
     "docs/",
+    "flamegraphs/",
     "sample_configs/",
-    "schema",
+    "schema/",
     "scripts/",
     "wix/",
     ".all-contributorsrc",
@@ -70,6 +72,7 @@ nvidia = ["nvml-wrapper"]
 gpu = ["nvidia"]
 zfs = []
 logging = ["fern", "log", "time/local-offset"]
+generate_schema = ["schemars", "serde_json"]
 deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
 
@@ -91,7 +94,9 @@ itertools = "0.13.0"
 log = { version = "0.4.21", optional = true }
 nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
 regex = "1.10.4"
+schemars = { version = "0.8.21", optional = true }
 serde = { version = "1.0.203", features = ["derive"] }
+serde_json = { version = "1.0.117", optional = true }
 starship-battery = { version = "0.8.3", optional = true }
 sysinfo = "=0.30.12"
 thiserror = "1.0.61"
@@ -143,7 +148,6 @@ clap_complete_nushell = "4.5.1"
 clap_complete_fig = "4.5.0"
 clap_mangen = "0.2.20"
 indoc = "2.0.5"
-# schemars = "0.8.21"
 
 [package.metadata.deb]
 section = "utility"

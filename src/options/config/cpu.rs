@@ -3,6 +3,7 @@ use serde::Deserialize;
 /// The default selection of the CPU widget. If the given selection is invalid,
 /// we will fall back to all.
 #[derive(Clone, Copy, Debug, Default, Deserialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum CpuDefault {
     #[default]
@@ -13,6 +14,7 @@ pub enum CpuDefault {
 
 /// Process column settings.
 #[derive(Clone, Debug, Default, Deserialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub struct CpuConfig {
     #[serde(default)]
     pub default: CpuDefault,

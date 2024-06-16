@@ -111,6 +111,7 @@ pub struct ProcTableConfig {
 
 /// A hacky workaround for now.
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub enum ProcWidgetColumn {
     PidOrCount,
     ProcNameOrCommand,

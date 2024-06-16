@@ -567,6 +567,10 @@ pub struct OtherArgs {
 
     #[arg(short = 'V', long, action = ArgAction::Version, help = "Prints version information.")]
     version: (),
+
+    #[cfg(feature = "generate_schema")]
+    #[arg(long, action = ArgAction::SetTrue)]
+    pub generate_schema: bool,
 }
 
 /// Returns a [`BottomArgs`].

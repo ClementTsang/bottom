@@ -5,6 +5,7 @@ use crate::{app::layout_manager::*, error::Result};
 /// Represents a row. This has a length of some sort (optional) and a vector
 /// of children.
 #[derive(Clone, Deserialize, Debug, Serialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[serde(rename = "row")]
 pub struct Row {
     pub ratio: Option<u32>,
@@ -214,6 +215,7 @@ impl Row {
 /// to have FinalWidgets as children, lest we get some amount of mutual
 /// recursion between Row and Col.
 #[derive(Clone, Deserialize, Debug, Serialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[serde(untagged)]
 pub enum RowChildren {
     Widget(FinalWidget),
@@ -225,6 +227,7 @@ pub enum RowChildren {
 
 /// Represents a widget.
 #[derive(Clone, Deserialize, Debug, Serialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub struct FinalWidget {
     pub ratio: Option<u32>,
     #[serde(rename = "type")]
