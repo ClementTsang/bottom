@@ -87,13 +87,13 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
 
         let calculated_width = calculated_width.get();
 
-        // This is a bit of a hack, but apparently we can avoid having to do any fancy checks
-        // of showing the "All" on a specific column if the other is hidden by just always
-        // showing it on the CPU (first) column - if there isn't room for it, it will just collapse
-        // down.
+        // This is a bit of a hack, but apparently we can avoid having to do any fancy
+        // checks of showing the "All" on a specific column if the other is
+        // hidden by just always showing it on the CPU (first) column - if there
+        // isn't room for it, it will just collapse down.
         //
-        // This is the same for the use percentages - we just *always* show them, and *always* hide the CPU column if
-        // it is too small.
+        // This is the same for the use percentages - we just *always* show them, and
+        // *always* hide the CPU column if it is too small.
         match &self {
             CpuWidgetTableData::All => match column {
                 CpuWidgetColumn::CPU => Some("All".into()),

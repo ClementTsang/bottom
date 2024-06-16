@@ -23,7 +23,8 @@ pub struct GraphData<'a> {
 }
 
 pub struct TimeGraph<'a> {
-    /// The min and max x boundaries. Expects a f64 representing the time range in milliseconds.
+    /// The min and max x boundaries. Expects a f64 representing the time range
+    /// in milliseconds.
     pub x_bounds: [u64; 2],
 
     /// Whether to hide the time/x-labels.
@@ -99,7 +100,8 @@ impl<'a> TimeGraph<'a> {
             )
     }
 
-    /// Generates a title for the [`TimeGraph`] widget, given the available space.
+    /// Generates a title for the [`TimeGraph`] widget, given the available
+    /// space.
     fn generate_title(&self, draw_loc: Rect) -> Line<'_> {
         if self.is_expanded {
             let title_base = concat_string!(self.title, "── Esc to go back ");
@@ -121,13 +123,15 @@ impl<'a> TimeGraph<'a> {
         }
     }
 
-    /// Draws a time graph at [`Rect`] location provided by `draw_loc`. A time graph is used to display data points
-    /// throughout time in the x-axis.
+    /// Draws a time graph at [`Rect`] location provided by `draw_loc`. A time
+    /// graph is used to display data points throughout time in the x-axis.
     ///
     /// This time graph:
     /// - Draws with the higher time value on the left, and lower on the right.
-    /// - Expects a [`TimeGraph`] to be passed in, which details how to draw the graph.
-    /// - Expects `graph_data`, which represents *what* data to draw, and various details like style and optional legends.
+    /// - Expects a [`TimeGraph`] to be passed in, which details how to draw the
+    ///   graph.
+    /// - Expects `graph_data`, which represents *what* data to draw, and
+    ///   various details like style and optional legends.
     pub fn draw_time_graph(&self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: &[GraphData<'_>]) {
         let x_axis = self.generate_x_axis();
         let y_axis = self.generate_y_axis();

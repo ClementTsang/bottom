@@ -32,7 +32,8 @@ pub struct ColoursConfig {
 }
 
 impl ColoursConfig {
-    /// Returns `true` if there is a [`ConfigColours`] that is empty or there isn't one at all.
+    /// Returns `true` if there is a [`ConfigColours`] that is empty or there
+    /// isn't one at all.
     pub fn is_empty(&self) -> bool {
         if let Ok(serialized_string) = toml_edit::ser::to_string(self) {
             return serialized_string.is_empty();

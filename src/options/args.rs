@@ -1,7 +1,7 @@
 //! Argument parsing via clap.
 //!
-//! Note that you probably want to keep this as a single file so the build script doesn't
-//! trip all over itself.
+//! Note that you probably want to keep this as a single file so the build
+//! script doesn't trip all over itself.
 
 // TODO: New sections are misaligned! See if we can get that fixed.
 
@@ -557,7 +557,8 @@ pub struct StyleArgs {
     pub color: Option<String>,
 }
 
-/// Other arguments. This just handle options that are for help/version displaying.
+/// Other arguments. This just handle options that are for help/version
+/// displaying.
 #[derive(Args, Clone, Debug)]
 #[command(next_help_heading = "Other Options", rename_all = "snake_case")]
 pub struct OtherArgs {

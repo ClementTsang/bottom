@@ -22,7 +22,8 @@ impl UnixProcessExt for MacOSProcessExt {
         let output = Command::new("ps")
             .args(["-o", "pid=,pcpu=", "-p"])
             .arg(
-                // Has to look like this since otherwise, it you hit a `unstable_name_collisions` warning.
+                // Has to look like this since otherwise, it you hit a `unstable_name_collisions`
+                // warning.
                 Itertools::intersperse(pids.iter().map(i32::to_string), ",".to_string())
                     .collect::<String>(),
             )

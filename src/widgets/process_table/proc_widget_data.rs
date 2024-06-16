@@ -41,9 +41,9 @@ impl From<&'static str> for Id {
 }
 
 impl Id {
-    /// Returns the ID as a lowercase [`String`], with no prefix. This is primarily useful for
-    /// cases like sorting where we treat everything as the same case (e.g. `Discord` comes before
-    /// `dkms`).
+    /// Returns the ID as a lowercase [`String`], with no prefix. This is
+    /// primarily useful for cases like sorting where we treat everything as
+    /// the same case (e.g. `Discord` comes before `dkms`).
     pub fn to_lowercase(&self) -> String {
         match &self.id_type {
             IdType::Name(name) => name.to_lowercase(),
@@ -306,7 +306,8 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
         let calculated_width = calculated_width.get();
 
         // TODO: Optimize the string allocations here...
-        // TODO: Also maybe just pull in the to_string call but add a variable for the differences.
+        // TODO: Also maybe just pull in the to_string call but add a variable for the
+        // differences.
         Some(match column {
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
             ProcColumn::MemoryVal | ProcColumn::MemoryPercent => self.mem_usage.to_string().into(),

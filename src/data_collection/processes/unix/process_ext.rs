@@ -6,7 +6,10 @@ use hashbrown::HashMap;
 use sysinfo::{ProcessStatus, System};
 
 use super::ProcessHarvest;
-use crate::{data_collection::processes::UserTable, data_collection::Pid, utils::error};
+use crate::{
+    data_collection::{processes::UserTable, Pid},
+    utils::error,
+};
 
 pub(crate) trait UnixProcessExt {
     fn sysinfo_process_data(

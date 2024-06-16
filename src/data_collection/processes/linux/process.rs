@@ -29,7 +29,8 @@ fn next_part<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Result<&'a str, io
 /// A wrapper around the data in `/proc/<PID>/stat`. For documentation, see
 /// [here](https://man7.org/linux/man-pages/man5/proc.5.html).
 ///
-/// Note this does not necessarily get all fields, only the ones we use in bottom.
+/// Note this does not necessarily get all fields, only the ones we use in
+/// bottom.
 pub(crate) struct Stat {
     /// The filename of the executable without parentheses.
     pub comm: String,
@@ -40,13 +41,16 @@ pub(crate) struct Stat {
     /// The parent process PID.
     pub ppid: Pid,
 
-    /// The amount of time this process has been scheduled in user mode in clock ticks.
+    /// The amount of time this process has been scheduled in user mode in clock
+    /// ticks.
     pub utime: u64,
 
-    /// The amount of time this process has been scheduled in kernel mode in clock ticks.
+    /// The amount of time this process has been scheduled in kernel mode in
+    /// clock ticks.
     pub stime: u64,
 
-    /// The resident set size, or the number of pages the process has in real memory.
+    /// The resident set size, or the number of pages the process has in real
+    /// memory.
     pub rss: u64,
 
     /// The start time of the process, represented in clock ticks.
@@ -56,8 +60,8 @@ pub(crate) struct Stat {
 impl Stat {
     #[inline]
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
-        // Since this is just one line, we can read it all at once. However, since it might have non-utf8 characters,
-        // we can't just use read_to_string.
+        // Since this is just one line, we can read it all at once. However, since it
+        // might have non-utf8 characters, we can't just use read_to_string.
         f.read_to_end(unsafe { buffer.as_mut_vec() })?;
 
         let line = buffer.to_string_lossy();
@@ -82,12 +86,14 @@ impl Stat {
             .ok_or_else(|| anyhow!("missing state"))?;
         let ppid: Pid = next_part(&mut rest)?.parse()?;
 
-        // Skip 9 fields until utime (pgrp, session, tty_nr, tpgid, flags, minflt, cminflt, majflt, cmajflt).
+        // Skip 9 fields until utime (pgrp, session, tty_nr, tpgid, flags, minflt,
+        // cminflt, majflt, cmajflt).
         let mut rest = rest.skip(9);
         let utime: u64 = next_part(&mut rest)?.parse()?;
         let stime: u64 = next_part(&mut rest)?.parse()?;
 
-        // Skip 6 fields until starttime (cutime, cstime, priority, nice, num_threads, itrealvalue).
+        // Skip 6 fields until starttime (cutime, cstime, priority, nice, num_threads,
+        // itrealvalue).
         let mut rest = rest.skip(6);
         let start_time: u64 = next_part(&mut rest)?.parse()?;
 
@@ -115,7 +121,8 @@ impl Stat {
 
 /// A wrapper around the data in `/proc/<PID>/io`.
 ///
-/// Note this does not necessarily get all fields, only the ones we use in bottom.
+/// Note this does not necessarily get all fields, only the ones we use in
+/// bottom.
 pub(crate) struct Io {
     pub read_bytes: u64,
     pub write_bytes: u64,
@@ -136,7 +143,8 @@ impl Io {
         let mut read_bytes = 0;
         let mut write_bytes = 0;
 
-        // This saves us from doing a string allocation on each iteration compared to `lines()`.
+        // This saves us from doing a string allocation on each iteration compared to
+        // `lines()`.
         while let Ok(bytes) = reader.read_line(buffer) {
             if bytes > 0 {
                 if buffer.is_empty() {
@@ -207,12 +215,13 @@ fn reset(root: &mut PathBuf, buffer: &mut String) {
 }
 
 impl Process {
-    /// Creates a new [`Process`] given a `/proc/<PID>` path. This may fail if the process
-    /// no longer exists or there are permissions issues.
+    /// Creates a new [`Process`] given a `/proc/<PID>` path. This may fail if
+    /// the process no longer exists or there are permissions issues.
     ///
-    /// Note that this pre-allocates fields on **creation**! As such, some data might end
-    /// up "outdated" depending on when you call some of the methods. Therefore, this struct
-    /// is only useful for either fields that are unlikely to change, or are short-lived and
+    /// Note that this pre-allocates fields on **creation**! As such, some data
+    /// might end up "outdated" depending on when you call some of the
+    /// methods. Therefore, this struct is only useful for either fields
+    /// that are unlikely to change, or are short-lived and
     /// will be discarded quickly.
     pub(crate) fn from_path(pid_path: PathBuf) -> anyhow::Result<Process> {
         // TODO: Pass in a buffer vec/string to share?
@@ -247,7 +256,8 @@ impl Process {
         let mut root = pid_path;
         let mut buffer = String::new();
 
-        // NB: Whenever you add a new stat, make sure to pop the root and clear the buffer!
+        // NB: Whenever you add a new stat, make sure to pop the root and clear the
+        // buffer!
         let stat =
             open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, &mut buffer))?;
         reset(&mut root, &mut buffer);
@@ -286,8 +296,9 @@ fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Res
         .map_err(Into::into)
 }
 
-/// Opens a path. Note that this function takes in a mutable root - this will mutate it to avoid allocations. You
-/// probably will want to pop the most recent child after if you need to use the buffer again.
+/// Opens a path. Note that this function takes in a mutable root - this will
+/// mutate it to avoid allocations. You probably will want to pop the most
+/// recent child after if you need to use the buffer again.
 #[inline]
 fn open_at(root: &mut PathBuf, child: &str, fd: &OwnedFd) -> anyhow::Result<File> {
     root.push(child);

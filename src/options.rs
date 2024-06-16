@@ -62,9 +62,10 @@ macro_rules! is_flag_enabled {
     };
 }
 
-/// Returns the config path to use. If `override_config_path` is specified, then we will use
-/// that. If not, then return the "default" config path, which is:
-/// - If a path already exists at `<HOME>/bottom/bottom.toml`, then use that for legacy reasons.
+/// Returns the config path to use. If `override_config_path` is specified, then
+/// we will use that. If not, then return the "default" config path, which is:
+/// - If a path already exists at `<HOME>/bottom/bottom.toml`, then use that for
+///   legacy reasons.
 /// - Otherwise, use `<SYSTEM_CONFIG_FOLDER>/bottom/bottom.toml`.
 ///
 /// For more details on this, see [dirs](https://docs.rs/dirs/latest/dirs/fn.config_dir.html)'
@@ -93,9 +94,10 @@ pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
     })
 }
 
-/// Get the config at `config_path`. If there is no config file at the specified path, it will
-/// try to create a new file with the default settings, and return the default config. If bottom
-/// fails to write a new config, it will silently just return the default config.
+/// Get the config at `config_path`. If there is no config file at the specified
+/// path, it will try to create a new file with the default settings, and return
+/// the default config. If bottom fails to write a new config, it will silently
+/// just return the default config.
 pub fn get_or_create_config(config_path: Option<&Path>) -> error::Result<ConfigV1> {
     match &config_path {
         Some(path) => {
@@ -111,7 +113,8 @@ pub fn get_or_create_config(config_path: Option<&Path>) -> error::Result<ConfigV
             }
         }
         None => {
-            // If we somehow don't have any config path, then just assume the default config but don't write to any file.
+            // If we somehow don't have any config path, then just assume the default config
+            // but don't write to any file.
             //
             // TODO: Maybe make this "show" an error, but don't crash.
             Ok(ConfigV1::default())
@@ -124,7 +127,8 @@ pub fn init_app(
 ) -> Result<(App, BottomLayout)> {
     use BottomWidgetType::*;
 
-    // Since everything takes a reference, but we want to take ownership here to drop matches/config later...
+    // Since everything takes a reference, but we want to take ownership here to
+    // drop matches/config later...
     let args = &args;
     let config = &config;
 
@@ -696,7 +700,8 @@ fn get_default_widget_and_count(
 fn get_use_battery(args: &BottomArgs, config: &ConfigV1) -> bool {
     #[cfg(feature = "battery")]
     {
-        // TODO: Move this so it's dynamic in the app itself and automatically hide if there are no batteries?
+        // TODO: Move this so it's dynamic in the app itself and automatically hide if
+        // there are no batteries?
         if let Ok(battery_manager) = Manager::new() {
             if let Ok(batteries) = battery_manager.batteries() {
                 if batteries.count() == 0 {
@@ -1089,15 +1094,17 @@ mod test {
         super::init_app(args, config, &styling).unwrap().0
     }
 
-    // TODO: There's probably a better way to create clap options AND unify together to avoid the possibility of
-    // typos/mixing up. Use proc macros to unify on one struct?
+    // TODO: There's probably a better way to create clap options AND unify together
+    // to avoid the possibility of typos/mixing up. Use proc macros to unify on
+    // one struct?
     #[test]
     fn verify_cli_options_build() {
         let app = crate::args::build_cmd();
 
         let default_app = create_app(BottomArgs::parse_from(["btm"]));
 
-        // Skip battery since it's tricky to test depending on the platform/features we're testing with.
+        // Skip battery since it's tricky to test depending on the platform/features
+        // we're testing with.
         let skip = ["help", "version", "celsius", "battery"];
 
         for arg in app.get_arguments().collect::<Vec<_>>() {

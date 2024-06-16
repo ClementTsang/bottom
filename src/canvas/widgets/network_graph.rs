@@ -42,8 +42,8 @@ impl Painter {
 
         if app_state.should_get_widget_bounds() {
             // Update draw loc in widget map
-            // Note that in both cases, we always go to the same widget id so it's fine to do it like
-            // this lol.
+            // Note that in both cases, we always go to the same widget id so it's fine to
+            // do it like this lol.
             if let Some(network_widget) = app_state.widget_map.get_mut(&widget_id) {
                 network_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
                 network_widget.bottom_right_corner =
@@ -74,7 +74,8 @@ impl Painter {
             // TODO: Cache network results: Only update if:
             // - Force update (includes time interval change)
             // - Old max time is off screen
-            // - A new time interval is better and does not fit (check from end of vector to last checked; we only want to update if it is TOO big!)
+            // - A new time interval is better and does not fit (check from end of vector to
+            //   last checked; we only want to update if it is TOO big!)
 
             // Find the maximal rx/tx so we know how to scale, and return it.
             let (_best_time, max_entry) = get_max_entry(
@@ -216,7 +217,8 @@ fn get_max_entry(
     rx: &[Point], tx: &[Point], time_start: f64, network_scale_type: &AxisScaling,
     network_use_binary_prefix: bool,
 ) -> Point {
-    /// Determines a "fake" max value in circumstances where we couldn't find one from the data.
+    /// Determines a "fake" max value in circumstances where we couldn't find
+    /// one from the data.
     fn calculate_missing_max(
         network_scale_type: &AxisScaling, network_use_binary_prefix: bool,
     ) -> f64 {
@@ -238,8 +240,9 @@ fn get_max_entry(
         }
     }
 
-    // First, let's shorten our ranges to actually look.  We can abuse the fact that our rx and tx arrays
-    // are sorted, so we can short-circuit our search to filter out only the relevant data points...
+    // First, let's shorten our ranges to actually look.  We can abuse the fact that
+    // our rx and tx arrays are sorted, so we can short-circuit our search to
+    // filter out only the relevant data points...
     let filtered_rx = if let (Some(rx_start), Some(rx_end)) = (
         rx.iter().position(|(time, _data)| *time >= time_start),
         rx.iter().rposition(|(time, _data)| *time <= 0.0),
@@ -337,26 +340,31 @@ fn adjust_network_data_point(
     network_use_binary_prefix: bool,
 ) -> (f64, Vec<String>) {
     // So, we're going with an approach like this for linear data:
-    // - Main goal is to maximize the amount of information displayed given a specific height.
-    //   We don't want to drown out some data if the ranges are too far though!  Nor do we want to filter
-    //   out too much data...
-    // - Change the y-axis unit (kilo/kibi, mega/mebi...) dynamically based on max load.
+    // - Main goal is to maximize the amount of information displayed given a
+    //   specific height. We don't want to drown out some data if the ranges are too
+    //   far though!  Nor do we want to filter out too much data...
+    // - Change the y-axis unit (kilo/kibi, mega/mebi...) dynamically based on max
+    //   load.
     //
-    // The idea is we take the top value, build our scale such that each "point" is a scaled version of that.
-    // So for example, let's say I use 390 Mb/s.  If I drew 4 segments, it would be 97.5, 195, 292.5, 390, and
+    // The idea is we take the top value, build our scale such that each "point" is
+    // a scaled version of that. So for example, let's say I use 390 Mb/s.  If I
+    // drew 4 segments, it would be 97.5, 195, 292.5, 390, and
     // probably something like 438.75?
     //
-    // So, how do we do this in ratatui?  Well, if we  are using intervals that tie in perfectly to the max
-    // value we want... then it's actually not that hard.  Since ratatui accepts a vector as labels and will
-    // properly space them all out... we just work with that and space it out properly.
+    // So, how do we do this in ratatui?  Well, if we  are using intervals that tie
+    // in perfectly to the max value we want... then it's actually not that
+    // hard.  Since ratatui accepts a vector as labels and will properly space
+    // them all out... we just work with that and space it out properly.
     //
     // Dynamic chart idea based off of FreeNAS's chart design.
     //
     // ===
     //
-    // For log data, we just use the old method of log intervals (kilo/mega/giga/etc.).  Keep it nice and simple.
+    // For log data, we just use the old method of log intervals
+    // (kilo/mega/giga/etc.).  Keep it nice and simple.
 
-    // Now just check the largest unit we correspond to... then proceed to build some entries from there!
+    // Now just check the largest unit we correspond to... then proceed to build
+    // some entries from there!
 
     let unit_char = match network_unit_type {
         DataUnit::Byte => "B",
@@ -411,8 +419,9 @@ fn adjust_network_data_point(
                     )
                 };
 
-            // Finally, build an acceptable range starting from there, using the given height!
-            // Note we try to put more of a weight on the bottom section vs. the top, since the top has less data.
+            // Finally, build an acceptable range starting from there, using the given
+            // height! Note we try to put more of a weight on the bottom section
+            // vs. the top, since the top has less data.
 
             let base_unit = max_value_scaled;
             let labels: Vec<String> = vec![
@@ -422,7 +431,8 @@ fn adjust_network_data_point(
                 format!("{:.1}", base_unit * 1.5),
             ]
             .into_iter()
-            .map(|s| format!("{s:>5}")) // Pull 5 as the longest legend value is generally going to be 5 digits (if they somehow hit over 5 terabits per second)
+            .map(|s| format!("{s:>5}")) // Pull 5 as the longest legend value is generally going to be 5 digits (if they somehow
+            // hit over 5 terabits per second)
             .collect();
 
             (bumped_max_entry, labels)

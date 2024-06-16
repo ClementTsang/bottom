@@ -63,8 +63,8 @@ impl Painter {
             .border_style(self.colours.border_style);
 
         if app_state.should_get_widget_bounds() {
-            // We must also recalculate how many lines are wrapping to properly get scrolling to work on
-            // small terminal sizes... oh joy.
+            // We must also recalculate how many lines are wrapping to properly get
+            // scrolling to work on small terminal sizes... oh joy.
 
             app_state.help_dialog_state.height = block.inner(draw_loc).height;
 

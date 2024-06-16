@@ -28,7 +28,8 @@ use crate::{
     data_collection::processes::{Pid, ProcessHarvest},
 };
 
-/// ProcessSearchState only deals with process' search's current settings and state.
+/// ProcessSearchState only deals with process' search's current settings and
+/// state.
 pub struct ProcessSearchState {
     pub search_state: AppSearchState,
     pub is_ignoring_case: bool,
@@ -172,7 +173,8 @@ pub struct ProcWidgetState {
     /// The state of the togglable table that controls sorting.
     pub sort_table: SortTable,
 
-    /// The internal column mapping as an [`IndexSet`], to allow us to do quick mappings of column type -> index.
+    /// The internal column mapping as an [`IndexSet`], to allow us to do quick
+    /// mappings of column type -> index.
     pub column_mapping: IndexSet<ProcWidgetColumn>,
 
     /// A name-to-pid mapping.
@@ -426,8 +428,9 @@ impl ProcWidgetState {
 
     /// Update the current table data.
     ///
-    /// This function *only* updates the displayed process data. If there is a need to update the actual *stored* data,
-    /// call it before this function.
+    /// This function *only* updates the displayed process data. If there is a
+    /// need to update the actual *stored* data, call it before this
+    /// function.
     pub fn set_table_data(&mut self, data_collection: &DataCollection) {
         let data = match &self.mode {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
@@ -495,7 +498,8 @@ impl ProcWidgetState {
             }
         }
 
-        // A process is shown under the filtered tree if at least one of these conditions hold:
+        // A process is shown under the filtered tree if at least one of these
+        // conditions hold:
         // - The process itself matches.
         // - The process contains some descendant that matches.
         // - The process's parent (and only parent, not any ancestor) matches.
@@ -524,7 +528,8 @@ impl ProcWidgetState {
 
                         // Show the entry if it is:
                         // - Matches the filter.
-                        // - Has at least one child (doesn't have to be direct) that matches the filter.
+                        // - Has at least one child (doesn't have to be direct) that matches the
+                        //   filter.
                         // - Is the child of a shown process.
                         let is_shown = is_process_matching
                             || !shown_children.is_empty()
@@ -724,7 +729,8 @@ impl ProcWidgetState {
                 if let Some(grouped_process_harvest) = id_process_mapping.get_mut(id) {
                     grouped_process_harvest.add(process);
                 } else {
-                    // FIXME: [PERF] could maybe eliminate an allocation here in the grouped mode... or maybe just avoid the entire transformation step, making an alloc fine.
+                    // FIXME: [PERF] could maybe eliminate an allocation here in the grouped mode...
+                    // or maybe just avoid the entire transformation step, making an alloc fine.
                     id_process_mapping.insert(id, process.clone());
                 }
             }
@@ -813,8 +819,8 @@ impl ProcWidgetState {
         self.force_update_data = true;
     }
 
-    /// Marks the selected column as hidden, and automatically resets the selected column to the default
-    /// sort index and order.
+    /// Marks the selected column as hidden, and automatically resets the
+    /// selected column to the default sort index and order.
     fn hide_column(&mut self, column: ProcWidgetColumn) {
         if let Some(index) = self.column_mapping.get_index_of(&column) {
             if let Some(col) = self.table.columns.get_mut(index) {
@@ -837,7 +843,8 @@ impl ProcWidgetState {
         }
     }
 
-    /// Select a column. If the column is already selected, then just toggle the sort order.
+    /// Select a column. If the column is already selected, then just toggle the
+    /// sort order.
     pub fn select_column(&mut self, column: ProcWidgetColumn) {
         if let Some(index) = self.column_mapping.get_index_of(&column) {
             self.table.set_sort_index(index);
@@ -891,12 +898,15 @@ impl ProcWidgetState {
 
     /// Toggles the appropriate columns/settings when tab is pressed.
     ///
-    /// If count is enabled, we should set the mode to [`ProcWidgetMode::Grouped`], and switch off the User and State
-    /// columns. We should also move the user off of the columns if they were selected, as those columns are now hidden
-    /// (handled by internal method calls), and go back to the "defaults".
+    /// If count is enabled, we should set the mode to
+    /// [`ProcWidgetMode::Grouped`], and switch off the User and State
+    /// columns. We should also move the user off of the columns if they were
+    /// selected, as those columns are now hidden (handled by internal
+    /// method calls), and go back to the "defaults".
     ///
-    /// Otherwise, if count is disabled, then if the columns exist, the User and State columns should be re-enabled,
-    /// and the mode switched to [`ProcWidgetMode::Normal`].
+    /// Otherwise, if count is disabled, then if the columns exist, the User and
+    /// State columns should be re-enabled, and the mode switched to
+    /// [`ProcWidgetMode::Normal`].
     pub fn toggle_tab(&mut self) {
         if !matches!(self.mode, ProcWidgetMode::Tree { .. }) {
             if let Some(index) = self
@@ -1005,14 +1015,15 @@ impl ProcWidgetState {
         self.proc_search.search_state.walk_backward();
     }
 
-    /// Returns the number of columns *enabled*. Note this differs from *visible* - a column may be enabled but not
-    /// visible (e.g. off screen).
+    /// Returns the number of columns *enabled*. Note this differs from
+    /// *visible* - a column may be enabled but not visible (e.g. off
+    /// screen).
     pub fn num_enabled_columns(&self) -> usize {
         self.table.columns.iter().filter(|c| !c.is_hidden).count()
     }
 
-    /// Sets the [`ProcWidgetState`]'s current sort index to whatever was in the sort table if possible, then closes the
-    /// sort table.
+    /// Sets the [`ProcWidgetState`]'s current sort index to whatever was in the
+    /// sort table if possible, then closes the sort table.
     pub(crate) fn use_sort_table_value(&mut self) {
         self.table.set_sort_index(self.sort_table.current_index());
 
@@ -1425,8 +1436,9 @@ mod test {
 
     /// Tests toggling if both mem and mem% columns are configured.
     ///
-    /// Currently, this test doesn't really do much, since we treat these two columns as the same - this test is
-    /// intended for use later when we might allow both at the same time.
+    /// Currently, this test doesn't really do much, since we treat these two
+    /// columns as the same - this test is intended for use later when we
+    /// might allow both at the same time.
     #[test]
     fn double_memory_sim_toggle() {
         let init_columns = [
@@ -1461,8 +1473,9 @@ mod test {
 
     /// Tests toggling if both pid and count columns are configured.
     ///
-    /// Currently, this test doesn't really do much, since we treat these two columns as the same - this test is
-    /// intended for use later when we might allow both at the same time.
+    /// Currently, this test doesn't really do much, since we treat these two
+    /// columns as the same - this test is intended for use later when we
+    /// might allow both at the same time.
     #[test]
     fn pid_and_count_sim_toggle() {
         let init_columns = [
@@ -1498,8 +1511,9 @@ mod test {
 
     /// Tests toggling if both command and name columns are configured.
     ///
-    /// Currently, this test doesn't really do much, since we treat these two columns as the same - this test is
-    /// intended for use later when we might allow both at the same time.
+    /// Currently, this test doesn't really do much, since we treat these two
+    /// columns as the same - this test is intended for use later when we
+    /// might allow both at the same time.
     #[test]
     fn command_name_sim_toggle() {
         let init_columns = [

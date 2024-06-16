@@ -86,16 +86,18 @@ cfg_if! {
     }
 }
 
-/// Whether to keep the current disk entry given the filters, disk name, and disk mount.
-/// Precedence ordering in the case where name and mount filters disagree, "allow"
-/// takes precedence over "deny".
+/// Whether to keep the current disk entry given the filters, disk name, and
+/// disk mount. Precedence ordering in the case where name and mount filters
+/// disagree, "allow" takes precedence over "deny".
 ///
 /// For implementation, we do this as follows:
 ///
-/// 1. Is the entry allowed through any filter? That is, does it match an entry in a
-///    filter where `is_list_ignored` is `false`? If so, we always keep this entry.
-/// 2. Is the entry denied through any filter? That is, does it match an entry in a
-///    filter where `is_list_ignored` is `true`? If so, we always deny this entry.
+/// 1. Is the entry allowed through any filter? That is, does it match an entry
+///    in a filter where `is_list_ignored` is `false`? If so, we always keep
+///    this entry.
+/// 2. Is the entry denied through any filter? That is, does it match an entry
+///    in a filter where `is_list_ignored` is `true`? If so, we always deny this
+///    entry.
 /// 3. Anything else is allowed.
 pub fn keep_disk_entry(
     disk_name: &str, mount_point: &str, disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,

@@ -260,7 +260,8 @@ impl Painter {
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(if terminal_width < 100 {
-                        // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
+                        // TODO: [REFACTOR] The point we start changing size at currently hard-coded
+                        // in.
                         [
                             Constraint::Percentage(0),
                             Constraint::Percentage(100),
@@ -386,7 +387,8 @@ impl Painter {
 
                 let actual_cpu_data_len = app_state.converted_data.cpu_data.len().saturating_sub(1);
 
-                // This fixes #397, apparently if the height is 1, it can't render the CPU bars...
+                // This fixes #397, apparently if the height is 1, it can't render the CPU
+                // bars...
                 let cpu_height = {
                     let c =
                         (actual_cpu_data_len / 4) as u16 + u16::from(actual_cpu_data_len % 4 != 0);
@@ -499,15 +501,15 @@ impl Painter {
                 }
 
                 if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
-                    // TODO: Can I remove this? Does ratatui's layout constraints work properly for fixing
-                    // https://github.com/ClementTsang/bottom/issues/896 now?
+                    // TODO: Can I remove this? Does ratatui's layout constraints work properly for
+                    // fixing https://github.com/ClementTsang/bottom/issues/896 now?
                     fn get_constraints(
                         direction: Direction, constraints: &[LayoutConstraint], area: Rect,
                     ) -> Vec<Rect> {
                         // Order of operations:
                         // - Ratios first + canvas-handled (which is just zero)
-                        // - Then any flex-grows to take up remaining space; divide amongst remaining
-                        //   hand out any remaining space
+                        // - Then any flex-grows to take up remaining space; divide amongst
+                        //   remaining hand out any remaining space
 
                         #[derive(Debug, Default, Clone, Copy)]
                         struct Size {
@@ -688,7 +690,8 @@ impl Painter {
                                     &col_rows.children
                                 )
                                 .map(|(draw_loc, col_row_constraint_vec, widgets)| {
-                                    // Note that col_row_constraint_vec CONTAINS the widget constraints
+                                    // Note that col_row_constraint_vec CONTAINS the widget
+                                    // constraints
                                     let widget_draw_locs = get_constraints(
                                         Direction::Horizontal,
                                         col_row_constraint_vec.as_slice(),

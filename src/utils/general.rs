@@ -26,12 +26,12 @@ pub fn partial_ordering_desc<T: PartialOrd>(a: T, b: T) -> Ordering {
 
 /// A trait for additional clamping functions on numeric types.
 pub trait ClampExt {
-    /// Restrict a value by a lower bound. If the current value is _lower_ than `lower_bound`,
-    /// it will be set to `_lower_bound`.
+    /// Restrict a value by a lower bound. If the current value is _lower_ than
+    /// `lower_bound`, it will be set to `_lower_bound`.
     fn clamp_lower(&self, lower_bound: Self) -> Self;
 
-    /// Restrict a value by an upper bound. If the current value is _greater_ than `upper_bound`,
-    /// it will be set to `upper_bound`.
+    /// Restrict a value by an upper bound. If the current value is _greater_
+    /// than `upper_bound`, it will be set to `upper_bound`.
     fn clamp_upper(&self, upper_bound: Self) -> Self;
 }
 

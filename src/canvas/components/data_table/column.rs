@@ -7,17 +7,20 @@ use std::{
 /// A bound on the width of a column.
 #[derive(Clone, Copy, Debug)]
 pub enum ColumnWidthBounds {
-    /// A width of this type is as long as `desired`, but can otherwise shrink and grow up to a point.
+    /// A width of this type is as long as `desired`, but can otherwise shrink
+    /// and grow up to a point.
     Soft {
-        /// The desired, calculated width. Take this if possible as the base starting width.
+        /// The desired, calculated width. Take this if possible as the base
+        /// starting width.
         desired: u16,
 
-        /// The max width, as a percentage of the total width available. If [`None`],
-        /// then it can grow as desired.
+        /// The max width, as a percentage of the total width available. If
+        /// [`None`], then it can grow as desired.
         max_percentage: Option<f32>,
     },
 
-    /// A width of this type is either as long as specified, or does not appear at all.
+    /// A width of this type is either as long as specified, or does not appear
+    /// at all.
     Hard(u16),
 
     /// A width of this type always resizes to the column header's text width.
@@ -28,7 +31,8 @@ pub trait ColumnHeader {
     /// The "text" version of the column header.
     fn text(&self) -> Cow<'static, str>;
 
-    /// The version displayed when drawing the table. Defaults to [`ColumnHeader::text`].
+    /// The version displayed when drawing the table. Defaults to
+    /// [`ColumnHeader::text`].
     #[inline(always)]
     fn header(&self) -> Cow<'static, str> {
         self.text()
@@ -63,8 +67,9 @@ pub trait DataTableColumn<H: ColumnHeader> {
     /// The actually displayed "header".
     fn header(&self) -> Cow<'static, str>;
 
-    /// The header length, along with any required additional lengths for things like arrows.
-    /// Defaults to getting the length of [`DataTableColumn::header`].
+    /// The header length, along with any required additional lengths for things
+    /// like arrows. Defaults to getting the length of
+    /// [`DataTableColumn::header`].
     fn header_len(&self) -> usize {
         self.header().len()
     }
@@ -78,7 +83,8 @@ pub struct Column<H> {
     /// A restriction on this column's width.
     bounds: ColumnWidthBounds,
 
-    /// Marks that this column is currently "hidden", and should *always* be skipped.
+    /// Marks that this column is currently "hidden", and should *always* be
+    /// skipped.
     is_hidden: bool,
 }
 
@@ -148,10 +154,13 @@ impl<H: ColumnHeader> Column<H> {
 }
 
 pub trait CalculateColumnWidths<H> {
-    /// Calculates widths for the columns of this table, given the current width when called.
+    /// Calculates widths for the columns of this table, given the current width
+    /// when called.
     ///
-    /// * `total_width` is the total width on the canvas that the columns can try and work with.
-    /// * `left_to_right` is whether to size from left-to-right (`true`) or right-to-left (`false`).
+    /// * `total_width` is the total width on the canvas that the columns can
+    ///   try and work with.
+    /// * `left_to_right` is whether to size from left-to-right (`true`) or
+    ///   right-to-left (`false`).
     fn calculate_column_widths(&self, total_width: u16, left_to_right: bool) -> Vec<NonZeroU16>;
 }
 

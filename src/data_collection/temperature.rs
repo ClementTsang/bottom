@@ -47,7 +47,8 @@ impl FromStr for TemperatureType {
 }
 
 impl TemperatureType {
-    /// Given a temperature in Celsius, covert it if necessary for a different unit.
+    /// Given a temperature in Celsius, covert it if necessary for a different
+    /// unit.
     pub fn convert_temp_unit(&self, temp_celsius: f32) -> f32 {
         fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
             celsius + 273.15

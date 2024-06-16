@@ -74,7 +74,8 @@ pub struct ConvertedData {
     pub cache_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
 
-    pub mem_data: Vec<Point>, /* TODO: Switch this and all data points over to a better data structure... */
+    pub mem_data: Vec<Point>, /* TODO: Switch this and all data points over to a better data
+                               * structure... */
     #[cfg(not(target_os = "windows"))]
     pub cache_data: Vec<Point>,
     pub swap_data: Vec<Point>,
@@ -169,7 +170,8 @@ impl ConvertedData {
                             data,
                             last_entry,
                         } => {
-                            // A bit faster to just update all the times, so we just clear the vector.
+                            // A bit faster to just update all the times, so we just clear the
+                            // vector.
                             data.clear();
                             *last_entry = *cpu_usage;
                         }
@@ -177,8 +179,8 @@ impl ConvertedData {
             }
         }
 
-        // TODO: [Opt] Can probably avoid data deduplication - store the shift + data + original once.
-        // Now push all the data.
+        // TODO: [Opt] Can probably avoid data deduplication - store the shift + data +
+        // original once. Now push all the data.
         for (itx, mut cpu) in &mut self.cpu_data.iter_mut().skip(1).enumerate() {
             match &mut cpu {
                 CpuWidgetData::All => unreachable!(),
@@ -262,10 +264,12 @@ pub fn convert_swap_data_points(data: &DataCollection) -> Vec<Point> {
     result
 }
 
-/// Returns the most appropriate binary prefix unit type (e.g. kibibyte) and denominator for the given amount of bytes.
+/// Returns the most appropriate binary prefix unit type (e.g. kibibyte) and
+/// denominator for the given amount of bytes.
 ///
-/// The expected usage is to divide out the given value with the returned denominator in order to be able to use it
-/// with the returned binary unit (e.g. divide 3000 bytes by 1024 to have a value in KiB).
+/// The expected usage is to divide out the given value with the returned
+/// denominator in order to be able to use it with the returned binary unit
+/// (e.g. divide 3000 bytes by 1024 to have a value in KiB).
 #[inline]
 fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
     match bytes {
@@ -277,7 +281,8 @@ fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
     }
 }
 
-/// Returns the unit type and denominator for given total amount of memory in kibibytes.
+/// Returns the unit type and denominator for given total amount of memory in
+/// kibibytes.
 pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
     if harvest.total_bytes > 0 {
         Some((format!("{:3.0}%", harvest.use_percent.unwrap_or(0.0)), {
@@ -371,7 +376,9 @@ pub fn convert_network_points(
     let (rx_converted_result, total_rx_converted_result): ((f64, String), (f64, &'static str)) =
         if use_binary_prefix {
             (
-                get_binary_prefix(rx_data, unit), /* If this isn't obvious why there's two functions, one you can configure the unit, the other is always bytes */
+                get_binary_prefix(rx_data, unit), /* If this isn't obvious why there's two
+                                                   * functions, one you can configure the unit,
+                                                   * the other is always bytes */
                 get_binary_bytes(total_rx_data),
             )
         } else {
@@ -464,8 +471,9 @@ pub fn convert_network_points(
     }
 }
 
-/// Returns a string given a value that is converted to the closest binary variant.
-/// If the value is greater than a gibibyte, then it will return a decimal place.
+/// Returns a string given a value that is converted to the closest binary
+/// variant. If the value is greater than a gibibyte, then it will return a
+/// decimal place.
 pub fn binary_byte_string(value: u64) -> String {
     let converted_values = get_binary_bytes(value);
     if value >= GIBI_LIMIT {
@@ -486,8 +494,9 @@ pub fn dec_bytes_per_string(value: u64) -> String {
     }
 }
 
-/// Returns a string given a value that is converted to the closest SI-variant, per second.
-/// If the value is greater than a giga-X, then it will return a decimal place.
+/// Returns a string given a value that is converted to the closest SI-variant,
+/// per second. If the value is greater than a giga-X, then it will return a
+/// decimal place.
 pub fn dec_bytes_per_second_string(value: u64) -> String {
     let converted_values = get_decimal_bytes(value);
     if value >= GIGA_LIMIT {

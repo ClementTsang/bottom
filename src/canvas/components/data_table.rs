@@ -20,13 +20,15 @@ use crate::utils::general::ClampExt;
 
 /// A [`DataTable`] is a component that displays data in a tabular form.
 ///
-/// Note that [`DataTable`] takes a generic type `S`, bounded by [`SortType`]. This controls whether this table
-/// expects sorted data or not, with two expected types:
+/// Note that [`DataTable`] takes a generic type `S`, bounded by [`SortType`].
+/// This controls whether this table expects sorted data or not, with two
+/// expected types:
 ///
-/// - [`Unsortable`]: The default if otherwise not specified. This table does not expect sorted data.
-/// - [`Sortable`]: This table expects sorted data, and there are helper functions to
-///   facilitate things like sorting based on a selected column, shortcut column selection support, mouse column
-///   selection support, etc.
+/// - [`Unsortable`]: The default if otherwise not specified. This table does
+///   not expect sorted data.
+/// - [`Sortable`]: This table expects sorted data, and there are helper
+///   functions to facilitate things like sorting based on a selected column,
+///   shortcut column selection support, mouse column selection support, etc.
 pub struct DataTable<DataType, Header, S = Unsortable, C = Column<Header>> {
     pub columns: Vec<C>,
     pub state: DataTableState,
@@ -89,8 +91,9 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
         }
     }
 
-    /// Increments the scroll position if possible by a positive/negative offset. If there is a
-    /// valid change, this function will also return the new position wrapped in an [`Option`].
+    /// Increments the scroll position if possible by a positive/negative
+    /// offset. If there is a valid change, this function will also return
+    /// the new position wrapped in an [`Option`].
     pub fn increment_position(&mut self, change: i64) -> Option<usize> {
         let max_index = self.data.len();
         let current_index = self.state.current_index;

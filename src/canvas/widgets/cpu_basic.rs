@@ -33,8 +33,8 @@ impl Painter {
             // many rows and columns we have in draw_loc (-2 on both sides for border?).
             // I think what we can do is try to fit in as many in one column as possible.
             // If not, then add a new column.
-            // Then, from this, split the row space across ALL columns.  From there, generate
-            // the desired lengths.
+            // Then, from this, split the row space across ALL columns.  From there,
+            // generate the desired lengths.
 
             if app_state.current_widget.widget_id == widget_id {
                 f.render_widget(

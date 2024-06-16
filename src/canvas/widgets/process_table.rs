@@ -20,7 +20,8 @@ const SORT_MENU_WIDTH: u16 = 7;
 
 impl Painter {
     /// Draws and handles all process-related drawing.  Use this.
-    /// - `widget_id` here represents the widget ID of the process widget itself!
+    /// - `widget_id` here represents the widget ID of the process widget
+    ///   itself!
     pub fn draw_process(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
@@ -106,7 +107,8 @@ impl Painter {
     }
 
     /// Draws the process search field.
-    /// - `widget_id` represents the widget ID of the search box itself --- NOT the process widget
+    /// - `widget_id` represents the widget ID of the search box itself --- NOT
+    ///   the process widget
     /// state that is stored.
     fn draw_search_field(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
@@ -310,7 +312,8 @@ impl Painter {
     }
 
     /// Draws the process sort box.
-    /// - `widget_id` represents the widget ID of the sort box itself --- NOT the process widget
+    /// - `widget_id` represents the widget ID of the sort box itself --- NOT
+    ///   the process widget
     /// state that is stored.
     fn draw_sort_table(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,

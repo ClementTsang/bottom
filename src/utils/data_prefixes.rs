@@ -38,9 +38,9 @@ pub const LOG_MEBI_LIMIT_U32: u32 = 20;
 pub const LOG_GIBI_LIMIT_U32: u32 = 30;
 pub const LOG_TEBI_LIMIT_U32: u32 = 40;
 
-/// Returns a tuple containing the value and the unit in bytes.  In units of 1024.
-/// This only supports up to a tebi.  Note the "single" unit will have a space appended to match the others if
-/// `spacing` is true.
+/// Returns a tuple containing the value and the unit in bytes.  In units of
+/// 1024. This only supports up to a tebi.  Note the "single" unit will have a
+/// space appended to match the others if `spacing` is true.
 #[inline]
 pub fn get_binary_bytes(bytes: u64) -> (f64, &'static str) {
     match bytes {
@@ -52,9 +52,9 @@ pub fn get_binary_bytes(bytes: u64) -> (f64, &'static str) {
     }
 }
 
-/// Returns a tuple containing the value and the unit in bytes.  In units of 1000.
-/// This only supports up to a tera.  Note the "single" unit will have a space appended to match the others if
-/// `spacing` is true.
+/// Returns a tuple containing the value and the unit in bytes.  In units of
+/// 1000. This only supports up to a tera.  Note the "single" unit will have a
+/// space appended to match the others if `spacing` is true.
 #[inline]
 pub fn get_decimal_bytes(bytes: u64) -> (f64, &'static str) {
     match bytes {
@@ -67,8 +67,8 @@ pub fn get_decimal_bytes(bytes: u64) -> (f64, &'static str) {
 }
 
 /// Returns a tuple containing the value and the unit.  In units of 1024.
-/// This only supports up to a tebi.  Note the "single" unit will have a space appended to match the others if
-/// `spacing` is true.
+/// This only supports up to a tebi.  Note the "single" unit will have a space
+/// appended to match the others if `spacing` is true.
 #[inline]
 pub fn get_binary_prefix(quantity: u64, unit: &str) -> (f64, String) {
     match quantity {
@@ -81,8 +81,8 @@ pub fn get_binary_prefix(quantity: u64, unit: &str) -> (f64, String) {
 }
 
 /// Returns a tuple containing the value and the unit.  In units of 1000.
-/// This only supports up to a tera.  Note the "single" unit will have a space appended to match the others if
-/// `spacing` is true.
+/// This only supports up to a tera.  Note the "single" unit will have a space
+/// appended to match the others if `spacing` is true.
 #[inline]
 pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
     match quantity {

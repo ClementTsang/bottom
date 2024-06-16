@@ -24,8 +24,9 @@ pub struct IoObject(io_object_t);
 impl IoObject {
     /// Returns a typed dictionary with this object's properties.
     pub fn properties(&self) -> anyhow::Result<CFDictionary<CFString, CFType>> {
-        // SAFETY: The IOKit call should be fine, the arguments are safe. The `assume_init` should also be fine, as
-        // we guard against it with a check against `result` to ensure it succeeded.
+        // SAFETY: The IOKit call should be fine, the arguments are safe. The
+        // `assume_init` should also be fine, as we guard against it with a
+        // check against `result` to ensure it succeeded.
         unsafe {
             let mut props = mem::MaybeUninit::<CFMutableDictionaryRef>::uninit();
 
@@ -45,8 +46,8 @@ impl IoObject {
         }
     }
 
-    /// Gets the [`kIOServicePlane`] parent [`io_object_t`] for this [`io_object_t`], if there
-    /// is one.
+    /// Gets the [`kIOServicePlane`] parent [`io_object_t`] for this
+    /// [`io_object_t`], if there is one.
     pub fn service_parent(&self) -> anyhow::Result<IoObject> {
         let mut parent: io_registry_entry_t = 0;
 
@@ -65,7 +66,8 @@ impl IoObject {
     // pub fn conforms_to_block_storage_driver(&self) -> bool {
     //     // SAFETY: IOKit call, the arguments should be safe.
     //     let result =
-    //         unsafe { IOObjectConformsTo(self.0, "IOBlockStorageDriver\0".as_ptr().cast()) };
+    //         unsafe { IOObjectConformsTo(self.0,
+    // "IOBlockStorageDriver\0".as_ptr().cast()) };
 
     //     result != 0
     // }
@@ -79,7 +81,8 @@ impl From<io_object_t> for IoObject {
 
 impl Drop for IoObject {
     fn drop(&mut self) {
-        // SAFETY: IOKit call, the argument here (an `io_object_t`) should be safe and expected.
+        // SAFETY: IOKit call, the argument here (an `io_object_t`) should be safe and
+        // expected.
         let result = unsafe { IOObjectRelease(self.0) };
         assert_eq!(result, kern_return::KERN_SUCCESS);
     }

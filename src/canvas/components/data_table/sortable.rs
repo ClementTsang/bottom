@@ -46,7 +46,8 @@ pub struct Sortable {
 }
 
 /// The [`SortType`] trait is meant to be used in the typing of a [`DataTable`]
-/// to denote whether the table is meant to display/store sorted or unsorted data.
+/// to denote whether the table is meant to display/store sorted or unsorted
+/// data.
 ///
 /// Note that the trait is [sealed](https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed),
 /// and therefore only [`Unsortable`] and [`Sortable`] can implement it.
@@ -97,9 +98,10 @@ impl SortType for Sortable {
                             SortOrder::Ascending => UP_ARROW,
                             SortOrder::Descending => DOWN_ARROW,
                         };
-                        // TODO: I think I can get away with removing the truncate_to_text call since
-                        // I almost always bind to at least the header size...
-                        // TODO: Or should we instead truncate but ALWAYS leave the arrow at the end?
+                        // TODO: I think I can get away with removing the truncate_to_text call
+                        // since I almost always bind to at least the header
+                        // size... TODO: Or should we instead truncate but
+                        // ALWAYS leave the arrow at the end?
                         truncate_to_text(&concat_string!(c.header(), arrow), width.get())
                     } else {
                         truncate_to_text(&c.header(), width.get())
@@ -127,7 +129,8 @@ pub struct SortColumn<T> {
     /// A restriction on this column's width.
     pub bounds: ColumnWidthBounds,
 
-    /// Marks that this column is currently "hidden", and should *always* be skipped.
+    /// Marks that this column is currently "hidden", and should *always* be
+    /// skipped.
     pub is_hidden: bool,
 }
 
@@ -178,8 +181,9 @@ impl<D, T> SortColumn<T>
 where
     T: ColumnHeader + SortsRow<DataType = D>,
 {
-    /// Creates a new [`SortColumn`] with a width that follows the header width, which has no shortcut and sorts by
-    /// default in ascending order ([`SortOrder::Ascending`]).
+    /// Creates a new [`SortColumn`] with a width that follows the header width,
+    /// which has no shortcut and sorts by default in ascending order
+    /// ([`SortOrder::Ascending`]).
     pub fn new(inner: T) -> Self {
         Self {
             inner,
@@ -189,8 +193,8 @@ where
         }
     }
 
-    /// Creates a new [`SortColumn`] with a hard width, which has no shortcut and sorts by default in
-    /// ascending order ([`SortOrder::Ascending`]).
+    /// Creates a new [`SortColumn`] with a hard width, which has no shortcut
+    /// and sorts by default in ascending order ([`SortOrder::Ascending`]).
     pub fn hard(inner: T, width: u16) -> Self {
         Self {
             inner,
@@ -200,8 +204,8 @@ where
         }
     }
 
-    /// Creates a new [`SortColumn`] with a soft width, which has no shortcut and sorts by default in
-    /// ascending order ([`SortOrder::Ascending`]).
+    /// Creates a new [`SortColumn`] with a soft width, which has no shortcut
+    /// and sorts by default in ascending order ([`SortOrder::Ascending`]).
     pub fn soft(inner: T, max_percentage: Option<f32>) -> Self {
         Self {
             inner,
@@ -226,7 +230,8 @@ where
         self
     }
 
-    /// Given a [`SortColumn`] and the sort order, sort a mutable slice of associated data.
+    /// Given a [`SortColumn`] and the sort order, sort a mutable slice of
+    /// associated data.
     pub fn sort_by(&self, data: &mut [D], order: SortOrder) {
         let descending = matches!(order, SortOrder::Descending);
         self.inner.sort_data(data, descending);
@@ -284,11 +289,11 @@ where
         }
     }
 
-    /// Given some `x` and `y`, if possible, select the corresponding column or toggle the column if already selected,
-    /// and otherwise do nothing.
+    /// Given some `x` and `y`, if possible, select the corresponding column or
+    /// toggle the column if already selected, and otherwise do nothing.
     ///
-    /// If there was some update, the corresponding column type will be returned. If nothing happens, [`None`] is
-    /// returned.
+    /// If there was some update, the corresponding column type will be
+    /// returned. If nothing happens, [`None`] is returned.
     pub fn try_select_location(&mut self, x: u16, y: u16) -> Option<usize> {
         if self.state.inner_rect.height > 1 && self.state.inner_rect.y == y {
             if let Some(index) = self.get_range(x) {
@@ -304,10 +309,11 @@ where
 
     /// Updates the sort index, and sets the sort order as appropriate.
     ///
-    /// If the index is different from the previous one, it will move to the new index and set the sort order
-    /// to the prescribed default sort order.
+    /// If the index is different from the previous one, it will move to the new
+    /// index and set the sort order to the prescribed default sort order.
     ///
-    /// If the index is the same as the previous one, it will simply toggle the current sort order.
+    /// If the index is the same as the previous one, it will simply toggle the
+    /// current sort order.
     pub fn set_sort_index(&mut self, index: usize) {
         if self.sort_type.sort_index == index {
             self.toggle_order();

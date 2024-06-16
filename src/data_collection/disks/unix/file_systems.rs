@@ -5,8 +5,8 @@ use crate::multi_eq_ignore_ascii_case;
 /// Known filesystems. Original list from
 /// [heim](https://github.com/heim-rs/heim/blob/master/heim-disk/src/filesystem.rs).
 ///
-/// All physical filesystems should have their own enum element and all virtual filesystems will go into
-/// the [`FileSystem::Other`] element.
+/// All physical filesystems should have their own enum element and all virtual
+/// filesystems will go into the [`FileSystem::Other`] element.
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 #[non_exhaustive]
 pub enum FileSystem {
@@ -81,7 +81,8 @@ impl FileSystem {
         !self.is_virtual()
     }
 
-    /// Checks if filesystem is used for a virtual devices (such as `tmpfs` or `smb` mounts).
+    /// Checks if filesystem is used for a virtual devices (such as `tmpfs` or
+    /// `smb` mounts).
     #[inline]
     pub fn is_virtual(&self) -> bool {
         matches!(self, FileSystem::Other(..))

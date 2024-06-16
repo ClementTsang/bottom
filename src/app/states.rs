@@ -112,7 +112,8 @@ impl Default for AppSearchState {
 }
 
 impl AppSearchState {
-    /// Resets the [`AppSearchState`] to its default state, albeit still enabled.
+    /// Resets the [`AppSearchState`] to its default state, albeit still
+    /// enabled.
     pub fn reset(&mut self) {
         *self = AppSearchState {
             is_enabled: self.is_enabled,
@@ -161,7 +162,8 @@ impl AppSearchState {
                         // Use the current index.
                         start_index
                     } else if cursor_range.end >= available_width {
-                        // If the current position is past the last visible element, skip until we see it.
+                        // If the current position is past the last visible element, skip until we
+                        // see it.
 
                         let mut index = 0;
                         for i in 0..(cursor_index + 1) {
@@ -211,7 +213,8 @@ impl AppSearchState {
             Ok(_) => {}
             Err(err) => match err {
                 GraphemeIncomplete::PreContext(ctx) => {
-                    // Provide the entire string as context. Not efficient but should resolve failures.
+                    // Provide the entire string as context. Not efficient but should resolve
+                    // failures.
                     self.grapheme_cursor
                         .provide_context(&self.current_search_query[0..ctx], 0);
 
@@ -233,7 +236,8 @@ impl AppSearchState {
             Ok(_) => {}
             Err(err) => match err {
                 GraphemeIncomplete::PreContext(ctx) => {
-                    // Provide the entire string as context. Not efficient but should resolve failures.
+                    // Provide the entire string as context. Not efficient but should resolve
+                    // failures.
                     self.grapheme_cursor
                         .provide_context(&self.current_search_query[0..ctx], 0);
 

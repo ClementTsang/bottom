@@ -249,14 +249,15 @@ impl Painter {
                 const SIGNAL: usize = if cfg!(target_os = "windows") { 1 } else { 15 };
 
                 // This is kinda weird, but the gist is:
-                // - We have three sections; we put our mouse bounding box for the "yes" button at the very right edge
-                //   of the left section and 3 characters back.  We then give it a buffer size of 1 on the x-coordinate.
-                // - Same for the "no" button, except it is the right section and we do it from the start of the right
-                //   section.
+                // - We have three sections; we put our mouse bounding box for the "yes" button
+                //   at the very right edge of the left section and 3 characters back.  We then
+                //   give it a buffer size of 1 on the x-coordinate.
+                // - Same for the "no" button, except it is the right section and we do it from
+                //   the start of the right section.
                 //
-                // Lastly, note that mouse detection for the dd buttons assume correct widths.  As such, we correct
-                // them here and check with >= and <= mouse bound checks, as opposed to how we do it elsewhere with
-                // >= and <.  See https://github.com/ClementTsang/bottom/pull/459 for details.
+                // Lastly, note that mouse detection for the dd buttons assume correct widths.
+                // As such, we correct them here and check with >= and <= mouse
+                // bound checks, as opposed to how we do it elsewhere with >= and <.  See https://github.com/ClementTsang/bottom/pull/459 for details.
                 app_state.delete_dialog_state.button_positions = vec![
                     // Yes
                     (

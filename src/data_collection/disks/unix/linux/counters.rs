@@ -28,7 +28,8 @@ impl FromStr for IoCounters {
 
     /// Converts a `&str` to an [`IoCounters`].
     ///
-    /// Follows the format used in Linux 2.6+. Note that this completely ignores the following stats:
+    /// Follows the format used in Linux 2.6+. Note that this completely ignores
+    /// the following stats:
     /// - Discard stats from 4.18+
     /// - Flush stats from 5.5+
     ///
@@ -71,7 +72,8 @@ pub fn io_stats() -> anyhow::Result<Vec<IoCounters>> {
     let mut reader = BufReader::new(File::open(PROC_DISKSTATS)?);
     let mut line = String::new();
 
-    // This saves us from doing a string allocation on each iteration compared to `lines()`.
+    // This saves us from doing a string allocation on each iteration compared to
+    // `lines()`.
     while let Ok(bytes) = reader.read_line(&mut line) {
         if bytes > 0 {
             if let Ok(counters) = IoCounters::from_str(&line) {

@@ -87,7 +87,8 @@ pub struct ProcessHarvest {
     /// Cumulative process uptime.
     pub time: Duration,
 
-    /// This is the *effective* user ID of the process. This is only used on Unix platforms.
+    /// This is the *effective* user ID of the process. This is only used on
+    /// Unix platforms.
     #[cfg(target_family = "unix")]
     pub uid: Option<libc::uid_t>,
 

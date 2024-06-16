@@ -43,8 +43,8 @@ impl Partition {
     /// Returns the device name for the partition.
     pub fn get_device_name(&self) -> String {
         if let Some(device) = self.device() {
-            // See if this disk is actually mounted elsewhere on Linux. This is a workaround properly map I/O
-            // in some cases (i.e. disk encryption, https://github.com/ClementTsang/bottom/issues/419).
+            // See if this disk is actually mounted elsewhere on Linux. This is a workaround
+            // properly map I/O in some cases (i.e. disk encryption, https://github.com/ClementTsang/bottom/issues/419).
             if let Ok(path) = std::fs::read_link(device) {
                 if path.is_absolute() {
                     path.into_os_string()
@@ -87,7 +87,8 @@ impl Partition {
 
         let mut vfs = mem::MaybeUninit::<libc::statvfs>::uninit();
 
-        // SAFETY: libc call, `path` is a valid C string and buf is a valid pointer to write to.
+        // SAFETY: libc call, `path` is a valid C string and buf is a valid pointer to
+        // write to.
         let result = unsafe { libc::statvfs(path.as_ptr(), vfs.as_mut_ptr()) };
 
         if result == 0 {
@@ -146,7 +147,8 @@ pub(crate) fn partitions() -> anyhow::Result<Vec<Partition>> {
     let mut reader = BufReader::new(File::open(PROC_MOUNTS)?);
     let mut line = String::new();
 
-    // This saves us from doing a string allocation on each iteration compared to `lines()`.
+    // This saves us from doing a string allocation on each iteration compared to
+    // `lines()`.
     while let Ok(bytes) = reader.read_line(&mut line) {
         if bytes > 0 {
             if let Ok(partition) = Partition::from_str(&line) {
@@ -171,7 +173,8 @@ pub(crate) fn physical_partitions() -> anyhow::Result<Vec<Partition>> {
     let mut reader = BufReader::new(File::open(PROC_MOUNTS)?);
     let mut line = String::new();
 
-    // This saves us from doing a string allocation on each iteration compared to `lines()`.
+    // This saves us from doing a string allocation on each iteration compared to
+    // `lines()`.
     while let Ok(bytes) = reader.read_line(&mut line) {
         if bytes > 0 {
             if let Ok(partition) = Partition::from_str(&line) {

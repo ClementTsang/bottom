@@ -98,7 +98,8 @@ impl Data {
     }
 }
 
-/// A wrapper around the sysinfo data source. We use sysinfo for the following data:
+/// A wrapper around the sysinfo data source. We use sysinfo for the following
+/// data:
 /// - CPU usage
 /// - Memory usage
 /// - Network usage
@@ -183,7 +184,7 @@ impl DataCollector {
             temperature_type: TemperatureType::Celsius,
             use_current_cpu_total: false,
             unnormalized_cpu: false,
-            last_collection_time: Instant::now() - Duration::from_secs(600), // Initialize it to the past to force it to load on initialization.
+            last_collection_time: Instant::now() - Duration::from_secs(600), /* Initialize it to the past to force it to load on initialization. */
             total_rx: 0,
             total_tx: 0,
             show_average_cpu: false,
@@ -255,7 +256,8 @@ impl DataCollector {
     /// - Disk (Windows)
     /// - Temperatures (non-Linux)
     fn refresh_sysinfo_data(&mut self) {
-        // Refresh the list of objects once every minute. If it's too frequent it can cause segfaults.
+        // Refresh the list of objects once every minute. If it's too frequent it can
+        // cause segfaults.
         const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
         let refresh_start = Instant::now();
 
@@ -374,9 +376,9 @@ impl DataCollector {
     fn update_processes(&mut self) {
         if self.widgets_to_harvest.use_proc {
             if let Ok(mut process_list) = self.get_processes() {
-                // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by PID here.
-                // We also want to avoid re-sorting *again* later on if we're sorting by PID, since we already
-                // did it here!
+                // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
+                // PID here. We also want to avoid re-sorting *again* later on
+                // if we're sorting by PID, since we already did it here!
                 process_list.sort_unstable_by_key(|p| p.pid);
                 self.data.list_of_processes = Some(process_list);
             }
@@ -473,12 +475,15 @@ impl DataCollector {
     }
 }
 
-/// We set a sleep duration between 10ms and 250ms, ideally sysinfo's [`sysinfo::MINIMUM_CPU_UPDATE_INTERVAL`] + 1.
+/// We set a sleep duration between 10ms and 250ms, ideally sysinfo's
+/// [`sysinfo::MINIMUM_CPU_UPDATE_INTERVAL`] + 1.
 ///
-/// We bound the upper end to avoid waiting too long (e.g. FreeBSD is 1s, which I'm fine with losing
-/// accuracy on for the first refresh), and we bound the lower end just to avoid the off-chance that
-/// refreshing too quickly causes problems. This second case should only happen on unsupported
-/// systems via sysinfo, in which case [`sysinfo::MINIMUM_CPU_UPDATE_INTERVAL`] is defined as 0.
+/// We bound the upper end to avoid waiting too long (e.g. FreeBSD is 1s, which
+/// I'm fine with losing accuracy on for the first refresh), and we bound the
+/// lower end just to avoid the off-chance that refreshing too quickly causes
+/// problems. This second case should only happen on unsupported systems via
+/// sysinfo, in which case [`sysinfo::MINIMUM_CPU_UPDATE_INTERVAL`] is defined
+/// as 0.
 ///
 /// We also do `INTERVAL + 1` for some wiggle room, just in case.
 const fn get_sleep_duration() -> Duration {

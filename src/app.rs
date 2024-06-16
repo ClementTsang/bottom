@@ -421,7 +421,8 @@ impl App {
             pws.is_sort_open = !pws.is_sort_open;
             pws.force_rerender = true;
 
-            // If the sort is now open, move left. Otherwise, if the proc sort was selected, force move right.
+            // If the sort is now open, move left. Otherwise, if the proc sort was selected,
+            // force move right.
             if pws.is_sort_open {
                 pws.sort_table.set_position(pws.table.sort_index());
                 self.move_widget_selection(&WidgetDirection::Left);
@@ -1054,13 +1055,15 @@ impl App {
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
-                // Traverse backwards from the current cursor location until you hit non-whitespace characters,
-                // then continue to traverse (and delete) backwards until you hit a whitespace character.  Halt.
+                // Traverse backwards from the current cursor location until you hit
+                // non-whitespace characters, then continue to traverse (and
+                // delete) backwards until you hit a whitespace character.  Halt.
 
                 // So... first, let's get our current cursor position in terms of char indices.
                 let end_index = proc_widget_state.cursor_char_index();
 
-                // Then, let's crawl backwards until we hit our location, and store the "head"...
+                // Then, let's crawl backwards until we hit our location, and store the
+                // "head"...
                 let query = proc_widget_state.current_search_query();
                 let mut start_index = 0;
                 let mut saw_non_whitespace = false;
@@ -1617,7 +1620,8 @@ impl App {
                                     if let Some(basic_table_widget_state) =
                                         &mut self.states.basic_table_widget_state
                                     {
-                                        // We also want to move towards Proc if we had set it to ProcSort.
+                                        // We also want to move towards Proc if we had set it to
+                                        // ProcSort.
                                         if let BottomWidgetType::ProcSort =
                                             basic_table_widget_state.currently_displayed_widget_type
                                         {
@@ -2505,20 +2509,22 @@ impl App {
         }
     }
 
-    /// Moves the mouse to the widget that was clicked on, then propagates the click down to be
-    /// handled by the widget specifically.
+    /// Moves the mouse to the widget that was clicked on, then propagates the
+    /// click down to be handled by the widget specifically.
     pub fn on_left_mouse_up(&mut self, x: u16, y: u16) {
-        // Pretty dead simple - iterate through the widget map and go to the widget where the click
-        // is within.
+        // Pretty dead simple - iterate through the widget map and go to the widget
+        // where the click is within.
 
         // TODO: [REFACTOR] might want to refactor this, it's really ugly.
-        // TODO: [REFACTOR] Might wanna refactor ALL state things in general, currently everything
-        // is grouped up as an app state.  We should separate stuff like event state and gui state and etc.
+        // TODO: [REFACTOR] Might wanna refactor ALL state things in general, currently
+        // everything is grouped up as an app state.  We should separate stuff
+        // like event state and gui state and etc.
 
-        // TODO: [MOUSE] double click functionality...?  We would do this above all other actions and SC if needed.
+        // TODO: [MOUSE] double click functionality...?  We would do this above all
+        // other actions and SC if needed.
 
-        // Short circuit if we're in basic table... we might have to handle the basic table arrow
-        // case here...
+        // Short circuit if we're in basic table... we might have to handle the basic
+        // table arrow case here...
 
         if let Some(bt) = &mut self.states.basic_table_widget_state {
             if let (
@@ -2582,8 +2588,8 @@ impl App {
             }
         }
 
-        // Second short circuit --- are we in the dd dialog state?  If so, only check yes/no/signals
-        // and bail after.
+        // Second short circuit --- are we in the dd dialog state?  If so, only check
+        // yes/no/signals and bail after.
         if self.is_in_dialog() {
             match self.delete_dialog_state.button_positions.iter().find(
                 |(tl_x, tl_y, br_x, br_y, _idx)| {
@@ -2649,7 +2655,8 @@ impl App {
         ) {
             let border_offset = u16::from(self.is_drawing_border());
 
-            // This check ensures the click isn't actually just clicking on the bottom border.
+            // This check ensures the click isn't actually just clicking on the bottom
+            // border.
             if y < (brc_y - border_offset) {
                 match &self.current_widget.widget_type {
                     BottomWidgetType::Proc
@@ -2682,8 +2689,10 @@ impl App {
 
                                             self.change_process_position(change);
 
-                                            // If in tree mode, also check to see if this click is on
-                                            // the same entry as the already selected one - if it is,
+                                            // If in tree mode, also check to see if this click is
+                                            // on
+                                            // the same entry as the already selected one - if it
+                                            // is,
                                             // then we minimize.
                                             if is_tree_mode && change == 0 {
                                                 self.toggle_collapsing_process_branch();
@@ -2755,8 +2764,9 @@ impl App {
                                 _ => {}
                             }
                         } else {
-                            // We might have clicked on a header!  Check if we only exceeded the table + border offset, and
-                            // it's implied we exceeded the gap offset.
+                            // We might have clicked on a header!  Check if we only exceeded the
+                            // table + border offset, and it's implied
+                            // we exceeded the gap offset.
                             if clicked_entry == border_offset {
                                 match &self.current_widget.widget_type {
                                     BottomWidgetType::Proc => {
@@ -2851,8 +2861,9 @@ impl App {
 
     /// A quick and dirty way to handle paste events.
     pub fn handle_paste(&mut self, paste: String) {
-        // Partially copy-pasted from the single-char variant; should probably clean up this process in the future.
-        // In particular, encapsulate this entire logic and add some tests to make it less potentially error-prone.
+        // Partially copy-pasted from the single-char variant; should probably clean up
+        // this process in the future. In particular, encapsulate this entire
+        // logic and add some tests to make it less potentially error-prone.
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .states

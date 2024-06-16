@@ -16,7 +16,8 @@ pub const TICK_RATE_IN_MILLISECONDS: u64 = 200;
 pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
 pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
 
-// Limits for when we should stop showing table gaps/labels (anything less means not shown)
+// Limits for when we should stop showing table gaps/labels (anything less means
+// not shown)
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 
@@ -773,8 +774,8 @@ mod test {
         }
     }
 
-    /// This test exists because previously, [`SIDE_BORDERS`] was set incorrectly after I moved from
-    /// tui-rs to ratatui.
+    /// This test exists because previously, [`SIDE_BORDERS`] was set
+    /// incorrectly after I moved from tui-rs to ratatui.
     #[test]
     fn assert_side_border_bits_match() {
         assert_eq!(

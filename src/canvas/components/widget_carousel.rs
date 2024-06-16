@@ -129,15 +129,18 @@ impl Painter {
 
             if app_state.should_get_widget_bounds() {
                 // Some explanations for future readers:
-                // - The "height" as of writing of this entire widget is 2.  If it's 1, it occasionally doesn't draw.
+                // - The "height" as of writing of this entire widget is 2.  If it's 1, it
+                //   occasionally doesn't draw.
                 // - As such, the buttons are only on the lower part of this 2-high widget.
-                // - So, we want to only check at one location, the `draw_loc.y + 1`, and that's it.
+                // - So, we want to only check at one location, the `draw_loc.y + 1`, and that's
+                //   it.
                 // - But why is it "+2" then?  Well, it's because I have a REALLY ugly hack
                 //   for mouse button checking, since most button checks are of the form `(draw_loc.y + draw_loc.height)`,
                 //   and the same for the x and width.  Unfortunately, if you check using >= and <=, the outer bound is
                 //   actually too large - so, we assume all of them are one too big and check via < (see
                 //   https://github.com/ClementTsang/bottom/pull/459 for details).
-                // - So in other words, to make it simple, we keep this to a standard and overshoot by one here.
+                // - So in other words, to make it simple, we keep this to a standard and
+                //   overshoot by one here.
                 if let Some(basic_table) = &mut app_state.states.basic_table_widget_state {
                     basic_table.left_tlc =
                         Some((margined_draw_loc[0].x, margined_draw_loc[0].y + 1));
