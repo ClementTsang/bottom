@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `mem_as_value` is now `process_memory_as_value`.
 - [#1472](https://github.com/ClementTsang/bottom/pull/1472): The following config fields have changed names:
   - `mem_as_value` is now `process_memory_as_value`.
-- [](): The following config fields have changed names:
+- [#1481](https://github.com/ClementTsang/bottom/pull/1481): The following config fields have changed names:
   - `disk_filter` is now `disk.name_filter`.
   - `mount_filter` is now `disk.mount_filter`.
   - `temp_filter` is now `temperature.sensor_filter`

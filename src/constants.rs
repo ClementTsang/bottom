@@ -602,15 +602,50 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "TopRight".
 
-# These are flags around the process widget.
+# Processes widget configuration
 #[processes]
 # The columns shown by the process widget. The following columns are supported:
-#   PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
+# PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
 #columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMEM%", "GPU%"]
 
-# [cpu]
+# CPU widget configuration
+#[cpu]
 # One of "all" (default), "average"/"avg"
 # default = "average"
+
+# Disk widget configuration
+#[disk]
+#[disk.name_filter]
+#is_list_ignored = true
+#list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
+
+#[disk.mount_filter]
+#is_list_ignored = true
+#list = ["/mnt/.*", "/boot"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
+
+# Temperature widget configuration
+#[temperature]
+#[temperature.sensor_filter]
+#is_list_ignored = true
+#list = ["cpu", "wifi"]
+#regex = false
+#case_sensitive = false
+#whole_word = false
+
+# Network widget configuration
+#[network]
+#[network.interface_filter]
+#is_list_ignored = true
+#list = ["virbr0.*"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
@@ -682,37 +717,6 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #  [[row.child]]
 #    type="proc"
 #    default=true
-
-
-# Filters - you can hide specific temperature sensors, network interfaces, and disks using filters.  This is admittedly
-# a bit hard to use as of now, and there is a planned in-app interface for managing this in the future:
-#[disk_filter]
-#is_list_ignored = true
-#list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
-#regex = true
-#case_sensitive = false
-#whole_word = false
-
-#[mount_filter]
-#is_list_ignored = true
-#list = ["/mnt/.*", "/boot"]
-#regex = true
-#case_sensitive = false
-#whole_word = false
-
-#[temp_filter]
-#is_list_ignored = true
-#list = ["cpu", "wifi"]
-#regex = false
-#case_sensitive = false
-#whole_word = false
-
-#[net_filter]
-#is_list_ignored = true
-#list = ["virbr0.*"]
-#regex = true
-#case_sensitive = false
-#whole_word = false
 "#;
 
 pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
