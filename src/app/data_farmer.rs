@@ -2,10 +2,10 @@
 //! a better name for the file.  Since I called data collection "harvesting",
 //! then this is the farmer I guess.
 //!
-//! Essentially the main goal is to shift the initial calculation and distribution
-//! of joiner points and data to one central location that will only do it
-//! *once* upon receiving the data --- as opposed to doing it on canvas draw,
-//! which will be a costly process.
+//! Essentially the main goal is to shift the initial calculation and
+//! distribution of joiner points and data to one central location that will
+//! only do it *once* upon receiving the data --- as opposed to doing it on
+//! canvas draw, which will be a costly process.
 //!
 //! This will also handle the *cleaning* of stale data.  That should be done
 //! in some manner (timer on another thread, some loop) that will occasionally
@@ -102,8 +102,8 @@ impl ProcessData {
 /// collected, and what is needed to convert into a displayable form.
 ///
 /// If the app is *frozen* - that is, we do not want to *display* any changing
-/// data, keep updating this. As of 2021-09-08, we just clone the current collection
-/// when it freezes to have a snapshot floating around.
+/// data, keep updating this. As of 2021-09-08, we just clone the current
+/// collection when it freezes to have a snapshot floating around.
 ///
 /// Note that with this method, the *app* thread is responsible for cleaning -
 /// not the data collector.
@@ -355,7 +355,8 @@ impl DataCollection {
                     #[cfg(feature = "zfs")]
                     {
                         if !device.name.starts_with('/') {
-                            Some(device.name.as_str()) // use the whole zfs dataset name
+                            Some(device.name.as_str()) // use the whole zfs
+                                                       // dataset name
                         } else {
                             device.name.split('/').last()
                         }

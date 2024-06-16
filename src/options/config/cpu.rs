@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
-/// The default selection of the CPU widget. If the given selection is invalid, we will fall back to all.
+/// The default selection of the CPU widget. If the given selection is invalid,
+/// we will fall back to all.
 #[derive(Clone, Copy, Debug, Default, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum CpuDefault {

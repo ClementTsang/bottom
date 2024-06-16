@@ -1,4 +1,5 @@
-//! This file is meant to house (OS specific) implementations on how to kill processes.
+//! This file is meant to house (OS specific) implementations on how to kill
+//! processes.
 
 #[cfg(target_os = "windows")]
 use windows::Win32::{
@@ -61,7 +62,8 @@ pub fn kill_process_given_pid(pid: Pid) -> crate::utils::error::Result<()> {
 /// Kills a process, given a PID, for UNIX.
 #[cfg(target_family = "unix")]
 pub fn kill_process_given_pid(pid: Pid, signal: usize) -> crate::utils::error::Result<()> {
-    // SAFETY: the signal should be valid, and we act properly on an error (exit code not 0).
+    // SAFETY: the signal should be valid, and we act properly on an error (exit
+    // code not 0).
 
     let output = unsafe { libc::kill(pid, signal as i32) };
     if output != 0 {

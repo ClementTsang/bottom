@@ -1,10 +1,12 @@
 //! Vendored from <https://github.com/fdehau/tui-rs/blob/fafad6c96109610825aad89c4bba5253e01101ed/src/widgets/canvas/mod.rs>
 //! and <https://github.com/ratatui-org/ratatui/blob/c8dd87918d44fff6d4c3c78e1fc821a3275db1ae/src/widgets/canvas.rs>.
 //!
-//! The main thing this is pulled in for is overriding how `BrailleGrid`'s draw logic works, as changing it is
-//! needed in order to draw all datasets in only one layer back in [`super::TimeChart::render`]. More specifically,
-//! the current implementation in ratatui `|=`s all the cells together if they overlap, but since we are smashing
-//! all the layers together which may have different colours, we instead just _replace_ whatever was in that cell
+//! The main thing this is pulled in for is overriding how `BrailleGrid`'s draw
+//! logic works, as changing it is needed in order to draw all datasets in only
+//! one layer back in [`super::TimeChart::render`]. More specifically,
+//! the current implementation in ratatui `|=`s all the cells together if they
+//! overlap, but since we are smashing all the layers together which may have
+//! different colours, we instead just _replace_ whatever was in that cell
 //! with the newer colour + character.
 //!
 //! See <https://github.com/ClementTsang/bottom/pull/918> and <https://github.com/ClementTsang/bottom/pull/937> for the
@@ -285,19 +287,21 @@ pub struct Painter<'a, 'b> {
     resolution: (f64, f64),
 }
 
-/// The HalfBlockGrid is a grid made up of cells each containing a half block character.
+/// The HalfBlockGrid is a grid made up of cells each containing a half block
+/// character.
 ///
-/// In terminals, each character is usually twice as tall as it is wide. Unicode has a couple of
-/// vertical half block characters, the upper half block '▀' and lower half block '▄' which take up
-/// half the height of a normal character but the full width. Together with an empty space ' ' and a
-/// full block '█', we can effectively double the resolution of a single cell. In addition, because
-/// each character can have a foreground and background color, we can control the color of the upper
-/// and lower half of each cell. This allows us to draw shapes with a resolution of 1x2 "pixels" per
-/// cell.
+/// In terminals, each character is usually twice as tall as it is wide. Unicode
+/// has a couple of vertical half block characters, the upper half block '▀' and
+/// lower half block '▄' which take up half the height of a normal character but
+/// the full width. Together with an empty space ' ' and a full block '█', we
+/// can effectively double the resolution of a single cell. In addition, because
+/// each character can have a foreground and background color, we can control
+/// the color of the upper and lower half of each cell. This allows us to draw
+/// shapes with a resolution of 1x2 "pixels" per cell.
 ///
-/// This allows for more flexibility than the BrailleGrid which only supports a single
-/// foreground color for each 2x4 dots cell, and the CharGrid which only supports a single
-/// character for each cell.
+/// This allows for more flexibility than the BrailleGrid which only supports a
+/// single foreground color for each 2x4 dots cell, and the CharGrid which only
+/// supports a single character for each cell.
 #[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
 struct HalfBlockGrid {
     /// width of the grid in number of terminal columns
@@ -309,8 +313,8 @@ struct HalfBlockGrid {
 }
 
 impl HalfBlockGrid {
-    /// Create a new [`HalfBlockGrid`] with the given width and height measured in terminal columns
-    /// and rows respectively.
+    /// Create a new [`HalfBlockGrid`] with the given width and height measured
+    /// in terminal columns and rows respectively.
     fn new(width: u16, height: u16) -> HalfBlockGrid {
         HalfBlockGrid {
             width,
@@ -334,10 +338,11 @@ impl Grid for HalfBlockGrid {
     }
 
     fn save(&self) -> Layer {
-        // Given that we store the pixels in a grid, and that we want to use 2 pixels arranged
-        // vertically to form a single terminal cell, which can be either empty, upper half block,
-        // lower half block or full block, we need examine the pixels in vertical pairs to decide
-        // what character to print in each cell. So these are the 4 states we use to represent each
+        // Given that we store the pixels in a grid, and that we want to use 2 pixels
+        // arranged vertically to form a single terminal cell, which can be
+        // either empty, upper half block, lower half block or full block, we
+        // need examine the pixels in vertical pairs to decide what character to
+        // print in each cell. So these are the 4 states we use to represent each
         // cell:
         //
         // 1. upper: reset, lower: reset => ' ' fg: reset / bg: reset
@@ -345,20 +350,23 @@ impl Grid for HalfBlockGrid {
         // 3. upper: color, lower: reset => '▀' fg: upper color / bg: reset
         // 4. upper: color, lower: color => '▀' fg: upper color / bg: lower color
         //
-        // Note that because the foreground reset color (i.e. default foreground color) is usually
-        // not the same as the background reset color (i.e. default background color), we need to
-        // swap around the colors for that state (2 reset/color).
+        // Note that because the foreground reset color (i.e. default foreground color)
+        // is usually not the same as the background reset color (i.e. default
+        // background color), we need to swap around the colors for that state
+        // (2 reset/color).
         //
-        // When the upper and lower colors are the same, we could continue to use an upper half
-        // block, but we choose to use a full block instead. This allows us to write unit tests that
-        // treat the cell as a single character instead of two half block characters.
+        // When the upper and lower colors are the same, we could continue to use an
+        // upper half block, but we choose to use a full block instead. This
+        // allows us to write unit tests that treat the cell as a single
+        // character instead of two half block characters.
 
-        // Note we implement this slightly differently to what is done in ratatui's repo,
-        // since their version doesn't seem to compile for me...
-        // TODO: Whenever I add this as a valid marker, make sure this works fine with the overriden
-        // time_chart drawing-layer-thing.
+        // Note we implement this slightly differently to what is done in ratatui's
+        // repo, since their version doesn't seem to compile for me...
+        // TODO: Whenever I add this as a valid marker, make sure this works fine with
+        // the overriden time_chart drawing-layer-thing.
 
-        // Join the upper and lower rows, and emit a tuple vector of strings to print, and their colours.
+        // Join the upper and lower rows, and emit a tuple vector of strings to print,
+        // and their colours.
         let (string, colors) = self
             .pixels
             .iter()
@@ -503,8 +511,8 @@ impl<'a> Context<'a> {
     }
 }
 
-/// The Canvas widget may be used to draw more detailed figures using braille patterns (each
-/// cell can have a braille character in 8 different positions).
+/// The Canvas widget may be used to draw more detailed figures using braille
+/// patterns (each cell can have a braille character in 8 different positions).
 pub struct Canvas<'a, F>
 where
     F: Fn(&mut Context<'_>),
@@ -558,9 +566,10 @@ where
         self
     }
 
-    /// Change the type of points used to draw the shapes. By default the braille patterns are used
-    /// as they provide a more fine grained result but you might want to use the simple dot or
-    /// block instead if the targeted terminal does not support those symbols.
+    /// Change the type of points used to draw the shapes. By default the
+    /// braille patterns are used as they provide a more fine grained result
+    /// but you might want to use the simple dot or block instead if the
+    /// targeted terminal does not support those symbols.
     ///
     /// # Examples
     ///

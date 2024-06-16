@@ -16,8 +16,9 @@ impl Filter {
     #[inline]
     pub(crate) fn keep_entry(&self, value: &str) -> bool {
         if self.has_match(value) {
-            // If a match is found, then if we wanted to ignore if we match, return false. If we want
-            // to keep if we match, return true. Thus, return the inverse of `is_list_ignored`.
+            // If a match is found, then if we wanted to ignore if we match, return false.
+            // If we want to keep if we match, return true. Thus, return the
+            // inverse of `is_list_ignored`.
             !self.is_list_ignored
         } else {
             self.is_list_ignored

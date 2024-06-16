@@ -1,7 +1,8 @@
 use super::DataCollection;
 
-/// The [`FrozenState`] indicates whether the application state should be frozen. It is either not frozen or
-/// frozen and containing a copy of the state at the time.
+/// The [`FrozenState`] indicates whether the application state should be
+/// frozen. It is either not frozen or frozen and containing a copy of the state
+/// at the time.
 pub enum FrozenState {
     NotFrozen,
     Frozen(Box<DataCollection>),

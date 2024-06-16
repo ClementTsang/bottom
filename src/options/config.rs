@@ -1,24 +1,29 @@
 pub mod cpu;
+pub mod disk;
 mod ignore_list;
 pub mod layout;
-pub mod process_columns;
+pub mod network;
+pub mod process;
+pub mod temperature;
 
+use disk::DiskConfig;
+use network::NetworkConfig;
 use serde::{Deserialize, Serialize};
+use temperature::TempConfig;
 
 pub use self::ignore_list::IgnoreList;
-use self::{cpu::CpuConfig, layout::Row, process_columns::ProcessConfig};
-use super::ConfigColours;
+use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
+use super::ColoursConfig;
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct ConfigV1 {
-    pub(crate) flags: Option<ConfigFlags>,
-    pub(crate) colors: Option<ConfigColours>,
+    pub(crate) flags: Option<FlagConfig>,
+    pub(crate) colors: Option<ColoursConfig>,
     pub(crate) row: Option<Vec<Row>>,
-    pub(crate) disk_filter: Option<IgnoreList>,
-    pub(crate) mount_filter: Option<IgnoreList>,
-    pub(crate) temp_filter: Option<IgnoreList>,
-    pub(crate) net_filter: Option<IgnoreList>,
-    pub(crate) processes: Option<ProcessConfig>,
+    pub(crate) processes: Option<ProcessesConfig>,
+    pub(crate) disk: Option<DiskConfig>,
+    pub(crate) temperature: Option<TempConfig>,
+    pub(crate) network: Option<NetworkConfig>,
     pub(crate) cpu: Option<CpuConfig>,
 }
 
@@ -42,7 +47,7 @@ impl From<u64> for StringOrNum {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub(crate) struct ConfigFlags {
+pub(crate) struct FlagConfig {
     pub(crate) hide_avg_cpu: Option<bool>,
     pub(crate) dot_marker: Option<bool>,
     pub(crate) temperature_type: Option<String>,

@@ -1,5 +1,5 @@
-//! Partial bindings from Apple's open source code for getting process information.
-//! Some of this is based on [heim's binding implementation](https://github.com/heim-rs/heim/blob/master/heim-process/src/sys/macos/bindings/process.rs).
+//! Partial bindings from Apple's open source code for getting process
+//! information. Some of this is based on [heim's binding implementation](https://github.com/heim-rs/heim/blob/master/heim-process/src/sys/macos/bindings/process.rs).
 
 use std::mem;
 
@@ -152,7 +152,8 @@ pub(crate) struct extern_proc {
     /// Pointer to process group. Originally a pointer to a `pgrp`.
     pub p_pgrp: *mut c_void,
 
-    /// Kernel virtual addr of u-area (PROC ONLY). Originally a pointer to a `user`.
+    /// Kernel virtual addr of u-area (PROC ONLY). Originally a pointer to a
+    /// `user`.
     pub p_addr: *mut c_void,
 
     /// Exit status for wait; also stop signal.
@@ -207,10 +208,12 @@ pub(crate) struct vmspace {
 #[allow(non_camel_case_types)]
 #[repr(C)]
 pub(crate) struct eproc {
-    /// Address of proc. We just cheat and use a c_void pointer since we aren't using this.
+    /// Address of proc. We just cheat and use a c_void pointer since we aren't
+    /// using this.
     pub e_paddr: *mut c_void,
 
-    /// Session pointer.  We just cheat and use a c_void pointer since we aren't using this.
+    /// Session pointer.  We just cheat and use a c_void pointer since we aren't
+    /// using this.
     pub e_sess: *mut c_void,
 
     /// Process credentials
@@ -237,7 +240,8 @@ pub(crate) struct eproc {
     /// tty process group id
     pub e_tpgid: pid_t,
 
-    /// tty session pointer.  We just cheat and use a c_void pointer since we aren't using this.
+    /// tty session pointer.  We just cheat and use a c_void pointer since we
+    /// aren't using this.
     pub e_tsess: *mut c_void,
 
     /// wchan message
@@ -291,8 +295,8 @@ pub(crate) fn kinfo_process(pid: Pid) -> Result<kinfo_proc> {
         bail!("failed to get process for pid {pid}");
     }
 
-    // SAFETY: info is initialized if result succeeded and returned a non-negative result. If sysctl failed, it returns
-    // -1 with errno set.
+    // SAFETY: info is initialized if result succeeded and returned a non-negative
+    // result. If sysctl failed, it returns -1 with errno set.
     //
     // Source: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/sysctl.3.html
     unsafe { Ok(info.assume_init()) }

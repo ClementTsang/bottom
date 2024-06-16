@@ -143,6 +143,7 @@ clap_complete_nushell = "4.5.1"
 clap_complete_fig = "4.5.0"
 clap_mangen = "0.2.20"
 indoc = "2.0.5"
+# schemars = "0.8.21"
 
 [package.metadata.deb]
 section = "utility"

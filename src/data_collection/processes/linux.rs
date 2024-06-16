@@ -29,11 +29,11 @@ pub struct PrevProcDetails {
     cpu_time: u64,
 }
 
-/// Given `/proc/stat` file contents, determine the idle and non-idle values of the CPU
-/// used to calculate CPU usage.
+/// Given `/proc/stat` file contents, determine the idle and non-idle values of
+/// the CPU used to calculate CPU usage.
 fn fetch_cpu_usage(line: &str) -> (f64, f64) {
-    /// Converts a `Option<&str>` value to an f64. If it fails to parse or is `None`, it
-    /// will return `0_f64`.
+    /// Converts a `Option<&str>` value to an f64. If it fails to parse or is
+    /// `None`, it will return `0_f64`.
     fn str_to_f64(val: Option<&str>) -> f64 {
         val.and_then(|v| v.parse::<f64>().ok()).unwrap_or(0_f64)
     }
@@ -48,8 +48,8 @@ fn fetch_cpu_usage(line: &str) -> (f64, f64) {
     let softirq: f64 = str_to_f64(val.next());
     let steal: f64 = str_to_f64(val.next());
 
-    // Note we do not get guest/guest_nice, as they are calculated as part of user/nice respectively
-    // See https://github.com/htop-dev/htop/blob/main/linux/LinuxProcessList.c
+    // Note we do not get guest/guest_nice, as they are calculated as part of
+    // user/nice respectively See https://github.com/htop-dev/htop/blob/main/linux/LinuxProcessList.c
     let idle = idle + iowait;
     let non_idle = user + nice + system + irq + softirq + steal;
 
@@ -331,8 +331,8 @@ pub(crate) fn linux_process_data(
         if unnormalized_cpu {
             let num_processors = collector.sys.system.cpus().len() as f64;
 
-            // Note we *divide* here because the later calculation divides `cpu_usage` - in effect,
-            // multiplying over the number of cores.
+            // Note we *divide* here because the later calculation divides `cpu_usage` - in
+            // effect, multiplying over the number of cores.
             cpu_usage /= num_processors;
         }
 

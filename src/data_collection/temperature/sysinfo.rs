@@ -21,7 +21,8 @@ pub fn get_temperature_data(
         }
     }
 
-    // For RockPro64 boards on FreeBSD, they apparently use "hw.temperature" for sensors.
+    // For RockPro64 boards on FreeBSD, they apparently use "hw.temperature" for
+    // sensors.
     #[cfg(target_os = "freebsd")]
     {
         use sysctl::Sysctl;

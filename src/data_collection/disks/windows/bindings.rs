@@ -41,7 +41,8 @@ fn volume_io(volume: &Path) -> anyhow::Result<DISK_PERFORMANCE> {
         wide_path
     };
 
-    // SAFETY: API call, arguments should be correct. We must also check after the call to ensure it is valid.
+    // SAFETY: API call, arguments should be correct. We must also check after the
+    // call to ensure it is valid.
     let h_device = unsafe {
         CreateFileW(
             windows::core::PCWSTR(volume.as_ptr()),
@@ -61,7 +62,8 @@ fn volume_io(volume: &Path) -> anyhow::Result<DISK_PERFORMANCE> {
     let mut disk_performance = DISK_PERFORMANCE::default();
     let mut bytes_returned = 0;
 
-    // SAFETY: This should be safe, we'll manually check the results and the arguments should be valid.
+    // SAFETY: This should be safe, we'll manually check the results and the
+    // arguments should be valid.
     let ret = unsafe {
         DeviceIoControl(
             h_device,
@@ -112,7 +114,8 @@ pub(crate) fn all_volume_io() -> anyhow::Result<Vec<anyhow::Result<(DISK_PERFORM
     let mut buffer = [0_u16; Foundation::MAX_PATH as usize];
 
     // Get the first volume and add the stats needed.
-    // SAFETY: We must verify the handle is correct. If no volume is found, it will be set to `INVALID_HANDLE_VALUE`.
+    // SAFETY: We must verify the handle is correct. If no volume is found, it will
+    // be set to `INVALID_HANDLE_VALUE`.
     let handle = unsafe { FindFirstVolumeW(&mut buffer) }?;
     if handle.is_invalid() {
         bail!("Invalid handle value: {:?}", io::Error::last_os_error());
@@ -148,8 +151,8 @@ pub(crate) fn all_volume_io() -> anyhow::Result<Vec<anyhow::Result<(DISK_PERFORM
 
 /// Returns the volume name from a mount name if possible.
 pub(crate) fn volume_name_from_mount(mount: &str) -> anyhow::Result<String> {
-    // According to winapi docs 50 is a reasonable length to accomodate the volume path
-    // https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumenameforvolumemountpointw
+    // According to winapi docs 50 is a reasonable length to accomodate the volume
+    // path https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumenameforvolumemountpointw
     const VOLUME_MAX_LEN: usize = 50;
 
     let mount = {

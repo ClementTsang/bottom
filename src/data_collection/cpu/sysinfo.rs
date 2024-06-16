@@ -32,7 +32,8 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> crate::error::
 }
 
 pub fn get_load_avg() -> crate::error::Result<LoadAvgHarvest> {
-    // The API for sysinfo apparently wants you to call it like this, rather than using a &System.
+    // The API for sysinfo apparently wants you to call it like this, rather than
+    // using a &System.
     let LoadAvg { one, five, fifteen } = sysinfo::System::load_average();
 
     Ok([one as f32, five as f32, fifteen as f32])

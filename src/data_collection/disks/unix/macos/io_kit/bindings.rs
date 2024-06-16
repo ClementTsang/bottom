@@ -49,7 +49,8 @@ extern "C" {
         entry: io_registry_entry_t, plane: *const libc::c_char, parent: *mut io_registry_entry_t,
     ) -> kern_return_t;
 
-    // pub fn IOObjectConformsTo(object: io_object_t, className: *const libc::c_char) -> mach2::boolean::boolean_t;
+    // pub fn IOObjectConformsTo(object: io_object_t, className: *const
+    // libc::c_char) -> mach2::boolean::boolean_t;
 
     pub fn IORegistryEntryCreateCFProperties(
         entry: io_registry_entry_t, properties: *mut CFMutableDictionaryRef,

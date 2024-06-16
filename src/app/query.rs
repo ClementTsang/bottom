@@ -26,13 +26,15 @@ const OR_LIST: [&str; 2] = ["or", "||"];
 const AND_LIST: [&str; 2] = ["and", "&&"];
 
 /// In charge of parsing the given query.
-/// We are defining the following language for a query (case-insensitive prefixes):
+/// We are defining the following language for a query (case-insensitive
+/// prefixes):
 ///
 /// - Process names: No prefix required, can use regex, match word, or case.
-///   Enclosing anything, including prefixes, in quotes, means we treat it as an entire process
-///   rather than a prefix.
+///   Enclosing anything, including prefixes, in quotes, means we treat it as an
+///   entire process rather than a prefix.
 /// - PIDs: Use prefix `pid`, can use regex or match word (case is irrelevant).
-/// - CPU: Use prefix `cpu`, cannot use r/m/c (regex, match word, case).  Can compare.
+/// - CPU: Use prefix `cpu`, cannot use r/m/c (regex, match word, case).  Can
+///   compare.
 /// - MEM: Use prefix `mem`, cannot use r/m/c.  Can compare.
 /// - STATE: Use prefix `state`, can use regex, match word, or case.
 /// - USER: Use prefix `user`, can use regex, match word, or case.
@@ -41,9 +43,10 @@ const AND_LIST: [&str; 2] = ["and", "&&"];
 /// - Total read: Use prefix `read`.  Can compare.
 /// - Total write: Use prefix `write`.  Can compare.
 ///
-/// For queries, whitespaces are our delimiters.  We will merge together any adjacent non-prefixed
-/// or quoted elements after splitting to treat as process names.
-/// Furthermore, we want to support boolean joiners like AND and OR, and brackets.
+/// For queries, whitespaces are our delimiters.  We will merge together any
+/// adjacent non-prefixed or quoted elements after splitting to treat as process
+/// names. Furthermore, we want to support boolean joiners like AND and OR, and
+/// brackets.
 pub fn parse_query(
     search_query: &str, is_searching_whole_word: bool, is_ignoring_case: bool,
     is_searching_with_regex: bool,
@@ -176,8 +179,9 @@ pub fn parse_query(
         if let Some(queue_top) = query.pop_front() {
             if inside_quotation {
                 if queue_top == "\"" {
-                    // This means we hit something like "".  Return an empty prefix, and to deal with
-                    // the close quote checker, add one to the top of the stack.  Ugly fix but whatever.
+                    // This means we hit something like "".  Return an empty prefix, and to deal
+                    // with the close quote checker, add one to the top of the
+                    // stack.  Ugly fix but whatever.
                     query.push_front("\"".to_string());
                     return Ok(Prefix {
                         or: None,
@@ -268,8 +272,9 @@ pub fn parse_query(
             } else if queue_top == ")" {
                 return Err(QueryError("Missing opening parentheses".into()));
             } else if queue_top == "\"" {
-                // Similar to parentheses, trap and check for missing closing quotes.  Note, however, that we
-                // will DIRECTLY call another process_prefix call...
+                // Similar to parentheses, trap and check for missing closing quotes.  Note,
+                // however, that we will DIRECTLY call another process_prefix
+                // call...
 
                 let prefix = process_prefix(query, true)?;
                 if let Some(close_paren) = query.pop_front() {
@@ -308,10 +313,12 @@ pub fn parse_query(
                                     // - (test)
                                     // - (test
                                     // - test)
-                                    // These are split into 2 to 3 different strings due to parentheses being
+                                    // These are split into 2 to 3 different strings due to
+                                    // parentheses being
                                     // delimiters in our query system.
                                     //
-                                    // Do we want these to be valid?  They should, as a string, right?
+                                    // Do we want these to be valid?  They should, as a string,
+                                    // right?
 
                                     return Ok(Prefix {
                                         or: None,
@@ -385,8 +392,8 @@ pub fn parse_query(
                             let mut condition: Option<QueryComparison> = None;
                             let mut value: Option<f64> = None;
 
-                            // TODO: Jeez, what the heck did I write here... add some tests and clean this up in the
-                            // future.
+                            // TODO: Jeez, what the heck did I write here... add some tests and
+                            // clean this up in the future.
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
                                 if let Some(queue_next) = query.pop_front() {
@@ -423,8 +430,9 @@ pub fn parse_query(
 
                             if let Some(condition) = condition {
                                 if let Some(read_value) = value {
-                                    // Note that the values *might* have a unit or need to be parsed differently
-                                    // based on the prefix type!
+                                    // Note that the values *might* have a unit or need to be parsed
+                                    // differently based on the
+                                    // prefix type!
 
                                     let mut value = read_value;
 
@@ -691,7 +699,8 @@ impl std::str::FromStr for PrefixType {
     }
 }
 
-// TODO: This is also jank and could be better represented. Add tests, then clean up!
+// TODO: This is also jank and could be better represented. Add tests, then
+// clean up!
 #[derive(Default)]
 pub struct Prefix {
     pub or: Option<Box<Or>>,

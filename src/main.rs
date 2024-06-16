@@ -1,9 +1,11 @@
-//! A customizable cross-platform graphical process/system monitor for the terminal.
-//! Supports Linux, macOS, and Windows. Inspired by gtop, gotop, and htop.
+//! A customizable cross-platform graphical process/system monitor for the
+//! terminal. Supports Linux, macOS, and Windows. Inspired by gtop, gotop, and
+//! htop.
 //!
-//! **Note:** The following documentation is primarily intended for people to refer to for development purposes rather
-//! than the actual usage of the application. If you are instead looking for documentation regarding the *usage* of
-//! bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
+//! **Note:** The following documentation is primarily intended for people to
+//! refer to for development purposes rather than the actual usage of the
+//! application. If you are instead looking for documentation regarding the
+//! *usage* of bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
 
 pub mod app;
 pub mod utils {
@@ -48,8 +50,7 @@ use crossterm::{
 };
 use data_conversion::*;
 use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, CollectionThreadEvent};
-use options::args;
-use options::{get_color_scheme, get_config_path, get_or_create_config, init_app};
+use options::{args, get_color_scheme, get_config_path, get_or_create_config, init_app};
 use tui::{backend::CrosstermBackend, Terminal};
 use utils::error;
 #[allow(unused_imports)]
@@ -156,9 +157,11 @@ fn create_input_thread(
                     if let Ok(event) = read() {
                         match event {
                             Event::Resize(_, _) => {
-                                // TODO: Might want to debounce this in the future, or take into account the actual resize
-                                // values. Maybe we want to keep the current implementation in case the resize event might
-                                // not fire... not sure.
+                                // TODO: Might want to debounce this in the future, or take into
+                                // account the actual resize values.
+                                // Maybe we want to keep the current implementation in case the
+                                // resize event might not fire...
+                                // not sure.
 
                                 if sender.send(BottomEvent::Resize).is_err() {
                                     break;
@@ -170,7 +173,8 @@ fn create_input_thread(
                                 }
                             }
                             Event::Key(key) if key.kind == KeyEventKind::Press => {
-                                // For now, we only care about key down events. This may change in the future.
+                                // For now, we only care about key down events. This may change in
+                                // the future.
                                 if sender.send(BottomEvent::KeyInput(key)).is_err() {
                                     break;
                                 }
@@ -302,7 +306,8 @@ fn main() -> anyhow::Result<()> {
         CanvasStyling::new(colour_scheme, &config)?
     };
 
-    // Create an "app" struct, which will control most of the program and store settings/state
+    // Create an "app" struct, which will control most of the program and store
+    // settings/state
     let (mut app, widget_layout) = init_app(args, config, &styling)?;
 
     // Create painter and set colours.
@@ -311,14 +316,16 @@ fn main() -> anyhow::Result<()> {
     // Check if the current environment is in a terminal.
     check_if_terminal();
 
-    // Create termination mutex and cvar. We use this setup because we need to sleep at some points in the update
-    // thread, but we want to be able to interrupt the "sleep" if a termination occurs.
+    // Create termination mutex and cvar. We use this setup because we need to sleep
+    // at some points in the update thread, but we want to be able to interrupt
+    // the "sleep" if a termination occurs.
     let termination_lock = Arc::new(Mutex::new(false));
     let termination_cvar = Arc::new(Condvar::new());
 
     let (sender, receiver) = mpsc::channel();
 
-    // Set up the event loop thread; we set this up early to speed up first-time-to-data.
+    // Set up the event loop thread; we set this up early to speed up
+    // first-time-to-data.
     let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
     let _collection_thread = create_collection_thread(
         sender.clone(),
@@ -394,7 +401,8 @@ fn main() -> anyhow::Result<()> {
 
     let mut first_run = true;
 
-    // Draw once first to initialize the canvas, so it doesn't feel like it's frozen.
+    // Draw once first to initialize the canvas, so it doesn't feel like it's
+    // frozen.
     try_drawing(&mut terminal, &mut app, &mut painter)?;
 
     loop {

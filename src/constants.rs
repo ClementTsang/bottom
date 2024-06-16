@@ -1,6 +1,6 @@
 use tui::widgets::Borders;
 
-use crate::options::ConfigColours;
+use crate::options::ColoursConfig;
 
 // Default widget ID
 pub const DEFAULT_WIDGET_ID: u64 = 56709;
@@ -16,7 +16,8 @@ pub const TICK_RATE_IN_MILLISECONDS: u64 = 200;
 pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
 pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
 
-// Limits for when we should stop showing table gaps/labels (anything less means not shown)
+// Limits for when we should stop showing table gaps/labels (anything less means
+// not shown)
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 
@@ -25,8 +26,8 @@ pub const SIDE_BORDERS: Borders = Borders::LEFT.union(Borders::RIGHT);
 
 // Colour profiles
 // TODO: Generate these with a macro or something...
-pub fn default_light_mode_colour_palette() -> ConfigColours {
-    ConfigColours {
+pub fn default_light_mode_colour_palette() -> ColoursConfig {
+    ColoursConfig {
         text_color: Some("black".into()),
         border_color: Some("black".into()),
         table_header_color: Some("black".into()),
@@ -61,12 +62,12 @@ pub fn default_light_mode_colour_palette() -> ConfigColours {
             "Blue".into(),
             "Red".into(),
         ]),
-        ..ConfigColours::default()
+        ..ColoursConfig::default()
     }
 }
 
-pub fn gruvbox_colour_palette() -> ConfigColours {
-    ConfigColours {
+pub fn gruvbox_colour_palette() -> ColoursConfig {
+    ColoursConfig {
         table_header_color: Some("#83a598".into()),
         all_cpu_color: Some("#8ec07c".into()),
         avg_cpu_color: Some("#fb4934".into()),
@@ -124,8 +125,8 @@ pub fn gruvbox_colour_palette() -> ConfigColours {
     }
 }
 
-pub fn gruvbox_light_colour_palette() -> ConfigColours {
-    ConfigColours {
+pub fn gruvbox_light_colour_palette() -> ColoursConfig {
+    ColoursConfig {
         table_header_color: Some("#076678".into()),
         all_cpu_color: Some("#8ec07c".into()),
         avg_cpu_color: Some("#fb4934".into()),
@@ -183,8 +184,8 @@ pub fn gruvbox_light_colour_palette() -> ConfigColours {
     }
 }
 
-pub fn nord_colour_palette() -> ConfigColours {
-    ConfigColours {
+pub fn nord_colour_palette() -> ColoursConfig {
+    ColoursConfig {
         table_header_color: Some("#81a1c1".into()),
         all_cpu_color: Some("#88c0d0".into()),
         avg_cpu_color: Some("#8fbcbb".into()),
@@ -230,8 +231,8 @@ pub fn nord_colour_palette() -> ConfigColours {
     }
 }
 
-pub fn nord_light_colour_palette() -> ConfigColours {
-    ConfigColours {
+pub fn nord_light_colour_palette() -> ColoursConfig {
+    ColoursConfig {
         table_header_color: Some("#5e81ac".into()),
         all_cpu_color: Some("#81a1c1".into()),
         avg_cpu_color: Some("#8fbcbb".into()),
@@ -601,15 +602,50 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "TopRight".
 
-# These are flags around the process widget.
+# Processes widget configuration
 #[processes]
 # The columns shown by the process widget. The following columns are supported:
-#   PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
+# PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
 #columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMEM%", "GPU%"]
 
-# [cpu]
+# CPU widget configuration
+#[cpu]
 # One of "all" (default), "average"/"avg"
 # default = "average"
+
+# Disk widget configuration
+#[disk]
+#[disk.name_filter]
+#is_list_ignored = true
+#list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
+
+#[disk.mount_filter]
+#is_list_ignored = true
+#list = ["/mnt/.*", "/boot"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
+
+# Temperature widget configuration
+#[temperature]
+#[temperature.sensor_filter]
+#is_list_ignored = true
+#list = ["cpu", "wifi"]
+#regex = false
+#case_sensitive = false
+#whole_word = false
+
+# Network widget configuration
+#[network]
+#[network.interface_filter]
+#is_list_ignored = true
+#list = ["virbr0.*"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
@@ -681,37 +717,6 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #  [[row.child]]
 #    type="proc"
 #    default=true
-
-
-# Filters - you can hide specific temperature sensors, network interfaces, and disks using filters.  This is admittedly
-# a bit hard to use as of now, and there is a planned in-app interface for managing this in the future:
-#[disk_filter]
-#is_list_ignored = true
-#list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
-#regex = true
-#case_sensitive = false
-#whole_word = false
-
-#[mount_filter]
-#is_list_ignored = true
-#list = ["/mnt/.*", "/boot"]
-#regex = true
-#case_sensitive = false
-#whole_word = false
-
-#[temp_filter]
-#is_list_ignored = true
-#list = ["cpu", "wifi"]
-#regex = false
-#case_sensitive = false
-#whole_word = false
-
-#[net_filter]
-#is_list_ignored = true
-#list = ["virbr0.*"]
-#regex = true
-#case_sensitive = false
-#whole_word = false
 "#;
 
 pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
@@ -773,8 +778,8 @@ mod test {
         }
     }
 
-    /// This test exists because previously, [`SIDE_BORDERS`] was set incorrectly after I moved from
-    /// tui-rs to ratatui.
+    /// This test exists because previously, [`SIDE_BORDERS`] was set
+    /// incorrectly after I moved from tui-rs to ratatui.
     #[test]
     fn assert_side_border_bits_match() {
         assert_eq!(

@@ -19,13 +19,14 @@ fn get_qemu_target(arch: &str) -> &str {
     }
 }
 
-/// This is required since running binary tests via cross can cause be tricky! We need to basically "magically" grab
-/// the correct runner in some cases, which can be done by inspecting env variables that should only show up while
+/// This is required since running binary tests via cross can cause be tricky!
+/// We need to basically "magically" grab the correct runner in some cases,
+/// which can be done by inspecting env variables that should only show up while
 /// using cross.
 ///
 /// Originally inspired by [ripgrep's test files](https://cs.github.com/BurntSushi/ripgrep/blob/9f0e88bcb14e02da1b88872435b17d74786640b5/tests/util.rs#L470),
-/// but adapted to work more generally with the architectures supported by bottom after looking through cross'
-/// [linux-runner](https://github.com/cross-rs/cross/blob/main/docker/linux-runner) file.
+/// but adapted to work more generally with the architectures supported by
+/// bottom after looking through cross' [linux-runner](https://github.com/cross-rs/cross/blob/main/docker/linux-runner) file.
 fn cross_runner() -> Option<String> {
     const TARGET_RUNNER: &str = "CARGO_TARGET_RUNNER";
     const CROSS_RUNNER: &str = "CROSS_RUNNER";

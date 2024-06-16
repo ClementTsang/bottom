@@ -9,11 +9,12 @@ pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a>
     Text::raw(truncate_str(content, width.into()))
 }
 
-/// Checks that the first string is equal to any of the other ones in a ASCII case-insensitive match.
+/// Checks that the first string is equal to any of the other ones in a ASCII
+/// case-insensitive match.
 ///
 /// The generated code is the same as writing:
-/// `to_ascii_lowercase(a) == to_ascii_lowercase(b) || to_ascii_lowercase(a) == to_ascii_lowercase(c)`,
-/// but without allocating and copying temporaries.
+/// `to_ascii_lowercase(a) == to_ascii_lowercase(b) || to_ascii_lowercase(a) ==
+/// to_ascii_lowercase(c)`, but without allocating and copying temporaries.
 ///
 /// # Examples
 ///

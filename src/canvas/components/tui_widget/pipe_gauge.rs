@@ -47,8 +47,8 @@ impl<'a> Default for PipeGauge<'a> {
 }
 
 impl<'a> PipeGauge<'a> {
-    /// The ratio, a value from 0.0 to 1.0 (any other greater or less will be clamped)
-    /// represents the portion of the pipe gauge to fill.
+    /// The ratio, a value from 0.0 to 1.0 (any other greater or less will be
+    /// clamped) represents the portion of the pipe gauge to fill.
     ///
     /// Note: passing in NaN will potentially cause problems.
     pub fn ratio(mut self, ratio: f64) -> Self {
@@ -87,7 +87,8 @@ impl<'a> PipeGauge<'a> {
         self
     }
 
-    /// Whether to hide parts of the gauge/label if the inner label wouldn't fit.
+    /// Whether to hide parts of the gauge/label if the inner label wouldn't
+    /// fit.
     pub fn hide_parts(mut self, hide_parts: LabelLimit) -> Self {
         self.hide_parts = hide_parts;
         self

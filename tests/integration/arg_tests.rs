@@ -1,4 +1,5 @@
-//! These tests are mostly here just to ensure that invalid results will be caught when passing arguments.
+//! These tests are mostly here just to ensure that invalid results will be
+//! caught when passing arguments.
 
 use assert_cmd::prelude::*;
 use predicates::prelude::*;

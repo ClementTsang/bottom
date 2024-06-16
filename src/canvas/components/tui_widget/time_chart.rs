@@ -1,5 +1,5 @@
-//! A [`tui::widgets::Chart`] but slightly more specialized to show right-aligned timeseries
-//! data.
+//! A [`tui::widgets::Chart`] but slightly more specialized to show
+//! right-aligned timeseries data.
 //!
 //! Generally should be updated to be in sync with [`chart.rs`](https://github.com/ratatui-org/ratatui/blob/main/src/widgets/chart.rs);
 //! the specializations are factored out to `time_chart/points.rs`.
@@ -31,7 +31,8 @@ pub type Point = (f64, f64);
 pub struct Axis<'a> {
     /// Title displayed next to axis end
     pub(crate) title: Option<Line<'a>>,
-    /// Bounds for the axis (all data points outside these limits will not be represented)
+    /// Bounds for the axis (all data points outside these limits will not be
+    /// represented)
     pub(crate) bounds: [f64; 2],
     /// A list of labels to put to the left or below the axis
     pub(crate) labels: Option<Vec<Span<'a>>>,
@@ -44,10 +45,11 @@ pub struct Axis<'a> {
 impl<'a> Axis<'a> {
     /// Sets the axis title
     ///
-    /// It will be displayed at the end of the axis. For an X axis this is the right, for a Y axis,
-    /// this is the top.
+    /// It will be displayed at the end of the axis. For an X axis this is the
+    /// right, for a Y axis, this is the top.
     ///
-    /// This is a fluent setter method which must be chained or used as it consumes self
+    /// This is a fluent setter method which must be chained or used as it
+    /// consumes self
     #[must_use = "method moves the value of self and returns the modified value"]
     pub fn title<T>(mut self, title: T) -> Axis<'a>
     where
@@ -61,7 +63,8 @@ impl<'a> Axis<'a> {
     ///
     /// In other words, sets the min and max value on this axis.
     ///
-    /// This is a fluent setter method which must be chained or used as it consumes self
+    /// This is a fluent setter method which must be chained or used as it
+    /// consumes self
     #[must_use = "method moves the value of self and returns the modified value"]
     pub fn bounds(mut self, bounds: [f64; 2]) -> Axis<'a> {
         self.bounds = bounds;
@@ -238,11 +241,13 @@ impl FromStr for LegendPosition {
 ///
 /// This is the main element composing a [`TimeChart`].
 ///
-/// A dataset can be [named](Dataset::name). Only named datasets will be rendered in the legend.
+/// A dataset can be [named](Dataset::name). Only named datasets will be
+/// rendered in the legend.
 ///
-/// After that, you can pass it data with [`Dataset::data`]. Data is an array of `f64` tuples
-/// (`(f64, f64)`), the first element being X and the second Y. It's also worth noting that, unlike
-/// the [`Rect`], here the Y axis is bottom to top, as in math.
+/// After that, you can pass it data with [`Dataset::data`]. Data is an array of
+/// `f64` tuples (`(f64, f64)`), the first element being X and the second Y.
+/// It's also worth noting that, unlike the [`Rect`], here the Y axis is bottom
+/// to top, as in math.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct Dataset<'a> {
     /// Name of the dataset (used in the legend if shown)
@@ -270,12 +275,12 @@ impl<'a> Dataset<'a> {
 
     /// Sets the data points of this dataset
     ///
-    /// Points will then either be rendered as scrattered points or with lines between them
-    /// depending on [`Dataset::graph_type`].
+    /// Points will then either be rendered as scrattered points or with lines
+    /// between them depending on [`Dataset::graph_type`].
     ///
-    /// Data consist in an array of `f64` tuples (`(f64, f64)`), the first element being X and the
-    /// second Y. It's also worth noting that, unlike the [`Rect`], here the Y axis is bottom to
-    /// top, as in math.
+    /// Data consist in an array of `f64` tuples (`(f64, f64)`), the first
+    /// element being X and the second Y. It's also worth noting that,
+    /// unlike the [`Rect`], here the Y axis is bottom to top, as in math.
     #[must_use = "method moves the value of self and returns the modified value"]
     pub fn data(mut self, data: &'a [(f64, f64)]) -> Dataset<'a> {
         self.data = data;
@@ -284,12 +289,15 @@ impl<'a> Dataset<'a> {
 
     /// Sets the kind of character to use to display this dataset
     ///
-    /// You can use dots (`•`), blocks (`█`), bars (`▄`), braille (`⠓`, `⣇`, `⣿`) or half-blocks
-    /// (`█`, `▄`, and `▀`). See [symbols::Marker] for more details.
+    /// You can use dots (`•`), blocks (`█`), bars (`▄`), braille (`⠓`, `⣇`,
+    /// `⣿`) or half-blocks (`█`, `▄`, and `▀`). See [symbols::Marker] for
+    /// more details.
     ///
-    /// Note [`Marker::Braille`] requires a font that supports Unicode Braille Patterns.
+    /// Note [`Marker::Braille`] requires a font that supports Unicode Braille
+    /// Patterns.
     ///
-    /// This is a fluent setter method which must be chained or used as it consumes self
+    /// This is a fluent setter method which must be chained or used as it
+    /// consumes self
     #[must_use = "method moves the value of self and returns the modified value"]
     pub fn marker(mut self, marker: symbols::Marker) -> Dataset<'a> {
         self.marker = marker;
@@ -298,9 +306,10 @@ impl<'a> Dataset<'a> {
 
     /// Sets how the dataset should be drawn
     ///
-    /// [`TimeChart`] can draw either a [scatter](GraphType::Scatter) or [line](GraphType::Line) charts.
-    /// A scatter will draw only the points in the dataset while a line will also draw a line
-    /// between them. See [`GraphType`] for more details
+    /// [`TimeChart`] can draw either a [scatter](GraphType::Scatter) or
+    /// [line](GraphType::Line) charts. A scatter will draw only the points
+    /// in the dataset while a line will also draw a line between them. See
+    /// [`GraphType`] for more details
     #[must_use = "method moves the value of self and returns the modified value"]
     pub fn graph_type(mut self, graph_type: GraphType) -> Dataset<'a> {
         self.graph_type = graph_type;
@@ -309,11 +318,13 @@ impl<'a> Dataset<'a> {
 
     /// Sets the style of this dataset
     ///
-    /// The given style will be used to draw the legend and the data points. Currently the legend
-    /// will use the entire style whereas the data points will only use the foreground.
+    /// The given style will be used to draw the legend and the data points.
+    /// Currently the legend will use the entire style whereas the data
+    /// points will only use the foreground.
     ///
-    /// `style` accepts any type that is convertible to [`Style`] (e.g. [`Style`], [`Color`], or
-    /// your own type that implements [`Into<Style>`]).
+    /// `style` accepts any type that is convertible to [`Style`] (e.g.
+    /// [`Style`], [`Color`], or your own type that implements
+    /// [`Into<Style>`]).
     #[must_use = "method moves the value of self and returns the modified value"]
     pub fn style<S: Into<Style>>(mut self, style: S) -> Dataset<'a> {
         self.style = style.into();
@@ -321,8 +332,8 @@ impl<'a> Dataset<'a> {
     }
 }
 
-/// A container that holds all the infos about where to display each elements of the chart (axis,
-/// labels, legend, ...).
+/// A container that holds all the infos about where to display each elements of
+/// the chart (axis, labels, legend, ...).
 #[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
 struct ChartLayout {
     /// Location of the title of the x axis
@@ -343,8 +354,9 @@ struct ChartLayout {
     graph_area: Rect,
 }
 
-/// A "custom" chart, just a slightly tweaked [`tui::widgets::Chart`] from ratatui, but with greater control over the
-/// legend, and built with the idea of drawing data points relative to a time-based x-axis.
+/// A "custom" chart, just a slightly tweaked [`tui::widgets::Chart`] from
+/// ratatui, but with greater control over the legend, and built with the idea
+/// of drawing data points relative to a time-based x-axis.
 ///
 /// Main changes:
 /// - Styling option for the legend box
@@ -368,8 +380,8 @@ pub struct TimeChart<'a> {
     legend_style: Style,
     /// Constraints used to determine whether the legend should be shown or not
     hidden_legend_constraints: (Constraint, Constraint),
-    /// The position detnermine where the legenth is shown or hide regaurdless of
-    /// `hidden_legend_constraints`
+    /// The position detnermine where the legenth is shown or hide regaurdless
+    /// of `hidden_legend_constraints`
     legend_position: Option<LegendPosition>,
     /// The marker type.
     marker: Marker,
@@ -402,8 +414,9 @@ impl<'a> TimeChart<'a> {
 
     /// Sets the style of the entire chart
     ///
-    /// `style` accepts any type that is convertible to [`Style`] (e.g. [`Style`], [`Color`], or
-    /// your own type that implements [`Into<Style>`]).
+    /// `style` accepts any type that is convertible to [`Style`] (e.g.
+    /// [`Style`], [`Color`], or your own type that implements
+    /// [`Into<Style>`]).
     ///
     /// Styles of [`Axis`] and [`Dataset`] will have priority over this style.
     #[must_use = "method moves the value of self and returns the modified value"]
@@ -444,14 +457,16 @@ impl<'a> TimeChart<'a> {
         self
     }
 
-    /// Sets the constraints used to determine whether the legend should be shown or not.
+    /// Sets the constraints used to determine whether the legend should be
+    /// shown or not.
     ///
-    /// The tuple's first constraint is used for the width and the second for the height. If the
-    /// legend takes more space than what is allowed by any constraint, the legend is hidden.
-    /// [`Constraint::Min`] is an exception and will always show the legend.
+    /// The tuple's first constraint is used for the width and the second for
+    /// the height. If the legend takes more space than what is allowed by
+    /// any constraint, the legend is hidden. [`Constraint::Min`] is an
+    /// exception and will always show the legend.
     ///
-    /// If this is not set, the default behavior is to hide the legend if it is greater than 25% of
-    /// the chart, either horizontally or vertically.
+    /// If this is not set, the default behavior is to hide the legend if it is
+    /// greater than 25% of the chart, either horizontally or vertically.
     #[must_use = "method moves the value of self and returns the modified value"]
     pub fn hidden_legend_constraints(
         mut self, constraints: (Constraint, Constraint),
@@ -464,8 +479,9 @@ impl<'a> TimeChart<'a> {
     ///
     /// The default is [`LegendPosition::TopRight`].
     ///
-    /// If [`None`] is given, hide the legend even if [`hidden_legend_constraints`] determines it
-    /// should be shown. In contrast, if `Some(...)` is given, [`hidden_legend_constraints`] might
+    /// If [`None`] is given, hide the legend even if
+    /// [`hidden_legend_constraints`] determines it should be shown. In
+    /// contrast, if `Some(...)` is given, [`hidden_legend_constraints`] might
     /// still decide whether to show the legend or not.
     ///
     /// See [`LegendPosition`] for all available positions.
@@ -477,8 +493,8 @@ impl<'a> TimeChart<'a> {
         self
     }
 
-    /// Compute the internal layout of the chart given the area. If the area is too small some
-    /// elements may be automatically hidden
+    /// Compute the internal layout of the chart given the area. If the area is
+    /// too small some elements may be automatically hidden
     fn layout(&self, area: Rect) -> ChartLayout {
         let mut layout = ChartLayout::default();
         if area.height == 0 || area.width == 0 {
@@ -593,7 +609,8 @@ impl<'a> TimeChart<'a> {
             };
             max_width = max(max_width, width_left_of_y_axis);
         }
-        // labels of y axis and first label of x axis can take at most 1/3rd of the total width
+        // labels of y axis and first label of x axis can take at most 1/3rd of the
+        // total width
         max_width.min(area.width / 3)
     }
 
@@ -703,9 +720,9 @@ impl Widget for TimeChart<'_> {
             return;
         }
 
-        // Sample the style of the entire widget. This sample will be used to reset the style of
-        // the cells that are part of the components put on top of the grah area (i.e legend and
-        // axis names).
+        // Sample the style of the entire widget. This sample will be used to reset the
+        // style of the cells that are part of the components put on top of the
+        // grah area (i.e legend and axis names).
         let original_style = buf.get(area.left(), area.top()).style();
 
         let layout = self.layout(chart_area);
@@ -1020,7 +1037,8 @@ mod tests {
         let layout = widget.layout(buffer.area);
 
         assert!(layout.legend_area.is_some());
-        assert_eq!(layout.legend_area.unwrap().height, 4); // 2 for borders, 2 for rows
+        assert_eq!(layout.legend_area.unwrap().height, 4); // 2 for borders, 2
+                                                           // for rows
     }
 
     #[test]

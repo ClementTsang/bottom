@@ -16,7 +16,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-pub use colours::ConfigColours;
+pub use colours::ColoursConfig;
 pub use config::ConfigV1;
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
@@ -62,9 +62,10 @@ macro_rules! is_flag_enabled {
     };
 }
 
-/// Returns the config path to use. If `override_config_path` is specified, then we will use
-/// that. If not, then return the "default" config path, which is:
-/// - If a path already exists at `<HOME>/bottom/bottom.toml`, then use that for legacy reasons.
+/// Returns the config path to use. If `override_config_path` is specified, then
+/// we will use that. If not, then return the "default" config path, which is:
+/// - If a path already exists at `<HOME>/bottom/bottom.toml`, then use that for
+///   legacy reasons.
 /// - Otherwise, use `<SYSTEM_CONFIG_FOLDER>/bottom/bottom.toml`.
 ///
 /// For more details on this, see [dirs](https://docs.rs/dirs/latest/dirs/fn.config_dir.html)'
@@ -93,9 +94,10 @@ pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
     })
 }
 
-/// Get the config at `config_path`. If there is no config file at the specified path, it will
-/// try to create a new file with the default settings, and return the default config. If bottom
-/// fails to write a new config, it will silently just return the default config.
+/// Get the config at `config_path`. If there is no config file at the specified
+/// path, it will try to create a new file with the default settings, and return
+/// the default config. If bottom fails to write a new config, it will silently
+/// just return the default config.
 pub fn get_or_create_config(config_path: Option<&Path>) -> error::Result<ConfigV1> {
     match &config_path {
         Some(path) => {
@@ -111,7 +113,8 @@ pub fn get_or_create_config(config_path: Option<&Path>) -> error::Result<ConfigV
             }
         }
         None => {
-            // If we somehow don't have any config path, then just assume the default config but don't write to any file.
+            // If we somehow don't have any config path, then just assume the default config
+            // but don't write to any file.
             //
             // TODO: Maybe make this "show" an error, but don't crash.
             Ok(ConfigV1::default())
@@ -124,7 +127,8 @@ pub fn init_app(
 ) -> Result<(App, BottomLayout)> {
     use BottomWidgetType::*;
 
-    // Since everything takes a reference, but we want to take ownership here to drop matches/config later...
+    // Since everything takes a reference, but we want to take ownership here to
+    // drop matches/config later...
     let args = &args;
     let config = &config;
 
@@ -175,18 +179,13 @@ pub fn init_app(
         is_flag_enabled!(network_use_binary_prefix, args.network, config);
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
-        let columns = config.processes.as_ref().map(|cfg| cfg.columns.clone());
-
-        match columns {
-            Some(columns) => {
-                if columns.is_empty() {
-                    None
-                } else {
-                    Some(IndexSet::from_iter(columns))
-                }
+        config.processes.as_ref().and_then(|cfg| {
+            if cfg.columns.is_empty() {
+                None
+            } else {
+                Some(IndexSet::from_iter(cfg.columns.clone()))
             }
-            None => None,
-        }
+        })
     };
 
     let network_legend_position = get_network_legend_position(args, config)?;
@@ -384,14 +383,29 @@ pub fn init_app(
         use_battery: used_widget_set.get(&Battery).is_some(),
     };
 
-    let disk_filter =
-        get_ignore_list(&config.disk_filter).context("Update 'disk_filter' in your config file")?;
-    let mount_filter = get_ignore_list(&config.mount_filter)
-        .context("Update 'mount_filter' in your config file")?;
-    let temp_filter =
-        get_ignore_list(&config.temp_filter).context("Update 'temp_filter' in your config file")?;
-    let net_filter =
-        get_ignore_list(&config.net_filter).context("Update 'net_filter' in your config file")?;
+    let (disk_name_filter, disk_mount_filter) = {
+        match &config.disk {
+            Some(cfg) => {
+                let df = get_ignore_list(&cfg.name_filter)
+                    .context("Update 'disk.name_filter' in your config file")?;
+                let mf = get_ignore_list(&cfg.mount_filter)
+                    .context("Update 'disk.mount_filter' in your config file")?;
+
+                (df, mf)
+            }
+            None => (None, None),
+        }
+    };
+    let temp_sensor_filter = match &config.temperature {
+        Some(cfg) => get_ignore_list(&cfg.sensor_filter)
+            .context("Update 'temperature.sensor_filter' in your config file")?,
+        None => None,
+    };
+    let net_interface_filter = match &config.network {
+        Some(cfg) => get_ignore_list(&cfg.interface_filter)
+            .context("Update 'network.interface_filter' in your config file")?,
+        None => None,
+    };
 
     let states = AppWidgetStates {
         cpu_state: CpuState::init(cpu_state_map),
@@ -406,10 +420,10 @@ pub fn init_app(
 
     let current_widget = widget_map.get(&initial_widget_id).unwrap().clone();
     let filters = DataFilters {
-        disk_filter,
-        mount_filter,
-        temp_filter,
-        net_filter,
+        disk_filter: disk_name_filter,
+        mount_filter: disk_mount_filter,
+        temp_filter: temp_sensor_filter,
+        net_filter: net_interface_filter,
     };
     let is_expanded = expanded && !use_basic_mode;
 
@@ -686,7 +700,8 @@ fn get_default_widget_and_count(
 fn get_use_battery(args: &BottomArgs, config: &ConfigV1) -> bool {
     #[cfg(feature = "battery")]
     {
-        // TODO: Move this so it's dynamic in the app itself and automatically hide if there are no batteries?
+        // TODO: Move this so it's dynamic in the app itself and automatically hide if
+        // there are no batteries?
         if let Ok(battery_manager) = Manager::new() {
             if let Ok(batteries) = battery_manager.batteries() {
                 if batteries.count() == 0 {
@@ -907,7 +922,7 @@ mod test {
         args::BottomArgs,
         canvas::styling::CanvasStyling,
         options::{
-            config::ConfigFlags, get_default_time_value, get_retention, get_update_rate,
+            config::FlagConfig, get_default_time_value, get_retention, get_update_rate,
             try_parse_ms,
         },
     };
@@ -986,7 +1001,7 @@ mod test {
         let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = ConfigV1::default();
-        let flags = ConfigFlags {
+        let flags = FlagConfig {
             time_delta: Some("2 min".to_string().into()),
             default_time_value: Some("300s".to_string().into()),
             rate: Some("1s".to_string().into()),
@@ -1016,7 +1031,7 @@ mod test {
         let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = ConfigV1::default();
-        let flags = ConfigFlags {
+        let flags = FlagConfig {
             time_delta: Some("120000".to_string().into()),
             default_time_value: Some("300000".to_string().into()),
             rate: Some("1000".to_string().into()),
@@ -1046,7 +1061,7 @@ mod test {
         let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = ConfigV1::default();
-        let flags = ConfigFlags {
+        let flags = FlagConfig {
             time_delta: Some(120000.into()),
             default_time_value: Some(300000.into()),
             rate: Some(1000.into()),
@@ -1079,15 +1094,17 @@ mod test {
         super::init_app(args, config, &styling).unwrap().0
     }
 
-    // TODO: There's probably a better way to create clap options AND unify together to avoid the possibility of
-    // typos/mixing up. Use proc macros to unify on one struct?
+    // TODO: There's probably a better way to create clap options AND unify together
+    // to avoid the possibility of typos/mixing up. Use proc macros to unify on
+    // one struct?
     #[test]
     fn verify_cli_options_build() {
         let app = crate::args::build_cmd();
 
         let default_app = create_app(BottomArgs::parse_from(["btm"]));
 
-        // Skip battery since it's tricky to test depending on the platform/features we're testing with.
+        // Skip battery since it's tricky to test depending on the platform/features
+        // we're testing with.
         let skip = ["help", "version", "celsius", "battery"];
 
         for arg in app.get_arguments().collect::<Vec<_>>() {

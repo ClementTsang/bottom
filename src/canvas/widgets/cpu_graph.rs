@@ -251,7 +251,8 @@ impl Painter {
             .widget_states
             .get_mut(&(widget_id - 1))
         {
-            // TODO: This line (and the one above, see caller) is pretty dumb but I guess needed for now. Refactor if possible!
+            // TODO: This line (and the one above, see caller) is pretty dumb but I guess
+            // needed for now. Refactor if possible!
             cpu_widget_state.is_legend_hidden = false;
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;

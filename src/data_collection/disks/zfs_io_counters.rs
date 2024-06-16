@@ -1,6 +1,7 @@
 use crate::data_collection::disks::IoCounters;
 
-/// Returns zpool I/O stats. Pulls data from `sysctl kstat.zfs.{POOL}.dataset.{objset-*}`
+/// Returns zpool I/O stats. Pulls data from `sysctl
+/// kstat.zfs.{POOL}.dataset.{objset-*}`
 #[cfg(target_os = "freebsd")]
 pub fn zfs_io_stats() -> anyhow::Result<Vec<IoCounters>> {
     use sysctl::Sysctl;

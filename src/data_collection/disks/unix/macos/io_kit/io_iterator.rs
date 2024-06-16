@@ -37,7 +37,8 @@ impl Iterator for IoIterator {
     fn next(&mut self) -> Option<Self::Item> {
         // Basically, we just stop when we hit 0.
 
-        // SAFETY: IOKit call, the passed argument (an `io_iterator_t`) is what is expected.
+        // SAFETY: IOKit call, the passed argument (an `io_iterator_t`) is what is
+        // expected.
         match unsafe { IOIteratorNext(self.0) } {
             0 => None,
             io_object => Some(IoObject::from(io_object)),
@@ -47,7 +48,8 @@ impl Iterator for IoIterator {
 
 impl Drop for IoIterator {
     fn drop(&mut self) {
-        // SAFETY: IOKit call, the passed argument (an `io_iterator_t`) is what is expected.
+        // SAFETY: IOKit call, the passed argument (an `io_iterator_t`) is what is
+        // expected.
         let result = unsafe { IOObjectRelease(self.0) };
         assert_eq!(result, kern_return::KERN_SUCCESS);
     }

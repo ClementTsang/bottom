@@ -34,8 +34,9 @@ pub(crate) fn mounts() -> anyhow::Result<Vec<libc::statfs>> {
             "Expected {expected_len} statfs entries, but instead got {result} entries",
         );
 
-        // SAFETY: We have a debug assert check, and if `result` is not correct (-1), we check against it.
-        // Otherwise, getfsstat64 should return the number of statfs structures if it succeeded.
+        // SAFETY: We have a debug assert check, and if `result` is not correct (-1), we
+        // check against it. Otherwise, getfsstat64 should return the number of
+        // statfs structures if it succeeded.
         //
         // Source: https://man.freebsd.org/cgi/man.cgi?query=getfsstat&sektion=2&format=html
         unsafe {

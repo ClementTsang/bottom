@@ -38,7 +38,8 @@ impl Partition {
         let result = unsafe { libc::statvfs(path.as_ptr(), vfs.as_mut_ptr()) };
 
         if result == 0 {
-            // SAFETY: We check that it succeeded (result is 0), which means vfs should be populated.
+            // SAFETY: We check that it succeeded (result is 0), which means vfs should be
+            // populated.
             Ok(Usage::new(unsafe { vfs.assume_init() }))
         } else {
             bail!("statvfs failed to get the disk usage for disk {path:?}")
