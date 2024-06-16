@@ -1,6 +1,6 @@
 use tui::widgets::Borders;
 
-use crate::options::ConfigColours;
+use crate::options::ColoursConfig;
 
 // Default widget ID
 pub const DEFAULT_WIDGET_ID: u64 = 56709;
@@ -25,8 +25,8 @@ pub const SIDE_BORDERS: Borders = Borders::LEFT.union(Borders::RIGHT);
 
 // Colour profiles
 // TODO: Generate these with a macro or something...
-pub fn default_light_mode_colour_palette() -> ConfigColours {
-    ConfigColours {
+pub fn default_light_mode_colour_palette() -> ColoursConfig {
+    ColoursConfig {
         text_color: Some("black".into()),
         border_color: Some("black".into()),
         table_header_color: Some("black".into()),
@@ -61,12 +61,12 @@ pub fn default_light_mode_colour_palette() -> ConfigColours {
             "Blue".into(),
             "Red".into(),
         ]),
-        ..ConfigColours::default()
+        ..ColoursConfig::default()
     }
 }
 
-pub fn gruvbox_colour_palette() -> ConfigColours {
-    ConfigColours {
+pub fn gruvbox_colour_palette() -> ColoursConfig {
+    ColoursConfig {
         table_header_color: Some("#83a598".into()),
         all_cpu_color: Some("#8ec07c".into()),
         avg_cpu_color: Some("#fb4934".into()),
@@ -124,8 +124,8 @@ pub fn gruvbox_colour_palette() -> ConfigColours {
     }
 }
 
-pub fn gruvbox_light_colour_palette() -> ConfigColours {
-    ConfigColours {
+pub fn gruvbox_light_colour_palette() -> ColoursConfig {
+    ColoursConfig {
         table_header_color: Some("#076678".into()),
         all_cpu_color: Some("#8ec07c".into()),
         avg_cpu_color: Some("#fb4934".into()),
@@ -183,8 +183,8 @@ pub fn gruvbox_light_colour_palette() -> ConfigColours {
     }
 }
 
-pub fn nord_colour_palette() -> ConfigColours {
-    ConfigColours {
+pub fn nord_colour_palette() -> ColoursConfig {
+    ColoursConfig {
         table_header_color: Some("#81a1c1".into()),
         all_cpu_color: Some("#88c0d0".into()),
         avg_cpu_color: Some("#8fbcbb".into()),
@@ -230,8 +230,8 @@ pub fn nord_colour_palette() -> ConfigColours {
     }
 }
 
-pub fn nord_light_colour_palette() -> ConfigColours {
-    ConfigColours {
+pub fn nord_light_colour_palette() -> ColoursConfig {
+    ColoursConfig {
         table_header_color: Some("#5e81ac".into()),
         all_cpu_color: Some("#81a1c1".into()),
         avg_cpu_color: Some("#8fbcbb".into()),

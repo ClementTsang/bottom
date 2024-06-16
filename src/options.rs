@@ -16,7 +16,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-pub use colours::ConfigColours;
+pub use colours::ColoursConfig;
 pub use config::ConfigV1;
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
@@ -175,18 +175,13 @@ pub fn init_app(
         is_flag_enabled!(network_use_binary_prefix, args.network, config);
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
-        let columns = config.processes.as_ref().map(|cfg| cfg.columns.clone());
-
-        match columns {
-            Some(columns) => {
-                if columns.is_empty() {
-                    None
-                } else {
-                    Some(IndexSet::from_iter(columns))
-                }
+        config.processes.as_ref().and_then(|cfg| {
+            if cfg.columns.is_empty() {
+                None
+            } else {
+                Some(IndexSet::from_iter(cfg.columns.clone()))
             }
-            None => None,
-        }
+        })
     };
 
     let network_legend_position = get_network_legend_position(args, config)?;
@@ -384,14 +379,29 @@ pub fn init_app(
         use_battery: used_widget_set.get(&Battery).is_some(),
     };
 
-    let disk_filter =
-        get_ignore_list(&config.disk_filter).context("Update 'disk_filter' in your config file")?;
-    let mount_filter = get_ignore_list(&config.mount_filter)
-        .context("Update 'mount_filter' in your config file")?;
-    let temp_filter =
-        get_ignore_list(&config.temp_filter).context("Update 'temp_filter' in your config file")?;
-    let net_filter =
-        get_ignore_list(&config.net_filter).context("Update 'net_filter' in your config file")?;
+    let (disk_name_filter, disk_mount_filter) = {
+        match &config.disk {
+            Some(cfg) => {
+                let df = get_ignore_list(&cfg.name_filter)
+                    .context("Update 'disk.name_filter' in your config file")?;
+                let mf = get_ignore_list(&cfg.mount_filter)
+                    .context("Update 'disk.mount_filter' in your config file")?;
+
+                (df, mf)
+            }
+            None => (None, None),
+        }
+    };
+    let temp_sensor_filter = match &config.temperature {
+        Some(cfg) => get_ignore_list(&cfg.sensor_filter)
+            .context("Update 'temperature.sensor_filter' in your config file")?,
+        None => None,
+    };
+    let net_interface_filter = match &config.network {
+        Some(cfg) => get_ignore_list(&cfg.interface_filter)
+            .context("Update 'network.interface_filter' in your config file")?,
+        None => None,
+    };
 
     let states = AppWidgetStates {
         cpu_state: CpuState::init(cpu_state_map),
@@ -406,10 +416,10 @@ pub fn init_app(
 
     let current_widget = widget_map.get(&initial_widget_id).unwrap().clone();
     let filters = DataFilters {
-        disk_filter,
-        mount_filter,
-        temp_filter,
-        net_filter,
+        disk_filter: disk_name_filter,
+        mount_filter: disk_mount_filter,
+        temp_filter: temp_sensor_filter,
+        net_filter: net_interface_filter,
     };
     let is_expanded = expanded && !use_basic_mode;
 
@@ -907,7 +917,7 @@ mod test {
         args::BottomArgs,
         canvas::styling::CanvasStyling,
         options::{
-            config::ConfigFlags, get_default_time_value, get_retention, get_update_rate,
+            config::FlagConfig, get_default_time_value, get_retention, get_update_rate,
             try_parse_ms,
         },
     };
@@ -986,7 +996,7 @@ mod test {
         let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = ConfigV1::default();
-        let flags = ConfigFlags {
+        let flags = FlagConfig {
             time_delta: Some("2 min".to_string().into()),
             default_time_value: Some("300s".to_string().into()),
             rate: Some("1s".to_string().into()),
@@ -1016,7 +1026,7 @@ mod test {
         let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = ConfigV1::default();
-        let flags = ConfigFlags {
+        let flags = FlagConfig {
             time_delta: Some("120000".to_string().into()),
             default_time_value: Some("300000".to_string().into()),
             rate: Some("1000".to_string().into()),
@@ -1046,7 +1056,7 @@ mod test {
         let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = ConfigV1::default();
-        let flags = ConfigFlags {
+        let flags = FlagConfig {
             time_delta: Some(120000.into()),
             default_time_value: Some(300000.into()),
             rate: Some(1000.into()),

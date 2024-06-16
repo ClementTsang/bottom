@@ -6,7 +6,7 @@ use tui::style::{Color, Style};
 
 use super::ColourScheme;
 pub use crate::options::ConfigV1;
-use crate::{constants::*, options::colours::ConfigColours, utils::error};
+use crate::{constants::*, options::colours::ColoursConfig, utils::error};
 
 pub struct CanvasStyling {
     pub currently_selected_text_colour: Color,
@@ -154,7 +154,7 @@ impl CanvasStyling {
         Ok(canvas_colours)
     }
 
-    pub fn set_colours_from_palette(&mut self, colours: &ConfigColours) -> anyhow::Result<()> {
+    pub fn set_colours_from_palette(&mut self, colours: &ColoursConfig) -> anyhow::Result<()> {
         // CPU
         try_set_colour!(self.avg_colour_style, colours, avg_cpu_color);
         try_set_colour!(self.all_colour_style, colours, all_cpu_color);
