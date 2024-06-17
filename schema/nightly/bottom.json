@@ -87,6 +87,7 @@
   },
   "definitions": {
     "ColoursConfig": {
+      "description": "Colour configuration.",
       "type": "object",
       "properties": {
         "all_cpu_color": {
@@ -242,7 +243,7 @@
       }
     },
     "CpuConfig": {
-      "description": "Process column settings.",
+      "description": "CPU column settings.",
       "type": "object",
       "properties": {
         "default": {
@@ -612,22 +613,22 @@
       }
     },
     "ProcWidgetColumn": {
-      "description": "A hacky workaround for now.",
+      "description": "Represents a process widget column.",
       "type": "string",
       "enum": [
-        "PidOrCount",
-        "ProcNameOrCommand",
-        "Cpu",
-        "Mem",
-        "ReadPerSecond",
-        "WritePerSecond",
-        "TotalRead",
-        "TotalWrite",
-        "User",
-        "State",
-        "Time",
-        "GpuMem",
-        "GpuUtil"
+        "pid",
+        "name",
+        "cpu%",
+        "mem%",
+        "r/s",
+        "w/s",
+        "t.read",
+        "t.write",
+        "user",
+        "state",
+        "time",
+        "gmem",
+        "gpu%"
       ]
     },
     "ProcessesConfig": {

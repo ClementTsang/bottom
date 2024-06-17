@@ -9,7 +9,7 @@ use indexmap::IndexSet;
 use itertools::Itertools;
 pub use proc_widget_column::*;
 pub use proc_widget_data::*;
-use serde::{de::Error, Deserialize};
+use serde::Deserialize;
 use sort_table::SortTableColumn;
 
 use crate::{
@@ -109,55 +109,40 @@ pub struct ProcTableConfig {
     pub is_command: bool,
 }
 
-/// A hacky workaround for now.
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+/// Represents a process widget column.
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub enum ProcWidgetColumn {
+    // This is a hacky workaround for now.
+    #[serde(rename = "pid", alias = "count")]
     PidOrCount,
+    #[serde(rename = "name", alias = "command")]
     ProcNameOrCommand,
+    #[serde(rename = "cpu%")]
     Cpu,
+    #[serde(rename = "mem%", alias = "mem")]
     Mem,
+    #[serde(rename = "r/s", alias = "read", alias = "rps")]
     ReadPerSecond,
+    #[serde(rename = "w/s", alias = "write", alias = "wps")]
     WritePerSecond,
+    #[serde(rename = "t.read", alias = "tread")]
     TotalRead,
+    #[serde(rename = "t.write", alias = "twrite")]
     TotalWrite,
+    #[serde(rename = "user")]
     User,
+    #[serde(rename = "state")]
     State,
+    #[serde(rename = "time")]
     Time,
     #[cfg(feature = "gpu")]
+    #[serde(rename = "gmem", alias = "gmem%")]
     GpuMem,
     #[cfg(feature = "gpu")]
+    #[serde(rename = "gpu%")]
     GpuUtil,
-}
-
-impl<'de> Deserialize<'de> for ProcWidgetColumn {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let value = String::deserialize(deserializer)?.to_lowercase();
-        match value.as_str() {
-            "cpu%" => Ok(ProcWidgetColumn::Cpu),
-            "mem" => Ok(ProcWidgetColumn::Mem),
-            "mem%" => Ok(ProcWidgetColumn::Mem),
-            "pid" => Ok(ProcWidgetColumn::PidOrCount),
-            "count" => Ok(ProcWidgetColumn::PidOrCount),
-            "name" => Ok(ProcWidgetColumn::ProcNameOrCommand),
-            "command" => Ok(ProcWidgetColumn::ProcNameOrCommand),
-            "read" | "r/s" | "rps" => Ok(ProcWidgetColumn::ReadPerSecond),
-            "write" | "w/s" | "wps" => Ok(ProcWidgetColumn::WritePerSecond),
-            "tread" | "t.read" => Ok(ProcWidgetColumn::TotalRead),
-            "twrite" | "t.write" => Ok(ProcWidgetColumn::TotalWrite),
-            "state" => Ok(ProcWidgetColumn::State),
-            "user" => Ok(ProcWidgetColumn::User),
-            "time" => Ok(ProcWidgetColumn::Time),
-            #[cfg(feature = "gpu")]
-            "gmem" | "gmem%" => Ok(ProcWidgetColumn::GpuMem),
-            #[cfg(feature = "gpu")]
-            "gpu%" => Ok(ProcWidgetColumn::GpuUtil),
-            _ => Err(Error::custom("doesn't match any column type")),
-        }
-    }
 }
 
 // This is temporary. Switch back to `ProcColumn` later!

@@ -545,13 +545,13 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #whole_word = false
 # Whether to make process searching use regex by default.
 #regex = false
-# Defaults to Celsius.  Temperature is one of:
-#temperature_type = "k"
-#temperature_type = "f"
+# The temperature unit. One of the following, defaults to "c" for Celsius:
 #temperature_type = "c"
-#temperature_type = "kelvin"
-#temperature_type = "fahrenheit"
-#temperature_type = "celsius"
+##temperature_type = "k"
+##temperature_type = "f"
+##temperature_type = "kelvin"
+##temperature_type = "fahrenheit"
+##temperature_type = "celsius"
 # The default time interval (in milliseconds).
 #default_time_value = "60s"
 # The time delta on each zoom in/out action (in milliseconds).
@@ -606,7 +606,7 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #[processes]
 # The columns shown by the process widget. The following columns are supported:
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
-#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMEM%", "GPU%"]
+#columns = ["pid", "name", "cpu%", "mem%", "r/s", "w/s", "t.read", "t.write", "user", "state", "gmem%", "gpu%"]
 
 # CPU widget configuration
 #[cpu]
