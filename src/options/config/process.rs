@@ -57,7 +57,9 @@ impl ProcColumn {
             ProcColumn::State => &["State"],
             ProcColumn::User => &["User"],
             ProcColumn::Time => &["Time"],
+            #[cfg(feature = "gpu")]
             ProcColumn::GpuMem => &["GMem", "GMem%"],
+            #[cfg(feature = "gpu")]
             ProcColumn::GpuPercent => &["GPU%"],
         }
     }
@@ -110,7 +112,9 @@ impl From<&ProcColumn> for ProcWidgetColumn {
             ProcColumn::State => ProcWidgetColumn::State,
             ProcColumn::User => ProcWidgetColumn::User,
             ProcColumn::Time => ProcWidgetColumn::Time,
+            #[cfg(feature = "gpu")]
             ProcColumn::GpuMem => ProcWidgetColumn::GpuMem,
+            #[cfg(feature = "gpu")]
             ProcColumn::GpuPercent => ProcWidgetColumn::GpuUtil,
         }
     }

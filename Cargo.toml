@@ -74,7 +74,7 @@ zfs = []
 logging = ["fern", "log", "time/local-offset"]
 generate_schema = ["schemars", "serde_json", "strum"]
 deploy = ["battery", "gpu", "zfs"]
-default = ["deploy", "generate_schema"]
+default = ["deploy"]
 
 [dependencies]
 anyhow = "1.0.86"
