@@ -183,7 +183,9 @@ pub fn init_app(
             if cfg.columns.is_empty() {
                 None
             } else {
-                Some(IndexSet::from_iter(cfg.columns.clone()))
+                Some(IndexSet::from_iter(
+                    cfg.columns.iter().map(ProcWidgetColumn::from),
+                ))
             }
         })
     };

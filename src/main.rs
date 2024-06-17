@@ -51,6 +51,7 @@ use crossterm::{
 use data_conversion::*;
 use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, CollectionThreadEvent};
 use options::{args, get_color_scheme, get_config_path, get_or_create_config, init_app};
+use strum::VariantArray;
 use tui::{backend::CrosstermBackend, Terminal};
 use utils::error;
 #[allow(unused_imports)]
@@ -287,6 +288,24 @@ fn main() -> anyhow::Result<()> {
     {
         if args.other.generate_schema {
             let mut schema = schemars::schema_for!(crate::options::config::ConfigV1);
+            {
+                use itertools::Itertools;
+
+                let proc_columns = schema.definitions.get_mut("ProcColumn").unwrap();
+                match proc_columns {
+                    schemars::schema::Schema::Object(proc_columns) => {
+                        let enums = proc_columns.enum_values.as_mut().unwrap();
+                        *enums = options::config::process::ProcColumn::VARIANTS
+                            .iter()
+                            .flat_map(|var| var.get_schema_names())
+                            .map(|v| serde_json::Value::String(v.to_string()))
+                            .dedup()
+                            .collect();
+                    }
+                    _ => anyhow::bail!("missing proc columns definition"),
+                }
+            }
+
             let metadata = schema.schema.metadata.as_mut().unwrap();
             metadata.id = Some(
                 "https://github.com/ClementTsang/bottom/blob/main/schema/nightly/bottom.json"

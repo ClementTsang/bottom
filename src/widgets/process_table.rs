@@ -9,7 +9,6 @@ use indexmap::IndexSet;
 use itertools::Itertools;
 pub use proc_widget_column::*;
 pub use proc_widget_data::*;
-use serde::Deserialize;
 use sort_table::SortTableColumn;
 
 use crate::{
@@ -109,39 +108,23 @@ pub struct ProcTableConfig {
     pub is_command: bool,
 }
 
-/// Represents a process widget column.
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Deserialize)]
-#[serde(rename_all = "lowercase")]
-#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+/// A hacky workaround for now.
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum ProcWidgetColumn {
-    // This is a hacky workaround for now.
-    #[serde(rename = "pid", alias = "count")]
     PidOrCount,
-    #[serde(rename = "name", alias = "command")]
     ProcNameOrCommand,
-    #[serde(rename = "cpu%")]
     Cpu,
-    #[serde(rename = "mem%", alias = "mem")]
     Mem,
-    #[serde(rename = "r/s", alias = "read", alias = "rps")]
     ReadPerSecond,
-    #[serde(rename = "w/s", alias = "write", alias = "wps")]
     WritePerSecond,
-    #[serde(rename = "t.read", alias = "tread")]
     TotalRead,
-    #[serde(rename = "t.write", alias = "twrite")]
     TotalWrite,
-    #[serde(rename = "user")]
     User,
-    #[serde(rename = "state")]
     State,
-    #[serde(rename = "time")]
     Time,
     #[cfg(feature = "gpu")]
-    #[serde(rename = "gmem", alias = "gmem%")]
     GpuMem,
     #[cfg(feature = "gpu")]
-    #[serde(rename = "gpu%")]
     GpuUtil,
 }
 

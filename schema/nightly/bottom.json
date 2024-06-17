@@ -612,23 +612,33 @@
         }
       }
     },
-    "ProcWidgetColumn": {
-      "description": "Represents a process widget column.",
+    "ProcColumn": {
+      "description": "A column in the process widget.",
       "type": "string",
       "enum": [
-        "pid",
-        "name",
-        "cpu%",
-        "mem%",
-        "r/s",
-        "w/s",
-        "t.read",
-        "t.write",
-        "user",
-        "state",
-        "time",
-        "gmem",
-        "gpu%"
+        "PID",
+        "Count",
+        "Name",
+        "Command",
+        "CPU%",
+        "Mem",
+        "Mem%",
+        "R/s",
+        "Read",
+        "Rps",
+        "W/s",
+        "Write",
+        "Wps",
+        "T.Read",
+        "TWrite",
+        "T.Write",
+        "TRead",
+        "State",
+        "User",
+        "Time",
+        "GMem",
+        "GMem%",
+        "GPU%"
       ]
     },
     "ProcessesConfig": {
@@ -639,7 +649,7 @@
           "description": "A list of process widget columns.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/ProcWidgetColumn"
+            "$ref": "#/definitions/ProcColumn"
           }
         }
       }

@@ -185,6 +185,7 @@ dependencies = [
  "serde",
  "serde_json",
  "starship-battery",
+ "strum",
  "sysctl",
  "sysinfo",
  "thiserror",

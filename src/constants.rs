@@ -606,7 +606,7 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #[processes]
 # The columns shown by the process widget. The following columns are supported:
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
-#columns = ["pid", "name", "cpu%", "mem%", "r/s", "w/s", "t.read", "t.write", "user", "state", "gmem%", "gpu%"]
+#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%"]
 
 # CPU widget configuration
 #[cpu]
