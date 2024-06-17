@@ -12,7 +12,7 @@ pub enum CpuDefault {
     Average,
 }
 
-/// Process column settings.
+/// CPU column settings.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub struct CpuConfig {

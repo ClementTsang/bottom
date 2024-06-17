@@ -5,6 +5,8 @@
 import argparse
 import toml
 import jsonschema_rs
+import re
+import traceback
 
 
 def main():
@@ -18,6 +20,12 @@ def main():
         "-s", "--schema", type=str, required=True, help="The schema to use."
     )
     parser.add_argument(
+        "--uncomment",
+        required=False,
+        action="store_true",
+        help="Uncomment the settings inside the file.",
+    )
+    parser.add_argument(
         "--should_fail",
         required=False,
         action="store_true",
@@ -28,22 +36,38 @@ def main():
     file = args.file
     schema = args.schema
     should_fail = args.should_fail
+    uncomment = args.uncomment
 
     with open(file) as f, open(schema) as s:
         try:
             validator = jsonschema_rs.JSONSchema.from_str(s.read())
         except:
-            print("Coudln't create validator.")
+            print("Couldn't create validator.")
             exit()
 
-        is_valid = validator.is_valid(toml.load(f))
-        if is_valid:
+        if uncomment:
+            read_file = f.read()
+            read_file = re.sub(r"^#([a-zA-Z\[])", r"\1", read_file, flags=re.MULTILINE)
+            read_file = re.sub(
+                r"^#(\s\s+)([a-zA-Z\[])", r"\2", read_file, flags=re.MULTILINE
+            )
+            print(f"uncommented file: \n{read_file}")
+
+            toml_str = toml.loads(read_file)
+        else:
+            toml_str = toml.load(f)
+
+        try:
+            validator.validate(toml_str)
             if should_fail:
-                print("Fail!")
+                print("Fail! Should have errored.")
                 exit(1)
             else:
                 print("All good!")
-        else:
+        except jsonschema_rs.ValidationError as err:
+            print(f"Caught error: `{err}`")
+            print(traceback.format_exc())
+
             if should_fail:
                 print("Caught error, good!")
             else:

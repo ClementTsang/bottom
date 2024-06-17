@@ -278,28 +278,47 @@ fn create_collection_thread(
     })
 }
 
+#[cfg(feature = "generate_schema")]
+fn generate_schema() -> anyhow::Result<()> {
+    let mut schema = schemars::schema_for!(crate::options::config::ConfigV1);
+    {
+        use itertools::Itertools;
+        use strum::VariantArray;
+
+        let proc_columns = schema.definitions.get_mut("ProcColumn").unwrap();
+        match proc_columns {
+            schemars::schema::Schema::Object(proc_columns) => {
+                let enums = proc_columns.enum_values.as_mut().unwrap();
+                *enums = options::config::process::ProcColumn::VARIANTS
+                    .iter()
+                    .flat_map(|var| var.get_schema_names())
+                    .map(|v| serde_json::Value::String(v.to_string()))
+                    .dedup()
+                    .collect();
+            }
+            _ => anyhow::bail!("missing proc columns definition"),
+        }
+    }
+
+    let metadata = schema.schema.metadata.as_mut().unwrap();
+    metadata.id = Some(
+        "https://github.com/ClementTsang/bottom/blob/main/schema/nightly/bottom.json".to_string(),
+    );
+    metadata.description =
+        Some("https://clementtsang.github.io/bottom/nightly/configuration/config-file".to_string());
+    println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+
+    Ok(())
+}
+
 fn main() -> anyhow::Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
 
     let args = args::get_args();
 
     #[cfg(feature = "generate_schema")]
-    {
-        if args.other.generate_schema {
-            let mut schema = schemars::schema_for!(crate::options::config::ConfigV1);
-            let metadata = schema.schema.metadata.as_mut().unwrap();
-            metadata.id = Some(
-                "https://github.com/ClementTsang/bottom/blob/main/schema/nightly/bottom.json"
-                    .to_string(),
-            );
-            metadata.description = Some(
-                "https://clementtsang.github.io/bottom/nightly/configuration/config-file"
-                    .to_string(),
-            );
-            println!("{}", serde_json::to_string_pretty(&schema).unwrap());
-
-            return Ok(());
-        }
+    if args.other.generate_schema {
+        return generate_schema();
     }
 
     #[cfg(feature = "logging")]

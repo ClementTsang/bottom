@@ -49,7 +49,9 @@ jobs:
       - name: Test nightly validates on valid sample configs
         run: |
           python3 scripts/schema/validator.py -s ./schema/nightly/bottom.json -f ./sample_configs/default_config.toml
+          python3 scripts/schema/validator.py --uncomment -s ./schema/nightly/bottom.json -f ./sample_configs/default_config.toml
           python3 scripts/schema/validator.py -s ./schema/nightly/bottom.json -f ./sample_configs/demo_config.toml
+          
 
       - name: Test nightly catches on a bad sample config
         run: |

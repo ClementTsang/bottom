@@ -9,7 +9,6 @@ use indexmap::IndexSet;
 use itertools::Itertools;
 pub use proc_widget_column::*;
 pub use proc_widget_data::*;
-use serde::{de::Error, Deserialize};
 use sort_table::SortTableColumn;
 
 use crate::{
@@ -111,7 +110,6 @@ pub struct ProcTableConfig {
 
 /// A hacky workaround for now.
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub enum ProcWidgetColumn {
     PidOrCount,
     ProcNameOrCommand,
@@ -128,36 +126,6 @@ pub enum ProcWidgetColumn {
     GpuMem,
     #[cfg(feature = "gpu")]
     GpuUtil,
-}
-
-impl<'de> Deserialize<'de> for ProcWidgetColumn {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let value = String::deserialize(deserializer)?.to_lowercase();
-        match value.as_str() {
-            "cpu%" => Ok(ProcWidgetColumn::Cpu),
-            "mem" => Ok(ProcWidgetColumn::Mem),
-            "mem%" => Ok(ProcWidgetColumn::Mem),
-            "pid" => Ok(ProcWidgetColumn::PidOrCount),
-            "count" => Ok(ProcWidgetColumn::PidOrCount),
-            "name" => Ok(ProcWidgetColumn::ProcNameOrCommand),
-            "command" => Ok(ProcWidgetColumn::ProcNameOrCommand),
-            "read" | "r/s" | "rps" => Ok(ProcWidgetColumn::ReadPerSecond),
-            "write" | "w/s" | "wps" => Ok(ProcWidgetColumn::WritePerSecond),
-            "tread" | "t.read" => Ok(ProcWidgetColumn::TotalRead),
-            "twrite" | "t.write" => Ok(ProcWidgetColumn::TotalWrite),
-            "state" => Ok(ProcWidgetColumn::State),
-            "user" => Ok(ProcWidgetColumn::User),
-            "time" => Ok(ProcWidgetColumn::Time),
-            #[cfg(feature = "gpu")]
-            "gmem" | "gmem%" => Ok(ProcWidgetColumn::GpuMem),
-            #[cfg(feature = "gpu")]
-            "gpu%" => Ok(ProcWidgetColumn::GpuUtil),
-            _ => Err(Error::custom("doesn't match any column type")),
-        }
-    }
 }
 
 // This is temporary. Switch back to `ProcColumn` later!

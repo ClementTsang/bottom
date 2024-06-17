@@ -87,6 +87,7 @@
   },
   "definitions": {
     "ColoursConfig": {
+      "description": "Colour configuration.",
       "type": "object",
       "properties": {
         "all_cpu_color": {
@@ -242,7 +243,7 @@
       }
     },
     "CpuConfig": {
-      "description": "Process column settings.",
+      "description": "CPU column settings.",
       "type": "object",
       "properties": {
         "default": {
@@ -611,23 +612,33 @@
         }
       }
     },
-    "ProcWidgetColumn": {
-      "description": "A hacky workaround for now.",
+    "ProcColumn": {
+      "description": "A column in the process widget.",
       "type": "string",
       "enum": [
-        "PidOrCount",
-        "ProcNameOrCommand",
-        "Cpu",
+        "PID",
+        "Count",
+        "Name",
+        "Command",
+        "CPU%",
         "Mem",
-        "ReadPerSecond",
-        "WritePerSecond",
-        "TotalRead",
-        "TotalWrite",
-        "User",
+        "Mem%",
+        "R/s",
+        "Read",
+        "Rps",
+        "W/s",
+        "Write",
+        "Wps",
+        "T.Read",
+        "TWrite",
+        "T.Write",
+        "TRead",
         "State",
+        "User",
         "Time",
-        "GpuMem",
-        "GpuUtil"
+        "GMem",
+        "GMem%",
+        "GPU%"
       ]
     },
     "ProcessesConfig": {
@@ -638,7 +649,7 @@
           "description": "A list of process widget columns.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/ProcWidgetColumn"
+            "$ref": "#/definitions/ProcColumn"
           }
         }
       }
