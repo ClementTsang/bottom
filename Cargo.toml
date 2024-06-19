@@ -38,7 +38,8 @@ exclude = [
     "perf.data",
     "rustfmt.toml",
 ]
-rust-version = "1.74.0" # The oldest version I've tested that should still build - note this is not an official MSRV!
+# The oldest version I've tested that should still build - note this is not an official MSRV!
+rust-version = "1.74.0"
 
 [[bin]]
 name = "btm"
@@ -48,7 +49,8 @@ doctest = true
 doc = true
 
 [profile.dev.package."*"]
-opt-level = 3 # Compile dependencies with optimizations on even in debug mode.
+# Compile dependencies with optimizations on even in debug mode.
+opt-level = 3
 
 [profile.no-opt]
 inherits = "dev"
