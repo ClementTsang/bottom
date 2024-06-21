@@ -269,6 +269,7 @@ pub(crate) fn init_app(
         network_unit_type,
         network_use_binary_prefix,
         retention_ms,
+        dedicated_average_row: get_dedicated_avg_row(args, config),
     };
 
     let table_config = ProcTableConfig {
@@ -675,6 +676,17 @@ fn get_show_average_cpu(args: &BottomArgs, config: &Config) -> bool {
     }
 
     true
+}
+
+fn get_dedicated_avg_row(_args: &BottomArgs, config: &Config) -> bool {
+    let conf = config
+        .flags
+        .as_ref()
+        .and_then(|flags| flags.average_cpu_row)
+        .unwrap_or(false);
+
+    // args.cpu.average_cpu_row || conf
+    conf
 }
 
 #[inline]

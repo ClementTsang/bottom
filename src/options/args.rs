@@ -428,6 +428,8 @@ pub struct CpuArgs {
         help = "Puts the CPU chart legend on the left side."
     )]
     pub cpu_left_legend: bool,
+    // #[arg(short = 'A', long, action = ArgAction::SetTrue, help = "Moves the average CPU usage entry to its own row when using basic mode.")]
+    // pub average_cpu_row: bool,
 }
 
 /// Memory argument/config options.
