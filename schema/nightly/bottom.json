@@ -562,6 +562,12 @@
             "boolean",
             "null"
           ]
+        },
+        "average_cpu_row": {
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       }
     },

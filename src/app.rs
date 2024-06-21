@@ -70,6 +70,7 @@ pub struct AppConfigFields {
     pub network_scale_type: AxisScaling,
     pub network_use_binary_prefix: bool,
     pub retention_ms: u64,
+    pub dedicated_average_row: bool,
 }
 
 /// For filtering out information
