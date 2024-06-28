@@ -6,7 +6,7 @@ use unicode_ellipsis::truncate_str;
 /// TODO: Maybe cache results from this function for some cases? e.g. columns
 #[inline]
 pub fn truncate_to_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
-    Text::raw(truncate_str(content, width.into()))
+    Text::raw(truncate_str(content, width.into()).to_string())
 }
 
 /// Checks that the first string is equal to any of the other ones in a ASCII
