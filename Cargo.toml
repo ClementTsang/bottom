@@ -111,7 +111,7 @@ log = { version = "0.4.22", optional = true }
 
 # These are just used for for schema generation.
 schemars = { version = "0.8.21", optional = true }
-serde_json = { version = "1.0.118", optional = true }
+serde_json = { version = "1.0.120", optional = true }
 strum = { version = "0.26.3", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
@@ -125,7 +125,7 @@ core-foundation = "0.9.4"
 mach2 = "0.4.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.57.0", features = [
+windows = { version = "0.58.0", features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_Storage_FileSystem",
@@ -136,7 +136,7 @@ windows = { version = "0.57.0", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.118" }
+serde_json = { version = "1.0.120" }
 sysctl = { version = "0.5.5" }
 filedescriptor = "0.8.2"
 
@@ -149,11 +149,11 @@ predicates = "3.1.0"
 portable-pty = "0.8.1"
 
 [build-dependencies]
-clap = { version = "4.5.7", features = ["default", "cargo", "wrap_help", "derive"] }
-clap_complete = "4.5.6"
+clap = { version = "4.5.8", features = ["default", "cargo", "wrap_help", "derive"] }
+clap_complete = "4.5.7"
 clap_complete_nushell = "4.5.2"
 clap_complete_fig = "4.5.1"
-clap_mangen = "0.2.21"
+clap_mangen = "0.2.22"
 indoc = "2.0.5"
 
 [package.metadata.deb]
