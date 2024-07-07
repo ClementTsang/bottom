@@ -94,7 +94,7 @@ indoc = "2.0.5"
 itertools = "0.13.0"
 nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
 regex = "1.10.5"
-serde = { version = "1.0.203", features = ["derive"] }
+serde = { version = "1.0.204", features = ["derive"] }
 starship-battery = { version = "0.8.3", optional = true }
 sysinfo = "=0.30.12"
 thiserror = "1.0.61"
