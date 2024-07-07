@@ -79,7 +79,7 @@ deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
 
 [dependencies]
-anyhow = "1.0.86"
+anyhow = { version = "0.6.12", package = "eyre" }
 backtrace = "0.3.73"
 cfg-if = "1.0.0"
 clap = { version = "4.5.7", features = ["default", "cargo", "wrap_help", "derive"] }
