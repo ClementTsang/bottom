@@ -26,8 +26,6 @@ pub enum BottomError {
     /// An error to represent errors with converting between data types.
     #[error("Conversion error, {0}")]
     ConversionError(String),
-    #[error("Error casting integers {0}")]
-    TryFromIntError(#[from] std::num::TryFromIntError),
 }
 
 impl From<std::io::Error> for BottomError {
