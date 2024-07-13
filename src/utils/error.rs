@@ -1,4 +1,4 @@
-use std::{borrow::Cow, result};
+use std::result;
 
 use thiserror::Error;
 
@@ -17,10 +17,6 @@ pub enum BottomError {
     /// An error to represent generic errors.
     #[error("Error, {0}")]
     GenericError(String),
-    #[cfg(feature = "fern")]
-    /// An error to represent errors with fern.
-    #[error("Fern error, {0}")]
-    FernError(String),
     /// An error to represent invalid command-line arguments.
     #[error("Invalid argument, {0}")]
     ArgumentError(String),
@@ -30,11 +26,6 @@ pub enum BottomError {
     /// An error to represent errors with converting between data types.
     #[error("Conversion error, {0}")]
     ConversionError(String),
-    /// An error to represent errors with a query.
-    #[error("Query error, {0}")]
-    QueryError(Cow<'static, str>),
-    #[error("Error casting integers {0}")]
-    TryFromIntError(#[from] std::num::TryFromIntError),
 }
 
 impl From<std::io::Error> for BottomError {
@@ -61,13 +52,6 @@ impl From<toml_edit::de::Error> for BottomError {
     }
 }
 
-#[cfg(feature = "fern")]
-impl From<fern::InitError> for BottomError {
-    fn from(err: fern::InitError) -> Self {
-        BottomError::FernError(err.to_string())
-    }
-}
-
 impl From<std::str::Utf8Error> for BottomError {
     fn from(err: std::str::Utf8Error) -> Self {
         BottomError::ConversionError(err.to_string())
@@ -77,15 +61,5 @@ impl From<std::str::Utf8Error> for BottomError {
 impl From<std::string::FromUtf8Error> for BottomError {
     fn from(err: std::string::FromUtf8Error) -> Self {
         BottomError::ConversionError(err.to_string())
-    }
-}
-
-impl From<regex::Error> for BottomError {
-    fn from(err: regex::Error) -> Self {
-        // We only really want the last part of it... so we'll do it the ugly way:
-        let err_str = err.to_string();
-        let error = err_str.split('\n').map(|s| s.trim()).collect::<Vec<_>>();
-
-        BottomError::QueryError(format!("Regex error: {}", error.last().unwrap_or(&"")).into())
     }
 }

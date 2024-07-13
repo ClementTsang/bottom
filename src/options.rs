@@ -566,7 +566,10 @@ fn get_show_average_cpu(args: &BottomArgs, config: &ConfigV1) -> bool {
 
 fn try_parse_ms(s: &str) -> error::Result<u64> {
     if let Ok(val) = humantime::parse_duration(s) {
-        Ok(val.as_millis().try_into()?)
+        Ok(val
+            .as_millis()
+            .try_into()
+            .map_err(|err| BottomError::GenericError(format!("could not parse duration, {err}")))?)
     } else if let Ok(val) = s.parse::<u64>() {
         Ok(val)
     } else {
@@ -784,8 +787,10 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Fil
             })
             .collect();
 
+        let list = list.map_err(|err| BottomError::ConfigError(err.to_string()))?;
+
         Ok(Some(Filter {
-            list: list?,
+            list,
             is_list_ignored: ignore_list.is_list_ignored,
         }))
     } else {
