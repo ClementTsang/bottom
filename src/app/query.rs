@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     collections::VecDeque,
-    fmt::{Debug, Formatter},
+    fmt::{Debug, Display, Formatter},
     time::Duration,
 };
 
@@ -9,16 +9,43 @@ use humantime::parse_duration;
 use regex::Regex;
 
 use crate::{
-    data_collection::processes::ProcessHarvest,
-    multi_eq_ignore_ascii_case,
-    utils::{
-        data_prefixes::*,
-        error::{
-            BottomError::{self, QueryError},
-            Result,
-        },
-    },
+    data_collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case, utils::data_prefixes::*,
 };
+
+#[derive(Debug)]
+pub(crate) struct QueryError {
+    reason: Cow<'static, str>,
+}
+
+impl QueryError {
+    #[inline]
+    pub(crate) fn new<I: Into<Cow<'static, str>>>(reason: I) -> Self {
+        Self {
+            reason: reason.into(),
+        }
+    }
+
+    #[inline]
+    fn missing_value() -> Self {
+        Self {
+            reason: "Missing value".into(),
+        }
+    }
+}
+
+impl Display for QueryError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.reason)
+    }
+}
+
+impl From<regex::Error> for QueryError {
+    fn from(err: regex::Error) -> Self {
+        Self::new(err.to_string())
+    }
+}
+
+type QueryResult<T> = Result<T, QueryError>;
 
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
 const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];
@@ -47,11 +74,11 @@ const AND_LIST: [&str; 2] = ["and", "&&"];
 /// adjacent non-prefixed or quoted elements after splitting to treat as process
 /// names. Furthermore, we want to support boolean joiners like AND and OR, and
 /// brackets.
-pub fn parse_query(
+pub(crate) fn parse_query(
     search_query: &str, is_searching_whole_word: bool, is_ignoring_case: bool,
     is_searching_with_regex: bool,
-) -> Result<Query> {
-    fn process_string_to_filter(query: &mut VecDeque<String>) -> Result<Query> {
+) -> QueryResult<Query> {
+    fn process_string_to_filter(query: &mut VecDeque<String>) -> QueryResult<Query> {
         let lhs = process_or(query)?;
         let mut list_of_ors = vec![lhs];
 
@@ -62,7 +89,7 @@ pub fn parse_query(
         Ok(Query { query: list_of_ors })
     }
 
-    fn process_or(query: &mut VecDeque<String>) -> Result<Or> {
+    fn process_or(query: &mut VecDeque<String>) -> QueryResult<Or> {
         let mut lhs = process_and(query)?;
         let mut rhs: Option<Box<And>> = None;
 
@@ -89,7 +116,7 @@ pub fn parse_query(
                     break;
                 }
             } else if COMPARISON_LIST.contains(&current_lowercase.as_str()) {
-                return Err(QueryError(Cow::Borrowed("Comparison not valid here")));
+                return Err(QueryError::new("Comparison not valid here"));
             } else {
                 break;
             }
@@ -98,7 +125,7 @@ pub fn parse_query(
         Ok(Or { lhs, rhs })
     }
 
-    fn process_and(query: &mut VecDeque<String>) -> Result<And> {
+    fn process_and(query: &mut VecDeque<String>) -> QueryResult<And> {
         let mut lhs = process_prefix(query, false)?;
         let mut rhs: Option<Box<Prefix>> = None;
 
@@ -128,7 +155,7 @@ pub fn parse_query(
                     break;
                 }
             } else if COMPARISON_LIST.contains(&current_lowercase.as_str()) {
-                return Err(QueryError(Cow::Borrowed("Comparison not valid here")));
+                return Err(QueryError::new("Comparison not valid here"));
             } else {
                 break;
             }
@@ -175,7 +202,7 @@ pub fn parse_query(
         }
     }
 
-    fn process_prefix(query: &mut VecDeque<String>, inside_quotation: bool) -> Result<Prefix> {
+    fn process_prefix(query: &mut VecDeque<String>, inside_quotation: bool) -> QueryResult<Prefix> {
         if let Some(queue_top) = query.pop_front() {
             if inside_quotation {
                 if queue_top == "\"" {
@@ -210,7 +237,7 @@ pub fn parse_query(
                 }
             } else if queue_top == "(" {
                 if query.is_empty() {
-                    return Err(QueryError(Cow::Borrowed("Missing closing parentheses")));
+                    return Err(QueryError::new("Missing closing parentheses"));
                 }
 
                 let mut list_of_ors = VecDeque::new();
@@ -225,7 +252,7 @@ pub fn parse_query(
 
                 // Ensure not empty
                 if list_of_ors.is_empty() {
-                    return Err(QueryError("No values within parentheses group".into()));
+                    return Err(QueryError::new("No values within parentheses group"));
                 }
 
                 // Now convert this back to a OR...
@@ -264,13 +291,13 @@ pub fn parse_query(
                             compare_prefix: None,
                         });
                     } else {
-                        return Err(QueryError("Missing closing parentheses".into()));
+                        return Err(QueryError::new("Missing closing parentheses"));
                     }
                 } else {
-                    return Err(QueryError("Missing closing parentheses".into()));
+                    return Err(QueryError::new("Missing closing parentheses"));
                 }
             } else if queue_top == ")" {
-                return Err(QueryError("Missing opening parentheses".into()));
+                return Err(QueryError::new("Missing opening parentheses"));
             } else if queue_top == "\"" {
                 // Similar to parentheses, trap and check for missing closing quotes.  Note,
                 // however, that we will DIRECTLY call another process_prefix
@@ -281,13 +308,13 @@ pub fn parse_query(
                     if close_paren == "\"" {
                         return Ok(prefix);
                     } else {
-                        return Err(QueryError("Missing closing quotation".into()));
+                        return Err(QueryError::new("Missing closing quotation"));
                     }
                 } else {
-                    return Err(QueryError("Missing closing quotation".into()));
+                    return Err(QueryError::new("Missing closing quotation"));
                 }
             } else {
-                //  Get prefix type...
+                // Get prefix type.
                 let prefix_type = queue_top.parse::<PrefixType>()?;
                 let content = if let PrefixType::Name = prefix_type {
                     Some(queue_top)
@@ -362,15 +389,15 @@ pub fn parse_query(
                                         duration_string = Some(queue_next);
                                     }
                                 } else {
-                                    return Err(QueryError("Missing value".into()));
+                                    return Err(QueryError::missing_value());
                                 }
                             }
 
                             if let Some(condition) = condition {
                                 let duration = parse_duration(
-                                    &duration_string.ok_or(QueryError("Missing value".into()))?,
+                                    &duration_string.ok_or(QueryError::missing_value())?,
                                 )
-                                .map_err(|err| QueryError(err.to_string().into()))?;
+                                .map_err(|err| QueryError::new(err.to_string()))?;
 
                                 return Ok(Prefix {
                                     or: None,
@@ -399,7 +426,7 @@ pub fn parse_query(
                                 if let Some(queue_next) = query.pop_front() {
                                     value = queue_next.parse::<f64>().ok();
                                 } else {
-                                    return Err(QueryError("Missing value".into()));
+                                    return Err(QueryError::missing_value());
                                 }
                             } else if content == ">" || content == "<" {
                                 // We also have to check if the next string is an "="...
@@ -413,7 +440,7 @@ pub fn parse_query(
                                         if let Some(queue_next_next) = query.pop_front() {
                                             value = queue_next_next.parse::<f64>().ok();
                                         } else {
-                                            return Err(QueryError("Missing value".into()));
+                                            return Err(QueryError::missing_value());
                                         }
                                     } else {
                                         condition = Some(if content == ">" {
@@ -424,7 +451,7 @@ pub fn parse_query(
                                         value = queue_next.parse::<f64>().ok();
                                     }
                                 } else {
-                                    return Err(QueryError("Missing value".into()));
+                                    return Err(QueryError::missing_value());
                                 }
                             }
 
@@ -467,15 +494,15 @@ pub fn parse_query(
                         }
                     }
                 } else {
-                    return Err(QueryError("Missing argument for search prefix".into()));
+                    return Err(QueryError::new("Missing argument for search prefix"));
                 }
             }
         } else if inside_quotation {
             // Uh oh, it's empty with quotes!
-            return Err(QueryError("Missing closing quotation".into()));
+            return Err(QueryError::new("Missing closing quotation"));
         }
 
-        Err(QueryError("Invalid query".into()))
+        Err(QueryError::new("Invalid query"))
     }
 
     let mut split_query = VecDeque::new();
@@ -507,14 +534,14 @@ pub fn parse_query(
 
 pub struct Query {
     /// Remember, AND > OR, but AND must come after OR when we parse.
-    pub query: Vec<Or>,
+    query: Vec<Or>,
 }
 
 impl Query {
-    pub fn process_regexes(
+    fn process_regexes(
         &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
         is_searching_with_regex: bool,
-    ) -> Result<()> {
+    ) -> QueryResult<()> {
         for or in &mut self.query {
             or.process_regexes(
                 is_searching_whole_word,
@@ -526,7 +553,7 @@ impl Query {
         Ok(())
     }
 
-    pub fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+    pub(crate) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         self.query
             .iter()
             .all(|ok| ok.check(process, is_using_command))
@@ -540,16 +567,16 @@ impl Debug for Query {
 }
 
 #[derive(Default)]
-pub struct Or {
-    pub lhs: And,
-    pub rhs: Option<Box<And>>,
+struct Or {
+    lhs: And,
+    rhs: Option<Box<And>>,
 }
 
 impl Or {
-    pub fn process_regexes(
+    fn process_regexes(
         &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
         is_searching_with_regex: bool,
-    ) -> Result<()> {
+    ) -> QueryResult<()> {
         self.lhs.process_regexes(
             is_searching_whole_word,
             is_ignoring_case,
@@ -566,7 +593,7 @@ impl Or {
         Ok(())
     }
 
-    pub fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+    fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         if let Some(rhs) = &self.rhs {
             self.lhs.check(process, is_using_command) || rhs.check(process, is_using_command)
         } else {
@@ -585,16 +612,16 @@ impl Debug for Or {
 }
 
 #[derive(Default)]
-pub struct And {
-    pub lhs: Prefix,
-    pub rhs: Option<Box<Prefix>>,
+struct And {
+    lhs: Prefix,
+    rhs: Option<Box<Prefix>>,
 }
 
 impl And {
-    pub fn process_regexes(
+    fn process_regexes(
         &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
         is_searching_with_regex: bool,
-    ) -> Result<()> {
+    ) -> QueryResult<()> {
         self.lhs.process_regexes(
             is_searching_whole_word,
             is_ignoring_case,
@@ -611,7 +638,7 @@ impl And {
         Ok(())
     }
 
-    pub fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+    fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         if let Some(rhs) = &self.rhs {
             self.lhs.check(process, is_using_command) && rhs.check(process, is_using_command)
         } else {
@@ -630,7 +657,7 @@ impl Debug for And {
 }
 
 #[derive(Debug)]
-pub enum PrefixType {
+enum PrefixType {
     Pid,
     PCpu,
     MemBytes,
@@ -653,9 +680,9 @@ pub enum PrefixType {
 }
 
 impl std::str::FromStr for PrefixType {
-    type Err = BottomError;
+    type Err = QueryError;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> QueryResult<Self> {
         use PrefixType::*;
 
         // TODO: Didn't add mem_bytes, total_read, and total_write
@@ -702,17 +729,17 @@ impl std::str::FromStr for PrefixType {
 // TODO: This is also jank and could be better represented. Add tests, then
 // clean up!
 #[derive(Default)]
-pub struct Prefix {
-    pub or: Option<Box<Or>>,
-    pub regex_prefix: Option<(PrefixType, StringQuery)>,
-    pub compare_prefix: Option<(PrefixType, ComparableQuery)>,
+struct Prefix {
+    or: Option<Box<Or>>,
+    regex_prefix: Option<(PrefixType, StringQuery)>,
+    compare_prefix: Option<(PrefixType, ComparableQuery)>,
 }
 
 impl Prefix {
-    pub fn process_regexes(
+    fn process_regexes(
         &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
         is_searching_with_regex: bool,
-    ) -> Result<()> {
+    ) -> QueryResult<()> {
         if let Some(or) = &mut self.or {
             return or.process_regexes(
                 is_searching_whole_word,
@@ -752,7 +779,7 @@ impl Prefix {
         Ok(())
     }
 
-    pub fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+    fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         fn matches_condition<I: Into<f64>, J: Into<f64>>(
             condition: &QueryComparison, lhs: I, rhs: J,
         ) -> bool {
@@ -883,7 +910,7 @@ impl Debug for Prefix {
 }
 
 #[derive(Debug)]
-pub enum QueryComparison {
+enum QueryComparison {
     Equal,
     Less,
     Greater,
@@ -892,25 +919,25 @@ pub enum QueryComparison {
 }
 
 #[derive(Debug)]
-pub enum StringQuery {
+enum StringQuery {
     Value(String),
     Regex(Regex),
 }
 
 #[derive(Debug)]
-pub enum ComparableQuery {
+enum ComparableQuery {
     Numerical(NumericalQuery),
     Time(TimeQuery),
 }
 
 #[derive(Debug)]
-pub struct NumericalQuery {
-    pub condition: QueryComparison,
-    pub value: f64,
+struct NumericalQuery {
+    condition: QueryComparison,
+    value: f64,
 }
 
 #[derive(Debug)]
-pub struct TimeQuery {
-    pub condition: QueryComparison,
-    pub duration: Duration,
+struct TimeQuery {
+    condition: QueryComparison,
+    duration: Duration,
 }

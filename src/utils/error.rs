@@ -1,4 +1,4 @@
-use std::{borrow::Cow, result};
+use std::result;
 
 use thiserror::Error;
 
@@ -26,9 +26,6 @@ pub enum BottomError {
     /// An error to represent errors with converting between data types.
     #[error("Conversion error, {0}")]
     ConversionError(String),
-    /// An error to represent errors with a query.
-    #[error("Query error, {0}")]
-    QueryError(Cow<'static, str>),
     #[error("Error casting integers {0}")]
     TryFromIntError(#[from] std::num::TryFromIntError),
 }
@@ -66,15 +63,5 @@ impl From<std::str::Utf8Error> for BottomError {
 impl From<std::string::FromUtf8Error> for BottomError {
     fn from(err: std::string::FromUtf8Error) -> Self {
         BottomError::ConversionError(err.to_string())
-    }
-}
-
-impl From<regex::Error> for BottomError {
-    fn from(err: regex::Error) -> Self {
-        // We only really want the last part of it... so we'll do it the ugly way:
-        let err_str = err.to_string();
-        let error = err_str.split('\n').map(|s| s.trim()).collect::<Vec<_>>();
-
-        BottomError::QueryError(format!("Regex error: {}", error.last().unwrap_or(&"")).into())
     }
 }
