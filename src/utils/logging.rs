@@ -7,7 +7,7 @@ pub static OFFSET: OnceLock<time::UtcOffset> = OnceLock::new();
 #[cfg(feature = "logging")]
 pub fn init_logger(
     min_level: log::LevelFilter, debug_file_name: Option<&std::ffi::OsStr>,
-) -> Result<(), fern::InitError> {
+) -> anyhow::Result<()> {
     let dispatch = fern::Dispatch::new()
         .format(|out, message, record| {
             let offset = OFFSET.get_or_init(|| {

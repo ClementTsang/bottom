@@ -17,10 +17,6 @@ pub enum BottomError {
     /// An error to represent generic errors.
     #[error("Error, {0}")]
     GenericError(String),
-    #[cfg(feature = "fern")]
-    /// An error to represent errors with fern.
-    #[error("Fern error, {0}")]
-    FernError(String),
     /// An error to represent invalid command-line arguments.
     #[error("Invalid argument, {0}")]
     ArgumentError(String),
@@ -58,13 +54,6 @@ impl From<String> for BottomError {
 impl From<toml_edit::de::Error> for BottomError {
     fn from(err: toml_edit::de::Error) -> Self {
         BottomError::ConfigError(err.to_string())
-    }
-}
-
-#[cfg(feature = "fern")]
-impl From<fern::InitError> for BottomError {
-    fn from(err: fern::InitError) -> Self {
-        BottomError::FernError(err.to_string())
     }
 }
 
