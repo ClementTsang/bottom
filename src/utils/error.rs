@@ -23,9 +23,6 @@ pub enum BottomError {
     /// An error to represent errors with the config.
     #[error("Configuration file error, {0}")]
     ConfigError(String),
-    /// An error to represent errors with converting between data types.
-    #[error("Conversion error, {0}")]
-    ConversionError(String),
 }
 
 impl From<std::io::Error> for BottomError {
@@ -49,17 +46,5 @@ impl From<String> for BottomError {
 impl From<toml_edit::de::Error> for BottomError {
     fn from(err: toml_edit::de::Error) -> Self {
         BottomError::ConfigError(err.to_string())
-    }
-}
-
-impl From<std::str::Utf8Error> for BottomError {
-    fn from(err: std::str::Utf8Error) -> Self {
-        BottomError::ConversionError(err.to_string())
-    }
-}
-
-impl From<std::string::FromUtf8Error> for BottomError {
-    fn from(err: std::string::FromUtf8Error) -> Self {
-        BottomError::ConversionError(err.to_string())
     }
 }

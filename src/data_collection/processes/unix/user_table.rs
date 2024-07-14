@@ -1,6 +1,6 @@
 use hashbrown::HashMap;
 
-use crate::utils::error;
+use crate::utils::error::{self, BottomError};
 
 #[derive(Debug, Default)]
 pub struct UserTable {
@@ -17,13 +17,12 @@ impl UserTable {
             let passwd = unsafe { libc::getpwuid(uid) };
 
             if passwd.is_null() {
-                Err(error::BottomError::GenericError(
-                    "passwd is inaccessible".into(),
-                ))
+                Err(BottomError::GenericError("passwd is inaccessible".into()))
             } else {
                 // SAFETY: We return early if passwd is null.
                 let username = unsafe { std::ffi::CStr::from_ptr((*passwd).pw_name) }
-                    .to_str()?
+                    .to_str()
+                    .map_err(|err| BottomError::GenericError(err.to_string()))?
                     .to_string();
                 self.uid_user_mapping.insert(uid, username.clone());
 

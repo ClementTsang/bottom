@@ -9,7 +9,7 @@ use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
 use super::{is_temp_filtered, TempHarvest, TemperatureType};
-use crate::{app::filter::Filter, utils::error::BottomError};
+use crate::app::filter::Filter;
 
 const EMPTY_NAME: &str = "Unknown";
 
@@ -23,11 +23,7 @@ struct HwmonResults {
 /// Parses and reads temperatures that were in millidegree Celsius, and if
 /// successful, returns a temperature in Celsius.
 fn parse_temp(path: &Path) -> Result<f32> {
-    Ok(fs::read_to_string(path)?
-        .trim_end()
-        .parse::<f32>()
-        .map_err(|e| BottomError::ConversionError(e.to_string()))?
-        / 1_000.0)
+    Ok(fs::read_to_string(path)?.trim_end().parse::<f32>()? / 1_000.0)
 }
 
 /// Get all candidates from hwmon and coretemp. It will also return the number
