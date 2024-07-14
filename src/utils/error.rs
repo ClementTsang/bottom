@@ -11,9 +11,6 @@ pub enum BottomError {
     /// An error when there is an IO exception.
     #[error("IO exception, {0}")]
     InvalidIo(String),
-    /// An error when the Crossterm library encounters a problem.
-    #[error("Error caused by Crossterm, {0}")]
-    CrosstermError(String),
     /// An error to represent generic errors.
     #[error("Error, {0}")]
     GenericError(String),
@@ -23,9 +20,6 @@ pub enum BottomError {
     /// An error to represent errors with the config.
     #[error("Configuration file error, {0}")]
     ConfigError(String),
-    /// An error to represent errors with converting between data types.
-    #[error("Conversion error, {0}")]
-    ConversionError(String),
 }
 
 impl From<std::io::Error> for BottomError {
@@ -49,17 +43,5 @@ impl From<String> for BottomError {
 impl From<toml_edit::de::Error> for BottomError {
     fn from(err: toml_edit::de::Error) -> Self {
         BottomError::ConfigError(err.to_string())
-    }
-}
-
-impl From<std::str::Utf8Error> for BottomError {
-    fn from(err: std::str::Utf8Error) -> Self {
-        BottomError::ConversionError(err.to_string())
-    }
-}
-
-impl From<std::string::FromUtf8Error> for BottomError {
-    fn from(err: std::string::FromUtf8Error) -> Self {
-        BottomError::ConversionError(err.to_string())
     }
 }
