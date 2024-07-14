@@ -11,9 +11,6 @@ pub enum BottomError {
     /// An error when there is an IO exception.
     #[error("IO exception, {0}")]
     InvalidIo(String),
-    /// An error when the Crossterm library encounters a problem.
-    #[error("Error caused by Crossterm, {0}")]
-    CrosstermError(String),
     /// An error to represent generic errors.
     #[error("Error, {0}")]
     GenericError(String),
