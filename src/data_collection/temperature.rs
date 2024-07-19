@@ -40,7 +40,7 @@ impl FromStr for TemperatureType {
             "kelvin" | "k" => Ok(TemperatureType::Kelvin),
             "celsius" | "c" => Ok(TemperatureType::Celsius),
             _ => Err(format!(
-                "\"{s}\" is an invalid temperature type, use \"<kelvin|k|celsius|c|fahrenheit|f>\"."
+                "'{s}' is an invalid temperature type, use one of: [kelvin, k, celsius, c, fahrenheit, f]."
             )),
         }
     }

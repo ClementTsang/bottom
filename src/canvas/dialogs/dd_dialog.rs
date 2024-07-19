@@ -182,19 +182,19 @@ impl Painter {
                     {
                         if to_kill_processes.1.len() != 1 {
                             Line::from(format!(
-                                "Kill {} processes with the name \"{}\"?  Press ENTER to confirm.",
+                                "Kill {} processes with the name '{}'?  Press ENTER to confirm.",
                                 to_kill_processes.1.len(),
                                 to_kill_processes.0
                             ))
                         } else {
                             Line::from(format!(
-                                "Kill 1 process with the name \"{}\"?  Press ENTER to confirm.",
+                                "Kill 1 process with the name '{}'?  Press ENTER to confirm.",
                                 to_kill_processes.0
                             ))
                         }
                     } else {
                         Line::from(format!(
-                            "Kill process \"{}\" with PID {}?  Press ENTER to confirm.",
+                            "Kill process '{}' with PID {}?  Press ENTER to confirm.",
                             to_kill_processes.0, first_pid
                         ))
                     },

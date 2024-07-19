@@ -13,9 +13,7 @@ fn test_small_rate() {
         .arg("249")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "set your update rate to be at least 250 ms.",
-        ));
+        .stderr(predicate::str::contains("'--rate' must be greater"));
 }
 
 #[test]
@@ -26,7 +24,7 @@ fn test_large_default_time() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "set your default time to be valid",
+            "'--default_time_value' was set with an invalid value",
         ));
 }
 
@@ -38,7 +36,7 @@ fn test_small_default_time() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "set your default time to be at least",
+            "'--default_time_value' must be greater",
         ));
 }
 
@@ -49,7 +47,9 @@ fn test_large_delta_time() {
         .arg("18446744073709551616")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("set your time delta to be valid"));
+        .stderr(predicate::str::contains(
+            "'--time_delta' was set with an invalid value",
+        ));
 }
 
 #[test]
@@ -59,9 +59,7 @@ fn test_small_delta_time() {
         .arg("900")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "set your time delta to be at least",
-        ));
+        .stderr(predicate::str::contains("'--time_delta' must be greater"));
 }
 
 #[test]
@@ -71,7 +69,9 @@ fn test_large_rate() {
         .arg("18446744073709551616")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("set your update rate"));
+        .stderr(predicate::str::contains(
+            "'--rate' was set with an invalid value",
+        ));
 }
 
 #[test]
@@ -92,7 +92,9 @@ fn test_invalid_rate() {
         .arg("100-1000")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("set your update rate"));
+        .stderr(predicate::str::contains(
+            "'--rate' was set with an invalid value",
+        ));
 }
 
 #[test]

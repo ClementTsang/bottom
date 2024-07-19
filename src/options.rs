@@ -5,6 +5,7 @@
 pub mod args;
 pub mod colours;
 pub mod config;
+mod error;
 
 use std::{
     convert::TryInto,
@@ -18,6 +19,7 @@ use std::{
 use anyhow::{Context, Result};
 pub use colours::ColoursConfig;
 pub use config::ConfigV1;
+pub(crate) use error::{OptionError, OptionResult};
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use regex::Regex;
@@ -33,10 +35,7 @@ use crate::{
     canvas::{components::time_chart::LegendPosition, styling::CanvasStyling, ColourScheme},
     constants::*,
     data_collection::temperature::TemperatureType,
-    utils::{
-        data_units::DataUnit,
-        error::{self, BottomError},
-    },
+    utils::data_units::DataUnit,
     widgets::*,
 };
 
@@ -98,11 +97,11 @@ pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
 /// path, it will try to create a new file with the default settings, and return
 /// the default config. If bottom fails to write a new config, it will silently
 /// just return the default config.
-pub fn get_or_create_config(config_path: Option<&Path>) -> error::Result<ConfigV1> {
+pub fn get_or_create_config(config_path: Option<&Path>) -> OptionResult<ConfigV1> {
     match &config_path {
         Some(path) => {
             if let Ok(config_string) = fs::read_to_string(path) {
-                Ok(toml_edit::de::from_str(config_string.as_str())?)
+                Ok(toml_edit::de::from_str(&config_string)?)
             } else {
                 if let Some(parent_path) = path.parent() {
                     fs::create_dir_all(parent_path)?;
@@ -445,7 +444,7 @@ pub fn init_app(
 
 pub fn get_widget_layout(
     args: &BottomArgs, config: &ConfigV1,
-) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
+) -> OptionResult<(BottomLayout, u64, Option<BottomWidgetType>)> {
     let cpu_left_legend = is_flag_enabled!(cpu_left_legend, args.cpu, config);
 
     let (default_widget_type, mut default_widget_count) =
@@ -488,8 +487,9 @@ pub fn get_widget_layout(
                         &mut default_widget_count,
                         cpu_left_legend,
                     )
+                    .map_err(|err| OptionError::config(err.to_string()))
                 })
-                .collect::<error::Result<Vec<_>>>()?,
+                .collect::<OptionResult<Vec<_>>>()?,
             total_row_height_ratio: total_height_ratio,
         };
 
@@ -498,8 +498,8 @@ pub fn get_widget_layout(
             ret_bottom_layout.get_movement_mappings();
             ret_bottom_layout
         } else {
-            return Err(BottomError::ConfigError(
-                "please have at least one widget under the '[[row]]' section.".to_string(),
+            return Err(OptionError::config(
+                "have at least one widget under the '[[row]]' section.",
             ));
         }
     };
@@ -507,36 +507,103 @@ pub fn get_widget_layout(
     Ok((bottom_layout, default_widget_id, default_widget_type))
 }
 
-fn get_update_rate(args: &BottomArgs, config: &ConfigV1) -> error::Result<u64> {
-    let update_rate = if let Some(update_rate) = &args.general.rate {
-        try_parse_ms(update_rate).map_err(|_| {
-            BottomError::ArgumentError("set your update rate to be valid".to_string())
-        })?
-    } else if let Some(flags) = &config.flags {
-        if let Some(rate) = &flags.rate {
-            match rate {
-                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
-                    BottomError::ConfigError("set your update rate to be valid".to_string())
-                })?,
-                StringOrNum::Num(n) => *n,
-            }
-        } else {
-            DEFAULT_REFRESH_RATE_IN_MILLISECONDS
-        }
+#[inline]
+fn try_parse_ms(s: &str) -> Result<u64, ()> {
+    Ok(if let Ok(val) = humantime::parse_duration(s) {
+        val.as_millis().try_into().map_err(|_| ())?
+    } else if let Ok(val) = s.parse::<u64>() {
+        val
     } else {
-        DEFAULT_REFRESH_RATE_IN_MILLISECONDS
-    };
-
-    if update_rate < 250 {
-        return Err(BottomError::ConfigError(
-            "set your update rate to be at least 250 ms.".to_string(),
-        ));
-    }
-
-    Ok(update_rate)
+        return Err(());
+    })
 }
 
-fn get_temperature(args: &BottomArgs, config: &ConfigV1) -> error::Result<TemperatureType> {
+macro_rules! parse_arg_value {
+    ($to_try:expr, $flag:literal) => {
+        $to_try.map_err(|_| OptionError::invalid_arg_value($flag))
+    };
+}
+
+macro_rules! parse_config_value {
+    ($to_try:expr, $setting:literal) => {
+        $to_try.map_err(|_| OptionError::invalid_config_value($setting))
+    };
+}
+
+macro_rules! parse_ms_option {
+    ($arg_expr:expr, $config_expr:expr, $default_value:expr, $setting:literal, $low:expr, $high:expr $(,)?) => {{
+        use humantime::format_duration;
+
+        if let Some(to_parse) = $arg_expr {
+            let value = parse_arg_value!(try_parse_ms(to_parse), $setting)?;
+
+            if let Some(limit) = $low {
+                if value < limit {
+                    return Err(OptionError::arg(format!(
+                        "'--{}' must be greater than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            if let Some(limit) = $high {
+                if value > limit {
+                    return Err(OptionError::arg(format!(
+                        "'--{}' must be less than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            Ok(value)
+        } else if let Some(to_parse) = $config_expr {
+            let value = match to_parse {
+                StringOrNum::String(s) => parse_config_value!(try_parse_ms(s), $setting)?,
+                StringOrNum::Num(n) => *n,
+            };
+
+            if let Some(limit) = $low {
+                if value < limit {
+                    return Err(OptionError::arg(format!(
+                        "'{}' must be greater than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            if let Some(limit) = $high {
+                if value > limit {
+                    return Err(OptionError::arg(format!(
+                        "'{}' must be less than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            Ok(value)
+        } else {
+            Ok($default_value)
+        }
+    }};
+}
+
+#[inline]
+fn get_update_rate(args: &BottomArgs, config: &ConfigV1) -> OptionResult<u64> {
+    parse_ms_option!(
+        &args.general.rate,
+        config.flags.as_ref().and_then(|flags| flags.rate.as_ref()),
+        DEFAULT_REFRESH_RATE_IN_MILLISECONDS,
+        "rate",
+        Some(250),
+        None,
+    )
+}
+
+fn get_temperature(args: &BottomArgs, config: &ConfigV1) -> OptionResult<TemperatureType> {
     if args.temperature.fahrenheit {
         return Ok(TemperatureType::Fahrenheit);
     } else if args.temperature.kelvin {
@@ -545,7 +612,7 @@ fn get_temperature(args: &BottomArgs, config: &ConfigV1) -> error::Result<Temper
         return Ok(TemperatureType::Celsius);
     } else if let Some(flags) = &config.flags {
         if let Some(temp_type) = &flags.temperature_type {
-            return TemperatureType::from_str(temp_type).map_err(BottomError::ConfigError);
+            return parse_config_value!(TemperatureType::from_str(temp_type), "temperature_type");
         }
     }
     Ok(TemperatureType::Celsius)
@@ -564,98 +631,43 @@ fn get_show_average_cpu(args: &BottomArgs, config: &ConfigV1) -> bool {
     true
 }
 
-fn try_parse_ms(s: &str) -> error::Result<u64> {
-    if let Ok(val) = humantime::parse_duration(s) {
-        Ok(val
-            .as_millis()
-            .try_into()
-            .map_err(|err| BottomError::GenericError(format!("could not parse duration, {err}")))?)
-    } else if let Ok(val) = s.parse::<u64>() {
-        Ok(val)
-    } else {
-        Err(BottomError::ConfigError(
-            "could not parse as a valid 64-bit unsigned integer or a human time".to_string(),
-        ))
-    }
-}
-
+#[inline]
 fn get_default_time_value(
     args: &BottomArgs, config: &ConfigV1, retention_ms: u64,
-) -> error::Result<u64> {
-    let default_time = if let Some(default_time_value) = &args.general.default_time_value {
-        try_parse_ms(default_time_value).map_err(|_| {
-            BottomError::ArgumentError("set your default time to be valid".to_string())
-        })?
-    } else if let Some(flags) = &config.flags {
-        if let Some(default_time_value) = &flags.default_time_value {
-            match default_time_value {
-                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
-                    BottomError::ConfigError("set your default time to be valid".to_string())
-                })?,
-                StringOrNum::Num(n) => *n,
-            }
-        } else {
-            DEFAULT_TIME_MILLISECONDS
-        }
-    } else {
-        DEFAULT_TIME_MILLISECONDS
-    };
-
-    if default_time < 30000 {
-        return Err(BottomError::ConfigError(
-            "set your default time to be at least 30s.".to_string(),
-        ));
-    } else if default_time > retention_ms {
-        return Err(BottomError::ConfigError(format!(
-            "set your default time to be at most {}.",
-            humantime::Duration::from(Duration::from_millis(retention_ms))
-        )));
-    }
-
-    Ok(default_time)
+) -> OptionResult<u64> {
+    parse_ms_option!(
+        &args.general.default_time_value,
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.default_time_value.as_ref()),
+        DEFAULT_TIME_MILLISECONDS,
+        "default_time_value",
+        Some(30000),
+        Some(retention_ms),
+    )
 }
 
-fn get_time_interval(
-    args: &BottomArgs, config: &ConfigV1, retention_ms: u64,
-) -> error::Result<u64> {
-    let time_interval = if let Some(time_interval) = &args.general.time_delta {
-        try_parse_ms(time_interval).map_err(|_| {
-            BottomError::ArgumentError("set your time delta to be valid".to_string())
-        })?
-    } else if let Some(flags) = &config.flags {
-        if let Some(time_interval) = &flags.time_delta {
-            match time_interval {
-                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
-                    BottomError::ArgumentError("set your time delta to be valid".to_string())
-                })?,
-                StringOrNum::Num(n) => *n,
-            }
-        } else {
-            TIME_CHANGE_MILLISECONDS
-        }
-    } else {
-        TIME_CHANGE_MILLISECONDS
-    };
-
-    if time_interval < 1000 {
-        return Err(BottomError::ConfigError(
-            "set your time delta to be at least 1s.".to_string(),
-        ));
-    } else if time_interval > retention_ms {
-        return Err(BottomError::ConfigError(format!(
-            "set your time delta to be at most {}.",
-            humantime::Duration::from(Duration::from_millis(retention_ms))
-        )));
-    }
-
-    Ok(time_interval)
+#[inline]
+fn get_time_interval(args: &BottomArgs, config: &ConfigV1, retention_ms: u64) -> OptionResult<u64> {
+    parse_ms_option!(
+        &args.general.time_delta,
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.time_delta.as_ref()),
+        TIME_CHANGE_MILLISECONDS,
+        "time_delta",
+        Some(1000),
+        Some(retention_ms),
+    )
 }
 
 fn get_default_widget_and_count(
     args: &BottomArgs, config: &ConfigV1,
-) -> error::Result<(Option<BottomWidgetType>, u64)> {
+) -> OptionResult<(Option<BottomWidgetType>, u64)> {
     let widget_type = if let Some(widget_type) = &args.general.default_widget_type {
-        let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
+        let parsed_widget = parse_arg_value!(widget_type.parse(), "default_widget_type")?;
         if let BottomWidgetType::Empty = parsed_widget {
             None
         } else {
@@ -663,7 +675,7 @@ fn get_default_widget_and_count(
         }
     } else if let Some(flags) = &config.flags {
         if let Some(widget_type) = &flags.default_widget_type {
-            let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
+            let parsed_widget = parse_config_value!(widget_type.parse(), "default_widget_type")?;
             if let BottomWidgetType::Empty = parsed_widget {
                 None
             } else {
@@ -688,13 +700,13 @@ fn get_default_widget_and_count(
 
     match (widget_type, widget_count) {
         (Some(widget_type), Some(widget_count)) => {
-            let widget_count = widget_count.try_into().map_err(|_| BottomError::ConfigError(
+            let widget_count = widget_count.try_into().map_err(|_| OptionError::other(
                 "set your widget count to be at most 18446744073709551615.".to_string()
             ))?;
             Ok((Some(widget_type), widget_count))
         }
         (Some(widget_type), None) => Ok((Some(widget_type), 1)),
-        (None, Some(_widget_count)) =>  Err(BottomError::ConfigError(
+        (None, Some(_widget_count)) =>  Err(OptionError::other(
             "cannot set 'default_widget_count' by itself, it must be used with 'default_widget_type'.".to_string(),
         )),
         (None, None) => Ok((None, 1))
@@ -759,7 +771,7 @@ fn get_enable_cache_memory(args: &BottomArgs, config: &ConfigV1) -> bool {
     false
 }
 
-fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Filter>> {
+fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> OptionResult<Option<Filter>> {
     if let Some(ignore_list) = ignore_list {
         let list: Result<Vec<_>, _> = ignore_list
             .list
@@ -787,7 +799,7 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Fil
             })
             .collect();
 
-        let list = list.map_err(|err| BottomError::ConfigError(err.to_string()))?;
+        let list = list.map_err(|err| OptionError::config(err.to_string()))?;
 
         Ok(Some(Filter {
             list,
@@ -798,7 +810,7 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Fil
     }
 }
 
-pub fn get_color_scheme(args: &BottomArgs, config: &ConfigV1) -> error::Result<ColourScheme> {
+pub fn get_color_scheme(args: &BottomArgs, config: &ConfigV1) -> OptionResult<ColourScheme> {
     if let Some(color) = &args.style.color {
         // Highest priority is always command line flags...
         return ColourScheme::from_str(color);
@@ -851,72 +863,62 @@ fn get_network_scale_type(args: &BottomArgs, config: &ConfigV1) -> AxisScaling {
     AxisScaling::Linear
 }
 
-fn get_retention(args: &BottomArgs, config: &ConfigV1) -> error::Result<u64> {
+fn get_retention(args: &BottomArgs, config: &ConfigV1) -> OptionResult<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
-    if let Some(retention) = &args.general.retention {
-        try_parse_ms(retention)
-            .map_err(|_| BottomError::ArgumentError("`retention` is an invalid value".to_string()))
-    } else if let Some(flags) = &config.flags {
-        if let Some(retention) = &flags.retention {
-            Ok(match retention {
-                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
-                    BottomError::ConfigError("`retention` is an invalid value".to_string())
-                })?,
-                StringOrNum::Num(n) => *n,
-            })
-        } else {
-            Ok(DEFAULT_RETENTION_MS)
-        }
-    } else {
-        Ok(DEFAULT_RETENTION_MS)
-    }
+    parse_ms_option!(
+        &args.general.retention,
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.retention.as_ref()),
+        DEFAULT_RETENTION_MS,
+        "retention",
+        None,
+        None,
+    )
 }
 
 fn get_network_legend_position(
     args: &BottomArgs, config: &ConfigV1,
-) -> error::Result<Option<LegendPosition>> {
-    if let Some(s) = &args.network.network_legend {
+) -> OptionResult<Option<LegendPosition>> {
+    let result = if let Some(s) = &args.network.network_legend {
         match s.to_ascii_lowercase().trim() {
-            "none" => Ok(None),
-            position => Ok(Some(position.parse::<LegendPosition>().map_err(|_| {
-                BottomError::ArgumentError("`network_legend` is an invalid value".to_string())
-            })?)),
+            "none" => None,
+            position => Some(parse_config_value!(position.parse(), "network_legend")?),
         }
     } else if let Some(flags) = &config.flags {
         if let Some(legend) = &flags.network_legend {
-            Ok(Some(legend.parse::<LegendPosition>().map_err(|_| {
-                BottomError::ConfigError("`network_legend` is an invalid value".to_string())
-            })?))
+            Some(parse_arg_value!(legend.parse(), "network_legend")?)
         } else {
-            Ok(Some(LegendPosition::default()))
+            Some(LegendPosition::default())
         }
     } else {
-        Ok(Some(LegendPosition::default()))
-    }
+        Some(LegendPosition::default())
+    };
+
+    Ok(result)
 }
 
 fn get_memory_legend_position(
     args: &BottomArgs, config: &ConfigV1,
-) -> error::Result<Option<LegendPosition>> {
-    if let Some(s) = &args.memory.memory_legend {
+) -> OptionResult<Option<LegendPosition>> {
+    let result = if let Some(s) = &args.memory.memory_legend {
         match s.to_ascii_lowercase().trim() {
-            "none" => Ok(None),
-            position => Ok(Some(position.parse::<LegendPosition>().map_err(|_| {
-                BottomError::ArgumentError("`memory_legend` is an invalid value".to_string())
-            })?)),
+            "none" => None,
+            position => Some(parse_config_value!(position.parse(), "memory_legend")?),
         }
     } else if let Some(flags) = &config.flags {
         if let Some(legend) = &flags.memory_legend {
-            Ok(Some(legend.parse::<LegendPosition>().map_err(|_| {
-                BottomError::ConfigError("`memory_legend` is an invalid value".to_string())
-            })?))
+            Some(parse_arg_value!(legend.parse(), "memory_legend")?)
         } else {
-            Ok(Some(LegendPosition::default()))
+            Some(LegendPosition::default())
         }
     } else {
-        Ok(Some(LegendPosition::default()))
-    }
+        Some(LegendPosition::default())
+    };
+
+    Ok(result)
 }
 
 #[cfg(test)]

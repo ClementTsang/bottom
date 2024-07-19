@@ -3,8 +3,6 @@ use itertools::Itertools;
 use tui::style::{Color, Style};
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::utils::error;
-
 pub const FIRST_COLOUR: Color = Color::LightMagenta;
 pub const SECOND_COLOUR: Color = Color::LightYellow;
 pub const THIRD_COLOUR: Color = Color::LightCyan;
@@ -16,19 +14,16 @@ pub const AVG_COLOUR: Color = Color::Red;
 pub const ALL_COLOUR: Color = Color::Green;
 
 /// Convert a hex string to a colour.
-fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
-    fn hex_component_to_int(hex: &str, first: &str, second: &str) -> error::Result<u8> {
-        u8::from_str_radix(&concat_string!(first, second), 16).map_err(|_| {
-            error::BottomError::ConfigError(format!(
-                "\"{hex}\" is an invalid hex color, could not decode."
-            ))
-        })
+fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
+    fn hex_component_to_int(hex: &str, first: &str, second: &str) -> Result<u8, String> {
+        u8::from_str_radix(&concat_string!(first, second), 16)
+            .map_err(|_| format!("'{hex}' is an invalid hex color, could not decode."))
     }
 
-    fn invalid_hex_format(hex: &str) -> error::BottomError {
-        error::BottomError::ConfigError(format!(
-            "\"{hex}\" is an invalid hex color. It must be either a 7 character hex string of the form \"#12ab3c\" or a 3 character hex string of the form \"#1a2\".",
-        ))
+    fn invalid_hex_format(hex: &str) -> String {
+        format!(
+            "'{hex}' is an invalid hex color. It must be either a 7 character hex string of the form '#12ab3c' or a 3 character hex string of the form '#1a2'.",
+        )
     }
 
     if !hex.starts_with('#') {
@@ -55,11 +50,11 @@ fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
     }
 }
 
-pub fn str_to_fg(input_val: &str) -> error::Result<Style> {
+pub fn str_to_fg(input_val: &str) -> Result<Style, String> {
     Ok(Style::default().fg(str_to_colour(input_val)?))
 }
 
-pub fn str_to_colour(input_val: &str) -> error::Result<Color> {
+pub fn str_to_colour(input_val: &str) -> Result<Color, String> {
     if input_val.len() > 1 {
         if input_val.starts_with('#') {
             convert_hex_to_color(input_val)
@@ -69,18 +64,16 @@ pub fn str_to_colour(input_val: &str) -> error::Result<Color> {
             convert_name_to_colour(input_val)
         }
     } else {
-        Err(error::BottomError::ConfigError(format!(
-            "value \"{input_val}\" is not valid.",
-        )))
+        Err(format!("Value '{input_val}' is not valid.",))
     }
 }
 
-fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
+fn convert_rgb_to_color(rgb_str: &str) -> Result<Color, String> {
     let rgb_list = rgb_str.split(',').collect::<Vec<&str>>();
     if rgb_list.len() != 3 {
-        return Err(error::BottomError::ConfigError(format!(
-            "value \"{rgb_str}\" is an invalid RGB colour. It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
-        )));
+        return Err(format!(
+            "Value '{rgb_str}' is an invalid RGB colour. It must be a comma separated value with 3 integers from 0 to 255 (ie: '255, 0, 155').",
+        ));
     }
 
     let rgb = rgb_list
@@ -93,16 +86,17 @@ fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
             }
         })
         .collect::<Vec<_>>();
+
     if rgb.len() == 3 {
         Ok(Color::Rgb(rgb[0], rgb[1], rgb[2]))
     } else {
-        Err(error::BottomError::ConfigError(format!(
-            "value \"{rgb_str}\" contained invalid RGB values. It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
-        )))
+        Err(format!(
+            "Value '{rgb_str}' contained invalid RGB values. It must be a comma separated value with 3 integers from 0 to 255 (ie: '255, 0, 155').",
+        ))
     }
 }
 
-fn convert_name_to_colour(color_name: &str) -> error::Result<Color> {
+fn convert_name_to_colour(color_name: &str) -> Result<Color, String> {
     match color_name.to_lowercase().trim() {
         "reset" => Ok(Color::Reset),
         "black" => Ok(Color::Black),
@@ -121,8 +115,8 @@ fn convert_name_to_colour(color_name: &str) -> error::Result<Color> {
         "lightmagenta" | "light magenta" => Ok(Color::LightMagenta),
         "lightcyan" | "light cyan" => Ok(Color::LightCyan),
         "white" => Ok(Color::White),
-        _ => Err(error::BottomError::ConfigError(format!(
-            "\"{color_name}\" is an invalid named color.
+        _ => Err(format!(
+            "'{color_name}' is an invalid named color.
             
 The following are supported strings: 
 +--------+-------------+---------------------+
@@ -137,9 +131,8 @@ The following are supported strings:
 | Yellow | Light Red   | White               |
 +--------+-------------+---------------------+
 |  Blue  | Light Green |                     |
-+--------+-------------+---------------------+
-        ",
-        ))),
++--------+-------------+---------------------+\n"
+        )),
     }
 }
 

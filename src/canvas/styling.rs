@@ -1,12 +1,15 @@
 mod colour_utils;
 
-use anyhow::Context;
 use colour_utils::*;
 use tui::style::{Color, Style};
 
 use super::ColourScheme;
 pub use crate::options::ConfigV1;
-use crate::{constants::*, options::colours::ColoursConfig, utils::error};
+use crate::{
+    constants::*,
+    options::{colours::ColoursConfig, OptionError, OptionResult},
+    utils::error,
+};
 
 pub struct CanvasStyling {
     pub currently_selected_text_colour: Color,
@@ -98,11 +101,12 @@ impl Default for CanvasStyling {
 macro_rules! try_set_colour {
     ($field:expr, $colours:expr, $colour_field:ident) => {
         if let Some(colour_str) = &$colours.$colour_field {
-            $field = str_to_fg(colour_str).context(concat!(
-                "update '",
-                stringify!($colour_field),
-                "' in your config file"
-            ))?;
+            $field = str_to_fg(colour_str).map_err(|err| {
+                OptionError::config(format!(
+                    "Please update 'colors.{}' in your config file. {err}",
+                    stringify!($colour_field)
+                ))
+            })?;
         }
     };
 }
@@ -113,12 +117,13 @@ macro_rules! try_set_colour_list {
             $field = colour_list
                 .iter()
                 .map(|s| str_to_fg(s))
-                .collect::<error::Result<Vec<Style>>>()
-                .context(concat!(
-                    "update '",
-                    stringify!($colour_field),
-                    "' in your config file"
-                ))?;
+                .collect::<Result<Vec<Style>, String>>()
+                .map_err(|err| {
+                    OptionError::config(format!(
+                        "Please update 'colors.{}' in your config file. {err}",
+                        stringify!($colour_field)
+                    ))
+                })?;
         }
     };
 }
@@ -154,7 +159,7 @@ impl CanvasStyling {
         Ok(canvas_colours)
     }
 
-    pub fn set_colours_from_palette(&mut self, colours: &ColoursConfig) -> anyhow::Result<()> {
+    pub fn set_colours_from_palette(&mut self, colours: &ColoursConfig) -> OptionResult<()> {
         // CPU
         try_set_colour!(self.avg_colour_style, colours, avg_cpu_color);
         try_set_colour!(self.all_colour_style, colours, all_cpu_color);
@@ -201,12 +206,12 @@ impl CanvasStyling {
 
         if let Some(scroll_entry_text_color) = &colours.selected_text_color {
             self.set_scroll_entry_text_color(scroll_entry_text_color)
-                .context("update 'selected_text_color' in your config file")?;
+                .map_err(|_| OptionError::invalid_config_value("selected_text_color"))?
         }
 
         if let Some(scroll_entry_bg_color) = &colours.selected_bg_color {
             self.set_scroll_entry_bg_color(scroll_entry_bg_color)
-                .context("update 'selected_bg_color' in your config file")?;
+                .map_err(|_| OptionError::invalid_config_value("selected_bg_color"))?
         }
 
         Ok(())
