@@ -534,38 +534,60 @@ macro_rules! parse_ms_option {
     ($arg_expr:expr, $config_expr:expr, $default_value:expr, $setting:literal, $low:expr, $high:expr $(,)?) => {{
         use humantime::format_duration;
 
-        let value = if let Some(to_parse) = $arg_expr {
-            parse_arg_value!(try_parse_ms(to_parse), $setting)?
+        if let Some(to_parse) = $arg_expr {
+            let value = parse_arg_value!(try_parse_ms(to_parse), $setting)?;
+
+            if let Some(limit) = $low {
+                if value < limit {
+                    return Err(OptionError::arg(format!(
+                        "'--{}' must be greater than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            if let Some(limit) = $high {
+                if value > limit {
+                    return Err(OptionError::arg(format!(
+                        "'--{}' must be less than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            Ok(value)
         } else if let Some(to_parse) = $config_expr {
-            match to_parse {
+            let value = match to_parse {
                 StringOrNum::String(s) => parse_config_value!(try_parse_ms(s), $setting)?,
                 StringOrNum::Num(n) => *n,
+            };
+
+            if let Some(limit) = $low {
+                if value < limit {
+                    return Err(OptionError::arg(format!(
+                        "'{}' must be greater than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
             }
+
+            if let Some(limit) = $high {
+                if value > limit {
+                    return Err(OptionError::arg(format!(
+                        "'{}' must be less than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            Ok(value)
         } else {
-            $default_value
-        };
-
-        if let Some(limit) = $low {
-            if value < limit {
-                return Err(OptionError::config(format!(
-                    "'{}' must be greater than {}",
-                    $setting,
-                    format_duration(Duration::from_millis(limit))
-                )));
-            }
+            Ok($default_value)
         }
-
-        if let Some(limit) = $high {
-            if value > limit {
-                return Err(OptionError::config(format!(
-                    "'{}' must be less than {}",
-                    $setting,
-                    format_duration(Duration::from_millis(limit))
-                )));
-            }
-        }
-
-        Ok(value)
     }};
 }
 

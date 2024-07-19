@@ -101,8 +101,11 @@ impl Default for CanvasStyling {
 macro_rules! try_set_colour {
     ($field:expr, $colours:expr, $colour_field:ident) => {
         if let Some(colour_str) = &$colours.$colour_field {
-            $field = str_to_fg(colour_str).map_err(|_| {
-                OptionError::invalid_config_value(&format!("colors.{}", stringify!($colour_field)))
+            $field = str_to_fg(colour_str).map_err(|err| {
+                OptionError::config(format!(
+                    "Please update 'colors.{}' in your config file. {err}",
+                    stringify!($colour_field)
+                ))
             })?;
         }
     };
@@ -115,9 +118,9 @@ macro_rules! try_set_colour_list {
                 .iter()
                 .map(|s| str_to_fg(s))
                 .collect::<Result<Vec<Style>, String>>()
-                .map_err(|_| {
-                    OptionError::invalid_config_value(&format!(
-                        "colors.{}",
+                .map_err(|err| {
+                    OptionError::config(format!(
+                        "Please update 'colors.{}' in your config file. {err}",
                         stringify!($colour_field)
                     ))
                 })?;

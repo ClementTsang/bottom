@@ -64,7 +64,7 @@ pub fn str_to_colour(input_val: &str) -> Result<Color, String> {
             convert_name_to_colour(input_val)
         }
     } else {
-        Err(format!("value '{input_val}' is not valid.",))
+        Err(format!("Value '{input_val}' is not valid.",))
     }
 }
 
@@ -72,7 +72,7 @@ fn convert_rgb_to_color(rgb_str: &str) -> Result<Color, String> {
     let rgb_list = rgb_str.split(',').collect::<Vec<&str>>();
     if rgb_list.len() != 3 {
         return Err(format!(
-            "value '{rgb_str}' is an invalid RGB colour. It must be a comma separated value with 3 integers from 0 to 255 (ie: '255, 0, 155').",
+            "Value '{rgb_str}' is an invalid RGB colour. It must be a comma separated value with 3 integers from 0 to 255 (ie: '255, 0, 155').",
         ));
     }
 
@@ -91,7 +91,7 @@ fn convert_rgb_to_color(rgb_str: &str) -> Result<Color, String> {
         Ok(Color::Rgb(rgb[0], rgb[1], rgb[2]))
     } else {
         Err(format!(
-            "value '{rgb_str}' contained invalid RGB values. It must be a comma separated value with 3 integers from 0 to 255 (ie: '255, 0, 155').",
+            "Value '{rgb_str}' contained invalid RGB values. It must be a comma separated value with 3 integers from 0 to 255 (ie: '255, 0, 155').",
         ))
     }
 }
@@ -131,8 +131,7 @@ The following are supported strings:
 | Yellow | Light Red   | White               |
 +--------+-------------+---------------------+
 |  Blue  | Light Green |                     |
-+--------+-------------+---------------------+
-        "
++--------+-------------+---------------------+\n"
         )),
     }
 }

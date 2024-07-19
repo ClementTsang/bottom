@@ -28,10 +28,10 @@ impl OptionError {
         )))
     }
 
-    // /// Create a new [`OptionError::Argument`].
-    // pub(crate) fn arg<R: Into<Cow<'static, str>>>(reason: R) -> Self {
-    //     OptionError::Argument(reason.into())
-    // }
+    /// Create a new [`OptionError::Argument`].
+    pub(crate) fn arg<R: Into<Cow<'static, str>>>(reason: R) -> Self {
+        OptionError::Argument(reason.into())
+    }
 
     /// Create a new [`OptionError::Argument`] for an invalid value.
     pub(crate) fn invalid_arg_value(value: &str) -> Self {
