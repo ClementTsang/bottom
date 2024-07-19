@@ -22,7 +22,8 @@ use crate::{
         App,
     },
     constants::*,
-    utils::{error, error::BottomError},
+    options::OptionError,
+    utils::error,
 };
 
 #[derive(Debug)]
@@ -37,9 +38,9 @@ pub enum ColourScheme {
 }
 
 impl FromStr for ColourScheme {
-    type Err = BottomError;
+    type Err = OptionError;
 
-    fn from_str(s: &str) -> error::Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let lower_case = s.to_lowercase();
         match lower_case.as_str() {
             "default" => Ok(ColourScheme::Default),
@@ -48,8 +49,8 @@ impl FromStr for ColourScheme {
             "gruvbox-light" => Ok(ColourScheme::GruvboxLight),
             "nord" => Ok(ColourScheme::Nord),
             "nord-light" => Ok(ColourScheme::NordLight),
-            _ => Err(BottomError::ConfigError(format!(
-                "`{s}` is an invalid built-in color scheme."
+            _ => Err(OptionError::other(format!(
+                "'{s}' is an invalid built-in color scheme."
             ))),
         }
     }

@@ -19,7 +19,7 @@ use std::{
 use anyhow::{Context, Result};
 pub use colours::ColoursConfig;
 pub use config::ConfigV1;
-use error::{OptionError, OptionResult};
+pub(crate) use error::{OptionError, OptionResult};
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use regex::Regex;
@@ -35,7 +35,7 @@ use crate::{
     canvas::{components::time_chart::LegendPosition, styling::CanvasStyling, ColourScheme},
     constants::*,
     data_collection::temperature::TemperatureType,
-    utils::{data_units::DataUnit, error::BottomError},
+    utils::data_units::DataUnit,
     widgets::*,
 };
 
@@ -530,13 +530,19 @@ macro_rules! parse_config_value {
     };
 }
 
-macro_rules! parse_config_ms {
-    ($to_parse:expr, $setting:literal, $low:expr, $high:expr) => {{
+macro_rules! parse_ms_option {
+    ($arg_expr:expr, $config_expr:expr, $default_value:expr, $setting:literal, $low:expr, $high:expr $(,)?) => {{
         use humantime::format_duration;
 
-        let value = match $to_parse {
-            StringOrNum::String(s) => parse_config_value!(try_parse_ms(s), $setting)?,
-            StringOrNum::Num(n) => *n,
+        let value = if let Some(to_parse) = $arg_expr {
+            parse_arg_value!(try_parse_ms(to_parse), $setting)?
+        } else if let Some(to_parse) = $config_expr {
+            match to_parse {
+                StringOrNum::String(s) => parse_config_value!(try_parse_ms(s), $setting)?,
+                StringOrNum::Num(n) => *n,
+            }
+        } else {
+            $default_value
         };
 
         if let Some(limit) = $low {
@@ -558,23 +564,21 @@ macro_rules! parse_config_ms {
                 )));
             }
         }
+
+        Ok(value)
     }};
 }
 
+#[inline]
 fn get_update_rate(args: &BottomArgs, config: &ConfigV1) -> OptionResult<u64> {
-    let update_rate = if let Some(update_rate) = &args.general.rate {
-        parse_arg_value!(try_parse_ms(update_rate, Some(250), None), "rate")?
-    } else if let Some(flags) = &config.flags {
-        if let Some(rate) = &flags.rate {
-            parse_config_ms!(rate, "rate", Some(250), None)
-        } else {
-            DEFAULT_REFRESH_RATE_IN_MILLISECONDS
-        }
-    } else {
-        DEFAULT_REFRESH_RATE_IN_MILLISECONDS
-    };
-
-    Ok(update_rate)
+    parse_ms_option!(
+        &args.general.rate,
+        config.flags.as_ref().and_then(|flags| flags.rate.as_ref()),
+        DEFAULT_REFRESH_RATE_IN_MILLISECONDS,
+        "rate",
+        Some(250),
+        None,
+    )
 }
 
 fn get_temperature(args: &BottomArgs, config: &ConfigV1) -> OptionResult<TemperatureType> {
@@ -605,64 +609,36 @@ fn get_show_average_cpu(args: &BottomArgs, config: &ConfigV1) -> bool {
     true
 }
 
+#[inline]
 fn get_default_time_value(
     args: &BottomArgs, config: &ConfigV1, retention_ms: u64,
 ) -> OptionResult<u64> {
-    let default_time = if let Some(default_time_value) = &args.general.default_time_value {
-        parse_arg_value!(
-            try_parse_ms(default_time_value, Some(30000), Some(retention_ms)),
-            "default_time_value"
-        )?
-    } else if let Some(flags) = &config.flags {
-        if let Some(default_time_value) = &flags.default_time_value {
-            parse_config_ms!(
-                default_time_value,
-                "default_time_value",
-                Some(30000),
-                Some(retention_ms)
-            )
-        } else {
-            DEFAULT_TIME_MILLISECONDS
-        }
-    } else {
-        DEFAULT_TIME_MILLISECONDS
-    };
-
-    Ok(default_time)
+    parse_ms_option!(
+        &args.general.default_time_value,
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.default_time_value.as_ref()),
+        DEFAULT_TIME_MILLISECONDS,
+        "default_time_value",
+        Some(30000),
+        Some(retention_ms),
+    )
 }
 
+#[inline]
 fn get_time_interval(args: &BottomArgs, config: &ConfigV1, retention_ms: u64) -> OptionResult<u64> {
-    let time_interval = if let Some(time_interval) = &args.general.time_delta {
-        try_parse_ms(time_interval).map_err(|_| {
-            BottomError::ArgumentError("set your time delta to be valid".to_string())
-        })?
-    } else if let Some(flags) = &config.flags {
-        if let Some(time_interval) = &flags.time_delta {
-            match time_interval {
-                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
-                    BottomError::ArgumentError("set your time delta to be valid".to_string())
-                })?,
-                StringOrNum::Num(n) => *n,
-            }
-        } else {
-            TIME_CHANGE_MILLISECONDS
-        }
-    } else {
-        TIME_CHANGE_MILLISECONDS
-    };
-
-    if time_interval < 1000 {
-        return Err(BottomError::ConfigError(
-            "set your time delta to be at least 1s.".to_string(),
-        ));
-    } else if time_interval > retention_ms {
-        return Err(BottomError::ConfigError(format!(
-            "set your time delta to be at most {}.",
-            humantime::Duration::from(Duration::from_millis(retention_ms))
-        )));
-    }
-
-    Ok(time_interval)
+    parse_ms_option!(
+        &args.general.time_delta,
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.time_delta.as_ref()),
+        TIME_CHANGE_MILLISECONDS,
+        "time_delta",
+        Some(1000),
+        Some(retention_ms),
+    )
 }
 
 fn get_default_widget_and_count(
@@ -702,13 +678,13 @@ fn get_default_widget_and_count(
 
     match (widget_type, widget_count) {
         (Some(widget_type), Some(widget_count)) => {
-            let widget_count = widget_count.try_into().map_err(|_| BottomError::ConfigError(
+            let widget_count = widget_count.try_into().map_err(|_| OptionError::other(
                 "set your widget count to be at most 18446744073709551615.".to_string()
             ))?;
             Ok((Some(widget_type), widget_count))
         }
         (Some(widget_type), None) => Ok((Some(widget_type), 1)),
-        (None, Some(_widget_count)) =>  Err(BottomError::ConfigError(
+        (None, Some(_widget_count)) =>  Err(OptionError::other(
             "cannot set 'default_widget_count' by itself, it must be used with 'default_widget_type'.".to_string(),
         )),
         (None, None) => Ok((None, 1))
@@ -868,23 +844,17 @@ fn get_network_scale_type(args: &BottomArgs, config: &ConfigV1) -> AxisScaling {
 fn get_retention(args: &BottomArgs, config: &ConfigV1) -> OptionResult<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
-    if let Some(retention) = &args.general.retention {
-        try_parse_ms(retention)
-            .map_err(|_| BottomError::ArgumentError("`retention` is an invalid value".to_string()))
-    } else if let Some(flags) = &config.flags {
-        if let Some(retention) = &flags.retention {
-            Ok(match retention {
-                StringOrNum::String(s) => try_parse_ms(s).map_err(|_| {
-                    BottomError::ConfigError("`retention` is an invalid value".to_string())
-                })?,
-                StringOrNum::Num(n) => *n,
-            })
-        } else {
-            Ok(DEFAULT_RETENTION_MS)
-        }
-    } else {
-        Ok(DEFAULT_RETENTION_MS)
-    }
+    parse_ms_option!(
+        &args.general.retention,
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.retention.as_ref()),
+        DEFAULT_RETENTION_MS,
+        "retention",
+        None,
+        None,
+    )
 }
 
 fn get_network_legend_position(

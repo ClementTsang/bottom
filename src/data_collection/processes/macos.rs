@@ -36,7 +36,7 @@ impl UnixProcessExt for MacOSProcessExt {
             .for_each(|chunk| {
                 let chunk: Vec<&str> = chunk.collect();
                 if chunk.len() != 2 {
-                    panic!("Unexpected `ps` output");
+                    panic!("Unexpected 'ps' output");
                 }
                 let pid = chunk[0].parse();
                 let usage = chunk[1].parse();

@@ -542,7 +542,7 @@ pub struct StyleArgs {
         ],
         hide_possible_values = true,
         help = indoc! {
-            "Use a color scheme, use `--help` for info on the colors. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
+            "Use a color scheme, use '--help' for info on the colors. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
         },
         long_help = indoc! {
             "Use a pre-defined color scheme. Currently supported values are:
@@ -562,7 +562,7 @@ pub struct StyleArgs {
 #[derive(Args, Clone, Debug)]
 #[command(next_help_heading = "Other Options", rename_all = "snake_case")]
 pub struct OtherArgs {
-    #[arg(short = 'h', long, action = ArgAction::Help, help = "Prints help info (for more details use `--help`.")]
+    #[arg(short = 'h', long, action = ArgAction::Help, help = "Prints help info (for more details use '--help'.")]
     help: (),
 
     #[arg(short = 'V', long, action = ArgAction::Version, help = "Prints version information.")]

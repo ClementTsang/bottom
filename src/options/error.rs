@@ -6,9 +6,10 @@ use std::borrow::Cow;
 /// why it's broken and what to fix), and as so treat it as such!
 ///
 /// For stylistic and consistency reasons, use _single quotes_ (e.g. `'bad'`)
-/// for highlighting error values.
+/// for highlighting error values. You can use (".*`.+`.*") as a regex to check
+/// for this.
 #[derive(Debug, PartialEq)]
-pub(crate) enum OptionError {
+pub enum OptionError {
     Config(Cow<'static, str>),
     Argument(Cow<'static, str>),
     Other(Cow<'static, str>),
@@ -27,16 +28,21 @@ impl OptionError {
         )))
     }
 
-    /// Create a new [`OptionError::Argument`].
-    pub(crate) fn arg<R: Into<Cow<'static, str>>>(reason: R) -> Self {
-        OptionError::Argument(reason.into())
-    }
+    // /// Create a new [`OptionError::Argument`].
+    // pub(crate) fn arg<R: Into<Cow<'static, str>>>(reason: R) -> Self {
+    //     OptionError::Argument(reason.into())
+    // }
 
     /// Create a new [`OptionError::Argument`] for an invalid value.
     pub(crate) fn invalid_arg_value(value: &str) -> Self {
-        OptionError::Config(Cow::Owned(format!(
+        OptionError::Argument(Cow::Owned(format!(
             "'--{value}' was set with an invalid value, please update your arguments."
         )))
+    }
+
+    /// Create a new [`OptionError::Other`].
+    pub(crate) fn other<R: Into<Cow<'static, str>>>(reason: R) -> Self {
+        OptionError::Other(reason.into())
     }
 }
 
@@ -48,7 +54,7 @@ impl std::fmt::Display for OptionError {
             OptionError::Config(reason) => write!(f, "Configuration file error: {reason}"),
             OptionError::Argument(reason) => write!(f, "Argument error: {reason}"),
             OptionError::Other(reason) => {
-                write!(f, "An error with the config file or arguments: {reason}")
+                write!(f, "Error with the config file or the arguments: {reason}")
             }
         }
     }
