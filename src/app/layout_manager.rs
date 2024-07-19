@@ -1025,7 +1025,7 @@ Supported widget names:
                 }
                 #[cfg(not(feature = "battery"))]
                 {
-                    Err(BottomError::ConfigError(format!(
+                    Err(OptionError::config(format!(
                         "'{s}' is an invalid widget name.
 
 Supported widget names:
