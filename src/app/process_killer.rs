@@ -10,7 +10,6 @@ use windows::Win32::{
 };
 
 use crate::data_collection::processes::Pid;
-#[cfg(target_family = "unix")]
 use crate::utils::error::BottomError;
 
 /// Based from [this SO answer](https://stackoverflow.com/a/55231715).
@@ -51,10 +50,8 @@ impl Drop for Process {
 /// Kills a process, given a PID, for windows.
 #[cfg(target_os = "windows")]
 pub fn kill_process_given_pid(pid: Pid) -> crate::utils::error::Result<()> {
-    {
-        let process = Process::open(pid as u32)?;
-        process.kill()?;
-    }
+    let process = Process::open(pid as u32).map_err(BottomError::GenericError)?;
+    process.kill().map_err(BottomError::GenericError)?;
 
     Ok(())
 }
@@ -64,8 +61,8 @@ pub fn kill_process_given_pid(pid: Pid) -> crate::utils::error::Result<()> {
 pub fn kill_process_given_pid(pid: Pid, signal: usize) -> crate::utils::error::Result<()> {
     // SAFETY: the signal should be valid, and we act properly on an error (exit
     // code not 0).
-
     let output = unsafe { libc::kill(pid, signal as i32) };
+
     if output != 0 {
         // We had an error...
         let err_code = std::io::Error::last_os_error().raw_os_error();
