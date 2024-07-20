@@ -8,7 +8,6 @@ pub use crate::options::ConfigV1;
 use crate::{
     constants::*,
     options::{colours::ColoursConfig, OptionError, OptionResult},
-    utils::error,
 };
 
 pub struct CanvasStyling {
@@ -206,18 +205,26 @@ impl CanvasStyling {
 
         if let Some(scroll_entry_text_color) = &colours.selected_text_color {
             self.set_scroll_entry_text_color(scroll_entry_text_color)
-                .map_err(|_| OptionError::invalid_config_value("selected_text_color"))?
+                .map_err(|err| {
+                    OptionError::config(format!(
+                        "Please update 'colors.selected_text_color' in your config file. {err}",
+                    ))
+                })?
         }
 
         if let Some(scroll_entry_bg_color) = &colours.selected_bg_color {
             self.set_scroll_entry_bg_color(scroll_entry_bg_color)
-                .map_err(|_| OptionError::invalid_config_value("selected_bg_color"))?
+                .map_err(|err| {
+                    OptionError::config(format!(
+                        "Please update 'colors.selected_bg_color' in your config file. {err}",
+                    ))
+                })?
         }
 
         Ok(())
     }
 
-    fn set_scroll_entry_text_color(&mut self, colour: &str) -> error::Result<()> {
+    fn set_scroll_entry_text_color(&mut self, colour: &str) -> Result<(), String> {
         self.currently_selected_text_colour = str_to_colour(colour)?;
         self.currently_selected_text_style = Style::default()
             .fg(self.currently_selected_text_colour)
@@ -226,7 +233,7 @@ impl CanvasStyling {
         Ok(())
     }
 
-    fn set_scroll_entry_bg_color(&mut self, colour: &str) -> error::Result<()> {
+    fn set_scroll_entry_bg_color(&mut self, colour: &str) -> Result<(), String> {
         self.currently_selected_bg_colour = str_to_colour(colour)?;
         self.currently_selected_text_style = Style::default()
             .fg(self.currently_selected_text_colour)

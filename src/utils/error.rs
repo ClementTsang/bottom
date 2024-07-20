@@ -21,9 +21,3 @@ impl From<std::io::Error> for BottomError {
         BottomError::InvalidIo(err.to_string())
     }
 }
-
-impl From<String> for BottomError {
-    fn from(err: String) -> Self {
-        BottomError::GenericError(err)
-    }
-}
