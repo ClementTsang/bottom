@@ -73,10 +73,11 @@ battery = ["starship-battery"]
 nvidia = ["nvml-wrapper"]
 gpu = ["nvidia"]
 zfs = []
-logging = ["fern", "log", "time/local-offset"]
-generate_schema = ["schemars", "serde_json", "strum"]
 deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
+
+logging = ["fern", "log", "time/local-offset"]
+generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
 anyhow = "1.0.86"
