@@ -6,9 +6,8 @@ use hashbrown::HashMap;
 use serde::Deserialize;
 
 use super::{keep_disk_entry, DiskHarvest, IoHarvest};
-use crate::{
-    data_collection::{deserialize_xo, disks::IoData, error::CollectionResult, DataCollector},
-    utils::error,
+use crate::data_collection::{
+    deserialize_xo, disks::IoData, error::CollectionResult, DataCollector,
 };
 
 #[derive(Deserialize, Debug, Default)]
