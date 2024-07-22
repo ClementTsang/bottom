@@ -97,7 +97,6 @@ regex = "1.10.5"
 serde = { version = "1.0.203", features = ["derive"] }
 starship-battery = { version = "0.8.3", optional = true }
 sysinfo = "=0.30.12"
-thiserror = "1.0.61"
 time = { version = "0.3.36", features = ["formatting", "macros"] }
 toml_edit = { version = "0.22.14", features = ["serde"] }
 tui = { version = "0.27.0", package = "ratatui" }
