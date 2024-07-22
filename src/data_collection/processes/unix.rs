@@ -14,7 +14,6 @@ cfg_if! {
 
         use crate::data_collection::{DataCollector, processes::*};
         use crate::data_collection::error::CollectionResult;
-        use crate::utils::error;
 
         pub fn sysinfo_process_data(collector: &mut DataCollector) -> CollectionResult<Vec<ProcessHarvest>> {
             let sys = &collector.sys.system;
