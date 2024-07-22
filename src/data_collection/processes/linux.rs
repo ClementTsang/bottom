@@ -13,10 +13,7 @@ use process::*;
 use sysinfo::ProcessStatus;
 
 use super::{Pid, ProcessHarvest, UserTable};
-use crate::{
-    data_collection::DataCollector,
-    utils::error::{self, BottomError},
-};
+use crate::data_collection::{error::CollectionResult, DataCollector};
 
 /// Maximum character length of a `/proc/<PID>/stat`` process name.
 /// If it's equal or greater, then we instead refer to the command for the name.
@@ -64,7 +61,9 @@ struct CpuUsage {
     cpu_fraction: f64,
 }
 
-fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error::Result<CpuUsage> {
+fn cpu_usage_calculation(
+    prev_idle: &mut f64, prev_non_idle: &mut f64,
+) -> CollectionResult<CpuUsage> {
     let (idle, non_idle) = {
         // From SO answer: https://stackoverflow.com/a/23376195
         let first_line = {
@@ -132,7 +131,7 @@ fn get_linux_cpu_usage(
 
 fn read_proc(
     prev_proc: &PrevProcDetails, process: Process, args: ReadProcArgs, user_table: &mut UserTable,
-) -> error::Result<(ProcessHarvest, u64)> {
+) -> CollectionResult<(ProcessHarvest, u64)> {
     let Process {
         pid: _,
         uid,
@@ -298,7 +297,7 @@ pub(crate) struct ReadProcArgs {
 
 pub(crate) fn linux_process_data(
     collector: &mut DataCollector, time_difference_in_secs: u64,
-) -> error::Result<Vec<ProcessHarvest>> {
+) -> CollectionResult<Vec<ProcessHarvest>> {
     let total_memory = collector.total_memory();
     let prev_proc = PrevProc {
         prev_idle: &mut collector.prev_idle,
@@ -323,88 +322,82 @@ pub(crate) fn linux_process_data(
 
     // TODO: [PROC THREADS] Add threads
 
-    if let Ok(CpuUsage {
+    let CpuUsage {
         mut cpu_usage,
         cpu_fraction,
-    }) = cpu_usage_calculation(prev_idle, prev_non_idle)
-    {
-        if unnormalized_cpu {
-            let num_processors = collector.sys.system.cpus().len() as f64;
+    } = cpu_usage_calculation(prev_idle, prev_non_idle)?;
 
-            // Note we *divide* here because the later calculation divides `cpu_usage` - in
-            // effect, multiplying over the number of cores.
-            cpu_usage /= num_processors;
-        }
+    if unnormalized_cpu {
+        let num_processors = collector.sys.system.cpus().len() as f64;
 
-        let mut pids_to_clear: HashSet<Pid> = pid_mapping.keys().cloned().collect();
-
-        let pids = fs::read_dir("/proc")?.flatten().filter_map(|dir| {
-            if is_str_numeric(dir.file_name().to_string_lossy().trim()) {
-                Some(dir.path())
-            } else {
-                None
-            }
-        });
-
-        let args = ReadProcArgs {
-            use_current_cpu_total,
-            cpu_usage,
-            cpu_fraction,
-            total_memory,
-            time_difference_in_secs,
-            uptime: sysinfo::System::uptime(),
-        };
-
-        let process_vector: Vec<ProcessHarvest> = pids
-            .filter_map(|pid_path| {
-                if let Ok(process) = Process::from_path(pid_path) {
-                    let pid = process.pid;
-                    let prev_proc_details = pid_mapping.entry(pid).or_default();
-
-                    #[allow(unused_mut)]
-                    if let Ok((mut process_harvest, new_process_times)) =
-                        read_proc(prev_proc_details, process, args, user_table)
-                    {
-                        #[cfg(feature = "gpu")]
-                        if let Some(gpus) = &collector.gpu_pids {
-                            gpus.iter().for_each(|gpu| {
-                                // add mem/util for all gpus to pid
-                                if let Some((mem, util)) = gpu.get(&(pid as u32)) {
-                                    process_harvest.gpu_mem += mem;
-                                    process_harvest.gpu_util += util;
-                                }
-                            });
-                            if let Some(gpu_total_mem) = &collector.gpus_total_mem {
-                                process_harvest.gpu_mem_percent = (process_harvest.gpu_mem as f64
-                                    / *gpu_total_mem as f64
-                                    * 100.0)
-                                    as f32;
-                            }
-                        }
-
-                        prev_proc_details.cpu_time = new_process_times;
-                        prev_proc_details.total_read_bytes = process_harvest.total_read_bytes;
-                        prev_proc_details.total_write_bytes = process_harvest.total_write_bytes;
-
-                        pids_to_clear.remove(&pid);
-                        return Some(process_harvest);
-                    }
-                }
-
-                None
-            })
-            .collect();
-
-        pids_to_clear.iter().for_each(|pid| {
-            pid_mapping.remove(pid);
-        });
-
-        Ok(process_vector)
-    } else {
-        Err(BottomError::GenericError(
-            "Could not calculate CPU usage.".to_string(),
-        ))
+        // Note we *divide* here because the later calculation divides `cpu_usage` - in
+        // effect, multiplying over the number of cores.
+        cpu_usage /= num_processors;
     }
+
+    let mut pids_to_clear: HashSet<Pid> = pid_mapping.keys().cloned().collect();
+
+    let pids = fs::read_dir("/proc")?.flatten().filter_map(|dir| {
+        if is_str_numeric(dir.file_name().to_string_lossy().trim()) {
+            Some(dir.path())
+        } else {
+            None
+        }
+    });
+
+    let args = ReadProcArgs {
+        use_current_cpu_total,
+        cpu_usage,
+        cpu_fraction,
+        total_memory,
+        time_difference_in_secs,
+        uptime: sysinfo::System::uptime(),
+    };
+
+    let process_vector: Vec<ProcessHarvest> = pids
+        .filter_map(|pid_path| {
+            if let Ok(process) = Process::from_path(pid_path) {
+                let pid = process.pid;
+                let prev_proc_details = pid_mapping.entry(pid).or_default();
+
+                #[allow(unused_mut)]
+                if let Ok((mut process_harvest, new_process_times)) =
+                    read_proc(prev_proc_details, process, args, user_table)
+                {
+                    #[cfg(feature = "gpu")]
+                    if let Some(gpus) = &collector.gpu_pids {
+                        gpus.iter().for_each(|gpu| {
+                            // add mem/util for all gpus to pid
+                            if let Some((mem, util)) = gpu.get(&(pid as u32)) {
+                                process_harvest.gpu_mem += mem;
+                                process_harvest.gpu_util += util;
+                            }
+                        });
+                        if let Some(gpu_total_mem) = &collector.gpus_total_mem {
+                            process_harvest.gpu_mem_percent =
+                                (process_harvest.gpu_mem as f64 / *gpu_total_mem as f64 * 100.0)
+                                    as f32;
+                        }
+                    }
+
+                    prev_proc_details.cpu_time = new_process_times;
+                    prev_proc_details.total_read_bytes = process_harvest.total_read_bytes;
+                    prev_proc_details.total_write_bytes = process_harvest.total_write_bytes;
+
+                    pids_to_clear.remove(&pid);
+                    return Some(process_harvest);
+                }
+            }
+
+            None
+        })
+        .collect();
+
+    pids_to_clear.iter().for_each(|pid| {
+        pid_mapping.remove(pid);
+    });
+
+    Ok(process_vector)
 }
 
 #[cfg(test)]

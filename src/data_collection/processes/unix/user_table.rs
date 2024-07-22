@@ -1,6 +1,6 @@
 use hashbrown::HashMap;
 
-use crate::utils::error::{self, BottomError};
+use crate::data_collection::error::{CollectionError, CollectionResult};
 
 #[derive(Debug, Default)]
 pub struct UserTable {
@@ -8,7 +8,7 @@ pub struct UserTable {
 }
 
 impl UserTable {
-    pub fn get_uid_to_username_mapping(&mut self, uid: libc::uid_t) -> error::Result<String> {
+    pub fn get_uid_to_username_mapping(&mut self, uid: libc::uid_t) -> CollectionResult<String> {
         if let Some(user) = self.uid_user_mapping.get(&uid) {
             Ok(user.clone())
         } else {
@@ -17,12 +17,12 @@ impl UserTable {
             let passwd = unsafe { libc::getpwuid(uid) };
 
             if passwd.is_null() {
-                Err(BottomError::GenericError("passwd is inaccessible".into()))
+                Err(CollectionError::from_str("passwd is inaccessible"))
             } else {
                 // SAFETY: We return early if passwd is null.
                 let username = unsafe { std::ffi::CStr::from_ptr((*passwd).pw_name) }
                     .to_str()
-                    .map_err(|err| BottomError::GenericError(err.to_string()))?
+                    .map_err(|err| CollectionError::General(err.into()))?
                     .to_string();
                 self.uid_user_mapping.insert(uid, username.clone());
 

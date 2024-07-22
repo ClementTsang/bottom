@@ -7,7 +7,7 @@ use sysinfo::{ProcessStatus, System};
 
 use super::ProcessHarvest;
 use crate::{
-    data_collection::{processes::UserTable, Pid},
+    data_collection::{error::CollectionResult, processes::UserTable, Pid},
     utils::error,
 };
 
@@ -15,7 +15,7 @@ pub(crate) trait UnixProcessExt {
     fn sysinfo_process_data(
         sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
         user_table: &mut UserTable,
-    ) -> error::Result<Vec<ProcessHarvest>> {
+    ) -> CollectionResult<Vec<ProcessHarvest>> {
         let mut process_vector: Vec<ProcessHarvest> = Vec::new();
         let process_hashmap = sys.processes();
         let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;

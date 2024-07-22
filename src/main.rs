@@ -52,7 +52,6 @@ use data_conversion::*;
 use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, CollectionThreadEvent};
 use options::{args, get_color_scheme, get_config_path, get_or_create_config, init_app};
 use tui::{backend::CrosstermBackend, Terminal};
-use utils::error;
 #[allow(unused_imports)]
 use utils::logging::*;
 
@@ -64,10 +63,10 @@ use utils::logging::*;
 fn try_drawing(
     terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App,
     painter: &mut canvas::Painter,
-) -> error::Result<()> {
+) -> anyhow::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
-        Err(err)
+        Err(err.into())
     } else {
         Ok(())
     }
@@ -76,7 +75,7 @@ fn try_drawing(
 /// Clean up the terminal before returning it to the user.
 fn cleanup_terminal(
     terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
-) -> error::Result<()> {
+) -> anyhow::Result<()> {
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),

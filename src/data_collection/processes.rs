@@ -33,8 +33,7 @@ cfg_if! {
 
 use std::{borrow::Cow, time::Duration};
 
-use super::DataCollector;
-use crate::utils::error;
+use super::{error::CollectionResult, DataCollector};
 
 cfg_if! {
     if #[cfg(target_family = "windows")] {
@@ -131,7 +130,7 @@ impl ProcessHarvest {
 }
 
 impl DataCollector {
-    pub(crate) fn get_processes(&mut self) -> error::Result<Vec<ProcessHarvest>> {
+    pub(crate) fn get_processes(&mut self) -> CollectionResult<Vec<ProcessHarvest>> {
         cfg_if! {
             if #[cfg(target_os = "linux")] {
                 let time_diff = self.data.collection_time
