@@ -11,7 +11,6 @@ pub mod app;
 pub mod utils {
     pub mod data_prefixes;
     pub mod data_units;
-    pub mod error;
     pub mod general;
     pub mod logging;
     pub mod strings;

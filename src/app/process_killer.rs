@@ -1,6 +1,7 @@
 //! This file is meant to house (OS specific) implementations on how to kill
 //! processes.
 
+use anyhow::bail;
 #[cfg(target_os = "windows")]
 use windows::Win32::{
     Foundation::{CloseHandle, HANDLE},
@@ -10,7 +11,6 @@ use windows::Win32::{
 };
 
 use crate::data_collection::processes::Pid;
-use crate::utils::error::BottomError;
 
 /// Based from [this SO answer](https://stackoverflow.com/a/55231715).
 #[cfg(target_os = "windows")]
@@ -18,19 +18,19 @@ struct Process(HANDLE);
 
 #[cfg(target_os = "windows")]
 impl Process {
-    fn open(pid: u32) -> Result<Process, String> {
+    fn open(pid: u32) -> anyhow::Result<Process> {
         // SAFETY: Windows API call, tread carefully with the args.
         match unsafe { OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE, false, pid) } {
             Ok(process) => Ok(Process(process)),
-            Err(_) => Err("process may have already been terminated.".to_string()),
+            Err(_) => bail!("process may have already been terminated."),
         }
     }
 
-    fn kill(self) -> Result<(), String> {
+    fn kill(self) -> anyhow::Result<()> {
         // SAFETY: Windows API call, this is safe as we are passing in the handle.
         let result = unsafe { TerminateProcess(self.0, 1) };
         if result.is_err() {
-            return Err("process may have already been terminated.".to_string());
+            bail!("process may have already been terminated.");
         }
 
         Ok(())
@@ -49,16 +49,16 @@ impl Drop for Process {
 
 /// Kills a process, given a PID, for windows.
 #[cfg(target_os = "windows")]
-pub fn kill_process_given_pid(pid: Pid) -> crate::utils::error::Result<()> {
-    let process = Process::open(pid as u32).map_err(BottomError::GenericError)?;
-    process.kill().map_err(BottomError::GenericError)?;
+pub fn kill_process_given_pid(pid: Pid) -> anyhow::Result<()> {
+    let process = Process::open(pid as u32)?;
+    process.kill()?;
 
     Ok(())
 }
 
 /// Kills a process, given a PID, for UNIX.
 #[cfg(target_family = "unix")]
-pub fn kill_process_given_pid(pid: Pid, signal: usize) -> crate::utils::error::Result<()> {
+pub fn kill_process_given_pid(pid: Pid, signal: usize) -> anyhow::Result<()> {
     // SAFETY: the signal should be valid, and we act properly on an error (exit
     // code not 0).
     let output = unsafe { libc::kill(pid, signal as i32) };
@@ -73,12 +73,10 @@ pub fn kill_process_given_pid(pid: Pid, signal: usize) -> crate::utils::error::R
             _ => "Unknown error occurred."
         };
 
-        return if let Some(err_code) = err_code {
-            Err(BottomError::GenericError(format!(
-                "Error code {err_code} - {err}"
-            )))
+        if let Some(err_code) = err_code {
+            bail!(format!("Error code {err_code} - {err}"))
         } else {
-            Err(BottomError::GenericError(format!("Error code ??? - {err}")))
+            bail!(format!("Error code unknown - {err}"))
         };
     }
 

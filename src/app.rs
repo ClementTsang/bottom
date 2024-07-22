@@ -11,6 +11,7 @@ use std::{
     time::Instant,
 };
 
+use anyhow::bail;
 use concat_string::concat_string;
 use data_farmer::*;
 use filter::*;
@@ -26,10 +27,7 @@ use crate::{
     data_collection::{processes::Pid, temperature},
     data_conversion::ConvertedData,
     get_network_points,
-    utils::{
-        data_units::DataUnit,
-        error::{BottomError, Result},
-    },
+    utils::data_units::DataUnit,
     widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
 
@@ -1469,7 +1467,7 @@ impl App {
         }
     }
 
-    pub fn kill_highlighted_process(&mut self) -> Result<()> {
+    pub fn kill_highlighted_process(&mut self) -> anyhow::Result<()> {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
             if let Some((_, pids)) = &self.to_delete_process_list {
                 #[cfg(target_family = "unix")]
@@ -1491,10 +1489,7 @@ impl App {
             self.to_delete_process_list = None;
             Ok(())
         } else {
-            Err(BottomError::GenericError(
-                "Cannot kill processes if the current widget is not the Process widget!"
-                    .to_string(),
-            ))
+            bail!("Cannot kill processes if the current widget is not the Process widget!");
         }
     }
 

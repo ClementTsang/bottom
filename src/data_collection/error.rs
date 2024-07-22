@@ -20,6 +20,22 @@ impl CollectionError {
     }
 }
 
+impl std::fmt::Display for CollectionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CollectionError::General(err) => err.fmt(f),
+            CollectionError::Unsupported => {
+                write!(
+                    f,
+                    "bottom does not support this type of data collection for this platform."
+                )
+            }
+        }
+    }
+}
+
+impl std::error::Error for CollectionError {}
+
 /// A [`Result`] with the error type being a [`DataCollectionError`].
 pub(crate) type CollectionResult<T> = Result<T, CollectionError>;
 
