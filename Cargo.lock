@@ -189,7 +189,6 @@ dependencies = [
  "strum",
  "sysctl",
  "sysinfo",
- "thiserror",
  "time",
  "toml_edit",
  "unicode-ellipsis",

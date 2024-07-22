@@ -73,10 +73,11 @@ battery = ["starship-battery"]
 nvidia = ["nvml-wrapper"]
 gpu = ["nvidia"]
 zfs = []
-logging = ["fern", "log", "time/local-offset"]
-generate_schema = ["schemars", "serde_json", "strum"]
 deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
+
+logging = ["fern", "log", "time/local-offset"]
+generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
 anyhow = "1.0.86"
@@ -97,7 +98,6 @@ regex = "1.10.5"
 serde = { version = "1.0.203", features = ["derive"] }
 starship-battery = { version = "0.8.3", optional = true }
 sysinfo = "=0.30.12"
-thiserror = "1.0.61"
 time = { version = "0.3.36", features = ["formatting", "macros"] }
 toml_edit = { version = "0.22.14", features = ["serde"] }
 tui = { version = "0.27.0", package = "ratatui" }

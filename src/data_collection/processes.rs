@@ -144,7 +144,7 @@ impl DataCollector {
             } else if #[cfg(any(target_os = "freebsd", target_os = "macos", target_os = "windows", target_os = "android", target_os = "ios"))] {
                 sysinfo_process_data(self)
             } else {
-                Err(error::BottomError::GenericError("Unsupported OS".to_string()))
+                Err(crate::data_collection::error::CollectionError::Unsupported)
             }
         }
     }
