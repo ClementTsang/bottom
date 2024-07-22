@@ -23,7 +23,6 @@ use crate::{
     },
     constants::*,
     options::OptionError,
-    utils::error,
 };
 
 #[derive(Debug)]
@@ -205,7 +204,7 @@ impl Painter {
 
     pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut App,
-    ) -> error::Result<()> {
+    ) -> Result<(), std::io::Error> {
         use BottomWidgetType::*;
 
         terminal.draw(|f| {

@@ -3,12 +3,13 @@
 use std::time::Duration;
 
 use super::ProcessHarvest;
+use crate::data_collection::error::CollectionResult;
 use crate::data_collection::DataCollector;
 
 // TODO: There's a lot of shared code with this and the unix impl.
 pub fn sysinfo_process_data(
     collector: &mut DataCollector,
-) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+) -> CollectionResult<Vec<ProcessHarvest>> {
     let sys = &collector.sys.system;
     let users = &collector.sys.users;
     let use_current_cpu_total = collector.use_current_cpu_total;

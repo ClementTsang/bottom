@@ -13,9 +13,9 @@ cfg_if! {
         use super::ProcessHarvest;
 
         use crate::data_collection::{DataCollector, processes::*};
-        use crate::utils::error;
+        use crate::data_collection::error::CollectionResult;
 
-        pub fn sysinfo_process_data(collector: &mut DataCollector) -> error::Result<Vec<ProcessHarvest>> {
+        pub fn sysinfo_process_data(collector: &mut DataCollector) -> CollectionResult<Vec<ProcessHarvest>> {
             let sys = &collector.sys.system;
             let use_current_cpu_total = collector.use_current_cpu_total;
             let unnormalized_cpu = collector.unnormalized_cpu;

@@ -8,6 +8,7 @@ pub mod batteries;
 
 pub mod cpu;
 pub mod disks;
+pub mod error;
 pub mod memory;
 pub mod network;
 pub mod processes;
@@ -367,7 +368,7 @@ impl DataCollector {
 
             #[cfg(target_family = "unix")]
             {
-                self.data.load_avg = cpu::get_load_avg().ok();
+                self.data.load_avg = Some(cpu::get_load_avg());
             }
         }
     }

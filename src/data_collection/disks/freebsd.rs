@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 use super::{keep_disk_entry, DiskHarvest, IoHarvest};
 use crate::{
-    data_collection::{deserialize_xo, disks::IoData, DataCollector},
+    data_collection::{deserialize_xo, disks::IoData, error::CollectionResult, DataCollector},
     utils::error,
 };
 
@@ -27,7 +27,7 @@ struct FileSystem {
     mounted_on: String,
 }
 
-pub fn get_io_usage() -> error::Result<IoHarvest> {
+pub fn get_io_usage() -> CollectionResult<IoHarvest> {
     // TODO: Should this (and other I/O collectors) fail fast? In general, should
     // collection ever fail fast?
     #[allow(unused_mut)]
@@ -59,7 +59,7 @@ pub fn get_io_usage() -> error::Result<IoHarvest> {
     Ok(io_harvest)
 }
 
-pub fn get_disk_usage(collector: &DataCollector) -> error::Result<Vec<DiskHarvest>> {
+pub fn get_disk_usage(collector: &DataCollector) -> CollectionResult<Vec<DiskHarvest>> {
     let disk_filter = &collector.filters.disk_filter;
     let mount_filter = &collector.filters.mount_filter;
     let vec_disks: Vec<DiskHarvest> = get_disk_info().map(|storage_system_information| {
