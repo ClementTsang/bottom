@@ -183,7 +183,7 @@ impl Painter {
                 &proc_widget_state.proc_search.search_state,
                 available_width,
                 is_on_widget,
-                self.colours.currently_selected_text_style,
+                self.colours.selected_text_style,
                 self.colours.text_style,
             );
 
@@ -203,19 +203,19 @@ impl Painter {
 
             // Text options shamelessly stolen from VS Code.
             let case_style = if !proc_widget_state.proc_search.is_ignoring_case {
-                self.colours.currently_selected_text_style
+                self.colours.selected_text_style
             } else {
                 self.colours.text_style
             };
 
             let whole_word_style = if proc_widget_state.proc_search.is_searching_whole_word {
-                self.colours.currently_selected_text_style
+                self.colours.selected_text_style
             } else {
                 self.colours.text_style
             };
 
             let regex_style = if proc_widget_state.proc_search.is_searching_with_regex {
-                self.colours.currently_selected_text_style
+                self.colours.selected_text_style
             } else {
                 self.colours.text_style
             };

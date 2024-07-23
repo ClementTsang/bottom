@@ -57,7 +57,7 @@ impl FromStr for ColourScheme {
 
 /// Handles the canvas' state.
 pub struct Painter {
-    pub colours: CanvasStyling,
+    pub colours: CanvasStyles,
     previous_height: u16,
     previous_width: u16,
 
@@ -81,7 +81,7 @@ pub enum LayoutConstraint {
 }
 
 impl Painter {
-    pub fn init(layout: BottomLayout, styling: CanvasStyling) -> anyhow::Result<Self> {
+    pub fn init(layout: BottomLayout, styling: CanvasStyles) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -193,7 +193,7 @@ impl Painter {
         f.render_widget(
             Paragraph::new(Span::styled(
                 "Frozen, press 'f' to unfreeze",
-                self.colours.currently_selected_text_style,
+                self.colours.selected_text_style,
             )),
             Layout::default()
                 .horizontal_margin(1)

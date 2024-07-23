@@ -7,7 +7,7 @@ use crate::{
             ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell,
             SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
         },
-        styling::CanvasStyling,
+        styling::CanvasStyles,
     },
     utils::{data_prefixes::get_decimal_bytes, general::sort_partial_fn},
 };
@@ -206,7 +206,7 @@ impl SortsRow for DiskWidgetColumn {
 }
 
 impl DiskTableWidget {
-    pub fn new(config: &AppConfigFields, colours: &CanvasStyling) -> Self {
+    pub fn new(config: &AppConfigFields, colours: &CanvasStyles) -> Self {
         let columns = [
             SortColumn::soft(DiskWidgetColumn::Disk, Some(0.2)),
             SortColumn::soft(DiskWidgetColumn::Mount, Some(0.2)),

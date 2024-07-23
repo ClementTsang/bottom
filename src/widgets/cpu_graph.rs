@@ -10,7 +10,7 @@ use crate::{
             Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
             DataToCell,
         },
-        styling::CanvasStyling,
+        styling::CanvasStyles,
         Painter,
     },
     data_collection::cpu::CpuDataType,
@@ -26,7 +26,7 @@ pub struct CpuWidgetStyling {
 }
 
 impl CpuWidgetStyling {
-    fn from_colours(colours: &CanvasStyling) -> Self {
+    fn from_colours(colours: &CanvasStyles) -> Self {
         let entries = if colours.cpu_colour_styles.is_empty() {
             vec![Style::default()]
         } else {
@@ -168,7 +168,7 @@ pub struct CpuWidgetState {
 impl CpuWidgetState {
     pub fn new(
         config: &AppConfigFields, default_selection: CpuDefault, current_display_time: u64,
-        autohide_timer: Option<Instant>, colours: &CanvasStyling,
+        autohide_timer: Option<Instant>, colours: &CanvasStyles,
     ) -> Self {
         const COLUMNS: [Column<CpuWidgetColumn>; 2] = [
             Column::soft(CpuWidgetColumn::CPU, Some(0.5)),

@@ -32,7 +32,7 @@ use self::{
 };
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::{components::time_chart::LegendPosition, styling::CanvasStyling, ColourScheme},
+    canvas::{components::time_chart::LegendPosition, styling::CanvasStyles, ColourScheme},
     constants::*,
     data_collection::temperature::TemperatureType,
     utils::data_units::DataUnit,
@@ -122,7 +122,7 @@ pub fn get_or_create_config(config_path: Option<&Path>) -> OptionResult<ConfigV1
 }
 
 pub fn init_app(
-    args: BottomArgs, config: ConfigV1, styling: &CanvasStyling,
+    args: BottomArgs, config: ConfigV1, styling: &CanvasStyles,
 ) -> Result<(App, BottomLayout)> {
     use BottomWidgetType::*;
 
@@ -929,9 +929,9 @@ mod test {
     use crate::{
         app::App,
         args::BottomArgs,
-        canvas::styling::CanvasStyling,
+        canvas::styling::CanvasStyles,
         options::{
-            config::FlagConfig, get_default_time_value, get_retention, get_update_rate,
+            config::flags::FlagConfig, get_default_time_value, get_retention, get_update_rate,
             try_parse_ms,
         },
     };
@@ -1098,7 +1098,7 @@ mod test {
     fn create_app(args: BottomArgs) -> App {
         let config = ConfigV1::default();
         let styling =
-            CanvasStyling::new(get_color_scheme(&args, &config).unwrap(), &config).unwrap();
+            CanvasStyles::new(get_color_scheme(&args, &config).unwrap(), &config).unwrap();
 
         super::init_app(args, config, &styling).unwrap().0
     }

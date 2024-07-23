@@ -10,10 +10,8 @@ use crate::{
     options::{colours::ColoursConfig, OptionError, OptionResult},
 };
 
-pub struct CanvasStyling {
-    pub currently_selected_text_colour: Color,
-    pub currently_selected_bg_colour: Color,
-    pub currently_selected_text_style: Style,
+pub struct CanvasStyles {
+    pub selected_text_style: Style,
     pub table_header_style: Style,
     pub ram_style: Style,
     #[cfg(not(target_os = "windows"))]
@@ -40,18 +38,16 @@ pub struct CanvasStyling {
     pub disabled_text_style: Style,
 }
 
-impl Default for CanvasStyling {
+impl CanvasStyles {
+    const DEFAULT_SELECTED_TEXT_STYLE: Style = Style::new().fg(Color::Black).bg(HIGHLIGHT_COLOUR);
+}
+
+impl Default for CanvasStyles {
     fn default() -> Self {
         let text_colour = Color::Gray;
-        let currently_selected_text_colour = Color::Black;
-        let currently_selected_bg_colour = HIGHLIGHT_COLOUR;
 
-        CanvasStyling {
-            currently_selected_text_colour,
-            currently_selected_bg_colour,
-            currently_selected_text_style: Style::default()
-                .fg(currently_selected_text_colour)
-                .bg(currently_selected_bg_colour),
+        CanvasStyles {
+            selected_text_style: CanvasStyles::DEFAULT_SELECTED_TEXT_STYLE,
             table_header_style: Style::default().fg(HIGHLIGHT_COLOUR),
             ram_style: Style::default().fg(FIRST_COLOUR),
             #[cfg(not(target_os = "windows"))]
@@ -127,7 +123,7 @@ macro_rules! try_set_colour_list {
     };
 }
 
-impl CanvasStyling {
+impl CanvasStyles {
     pub fn new(colour_scheme: ColourScheme, config: &ConfigV1) -> anyhow::Result<Self> {
         let mut canvas_colours = Self::default();
 
@@ -204,7 +200,7 @@ impl CanvasStyling {
         try_set_colour!(self.table_header_style, colours, table_header_color);
 
         if let Some(scroll_entry_text_color) = &colours.selected_text_color {
-            self.set_scroll_entry_text_color(scroll_entry_text_color)
+            self.set_selected_text_fg(scroll_entry_text_color)
                 .map_err(|err| {
                     OptionError::config(format!(
                         "Please update 'colors.selected_text_color' in your config file. {err}",
@@ -213,7 +209,7 @@ impl CanvasStyling {
         }
 
         if let Some(scroll_entry_bg_color) = &colours.selected_bg_color {
-            self.set_scroll_entry_bg_color(scroll_entry_bg_color)
+            self.set_selected_text_bg(scroll_entry_bg_color)
                 .map_err(|err| {
                     OptionError::config(format!(
                         "Please update 'colors.selected_bg_color' in your config file. {err}",
@@ -224,21 +220,17 @@ impl CanvasStyling {
         Ok(())
     }
 
-    fn set_scroll_entry_text_color(&mut self, colour: &str) -> Result<(), String> {
-        self.currently_selected_text_colour = str_to_colour(colour)?;
-        self.currently_selected_text_style = Style::default()
-            .fg(self.currently_selected_text_colour)
-            .bg(self.currently_selected_bg_colour);
-
+    /// Set the selected text style's foreground colour.
+    #[inline]
+    fn set_selected_text_fg(&mut self, colour: &str) -> Result<(), String> {
+        self.selected_text_style = self.selected_text_style.fg(str_to_colour(colour)?);
         Ok(())
     }
 
-    fn set_scroll_entry_bg_color(&mut self, colour: &str) -> Result<(), String> {
-        self.currently_selected_bg_colour = str_to_colour(colour)?;
-        self.currently_selected_text_style = Style::default()
-            .fg(self.currently_selected_text_colour)
-            .bg(self.currently_selected_bg_colour);
-
+    /// Set the selected text style's background colour.
+    #[inline]
+    fn set_selected_text_bg(&mut self, colour: &str) -> Result<(), String> {
+        self.selected_text_style = self.selected_text_style.bg(str_to_colour(colour)?);
         Ok(())
     }
 }
@@ -247,47 +239,45 @@ impl CanvasStyling {
 mod test {
     use tui::style::{Color, Style};
 
-    use super::{CanvasStyling, ColourScheme};
+    use super::{CanvasStyles, ColourScheme};
     use crate::options::ConfigV1;
 
     #[test]
     fn default_selected_colour_works() {
-        let mut colours = CanvasStyling::default();
+        let mut colours = CanvasStyles::default();
+        let original_selected_text_colour = CanvasStyles::DEFAULT_SELECTED_TEXT_STYLE.fg.unwrap();
+        let original_selected_bg_colour = CanvasStyles::DEFAULT_SELECTED_TEXT_STYLE.bg.unwrap();
 
         assert_eq!(
-            colours.currently_selected_text_style,
+            colours.selected_text_style,
             Style::default()
-                .fg(colours.currently_selected_text_colour)
-                .bg(colours.currently_selected_bg_colour),
+                .fg(original_selected_text_colour)
+                .bg(original_selected_bg_colour),
         );
 
-        colours.set_scroll_entry_text_color("red").unwrap();
+        colours.set_selected_text_fg("red").unwrap();
         assert_eq!(
-            colours.currently_selected_text_style,
+            colours.selected_text_style,
             Style::default()
                 .fg(Color::Red)
-                .bg(colours.currently_selected_bg_colour),
+                .bg(original_selected_bg_colour),
         );
 
-        colours.set_scroll_entry_bg_color("magenta").unwrap();
+        colours.set_selected_text_bg("magenta").unwrap();
         assert_eq!(
-            colours.currently_selected_text_style,
+            colours.selected_text_style,
             Style::default().fg(Color::Red).bg(Color::Magenta),
         );
 
-        colours.set_scroll_entry_text_color("fake red").unwrap_err();
+        colours.set_selected_text_fg("fake blue").unwrap_err();
         assert_eq!(
-            colours.currently_selected_text_style,
-            Style::default()
-                .fg(Color::Red)
-                .bg(colours.currently_selected_bg_colour),
+            colours.selected_text_style,
+            Style::default().fg(Color::Red).bg(Color::Magenta),
         );
 
-        colours
-            .set_scroll_entry_bg_color("fake magenta")
-            .unwrap_err();
+        colours.set_selected_text_bg("fake blue").unwrap_err();
         assert_eq!(
-            colours.currently_selected_text_style,
+            colours.selected_text_style,
             Style::default().fg(Color::Red).bg(Color::Magenta),
         );
     }
@@ -295,11 +285,11 @@ mod test {
     #[test]
     fn built_in_colour_schemes_work() {
         let config = ConfigV1::default();
-        CanvasStyling::new(ColourScheme::Default, &config).unwrap();
-        CanvasStyling::new(ColourScheme::DefaultLight, &config).unwrap();
-        CanvasStyling::new(ColourScheme::Gruvbox, &config).unwrap();
-        CanvasStyling::new(ColourScheme::GruvboxLight, &config).unwrap();
-        CanvasStyling::new(ColourScheme::Nord, &config).unwrap();
-        CanvasStyling::new(ColourScheme::NordLight, &config).unwrap();
+        CanvasStyles::new(ColourScheme::Default, &config).unwrap();
+        CanvasStyles::new(ColourScheme::DefaultLight, &config).unwrap();
+        CanvasStyles::new(ColourScheme::Gruvbox, &config).unwrap();
+        CanvasStyles::new(ColourScheme::GruvboxLight, &config).unwrap();
+        CanvasStyles::new(ColourScheme::Nord, &config).unwrap();
+        CanvasStyles::new(ColourScheme::NordLight, &config).unwrap();
     }
 }

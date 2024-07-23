@@ -13,3 +13,5 @@ whole_word = false
 regex = true
 default_widget_type = "cpu"
 default_widget_count = 1
+
+color = "gruvbox"

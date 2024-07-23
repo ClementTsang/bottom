@@ -37,7 +37,7 @@ use std::{
 
 use anyhow::Context;
 use app::{layout_manager::UsedWidgets, App, AppConfigFields, DataFilters};
-use canvas::styling::CanvasStyling;
+use canvas::styling::CanvasStyles;
 use crossterm::{
     event::{
         poll, read, DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste,
@@ -339,7 +339,7 @@ fn main() -> anyhow::Result<()> {
     // FIXME: Should move this into build app or config
     let styling = {
         let colour_scheme = get_color_scheme(&args, &config)?;
-        CanvasStyling::new(colour_scheme, &config)?
+        CanvasStyles::new(colour_scheme, &config)?
     };
 
     // Create an "app" struct, which will control most of the program and store

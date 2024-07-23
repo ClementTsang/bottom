@@ -22,7 +22,7 @@ use crate::{
             Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
             DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
         },
-        styling::CanvasStyling,
+        styling::CanvasStyles,
     },
     data_collection::processes::{Pid, ProcessHarvest},
 };
@@ -161,7 +161,7 @@ pub struct ProcWidgetState {
 }
 
 impl ProcWidgetState {
-    fn new_sort_table(config: &AppConfigFields, colours: &CanvasStyling) -> SortTable {
+    fn new_sort_table(config: &AppConfigFields, colours: &CanvasStyles) -> SortTable {
         const COLUMNS: [Column<SortTableColumn>; 1] = [Column::hard(SortTableColumn, 7)];
 
         let props = DataTableProps {
@@ -178,7 +178,7 @@ impl ProcWidgetState {
     }
 
     fn new_process_table(
-        config: &AppConfigFields, colours: &CanvasStyling, columns: Vec<SortColumn<ProcColumn>>,
+        config: &AppConfigFields, colours: &CanvasStyles, columns: Vec<SortColumn<ProcColumn>>,
         default_index: usize, default_order: SortOrder,
     ) -> ProcessTable {
         let inner_props = DataTableProps {
@@ -201,7 +201,7 @@ impl ProcWidgetState {
 
     pub fn new(
         config: &AppConfigFields, mode: ProcWidgetMode, table_config: ProcTableConfig,
-        colours: &CanvasStyling, config_columns: &Option<IndexSet<ProcWidgetColumn>>,
+        colours: &CanvasStyles, config_columns: &Option<IndexSet<ProcWidgetColumn>>,
     ) -> Self {
         let process_search_state = {
             let mut pss = ProcessSearchState::default();
@@ -1142,7 +1142,7 @@ mod test {
 
     fn init_state(table_config: ProcTableConfig, columns: &[ProcWidgetColumn]) -> ProcWidgetState {
         let config = AppConfigFields::default();
-        let styling = CanvasStyling::default();
+        let styling = CanvasStyles::default();
         let columns = Some(columns.iter().cloned().collect());
 
         ProcWidgetState::new(

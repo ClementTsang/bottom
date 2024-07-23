@@ -96,7 +96,7 @@ impl Painter {
                     )
                     .divider(tui::symbols::line::VERTICAL)
                     .style(self.colours.text_style)
-                    .highlight_style(self.colours.currently_selected_text_style)
+                    .highlight_style(self.colours.selected_text_style)
                     .select(battery_widget_state.currently_selected_battery_index),
                     tab_draw_loc,
                 );
