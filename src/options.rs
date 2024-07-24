@@ -3,7 +3,6 @@
 // TODO: Break this apart or do something a bit smarter.
 
 pub mod args;
-pub mod colours;
 pub mod config;
 mod error;
 
@@ -17,7 +16,6 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-pub use colours::ColoursConfig;
 pub use config::ConfigV1;
 pub(crate) use error::{OptionError, OptionResult};
 use hashbrown::{HashMap, HashSet};

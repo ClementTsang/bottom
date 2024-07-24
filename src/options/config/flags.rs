@@ -31,8 +31,6 @@ pub(crate) struct FlagConfig {
     pub(crate) no_write: Option<bool>,
     pub(crate) network_legend: Option<String>,
     pub(crate) memory_legend: Option<String>,
-    /// For built-in colour palettes.
-    pub(crate) color: Option<String>,
     pub(crate) process_memory_as_value: Option<bool>,
     pub(crate) tree: Option<bool>,
     pub(crate) show_table_scroll_position: Option<bool>,

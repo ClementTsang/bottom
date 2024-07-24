@@ -7,7 +7,7 @@ use super::ColourScheme;
 pub use crate::options::ConfigV1;
 use crate::{
     constants::*,
-    options::{colours::ColoursConfig, OptionError, OptionResult},
+    options::{OptionError, OptionResult},
 };
 
 pub struct CanvasStyles {

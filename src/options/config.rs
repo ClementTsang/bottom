@@ -5,17 +5,18 @@ mod ignore_list;
 pub mod layout;
 pub mod network;
 pub mod process;
+pub mod style;
 pub mod temperature;
 
 use disk::DiskConfig;
 use flags::FlagConfig;
 use network::NetworkConfig;
 use serde::{Deserialize, Serialize};
+use style::StyleConfig;
 use temperature::TempConfig;
 
 pub use self::ignore_list::IgnoreList;
 use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
-use super::ColoursConfig;
 
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(
@@ -25,7 +26,7 @@ use super::ColoursConfig;
 )]
 pub struct ConfigV1 {
     pub(crate) flags: Option<FlagConfig>,
-    pub(crate) colors: Option<ColoursConfig>,
+    pub(crate) style: Option<StyleConfig>,
     pub(crate) row: Option<Vec<Row>>,
     pub(crate) processes: Option<ProcessesConfig>,
     pub(crate) disk: Option<DiskConfig>,
