@@ -4,10 +4,7 @@ mod drawing_utils;
 pub mod styling;
 mod widgets;
 
-use std::str::FromStr;
-
 use itertools::izip;
-use styling::*;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -22,42 +19,12 @@ use crate::{
         App,
     },
     constants::*,
-    options::OptionError,
+    options::config::style::ColourPalette,
 };
-
-#[derive(Debug)]
-pub enum ColourScheme {
-    Default,
-    DefaultLight,
-    Gruvbox,
-    GruvboxLight,
-    Nord,
-    NordLight,
-    Custom,
-}
-
-impl FromStr for ColourScheme {
-    type Err = OptionError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let lower_case = s.to_lowercase();
-        match lower_case.as_str() {
-            "default" => Ok(ColourScheme::Default),
-            "default-light" => Ok(ColourScheme::DefaultLight),
-            "gruvbox" => Ok(ColourScheme::Gruvbox),
-            "gruvbox-light" => Ok(ColourScheme::GruvboxLight),
-            "nord" => Ok(ColourScheme::Nord),
-            "nord-light" => Ok(ColourScheme::NordLight),
-            _ => Err(OptionError::other(format!(
-                "'{s}' is an invalid built-in color scheme."
-            ))),
-        }
-    }
-}
 
 /// Handles the canvas' state.
 pub struct Painter {
-    pub colours: CanvasStyles,
+    pub colours: ColourPalette,
     previous_height: u16,
     previous_width: u16,
 
@@ -81,7 +48,7 @@ pub enum LayoutConstraint {
 }
 
 impl Painter {
-    pub fn init(layout: BottomLayout, styling: CanvasStyles) -> anyhow::Result<Self> {
+    pub fn init(layout: BottomLayout, styling: ColourPalette) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.

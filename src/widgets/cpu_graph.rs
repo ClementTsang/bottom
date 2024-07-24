@@ -130,12 +130,12 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
     #[inline(always)]
     fn style_row<'a>(&self, row: Row<'a>, painter: &Painter) -> Row<'a> {
         let style = match self {
-            CpuWidgetTableData::All => painter.colours.all_colour_style,
+            CpuWidgetTableData::All => painter.colours.all_cpu_colour,
             CpuWidgetTableData::Entry {
                 data_type,
                 last_entry: _,
             } => match data_type {
-                CpuDataType::Avg => painter.colours.avg_colour_style,
+                CpuDataType::Avg => painter.colours.avg_cpu_colour,
                 CpuDataType::Cpu(index) => {
                     painter.colours.cpu_colour_styles
                         [index % painter.colours.cpu_colour_styles.len()]

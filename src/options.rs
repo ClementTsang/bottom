@@ -16,7 +16,8 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-pub use config::ConfigV1;
+use config::style::ColourPalette;
+pub use config::Config;
 pub(crate) use error::{OptionError, OptionResult};
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
@@ -30,7 +31,7 @@ use self::{
 };
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::{components::time_chart::LegendPosition, styling::CanvasStyles, ColourScheme},
+    canvas::components::time_chart::LegendPosition,
     constants::*,
     data_collection::temperature::TemperatureType,
     utils::data_units::DataUnit,
@@ -95,7 +96,7 @@ pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
 /// path, it will try to create a new file with the default settings, and return
 /// the default config. If bottom fails to write a new config, it will silently
 /// just return the default config.
-pub fn get_or_create_config(config_path: Option<&Path>) -> OptionResult<ConfigV1> {
+pub fn get_or_create_config(config_path: Option<&Path>) -> OptionResult<Config> {
     match &config_path {
         Some(path) => {
             if let Ok(config_string) = fs::read_to_string(path) {
@@ -106,7 +107,7 @@ pub fn get_or_create_config(config_path: Option<&Path>) -> OptionResult<ConfigV1
                 }
 
                 fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
-                Ok(ConfigV1::default())
+                Ok(Config::default())
             }
         }
         None => {
@@ -114,20 +115,20 @@ pub fn get_or_create_config(config_path: Option<&Path>) -> OptionResult<ConfigV1
             // but don't write to any file.
             //
             // TODO: Maybe make this "show" an error, but don't crash.
-            Ok(ConfigV1::default())
+            Ok(Config::default())
         }
     }
 }
 
-pub fn init_app(
-    args: BottomArgs, config: ConfigV1, styling: &CanvasStyles,
-) -> Result<(App, BottomLayout)> {
+pub fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomLayout, ColourPalette)> {
     use BottomWidgetType::*;
 
     // Since everything takes a reference, but we want to take ownership here to
     // drop matches/config later...
     let args = &args;
     let config = &config;
+
+    let styling = ColourPalette::new(&args, &config)?;
 
     let (widget_layout, default_widget_id, default_widget_type_option) =
         get_widget_layout(args, config)
@@ -283,7 +284,7 @@ pub fn init_app(
                                         .unwrap_or_default(),
                                     default_time_value,
                                     autohide_timer,
-                                    styling,
+                                    &styling,
                                 ),
                             );
                         }
@@ -316,7 +317,7 @@ pub fn init_app(
                                     &app_config_fields,
                                     mode,
                                     table_config,
-                                    styling,
+                                    &styling,
                                     &proc_columns,
                                 ),
                             );
@@ -324,13 +325,13 @@ pub fn init_app(
                         Disk => {
                             disk_state_map.insert(
                                 widget.widget_id,
-                                DiskTableWidget::new(&app_config_fields, styling),
+                                DiskTableWidget::new(&app_config_fields, &styling),
                             );
                         }
                         Temp => {
                             temp_state_map.insert(
                                 widget.widget_id,
-                                TempWidgetState::new(&app_config_fields, styling),
+                                TempWidgetState::new(&app_config_fields, &styling),
                             );
                         }
                         Battery => {
@@ -437,11 +438,12 @@ pub fn init_app(
             is_expanded,
         ),
         widget_layout,
+        styling,
     ))
 }
 
 pub fn get_widget_layout(
-    args: &BottomArgs, config: &ConfigV1,
+    args: &BottomArgs, config: &Config,
 ) -> OptionResult<(BottomLayout, u64, Option<BottomWidgetType>)> {
     let cpu_left_legend = is_flag_enabled!(cpu_left_legend, args.cpu, config);
 
@@ -459,7 +461,7 @@ pub fn get_widget_layout(
             Some(r) => r,
             None => {
                 // This cannot (like it really shouldn't) fail!
-                ref_row = toml_edit::de::from_str::<ConfigV1>(if get_use_battery(args, config) {
+                ref_row = toml_edit::de::from_str::<Config>(if get_use_battery(args, config) {
                     DEFAULT_BATTERY_LAYOUT
                 } else {
                     DEFAULT_LAYOUT
@@ -590,7 +592,7 @@ macro_rules! parse_ms_option {
 }
 
 #[inline]
-fn get_update_rate(args: &BottomArgs, config: &ConfigV1) -> OptionResult<u64> {
+fn get_update_rate(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
     parse_ms_option!(
         &args.general.rate,
         config.flags.as_ref().and_then(|flags| flags.rate.as_ref()),
@@ -601,7 +603,7 @@ fn get_update_rate(args: &BottomArgs, config: &ConfigV1) -> OptionResult<u64> {
     )
 }
 
-fn get_temperature(args: &BottomArgs, config: &ConfigV1) -> OptionResult<TemperatureType> {
+fn get_temperature(args: &BottomArgs, config: &Config) -> OptionResult<TemperatureType> {
     if args.temperature.fahrenheit {
         return Ok(TemperatureType::Fahrenheit);
     } else if args.temperature.kelvin {
@@ -617,7 +619,7 @@ fn get_temperature(args: &BottomArgs, config: &ConfigV1) -> OptionResult<Tempera
 }
 
 /// Yes, this function gets whether to show average CPU (true) or not (false).
-fn get_show_average_cpu(args: &BottomArgs, config: &ConfigV1) -> bool {
+fn get_show_average_cpu(args: &BottomArgs, config: &Config) -> bool {
     if args.cpu.hide_avg_cpu {
         return false;
     } else if let Some(flags) = &config.flags {
@@ -631,7 +633,7 @@ fn get_show_average_cpu(args: &BottomArgs, config: &ConfigV1) -> bool {
 
 #[inline]
 fn get_default_time_value(
-    args: &BottomArgs, config: &ConfigV1, retention_ms: u64,
+    args: &BottomArgs, config: &Config, retention_ms: u64,
 ) -> OptionResult<u64> {
     parse_ms_option!(
         &args.general.default_time_value,
@@ -647,7 +649,7 @@ fn get_default_time_value(
 }
 
 #[inline]
-fn get_time_interval(args: &BottomArgs, config: &ConfigV1, retention_ms: u64) -> OptionResult<u64> {
+fn get_time_interval(args: &BottomArgs, config: &Config, retention_ms: u64) -> OptionResult<u64> {
     parse_ms_option!(
         &args.general.time_delta,
         config
@@ -662,7 +664,7 @@ fn get_time_interval(args: &BottomArgs, config: &ConfigV1, retention_ms: u64) ->
 }
 
 fn get_default_widget_and_count(
-    args: &BottomArgs, config: &ConfigV1,
+    args: &BottomArgs, config: &Config,
 ) -> OptionResult<(Option<BottomWidgetType>, u64)> {
     let widget_type = if let Some(widget_type) = &args.general.default_widget_type {
         let parsed_widget = parse_arg_value!(widget_type.parse(), "default_widget_type")?;
@@ -712,7 +714,7 @@ fn get_default_widget_and_count(
 }
 
 #[allow(unused_variables)]
-fn get_use_battery(args: &BottomArgs, config: &ConfigV1) -> bool {
+fn get_use_battery(args: &BottomArgs, config: &Config) -> bool {
     #[cfg(feature = "battery")]
     {
         // TODO: Move this so it's dynamic in the app itself and automatically hide if
@@ -738,7 +740,7 @@ fn get_use_battery(args: &BottomArgs, config: &ConfigV1) -> bool {
 }
 
 #[allow(unused_variables)]
-fn get_enable_gpu(args: &BottomArgs, config: &ConfigV1) -> bool {
+fn get_enable_gpu(args: &BottomArgs, config: &Config) -> bool {
     #[cfg(feature = "gpu")]
     {
         if args.gpu.enable_gpu {
@@ -754,7 +756,7 @@ fn get_enable_gpu(args: &BottomArgs, config: &ConfigV1) -> bool {
 }
 
 #[allow(unused_variables)]
-fn get_enable_cache_memory(args: &BottomArgs, config: &ConfigV1) -> bool {
+fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
     #[cfg(not(target_os = "windows"))]
     {
         if args.memory.enable_cache_memory {
@@ -808,32 +810,7 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> OptionResult<Option<Filt
     }
 }
 
-pub fn get_color_scheme(args: &BottomArgs, config: &ConfigV1) -> OptionResult<ColourScheme> {
-    if let Some(color) = &args.style.color {
-        // Highest priority is always command line flags...
-        return ColourScheme::from_str(color);
-    } else if let Some(colors) = &config.colors {
-        if !colors.is_empty() {
-            // Then, give priority to custom colours...
-            return Ok(ColourScheme::Custom);
-        } else if let Some(flags) = &config.flags {
-            // Last priority is config file flags...
-            if let Some(color) = &flags.color {
-                return ColourScheme::from_str(color);
-            }
-        }
-    } else if let Some(flags) = &config.flags {
-        // Last priority is config file flags...
-        if let Some(color) = &flags.color {
-            return ColourScheme::from_str(color);
-        }
-    }
-
-    // And lastly, the final case is just "default".
-    Ok(ColourScheme::Default)
-}
-
-fn get_network_unit_type(args: &BottomArgs, config: &ConfigV1) -> DataUnit {
+fn get_network_unit_type(args: &BottomArgs, config: &Config) -> DataUnit {
     if args.network.network_use_bytes {
         return DataUnit::Byte;
     } else if let Some(flags) = &config.flags {
@@ -847,7 +824,7 @@ fn get_network_unit_type(args: &BottomArgs, config: &ConfigV1) -> DataUnit {
     DataUnit::Bit
 }
 
-fn get_network_scale_type(args: &BottomArgs, config: &ConfigV1) -> AxisScaling {
+fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
     if args.network.network_use_log {
         return AxisScaling::Log;
     } else if let Some(flags) = &config.flags {
@@ -861,7 +838,7 @@ fn get_network_scale_type(args: &BottomArgs, config: &ConfigV1) -> AxisScaling {
     AxisScaling::Linear
 }
 
-fn get_retention(args: &BottomArgs, config: &ConfigV1) -> OptionResult<u64> {
+fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
     parse_ms_option!(
@@ -878,7 +855,7 @@ fn get_retention(args: &BottomArgs, config: &ConfigV1) -> OptionResult<u64> {
 }
 
 fn get_network_legend_position(
-    args: &BottomArgs, config: &ConfigV1,
+    args: &BottomArgs, config: &Config,
 ) -> OptionResult<Option<LegendPosition>> {
     let result = if let Some(s) = &args.network.network_legend {
         match s.to_ascii_lowercase().trim() {
@@ -899,7 +876,7 @@ fn get_network_legend_position(
 }
 
 fn get_memory_legend_position(
-    args: &BottomArgs, config: &ConfigV1,
+    args: &BottomArgs, config: &Config,
 ) -> OptionResult<Option<LegendPosition>> {
     let result = if let Some(s) = &args.memory.memory_legend {
         match s.to_ascii_lowercase().trim() {
@@ -923,11 +900,10 @@ fn get_memory_legend_position(
 mod test {
     use clap::Parser;
 
-    use super::{get_color_scheme, get_time_interval, ConfigV1};
+    use super::{get_time_interval, Config};
     use crate::{
         app::App,
         args::BottomArgs,
-        canvas::styling::CanvasStyles,
         options::{
             config::flags::FlagConfig, get_default_time_value, get_retention, get_update_rate,
             try_parse_ms,
@@ -955,7 +931,7 @@ mod test {
 
     #[test]
     fn matches_human_times() {
-        let config = ConfigV1::default();
+        let config = Config::default();
 
         {
             let delta_args = vec!["btm", "--time_delta", "2 min"];
@@ -980,7 +956,7 @@ mod test {
 
     #[test]
     fn matches_number_times() {
-        let config = ConfigV1::default();
+        let config = Config::default();
 
         {
             let delta_args = vec!["btm", "--time_delta", "120000"];
@@ -1007,7 +983,7 @@ mod test {
     fn config_human_times() {
         let args = BottomArgs::parse_from(["btm"]);
 
-        let mut config = ConfigV1::default();
+        let mut config = Config::default();
         let flags = FlagConfig {
             time_delta: Some("2 min".to_string().into()),
             default_time_value: Some("300s".to_string().into()),
@@ -1037,7 +1013,7 @@ mod test {
     fn config_number_times_as_string() {
         let args = BottomArgs::parse_from(["btm"]);
 
-        let mut config = ConfigV1::default();
+        let mut config = Config::default();
         let flags = FlagConfig {
             time_delta: Some("120000".to_string().into()),
             default_time_value: Some("300000".to_string().into()),
@@ -1067,7 +1043,7 @@ mod test {
     fn config_number_times_as_num() {
         let args = BottomArgs::parse_from(["btm"]);
 
-        let mut config = ConfigV1::default();
+        let mut config = Config::default();
         let flags = FlagConfig {
             time_delta: Some(120000.into()),
             default_time_value: Some(300000.into()),
@@ -1094,11 +1070,8 @@ mod test {
     }
 
     fn create_app(args: BottomArgs) -> App {
-        let config = ConfigV1::default();
-        let styling =
-            CanvasStyles::new(get_color_scheme(&args, &config).unwrap(), &config).unwrap();
-
-        super::init_app(args, config, &styling).unwrap().0
+        let config = Config::default();
+        super::init_app(args, config).unwrap().0
     }
 
     // TODO: There's probably a better way to create clap options AND unify together

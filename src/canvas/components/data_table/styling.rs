@@ -1,6 +1,6 @@
 use tui::style::Style;
 
-use crate::canvas::styling::CanvasStyles;
+use crate::options::config::style::ColourPalette;
 
 #[derive(Default)]
 pub struct DataTableStyling {
@@ -13,7 +13,7 @@ pub struct DataTableStyling {
 }
 
 impl DataTableStyling {
-    pub fn from_colours(colours: &CanvasStyles) -> Self {
+    pub fn from_colours(colours: &ColourPalette) -> Self {
         Self {
             header_style: colours.table_header_style,
             border_style: colours.border_style,

@@ -136,9 +136,9 @@ impl Painter {
                         CpuWidgetData::All => None,
                         CpuWidgetData::Entry { data, .. } => {
                             let style = if show_avg_cpu && itx == AVG_POSITION {
-                                self.colours.avg_colour_style
+                                self.colours.avg_cpu_colour
                             } else if itx == ALL_POSITION {
-                                self.colours.all_colour_style
+                                self.colours.all_cpu_colour
                             } else {
                                 let offset_position = itx - 1; // Because of the all position
                                 self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
@@ -158,7 +158,7 @@ impl Painter {
             cpu_data.get(current_scroll_position)
         {
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
-                self.colours.avg_colour_style
+                self.colours.avg_cpu_colour
             } else {
                 let offset_position = current_scroll_position - 1; // Because of the all position
                 self.colours.cpu_colour_styles

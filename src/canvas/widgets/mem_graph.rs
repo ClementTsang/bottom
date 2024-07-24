@@ -89,7 +89,7 @@ impl Painter {
                 {
                     if let Some(gpu_data) = &app_state.converted_data.gpu_data {
                         let mut color_index = 0;
-                        let gpu_styles = &self.colours.gpu_colour_styles;
+                        let gpu_styles = &self.colours.gpu_colours;
                         gpu_data.iter().for_each(|gpu| {
                             let gpu_label =
                                 format!("{}:{}{}", gpu.name, gpu.mem_percent, gpu.mem_total);

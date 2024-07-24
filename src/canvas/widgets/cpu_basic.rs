@@ -64,7 +64,7 @@ impl Painter {
                         last_entry,
                     } => {
                         let (outer, style) = match data_type {
-                            CpuDataType::Avg => ("AVG".to_string(), self.colours.avg_colour_style),
+                            CpuDataType::Avg => ("AVG".to_string(), self.colours.avg_cpu_colour),
                             CpuDataType::Cpu(index) => (
                                 format!("{index:<3}",),
                                 self.colours.cpu_colour_styles
