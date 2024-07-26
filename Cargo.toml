@@ -97,7 +97,7 @@ serde = { version = "=1.0.188 ", features = ["derive"] }
 starship-battery = { version = "0.8.2", optional = true }
 sysinfo = "=0.29.8"
 thiserror = "1.0.47"
-time = { version = "0.3.26", features = ["formatting", "macros"] }
+time = { version = "0.3.36", features = ["formatting", "macros"] }
 toml_edit = { version = "0.19.14", features = ["serde"] }
 tui = { version = "0.22.0", package = "ratatui" }
 unicode-segmentation = "1.10.1"

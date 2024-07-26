@@ -131,6 +131,7 @@ struct Layer {
     colors: Vec<Color>,
 }
 
+#[allow(dead_code)]
 trait Grid: Debug {
     fn width(&self) -> u16;
     fn height(&self) -> u16;
