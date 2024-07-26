@@ -15,6 +15,7 @@ build = "build.rs"
 exclude = [
     ".cargo-husky/",
     ".github/",
+    ".idea",
     ".vscode/",
     "assets/",
     "desktop/",
@@ -33,9 +34,7 @@ exclude = [
     "codecov.yml",
     "CONTRIBUTING.md",
     "Cross.toml",
-    "debug.log",
-    "flamegraph.svg",
-    "perf.data",
+    "rust-toolchain.toml",
     "rustfmt.toml",
 ]
 # The oldest version I've tested that should still build - note this is not an official MSRV!
