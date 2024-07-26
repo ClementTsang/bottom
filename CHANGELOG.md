@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1355](https://github.com/ClementTsang/bottom/pull/1355): Reduce chances of non-D0 devices waking up due to temperature checks on Linux.
 - [#1410](https://github.com/ClementTsang/bottom/pull/1410): Fix uptime calculation for Linux.
 
+## [0.9.7] - 2023-08-26
+
+## Other
+
+- [#1500](https://github.com/ClementTsang/bottom/issues/1500): Fix builds for Rust 1.80.
+
 ## [0.9.6] - 2023-08-26
 
 ### Other
