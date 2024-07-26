@@ -75,7 +75,7 @@ zfs = []
 deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
 
-logging = ["fern", "log", "time/local-offset"]
+logging = ["fern", "log", "time"]
 generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
@@ -97,7 +97,6 @@ regex = "1.10.5"
 serde = { version = "1.0.203", features = ["derive"] }
 starship-battery = { version = "0.8.3", optional = true }
 sysinfo = "=0.30.12"
-time = { version = "0.3.36", features = ["formatting", "macros"] }
 toml_edit = { version = "0.22.14", features = ["serde"] }
 tui = { version = "0.27.0", package = "ratatui" }
 unicode-ellipsis = "0.2.0"
@@ -107,6 +106,7 @@ unicode-width = "0.1.13"
 # Used for logging.
 fern = { version = "0.6.2", optional = true }
 log = { version = "0.4.22", optional = true }
+time = { version = "0.3.36", features = ["local-offset", "formatting", "macros"], optional = true }
 
 # These are just used for for schema generation.
 schemars = { version = "0.8.21", optional = true }

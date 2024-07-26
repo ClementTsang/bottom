@@ -142,46 +142,6 @@ impl Painter {
                     charge_percentage,
                 );
 
-                fn long_time(secs: i64) -> String {
-                    let time = time::Duration::seconds(secs);
-                    let num_hours = time.whole_hours();
-                    let num_minutes = time.whole_minutes() - num_hours * 60;
-                    let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
-
-                    if num_hours > 0 {
-                        format!(
-                            "{} hour{}, {} minute{}, {} second{}",
-                            num_hours,
-                            if num_hours == 1 { "" } else { "s" },
-                            num_minutes,
-                            if num_minutes == 1 { "" } else { "s" },
-                            num_seconds,
-                            if num_seconds == 1 { "" } else { "s" },
-                        )
-                    } else {
-                        format!(
-                            "{} minute{}, {} second{}",
-                            num_minutes,
-                            if num_minutes == 1 { "" } else { "s" },
-                            num_seconds,
-                            if num_seconds == 1 { "" } else { "s" },
-                        )
-                    }
-                }
-
-                fn short_time(secs: i64) -> String {
-                    let time = time::Duration::seconds(secs);
-                    let num_hours = time.whole_hours();
-                    let num_minutes = time.whole_minutes() - num_hours * 60;
-                    let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
-
-                    if num_hours > 0 {
-                        format!("{num_hours}h {num_minutes}m {num_seconds}s")
-                    } else {
-                        format!("{num_minutes}m {num_seconds}s")
-                    }
-                }
-
                 let mut battery_charge_rows = Vec::with_capacity(2);
                 battery_charge_rows.push(Row::new([
                     Cell::from("Charge").style(self.colours.text_style)
@@ -290,5 +250,85 @@ impl Painter {
                 }
             }
         }
+    }
+}
+
+#[inline]
+fn get_hms(secs: i64) -> (i64, i64, i64) {
+    let hours = secs / (60 * 60);
+    let minutes = (secs / 60) - hours * 60;
+    let seconds = secs - minutes * 60 - hours * 60 * 60;
+
+    (hours, minutes, seconds)
+}
+
+fn long_time(secs: i64) -> String {
+    let (hours, minutes, seconds) = get_hms(secs);
+
+    if hours > 0 {
+        format!(
+            "{} hour{}, {} minute{}, {} second{}",
+            hours,
+            if hours == 1 { "" } else { "s" },
+            minutes,
+            if minutes == 1 { "" } else { "s" },
+            seconds,
+            if seconds == 1 { "" } else { "s" },
+        )
+    } else {
+        format!(
+            "{} minute{}, {} second{}",
+            minutes,
+            if minutes == 1 { "" } else { "s" },
+            seconds,
+            if seconds == 1 { "" } else { "s" },
+        )
+    }
+}
+
+fn short_time(secs: i64) -> String {
+    let (hours, minutes, seconds) = get_hms(secs);
+
+    if hours > 0 {
+        format!("{hours}h {minutes}m {seconds}s")
+    } else {
+        format!("{minutes}m {seconds}s")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_hms() {
+        assert_eq!(get_hms(10), (0, 0, 10));
+        assert_eq!(get_hms(60), (0, 1, 0));
+        assert_eq!(get_hms(61), (0, 1, 1));
+        assert_eq!(get_hms(3600), (1, 0, 0));
+        assert_eq!(get_hms(3601), (1, 0, 1));
+        assert_eq!(get_hms(3661), (1, 1, 1));
+    }
+
+    #[test]
+    fn test_long_time() {
+        assert_eq!(long_time(1), "0 minutes, 1 second".to_string());
+        assert_eq!(long_time(10), "0 minutes, 10 seconds".to_string());
+        assert_eq!(long_time(60), "1 minute, 0 seconds".to_string());
+        assert_eq!(long_time(61), "1 minute, 1 second".to_string());
+        assert_eq!(long_time(3600), "1 hour, 0 minutes, 0 seconds".to_string());
+        assert_eq!(long_time(3601), "1 hour, 0 minutes, 1 second".to_string());
+        assert_eq!(long_time(3661), "1 hour, 1 minute, 1 second".to_string());
+    }
+
+    #[test]
+    fn test_short_time() {
+        assert_eq!(short_time(1), "0m 1s".to_string());
+        assert_eq!(short_time(10), "0m 10s".to_string());
+        assert_eq!(short_time(60), "1m 0s".to_string());
+        assert_eq!(short_time(61), "1m 1s".to_string());
+        assert_eq!(short_time(3600), "1h 0m 0s".to_string());
+        assert_eq!(short_time(3601), "1h 0m 1s".to_string());
+        assert_eq!(short_time(3661), "1h 1m 1s".to_string());
     }
 }
