@@ -108,8 +108,7 @@ impl Painter {
 
     /// Draws the process search field.
     /// - `widget_id` represents the widget ID of the search box itself --- NOT
-    ///   the process widget
-    /// state that is stored.
+    ///   the process widget state that is stored.
     fn draw_search_field(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
@@ -313,8 +312,7 @@ impl Painter {
 
     /// Draws the process sort box.
     /// - `widget_id` represents the widget ID of the sort box itself --- NOT
-    ///   the process widget
-    /// state that is stored.
+    ///   the process widget state that is stored.
     fn draw_sort_table(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
