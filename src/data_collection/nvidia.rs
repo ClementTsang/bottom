@@ -64,6 +64,7 @@ pub fn get_nvidia_vecs(
                     }
                     if widgets_to_harvest.use_proc {
                         let mut procs = HashMap::new();
+
                         if let Ok(gpu_procs) = device.process_utilization_stats(None) {
                             for proc in gpu_procs {
                                 let pid = proc.pid;
@@ -71,6 +72,7 @@ pub fn get_nvidia_vecs(
                                 procs.insert(pid, (0, gpu_util));
                             }
                         }
+
                         if let Ok(compute_procs) = device.running_compute_processes() {
                             for proc in compute_procs {
                                 let pid = proc.pid;
@@ -85,6 +87,7 @@ pub fn get_nvidia_vecs(
                                 }
                             }
                         }
+
                         // Use the legacy API too but prefer newer API results
                         if let Ok(graphics_procs) = device.running_graphics_processes_v2() {
                             for proc in graphics_procs {
@@ -100,6 +103,7 @@ pub fn get_nvidia_vecs(
                                 }
                             }
                         }
+
                         if let Ok(graphics_procs) = device.running_graphics_processes() {
                             for proc in graphics_procs {
                                 let pid = proc.pid;
@@ -114,9 +118,11 @@ pub fn get_nvidia_vecs(
                                 }
                             }
                         }
+
                         if !procs.is_empty() {
                             proc_vec.push(procs);
                         }
+
                         // running total for proc %
                         if let Ok(mem) = device.memory_info() {
                             total_mem += mem.total;
