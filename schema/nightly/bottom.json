@@ -64,7 +64,7 @@
         "$ref": "#/definitions/row"
       }
     },
-    "style": {
+    "styles": {
       "anyOf": [
         {
           "$ref": "#/definitions/StyleConfig"
