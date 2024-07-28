@@ -277,7 +277,7 @@ fn create_collection_thread(
 
 #[cfg(feature = "generate_schema")]
 fn generate_schema() -> anyhow::Result<()> {
-    let mut schema = schemars::schema_for!(crate::options::config::ConfigV1);
+    let mut schema = schemars::schema_for!(crate::options::config::Config);
     {
         use itertools::Itertools;
         use strum::VariantArray;

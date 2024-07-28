@@ -28,6 +28,7 @@ use crate::options::{args::BottomArgs, OptionError, OptionResult};
 use super::Config;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub(crate) struct ColorStr(Cow<'static, str>);
 
 /// A style for text.
