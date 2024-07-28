@@ -83,6 +83,7 @@ pub(crate) struct StyleConfig {
 
 /// The actual internal representation of the configured colours,
 /// as a "palette".
+#[derive(Debug)]
 pub struct ColourPalette {
     pub selected_text_style: Style,
     pub table_header_style: Style,
@@ -141,10 +142,10 @@ impl ColourPalette {
         match lower_case.as_str() {
             "default" => Ok(Self::default_palette()),
             "default-light" => Ok(Self::default_light_mode()),
-            "gruvbox" => Ok(todo!()),
-            "gruvbox-light" => Ok(todo!()),
-            "nord" => Ok(todo!()),
-            "nord-light" => Ok(todo!()),
+            "gruvbox" => Ok(Self::gruvbox_palette()),
+            "gruvbox-light" => Ok(Self::gruvbox_light_palette()),
+            "nord" => Ok(Self::nord_palette()),
+            "nord-light" => Ok(Self::nord_light_palette()),
             _ => Err(
                 OptionError::other(format!("'{theme}' is an invalid built-in color scheme."))
                     .into(),
@@ -266,13 +267,20 @@ mod test {
     use tui::style::{Color, Style};
 
     use super::ColourPalette;
-    use crate::options::{config::style::utils::str_to_colour, Config};
+    use crate::options::config::style::utils::str_to_colour;
 
     #[test]
     fn default_selected_colour_works() {
         let mut colours = ColourPalette::default();
-        let original_selected_text_colour = ColourPalette::default_palette().text_style.fg.unwrap();
-        let original_selected_bg_colour = ColourPalette::default_palette().text_style.bg.unwrap();
+        println!("colours: {colours:?}");
+        let original_selected_text_colour = ColourPalette::default_palette()
+            .selected_text_style
+            .fg
+            .unwrap();
+        let original_selected_bg_colour = ColourPalette::default_palette()
+            .selected_text_style
+            .bg
+            .unwrap();
 
         assert_eq!(
             colours.selected_text_style,

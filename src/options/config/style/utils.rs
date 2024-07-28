@@ -3,7 +3,7 @@ use tui::style::{Color, Style};
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Convert a hex string to a colour.
-fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
+pub(super) fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
     fn hex_component_to_int(hex: &str, first: &str, second: &str) -> Result<u8, String> {
         u8::from_str_radix(&concat_string!(first, second), 16)
             .map_err(|_| format!("'{hex}' is an invalid hex color, could not decode."))

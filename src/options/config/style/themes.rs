@@ -11,7 +11,10 @@ macro_rules! color {
 }
 
 macro_rules! hex {
-    ($value:literal) => {};
+    ($value:literal) => {
+        tui::style::Style::new()
+            .fg(crate::options::config::style::utils::convert_hex_to_color($value.into()).unwrap())
+    };
 }
 
 pub(super) use {color, hex};
