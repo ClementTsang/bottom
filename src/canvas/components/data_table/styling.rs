@@ -13,7 +13,7 @@ pub struct DataTableStyling {
 }
 
 impl DataTableStyling {
-    pub fn from_colours(colours: &ColourPalette) -> Self {
+    pub fn from_palette(colours: &ColourPalette) -> Self {
         Self {
             header_style: colours.table_header_style,
             border_style: colours.border_style,

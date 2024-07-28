@@ -120,7 +120,9 @@ pub fn get_or_create_config(config_path: Option<&Path>) -> OptionResult<Config> 
     }
 }
 
-pub fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomLayout, ColourPalette)> {
+pub(crate) fn init_app(
+    args: BottomArgs, config: Config,
+) -> Result<(App, BottomLayout, ColourPalette)> {
     use BottomWidgetType::*;
 
     // Since everything takes a reference, but we want to take ownership here to

@@ -10,12 +10,11 @@ use crate::{
             Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
             DataToCell,
         },
-        styling::CanvasStyles,
         Painter,
     },
     data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,
-    options::config::cpu::CpuDefault,
+    options::config::{cpu::CpuDefault, style::ColourPalette},
 };
 
 #[derive(Default)]
@@ -26,16 +25,16 @@ pub struct CpuWidgetStyling {
 }
 
 impl CpuWidgetStyling {
-    fn from_colours(colours: &CanvasStyles) -> Self {
-        let entries = if colours.cpu_colour_styles.is_empty() {
+    fn from_colours(palette: &ColourPalette) -> Self {
+        let entries = if palette.cpu_colour_styles.is_empty() {
             vec![Style::default()]
         } else {
-            colours.cpu_colour_styles.clone()
+            palette.cpu_colour_styles.clone()
         };
 
         Self {
-            all: colours.all_colour_style,
-            avg: colours.avg_colour_style,
+            all: palette.all_cpu_colour,
+            avg: palette.avg_cpu_colour,
             entries,
         }
     }
@@ -168,7 +167,7 @@ pub struct CpuWidgetState {
 impl CpuWidgetState {
     pub fn new(
         config: &AppConfigFields, default_selection: CpuDefault, current_display_time: u64,
-        autohide_timer: Option<Instant>, colours: &CanvasStyles,
+        autohide_timer: Option<Instant>, colours: &ColourPalette,
     ) -> Self {
         const COLUMNS: [Column<CpuWidgetColumn>; 2] = [
             Column::soft(CpuWidgetColumn::CPU, Some(0.5)),
@@ -184,7 +183,7 @@ impl CpuWidgetState {
             show_current_entry_when_unfocused: true,
         };
 
-        let styling = DataTableStyling::from_colours(colours);
+        let styling = DataTableStyling::from_palette(colours);
         let mut table = DataTable::new(COLUMNS, props, styling);
         match default_selection {
             CpuDefault::All => {}
