@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1276](https://github.com/ClementTsang/bottom/pull/1276): Add GPU process info.
 - [#1353](https://github.com/ClementTsang/bottom/pull/1353): Support selecting the average CPU graph as a default.
 - [#1430](https://github.com/ClementTsang/bottom/pull/1430): Support controlling the graph legend position for memory and network graph widgets.
-- [#1499](https://github.com/ClementTsang/bottom/pull/1499): Support bold text customization.
 
 ### Changes
 
