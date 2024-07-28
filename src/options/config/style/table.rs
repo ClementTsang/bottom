@@ -6,5 +6,5 @@ use super::TextStyleConfig;
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub(crate) struct TableStyle {
-    pub(crate) table_header: Option<TextStyleConfig>,
+    pub(crate) headers: Option<TextStyleConfig>,
 }

@@ -124,14 +124,14 @@ impl ColourPalette {
     pub fn new(args: &BottomArgs, config: &Config) -> anyhow::Result<Self> {
         let mut palette = match &args.style.color {
             Some(theme) => Self::from_theme(theme)?,
-            None => match config.style.as_ref().and_then(|s| s.theme.as_ref()) {
+            None => match config.styles.as_ref().and_then(|s| s.theme.as_ref()) {
                 Some(theme) => Self::from_theme(theme)?,
                 None => Self::default(),
             },
         };
 
         // Apply theme from config on top.
-        if let Some(style) = &config.style {
+        if let Some(style) = &config.styles {
             palette.set_colours_from_palette(style)?;
         }
 
@@ -185,7 +185,7 @@ impl ColourPalette {
         set_colour!(self.low_battery, config.battery, low_battery);
 
         // Tables
-        set_style!(self.table_header_style, config.tables, table_header);
+        set_style!(self.table_header_style, config.tables, headers);
 
         // Widget graphs
         set_colour!(self.graph_style, config.graphs, graph_color);

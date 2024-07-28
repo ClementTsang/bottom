@@ -138,11 +138,15 @@ macro_rules! set_style {
         if let Some(style) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
             if let Some(colour) = &style.color {
                 $palette_field = crate::options::config::style::utils::str_to_fg(&colour.0)
-                    .map_err(|err| {
-                        OptionError::config(format!(
-                            "Please update 'colors.{}' in your config file. {err}",
+                    .map_err(|err| match stringify!($config_location).split_once(".") {
+                        Some((_, loc)) => OptionError::config(format!(
+                            "Please update 'styles.{loc}.{}' in your config file. {err}",
                             stringify!($field)
-                        ))
+                        )),
+                        None => OptionError::config(format!(
+                            "Please update 'styles.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
                     })?;
             }
         }
@@ -154,10 +158,16 @@ macro_rules! set_colour {
         if let Some(colour) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
             $palette_field =
                 crate::options::config::style::utils::str_to_fg(&colour.0).map_err(|err| {
-                    OptionError::config(format!(
-                        "Please update 'colors.{}' in your config file. {err}",
-                        stringify!($field)
-                    ))
+                    match stringify!($config_location).split_once(".") {
+                        Some((_, loc)) => OptionError::config(format!(
+                            "Please update 'styles.{loc}.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
+                        None => OptionError::config(format!(
+                            "Please update 'styles.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
+                    }
                 })?;
         }
     };
@@ -170,11 +180,15 @@ macro_rules! set_colour_list {
                 .iter()
                 .map(|s| crate::options::config::style::utils::str_to_fg(&s.0))
                 .collect::<Result<Vec<Style>, String>>()
-                .map_err(|err| {
-                    OptionError::config(format!(
-                        "Please update 'colors.{}' in your config file. {err}",
+                .map_err(|err| match stringify!($config_location).split_once(".") {
+                    Some((_, loc)) => OptionError::config(format!(
+                        "Please update 'styles.{loc}.{}' in your config file. {err}",
                         stringify!($field)
-                    ))
+                    )),
+                    None => OptionError::config(format!(
+                        "Please update 'styles.{}' in your config file. {err}",
+                        stringify!($field)
+                    )),
                 })?;
         }
     };

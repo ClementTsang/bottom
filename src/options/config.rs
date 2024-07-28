@@ -26,7 +26,7 @@ use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
 )]
 pub struct Config {
     pub(crate) flags: Option<FlagConfig>,
-    pub(crate) style: Option<StyleConfig>,
+    pub(crate) styles: Option<StyleConfig>,
     pub(crate) row: Option<Vec<Row>>,
     pub(crate) processes: Option<ProcessesConfig>,
     pub(crate) disk: Option<DiskConfig>,

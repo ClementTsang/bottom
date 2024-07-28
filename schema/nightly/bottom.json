@@ -830,7 +830,7 @@
       "description": "General styling for table widgets.",
       "type": "object",
       "properties": {
-        "table_header": {
+        "headers": {
           "anyOf": [
             {
               "$ref": "#/definitions/TextStyleConfig"
