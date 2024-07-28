@@ -130,7 +130,7 @@ pub(crate) fn init_app(
     let args = &args;
     let config = &config;
 
-    let styling = ColourPalette::new(&args, &config)?;
+    let styling = ColourPalette::new(args, config)?;
 
     let (widget_layout, default_widget_id, default_widget_type_option) =
         get_widget_layout(args, config)
