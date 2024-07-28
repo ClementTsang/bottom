@@ -20,7 +20,7 @@ use network::NetworkStyle;
 use serde::{Deserialize, Serialize};
 use table::TableStyle;
 use tui::style::Style;
-use utils::{opt, try_set_colour, try_set_colour_list, try_set_style};
+use utils::{opt, set_colour, set_colour_list, set_style};
 use widget::WidgetStyle;
 
 use crate::options::{args::BottomArgs, OptionError, OptionResult};
@@ -116,9 +116,10 @@ pub(crate) struct ColourPalette {
     pub text_style: Style,
     pub widget_title_style: Style,
     pub graph_style: Style,
-    pub high_battery_colour: Style,
-    pub medium_battery_colour: Style,
-    pub low_battery_colour: Style,
+    pub graph_legend_style: Style,
+    pub high_battery: Style,
+    pub medium_battery: Style,
+    pub low_battery: Style,
     pub invalid_query_style: Style,
     pub disabled_text_style: Style,
 }
@@ -165,81 +166,169 @@ impl ColourPalette {
 
     fn set_colours_from_palette(&mut self, config: &StyleConfig) -> OptionResult<()> {
         // CPU
-        try_set_colour!(self.avg_cpu_colour, opt!(config.cpu?.avg_entry_color));
-        try_set_colour!(self.all_cpu_colour, opt!(config.cpu?.all_entry_color));
-        try_set_colour_list!(self.cpu_colour_styles, opt!(config.cpu?.cpu_core_colors));
+        set_colour!(
+            self.avg_cpu_colour,
+            opt!(config.cpu.as_ref()?.avg_entry_color.as_ref())
+        );
+        set_colour!(
+            self.all_cpu_colour,
+            opt!(config.cpu.as_ref()?.all_entry_color.as_ref())
+        );
+        set_colour_list!(
+            self.cpu_colour_styles,
+            opt!(config.cpu.as_ref()?.cpu_core_colors.as_ref())
+        );
 
         // Memory
-        try_set_style!(self.ram_style, opt!(config.memory?.ram));
-        try_set_style!(self.swap_style, opt!(config.memory?.swap));
+        set_colour!(self.ram_style, opt!(config.memory.as_ref()?.ram.as_ref()));
+        set_colour!(self.swap_style, opt!(config.memory.as_ref()?.swap.as_ref()));
 
         #[cfg(not(target_os = "windows"))]
-        try_set_style!(self.cache_style, opt!(config.memory?.cache));
+        set_colour!(
+            self.cache_style,
+            opt!(config.memory.as_ref()?.cache.as_ref())
+        );
 
         #[cfg(feature = "zfs")]
-        try_set_style!(self.arc_style, opt!(config.memory?.arc));
+        set_colour!(self.arc_style, opt!(config.memory.as_ref()?.arc.as_ref()));
 
         #[cfg(feature = "gpu")]
-        try_set_colour_list!(self.gpu_colours, opt!(config.memory?.gpus));
+        set_colour_list!(
+            self.gpu_colours,
+            opt!(config.memory.as_ref()?.gpus.as_ref())
+        );
 
         // Network
-        try_set_style!(self.rx_style, config, rx_color);
-        try_set_style!(self.tx_style, config, tx_color);
-        try_set_style!(self.total_rx_style, config, rx_total_color);
-        try_set_style!(self.total_tx_style, config, tx_total_color);
+        set_colour!(self.rx_style, opt!(config.network.as_ref()?.rx.as_ref()));
+        set_colour!(self.tx_style, opt!(config.network.as_ref()?.tx.as_ref()));
+        set_colour!(
+            self.total_rx_style,
+            opt!(config.network.as_ref()?.rx_total.as_ref())
+        );
+        set_colour!(
+            self.total_tx_style,
+            opt!(config.network.as_ref()?.tx_total.as_ref())
+        );
 
         // Battery
-        try_set_style!(self.high_battery_colour, config, high_battery_color);
-        try_set_style!(self.medium_battery_colour, config, medium_battery_color);
-        try_set_style!(self.low_battery_colour, config, low_battery_color);
-
-        // Widget text and graphs
-        try_set_style!(self.widget_title_style, config, widget_title_color);
-        try_set_style!(self.graph_style, config, graph_color);
-        try_set_style!(self.text_style, config, text_color);
-        try_set_style!(self.disabled_text_style, config, disabled_text_color);
-        try_set_style!(self.border_style, config, border_color);
-        try_set_style!(
-            self.highlighted_border_style,
-            config,
-            highlighted_border_color
+        set_colour!(
+            self.high_battery,
+            opt!(config.battery.as_ref()?.high_battery.as_ref())
+        );
+        set_colour!(
+            self.medium_battery,
+            opt!(config.battery.as_ref()?.medium_battery.as_ref())
+        );
+        set_colour!(
+            self.low_battery,
+            opt!(config.battery.as_ref()?.low_battery.as_ref())
         );
 
         // Tables
-        try_set_style!(self.table_header_style, config, table_header_color);
+        set_style!(
+            self.table_header_style,
+            opt!(config.tables.as_ref()?.table_header.as_ref())
+        );
 
-        if let Some(scroll_entry_text_color) = &config.selected_text_color {
-            self.set_selected_text_fg(scroll_entry_text_color)
-                .map_err(|err| {
-                    OptionError::config(format!(
-                        "Please update 'colors.selected_text_color' in your config file. {err}",
-                    ))
-                })?
-        }
+        // Widget graphs
+        set_colour!(
+            self.graph_style,
+            opt!(config.graphs.as_ref()?.graph_color.as_ref())
+        );
+        set_style!(
+            self.graph_legend_style,
+            opt!(config.graphs.as_ref()?.legend_text.as_ref())
+        );
 
-        if let Some(scroll_entry_bg_color) = &config.selected_bg_color {
-            self.set_selected_text_bg(scroll_entry_bg_color)
-                .map_err(|err| {
-                    OptionError::config(format!(
-                        "Please update 'colors.selected_bg_color' in your config file. {err}",
-                    ))
-                })?
-        }
+        // General widget text.
+        set_style!(
+            self.widget_title_style,
+            opt!(config.widgets.as_ref()?.widget_title.as_ref())
+        );
+        set_style!(
+            self.text_style,
+            opt!(config.widgets.as_ref()?.text.as_ref())
+        );
+        set_style!(
+            self.selected_text_style,
+            opt!(config.widgets.as_ref()?.selected_text.as_ref())
+        );
+        set_style!(
+            self.disabled_text_style,
+            opt!(config.widgets.as_ref()?.disabled_text.as_ref())
+        );
+
+        // Widget borders
+        set_colour!(
+            self.border_style,
+            opt!(config.widgets.as_ref()?.border.as_ref())
+        );
+        set_colour!(
+            self.highlighted_border_style,
+            opt!(config.widgets.as_ref()?.highlighted_border_color.as_ref())
+        );
 
         Ok(())
     }
+}
 
-    /// Set the selected text style's foreground colour.
-    #[inline]
-    fn set_selected_text_fg(&mut self, colour: &str) -> Result<(), String> {
-        self.selected_text_style = self.selected_text_style.fg(str_to_colour(colour)?);
-        Ok(())
+#[cfg(test)]
+mod test {
+    /*
+    use tui::style::{Color, Style};
+
+    use super::{CanvasStyles, ColourScheme};
+    use crate::options::Config;
+
+    #[test]
+    fn default_selected_colour_works() {
+        let mut colours = CanvasStyles::default();
+        let original_selected_text_colour = CanvasStyles::DEFAULT_SELECTED_TEXT_STYLE.fg.unwrap();
+        let original_selected_bg_colour = CanvasStyles::DEFAULT_SELECTED_TEXT_STYLE.bg.unwrap();
+
+        assert_eq!(
+            colours.selected_text_style,
+            Style::default()
+                .fg(original_selected_text_colour)
+                .bg(original_selected_bg_colour),
+        );
+
+        colours.set_selected_text_fg("red").unwrap();
+        assert_eq!(
+            colours.selected_text_style,
+            Style::default()
+                .fg(Color::Red)
+                .bg(original_selected_bg_colour),
+        );
+
+        colours.set_selected_text_bg("magenta").unwrap();
+        assert_eq!(
+            colours.selected_text_style,
+            Style::default().fg(Color::Red).bg(Color::Magenta),
+        );
+
+        colours.set_selected_text_fg("fake blue").unwrap_err();
+        assert_eq!(
+            colours.selected_text_style,
+            Style::default().fg(Color::Red).bg(Color::Magenta),
+        );
+
+        colours.set_selected_text_bg("fake blue").unwrap_err();
+        assert_eq!(
+            colours.selected_text_style,
+            Style::default().fg(Color::Red).bg(Color::Magenta),
+        );
     }
 
-    /// Set the selected text style's background colour.
-    #[inline]
-    fn set_selected_text_bg(&mut self, colour: &str) -> Result<(), String> {
-        self.selected_text_style = self.selected_text_style.bg(str_to_colour(colour)?);
-        Ok(())
+    #[test]
+    fn built_in_colour_schemes_work() {
+        let config = Config::default();
+        CanvasStyles::new(ColourScheme::Default, &config).unwrap();
+        CanvasStyles::new(ColourScheme::DefaultLight, &config).unwrap();
+        CanvasStyles::new(ColourScheme::Gruvbox, &config).unwrap();
+        CanvasStyles::new(ColourScheme::GruvboxLight, &config).unwrap();
+        CanvasStyles::new(ColourScheme::Nord, &config).unwrap();
+        CanvasStyles::new(ColourScheme::NordLight, &config).unwrap();
     }
+     */
 }

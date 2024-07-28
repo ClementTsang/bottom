@@ -58,9 +58,10 @@ impl ColourPalette {
             text_style: color!(text_colour),
             widget_title_style: color!(text_colour),
             graph_style: color!(text_colour),
-            high_battery_colour: color!(Color::Green),
-            medium_battery_colour: color!(Color::Yellow),
-            low_battery_colour: color!(Color::Red),
+            graph_legend_style: color!(text_colour),
+            high_battery: color!(Color::Green),
+            medium_battery: color!(Color::Yellow),
+            low_battery: color!(Color::Red),
             invalid_query_style: color!(Color::Red),
             disabled_text_style: color!(Color::DarkGray),
         }
@@ -101,6 +102,7 @@ impl ColourPalette {
             text_style: color!(Color::Black),
             widget_title_style: color!(Color::Black),
             graph_style: color!(Color::Black),
+            graph_legend_style: color!(Color::Black),
             disabled_text_style: color!(Color::Gray),
             ..Self::default_palette()
         }

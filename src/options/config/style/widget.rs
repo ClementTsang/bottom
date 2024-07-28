@@ -11,6 +11,6 @@ pub(crate) struct WidgetStyle {
     pub(crate) widget_title: Option<TextStyleConfig>,
 
     pub(crate) text: Option<TextStyleConfig>,
-    pub(crate) disabled_text: Option<TextStyleConfig>,
     pub(crate) selected_text: Option<TextStyleConfig>,
+    pub(crate) disabled_text: Option<TextStyleConfig>,
 }

@@ -19,7 +19,7 @@ fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
         return Err(invalid_hex_format(hex));
     }
 
-    let components = hex.graphemes(true).collect_vec();
+    let components: Vec<&str> = hex.graphemes(true).collect();
     if components.len() == 7 {
         // A 6-long hex.
         let r = hex_component_to_int(hex, components[1], components[2])?;
@@ -131,10 +131,10 @@ macro_rules! opt {
     }
 }
 
-macro_rules! try_set_style {
+macro_rules! set_style {
     ($palette_field:expr, $option_field:expr) => {
         if let Some(style) = &$option_field {
-            if let Some(colour) = style.color {
+            if let Some(colour) = &style.color {
                 $palette_field = crate::options::config::style::utils::str_to_fg(&colour.0)
                     .map_err(|err| {
                         OptionError::config(format!(
@@ -147,7 +147,7 @@ macro_rules! try_set_style {
     };
 }
 
-macro_rules! try_set_colour {
+macro_rules! set_colour {
     ($palette_field:expr, $option_colour:expr) => {
         if let Some(colour) = &$option_colour {
             $palette_field =
@@ -161,7 +161,7 @@ macro_rules! try_set_colour {
     };
 }
 
-macro_rules! try_set_colour_list {
+macro_rules! set_colour_list {
     ($palette_field:expr, $option_field:expr) => {
         if let Some(colour_list) = &$option_field {
             $palette_field = colour_list
@@ -178,7 +178,162 @@ macro_rules! try_set_colour_list {
     };
 }
 
-pub(super) use {opt, try_set_colour, try_set_colour_list, try_set_style};
+pub(super) use {opt, set_colour, set_colour_list, set_style};
 
 #[cfg(test)]
-mod test {}
+mod test {
+    /*
+    use super::*;
+
+    #[test]
+    fn general_str_to_colour() {
+        assert_eq!(str_to_colour("red").unwrap(), Color::Red);
+        assert!(str_to_colour("r ed").is_err());
+
+        assert_eq!(str_to_colour("#ffffff").unwrap(), Color::Rgb(255, 255, 255));
+        assert!(str_to_colour("#fff fff").is_err());
+
+        assert_eq!(
+            str_to_colour("255, 255, 255").unwrap(),
+            Color::Rgb(255, 255, 255)
+        );
+        assert!(str_to_colour("255, 256, 255").is_err());
+    }
+
+    #[test]
+    fn invalid_colour_names() {
+        // Test invalid spacing in single word.
+        assert!(convert_name_to_colour("bl ack").is_err());
+
+        // Test invalid spacing in dual word.
+        assert!(convert_name_to_colour("darkg ray").is_err());
+
+        // Test completely invalid colour.
+        assert!(convert_name_to_colour("darkreset").is_err());
+    }
+
+    #[test]
+    fn valid_colour_names() {
+        // Standard color should work
+        assert_eq!(convert_name_to_colour("red"), Ok(Color::Red));
+
+        // Capitalizing should be fine.
+        assert_eq!(convert_name_to_colour("RED"), Ok(Color::Red));
+
+        // Spacing shouldn't be an issue now.
+        assert_eq!(convert_name_to_colour(" red "), Ok(Color::Red));
+
+        // The following are all equivalent.
+        assert_eq!(convert_name_to_colour("darkgray"), Ok(Color::DarkGray));
+        assert_eq!(convert_name_to_colour("darkgrey"), Ok(Color::DarkGray));
+        assert_eq!(convert_name_to_colour("dark grey"), Ok(Color::DarkGray));
+        assert_eq!(convert_name_to_colour("dark gray"), Ok(Color::DarkGray));
+
+        assert_eq!(convert_name_to_colour("grey"), Ok(Color::Gray));
+        assert_eq!(convert_name_to_colour("gray"), Ok(Color::Gray));
+
+        // One more test with spacing.
+        assert_eq!(
+            convert_name_to_colour(" lightmagenta "),
+            Ok(Color::LightMagenta)
+        );
+        assert_eq!(
+            convert_name_to_colour("light magenta"),
+            Ok(Color::LightMagenta)
+        );
+        assert_eq!(
+            convert_name_to_colour(" light magenta "),
+            Ok(Color::LightMagenta)
+        );
+    }
+
+    #[test]
+    fn valid_hex_colours() {
+        // Check hex with 6 characters.
+        assert_eq!(
+            convert_hex_to_color("#ffffff").unwrap(),
+            Color::Rgb(255, 255, 255)
+        );
+        assert_eq!(
+            convert_hex_to_color("#000000").unwrap(),
+            Color::Rgb(0, 0, 0)
+        );
+        convert_hex_to_color("#111111").unwrap();
+        convert_hex_to_color("#11ff11").unwrap();
+        convert_hex_to_color("#1f1f1f").unwrap();
+        assert_eq!(
+            convert_hex_to_color("#123abc").unwrap(),
+            Color::Rgb(18, 58, 188)
+        );
+
+        // Check hex with 3 characters.
+        assert_eq!(
+            convert_hex_to_color("#fff").unwrap(),
+            Color::Rgb(255, 255, 255)
+        );
+        assert_eq!(convert_hex_to_color("#000").unwrap(), Color::Rgb(0, 0, 0));
+        convert_hex_to_color("#111").unwrap();
+        convert_hex_to_color("#1f1").unwrap();
+        convert_hex_to_color("#f1f").unwrap();
+        convert_hex_to_color("#ff1").unwrap();
+        convert_hex_to_color("#1ab").unwrap();
+        assert_eq!(
+            convert_hex_to_color("#1ab").unwrap(),
+            Color::Rgb(17, 170, 187)
+        );
+    }
+
+    #[test]
+    fn invalid_hex_colours() {
+        assert!(convert_hex_to_color("ffffff").is_err());
+        assert!(convert_hex_to_color("111111").is_err());
+
+        assert!(convert_hex_to_color("fff").is_err());
+        assert!(convert_hex_to_color("111").is_err());
+        assert!(convert_hex_to_color("fffffff").is_err());
+        assert!(convert_hex_to_color("1234567").is_err());
+
+        assert!(convert_hex_to_color("#fffffff").is_err());
+        assert!(convert_hex_to_color("#1234567").is_err());
+        assert!(convert_hex_to_color("#ff").is_err());
+        assert!(convert_hex_to_color("#12").is_err());
+        assert!(convert_hex_to_color("").is_err());
+
+        assert!(convert_hex_to_color("#pppppp").is_err());
+        assert!(convert_hex_to_color("#00000p").is_err());
+        assert!(convert_hex_to_color("#ppp").is_err());
+
+        assert!(convert_hex_to_color("#一").is_err());
+        assert!(convert_hex_to_color("#一二").is_err());
+        assert!(convert_hex_to_color("#一二三").is_err());
+        assert!(convert_hex_to_color("#一二三四").is_err());
+
+        assert!(convert_hex_to_color("#f一f").is_err());
+        assert!(convert_hex_to_color("#ff一11").is_err());
+
+        assert!(convert_hex_to_color("#🇨🇦").is_err());
+        assert!(convert_hex_to_color("#🇨🇦🇨🇦").is_err());
+        assert!(convert_hex_to_color("#🇨🇦🇨🇦🇨🇦").is_err());
+        assert!(convert_hex_to_color("#🇨🇦🇨🇦🇨🇦🇨🇦").is_err());
+
+        assert!(convert_hex_to_color("#हिन्दी").is_err());
+    }
+
+    #[test]
+    fn test_rgb_colours() {
+        assert_eq!(
+            convert_rgb_to_color("0, 0, 0").unwrap(),
+            Color::Rgb(0, 0, 0)
+        );
+        assert_eq!(
+            convert_rgb_to_color("255, 255, 255").unwrap(),
+            Color::Rgb(255, 255, 255)
+        );
+        assert!(convert_rgb_to_color("255, 256, 255").is_err());
+        assert!(convert_rgb_to_color("256, 0, 256").is_err());
+        assert!(convert_rgb_to_color("1, -1, 1").is_err());
+        assert!(convert_rgb_to_color("1, -100000, 1").is_err());
+        assert!(convert_rgb_to_color("1, -100000, 100000").is_err());
+    }
+    */
+}
