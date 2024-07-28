@@ -182,7 +182,7 @@ pub(super) use {opt, set_colour, set_colour_list, set_style};
 
 #[cfg(test)]
 mod test {
-    /*
+
     use super::*;
 
     #[test]
@@ -335,5 +335,4 @@ mod test {
         assert!(convert_rgb_to_color("1, -100000, 1").is_err());
         assert!(convert_rgb_to_color("1, -100000, 100000").is_err());
     }
-    */
 }

@@ -81,18 +81,6 @@ pub(crate) struct StyleConfig {
     pub(crate) widgets: Option<WidgetStyle>,
 }
 
-impl StyleConfig {
-    /// Returns `true` if there is a [`ConfigColours`] that is empty or there
-    /// isn't one at all.
-    pub(crate) fn is_empty(&self) -> bool {
-        if let Ok(serialized_string) = toml_edit::ser::to_string(self) {
-            return serialized_string.is_empty();
-        }
-
-        true
-    }
-}
-
 /// The actual internal representation of the configured colours,
 /// as a "palette".
 pub struct ColourPalette {
@@ -274,17 +262,17 @@ impl ColourPalette {
 
 #[cfg(test)]
 mod test {
-    /*
+
     use tui::style::{Color, Style};
 
-    use super::{ColourPalette, ColourScheme};
-    use crate::options::Config;
+    use super::ColourPalette;
+    use crate::options::{config::style::utils::str_to_colour, Config};
 
     #[test]
     fn default_selected_colour_works() {
         let mut colours = ColourPalette::default();
-        let original_selected_text_colour = ColourPalette::DEFAULT_SELECTED_TEXT_STYLE.fg.unwrap();
-        let original_selected_bg_colour = ColourPalette::DEFAULT_SELECTED_TEXT_STYLE.bg.unwrap();
+        let original_selected_text_colour = ColourPalette::default_palette().text_style.fg.unwrap();
+        let original_selected_bg_colour = ColourPalette::default_palette().text_style.bg.unwrap();
 
         assert_eq!(
             colours.selected_text_style,
@@ -293,42 +281,24 @@ mod test {
                 .bg(original_selected_bg_colour),
         );
 
-        colours.set_selected_text_fg("red").unwrap();
-        assert_eq!(
-            colours.selected_text_style,
-            Style::default()
-                .fg(Color::Red)
-                .bg(original_selected_bg_colour),
-        );
+        colours.selected_text_style = colours
+            .selected_text_style
+            .fg(str_to_colour("magenta").unwrap())
+            .bg(str_to_colour("red").unwrap());
 
-        colours.set_selected_text_bg("magenta").unwrap();
         assert_eq!(
             colours.selected_text_style,
-            Style::default().fg(Color::Red).bg(Color::Magenta),
-        );
-
-        colours.set_selected_text_fg("fake blue").unwrap_err();
-        assert_eq!(
-            colours.selected_text_style,
-            Style::default().fg(Color::Red).bg(Color::Magenta),
-        );
-
-        colours.set_selected_text_bg("fake blue").unwrap_err();
-        assert_eq!(
-            colours.selected_text_style,
-            Style::default().fg(Color::Red).bg(Color::Magenta),
+            Style::default().fg(Color::Magenta).bg(Color::Red),
         );
     }
 
     #[test]
     fn built_in_colour_schemes_work() {
-        let config = Config::default();
-        ColourPalette::new(ColourScheme::Default, &config).unwrap();
-        ColourPalette::new(ColourScheme::DefaultLight, &config).unwrap();
-        ColourPalette::new(ColourScheme::Gruvbox, &config).unwrap();
-        ColourPalette::new(ColourScheme::GruvboxLight, &config).unwrap();
-        ColourPalette::new(ColourScheme::Nord, &config).unwrap();
-        ColourPalette::new(ColourScheme::NordLight, &config).unwrap();
+        ColourPalette::from_theme("default").unwrap();
+        ColourPalette::from_theme("default-light").unwrap();
+        ColourPalette::from_theme("gruvbox").unwrap();
+        ColourPalette::from_theme("gruvbox-light").unwrap();
+        ColourPalette::from_theme("nord").unwrap();
+        ColourPalette::from_theme("nord-light").unwrap();
     }
-     */
 }
