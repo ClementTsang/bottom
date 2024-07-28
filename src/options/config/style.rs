@@ -156,106 +156,53 @@ impl ColourPalette {
 
     fn set_colours_from_palette(&mut self, config: &StyleConfig) -> OptionResult<()> {
         // CPU
-        set_colour!(
-            self.avg_cpu_colour,
-            opt!(config.cpu.as_ref()?.avg_entry_color.as_ref())
-        );
-        set_colour!(
-            self.all_cpu_colour,
-            opt!(config.cpu.as_ref()?.all_entry_color.as_ref())
-        );
-        set_colour_list!(
-            self.cpu_colour_styles,
-            opt!(config.cpu.as_ref()?.cpu_core_colors.as_ref())
-        );
+        set_colour!(self.avg_cpu_colour, config.cpu, avg_entry_color);
+        set_colour!(self.all_cpu_colour, config.cpu, all_entry_color);
+        set_colour_list!(self.cpu_colour_styles, config.cpu, cpu_core_colors);
 
         // Memory
-        set_colour!(self.ram_style, opt!(config.memory.as_ref()?.ram.as_ref()));
-        set_colour!(self.swap_style, opt!(config.memory.as_ref()?.swap.as_ref()));
+        set_colour!(self.ram_style, config.memory, ram);
+        set_colour!(self.swap_style, config.memory, swap);
 
         #[cfg(not(target_os = "windows"))]
-        set_colour!(
-            self.cache_style,
-            opt!(config.memory.as_ref()?.cache.as_ref())
-        );
+        set_colour!(self.cache_style, config.memory, cache);
 
         #[cfg(feature = "zfs")]
-        set_colour!(self.arc_style, opt!(config.memory.as_ref()?.arc.as_ref()));
+        set_colour!(self.arc_style, config.memory, arc);
 
         #[cfg(feature = "gpu")]
-        set_colour_list!(
-            self.gpu_colours,
-            opt!(config.memory.as_ref()?.gpus.as_ref())
-        );
+        set_colour_list!(self.gpu_colours, config.memory, gpus);
 
         // Network
-        set_colour!(self.rx_style, opt!(config.network.as_ref()?.rx.as_ref()));
-        set_colour!(self.tx_style, opt!(config.network.as_ref()?.tx.as_ref()));
-        set_colour!(
-            self.total_rx_style,
-            opt!(config.network.as_ref()?.rx_total.as_ref())
-        );
-        set_colour!(
-            self.total_tx_style,
-            opt!(config.network.as_ref()?.tx_total.as_ref())
-        );
+        set_colour!(self.rx_style, config.network, rx);
+        set_colour!(self.tx_style, config.network, tx);
+        set_colour!(self.total_rx_style, config.network, rx_total);
+        set_colour!(self.total_tx_style, config.network, tx_total);
 
         // Battery
-        set_colour!(
-            self.high_battery,
-            opt!(config.battery.as_ref()?.high_battery.as_ref())
-        );
-        set_colour!(
-            self.medium_battery,
-            opt!(config.battery.as_ref()?.medium_battery.as_ref())
-        );
-        set_colour!(
-            self.low_battery,
-            opt!(config.battery.as_ref()?.low_battery.as_ref())
-        );
+        set_colour!(self.high_battery, config.battery, high_battery);
+        set_colour!(self.medium_battery, config.battery, medium_battery);
+        set_colour!(self.low_battery, config.battery, low_battery);
 
         // Tables
-        set_style!(
-            self.table_header_style,
-            opt!(config.tables.as_ref()?.table_header.as_ref())
-        );
+        set_style!(self.table_header_style, config.tables, table_header);
 
         // Widget graphs
-        set_colour!(
-            self.graph_style,
-            opt!(config.graphs.as_ref()?.graph_color.as_ref())
-        );
-        set_style!(
-            self.graph_legend_style,
-            opt!(config.graphs.as_ref()?.legend_text.as_ref())
-        );
+        set_colour!(self.graph_style, config.graphs, graph_color);
+        set_style!(self.graph_legend_style, config.graphs, legend_text);
 
         // General widget text.
-        set_style!(
-            self.widget_title_style,
-            opt!(config.widgets.as_ref()?.widget_title.as_ref())
-        );
-        set_style!(
-            self.text_style,
-            opt!(config.widgets.as_ref()?.text.as_ref())
-        );
-        set_style!(
-            self.selected_text_style,
-            opt!(config.widgets.as_ref()?.selected_text.as_ref())
-        );
-        set_style!(
-            self.disabled_text_style,
-            opt!(config.widgets.as_ref()?.disabled_text.as_ref())
-        );
+        set_style!(self.widget_title_style, config.widgets, widget_title);
+        set_style!(self.text_style, config.widgets, text);
+        set_style!(self.selected_text_style, config.widgets, selected_text);
+        set_style!(self.disabled_text_style, config.widgets, disabled_text);
 
         // Widget borders
-        set_colour!(
-            self.border_style,
-            opt!(config.widgets.as_ref()?.border.as_ref())
-        );
+        set_colour!(self.border_style, config.widgets, border);
         set_colour!(
             self.highlighted_border_style,
-            opt!(config.widgets.as_ref()?.highlighted_border_color.as_ref())
+            config.widgets,
+            highlighted_border_color
         );
 
         Ok(())

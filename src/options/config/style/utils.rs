@@ -107,7 +107,7 @@ fn convert_name_to_colour(color_name: &str) -> Result<Color, String> {
         _ => Err(format!(
             "'{color_name}' is an invalid named color.
             
-The following are supported strings: 
+The following are supported named colors: 
 +--------+-------------+---------------------+
 |  Reset | Magenta     | Light Yellow        |
 +--------+-------------+---------------------+
@@ -120,7 +120,9 @@ The following are supported strings:
 | Yellow | Light Red   | White               |
 +--------+-------------+---------------------+
 |  Blue  | Light Green |                     |
-+--------+-------------+---------------------+\n"
++--------+-------------+---------------------+
+
+Alternatively, hex colors or RGB color codes are valid.\n"
         )),
     }
 }
@@ -132,14 +134,14 @@ macro_rules! opt {
 }
 
 macro_rules! set_style {
-    ($palette_field:expr, $option_field:expr) => {
-        if let Some(style) = &$option_field {
+    ($palette_field:expr, $config_location:expr, $field:tt) => {
+        if let Some(style) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
             if let Some(colour) = &style.color {
                 $palette_field = crate::options::config::style::utils::str_to_fg(&colour.0)
                     .map_err(|err| {
                         OptionError::config(format!(
                             "Please update 'colors.{}' in your config file. {err}",
-                            stringify!($colour_field)
+                            stringify!($field)
                         ))
                     })?;
             }
@@ -148,13 +150,13 @@ macro_rules! set_style {
 }
 
 macro_rules! set_colour {
-    ($palette_field:expr, $option_colour:expr) => {
-        if let Some(colour) = &$option_colour {
+    ($palette_field:expr, $config_location:expr, $field:tt) => {
+        if let Some(colour) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
             $palette_field =
                 crate::options::config::style::utils::str_to_fg(&colour.0).map_err(|err| {
                     OptionError::config(format!(
                         "Please update 'colors.{}' in your config file. {err}",
-                        stringify!($colour_field)
+                        stringify!($field)
                     ))
                 })?;
         }
@@ -162,8 +164,8 @@ macro_rules! set_colour {
 }
 
 macro_rules! set_colour_list {
-    ($palette_field:expr, $option_field:expr) => {
-        if let Some(colour_list) = &$option_field {
+    ($palette_field:expr, $config_location:expr, $field:tt) => {
+        if let Some(colour_list) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
             $palette_field = colour_list
                 .iter()
                 .map(|s| crate::options::config::style::utils::str_to_fg(&s.0))
@@ -171,7 +173,7 @@ macro_rules! set_colour_list {
                 .map_err(|err| {
                     OptionError::config(format!(
                         "Please update 'colors.{}' in your config file. {err}",
-                        stringify!($colour_field)
+                        stringify!($field)
                     ))
                 })?;
         }
