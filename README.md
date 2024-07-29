@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>bottom</h1>
+  <h1>bottom (btm)</h1>
 
   <p>
   A customizable cross-platform graphical process/system monitor for the terminal.<br />Supports Linux, macOS, and Windows. Inspired by <a href=https://github.com/aksakalli/gtop>gtop</a>, <a href=https://github.com/xxxserxxx/gotop>gotop</a>, and <a href=https://github.com/htop-dev/htop/>htop</a>.
