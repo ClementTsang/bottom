@@ -1,0 +1,53 @@
+# These are all the components that support custom theming.  Note that colour support
+# will depend on terminal support.
+[styles]
+
+# Built-in themes. Valid values are:
+# - "default"
+# - "default-light"
+# - "gruvbox"
+# - "gruvbox-light"
+# - "nord"
+# - "nord-light".
+
+# This will have the lowest precedence if a custom colour palette is set,
+# or overriden if the command-line flag for a built-in theme is set.
+theme = "default"
+
+[styles.cpu]
+all_entry_color = "green"
+avg_entry_color = "red"
+cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+
+[styles.memory]
+ram = "light magenta"
+cache = "light red"
+swap = "light yellow"
+arc = "light cyan"
+gpus = ["light blue", "light red", "cyan", "green", "blue", "red"]
+
+[styles.network]
+rx = "light magenta"
+tx = "light yellow"
+rx_total = "light cyan"
+tx_total = "light green"
+
+[styles.battery]
+high_battery = "green"
+medium_battery = "yellow"
+low_battery = "red"
+
+[styles.tables]
+headers = {color = "light blue"}
+
+[styles.graphs]
+graph_color = "gray"
+legend_text = {color = "gray"}
+
+[styles.widgets]
+border = "gray"
+selected_border = "light blue"
+widget_title = {color = "gray"}
+text = {color = "gray"}
+selected_text = {color = "black", bg_color = "light blue"}
+disabled_text = {color = "dark gray"}

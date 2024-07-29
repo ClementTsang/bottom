@@ -4,14 +4,12 @@ use concat_string::concat_string;
 
 use crate::{
     app::AppConfigFields,
-    canvas::{
-        components::data_table::{
-            ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell,
-            SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
-        },
-        styling::CanvasStyling,
+    canvas::components::data_table::{
+        ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
+        SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
     data_collection::temperature::TemperatureType,
+    options::config::style::ColourPalette,
     utils::general::sort_partial_fn,
 };
 
@@ -102,7 +100,7 @@ pub struct TempWidgetState {
 }
 
 impl TempWidgetState {
-    pub fn new(config: &AppConfigFields, colours: &CanvasStyling) -> Self {
+    pub(crate) fn new(config: &AppConfigFields, palette: &ColourPalette) -> Self {
         let columns = [
             SortColumn::soft(TempWidgetColumn::Sensor, Some(0.8)),
             SortColumn::soft(TempWidgetColumn::Temp, None).default_descending(),
@@ -121,7 +119,7 @@ impl TempWidgetState {
             order: SortOrder::Ascending,
         };
 
-        let styling = DataTableStyling::from_colours(colours);
+        let styling = DataTableStyling::from_palette(palette);
 
         Self {
             table: SortDataTable::new_sortable(columns, props, styling),

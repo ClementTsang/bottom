@@ -67,3 +67,18 @@ fn test_all_proc() {
 fn test_cpu_doughnut() {
     run_and_kill(&["-C", "./tests/valid_configs/cpu_doughnut.toml"]);
 }
+
+#[test]
+fn test_theme() {
+    run_and_kill(&["-C", "./tests/valid_configs/theme.toml"]);
+}
+
+#[test]
+fn test_styling_sanity_check() {
+    run_and_kill(&["-C", "./tests/valid_configs/styling.toml"]);
+}
+
+#[test]
+fn test_styling_sanity_check_2() {
+    run_and_kill(&["-C", "./tests/valid_configs/styling_2.toml"]);
+}

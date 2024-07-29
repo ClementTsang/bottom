@@ -1,2 +1,2 @@
-[colors]
-table_header_color="#zzzzzz"
+[styles.tables.headers]
+color="#zzzzzz"

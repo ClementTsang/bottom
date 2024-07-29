@@ -37,7 +37,6 @@ use std::{
 
 use anyhow::Context;
 use app::{layout_manager::UsedWidgets, App, AppConfigFields, DataFilters};
-use canvas::styling::CanvasStyling;
 use crossterm::{
     event::{
         poll, read, DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste,
@@ -49,7 +48,7 @@ use crossterm::{
 };
 use data_conversion::*;
 use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, CollectionThreadEvent};
-use options::{args, get_color_scheme, get_config_path, get_or_create_config, init_app};
+use options::{args, get_config_path, get_or_create_config, init_app};
 use tui::{backend::CrosstermBackend, Terminal};
 #[allow(unused_imports)]
 use utils::logging::*;
@@ -278,7 +277,7 @@ fn create_collection_thread(
 
 #[cfg(feature = "generate_schema")]
 fn generate_schema() -> anyhow::Result<()> {
-    let mut schema = schemars::schema_for!(crate::options::config::ConfigV1);
+    let mut schema = schemars::schema_for!(crate::options::config::Config);
     {
         use itertools::Itertools;
         use strum::VariantArray;
@@ -336,15 +335,8 @@ fn main() -> anyhow::Result<()> {
             .context("Unable to parse or create the config file.")?
     };
 
-    // FIXME: Should move this into build app or config
-    let styling = {
-        let colour_scheme = get_color_scheme(&args, &config)?;
-        CanvasStyling::new(colour_scheme, &config)?
-    };
-
-    // Create an "app" struct, which will control most of the program and store
-    // settings/state
-    let (mut app, widget_layout) = init_app(args, config, &styling)?;
+    // Create the "app" and initialize a bunch of stuff.
+    let (mut app, widget_layout, styling) = init_app(args, config)?;
 
     // Create painter and set colours.
     let mut painter = canvas::Painter::init(widget_layout, styling)?;

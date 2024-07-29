@@ -1,20 +1,9 @@
 use concat_string::concat_string;
-use itertools::Itertools;
 use tui::style::{Color, Style};
 use unicode_segmentation::UnicodeSegmentation;
 
-pub const FIRST_COLOUR: Color = Color::LightMagenta;
-pub const SECOND_COLOUR: Color = Color::LightYellow;
-pub const THIRD_COLOUR: Color = Color::LightCyan;
-pub const FOURTH_COLOUR: Color = Color::LightGreen;
-#[cfg(not(target_os = "windows"))]
-pub const FIFTH_COLOUR: Color = Color::LightRed;
-pub const HIGHLIGHT_COLOUR: Color = Color::LightBlue;
-pub const AVG_COLOUR: Color = Color::Red;
-pub const ALL_COLOUR: Color = Color::Green;
-
 /// Convert a hex string to a colour.
-fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
+pub(super) fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
     fn hex_component_to_int(hex: &str, first: &str, second: &str) -> Result<u8, String> {
         u8::from_str_radix(&concat_string!(first, second), 16)
             .map_err(|_| format!("'{hex}' is an invalid hex color, could not decode."))
@@ -30,7 +19,7 @@ fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
         return Err(invalid_hex_format(hex));
     }
 
-    let components = hex.graphemes(true).collect_vec();
+    let components: Vec<&str> = hex.graphemes(true).collect();
     if components.len() == 7 {
         // A 6-long hex.
         let r = hex_component_to_int(hex, components[1], components[2])?;
@@ -50,10 +39,6 @@ fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
     }
 }
 
-pub fn str_to_fg(input_val: &str) -> Result<Style, String> {
-    Ok(Style::default().fg(str_to_colour(input_val)?))
-}
-
 pub fn str_to_colour(input_val: &str) -> Result<Color, String> {
     if input_val.len() > 1 {
         if input_val.starts_with('#') {
@@ -66,6 +51,10 @@ pub fn str_to_colour(input_val: &str) -> Result<Color, String> {
     } else {
         Err(format!("Value '{input_val}' is not valid.",))
     }
+}
+
+pub(super) fn str_to_fg(input_val: &str) -> Result<Style, String> {
+    Ok(Style::default().fg(str_to_colour(input_val)?))
 }
 
 fn convert_rgb_to_color(rgb_str: &str) -> Result<Color, String> {
@@ -118,7 +107,7 @@ fn convert_name_to_colour(color_name: &str) -> Result<Color, String> {
         _ => Err(format!(
             "'{color_name}' is an invalid named color.
             
-The following are supported strings: 
+The following are supported named colors: 
 +--------+-------------+---------------------+
 |  Reset | Magenta     | Light Yellow        |
 +--------+-------------+---------------------+
@@ -131,13 +120,85 @@ The following are supported strings:
 | Yellow | Light Red   | White               |
 +--------+-------------+---------------------+
 |  Blue  | Light Green |                     |
-+--------+-------------+---------------------+\n"
++--------+-------------+---------------------+
+
+Alternatively, hex colors or RGB color codes are valid.\n"
         )),
     }
 }
 
+macro_rules! opt {
+    ($($e: tt)+) => {
+        (|| { $($e)+ })()
+    }
+}
+
+macro_rules! set_style {
+    ($palette_field:expr, $config_location:expr, $field:tt) => {
+        if let Some(style) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
+            if let Some(colour) = &style.color {
+                $palette_field = crate::options::config::style::utils::str_to_fg(&colour.0)
+                    .map_err(|err| match stringify!($config_location).split_once(".") {
+                        Some((_, loc)) => OptionError::config(format!(
+                            "Please update 'styles.{loc}.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
+                        None => OptionError::config(format!(
+                            "Please update 'styles.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
+                    })?;
+            }
+        }
+    };
+}
+
+macro_rules! set_colour {
+    ($palette_field:expr, $config_location:expr, $field:tt) => {
+        if let Some(colour) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
+            $palette_field =
+                crate::options::config::style::utils::str_to_fg(&colour.0).map_err(|err| {
+                    match stringify!($config_location).split_once(".") {
+                        Some((_, loc)) => OptionError::config(format!(
+                            "Please update 'styles.{loc}.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
+                        None => OptionError::config(format!(
+                            "Please update 'styles.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
+                    }
+                })?;
+        }
+    };
+}
+
+macro_rules! set_colour_list {
+    ($palette_field:expr, $config_location:expr, $field:tt) => {
+        if let Some(colour_list) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
+            $palette_field = colour_list
+                .iter()
+                .map(|s| crate::options::config::style::utils::str_to_fg(&s.0))
+                .collect::<Result<Vec<Style>, String>>()
+                .map_err(|err| match stringify!($config_location).split_once(".") {
+                    Some((_, loc)) => OptionError::config(format!(
+                        "Please update 'styles.{loc}.{}' in your config file. {err}",
+                        stringify!($field)
+                    )),
+                    None => OptionError::config(format!(
+                        "Please update 'styles.{}' in your config file. {err}",
+                        stringify!($field)
+                    )),
+                })?;
+        }
+    };
+}
+
+pub(super) use {opt, set_colour, set_colour_list, set_style};
+
 #[cfg(test)]
 mod test {
+
     use super::*;
 
     #[test]

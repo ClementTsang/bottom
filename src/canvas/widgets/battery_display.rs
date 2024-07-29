@@ -96,7 +96,7 @@ impl Painter {
                     )
                     .divider(tui::symbols::line::VERTICAL)
                     .style(self.colours.text_style)
-                    .highlight_style(self.colours.currently_selected_text_style)
+                    .highlight_style(self.colours.selected_text_style)
                     .select(battery_widget_state.currently_selected_battery_index),
                     tab_draw_loc,
                 );
@@ -148,11 +148,11 @@ impl Painter {
                 ]));
                 battery_charge_rows.push(Row::new([Cell::from(bars).style(
                     if charge_percentage < 10.0 {
-                        self.colours.low_battery_colour
+                        self.colours.low_battery
                     } else if charge_percentage < 50.0 {
-                        self.colours.medium_battery_colour
+                        self.colours.medium_battery
                     } else {
-                        self.colours.high_battery_colour
+                        self.colours.high_battery
                     },
                 )]));
 

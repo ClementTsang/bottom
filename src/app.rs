@@ -1529,16 +1529,14 @@ impl App {
     }
 
     fn move_widget_selection_logic(&mut self, direction: &WidgetDirection) {
-        /*
-            The actual logic for widget movement.
+        // The actual logic for widget movement.
 
-            We follow these following steps:
-            1. Send a movement signal in `direction`.
-            2. Check if this new widget we've landed on is hidden.  If not, halt.
-            3. If it hidden, loop and either send:
-               - A signal equal to the current direction, if it is opposite of the reflection.
-               - Reflection direction.
-        */
+        // We follow these following steps:
+        // 1. Send a movement signal in `direction`.
+        // 2. Check if this new widget we've landed on is hidden.  If not, halt.
+        // 3. If it hidden, loop and either send:
+        //    - A signal equal to the current direction, if it is opposite of the reflection.
+        //    - Reflection direction.
 
         if !self.ignore_normal_keybinds() && !self.is_expanded {
             if let Some(new_widget_id) = &(match direction {

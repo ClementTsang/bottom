@@ -2,13 +2,11 @@ use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use crate::{
     app::AppConfigFields,
-    canvas::{
-        components::data_table::{
-            ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell,
-            SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
-        },
-        styling::CanvasStyling,
+    canvas::components::data_table::{
+        ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
+        SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
+    options::config::style::ColourPalette,
     utils::{data_prefixes::get_decimal_bytes, general::sort_partial_fn},
 };
 
@@ -206,7 +204,7 @@ impl SortsRow for DiskWidgetColumn {
 }
 
 impl DiskTableWidget {
-    pub fn new(config: &AppConfigFields, colours: &CanvasStyling) -> Self {
+    pub fn new(config: &AppConfigFields, palette: &ColourPalette) -> Self {
         let columns = [
             SortColumn::soft(DiskWidgetColumn::Disk, Some(0.2)),
             SortColumn::soft(DiskWidgetColumn::Mount, Some(0.2)),
@@ -231,7 +229,7 @@ impl DiskTableWidget {
             order: SortOrder::Ascending,
         };
 
-        let styling = DataTableStyling::from_colours(colours);
+        let styling = DataTableStyling::from_palette(palette);
 
         Self {
             table: SortDataTable::new_sortable(columns, props, styling),

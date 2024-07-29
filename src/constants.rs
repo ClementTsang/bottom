@@ -1,7 +1,5 @@
 use tui::widgets::Borders;
 
-use crate::options::ColoursConfig;
-
 // Default widget ID
 pub const DEFAULT_WIDGET_ID: u64 = 56709;
 
@@ -23,260 +21,6 @@ pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 
 // Side borders
 pub const SIDE_BORDERS: Borders = Borders::LEFT.union(Borders::RIGHT);
-
-// Colour profiles
-// TODO: Generate these with a macro or something...
-pub fn default_light_mode_colour_palette() -> ColoursConfig {
-    ColoursConfig {
-        text_color: Some("black".into()),
-        border_color: Some("black".into()),
-        table_header_color: Some("black".into()),
-        widget_title_color: Some("black".into()),
-        selected_text_color: Some("white".into()),
-        graph_color: Some("black".into()),
-        disabled_text_color: Some("gray".into()),
-        ram_color: Some("blue".into()),
-        #[cfg(not(target_os = "windows"))]
-        cache_color: Some("LightRed".into()),
-        swap_color: Some("red".into()),
-        arc_color: Some("LightBlue".into()),
-        gpu_core_colors: Some(vec![
-            "LightGreen".into(),
-            "LightCyan".into(),
-            "LightRed".into(),
-            "Cyan".into(),
-            "Green".into(),
-            "Blue".into(),
-            "Red".into(),
-        ]),
-        rx_color: Some("blue".into()),
-        tx_color: Some("red".into()),
-        rx_total_color: Some("LightBlue".into()),
-        tx_total_color: Some("LightRed".into()),
-        cpu_core_colors: Some(vec![
-            "LightMagenta".into(),
-            "LightBlue".into(),
-            "LightRed".into(),
-            "Cyan".into(),
-            "Green".into(),
-            "Blue".into(),
-            "Red".into(),
-        ]),
-        ..ColoursConfig::default()
-    }
-}
-
-pub fn gruvbox_colour_palette() -> ColoursConfig {
-    ColoursConfig {
-        table_header_color: Some("#83a598".into()),
-        all_cpu_color: Some("#8ec07c".into()),
-        avg_cpu_color: Some("#fb4934".into()),
-        cpu_core_colors: Some(vec![
-            "#cc241d".into(),
-            "#98971a".into(),
-            "#d79921".into(),
-            "#458588".into(),
-            "#b16286".into(),
-            "#689d6a".into(),
-            "#fe8019".into(),
-            "#b8bb26".into(),
-            "#fabd2f".into(),
-            "#83a598".into(),
-            "#d3869b".into(),
-            "#d65d0e".into(),
-            "#9d0006".into(),
-            "#79740e".into(),
-            "#b57614".into(),
-            "#076678".into(),
-            "#8f3f71".into(),
-            "#427b58".into(),
-            "#d65d03".into(),
-            "#af3a03".into(),
-        ]),
-        ram_color: Some("#8ec07c".into()),
-        #[cfg(not(target_os = "windows"))]
-        cache_color: Some("#b16286".into()),
-        swap_color: Some("#fabd2f".into()),
-        arc_color: Some("#689d6a".into()),
-        gpu_core_colors: Some(vec![
-            "#d79921".into(),
-            "#458588".into(),
-            "#b16286".into(),
-            "#fe8019".into(),
-            "#b8bb26".into(),
-            "#cc241d".into(),
-            "#98971a".into(),
-        ]),
-        rx_color: Some("#8ec07c".into()),
-        tx_color: Some("#fabd2f".into()),
-        rx_total_color: Some("#689d6a".into()),
-        tx_total_color: Some("#d79921".into()),
-        border_color: Some("#ebdbb2".into()),
-        highlighted_border_color: Some("#fe8019".into()),
-        disabled_text_color: Some("#665c54".into()),
-        text_color: Some("#ebdbb2".into()),
-        selected_text_color: Some("#1d2021".into()),
-        selected_bg_color: Some("#ebdbb2".into()),
-        widget_title_color: Some("#ebdbb2".into()),
-        graph_color: Some("#ebdbb2".into()),
-        high_battery_color: Some("#98971a".into()),
-        medium_battery_color: Some("#fabd2f".into()),
-        low_battery_color: Some("#fb4934".into()),
-    }
-}
-
-pub fn gruvbox_light_colour_palette() -> ColoursConfig {
-    ColoursConfig {
-        table_header_color: Some("#076678".into()),
-        all_cpu_color: Some("#8ec07c".into()),
-        avg_cpu_color: Some("#fb4934".into()),
-        cpu_core_colors: Some(vec![
-            "#cc241d".into(),
-            "#98971a".into(),
-            "#d79921".into(),
-            "#458588".into(),
-            "#b16286".into(),
-            "#689d6a".into(),
-            "#fe8019".into(),
-            "#b8bb26".into(),
-            "#fabd2f".into(),
-            "#83a598".into(),
-            "#d3869b".into(),
-            "#d65d0e".into(),
-            "#9d0006".into(),
-            "#79740e".into(),
-            "#b57614".into(),
-            "#076678".into(),
-            "#8f3f71".into(),
-            "#427b58".into(),
-            "#d65d03".into(),
-            "#af3a03".into(),
-        ]),
-        ram_color: Some("#427b58".into()),
-        #[cfg(not(target_os = "windows"))]
-        cache_color: Some("#d79921".into()),
-        swap_color: Some("#cc241d".into()),
-        arc_color: Some("#689d6a".into()),
-        gpu_core_colors: Some(vec![
-            "#9d0006".into(),
-            "#98971a".into(),
-            "#d79921".into(),
-            "#458588".into(),
-            "#b16286".into(),
-            "#fe8019".into(),
-            "#b8bb26".into(),
-        ]),
-        rx_color: Some("#427b58".into()),
-        tx_color: Some("#cc241d".into()),
-        rx_total_color: Some("#689d6a".into()),
-        tx_total_color: Some("#9d0006".into()),
-        border_color: Some("#3c3836".into()),
-        highlighted_border_color: Some("#af3a03".into()),
-        disabled_text_color: Some("#d5c4a1".into()),
-        text_color: Some("#3c3836".into()),
-        selected_text_color: Some("#ebdbb2".into()),
-        selected_bg_color: Some("#3c3836".into()),
-        widget_title_color: Some("#3c3836".into()),
-        graph_color: Some("#3c3836".into()),
-        high_battery_color: Some("#98971a".into()),
-        medium_battery_color: Some("#d79921".into()),
-        low_battery_color: Some("#cc241d".into()),
-    }
-}
-
-pub fn nord_colour_palette() -> ColoursConfig {
-    ColoursConfig {
-        table_header_color: Some("#81a1c1".into()),
-        all_cpu_color: Some("#88c0d0".into()),
-        avg_cpu_color: Some("#8fbcbb".into()),
-        cpu_core_colors: Some(vec![
-            "#5e81ac".into(),
-            "#81a1c1".into(),
-            "#d8dee9".into(),
-            "#b48ead".into(),
-            "#a3be8c".into(),
-            "#ebcb8b".into(),
-            "#d08770".into(),
-            "#bf616a".into(),
-        ]),
-        ram_color: Some("#88c0d0".into()),
-        #[cfg(not(target_os = "windows"))]
-        cache_color: Some("#d8dee9".into()),
-        swap_color: Some("#d08770".into()),
-        arc_color: Some("#5e81ac".into()),
-        gpu_core_colors: Some(vec![
-            "#8fbcbb".into(),
-            "#81a1c1".into(),
-            "#d8dee9".into(),
-            "#b48ead".into(),
-            "#a3be8c".into(),
-            "#ebcb8b".into(),
-            "#bf616a".into(),
-        ]),
-        rx_color: Some("#88c0d0".into()),
-        tx_color: Some("#d08770".into()),
-        rx_total_color: Some("#5e81ac".into()),
-        tx_total_color: Some("#8fbcbb".into()),
-        border_color: Some("#88c0d0".into()),
-        highlighted_border_color: Some("#5e81ac".into()),
-        disabled_text_color: Some("#4c566a".into()),
-        text_color: Some("#e5e9f0".into()),
-        selected_text_color: Some("#2e3440".into()),
-        selected_bg_color: Some("#88c0d0".into()),
-        widget_title_color: Some("#e5e9f0".into()),
-        graph_color: Some("#e5e9f0".into()),
-        high_battery_color: Some("#a3be8c".into()),
-        medium_battery_color: Some("#ebcb8b".into()),
-        low_battery_color: Some("#bf616a".into()),
-    }
-}
-
-pub fn nord_light_colour_palette() -> ColoursConfig {
-    ColoursConfig {
-        table_header_color: Some("#5e81ac".into()),
-        all_cpu_color: Some("#81a1c1".into()),
-        avg_cpu_color: Some("#8fbcbb".into()),
-        cpu_core_colors: Some(vec![
-            "#5e81ac".into(),
-            "#88c0d0".into(),
-            "#4c566a".into(),
-            "#b48ead".into(),
-            "#a3be8c".into(),
-            "#ebcb8b".into(),
-            "#d08770".into(),
-            "#bf616a".into(),
-        ]),
-        ram_color: Some("#81a1c1".into()),
-        #[cfg(not(target_os = "windows"))]
-        cache_color: Some("#4c566a".into()),
-        swap_color: Some("#d08770".into()),
-        arc_color: Some("#5e81ac".into()),
-        gpu_core_colors: Some(vec![
-            "#8fbcbb".into(),
-            "#88c0d0".into(),
-            "#4c566a".into(),
-            "#b48ead".into(),
-            "#a3be8c".into(),
-            "#ebcb8b".into(),
-            "#bf616a".into(),
-        ]),
-        rx_color: Some("#81a1c1".into()),
-        tx_color: Some("#d08770".into()),
-        rx_total_color: Some("#5e81ac".into()),
-        tx_total_color: Some("#8fbcbb".into()),
-        border_color: Some("#2e3440".into()),
-        highlighted_border_color: Some("#5e81ac".into()),
-        disabled_text_color: Some("#d8dee9".into()),
-        text_color: Some("#2e3440".into()),
-        selected_text_color: Some("#f5f5f5".into()),
-        selected_bg_color: Some("#5e81ac".into()),
-        widget_title_color: Some("#2e3440".into()),
-        graph_color: Some("#2e3440".into()),
-        high_battery_color: Some("#a3be8c".into()),
-        medium_battery_color: Some("#ebcb8b".into()),
-        low_battery_color: Some("#bf616a".into()),
-    }
-}
 
 // Help text
 pub const HELP_CONTENTS_TEXT: [&str; 10] = [
@@ -573,8 +317,6 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #battery = false
 # Disable mouse clicks
 #disable_click = false
-# Built-in themes. Valid values are "default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"
-#color = "default"
 # Show memory values in the processes widget as values by default
 #process_memory_as_value = false
 # Show tree mode by default in the processes widget.
@@ -649,43 +391,57 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
-#[colors] # Uncomment if you want to use custom colors
-# Represents the colour of table headers (processes, CPU, disks, temperature).
-#table_header_color="LightBlue"
-# Represents the colour of the label each widget has.
-#widget_title_color="Gray"
-# Represents the average CPU color.
-#avg_cpu_color="Red"
-# Represents the colour the core will use in the CPU legend and graph.
-#cpu_core_colors=["LightMagenta", "LightYellow", "LightCyan", "LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
-# Represents the colour RAM will use in the memory legend and graph.
-#ram_color="LightMagenta"
-# Represents the colour SWAP will use in the memory legend and graph.
-#swap_color="LightYellow"
-# Represents the colour ARC will use in the memory legend and graph.
-#arc_color="LightCyan"
-# Represents the colour the GPU will use in the legend and graph.
-#gpu_core_colors=["LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
-# Represents the colour rx will use in the network legend and graph.
-#rx_color="LightCyan"
-# Represents the colour tx will use in the network legend and graph.
-#tx_color="LightGreen"
-# Represents the colour of the border of unselected widgets.
-#border_color="Gray"
-# Represents the colour of the border of selected widgets.
-#highlighted_border_color="LightBlue"
-# Represents the colour of most text.
-#text_color="Gray"
-# Represents the colour of text that is selected.
-#selected_text_color="Black"
-# Represents the background colour of text that is selected.
-#selected_bg_color="LightBlue"
-# Represents the colour of the lines and text of the graph.
-#graph_color="Gray"
-# Represents the colours of the battery based on charge
-#high_battery_color="green"
-#medium_battery_color="yellow"
-#low_battery_color="red"
+#[styles] # Uncomment if you want to use custom styling
+
+# Built-in themes. Valid values are:
+# - "default"
+# - "default-light"
+# - "gruvbox"
+# - "gruvbox-light"
+# - "nord"
+# - "nord-light".
+#
+# This will have the lowest precedence if a custom colour palette is set,
+# or overriden if the command-line flag for a built-in theme is set.
+#theme = "default"
+
+#[styles.cpu]
+#all_entry_color = "green"
+#avg_entry_color = "red"
+#cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+
+#[styles.memory]
+#ram = "light magenta"
+#cache = "light red"
+#swap = "light yellow"
+#arc = "light cyan"
+#gpus = ["light blue", "light red", "cyan", "green", "blue", "red"]
+
+#[styles.network]
+#rx = "light magenta"
+#tx = "light yellow"
+#rx_total = "light cyan"
+#tx_total = "light green"
+
+#[styles.battery]
+#high_battery = "green"
+#medium_battery = "yellow"
+#low_battery = "red"
+
+#[styles.tables]
+#headers = {color = "light blue"}
+
+#[styles.graphs]
+#graph_color = "gray"
+#legend_text = {color = "gray"}
+
+#[styles.widgets]
+#border = "gray"
+#selected_border = "light blue"
+#widget_title = {color = "gray"}
+#text = {color = "gray"}
+#selected_text = {color = "black", bg_color = "light blue"}
+#disabled_text = {color = "dark gray"}
 
 # Layout - layouts follow a pattern like this:
 # [[row]] represents a row in the application.

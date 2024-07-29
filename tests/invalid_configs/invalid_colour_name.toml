@@ -1,2 +1,2 @@
-[colors]
-table_header_color = "LightB lue"
+[styles.tables.headers]
+color = "LightB lue"

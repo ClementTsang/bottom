@@ -211,12 +211,12 @@ impl Painter {
         if MAX_PROCESS_SIGNAL == 1 || !app_state.app_config_fields.is_advanced_kill {
             let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
                 KillSignal::Kill(_) => (
-                    Span::styled("Yes", self.colours.currently_selected_text_style),
+                    Span::styled("Yes", self.colours.selected_text_style),
                     Span::styled("No", self.colours.text_style),
                 ),
                 KillSignal::Cancel => (
                     Span::styled("Yes", self.colours.text_style),
-                    Span::styled("No", self.colours.currently_selected_text_style),
+                    Span::styled("No", self.colours.selected_text_style),
                 ),
             };
 
@@ -325,10 +325,8 @@ impl Painter {
                     .map(|text| Span::styled(*text, self.colours.text_style))
                     .collect::<Vec<Span<'_>>>();
                 buttons.insert(0, Span::styled(SIGNAL_TEXT[0], self.colours.text_style));
-                buttons[selected - scroll_offset] = Span::styled(
-                    SIGNAL_TEXT[selected],
-                    self.colours.currently_selected_text_style,
-                );
+                buttons[selected - scroll_offset] =
+                    Span::styled(SIGNAL_TEXT[selected], self.colours.selected_text_style);
 
                 app_state.delete_dialog_state.button_positions = layout
                     .iter()
