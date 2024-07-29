@@ -987,11 +987,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/config-file/theming/" class="md-nav__link">
+      <a href="../configuration/config-file/styling/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Theming
+    Styling
   </span>
   
 
@@ -1652,16 +1652,20 @@ on how to run htop without sudo for bottom. However, <strong>please</strong> und
 <h2 id="my-configuration-file-isnt-working"><a class="toclink" href="#my-configuration-file-isnt-working">My configuration file isn't working</a></h2>
 <p>If your configuration files aren't working, here are a few things to try:</p>
 <h3 id="check-the-formatting"><a class="toclink" href="#check-the-formatting">Check the formatting</a></h3>
-<p>It may be handy to refer to the automatically generated config files or the <a href="https://github.com/ClementTsang/bottom/tree/main/sample_configs">sample configuration files</a>.
-The config files also follow the <a href="https://toml.io/en/">TOML</a> format.</p>
-<p>Also make sure your config options are under the right table - for example, to set your temperature type, you must set it under the <code>[flags]</code> table:</p>
+<p>It may be handy to refer to the automatically generated config files or the
+<a href="https://github.com/ClementTsang/bottom/tree/main/sample_configs">sample configuration files</a>. The config files also
+follow the <a href="https://toml.io/en/">TOML</a> format.</p>
+<p>Also make sure your config options are under the right table - for example, to set your temperature type, you must
+set it under the <code>[flags]</code> table:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[flags]</span>
 <span class="n">temperature_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;f&quot;</span>
 </code></pre></div>
-<p>Meanwhile, if you want to set a custom color scheme, it would be under the <code>[colors]</code> table:</p>
-<div class="highlight"><pre><span></span><code><span class="k">[colors]</span>
-<span class="n">table_header_color</span><span class="o">=</span><span class="s2">&quot;LightBlue&quot;</span>
+<p>Meanwhile, if you want to set a custom color scheme, it would be under the <code>[styles]</code> table:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[styles.tables.headers]</span>
+<span class="n">color</span><span class="o">=</span><span class="s2">&quot;LightBlue&quot;</span>
 </code></pre></div>
+<p>To help validate your configuration files, there is <a href="https://json-schema.org/">JSON Schema</a> support if your IDE/editor
+supports it.</p>
 <h3 id="check-the-configuration-file-location"><a class="toclink" href="#check-the-configuration-file-location">Check the configuration file location</a></h3>
 <p>Make sure bottom is reading the right configuration file. By default, bottom looks for config files at these locations:</p>
 <table>
@@ -1717,7 +1721,7 @@ sudo<span class="w"> </span>snap<span class="w"> </span>connect<span class="w"> 
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 2, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 29, 2024</span>
   </span>
 
     

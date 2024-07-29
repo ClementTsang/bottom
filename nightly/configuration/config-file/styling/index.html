@@ -12,7 +12,7 @@
         <meta name="author" content="Clement Tsang">
       
       
-        <link rel="canonical" href="https://clementtsang.github.io/bottom/stable/configuration/config-file/theming/">
+        <link rel="canonical" href="https://clementtsang.github.io/bottom/stable/configuration/config-file/styling/">
       
       
         <link rel="prev" href="../flags/">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Theming - bottom</title>
+        <title>Styling - bottom</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#theming" class="md-skip">
+        <a href="#styling" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Theming
+              Styling
             
           </span>
         </div>
@@ -1004,15 +1004,174 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Styling
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
-    Theming
+    Styling
   </span>
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#precedence" class="md-nav__link">
+    <span class="md-ellipsis">
+      Precedence
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-styles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Built-in styles
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-styling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom styling
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Custom styling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#colours" class="md-nav__link">
+    <span class="md-ellipsis">
+      Colours
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#text" class="md-nav__link">
+    <span class="md-ellipsis">
+      Text
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      CPU
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network" class="md-nav__link">
+    <span class="md-ellipsis">
+      Network
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#battery" class="md-nav__link">
+    <span class="md-ellipsis">
+      Battery
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tables
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Graphs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#general-widget-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      General widget settings
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1421,7 +1580,7 @@
                   
 
   
-    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/configuration/config-file/theming.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/configuration/config-file/styling.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
     </a>
@@ -1429,126 +1588,280 @@
   
 
 
-<h1 id="theming"><a class="toclink" href="#theming">Theming</a></h1>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>This section is in progress, and is just copied from the old documentation.</p>
-</div>
-<p>The config file can be used to set custom colours for parts of the application under the <code>[colors]</code> object. The following labels are customizable with strings that are hex colours, RGB colours, or specific named colours.</p>
-<p>Supported named colours are one of the following strings: <code>Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, LightYellow, LightBlue, LightMagenta, LightCyan, White</code>.</p>
+<h1 id="styling"><a class="toclink" href="#styling">Styling</a></h1>
+<p>Various parts of the bottom can be styled, using either built-in themes or custom theming.</p>
+<h2 id="precedence"><a class="toclink" href="#precedence">Precedence</a></h2>
+<p>As there are a few ways styles can be applied to bottom, the order of which styles are prioritized are, in order of
+highest precedence to lowest precedence:</p>
+<ol>
+<li>Built-in themes set via command-line args (e.g. <code>btm --theme gruvbox</code>)</li>
+<li>Custom themes set via config file</li>
+<li>Built-in themes set via config file</li>
+</ol>
+<p>If nothing is set, it will fall back to the default theme.</p>
+<h2 id="built-in-styles"><a class="toclink" href="#built-in-styles">Built-in styles</a></h2>
+<p>bottom has a few built-in themes:</p>
+<ul>
+<li>Default</li>
+<li><a href="https://www.nordtheme.com/">Nord</a></li>
+<li><a href="https://github.com/morhetz/gruvbox">Gruvbox</a></li>
+</ul>
+<p>These themes all also have light variants to support terminals using lighter colours.</p>
+<p>To set the theme from the command line:</p>
+<div class="highlight"><pre><span></span><code>btm<span class="w"> </span>--theme<span class="w"> </span>gruvbox
+</code></pre></div>
+<p>To set the theme using the config file:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[styles]</span>
+<span class="n">theme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;gruvbox&quot;</span>
+</code></pre></div>
+<h2 id="custom-styling"><a class="toclink" href="#custom-styling">Custom styling</a></h2>
+<p>bottom's components can also be individually styled by the user to control the colour of the text style.</p>
+<h3 id="colours"><a class="toclink" href="#colours">Colours</a></h3>
+<p>You can configure the colours for components with strings that are either hex colours (e.g. <code>"#ffffff"</code>), RGB colours
+(e.g. <code>"255, 255, 255"</code>), or named colours. Named colours are one of the following strings:</p>
+<ul>
+<li><code>"Black"</code></li>
+<li><code>"Red"</code></li>
+<li><code>"Green"</code></li>
+<li><code>"Yellow"</code></li>
+<li><code>"Blue"</code></li>
+<li><code>"Magenta"</code></li>
+<li><code>"Cyan"</code></li>
+<li><code>"Gray"</code></li>
+<li><code>"DarkGray"</code></li>
+<li><code>"LightRed"</code></li>
+<li><code>"LightGreen"</code></li>
+<li><code>"LightYellow"</code></li>
+<li><code>"LightBlue"</code></li>
+<li><code>"LightMagenta"</code></li>
+<li><code>"LightCyan"</code></li>
+<li><code>"White"</code></li>
+</ul>
+<h3 id="text"><a class="toclink" href="#text">Text</a></h3>
+<p>Text can generally be styled using the following TOML table:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[field]</span>
+<span class="c1"># The foreground colour of text.</span>
+<span class="n">color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span>
+
+<span class="c1"># The background colour of text.</span>
+<span class="n">bg_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;blue&quot;</span>
+
+<span class="c1"># Whether to make the text bold.</span>
+<span class="n">bold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="c1"># Inline table version</span>
+<span class="n">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">color</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bg_color</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;blue&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bold</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p>All fields are optional; by default if <code>bg_color</code> is not set then there will be no background color.</p>
+<h3 id="configuration"><a class="toclink" href="#configuration">Configuration</a></h3>
+<h4 id="cpu"><a class="toclink" href="#cpu">CPU</a></h4>
+<p>These can be set under <code>[styles.cpu]</code>:</p>
 <table>
 <thead>
 <tr>
-<th>Labels</th>
+<th>Config field</th>
 <th>Details</th>
-<th>Example</th>
+<th>Examples</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Table header colours</td>
-<td>Colour of table headers</td>
-<td><code>table_header_color="255, 255, 255"</code></td>
+<td><code>all_entry_color</code></td>
+<td>The colour of the "All" CPU label</td>
+<td><code>all_entry_color = "Red"</code></td>
 </tr>
 <tr>
-<td>CPU colour per core</td>
-<td>Colour of each core. Read in order.</td>
-<td><code>cpu_core_colors=["#ffffff", "white", "255, 255, 255"]</code></td>
+<td><code>avg_entry_color</code></td>
+<td>The colour of the average CPU label and graph line</td>
+<td><code>avg_entry_color = "255, 0, 255"</code></td>
 </tr>
 <tr>
-<td>Average CPU colour</td>
-<td>The average CPU color</td>
-<td><code>avg_cpu_color="White"</code></td>
+<td><code>cpu_core_colors</code></td>
+<td>Colour of each CPU threads' label and graph line. Read in order.</td>
+<td><code>cpu_core_colors = ["Red", "Blue", "Green"]</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="memory"><a class="toclink" href="#memory">Memory</a></h4>
+<p>These can be set under <code>[styles.memory]</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Config field</th>
+<th>Details</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ram</code></td>
+<td>The colour of the RAM label and graph line</td>
+<td><code>ram = "Red"</code></td>
 </tr>
 <tr>
-<td>All CPUs colour</td>
-<td>The colour for the "All" CPU label</td>
-<td><code>all_cpu_color="White"</code></td>
+<td><code>cache</code></td>
+<td>The colour of the cache label and graph line. Does not do anything on Windows.</td>
+<td><code>cache = "#ffffff"</code></td>
 </tr>
 <tr>
-<td>RAM</td>
-<td>The colour RAM will use</td>
-<td><code>ram_color="#ffffff"</code></td>
+<td><code>swap</code></td>
+<td>The colour of the swap label and graph line</td>
+<td><code>swap = "255, 0, 255"</code></td>
 </tr>
 <tr>
-<td>SWAP</td>
-<td>The colour SWAP will use</td>
-<td><code>swap_color="#ffffff"</code></td>
+<td><code>arc</code></td>
+<td>The colour of the ARC label and graph line</td>
+<td><code>arc = "Blue"</code></td>
 </tr>
 <tr>
-<td>RX</td>
-<td>The colour rx will use</td>
-<td><code>rx_color="#ffffff"</code></td>
+<td><code>gpus</code></td>
+<td>Colour of each GPU's memory label and graph line. Read in order.</td>
+<td><code>gpus = ["Red", "Blue", "Green"]</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="network"><a class="toclink" href="#network">Network</a></h4>
+<p>These can be set under <code>[styles.network]</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Config field</th>
+<th>Details</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rx</code></td>
+<td>The colour of the RX (download) label and graph line</td>
+<td><code>rx = "Red"</code></td>
 </tr>
 <tr>
-<td>TX</td>
-<td>The colour tx will use</td>
-<td><code>tx_color="#ffffff"</code></td>
+<td><code>tx</code></td>
+<td>The colour of the TX (upload) label and graph line.</td>
+<td><code>tx = "#ffffff"</code></td>
 </tr>
 <tr>
-<td>Widget title colour</td>
-<td>The colour of the label each widget has</td>
-<td><code>widget_title_color="#ffffff"</code></td>
+<td><code>rx_total</code></td>
+<td>The colour of the total RX (download) label in basic mode</td>
+<td><code>rx_total = "0, 0, 0"</code></td>
 </tr>
 <tr>
-<td>Border colour</td>
-<td>The colour of the border of unselected widgets</td>
-<td><code>border_color="#ffffff"</code></td>
+<td><code>tx_total</code></td>
+<td>The colour of the total TX (upload) label in basic mode</td>
+<td><code>tx_total = "#000"</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="battery"><a class="toclink" href="#battery">Battery</a></h4>
+<p>These can be set under <code>[styles.battery]</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Config field</th>
+<th>Details</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>high_battery</code></td>
+<td>The colour of the battery widget bar when the battery is over 50%</td>
+<td><code>high_battery = "Red"</code></td>
 </tr>
 <tr>
-<td>Selected border colour</td>
-<td>The colour of the border of selected widgets</td>
-<td><code>highlighted_border_color="#ffffff"</code></td>
+<td><code>medium_battery</code></td>
+<td>The colour of the battery widget bar when the battery between 10% to 50%</td>
+<td><code>medium_battery = "#ffffff"</code></td>
 </tr>
 <tr>
-<td>Text colour</td>
-<td>The colour of most text</td>
-<td><code>text_color="#ffffff"</code></td>
+<td><code>low_battery</code></td>
+<td>The colour of the battery widget bar when the battery is under 10%</td>
+<td><code>low_battery = "0, 0, 0"</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="tables"><a class="toclink" href="#tables">Tables</a></h4>
+<p>These can be set under <code>[styles.tables]</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Config field</th>
+<th>Details</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>headers</code></td>
+<td>Text styling for table headers</td>
+<td><code>headers = { color = "red", bg_color = "black", bold = true }</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="graphs"><a class="toclink" href="#graphs">Graphs</a></h4>
+<p>These can be set under <code>[styles.graphs]</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Config field</th>
+<th>Details</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>graph_color</code></td>
+<td>The general colour of the parts of the graph</td>
+<td><code>graph_color = "white"</code></td>
 </tr>
 <tr>
-<td>Graph colour</td>
-<td>The colour of the lines and text of the graph</td>
-<td><code>graph_color="#ffffff"</code></td>
+<td><code>legend_text</code></td>
+<td>Text styling for graph's legend text</td>
+<td><code>legend_text = { color = "black", bg_color = "blue", bold = true }</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="general-widget-settings"><a class="toclink" href="#general-widget-settings">General widget settings</a></h4>
+<p>These can be set under <code>[styles.widgets]</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Config field</th>
+<th>Details</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>border</code></td>
+<td>The colour of the widgets' borders</td>
+<td><code>border = "white"</code></td>
 </tr>
 <tr>
-<td>Cursor colour</td>
-<td>The cursor's colour</td>
-<td><code>cursor_color="#ffffff"</code></td>
+<td><code>selected_border</code></td>
+<td>The colour of a widget's borders when the widget is selected</td>
+<td><code>selected_border = "white"</code></td>
 </tr>
 <tr>
-<td>Selected text colour</td>
-<td>The colour of text that is selected</td>
-<td><code>scroll_entry_text_color="#ffffff"</code></td>
+<td><code>widget_title</code></td>
+<td>Text styling for a widget's title</td>
+<td><code>widget_title = { color = "black", bg_color = "blue", bold = true }</code></td>
 </tr>
 <tr>
-<td>Selected text background colour</td>
-<td>The background colour of text that is selected</td>
-<td><code>scroll_entry_bg_color="#ffffff"</code></td>
+<td><code>text</code></td>
+<td>Text styling for text in general</td>
+<td><code>text = { color = "black", bg_color = "blue", bold = true }</code></td>
 </tr>
 <tr>
-<td>High battery level colour</td>
-<td>The colour used for a high battery level (100% to 50%)</td>
-<td><code>high_battery_color="green"</code></td>
+<td><code>selected_text</code></td>
+<td>Text styling for text when representing something selected</td>
+<td><code>selected_text = { color = "black", bg_color = "blue", bold = true }</code></td>
 </tr>
 <tr>
-<td>Medium battery level colour</td>
-<td>The colour used for a medium battery level (50% to 10%)</td>
-<td><code>medium_battery_color="yellow"</code></td>
-</tr>
-<tr>
-<td>Low battery level colour</td>
-<td>The colour used for a low battery level (10% to 0%)</td>
-<td><code>low_battery_color="red"</code></td>
-</tr>
-<tr>
-<td>GPU colour per gpu</td>
-<td>Colour of each gpu. Read in order.</td>
-<td><code>gpu_core_colors=["#ffffff", "white", "255, 255, 255"]</code></td>
-</tr>
-<tr>
-<td>ARC</td>
-<td>The colour ARC will use</td>
-<td><code>arc_color="#ffffff"</code></td>
+<td><code>disabled_text</code></td>
+<td>Text styling for text when representing something disabled</td>
+<td><code>disabled_text = { color = "black", bg_color = "blue", bold = true }</code></td>
 </tr>
 </tbody>
 </table>
@@ -1572,7 +1885,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 16, 2022</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 29, 2024</span>
   </span>
 
     
