@@ -38,7 +38,7 @@ def main():
     should_fail = args.should_fail
     uncomment = args.uncomment
 
-    with open(file) as f, open(schema) as s:
+    with open(file, "rb") as f, open(schema) as s:
         try:
             validator = jsonschema_rs.JSONSchema.from_str(s.read())
         except:
@@ -46,7 +46,7 @@ def main():
             exit()
 
         if uncomment:
-            read_file = f.read()
+            read_file = f.read().decode("utf-8")
             read_file = re.sub(r"^#([a-zA-Z\[])", r"\1", read_file, flags=re.MULTILINE)
             read_file = re.sub(
                 r"^#(\s\s+)([a-zA-Z\[])", r"\2", read_file, flags=re.MULTILINE
