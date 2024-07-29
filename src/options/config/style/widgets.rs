@@ -7,7 +7,7 @@ use super::{ColorStr, TextStyleConfig};
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub(crate) struct WidgetStyle {
     pub(crate) border: Option<ColorStr>,
-    pub(crate) highlighted_border_color: Option<ColorStr>,
+    pub(crate) selected_border: Option<ColorStr>,
     pub(crate) widget_title: Option<TextStyleConfig>,
 
     pub(crate) text: Option<TextStyleConfig>,

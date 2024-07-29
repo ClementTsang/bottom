@@ -2,26 +2,26 @@
 
 mod battery;
 mod cpu;
-mod graph;
+mod graphs;
 mod memory;
 mod network;
-mod table;
+mod tables;
 mod themes;
 mod utils;
-mod widget;
+mod widgets;
 
 use std::borrow::Cow;
 
 use battery::BatteryStyle;
 use cpu::CpuStyle;
-use graph::GraphStyle;
+use graphs::GraphStyle;
 use memory::MemoryStyle;
 use network::NetworkStyle;
 use serde::{Deserialize, Serialize};
-use table::TableStyle;
+use tables::TableStyle;
 use tui::style::Style;
 use utils::{opt, set_colour, set_colour_list, set_style};
-use widget::WidgetStyle;
+use widgets::WidgetStyle;
 
 use crate::options::{args::BottomArgs, OptionError, OptionResult};
 
@@ -202,7 +202,7 @@ impl ColourPalette {
         set_colour!(
             self.highlighted_border_style,
             config.widgets,
-            highlighted_border_color
+            selected_border
         );
 
         Ok(())

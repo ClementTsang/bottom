@@ -918,7 +918,7 @@
             }
           ]
         },
-        "highlighted_border_color": {
+        "selected_border": {
           "anyOf": [
             {
               "$ref": "#/definitions/ColorStr"
