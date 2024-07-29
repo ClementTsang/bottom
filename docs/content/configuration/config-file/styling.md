@@ -1,6 +1,17 @@
-# Theming
+# Styling
 
-Various parts of the application can be styled.
+Various parts of the bottom can be styled, using either built-in themes or custom theming.
+
+## Precedence
+
+As there are a few ways styles can be applied to bottom, the order of which styles are prioritized are, in order of
+highest precedence to lowest precedence:
+
+1. Built-in themes set via command-line args (e.g. `btm --theme gruvbox`)
+2. Custom themes set via config file
+3. Built-in themes set via config file
+
+If nothing is set, it will fall back to the default theme.
 
 ## Built-in styles
 

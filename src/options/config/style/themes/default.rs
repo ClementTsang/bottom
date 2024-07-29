@@ -18,7 +18,7 @@ impl ColourPalette {
 
         const DEFAULT_SELECTED_TEXT_STYLE: Style = color!(Color::Black).bg(HIGHLIGHT_COLOUR);
 
-        let text_colour = Color::Gray;
+        const TEXT_COLOUR: Color = Color::Gray;
 
         Self {
             selected_text_style: DEFAULT_SELECTED_TEXT_STYLE,
@@ -53,12 +53,12 @@ impl ColourPalette {
                 color!(Color::Green),
                 color!(Color::Blue),
             ],
-            border_style: color!(text_colour),
+            border_style: color!(TEXT_COLOUR),
             highlighted_border_style: color!(HIGHLIGHT_COLOUR),
-            text_style: color!(text_colour),
-            widget_title_style: color!(text_colour),
-            graph_style: color!(text_colour),
-            graph_legend_style: color!(text_colour),
+            text_style: color!(TEXT_COLOUR),
+            widget_title_style: color!(TEXT_COLOUR),
+            graph_style: color!(TEXT_COLOUR),
+            graph_legend_style: color!(TEXT_COLOUR),
             high_battery: color!(Color::Green),
             medium_battery: color!(Color::Yellow),
             low_battery: color!(Color::Red),

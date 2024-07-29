@@ -77,3 +77,8 @@ fn test_theme() {
 fn test_styling_sanity_check() {
     run_and_kill(&["-C", "./tests/valid_configs/styling.toml"]);
 }
+
+#[test]
+fn test_styling_sanity_check_2() {
+    run_and_kill(&["-C", "./tests/valid_configs/styling_2.toml"]);
+}

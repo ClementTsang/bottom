@@ -127,43 +127,57 @@
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
-#[colors] # Uncomment if you want to use custom colors
-# Represents the colour of table headers (processes, CPU, disks, temperature).
-#table_header_color="LightBlue"
-# Represents the colour of the label each widget has.
-#widget_title_color="Gray"
-# Represents the average CPU color.
-#avg_cpu_color="Red"
-# Represents the colour the core will use in the CPU legend and graph.
-#cpu_core_colors=["LightMagenta", "LightYellow", "LightCyan", "LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
-# Represents the colour RAM will use in the memory legend and graph.
-#ram_color="LightMagenta"
-# Represents the colour SWAP will use in the memory legend and graph.
-#swap_color="LightYellow"
-# Represents the colour ARC will use in the memory legend and graph.
-#arc_color="LightCyan"
-# Represents the colour the GPU will use in the legend and graph.
-#gpu_core_colors=["LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
-# Represents the colour rx will use in the network legend and graph.
-#rx_color="LightCyan"
-# Represents the colour tx will use in the network legend and graph.
-#tx_color="LightGreen"
-# Represents the colour of the border of unselected widgets.
-#border_color="Gray"
-# Represents the colour of the border of selected widgets.
-#highlighted_border_color="LightBlue"
-# Represents the colour of most text.
-#text_color="Gray"
-# Represents the colour of text that is selected.
-#selected_text_color="Black"
-# Represents the background colour of text that is selected.
-#selected_bg_color="LightBlue"
-# Represents the colour of the lines and text of the graph.
-#graph_color="Gray"
-# Represents the colours of the battery based on charge
-#high_battery_color="green"
-#medium_battery_color="yellow"
-#low_battery_color="red"
+#[styles] # Uncomment if you want to use custom styling
+
+# Built-in themes. Valid values are:
+# - "default"
+# - "default-light"
+# - "gruvbox"
+# - "gruvbox-light"
+# - "nord"
+# - "nord-light".
+#
+# This will have the lowest precedence if a custom colour palette is set,
+# or overriden if the command-line flag for a built-in theme is set.
+#theme = "default"
+
+#[styles.cpu]
+#all_entry_color = "green"
+#avg_entry_color = "red"
+#cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+
+#[styles.memory]
+#ram = "light magenta"
+#cache = "light red"
+#swap = "light yellow"
+#arc = "light cyan"
+#gpus = ["light blue", "light red", "cyan", "green", "blue", "red"]
+
+#[styles.network]
+#rx = "light magenta"
+#tx = "light yellow"
+#rx_total = "light cyan"
+#tx_total = "light green"
+
+#[styles.battery]
+#high_battery = "green"
+#medium_battery = "yellow"
+#low_battery = "red"
+
+#[styles.tables]
+#headers = {color = "light blue"}
+
+#[styles.graphs]
+#graph_color = "gray"
+#legend_text = {color = "gray"}
+
+#[styles.widgets]
+#border = "gray"
+#selected_border = "light blue"
+#widget_title = {color = "gray"}
+#text = {color = "gray"}
+#selected_text = {color = "black", bg_color = "light blue"}
+#disabled_text = {color = "dark gray"}
 
 # Layout - layouts follow a pattern like this:
 # [[row]] represents a row in the application.

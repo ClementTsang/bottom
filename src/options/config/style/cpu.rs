@@ -6,6 +6,7 @@ use super::ColorStr;
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub(crate) struct CpuStyle {
+    // TODO: Should I change the name of these?
     #[serde(alias = "all_entry_colour")]
     pub(crate) all_entry_color: Option<ColorStr>,
 
