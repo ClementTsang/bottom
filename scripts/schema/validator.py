@@ -3,7 +3,7 @@
 # A simple script to validate that a schema is valid for a file.
 
 import argparse
-import toml
+import tomllib
 import jsonschema_rs
 import re
 import traceback
@@ -38,7 +38,7 @@ def main():
     should_fail = args.should_fail
     uncomment = args.uncomment
 
-    with open(file) as f, open(schema) as s:
+    with open(file, "rb") as f, open(schema) as s:
         try:
             validator = jsonschema_rs.JSONSchema.from_str(s.read())
         except:
@@ -46,16 +46,16 @@ def main():
             exit()
 
         if uncomment:
-            read_file = f.read()
+            read_file = f.read().decode("utf-8")
             read_file = re.sub(r"^#([a-zA-Z\[])", r"\1", read_file, flags=re.MULTILINE)
             read_file = re.sub(
                 r"^#(\s\s+)([a-zA-Z\[])", r"\2", read_file, flags=re.MULTILINE
             )
             print(f"uncommented file: \n{read_file}")
 
-            toml_str = toml.loads(read_file)
+            toml_str = tomllib.loads(read_file)
         else:
-            toml_str = toml.load(f)
+            toml_str = tomllib.load(f)
 
         try:
             validator.validate(toml_str)
