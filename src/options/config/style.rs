@@ -122,7 +122,7 @@ impl Default for ColourPalette {
 
 impl ColourPalette {
     pub fn new(args: &BottomArgs, config: &Config) -> anyhow::Result<Self> {
-        let mut palette = match &args.style.color {
+        let mut palette = match &args.style.theme {
             Some(theme) => Self::from_theme(theme)?,
             None => match config.styles.as_ref().and_then(|s| s.theme.as_ref()) {
                 Some(theme) => Self::from_theme(theme)?,

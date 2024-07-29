@@ -35,7 +35,6 @@ each time:
 | `default_widget_type`        | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options)                              | Sets the default widget type, use --help for more info.          |
 | `default_widget_count`       | Unsigned Int (represents which `default_widget_type`)                                                              | Sets the n'th selected widget type as the default.               |
 | `disable_click`              | Boolean                                                                                                            | Disables mouse clicks.                                           |
-| `color`                      | String (one of ["default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"])                     | Use a color scheme, use --help for supported values.             |
 | `enable_cache_memory`        | Boolean                                                                                                            | Enable cache and buffer memory stats (not available on Windows). |
 | `process_memory_as_value`    | Boolean                                                                                                            | Defaults to showing process memory usage by value.               |
 | `tree`                       | Boolean                                                                                                            | Defaults to showing the process widget in tree mode.             |

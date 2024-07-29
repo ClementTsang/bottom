@@ -1,12 +1,50 @@
 # Theming
 
-!!! Warning
+Various parts of the application can be styled.
 
-    This section is in progress, and is just copied from the old documentation.
+## Built-in styles
 
-The config file can be used to set custom colours for parts of the application under the `[colors]` object. The following labels are customizable with strings that are hex colours, RGB colours, or specific named colours.
+bottom has a few built-in themes:
 
-Supported named colours are one of the following strings: `Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, LightYellow, LightBlue, LightMagenta, LightCyan, White`.
+- Default
+- [Nord](https://www.nordtheme.com/)
+- [Gruvbox](https://github.com/morhetz/gruvbox)
+
+These themes all also have light variants to support terminals using lighter colours.
+
+To set the theme from the command line:
+
+```bash
+btm --theme gruvbox
+```
+
+To set the theme using the config file:
+
+```toml
+[styles]
+theme = "gruvbox"
+```
+
+## Custom styling
+
+Supported named colours are one of the following strings:
+
+- `"Black"`
+- `"Red"`
+- `"Green"`
+- `"Yellow"`
+- `"Blue"`
+- `"Magenta"`
+- `"Cyan"`
+- `"Gray"`
+- `"DarkGray"`
+- `"LightRed"`
+- `"LightGreen"`
+- `"LightYellow"`
+- `"LightBlue"`
+- `"LightMagenta"`
+- `"LightCyan"`
+- `"White"`
 
 | Labels                          | Details                                                 | Example                                                 |
 | ------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- |

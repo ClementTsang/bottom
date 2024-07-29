@@ -1,0 +1,4 @@
+#:schema none
+
+[styles]
+theme = "gruvbox"

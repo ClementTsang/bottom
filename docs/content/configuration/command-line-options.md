@@ -86,7 +86,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 | Option                   | Behaviour                                  |
 | ------------------------ | ------------------------------------------ |
-| `--color <COLOR SCHEME>` | Use a color scheme, use `--help` for info. |
+| `--theme <COLOR SCHEME>` | Use a color scheme, use `--help` for info. |
 
 ## Other Options
 

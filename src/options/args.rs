@@ -542,10 +542,10 @@ pub struct StyleArgs {
         ],
         hide_possible_values = true,
         help = indoc! {
-            "Use a color scheme, use '--help' for info on the colors. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
+            "Use a built-in color theme, use '--help' for info on the colors. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
         },
         long_help = indoc! {
-            "Use a pre-defined color scheme. Currently supported values are:
+            "Use a pre-defined color theme. Currently supported themes are:
             - default
             - default-light (default but adjusted for lighter backgrounds)
             - gruvbox       (a bright theme with 'retro groove' colors)
@@ -554,7 +554,7 @@ pub struct StyleArgs {
             - nord-light    (nord but adjusted for lighter backgrounds)"
         }
     )]
-    pub color: Option<String>,
+    pub theme: Option<String>,
 }
 
 /// Other arguments. This just handle options that are for help/version

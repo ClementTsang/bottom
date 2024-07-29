@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `expanded_on_startup` is now `expanded`.
   - `left_legend` is now `cpu_left_legend`.
 - [#1472](https://github.com/ClementTsang/bottom/pull/1472): The following arguments have changed names:
-  - `mem_as_value` is now `process_memory_as_value`.
+  - `--mem_as_value` is now `process_memory_as_value`.
 - [#1472](https://github.com/ClementTsang/bottom/pull/1472): The following config fields have changed names:
   - `mem_as_value` is now `process_memory_as_value`.
 - [#1481](https://github.com/ClementTsang/bottom/pull/1481): The following config fields have changed names:
@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `temp_filter` is now `temperature.sensor_filter`
   - `net_filter` is now `network.interface_filter`
 - [#1499](https://github.com/ClementTsang/bottom/pull/1499): Redesign how styling is configured.
+- [#1499](https://github.com/ClementTsang/bottom/pull/1499): The following arguments have changed names:
+  - `--colors` is now `--theme`
 
 ### Bug Fixes
 
