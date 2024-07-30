@@ -148,7 +148,7 @@ macro_rules! set_style {
                             })?
                     );
                 }
-                TextStyleConfig::TextStyle {color, bg_color, bold: _} => {
+                TextStyleConfig::TextStyle {color, bg_color, bold} => {
                     if let Some(fg) = &color {
                         $palette_field = $palette_field.fg(
                             crate::options::config::style::utils::str_to_colour(&fg.0)
@@ -179,6 +179,14 @@ macro_rules! set_style {
                                     )),
                                 })?
                         );
+                    }
+
+                    if let Some(bold) = &bold {
+                        if *bold {
+                            $palette_field = $palette_field.add_modifier(tui::style::Modifier::BOLD);
+                        } else {
+                            $palette_field = $palette_field.remove_modifier(tui::style::Modifier::BOLD);
+                        }
                     }
                 }
             }
@@ -236,7 +244,7 @@ pub(super) use {opt, set_colour, set_colour_list, set_style};
 #[cfg(test)]
 mod test {
 
-    use tui::style::Style;
+    use tui::style::{Modifier, Style};
 
     use crate::options::config::style::{ColorStr, TextStyleConfig};
 
@@ -427,12 +435,12 @@ mod test {
                 text_c: Some(TextStyleConfig::TextStyle {
                     color: Some(ColorStr("magenta".into())),
                     bg_color: Some(ColorStr("255, 255, 255".into())),
-                    bold: Some(false),
+                    bold: Some(true),
                 }),
                 text_d: Some(TextStyleConfig::TextStyle {
                     color: Some(ColorStr("#fff".into())),
                     bg_color: Some(ColorStr("1, 1, 1".into())),
-                    bold: Some(true),
+                    bold: Some(false),
                 }),
                 text_e: None,
             }
@@ -503,12 +511,12 @@ mod test {
         set_style!(s, &dummy.inner, text_c);
         assert_eq!(s.fg.unwrap(), Color::Magenta);
         assert_eq!(s.bg.unwrap(), Color::Rgb(255, 255, 255));
+        assert!(s.add_modifier.contains(Modifier::BOLD));
 
         set_style!(s, &dummy.inner, text_d);
         assert_eq!(s.fg.unwrap(), Color::Rgb(255, 255, 255));
         assert_eq!(s.bg.unwrap(), Color::Rgb(1, 1, 1));
-        // TODO: Add this
-        // assert!(s.add_modifier.contains(Modifier::BOLD));
+        assert!(s.add_modifier.is_empty());
 
         Ok(())
     }
