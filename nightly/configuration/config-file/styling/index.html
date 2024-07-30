@@ -1653,6 +1653,11 @@ highest precedence to lowest precedence:</p>
 <span class="n">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">color</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bg_color</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;blue&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bold</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
 <p>All fields are optional; by default if <code>bg_color</code> is not set then there will be no background color.</p>
+<p>If you <em>just</em> want to style text by setting the foreground colour, for brevity, then you can also just set the field
+to be the colour itself. For example:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[styles.widgets]</span>
+<span class="n">selected_text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;#fff&quot;</span>
+</code></pre></div>
 <h3 id="configuration"><a class="toclink" href="#configuration">Configuration</a></h3>
 <h4 id="cpu"><a class="toclink" href="#cpu">CPU</a></h4>
 <p>These can be set under <code>[styles.cpu]</code>:</p>
@@ -1694,29 +1699,29 @@ highest precedence to lowest precedence:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>ram</code></td>
+<td><code>ram_color</code></td>
 <td>The colour of the RAM label and graph line</td>
-<td><code>ram = "Red"</code></td>
+<td><code>ram_color = "Red"</code></td>
 </tr>
 <tr>
-<td><code>cache</code></td>
+<td><code>cache_color</code></td>
 <td>The colour of the cache label and graph line. Does not do anything on Windows.</td>
-<td><code>cache = "#ffffff"</code></td>
+<td><code>cache_color = "#ffffff"</code></td>
 </tr>
 <tr>
-<td><code>swap</code></td>
+<td><code>swap_color</code></td>
 <td>The colour of the swap label and graph line</td>
-<td><code>swap = "255, 0, 255"</code></td>
+<td><code>swap_color = "255, 0, 255"</code></td>
 </tr>
 <tr>
-<td><code>arc</code></td>
+<td><code>arc_color</code></td>
 <td>The colour of the ARC label and graph line</td>
-<td><code>arc = "Blue"</code></td>
+<td><code>arc_color = "Blue"</code></td>
 </tr>
 <tr>
-<td><code>gpus</code></td>
+<td><code>gpu_colors</code></td>
 <td>Colour of each GPU's memory label and graph line. Read in order.</td>
-<td><code>gpus = ["Red", "Blue", "Green"]</code></td>
+<td><code>gpu_colors = ["Red", "Blue", "Green"]</code></td>
 </tr>
 </tbody>
 </table>
@@ -1732,24 +1737,24 @@ highest precedence to lowest precedence:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>rx</code></td>
+<td><code>rx_color</code></td>
 <td>The colour of the RX (download) label and graph line</td>
-<td><code>rx = "Red"</code></td>
+<td><code>rx_color = "Red"</code></td>
 </tr>
 <tr>
-<td><code>tx</code></td>
-<td>The colour of the TX (upload) label and graph line.</td>
-<td><code>tx = "#ffffff"</code></td>
+<td><code>tx_color</code></td>
+<td>The colour of the TX (upload) label and graph line</td>
+<td><code>tx_color = "#ffffff"</code></td>
 </tr>
 <tr>
-<td><code>rx_total</code></td>
+<td><code>rx_total_color</code></td>
 <td>The colour of the total RX (download) label in basic mode</td>
-<td><code>rx_total = "0, 0, 0"</code></td>
+<td><code>rx_total_color = "0, 0, 0"</code></td>
 </tr>
 <tr>
-<td><code>tx_total</code></td>
+<td><code>tx_total_color</code></td>
 <td>The colour of the total TX (upload) label in basic mode</td>
-<td><code>tx_total = "#000"</code></td>
+<td><code>tx_total_color = "#000"</code></td>
 </tr>
 </tbody>
 </table>
@@ -1765,19 +1770,19 @@ highest precedence to lowest precedence:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>high_battery</code></td>
+<td><code>high_battery_color</code></td>
 <td>The colour of the battery widget bar when the battery is over 50%</td>
-<td><code>high_battery = "Red"</code></td>
+<td><code>high_battery_color = "Red"</code></td>
 </tr>
 <tr>
-<td><code>medium_battery</code></td>
+<td><code>medium_battery_color</code></td>
 <td>The colour of the battery widget bar when the battery between 10% to 50%</td>
-<td><code>medium_battery = "#ffffff"</code></td>
+<td><code>medium_battery_color = "#ffffff"</code></td>
 </tr>
 <tr>
-<td><code>low_battery</code></td>
+<td><code>low_battery_color</code></td>
 <td>The colour of the battery widget bar when the battery is under 10%</td>
-<td><code>low_battery = "0, 0, 0"</code></td>
+<td><code>low_battery_color = "0, 0, 0"</code></td>
 </tr>
 </tbody>
 </table>
@@ -1834,14 +1839,14 @@ highest precedence to lowest precedence:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>border</code></td>
+<td><code>border_color</code></td>
 <td>The colour of the widgets' borders</td>
-<td><code>border = "white"</code></td>
+<td><code>border_color = "white"</code></td>
 </tr>
 <tr>
-<td><code>selected_border</code></td>
+<td><code>selected_border_color</code></td>
 <td>The colour of a widget's borders when the widget is selected</td>
-<td><code>selected_border = "white"</code></td>
+<td><code>selected_border_color = "white"</code></td>
 </tr>
 <tr>
 <td><code>widget_title</code></td>
@@ -1855,12 +1860,12 @@ highest precedence to lowest precedence:</p>
 </tr>
 <tr>
 <td><code>selected_text</code></td>
-<td>Text styling for text when representing something selected</td>
+<td>Text styling for text when representing something that is selected</td>
 <td><code>selected_text = { color = "black", bg_color = "blue", bold = true }</code></td>
 </tr>
 <tr>
 <td><code>disabled_text</code></td>
-<td>Text styling for text when representing something disabled</td>
+<td>Text styling for text when representing something that is disabled</td>
 <td><code>disabled_text = { color = "black", bg_color = "blue", bold = true }</code></td>
 </tr>
 </tbody>
@@ -1885,7 +1890,7 @@ highest precedence to lowest precedence:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 29, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 30, 2024</span>
   </span>
 
     
