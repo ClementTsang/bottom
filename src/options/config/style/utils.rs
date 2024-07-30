@@ -416,6 +416,10 @@ mod test {
         text_c: Option<TextStyleConfig>,
         text_d: Option<TextStyleConfig>,
         text_e: Option<TextStyleConfig>,
+        bad_color: Option<ColorStr>,
+        bad_list: Option<Vec<ColorStr>>,
+        bad_text_a: Option<TextStyleConfig>,
+        bad_text_b: Option<TextStyleConfig>,
     }
 
     impl Default for InnerDummyConfig {
@@ -443,6 +447,22 @@ mod test {
                     bold: Some(false),
                 }),
                 text_e: None,
+                bad_color: Some(ColorStr("asdf".into())),
+                bad_list: Some(vec![
+                    ColorStr("red".into()),
+                    ColorStr("asdf".into()),
+                    ColorStr("ghi".into()),
+                ]),
+                bad_text_a: Some(TextStyleConfig::TextStyle {
+                    color: Some(ColorStr("asdf".into())),
+                    bg_color: None,
+                    bold: None,
+                }),
+                bad_text_b: Some(TextStyleConfig::TextStyle {
+                    color: None,
+                    bg_color: Some(ColorStr("asdf".into())),
+                    bold: None,
+                }),
             }
         }
     }
@@ -474,6 +494,21 @@ mod test {
     }
 
     #[test]
+    fn test_bad_set_colour() {
+        let mut _s = Style::default().fg(Color::Black);
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+
+        (move || -> anyhow::Result<()> {
+            set_colour!(_s, &dummy.inner, bad_color);
+
+            Ok(())
+        })()
+        .unwrap_err();
+    }
+
+    #[test]
     fn test_set_multi_colours() -> anyhow::Result<()> {
         let mut s: Vec<Style> = vec![];
         let dummy = DummyConfig {
@@ -486,6 +521,21 @@ mod test {
         assert_eq!(s[1].fg, Some(Color::Blue));
 
         Ok(())
+    }
+
+    #[test]
+    fn test_bad_set_list() {
+        let mut _s: Vec<Style> = vec![];
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+
+        (move || -> anyhow::Result<()> {
+            set_colour_list!(_s, &dummy.inner, bad_list);
+
+            Ok(())
+        })()
+        .unwrap_err();
     }
 
     #[test]
@@ -519,5 +569,34 @@ mod test {
         assert!(s.add_modifier.is_empty());
 
         Ok(())
+    }
+
+    #[test]
+    fn test_bad_text_1() {
+        let mut _s = Style::default().fg(Color::Black);
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+
+        (move || -> anyhow::Result<()> {
+            set_style!(_s, &dummy.inner, bad_text_a);
+
+            Ok(())
+        })()
+        .unwrap_err();
+    }
+
+    #[test]
+    fn test_bad_text_2() {
+        let mut _s = Style::default().fg(Color::Black);
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+        (move || -> anyhow::Result<()> {
+            set_style!(_s, &dummy.inner, bad_text_b);
+
+            Ok(())
+        })()
+        .unwrap_err();
     }
 }
