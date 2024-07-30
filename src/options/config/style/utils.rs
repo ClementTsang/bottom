@@ -1,5 +1,5 @@
 use concat_string::concat_string;
-use tui::style::{Color, Style};
+use tui::style::Color;
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Convert a hex string to a colour.
@@ -51,10 +51,6 @@ pub fn str_to_colour(input_val: &str) -> Result<Color, String> {
     } else {
         Err(format!("Value '{input_val}' is not valid.",))
     }
-}
-
-pub(super) fn str_to_fg(input_val: &str) -> Result<Style, String> {
-    Ok(Style::default().fg(str_to_colour(input_val)?))
 }
 
 fn convert_rgb_to_color(rgb_str: &str) -> Result<Color, String> {
@@ -136,18 +132,55 @@ macro_rules! opt {
 macro_rules! set_style {
     ($palette_field:expr, $config_location:expr, $field:tt) => {
         if let Some(style) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
-            if let Some(colour) = &style.color {
-                $palette_field = crate::options::config::style::utils::str_to_fg(&colour.0)
-                    .map_err(|err| match stringify!($config_location).split_once(".") {
-                        Some((_, loc)) => OptionError::config(format!(
-                            "Please update 'styles.{loc}.{}' in your config file. {err}",
-                            stringify!($field)
-                        )),
-                        None => OptionError::config(format!(
-                            "Please update 'styles.{}' in your config file. {err}",
-                            stringify!($field)
-                        )),
-                    })?;
+            match &style {
+                TextStyleConfig::Colour(colour) => {
+                    $palette_field = $palette_field.fg(
+                        crate::options::config::style::utils::str_to_colour(&colour.0)
+                            .map_err(|err| match stringify!($config_location).split_once(".") {
+                                Some((_, loc)) => OptionError::config(format!(
+                                    "Please update 'styles.{loc}.{}' in your config file. {err}",
+                                    stringify!($field)
+                                )),
+                                None => OptionError::config(format!(
+                                    "Please update 'styles.{}' in your config file. {err}",
+                                    stringify!($field)
+                                )),
+                            })?
+                    );
+                }
+                TextStyleConfig::TextStyle {color, bg_color, bold: _} => {
+                    if let Some(fg) = &color {
+                        $palette_field = $palette_field.fg(
+                            crate::options::config::style::utils::str_to_colour(&fg.0)
+                                .map_err(|err| match stringify!($config_location).split_once(".") {
+                                    Some((_, loc)) => OptionError::config(format!(
+                                        "Please update 'styles.{loc}.{}' in your config file. {err}",
+                                        stringify!($field)
+                                    )),
+                                    None => OptionError::config(format!(
+                                        "Please update 'styles.{}' in your config file. {err}",
+                                        stringify!($field)
+                                    )),
+                                })?
+                        );
+                    }
+
+                    if let Some(bg) = &bg_color {
+                        $palette_field = $palette_field.bg(
+                            crate::options::config::style::utils::str_to_colour(&bg.0)
+                                .map_err(|err| match stringify!($config_location).split_once(".") {
+                                    Some((_, loc)) => OptionError::config(format!(
+                                        "Please update 'styles.{loc}.{}' in your config file. {err}",
+                                        stringify!($field)
+                                    )),
+                                    None => OptionError::config(format!(
+                                        "Please update 'styles.{}' in your config file. {err}",
+                                        stringify!($field)
+                                    )),
+                                })?
+                        );
+                    }
+                }
             }
         }
     };
@@ -156,8 +189,8 @@ macro_rules! set_style {
 macro_rules! set_colour {
     ($palette_field:expr, $config_location:expr, $field:tt) => {
         if let Some(colour) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
-            $palette_field =
-                crate::options::config::style::utils::str_to_fg(&colour.0).map_err(|err| {
+            $palette_field = $palette_field.fg(
+                crate::options::config::style::utils::str_to_colour(&colour.0).map_err(|err| {
                     match stringify!($config_location).split_once(".") {
                         Some((_, loc)) => OptionError::config(format!(
                             "Please update 'styles.{loc}.{}' in your config file. {err}",
@@ -168,7 +201,8 @@ macro_rules! set_colour {
                             stringify!($field)
                         )),
                     }
-                })?;
+                })?,
+            );
         }
     };
 }
@@ -178,7 +212,10 @@ macro_rules! set_colour_list {
         if let Some(colour_list) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
             $palette_field = colour_list
                 .iter()
-                .map(|s| crate::options::config::style::utils::str_to_fg(&s.0))
+                .map(|s| {
+                    Ok(Style::default()
+                        .fg(crate::options::config::style::utils::str_to_colour(&s.0)?))
+                })
                 .collect::<Result<Vec<Style>, String>>()
                 .map_err(|err| match stringify!($config_location).split_once(".") {
                     Some((_, loc)) => OptionError::config(format!(

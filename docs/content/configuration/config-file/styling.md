@@ -83,6 +83,14 @@ field = { color = "black", bg_color = "blue", bold = false }
 
 All fields are optional; by default if `bg_color` is not set then there will be no background color.
 
+If you _just_ want to style text by setting the foreground colour, for brevity, then you can also just set the field
+to be the colour itself. For example:
+
+```toml
+[styles.widgets]
+selected_text = "#fff"
+```
+
 ### Configuration
 
 #### CPU

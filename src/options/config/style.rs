@@ -32,20 +32,24 @@ use super::Config;
 pub(crate) struct ColorStr(Cow<'static, str>);
 
 /// A style for text.
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
-pub(crate) struct TextStyleConfig {
-    /// A built-in ANSI colour, RGB hex, or RGB colour code.
-    #[serde(alias = "colour")]
-    pub(crate) color: Option<ColorStr>,
+pub(crate) enum TextStyleConfig {
+    Colour(ColorStr),
+    TextStyle {
+        /// A built-in ANSI colour, RGB hex, or RGB colour code.
+        #[serde(alias = "colour")]
+        color: Option<ColorStr>,
 
-    /// A built-in ANSI colour, RGB hex, or RGB colour code.
-    #[serde(alias = "bg_colour")]
-    pub(crate) bg_color: Option<ColorStr>,
+        /// A built-in ANSI colour, RGB hex, or RGB colour code.
+        #[serde(alias = "bg_colour")]
+        bg_color: Option<ColorStr>,
 
-    /// Whether to make this text bolded or not. If not set,
-    /// will default to built-in defaults.
-    pub(crate) bold: Option<bool>,
+        /// Whether to make this text bolded or not. If not set,
+        /// will default to built-in defaults.
+        bold: Option<bool>,
+    },
 }
 
 /// Style-related configs.
