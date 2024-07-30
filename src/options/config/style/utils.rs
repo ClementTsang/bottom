@@ -218,11 +218,11 @@ macro_rules! set_colour_list {
                 })
                 .collect::<Result<Vec<Style>, String>>()
                 .map_err(|err| match stringify!($config_location).split_once(".") {
-                    Some((_, loc)) => OptionError::config(format!(
+                    Some((_, loc)) => crate::options::OptionError::config(format!(
                         "Please update 'styles.{loc}.{}' in your config file. {err}",
                         stringify!($field)
                     )),
-                    None => OptionError::config(format!(
+                    None => crate::options::OptionError::config(format!(
                         "Please update 'styles.{}' in your config file. {err}",
                         stringify!($field)
                     )),
@@ -402,6 +402,7 @@ mod test {
         color_b: Option<ColorStr>,
         color_c: Option<ColorStr>,
         color_d: Option<ColorStr>,
+        many_colors: Option<Vec<ColorStr>>,
         text_a: Option<TextStyleConfig>,
         text_b: Option<TextStyleConfig>,
         text_c: Option<TextStyleConfig>,
@@ -416,6 +417,7 @@ mod test {
                 color_b: Some(ColorStr("red".into())),
                 color_c: Some(ColorStr("255, 255, 255".into())),
                 color_d: Some(ColorStr("#000000".into())),
+                many_colors: Some(vec![ColorStr("red".into()), ColorStr("blue".into())]),
                 text_a: Some(TextStyleConfig::Colour(ColorStr("green".into()))),
                 text_b: Some(TextStyleConfig::TextStyle {
                     color: None,
@@ -459,6 +461,21 @@ mod test {
         set_colour!(s, &dummy.inner, color_d);
         assert_eq!(s.fg.unwrap(), Color::Rgb(0, 0, 0));
         assert_eq!(s.bg, None);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_set_multi_colours() -> anyhow::Result<()> {
+        let mut s: Vec<Style> = vec![];
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+
+        set_colour_list!(s, &dummy.inner, many_colors);
+        assert_eq!(s.len(), 2);
+        assert_eq!(s[0].fg, Some(Color::Red));
+        assert_eq!(s[1].fg, Some(Color::Blue));
 
         Ok(())
     }
