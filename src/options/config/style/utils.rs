@@ -148,7 +148,7 @@ macro_rules! set_style {
                             })?
                     );
                 }
-                TextStyleConfig::TextStyle {color, bg_color, bold: _} => {
+                TextStyleConfig::TextStyle {color, bg_color, bold} => {
                     if let Some(fg) = &color {
                         $palette_field = $palette_field.fg(
                             crate::options::config::style::utils::str_to_colour(&fg.0)
@@ -179,6 +179,14 @@ macro_rules! set_style {
                                     )),
                                 })?
                         );
+                    }
+
+                    if let Some(bold) = &bold {
+                        if *bold {
+                            $palette_field = $palette_field.add_modifier(tui::style::Modifier::BOLD);
+                        } else {
+                            $palette_field = $palette_field.remove_modifier(tui::style::Modifier::BOLD);
+                        }
                     }
                 }
             }
@@ -236,7 +244,7 @@ pub(super) use {opt, set_colour, set_colour_list, set_style};
 #[cfg(test)]
 mod test {
 
-    use tui::style::Style;
+    use tui::style::{Modifier, Style};
 
     use crate::options::config::style::{ColorStr, TextStyleConfig};
 
@@ -408,6 +416,10 @@ mod test {
         text_c: Option<TextStyleConfig>,
         text_d: Option<TextStyleConfig>,
         text_e: Option<TextStyleConfig>,
+        bad_color: Option<ColorStr>,
+        bad_list: Option<Vec<ColorStr>>,
+        bad_text_a: Option<TextStyleConfig>,
+        bad_text_b: Option<TextStyleConfig>,
     }
 
     impl Default for InnerDummyConfig {
@@ -427,14 +439,30 @@ mod test {
                 text_c: Some(TextStyleConfig::TextStyle {
                     color: Some(ColorStr("magenta".into())),
                     bg_color: Some(ColorStr("255, 255, 255".into())),
-                    bold: Some(false),
+                    bold: Some(true),
                 }),
                 text_d: Some(TextStyleConfig::TextStyle {
                     color: Some(ColorStr("#fff".into())),
                     bg_color: Some(ColorStr("1, 1, 1".into())),
-                    bold: Some(true),
+                    bold: Some(false),
                 }),
                 text_e: None,
+                bad_color: Some(ColorStr("asdf".into())),
+                bad_list: Some(vec![
+                    ColorStr("red".into()),
+                    ColorStr("asdf".into()),
+                    ColorStr("ghi".into()),
+                ]),
+                bad_text_a: Some(TextStyleConfig::TextStyle {
+                    color: Some(ColorStr("asdf".into())),
+                    bg_color: None,
+                    bold: None,
+                }),
+                bad_text_b: Some(TextStyleConfig::TextStyle {
+                    color: None,
+                    bg_color: Some(ColorStr("asdf".into())),
+                    bold: None,
+                }),
             }
         }
     }
@@ -466,6 +494,21 @@ mod test {
     }
 
     #[test]
+    fn test_bad_set_colour() {
+        let mut _s = Style::default().fg(Color::Black);
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+
+        (move || -> anyhow::Result<()> {
+            set_colour!(_s, &dummy.inner, bad_color);
+
+            Ok(())
+        })()
+        .unwrap_err();
+    }
+
+    #[test]
     fn test_set_multi_colours() -> anyhow::Result<()> {
         let mut s: Vec<Style> = vec![];
         let dummy = DummyConfig {
@@ -478,6 +521,21 @@ mod test {
         assert_eq!(s[1].fg, Some(Color::Blue));
 
         Ok(())
+    }
+
+    #[test]
+    fn test_bad_set_list() {
+        let mut _s: Vec<Style> = vec![];
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+
+        (move || -> anyhow::Result<()> {
+            set_colour_list!(_s, &dummy.inner, bad_list);
+
+            Ok(())
+        })()
+        .unwrap_err();
     }
 
     #[test]
@@ -503,13 +561,42 @@ mod test {
         set_style!(s, &dummy.inner, text_c);
         assert_eq!(s.fg.unwrap(), Color::Magenta);
         assert_eq!(s.bg.unwrap(), Color::Rgb(255, 255, 255));
+        assert!(s.add_modifier.contains(Modifier::BOLD));
 
         set_style!(s, &dummy.inner, text_d);
         assert_eq!(s.fg.unwrap(), Color::Rgb(255, 255, 255));
         assert_eq!(s.bg.unwrap(), Color::Rgb(1, 1, 1));
-        // TODO: Add this
-        // assert!(s.add_modifier.contains(Modifier::BOLD));
+        assert!(s.add_modifier.is_empty());
 
         Ok(())
+    }
+
+    #[test]
+    fn test_bad_text_1() {
+        let mut _s = Style::default().fg(Color::Black);
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+
+        (move || -> anyhow::Result<()> {
+            set_style!(_s, &dummy.inner, bad_text_a);
+
+            Ok(())
+        })()
+        .unwrap_err();
+    }
+
+    #[test]
+    fn test_bad_text_2() {
+        let mut _s = Style::default().fg(Color::Black);
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+        (move || -> anyhow::Result<()> {
+            set_style!(_s, &dummy.inner, bad_text_b);
+
+            Ok(())
+        })()
+        .unwrap_err();
     }
 }
