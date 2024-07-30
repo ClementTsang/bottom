@@ -165,28 +165,28 @@ impl ColourPalette {
         set_colour_list!(self.cpu_colour_styles, config.cpu, cpu_core_colors);
 
         // Memory
-        set_colour!(self.ram_style, config.memory, ram);
-        set_colour!(self.swap_style, config.memory, swap);
+        set_colour!(self.ram_style, config.memory, ram_color);
+        set_colour!(self.swap_style, config.memory, swap_color);
 
         #[cfg(not(target_os = "windows"))]
-        set_colour!(self.cache_style, config.memory, cache);
+        set_colour!(self.cache_style, config.memory, cache_color);
 
         #[cfg(feature = "zfs")]
-        set_colour!(self.arc_style, config.memory, arc);
+        set_colour!(self.arc_style, config.memory, arc_color);
 
         #[cfg(feature = "gpu")]
-        set_colour_list!(self.gpu_colours, config.memory, gpus);
+        set_colour_list!(self.gpu_colours, config.memory, gpu_colors);
 
         // Network
-        set_colour!(self.rx_style, config.network, rx);
-        set_colour!(self.tx_style, config.network, tx);
-        set_colour!(self.total_rx_style, config.network, rx_total);
-        set_colour!(self.total_tx_style, config.network, tx_total);
+        set_colour!(self.rx_style, config.network, rx_color);
+        set_colour!(self.tx_style, config.network, tx_color);
+        set_colour!(self.total_rx_style, config.network, rx_total_color);
+        set_colour!(self.total_tx_style, config.network, tx_total_color);
 
         // Battery
-        set_colour!(self.high_battery, config.battery, high_battery);
-        set_colour!(self.medium_battery, config.battery, medium_battery);
-        set_colour!(self.low_battery, config.battery, low_battery);
+        set_colour!(self.high_battery, config.battery, high_battery_color);
+        set_colour!(self.medium_battery, config.battery, medium_battery_color);
+        set_colour!(self.low_battery, config.battery, low_battery_color);
 
         // Tables
         set_style!(self.table_header_style, config.tables, headers);
@@ -202,11 +202,11 @@ impl ColourPalette {
         set_style!(self.disabled_text_style, config.widgets, disabled_text);
 
         // Widget borders
-        set_colour!(self.border_style, config.widgets, border);
+        set_colour!(self.border_style, config.widgets, border_color);
         set_colour!(
             self.highlighted_border_style,
             config.widgets,
-            selected_border
+            selected_border_color
         );
 
         Ok(())

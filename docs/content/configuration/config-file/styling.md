@@ -107,34 +107,34 @@ These can be set under `[styles.cpu]`:
 
 These can be set under `[styles.memory]`:
 
-| Config field | Details                                                                        | Examples                          |
-| ------------ | ------------------------------------------------------------------------------ | --------------------------------- |
-| `ram`        | The colour of the RAM label and graph line                                     | `ram = "Red"`                     |
-| `cache`      | The colour of the cache label and graph line. Does not do anything on Windows. | `cache = "#ffffff"`               |
-| `swap`       | The colour of the swap label and graph line                                    | `swap = "255, 0, 255"`            |
-| `arc`        | The colour of the ARC label and graph line                                     | `arc = "Blue"`                    |
-| `gpus`       | Colour of each GPU's memory label and graph line. Read in order.               | `gpus = ["Red", "Blue", "Green"]` |
+| Config field  | Details                                                                        | Examples                                |
+| ------------- | ------------------------------------------------------------------------------ | --------------------------------------- |
+| `ram_color`   | The colour of the RAM label and graph line                                     | `ram_color = "Red"`                     |
+| `cache_color` | The colour of the cache label and graph line. Does not do anything on Windows. | `cache_color = "#ffffff"`               |
+| `swap_color`  | The colour of the swap label and graph line                                    | `swap_color = "255, 0, 255"`            |
+| `arc_color`   | The colour of the ARC label and graph line                                     | `arc_color = "Blue"`                    |
+| `gpu_colors`  | Colour of each GPU's memory label and graph line. Read in order.               | `gpu_colors = ["Red", "Blue", "Green"]` |
 
 #### Network
 
 These can be set under `[styles.network]`:
 
-| Config field | Details                                                   | Examples               |
-| ------------ | --------------------------------------------------------- | ---------------------- |
-| `rx`         | The colour of the RX (download) label and graph line      | `rx = "Red"`           |
-| `tx`         | The colour of the TX (upload) label and graph line.       | `tx = "#ffffff"`       |
-| `rx_total`   | The colour of the total RX (download) label in basic mode | `rx_total = "0, 0, 0"` |
-| `tx_total`   | The colour of the total TX (upload) label in basic mode   | `tx_total = "#000"`    |
+| Config field     | Details                                                   | Examples                     |
+| ---------------- | --------------------------------------------------------- | ---------------------------- |
+| `rx_color`       | The colour of the RX (download) label and graph line      | `rx_color = "Red"`           |
+| `tx_color`       | The colour of the TX (upload) label and graph line        | `tx_color = "#ffffff"`       |
+| `rx_total_color` | The colour of the total RX (download) label in basic mode | `rx_total_color = "0, 0, 0"` |
+| `tx_total_color` | The colour of the total TX (upload) label in basic mode   | `tx_total_color = "#000"`    |
 
 #### Battery
 
 These can be set under `[styles.battery]`:
 
-| Config field     | Details                                                                  | Examples                     |
-| ---------------- | ------------------------------------------------------------------------ | ---------------------------- |
-| `high_battery`   | The colour of the battery widget bar when the battery is over 50%        | `high_battery = "Red"`       |
-| `medium_battery` | The colour of the battery widget bar when the battery between 10% to 50% | `medium_battery = "#ffffff"` |
-| `low_battery`    | The colour of the battery widget bar when the battery is under 10%       | `low_battery = "0, 0, 0"`    |
+| Config field           | Details                                                                  | Examples                           |
+| ---------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| `high_battery_color`   | The colour of the battery widget bar when the battery is over 50%        | `high_battery_color = "Red"`       |
+| `medium_battery_color` | The colour of the battery widget bar when the battery between 10% to 50% | `medium_battery_color = "#ffffff"` |
+| `low_battery_color`    | The colour of the battery widget bar when the battery is under 10%       | `low_battery_color = "0, 0, 0"`    |
 
 #### Tables
 
@@ -157,11 +157,11 @@ These can be set under `[styles.graphs]`:
 
 These can be set under `[styles.widgets]`:
 
-| Config field      | Details                                                      | Examples                                                              |
-| ----------------- | ------------------------------------------------------------ | --------------------------------------------------------------------- |
-| `border`          | The colour of the widgets' borders                           | `border = "white"`                                                    |
-| `selected_border` | The colour of a widget's borders when the widget is selected | `selected_border = "white"`                                           |
-| `widget_title`    | Text styling for a widget's title                            | `widget_title = { color = "black", bg_color = "blue", bold = true }`  |
-| `text`            | Text styling for text in general                             | `text = { color = "black", bg_color = "blue", bold = true }`          |
-| `selected_text`   | Text styling for text when representing something selected   | `selected_text = { color = "black", bg_color = "blue", bold = true }` |
-| `disabled_text`   | Text styling for text when representing something disabled   | `disabled_text = { color = "black", bg_color = "blue", bold = true }` |
+| Config field            | Details                                                      | Examples                                                              |
+| ----------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------- |
+| `border_color`          | The colour of the widgets' borders                           | `border_color = "white"`                                              |
+| `selected_border_color` | The colour of a widget's borders when the widget is selected | `selected_border_color = "white"`                                     |
+| `widget_title`          | Text styling for a widget's title                            | `widget_title = { color = "black", bg_color = "blue", bold = true }`  |
+| `text`                  | Text styling for text in general                             | `text = { color = "black", bg_color = "blue", bold = true }`          |
+| `selected_text`         | Text styling for text when representing something that is selected   | `selected_text = { color = "black", bg_color = "blue", bold = true }` |
+| `disabled_text`         | Text styling for text when representing something that is disabled   | `disabled_text = { color = "black", bg_color = "blue", bold = true }` |

@@ -6,7 +6,15 @@ use super::ColorStr;
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub(crate) struct BatteryStyle {
-    pub(crate) high_battery: Option<ColorStr>,
-    pub(crate) medium_battery: Option<ColorStr>,
-    pub(crate) low_battery: Option<ColorStr>,
+    /// The colour of the battery widget bar when the battery is over 50%.
+    #[serde(alias = "high_battery_colour")]
+    pub(crate) high_battery_color: Option<ColorStr>,
+
+    /// The colour of the battery widget bar when the battery between 10% to 50%.
+    #[serde(alias = "medium_battery_colour")]
+    pub(crate) medium_battery_color: Option<ColorStr>,
+
+    /// The colour of the battery widget bar when the battery is under 10%.
+    #[serde(alias = "low_battery_colour")]
+    pub(crate) low_battery_color: Option<ColorStr>,
 }

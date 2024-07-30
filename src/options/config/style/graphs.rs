@@ -6,8 +6,10 @@ use super::{ColorStr, TextStyleConfig};
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub(crate) struct GraphStyle {
+    /// The general colour of the parts of the graph.
     #[serde(alias = "graph_colour")]
     pub(crate) graph_color: Option<ColorStr>,
 
+    /// Text styling for graph's legend text.
     pub(crate) legend_text: Option<TextStyleConfig>,
 }
