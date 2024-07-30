@@ -1,6 +1,6 @@
 # Test basic colours
 [styles.cpu]
-all_entry_color="255, 50, 50"
+all_entry_color = "255, 50, 50"
 
 # Test tables
 [styles.graphs.legend_text]
@@ -10,4 +10,10 @@ bold = false
 
 # Test inline tables
 [styles.tables]
-headers = { color = "red", bg_color = "reset", bold = true }
+headers = { color = "red", bg_color = "black", bold = true }
+
+# Test using normal colour where inline table can also work
+[styles.widgets]
+selected_text = "#fff"
+disabled_text = "blue"
+text = "255, 0, 255"

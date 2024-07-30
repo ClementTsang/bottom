@@ -147,22 +147,22 @@
 #cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
 
 #[styles.memory]
-#ram = "light magenta"
-#cache = "light red"
-#swap = "light yellow"
-#arc = "light cyan"
-#gpus = ["light blue", "light red", "cyan", "green", "blue", "red"]
+#ram_color = "light magenta"
+#cache_color = "light red"
+#swap_color = "light yellow"
+#arc_color = "light cyan"
+#gpu_colors = ["light blue", "light red", "cyan", "green", "blue", "red"]
 
 #[styles.network]
-#rx = "light magenta"
-#tx = "light yellow"
-#rx_total = "light cyan"
-#tx_total = "light green"
+#rx_color = "light magenta"
+#tx_color = "light yellow"
+#rx_total_color = "light cyan"
+#tx_total_color = "light green"
 
 #[styles.battery]
-#high_battery = "green"
-#medium_battery = "yellow"
-#low_battery = "red"
+#high_battery_color = "green"
+#medium_battery_color = "yellow"
+#low_battery_color = "red"
 
 #[styles.tables]
 #headers = {color = "light blue"}
@@ -172,8 +172,8 @@
 #legend_text = {color = "gray"}
 
 #[styles.widgets]
-#border = "gray"
-#selected_border = "light blue"
+#border_color = "gray"
+#selected_border_color = "light blue"
 #widget_title = {color = "gray"}
 #text = {color = "gray"}
 #selected_text = {color = "black", bg_color = "light blue"}

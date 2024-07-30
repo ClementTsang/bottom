@@ -6,14 +6,19 @@ use super::ColorStr;
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub(crate) struct NetworkStyle {
-    pub(crate) rx: Option<ColorStr>,
-    pub(crate) tx: Option<ColorStr>,
+    /// The colour of the RX (download) label and graph line.
+    #[serde(alias = "rx_colour")]
+    pub(crate) rx_color: Option<ColorStr>,
 
-    /// Set the colour of the "rx total" text. This only affects
-    /// basic mode.
-    pub(crate) rx_total: Option<ColorStr>,
+    /// The colour of the TX (upload) label and graph line.
+    #[serde(alias = "tx_colour")]
+    pub(crate) tx_color: Option<ColorStr>,
 
-    /// Set the colour of the "tx total" text. This only affects
-    /// basic mode.
-    pub(crate) tx_total: Option<ColorStr>,
+    /// he colour of the total RX (download) label in basic mode.
+    #[serde(alias = "rx_total_colour")]
+    pub(crate) rx_total_color: Option<ColorStr>,
+
+    /// The colour of the total TX (upload) label in basic mode.
+    #[serde(alias = "tx_total_colour")]
+    pub(crate) tx_total_color: Option<ColorStr>,
 }
