@@ -474,6 +474,7 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://www.davlgd.fr"><img src="https://avatars.githubusercontent.com/u/1110600?v=4?s=100" width="100px;" alt="David Legrand"/><br /><sub><b>David Legrand</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=davlgd" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MichalBryxi"><img src="https://avatars.githubusercontent.com/u/847473?v=4?s=100" width="100px;" alt="Michal Bryxí"/><br /><sub><b>Michal Bryxí</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=MichalBryxi" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://mpia.de/~hviding/"><img src="https://avatars.githubusercontent.com/u/17031860?v=4?s=100" width="100px;" alt="Raphael Erik Hviding"/><br /><sub><b>Raphael Erik Hviding</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=TheSkyentist" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://cosmichorror.dev"><img src="https://avatars.githubusercontent.com/u/30302768?v=4?s=100" width="100px;" alt="CosmicHorror"/><br /><sub><b>CosmicHorror</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=CosmicHorrorDev" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
