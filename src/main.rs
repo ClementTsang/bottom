@@ -27,6 +27,7 @@ use std::{
     boxed::Box,
     io::{stderr, stdout, Write},
     panic::{self, PanicInfo},
+    path::Path,
     sync::{
         mpsc::{self, Receiver, Sender},
         Arc, Condvar, Mutex,
@@ -331,8 +332,15 @@ fn main() -> anyhow::Result<()> {
     // Read from config file.
     let config = {
         let config_path = get_config_path(args.general.config_location.as_deref());
-        get_or_create_config(config_path.as_deref())
-            .context("Unable to parse or create the config file.")?
+        get_or_create_config(config_path.as_deref()).with_context(|| {
+            format!(
+                "Unable to parse or create the config file at: {}",
+                config_path
+                    .as_deref()
+                    .unwrap_or_else(|| Path::new("<failed locating>"))
+                    .display()
+            )
+        })?
     };
 
     // Create the "app" and initialize a bunch of stuff.
