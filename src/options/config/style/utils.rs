@@ -148,7 +148,7 @@ macro_rules! set_style {
                             })?
                     );
                 }
-                TextStyleConfig::TextStyle {color, bg_color, bold} => {
+                TextStyleConfig::TextStyle {color, bg_color, bold, italics} => {
                     if let Some(fg) = &color {
                         $palette_field = $palette_field.fg(
                             crate::options::config::style::utils::str_to_colour(&fg.0)
@@ -186,6 +186,14 @@ macro_rules! set_style {
                             $palette_field = $palette_field.add_modifier(tui::style::Modifier::BOLD);
                         } else {
                             $palette_field = $palette_field.remove_modifier(tui::style::Modifier::BOLD);
+                        }
+                    }
+
+                    if let Some(italics) = &italics {
+                        if *italics {
+                            $palette_field = $palette_field.add_modifier(tui::style::Modifier::ITALIC);
+                        } else {
+                            $palette_field = $palette_field.remove_modifier(tui::style::Modifier::ITALIC);
                         }
                     }
                 }
@@ -435,16 +443,19 @@ mod test {
                     color: None,
                     bg_color: None,
                     bold: None,
+                    italics: None,
                 }),
                 text_c: Some(TextStyleConfig::TextStyle {
                     color: Some(ColorStr("magenta".into())),
                     bg_color: Some(ColorStr("255, 255, 255".into())),
                     bold: Some(true),
+                    italics: Some(false),
                 }),
                 text_d: Some(TextStyleConfig::TextStyle {
                     color: Some(ColorStr("#fff".into())),
                     bg_color: Some(ColorStr("1, 1, 1".into())),
                     bold: Some(false),
+                    italics: Some(true),
                 }),
                 text_e: None,
                 bad_color: Some(ColorStr("asdf".into())),
@@ -457,11 +468,13 @@ mod test {
                     color: Some(ColorStr("asdf".into())),
                     bg_color: None,
                     bold: None,
+                    italics: None,
                 }),
                 bad_text_b: Some(TextStyleConfig::TextStyle {
                     color: None,
                     bg_color: Some(ColorStr("asdf".into())),
                     bold: None,
+                    italics: None,
                 }),
             }
         }
@@ -562,11 +575,13 @@ mod test {
         assert_eq!(s.fg.unwrap(), Color::Magenta);
         assert_eq!(s.bg.unwrap(), Color::Rgb(255, 255, 255));
         assert!(s.add_modifier.contains(Modifier::BOLD));
+        assert!(!s.add_modifier.contains(Modifier::ITALIC));
 
         set_style!(s, &dummy.inner, text_d);
         assert_eq!(s.fg.unwrap(), Color::Rgb(255, 255, 255));
         assert_eq!(s.bg.unwrap(), Color::Rgb(1, 1, 1));
-        assert!(s.add_modifier.is_empty());
+        assert!(!s.add_modifier.contains(Modifier::BOLD));
+        assert!(s.add_modifier.contains(Modifier::ITALIC));
 
         Ok(())
     }

@@ -49,6 +49,10 @@ pub(crate) enum TextStyleConfig {
         /// Whether to make this text bolded or not. If not set,
         /// will default to built-in defaults.
         bold: Option<bool>,
+
+        /// Whether to make this text italicized or not. If not set,
+        /// will default to built-in defaults.
+        italics: Option<bool>,
     },
 }
 
