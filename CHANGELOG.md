@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1499](https://github.com/ClementTsang/bottom/pull/1499): The following arguments have changed names:
   - `--colors` is now `--theme`
 - [#1513](https://github.com/ClementTsang/bottom/pull/1513): Table headers are now bold by default.
+- [#1515](https://github.com/ClementTsang/bottom/pull/1515): Show the config path in the error message if unable to read/create a config.
 
 ### Bug Fixes
 
