@@ -15,6 +15,7 @@ pub enum CpuDefault {
 /// CPU column settings.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct CpuConfig {
     #[serde(default)]
     pub default: CpuDefault,

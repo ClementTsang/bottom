@@ -35,6 +35,7 @@ pub(crate) struct ColorStr(Cow<'static, str>);
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub(crate) enum TextStyleConfig {
     Colour(ColorStr),
     TextStyle {
