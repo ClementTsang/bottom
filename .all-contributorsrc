@@ -481,6 +481,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "CosmicHorrorDev",
+      "name": "CosmicHorror",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30302768?v=4",
+      "profile": "http://cosmichorror.dev",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
