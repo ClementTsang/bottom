@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1353](https://github.com/ClementTsang/bottom/pull/1353): Support selecting the average CPU graph as a default.
 - [#1430](https://github.com/ClementTsang/bottom/pull/1430): Support controlling the graph legend position for memory and network graph widgets.
 - [#1512](https://github.com/ClementTsang/bottom/pull/1512): Support bold text styling options.
+- [#1514](https://github.com/ClementTsang/bottom/pull/1514): Support italic text styling options.
 
 ### Changes
 
