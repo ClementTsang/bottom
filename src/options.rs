@@ -68,7 +68,7 @@ macro_rules! is_flag_enabled {
 ///
 /// For more details on this, see [dirs](https://docs.rs/dirs/latest/dirs/fn.config_dir.html)'
 /// documentation.
-pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
+fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
     const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
     if let Some(conf_loc) = override_config_path {
@@ -92,29 +92,73 @@ pub fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
     })
 }
 
+fn create_config_at_path(path: &Path) -> anyhow::Result<Config> {
+    if let Some(parent_path) = path.parent() {
+        fs::create_dir_all(parent_path)?;
+    }
+
+    let mut file = fs::File::create(path)?;
+    file.write_all(CONFIG_TEXT.as_bytes())?;
+
+    Ok(Config::default())
+}
+
 /// Get the config at `config_path`. If there is no config file at the specified
 /// path, it will try to create a new file with the default settings, and return
-/// the default config. If bottom fails to write a new config, it will silently
-/// just return the default config.
-pub fn get_or_create_config(config_path: Option<&Path>) -> OptionResult<Config> {
-    match &config_path {
+/// the default config.
+///
+/// We're going to use the following behaviour on when we'll return an error rather
+/// than just "silently" continuing on:
+/// - If the user passed in a path explicitly, then we will be loud and error out.
+/// - If the user does NOT pass in a path explicitly, then just show a warning,
+///   but continue. This is in case they do not want to write a default config file at
+///   the XDG locations, for example.
+pub fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config> {
+    let adjusted_config_path = get_config_path(config_path);
+
+    match &adjusted_config_path {
         Some(path) => {
             if let Ok(config_string) = fs::read_to_string(path) {
                 Ok(toml_edit::de::from_str(&config_string)?)
             } else {
-                if let Some(parent_path) = path.parent() {
-                    fs::create_dir_all(parent_path)?;
-                }
+                match create_config_at_path(path) {
+                    Ok(cfg) => Ok(cfg),
+                    Err(err) => {
+                        if config_path.is_some() {
+                            Err(err.context(format!(
+                                "bottom could not create a new config file at '{}'.",
+                                path.display()
+                            )))
+                        } else {
+                            indoc::eprintdoc!(
+                                "Note: bottom couldn't create a default config file at '{}', and the \
+                                application has fallen back to the default configuration.
+                                    
+                                Caused by:
+                                    {err}
+                                ",
+                                path.display()
+                            );
 
-                fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
-                Ok(Config::default())
+                            Ok(Config::default())
+                        }
+                    }
+                }
             }
         }
         None => {
             // If we somehow don't have any config path, then just assume the default config
             // but don't write to any file.
             //
-            // TODO: Maybe make this "show" an error, but don't crash.
+            // TODO: For now, just print a message to stderr indicating this. In the future,
+            // probably show in-app (too).
+
+            eprintln!(
+                "Note: bottom couldn't find a location to create or read a config file, so \
+                the application has fallen back to the default configuration. \
+                This could be for a variety of reasons, such as issues with file permissions."
+            );
+
             Ok(Config::default())
         }
     }

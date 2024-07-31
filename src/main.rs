@@ -27,7 +27,6 @@ use std::{
     boxed::Box,
     io::{stderr, stdout, Write},
     panic::{self, PanicInfo},
-    path::Path,
     sync::{
         mpsc::{self, Receiver, Sender},
         Arc, Condvar, Mutex,
@@ -36,7 +35,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use anyhow::Context;
 use app::{layout_manager::UsedWidgets, App, AppConfigFields, DataFilters};
 use crossterm::{
     event::{
@@ -49,7 +47,7 @@ use crossterm::{
 };
 use data_conversion::*;
 use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, CollectionThreadEvent};
-use options::{args, get_config_path, get_or_create_config, init_app};
+use options::{args, get_or_create_config, init_app};
 use tui::{backend::CrosstermBackend, Terminal};
 #[allow(unused_imports)]
 use utils::logging::*;
@@ -330,18 +328,8 @@ fn main() -> anyhow::Result<()> {
     }
 
     // Read from config file.
-    let config = {
-        let config_path = get_config_path(args.general.config_location.as_deref());
-        get_or_create_config(config_path.as_deref()).with_context(|| {
-            format!(
-                "Unable to parse or create the config file at: {}",
-                config_path
-                    .as_deref()
-                    .unwrap_or_else(|| Path::new("<failed locating>"))
-                    .display()
-            )
-        })?
-    };
+
+    let config = get_or_create_config(args.general.config_location.as_deref())?;
 
     // Create the "app" and initialize a bunch of stuff.
     let (mut app, widget_layout, styling) = init_app(args, config)?;
