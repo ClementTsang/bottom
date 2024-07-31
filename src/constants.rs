@@ -402,7 +402,7 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 # - "nord-light".
 #
 # This will have the lowest precedence if a custom colour palette is set,
-# or overriden if the command-line flag for a built-in theme is set.
+# or overridden if the command-line flag for a built-in theme is set.
 #theme = "default"
 
 #[styles.cpu]
@@ -429,7 +429,7 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 #low_battery_color = "red"
 
 #[styles.tables]
-#headers = {color = "light blue"}
+#headers = {color = "light blue", bold = true}
 
 #[styles.graphs]
 #graph_color = "gray"

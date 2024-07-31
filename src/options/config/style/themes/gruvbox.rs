@@ -1,4 +1,4 @@
-use tui::style::Color;
+use tui::style::{Color, Modifier};
 
 use crate::options::config::style::{utils::convert_hex_to_color, ColourPalette};
 
@@ -8,7 +8,7 @@ impl ColourPalette {
     pub(crate) fn gruvbox_palette() -> Self {
         Self {
             selected_text_style: hex!("#1d2021").bg(convert_hex_to_color("#ebdbb2").unwrap()),
-            table_header_style: hex!("#83a598"),
+            table_header_style: hex!("#83a598").add_modifier(Modifier::BOLD),
             ram_style: hex!("#8ec07c"),
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#b16286"),
@@ -68,7 +68,7 @@ impl ColourPalette {
     pub(crate) fn gruvbox_light_palette() -> Self {
         Self {
             selected_text_style: hex!("#ebdbb2").bg(convert_hex_to_color("#3c3836").unwrap()),
-            table_header_style: hex!("#076678"),
+            table_header_style: hex!("#076678").add_modifier(Modifier::BOLD),
             ram_style: hex!("#427b58"),
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#d79921"),
