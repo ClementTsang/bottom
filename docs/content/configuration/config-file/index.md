@@ -12,8 +12,8 @@ If no config file argument is given, it will automatically look for a config fil
 | Linux   | `~/.config/bottom/bottom.toml` <br/> `$XDG_CONFIG_HOME/bottom/bottom.toml`                                                             |
 | Windows | `C:\Users\<USER>\AppData\Roaming\bottom\bottom.toml`                                                                                   |
 
-Like if a path is passed with `-C`/`--config`, if a file doesn't exist at the path, bottom will automatically create a
-new, default config file at that location.
+If the config file doesn't exist at the path, bottom will automatically try to create a new config file at the location
+with default values.
 
 ## JSON Schema
 
