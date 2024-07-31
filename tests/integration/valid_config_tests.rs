@@ -82,3 +82,8 @@ fn test_styling_sanity_check() {
 fn test_styling_sanity_check_2() {
     run_and_kill(&["-C", "./tests/valid_configs/styling_2.toml"]);
 }
+
+#[test]
+fn test_filtering() {
+    run_and_kill(&["-C", "./tests/valid_configs/filtering.toml"]);
+}

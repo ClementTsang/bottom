@@ -24,6 +24,7 @@ use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
     derive(schemars::JsonSchema),
     schemars(title = "Schema for bottom's configs (nightly)")
 )]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct Config {
     pub(crate) flags: Option<FlagConfig>,
     pub(crate) styles: Option<StyleConfig>,
