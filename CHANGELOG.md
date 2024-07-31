@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.9.7] - 2023-08-26
 
-## Other
+## Bug Fixes
 
 - [#1500](https://github.com/ClementTsang/bottom/issues/1500): Fix builds for Rust 1.80.
 
