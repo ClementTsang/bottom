@@ -1,4 +1,4 @@
-use tui::style::{Color, Style};
+use tui::style::{Color, Modifier, Style};
 
 use crate::options::config::style::ColourPalette;
 
@@ -22,7 +22,7 @@ impl ColourPalette {
 
         Self {
             selected_text_style: DEFAULT_SELECTED_TEXT_STYLE,
-            table_header_style: color!(HIGHLIGHT_COLOUR),
+            table_header_style: color!(HIGHLIGHT_COLOUR).add_modifier(Modifier::BOLD),
             ram_style: color!(FIRST_COLOUR),
             #[cfg(not(target_os = "windows"))]
             cache_style: color!(FIFTH_COLOUR),
@@ -70,7 +70,7 @@ impl ColourPalette {
     pub fn default_light_mode() -> Self {
         Self {
             selected_text_style: color!(Color::White),
-            table_header_style: color!(Color::Black),
+            table_header_style: color!(Color::Black).add_modifier(Modifier::BOLD),
             ram_style: color!(Color::Blue),
             #[cfg(not(target_os = "windows"))]
             cache_style: color!(Color::LightRed),

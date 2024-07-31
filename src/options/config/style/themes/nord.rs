@@ -1,4 +1,4 @@
-use tui::style::Color;
+use tui::style::{Color, Modifier};
 
 use crate::options::config::style::{utils::convert_hex_to_color, ColourPalette};
 
@@ -8,7 +8,7 @@ impl ColourPalette {
     pub(crate) fn nord_palette() -> Self {
         Self {
             selected_text_style: hex!("#2e3440").bg(convert_hex_to_color("#88c0d0").unwrap()),
-            table_header_style: hex!("#81a1c1"),
+            table_header_style: hex!("#81a1c1").add_modifier(Modifier::BOLD),
             ram_style: hex!("#88c0d0"),
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#d8dee9"),
@@ -56,7 +56,7 @@ impl ColourPalette {
     pub(crate) fn nord_light_palette() -> Self {
         Self {
             selected_text_style: hex!("#f5f5f5").bg(convert_hex_to_color("#5e81ac").unwrap()),
-            table_header_style: hex!("#5e81ac"),
+            table_header_style: hex!("#5e81ac").add_modifier(Modifier::BOLD),
             ram_style: hex!("#81a1c1"),
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#4c566a"),
