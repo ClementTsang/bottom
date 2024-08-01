@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=bottom
-Version=0.10.0
+Version=0.10.1
 GenericName=System Monitor
 Comment=A customizable cross-platform graphical process/system monitor for the terminal.
 Exec=btm

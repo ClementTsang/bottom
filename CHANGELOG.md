@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2024-08-01
+
+### Bug Fixes
+
+- [#1526](https://github.com/ClementTsang/bottom/pull/1526): Fix `--help` description being incorrectly set for a flag.
+
 ## [0.10.0] - 2024-08-01
 
 ### Features
