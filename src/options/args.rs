@@ -95,7 +95,7 @@ pub struct GeneralArgs {
         long,
         action = ArgAction::SetTrue,
         help = "Temporarily shows the time scale in graphs.",
-        long = "Automatically hides the time scale in graphs after being shown for a brief moment when zoomed \
+        long_help = "Automatically hides the time scale in graphs after being shown for a brief moment when zoomed \
                 in/out. If time is disabled using --hide_time then this will have no effect."
     )]
     pub autohide_time: bool,
