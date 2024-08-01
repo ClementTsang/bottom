@@ -48,6 +48,7 @@ test_task:
     - name: "FreeBSD 14 Test"
       freebsd_instance:
         image_family: freebsd-14-0
+
     - name: "FreeBSD 13 Test"
       freebsd_instance:
         image_family: freebsd-13-3
@@ -67,9 +68,9 @@ test_task:
     - cargo clippy --all-targets --workspace --all-features -- -D warnings
   <<: *CLEANUP_TEMPLATE
 
-build_task:
+release_task:
   auto_cancellation: $CIRRUS_BRANCH == 'main'
-  only_if: $CIRRUS_BUILD_SOURCE == "api"
+  only_if: $CIRRUS_BUILD_SOURCE == "api" && $BTM_BUILD_RELEASE_CALLER == "ci"
   timeout_in: "30m"
   env:
     BTM_GENERATE: "true"
@@ -84,6 +85,7 @@ build_task:
       env:
         TARGET: "x86_64-unknown-freebsd"
         NAME: "x86_64-unknown-freebsd-14-0"
+
     - name: "FreeBSD 13 Build"
       alias: "freebsd_13_3_build"
       freebsd_instance:
@@ -91,6 +93,7 @@ build_task:
       env:
         TARGET: "x86_64-unknown-freebsd"
         NAME: "x86_64-unknown-freebsd-13-3"
+
     - name: "Legacy Linux (2.17)"
       alias: "linux_2_17_build"
       container:

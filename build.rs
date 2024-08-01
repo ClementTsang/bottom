@@ -84,7 +84,7 @@ fn nightly_version() {
     const ENV_KEY: &str = "BTM_BUILD_RELEASE_CALLER";
 
     match env::var_os(ENV_KEY) {
-        Some(var) if !var.is_empty() && var == "nightly" => {
+        Some(var) if !var.is_empty() && var == "ci" => {
             let version = env!("CARGO_PKG_VERSION");
 
             if let Some(hash) = extract_sha(option_env!("CIRRUS_CHANGE_IN_REPO")) {

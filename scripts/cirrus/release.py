@@ -34,7 +34,9 @@ def make_query_request(key: str, branch: str, build_type: str):
 
     # Dumb but if it works...
     config_override = (
-        Path(".cirrus.yml").read_text().replace("# -PLACEHOLDER FOR CI-", 'BTM_BUILD_RELEASE_CALLER: "nightly"')
+        Path(".cirrus.yml")
+        .read_text()
+        .replace("# -PLACEHOLDER FOR CI-", 'BTM_BUILD_RELEASE_CALLER: "ci"')
     )
     query = """
         mutation CreateCirrusCIBuild (
@@ -43,7 +45,7 @@ def make_query_request(key: str, branch: str, build_type: str):
             $mutation_id: String!,
             $config_override: String,
         ) {
-            createBuild(
+            createBuild (
                 input: {
                     repositoryId: $repo,
                     branch: $branch,
@@ -193,7 +195,11 @@ def main():
                         # Sleep for a minute if something went wrong, just in case.
                         sleep(60)
                 else:
-                    print("Build failed to complete after {} minutes, bailing.".format(MINUTES))
+                    print(
+                        "Build failed to complete after {} minutes, bailing.".format(
+                            MINUTES
+                        )
+                    )
 
         if not success:
             exit(2)
