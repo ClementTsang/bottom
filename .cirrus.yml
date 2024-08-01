@@ -42,12 +42,13 @@ env:
 test_task:
   auto_cancellation: "false" # We set this to false to prevent nightly builds from affecting this
   only_if: $CIRRUS_BUILD_SOURCE != "api" && ($CIRRUS_BRANCH == "main" || $CIRRUS_PR != "")
-  timeout_in: "20m"
+  timeout_in: "15m"
   skip: "!changesInclude('.cargo/**', '.cirrus.yml', 'sample_configs/**', 'src/**', 'tests/**', 'build.rs', 'Cargo.lock', 'Cargo.toml', 'clippy.toml', 'rustfmt.toml')"
   matrix:
     - name: "FreeBSD 14 Test"
       freebsd_instance:
         image_family: freebsd-14-0
+
     - name: "FreeBSD 13 Test"
       freebsd_instance:
         image_family: freebsd-13-3
@@ -67,9 +68,9 @@ test_task:
     - cargo clippy --all-targets --workspace --all-features -- -D warnings
   <<: *CLEANUP_TEMPLATE
 
-build_task:
+release_task:
   auto_cancellation: "false"
-  only_if: $CIRRUS_BUILD_SOURCE == "api"
+  only_if: $CIRRUS_BUILD_SOURCE == "api" && $BTM_BUILD_RELEASE_CALLER == "ci"
   timeout_in: "30m"
   env:
     BTM_GENERATE: "true"
@@ -84,6 +85,7 @@ build_task:
       env:
         TARGET: "x86_64-unknown-freebsd"
         NAME: "x86_64-unknown-freebsd-14-0"
+
     - name: "FreeBSD 13 Build"
       alias: "freebsd_13_3_build"
       freebsd_instance:
@@ -91,6 +93,7 @@ build_task:
       env:
         TARGET: "x86_64-unknown-freebsd"
         NAME: "x86_64-unknown-freebsd-13-3"
+
     - name: "Legacy Linux (2.17)"
       alias: "linux_2_17_build"
       container:

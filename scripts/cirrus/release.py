@@ -34,7 +34,9 @@ def make_query_request(key: str, branch: str, build_type: str):
 
     # Dumb but if it works...
     config_override = (
-        Path(".cirrus.yml").read_text().replace("# -PLACEHOLDER FOR CI-", 'BTM_BUILD_RELEASE_CALLER: "nightly"')
+        Path(".cirrus.yml")
+        .read_text()
+        .replace("# -PLACEHOLDER FOR CI-", 'BTM_BUILD_RELEASE_CALLER: "ci"')
     )
     query = """
         mutation CreateCirrusCIBuild (
@@ -43,7 +45,7 @@ def make_query_request(key: str, branch: str, build_type: str):
             $mutation_id: String!,
             $config_override: String,
         ) {
-            createBuild(
+            createBuild (
                 input: {
                     repositoryId: $repo,
                     branch: $branch,
@@ -108,7 +110,7 @@ def try_download(build_id: str, dl_path: Path):
     for task, file in TASKS:
         url = DL_URL_TEMPLATE % (build_id, task, file)
         out = os.path.join(dl_path, file)
-        print("Downloading {} to {}".format(file, out))
+        print(f"Downloading {file} to {out}")
         urlretrieve(url, out)
 
 
@@ -140,7 +142,7 @@ def main():
         for i in range(MAX_ATTEMPTS):
             if success:
                 break
-            print("Attempt {}:".format(i + 1))
+            print(f"Attempt {i + 1}:")
 
             with urlopen(make_query_request(key, branch, build_type)) as response:
                 response = json.load(response)
@@ -151,14 +153,14 @@ def main():
 
                 try:
                     build_id = response["data"]["createBuild"]["build"]["id"]
-                    print("Created build job {}.".format(build_id))
+                    print(f"Created build job {build_id}.")
                 except KeyError:
                     print("There was an issue with creating a build job.")
                     continue
 
                 # First, sleep 4 minutes, as it's unlikely it'll finish before then.
                 SLEEP_MINUTES = 4
-                print("Sleeping for {} minutes.".format(SLEEP_MINUTES))
+                print(f"Sleeping for {SLEEP_MINUTES} minutes.")
                 sleep(60 * SLEEP_MINUTES)
                 print("Mandatory nap over. Starting to check for completion.")
 
@@ -193,7 +195,7 @@ def main():
                         # Sleep for a minute if something went wrong, just in case.
                         sleep(60)
                 else:
-                    print("Build failed to complete after {} minutes, bailing.".format(MINUTES))
+                    print(f"Build failed to complete after {MINUTES} minutes, bailing.")
 
         if not success:
             exit(2)

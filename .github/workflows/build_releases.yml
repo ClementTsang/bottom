@@ -296,7 +296,7 @@ jobs:
             raw=$(git branch -r --contains '${{ github.ref_name }}');
             BRANCH=${raw##*/};
           fi
-          python ./scripts/cirrus/build.py "$BRANCH" "release/" "${{ inputs.caller }}"
+          python ./scripts/cirrus/release.py "$BRANCH" "release/" "${{ inputs.caller }}"
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@v1
