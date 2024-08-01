@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1276](https://github.com/ClementTsang/bottom/pull/1276): Add GPU process info.
 - [#1353](https://github.com/ClementTsang/bottom/pull/1353): Support selecting the average CPU graph as a default.
+- [#1373](https://github.com/ClementTsang/bottom/pull/1373): Add support for bcachefs in disk widget.
 - [#1430](https://github.com/ClementTsang/bottom/pull/1430): Support controlling the graph legend position for memory and network graph widgets.
 - [#1512](https://github.com/ClementTsang/bottom/pull/1512): Support bold text styling options.
 - [#1514](https://github.com/ClementTsang/bottom/pull/1514): Support italic text styling options.
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1441](https://github.com/ClementTsang/bottom/pull/1441): The following config fields have changed names:
   - `expanded_on_startup` is now `expanded`.
   - `left_legend` is now `cpu_left_legend`.
+- [#1458](https://github.com/ClementTsang/bottom/pull/1458): Fix a bug with `--hide_table_gap` with the battery widget.
 - [#1472](https://github.com/ClementTsang/bottom/pull/1472): The following arguments have changed names:
   - `--mem_as_value` is now `process_memory_as_value`.
 - [#1472](https://github.com/ClementTsang/bottom/pull/1472): The following config fields have changed names:
@@ -46,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1314](https://github.com/ClementTsang/bottom/pull/1314): Fix fat32 mounts not showing up in macOS.
 - [#1355](https://github.com/ClementTsang/bottom/pull/1355): Reduce chances of non-D0 devices waking up due to temperature checks on Linux.
 - [#1410](https://github.com/ClementTsang/bottom/pull/1410): Fix uptime calculation for Linux.
+
+### Other
+
+- [#1394](https://github.com/ClementTsang/bottom/pull/1394): Add JSON Schema support.
 
 ## [0.9.7] - 2024-07-26
 
