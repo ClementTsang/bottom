@@ -30,7 +30,7 @@ DL_URL_TEMPLATE = "https://api.cirrus-ci.com/v1/artifact/build/%s/%s/binaries/%s
 
 def make_query_request(key: str, branch: str, build_type: str):
     print("Creating query request.")
-    mutation_id = f"Cirrus CI Build {build_type}-{branch}-{int(time())}"
+    mutation_id = "Cirrus CI Build {}-{}-{}".format(build_type, branch, int(time()))
 
     # Dumb but if it works...
     config_override = (
@@ -70,7 +70,7 @@ def make_query_request(key: str, branch: str, build_type: str):
     data = json.dumps(data).encode()
 
     request = Request(URL, data=data, method="POST")
-    request.add_header(f"Authorization", "Bearer {key}")
+    request.add_header("Authorization", "Bearer {}".format(key))
 
     return request
 
@@ -91,7 +91,7 @@ def check_build_status(key: str, id: str) -> Optional[str]:
     data = json.dumps(data).encode()
 
     request = Request(URL, data=data, method="POST")
-    request.add_header(f"Authorization", "Bearer {key}")
+    request.add_header("Authorization", "Bearer {}".format(key))
     with urlopen(request) as response:
         response = json.load(response)
         if response.get("errors") is not None:
@@ -110,7 +110,7 @@ def try_download(build_id: str, dl_path: Path):
     for task, file in TASKS:
         url = DL_URL_TEMPLATE % (build_id, task, file)
         out = os.path.join(dl_path, file)
-        print(f"Downloading {file} to {out}")
+        print("Downloading {} to {}".format(file, out))
         urlretrieve(url, out)
 
 
@@ -142,7 +142,7 @@ def main():
         for i in range(MAX_ATTEMPTS):
             if success:
                 break
-            print(f"Attempt {i + 1}:")
+            print("Attempt {}:".format(i + 1))
 
             with urlopen(make_query_request(key, branch, build_type)) as response:
                 response = json.load(response)
@@ -153,14 +153,14 @@ def main():
 
                 try:
                     build_id = response["data"]["createBuild"]["build"]["id"]
-                    print(f"Created build job {build_id}.")
+                    print("Created build job {}.".format(build_id))
                 except KeyError:
                     print("There was an issue with creating a build job.")
                     continue
 
                 # First, sleep 4 minutes, as it's unlikely it'll finish before then.
                 SLEEP_MINUTES = 4
-                print(f"Sleeping for {SLEEP_MINUTES} minutes.")
+                print("Sleeping for {} minutes.".format(SLEEP_MINUTES))
                 sleep(60 * SLEEP_MINUTES)
                 print("Mandatory nap over. Starting to check for completion.")
 
@@ -179,7 +179,7 @@ def main():
                             success = True
                             break
                         else:
-                            print(f"Build status: {(status or 'unknown')}")
+                            print("Build status: {}".format(status or "unknown"))
                             if status == "ABORTED":
                                 print("Build aborted, bailing.")
                                 break
@@ -195,7 +195,11 @@ def main():
                         # Sleep for a minute if something went wrong, just in case.
                         sleep(60)
                 else:
-                    print(f"Build failed to complete after {MINUTES} minutes, bailing.")
+                    print(
+                        "Build failed to complete after {} minutes, bailing.".format(
+                            MINUTES
+                        )
+                    )
 
         if not success:
             exit(2)
