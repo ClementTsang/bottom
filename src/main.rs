@@ -308,6 +308,8 @@ fn generate_schema() -> anyhow::Result<()> {
 }
 
 fn main() -> anyhow::Result<()> {
+    // TODO: If there is any panic in any thread, send a cancellation token (or similar) to shut down everything.
+
     // let _profiler = dhat::Profiler::new_heap();
 
     let args = args::get_args();
@@ -328,7 +330,6 @@ fn main() -> anyhow::Result<()> {
     }
 
     // Read from config file.
-
     let config = get_or_create_config(args.general.config_location.as_deref())?;
 
     // Create the "app" and initialize a bunch of stuff.
