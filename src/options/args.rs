@@ -586,6 +586,8 @@ pub(crate) fn build_cmd() -> Command {
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashSet;
+
     use super::*;
 
     #[test]
@@ -596,12 +598,37 @@ mod test {
     #[test]
     fn no_default_help_heading() {
         let mut cmd = build_cmd();
-        let help_str = cmd.render_help();
 
+        let help_str = cmd.render_help();
         assert!(
             !help_str.to_string().contains("\nOptions:\n"),
             "the default 'Options' heading should not exist; if it does then an argument is \
             missing a help heading."
         );
+
+        let long_help_str = cmd.render_long_help();
+        assert!(
+            !long_help_str.to_string().contains("\nOptions:\n"),
+            "the default 'Options' heading should not exist; if it does then an argument is \
+            missing a help heading."
+        );
+    }
+
+    #[test]
+    fn catch_incorrect_long_args() {
+        // Set this to allow certain ones through if needed.
+        let allow_list: HashSet<&str> = vec![].into_iter().collect();
+        let cmd = build_cmd();
+
+        for opts in cmd.get_opts() {
+            let long_flag = opts.get_long().unwrap();
+
+            if !allow_list.contains(long_flag) {
+                assert!(
+                    long_flag.len() < 30,
+                    "the long help arg '{long_flag}' might be set wrong, please take a look!"
+                );
+            }
+        }
     }
 }
