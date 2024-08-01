@@ -175,16 +175,16 @@ A `.deb` file is provided on each [stable release](https://github.com/ClementTsa
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.7/bottom_0.9.7_amd64.deb
-sudo dpkg -i bottom_0.9.7_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.0/bottom_0.10.0_amd64.deb
+sudo dpkg -i bottom_0.10.0_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.7/bottom_0.9.7_arm64.deb
-sudo dpkg -i bottom_0.9.7_arm64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.0/bottom_0.10.0_arm64.deb
+sudo dpkg -i bottom_0.10.0_arm64.deb
 
 # ARM
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.7/bottom_0.9.7_armhf.deb
-sudo dpkg -i bottom_0.9.7_armhf.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.0/bottom_0.10.0_armhf.deb
+sudo dpkg -i bottom_0.10.0_armhf.deb
 ```
 
 ### Exherbo Linux
@@ -210,12 +210,12 @@ something like:
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.7/bottom-0.9.7-1.x86_64.rpm
-sudo rpm -i bottom-0.9.7-1.x86_64.rpm
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.0/bottom-0.10.0-1.x86_64.rpm
+sudo rpm -i bottom-0.10.0-1.x86_64.rpm
 
 # Nightly x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/nightly/bottom-0.9.7-1.x86_64.rpm
-sudo rpm -i bottom-0.9.7-1.x86_64.rpm
+curl -LO https://github.com/ClementTsang/bottom/releases/download/nightly/bottom-0.10.0-1.x86_64.rpm
+sudo rpm -i bottom-0.10.0-1.x86_64.rpm
 ```
 
 ### Gentoo
@@ -326,8 +326,8 @@ to do so using the most recent version of stable Rust, which is how the binaries
 rustup update stable
 
 # Option 1 - Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.9.7.tar.gz
-tar -xzvf 0.9.7.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.10.0.tar.gz
+tar -xzvf 0.10.0.tar.gz
 cargo install --path . --locked
 
 # Option 2 - Clone the repo and install manually
