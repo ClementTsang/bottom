@@ -8,7 +8,7 @@ You can configure flags by putting them in `[flags]` table. Example:
 
 ```toml
 [flags]
-color = "nord-light"
+hide_avg_cpu = true
 ```
 
 Most of the [command line flags](../command-line-options.md) have config file equivalents to avoid having to type them out
