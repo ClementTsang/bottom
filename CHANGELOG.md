@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
-- [#1526](https://github.com/ClementTsang/bottom/pull/1526): Fix `--help` description being incorrectly set for a flag.
+- [#1526](https://github.com/ClementTsang/bottom/pull/1526): Fix `--help` description being incorrectly set for a flag, breaking the output.
 
 ## [0.10.0] - 2024-08-01
 
