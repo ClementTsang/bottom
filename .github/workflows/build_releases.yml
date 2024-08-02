@@ -383,7 +383,7 @@ jobs:
         env:
           BTM_GENERATE: true
         run: |
-          cargo install cargo-deb --version 2.2.0 --locked
+          cargo install cargo-deb --version 2.5.1 --locked
           cargo deb --no-build --target ${{ matrix.info.target }}
           cp ./target/${{ matrix.info.target }}/debian/bottom_*.deb .
 
