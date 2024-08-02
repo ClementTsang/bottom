@@ -64,7 +64,7 @@ jobs:
       - name: Install cargo-llvm-cov
         run: |
           rustup component add llvm-tools-preview
-          cargo install cargo-llvm-cov --version 0.6.10 --locked
+          cargo install cargo-llvm-cov --version 0.6.11 --locked
 
       - name: Generate code coverage
         run: |
