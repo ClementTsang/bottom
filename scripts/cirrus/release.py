@@ -80,8 +80,8 @@ def check_build_status(key: str, id: str) -> Optional[str]:
         query BuildStatus($id: ID!) {
             build(id: $id) {
                 status
+            }
         }
-    }
     """
     params = {
         "id": id,
@@ -100,6 +100,8 @@ def check_build_status(key: str, id: str) -> Optional[str]:
 
         try:
             status = response["data"]["build"]["status"]
+            tasks = response["data"]["build"]["tasks"]
+            print(tasks)
             return status
         except KeyError:
             print("There was an issue with creating a build job.")
