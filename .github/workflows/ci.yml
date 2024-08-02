@@ -9,7 +9,7 @@
 #
 # Supported platforms run the following tasks:
 # - cargo fmt
-# - cargo test (built/test in separate steps)
+# - cargo nextest + coverage
 # - cargo clippy (apparently faster to do it after the build/test)
 #
 # Unsupported platforms run the following tasks:
@@ -106,21 +106,27 @@ jobs:
       - name: Check cargo fmt
         run: cargo fmt --all -- --check
 
-      - name: Build tests
+      - name: Install nextest
         uses: ClementTsang/cargo-action@v0.0.5
         with:
-          command: test
-          args: --no-run --locked ${{ matrix.features }} --target=${{ matrix.info.target }}
+          command: install cargo-nextest
+          args: --version 0.9.72 --locked
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.5
-        env:
-          RUST_BACKTRACE: full
+
+      # - name: Install cargo-llvm-cov
+      #   uses: ClementTsang/cargo-action@v0.0.5
+      #   with:
+      #     command: install cargo-llvm-cov
+      #     args: --version 0.6.11 --locked
+      #     use-cross: ${{ matrix.info.cross }}
+      #     cross-version: 0.2.5
 
       - name: Run tests
         uses: ClementTsang/cargo-action@v0.0.5
         with:
-          command: test
-          args: --no-fail-fast ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
+          command: nextest run
+          args: --no-fail-fast ${{ matrix.features }} --target=${{ matrix.info.target }} --no-capture --hide-progress-bar
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.5
         env:
@@ -137,8 +143,8 @@ jobs:
           RUST_BACKTRACE: full
 
   # Try running cargo build on all other platforms.
-  # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
-  # I would also put android there.
+  # TODO: Maybe some of these should be allowed to fail? If so,
+  # I guess we can add back the "unofficial" MSRV; I would also put android there.
   other-check:
     needs: pre-job
     runs-on: ${{ matrix.info.os }}
