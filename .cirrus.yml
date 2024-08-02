@@ -43,7 +43,7 @@ test_task:
   auto_cancellation: "false" # We set this to false to prevent nightly builds from affecting this
   only_if: $CIRRUS_BUILD_SOURCE != "api" && ($CIRRUS_BRANCH == "main" || $CIRRUS_PR != "")
   timeout_in: "15m"
-  skip: "!changesInclude('.cargo/**', '.cirrus.yml', 'sample_configs/**', 'src/**', 'tests/**', 'build.rs', 'Cargo.lock', 'Cargo.toml', 'clippy.toml', 'rustfmt.toml')"
+  skip: "!changesInclude('.cargo/**', 'sample_configs/**', 'scripts/cirrus/**', 'src/**', 'tests/**', '.cirrus.yml', 'build.rs', 'Cargo.lock', 'Cargo.toml', 'clippy.toml', 'rustfmt.toml')"
   matrix:
     - name: "FreeBSD 14 Test"
       freebsd_instance:
