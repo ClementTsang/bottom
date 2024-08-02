@@ -222,13 +222,15 @@ def main():
 
             if tasks and mutation_id:
                 print("Killing previous tasks first...")
+
                 if stop_build_tasks(key, tasks, mutation_id):
-                    print("Previous tasks successfully stopped.")
+                    print("All previous tasks successfully stopped.")
                 else:
                     print(
-                        "Not all previous tasks stopped. This isn't a problem, but it does mean wasted resources."
+                        "Not all previous tasks stopped. This isn't a problem but it is a waste."
                     )
 
+            tasks = []
             mutation_id = "Cirrus CI Build {}-{}-{}".format(
                 build_type, branch, int(time())
             )
@@ -248,7 +250,7 @@ def main():
                     print("There was an issue with creating a build job.")
                     continue
 
-                # First, sleep 4 minutes total, as it's unlikely it'll finish before then.
+                # First, sleep X minutes total, as it's unlikely it'll finish before then.
                 SLEEP_MINUTES = 4
                 print(f"Sleeping for {SLEEP_MINUTES} minutes.")
 
@@ -262,9 +264,7 @@ def main():
                 SLEEP_SEC = 30
                 TRIES = int(MINUTES * (60 / SLEEP_SEC))  # Works out to 20 tries.
 
-                print(
-                    f"Mandatory nap over. Starting to check for completion. Will check for {MINUTES} minutes."
-                )
+                print(f"Mandatory nap over. Checking for completion for {MINUTES} min.")
 
                 for attempt in range(TRIES):
                     print("Checking...")
