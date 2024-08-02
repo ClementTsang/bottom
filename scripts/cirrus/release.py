@@ -28,9 +28,8 @@ URL = "https://api.cirrus-ci.com/graphql"
 DL_URL_TEMPLATE = "https://api.cirrus-ci.com/v1/artifact/build/%s/%s/binaries/%s"
 
 
-def make_query_request(key: str, branch: str, build_type: str):
+def make_query_request(key: str, branch: str, mutation_id: str):
     print("Creating query request.")
-    mutation_id = "Cirrus CI Build {}-{}-{}".format(build_type, branch, int(time()))
 
     # Dumb but if it works...
     config_override = (
@@ -38,6 +37,7 @@ def make_query_request(key: str, branch: str, build_type: str):
         .read_text()
         .replace("# -PLACEHOLDER FOR CI-", 'BTM_BUILD_RELEASE_CALLER: "ci"')
     )
+
     query = """
         mutation CreateCirrusCIBuild (
             $repo: ID!,
@@ -60,12 +60,14 @@ def make_query_request(key: str, branch: str, build_type: str):
             }
         }
     """
+
     params = {
         "repo": "6646638922956800",
         "branch": branch,
         "mutation_id": mutation_id,
         "config_override": dedent(config_override),
     }
+
     data = {"query": dedent(query), "variables": params}
     data = json.dumps(data).encode()
 
@@ -75,7 +77,7 @@ def make_query_request(key: str, branch: str, build_type: str):
     return request
 
 
-def check_build_status(key: str, id: str) -> Optional[str]:
+def check_build_status(key: str, build_id: str) -> Optional[str]:
     query = """
         query BuildStatus($id: ID!) {
             build(id: $id) {
@@ -83,8 +85,9 @@ def check_build_status(key: str, id: str) -> Optional[str]:
             }
         }
     """
+
     params = {
-        "id": id,
+        "id": build_id,
     }
 
     data = {"query": dedent(query), "variables": params}
@@ -100,12 +103,80 @@ def check_build_status(key: str, id: str) -> Optional[str]:
 
         try:
             status = response["data"]["build"]["status"]
-            tasks = response["data"]["build"]["tasks"]
-            print(tasks)
             return status
         except KeyError:
-            print("There was an issue with creating a build job.")
+            print("There was an issue with checking the build status.")
             return None
+
+
+def check_build_tasks(key: str, build_id: str) -> Optional[List[str]]:
+    query = """
+        query Build($id:ID!) {
+            build(id:$id){
+                tasks {
+                    id
+                }
+            }
+        }
+    """
+
+    params = {
+        "id": build_id,
+    }
+
+    data = {"query": dedent(query), "variables": params}
+    data = json.dumps(data).encode()
+
+    request = Request(URL, data=data, method="POST")
+    request.add_header("Authorization", "Bearer {}".format(key))
+    with urlopen(request) as response:
+        response = json.load(response)
+
+        if response.get("errors") is not None:
+            print("There was an error in the returned response.")
+            return None
+
+        try:
+            tasks = [task["id"] for task in response["data"]["build"]["tasks"]]
+            return tasks
+        except KeyError:
+            print("There was an issue with getting the list of task ids.")
+            return None
+
+
+def stop_build_tasks(key: str, task_ids: List[str], mutation_id: str) -> bool:
+    query = """
+        mutation StopCirrusCiTasks (
+            $task_ids: [ID!]!,
+            $mutation_id: String!,
+        ) {
+                batchAbort (
+                input: {
+                        taskIds: $task_ids,
+                        clientMutationId: $mutation_id
+                }
+            ) {
+                tasks {
+                    id
+                }
+            }
+        }
+    """
+
+    params = {
+        "task_ids": task_ids,
+        "mutation_id": mutation_id,
+    }
+
+    data = {"query": dedent(query), "variables": params}
+    data = json.dumps(data).encode()
+
+    request = Request(URL, data=data, method="POST")
+    request.add_header("Authorization", "Bearer {}".format(key))
+
+    with urlopen(request) as response:
+        response = json.load(response)
+        return len(response["data"]["batchAbort"]["tasks"]) == len(task_ids)
 
 
 def try_download(build_id: str, dl_path: Path):
@@ -140,17 +211,34 @@ def main():
         # Try up to three times
         MAX_ATTEMPTS = 5
         success = False
+        tasks = []
+        mutation_id = None
 
         for i in range(MAX_ATTEMPTS):
             if success:
                 break
+
             print(f"Attempt {i + 1}:")
 
-            with urlopen(make_query_request(key, branch, build_type)) as response:
-                response = json.load(response)
+            if tasks and mutation_id:
+                print("Killing previous tasks first...")
+                if stop_build_tasks(key, tasks, mutation_id):
+                    print("Previous tasks successfully stopped.")
+                else:
+                    print(
+                        "Not all previous tasks stopped. This isn't a problem, but it does mean wasted resources."
+                    )
 
-                if response.get("errors") is not None:
-                    print("There was an error in the returned response.")
+            mutation_id = "Cirrus CI Build {}-{}-{}".format(
+                build_type, branch, int(time())
+            )
+
+            with urlopen(make_query_request(key, branch, mutation_id)) as response:
+                response = json.load(response)
+                errors = response.get("errors")
+
+                if errors is not None:
+                    print(f"There was an error in the returned response: {str(errors)}")
                     continue
 
                 try:
@@ -160,15 +248,23 @@ def main():
                     print("There was an issue with creating a build job.")
                     continue
 
-                # First, sleep 4 minutes, as it's unlikely it'll finish before then.
+                # First, sleep 4 minutes total, as it's unlikely it'll finish before then.
                 SLEEP_MINUTES = 4
                 print(f"Sleeping for {SLEEP_MINUTES} minutes.")
-                sleep(60 * SLEEP_MINUTES)
-                print("Mandatory nap over. Starting to check for completion.")
+
+                # Sleep and check for tasks out every 10 seconds
+                for _ in range(SLEEP_MINUTES * 6):
+                    sleep(10)
+                    if not tasks:
+                        tasks = check_build_tasks(key, build_id)
 
                 MINUTES = 10
                 SLEEP_SEC = 30
                 TRIES = int(MINUTES * (60 / SLEEP_SEC))  # Works out to 20 tries.
+
+                print(
+                    f"Mandatory nap over. Starting to check for completion. Will check for {MINUTES} minutes."
+                )
 
                 for attempt in range(TRIES):
                     print("Checking...")
@@ -181,7 +277,8 @@ def main():
                             success = True
                             break
                         else:
-                            print("Build status: {}".format(status or "unknown"))
+                            print(f"Build status: {(status or 'unknown')}")
+
                             if status == "ABORTED":
                                 print("Build aborted, bailing.")
                                 break
