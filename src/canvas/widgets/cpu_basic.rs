@@ -20,7 +20,7 @@ use crate::{
 impl Painter {
     /// Inspired by htop.
     pub fn draw_basic_cpu(
-        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_>, app_state: &mut App, mut draw_loc: Rect, widget_id: u64,
     ) {
         // Skip the first element, it's the "all" element
         if app_state.converted_data.cpu_data.len() > 1 {
@@ -45,6 +45,32 @@ impl Painter {
                 );
             }
 
+            let (cpu_data, avg_data) =
+                maybe_split_avg(cpu_data, app_state.app_config_fields.dedicated_average_row);
+
+            if let Some(avg) = avg_data {
+                let (outer, inner, ratio, style) = self.cpu_info(&avg);
+                let [cores_loc, mut avg_loc] =
+                    Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(draw_loc);
+
+                // The cores section all have horizontal margin, so to line up with the cores we
+                // need to add some margin ourselves.
+                avg_loc.x += 1;
+                avg_loc.width -= 2;
+
+                f.render_widget(
+                    PipeGauge::default()
+                        .gauge_style(style)
+                        .label_style(style)
+                        .inner_label(inner)
+                        .start_label(outer)
+                        .ratio(ratio),
+                    avg_loc,
+                );
+
+                draw_loc = cores_loc;
+            }
+
             if draw_loc.height > 0 {
                 let remaining_height = usize::from(draw_loc.height);
                 const REQUIRED_COLUMNS: usize = 4;
@@ -56,27 +82,7 @@ impl Painter {
                     .direction(Direction::Horizontal)
                     .split(draw_loc);
 
-                let mut gauge_info = cpu_data.iter().map(|cpu| match cpu {
-                    CpuWidgetData::All => unreachable!(),
-                    CpuWidgetData::Entry {
-                        data_type,
-                        data: _,
-                        last_entry,
-                    } => {
-                        let (outer, style) = match data_type {
-                            CpuDataType::Avg => ("AVG".to_string(), self.colours.avg_cpu_colour),
-                            CpuDataType::Cpu(index) => (
-                                format!("{index:<3}",),
-                                self.colours.cpu_colour_styles
-                                    [index % self.colours.cpu_colour_styles.len()],
-                            ),
-                        };
-                        let inner = format!("{:>3.0}%", last_entry.round());
-                        let ratio = last_entry / 100.0;
-
-                        (outer, inner, ratio, style)
-                    }
-                });
+                let mut gauge_info = cpu_data.iter().map(|cpu| self.cpu_info(cpu));
 
                 // Very ugly way to sync the gauge limit across all gauges.
                 let hide_parts = columns
@@ -138,4 +144,64 @@ impl Painter {
             }
         }
     }
+
+    fn cpu_info(&self, cpu: &CpuWidgetData) -> (String, String, f64, tui::style::Style) {
+        let CpuWidgetData::Entry {
+            data_type,
+            last_entry,
+            ..
+        } = cpu
+        else {
+            unreachable!()
+        };
+
+        let (outer, style) = match data_type {
+            CpuDataType::Avg => ("AVG".to_string(), self.colours.avg_cpu_colour),
+            CpuDataType::Cpu(index) => (
+                format!("{index:<3}",),
+                self.colours.cpu_colour_styles[index % self.colours.cpu_colour_styles.len()],
+            ),
+        };
+        let inner = format!("{:>3.0}%", last_entry.round());
+        let ratio = last_entry / 100.0;
+
+        (outer, inner, ratio, style)
+    }
+}
+
+fn maybe_split_avg(
+    data: &[CpuWidgetData], separate_avg: bool,
+) -> (Vec<CpuWidgetData>, Option<CpuWidgetData>) {
+    let mut cpu_data = vec![];
+    let mut avg_data = None;
+
+    for cpu in data {
+        let CpuWidgetData::Entry {
+            data_type,
+            data,
+            last_entry,
+        } = cpu
+        else {
+            unreachable!()
+        };
+
+        match data_type {
+            CpuDataType::Avg if separate_avg => {
+                avg_data = Some(CpuWidgetData::Entry {
+                    data_type: *data_type,
+                    data: data.clone(),
+                    last_entry: *last_entry,
+                });
+            }
+            _ => {
+                cpu_data.push(CpuWidgetData::Entry {
+                    data_type: *data_type,
+                    data: data.clone(),
+                    last_entry: *last_entry,
+                });
+            }
+        }
+    }
+
+    (cpu_data, avg_data)
 }

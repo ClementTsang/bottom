@@ -246,6 +246,12 @@
             "null"
           ]
         },
+        "average_cpu_row": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "basic": {
           "type": [
             "boolean",
