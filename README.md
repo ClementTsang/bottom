@@ -44,8 +44,7 @@
   - [Scoop](#scoop)
   - [winget](#winget)
   - [Windows installer](#windows-installer)
-  - [Manual installation](#manual-installation)
-  - [Binaries](#binaries)
+  - [Pre-built binaries](#pre-built-binaries)
     - [Auto-completion](#auto-completion)
 - [Usage](#usage)
 - [Configuration](#configuration)
@@ -132,7 +131,7 @@ For more details on unsupported platforms and known problems, check out [the doc
 
 ### Cargo
 
-Installation via cargo can be done by installing the [`bottom`](https://crates.io/crates/bottom) crate:
+Installation via `cargo` can be done by installing the [`bottom`](https://crates.io/crates/bottom) crate:
 
 ```bash
 # You might need to update the stable version of Rust first.
@@ -150,6 +149,31 @@ cargo +stable install bottom --locked
 # locked crate versions in Cargo.lock. However, be
 # aware that this may cause problems with dependencies.
 cargo install bottom
+```
+
+Alternatively, if you can use `cargo install` using the repo as the source.
+
+```bash
+# You might need to update the stable version of Rust first.
+# Other versions might work, but this is not guaranteed.
+rustup update stable
+
+# Option 1 - Download an archive from releases and install
+curl -LO https://github.com/ClementTsang/bottom/archive/0.10.1.tar.gz
+tar -xzvf 0.10.1.tar.gz
+cargo install --path . --locked
+
+# Option 2 - Manually clone the repo and install
+git clone https://github.com/ClementTsang/bottom
+cd bottom
+cargo install --path . --locked
+
+# Option 3 - Install using cargo with the repo as the source
+cargo install --git https://github.com/ClementTsang/bottom --locked
+
+# You can also pass in the target-cpu=native flag for
+# better CPU-specific optimizations. For example:
+RUSTFLAGS="-C target-cpu=native" cargo install --path . --locked
 ```
 
 ### Arch Linux
@@ -205,16 +229,11 @@ sudo dnf copr enable atim/bottom -y
 sudo dnf install bottom
 ```
 
-`.rpm` files are also generated (starting from 0.9.3) for x86. If you wish to install this way, then you can do
-something like:
+`.rpm` files are also generated for x86 in the [releases](https://github.com/ClementTsang/bottom/releases) page.
+For example:
 
 ```bash
-# x86-64
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.1/bottom-0.10.1-1.x86_64.rpm
-sudo rpm -i bottom-0.10.1-1.x86_64.rpm
-
-# Nightly x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/nightly/bottom-0.10.1-1.x86_64.rpm
 sudo rpm -i bottom-0.10.1-1.x86_64.rpm
 ```
 
@@ -315,37 +334,9 @@ You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 You can also manually install bottom as a Windows program by going to the [latest release](https://github.com/ClementTsang/bottom/releases/latest)
 and installing via the `.msi` file.
 
-### Manual installation
+### Pre-built binaries
 
-There are a few ways to go about doing this manually. Note that you probably want
-to do so using the most recent version of stable Rust, which is how the binaries are built:
-
-```bash
-# You might need to update the stable version of Rust first.
-# Other versions might work, but this is not guaranteed.
-rustup update stable
-
-# Option 1 - Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.10.1.tar.gz
-tar -xzvf 0.10.1.tar.gz
-cargo install --path . --locked
-
-# Option 2 - Clone the repo and install manually
-git clone https://github.com/ClementTsang/bottom
-cd bottom
-cargo install --path . --locked
-
-# Option 3 - Clone and install directly from the repo all via Cargo
-cargo install --git https://github.com/ClementTsang/bottom --locked
-
-# You can also pass in the target-cpu=native flag for
-# better CPU-specific optimizations. For example:
-RUSTFLAGS="-C target-cpu=native" cargo install --path . --locked
-```
-
-### Binaries
-
-You can also use the pre-built release binaries manually:
+You can also use the pre-built release binaries:
 
 - [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), built using the release branch
 - [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), built using the `main` branch at 00:00 UTC daily
@@ -356,7 +347,7 @@ To use, download and extract the binary that matches your system. You can then r
 ./btm
 ```
 
-or by installing to your system following whatever the procedure is for installing a binary to your system.
+or by installing to your system following the procedures for installing binaries to your system.
 
 #### Auto-completion
 
