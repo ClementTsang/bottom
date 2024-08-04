@@ -35,8 +35,8 @@
   - [Fedora / CentOS / AlmaLinux / Rocky Linux](#fedora--centos--almalinux--rocky-linux)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
-  - [Solus](#solus)
   - [Snap](#snap)
+  - [Solus](#solus)
   - [Void](#void)
   - [Homebrew](#homebrew)
   - [MacPorts](#macports)
@@ -253,14 +253,6 @@ Available [in the nix-community repo](https://github.com/nix-community/home-mana
 nix-env -i bottom
 ```
 
-### Solus
-
-Available [in the Solus repos](https://dev.getsol.us/source/bottom/):
-
-```bash
-sudo eopkg it bottom
-```
-
 ### Snap
 
 bottom is available as a [snap](https://snapcraft.io/install/bottom/ubuntu):
@@ -273,6 +265,14 @@ sudo snap connect bottom:mount-observe
 sudo snap connect bottom:hardware-observe
 sudo snap connect bottom:system-observe
 sudo snap connect bottom:process-control
+```
+
+### Solus
+
+Available [in the Solus repos](https://dev.getsol.us/source/bottom/):
+
+```bash
+sudo eopkg it bottom
 ```
 
 ### Void
