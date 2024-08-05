@@ -123,6 +123,7 @@ pub struct SysinfoSource {
 impl Default for SysinfoSource {
     fn default() -> Self {
         use sysinfo::*;
+
         Self {
             system: System::new_with_specifics(RefreshKind::new()),
             network: Networks::new(),
@@ -173,6 +174,10 @@ pub struct DataCollector {
 
 impl DataCollector {
     pub fn new(filters: DataFilters) -> Self {
+        // Initialize it to the past to force it to load on initialization.
+        let now = Instant::now();
+        let last_collection_time = now.checked_sub(Duration::from_secs(600)).unwrap_or(now);
+
         DataCollector {
             data: Data::default(),
             sys: SysinfoSource::default(),
@@ -185,7 +190,7 @@ impl DataCollector {
             temperature_type: TemperatureType::Celsius,
             use_current_cpu_total: false,
             unnormalized_cpu: false,
-            last_collection_time: Instant::now() - Duration::from_secs(600), /* Initialize it to the past to force it to load on initialization. */
+            last_collection_time,
             total_rx: 0,
             total_tx: 0,
             show_average_cpu: false,
@@ -284,7 +289,12 @@ impl DataCollector {
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
-                self.sys.system.refresh_processes();
+                self.sys.system.refresh_processes_specifics(
+                    sysinfo::ProcessRefreshKind::everything()
+                        .without_environ()
+                        .without_cwd()
+                        .without_root(),
+                );
 
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
