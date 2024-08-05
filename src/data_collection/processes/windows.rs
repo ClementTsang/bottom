@@ -104,9 +104,11 @@ pub fn sysinfo_process_data(
                 .and_then(|uid| users.get_user_by_id(uid))
                 .map_or_else(|| "N/A".into(), |user| user.name().to_owned().into()),
             time: if process_val.start_time() == 0 {
-                // Workaround for Windows occasionally returning a start time equal to UNIX
+                // Workaround for sysinfo occasionally returning a start time equal to UNIX
                 // epoch, giving a run time in the range of 50+ years. We just
                 // return a time of zero in this case for simplicity.
+                //
+                // TODO: Maybe return an option instead?
                 Duration::ZERO
             } else {
                 Duration::from_secs(process_val.run_time())

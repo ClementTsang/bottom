@@ -90,7 +90,16 @@ pub(crate) trait UnixProcessExt {
                             .ok()
                     })
                     .unwrap_or_else(|| "N/A".into()),
-                time: Duration::from_secs(process_val.run_time()),
+                time: if process_val.start_time() == 0 {
+                    // Workaround for sysinfo occasionally returning a start time equal to UNIX
+                    // epoch, giving a run time in the range of 50+ years. We just
+                    // return a time of zero in this case for simplicity.
+                    //
+                    // TODO: Maybe return an option instead?
+                    Duration::ZERO
+                } else {
+                    Duration::from_secs(process_val.run_time())
+                },
                 #[cfg(feature = "gpu")]
                 gpu_mem: 0,
                 #[cfg(feature = "gpu")]
