@@ -48,27 +48,28 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## CPU Options
 
-| Option               | Behaviour                                   |
-| -------------------- | ------------------------------------------- |
-| `--cpu_left_legend`  | Puts the CPU chart legend on the left side. |
-| `-a, --hide_avg_cpu` | Hides the average CPU usage entry.          |
+| Option                | Behaviour                                         |
+| --------------------- | ------------------------------------------------- |
+| `--cpu_left_legend`   | Puts the CPU chart legend on the left side.       |
+| `--default_cpu_entry` | Sets which CPU entry type is selected by default. |
+| `-a, --hide_avg_cpu`  | Hides the average CPU usage entry.                |
 
 ## Memory Options
 
 | Option                       | Behaviour                                                 |
 | ---------------------------- | --------------------------------------------------------- |
-| `--enable_cache_memory`      | Enable collecting and displaying cache and buffer memory. |
 | `--memory_legend <POSITION>` | Where to place the legend for the memory chart widget.    |
+| `--enable_cache_memory`      | Enable collecting and displaying cache and buffer memory. |
 
 ## Network Options
 
 | Option                        | Behaviour                                               |
 | ----------------------------- | ------------------------------------------------------- |
 | `--network_legend <POSITION>` | Where to place the legend for the network chart widget. |
-| `--network_use_binary_prefix` | Displays the network widget with binary prefixes.       |
 | `--network_use_bytes`         | Displays the network widget using bytes.                |
+| `--network_use_binary_prefix` | Displays the network widget with binary prefixes.       |
 | `--network_use_log`           | Displays the network widget with a log scale.           |
-| `--use_old_network_legend`    | (DEPRECATED) Uses a separated network legend.           |
+| `--use_old_network_legend`    | (DEPRECATED) Uses a separate network legend.            |
 
 ## Battery Options
 
@@ -84,9 +85,9 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## Style Options
 
-| Option                   | Behaviour                                  |
-| ------------------------ | ------------------------------------------ |
-| `--theme <COLOR SCHEME>` | Use a color scheme, use `--help` for info. |
+| Option             | Behaviour                                                        |
+| ------------------ | ---------------------------------------------------------------- |
+| `--theme <SCHEME>` | Use a built-in color theme, use '--help' for info on the colors. |
 
 ## Other Options
 

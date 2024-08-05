@@ -197,6 +197,9 @@ pub(crate) fn init_app(
     let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, args.process, config));
     let process_memory_as_value = is_flag_enabled!(process_memory_as_value, args.process, config);
 
+    // For CPU
+    let default_cpu_selection = get_default_cpu_selection(args, config);
+
     let mut widget_map = HashMap::new();
     let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
     let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::new();
@@ -269,7 +272,7 @@ pub(crate) fn init_app(
         network_unit_type,
         network_use_binary_prefix,
         retention_ms,
-        dedicated_average_row: get_dedicated_avg_row(args, config),
+        dedicated_average_row: get_dedicated_avg_row(config),
     };
 
     let table_config = ProcTableConfig {
@@ -324,11 +327,7 @@ pub(crate) fn init_app(
                                 widget.widget_id,
                                 CpuWidgetState::new(
                                     &app_config_fields,
-                                    config
-                                        .cpu
-                                        .as_ref()
-                                        .map(|cfg| cfg.default)
-                                        .unwrap_or_default(),
+                                    default_cpu_selection,
                                     default_time_value,
                                     autohide_timer,
                                     &styling,
@@ -678,14 +677,24 @@ fn get_show_average_cpu(args: &BottomArgs, config: &Config) -> bool {
     true
 }
 
-fn get_dedicated_avg_row(_args: &BottomArgs, config: &Config) -> bool {
+// I hate this too.
+fn get_default_cpu_selection(args: &BottomArgs, config: &Config) -> config::cpu::CpuDefault {
+    match &args.cpu.default_cpu_entry {
+        Some(default) => match default {
+            args::CpuDefault::All => config::cpu::CpuDefault::All,
+            args::CpuDefault::Average => config::cpu::CpuDefault::Average,
+        },
+        None => config.cpu.as_ref().map(|c| c.default).unwrap_or_default(),
+    }
+}
+
+fn get_dedicated_avg_row(config: &Config) -> bool {
     let conf = config
         .flags
         .as_ref()
         .and_then(|flags| flags.average_cpu_row)
         .unwrap_or(false);
 
-    // args.cpu.average_cpu_row || conf
     conf
 }
 
