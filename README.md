@@ -159,8 +159,8 @@ Alternatively, if you can use `cargo install` using the repo as the source.
 rustup update stable
 
 # Option 1 - Download an archive from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.10.1.tar.gz
-tar -xzvf 0.10.1.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.10.2.tar.gz
+tar -xzvf 0.10.2.tar.gz
 cargo install --path . --locked
 
 # Option 2 - Manually clone the repo and install
@@ -199,16 +199,16 @@ A `.deb` file is provided on each [stable release](https://github.com/ClementTsa
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.1/bottom_0.10.1_amd64.deb
-sudo dpkg -i bottom_0.10.1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2_amd64.deb
+sudo dpkg -i bottom_0.10.2_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.1/bottom_0.10.1_arm64.deb
-sudo dpkg -i bottom_0.10.1_arm64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2_arm64.deb
+sudo dpkg -i bottom_0.10.2_arm64.deb
 
 # ARM
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.1/bottom_0.10.1_armhf.deb
-sudo dpkg -i bottom_0.10.1_armhf.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2_armhf.deb
+sudo dpkg -i bottom_0.10.2_armhf.deb
 ```
 
 ### Exherbo Linux
@@ -233,8 +233,8 @@ sudo dnf install bottom
 For example:
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.1/bottom-0.10.1-1.x86_64.rpm
-sudo rpm -i bottom-0.10.1-1.x86_64.rpm
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom-0.10.2-1.x86_64.rpm
+sudo rpm -i bottom-0.10.2-1.x86_64.rpm
 ```
 
 ### Gentoo
