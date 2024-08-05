@@ -123,6 +123,7 @@ pub struct SysinfoSource {
 impl Default for SysinfoSource {
     fn default() -> Self {
         use sysinfo::*;
+
         Self {
             system: System::new_with_specifics(RefreshKind::new()),
             network: Networks::new(),
@@ -284,7 +285,12 @@ impl DataCollector {
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
-                self.sys.system.refresh_processes();
+                self.sys.system.refresh_processes_specifics(
+                    sysinfo::ProcessRefreshKind::everything()
+                        .without_environ()
+                        .without_cwd()
+                        .without_root(),
+                );
 
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
