@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bug Fixes
 
 - [#1541](https://github.com/ClementTsang/bottom/pull/1541): Fix some process details not updating for macOS and Windows.
+- [#1543](https://github.com/ClementTsang/bottom/pull/1543): Fix the `--default_cpu_entry` argument not being checked.
 
 ## [0.10.1] - 2024-08-01
 

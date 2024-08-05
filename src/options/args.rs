@@ -408,18 +408,6 @@ impl ValueEnum for CpuDefault {
 #[derive(Args, Clone, Debug, Default)]
 #[command(next_help_heading = "CPU Options", rename_all = "snake_case")]
 pub struct CpuArgs {
-    #[arg(
-        long,
-        help = "Sets which CPU entry type is selected by default.",
-        value_name = "ENTRY",
-        value_parser = value_parser!(CpuDefault),
-        default_value = "all"
-    )]
-    pub default_cpu_entry: CpuDefault,
-
-    #[arg(short = 'a', long, action = ArgAction::SetTrue, help = "Hides the average CPU usage entry.")]
-    pub hide_avg_cpu: bool,
-
     // TODO: Maybe rename this or fix this? Should this apply to all "left legends"?
     #[arg(
         short = 'l',
@@ -428,8 +416,17 @@ pub struct CpuArgs {
         help = "Puts the CPU chart legend on the left side."
     )]
     pub cpu_left_legend: bool,
-    // #[arg(short = 'A', long, action = ArgAction::SetTrue, help = "Moves the average CPU usage entry to its own row when using basic mode.")]
-    // pub average_cpu_row: bool,
+
+    #[arg(
+        long,
+        help = "Sets which CPU entry type is selected by default.",
+        value_name = "ENTRY",
+        value_parser = value_parser!(CpuDefault),
+    )]
+    pub default_cpu_entry: Option<CpuDefault>,
+
+    #[arg(short = 'a', long, action = ArgAction::SetTrue, help = "Hides the average CPU usage entry.")]
+    pub hide_avg_cpu: bool,
 }
 
 /// Memory argument/config options.
