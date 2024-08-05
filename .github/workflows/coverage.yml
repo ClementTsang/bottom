@@ -74,7 +74,7 @@ jobs:
       - name: Upload to codecov.io
         uses: Wandalen/wretry.action@6feedb7dedadeb826de0f45ff482b53b379a7844 # v3.5.0
         with:
-          action: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # 3.1.4
+          action: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
           with: |
             files: lcov.info
             fail_ci_if_error: true
