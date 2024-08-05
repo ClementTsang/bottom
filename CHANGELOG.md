@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1487](https://github.com/ClementTsang/bottom/pull/1487): Add option to move the AVG CPU bar to another row in basic mode.
 
+### Bug Fixes
+
+- [#1541](https://github.com/ClementTsang/bottom/pull/1541): Fix some process details not updating for macOS and Windows.
+
 ## [0.10.1] - 2024-08-01
 
 ### Bug Fixes
