@@ -194,21 +194,25 @@ sudo paru -S bottom-git
 ### Debian / Ubuntu
 
 A `.deb` file is provided on each [stable release](https://github.com/ClementTsang/bottom/releases/latest) and
-[nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly) for x86, aarch64, and armv7
-(note stable ARM builds are only available for 0.6.8 and later). An example of installing this way:
+[nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly) for x86, aarch64, and armv7.
+Some examples of installing it this way:
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2_amd64.deb
-sudo dpkg -i bottom_0.10.2_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2-1_amd64.deb
+sudo dpkg -i bottom_0.10.2-1_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2_arm64.deb
-sudo dpkg -i bottom_0.10.2_arm64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2-1_arm64.deb
+sudo dpkg -i bottom_0.10.2-1_arm64.deb
 
 # ARM
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2_armhf.deb
-sudo dpkg -i bottom_0.10.2_armhf.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2-1_armhf.deb
+sudo dpkg -i bottom_0.10.2-1_armhf.deb
+
+# musl-based
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom-musl_0.10.2-1_amd64.deb
+sudo dpkg -i bottom-musl_0.10.2-1_amd64.deb
 ```
 
 ### Exherbo Linux
