@@ -357,14 +357,14 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 
 # Disk widget configuration
 #[disk]
-#[name_filter]
+#[disk.name_filter]
 #is_list_ignored = true
 #list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
 #regex = true
 #case_sensitive = false
 #whole_word = false
 
-#[mount_filter]
+#[disk.mount_filter]
 #is_list_ignored = true
 #list = ["/mnt/.*", "/boot"]
 #regex = true
@@ -373,7 +373,7 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 
 # Temperature widget configuration
 #[temperature]
-#[sensor_filter]
+#[temperature.sensor_filter]
 #is_list_ignored = true
 #list = ["cpu", "wifi"]
 #regex = false
@@ -382,7 +382,7 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 
 # Network widget configuration
 #[network]
-#[interface_filter]
+#[network.interface_filter]
 #is_list_ignored = true
 #list = ["virbr0.*"]
 #regex = true
