@@ -5,6 +5,7 @@ use serde::Deserialize;
 #[derive(Clone, Copy, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub enum CpuDefault {
     #[default]
     All,
@@ -15,7 +16,7 @@ pub enum CpuDefault {
 /// CPU column settings.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub struct CpuConfig {
     #[serde(default)]
     pub default: CpuDefault,

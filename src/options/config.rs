@@ -24,7 +24,7 @@ use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
     derive(schemars::JsonSchema),
     schemars(title = "Schema for bottom's configs (nightly)")
 )]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub struct Config {
     pub(crate) flags: Option<FlagConfig>,
     pub(crate) styles: Option<StyleConfig>,
@@ -39,6 +39,7 @@ pub struct Config {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub(crate) enum StringOrNum {
     String(String),
     Num(u64),

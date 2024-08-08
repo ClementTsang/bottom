@@ -6,7 +6,7 @@ use crate::{app::layout_manager::*, options::OptionResult};
 /// of children.
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 #[serde(rename = "row")]
 pub struct Row {
     pub ratio: Option<u32>,
@@ -218,7 +218,7 @@ impl Row {
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[serde(untagged)]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub enum RowChildren {
     Widget(FinalWidget),
     Col {
@@ -230,7 +230,7 @@ pub enum RowChildren {
 /// Represents a widget.
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub struct FinalWidget {
     pub ratio: Option<u32>,
     #[serde(rename = "type")]

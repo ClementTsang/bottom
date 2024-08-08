@@ -5,6 +5,7 @@ use super::{ColorStr, TextStyleConfig};
 /// General styling for generic widgets.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct WidgetStyle {
     /// The colour of the widgets' borders.
     #[serde(alias = "border_colour")]
