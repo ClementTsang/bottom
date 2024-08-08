@@ -66,6 +66,7 @@ mod test {
     // Test all valid configs in the integration test folder and ensure they are accepted.
     // We need this separated as only test library code sets `serde(deny_unknown_fields)`.
     #[test]
+    #[cfg(feature = "default")]
     fn test_integration_valid_configs() {
         for config_path in fs::read_dir("./tests/valid_configs").unwrap() {
             let config_path = config_path.unwrap();

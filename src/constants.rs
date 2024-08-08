@@ -524,6 +524,7 @@ mod test {
 
     /// Checks that the default config is valid.
     #[test]
+    #[cfg(feature = "default")]
     fn check_default_config() {
         let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
             .unwrap()
