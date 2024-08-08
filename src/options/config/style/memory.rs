@@ -13,7 +13,7 @@ pub(crate) struct MemoryStyle {
     pub(crate) ram_color: Option<ColorStr>,
 
     /// The colour of the cache label and graph line. Does not do anything on Windows.
-    #[cfg(not(target_os = "windows"))]
+    #[cfg_attr(target_os = "windows", allow(dead_code))]
     #[serde(alias = "cache_colour")]
     pub(crate) cache_color: Option<ColorStr>,
 
