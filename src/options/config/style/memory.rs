@@ -6,6 +6,7 @@ use super::ColorStr;
 /// Styling specific to the memory widget.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct MemoryStyle {
     /// The colour of the RAM label and graph line.
     #[serde(alias = "ram_colour")]

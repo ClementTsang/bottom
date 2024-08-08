@@ -5,7 +5,7 @@ use crate::widgets::ProcWidgetColumn;
 /// Process configuration.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub struct ProcessesConfig {
     /// A list of process widget columns.
     #[serde(default)]
@@ -18,6 +18,7 @@ pub struct ProcessesConfig {
     feature = "generate_schema",
     derive(schemars::JsonSchema, strum::VariantArray)
 )]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub enum ProcColumn {
     Pid,
     Count,

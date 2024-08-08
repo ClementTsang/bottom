@@ -261,11 +261,11 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r#"
 // Config and flags
 
 // TODO: Eventually deprecate this, or grab from a file.
-pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  All of the settings are commented
+pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom. All of the settings are commented
 # out by default; if you wish to change them uncomment and modify as you see
 # fit.
 
-# This group of options represents a command-line option.  Flags explicitly
+# This group of options represents a command-line option. Flags explicitly
 # added when running (ie: btm -a) will override this config file if an option
 # is also set here.
 [flags]
@@ -340,9 +340,9 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom.  Al
 # How much data is stored at once in terms of time.
 #retention = "10m"
 # Where to place the legend for the memory widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
-#memory_legend = "TopRight".
+#memory_legend = "TopRight"
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
-#network_legend = "TopRight".
+#network_legend = "TopRight"
 
 # Processes widget configuration
 #[processes]
@@ -484,34 +484,12 @@ pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
 
 "##;
 
-pub const CONFIG_DISPLAY_OPTIONS_HEAD: &str = r#"
-# These options represent settings that affect how bottom functions.
-# If a setting here corresponds to command-line option, then the flag will temporarily override
-# the setting.
-"#;
-
-pub const CONFIG_COLOUR_HEAD: &str = r#"
-# These options represent colour values for various parts of bottom.  Note that colour support
-# will ultimately depend on the terminal - for example, the Terminal for macOS does NOT like
-# custom colours and it may glitch out.
-"#;
-
-pub const CONFIG_LAYOUT_HEAD: &str = r#"
-# These options represent how bottom will lay out its widgets.  Layouts follow a pattern like this:
-# [[row]] represents a row in the application.
-# [[row.child]] represents either a widget or a column.
-# [[row.child.child]] represents a widget.
-#
-# All widgets must have the valid type value set to one of ["cpu", "mem", "proc", "net", "temp", "disk", "empty"].
-# All layout components have a ratio value - if this is not set, then it defaults to 1.
-"#;
-
-pub const CONFIG_FILTER_HEAD: &str = r#"
-# These options represent disabled entries for the temperature and disk widgets.
-"#;
-
 #[cfg(test)]
 mod test {
+    use regex::Regex;
+
+    use crate::options::Config;
+
     use super::*;
 
     #[test]
@@ -542,5 +520,23 @@ mod test {
             SIDE_BORDERS,
             Borders::ALL.difference(Borders::TOP.union(Borders::BOTTOM))
         )
+    }
+
+    /// Checks that the default config is valid.
+    #[test]
+    fn check_default_config() {
+        let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
+            .unwrap()
+            .replace_all(CONFIG_TEXT, "$1");
+
+        let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z\[])")
+            .unwrap()
+            .replace_all(&default_config, "$2");
+
+        let _config: Config =
+            toml_edit::de::from_str(&default_config).expect("can parse default config");
+
+        // TODO: Check this.
+        // assert_eq!(config, Config::default());
     }
 }

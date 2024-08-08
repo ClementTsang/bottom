@@ -5,6 +5,7 @@ use super::ColorStr;
 /// Styling specific to the network widget.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct NetworkStyle {
     /// The colour of the RX (download) label and graph line.
     #[serde(alias = "rx_colour")]
