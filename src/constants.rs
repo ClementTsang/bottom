@@ -486,10 +486,6 @@ pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
 
 #[cfg(test)]
 mod test {
-    use regex::Regex;
-
-    use crate::options::Config;
-
     use super::*;
 
     #[test]
@@ -526,6 +522,10 @@ mod test {
     #[test]
     #[cfg(feature = "default")]
     fn check_default_config() {
+        use regex::Regex;
+
+        use crate::options::Config;
+
         let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
             .unwrap()
             .replace_all(CONFIG_TEXT, "$1");

@@ -59,22 +59,22 @@ impl From<u64> for StringOrNum {
 
 #[cfg(test)]
 mod test {
-    use std::fs;
-
-    use super::Config;
 
     // Test all valid configs in the integration test folder and ensure they are accepted.
     // We need this separated as only test library code sets `serde(deny_unknown_fields)`.
     #[test]
     #[cfg(feature = "default")]
     fn test_integration_valid_configs() {
+        use super::Config;
+        use std::fs;
+
         for config_path in fs::read_dir("./tests/valid_configs").unwrap() {
             let config_path = config_path.unwrap();
             let config_path_str = config_path.path().display().to_string();
-            let config_str = fs::read_to_string(&config_path.path()).unwrap();
+            let config_str = fs::read_to_string(config_path.path()).unwrap();
 
             toml_edit::de::from_str::<Config>(&config_str)
-                .expect(&format!("incorrectly rejected '{config_path_str}'",));
+                .unwrap_or_else(|_| panic!("incorrectly rejected '{config_path_str}'"));
         }
     }
 
