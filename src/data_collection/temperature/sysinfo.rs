@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 
-use super::{is_temp_filtered, TempHarvest, TemperatureType};
+use super::{TempHarvest, TemperatureType};
 use crate::app::filter::Filter;
 
 pub fn get_temperature_data(
@@ -13,7 +13,7 @@ pub fn get_temperature_data(
     for component in components {
         let name = component.label().to_string();
 
-        if is_temp_filtered(filter, &name) {
+        if Filter::optional_should_keep(filter, &name) {
             temperature_vec.push(TempHarvest {
                 name,
                 temperature: Some(temp_type.convert_temp_unit(component.temperature())),
