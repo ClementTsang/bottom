@@ -23,7 +23,7 @@ pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 pub const SIDE_BORDERS: Borders = Borders::LEFT.union(Borders::RIGHT);
 
 // Help text
-pub const HELP_CONTENTS_TEXT: [&str; 10] = [
+const HELP_CONTENTS_TEXT: [&str; 10] = [
     "Either scroll or press the number key to go to the corresponding help menu section:",
     "1 - General",
     "2 - CPU widget",
@@ -38,7 +38,7 @@ pub const HELP_CONTENTS_TEXT: [&str; 10] = [
 
 // TODO [Help]: Search in help?
 // TODO [Help]: Move to using tables for easier formatting?
-pub const GENERAL_HELP_TEXT: [&str; 32] = [
+pub(crate) const GENERAL_HELP_TEXT: [&str; 32] = [
     "1 - General",
     "q, Ctrl-c        Quit",
     "Esc              Close dialog windows, search, widgets, or exit expanded mode",
@@ -73,12 +73,12 @@ pub const GENERAL_HELP_TEXT: [&str; 32] = [
     "Mouse click      Selects the clicked widget, table entry, dialog option, or tab",
 ];
 
-pub const CPU_HELP_TEXT: [&str; 2] = [
+const CPU_HELP_TEXT: [&str; 2] = [
     "2 - CPU widget",
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-pub const PROCESS_HELP_TEXT: [&str; 17] = [
+const PROCESS_HELP_TEXT: [&str; 17] = [
     "3 - Process widget",
     "dd, F9           Kill the selected process",
     "c                Sort by CPU usage, press again to reverse",
@@ -98,7 +98,7 @@ pub const PROCESS_HELP_TEXT: [&str; 17] = [
     "M                Sort by GPU memory usage, press again to reverse",
 ];
 
-pub const SEARCH_HELP_TEXT: [&str; 51] = [
+const SEARCH_HELP_TEXT: [&str; 51] = [
     "4 - Process search widget",
     "Esc              Close the search widget (retains the filter)",
     "Ctrl-a           Skip to the start of the search query",
@@ -152,7 +152,7 @@ pub const SEARCH_HELP_TEXT: [&str; 51] = [
     "TiB              ex: read > 1 tib",
 ];
 
-pub const SORT_HELP_TEXT: [&str; 6] = [
+const SORT_HELP_TEXT: [&str; 6] = [
     "5 - Sort widget",
     "Down, 'j'        Scroll down in list",
     "Up, 'k'          Scroll up in list",
@@ -161,13 +161,13 @@ pub const SORT_HELP_TEXT: [&str; 6] = [
     "Enter            Sort by current selected column",
 ];
 
-pub const TEMP_HELP_WIDGET: [&str; 3] = [
+const TEMP_HELP_WIDGET: [&str; 3] = [
     "6 - Temperature widget",
     "'s'              Sort by sensor name, press again to reverse",
     "'t'              Sort by temperature, press again to reverse",
 ];
 
-pub const DISK_HELP_WIDGET: [&str; 9] = [
+const DISK_HELP_WIDGET: [&str; 9] = [
     "7 - Disk widget",
     "'d'              Sort by disk name, press again to reverse",
     "'m'              Sort by disk mount, press again to reverse",
@@ -179,18 +179,18 @@ pub const DISK_HELP_WIDGET: [&str; 9] = [
     "'w'              Sort by disk write activity, press again to reverse",
 ];
 
-pub const BATTERY_HELP_TEXT: [&str; 3] = [
+const BATTERY_HELP_TEXT: [&str; 3] = [
     "8 - Battery widget",
     "Left             Go to previous battery",
     "Right            Go to next battery",
 ];
 
-pub const BASIC_MEM_HELP_TEXT: [&str; 2] = [
+const BASIC_MEM_HELP_TEXT: [&str; 2] = [
     "9 - Basic memory widget",
     "%                Toggle between values and percentages for memory usage",
 ];
 
-pub const HELP_TEXT: [&[&str]; HELP_CONTENTS_TEXT.len()] = [
+pub(crate) const HELP_TEXT: [&[&str]; HELP_CONTENTS_TEXT.len()] = [
     &HELP_CONTENTS_TEXT,
     &GENERAL_HELP_TEXT,
     &CPU_HELP_TEXT,
@@ -203,8 +203,7 @@ pub const HELP_TEXT: [&[&str]; HELP_CONTENTS_TEXT.len()] = [
     &BASIC_MEM_HELP_TEXT,
 ];
 
-// Default layouts
-pub const DEFAULT_LAYOUT: &str = r#"
+pub(crate) const DEFAULT_LAYOUT: &str = r#"
 [[row]]
   ratio=30
   [[row.child]]
@@ -229,7 +228,7 @@ pub const DEFAULT_LAYOUT: &str = r#"
     default=true
 "#;
 
-pub const DEFAULT_BATTERY_LAYOUT: &str = r#"
+pub(crate) const DEFAULT_BATTERY_LAYOUT: &str = r#"
 [[row]]
   ratio=30
   [[row.child]]
@@ -258,10 +257,8 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r#"
     default=true
 "#;
 
-// Config and flags
-
 // TODO: Eventually deprecate this, or grab from a file.
-pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom. All of the settings are commented
+pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bottom. All of the settings are commented
 # out by default; if you wish to change them uncomment and modify as you see
 # fit.
 
@@ -474,15 +471,6 @@ pub const CONFIG_TEXT: &str = r#"# This is a default config file for bottom. All
 #    type="proc"
 #    default=true
 "#;
-
-pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
-# Values in this config file will change when changed in the interface.
-# You can also manually change these values.
-# Be aware that contents of this file will be overwritten if something is
-# changed in the application; you can disable writing via the
-# --no_write flag or no_write config option.
-
-"##;
 
 #[cfg(test)]
 mod test {

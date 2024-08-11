@@ -74,8 +74,8 @@ pub struct ConvertedData {
     pub cache_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
 
-    pub mem_data: Vec<Point>, /* TODO: Switch this and all data points over to a better data
-                               * structure... */
+    // TODO: Switch this and all data points over to a better data structure.
+    pub mem_data: Vec<Point>,
     #[cfg(not(target_os = "windows"))]
     pub cache_data: Vec<Point>,
     pub swap_data: Vec<Point>,
