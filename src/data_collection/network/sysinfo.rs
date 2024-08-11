@@ -18,7 +18,7 @@ pub fn get_network_data(
 
     for (name, network) in networks {
         let to_keep = if let Some(filter) = filter {
-            filter.keep_entry(name)
+            filter.should_keep(name)
         } else {
             true
         };

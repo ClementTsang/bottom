@@ -9,7 +9,7 @@ use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
     data_collection::{
         memory::MemHarvest,
-        temperature::{is_temp_filtered, TempHarvest, TemperatureType},
+        temperature::{TempHarvest, TemperatureType},
     },
 };
 
@@ -53,7 +53,9 @@ pub fn get_nvidia_vecs(
                             }
                         }
 
-                        if widgets_to_harvest.use_temp && is_temp_filtered(filter, &name) {
+                        if widgets_to_harvest.use_temp
+                            && Filter::optional_should_keep(filter, &name)
+                        {
                             if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
                                 let temperature = temp_type.convert_temp_unit(temperature as f32);
 

@@ -15,8 +15,6 @@ cfg_if::cfg_if! {
 
 use std::str::FromStr;
 
-use crate::app::filter::Filter;
-
 #[derive(Default, Debug, Clone)]
 pub struct TempHarvest {
     pub name: String,
@@ -63,21 +61,6 @@ impl TemperatureType {
             TemperatureType::Kelvin => convert_celsius_to_kelvin(temp_celsius),
             TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp_celsius),
         }
-    }
-}
-
-pub fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {
-    if let Some(filter) = filter {
-        let mut ret = filter.is_list_ignored;
-        for r in &filter.list {
-            if r.is_match(text) {
-                ret = !filter.is_list_ignored;
-                break;
-            }
-        }
-        ret
-    } else {
-        true
     }
 }
 
