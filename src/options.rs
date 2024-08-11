@@ -868,10 +868,7 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> OptionResult<Option<Filt
 
         let list = list.map_err(|err| OptionError::config(err.to_string()))?;
 
-        Ok(Some(Filter {
-            list,
-            is_list_ignored: ignore_list.is_list_ignored,
-        }))
+        Ok(Some(Filter::new(ignore_list.is_list_ignored, list)))
     } else {
         Ok(None)
     }

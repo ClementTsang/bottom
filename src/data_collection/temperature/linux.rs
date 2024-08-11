@@ -8,7 +8,7 @@ use std::{
 use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
-use super::{is_temp_filtered, TempHarvest, TemperatureType};
+use super::{TempHarvest, TemperatureType};
 use crate::app::filter::Filter;
 
 const EMPTY_NAME: &str = "Unknown";
@@ -327,7 +327,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 
                 // TODO: It's possible we may want to move the filter check further up to avoid
                 // probing hwmon if not needed?
-                if is_temp_filtered(filter, &name) {
+                if Filter::optional_should_keep(filter, &name) {
                     if let Ok(temp_celsius) = parse_temp(&temp_path) {
                         temperatures.push(TempHarvest {
                             name,
@@ -377,7 +377,7 @@ fn add_thermal_zone_temperatures(
                     name
                 };
 
-                if is_temp_filtered(filter, &name) {
+                if Filter::optional_should_keep(filter, &name) {
                     let temp_path = file_path.join("temp");
                     if let Ok(temp_celsius) = parse_temp(&temp_path) {
                         let name = counted_name(&mut seen_names, name);
