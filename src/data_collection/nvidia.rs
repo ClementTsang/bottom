@@ -32,6 +32,7 @@ pub fn get_nvidia_vecs(
             let mut mem_vec = Vec::with_capacity(num_gpu as usize);
             let mut proc_vec = Vec::with_capacity(num_gpu as usize);
             let mut total_mem = 0;
+
             for i in 0..num_gpu {
                 if let Ok(device) = nvml.device_by_index(i) {
                     if let Ok(name) = device.name() {
@@ -51,17 +52,24 @@ pub fn get_nvidia_vecs(
                                 ));
                             }
                         }
+
                         if widgets_to_harvest.use_temp && is_temp_filtered(filter, &name) {
                             if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
                                 let temperature = temp_type.convert_temp_unit(temperature as f32);
 
                                 temp_vec.push(TempHarvest {
-                                    name: name.clone(),
+                                    name,
                                     temperature: Some(temperature),
+                                });
+                            } else {
+                                temp_vec.push(TempHarvest {
+                                    name,
+                                    temperature: None,
                                 });
                             }
                         }
                     }
+
                     if widgets_to_harvest.use_proc {
                         let mut procs = HashMap::new();
 
@@ -130,6 +138,7 @@ pub fn get_nvidia_vecs(
                     }
                 }
             }
+
             Some(GpusData {
                 memory: if !mem_vec.is_empty() {
                     Some(mem_vec)
