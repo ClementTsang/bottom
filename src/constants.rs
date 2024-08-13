@@ -330,8 +330,8 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #network_use_log = false
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
-# Shows GPU(s) information
-#enable_gpu = false
+# Hide GPU(s) information
+#disable_gpu = false
 # Shows cache and buffer memory
 #enable_cache_memory = false
 # How much data is stored at once in terms of time.

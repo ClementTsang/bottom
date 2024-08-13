@@ -520,8 +520,8 @@ pub struct BatteryArgs {
 #[derive(Args, Clone, Debug, Default)]
 #[command(next_help_heading = "GPU Options", rename_all = "snake_case")]
 pub struct GpuArgs {
-    #[arg(long, action = ArgAction::SetTrue, help = "Enable collecting and displaying GPU usage.")]
-    pub enable_gpu: bool,
+    #[arg(long, action = ArgAction::SetTrue, help = "Disable collecting and displaying GPU usage.")]
+    pub disable_gpu: bool,
 }
 
 /// Style arguments/config options.
