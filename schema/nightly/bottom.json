@@ -330,7 +330,7 @@
             "null"
           ]
         },
-        "enable_gpu": {
+        "disable_gpu": {
           "type": [
             "boolean",
             "null"

@@ -806,19 +806,20 @@ fn get_use_battery(args: &BottomArgs, config: &Config) -> bool {
     false
 }
 
-#[allow(unused_variables)]
+#[cfg(feature = "gpu")]
 fn get_enable_gpu(args: &BottomArgs, config: &Config) -> bool {
-    #[cfg(feature = "gpu")]
-    {
-        if args.gpu.enable_gpu {
-            return true;
-        } else if let Some(flags) = &config.flags {
-            if let Some(enable_gpu) = flags.enable_gpu {
-                return enable_gpu;
-            }
-        }
+    if args.gpu.disable_gpu {
+        return false;
     }
+    !config
+        .flags
+        .as_ref()
+        .and_then(|f| f.disable_gpu)
+        .unwrap_or(false)
+}
 
+#[cfg(not(feature = "gpu"))]
+fn get_enable_gpu(_: &BottomArgs, _: &Config) -> bool {
     false
 }
 
