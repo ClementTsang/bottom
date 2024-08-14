@@ -26,16 +26,17 @@ venv/bin/mkdocs serve
 
 ## Deploying
 
-Deploying is done via [mike](https://github.com/jimporter/mike).
+Deploying is done via [mike](https://github.com/jimporter/mike). Typically, this is done through CI, but can be done
+manually if needed.
 
-### Nightly
+### Nightly docs
 
 ```bash
 cd docs
 mike deploy nightly --push
 ```
 
-### Stable
+### Stable docs
 
 ```bash
 cd docs

@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- [#1276](https://github.com/ClementTsang/bottom/pull/1276): GPU functionality is now tied behind the `--enable_gpu` flag. This will likely be changed in the future.
+- [#1276](https://github.com/ClementTsang/bottom/pull/1276): NVIDIA GPU functionality is now tied behind the `--enable_gpu` flag. This will likely be changed in the future.
 - [#1344](https://github.com/ClementTsang/bottom/pull/1344): Change the `group` command line-argument to `group_processes` for consistency with the config file option.
 - [#1376](https://github.com/ClementTsang/bottom/pull/1376): Group together related command-line arguments in `-h` and `--help`.
 - [#1411](https://github.com/ClementTsang/bottom/pull/1411): Add `time` as a default column.
