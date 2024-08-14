@@ -7,7 +7,8 @@ Documentation is currently built using Python 3.11, though it should work fine w
 
 ## Running locally
 
-One way is to just run `serve.sh`. Alternatively, the manual steps are:
+One way is to just run `serve.sh`. Alternatively, the manual steps are, assuming your current working directory
+is the bottom repo:
 
 ```bash
 # Change directories to the documentation.
@@ -26,8 +27,8 @@ venv/bin/mkdocs serve
 
 ## Deploying
 
-Deploying is done via [mike](https://github.com/jimporter/mike). Typically, this is done through CI, but can be done
-manually if needed.
+Deploying is done via [mike](https://github.com/jimporter/mike) in order to get versioning. Typically,
+this is done through CI, but can be done manually if needed.
 
 ### Nightly docs
 
