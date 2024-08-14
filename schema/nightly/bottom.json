@@ -318,6 +318,12 @@
             "null"
           ]
         },
+        "disable_gpu": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "dot_marker": {
           "type": [
             "boolean",
@@ -325,12 +331,6 @@
           ]
         },
         "enable_cache_memory": {
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "disable_gpu": {
           "type": [
             "boolean",
             "null"

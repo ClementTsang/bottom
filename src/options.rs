@@ -811,6 +811,7 @@ fn get_enable_gpu(args: &BottomArgs, config: &Config) -> bool {
     if args.gpu.disable_gpu {
         return false;
     }
+
     !config
         .flags
         .as_ref()

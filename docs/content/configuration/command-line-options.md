@@ -79,9 +79,9 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## GPU Options
 
-| Option         | Behaviour                                   |
-| -------------- | ------------------------------------------- |
-| `--enable_gpu` | Enable collecting and displaying GPU usage. |
+| Option          | Behaviour                                                 |
+| --------------- | --------------------------------------------------------- |
+| `--disable_gpu` | Disable collecting and displaying NVIDIA GPU information. |
 
 ## Style Options
 
