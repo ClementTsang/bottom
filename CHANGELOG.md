@@ -1,9 +1,24 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project will be documented in this file. The format is based on
+[Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Versioning for this project is based on [Semantic Versioning](https://semver.org/spec/v2.0.0.html). More specifically:
+
+**Pre 1.0.0 (current)**:
+
+- Patch versions should aim to only contain bug fixes or non-breaking features/changes.
+- Minor versions may break things.
+
+**Post 1.0.0**:
+
+- Patch versions should only contain bug fixes.
+- Minor versions should only contain forward-compatible features/changes.
+- Major versions may break things.
+
+That said, these are more guidelines rather than hardset rules, though the project will generally try to follow them.
+
+---
 
 ## [0.11.0]/[0.10.3] - Unreleased
 
