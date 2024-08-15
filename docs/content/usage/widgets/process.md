@@ -36,7 +36,7 @@ By default, the main process table displays the following information for each p
       [here](https://docs.rs/sysinfo/latest/sysinfo/struct.Process.html#method.disk_usage)
       for more details.
 
-With the feature flag (`--enable_gpu` on Linux/Windows) and gpu process columns enabled in the configuration:
+With the feature flag (`--disable_gpu` on Linux/Windows to disable) and gpu process columns enabled in the configuration:
 
 - GPU memory use percentage
 - GPU core utilization percentage

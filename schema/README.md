@@ -9,6 +9,8 @@ behind a feature flag to avoid building unnecessary code for release builds, and
 cargo run --features="generate_schema" -- --generate_schema > schema/nightly/bottom.json
 ```
 
+Alternatively, run the script in `scripts/schema/generate.sh`, which does this for you.
+
 ## Publication
 
 To publish these schemas, cut a new version by copying `nightly` to a new folder with a version number matching bottom's

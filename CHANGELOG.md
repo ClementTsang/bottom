@@ -27,6 +27,10 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1551](https://github.com/ClementTsang/bottom/pull/1551): Fix missing parent section names in default config.
 - [#1552](https://github.com/ClementTsang/bottom/pull/1552): Fix typo in default config.
 
+### Changes
+
+- [#1559](https://github.com/ClementTsang/bottom/pull/1559): Rename `--enable_gpu` to `--disable_gpu`, and make GPU features enabled by default.
+
 ## [0.10.2] - 2024-08-05
 
 ### Features
