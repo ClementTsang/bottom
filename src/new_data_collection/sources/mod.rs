@@ -1,14 +1,16 @@
-//! Re-exports all of the sources.
+pub mod common;
+pub mod linux;
+pub mod macos;
+#[cfg(feature = "gpu")]
+pub mod nvidia;
+pub mod sysinfo;
+pub mod unix;
+pub mod windows;
 
 cfg_if::cfg_if! {
-    if #[cfg(any(
-        target_os = "windows",
-        target_os = "macos",
-        target_os = "linux",
-        target_os = "freebsd",
-        target_os = "dragonfly",
-        target_os = "ios",
-    ))] {
-        pub mod starship_battery;
+    if #[cfg(target_family = "windows")] {
+        pub use windows::processes::Pid as Pid;
+    } else if #[cfg(target_family = "unix")] {
+        pub use unix::processes::Pid as Pid;
     }
 }

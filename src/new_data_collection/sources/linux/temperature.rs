@@ -8,15 +8,17 @@ use std::{
 use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
-use super::{TempHarvest, TemperatureType};
-use crate::app::filter::Filter;
+use crate::{
+    app::filter::Filter,
+    new_data_collection::sources::common::temperature::{TemperatureData, TemperatureType},
+};
 
 const EMPTY_NAME: &str = "Unknown";
 
 /// Returned results from grabbing hwmon/coretemp temperature sensor
 /// values/names.
 struct HwmonResults {
-    temperatures: Vec<TempHarvest>,
+    temperatures: Vec<TemperatureData>,
     num_hwmon: usize,
 }
 
@@ -224,7 +226,7 @@ fn is_device_awake(path: &Path) -> bool {
 /// once this happens, the device will be *kept* on through the sensor
 /// reading, and not be able to re-enter ACPI D3cold.
 fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> HwmonResults {
-    let mut temperatures: Vec<TempHarvest> = vec![];
+    let mut temperatures: Vec<TemperatureData> = vec![];
     let mut seen_names: HashMap<String, u32> = HashMap::new();
 
     let (dirs, num_hwmon) = get_hwmon_candidates();
@@ -246,7 +248,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 
         if !is_device_awake(&file_path) {
             let name = finalize_name(None, None, &sensor_name, &mut seen_names);
-            temperatures.push(TempHarvest {
+            temperatures.push(TemperatureData {
                 name,
                 temperature: None,
             });
@@ -329,7 +331,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
                 // probing hwmon if not needed?
                 if Filter::optional_should_keep(filter, &name) {
                     if let Ok(temp_celsius) = parse_temp(&temp_path) {
-                        temperatures.push(TempHarvest {
+                        temperatures.push(TemperatureData {
                             name,
                             temperature: Some(temp_type.convert_temp_unit(temp_celsius)),
                         });
@@ -352,7 +354,7 @@ fn hwmon_temperatures(temp_type: &TemperatureType, filter: &Option<Filter>) -> H
 /// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
 /// for more details.
 fn add_thermal_zone_temperatures(
-    temperatures: &mut Vec<TempHarvest>, temp_type: &TemperatureType, filter: &Option<Filter>,
+    temperatures: &mut Vec<TemperatureData>, temp_type: &TemperatureType, filter: &Option<Filter>,
 ) {
     let path = Path::new("/sys/class/thermal");
     let Ok(read_dir) = path.read_dir() else {
@@ -382,7 +384,7 @@ fn add_thermal_zone_temperatures(
                     if let Ok(temp_celsius) = parse_temp(&temp_path) {
                         let name = counted_name(&mut seen_names, name);
 
-                        temperatures.push(TempHarvest {
+                        temperatures.push(TemperatureData {
                             name,
                             temperature: Some(temp_type.convert_temp_unit(temp_celsius)),
                         });
@@ -396,14 +398,14 @@ fn add_thermal_zone_temperatures(
 /// Gets temperature sensors and data.
 pub fn get_temperature_data(
     temp_type: &TemperatureType, filter: &Option<Filter>,
-) -> Result<Option<Vec<TempHarvest>>> {
+) -> Vec<TemperatureData> {
     let mut results = hwmon_temperatures(temp_type, filter);
 
     if results.num_hwmon == 0 {
         add_thermal_zone_temperatures(&mut results.temperatures, temp_type, filter);
     }
 
-    Ok(Some(results.temperatures))
+    results.temperatures
 }
 
 #[cfg(test)]
