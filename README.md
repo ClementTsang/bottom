@@ -226,6 +226,13 @@ cave resolve -x bottom
 
 ### Fedora / CentOS / AlmaLinux / Rocky Linux
 
+bottom is available in [Terra](https://terra.fyralabs.com/):
+
+```bash
+sudo dnf install --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' --setopt='terra.gpgkey=https://repos.fyralabs.com/terra$releasever/key.asc' terra-release
+sudo dnf install bottom
+```
+
 bottom is available in [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
 
 ```bash
