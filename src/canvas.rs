@@ -356,8 +356,12 @@ impl Painter {
                 // This fixes #397, apparently if the height is 1, it can't render the CPU
                 // bars...
                 let cpu_height = {
-                    let c =
-                        (actual_cpu_data_len / 4) as u16 + u16::from(actual_cpu_data_len % 4 != 0);
+                    let c = (actual_cpu_data_len / 4) as u16
+                        + u16::from(actual_cpu_data_len % 4 != 0)
+                        + u16::from(
+                            app_state.app_config_fields.dedicated_average_row
+                                && actual_cpu_data_len.saturating_sub(1) % 4 != 0,
+                        );
 
                     if c <= 1 {
                         1
