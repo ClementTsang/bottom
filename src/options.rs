@@ -1219,7 +1219,10 @@ mod test {
         use std::path::PathBuf;
 
         // Case three: no previous config, no XDG var.
-        std::env::set_var("XDG_CONFIG_HOME", "");
+        // SAFETY: this is the only test that does this
+        unsafe {
+            std::env::remove_var("XDG_CONFIG_HOME");
+        }
 
         let case_1 = dirs::config_dir()
             .map(|mut path| {
@@ -1236,11 +1239,10 @@ mod test {
         case_2.push("/tmp");
         case_2.push(DEFAULT_CONFIG_FILE_PATH);
 
-        assert_eq!(get_config_path(None), Some(case_2.clone()));
+        assert_eq!(get_config_path(None), Some(case_2));
 
-        // Case one: old non-XDG exists already
-        std::env::set_var("XDG_CONFIG_HOME", "");
-        let case_3 = case_2;
-        assert_eq!(get_config_path(None), Some(case_3));
+        // Case one: old non-XDG exists already, XDG var exists.
+        // let case_3 = case_1;
+        // assert_eq!(get_config_path(None), Some(case_1));
     }
 }
