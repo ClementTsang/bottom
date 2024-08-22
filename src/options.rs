@@ -60,36 +60,67 @@ macro_rules! is_flag_enabled {
     };
 }
 
+/// The default config file sub-path.
+const DEFAULT_CONFIG_FILE_LOCATION: &str = "bottom/bottom.toml";
+
 /// Returns the config path to use. If `override_config_path` is specified, then
 /// we will use that. If not, then return the "default" config path, which is:
+///
 /// - If a path already exists at `<HOME>/bottom/bottom.toml`, then use that for
 ///   legacy reasons.
 /// - Otherwise, use `<SYSTEM_CONFIG_FOLDER>/bottom/bottom.toml`.
 ///
 /// For more details on this, see [dirs](https://docs.rs/dirs/latest/dirs/fn.config_dir.html)'
 /// documentation.
+///
+/// XXX: For macOS, we additionally will manually check `$XDG_CONFIG_HOME` as well first
+/// before falling back to `dirs`.
 fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
-    const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
-
     if let Some(conf_loc) = override_config_path {
         return Some(conf_loc.to_path_buf());
     } else if let Some(home_path) = dirs::home_dir() {
         let mut old_home_path = home_path;
         old_home_path.push(".config/");
-        old_home_path.push(DEFAULT_CONFIG_FILE_PATH);
-        if old_home_path.exists() {
-            // We used to create it at `<HOME>/DEFAULT_CONFIG_FILE_PATH`, but changed it
-            // to be more correct later. However, for legacy reasons, if it already exists,
-            // use the old one.
-            return Some(old_home_path);
+        old_home_path.push(DEFAULT_CONFIG_FILE_LOCATION);
+        if let Ok(res) = old_home_path.try_exists() {
+            if res {
+                // We used to create it at `<HOME>/DEFAULT_CONFIG_FILE_PATH`, but changed it
+                // to be more correct later. However, for legacy reasons, if it already exists,
+                // use the old one.
+                return Some(old_home_path);
+            }
         }
     }
 
-    // Otherwise, return the "correct" path based on the config dir.
-    dirs::config_dir().map(|mut path| {
-        path.push(DEFAULT_CONFIG_FILE_PATH);
+    let config_path = dirs::config_dir().map(|mut path| {
+        path.push(DEFAULT_CONFIG_FILE_LOCATION);
         path
-    })
+    });
+
+    if cfg!(target_os = "macos") {
+        if let Ok(xdg_config_path) = std::env::var("XDG_CONFIG_HOME") {
+            if !xdg_config_path.is_empty() {
+                // If XDG_CONFIG_HOME exists and is non-empty, _but_ we previously used the Library-based path
+                // for a config and it exists, then use that instead for backwards-compatibility.
+                if let Some(old_macos_path) = &config_path {
+                    if let Ok(res) = old_macos_path.try_exists() {
+                        if res {
+                            return config_path;
+                        }
+                    }
+                }
+
+                // Otherwise, try and use the XDG_CONFIG_HOME-based path.
+                let mut cfg_path = PathBuf::new();
+                cfg_path.push(xdg_config_path);
+                cfg_path.push(DEFAULT_CONFIG_FILE_LOCATION);
+
+                return Some(cfg_path);
+            }
+        }
+    }
+
+    config_path
 }
 
 fn create_config_at_path(path: &Path) -> anyhow::Result<Config> {
@@ -1182,5 +1213,48 @@ mod test {
                 }
             }
         }
+    }
+
+    /// This one has slightly more complex behaviour due to `dirs` not respecting XDG on macOS, so we manually
+    /// handle it. However, to ensure backwards-compatibility, we also have to do some special cases.
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn test_get_config_path_macos() {
+        use super::get_config_path;
+        use super::DEFAULT_CONFIG_FILE_LOCATION;
+        use std::path::PathBuf;
+
+        // Case three: no previous config, no XDG var.
+        // SAFETY: this is the only test that does this
+        unsafe {
+            std::env::remove_var("XDG_CONFIG_HOME");
+        }
+
+        let case_1 = dirs::config_dir()
+            .map(|mut path| {
+                path.push(DEFAULT_CONFIG_FILE_LOCATION);
+                path
+            })
+            .unwrap();
+
+        // Skip this test if the file already exists.
+        if !case_1.exists() {
+            assert_eq!(get_config_path(None), Some(case_1));
+        }
+
+        // Case two: no previous config, XDG var exists.
+        std::env::set_var("XDG_CONFIG_HOME", "/tmp");
+        let mut case_2 = PathBuf::new();
+        case_2.push("/tmp");
+        case_2.push(DEFAULT_CONFIG_FILE_LOCATION);
+
+        // Skip this test if the file already exists.
+        if !case_2.exists() {
+            assert_eq!(get_config_path(None), Some(case_2));
+        }
+
+        // Case one: old non-XDG exists already, XDG var exists.
+        // let case_3 = case_1;
+        // assert_eq!(get_config_path(None), Some(case_1));
     }
 }

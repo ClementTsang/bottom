@@ -30,6 +30,8 @@ That said, these are more guidelines rather than hardset rules, though the proje
 ### Changes
 
 - [#1559](https://github.com/ClementTsang/bottom/pull/1559): Rename `--enable_gpu` to `--disable_gpu`, and make GPU features enabled by default.
+- [#1570](https://github.com/ClementTsang/bottom/pull/1570): Consider `$XDG_CONFIG_HOME` on macOS when looking for a default config path in a
+  backwards-compatible fashion.
 
 ## [0.10.2] - 2024-08-05
 
