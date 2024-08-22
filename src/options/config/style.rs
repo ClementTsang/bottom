@@ -231,7 +231,6 @@ mod test {
     #[test]
     fn default_selected_colour_works() {
         let mut colours = ColourPalette::default();
-        println!("colours: {colours:?}");
         let original_selected_text_colour = ColourPalette::default_palette()
             .selected_text_style
             .fg

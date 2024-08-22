@@ -1232,7 +1232,7 @@ mod test {
 
         let case_1 = dirs::config_dir()
             .map(|mut path| {
-                path.push(DEFAULT_CONFIG_FILE_PATH);
+                path.push(DEFAULT_CONFIG_FILE_LOCATION);
                 path
             })
             .unwrap();
@@ -1246,7 +1246,7 @@ mod test {
         std::env::set_var("XDG_CONFIG_HOME", "/tmp");
         let mut case_2 = PathBuf::new();
         case_2.push("/tmp");
-        case_2.push(DEFAULT_CONFIG_FILE_PATH);
+        case_2.push(DEFAULT_CONFIG_FILE_LOCATION);
 
         // Skip this test if the file already exists.
         if !case_2.exists() {
