@@ -150,17 +150,17 @@ jobs:
         info:
           # x86 or x86-64
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-latest",
               target: "i686-unknown-linux-gnu",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-latest",
               target: "x86_64-unknown-linux-musl",
               cross: false,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-latest",
               target: "i686-unknown-linux-musl",
               cross: true,
             }
@@ -174,7 +174,7 @@ jobs:
 
           # Beta
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-latest",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: "beta",
@@ -194,35 +194,35 @@ jobs:
 
           # armv7
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-latest",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
             }
 
           # armv6
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-latest",
               target: "arm-unknown-linux-gnueabihf",
               cross: true,
             }
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-latest",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
             }
 
           # Risc-V 64gc
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-latest",
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
             }
 
           # Android ARM64
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-latest",
               target: "aarch64-linux-android",
               cross: true,
               cross-version: "git:cabfc3b02d1edec03869fabdabf6a7f8b0519160",
@@ -231,7 +231,7 @@ jobs:
 
           # FreeBSD 13
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-latest",
               target: "x86_64-unknown-freebsd",
               cross: true,
             }
