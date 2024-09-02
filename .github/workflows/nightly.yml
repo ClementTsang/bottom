@@ -89,7 +89,7 @@ jobs:
         if: github.event.inputs.isMock != 'mock'
 
       - name: Add all release files and create nightly release if not mock
-        uses: softprops/action-gh-release@20e085ccc73308c2c8e43ab8da4f8d7ecbb94d4e # 2.0.1
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # 2.0.8
         if: github.event.inputs.isMock != 'mock'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
