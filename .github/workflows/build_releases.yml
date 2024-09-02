@@ -121,12 +121,9 @@ jobs:
               cross: true,
             }
 
-          # FreeBSD 13
-          - {
-              os: "ubuntu-latest",
-              target: "x86_64-unknown-freebsd",
-              cross: true,
-            }
+          # Seems like cross' FreeBSD image is a bit broken? I
+          # get build errors, may be related to this issue:
+          # https://github.com/cross-rs/cross/issues/1291
     steps:
       - name: Checkout repository
         if: matrix.info.container == ''
