@@ -150,17 +150,17 @@ jobs:
         info:
           # x86 or x86-64
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-20.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-20.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-20.04",
               target: "i686-unknown-linux-musl",
               cross: true,
             }
@@ -174,7 +174,7 @@ jobs:
 
           # Beta
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-20.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: "beta",
@@ -194,41 +194,47 @@ jobs:
 
           # armv7
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-20.04",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
             }
 
           # armv6
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-20.04",
               target: "arm-unknown-linux-gnueabihf",
               cross: true,
             }
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-20.04",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
             }
 
           # Risc-V 64gc
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-20.04",
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
             }
 
           # Android ARM64
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-20.04",
               target: "aarch64-linux-android",
               cross: true,
               cross-version: "git:cabfc3b02d1edec03869fabdabf6a7f8b0519160",
               no-default-features: true,
             }
 
+          # FreeBSD 13
+          - {
+              os: "ubuntu-20.04",
+              target: "x86_64-unknown-freebsd",
+              cross: true,
+            }
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
