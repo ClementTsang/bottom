@@ -123,7 +123,7 @@ jobs:
     steps:
       - name: Checkout repository
         if: matrix.info.container == ''
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
@@ -183,7 +183,7 @@ jobs:
           echo "ASSET=bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz" >> $GITHUB_ENV
 
       - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
         with:
           subject-path: ${{ env.ASSET }}
 
@@ -227,7 +227,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
@@ -255,7 +255,7 @@ jobs:
           cargo wix
 
       - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
         with:
           subject-path: "bottom_x86_64_installer.msi"
 
@@ -278,7 +278,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
 
@@ -299,7 +299,7 @@ jobs:
           python ./scripts/cirrus/release.py "$BRANCH" "release/" "${{ inputs.caller }}"
 
       - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
         with:
           subject-path: "release/**/*.tar.gz"
 
@@ -346,7 +346,7 @@ jobs:
             }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
@@ -420,7 +420,7 @@ jobs:
           rm -r ./target/${{ matrix.info.target }}/debian/
 
       - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
         with:
           subject-path: ${{ steps.verify.outputs.DEB_FILE }}
 
@@ -450,7 +450,7 @@ jobs:
           - { target: "x86_64-unknown-linux-musl", cross: true }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
@@ -510,7 +510,7 @@ jobs:
           rm -r ./target/${{ matrix.info.target }}/generate-rpm/
 
       - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
         with:
           subject-path: ${{ steps.verify.outputs.RPM_FILE }}
 
