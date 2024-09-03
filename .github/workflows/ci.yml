@@ -232,6 +232,7 @@ jobs:
           # Seems like cross' FreeBSD image is a bit broken? I
           # get build errors, may be related to this issue:
           # https://github.com/cross-rs/cross/issues/1291
+        features: ["--all-features", "--no-default-features"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -249,27 +250,79 @@ jobs:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      - name: Try building with only default features enabled
+      - name: Run clippy
         uses: ClementTsang/cargo-action@v0.0.5
-        if: ${{ matrix.info.no-default-features != true }}
         with:
-          command: build
-          args: --all-targets --verbose --target=${{ matrix.info.target }} --locked
+          command: clippy
+          args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} -- -D warnings
           use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+          cross-version: 0.2.5
+        env:
+          RUST_BACKTRACE: full
 
-      - name: Try building with no features enabled
-        uses: ClementTsang/cargo-action@v0.0.5
-        if: ${{ matrix.info.no-default-features == true  }}
+  vm-check:
+    name: "Test using VMs"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          - {
+              type: "freebsd",
+              os_release: "14.1",
+              target: "x86_64-unknown-freebsd",
+            }
+          - {
+              type: "freebsd",
+              os_release: "13.3",
+              target: "x86_64-unknown-freebsd",
+            }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
-          command: build
-          args: --all-targets --verbose --target=${{ matrix.info.target }} --locked --no-default-features
-          use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+          fetch-depth: 1
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        with:
+          toolchain: ${{ matrix.info.rust || 'stable' }}
+          target: ${{ matrix.info.target }}
+
+      - name: Enable Rust cache
+        uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
+        if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
+        with:
+          key: ${{ matrix.info.target }}
+          cache-all-crates: true
+
+      - name: Test FreeBSD
+        if: ${{ matrix.info.type == 'freebsd' }}
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "${{ matrix.info.os_release }}"
+          prepare: |
+            pkg install curl -y
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . $HOME/.cargo/env
+            cargo fmt --all -- --check
+
+            # Test with default features
+            cargo test --no-run --locked
+            cargo test --no-fail-fast -- --nocapture --quiet
+            cargo clippy --all-targets --workspace -- -D warnings
+
+            # Test with no default features
+            cargo test --no-run --locked --no-default-features
+            cargo test --no-fail-fast --no-default-features -- --nocapture --quiet
+            cargo clippy --all-targets --workspace --no-default-features -- -D warnings
 
   completion:
     name: "CI Pass Check"
-    needs: [supported, other-check]
+    needs: [supported, other-check, vm-check]
     if: ${{ always() }}
     runs-on: "ubuntu-latest"
     steps:
