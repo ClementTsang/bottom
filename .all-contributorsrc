@@ -499,6 +499,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "stephen-huan",
+      "name": "Stephen Huan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20411956?v=4",
+      "profile": "http://cgdct.moe",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
