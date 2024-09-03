@@ -39,35 +39,6 @@ env:
   CARGO_PROFILE_DEV_DEBUG: "0"
   CARGO_HUSKY_DONT_INSTALL_HOOKS: "true"
 
-test_task:
-  auto_cancellation: "false" # We set this to false to prevent nightly builds from affecting this
-  only_if: $CIRRUS_BUILD_SOURCE != "api" && ($CIRRUS_BRANCH == "main" || $CIRRUS_PR != "")
-  timeout_in: "15m"
-  skip: "!changesInclude('.cargo/**', 'sample_configs/**', 'scripts/cirrus/**', 'src/**', 'tests/**', '.cirrus.yml', 'build.rs', 'Cargo.lock', 'Cargo.toml', 'clippy.toml', 'rustfmt.toml')"
-  matrix:
-    - name: "FreeBSD 14 Test"
-      freebsd_instance:
-        image_family: freebsd-14-0
-
-    - name: "FreeBSD 13 Test"
-      freebsd_instance:
-        image_family: freebsd-13-3
-  <<: *SETUP_TEMPLATE
-  <<: *CACHE_TEMPLATE
-  test_no_feature_script:
-    - . $HOME/.cargo/env
-    - cargo fmt --all -- --check
-    - cargo test --no-run --locked --no-default-features
-    - cargo test --no-fail-fast --no-default-features -- --nocapture --quiet
-    - cargo clippy --all-targets --workspace --no-default-features -- -D warnings
-  test_all_feature_script:
-    - . $HOME/.cargo/env
-    - cargo fmt --all -- --check
-    - cargo test --no-run --locked --all-features
-    - cargo test --no-fail-fast --all-features -- --nocapture --quiet
-    - cargo clippy --all-targets --workspace --all-features -- -D warnings
-  <<: *CLEANUP_TEMPLATE
-
 release_task:
   auto_cancellation: "false"
   only_if: $CIRRUS_BUILD_SOURCE == "api" && $BTM_BUILD_RELEASE_CALLER == "ci"

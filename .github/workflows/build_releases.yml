@@ -120,6 +120,10 @@ jobs:
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
             }
+
+          # Seems like cross' FreeBSD image is a bit broken? I
+          # get build errors, may be related to this issue:
+          # https://github.com/cross-rs/cross/issues/1291
     steps:
       - name: Checkout repository
         if: matrix.info.container == ''
@@ -271,6 +275,30 @@ jobs:
           retention-days: 3
           name: "release-build-msi"
           path: release
+
+  # build-vm:
+  #   name: "Build using VMs"
+  #   runs-on: "ubuntu-latest"
+  #   timeout-minutes: 30
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       info:
+  #         - {
+  #             type: "freebsd",
+  #             os_release: "14.1",
+  #             target: "x86_64-unknown-freebsd",
+  #           }
+  #         - {
+  #             type: "freebsd",
+  #             os_release: "13.3",
+  #             target: "x86_64-unknown-freebsd",
+  #           }
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+  #       with:
+  #         fetch-depth: 1
 
   build-cirrus:
     name: "Build using Cirrus CI"

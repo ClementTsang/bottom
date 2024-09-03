@@ -9,9 +9,10 @@ on:
   workflow_dispatch:
     inputs:
       isMock:
-        description: "Replace with any word other than 'mock' to trigger a non-mock run."
-        default: "mock"
+        description: "Mock run"
+        default: true
         required: false
+        type: boolean
 
 env:
   CARGO_INCREMENTAL: 0
@@ -43,7 +44,7 @@ jobs:
           echo "${{ github.event.inputs.isMock }}";
           if [[ -z "${{ github.event.inputs.isMock }}" ]]; then
             echo "This is a scheduled nightly run."
-          elif [[ "${{ github.event.inputs.isMock }}" == "mock" ]]; then
+          elif [[ ${{ github.event.inputs.isMock }} == true ]]; then
             echo "This is a mock run."
           else
             echo "This is NOT a mock run. Watch for the generated files!"
