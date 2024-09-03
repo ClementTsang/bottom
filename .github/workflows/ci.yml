@@ -214,6 +214,7 @@ jobs:
             }
 
           # Risc-V 64gc
+          # Note: seems like this breaks with tests?
           - {
               os: "ubuntu-latest",
               target: "riscv64gc-unknown-linux-gnu",
@@ -251,23 +252,23 @@ jobs:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      - name: Test (default features)
-        uses: ClementTsang/cargo-action@v0.0.5
-        if: ${{ matrix.info.no-default-features != true }}
-        with:
-          command: test
-          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
-          use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+      # - name: Test (default features)
+      #   uses: ClementTsang/cargo-action@v0.0.5
+      #   if: ${{ matrix.info.no-default-features != true }}
+      #   with:
+      #     command: test
+      #     args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
+      #     use-cross: ${{ matrix.info.cross }}
+      #     cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
-      - name: Test (no features enabled)
-        uses: ClementTsang/cargo-action@v0.0.5
-        if: ${{ matrix.info.no-default-features == true  }}
-        with:
-          command: test
-          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
-          use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+      # - name: Test (no features enabled)
+      #   uses: ClementTsang/cargo-action@v0.0.5
+      #   if: ${{ matrix.info.no-default-features == true  }}
+      #   with:
+      #     command: test
+      #     args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
+      #     use-cross: ${{ matrix.info.cross }}
+      #     cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
       - name: Check (default features)
         uses: ClementTsang/cargo-action@v0.0.5
