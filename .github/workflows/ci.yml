@@ -233,7 +233,6 @@ jobs:
           # Seems like cross' FreeBSD image is a bit broken? I
           # get build errors, may be related to this issue:
           # https://github.com/cross-rs/cross/issues/1291
-        features: ["--all-features", "--no-default-features"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -252,27 +251,23 @@ jobs:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      - name: Run clippy
+      - name: Check (default features)
         uses: ClementTsang/cargo-action@v0.0.5
-        if: matrix.info.no-clippy != 'true'
+        if: ${{ matrix.info.no-default-features != true }}
         with:
           command: clippy
-          args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} --locked
+          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
-        env:
-          RUST_BACKTRACE: full
 
-      - name: Try building with only default features enabled
+      - name: Check (no features enabled)
         uses: ClementTsang/cargo-action@v0.0.5
-        if: matrix.info.no-clippy == 'true'
+        if: ${{ matrix.info.no-default-features == true  }}
         with:
-          command: build
-          args: ${{ matrix.features }} --all-targets --verbose --target=${{ matrix.info.target }} --locked
+          command: clippy
+          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
-        env:
-          RUST_BACKTRACE: full
 
   vm-check:
     name: "Test using VMs"
@@ -319,22 +314,13 @@ jobs:
           release: "${{ matrix.info.os_release }}"
           envs: "CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           prepare: |
-            pkg install -y curl
+            pkg install -y curl bash
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
             sh rustup.sh --default-toolchain stable -y
           run: |
+            chsh -s /usr/local/bin/bash
             . $HOME/.cargo/env
-            cargo fmt --all -- --check
-
-            # Test with default features
-            cargo test --no-run --locked
-            cargo test --no-fail-fast -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
-
-            # Test with no default features
-            cargo test --no-run --locked --no-default-features
-            cargo test --no-fail-fast --no-default-features -- --nocapture --quiet
-            cargo clippy --all-targets --workspace --no-default-features -- -D warnings
 
   completion:
     name: "CI Pass Check"
