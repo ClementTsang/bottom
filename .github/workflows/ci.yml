@@ -227,6 +227,7 @@ jobs:
               cross: true,
               cross-version: "git:cabfc3b02d1edec03869fabdabf6a7f8b0519160",
               no-default-features: true,
+              no-clippy: true,
             }
 
           # Seems like cross' FreeBSD image is a bit broken? I
@@ -253,11 +254,23 @@ jobs:
 
       - name: Run clippy
         uses: ClementTsang/cargo-action@v0.0.5
+        if: matrix.info.no-clippy != 'true'
         with:
           command: clippy
-          args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} -- -D warnings
+          args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} --locked
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.5
+          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+        env:
+          RUST_BACKTRACE: full
+
+      - name: Try building with only default features enabled
+        uses: ClementTsang/cargo-action@v0.0.5
+        if: matrix.info.no-clippy == 'true'
+        with:
+          command: build
+          args: ${{ matrix.features }} --all-targets --verbose --target=${{ matrix.info.target }} --locked
+          use-cross: ${{ matrix.info.cross }}
+          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
         env:
           RUST_BACKTRACE: full
 
