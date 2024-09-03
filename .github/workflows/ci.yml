@@ -322,7 +322,7 @@ jobs:
         uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
-          key: ${{ matrix.info.target }}
+          key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
           cache-all-crates: true
 
       - name: Test FreeBSD
