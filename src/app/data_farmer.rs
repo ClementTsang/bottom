@@ -206,6 +206,8 @@ impl DataCollection {
         self.timed_data_vec.shrink_to_fit();
     }
 
+    // Clippy allow to avoid warning on certain platforms (e.g. 32-bit).
+    #[allow(clippy::boxed_local)]
     pub fn eat_data(&mut self, harvested_data: Box<Data>) {
         let harvested_time = harvested_data.collection_time;
         let mut new_entry = TimedData::default();

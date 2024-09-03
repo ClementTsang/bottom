@@ -309,17 +309,17 @@ jobs:
 
       - name: Test FreeBSD
         if: ${{ matrix.info.type == 'freebsd' }}
-        uses: vmactions/freebsd-vm@v1
+        uses: vmactions/freebsd-vm@v1.0.8
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
           prepare: |
             pkg install -y curl bash
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
             sh rustup.sh --default-toolchain stable -y
           run: |
-            chsh -s /usr/local/bin/bash
-            . $HOME/.cargo/env
+            . "$HOME/.cargo/env"
             cargo clippy --all-targets --workspace -- -D warnings
 
   completion:
