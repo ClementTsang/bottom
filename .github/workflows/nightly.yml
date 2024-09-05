@@ -20,8 +20,9 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
 
 jobs:
-  # Check if things should be skipped.
-  pre-job:
+  # Check if things should be skipped, or if this is a mock job.
+  initialize-job:
+    name: initialize-job
     runs-on: ubuntu-latest
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
@@ -33,17 +34,11 @@ jobs:
           skip_after_successful_duplicate: "true"
           do_not_skip: '["workflow_dispatch"]'
 
-  initialize-job:
-    name: initialize-job
-    needs: pre-job
-    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    runs-on: ubuntu-latest
-    steps:
       - name: Check if mock
         run: |
           if [[ -z "${{ github.event.inputs.isMock }}" ]]; then
             echo "This is a scheduled nightly run."
-          elif [[ "${{ github.event.inputs.isMock }}" == true ]]; then
+          elif [[ "${{ github.event.inputs.isMock }}" == "true" ]]; then
             echo "This is a mock run."
           else
             echo "This is NOT a mock run. Watch for the generated files!"
