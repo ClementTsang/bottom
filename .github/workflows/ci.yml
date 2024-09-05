@@ -57,7 +57,7 @@ jobs:
 
   # Runs rustfmt + tests + clippy on the main supported platforms.
   #
-  # Note that m1 macOS is tested via CirrusCI.
+  # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
   supported:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}

@@ -45,6 +45,8 @@ jobs:
         info:
           # ======= Supported targets =======
           # Linux (x86-64, x86, aarch64)
+          #
+          # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
           - {
               os: "ubuntu-20.04",
               target: "x86_64-unknown-linux-gnu",
@@ -321,6 +323,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
         info:
           - { target: "x86_64-unknown-linux-gnu", dpkg: amd64 }
           - { target: "x86_64-unknown-linux-musl", cross: true, dpkg: amd64 }
