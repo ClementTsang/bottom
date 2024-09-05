@@ -41,10 +41,9 @@ jobs:
     steps:
       - name: Check if mock
         run: |
-          echo "${{ github.event.inputs.isMock }}";
           if [[ -z "${{ github.event.inputs.isMock }}" ]]; then
             echo "This is a scheduled nightly run."
-          elif [[ ${{ github.event.inputs.isMock }} == true ]]; then
+          elif [[ "${{ github.event.inputs.isMock }}" == true ]]; then
             echo "This is a mock run."
           else
             echo "This is NOT a mock run. Watch for the generated files!"

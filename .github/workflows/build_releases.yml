@@ -38,13 +38,15 @@ jobs:
     name: "Build binaries"
     runs-on: ${{ matrix.info.os }}
     container: ${{ matrix.info.container }}
-    timeout-minutes: 30
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
         info:
           # ======= Supported targets =======
           # Linux (x86-64, x86, aarch64)
+          #
+          # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
           - {
               os: "ubuntu-20.04",
               target: "x86_64-unknown-linux-gnu",
@@ -228,7 +230,7 @@ jobs:
   build-msi:
     name: "Build MSI installer"
     runs-on: "windows-2019"
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -276,34 +278,10 @@ jobs:
           name: "release-build-msi"
           path: release
 
-  # build-vm:
-  #   name: "Build using VMs"
-  #   runs-on: "ubuntu-latest"
-  #   timeout-minutes: 30
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       info:
-  #         - {
-  #             type: "freebsd",
-  #             os_release: "14.1",
-  #             target: "x86_64-unknown-freebsd",
-  #           }
-  #         - {
-  #             type: "freebsd",
-  #             os_release: "13.3",
-  #             target: "x86_64-unknown-freebsd",
-  #           }
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-  #       with:
-  #         fetch-depth: 1
-
   build-cirrus:
     name: "Build using Cirrus CI"
     runs-on: "ubuntu-latest"
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -341,10 +319,11 @@ jobs:
   build-deb:
     name: "Build .deb software packages"
     runs-on: "ubuntu-20.04"
-    timeout-minutes: 30
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
+        # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
         info:
           - { target: "x86_64-unknown-linux-gnu", dpkg: amd64 }
           - { target: "x86_64-unknown-linux-musl", cross: true, dpkg: amd64 }
@@ -469,7 +448,7 @@ jobs:
     name: "Build .rpm software packages"
     runs-on: ubuntu-latest
     container: ghcr.io/clementtsang/almalinux-8
-    timeout-minutes: 30
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
