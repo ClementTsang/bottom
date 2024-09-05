@@ -38,7 +38,7 @@ jobs:
     name: "Build binaries"
     runs-on: ${{ matrix.info.os }}
     container: ${{ matrix.info.container }}
-    timeout-minutes: 10
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
@@ -230,7 +230,7 @@ jobs:
   build-msi:
     name: "Build MSI installer"
     runs-on: "windows-2019"
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -281,7 +281,7 @@ jobs:
   build-cirrus:
     name: "Build using Cirrus CI"
     runs-on: "ubuntu-latest"
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -319,7 +319,7 @@ jobs:
   build-deb:
     name: "Build .deb software packages"
     runs-on: "ubuntu-20.04"
-    timeout-minutes: 10
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
@@ -448,7 +448,7 @@ jobs:
     name: "Build .rpm software packages"
     runs-on: ubuntu-latest
     container: ghcr.io/clementtsang/almalinux-8
-    timeout-minutes: 10
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
