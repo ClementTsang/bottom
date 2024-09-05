@@ -37,7 +37,7 @@ jobs:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: ${{ matrix.info.os }}
-    timeout-minutes: 18
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
