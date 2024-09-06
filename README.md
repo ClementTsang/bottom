@@ -85,7 +85,7 @@ As (yet another) process/system visualization and management application, bottom
   - Changing the layout of widgets
   - Filtering out entries in some widgets
 
-- Some other nice stuff, like:
+- And more:
 
   - [An htop-inspired basic mode](https://clementtsang.github.io/bottom/nightly/usage/basic-mode/)
   - [Expansion, which focuses on just one widget](https://clementtsang.github.io/bottom/nightly/usage/general-usage/#expansion)
@@ -119,7 +119,7 @@ bottom may work on a number of platforms that aren't officially supported. Note 
 
 Note that some unsupported platforms may eventually be officially supported (e.g., FreeBSD).
 
-A non-comprehensive list of some currently unofficially supported platforms that may compile/work include:
+A non-comprehensive list of some currently unofficially-supported platforms that may compile/work include:
 
 - FreeBSD (`x86_64`)
 - Linux (`armv6`, `armv7`, `powerpc64le`, `riscv64gc`)
@@ -184,11 +184,14 @@ bottom is available as an [official package](https://archlinux.org/packages/extr
 sudo pacman -S bottom
 ```
 
-If you want the latest changes that are not yet stable, you can also install `bottom-git` [from the AUR](https://aur.archlinux.org/packages/bottom-git).
-For example, to install with `paru`:
+If you want the latest changes that are not yet stable, you can also install `bottom-git` [from the AUR](https://aur.archlinux.org/packages/bottom-git):
 
 ```bash
+# Using paru
 sudo paru -S bottom-git
+
+# Using yay
+sudo yay -S bottom-git
 ```
 
 ### Debian / Ubuntu
