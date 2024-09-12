@@ -157,7 +157,7 @@ impl FromStr for FileSystem {
             FileSystem::Bcachefs
         } else if s.eq_ignore_ascii_case("minix") {
             FileSystem::Minix
-        } else if s.eq_ignore_ascii_case("nilfs") {
+        } else if multi_eq_ignore_ascii_case!(s, "nilfs" | "nilfs2") {
             FileSystem::Nilfs
         } else if s.eq_ignore_ascii_case("xfs") {
             FileSystem::Xfs
