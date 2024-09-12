@@ -1,14 +1,9 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
-use std::{
-    io::{Read, Write},
-    path::Path,
-    thread,
-    time::Duration,
-};
+use std::{io::Read, thread, time::Duration};
 
-use regex::Regex;
-use tempfile::TempPath;
+#[cfg(feature = "default")]
+use std::{io::Write, path::Path};
 
 use crate::util::spawn_btm_in_pty;
 
@@ -61,7 +56,10 @@ fn test_empty() {
     run_and_kill(&["-C", "./tests/valid_configs/empty_config.toml"]);
 }
 
+#[cfg(feature = "default")]
 fn test_uncommented_default_config(original: &Path, test_name: &str) {
+    use regex::Regex;
+
     // Take the default config file and uncomment everything.
     let default_config = match std::fs::File::open(original) {
         Ok(mut default_config_file) => {
@@ -116,6 +114,8 @@ fn test_default() {
 #[cfg(feature = "default")]
 #[test]
 fn test_new_default() {
+    use tempfile::TempPath;
+
     let new_temp_default_path = match tempfile::NamedTempFile::new() {
         Ok(temp_file) => temp_file.into_temp_path(),
         Err(err) => {
