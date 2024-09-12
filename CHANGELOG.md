@@ -27,6 +27,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1551](https://github.com/ClementTsang/bottom/pull/1551): Fix missing parent section names in default config.
 - [#1552](https://github.com/ClementTsang/bottom/pull/1552): Fix typo in default config.
 - [#1578](https://github.com/ClementTsang/bottom/pull/1578): Fix missing selected text background colour in `default-light` theme.
+- [#1593](https://github.com/ClementTsang/bottom/pull/1593): Fix using `"none"` for chart legend position in configs.
 
 ### Changes
 
