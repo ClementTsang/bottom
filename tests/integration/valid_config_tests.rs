@@ -122,8 +122,8 @@ fn test_new_default() {
         }
     };
 
-    // This is a hack because we need a file that doesn't exist, and this hopefully means we avoid a bit of TOCTOU...?
-    let actual_temp_default_path = new_temp_default_path.join("_test_test_test_test");
+    // This is a hack because we need a temp file that doesn't exist.
+    let actual_temp_default_path = new_temp_default_path.to_path_buf();
     new_temp_default_path.close().unwrap();
 
     if !actual_temp_default_path.exists() {
