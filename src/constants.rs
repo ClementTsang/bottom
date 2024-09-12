@@ -354,36 +354,64 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Disk widget configuration
 #[disk]
+
+# By default, there are no disk name filters enabled. These can be turned on to filter out specific data entries if you
+# don't want to see them. An example use case is provided below.
 #[disk.name_filter]
+# Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
+# A list of filters to try and match.
 #list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
+# Whether to use regex. Defaults to false.
 #regex = true
+# Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
+# Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
 
+# By default, there are no mount name filters enabled. An example use case is provided below.
 #[disk.mount_filter]
+# Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
+# A list of filters to try and match.
 #list = ["/mnt/.*", "/boot"]
+# Whether to use regex. Defaults to false.
 #regex = true
+# Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
+# Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
 
 # Temperature widget configuration
 #[temperature]
+
+# By default, there are no temperature sensor filters enabled. An example use case is provided below.
 #[temperature.sensor_filter]
+# Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
+# A list of filters to try and match.
 #list = ["cpu", "wifi"]
+# Whether to use regex. Defaults to false.
 #regex = false
+# Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
+# Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
 
 # Network widget configuration
 #[network]
+
+# By default, there are no network interface filters enabled. An example use case is provided below.
 #[network.interface_filter]
+# Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
+# A list of filters to try and match.
 #list = ["virbr0.*"]
+# Whether to use regex. Defaults to false.
 #regex = true
+# Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
+# Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
 
 # These are all the components that support custom theming.  Note that colour support
