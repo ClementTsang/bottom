@@ -5,7 +5,14 @@ use hashbrown::HashMap;
 use portable_pty::{native_pty_system, Child, CommandBuilder, MasterPty, PtySize};
 
 pub fn abs_path(path: &str) -> OsString {
-    Path::new(path).canonicalize().unwrap().into_os_string()
+    let path = Path::new(path);
+
+    if path.exists() {
+        path.canonicalize().unwrap().into_os_string()
+    } else {
+        // We are going to trust that the path given is valid...
+        path.to_owned().into_os_string()
+    }
 }
 
 /// Returns a QEMU runner target given an architecture.

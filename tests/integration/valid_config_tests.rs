@@ -2,6 +2,7 @@
 
 use std::{
     io::{Read, Write},
+    path::Path,
     thread,
     time::Duration,
 };
@@ -59,10 +60,9 @@ fn test_empty() {
     run_and_kill(&["-C", "./tests/valid_configs/empty_config.toml"]);
 }
 
-#[test]
-fn test_default() {
+fn test_uncommented_default_config(original: &Path, test_name: &str) {
     // Take the default config file and uncomment everything.
-    let default_config = match std::fs::File::open("./sample_configs/default_config.toml") {
+    let default_config = match std::fs::File::open(original) {
         Ok(mut default_config_file) => {
             let mut buf = String::new();
             default_config_file
@@ -72,10 +72,12 @@ fn test_default() {
             buf
         }
         Err(err) => {
-            println!("Could not open default config, skipping test_default: {err:?}");
+            println!("Could not open default config, skipping {test_name}. Error: {err:?}");
             return;
         }
     };
+
+    println!("default config: {default_config}");
 
     let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
         .unwrap()
@@ -85,20 +87,62 @@ fn test_default() {
         .unwrap()
         .replace_all(&default_config, "$2");
 
-    let Ok(mut uncommented_config) = tempfile::NamedTempFile::new() else {
-        println!("Could not create a temp file, skipping test_default.");
-        return;
+    let mut uncommented_config = match tempfile::NamedTempFile::new() {
+        Ok(tf) => tf,
+        Err(err) => {
+            println!("Could not create a temp file, skipping {test_name}. Error: {err:?}");
+            return;
+        }
     };
 
-    if uncommented_config
-        .write_all(default_config.as_bytes())
-        .is_err()
-    {
-        println!("Could not write to temp file, skipping test_default.");
+    if let Err(err) = uncommented_config.write_all(default_config.as_bytes()) {
+        println!("Could not write to temp file, skipping {test_name}. Error: {err:?}");
         return;
     }
 
     run_and_kill(&["-C", &uncommented_config.path().to_string_lossy()]);
+
+    uncommented_config.close().unwrap();
+}
+
+#[test]
+fn test_default() {
+    test_uncommented_default_config(
+        Path::new("./sample_configs/default_config.toml"),
+        "test_default",
+    );
+}
+
+#[test]
+fn test_new_default() {
+    let new_temp_default_path = match tempfile::NamedTempFile::new() {
+        Ok(temp_file) => temp_file.into_temp_path(),
+        Err(err) => {
+            println!("Could not create a temp file, skipping test_new_default. Error: {err:?}");
+            return;
+        }
+    };
+
+    // This is a hack because we need a file that doesn't exist, and this hopefully means we avoid a bit of TOCTOU...?
+    let actual_temp_default_path = new_temp_default_path.join("_test_test_test_test");
+    new_temp_default_path.close().unwrap();
+
+    if !actual_temp_default_path.exists() {
+        run_and_kill(&["-C", &(actual_temp_default_path.to_string_lossy())]);
+        test_uncommented_default_config(&actual_temp_default_path, "test_new_default");
+    } else {
+        println!("temp path we want to check exists, skip test_new_default test.");
+    }
+}
+
+#[test]
+fn test_demo() {
+    let path: &str = "./sample_configs/demo_config.toml";
+    if std::path::Path::new(path).exists() {
+        run_and_kill(&["-C", path]);
+    } else {
+        println!("Could not read demo config.");
+    }
 }
 
 #[test]
