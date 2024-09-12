@@ -104,6 +104,7 @@ fn test_uncommented_default_config(original: &Path, test_name: &str) {
     uncommented_config.close().unwrap();
 }
 
+#[cfg(feature = "default")]
 #[test]
 fn test_default() {
     test_uncommented_default_config(
@@ -112,6 +113,7 @@ fn test_default() {
     );
 }
 
+#[cfg(feature = "default")]
 #[test]
 fn test_new_default() {
     let new_temp_default_path = match tempfile::NamedTempFile::new() {
