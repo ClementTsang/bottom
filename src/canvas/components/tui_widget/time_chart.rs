@@ -223,7 +223,7 @@ impl FromStr for LegendPosition {
     type Err = ParseLegendPositionError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_ascii_lowercase().as_str() {
+        match s {
             "top" => Ok(Self::Top),
             "top-left" => Ok(Self::TopLeft),
             "top-right" => Ok(Self::TopRight),
