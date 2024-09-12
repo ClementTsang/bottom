@@ -960,8 +960,11 @@ fn get_network_legend_position(
             position => Some(parse_config_value!(position.parse(), "network_legend")?),
         }
     } else if let Some(flags) = &config.flags {
-        if let Some(legend) = &flags.network_legend {
-            Some(parse_arg_value!(legend.parse(), "network_legend")?)
+        if let Some(s) = &flags.network_legend {
+            match s.to_ascii_lowercase().trim() {
+                "none" => None,
+                position => Some(parse_arg_value!(position.parse(), "network_legend")?),
+            }
         } else {
             Some(LegendPosition::default())
         }
