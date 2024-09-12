@@ -1,6 +1,12 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
-use std::{io::Read, thread, time::Duration};
+use std::{
+    io::{Read, Write},
+    thread,
+    time::Duration,
+};
+
+use regex::Regex;
 
 use crate::util::spawn_btm_in_pty;
 
@@ -51,6 +57,48 @@ fn test_bad_basic() {
 #[test]
 fn test_empty() {
     run_and_kill(&["-C", "./tests/valid_configs/empty_config.toml"]);
+}
+
+#[test]
+fn test_default() {
+    // Take the default config file and uncomment everything.
+    let default_config = match std::fs::File::open("./sample_configs/default_config.toml") {
+        Ok(mut default_config_file) => {
+            let mut buf = String::new();
+            default_config_file
+                .read_to_string(&mut buf)
+                .expect("can read file");
+
+            buf
+        }
+        Err(err) => {
+            println!("Could not open default config, skipping test_default: {err:?}");
+            return;
+        }
+    };
+
+    let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
+        .unwrap()
+        .replace_all(&default_config, "$1");
+
+    let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z\[])")
+        .unwrap()
+        .replace_all(&default_config, "$2");
+
+    let Ok(mut uncommented_config) = tempfile::NamedTempFile::new() else {
+        println!("Could not create a temp file, skipping test_default.");
+        return;
+    };
+
+    if uncommented_config
+        .write_all(default_config.as_bytes())
+        .is_err()
+    {
+        println!("Could not write to temp file, skipping test_default.");
+        return;
+    }
+
+    run_and_kill(&["-C", &uncommented_config.path().to_string_lossy()]);
 }
 
 #[test]

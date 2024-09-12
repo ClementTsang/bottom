@@ -957,13 +957,13 @@ fn get_network_legend_position(
     let result = if let Some(s) = &args.network.network_legend {
         match s.to_ascii_lowercase().trim() {
             "none" => None,
-            position => Some(parse_config_value!(position.parse(), "network_legend")?),
+            position => Some(parse_arg_value!(position.parse(), "network_legend")?),
         }
     } else if let Some(flags) = &config.flags {
         if let Some(s) = &flags.network_legend {
             match s.to_ascii_lowercase().trim() {
                 "none" => None,
-                position => Some(parse_arg_value!(position.parse(), "network_legend")?),
+                position => Some(parse_config_value!(position.parse(), "network_legend")?),
             }
         } else {
             Some(LegendPosition::default())
@@ -981,13 +981,13 @@ fn get_memory_legend_position(
     let result = if let Some(s) = &args.memory.memory_legend {
         match s.to_ascii_lowercase().trim() {
             "none" => None,
-            position => Some(parse_config_value!(position.parse(), "memory_legend")?),
+            position => Some(parse_arg_value!(position.parse(), "memory_legend")?),
         }
     } else if let Some(flags) = &config.flags {
         if let Some(s) = &flags.memory_legend {
             match s.to_ascii_lowercase().trim() {
                 "none" => None,
-                position => Some(parse_arg_value!(position.parse(), "memory_legend")?),
+                position => Some(parse_config_value!(position.parse(), "memory_legend")?),
             }
         } else {
             Some(LegendPosition::default())
