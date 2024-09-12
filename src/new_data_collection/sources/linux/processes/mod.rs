@@ -272,13 +272,13 @@ fn read_proc(
     ))
 }
 
-pub(crate) struct PrevProc {
+pub struct PrevProc {
     pub prev_idle: f64,
     pub prev_non_idle: f64,
 }
 
 #[derive(Clone, Copy)]
-pub(crate) struct ProcHarvestOptions {
+pub struct ProcHarvestOptions {
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
 }
@@ -289,13 +289,13 @@ fn is_str_numeric(s: &str) -> bool {
 
 /// General args to keep around for reading proc data.
 #[derive(Copy, Clone)]
-pub(crate) struct ReadProcArgs {
-    pub(crate) use_current_cpu_total: bool,
-    pub(crate) cpu_usage: f64,
-    pub(crate) cpu_fraction: f64,
-    pub(crate) total_memory: u64,
-    pub(crate) time_difference_in_secs: u64,
-    pub(crate) uptime: u64,
+pub struct ReadProcArgs {
+    pub use_current_cpu_total: bool,
+    pub cpu_usage: f64,
+    pub cpu_fraction: f64,
+    pub total_memory: u64,
+    pub time_difference_in_secs: u64,
+    pub uptime: u64,
 }
 
 pub struct ProcessCollector {

@@ -10,17 +10,21 @@
 
 use starship_battery::{
     units::{power::watt, ratio::percent, time::second},
-    Battery, Manager, State,
+    Battery, Manager,
 };
 
-#[derive(Debug, Clone)]
-pub struct BatteryHarvest {
-    pub charge_percent: f64,
-    pub secs_until_full: Option<i64>,
-    pub secs_until_empty: Option<i64>,
-    pub power_consumption_rate_watts: f64,
-    pub health_percent: f64,
-    pub state: State,
+use super::battery::{BatteryHarvest, State};
+
+impl From<starship_battery::State> for State {
+    fn from(value: starship_battery::State) -> Self {
+        match value {
+            starship_battery::State::Unknown => State::Unknown,
+            starship_battery::State::Charging => State::Charging,
+            starship_battery::State::Discharging => State::Discharging,
+            starship_battery::State::Empty => State::Empty,
+            starship_battery::State::Full => State::Full,
+        }
+    }
 }
 
 pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<BatteryHarvest> {
@@ -40,7 +44,7 @@ pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<Ba
                     charge_percent: f64::from(battery.state_of_charge().get::<percent>()),
                     power_consumption_rate_watts: f64::from(battery.energy_rate().get::<watt>()),
                     health_percent: f64::from(battery.state_of_health().get::<percent>()),
-                    state: battery.state(),
+                    state: battery.state().into(),
                 })
             } else {
                 None

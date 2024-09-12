@@ -26,6 +26,7 @@ pub struct IoData {
     pub write_bytes: u64,
 }
 
+#[derive(Clone, Debug)]
 pub struct DiskHarvest {
     /// Disk entries.
     pub entries: Vec<DiskEntry>,

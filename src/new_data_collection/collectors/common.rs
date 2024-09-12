@@ -1,19 +1,34 @@
 //! Common code amongst all data collectors.
 
-use crate::new_data_collection::{
-    error::CollectionResult,
-    sources::common::{
-        disk::DiskHarvest, processes::ProcessHarvest, temperature::TemperatureData,
+use crate::{
+    data_collection::Data,
+    new_data_collection::{
+        error::CollectionResult,
+        sources::{
+            cpu::CpuHarvest, disk::DiskHarvest, memory::MemHarvest, processes::ProcessHarvest,
+            temperature::TemperatureData,
+        },
     },
 };
 
+#[cfg(feature = "battery")]
+use crate::new_data_collection::sources::battery::BatteryHarvest;
+
+// /// Represents data collected at an instance.
+// #[derive(Debug)]
+// pub struct Data {
+//     pub collection_time: Instant,
+//     pub temperature_data: Option<Vec<TemperatureData>>,
+//     pub process_data: Option<Vec<ProcessHarvest>>,
+//     pub disk_data: Option<DiskHarvest>,
+// }
+
 /// The trait representing what a per-platform data collector should implement.
-pub(crate) trait DataCollector {
-    /// Refresh inner data sources to prepare them for gathering data.
+pub trait DataCollector {
+    /// Return data.
     ///
-    /// Note that depending on the implementation, this may
-    /// not actually need to do anything.
-    fn refresh_data(&mut self) -> CollectionResult<()>;
+    /// For now, this returns the old data type for cross-compatibility as we migrate.
+    fn get_data(&mut self) -> Data;
 
     /// Return temperature data.
     fn get_temperature_data(&mut self) -> CollectionResult<Vec<TemperatureData>>;
@@ -23,4 +38,14 @@ pub(crate) trait DataCollector {
 
     /// Return disk data.
     fn get_disk_data(&mut self) -> CollectionResult<DiskHarvest>;
+
+    /// Return CPU data.
+    fn get_cpu_data(&mut self) -> CollectionResult<CpuHarvest>;
+
+    /// Return memory data.
+    fn get_memory_data(&mut self) -> CollectionResult<MemHarvest>;
+
+    #[cfg(feature = "battery")]
+    /// Return battery data.
+    fn get_battery_data(&mut self) -> CollectionResult<Vec<BatteryHarvest>>;
 }

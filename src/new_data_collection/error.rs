@@ -6,6 +6,9 @@ pub enum CollectionError {
     /// A general error to propagate back up. A wrapper around [`anyhow::Error`].
     General(anyhow::Error),
 
+    /// No data.
+    NoData,
+
     /// Collection is unsupported.
     Unsupported,
 }
@@ -14,6 +17,9 @@ impl std::fmt::Display for CollectionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CollectionError::General(err) => err.fmt(f),
+            CollectionError::NoData => {
+                write!(f, "no data found")
+            }
             CollectionError::Unsupported => {
                 write!(
                     f,

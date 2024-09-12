@@ -2,27 +2,35 @@
 
 use std::time::Instant;
 
-use starship_battery::{Battery, Manager};
-
 use crate::{
     app::filter::Filter,
+    data_collection::Data,
     new_data_collection::{
         error::CollectionResult,
         sources::{
-            common::{
-                disk::DiskHarvest,
-                processes::ProcessHarvest,
-                temperature::{TemperatureData, TemperatureType},
+            cpu::CpuHarvest,
+            disk::DiskHarvest,
+            linux::{get_temperature_data, linux_process_data, ProcessCollector},
+            memory::MemHarvest,
+            processes::ProcessHarvest,
+            sysinfo::{
+                cpu::{get_cpu_data_list, get_load_avg},
+                memory::{get_cache_usage, get_ram_usage, get_swap_usage},
             },
-            linux::{
-                processes::{linux_process_data, ProcessCollector},
-                temperature::get_temperature_data,
-            },
+            temperature::{TemperatureData, TemperatureType},
         },
     },
 };
 
 use super::common::DataCollector;
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "battery")] {
+        use starship_battery::{Battery, Manager};
+        use crate::new_data_collection::sources::battery::BatteryHarvest;
+    }
+
+}
 
 /// The [`DataCollector`] for Linux.
 pub struct LinuxDataCollector {
@@ -37,18 +45,29 @@ pub struct LinuxDataCollector {
     system: sysinfo::System,
     network: sysinfo::Networks,
 
+    show_average_cpu: bool,
+
     #[cfg(feature = "battery")]
-    battery_manager: Option<Manager>,
-    #[cfg(feature = "battery")]
-    battery_list: Option<Vec<Battery>>,
+    batteries: Option<(Manager, Vec<Battery>)>,
+
+    #[cfg(feature = "gpu")]
+    nvml: nvml_wrapper::Nvml,
 
     #[cfg(feature = "gpu")]
     gpus_total_mem: Option<u64>,
 }
 
-impl DataCollector for LinuxDataCollector {
+impl LinuxDataCollector {
     fn refresh_data(&mut self) -> CollectionResult<()> {
         Ok(())
+    }
+}
+
+impl DataCollector for LinuxDataCollector {
+    fn get_data(&mut self) -> Data {
+        let collection_time = Instant::now();
+
+        todo!()
     }
 
     fn get_temperature_data(&mut self) -> CollectionResult<Vec<TemperatureData>> {
@@ -72,5 +91,45 @@ impl DataCollector for LinuxDataCollector {
 
     fn get_disk_data(&mut self) -> CollectionResult<DiskHarvest> {
         todo!()
+    }
+
+    fn get_cpu_data(&mut self) -> CollectionResult<CpuHarvest> {
+        let usages = get_cpu_data_list(&self.system, self.show_average_cpu);
+        let load_average = get_load_avg();
+
+        CollectionResult::Ok(CpuHarvest {
+            usages,
+            load_average,
+        })
+    }
+
+    fn get_memory_data(&mut self) -> CollectionResult<MemHarvest> {
+        let memory = get_ram_usage(&self.system);
+        let swap = get_swap_usage(&self.system);
+        let cache = get_cache_usage(&self.system);
+
+        CollectionResult::Ok(MemHarvest {
+            memory,
+            swap,
+            cache,
+            #[cfg(feature = "zfs")]
+            arc: crate::new_data_collection::sources::linux::get_arc_usage(),
+            #[cfg(feature = "gpu")]
+            gpu: crate::new_data_collection::sources::nvidia::get_gpu_memory_usage(&self.nvml),
+        })
+    }
+
+    #[cfg(feature = "battery")]
+    fn get_battery_data(&mut self) -> CollectionResult<Vec<BatteryHarvest>> {
+        use crate::new_data_collection::{
+            error::CollectionError, sources::starship::refresh_batteries,
+        };
+
+        match &mut self.batteries {
+            Some((battery_manager, battery_list)) => {
+                CollectionResult::Ok(refresh_batteries(battery_manager, battery_list))
+            }
+            None => CollectionResult::Err(CollectionError::NoData),
+        }
     }
 }
