@@ -8,6 +8,7 @@ use std::{
 };
 
 use regex::Regex;
+use tempfile::TempPath;
 
 use crate::util::spawn_btm_in_pty;
 
@@ -77,8 +78,6 @@ fn test_uncommented_default_config(original: &Path, test_name: &str) {
         }
     };
 
-    println!("default config: {default_config}");
-
     let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
         .unwrap()
         .replace_all(&default_config, "$1");
@@ -129,7 +128,12 @@ fn test_new_default() {
 
     if !actual_temp_default_path.exists() {
         run_and_kill(&["-C", &(actual_temp_default_path.to_string_lossy())]);
+
+        // Re-take control over the temp path to ensure it gets deleted.
+        let actual_temp_default_path = TempPath::from_path(actual_temp_default_path);
         test_uncommented_default_config(&actual_temp_default_path, "test_new_default");
+
+        actual_temp_default_path.close().unwrap();
     } else {
         println!("temp path we want to check exists, skip test_new_default test.");
     }
