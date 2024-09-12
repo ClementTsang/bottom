@@ -2,7 +2,9 @@
 
 use crate::new_data_collection::{
     error::CollectionResult,
-    sources::common::{processes::ProcessHarvest, temperature::TemperatureData},
+    sources::common::{
+        disk::DiskHarvest, processes::ProcessHarvest, temperature::TemperatureData,
+    },
 };
 
 /// The trait representing what a per-platform data collector should implement.
@@ -11,17 +13,14 @@ pub(crate) trait DataCollector {
     ///
     /// Note that depending on the implementation, this may
     /// not actually need to do anything.
-    fn refresh_data(&mut self) -> CollectionResult<()> {
-        Ok(())
-    }
+    fn refresh_data(&mut self) -> CollectionResult<()>;
 
     /// Return temperature data.
-    fn get_temperature_data(&mut self) -> CollectionResult<Vec<TemperatureData>> {
-        Ok(vec![])
-    }
+    fn get_temperature_data(&mut self) -> CollectionResult<Vec<TemperatureData>>;
 
     /// Return process data.
-    fn get_process_data(&mut self) -> CollectionResult<Vec<ProcessHarvest>> {
-        Ok(vec![])
-    }
+    fn get_process_data(&mut self) -> CollectionResult<Vec<ProcessHarvest>>;
+
+    /// Return disk data.
+    fn get_disk_data(&mut self) -> CollectionResult<DiskHarvest>;
 }

@@ -6,7 +6,7 @@ pub enum CollectionError {
     /// A general error to propagate back up. A wrapper around [`anyhow::Error`].
     General(anyhow::Error),
 
-    /// The collection is unsupported.
+    /// Collection is unsupported.
     Unsupported,
 }
 

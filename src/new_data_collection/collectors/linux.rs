@@ -10,6 +10,7 @@ use crate::{
         error::CollectionResult,
         sources::{
             common::{
+                disk::DiskHarvest,
                 processes::ProcessHarvest,
                 temperature::{TemperatureData, TemperatureType},
             },
@@ -67,5 +68,9 @@ impl DataCollector for LinuxDataCollector {
             #[cfg(feature = "gpu")]
             self.gpus_total_mem,
         )
+    }
+
+    fn get_disk_data(&mut self) -> CollectionResult<DiskHarvest> {
+        todo!()
     }
 }
