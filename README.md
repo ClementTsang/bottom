@@ -484,6 +484,9 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="http://cgdct.moe"><img src="https://avatars.githubusercontent.com/u/20411956?v=4?s=100" width="100px;" alt="Stephen Huan"/><br /><sub><b>Stephen Huan</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=stephen-huan" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jasongwartz"><img src="https://avatars.githubusercontent.com/u/10981911?v=4?s=100" width="100px;" alt="Jason Gwartz"/><br /><sub><b>Jason Gwartz</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=jasongwartz" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/llc0930"><img src="https://avatars.githubusercontent.com/u/14966910?v=4?s=100" width="100px;" alt="llc0930"/><br /><sub><b>llc0930</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=llc0930" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
