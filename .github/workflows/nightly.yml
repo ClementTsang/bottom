@@ -46,6 +46,7 @@ jobs:
 
   build-release:
     needs: initialize-job
+    if: ${{ needs.initialize-job.outputs.should_skip != 'true' }}
     uses: ./.github/workflows/build_releases.yml
     with:
       caller: "nightly"
