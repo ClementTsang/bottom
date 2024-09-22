@@ -6,7 +6,7 @@ use crate::data_collection::disks::IoCounters;
 fn get_device_io(device: io_kit::IoObject) -> anyhow::Result<IoCounters> {
     let parent = device.service_parent()?;
 
-    // XXX: Re: Conform check being disabled.
+    // NB: Regarding the conform check being disabled.
     //
     // Okay, so this is weird.
     //
