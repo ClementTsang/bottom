@@ -156,7 +156,7 @@ checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
 name = "bottom"
-version = "0.10.2"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -169,7 +169,7 @@ dependencies = [
  "clap_complete_nushell",
  "clap_mangen",
  "concat-string",
- "core-foundation 0.10.0",
+ "core-foundation",
  "crossterm",
  "ctrlc",
  "dirs",
@@ -359,16 +359,6 @@ name = "concat-string"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7439becb5fafc780b6f4de382b1a7a3e70234afe783854a4702ee8adbb838609"
-
-[[package]]
-name = "core-foundation"
-version = "0.9.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f"
-dependencies = [
- "core-foundation-sys",
- "libc",
-]
 
 [[package]]
 name = "core-foundation"
@@ -1403,12 +1393,12 @@ dependencies = [
 
 [[package]]
 name = "starship-battery"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da7915746794358b8f649d3032c8ce150f55b7a0cd41951f170162e82e6cf43f"
+checksum = "9017a937879cf3db80807fa7c28f09eafd4981c998265233028ee7b75f898ed2"
 dependencies = [
  "cfg-if",
- "core-foundation 0.9.4",
+ "core-foundation",
  "lazycell",
  "libc",
  "mach2",
@@ -1416,7 +1406,7 @@ dependencies = [
  "num-traits",
  "plist",
  "uom",
- "winapi",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
