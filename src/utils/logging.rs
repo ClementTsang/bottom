@@ -18,7 +18,7 @@ pub fn init_logger(
                 // logging at all in a debug context which is generally fine,
                 // release builds should have this logging disabled entirely for now.
                 unsafe {
-                    // XXX: If we ever DO add general logging as a release feature, evaluate this
+                    // NB: If we ever DO add general logging as a release feature, evaluate this
                     // again and whether this is something we want enabled in
                     // release builds! What might be safe is falling back to the non-set-soundness
                     // mode when specifically using certain feature flags (e.g. dev-logging feature

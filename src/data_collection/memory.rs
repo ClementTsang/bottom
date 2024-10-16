@@ -19,6 +19,6 @@ pub mod arc;
 pub struct MemHarvest {
     pub used_bytes: u64,
     pub total_bytes: u64,
-    pub use_percent: Option<f64>, /* TODO: Might be find to just make this an f64, and any
+    pub use_percent: Option<f64>, /* TODO: Might be fine to just make this an f64, and any
                                    * consumer checks NaN. */
 }

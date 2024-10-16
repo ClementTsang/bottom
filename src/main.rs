@@ -21,6 +21,7 @@ pub mod constants;
 pub mod data_collection;
 pub mod data_conversion;
 pub mod event;
+pub mod new_data_collection;
 pub mod options;
 pub mod widgets;
 
