@@ -2,7 +2,7 @@ pub struct Usage(libc::statvfs);
 
 // Note that x86 returns `u32` values while x86-64 returns `u64`s, so we convert
 // everything to `u64` for consistency.
-#[allow(clippy::useless_conversion)]
+#[expect(clippy::useless_conversion)]
 impl Usage {
     pub(crate) fn new(vfs: libc::statvfs) -> Self {
         Self(vfs)
@@ -19,7 +19,7 @@ impl Usage {
         u64::from(self.0.f_bfree) * u64::from(self.0.f_frsize)
     }
 
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     /// Returns the total number of bytes used. Equal to `total - available` on
     /// Unix.
     pub fn used(&self) -> u64 {

@@ -1,4 +1,4 @@
-#[allow(dead_code)]
+#[expect(dead_code)]
 #[path = "src/options/args.rs"]
 mod args;
 

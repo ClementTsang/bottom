@@ -360,7 +360,6 @@ pub(crate) fn linux_process_data(
                 let pid = process.pid;
                 let prev_proc_details = pid_mapping.entry(pid).or_default();
 
-                #[allow(unused_mut)]
                 if let Ok((mut process_harvest, new_process_times)) =
                     read_proc(prev_proc_details, process, args, user_table)
                 {

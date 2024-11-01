@@ -811,7 +811,6 @@ fn get_default_widget_and_count(
     }
 }
 
-#[allow(unused_variables)]
 fn get_use_battery(args: &BottomArgs, config: &Config) -> bool {
     #[cfg(feature = "battery")]
     {
@@ -855,7 +854,6 @@ fn get_enable_gpu(_: &BottomArgs, _: &Config) -> bool {
     false
 }
 
-#[allow(unused_variables)]
 fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
     #[cfg(not(target_os = "windows"))]
     {

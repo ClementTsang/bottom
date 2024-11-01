@@ -88,7 +88,7 @@ impl FileSystem {
         matches!(self, FileSystem::Other(..))
     }
 
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     #[inline]
     /// Returns a string literal identifying this filesystem.
     pub fn as_str(&self) -> &str {
