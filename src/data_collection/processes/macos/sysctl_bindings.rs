@@ -12,14 +12,12 @@ use mach2::vm_types::user_addr_t;
 
 use crate::data_collection::Pid;
 
-#[expect(non_camel_case_types)]
 #[repr(C)]
 pub(crate) struct kinfo_proc {
     pub kp_proc: extern_proc,
     pub kp_eproc: eproc,
 }
 
-#[expect(non_camel_case_types)]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct p_st1 {
@@ -28,7 +26,6 @@ pub struct p_st1 {
     p_back: user_addr_t,
 }
 
-#[expect(non_camel_case_types)]
 #[repr(C)]
 pub union p_un {
     pub p_st1: p_st1,
@@ -39,7 +36,6 @@ pub union p_un {
 
 /// Exported fields for kern sysctl. See
 /// [`proc.h`](https://opensource.apple.com/source/xnu/xnu-201/bsd/sys/proc.h)
-#[expect(non_camel_case_types)]
 #[repr(C)]
 pub(crate) struct extern_proc {
     pub p_un: p_un,
@@ -182,7 +178,6 @@ type segsz_t = i32;
 type fixpt_t = u32;
 
 /// See [`proc.h`](https://opensource.apple.com/source/xnu/xnu-201/bsd/sys/proc.h)
-#[expect(non_camel_case_types)]
 #[repr(C)]
 pub(crate) struct pcred {
     pub pc_lock: [c_char; 72],
@@ -195,7 +190,6 @@ pub(crate) struct pcred {
 }
 
 /// See `vm.h`.
-#[expect(non_camel_case_types)]
 #[repr(C)]
 pub(crate) struct vmspace {
     pub dummy: i32,
@@ -205,7 +199,6 @@ pub(crate) struct vmspace {
 }
 
 /// See [`sysctl.h`](https://opensource.apple.com/source/xnu/xnu-344/bsd/sys/sysctl.h).
-#[expect(non_camel_case_types)]
 #[repr(C)]
 pub(crate) struct eproc {
     /// Address of proc. We just cheat and use a c_void pointer since we aren't

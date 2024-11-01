@@ -857,18 +857,21 @@ fn get_enable_gpu(_: &BottomArgs, _: &Config) -> bool {
     false
 }
 
+#[cfg(not(target_os = "windows"))]
 fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
-    #[cfg(not(target_os = "windows"))]
-    {
-        if args.memory.enable_cache_memory {
-            return true;
-        } else if let Some(flags) = &config.flags {
-            if let Some(enable_cache_memory) = flags.enable_cache_memory {
-                return enable_cache_memory;
-            }
+    if args.memory.enable_cache_memory {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(enable_cache_memory) = flags.enable_cache_memory {
+            return enable_cache_memory;
         }
     }
 
+    false
+}
+
+#[cfg(target_os = "windows")]
+fn get_enable_cache_memory(_args: &BottomArgs, _config: &Config) -> bool {
     false
 }
 
