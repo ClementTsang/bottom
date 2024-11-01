@@ -24,10 +24,11 @@ pub mod event;
 pub mod options;
 pub mod widgets;
 
+#[allow(deprecated)]
+use std::panic::{self, PanicInfo};
 use std::{
     boxed::Box,
     io::{stderr, stdout, Write},
-    panic::{self, PanicInfo},
     sync::{
         mpsc::{self, Receiver, Sender},
         Arc,
@@ -103,6 +104,7 @@ fn check_if_terminal() {
 
 /// A panic hook to properly restore the terminal in the case of a panic.
 /// Originally based on [spotify-tui's implementation](https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs).
+#[allow(deprecated)]
 fn panic_hook(panic_info: &PanicInfo<'_>) {
     let mut stdout = stdout();
 
