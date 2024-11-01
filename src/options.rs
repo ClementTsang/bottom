@@ -811,28 +811,31 @@ fn get_default_widget_and_count(
     }
 }
 
+#[cfg(feature = "battery")]
 fn get_use_battery(args: &BottomArgs, config: &Config) -> bool {
-    #[cfg(feature = "battery")]
-    {
-        // TODO: Move this so it's dynamic in the app itself and automatically hide if
-        // there are no batteries?
-        if let Ok(battery_manager) = Manager::new() {
-            if let Ok(batteries) = battery_manager.batteries() {
-                if batteries.count() == 0 {
-                    return false;
-                }
-            }
-        }
-
-        if args.battery.battery {
-            return true;
-        } else if let Some(flags) = &config.flags {
-            if let Some(battery) = flags.battery {
-                return battery;
+    // TODO: Move this so it's dynamic in the app itself and automatically hide if
+    // there are no batteries?
+    if let Ok(battery_manager) = Manager::new() {
+        if let Ok(batteries) = battery_manager.batteries() {
+            if batteries.count() == 0 {
+                return false;
             }
         }
     }
 
+    if args.battery.battery {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(battery) = flags.battery {
+            return battery;
+        }
+    }
+
+    false
+}
+
+#[cfg(not(feature = "battery"))]
+fn get_use_battery(_args: &BottomArgs, _config: &Config) -> bool {
     false
 }
 
