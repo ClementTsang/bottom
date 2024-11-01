@@ -12,24 +12,24 @@ use core_foundation::{
 use libc::c_char;
 use mach2::{kern_return::kern_return_t, port::MACH_PORT_NULL};
 
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 pub type io_object_t = mach_port_t;
 
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 pub type io_iterator_t = io_object_t;
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 pub type io_registry_entry_t = io_object_t;
 
 pub type IOOptionBits = u32;
 
 /// See https://github.com/1kc/librazermacos/pull/27#issuecomment-1042368531.
-#[allow(non_upper_case_globals)]
+#[expect(non_upper_case_globals)]
 pub const kIOMasterPortDefault: mach_port_t = MACH_PORT_NULL;
 
-#[allow(non_upper_case_globals)]
+#[expect(non_upper_case_globals)]
 pub const kIOServicePlane: &str = "IOService\0";
 
-#[allow(non_upper_case_globals)]
+#[expect(non_upper_case_globals)]
 pub const kIOMediaClass: &str = "IOMedia\0";
 
 // See [here](https://developer.apple.com/documentation/iokit) for more details.

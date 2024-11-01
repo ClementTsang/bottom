@@ -84,7 +84,7 @@ fn partitions_iter() -> anyhow::Result<impl Iterator<Item = Partition>> {
     }))
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 /// Returns a [`Vec`] containing all partitions.
 pub(crate) fn partitions() -> anyhow::Result<Vec<Partition>> {
     partitions_iter().map(|iter| iter.collect())

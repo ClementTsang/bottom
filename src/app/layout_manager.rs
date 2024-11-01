@@ -19,7 +19,7 @@ type ColumnMappings = (u32, BTreeMap<LineSegment, ColumnRowMappings>);
 
 impl BottomLayout {
     pub fn get_movement_mappings(&mut self) {
-        #[allow(clippy::suspicious_operation_groupings)] // Have to enable this, clippy really doesn't like me doing this with tuples...
+        #[expect(clippy::suspicious_operation_groupings)] // Have to enable this, clippy really doesn't like me doing this with tuples...
         fn is_intersecting(a: LineSegment, b: LineSegment) -> bool {
             a.0 >= b.0 && a.1 <= b.1
                 || a.1 >= b.1 && a.0 <= b.0

@@ -811,29 +811,31 @@ fn get_default_widget_and_count(
     }
 }
 
-#[allow(unused_variables)]
+#[cfg(feature = "battery")]
 fn get_use_battery(args: &BottomArgs, config: &Config) -> bool {
-    #[cfg(feature = "battery")]
-    {
-        // TODO: Move this so it's dynamic in the app itself and automatically hide if
-        // there are no batteries?
-        if let Ok(battery_manager) = Manager::new() {
-            if let Ok(batteries) = battery_manager.batteries() {
-                if batteries.count() == 0 {
-                    return false;
-                }
-            }
-        }
-
-        if args.battery.battery {
-            return true;
-        } else if let Some(flags) = &config.flags {
-            if let Some(battery) = flags.battery {
-                return battery;
+    // TODO: Move this so it's dynamic in the app itself and automatically hide if
+    // there are no batteries?
+    if let Ok(battery_manager) = Manager::new() {
+        if let Ok(batteries) = battery_manager.batteries() {
+            if batteries.count() == 0 {
+                return false;
             }
         }
     }
 
+    if args.battery.battery {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(battery) = flags.battery {
+            return battery;
+        }
+    }
+
+    false
+}
+
+#[cfg(not(feature = "battery"))]
+fn get_use_battery(_args: &BottomArgs, _config: &Config) -> bool {
     false
 }
 
@@ -855,19 +857,21 @@ fn get_enable_gpu(_: &BottomArgs, _: &Config) -> bool {
     false
 }
 
-#[allow(unused_variables)]
+#[cfg(not(target_os = "windows"))]
 fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
-    #[cfg(not(target_os = "windows"))]
-    {
-        if args.memory.enable_cache_memory {
-            return true;
-        } else if let Some(flags) = &config.flags {
-            if let Some(enable_cache_memory) = flags.enable_cache_memory {
-                return enable_cache_memory;
-            }
+    if args.memory.enable_cache_memory {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(enable_cache_memory) = flags.enable_cache_memory {
+            return enable_cache_memory;
         }
     }
 
+    false
+}
+
+#[cfg(target_os = "windows")]
+fn get_enable_cache_memory(_args: &BottomArgs, _config: &Config) -> bool {
     false
 }
 

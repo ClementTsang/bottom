@@ -27,7 +27,7 @@ pub mod widgets;
 use std::{
     boxed::Box,
     io::{stderr, stdout, Write},
-    panic::{self, PanicInfo},
+    panic::{self, PanicHookInfo},
     sync::{
         mpsc::{self, Receiver, Sender},
         Arc,
@@ -51,7 +51,7 @@ use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, Collecti
 use options::{args, get_or_create_config, init_app};
 use tui::{backend::CrosstermBackend, Terminal};
 use utils::cancellation_token::CancellationToken;
-#[allow(unused_imports)]
+#[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;
 
 // Used for heap allocation debugging purposes.
@@ -103,7 +103,7 @@ fn check_if_terminal() {
 
 /// A panic hook to properly restore the terminal in the case of a panic.
 /// Originally based on [spotify-tui's implementation](https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs).
-fn panic_hook(panic_info: &PanicInfo<'_>) {
+fn panic_hook(panic_info: &PanicHookInfo<'_>) {
     let mut stdout = stdout();
 
     let msg = match panic_info.payload().downcast_ref::<&'static str>() {
