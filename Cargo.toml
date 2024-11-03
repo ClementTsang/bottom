@@ -82,7 +82,7 @@ backtrace = "0.3.74"
 cfg-if = "1.0.0"
 clap = { version = "4.5.20", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
-crossterm = "0.27.0"
+crossterm = "0.28.1"
 ctrlc = { version = "3.4.5", features = ["termination"] }
 dirs = "5.0.1"
 # Maybe consider https://github.com/rust-lang/rustc-hash for some cases too?
@@ -97,7 +97,7 @@ serde = { version = "1.0.214", features = ["derive"] }
 starship-battery = { version = "0.10.0", optional = true }
 sysinfo = "=0.30.13"
 toml_edit = { version = "0.22.22", features = ["serde"] }
-tui = { version = "0.27.0", package = "ratatui" }
+tui = { version = "0.28.1", package = "ratatui" }
 unicode-ellipsis = "0.2.0"
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2.0"
