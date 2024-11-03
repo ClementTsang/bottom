@@ -51,8 +51,10 @@ body:
 
   - type: dropdown
     id: filesystem
+    validations:
+      required: false
     attributes:
-      label: What filesystem(s) are you using?
+      label: (Optional) What filesystem(s) are you using?
       description: >
         If you know, please select what filesystem(s) you are using on the system that is experiencing the problem. This
         can be especially helpful if the issue is related to either the disk or memory widgets.
