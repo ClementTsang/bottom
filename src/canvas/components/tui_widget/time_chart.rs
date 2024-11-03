@@ -723,7 +723,10 @@ impl Widget for TimeChart<'_> {
         // Sample the style of the entire widget. This sample will be used to reset the
         // style of the cells that are part of the components put on top of the
         // grah area (i.e legend and axis names).
-        let original_style = buf.get(area.left(), area.top()).style();
+        let Some(original_style) = buf.cell((area.left(), area.top())).map(|cell| cell.style())
+        else {
+            return;
+        };
 
         let layout = self.layout(chart_area);
         let graph_area = layout.graph_area;
@@ -736,25 +739,28 @@ impl Widget for TimeChart<'_> {
 
         if let Some(y) = layout.axis_x {
             for x in graph_area.left()..graph_area.right() {
-                buf.get_mut(x, y)
-                    .set_symbol(symbols::line::HORIZONTAL)
-                    .set_style(self.x_axis.style);
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_symbol(symbols::line::HORIZONTAL)
+                        .set_style(self.x_axis.style);
+                }
             }
         }
 
         if let Some(x) = layout.axis_y {
             for y in graph_area.top()..graph_area.bottom() {
-                buf.get_mut(x, y)
-                    .set_symbol(symbols::line::VERTICAL)
-                    .set_style(self.y_axis.style);
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_symbol(symbols::line::VERTICAL)
+                        .set_style(self.y_axis.style);
+                }
             }
         }
 
         if let Some(y) = layout.axis_x {
             if let Some(x) = layout.axis_y {
-                buf.get_mut(x, y)
-                    .set_symbol(symbols::line::BOTTOM_LEFT)
-                    .set_style(self.x_axis.style);
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_symbol(symbols::line::BOTTOM_LEFT)
+                        .set_style(self.x_axis.style);
+                }
             }
         }
 
@@ -892,7 +898,7 @@ mod tests {
                             .iter()
                             .enumerate()
                             .map(|(i, (x, y, cell))| {
-                                let expected_cell = expected.get(*x, *y);
+                                let expected_cell = expected.cell((*x, *y)).unwrap();
                                 indoc::formatdoc! {"
                                     {i}: at ({x}, {y})
                                       expected: {expected_cell:?}

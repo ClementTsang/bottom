@@ -1,9 +1,9 @@
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
-    terminal::Frame,
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
+    Frame,
 };
 use unicode_segmentation::UnicodeSegmentation;
 

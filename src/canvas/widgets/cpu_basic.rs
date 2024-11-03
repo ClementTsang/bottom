@@ -2,8 +2,8 @@ use std::cmp::min;
 
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
-    terminal::Frame,
     widgets::Block,
+    Frame,
 };
 
 use crate::{

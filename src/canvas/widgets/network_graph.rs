@@ -1,9 +1,9 @@
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
-    terminal::Frame,
     text::Text,
     widgets::{Block, Borders, Row, Table},
+    Frame,
 };
 
 use crate::{
