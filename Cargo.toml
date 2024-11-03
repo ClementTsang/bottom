@@ -47,13 +47,9 @@ test = true
 doctest = true
 doc = true
 
-[profile.dev.package."*"]
 # Compile dependencies with optimizations enabled, even in debug mode.
+[profile.dev.package."*"]
 opt-level = 3
-
-[profile.no-opt]
-inherits = "dev"
-opt-level = 0
 
 [profile.release]
 debug = 0
@@ -68,6 +64,7 @@ debug = true
 strip = false
 
 [features]
+# Used for general builds.
 battery = ["starship-battery"]
 nvidia = ["nvml-wrapper"]
 gpu = ["nvidia"]
@@ -75,11 +72,12 @@ zfs = []
 deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
 
+# Should not be included in builds.
 logging = ["fern", "log", "time"]
 generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
-anyhow = "1.0.89"
+anyhow = "1.0.92"
 backtrace = "0.3.74"
 cfg-if = "1.0.0"
 clap = { version = "4.5.20", features = ["default", "cargo", "wrap_help", "derive"] }
@@ -94,8 +92,8 @@ indexmap = "2.6.0"
 indoc = "2.0.5"
 itertools = "0.13.0"
 nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
-regex = "1.11.0"
-serde = { version = "1.0.210", features = ["derive"] }
+regex = "1.11.1"
+serde = { version = "1.0.214", features = ["derive"] }
 starship-battery = { version = "0.10.0", optional = true }
 sysinfo = "=0.30.13"
 toml_edit = { version = "0.22.22", features = ["serde"] }
@@ -105,20 +103,20 @@ unicode-segmentation = "1.12.0"
 unicode-width = "0.2.0"
 
 # Used for logging.
-fern = { version = "0.6.2", optional = true }
+fern = { version = "0.7.0", optional = true }
 log = { version = "0.4.22", optional = true }
 time = { version = "0.3.36", features = ["local-offset", "formatting", "macros"], optional = true }
 
 # These are just used for JSON schema generation.
 schemars = { version = "0.8.21", optional = true }
-serde_json = { version = "1.0.128", optional = true }
+serde_json = { version = "1.0.132", optional = true }
 strum = { version = "0.26.3", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.159"
+libc = "0.2.161"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "0.38.37", features = ["fs", "param"] }
+rustix = { version = "0.38.38", features = ["fs", "param"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10.0"
@@ -136,7 +134,7 @@ windows = { version = "0.58.0", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.128" }
+serde_json = { version = "1.0.132" }
 sysctl = { version = "0.6.0" }
 filedescriptor = "0.8.2"
 
@@ -151,7 +149,7 @@ portable-pty = "0.8.1"
 
 [build-dependencies]
 clap = { version = "4.5.20", features = ["default", "cargo", "wrap_help", "derive"] }
-clap_complete = "4.5.33"
+clap_complete = "4.5.36"
 clap_complete_nushell = "4.5.4"
 clap_complete_fig = "4.5.2"
 clap_mangen = "0.2.24"
