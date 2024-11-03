@@ -1,4 +1,4 @@
-use tui::{layout::Rect, terminal::Frame};
+use tui::{layout::Rect, Frame};
 
 use crate::{
     app,

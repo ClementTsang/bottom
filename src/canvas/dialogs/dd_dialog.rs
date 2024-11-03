@@ -3,9 +3,9 @@ use std::cmp::min;
 
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    terminal::Frame,
     text::{Line, Span, Text},
     widgets::{Block, Borders, Paragraph, Wrap},
+    Frame,
 };
 
 use crate::{

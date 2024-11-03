@@ -1,8 +1,8 @@
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    terminal::Frame,
     text::{Line, Span},
     widgets::{Block, Paragraph},
+    Frame,
 };
 
 use crate::{

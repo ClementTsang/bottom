@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use tui::{
     layout::{Constraint, Rect},
     symbols::Marker,
-    terminal::Frame,
+    Frame,
 };
 
 use crate::{

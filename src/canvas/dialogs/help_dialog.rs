@@ -2,9 +2,9 @@ use std::cmp::{max, min};
 
 use tui::{
     layout::{Alignment, Rect},
-    terminal::Frame,
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Wrap},
+    Frame,
 };
 use unicode_width::UnicodeWidthStr;
 

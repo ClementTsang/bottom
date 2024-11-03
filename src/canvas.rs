@@ -178,10 +178,10 @@ impl Painter {
                 // TODO: Remove built-in cache?
                 let split_loc = Layout::default()
                     .constraints([Constraint::Min(0), Constraint::Length(1)])
-                    .split(f.size());
+                    .split(f.area());
                 (split_loc[0], Some(split_loc[1]))
             } else {
-                (f.size(), None)
+                (f.area(), None)
             };
             let terminal_height = terminal_size.height;
             let terminal_width = terminal_size.width;

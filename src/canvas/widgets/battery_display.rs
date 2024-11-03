@@ -1,8 +1,8 @@
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
-    terminal::Frame,
     text::{Line, Span},
     widgets::{Block, Borders, Cell, Paragraph, Row, Table, Tabs},
+    Frame,
 };
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;

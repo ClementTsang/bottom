@@ -203,13 +203,15 @@ impl<'a> Widget for PipeGauge<'a> {
                 let pipe_end =
                     start + (f64::from(end.saturating_sub(start)) * self.ratio).floor() as u16;
                 for col in start..pipe_end {
-                    buf.get_mut(col, row).set_symbol("|").set_style(Style {
-                        fg: self.gauge_style.fg,
-                        bg: None,
-                        add_modifier: self.gauge_style.add_modifier,
-                        sub_modifier: self.gauge_style.sub_modifier,
-                        underline_color: None,
-                    });
+                    if let Some(cell) = buf.cell_mut((col, row)) {
+                        cell.set_symbol("|").set_style(Style {
+                            fg: self.gauge_style.fg,
+                            bg: None,
+                            add_modifier: self.gauge_style.add_modifier,
+                            sub_modifier: self.gauge_style.sub_modifier,
+                            underline_color: None,
+                        });
+                    }
                 }
 
                 if (end_label.width() as u16) < end.saturating_sub(start) {
