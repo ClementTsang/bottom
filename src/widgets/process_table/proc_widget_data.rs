@@ -280,7 +280,7 @@ impl ProcWidgetData {
     fn to_string(&self, column: &ProcColumn) -> String {
         match column {
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
-            ProcColumn::MemoryVal | ProcColumn::MemoryPercent => self.mem_usage.to_string(),
+            ProcColumn::MemoryValue | ProcColumn::MemoryPercent => self.mem_usage.to_string(),
             ProcColumn::Pid => self.pid.to_string(),
             ProcColumn::Count => self.num_similar.to_string(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string(),
@@ -292,7 +292,9 @@ impl ProcWidgetData {
             ProcColumn::User => self.user.clone(),
             ProcColumn::Time => format_time(self.time),
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMem | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
+            ProcColumn::GpuMemoryValue | ProcColumn::GpuMemoryPercent => {
+                self.gpu_mem_usage.to_string()
+            }
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage),
         }
@@ -310,7 +312,9 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
         // differences.
         Some(match column {
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
-            ProcColumn::MemoryVal | ProcColumn::MemoryPercent => self.mem_usage.to_string().into(),
+            ProcColumn::MemoryValue | ProcColumn::MemoryPercent => {
+                self.mem_usage.to_string().into()
+            }
             ProcColumn::Pid => self.pid.to_string().into(),
             ProcColumn::Count => self.num_similar.to_string().into(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string().into(),
@@ -328,7 +332,9 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             ProcColumn::User => self.user.clone().into(),
             ProcColumn::Time => format_time(self.time).into(),
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMem | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string().into(),
+            ProcColumn::GpuMemoryValue | ProcColumn::GpuMemoryPercent => {
+                self.gpu_mem_usage.to_string().into()
+            }
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage).into(),
         })

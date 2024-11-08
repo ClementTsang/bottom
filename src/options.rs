@@ -519,7 +519,7 @@ pub(crate) fn init_app(
     ))
 }
 
-pub fn get_widget_layout(
+fn get_widget_layout(
     args: &BottomArgs, config: &Config,
 ) -> OptionResult<(BottomLayout, u64, Option<BottomWidgetType>)> {
     let cpu_left_legend = is_flag_enabled!(cpu_left_legend, args.cpu, config);

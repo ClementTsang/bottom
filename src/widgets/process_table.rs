@@ -1,5 +1,6 @@
 pub mod proc_widget_column;
 pub mod proc_widget_data;
+pub mod query;
 mod sort_table;
 
 use std::{borrow::Cow, collections::BTreeMap};
@@ -9,12 +10,12 @@ use indexmap::IndexSet;
 use itertools::Itertools;
 pub use proc_widget_column::*;
 pub use proc_widget_data::*;
+use query::{parse_query, ProcessQuery};
 use sort_table::SortTableColumn;
 
 use crate::{
     app::{
         data_farmer::{DataCollection, ProcessData},
-        query::*,
         AppConfigFields, AppSearchState,
     },
     canvas::components::data_table::{
@@ -75,7 +76,7 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
 
     match column {
         CpuPercent => SortColumn::new(CpuPercent).default_descending(),
-        MemoryVal => SortColumn::new(MemoryVal).default_descending(),
+        MemoryValue => SortColumn::new(MemoryValue).default_descending(),
         MemoryPercent => SortColumn::new(MemoryPercent).default_descending(),
         Pid => SortColumn::new(Pid),
         Count => SortColumn::new(Count),
@@ -89,9 +90,9 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         State => SortColumn::hard(State, 9),
         Time => SortColumn::new(Time),
         #[cfg(feature = "gpu")]
-        GpuMem => SortColumn::new(GpuMem).default_descending(),
+        GpuMemoryValue => SortColumn::new(GpuMemoryValue).default_descending(),
         #[cfg(feature = "gpu")]
-        GpuMemPercent => SortColumn::new(GpuMemPercent).default_descending(),
+        GpuMemoryPercent => SortColumn::new(GpuMemoryPercent).default_descending(),
         #[cfg(feature = "gpu")]
         GpuUtilPercent => SortColumn::new(GpuUtilPercent).default_descending(),
     }
@@ -247,7 +248,7 @@ impl ProcWidgetState {
                             ProcWidgetColumn::Cpu => CpuPercent,
                             ProcWidgetColumn::Mem => {
                                 if mem_as_values {
-                                    MemoryVal
+                                    MemoryValue
                                 } else {
                                     MemoryPercent
                                 }
@@ -262,9 +263,9 @@ impl ProcWidgetState {
                             #[cfg(feature = "gpu")]
                             ProcWidgetColumn::GpuMem => {
                                 if mem_as_values {
-                                    GpuMem
+                                    GpuMemoryValue
                                 } else {
-                                    GpuMemPercent
+                                    GpuMemoryPercent
                                 }
                             }
                             #[cfg(feature = "gpu")]
@@ -280,7 +281,7 @@ impl ProcWidgetState {
                         if is_command { Command } else { Name },
                         CpuPercent,
                         if mem_as_values {
-                            MemoryVal
+                            MemoryValue
                         } else {
                             MemoryPercent
                         },
@@ -305,7 +306,7 @@ impl ProcWidgetState {
 
                 match col.inner() {
                     CpuPercent => ProcWidgetColumn::Cpu,
-                    MemoryVal | MemoryPercent => ProcWidgetColumn::Mem,
+                    MemoryValue | MemoryPercent => ProcWidgetColumn::Mem,
                     Pid | Count => ProcWidgetColumn::PidOrCount,
                     Name | Command => ProcWidgetColumn::ProcNameOrCommand,
                     ReadPerSecond => ProcWidgetColumn::ReadPerSecond,
@@ -316,7 +317,7 @@ impl ProcWidgetState {
                     User => ProcWidgetColumn::User,
                     Time => ProcWidgetColumn::Time,
                     #[cfg(feature = "gpu")]
-                    GpuMem | GpuMemPercent => ProcWidgetColumn::GpuMem,
+                    GpuMemoryValue | GpuMemoryPercent => ProcWidgetColumn::GpuMem,
                     #[cfg(feature = "gpu")]
                     GpuUtilPercent => ProcWidgetColumn::GpuUtil,
                 }
@@ -385,7 +386,7 @@ impl ProcWidgetState {
             .unwrap_or(false)
     }
 
-    fn get_query(&self) -> &Option<Query> {
+    fn get_query(&self) -> &Option<ProcessQuery> {
         if self.proc_search.search_state.is_invalid_or_blank_search() {
             &None
         } else {
@@ -741,11 +742,11 @@ impl ProcWidgetState {
         if let Some(index) = self.column_mapping.get_index_of(&ProcWidgetColumn::Mem) {
             if let Some(mem) = self.get_mut_proc_col(index) {
                 match mem {
-                    ProcColumn::MemoryVal => {
+                    ProcColumn::MemoryValue => {
                         *mem = ProcColumn::MemoryPercent;
                     }
                     ProcColumn::MemoryPercent => {
-                        *mem = ProcColumn::MemoryVal;
+                        *mem = ProcColumn::MemoryValue;
                     }
                     _ => unreachable!(),
                 }
@@ -758,11 +759,11 @@ impl ProcWidgetState {
         if let Some(index) = self.column_mapping.get_index_of(&ProcWidgetColumn::GpuMem) {
             if let Some(mem) = self.get_mut_proc_col(index) {
                 match mem {
-                    ProcColumn::GpuMem => {
-                        *mem = ProcColumn::GpuMemPercent;
+                    ProcColumn::GpuMemoryValue => {
+                        *mem = ProcColumn::GpuMemoryPercent;
                     }
-                    ProcColumn::GpuMemPercent => {
-                        *mem = ProcColumn::GpuMem;
+                    ProcColumn::GpuMemoryPercent => {
+                        *mem = ProcColumn::GpuMemoryValue;
                     }
                     _ => unreachable!(),
                 }
@@ -1291,7 +1292,7 @@ mod test {
         ];
         let new_columns = vec![
             ProcColumn::Pid,
-            ProcColumn::MemoryVal,
+            ProcColumn::MemoryValue,
             ProcColumn::State,
             ProcColumn::Name,
         ];
@@ -1316,7 +1317,7 @@ mod test {
         ];
         let original_columns = vec![
             ProcColumn::Pid,
-            ProcColumn::MemoryVal,
+            ProcColumn::MemoryValue,
             ProcColumn::State,
             ProcColumn::Name,
         ];
@@ -1381,7 +1382,7 @@ mod test {
         ];
         let original_columns = vec![
             ProcColumn::Pid,
-            ProcColumn::MemoryVal,
+            ProcColumn::MemoryValue,
             ProcColumn::State,
             ProcColumn::Name,
         ];
@@ -1422,7 +1423,7 @@ mod test {
             ProcColumn::Name,
         ];
         let new_columns = vec![
-            ProcColumn::MemoryVal,
+            ProcColumn::MemoryValue,
             ProcColumn::Pid,
             ProcColumn::State,
             ProcColumn::Name,

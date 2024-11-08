@@ -3,7 +3,6 @@ pub mod filter;
 pub mod frozen_state;
 pub mod layout_manager;
 mod process_killer;
-pub mod query;
 pub mod states;
 
 use std::{
@@ -28,7 +27,7 @@ use crate::{
     data_conversion::ConvertedData,
     get_network_points,
     utils::data_units::DataUnit,
-    widgets::{ProcWidgetColumn, ProcWidgetMode},
+    widgets::{query::ProcessQuery, ProcWidgetColumn, ProcWidgetMode},
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
@@ -671,7 +670,7 @@ impl App {
         }
     }
 
-    pub fn get_process_filter(&self, widget_id: u64) -> &Option<query::Query> {
+    pub fn get_process_filter(&self, widget_id: u64) -> &Option<ProcessQuery> {
         if let Some(process_widget_state) = self.states.proc_state.widget_states.get(&widget_id) {
             &process_widget_state.proc_search.search_state.query
         } else {
