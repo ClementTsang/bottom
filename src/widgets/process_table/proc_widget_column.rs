@@ -9,7 +9,7 @@ use crate::{
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 pub enum ProcColumn {
     CpuPercent,
-    MemoryVal,
+    MemoryValue,
     MemoryPercent,
     Pid,
     Count,
@@ -23,9 +23,9 @@ pub enum ProcColumn {
     User,
     Time,
     #[cfg(feature = "gpu")]
-    GpuMem,
+    GpuMemoryValue,
     #[cfg(feature = "gpu")]
-    GpuMemPercent,
+    GpuMemoryPercent,
     #[cfg(feature = "gpu")]
     GpuUtilPercent,
 }
@@ -34,7 +34,7 @@ impl ColumnHeader for ProcColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
             ProcColumn::CpuPercent => "CPU%",
-            ProcColumn::MemoryVal => "Mem",
+            ProcColumn::MemoryValue => "Mem",
             ProcColumn::MemoryPercent => "Mem%",
             ProcColumn::Pid => "PID",
             ProcColumn::Count => "Count",
@@ -48,9 +48,9 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::User => "User",
             ProcColumn::Time => "Time",
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMem => "GMem",
+            ProcColumn::GpuMemoryValue => "GMem",
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMemPercent => "GMem%",
+            ProcColumn::GpuMemoryPercent => "GMem%",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => "GPU%",
         }
@@ -60,7 +60,7 @@ impl ColumnHeader for ProcColumn {
     fn header(&self) -> Cow<'static, str> {
         match self {
             ProcColumn::CpuPercent => "CPU%(c)",
-            ProcColumn::MemoryVal => "Mem(m)",
+            ProcColumn::MemoryValue => "Mem(m)",
             ProcColumn::MemoryPercent => "Mem%(m)",
             ProcColumn::Pid => "PID(p)",
             ProcColumn::Count => "Count",
@@ -74,9 +74,9 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::User => "User",
             ProcColumn::Time => "Time",
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMem => "GMem",
+            ProcColumn::GpuMemoryValue => "GMem",
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMemPercent => "GMem%",
+            ProcColumn::GpuMemoryPercent => "GMem%",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => "GPU%",
         }
@@ -94,7 +94,7 @@ impl SortsRow for ProcColumn {
                     sort_partial_fn(descending)(a.cpu_usage_percent, b.cpu_usage_percent)
                 });
             }
-            ProcColumn::MemoryVal | ProcColumn::MemoryPercent => {
+            ProcColumn::MemoryValue | ProcColumn::MemoryPercent => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.mem_usage, &b.mem_usage));
             }
             ProcColumn::Pid => {
@@ -140,7 +140,7 @@ impl SortsRow for ProcColumn {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.time, b.time));
             }
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMem | ProcColumn::GpuMemPercent => {
+            ProcColumn::GpuMemoryValue | ProcColumn::GpuMemoryPercent => {
                 data.sort_by(|a, b| {
                     sort_partial_fn(descending)(&a.gpu_mem_usage, &b.gpu_mem_usage)
                 });

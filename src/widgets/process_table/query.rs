@@ -77,8 +77,8 @@ const AND_LIST: [&str; 2] = ["and", "&&"];
 pub(crate) fn parse_query(
     search_query: &str, is_searching_whole_word: bool, is_ignoring_case: bool,
     is_searching_with_regex: bool,
-) -> QueryResult<Query> {
-    fn process_string_to_filter(query: &mut VecDeque<String>) -> QueryResult<Query> {
+) -> QueryResult<ProcessQuery> {
+    fn process_string_to_filter(query: &mut VecDeque<String>) -> QueryResult<ProcessQuery> {
         let lhs = process_or(query)?;
         let mut list_of_ors = vec![lhs];
 
@@ -86,7 +86,7 @@ pub(crate) fn parse_query(
             list_of_ors.push(process_or(query)?);
         }
 
-        Ok(Query { query: list_of_ors })
+        Ok(ProcessQuery { query: list_of_ors })
     }
 
     fn process_or(query: &mut VecDeque<String>) -> QueryResult<Or> {
@@ -532,12 +532,12 @@ pub(crate) fn parse_query(
     Ok(process_filter)
 }
 
-pub struct Query {
+pub struct ProcessQuery {
     /// Remember, AND > OR, but AND must come after OR when we parse.
     query: Vec<Or>,
 }
 
-impl Query {
+impl ProcessQuery {
     fn process_regexes(
         &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
         is_searching_with_regex: bool,
@@ -560,7 +560,7 @@ impl Query {
     }
 }
 
-impl Debug for Query {
+impl Debug for ProcessQuery {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}", self.query))
     }

@@ -6,11 +6,11 @@ use unicode_ellipsis::grapheme_width;
 use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete, UnicodeSegmentation};
 
 use crate::{
-    app::{layout_manager::BottomWidgetType, query::*},
+    app::layout_manager::BottomWidgetType,
     constants,
     widgets::{
-        BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
-        ProcWidgetState, TempWidgetState,
+        query::ProcessQuery, BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState,
+        NetWidgetState, ProcWidgetState, TempWidgetState,
     },
 };
 
@@ -90,7 +90,7 @@ pub struct AppSearchState {
     pub size_mappings: IndexMap<usize, Range<usize>>,
 
     /// The query. TODO: Merge this as one enum.
-    pub query: Option<Query>,
+    pub query: Option<ProcessQuery>,
     pub error_message: Option<String>,
 }
 
