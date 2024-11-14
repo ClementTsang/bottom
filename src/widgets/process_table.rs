@@ -1,5 +1,5 @@
-pub mod proc_widget_column;
-pub mod proc_widget_data;
+pub mod process_columns;
+pub mod process_data;
 pub mod query;
 mod sort_table;
 
@@ -8,8 +8,8 @@ use std::{borrow::Cow, collections::BTreeMap};
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use itertools::Itertools;
-pub use proc_widget_column::*;
-pub use proc_widget_data::*;
+pub use process_columns::*;
+pub use process_data::*;
 use query::{parse_query, ProcessQuery};
 use sort_table::SortTableColumn;
 

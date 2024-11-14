@@ -9,7 +9,7 @@ use std::{
 use concat_string::concat_string;
 use tui::widgets::Row;
 
-use super::proc_widget_column::ProcColumn;
+use super::process_columns::ProcColumn;
 use crate::{
     canvas::{
         components::data_table::{DataTableColumn, DataToCell},
@@ -369,7 +369,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
 mod test {
     use std::time::Duration;
 
-    use crate::widgets::proc_widget_data::format_time;
+    use crate::widgets::process_data::format_time;
 
     #[test]
     fn test_format_time() {
