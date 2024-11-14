@@ -674,6 +674,7 @@
       }
     },
     "ProcColumn": {
+      "description": "A column in the process widget.",
       "type": "string",
       "enum": [
         "CPU%",
