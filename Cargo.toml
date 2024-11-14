@@ -77,10 +77,10 @@ logging = ["fern", "log", "time"]
 generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
-anyhow = "1.0.92"
+anyhow = "1.0.93"
 backtrace = "0.3.74"
 cfg-if = "1.0.0"
-clap = { version = "4.5.20", features = ["default", "cargo", "wrap_help", "derive"] }
+clap = { version = "4.5.21", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
 crossterm = "0.28.1"
 ctrlc = { version = "3.4.5", features = ["termination"] }
@@ -97,7 +97,7 @@ serde = { version = "1.0.214", features = ["derive"] }
 starship-battery = { version = "0.10.0", optional = true }
 sysinfo = "=0.30.13"
 toml_edit = { version = "0.22.22", features = ["serde"] }
-tui = { version = "0.28.1", package = "ratatui" }
+tui = { version = "0.29.0", package = "ratatui" }
 unicode-ellipsis = "0.2.0"
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2.0"
@@ -113,10 +113,10 @@ serde_json = { version = "1.0.132", optional = true }
 strum = { version = "0.26.3", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.161"
+libc = "0.2.162"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "0.38.38", features = ["fs", "param"] }
+rustix = { version = "0.38.40", features = ["fs", "param"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10.0"
@@ -142,14 +142,14 @@ filedescriptor = "0.8.2"
 assert_cmd = "2.0.16"
 cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
 predicates = "3.1.2"
-tempfile = "3.13.0"
+tempfile = "3.14.0"
 
 [target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
 portable-pty = "0.8.1"
 
 [build-dependencies]
-clap = { version = "4.5.20", features = ["default", "cargo", "wrap_help", "derive"] }
-clap_complete = "4.5.36"
+clap = { version = "4.5.21", features = ["default", "cargo", "wrap_help", "derive"] }
+clap_complete = "4.5.38"
 clap_complete_nushell = "4.5.4"
 clap_complete_fig = "4.5.2"
 clap_mangen = "0.2.24"
