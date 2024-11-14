@@ -261,6 +261,7 @@ pub(crate) fn init_app(
             if cfg.columns.is_empty() {
                 None
             } else {
+                // TODO: Should we be using an indexmap? Or maybe allow dupes.
                 Some(IndexSet::from_iter(
                     cfg.columns.iter().map(ProcWidgetColumn::from),
                 ))
