@@ -256,7 +256,7 @@ where
                         self.state.calculated_widths.iter().map(|nzu| nzu.get()),
                     )
                     .block(block)
-                    .highlight_style(highlight_style)
+                    .row_highlight_style(highlight_style)
                     .style(self.styling.text_style);
 
                     if show_header {
