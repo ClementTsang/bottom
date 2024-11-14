@@ -674,16 +674,14 @@
       }
     },
     "ProcColumn": {
-      "description": "A column in the process widget.",
       "type": "string",
       "enum": [
+        "CPU%",
+        "Mem%",
         "PID",
         "Count",
         "Name",
         "Command",
-        "CPU%",
-        "Mem",
-        "Mem%",
         "R/s",
         "Read",
         "Rps",
@@ -697,6 +695,8 @@
         "State",
         "User",
         "Time",
+        "GMem",
+        "GMem%",
         "GMem",
         "GMem%",
         "GPU%"

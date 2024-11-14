@@ -283,7 +283,7 @@ fn generate_schema() -> anyhow::Result<()> {
         match proc_columns {
             schemars::schema::Schema::Object(proc_columns) => {
                 let enums = proc_columns.enum_values.as_mut().unwrap();
-                *enums = options::config::process::ProcColumn::VARIANTS
+                *enums = widgets::ProcColumn::VARIANTS
                     .iter()
                     .flat_map(|var| var.get_schema_names())
                     .map(|v| serde_json::Value::String(v.to_string()))

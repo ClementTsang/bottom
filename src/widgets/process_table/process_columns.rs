@@ -1,12 +1,18 @@
 use std::{borrow::Cow, cmp::Reverse};
 
-use super::ProcWidgetData;
+use serde::Deserialize;
+
+use super::{ProcWidgetColumn, ProcWidgetData};
 use crate::{
     canvas::components::data_table::{ColumnHeader, SortsRow},
     utils::general::sort_partial_fn,
 };
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
+#[cfg_attr(
+    feature = "generate_schema",
+    derive(schemars::JsonSchema, strum::VariantArray)
+)]
 pub enum ProcColumn {
     CpuPercent,
     MemoryValue,
@@ -28,6 +34,34 @@ pub enum ProcColumn {
     GpuMemoryPercent,
     #[cfg(feature = "gpu")]
     GpuUtilPercent,
+}
+
+impl ProcColumn {
+    /// An ugly hack to generate the JSON schema.
+    #[cfg(feature = "generate_schema")]
+    pub fn get_schema_names(&self) -> &[&'static str] {
+        match self {
+            ProcColumn::Pid => &["PID"],
+            ProcColumn::Count => &["Count"],
+            ProcColumn::Name => &["Name"],
+            ProcColumn::Command => &["Command"],
+            ProcColumn::CpuPercent => &["CPU%"],
+            // TODO: Change this
+            ProcColumn::MemoryValue | ProcColumn::MemoryPercent => &["Mem", "Mem%"],
+            ProcColumn::ReadPerSecond => &["R/s", "Read", "Rps"],
+            ProcColumn::WritePerSecond => &["W/s", "Write", "Wps"],
+            ProcColumn::TotalRead => &["T.Read", "TWrite"],
+            ProcColumn::TotalWrite => &["T.Write", "TRead"],
+            ProcColumn::State => &["State"],
+            ProcColumn::User => &["User"],
+            ProcColumn::Time => &["Time"],
+            #[cfg(feature = "gpu")]
+            // TODO: Change this
+            ProcColumn::GpuMemoryValue | ProcColumn::GpuMemoryPercent => &["GMem", "GMem%"],
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuUtilPercent => &["GPU%"],
+        }
+    }
 }
 
 impl ColumnHeader for ProcColumn {
@@ -149,6 +183,59 @@ impl SortsRow for ProcColumn {
             ProcColumn::GpuUtilPercent => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.gpu_usage, b.gpu_usage));
             }
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ProcColumn {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?.to_lowercase();
+        match value.as_str() {
+            "cpu%" => Ok(ProcColumn::CpuPercent),
+            // TODO: Maybe change this in the future.
+            "mem" | "mem%" => Ok(ProcColumn::MemoryPercent),
+            "pid" => Ok(ProcColumn::Pid),
+            "count" => Ok(ProcColumn::Count),
+            "name" => Ok(ProcColumn::Name),
+            "command" => Ok(ProcColumn::Command),
+            "read" | "r/s" | "rps" => Ok(ProcColumn::ReadPerSecond),
+            "write" | "w/s" | "wps" => Ok(ProcColumn::WritePerSecond),
+            "tread" | "t.read" => Ok(ProcColumn::TotalRead),
+            "twrite" | "t.write" => Ok(ProcColumn::TotalWrite),
+            "state" => Ok(ProcColumn::State),
+            "user" => Ok(ProcColumn::User),
+            "time" => Ok(ProcColumn::Time),
+            #[cfg(feature = "gpu")]
+            // TODO: Maybe change this in the future.
+            "gmem" | "gmem%" => Ok(ProcColumn::GpuMemoryPercent),
+            #[cfg(feature = "gpu")]
+            "gpu%" => Ok(ProcColumn::GpuUtilPercent),
+            _ => Err(serde::de::Error::custom("doesn't match any column type")),
+        }
+    }
+}
+
+impl From<&ProcColumn> for ProcWidgetColumn {
+    fn from(value: &ProcColumn) -> Self {
+        match value {
+            ProcColumn::Pid | ProcColumn::Count => ProcWidgetColumn::PidOrCount,
+            ProcColumn::Name | ProcColumn::Command => ProcWidgetColumn::ProcNameOrCommand,
+            ProcColumn::CpuPercent => ProcWidgetColumn::Cpu,
+            ProcColumn::MemoryPercent | ProcColumn::MemoryValue => ProcWidgetColumn::Mem,
+            ProcColumn::ReadPerSecond => ProcWidgetColumn::ReadPerSecond,
+            ProcColumn::WritePerSecond => ProcWidgetColumn::WritePerSecond,
+            ProcColumn::TotalRead => ProcWidgetColumn::TotalRead,
+            ProcColumn::TotalWrite => ProcWidgetColumn::TotalWrite,
+            ProcColumn::State => ProcWidgetColumn::State,
+            ProcColumn::User => ProcWidgetColumn::User,
+            ProcColumn::Time => ProcWidgetColumn::Time,
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuMemoryPercent | ProcColumn::GpuMemoryValue => ProcWidgetColumn::GpuMem,
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuUtilPercent => ProcWidgetColumn::GpuUtil,
         }
     }
 }
