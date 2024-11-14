@@ -286,6 +286,7 @@ fn generate_schema() -> anyhow::Result<()> {
                 *enums = widgets::ProcColumn::VARIANTS
                     .iter()
                     .flat_map(|var| var.get_schema_names())
+                    .sorted()
                     .map(|v| serde_json::Value::String(v.to_string()))
                     .dedup()
                     .collect();
