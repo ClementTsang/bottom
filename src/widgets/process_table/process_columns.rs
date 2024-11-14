@@ -8,6 +8,7 @@ use crate::{
     utils::general::sort_partial_fn,
 };
 
+/// A column in the process widget.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 #[cfg_attr(
     feature = "generate_schema",
