@@ -183,6 +183,24 @@
         }
       }
     },
+    "DiskColumn": {
+      "type": "string",
+      "enum": [
+        "Disk",
+        "Free",
+        "Free%",
+        "Mount",
+        "R/s",
+        "Read",
+        "Rps",
+        "Total",
+        "Used",
+        "Used%",
+        "W/s",
+        "Wps",
+        "Write"
+      ]
+    },
     "DiskConfig": {
       "description": "Disk configuration.",
       "type": "object",
@@ -191,7 +209,7 @@
           "description": "A list of disk widget columns.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DiskWidgetColumn"
+            "$ref": "#/definitions/DiskColumn"
           }
         },
         "mount_filter": {
@@ -217,20 +235,6 @@
           ]
         }
       }
-    },
-    "DiskWidgetColumn": {
-      "type": "string",
-      "enum": [
-        "Disk",
-        "Mount",
-        "Used",
-        "Free",
-        "Total",
-        "UsedPercent",
-        "FreePercent",
-        "IoRead",
-        "IoWrite"
-      ]
     },
     "FinalWidget": {
       "description": "Represents a widget.",

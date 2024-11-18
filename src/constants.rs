@@ -354,6 +354,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Disk widget configuration
 #[disk]
+# The columns shown by the process widget. The following columns are supported:
+# Disk, Mount, Used, Free, Total, Used%, Free%, R/s, W/s
+#columns = ["disk", "mount", "used", "free", "total", "used%", "r/s", "w/s"]
 
 # By default, there are no disk name filters enabled. These can be turned on to filter out specific data entries if you
 # don't want to see them. An example use case is provided below.
@@ -384,7 +387,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Temperature widget configuration
 #[temperature]
-
 # By default, there are no temperature sensor filters enabled. An example use case is provided below.
 #[temperature.sensor_filter]
 # Whether to ignore any matches. Defaults to true.
@@ -400,7 +402,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Network widget configuration
 #[network]
-
 # By default, there are no network interface filters enabled. An example use case is provided below.
 #[network.interface_filter]
 # Whether to ignore any matches. Defaults to true.
@@ -417,7 +418,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
 #[styles] # Uncomment if you want to use custom styling
-
 # Built-in themes. Valid values are:
 # - "default"
 # - "default-light"

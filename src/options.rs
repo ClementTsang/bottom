@@ -403,7 +403,11 @@ pub(crate) fn init_app(
                         Disk => {
                             disk_state_map.insert(
                                 widget.widget_id,
-                                DiskTableWidget::new(&app_config_fields, &styling),
+                                DiskTableWidget::new(
+                                    &app_config_fields,
+                                    &styling,
+                                    config.disk.as_ref().map(|cfg| cfg.columns.as_slice()),
+                                ),
                             );
                         }
                         Temp => {

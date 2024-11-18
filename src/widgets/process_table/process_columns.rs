@@ -200,7 +200,9 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "gmem" | "gmem%" => Ok(ProcColumn::GpuMemPercent),
             #[cfg(feature = "gpu")]
             "gpu%" => Ok(ProcColumn::GpuUtilPercent),
-            _ => Err(serde::de::Error::custom("doesn't match any column type")),
+            _ => Err(serde::de::Error::custom(
+                "doesn't match any process column name",
+            )),
         }
     }
 }

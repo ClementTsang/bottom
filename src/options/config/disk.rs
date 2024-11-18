@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::options::DiskWidgetColumn;
+use crate::options::DiskColumn;
 
 use super::IgnoreList;
 
@@ -17,5 +17,22 @@ pub(crate) struct DiskConfig {
 
     /// A list of disk widget columns.
     #[serde(default)]
-    pub(crate) columns: Vec<DiskWidgetColumn>, // TODO: make this more composable(?) in the future, we might need to rethink how it's done for custom widgets
+    pub(crate) columns: Vec<DiskColumn>, // TODO: make this more composable(?) in the future, we might need to rethink how it's done for custom widgets
+}
+
+#[cfg(test)]
+mod test {
+    use super::DiskConfig;
+
+    #[test]
+    fn valid_disk_column_settings() {
+        let config = r#"columns = ["disk", "mount", "used", "free", "total", "used%", "free%", "r/s", "w/s"]"#;
+        toml_edit::de::from_str::<DiskConfig>(config).expect("Should succeed!");
+    }
+
+    #[test]
+    fn bad_disk_column_settings() {
+        let config = r#"columns = ["diskk"]"#;
+        toml_edit::de::from_str::<DiskConfig>(config).expect_err("Should error out!");
+    }
 }

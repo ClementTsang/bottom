@@ -131,3 +131,11 @@ fn test_invalid_process_column() {
         .failure()
         .stderr(predicate::str::contains("doesn't match"));
 }
+
+#[test]
+fn test_invalid_disk_column() {
+    btm_command(&["-C", "./tests/invalid_configs/invalid_disk_column.toml"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("doesn't match"));
+}

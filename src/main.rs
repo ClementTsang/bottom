@@ -293,6 +293,21 @@ fn generate_schema() -> anyhow::Result<()> {
             }
             _ => anyhow::bail!("missing proc columns definition"),
         }
+
+        let disk_columns = schema.definitions.get_mut("DiskColumn").unwrap();
+        match disk_columns {
+            schemars::schema::Schema::Object(disk_columns) => {
+                let enums = disk_columns.enum_values.as_mut().unwrap();
+                *enums = widgets::DiskColumn::VARIANTS
+                    .iter()
+                    .flat_map(|var| var.get_schema_names())
+                    .sorted()
+                    .map(|v| serde_json::Value::String(v.to_string()))
+                    .dedup()
+                    .collect();
+            }
+            _ => anyhow::bail!("missing disk columns definition"),
+        }
     }
 
     let metadata = schema.schema.metadata.as_mut().unwrap();
