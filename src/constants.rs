@@ -268,24 +268,34 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 [flags]
 # Whether to hide the average cpu entry.
 #hide_avg_cpu = false
+
 # Whether to use dot markers rather than braille.
 #dot_marker = false
+
 # The update rate of the application.
 #rate = "1s"
+
 # Whether to put the CPU legend to the left.
 #cpu_left_legend = false
+
 # Whether to set CPU% on a process to be based on the total CPU or just current usage.
 #current_usage = false
+
 # Whether to set CPU% on a process to be based on the total CPU or per-core CPU% (not divided by the number of cpus).
 #unnormalized_cpu = false
+
 # Whether to group processes with the same name together by default.
 #group_processes = false
+
 # Whether to make process searching case sensitive by default.
 #case_sensitive = false
+
 # Whether to make process searching look for matching the entire word by default.
 #whole_word = false
+
 # Whether to make process searching use regex by default.
 #regex = false
+
 # The temperature unit. One of the following, defaults to "c" for Celsius:
 #temperature_type = "c"
 ##temperature_type = "k"
@@ -293,53 +303,77 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 ##temperature_type = "kelvin"
 ##temperature_type = "fahrenheit"
 ##temperature_type = "celsius"
+
 # The default time interval (in milliseconds).
 #default_time_value = "60s"
+
 # The time delta on each zoom in/out action (in milliseconds).
 #time_delta = 15000
+
 # Hides the time scale.
 #hide_time = false
+
 # Override layout default widget
 #default_widget_type = "proc"
 #default_widget_count = 1
+
 # Expand selected widget upon starting the app
 #expanded = true
+
 # Use basic mode
 #basic = false
+
 # Use the old network legend style
 #use_old_network_legend = false
+
 # Remove space in tables
 #hide_table_gap = false
+
 # Show the battery widgets
 #battery = false
+
 # Disable mouse clicks
 #disable_click = false
+
 # Show memory values in the processes widget as values by default
 #process_memory_as_value = false
+
 # Show tree mode by default in the processes widget.
 #tree = false
+
 # Shows an indicator in table widgets tracking where in the list you are.
 #show_table_scroll_position = false
+
 # Show processes as their commands by default in the process widget.
 #process_command = false
+
 # Displays the network widget with binary prefixes.
 #network_use_binary_prefix = false
+
 # Displays the network widget using bytes.
 #network_use_bytes = false
+
 # Displays the network widget with a log scale.
 #network_use_log = false
+
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
+
 # Hide GPU(s) information
 #disable_gpu = false
+
 # Shows cache and buffer memory
 #enable_cache_memory = false
+
 # How much data is stored at once in terms of time.
 #retention = "10m"
+
 # Where to place the legend for the memory widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #memory_legend = "top-right"
+
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "top-right"
+
 
 # Processes widget configuration
 #[processes]
@@ -347,28 +381,34 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
 #columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%"]
 
+
 # CPU widget configuration
 #[cpu]
 # One of "all" (default), "average"/"avg"
-# default = "average"
+#default = "average"
+
 
 # Disk widget configuration
 #[disk]
 # The columns shown by the process widget. The following columns are supported:
 # Disk, Mount, Used, Free, Total, Used%, Free%, R/s, W/s
-#columns = ["disk", "mount", "used", "free", "total", "used%", "r/s", "w/s"]
+#columns = ["Disk", "Mount", "Used", "Free", "Total", "Used%", "R/s", "W/s"]
 
 # By default, there are no disk name filters enabled. These can be turned on to filter out specific data entries if you
 # don't want to see them. An example use case is provided below.
 #[disk.name_filter]
 # Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
+
 # A list of filters to try and match.
 #list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
+
 # Whether to use regex. Defaults to false.
 #regex = true
+
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
+
 # Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
 
@@ -376,14 +416,19 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #[disk.mount_filter]
 # Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
+
 # A list of filters to try and match.
 #list = ["/mnt/.*", "/boot"]
+
 # Whether to use regex. Defaults to false.
 #regex = true
+
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
+
 # Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
+
 
 # Temperature widget configuration
 #[temperature]
@@ -391,14 +436,19 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #[temperature.sensor_filter]
 # Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
+
 # A list of filters to try and match.
 #list = ["cpu", "wifi"]
+
 # Whether to use regex. Defaults to false.
 #regex = false
+
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
+
 # Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
+
 
 # Network widget configuration
 #[network]
@@ -406,14 +456,19 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #[network.interface_filter]
 # Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
+
 # A list of filters to try and match.
 #list = ["virbr0.*"]
+
 # Whether to use regex. Defaults to false.
 #regex = true
+
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
+
 # Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
+
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.

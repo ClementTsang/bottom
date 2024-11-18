@@ -279,6 +279,8 @@ fn generate_schema() -> anyhow::Result<()> {
         use itertools::Itertools;
         use strum::VariantArray;
 
+        // TODO: Maybe make this case insensitive? See https://stackoverflow.com/a/68639341
+
         let proc_columns = schema.definitions.get_mut("ProcColumn").unwrap();
         match proc_columns {
             schemars::schema::Schema::Object(proc_columns) => {
