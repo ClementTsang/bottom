@@ -6,10 +6,10 @@ use crate::widgets::ProcColumn;
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
-pub struct ProcessesConfig {
+pub(crate) struct ProcessesConfig {
     /// A list of process widget columns.
     #[serde(default)]
-    pub columns: Vec<ProcColumn>,
+    pub(crate) columns: Vec<ProcColumn>,
 }
 
 #[cfg(test)]

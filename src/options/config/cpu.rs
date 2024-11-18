@@ -6,7 +6,7 @@ use serde::Deserialize;
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 #[cfg_attr(test, derive(PartialEq, Eq))]
-pub enum CpuDefault {
+pub(crate) enum CpuDefault {
     #[default]
     All,
     #[serde(alias = "avg")]
@@ -17,9 +17,9 @@ pub enum CpuDefault {
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
-pub struct CpuConfig {
+pub(crate) struct CpuConfig {
     #[serde(default)]
-    pub default: CpuDefault,
+    pub(crate) default: CpuDefault,
 }
 
 #[cfg(test)]

@@ -187,6 +187,13 @@
       "description": "Disk configuration.",
       "type": "object",
       "properties": {
+        "columns": {
+          "description": "A list of disk widget columns.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiskWidgetColumn"
+          }
+        },
         "mount_filter": {
           "description": "A filter over the mount names.",
           "anyOf": [
@@ -210,6 +217,20 @@
           ]
         }
       }
+    },
+    "DiskWidgetColumn": {
+      "type": "string",
+      "enum": [
+        "Disk",
+        "Mount",
+        "Used",
+        "Free",
+        "Total",
+        "UsedPercent",
+        "FreePercent",
+        "IoRead",
+        "IoWrite"
+      ]
     },
     "FinalWidget": {
       "description": "Represents a widget.",

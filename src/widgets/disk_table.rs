@@ -1,5 +1,7 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
+use serde::Deserialize;
+
 use crate::{
     app::AppConfigFields,
     canvas::components::data_table::{
@@ -93,6 +95,9 @@ impl DiskWidgetData {
     }
 }
 
+#[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub enum DiskWidgetColumn {
     Disk,
     Mount,
