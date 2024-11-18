@@ -25,6 +25,13 @@ mod test {
     use super::DiskConfig;
 
     #[test]
+    fn empty_column_setting() {
+        let config = "";
+        let generated: DiskConfig = toml_edit::de::from_str(config).unwrap();
+        assert!(generated.columns.is_empty());
+    }
+
+    #[test]
     fn valid_disk_column_settings() {
         let config = r#"columns = ["disk", "mount", "used", "free", "total", "used%", "free%", "r/s", "w/s"]"#;
         toml_edit::de::from_str::<DiskConfig>(config).expect("Should succeed!");
