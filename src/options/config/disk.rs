@@ -17,5 +17,5 @@ pub(crate) struct DiskConfig {
 
     /// A list of disk widget columns.
     #[serde(default)]
-    pub(crate) columns: Vec<DiskWidgetColumn>,
+    pub(crate) columns: Vec<DiskWidgetColumn>, // TODO: make this more composable(?) in the future, we might need to rethink how it's done for custom widgets
 }

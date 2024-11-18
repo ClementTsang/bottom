@@ -28,11 +28,7 @@ impl DiskWidgetData {
     fn total_space(&self) -> Cow<'static, str> {
         if let Some(total_bytes) = self.total_bytes {
             let converted_total_space = get_decimal_bytes(total_bytes);
-            format!(
-                "{:.*}{}",
-                0, converted_total_space.0, converted_total_space.1
-            )
-            .into()
+            format!("{:.0}{}", converted_total_space.0, converted_total_space.1).into()
         } else {
             "N/A".into()
         }
@@ -41,7 +37,7 @@ impl DiskWidgetData {
     fn free_space(&self) -> Cow<'static, str> {
         if let Some(free_bytes) = self.free_bytes {
             let converted_free_space = get_decimal_bytes(free_bytes);
-            format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
+            format!("{:.0}{}", converted_free_space.0, converted_free_space.1).into()
         } else {
             "N/A".into()
         }
@@ -50,7 +46,7 @@ impl DiskWidgetData {
     fn used_space(&self) -> Cow<'static, str> {
         if let Some(used_bytes) = self.used_bytes {
             let converted_free_space = get_decimal_bytes(used_bytes);
-            format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
+            format!("{:.0}{}", converted_free_space.0, converted_free_space.1).into()
         } else {
             "N/A".into()
         }
@@ -60,16 +56,13 @@ impl DiskWidgetData {
         if let (Some(free_bytes), Some(summed_total_bytes)) =
             (self.free_bytes, self.summed_total_bytes)
         {
-            Some(free_bytes as f64 / summed_total_bytes as f64 * 100_f64)
+            if summed_total_bytes > 0 {
+                Some(free_bytes as f64 / summed_total_bytes as f64 * 100_f64)
+            } else {
+                None
+            }
         } else {
             None
-        }
-    }
-
-    fn free_percent_string(&self) -> Cow<'static, str> {
-        match self.free_percent() {
-            Some(val) => format!("{val:.1}%").into(),
-            None => "N/A".into(),
         }
     }
 
@@ -84,13 +77,6 @@ impl DiskWidgetData {
             }
         } else {
             None
-        }
-    }
-
-    fn used_percent_string(&self) -> Cow<'static, str> {
-        match self.used_percent() {
-            Some(val) => format!("{val:.1}%").into(),
-            None => "N/A".into(),
         }
     }
 }
@@ -131,13 +117,20 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
     fn to_cell(
         &self, column: &DiskWidgetColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
+        fn percent_string(value: Option<f64>) -> Cow<'static, str> {
+            match value {
+                Some(val) => format!("{val:.1}%").into(),
+                None => "N/A".into(),
+            }
+        }
+
         let text = match column {
             DiskWidgetColumn::Disk => self.name.clone(),
             DiskWidgetColumn::Mount => self.mount_point.clone(),
             DiskWidgetColumn::Used => self.used_space(),
             DiskWidgetColumn::Free => self.free_space(),
-            DiskWidgetColumn::UsedPercent => self.used_percent_string(),
-            DiskWidgetColumn::FreePercent => self.free_percent_string(),
+            DiskWidgetColumn::UsedPercent => percent_string(self.used_percent()),
+            DiskWidgetColumn::FreePercent => percent_string(self.free_percent()),
             DiskWidgetColumn::Total => self.total_space(),
             DiskWidgetColumn::IoRead => self.io_read.clone(),
             DiskWidgetColumn::IoWrite => self.io_write.clone(),
