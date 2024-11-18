@@ -183,10 +183,35 @@
         }
       }
     },
+    "DiskColumn": {
+      "type": "string",
+      "enum": [
+        "Disk",
+        "Free",
+        "Free%",
+        "Mount",
+        "R/s",
+        "Read",
+        "Rps",
+        "Total",
+        "Used",
+        "Used%",
+        "W/s",
+        "Wps",
+        "Write"
+      ]
+    },
     "DiskConfig": {
       "description": "Disk configuration.",
       "type": "object",
       "properties": {
+        "columns": {
+          "description": "A list of disk widget columns.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiskColumn"
+          }
+        },
         "mount_filter": {
           "description": "A filter over the mount names.",
           "anyOf": [

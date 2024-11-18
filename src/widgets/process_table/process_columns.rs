@@ -94,28 +94,14 @@ impl ColumnHeader for ProcColumn {
 
     fn header(&self) -> Cow<'static, str> {
         match self {
-            ProcColumn::CpuPercent => "CPU%(c)",
-            ProcColumn::MemValue => "Mem(m)",
-            ProcColumn::MemPercent => "Mem%(m)",
-            ProcColumn::Pid => "PID(p)",
-            ProcColumn::Count => "Count",
-            ProcColumn::Name => "Name(n)",
-            ProcColumn::Command => "Command(n)",
-            ProcColumn::ReadPerSecond => "R/s",
-            ProcColumn::WritePerSecond => "W/s",
-            ProcColumn::TotalRead => "T.Read",
-            ProcColumn::TotalWrite => "T.Write",
-            ProcColumn::State => "State",
-            ProcColumn::User => "User",
-            ProcColumn::Time => "Time",
-            #[cfg(feature = "gpu")]
-            ProcColumn::GpuMemValue => "GMem",
-            #[cfg(feature = "gpu")]
-            ProcColumn::GpuMemPercent => "GMem%",
-            #[cfg(feature = "gpu")]
-            ProcColumn::GpuUtilPercent => "GPU%",
+            ProcColumn::CpuPercent => "CPU%(c)".into(),
+            ProcColumn::MemValue => "Mem(m)".into(),
+            ProcColumn::MemPercent => "Mem%(m)".into(),
+            ProcColumn::Pid => "PID(p)".into(),
+            ProcColumn::Name => "Name(n)".into(),
+            ProcColumn::Command => "Command(n)".into(),
+            _ => self.text(),
         }
-        .into()
     }
 }
 
@@ -214,7 +200,9 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "gmem" | "gmem%" => Ok(ProcColumn::GpuMemPercent),
             #[cfg(feature = "gpu")]
             "gpu%" => Ok(ProcColumn::GpuUtilPercent),
-            _ => Err(serde::de::Error::custom("doesn't match any column type")),
+            _ => Err(serde::de::Error::custom(
+                "doesn't match any process column name",
+            )),
         }
     }
 }

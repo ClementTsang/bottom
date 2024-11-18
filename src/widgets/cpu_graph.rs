@@ -165,7 +165,7 @@ pub struct CpuWidgetState {
 }
 
 impl CpuWidgetState {
-    pub fn new(
+    pub(crate) fn new(
         config: &AppConfigFields, default_selection: CpuDefault, current_display_time: u64,
         autohide_timer: Option<Instant>, colours: &ColourPalette,
     ) -> Self {

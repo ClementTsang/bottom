@@ -51,7 +51,7 @@ def main():
             read_file = re.sub(
                 r"^#(\s\s+)([a-zA-Z\[])", r"\2", read_file, flags=re.MULTILINE
             )
-            print(f"uncommented file: \n{read_file}")
+            print(f"uncommented file: \n{read_file}\n=====\n")
 
             toml_str = tomllib.loads(read_file)
         else:

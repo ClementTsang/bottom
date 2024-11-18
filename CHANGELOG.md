@@ -22,6 +22,10 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ## [0.11.0] - Unreleased
 
+### Features
+
+- [#1625](https://github.com/ClementTsang/bottom/pull/1625): Add the ability to configure the disk widget's table columns.
+
 ### Bug Fixes
 
 - [#1551](https://github.com/ClementTsang/bottom/pull/1551): Fix missing parent section names in default config.
