@@ -51,3 +51,4 @@ each time:
 | `memory_legend`              | String (one of ["none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"]) | Where to place the legend for the memory widget.                        |
 | `network_legend`             | String (one of ["none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"]) | Where to place the legend for the network widget.                       |
 | `average_cpu_row`            | Boolean                                                                                                            | Moves the average CPU usage entry to its own row when using basic mode. |
+| `tree_collapse`              | Boolean                                                                                                            | Collapse process tree by default.                                       |

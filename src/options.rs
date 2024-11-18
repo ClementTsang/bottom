@@ -227,6 +227,7 @@ pub(crate) fn init_app(
     let is_default_command = is_flag_enabled!(process_command, args.process, config);
     let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, args.process, config));
     let process_memory_as_value = is_flag_enabled!(process_memory_as_value, args.process, config);
+    let tree_collapse = is_flag_enabled!(tree_collapse, args.process, config);
 
     // For CPU
     let default_cpu_selection = get_default_cpu_selection(args, config);
@@ -305,6 +306,7 @@ pub(crate) fn init_app(
         network_use_binary_prefix,
         retention_ms,
         dedicated_average_row: get_dedicated_avg_row(config),
+        tree_collapse,
     };
 
     let table_config = ProcTableConfig {
@@ -384,6 +386,7 @@ pub(crate) fn init_app(
                             } else if is_default_tree {
                                 ProcWidgetMode::Tree {
                                     collapsed_pids: Default::default(),
+                                    collapse: tree_collapse,
                                 }
                             } else {
                                 ProcWidgetMode::Normal
