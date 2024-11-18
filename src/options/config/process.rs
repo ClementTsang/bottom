@@ -6,10 +6,10 @@ use crate::widgets::ProcColumn;
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
-pub struct ProcessesConfig {
+pub(crate) struct ProcessesConfig {
     /// A list of process widget columns.
     #[serde(default)]
-    pub columns: Vec<ProcColumn>,
+    pub(crate) columns: Vec<ProcColumn>, // TODO: make this more composable(?) in the future, we might need to rethink how it's done for custom widgets
 }
 
 #[cfg(test)]
@@ -32,7 +32,7 @@ mod test {
     }
 
     #[test]
-    fn process_column_settings() {
+    fn valid_process_column_config() {
         let config = r#"
             columns = ["CPU%", "PiD", "user", "MEM", "Tread", "T.Write", "Rps", "W/s", "tiMe", "USER", "state"]
         "#;
@@ -57,13 +57,13 @@ mod test {
     }
 
     #[test]
-    fn process_column_settings_2() {
+    fn bad_process_column_config() {
         let config = r#"columns = ["MEM", "TWrite", "Cpuz", "read", "wps"]"#;
         toml_edit::de::from_str::<ProcessesConfig>(config).expect_err("Should error out!");
     }
 
     #[test]
-    fn process_column_settings_3() {
+    fn valid_process_column_config_2() {
         let config = r#"columns = ["Twrite", "T.Write"]"#;
         let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
         assert_eq!(

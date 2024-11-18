@@ -402,15 +402,15 @@ pub fn convert_network_points(
         };
 
     if need_four_points {
-        let rx_display = format!("{:.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
+        let rx_display = format!("{:.1}{}", rx_converted_result.0, rx_converted_result.1);
         let total_rx_display = Some(format!(
-            "{:.*}{}",
-            1, total_rx_converted_result.0, total_rx_converted_result.1
+            "{:.1}{}",
+            total_rx_converted_result.0, total_rx_converted_result.1
         ));
-        let tx_display = format!("{:.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
+        let tx_display = format!("{:.1}{}", tx_converted_result.0, tx_converted_result.1);
         let total_tx_display = Some(format!(
-            "{:.*}{}",
-            1, total_tx_converted_result.0, total_tx_converted_result.1
+            "{:.1}{}",
+            total_tx_converted_result.0, total_tx_converted_result.1
         ));
         ConvertedNetworkData {
             rx,
@@ -474,35 +474,38 @@ pub fn convert_network_points(
 /// Returns a string given a value that is converted to the closest binary
 /// variant. If the value is greater than a gibibyte, then it will return a
 /// decimal place.
+#[inline]
 pub fn binary_byte_string(value: u64) -> String {
     let converted_values = get_binary_bytes(value);
     if value >= GIBI_LIMIT {
-        format!("{:.*}{}", 1, converted_values.0, converted_values.1)
+        format!("{:.1}{}", converted_values.0, converted_values.1)
     } else {
-        format!("{:.*}{}", 0, converted_values.0, converted_values.1)
+        format!("{:.0}{}", converted_values.0, converted_values.1)
     }
 }
 
 /// Returns a string given a value that is converted to the closest SI-variant.
 /// If the value is greater than a giga-X, then it will return a decimal place.
+#[inline]
 pub fn dec_bytes_per_string(value: u64) -> String {
     let converted_values = get_decimal_bytes(value);
     if value >= GIGA_LIMIT {
-        format!("{:.*}{}", 1, converted_values.0, converted_values.1)
+        format!("{:.1}{}", converted_values.0, converted_values.1)
     } else {
-        format!("{:.*}{}", 0, converted_values.0, converted_values.1)
+        format!("{:.0}{}", converted_values.0, converted_values.1)
     }
 }
 
 /// Returns a string given a value that is converted to the closest SI-variant,
 /// per second. If the value is greater than a giga-X, then it will return a
 /// decimal place.
+#[inline]
 pub fn dec_bytes_per_second_string(value: u64) -> String {
     let converted_values = get_decimal_bytes(value);
     if value >= GIGA_LIMIT {
-        format!("{:.*}{}/s", 1, converted_values.0, converted_values.1)
+        format!("{:.1}{}/s", converted_values.0, converted_values.1)
     } else {
-        format!("{:.*}{}/s", 0, converted_values.0, converted_values.1)
+        format!("{:.0}{}/s", converted_values.0, converted_values.1)
     }
 }
 
@@ -511,9 +514,9 @@ pub fn dec_bytes_per_second_string(value: u64) -> String {
 pub fn dec_bytes_string(value: u64) -> String {
     let converted_values = get_decimal_bytes(value);
     if value >= GIGA_LIMIT {
-        format!("{:.*}{}", 1, converted_values.0, converted_values.1)
+        format!("{:.1}{}", converted_values.0, converted_values.1)
     } else {
-        format!("{:.*}{}", 0, converted_values.0, converted_values.1)
+        format!("{:.0}{}", converted_values.0, converted_values.1)
     }
 }
 

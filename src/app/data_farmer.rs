@@ -25,7 +25,7 @@ use crate::{
         processes::{Pid, ProcessHarvest},
         temperature, Data,
     },
-    utils::data_prefixes::*,
+    dec_bytes_per_second_string,
 };
 
 pub type TimeOffset = f64;
@@ -423,20 +423,11 @@ impl DataCollection {
                         *io_curr = (r_rate, w_rate);
                         *io_prev = (io_r_pt, io_w_pt);
 
+                        // TODO: idk why I'm generating this here tbh
                         if let Some(io_labels) = self.io_labels.get_mut(itx) {
-                            let converted_read = get_decimal_bytes(r_rate);
-                            let converted_write = get_decimal_bytes(w_rate);
                             *io_labels = (
-                                if r_rate >= GIGA_LIMIT {
-                                    format!("{:.*}{}/s", 1, converted_read.0, converted_read.1)
-                                } else {
-                                    format!("{:.*}{}/s", 0, converted_read.0, converted_read.1)
-                                },
-                                if w_rate >= GIGA_LIMIT {
-                                    format!("{:.*}{}/s", 1, converted_write.0, converted_write.1)
-                                } else {
-                                    format!("{:.*}{}/s", 0, converted_write.0, converted_write.1)
-                                },
+                                dec_bytes_per_second_string(r_rate),
+                                dec_bytes_per_second_string(w_rate),
                             );
                         }
                     }

@@ -25,11 +25,16 @@ impl SortOrder {
             SortOrder::Descending => SortOrder::Ascending,
         }
     }
+
+    /// A hack to get a const default.
+    pub const fn const_default() -> Self {
+        Self::Ascending
+    }
 }
 
 impl Default for SortOrder {
     fn default() -> Self {
-        Self::Ascending
+        Self::const_default()
     }
 }
 
@@ -195,18 +200,18 @@ where
 
     /// Creates a new [`SortColumn`] with a hard width, which has no shortcut
     /// and sorts by default in ascending order ([`SortOrder::Ascending`]).
-    pub fn hard(inner: T, width: u16) -> Self {
+    pub const fn hard(inner: T, width: u16) -> Self {
         Self {
             inner,
             bounds: ColumnWidthBounds::Hard(width),
             is_hidden: false,
-            default_order: SortOrder::default(),
+            default_order: SortOrder::const_default(),
         }
     }
 
     /// Creates a new [`SortColumn`] with a soft width, which has no shortcut
     /// and sorts by default in ascending order ([`SortOrder::Ascending`]).
-    pub fn soft(inner: T, max_percentage: Option<f32>) -> Self {
+    pub const fn soft(inner: T, max_percentage: Option<f32>) -> Self {
         Self {
             inner,
             bounds: ColumnWidthBounds::Soft {
@@ -214,7 +219,7 @@ where
                 max_percentage,
             },
             is_hidden: false,
-            default_order: SortOrder::default(),
+            default_order: SortOrder::const_default(),
         }
     }
 
@@ -225,7 +230,7 @@ where
     }
 
     /// Sets the default sort order to [`SortOrder::Descending`].
-    pub fn default_descending(mut self) -> Self {
+    pub const fn default_descending(mut self) -> Self {
         self.default_order = SortOrder::Descending;
         self
     }
