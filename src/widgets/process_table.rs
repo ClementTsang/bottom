@@ -571,7 +571,7 @@ impl ProcWidgetState {
             let disabled = !kept_pids.contains(&process.pid);
             let is_last = *siblings_left == 0;
 
-            if !collapsed_pids.contains(&process.pid) & collapse {
+            if collapsed_pids.contains(&process.pid).eq(&!collapse) {
                 let mut summed_process = process.clone();
                 let mut prefix = if prefixes.is_empty() {
                     String::default()
