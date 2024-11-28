@@ -6,8 +6,6 @@ use crate::options::config::style::{utils::convert_hex_to_color, ColourPalette};
 impl ColourPalette {
     pub(crate) fn nord_palette() -> Self {
         Self {
-            selected_text_style: hex!("#2e3440").bg(convert_hex_to_color("#88c0d0").unwrap()),
-            table_header_style: hex!("#81a1c1").add_modifier(Modifier::BOLD),
             ram_style: hex!("#88c0d0"),
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#d8dee9"),
@@ -41,6 +39,8 @@ impl ColourPalette {
             border_style: hex!("#88c0d0"),
             highlighted_border_style: hex!("#5e81ac"),
             text_style: hex!("#e5e9f0"),
+            selected_text_style: hex!("#2e3440").bg(convert_hex_to_color("#88c0d0").unwrap()),
+            table_header_style: hex!("#81a1c1").add_modifier(Modifier::BOLD),
             widget_title_style: hex!("#e5e9f0"),
             graph_style: hex!("#e5e9f0"),
             graph_legend_style: hex!("#e5e9f0"),
@@ -54,8 +54,6 @@ impl ColourPalette {
 
     pub(crate) fn nord_light_palette() -> Self {
         Self {
-            selected_text_style: hex!("#f5f5f5").bg(convert_hex_to_color("#5e81ac").unwrap()),
-            table_header_style: hex!("#5e81ac").add_modifier(Modifier::BOLD),
             ram_style: hex!("#81a1c1"),
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#4c566a"),
@@ -89,6 +87,8 @@ impl ColourPalette {
             border_style: hex!("#2e3440"),
             highlighted_border_style: hex!("#5e81ac"),
             text_style: hex!("#2e3440"),
+            selected_text_style: hex!("#f5f5f5").bg(convert_hex_to_color("#5e81ac").unwrap()),
+            table_header_style: hex!("#5e81ac").add_modifier(Modifier::BOLD),
             widget_title_style: hex!("#2e3440"),
             graph_style: hex!("#2e3440"),
             graph_legend_style: hex!("#2e3440"),
