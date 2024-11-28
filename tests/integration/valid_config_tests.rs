@@ -1,7 +1,6 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
 use std::{io::Read, thread, time::Duration};
-
 #[cfg(feature = "default")]
 use std::{io::Write, path::Path};
 

@@ -40,12 +40,23 @@ exclude = [
 # The oldest version I've tested that should still build - note this is not an official MSRV!
 rust-version = "1.81.0"
 
-[[bin]]
-name = "btm"
-path = "src/main.rs"
+[lib]
 test = true
 doctest = true
 doc = true
+
+[[bin]]
+name = "btm"
+path = "src/bin/main.rs"
+doc = false
+
+[[bin]]
+name = "schema"
+path = "src/bin/schema.rs"
+test = false
+doctest = false
+doc = false
+required-features = ["generate_schema"]
 
 # Compile dependencies with optimizations enabled, even in debug mode.
 [profile.dev.package."*"]

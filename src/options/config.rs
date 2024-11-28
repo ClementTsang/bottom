@@ -18,6 +18,7 @@ use temperature::TempConfig;
 pub use self::ignore_list::IgnoreList;
 use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
 
+/// Overall config for `bottom`.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(
     feature = "generate_schema",
@@ -65,8 +66,9 @@ mod test {
     #[test]
     #[cfg(feature = "default")]
     fn test_integration_valid_configs() {
-        use super::Config;
         use std::fs;
+
+        use super::Config;
 
         for config_path in fs::read_dir("./tests/valid_configs").unwrap() {
             let config_path = config_path.unwrap();

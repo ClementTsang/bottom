@@ -247,16 +247,18 @@ macro_rules! set_colour_list {
     };
 }
 
-pub(super) use {opt, set_colour, set_colour_list, set_style};
+pub(super) use opt;
+pub(super) use set_colour;
+pub(super) use set_colour_list;
+pub(super) use set_style;
 
 #[cfg(test)]
 mod test {
 
     use tui::style::{Modifier, Style};
 
-    use crate::options::config::style::{ColorStr, TextStyleConfig};
-
     use super::*;
+    use crate::options::config::style::{ColorStr, TextStyleConfig};
 
     #[test]
     fn general_str_to_colour() {

@@ -1,8 +1,7 @@
 use serde::Deserialize;
 
-use crate::options::DiskColumn;
-
 use super::IgnoreList;
+use crate::options::DiskColumn;
 
 /// Disk configuration.
 #[derive(Clone, Debug, Default, Deserialize)]

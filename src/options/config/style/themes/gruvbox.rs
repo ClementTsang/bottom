@@ -1,8 +1,7 @@
 use tui::style::{Color, Modifier};
 
-use crate::options::config::style::{utils::convert_hex_to_color, ColourPalette};
-
 use super::{color, hex};
+use crate::options::config::style::{utils::convert_hex_to_color, ColourPalette};
 
 impl ColourPalette {
     pub(crate) fn gruvbox_palette() -> Self {

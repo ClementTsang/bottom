@@ -23,9 +23,8 @@ use tui::style::Style;
 use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
 
-use crate::options::{args::BottomArgs, OptionError, OptionResult};
-
 use super::Config;
+use crate::options::{args::BottomArgs, OptionError, OptionResult};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]

@@ -3,8 +3,7 @@
 use std::time::Duration;
 
 use super::ProcessHarvest;
-use crate::data_collection::error::CollectionResult;
-use crate::data_collection::DataCollector;
+use crate::data_collection::{error::CollectionResult, DataCollector};
 
 // TODO: There's a lot of shared code with this and the unix impl.
 pub fn sysinfo_process_data(

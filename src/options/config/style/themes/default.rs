@@ -1,8 +1,7 @@
 use tui::style::{Color, Modifier, Style};
 
-use crate::options::config::style::ColourPalette;
-
 use super::color;
+use crate::options::config::style::ColourPalette;
 
 impl ColourPalette {
     pub(crate) fn default_palette() -> Self {
