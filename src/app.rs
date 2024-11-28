@@ -1990,7 +1990,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.table.to_first();
+                        proc_widget_state.table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::ProcSort => {
@@ -1999,7 +1999,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table.to_first();
+                        proc_widget_state.sort_table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -2008,7 +2008,7 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        temp_widget_state.table.to_first();
+                        temp_widget_state.table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -2017,7 +2017,7 @@ impl App {
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        disk_widget_state.table.to_first();
+                        disk_widget_state.table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::CpuLegend => {
@@ -2026,7 +2026,7 @@ impl App {
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
-                        cpu_widget_state.table.to_first();
+                        cpu_widget_state.table.scroll_to_first();
                     }
                 }
 
@@ -2049,7 +2049,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.table.to_last();
+                        proc_widget_state.table.scroll_to_last();
                     }
                 }
                 BottomWidgetType::ProcSort => {
@@ -2058,7 +2058,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table.to_last();
+                        proc_widget_state.sort_table.scroll_to_last();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -2067,7 +2067,7 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        temp_widget_state.table.to_last();
+                        temp_widget_state.table.scroll_to_last();
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -2077,7 +2077,7 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         if !self.converted_data.disk_data.is_empty() {
-                            disk_widget_state.table.to_last();
+                            disk_widget_state.table.scroll_to_last();
                         }
                     }
                 }
@@ -2087,7 +2087,7 @@ impl App {
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
-                        cpu_widget_state.table.to_last();
+                        cpu_widget_state.table.scroll_to_last();
                     }
                 }
                 _ => {}

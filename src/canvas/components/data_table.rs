@@ -69,13 +69,13 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     }
 
     /// Sets the scroll position to the first value.
-    pub fn to_first(&mut self) {
+    pub fn scroll_to_first(&mut self) {
         self.state.current_index = 0;
         self.state.scroll_direction = ScrollDirection::Up;
     }
 
     /// Sets the scroll position to the last value.
-    pub fn to_last(&mut self) {
+    pub fn scroll_to_last(&mut self) {
         self.state.current_index = self.data.len().saturating_sub(1);
         self.state.scroll_direction = ScrollDirection::Down;
     }
@@ -197,11 +197,11 @@ mod test {
         let mut table = DataTable::new(columns, props, styling);
         table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
 
-        table.to_last();
+        table.scroll_to_last();
         assert_eq!(table.current_index(), 4);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
 
-        table.to_first();
+        table.scroll_to_first();
         assert_eq!(table.current_index(), 0);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Up);
 
