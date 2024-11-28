@@ -1,17 +1,16 @@
 [package]
 name = "bottom"
 version = "0.11.0"
-authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
-edition = "2021"
 repository = "https://github.com/ClementTsang/bottom"
-keywords = ["cross-platform", "monitoring", "cli", "top", "tui"]
 license = "MIT"
-categories = ["command-line-utilities", "visualization"]
 description = "A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows."
 documentation = "https://clementtsang.github.io/bottom/stable"
 readme = "README.md"
 default-run = "btm"
 build = "build.rs"
+authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
+keywords = ["cross-platform", "monitoring", "cli", "top", "tui"]
+categories = ["command-line-utilities", "visualization"]
 exclude = [
     ".cargo-husky/",
     ".github/",
@@ -37,6 +36,7 @@ exclude = [
     "rust-toolchain.toml",
     "rustfmt.toml",
 ]
+edition = "2021"
 # The oldest version I've tested that should still build - note this is not an official MSRV!
 rust-version = "1.81"
 

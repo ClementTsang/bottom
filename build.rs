@@ -17,15 +17,13 @@ use clap_complete_nushell::Nushell;
 use crate::args::BottomArgs;
 
 fn create_dir(dir: &Path) -> io::Result<()> {
-    let res = fs::create_dir_all(dir);
-    match &res {
-        Ok(()) => {}
-        Err(err) => {
-            eprintln!("Failed to create a directory at location {dir:?}, encountered error {err:?}.  Aborting...",);
-        }
-    }
-
-    res
+    fs::create_dir_all(dir).inspect_err(|err| {
+        eprintln!(
+            "Couldn't create a directory at {} ({:?}). Aborting.",
+            dir.display(),
+            err
+        )
+    })
 }
 
 fn generate_completions<G>(to_generate: G, cmd: &mut Command, out_dir: &Path) -> io::Result<PathBuf>
