@@ -31,7 +31,8 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResu
     Ok(Vec::from(cpu_deque))
 }
 
-pub fn get_load_avg() -> LoadAvgHarvest {
+#[cfg(target_family = "unix")]
+pub(crate) fn get_load_avg() -> LoadAvgHarvest {
     // The API for sysinfo apparently wants you to call it like this, rather than
     // using a &System.
     let LoadAvg { one, five, fifteen } = sysinfo::System::load_average();

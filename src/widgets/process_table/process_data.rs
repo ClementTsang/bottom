@@ -166,10 +166,10 @@ fn format_time(dur: Duration) -> String {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ProcWidgetData {
     pub pid: Pid,
-    #[expect(dead_code)]
+    #[allow(dead_code)]
     pub ppid: Option<Pid>,
     pub id: Id,
     pub cpu_usage_percent: f32,
