@@ -14,9 +14,7 @@ impl ColourPalette {
         const HIGHLIGHT_COLOUR: Color = Color::LightBlue;
         const AVG_COLOUR: Color = Color::Red;
         const ALL_COLOUR: Color = Color::Green;
-
         const DEFAULT_SELECTED_TEXT_STYLE: Style = color!(Color::Black).bg(HIGHLIGHT_COLOUR);
-
         const TEXT_COLOUR: Color = Color::Gray;
 
         Self {
