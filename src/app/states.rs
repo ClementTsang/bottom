@@ -296,14 +296,6 @@ impl NetState {
             widget_states,
         }
     }
-
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut NetWidgetState> {
-        self.widget_states.get_mut(&widget_id)
-    }
-
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&NetWidgetState> {
-        self.widget_states.get(&widget_id)
-    }
 }
 
 pub struct CpuState {
@@ -339,14 +331,6 @@ impl MemState {
             force_update: None,
             widget_states,
         }
-    }
-
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut MemWidgetState> {
-        self.widget_states.get_mut(&widget_id)
-    }
-
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&MemWidgetState> {
-        self.widget_states.get(&widget_id)
     }
 }
 
@@ -391,7 +375,6 @@ pub struct BasicTableWidgetState {
     // then we can expand outwards with a normal BasicTableState and a hashmap
     pub currently_displayed_widget_type: BottomWidgetType,
     pub currently_displayed_widget_id: u64,
-    pub widget_id: i64,
     pub left_tlc: Option<(u16, u16)>,
     pub left_brc: Option<(u16, u16)>,
     pub right_tlc: Option<(u16, u16)>,
@@ -409,10 +392,6 @@ impl BatteryState {
 
     pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut BatteryWidgetState> {
         self.widget_states.get_mut(&widget_id)
-    }
-
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&BatteryWidgetState> {
-        self.widget_states.get(&widget_id)
     }
 }
 

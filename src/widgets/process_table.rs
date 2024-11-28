@@ -979,13 +979,6 @@ impl ProcWidgetState {
         self.proc_search.search_state.walk_backward();
     }
 
-    /// Returns the number of columns *enabled*. Note this differs from
-    /// *visible* - a column may be enabled but not visible (e.g. off
-    /// screen).
-    pub fn num_enabled_columns(&self) -> usize {
-        self.table.columns.iter().filter(|c| !c.is_hidden).count()
-    }
-
     /// Sets the [`ProcWidgetState`]'s current sort index to whatever was in the
     /// sort table if possible, then closes the sort table.
     pub(crate) fn use_sort_table_value(&mut self) {

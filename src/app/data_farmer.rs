@@ -28,7 +28,6 @@ use crate::{
     dec_bytes_per_second_string,
 };
 
-pub type TimeOffset = f64;
 pub type Value = f64;
 
 #[derive(Debug, Default, Clone)]

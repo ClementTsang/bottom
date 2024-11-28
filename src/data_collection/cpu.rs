@@ -18,6 +18,3 @@ pub struct CpuData {
 }
 
 pub type CpuHarvest = Vec<CpuData>;
-
-pub type PastCpuWork = f64;
-pub type PastCpuTotal = f64;

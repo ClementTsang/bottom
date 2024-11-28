@@ -1,7 +1,7 @@
 use std::{borrow::Cow, num::NonZeroU16, time::Instant};
 
 use concat_string::concat_string;
-use tui::{style::Style, widgets::Row};
+use tui::widgets::Row;
 
 use crate::{
     app::AppConfigFields,
@@ -17,38 +17,15 @@ use crate::{
     options::config::{cpu::CpuDefault, style::ColourPalette},
 };
 
-#[derive(Default)]
-pub struct CpuWidgetStyling {
-    pub all: Style,
-    pub avg: Style,
-    pub entries: Vec<Style>,
-}
-
-impl CpuWidgetStyling {
-    fn from_colours(palette: &ColourPalette) -> Self {
-        let entries = if palette.cpu_colour_styles.is_empty() {
-            vec![Style::default()]
-        } else {
-            palette.cpu_colour_styles.clone()
-        };
-
-        Self {
-            all: palette.all_cpu_colour,
-            avg: palette.avg_cpu_colour,
-            entries,
-        }
-    }
-}
-
 pub enum CpuWidgetColumn {
-    CPU,
+    Cpu,
     Use,
 }
 
 impl ColumnHeader for CpuWidgetColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
-            CpuWidgetColumn::CPU => "CPU".into(),
+            CpuWidgetColumn::Cpu => "CPU".into(),
             CpuWidgetColumn::Use => "Use".into(),
         }
     }
@@ -95,7 +72,7 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
         // *always* hide the CPU column if it is too small.
         match &self {
             CpuWidgetTableData::All => match column {
-                CpuWidgetColumn::CPU => Some("All".into()),
+                CpuWidgetColumn::Cpu => Some("All".into()),
                 CpuWidgetColumn::Use => None,
             },
             CpuWidgetTableData::Entry {
@@ -106,7 +83,7 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
                     None
                 } else {
                     match column {
-                        CpuWidgetColumn::CPU => match data_type {
+                        CpuWidgetColumn::Cpu => match data_type {
                             CpuDataType::Avg => Some("AVG".into()),
                             CpuDataType::Cpu(index) => {
                                 let index_str = index.to_string();
@@ -158,10 +135,8 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
 pub struct CpuWidgetState {
     pub current_display_time: u64,
     pub is_legend_hidden: bool,
-    pub show_avg: bool,
     pub autohide_timer: Option<Instant>,
     pub table: DataTable<CpuWidgetTableData, CpuWidgetColumn>,
-    pub styling: CpuWidgetStyling,
 }
 
 impl CpuWidgetState {
@@ -170,7 +145,7 @@ impl CpuWidgetState {
         autohide_timer: Option<Instant>, colours: &ColourPalette,
     ) -> Self {
         const COLUMNS: [Column<CpuWidgetColumn>; 2] = [
-            Column::soft(CpuWidgetColumn::CPU, Some(0.5)),
+            Column::soft(CpuWidgetColumn::Cpu, Some(0.5)),
             Column::soft(CpuWidgetColumn::Use, Some(0.5)),
         ];
 
@@ -196,10 +171,8 @@ impl CpuWidgetState {
         CpuWidgetState {
             current_display_time,
             is_legend_hidden: false,
-            show_avg: config.show_average_cpu,
             autohide_timer,
             table,
-            styling: CpuWidgetStyling::from_colours(colours),
         }
     }
 

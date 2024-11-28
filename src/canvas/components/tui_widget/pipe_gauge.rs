@@ -9,6 +9,7 @@ use tui::{
 #[derive(Debug, Clone, Copy)]
 pub enum LabelLimit {
     None,
+    #[expect(dead_code)]
     Auto(u16),
     Bars,
     StartLabel,

@@ -168,11 +168,6 @@ where
         self.is_hidden
     }
 
-    #[inline]
-    fn set_is_hidden(&mut self, is_hidden: bool) {
-        self.is_hidden = is_hidden;
-    }
-
     fn header(&self) -> Cow<'static, str> {
         self.inner.header()
     }
@@ -221,12 +216,6 @@ where
             is_hidden: false,
             default_order: SortOrder::const_default(),
         }
-    }
-
-    /// Sets the default sort order to [`SortOrder::Ascending`].
-    pub fn default_ascending(mut self) -> Self {
-        self.default_order = SortOrder::Ascending;
-        self
     }
 
     /// Sets the default sort order to [`SortOrder::Descending`].

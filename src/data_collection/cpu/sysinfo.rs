@@ -3,10 +3,10 @@
 
 use std::collections::VecDeque;
 
-use sysinfo::{LoadAvg, System};
+use sysinfo::System;
 
 use super::{CpuData, CpuDataType, CpuHarvest};
-use crate::data_collection::{cpu::LoadAvgHarvest, error::CollectionResult};
+use crate::data_collection::error::CollectionResult;
 
 pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResult<CpuHarvest> {
     let mut cpu_deque: VecDeque<_> = sys
@@ -31,10 +31,11 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResu
     Ok(Vec::from(cpu_deque))
 }
 
-pub fn get_load_avg() -> LoadAvgHarvest {
+#[cfg(target_family = "unix")]
+pub(crate) fn get_load_avg() -> crate::data_collection::cpu::LoadAvgHarvest {
     // The API for sysinfo apparently wants you to call it like this, rather than
     // using a &System.
-    let LoadAvg { one, five, fifteen } = sysinfo::System::load_average();
+    let sysinfo::LoadAvg { one, five, fifteen } = sysinfo::System::load_average();
 
     [one as f32, five as f32, fifteen as f32]
 }

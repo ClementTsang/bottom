@@ -28,16 +28,6 @@ pub const LOG_GIBI_LIMIT: f64 = 30.0;
 pub const LOG_TEBI_LIMIT: f64 = 40.0;
 pub const LOG_PEBI_LIMIT: f64 = 50.0;
 
-pub const LOG_KILO_LIMIT_U32: u32 = 3;
-pub const LOG_MEGA_LIMIT_U32: u32 = 6;
-pub const LOG_GIGA_LIMIT_U32: u32 = 9;
-pub const LOG_TERA_LIMIT_U32: u32 = 12;
-
-pub const LOG_KIBI_LIMIT_U32: u32 = 10;
-pub const LOG_MEBI_LIMIT_U32: u32 = 20;
-pub const LOG_GIBI_LIMIT_U32: u32 = 30;
-pub const LOG_TEBI_LIMIT_U32: u32 = 40;
-
 /// Returns a tuple containing the value and the unit in bytes.  In units of
 /// 1024. This only supports up to a tebi.  Note the "single" unit will have a
 /// space appended to match the others if `spacing` is true.
