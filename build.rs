@@ -1,3 +1,5 @@
+//! General build script used by bottom to generate completion files and set binary version.
+
 #[expect(dead_code)]
 #[path = "src/options/args.rs"]
 mod args;
