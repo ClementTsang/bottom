@@ -96,8 +96,6 @@ pub(crate) struct StyleConfig {
 /// as a "palette".
 #[derive(Debug)]
 pub struct ColourPalette {
-    pub selected_text_style: Style,
-    pub table_header_style: Style,
     pub ram_style: Style,
     #[cfg(not(target_os = "windows"))]
     pub cache_style: Style,
@@ -114,6 +112,8 @@ pub struct ColourPalette {
     pub border_style: Style,
     pub highlighted_border_style: Style,
     pub text_style: Style,
+    pub selected_text_style: Style,
+    pub table_header_style: Style,
     pub widget_title_style: Style,
     pub graph_style: Style,
     pub graph_legend_style: Style,

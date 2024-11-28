@@ -20,8 +20,6 @@ impl ColourPalette {
         const TEXT_COLOUR: Color = Color::Gray;
 
         Self {
-            selected_text_style: DEFAULT_SELECTED_TEXT_STYLE,
-            table_header_style: color!(HIGHLIGHT_COLOUR).add_modifier(Modifier::BOLD),
             ram_style: color!(FIRST_COLOUR),
             #[cfg(not(target_os = "windows"))]
             cache_style: color!(FIFTH_COLOUR),
@@ -55,6 +53,8 @@ impl ColourPalette {
             border_style: color!(TEXT_COLOUR),
             highlighted_border_style: color!(HIGHLIGHT_COLOUR),
             text_style: color!(TEXT_COLOUR),
+            selected_text_style: DEFAULT_SELECTED_TEXT_STYLE,
+            table_header_style: color!(HIGHLIGHT_COLOUR).add_modifier(Modifier::BOLD),
             widget_title_style: color!(TEXT_COLOUR),
             graph_style: color!(TEXT_COLOUR),
             graph_legend_style: color!(TEXT_COLOUR),
@@ -68,8 +68,6 @@ impl ColourPalette {
 
     pub fn default_light_mode() -> Self {
         Self {
-            selected_text_style: color!(Color::White).bg(Color::LightBlue),
-            table_header_style: color!(Color::Black).add_modifier(Modifier::BOLD),
             ram_style: color!(Color::Blue),
             #[cfg(not(target_os = "windows"))]
             cache_style: color!(Color::LightRed),
@@ -99,6 +97,8 @@ impl ColourPalette {
             ],
             border_style: color!(Color::Black),
             text_style: color!(Color::Black),
+            selected_text_style: color!(Color::White).bg(Color::LightBlue),
+            table_header_style: color!(Color::Black).add_modifier(Modifier::BOLD),
             widget_title_style: color!(Color::Black),
             graph_style: color!(Color::Black),
             graph_legend_style: color!(Color::Black),
