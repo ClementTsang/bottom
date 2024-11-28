@@ -400,7 +400,7 @@ impl Grid for HalfBlockGrid {
     }
 }
 
-impl<'a, 'b> Painter<'a, 'b> {
+impl Painter<'_, '_> {
     /// Convert the (x, y) coordinates to location of a point on the grid
     ///
     /// # Examples:
@@ -594,7 +594,7 @@ where
     }
 }
 
-impl<'a, F> Widget for Canvas<'a, F>
+impl<F> Widget for Canvas<'_, F>
 where
     F: Fn(&mut Context<'_>),
 {
