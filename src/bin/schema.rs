@@ -1,7 +1,6 @@
 #![cfg(feature = "generate_schema")]
 
-use bottom::options::config;
-use bottom::widgets;
+use bottom::{options::config, widgets};
 use clap::Parser;
 use itertools::Itertools;
 use strum::VariantArray;

@@ -1236,9 +1236,9 @@ mod test {
     #[cfg(target_os = "macos")]
     #[test]
     fn test_get_config_path_macos() {
-        use super::get_config_path;
-        use super::DEFAULT_CONFIG_FILE_LOCATION;
         use std::path::PathBuf;
+
+        use super::{get_config_path, DEFAULT_CONFIG_FILE_LOCATION};
 
         // Case three: no previous config, no XDG var.
         // SAFETY: this is the only test that does this
