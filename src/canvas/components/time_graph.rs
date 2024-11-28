@@ -62,7 +62,7 @@ pub struct TimeGraph<'a> {
     pub marker: Marker,
 }
 
-impl<'a> TimeGraph<'a> {
+impl TimeGraph<'_> {
     /// Generates the [`Axis`] for the x-axis.
     fn generate_x_axis(&self) -> Axis<'_> {
         // Due to how we display things, we need to adjust the time bound values.

@@ -32,7 +32,7 @@ pub struct PipeGauge<'a> {
     hide_parts: LabelLimit,
 }
 
-impl<'a> Default for PipeGauge<'a> {
+impl Default for PipeGauge<'_> {
     fn default() -> Self {
         Self {
             block: None,
@@ -95,7 +95,7 @@ impl<'a> PipeGauge<'a> {
     }
 }
 
-impl<'a> Widget for PipeGauge<'a> {
+impl Widget for PipeGauge<'_> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         buf.set_style(area, self.label_style);
         let gauge_area = match self.block.take() {

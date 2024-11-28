@@ -38,7 +38,7 @@ exclude = [
     "rustfmt.toml",
 ]
 # The oldest version I've tested that should still build - note this is not an official MSRV!
-rust-version = "1.81.0"
+rust-version = "1.81"
 
 [lib]
 test = true
