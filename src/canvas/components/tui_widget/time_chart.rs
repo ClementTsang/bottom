@@ -51,6 +51,7 @@ impl<'a> Axis<'a> {
     /// This is a fluent setter method which must be chained or used as it
     /// consumes self
     #[must_use = "method moves the value of self and returns the modified value"]
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn title<T>(mut self, title: T) -> Axis<'a>
     where
         T: Into<Line<'a>>,
@@ -96,6 +97,7 @@ impl<'a> Axis<'a> {
     ///
     /// On the X axis, this parameter only affects the first label.
     #[must_use = "method moves the value of self and returns the modified value"]
+    #[expect(dead_code)]
     pub fn labels_alignment(mut self, alignment: Alignment) -> Axis<'a> {
         self.labels_alignment = alignment;
         self
@@ -299,6 +301,7 @@ impl<'a> Dataset<'a> {
     /// This is a fluent setter method which must be chained or used as it
     /// consumes self
     #[must_use = "method moves the value of self and returns the modified value"]
+    #[expect(dead_code)]
     pub fn marker(mut self, marker: symbols::Marker) -> Dataset<'a> {
         self.marker = marker;
         self

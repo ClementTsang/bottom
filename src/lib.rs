@@ -7,20 +7,20 @@
 //! application. If you are instead looking for documentation regarding the
 //! *usage* of bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
 
-pub mod app;
-pub mod utils {
-    pub mod cancellation_token;
-    pub mod data_prefixes;
-    pub mod data_units;
-    pub mod general;
-    pub mod logging;
-    pub mod strings;
+pub(crate) mod app;
+mod utils {
+    pub(crate) mod cancellation_token;
+    pub(crate) mod data_prefixes;
+    pub(crate) mod data_units;
+    pub(crate) mod general;
+    pub(crate) mod logging;
+    pub(crate) mod strings;
 }
-pub mod canvas;
-pub mod constants;
-pub mod data_collection;
-pub mod data_conversion;
-pub mod event;
+pub(crate) mod canvas;
+pub(crate) mod constants;
+pub(crate) mod data_collection;
+pub(crate) mod data_conversion;
+pub(crate) mod event;
 pub mod options;
 pub mod widgets;
 
