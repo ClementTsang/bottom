@@ -2,10 +2,17 @@
 
 use bottom::options::config;
 use bottom::widgets;
+use clap::Parser;
 use itertools::Itertools;
 use strum::VariantArray;
 
-fn generate_schema() -> anyhow::Result<()> {
+#[derive(Parser)]
+struct SchemaOptions {
+    /// The version of the schema.
+    version: Option<String>,
+}
+
+fn generate_schema(schema_options: SchemaOptions) -> anyhow::Result<()> {
     let mut schema = schemars::schema_for!(config::Config);
     {
         // TODO: Maybe make this case insensitive? See https://stackoverflow.com/a/68639341
@@ -42,18 +49,26 @@ fn generate_schema() -> anyhow::Result<()> {
     }
 
     let metadata = schema.schema.metadata.as_mut().unwrap();
-    metadata.id = Some(
-        "https://github.com/ClementTsang/bottom/blob/main/schema/nightly/bottom.json".to_string(),
-    );
-    metadata.description =
-        Some("https://clementtsang.github.io/bottom/nightly/configuration/config-file".to_string());
+    let version = schema_options.version.unwrap_or("nightly".to_string());
+    metadata.id = Some(format!(
+        "https://github.com/ClementTsang/bottom/blob/main/schema/{version}/bottom.json"
+    ));
+    metadata.description = Some(format!(
+        "https://clementtsang.github.io/bottom/{}/configuration/config-file",
+        if version == "nightly" {
+            "nightly"
+        } else {
+            "stable"
+        }
+    ));
     println!("{}", serde_json::to_string_pretty(&schema).unwrap());
 
     Ok(())
 }
 
 fn main() -> anyhow::Result<()> {
-    generate_schema()?;
+    let schema_options = SchemaOptions::parse();
+    generate_schema(schema_options)?;
 
     Ok(())
 }
