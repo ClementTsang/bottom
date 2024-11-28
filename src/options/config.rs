@@ -18,6 +18,7 @@ use temperature::TempConfig;
 pub use self::ignore_list::IgnoreList;
 use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
 
+/// Overall config for `bottom`.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(
     feature = "generate_schema",

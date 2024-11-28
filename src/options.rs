@@ -195,6 +195,7 @@ pub fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config
     }
 }
 
+/// Initialize the app.
 pub(crate) fn init_app(
     args: BottomArgs, config: Config,
 ) -> Result<(App, BottomLayout, ColourPalette)> {
