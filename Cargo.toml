@@ -58,22 +58,6 @@ doctest = false
 doc = false
 required-features = ["generate_schema"]
 
-# Compile dependencies with optimizations enabled, even in debug mode.
-[profile.dev.package."*"]
-opt-level = 3
-
-[profile.release]
-debug = 0
-strip = "symbols"
-lto = true
-opt-level = 3
-codegen-units = 1
-
-[profile.profiling]
-inherits = "release"
-debug = true
-strip = false
-
 [features]
 # Used for general builds.
 battery = ["starship-battery"]
@@ -165,6 +149,22 @@ clap_complete_nushell = "4.5.4"
 clap_complete_fig = "4.5.2"
 clap_mangen = "0.2.24"
 indoc = "2.0.5"
+
+# Compile dependencies with optimizations enabled, even in debug mode.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+debug = 0
+strip = "symbols"
+lto = true
+opt-level = 3
+codegen-units = 1
+
+[profile.profiling]
+inherits = "release"
+debug = true
+strip = false
 
 [package.metadata.deb]
 section = "utility"
