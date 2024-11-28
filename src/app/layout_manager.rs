@@ -745,11 +745,6 @@ impl BottomRow {
         self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
         self
     }
-
-    pub fn grow(mut self, minimum: Option<u32>) -> Self {
-        self.constraint = IntermediaryConstraint::Grow { minimum };
-        self
-    }
 }
 
 /// Represents a single column in the layout.  We assume that even if the column
@@ -783,11 +778,6 @@ impl BottomCol {
 
     pub fn canvas_handled(mut self) -> Self {
         self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
-        self
-    }
-
-    pub fn grow(mut self, minimum: Option<u32>) -> Self {
-        self.constraint = IntermediaryConstraint::Grow { minimum };
         self
     }
 }

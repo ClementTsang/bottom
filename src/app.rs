@@ -27,7 +27,7 @@ use crate::{
     data_conversion::ConvertedData,
     get_network_points,
     utils::data_units::DataUnit,
-    widgets::{query::ProcessQuery, ProcWidgetColumn, ProcWidgetMode},
+    widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
@@ -115,8 +115,6 @@ pub struct App {
     pub is_force_redraw: bool,
     pub is_determining_widget_boundary: bool,
     pub basic_mode_use_percent: bool,
-    #[cfg(target_family = "unix")]
-    pub user_table: crate::data_collection::processes::UserTable,
     pub states: AppWidgetStates,
     pub app_config_fields: AppConfigFields,
     pub widget_map: HashMap<u64, BottomWidget>,
@@ -147,8 +145,6 @@ impl App {
             is_force_redraw: false,
             is_determining_widget_boundary: false,
             basic_mode_use_percent: false,
-            #[cfg(target_family = "unix")]
-            user_table: crate::data_collection::processes::UserTable::default(),
             states,
             app_config_fields,
             widget_map,
@@ -667,14 +663,6 @@ impl App {
                     proc_widget_state.update_query();
                 }
             }
-        }
-    }
-
-    pub fn get_process_filter(&self, widget_id: u64) -> &Option<ProcessQuery> {
-        if let Some(process_widget_state) = self.states.proc_state.widget_states.get(&widget_id) {
-            &process_widget_state.proc_search.search_state.query
-        } else {
-            &None
         }
     }
 

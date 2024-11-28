@@ -21,8 +21,8 @@ pub(crate) mod constants;
 pub(crate) mod data_collection;
 pub(crate) mod data_conversion;
 pub(crate) mod event;
-pub mod options;
-pub mod widgets;
+pub(crate) mod options;
+pub(crate) mod widgets;
 
 use std::{
     boxed::Box,

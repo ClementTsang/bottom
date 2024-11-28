@@ -7,6 +7,10 @@ pub enum CollectionError {
     General(anyhow::Error),
 
     /// The collection is unsupported.
+    #[allow(
+        dead_code,
+        reason = "this is not used if everything is supported for the platform"
+    )]
     Unsupported,
 }
 

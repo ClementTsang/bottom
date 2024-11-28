@@ -1,7 +1,7 @@
 use std::{borrow::Cow, num::NonZeroU16, time::Instant};
 
 use concat_string::concat_string;
-use tui::{style::Style, widgets::Row};
+use tui::widgets::Row;
 
 use crate::{
     app::AppConfigFields,
@@ -16,29 +16,6 @@ use crate::{
     data_conversion::CpuWidgetData,
     options::config::{cpu::CpuDefault, style::ColourPalette},
 };
-
-#[derive(Default)]
-pub struct CpuWidgetStyling {
-    pub all: Style,
-    pub avg: Style,
-    pub entries: Vec<Style>,
-}
-
-impl CpuWidgetStyling {
-    fn from_colours(palette: &ColourPalette) -> Self {
-        let entries = if palette.cpu_colour_styles.is_empty() {
-            vec![Style::default()]
-        } else {
-            palette.cpu_colour_styles.clone()
-        };
-
-        Self {
-            all: palette.all_cpu_colour,
-            avg: palette.avg_cpu_colour,
-            entries,
-        }
-    }
-}
 
 pub enum CpuWidgetColumn {
     CPU,
@@ -158,10 +135,8 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
 pub struct CpuWidgetState {
     pub current_display_time: u64,
     pub is_legend_hidden: bool,
-    pub show_avg: bool,
     pub autohide_timer: Option<Instant>,
     pub table: DataTable<CpuWidgetTableData, CpuWidgetColumn>,
-    pub styling: CpuWidgetStyling,
 }
 
 impl CpuWidgetState {
@@ -196,10 +171,8 @@ impl CpuWidgetState {
         CpuWidgetState {
             current_display_time,
             is_legend_hidden: false,
-            show_avg: config.show_average_cpu,
             autohide_timer,
             table,
-            styling: CpuWidgetStyling::from_colours(colours),
         }
     }
 
