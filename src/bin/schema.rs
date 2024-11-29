@@ -60,6 +60,7 @@ fn generate_schema(schema_options: SchemaOptions) -> anyhow::Result<()> {
             "stable"
         }
     ));
+    metadata.title = Some(format!("Schema for bottom's config file ({version})",));
     println!("{}", serde_json::to_string_pretty(&schema).unwrap());
 
     Ok(())

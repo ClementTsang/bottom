@@ -20,11 +20,7 @@ use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
 
 /// Overall config for `bottom`.
 #[derive(Clone, Debug, Default, Deserialize)]
-#[cfg_attr(
-    feature = "generate_schema",
-    derive(schemars::JsonSchema),
-    schemars(title = "Schema for bottom's configs (nightly)")
-)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub struct Config {
     pub(crate) flags: Option<FlagConfig>,
