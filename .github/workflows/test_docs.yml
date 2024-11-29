@@ -1,6 +1,7 @@
 # Small CI workflow to test if mkdocs documentation can be successfully built.
 
 name: test docs
+
 on:
   workflow_dispatch:
   pull_request:

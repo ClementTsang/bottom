@@ -1,5 +1,5 @@
-# Main CI workflow to validate PRs and branches are correctly formatted
-# and pass tests.
+# Main CI workflow to validate that files are formatted correctly, pass tests,
+# and pass lints.
 #
 # CI workflow was based on a lot of work from other people:
 # - https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
@@ -8,16 +8,12 @@
 # - https://matklad.github.io/2021/09/04/fast-rust-builds.html
 #
 # Supported platforms run the following tasks:
-# - cargo fmt
-# - cargo test (built/test in separate steps)
-# - cargo clippy (apparently faster to do it after the build/test)
+# - Format
+# - Test (built/test in separate steps)
+# - Clippy (apparently faster to do it after the build/test)
 #
 # Unsupported platforms run the following tasks:
-# - cargo build
-#
-# Note that not all platforms are tested using this CI action! There are some
-# tested by Cirrus CI due to (free) platform limitations on GitHub. Currently,
-# this is just macOS M1 and FreeBSD.
+# - Clippy
 
 name: ci
 
@@ -250,7 +246,7 @@ jobs:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      - name: Check (default features)
+      - name: Clippy (default features)
         uses: ClementTsang/cargo-action@v0.0.5
         if: ${{ matrix.info.no-default-features != true }}
         with:
@@ -259,7 +255,7 @@ jobs:
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
-      - name: Check (no features enabled)
+      - name: Clippy (no features enabled)
         uses: ClementTsang/cargo-action@v0.0.5
         if: ${{ matrix.info.no-default-features == true  }}
         with:
@@ -312,7 +308,7 @@ jobs:
           key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
           cache-all-crates: true
 
-      - name: Test FreeBSD
+      - name: Clippy (FreeBSD)
         if: ${{ matrix.info.type == 'freebsd' }}
         uses: vmactions/freebsd-vm@v1.0.8
         with:
