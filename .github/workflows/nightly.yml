@@ -75,18 +75,18 @@ jobs:
           du -h -d 0 ./release/*
 
       - name: Delete tag and release if not mock
-        if: github.event.inputs.isMock != 'mock'
+        if: github.event.inputs.isMock != 'true'
         run: gh release delete nightly --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release
         run: sleep 10
-        if: github.event.inputs.isMock != 'mock'
+        if: github.event.inputs.isMock != 'true'
 
       - name: Add all release files and create nightly release if not mock
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # 2.0.8
-        if: github.event.inputs.isMock != 'mock'
+        if: github.event.inputs.isMock != 'true'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
