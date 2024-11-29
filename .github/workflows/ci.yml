@@ -137,6 +137,7 @@ jobs:
           RUST_BACKTRACE: full
 
   # Try running cargo build on all other platforms.
+  #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
   other-check:
@@ -231,9 +232,6 @@ jobs:
               no-clippy: true,
             }
 
-          # Seems like cross' FreeBSD image is a bit broken? I
-          # get build errors, may be related to this issue:
-          # https://github.com/cross-rs/cross/issues/1291
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -251,24 +249,6 @@ jobs:
         with:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
-
-      # - name: Test (default features)
-      #   uses: ClementTsang/cargo-action@v0.0.5
-      #   if: ${{ matrix.info.no-default-features != true }}
-      #   with:
-      #     command: test
-      #     args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
-      #     use-cross: ${{ matrix.info.cross }}
-      #     cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
-
-      # - name: Test (no features enabled)
-      #   uses: ClementTsang/cargo-action@v0.0.5
-      #   if: ${{ matrix.info.no-default-features == true  }}
-      #   with:
-      #     command: test
-      #     args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
-      #     use-cross: ${{ matrix.info.cross }}
-      #     cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
       - name: Check (default features)
         uses: ClementTsang/cargo-action@v0.0.5
@@ -298,6 +278,11 @@ jobs:
       fail-fast: false
       matrix:
         info:
+          # Seems like cross' FreeBSD image is a bit broken? I
+          # get build errors, may be related to this issue:
+          # https://github.com/cross-rs/cross/issues/1291
+          #
+          # Alas, that's why we do it with VMs.
           - {
               type: "freebsd",
               os_release: "14.1",

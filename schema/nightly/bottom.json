@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/nightly/bottom.json",
-  "title": "Schema for bottom's configs (nightly)",
+  "title": "Schema for bottom's config file (nightly)",
   "description": "https://clementtsang.github.io/bottom/nightly/configuration/config-file",
   "type": "object",
   "properties": {
