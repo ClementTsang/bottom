@@ -40,7 +40,7 @@ def main():
 
     with open(file, "rb") as f, open(schema) as s:
         try:
-            validator = jsonschema_rs.JSONSchema.from_str(s.read())
+            validator = jsonschema_rs.validator_for(s.read())
         except:
             print("Couldn't create validator.")
             exit()
