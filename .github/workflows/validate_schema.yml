@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - "schema/**"
+      - "scripts/schema/**"
       - ".github/workflows/validate_schema.yml"
 
 concurrency:
