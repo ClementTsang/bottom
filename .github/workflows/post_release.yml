@@ -27,22 +27,18 @@ jobs:
       version: ${{ env.VERSION }}
     steps:
       - name: Get the release version from the tag
-        if: env.VERSION == ''
         run: |
           if [[ -n "${{ github.event.inputs.tag }}" ]]; then
             echo "Manual run against a tag; overriding actual tag in the environment..."
-            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+            echo "VERSION=${{ github.event.inputs.tag }}" >> "$GITHUB_ENV"
           else
-            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+            echo "VERSION=${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
           fi
-
-      - name: Test env
-        run: |
-          echo ${{ env.VERSION }}
 
       - name: Make sure you're not on master/main/nightly
         run: |
-          if [[ ${{ env.VERSION }} == "master" || ${{ env.VERSION }} == "main" || ${{ env.VERSION }} == "nightly" ]]; then
+          echo ${{ env.VERSION }} 
+          if [[ ${{ env.VERSION }} == "master" || ${{ env.VERSION }}  == "main" || ${{ env.VERSION }}  == "nightly" ]]; then
             exit 1
           fi
 
@@ -64,9 +60,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
-          python-version: 3.11
+          python-version: 3.12
 
       - name: Install Python dependencies
         run: pip install -r docs/requirements.txt
