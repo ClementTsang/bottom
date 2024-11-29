@@ -1,11 +1,10 @@
 # Builds the following releases:
-# - Binary releases
+# - Binaries
+# - Binaries via VMs
+# - Cirrus binaries (currently just Linux 2.17)
+# - MSI installer for Windows (.msi)
 # - .deb releases
 # - .rpm releases
-# - MSI installer for Windows (.msi)
-# - Cirrus CI binaries
-#   - FreeBSD (x86_64)
-#   - macOS (aarch64)
 
 name: "build releases"
 
@@ -133,12 +132,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Checkout repository (non-GitHub container)
-        if: matrix.info.container != ''
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-        with:
-          fetch-depth: 1
-
       - name: Set up Rust toolchain
         if: matrix.info.container == ''
         uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
@@ -185,8 +178,8 @@ jobs:
         shell: bash
         run: |
           cp target/${{ matrix.info.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz" >> $GITHUB_ENV
+          tar -czvf bottom_${{ matrix.info.target }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.info.target }}.tar.gz" >> $GITHUB_ENV
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
@@ -224,7 +217,82 @@ jobs:
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: "release-${{ matrix.info.target }}${{ matrix.info.suffix }}"
+          name: "release-${{ matrix.info.target }}"
+          path: release
+
+  build-vm:
+    name: "Build binaries via VMs"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          # Seems like cross' FreeBSD image is a bit broken? I get build errors, may be related to this issue:
+          # https://github.com/cross-rs/cross/issues/1291
+          #
+          # Alas, that's why we do it with VMs.
+          - {
+              type: "freebsd",
+              os_release: "14.1",
+              target: "x86_64-unknown-freebsd",
+            }
+          - {
+              type: "freebsd",
+              os_release: "13.3",
+              target: "x86_64-unknown-freebsd",
+            }
+    steps:
+      - name: Checkout repository
+        if: matrix.info.container == ''
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 1
+
+      - name: Build (FreeBSD)
+        if: ${{ matrix.info.type == 'freebsd' }}
+        uses: vmactions/freebsd-vm@v1.0.8
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            cargo build --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
+
+      - name: Move automatically generated completion/manpage
+        shell: bash
+        run: |
+          mv "$COMPLETION_DIR" completion
+          mv "$MANPAGE_DIR" manpage
+
+      - name: Bundle release and completion
+        shell: bash
+        run: |
+          cp target/${{ matrix.info.target }}/release/btm ./btm
+          tar -czvf bottom_${{ matrix.info.target }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.info.target }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        with:
+          subject-path: ${{ env.ASSET }}
+
+      - name: Create release directory for artifact, move file
+        shell: bash
+        run: |
+          mkdir release
+          mv ${{ env.ASSET }} release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        with:
+          retention-days: 3
+          name: "release-${{ matrix.info.target }}-${{ matrix.info.os_release }}"
           path: release
 
   build-msi:
