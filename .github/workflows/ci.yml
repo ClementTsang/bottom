@@ -280,6 +280,11 @@ jobs:
           # Alas, that's why we do it with VMs.
           - {
               type: "freebsd",
+              os_release: "15.0",
+              target: "x86_64-unknown-freebsd",
+            }
+          - {
+              type: "freebsd",
               os_release: "14.1",
               target: "x86_64-unknown-freebsd",
             }
@@ -303,7 +308,7 @@ jobs:
 
       - name: Clippy (FreeBSD)
         if: ${{ matrix.info.type == 'freebsd' }}
-        uses: vmactions/freebsd-vm@v1.0.8
+        uses: vmactions/freebsd-vm@debf37ca7b7fa40e19c542ef7ba30d6054a706a4 # v1.1.5
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
