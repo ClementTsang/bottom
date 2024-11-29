@@ -73,7 +73,7 @@ jobs:
               target: "aarch64-unknown-linux-gnu",
               cross: true,
             }
-          - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-13", target: "x86_64-apple-darwin", cross: false }
           - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
           - {
               os: "windows-2019",
@@ -177,8 +177,8 @@ jobs:
               rust: "beta",
             }
           - {
-              os: "macos-12",
-              target: "x86_64-apple-darwin",
+              os: "macos-14",
+              target: "aarch64-apple-darwin",
               cross: false,
               rust: "beta",
             }
@@ -274,11 +274,15 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          # Seems like cross' FreeBSD image is a bit broken? I
-          # get build errors, may be related to this issue:
+          # Seems like cross' FreeBSD image is a bit broken? I get build errors, may be related to this issue:
           # https://github.com/cross-rs/cross/issues/1291
           #
           # Alas, that's why we do it with VMs.
+          - {
+              type: "freebsd",
+              os_release: "15.0",
+              target: "x86_64-unknown-freebsd",
+            }
           - {
               type: "freebsd",
               os_release: "14.1",
@@ -295,12 +299,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
-        with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
-          target: ${{ matrix.info.target }}
-
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
@@ -310,10 +308,10 @@ jobs:
 
       - name: Clippy (FreeBSD)
         if: ${{ matrix.info.type == 'freebsd' }}
-        uses: vmactions/freebsd-vm@v1.0.8
+        uses: vmactions/freebsd-vm@debf37ca7b7fa40e19c542ef7ba30d6054a706a4 # v1.1.5
         with:
           release: "${{ matrix.info.os_release }}"
-          envs: "CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           prepare: |
             pkg install -y curl bash
