@@ -279,8 +279,8 @@ jobs:
         shell: bash
         run: |
           cp target/${{ matrix.info.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.info.target }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.info.target }}.tar.gz" >> $GITHUB_ENV
+          tar -czvf bottom_${{ matrix.info.target }}-${{ matrix.info.os_release }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.info.target }}-${{ matrix.info.os_release }}.tar.gz" >> $GITHUB_ENV
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
