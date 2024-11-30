@@ -144,7 +144,7 @@ fn create_config_at_path(path: &Path) -> anyhow::Result<Config> {
 /// - If the user does NOT pass in a path explicitly, then just show a warning,
 ///   but continue. This is in case they do not want to write a default config file at
 ///   the XDG locations, for example.
-pub fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config> {
+pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config> {
     let adjusted_config_path = get_config_path(config_path);
 
     match &adjusted_config_path {
