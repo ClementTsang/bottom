@@ -10,7 +10,7 @@ The temperature widget provides a table of temperature sensors and their current
 
 The temperature widget provides the sensor name as well as its current temperature.
 
-This widget can also be configured to display Nvidia GPU temperatures (`--disable_gpu` on Linux/Windows to disable).
+This widget can also be configured to display Nvidia and AMD GPU temperatures (`--disable_gpu` on Linux/Windows to disable).
 
 ## Key bindings
 

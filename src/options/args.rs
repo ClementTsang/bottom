@@ -520,7 +520,7 @@ pub struct BatteryArgs {
 #[derive(Args, Clone, Debug, Default)]
 #[command(next_help_heading = "GPU Options", rename_all = "snake_case")]
 pub struct GpuArgs {
-    #[arg(long, action = ArgAction::SetTrue, help = "Disable collecting and displaying NVIDIA GPU information.")]
+    #[arg(long, action = ArgAction::SetTrue, help = "Disable collecting and displaying NVIDIA and AMD GPU information.")]
     pub disable_gpu: bool,
 }
 
