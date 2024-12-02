@@ -3,7 +3,7 @@
 #[cfg(feature = "nvidia")]
 pub mod nvidia;
 
-#[cfg(all(feature = "amd", target_os = "linux"))]
+#[cfg(all(target_os = "linux", feature = "gpu"))]
 pub mod amd;
 
 #[cfg(feature = "battery")]
@@ -376,11 +376,12 @@ impl DataCollector {
                 }
             }
 
-            #[cfg(all(feature = "amd", target_os = "linux"))]
+            #[cfg(target_os = "linux")]
             if let Some(data) = amd::get_amd_vecs(
                 &self.temperature_type,
                 &self.filters.temp_filter,
                 &self.widgets_to_harvest,
+                self.last_collection_time,
             ) {
                 if let Some(mut temp) = data.temperature {
                     if let Some(sensors) = &mut self.data.temperature_sensors {
@@ -398,9 +399,23 @@ impl DataCollector {
                 }
             }
 
-            self.data.gpu = Some(local_gpu);
-            self.gpu_pids = Some(local_gpu_pids);
-            self.gpus_total_mem = Some(local_gpu_total_mem);
+            self.data.gpu = if !local_gpu.is_empty() {
+                Some(local_gpu)
+            } else {
+                None
+            };
+
+            self.gpu_pids = if !local_gpu_pids.is_empty() {
+                Some(local_gpu_pids)
+            } else {
+                None
+            };
+
+            self.gpus_total_mem = if local_gpu_total_mem > 0 {
+                Some(local_gpu_total_mem)
+            } else {
+                None
+            };
         }
     }
 

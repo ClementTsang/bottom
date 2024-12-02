@@ -168,7 +168,6 @@ dependencies = [
  "indexmap",
  "indoc",
  "itertools",
- "libamdgpu_top",
  "libc",
  "log",
  "mach2",
@@ -727,29 +726,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
-name = "libamdgpu_top"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "783f82036d85fc1d1eb7b106b71636c66d0a8a9c12e62c3dfb770b5613dfaf65"
-dependencies = [
- "anyhow",
- "libdrm_amdgpu_sys",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.162"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18d287de67fe55fd7e1581fe933d965a5a9477b38e949cfa9f8574ef01506398"
-
-[[package]]
-name = "libdrm_amdgpu_sys"
-version = "0.7.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b138fce021c047c76625cd701e8efb2450d8677551f79d8b5574581b9533f107"
-dependencies = [
- "libc",
-]
 
 [[package]]
 name = "libloading"
