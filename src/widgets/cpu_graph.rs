@@ -14,7 +14,7 @@ use crate::{
     },
     data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,
-    options::config::{cpu::CpuDefault, style::ColourPalette},
+    options::config::{cpu::CpuDefault, style::Styles},
 };
 
 pub enum CpuWidgetColumn {
@@ -106,15 +106,14 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
     #[inline(always)]
     fn style_row<'a>(&self, row: Row<'a>, painter: &Painter) -> Row<'a> {
         let style = match self {
-            CpuWidgetTableData::All => painter.colours.all_cpu_colour,
+            CpuWidgetTableData::All => painter.styles.all_cpu_colour,
             CpuWidgetTableData::Entry {
                 data_type,
                 last_entry: _,
             } => match data_type {
-                CpuDataType::Avg => painter.colours.avg_cpu_colour,
+                CpuDataType::Avg => painter.styles.avg_cpu_colour,
                 CpuDataType::Cpu(index) => {
-                    painter.colours.cpu_colour_styles
-                        [index % painter.colours.cpu_colour_styles.len()]
+                    painter.styles.cpu_colour_styles[index % painter.styles.cpu_colour_styles.len()]
                 }
             },
         };
@@ -142,7 +141,7 @@ pub struct CpuWidgetState {
 impl CpuWidgetState {
     pub(crate) fn new(
         config: &AppConfigFields, default_selection: CpuDefault, current_display_time: u64,
-        autohide_timer: Option<Instant>, colours: &ColourPalette,
+        autohide_timer: Option<Instant>, colours: &Styles,
     ) -> Self {
         const COLUMNS: [Column<CpuWidgetColumn>; 2] = [
             Column::soft(CpuWidgetColumn::Cpu, Some(0.5)),

@@ -4,18 +4,15 @@ use std::cmp::min;
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Block, Paragraph, Wrap},
     Frame,
 };
 
 use crate::{
     app::{App, KillSignal, MAX_PROCESS_SIGNAL},
-    canvas::Painter,
+    canvas::{drawing_utils::dialog_block, Painter},
     widgets::ProcWidgetMode,
 };
-
-const DD_BASE: &str = " Confirm Kill Process ── Esc to close ";
-const DD_ERROR_BASE: &str = " Error ── Esc to close ";
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
@@ -211,12 +208,12 @@ impl Painter {
         if MAX_PROCESS_SIGNAL == 1 || !app_state.app_config_fields.is_advanced_kill {
             let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
                 KillSignal::Kill(_) => (
-                    Span::styled("Yes", self.colours.selected_text_style),
-                    Span::styled("No", self.colours.text_style),
+                    Span::styled("Yes", self.styles.selected_text_style),
+                    Span::styled("No", self.styles.text_style),
                 ),
                 KillSignal::Cancel => (
-                    Span::styled("Yes", self.colours.text_style),
-                    Span::styled("No", self.colours.selected_text_style),
+                    Span::styled("Yes", self.styles.text_style),
+                    Span::styled("No", self.styles.selected_text_style),
                 ),
             };
 
@@ -322,11 +319,11 @@ impl Painter {
                 let mut buttons = SIGNAL_TEXT
                     [scroll_offset + 1..min((layout.len()) + scroll_offset, SIGNAL_TEXT.len())]
                     .iter()
-                    .map(|text| Span::styled(*text, self.colours.text_style))
+                    .map(|text| Span::styled(*text, self.styles.text_style))
                     .collect::<Vec<Span<'_>>>();
-                buttons.insert(0, Span::styled(SIGNAL_TEXT[0], self.colours.text_style));
+                buttons.insert(0, Span::styled(SIGNAL_TEXT[0], self.styles.text_style));
                 buttons[selected - scroll_offset] =
-                    Span::styled(SIGNAL_TEXT[selected], self.colours.selected_text_style);
+                    Span::styled(SIGNAL_TEXT[selected], self.styles.selected_text_style);
 
                 app_state.delete_dialog_state.button_positions = layout
                     .iter()
@@ -354,45 +351,24 @@ impl Painter {
     ) -> bool {
         if let Some(dd_text) = dd_text {
             let dd_title = if app_state.dd_err.is_some() {
-                Line::from(vec![
-                    Span::styled(" Error ", self.colours.widget_title_style),
-                    Span::styled(
-                        format!(
-                            "─{}─ Esc to close ",
-                            "─".repeat(
-                                usize::from(draw_loc.width)
-                                    .saturating_sub(DD_ERROR_BASE.chars().count() + 2)
-                            )
-                        ),
-                        self.colours.border_style,
-                    ),
-                ])
+                Line::styled(" Error ", self.styles.widget_title_style)
             } else {
-                Line::from(vec![
-                    Span::styled(" Confirm Kill Process ", self.colours.widget_title_style),
-                    Span::styled(
-                        format!(
-                            "─{}─ Esc to close ",
-                            "─".repeat(
-                                usize::from(draw_loc.width)
-                                    .saturating_sub(DD_BASE.chars().count() + 2)
-                            )
-                        ),
-                        self.colours.border_style,
-                    ),
-                ])
+                Line::styled(" Confirm Kill Process ", self.styles.widget_title_style)
             };
 
             f.render_widget(
                 Paragraph::new(dd_text)
                     .block(
-                        Block::default()
-                            .title(dd_title)
-                            .style(self.colours.border_style)
-                            .borders(Borders::ALL)
-                            .border_style(self.colours.border_style),
+                        dialog_block(self.styles.border_type)
+                            .title_top(dd_title)
+                            .title_top(
+                                Line::styled(" Esc to close ", self.styles.widget_title_style)
+                                    .right_aligned(),
+                            )
+                            .style(self.styles.border_style)
+                            .border_style(self.styles.border_style),
                     )
-                    .style(self.colours.text_style)
+                    .style(self.styles.text_style)
                     .alignment(Alignment::Center)
                     .wrap(Wrap { trim: true }),
                 draw_loc,

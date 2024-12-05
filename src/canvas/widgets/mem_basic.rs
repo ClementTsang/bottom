@@ -1,13 +1,11 @@
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::Block,
     Frame,
 };
 
 use crate::{
     app::App,
-    canvas::{components::pipe_gauge::PipeGauge, Painter},
-    constants::*,
+    canvas::{components::pipe_gauge::PipeGauge, drawing_utils::widget_block, Painter},
 };
 
 impl Painter {
@@ -19,9 +17,8 @@ impl Painter {
 
         if app_state.current_widget.widget_id == widget_id {
             f.render_widget(
-                Block::default()
-                    .borders(SIDE_BORDERS)
-                    .border_style(self.colours.highlighted_border_style),
+                widget_block(true, true, self.styles.border_type)
+                    .border_style(self.styles.highlighted_border_style),
                 draw_loc,
             );
         }
@@ -50,8 +47,8 @@ impl Painter {
                 .ratio(ram_percentage / 100.0)
                 .start_label("RAM")
                 .inner_label(memory_fraction_label)
-                .label_style(self.colours.ram_style)
-                .gauge_style(self.colours.ram_style),
+                .label_style(self.styles.ram_style)
+                .gauge_style(self.styles.ram_style),
         );
 
         #[cfg(not(target_os = "windows"))]
@@ -75,8 +72,8 @@ impl Painter {
                         .ratio(cache_percentage / 100.0)
                         .start_label("CHE")
                         .inner_label(cache_fraction_label)
-                        .label_style(self.colours.cache_style)
-                        .gauge_style(self.colours.cache_style),
+                        .label_style(self.styles.cache_style)
+                        .gauge_style(self.styles.cache_style),
                 );
             }
         }
@@ -100,8 +97,8 @@ impl Painter {
                     .ratio(swap_percentage / 100.0)
                     .start_label("SWP")
                     .inner_label(swap_fraction_label)
-                    .label_style(self.colours.swap_style)
-                    .gauge_style(self.colours.swap_style),
+                    .label_style(self.styles.swap_style)
+                    .gauge_style(self.styles.swap_style),
             );
         }
 
@@ -124,8 +121,8 @@ impl Painter {
                         .ratio(arc_percentage / 100.0)
                         .start_label("ARC")
                         .inner_label(arc_fraction_label)
-                        .label_style(self.colours.arc_style)
-                        .gauge_style(self.colours.arc_style),
+                        .label_style(self.styles.arc_style)
+                        .gauge_style(self.styles.arc_style),
                 );
             }
         }
@@ -133,7 +130,7 @@ impl Painter {
         #[cfg(feature = "gpu")]
         {
             if let Some(gpu_data) = &app_state.converted_data.gpu_data {
-                let gpu_styles = &self.colours.gpu_colours;
+                let gpu_styles = &self.styles.gpu_colours;
                 let mut color_index = 0;
 
                 gpu_data.iter().for_each(|gpu_data_vec| {

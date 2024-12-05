@@ -340,7 +340,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
     #[inline(always)]
     fn style_row<'a>(&self, row: Row<'a>, painter: &Painter) -> Row<'a> {
         if self.disabled {
-            row.style(painter.colours.disabled_text_style)
+            row.style(painter.styles.disabled_text_style)
         } else {
             row
         }

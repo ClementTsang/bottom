@@ -84,26 +84,25 @@ impl Painter {
                 },
             );
 
+            // TODO: I can do this text effect as just a border now!
             let left_name = left_table.get_pretty_name();
             let right_name = right_table.get_pretty_name();
-
             let num_spaces =
                 usize::from(draw_loc.width).saturating_sub(6 + left_name.len() + right_name.len());
+            let carousel_text_style = if widget_id == app_state.current_widget.widget_id {
+                self.styles.highlighted_border_style
+            } else {
+                self.styles.text_style
+            };
 
             let left_arrow_text = vec![
                 Line::default(),
-                Line::from(Span::styled(
-                    format!("◄ {left_name}"),
-                    self.colours.text_style,
-                )),
+                Line::from(Span::styled(format!("◄ {left_name}"), carousel_text_style)),
             ];
 
             let right_arrow_text = vec![
                 Line::default(),
-                Line::from(Span::styled(
-                    format!("{right_name} ►"),
-                    self.colours.text_style,
-                )),
+                Line::from(Span::styled(format!("{right_name} ►"), carousel_text_style)),
             ];
 
             let margined_draw_loc = Layout::default()

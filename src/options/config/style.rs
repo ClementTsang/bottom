@@ -1,6 +1,7 @@
 //! Config options around styling.
 
 mod battery;
+mod borders;
 mod cpu;
 mod graphs;
 mod memory;
@@ -19,7 +20,7 @@ use memory::MemoryStyle;
 use network::NetworkStyle;
 use serde::{Deserialize, Serialize};
 use tables::TableStyle;
-use tui::style::Style;
+use tui::{style::Style, widgets::BorderType};
 use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
 
@@ -92,45 +93,47 @@ pub(crate) struct StyleConfig {
     pub(crate) widgets: Option<WidgetStyle>,
 }
 
-/// The actual internal representation of the configured colours,
-/// as a "palette".
+/// The actual internal representation of the configured styles.
 #[derive(Debug)]
-pub struct ColourPalette {
-    pub ram_style: Style,
+pub struct Styles {
+    pub(crate) ram_style: Style,
     #[cfg(not(target_os = "windows"))]
-    pub cache_style: Style,
-    pub swap_style: Style,
-    pub arc_style: Style,
-    pub gpu_colours: Vec<Style>,
-    pub rx_style: Style,
-    pub tx_style: Style,
-    pub total_rx_style: Style,
-    pub total_tx_style: Style,
-    pub all_cpu_colour: Style,
-    pub avg_cpu_colour: Style,
-    pub cpu_colour_styles: Vec<Style>,
-    pub border_style: Style,
-    pub highlighted_border_style: Style,
-    pub text_style: Style,
-    pub selected_text_style: Style,
-    pub table_header_style: Style,
-    pub widget_title_style: Style,
-    pub graph_style: Style,
-    pub graph_legend_style: Style,
-    pub high_battery: Style,
-    pub medium_battery: Style,
-    pub low_battery: Style,
-    pub invalid_query_style: Style,
-    pub disabled_text_style: Style,
+    pub(crate) cache_style: Style,
+    pub(crate) swap_style: Style,
+    #[cfg(feature = "zfs")]
+    pub(crate) arc_style: Style,
+    #[cfg(feature = "gpu")]
+    pub(crate) gpu_colours: Vec<Style>,
+    pub(crate) rx_style: Style,
+    pub(crate) tx_style: Style,
+    pub(crate) total_rx_style: Style,
+    pub(crate) total_tx_style: Style,
+    pub(crate) all_cpu_colour: Style,
+    pub(crate) avg_cpu_colour: Style,
+    pub(crate) cpu_colour_styles: Vec<Style>,
+    pub(crate) border_style: Style,
+    pub(crate) highlighted_border_style: Style,
+    pub(crate) text_style: Style,
+    pub(crate) selected_text_style: Style,
+    pub(crate) table_header_style: Style,
+    pub(crate) widget_title_style: Style,
+    pub(crate) graph_style: Style,
+    pub(crate) graph_legend_style: Style,
+    pub(crate) high_battery: Style,
+    pub(crate) medium_battery: Style,
+    pub(crate) low_battery: Style,
+    pub(crate) invalid_query_style: Style,
+    pub(crate) disabled_text_style: Style,
+    pub(crate) border_type: BorderType,
 }
 
-impl Default for ColourPalette {
+impl Default for Styles {
     fn default() -> Self {
-        Self::default_palette()
+        Self::default_style()
     }
 }
 
-impl ColourPalette {
+impl Styles {
     pub fn new(args: &BottomArgs, config: &Config) -> anyhow::Result<Self> {
         let mut palette = match &args.style.theme {
             Some(theme) => Self::from_theme(theme)?,
@@ -141,8 +144,8 @@ impl ColourPalette {
         };
 
         // Apply theme from config on top.
-        if let Some(style) = &config.styles {
-            palette.set_colours_from_palette(style)?;
+        if let Some(config_style) = &config.styles {
+            palette.set_styles_from_config(config_style)?;
         }
 
         Ok(palette)
@@ -151,7 +154,7 @@ impl ColourPalette {
     fn from_theme(theme: &str) -> anyhow::Result<Self> {
         let lower_case = theme.to_lowercase();
         match lower_case.as_str() {
-            "default" => Ok(Self::default_palette()),
+            "default" => Ok(Self::default_style()),
             "default-light" => Ok(Self::default_light_mode()),
             "gruvbox" => Ok(Self::gruvbox_palette()),
             "gruvbox-light" => Ok(Self::gruvbox_light_palette()),
@@ -164,7 +167,7 @@ impl ColourPalette {
         }
     }
 
-    fn set_colours_from_palette(&mut self, config: &StyleConfig) -> OptionResult<()> {
+    fn set_styles_from_config(&mut self, config: &StyleConfig) -> OptionResult<()> {
         // CPU
         set_colour!(self.avg_cpu_colour, config.cpu, avg_entry_color);
         set_colour!(self.all_cpu_colour, config.cpu, all_entry_color);
@@ -215,6 +218,12 @@ impl ColourPalette {
             selected_border_color
         );
 
+        if let Some(widgets) = &config.widgets {
+            if let Some(widget_borders) = widgets.widget_border_type {
+                self.border_type = widget_borders.into();
+            }
+        }
+
         Ok(())
     }
 }
@@ -224,20 +233,14 @@ mod test {
 
     use tui::style::{Color, Style};
 
-    use super::ColourPalette;
+    use super::Styles;
     use crate::options::config::style::utils::str_to_colour;
 
     #[test]
     fn default_selected_colour_works() {
-        let mut colours = ColourPalette::default();
-        let original_selected_text_colour = ColourPalette::default_palette()
-            .selected_text_style
-            .fg
-            .unwrap();
-        let original_selected_bg_colour = ColourPalette::default_palette()
-            .selected_text_style
-            .bg
-            .unwrap();
+        let mut colours = Styles::default();
+        let original_selected_text_colour = Styles::default_style().selected_text_style.fg.unwrap();
+        let original_selected_bg_colour = Styles::default_style().selected_text_style.bg.unwrap();
 
         assert_eq!(
             colours.selected_text_style,
@@ -259,11 +262,11 @@ mod test {
 
     #[test]
     fn built_in_colour_schemes_work() {
-        ColourPalette::from_theme("default").unwrap();
-        ColourPalette::from_theme("default-light").unwrap();
-        ColourPalette::from_theme("gruvbox").unwrap();
-        ColourPalette::from_theme("gruvbox-light").unwrap();
-        ColourPalette::from_theme("nord").unwrap();
-        ColourPalette::from_theme("nord-light").unwrap();
+        Styles::from_theme("default").unwrap();
+        Styles::from_theme("default-light").unwrap();
+        Styles::from_theme("gruvbox").unwrap();
+        Styles::from_theme("gruvbox-light").unwrap();
+        Styles::from_theme("nord").unwrap();
+        Styles::from_theme("nord-light").unwrap();
     }
 }

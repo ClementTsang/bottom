@@ -81,7 +81,7 @@ crossterm = "0.28.1"
 ctrlc = { version = "3.4.5", features = ["termination"] }
 dirs = "5.0.1"
 # Maybe consider https://github.com/rust-lang/rustc-hash for some cases too?
-hashbrown = "0.15.0"
+hashbrown = "0.15.2"
 humantime = "2.1.0"
 indexmap = "2.6.0"
 indoc = "2.0.5"
@@ -104,7 +104,7 @@ time = { version = "0.3.36", features = ["local-offset", "formatting", "macros"]
 
 # These are just used for JSON schema generation.
 schemars = { version = "0.8.21", optional = true }
-serde_json = { version = "1.0.132", optional = true }
+serde_json = { version = "1.0.133", optional = true }
 strum = { version = "0.26.3", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]

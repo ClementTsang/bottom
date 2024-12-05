@@ -2,7 +2,6 @@ use std::cmp::min;
 
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::Block,
     Frame,
 };
 
@@ -10,9 +9,9 @@ use crate::{
     app::App,
     canvas::{
         components::pipe_gauge::{LabelLimit, PipeGauge},
+        drawing_utils::widget_block,
         Painter,
     },
-    constants::*,
     data_collection::cpu::CpuDataType,
     data_conversion::CpuWidgetData,
 };
@@ -38,9 +37,8 @@ impl Painter {
 
             if app_state.current_widget.widget_id == widget_id {
                 f.render_widget(
-                    Block::default()
-                        .borders(SIDE_BORDERS)
-                        .border_style(self.colours.highlighted_border_style),
+                    widget_block(true, true, self.styles.border_type)
+                        .border_style(self.styles.highlighted_border_style),
                     draw_loc,
                 );
             }
@@ -156,10 +154,10 @@ impl Painter {
         };
 
         let (outer, style) = match data_type {
-            CpuDataType::Avg => ("AVG".to_string(), self.colours.avg_cpu_colour),
+            CpuDataType::Avg => ("AVG".to_string(), self.styles.avg_cpu_colour),
             CpuDataType::Cpu(index) => (
                 format!("{index:<3}",),
-                self.colours.cpu_colour_styles[index % self.colours.cpu_colour_styles.len()],
+                self.styles.cpu_colour_styles[index % self.styles.cpu_colour_styles.len()],
             ),
         };
         let inner = format!("{:>3.0}%", last_entry.round());

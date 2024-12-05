@@ -2,7 +2,7 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph},
+    widgets::Paragraph,
     Frame,
 };
 use unicode_segmentation::UnicodeSegmentation;
@@ -11,9 +11,9 @@ use crate::{
     app::{App, AppSearchState},
     canvas::{
         components::data_table::{DrawInfo, SelectionState},
+        drawing_utils::widget_block,
         Painter,
     },
-    constants::*,
 };
 
 const SORT_MENU_WIDTH: u16 = 7;
@@ -23,11 +23,11 @@ impl Painter {
     /// - `widget_id` here represents the widget ID of the process widget
     ///   itself!
     pub fn draw_process(
-        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
-        widget_id: u64,
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if let Some(proc_widget_state) = app_state.states.proc_state.widget_states.get(&widget_id) {
-            let search_height = if draw_border { 5 } else { 3 };
+            let is_basic = app_state.app_config_fields.use_basic_mode;
+            let search_height = if !is_basic { 5 } else { 3 };
             let is_sort_open = proc_widget_state.is_sort_open;
 
             let mut proc_draw_loc = draw_loc;
@@ -38,13 +38,7 @@ impl Painter {
                     .split(draw_loc);
                 proc_draw_loc = processes_chunk[0];
 
-                self.draw_search_field(
-                    f,
-                    app_state,
-                    processes_chunk[1],
-                    draw_border,
-                    widget_id + 1,
-                );
+                self.draw_search_field(f, app_state, processes_chunk[1], widget_id + 1);
             }
 
             if is_sort_open {
@@ -110,8 +104,7 @@ impl Painter {
     /// - `widget_id` represents the widget ID of the search box itself --- NOT
     ///   the process widget state that is stored.
     fn draw_search_field(
-        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
-        widget_id: u64,
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         fn build_query_span(
             search_state: &AppSearchState, available_width: usize, is_on_widget: bool,
@@ -157,16 +150,18 @@ impl Painter {
             }
         }
 
+        let is_basic = app_state.app_config_fields.use_basic_mode;
+
         if let Some(proc_widget_state) = app_state
             .states
             .proc_state
             .widget_states
             .get_mut(&(widget_id - 1))
         {
-            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            let is_selected = widget_id == app_state.current_widget.widget_id;
             let num_columns = usize::from(draw_loc.width);
             const SEARCH_TITLE: &str = "> ";
-            let offset = if draw_border { 4 } else { 2 }; // width of 3 removed for >_|
+            let offset = 4;
             let available_width = if num_columns > (offset + 3) {
                 num_columns - offset
             } else {
@@ -182,18 +177,18 @@ impl Painter {
             let query_with_cursor = build_query_span(
                 &proc_widget_state.proc_search.search_state,
                 available_width,
-                is_on_widget,
-                self.colours.selected_text_style,
-                self.colours.text_style,
+                is_selected,
+                self.styles.selected_text_style,
+                self.styles.text_style,
             );
 
             let mut search_text = vec![Line::from({
                 let mut search_vec = vec![Span::styled(
                     SEARCH_TITLE,
-                    if is_on_widget {
-                        self.colours.table_header_style
+                    if is_selected {
+                        self.styles.table_header_style
                     } else {
-                        self.colours.text_style
+                        self.styles.text_style
                     },
                 )];
                 search_vec.extend(query_with_cursor);
@@ -203,21 +198,21 @@ impl Painter {
 
             // Text options shamelessly stolen from VS Code.
             let case_style = if !proc_widget_state.proc_search.is_ignoring_case {
-                self.colours.selected_text_style
+                self.styles.selected_text_style
             } else {
-                self.colours.text_style
+                self.styles.text_style
             };
 
             let whole_word_style = if proc_widget_state.proc_search.is_searching_whole_word {
-                self.colours.selected_text_style
+                self.styles.selected_text_style
             } else {
-                self.colours.text_style
+                self.styles.text_style
             };
 
             let regex_style = if proc_widget_state.proc_search.is_searching_with_regex {
-                self.colours.selected_text_style
+                self.styles.selected_text_style
             } else {
-                self.colours.text_style
+                self.styles.text_style
             };
 
             // TODO: [MOUSE] Mouse support for these in search
@@ -245,54 +240,42 @@ impl Painter {
                 } else {
                     ""
                 },
-                self.colours.invalid_query_style,
+                self.styles.invalid_query_style,
             )));
             search_text.push(option_text);
 
             let current_border_style =
                 if proc_widget_state.proc_search.search_state.is_invalid_search {
-                    self.colours.invalid_query_style
-                } else if is_on_widget {
-                    self.colours.highlighted_border_style
+                    self.styles.invalid_query_style
+                } else if is_selected {
+                    self.styles.highlighted_border_style
                 } else {
-                    self.colours.border_style
+                    self.styles.border_style
                 };
 
-            let title = Span::styled(
-                if draw_border {
-                    const TITLE_BASE: &str = " Esc to close ";
-                    let repeat_num =
-                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
-                    format!("{} Esc to close ", "─".repeat(repeat_num))
-                } else {
-                    String::new()
-                },
-                current_border_style,
-            );
+            let process_search_block = {
+                let mut block = widget_block(is_basic, is_selected, self.styles.border_type)
+                    .border_style(current_border_style);
 
-            let process_search_block = if draw_border {
-                Block::default()
-                    .title(title)
-                    .borders(Borders::ALL)
-                    .border_style(current_border_style)
-            } else if is_on_widget {
-                Block::default()
-                    .borders(SIDE_BORDERS)
-                    .border_style(current_border_style)
-            } else {
-                Block::default().borders(Borders::NONE)
+                if !is_basic {
+                    block = block.title_top(
+                        Line::styled(" Esc to close ", current_border_style).right_aligned(),
+                    )
+                }
+
+                block
             };
 
             let margined_draw_loc = Layout::default()
                 .constraints([Constraint::Percentage(100)])
-                .horizontal_margin(u16::from(!(is_on_widget || draw_border)))
+                .horizontal_margin(u16::from(is_basic && !is_selected))
                 .direction(Direction::Horizontal)
                 .split(draw_loc)[0];
 
             f.render_widget(
                 Paragraph::new(search_text)
                     .block(process_search_block)
-                    .style(self.colours.text_style)
+                    .style(self.styles.text_style)
                     .alignment(Alignment::Left),
                 margined_draw_loc,
             );

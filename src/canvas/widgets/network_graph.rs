@@ -107,17 +107,17 @@ impl Painter {
                 vec![
                     GraphData {
                         points: network_data_rx,
-                        style: self.colours.rx_style,
+                        style: self.styles.rx_style,
                         name: Some(format!("RX: {:7}", app_state.converted_data.rx_display).into()),
                     },
                     GraphData {
                         points: network_data_tx,
-                        style: self.colours.tx_style,
+                        style: self.styles.tx_style,
                         name: Some(format!("TX: {:7}", app_state.converted_data.tx_display).into()),
                     },
                     GraphData {
                         points: &[],
-                        style: self.colours.total_rx_style,
+                        style: self.styles.total_rx_style,
                         name: Some(
                             format!("Total RX: {:7}", app_state.converted_data.total_rx_display)
                                 .into(),
@@ -125,7 +125,7 @@ impl Painter {
                     },
                     GraphData {
                         points: &[],
-                        style: self.colours.total_tx_style,
+                        style: self.styles.total_tx_style,
                         name: Some(
                             format!("Total TX: {:7}", app_state.converted_data.total_tx_display)
                                 .into(),
@@ -136,12 +136,12 @@ impl Painter {
                 vec![
                     GraphData {
                         points: network_data_rx,
-                        style: self.colours.rx_style,
+                        style: self.styles.rx_style,
                         name: Some((&app_state.converted_data.rx_display).into()),
                     },
                     GraphData {
                         points: network_data_tx,
-                        style: self.colours.tx_style,
+                        style: self.styles.tx_style,
                         name: Some((&app_state.converted_data.tx_display).into()),
                     },
                 ]
@@ -158,11 +158,13 @@ impl Painter {
                 hide_x_labels,
                 y_bounds,
                 y_labels: &y_labels,
-                graph_style: self.colours.graph_style,
+                graph_style: self.styles.graph_style,
                 border_style,
+                border_type: self.styles.border_type,
                 title: " Network ".into(),
+                is_selected: app_state.current_widget.widget_id == widget_id,
                 is_expanded: app_state.is_expanded,
-                title_style: self.colours.widget_title_style,
+                title_style: self.styles.widget_title_style,
                 legend_position: app_state.app_config_fields.network_legend_position,
                 legend_constraints: Some(legend_constraints),
                 marker,
@@ -183,10 +185,10 @@ impl Painter {
 
         // Gross but I need it to work...
         let total_network = vec![Row::new([
-            Text::styled(rx_display, self.colours.rx_style),
-            Text::styled(tx_display, self.colours.tx_style),
-            Text::styled(total_rx_display, self.colours.total_rx_style),
-            Text::styled(total_tx_display, self.colours.total_tx_style),
+            Text::styled(rx_display, self.styles.rx_style),
+            Text::styled(tx_display, self.styles.tx_style),
+            Text::styled(total_rx_display, self.styles.total_rx_style),
+            Text::styled(total_tx_display, self.styles.total_tx_style),
         ])];
 
         // Draw
@@ -198,15 +200,15 @@ impl Painter {
                     .map(Constraint::Length)
                     .collect::<Vec<_>>()),
             )
-            .header(Row::new(NETWORK_HEADERS).style(self.colours.table_header_style))
+            .header(Row::new(NETWORK_HEADERS).style(self.styles.table_header_style))
             .block(Block::default().borders(Borders::ALL).border_style(
                 if app_state.current_widget.widget_id == widget_id {
-                    self.colours.highlighted_border_style
+                    self.styles.highlighted_border_style
                 } else {
-                    self.colours.border_style
+                    self.styles.border_style
                 },
             ))
-            .style(self.colours.text_style),
+            .style(self.styles.text_style),
             draw_loc,
         );
     }

@@ -16,7 +16,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use config::style::ColourPalette;
+use config::style::Styles;
 pub use config::Config;
 pub(crate) use error::{OptionError, OptionResult};
 use hashbrown::{HashMap, HashSet};
@@ -144,7 +144,7 @@ fn create_config_at_path(path: &Path) -> anyhow::Result<Config> {
 /// - If the user does NOT pass in a path explicitly, then just show a warning,
 ///   but continue. This is in case they do not want to write a default config file at
 ///   the XDG locations, for example.
-pub fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config> {
+pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config> {
     let adjusted_config_path = get_config_path(config_path);
 
     match &adjusted_config_path {
@@ -196,9 +196,7 @@ pub fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config
 }
 
 /// Initialize the app.
-pub(crate) fn init_app(
-    args: BottomArgs, config: Config,
-) -> Result<(App, BottomLayout, ColourPalette)> {
+pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomLayout, Styles)> {
     use BottomWidgetType::*;
 
     // Since everything takes a reference, but we want to take ownership here to
@@ -206,7 +204,7 @@ pub(crate) fn init_app(
     let args = &args;
     let config = &config;
 
-    let styling = ColourPalette::new(args, config)?;
+    let styling = Styles::new(args, config)?;
 
     let (widget_layout, default_widget_id, default_widget_type_option) =
         get_widget_layout(args, config)

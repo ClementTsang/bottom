@@ -18,12 +18,12 @@ use crate::{
         App,
     },
     constants::*,
-    options::config::style::ColourPalette,
+    options::config::style::Styles,
 };
 
 /// Handles the canvas' state.
 pub struct Painter {
-    pub colours: ColourPalette,
+    pub styles: Styles,
     previous_height: u16,
     previous_width: u16,
 
@@ -47,7 +47,7 @@ pub enum LayoutConstraint {
 }
 
 impl Painter {
-    pub fn init(layout: BottomLayout, styling: ColourPalette) -> anyhow::Result<Self> {
+    pub fn init(layout: BottomLayout, styling: Styles) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -131,7 +131,7 @@ impl Painter {
         });
 
         let painter = Painter {
-            colours: styling,
+            styles: styling,
             previous_height: 0,
             previous_width: 0,
             row_constraints,
@@ -149,9 +149,9 @@ impl Painter {
     pub fn get_border_style(&self, widget_id: u64, selected_widget_id: u64) -> tui::style::Style {
         let is_on_widget = widget_id == selected_widget_id;
         if is_on_widget {
-            self.colours.highlighted_border_style
+            self.styles.highlighted_border_style
         } else {
-            self.colours.border_style
+            self.styles.border_style
         }
     }
 
@@ -159,7 +159,7 @@ impl Painter {
         f.render_widget(
             Paragraph::new(Span::styled(
                 "Frozen, press 'f' to unfreeze",
-                self.colours.selected_text_style,
+                self.styles.selected_text_style,
             )),
             Layout::default()
                 .horizontal_margin(1)
@@ -333,15 +333,11 @@ impl Painter {
                                 _ => 0,
                             };
 
-                        self.draw_process(f, app_state, rect[0], true, widget_id);
+                        self.draw_process(f, app_state, rect[0], widget_id);
                     }
-                    Battery => self.draw_battery(
-                        f,
-                        app_state,
-                        rect[0],
-                        true,
-                        app_state.current_widget.widget_id,
-                    ),
+                    Battery => {
+                        self.draw_battery(f, app_state, rect[0], app_state.current_widget.widget_id)
+                    }
                     _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
@@ -444,18 +440,14 @@ impl Painter {
                                         ProcSort => 2,
                                         _ => 0,
                                     };
-                                self.draw_process(f, app_state, vertical_chunks[3], false, wid);
+                                self.draw_process(f, app_state, vertical_chunks[3], wid);
                             }
                             Temp => {
                                 self.draw_temp_table(f, app_state, vertical_chunks[3], widget_id)
                             }
-                            Battery => self.draw_battery(
-                                f,
-                                app_state,
-                                vertical_chunks[3],
-                                false,
-                                widget_id,
-                            ),
+                            Battery => {
+                                self.draw_battery(f, app_state, vertical_chunks[3], widget_id)
+                            }
                             _ => {}
                         }
                     }
@@ -729,8 +721,8 @@ impl Painter {
                     Net => self.draw_network(f, app_state, *draw_loc, widget.widget_id),
                     Temp => self.draw_temp_table(f, app_state, *draw_loc, widget.widget_id),
                     Disk => self.draw_disk_table(f, app_state, *draw_loc, widget.widget_id),
-                    Proc => self.draw_process(f, app_state, *draw_loc, true, widget.widget_id),
-                    Battery => self.draw_battery(f, app_state, *draw_loc, true, widget.widget_id),
+                    Proc => self.draw_process(f, app_state, *draw_loc, widget.widget_id),
+                    Battery => self.draw_battery(f, app_state, *draw_loc, widget.widget_id),
                     _ => {}
                 }
             }

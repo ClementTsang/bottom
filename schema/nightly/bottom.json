@@ -955,6 +955,15 @@
         }
       ]
     },
+    "WidgetBorderType": {
+      "type": "string",
+      "enum": [
+        "Default",
+        "Rounded",
+        "Double",
+        "Thick"
+      ]
+    },
     "WidgetStyle": {
       "description": "General styling for generic widgets.",
       "type": "object",
@@ -1008,6 +1017,17 @@
           "anyOf": [
             {
               "$ref": "#/definitions/TextStyleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "widget_border_type": {
+          "description": "Widget borders type.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/WidgetBorderType"
             },
             {
               "type": "null"

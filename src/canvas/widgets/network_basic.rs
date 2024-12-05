@@ -5,7 +5,10 @@ use tui::{
     Frame,
 };
 
-use crate::{app::App, canvas::Painter, constants::*};
+use crate::{
+    app::App,
+    canvas::{drawing_utils::widget_block, Painter},
+};
 
 impl Painter {
     pub fn draw_basic_network(
@@ -30,9 +33,8 @@ impl Painter {
 
         if app_state.current_widget.widget_id == widget_id {
             f.render_widget(
-                Block::default()
-                    .borders(SIDE_BORDERS)
-                    .border_style(self.colours.highlighted_border_style),
+                widget_block(true, true, self.styles.border_type)
+                    .border_style(self.styles.highlighted_border_style),
                 draw_loc,
             );
         }
@@ -43,13 +45,13 @@ impl Painter {
         let total_tx_label = format!("Total TX: {}", app_state.converted_data.total_tx_display);
 
         let net_text = vec![
-            Line::from(Span::styled(rx_label, self.colours.rx_style)),
-            Line::from(Span::styled(tx_label, self.colours.tx_style)),
+            Line::from(Span::styled(rx_label, self.styles.rx_style)),
+            Line::from(Span::styled(tx_label, self.styles.tx_style)),
         ];
 
         let total_net_text = vec![
-            Line::from(Span::styled(total_rx_label, self.colours.total_rx_style)),
-            Line::from(Span::styled(total_tx_label, self.colours.total_tx_style)),
+            Line::from(Span::styled(total_rx_label, self.styles.total_rx_style)),
+            Line::from(Span::styled(total_tx_label, self.styles.total_tx_style)),
         ];
 
         f.render_widget(Paragraph::new(net_text).block(Block::default()), net_loc[0]);

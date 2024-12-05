@@ -1,16 +1,21 @@
-use tui::style::{Color, Modifier};
+use tui::{
+    style::{Color, Modifier},
+    widgets::BorderType,
+};
 
 use super::{color, hex};
-use crate::options::config::style::{utils::convert_hex_to_color, ColourPalette};
+use crate::options::config::style::{utils::convert_hex_to_color, Styles};
 
-impl ColourPalette {
+impl Styles {
     pub(crate) fn gruvbox_palette() -> Self {
         Self {
             ram_style: hex!("#8ec07c"),
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#b16286"),
             swap_style: hex!("#fabd2f"),
+            #[cfg(feature = "zfs")]
             arc_style: hex!("#689d6a"),
+            #[cfg(feature = "gpu")]
             gpu_colours: vec![
                 hex!("#d79921"),
                 hex!("#458588"),
@@ -61,6 +66,7 @@ impl ColourPalette {
             low_battery: hex!("#fb4934"),
             invalid_query_style: color!(Color::Red),
             disabled_text_style: hex!("#665c54"),
+            border_type: BorderType::Plain,
         }
     }
 
@@ -70,7 +76,9 @@ impl ColourPalette {
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#d79921"),
             swap_style: hex!("#cc241d"),
+            #[cfg(feature = "zfs")]
             arc_style: hex!("#689d6a"),
+            #[cfg(feature = "gpu")]
             gpu_colours: vec![
                 hex!("#9d0006"),
                 hex!("#98971a"),
@@ -121,6 +129,7 @@ impl ColourPalette {
             low_battery: hex!("#cc241d"),
             invalid_query_style: color!(Color::Red),
             disabled_text_style: hex!("#d5c4a1"),
+            border_type: BorderType::Plain,
         }
     }
 }

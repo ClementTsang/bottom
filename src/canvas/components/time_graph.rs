@@ -6,10 +6,11 @@ use tui::{
     style::Style,
     symbols::Marker,
     text::{Line, Span},
-    widgets::{Block, Borders, GraphType},
+    widgets::{BorderType, GraphType},
     Frame,
 };
-use unicode_segmentation::UnicodeSegmentation;
+
+use crate::canvas::drawing_utils::widget_block;
 
 use super::time_chart::{
     Axis, Dataset, LegendPosition, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS,
@@ -42,8 +43,14 @@ pub struct TimeGraph<'a> {
     /// The border style.
     pub border_style: Style,
 
+    /// The border type.
+    pub border_type: BorderType,
+
     /// The graph title.
     pub title: Cow<'a, str>,
+
+    /// Whether this graph is selected.
+    pub is_selected: bool,
 
     /// Whether this graph is expanded.
     pub is_expanded: bool,
@@ -100,29 +107,6 @@ impl TimeGraph<'_> {
             )
     }
 
-    /// Generates a title for the [`TimeGraph`] widget, given the available
-    /// space.
-    fn generate_title(&self, draw_loc: Rect) -> Line<'_> {
-        if self.is_expanded {
-            let title_base = concat_string!(self.title, "── Esc to go back ");
-            Line::from(vec![
-                Span::styled(self.title.as_ref(), self.title_style),
-                Span::styled(
-                    concat_string!(
-                        "─",
-                        "─".repeat(usize::from(draw_loc.width).saturating_sub(
-                            UnicodeSegmentation::graphemes(title_base.as_str(), true).count() + 2
-                        )),
-                        "─ Esc to go back "
-                    ),
-                    self.border_style,
-                ),
-            ])
-        } else {
-            Line::from(Span::styled(self.title.as_ref(), self.title_style))
-        }
-    }
-
     /// Draws a time graph at [`Rect`] location provided by `draw_loc`. A time
     /// graph is used to display data points throughout time in the x-axis.
     ///
@@ -139,10 +123,18 @@ impl TimeGraph<'_> {
         // This is some ugly manual loop unswitching. Maybe unnecessary.
         // TODO: Optimize this step. Cut out unneeded points.
         let data = graph_data.iter().map(create_dataset).collect();
-        let block = Block::default()
-            .title(self.generate_title(draw_loc))
-            .borders(Borders::ALL)
-            .border_style(self.border_style);
+
+        let block = {
+            let mut b = widget_block(false, self.is_selected, self.border_type)
+                .border_style(self.border_style)
+                .title_top(Line::styled(self.title.as_ref(), self.title_style));
+
+            if self.is_expanded {
+                b = b.title_top(Line::styled(" Esc to go back ", self.title_style).right_aligned())
+            }
+
+            b
+        };
 
         f.render_widget(
             TimeChart::new(data)
@@ -186,10 +178,10 @@ mod test {
     use std::borrow::Cow;
 
     use tui::{
-        layout::Rect,
         style::{Color, Style},
         symbols::Marker,
-        text::{Line, Span},
+        text::Span,
+        widgets::BorderType,
     };
 
     use super::TimeGraph;
@@ -210,6 +202,8 @@ mod test {
             y_labels: &Y_LABELS,
             graph_style: Style::default().fg(Color::Red),
             border_style: Style::default().fg(Color::Blue),
+            border_type: BorderType::Plain,
+            is_selected: false,
             is_expanded: false,
             title_style: Style::default().fg(Color::Cyan),
             legend_position: None,
@@ -251,27 +245,5 @@ mod test {
         assert_eq!(y_axis.bounds, actual.bounds);
         assert_eq!(y_axis.labels, actual.labels);
         assert_eq!(y_axis.style, actual.style);
-    }
-
-    #[test]
-    fn time_graph_gen_title() {
-        let mut time_graph = create_time_graph();
-        let draw_loc = Rect::new(0, 0, 32, 100);
-
-        let title = time_graph.generate_title(draw_loc);
-        assert_eq!(
-            title,
-            Line::from(Span::styled(" Network ", Style::default().fg(Color::Cyan)))
-        );
-
-        time_graph.is_expanded = true;
-        let title = time_graph.generate_title(draw_loc);
-        assert_eq!(
-            title,
-            Line::from(vec![
-                Span::styled(" Network ", Style::default().fg(Color::Cyan)),
-                Span::styled("───── Esc to go back ", Style::default().fg(Color::Blue))
-            ])
-        );
     }
 }

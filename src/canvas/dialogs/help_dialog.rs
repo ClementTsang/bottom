@@ -3,18 +3,16 @@ use std::cmp::{max, min};
 use tui::{
     layout::{Alignment, Rect},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Paragraph, Wrap},
     Frame,
 };
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::App,
-    canvas::Painter,
+    canvas::{drawing_utils::dialog_block, Painter},
     constants::{self, HELP_TEXT},
 };
-
-const HELP_BASE: &str = " Help ── Esc to close ";
 
 // TODO: [REFACTOR] Make generic dialog boxes to build off of instead?
 impl Painter {
@@ -28,12 +26,12 @@ impl Painter {
             if itx > 0 {
                 if let Some(header) = section.next() {
                     styled_help_spans.push(Span::default());
-                    styled_help_spans.push(Span::styled(*header, self.colours.table_header_style));
+                    styled_help_spans.push(Span::styled(*header, self.styles.table_header_style));
                 }
             }
 
             section.for_each(|&text| {
-                styled_help_spans.push(Span::styled(text, self.colours.text_style))
+                styled_help_spans.push(Span::styled(text, self.styles.text_style))
             });
         });
 
@@ -43,24 +41,12 @@ impl Painter {
     pub fn draw_help_dialog(&self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect) {
         let styled_help_text = self.help_text_lines();
 
-        let help_title = Line::from(vec![
-            Span::styled(" Help ", self.colours.widget_title_style),
-            Span::styled(
-                format!(
-                    "─{}─ Esc to close ",
-                    "─".repeat(
-                        usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2)
-                    )
-                ),
-                self.colours.border_style,
-            ),
-        ]);
-
-        let block = Block::default()
-            .title(help_title)
-            .style(self.colours.border_style)
-            .borders(Borders::ALL)
-            .border_style(self.colours.border_style);
+        let block = dialog_block(self.styles.border_type)
+            .border_style(self.styles.border_style)
+            .title_top(Line::styled(" Help ", self.styles.widget_title_style))
+            .title_top(
+                Line::styled(" Esc to close ", self.styles.widget_title_style).right_aligned(),
+            );
 
         if app_state.should_get_widget_bounds() {
             // We must also recalculate how many lines are wrapping to properly get
@@ -116,7 +102,7 @@ impl Painter {
         f.render_widget(
             Paragraph::new(styled_help_text.clone())
                 .block(block)
-                .style(self.colours.text_style)
+                .style(self.styles.text_style)
                 .alignment(Alignment::Left)
                 .wrap(Wrap { trim: true })
                 .scroll((

@@ -136,13 +136,13 @@ impl Painter {
                         CpuWidgetData::All => None,
                         CpuWidgetData::Entry { data, .. } => {
                             let style = if show_avg_cpu && itx == AVG_POSITION {
-                                self.colours.avg_cpu_colour
+                                self.styles.avg_cpu_colour
                             } else if itx == ALL_POSITION {
-                                self.colours.all_cpu_colour
+                                self.styles.all_cpu_colour
                             } else {
                                 let offset_position = itx - 1; // Because of the all position
-                                self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
-                                    % self.colours.cpu_colour_styles.len()]
+                                self.styles.cpu_colour_styles[(offset_position - show_avg_offset)
+                                    % self.styles.cpu_colour_styles.len()]
                             };
 
                             Some(GraphData {
@@ -158,11 +158,11 @@ impl Painter {
             cpu_data.get(current_scroll_position)
         {
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
-                self.colours.avg_cpu_colour
+                self.styles.avg_cpu_colour
             } else {
                 let offset_position = current_scroll_position - 1; // Because of the all position
-                self.colours.cpu_colour_styles
-                    [(offset_position - show_avg_offset) % self.colours.cpu_colour_styles.len()]
+                self.styles.cpu_colour_styles
+                    [(offset_position - show_avg_offset) % self.styles.cpu_colour_styles.len()]
             };
 
             vec![GraphData {
@@ -228,11 +228,13 @@ impl Painter {
                 hide_x_labels,
                 y_bounds: Y_BOUNDS,
                 y_labels: &Y_LABELS,
-                graph_style: self.colours.graph_style,
+                graph_style: self.styles.graph_style,
                 border_style,
+                border_type: self.styles.border_type,
                 title,
+                is_selected: app_state.current_widget.widget_id == widget_id,
                 is_expanded: app_state.is_expanded,
-                title_style: self.colours.widget_title_style,
+                title_style: self.styles.widget_title_style,
                 legend_position: None,
                 legend_constraints: None,
                 marker,
