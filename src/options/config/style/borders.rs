@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use tui::widgets::BorderType;
 
 #[derive(Default, Clone, Copy, Debug, Serialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, derive(PartialEq, Eq))]
 pub(crate) enum WidgetBorderType {
     #[default]
