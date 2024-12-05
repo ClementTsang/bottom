@@ -81,26 +81,24 @@ where
         let mut block = widget_block(self.props.is_basic, is_selected, self.styling.border_type)
             .border_style(border_style);
 
-        let (left_title, right_title) = self.generate_title(draw_info, data_len);
-
-        if let Some(left_title) = left_title {
+        if let Some((left_title, right_title)) = self.generate_title(draw_info, data_len) {
             if !self.props.is_basic {
                 block = block.title_top(left_title);
             }
-        }
 
-        if let Some(right_title) = right_title {
-            block = block.title_top(right_title);
+            if let Some(right_title) = right_title {
+                block = block.title_top(right_title);
+            }
         }
 
         block
     }
 
     /// Generates a title, given the available space.
-    fn generate_title<'a>(
-        &self, draw_info: &'a DrawInfo, total_items: usize,
-    ) -> (Option<Line<'a>>, Option<Line<'static>>) {
-        let left_title = self.props.title.as_ref().map(|title| {
+    fn generate_title(
+        &self, draw_info: &'_ DrawInfo, total_items: usize,
+    ) -> Option<(Line<'static>, Option<Line<'static>>)> {
+        self.props.title.as_ref().map(|title| {
             let current_index = self.state.current_index.saturating_add(1);
             let draw_loc = draw_info.loc;
             let title_style = self.styling.title_style;
@@ -119,16 +117,16 @@ where
                 title.to_string()
             };
 
-            Line::from(Span::styled(title, title_style)).left_aligned()
-        });
+            let left_title = Line::from(Span::styled(title, title_style)).left_aligned();
 
-        let right_title = if draw_info.is_expanded() {
-            Some(Line::from(" Esc to go back ").right_aligned())
-        } else {
-            None
-        };
+            let right_title = if draw_info.is_expanded() {
+                Some(Line::from(" Esc to go back ").right_aligned())
+            } else {
+                None
+            };
 
-        (left_title, right_title)
+            (left_title, right_title)
+        })
     }
 
     pub fn draw(
