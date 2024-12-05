@@ -1,10 +1,13 @@
-use tui::style::{Color, Modifier, Style};
+use tui::{
+    style::{Color, Modifier, Style},
+    widgets::BorderType,
+};
 
 use super::color;
-use crate::options::config::style::ColourPalette;
+use crate::options::config::style::Styles;
 
-impl ColourPalette {
-    pub(crate) fn default_palette() -> Self {
+impl Styles {
+    pub(crate) fn default_style() -> Self {
         const FIRST_COLOUR: Color = Color::LightMagenta;
         const SECOND_COLOUR: Color = Color::LightYellow;
         const THIRD_COLOUR: Color = Color::LightCyan;
@@ -61,6 +64,7 @@ impl ColourPalette {
             low_battery: color!(Color::Red),
             invalid_query_style: color!(Color::Red),
             disabled_text_style: color!(Color::DarkGray),
+            border_type: Some(BorderType::Plain),
         }
     }
 
@@ -101,7 +105,7 @@ impl ColourPalette {
             graph_style: color!(Color::Black),
             graph_legend_style: color!(Color::Black),
             disabled_text_style: color!(Color::Gray),
-            ..Self::default_palette()
+            ..Self::default_style()
         }
     }
 }

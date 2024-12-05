@@ -16,7 +16,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use config::style::ColourPalette;
+use config::style::Styles;
 pub use config::Config;
 pub(crate) use error::{OptionError, OptionResult};
 use hashbrown::{HashMap, HashSet};
@@ -198,7 +198,7 @@ pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result
 /// Initialize the app.
 pub(crate) fn init_app(
     args: BottomArgs, config: Config,
-) -> Result<(App, BottomLayout, ColourPalette)> {
+) -> Result<(App, BottomLayout, Styles)> {
     use BottomWidgetType::*;
 
     // Since everything takes a reference, but we want to take ownership here to
@@ -206,7 +206,7 @@ pub(crate) fn init_app(
     let args = &args;
     let config = &config;
 
-    let styling = ColourPalette::new(args, config)?;
+    let styling = Styles::new(args, config)?;
 
     let (widget_layout, default_widget_id, default_widget_type_option) =
         get_widget_layout(args, config)

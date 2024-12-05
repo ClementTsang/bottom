@@ -9,7 +9,7 @@ use crate::{
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
     data_collection::temperature::TemperatureType,
-    options::config::style::ColourPalette,
+    options::config::style::Styles,
     utils::general::sort_partial_fn,
 };
 
@@ -100,7 +100,7 @@ pub struct TempWidgetState {
 }
 
 impl TempWidgetState {
-    pub(crate) fn new(config: &AppConfigFields, palette: &ColourPalette) -> Self {
+    pub(crate) fn new(config: &AppConfigFields, palette: &Styles) -> Self {
         let columns = [
             SortColumn::soft(TempWidgetColumn::Sensor, Some(0.8)),
             SortColumn::soft(TempWidgetColumn::Temp, None).default_descending(),

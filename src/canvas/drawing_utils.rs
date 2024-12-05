@@ -1,6 +1,11 @@
 use std::{cmp::min, time::Instant};
 
-use tui::layout::Rect;
+use tui::{
+    layout::Rect,
+    widgets::{Block, BorderType, Borders},
+};
+
+use super::SIDE_BORDERS;
 
 /// Calculate how many bars are to be drawn within basic mode's components.
 pub fn calculate_basic_use_bars(use_percentage: f64, num_bars_available: usize) -> usize {
@@ -28,6 +33,42 @@ pub fn should_hide_x_label(
     } else {
         draw_loc.height < TIME_LABEL_HEIGHT_LIMIT
     }
+}
+
+/// Return a widget block.
+pub fn widget_block(
+    is_basic: bool, is_selected: bool, border_type: Option<BorderType>,
+) -> Block<'static> {
+    let mut block = Block::default().borders(Borders::empty());
+
+    if let Some(border_type) = border_type {
+        block = Block::default().border_type(border_type);
+
+        if is_basic {
+            if is_selected {
+                block = block.borders(SIDE_BORDERS);
+            } else {
+                block = block.borders(Borders::empty());
+            }
+        } else {
+            block = block.borders(Borders::all());
+        }
+    }
+
+    block
+}
+
+/// Return a dialog block.
+pub fn dialog_block(border_type: Option<BorderType>) -> Block<'static> {
+    let mut block = Block::default().borders(Borders::empty());
+
+    if let Some(border_type) = border_type {
+        block = Block::default()
+            .border_type(border_type)
+            .borders(Borders::all());
+    }
+
+    block
 }
 
 #[cfg(test)]

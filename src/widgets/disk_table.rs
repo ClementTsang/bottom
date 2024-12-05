@@ -8,7 +8,7 @@ use crate::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    options::config::style::ColourPalette,
+    options::config::style::Styles,
     utils::{data_prefixes::get_decimal_bytes, general::sort_partial_fn},
 };
 
@@ -276,7 +276,7 @@ const fn default_disk_columns() -> [SortColumn<DiskColumn>; 8] {
 
 impl DiskTableWidget {
     pub fn new(
-        config: &AppConfigFields, palette: &ColourPalette, columns: Option<&[DiskColumn]>,
+        config: &AppConfigFields, palette: &Styles, columns: Option<&[DiskColumn]>,
     ) -> Self {
         let props = SortDataTableProps {
             inner: DataTableProps {

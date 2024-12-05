@@ -7,10 +7,9 @@ use concat_string::concat_string;
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Row, Table},
+    widgets::{Block, Row, Table},
     Frame,
 };
-use unicode_segmentation::UnicodeSegmentation;
 
 use super::{
     CalculateColumnWidths, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataToCell,
@@ -18,8 +17,8 @@ use super::{
 };
 use crate::{
     app::layout_manager::BottomWidget,
-    canvas::Painter,
-    constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
+    canvas::{drawing_utils::widget_block, Painter},
+    constants::TABLE_GAP_HEIGHT_LIMIT,
     utils::strings::truncate_to_text,
 };
 
@@ -68,46 +67,43 @@ where
     C: DataTableColumn<H>,
 {
     fn block<'a>(&self, draw_info: &'a DrawInfo, data_len: usize) -> Block<'a> {
-        let border_style = match draw_info.selection_state {
-            SelectionState::NotSelected => self.styling.border_style,
-            SelectionState::Selected | SelectionState::Expanded => {
-                self.styling.highlighted_border_style
-            }
+        let is_selected = match draw_info.selection_state {
+            SelectionState::NotSelected => false,
+            SelectionState::Selected | SelectionState::Expanded => true,
         };
 
-        if !self.props.is_basic {
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .border_style(border_style);
-
-            if let Some(title) = self.generate_title(draw_info, data_len) {
-                block.title(title)
-            } else {
-                block
-            }
-        } else if draw_info.is_on_widget() {
-            // Implies it is basic mode but selected.
-            Block::default()
-                .borders(SIDE_BORDERS)
-                .border_style(border_style)
+        let border_style = if is_selected {
+            self.styling.highlighted_border_style
         } else {
-            Block::default().borders(Borders::NONE)
+            self.styling.border_style
+        };
+
+        let mut block = widget_block(self.props.is_basic, is_selected, self.styling.border_type)
+            .border_style(border_style);
+
+        let (left_title, right_title) = self.generate_title(draw_info, data_len);
+
+        if let Some(left_title) = left_title {
+            if !self.props.is_basic {
+                block = block.title_top(left_title);
+            }
         }
+
+        if let Some(right_title) = right_title {
+            block = block.title_top(right_title);
+        }
+
+        block
     }
 
     /// Generates a title, given the available space.
-    pub fn generate_title<'a>(
+    fn generate_title<'a>(
         &self, draw_info: &'a DrawInfo, total_items: usize,
-    ) -> Option<Line<'a>> {
-        self.props.title.as_ref().map(|title| {
+    ) -> (Option<Line<'a>>, Option<Line<'static>>) {
+        let left_title = self.props.title.as_ref().map(|title| {
             let current_index = self.state.current_index.saturating_add(1);
             let draw_loc = draw_info.loc;
             let title_style = self.styling.title_style;
-            let border_style = if draw_info.is_on_widget() {
-                self.styling.highlighted_border_style
-            } else {
-                self.styling.border_style
-            };
 
             let title = if self.props.show_table_scroll_position {
                 let pos = current_index.to_string();
@@ -123,20 +119,16 @@ where
                 title.to_string()
             };
 
-            if draw_info.is_expanded() {
-                let title_base = concat_string!(title, "── Esc to go back ");
-                let lines = "─".repeat(usize::from(draw_loc.width).saturating_sub(
-                    UnicodeSegmentation::graphemes(title_base.as_str(), true).count() + 2,
-                ));
-                let esc = concat_string!("─", lines, "─ Esc to go back ");
-                Line::from(vec![
-                    Span::styled(title, title_style),
-                    Span::styled(esc, border_style),
-                ])
-            } else {
-                Line::from(Span::styled(title, title_style))
-            }
-        })
+            Line::from(Span::styled(title, title_style)).left_aligned()
+        });
+
+        let right_title = if draw_info.is_expanded() {
+            Some(Line::from(" Esc to go back ").right_aligned())
+        } else {
+            None
+        };
+
+        (left_title, right_title)
     }
 
     pub fn draw(
@@ -202,8 +194,9 @@ where
 
             if !self.data.is_empty() || !self.first_draw {
                 if self.first_draw {
-                    self.first_draw = false; // TODO: Doing it this way is fine, but it could be done better (e.g. showing
-                                             // custom no results/entries message)
+                    // TODO: Doing it this way is fine, but it could be done better (e.g. showing
+                    // custom no results/entries message)
+                    self.first_draw = false;
                     if let Some(first_index) = self.first_index {
                         self.set_position(first_index);
                     }

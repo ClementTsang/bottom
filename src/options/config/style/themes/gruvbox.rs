@@ -1,9 +1,12 @@
-use tui::style::{Color, Modifier};
+use tui::{
+    style::{Color, Modifier},
+    widgets::BorderType,
+};
 
 use super::{color, hex};
-use crate::options::config::style::{utils::convert_hex_to_color, ColourPalette};
+use crate::options::config::style::{utils::convert_hex_to_color, Styles};
 
-impl ColourPalette {
+impl Styles {
     pub(crate) fn gruvbox_palette() -> Self {
         Self {
             ram_style: hex!("#8ec07c"),
@@ -61,6 +64,7 @@ impl ColourPalette {
             low_battery: hex!("#fb4934"),
             invalid_query_style: color!(Color::Red),
             disabled_text_style: hex!("#665c54"),
+            border_type: Some(BorderType::Plain),
         }
     }
 
@@ -121,6 +125,7 @@ impl ColourPalette {
             low_battery: hex!("#cc241d"),
             invalid_query_style: color!(Color::Red),
             disabled_text_style: hex!("#d5c4a1"),
+            border_type: Some(BorderType::Plain),
         }
     }
 }
