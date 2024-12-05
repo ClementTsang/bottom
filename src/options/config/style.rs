@@ -100,7 +100,9 @@ pub struct Styles {
     #[cfg(not(target_os = "windows"))]
     pub(crate) cache_style: Style,
     pub(crate) swap_style: Style,
+    #[cfg(feature = "zfs")]
     pub(crate) arc_style: Style,
+    #[cfg(feature = "gpu")]
     pub(crate) gpu_colours: Vec<Style>,
     pub(crate) rx_style: Style,
     pub(crate) tx_style: Style,

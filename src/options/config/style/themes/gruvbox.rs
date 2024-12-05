@@ -13,7 +13,9 @@ impl Styles {
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#b16286"),
             swap_style: hex!("#fabd2f"),
+            #[cfg(feature = "zfs")]
             arc_style: hex!("#689d6a"),
+            #[cfg(feature = "gpu")]
             gpu_colours: vec![
                 hex!("#d79921"),
                 hex!("#458588"),
@@ -74,7 +76,9 @@ impl Styles {
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#d79921"),
             swap_style: hex!("#cc241d"),
+            #[cfg(feature = "zfs")]
             arc_style: hex!("#689d6a"),
+            #[cfg(feature = "gpu")]
             gpu_colours: vec![
                 hex!("#9d0006"),
                 hex!("#98971a"),

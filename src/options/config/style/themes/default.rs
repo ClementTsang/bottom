@@ -25,7 +25,9 @@ impl Styles {
             #[cfg(not(target_os = "windows"))]
             cache_style: color!(FIFTH_COLOUR),
             swap_style: color!(SECOND_COLOUR),
+            #[cfg(feature = "zfs")]
             arc_style: color!(THIRD_COLOUR),
+            #[cfg(feature = "gpu")]
             gpu_colours: vec![
                 color!(FOURTH_COLOUR),
                 color!(Color::LightBlue),
@@ -74,7 +76,9 @@ impl Styles {
             #[cfg(not(target_os = "windows"))]
             cache_style: color!(Color::LightRed),
             swap_style: color!(Color::Red),
+            #[cfg(feature = "zfs")]
             arc_style: color!(Color::LightBlue),
+            #[cfg(feature = "gpu")]
             gpu_colours: vec![
                 color!(Color::LightGreen),
                 color!(Color::LightCyan),
