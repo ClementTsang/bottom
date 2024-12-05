@@ -52,7 +52,7 @@ impl Styles {
             low_battery: hex!("#bf616a"),
             invalid_query_style: color!(Color::Red),
             disabled_text_style: hex!("#4c566a"),
-            border_type: Some(BorderType::Plain),
+            border_type: BorderType::Plain,
         }
     }
 
@@ -101,7 +101,7 @@ impl Styles {
             low_battery: hex!("#bf616a"),
             invalid_query_style: color!(Color::Red),
             disabled_text_style: hex!("#d8dee9"),
-            border_type: Some(BorderType::Plain),
+            border_type: BorderType::Plain,
         }
     }
 }

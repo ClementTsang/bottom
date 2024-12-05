@@ -64,7 +64,7 @@ impl Styles {
             low_battery: color!(Color::Red),
             invalid_query_style: color!(Color::Red),
             disabled_text_style: color!(Color::DarkGray),
-            border_type: Some(BorderType::Plain),
+            border_type: BorderType::Plain,
         }
     }
 

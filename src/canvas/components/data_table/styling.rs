@@ -6,7 +6,7 @@ use crate::options::config::style::Styles;
 pub struct DataTableStyling {
     pub header_style: Style,
     pub border_style: Style,
-    pub border_type: Option<BorderType>,
+    pub border_type: BorderType,
     pub highlighted_border_style: Style,
     pub text_style: Style,
     pub highlighted_text_style: Style,

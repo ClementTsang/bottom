@@ -44,7 +44,7 @@ pub struct TimeGraph<'a> {
     pub border_style: Style,
 
     /// The border type.
-    pub border_type: Option<BorderType>,
+    pub border_type: BorderType,
 
     /// The graph title.
     pub title: Cow<'a, str>,
@@ -202,7 +202,7 @@ mod test {
             y_labels: &Y_LABELS,
             graph_style: Style::default().fg(Color::Red),
             border_style: Style::default().fg(Color::Blue),
-            border_type: Some(BorderType::Plain),
+            border_type: BorderType::Plain,
             is_selected: false,
             is_expanded: false,
             title_style: Style::default().fg(Color::Cyan),

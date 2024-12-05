@@ -122,7 +122,7 @@ pub struct Styles {
     pub(crate) low_battery: Style,
     pub(crate) invalid_query_style: Style,
     pub(crate) disabled_text_style: Style,
-    pub(crate) border_type: Option<BorderType>,
+    pub(crate) border_type: BorderType,
 }
 
 impl Default for Styles {

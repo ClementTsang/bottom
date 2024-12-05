@@ -36,39 +36,27 @@ pub fn should_hide_x_label(
 }
 
 /// Return a widget block.
-pub fn widget_block(
-    is_basic: bool, is_selected: bool, border_type: Option<BorderType>,
-) -> Block<'static> {
-    let mut block = Block::default().borders(Borders::empty());
+pub fn widget_block(is_basic: bool, is_selected: bool, border_type: BorderType) -> Block<'static> {
+    let mut block = Block::default().border_type(border_type);
 
-    if let Some(border_type) = border_type {
-        block = Block::default().border_type(border_type);
-
-        if is_basic {
-            if is_selected {
-                block = block.borders(SIDE_BORDERS);
-            } else {
-                block = block.borders(Borders::empty());
-            }
+    if is_basic {
+        if is_selected {
+            block = block.borders(SIDE_BORDERS);
         } else {
-            block = block.borders(Borders::all());
+            block = block.borders(Borders::empty());
         }
+    } else {
+        block = block.borders(Borders::all());
     }
 
     block
 }
 
 /// Return a dialog block.
-pub fn dialog_block(border_type: Option<BorderType>) -> Block<'static> {
-    let mut block = Block::default().borders(Borders::empty());
-
-    if let Some(border_type) = border_type {
-        block = Block::default()
-            .border_type(border_type)
-            .borders(Borders::all());
-    }
-
-    block
+pub fn dialog_block(border_type: BorderType) -> Block<'static> {
+    Block::default()
+        .border_type(border_type)
+        .borders(Borders::all())
 }
 
 #[cfg(test)]

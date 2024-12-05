@@ -9,7 +9,6 @@ pub(crate) enum WidgetBorderType {
     Rounded,
     Double,
     Thick,
-    None,
 }
 
 impl<'de> Deserialize<'de> for WidgetBorderType {
@@ -23,7 +22,6 @@ impl<'de> Deserialize<'de> for WidgetBorderType {
             "rounded" => Ok(WidgetBorderType::Rounded),
             "double" => Ok(WidgetBorderType::Double),
             "thick" => Ok(WidgetBorderType::Thick),
-            "none" => Ok(WidgetBorderType::None),
             _ => Err(serde::de::Error::custom(
                 "doesn't match any widget border type",
             )),
@@ -31,14 +29,13 @@ impl<'de> Deserialize<'de> for WidgetBorderType {
     }
 }
 
-impl From<WidgetBorderType> for Option<BorderType> {
+impl From<WidgetBorderType> for BorderType {
     fn from(value: WidgetBorderType) -> Self {
         match value {
-            WidgetBorderType::Default => Some(BorderType::Plain),
-            WidgetBorderType::Rounded => Some(BorderType::Rounded),
-            WidgetBorderType::Double => Some(BorderType::Double),
-            WidgetBorderType::Thick => Some(BorderType::Thick),
-            WidgetBorderType::None => None,
+            WidgetBorderType::Default => BorderType::Plain,
+            WidgetBorderType::Rounded => BorderType::Rounded,
+            WidgetBorderType::Double => BorderType::Double,
+            WidgetBorderType::Thick => BorderType::Thick,
         }
     }
 }
