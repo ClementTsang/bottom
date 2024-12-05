@@ -196,9 +196,7 @@ pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result
 }
 
 /// Initialize the app.
-pub(crate) fn init_app(
-    args: BottomArgs, config: Config,
-) -> Result<(App, BottomLayout, Styles)> {
+pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomLayout, Styles)> {
     use BottomWidgetType::*;
 
     // Since everything takes a reference, but we want to take ownership here to

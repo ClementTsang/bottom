@@ -49,10 +49,10 @@ impl Painter {
                 .title_top(Line::styled(" Battery ", self.styles.widget_title_style));
 
                 if app_state.is_expanded {
-                    block = block.title_top(Line::styled(
-                        " Esc to go back ",
-                        self.styles.widget_title_style,
-                    ).right_aligned())
+                    block = block.title_top(
+                        Line::styled(" Esc to go back ", self.styles.widget_title_style)
+                            .right_aligned(),
+                    )
                 }
 
                 block

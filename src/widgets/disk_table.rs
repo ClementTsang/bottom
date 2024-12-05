@@ -275,9 +275,7 @@ const fn default_disk_columns() -> [SortColumn<DiskColumn>; 8] {
 }
 
 impl DiskTableWidget {
-    pub fn new(
-        config: &AppConfigFields, palette: &Styles, columns: Option<&[DiskColumn]>,
-    ) -> Self {
+    pub fn new(config: &AppConfigFields, palette: &Styles, columns: Option<&[DiskColumn]>) -> Self {
         let props = SortDataTableProps {
             inner: DataTableProps {
                 title: Some(" Disks ".into()),
