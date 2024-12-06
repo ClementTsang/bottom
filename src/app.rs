@@ -68,6 +68,7 @@ pub struct AppConfigFields {
     pub network_use_binary_prefix: bool,
     pub retention_ms: u64,
     pub dedicated_average_row: bool,
+    pub tree_collapse: bool,
 }
 
 /// For filtering out information
@@ -526,6 +527,7 @@ impl App {
                 ProcWidgetMode::Normal => {
                     proc_widget_state.mode = ProcWidgetMode::Tree {
                         collapsed_pids: Default::default(),
+                        collapse: self.app_config_fields.tree_collapse,
                     };
                     proc_widget_state.force_rerender_and_update();
                 }
