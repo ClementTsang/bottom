@@ -399,23 +399,9 @@ impl DataCollector {
                 }
             }
 
-            self.data.gpu = if !local_gpu.is_empty() {
-                Some(local_gpu)
-            } else {
-                None
-            };
-
-            self.gpu_pids = if !local_gpu_pids.is_empty() {
-                Some(local_gpu_pids)
-            } else {
-                None
-            };
-
-            self.gpus_total_mem = if local_gpu_total_mem > 0 {
-                Some(local_gpu_total_mem)
-            } else {
-                None
-            };
+            self.data.gpu = (!local_gpu.is_empty()).then_some(local_gpu);
+            self.gpu_pids = (!local_gpu_pids.is_empty()).then_some(local_gpu_pids);
+            self.gpus_total_mem = (local_gpu_total_mem > 0).then_some(local_gpu_total_mem);
         }
     }
 

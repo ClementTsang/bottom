@@ -52,7 +52,7 @@ static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, HashMap<u32, AMDGPUProc>>>> =
 pub fn get_amd_devs() -> Option<Vec<PathBuf>> {
     let mut devices = Vec::new();
 
-    // read all PCI devices controlled b y the AMDGPU module
+    // read all PCI devices controlled by the AMDGPU module
     let Ok(paths) = fs::read_dir("/sys/module/amdgpu/drivers/pci:amdgpu") else {
         return None;
     };
@@ -387,7 +387,7 @@ pub fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AMDGPUProc>> {
                     "drm-engine-jpeg" => usage.vcn_usage += fdinfo_value_num,
                     "drm-engine-vpe" => usage.vpe_usage += fdinfo_value_num,
                     "drm-engine-compute" => usage.compute_usage += fdinfo_value_num,
-                    "drm-memory-vram" => usage.vram_usage += fdinfo_value_num << 10,
+                    "drm-memory-vram" => usage.vram_usage += fdinfo_value_num << 10, // KiB -> B
                     _ => {}
                 };
             }
@@ -418,8 +418,8 @@ pub fn get_amd_vecs(
         let device_name =
             get_amd_name(&device_path).unwrap_or(amdgpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
 
-        if widgets_to_harvest.use_mem {
-            if let Some(mem) = get_amd_vram(&device_path) {
+        if let Some(mem) = get_amd_vram(&device_path) {
+            if widgets_to_harvest.use_mem {
                 mem_vec.push((
                     device_name.clone(),
                     MemHarvest {
@@ -433,6 +433,8 @@ pub fn get_amd_vecs(
                     },
                 ));
             }
+
+            total_mem += mem.total
         }
 
         if widgets_to_harvest.use_temp && Filter::optional_should_keep(filter, &device_name) {
@@ -456,8 +458,6 @@ pub fn get_amd_vecs(
 
                 let mut procs_map = HashMap::new();
                 for (proc_pid, proc_usage) in procs {
-                    total_mem += proc_usage.vram_usage;
-
                     if let Some(prev_usage) = prev_fdinfo.get_mut(&proc_pid) {
                         // calculate deltas
                         let gfx_usage =
@@ -486,7 +486,7 @@ pub fn get_amd_vecs(
 
                         let gpu_util: u32 = gpu_util_wide.try_into().unwrap_or(0);
 
-                        if gpu_util > 0 {
+                        if gpu_util > 0 || proc_usage.vram_usage > 0 {
                             procs_map.insert(proc_pid, (proc_usage.vram_usage, gpu_util));
                         }
 
@@ -504,20 +504,8 @@ pub fn get_amd_vecs(
     }
 
     Some(AMDGPUData {
-        memory: if !mem_vec.is_empty() {
-            Some(mem_vec)
-        } else {
-            None
-        },
-        temperature: if !temp_vec.is_empty() {
-            Some(temp_vec)
-        } else {
-            None
-        },
-        procs: if !proc_vec.is_empty() {
-            Some((total_mem, proc_vec))
-        } else {
-            None
-        },
+        memory: (!mem_vec.is_empty()).then_some(mem_vec),
+        temperature: (!temp_vec.is_empty()).then_some(temp_vec),
+        procs: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),
     })
 }
