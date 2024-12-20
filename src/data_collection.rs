@@ -3,6 +3,9 @@
 #[cfg(feature = "nvidia")]
 pub mod nvidia;
 
+#[cfg(all(target_os = "linux", feature = "gpu"))]
+pub mod amd;
+
 #[cfg(feature = "battery")]
 pub mod batteries;
 
@@ -347,6 +350,10 @@ impl DataCollector {
     #[inline]
     fn update_gpus(&mut self) {
         if self.widgets_to_harvest.use_gpu {
+            let mut local_gpu: Vec<(String, memory::MemHarvest)> = Vec::new();
+            let mut local_gpu_pids: Vec<HashMap<u32, (u64, u32)>> = Vec::new();
+            let mut local_gpu_total_mem: u64 = 0;
+
             #[cfg(feature = "nvidia")]
             if let Some(data) = nvidia::get_nvidia_vecs(
                 &self.temperature_type,
@@ -360,14 +367,41 @@ impl DataCollector {
                         self.data.temperature_sensors = Some(temp);
                     }
                 }
-                if let Some(mem) = data.memory {
-                    self.data.gpu = Some(mem);
+                if let Some(mut mem) = data.memory {
+                    local_gpu.append(&mut mem);
                 }
-                if let Some(proc) = data.procs {
-                    self.gpu_pids = Some(proc.1);
-                    self.gpus_total_mem = Some(proc.0);
+                if let Some(mut proc) = data.procs {
+                    local_gpu_pids.append(&mut proc.1);
+                    local_gpu_total_mem += proc.0;
                 }
             }
+
+            #[cfg(target_os = "linux")]
+            if let Some(data) = amd::get_amd_vecs(
+                &self.temperature_type,
+                &self.filters.temp_filter,
+                &self.widgets_to_harvest,
+                self.last_collection_time,
+            ) {
+                if let Some(mut temp) = data.temperature {
+                    if let Some(sensors) = &mut self.data.temperature_sensors {
+                        sensors.append(&mut temp);
+                    } else {
+                        self.data.temperature_sensors = Some(temp);
+                    }
+                }
+                if let Some(mut mem) = data.memory {
+                    local_gpu.append(&mut mem);
+                }
+                if let Some(mut proc) = data.procs {
+                    local_gpu_pids.append(&mut proc.1);
+                    local_gpu_total_mem += proc.0;
+                }
+            }
+
+            self.data.gpu = (!local_gpu.is_empty()).then_some(local_gpu);
+            self.gpu_pids = (!local_gpu_pids.is_empty()).then_some(local_gpu_pids);
+            self.gpus_total_mem = (local_gpu_total_mem > 0).then_some(local_gpu_total_mem);
         }
     }
 
