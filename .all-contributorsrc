@@ -526,6 +526,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "yretenai",
+      "name": "Ada Ahmed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/614231?v=4",
+      "profile": "https://chronovore.dev",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
