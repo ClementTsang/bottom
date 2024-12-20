@@ -437,6 +437,7 @@ pub fn get_amd_vecs(
             total_mem += mem.total
         }
 
+        // TODO: Not sure if this overlaps with the existing generic temperature code.
         if widgets_to_harvest.use_temp && Filter::optional_should_keep(filter, &device_name) {
             if let Some(temperatures) = get_amd_temp(&device_path) {
                 for info in temperatures {
