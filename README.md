@@ -487,6 +487,7 @@ Thanks to all contributors:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/llc0930"><img src="https://avatars.githubusercontent.com/u/14966910?v=4?s=100" width="100px;" alt="llc0930"/><br /><sub><b>llc0930</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=llc0930" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://chronovore.dev"><img src="https://avatars.githubusercontent.com/u/614231?v=4?s=100" width="100px;" alt="Ada Ahmed"/><br /><sub><b>Ada Ahmed</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=yretenai" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Wateir"><img src="https://avatars.githubusercontent.com/u/78731687?v=4?s=100" width="100px;" alt="Wateir"/><br /><sub><b>Wateir</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Wateir" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
