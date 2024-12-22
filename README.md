@@ -188,10 +188,10 @@ If you want the latest changes that are not yet stable, you can also install `bo
 
 ```bash
 # Using paru
-sudo paru -S bottom-git
+paru -S bottom-git
 
 # Using yay
-sudo yay -S bottom-git
+yay -S bottom-git
 ```
 
 ### Debian / Ubuntu
