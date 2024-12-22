@@ -535,6 +535,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Wateir",
+      "name": "Wateir",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78731687?v=4",
+      "profile": "https://github.com/Wateir",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
