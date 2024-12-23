@@ -765,7 +765,7 @@ impl App {
                 BottomWidgetType::Battery =>
                 {
                     #[cfg(feature = "battery")]
-                    if self.converted_data.battery_data.len() > 1 {
+                    if self.data_collection.battery_harvest.len() > 1 {
                         if let Some(battery_widget_state) = self
                             .states
                             .battery_state
@@ -828,8 +828,8 @@ impl App {
                 BottomWidgetType::Battery =>
                 {
                     #[cfg(feature = "battery")]
-                    if self.converted_data.battery_data.len() > 1 {
-                        let battery_count = self.converted_data.battery_data.len();
+                    if self.data_collection.battery_harvest.len() > 1 {
+                        let battery_count = self.data_collection.battery_harvest.len();
                         if let Some(battery_widget_state) = self
                             .states
                             .battery_state
@@ -2805,10 +2805,10 @@ impl App {
                                 {
                                     if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y)
                                     {
-                                        if itx >= self.converted_data.battery_data.len() {
+                                        if itx >= self.data_collection.battery_harvest.len() {
                                             // range check to keep within current data
                                             battery_widget_state.currently_selected_battery_index =
-                                                self.converted_data.battery_data.len() - 1;
+                                                self.data_collection.battery_harvest.len() - 1;
                                         } else {
                                             battery_widget_state.currently_selected_battery_index =
                                                 itx;

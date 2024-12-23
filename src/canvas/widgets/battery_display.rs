@@ -65,10 +65,10 @@ impl Painter {
                 block
             };
 
-            if app_state.converted_data.battery_data.len() > 1 {
+            if app_state.data_collection.battery_harvest.len() > 1 {
                 let battery_names = app_state
-                    .converted_data
-                    .battery_data
+                    .data_collection
+                    .battery_harvest
                     .iter()
                     .enumerate()
                     .map(|(itx, _)| format!("Battery {itx}"))
@@ -125,8 +125,8 @@ impl Painter {
                 .split(draw_loc)[0];
 
             if let Some(battery_details) = app_state
-                .converted_data
-                .battery_data
+                .data_collection
+                .battery_harvest
                 .get(battery_widget_state.currently_selected_battery_index)
             {
                 let full_width = draw_loc.width.saturating_sub(2);
@@ -202,7 +202,7 @@ impl Painter {
 
                 battery_rows.push(Row::new(["Health", &health]).style(self.styles.text_style));
 
-                let header = if app_state.converted_data.battery_data.len() > 1 {
+                let header = if app_state.data_collection.battery_harvest.len() > 1 {
                     Row::new([""]).bottom_margin(table_gap)
                 } else {
                     Row::default()
