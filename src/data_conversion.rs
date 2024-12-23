@@ -8,29 +8,12 @@ use std::borrow::Cow;
 use crate::{
     app::{data_farmer::DataCollection, AxisScaling},
     canvas::components::time_chart::Point,
-    data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
+    data_collection::{
+        batteries::BatteryData, cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType,
+    },
     utils::{data_prefixes::*, data_units::DataUnit},
     widgets::{DiskWidgetData, TempWidgetData},
 };
-
-#[derive(Debug, Default)]
-pub enum BatteryDuration {
-    ToEmpty(i64),
-    ToFull(i64),
-    Empty,
-    Full,
-    #[default]
-    Unknown,
-}
-
-#[derive(Default, Debug)]
-pub struct ConvertedBatteryData {
-    pub charge_percentage: f64,
-    pub watt_consumption: String,
-    pub battery_duration: BatteryDuration,
-    pub health: String,
-    pub state: String,
-}
 
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
@@ -90,7 +73,8 @@ pub struct ConvertedData {
 
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<CpuWidgetData>,
-    pub battery_data: Vec<ConvertedBatteryData>,
+
+    pub battery_data: Vec<BatteryData>,
     pub disk_data: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
 }
@@ -506,37 +490,6 @@ pub fn dec_bytes_string(value: u64) -> String {
     } else {
         format!("{:.0}{}", converted_values.0, converted_values.1)
     }
-}
-
-#[cfg(feature = "battery")]
-pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBatteryData> {
-    current_data
-        .battery_harvest
-        .iter()
-        .map(|battery_harvest| ConvertedBatteryData {
-            charge_percentage: battery_harvest.charge_percent,
-            watt_consumption: format!("{:.2}W", battery_harvest.power_consumption_rate_watts),
-            battery_duration: if let Some(secs) = battery_harvest.secs_until_empty {
-                BatteryDuration::ToEmpty(secs)
-            } else if let Some(secs) = battery_harvest.secs_until_full {
-                BatteryDuration::ToFull(secs)
-            } else {
-                match battery_harvest.state {
-                    starship_battery::State::Empty => BatteryDuration::Empty,
-                    starship_battery::State::Full => BatteryDuration::Full,
-                    _ => BatteryDuration::Unknown,
-                }
-            },
-            health: format!("{:.2}%", battery_harvest.health_percent),
-            state: {
-                let mut s = battery_harvest.state.to_string();
-                if !s.is_empty() {
-                    s[0..1].make_ascii_uppercase();
-                }
-                s
-            },
-        })
-        .collect()
 }
 
 #[cfg(feature = "zfs")]

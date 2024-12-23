@@ -6,9 +6,7 @@ pub mod nvidia;
 #[cfg(all(target_os = "linux", feature = "gpu"))]
 pub mod amd;
 
-#[cfg(feature = "battery")]
 pub mod batteries;
-
 pub mod cpu;
 pub mod disks;
 pub mod error;
@@ -45,7 +43,7 @@ pub struct Data {
     pub disks: Option<Vec<disks::DiskHarvest>>,
     pub io: Option<disks::IoHarvest>,
     #[cfg(feature = "battery")]
-    pub list_of_batteries: Option<Vec<batteries::BatteryHarvest>>,
+    pub list_of_batteries: Option<Vec<batteries::BatteryData>>,
     #[cfg(feature = "zfs")]
     pub arc: Option<memory::MemHarvest>,
     #[cfg(feature = "gpu")]

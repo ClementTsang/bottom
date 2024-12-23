@@ -493,7 +493,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         proc_state: ProcState::init(proc_state_map),
         temp_state: TempState::init(temp_state_map),
         disk_state: DiskState::init(disk_state_map),
-        battery_state: BatteryState::init(battery_state_map),
+        battery_state: AppBatteryState::init(battery_state_map),
         basic_table_widget_state,
     };
 

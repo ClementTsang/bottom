@@ -513,7 +513,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         {
                             if app.used_widgets.use_battery {
                                 app.converted_data.battery_data =
-                                    convert_battery_harvest(&app.data_collection);
+                                    app.data_collection.battery_harvest.clone();
                             }
                         }
 
