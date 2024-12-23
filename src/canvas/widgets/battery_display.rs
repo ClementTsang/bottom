@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span},
@@ -8,13 +10,18 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::App,
-    canvas::{
-        drawing_utils::{calculate_basic_use_bars, widget_block},
-        Painter,
-    },
+    canvas::{drawing_utils::widget_block, Painter},
     constants::*,
     data_collection::batteries::BatteryState,
 };
+
+/// Calculate how many bars are to be drawn within basic mode's components.
+fn calculate_basic_use_bars(use_percentage: f64, num_bars_available: usize) -> usize {
+    min(
+        (num_bars_available as f64 * use_percentage / 100.0).round() as usize,
+        num_bars_available,
+    )
+}
 
 impl Painter {
     pub fn draw_battery(
@@ -313,5 +320,19 @@ mod tests {
         assert_eq!(short_time(3600), "1h 0m 0s".to_string());
         assert_eq!(short_time(3601), "1h 0m 1s".to_string());
         assert_eq!(short_time(3661), "1h 1m 1s".to_string());
+    }
+
+    #[test]
+    fn test_calculate_basic_use_bars() {
+        // Testing various breakpoints and edge cases.
+        assert_eq!(calculate_basic_use_bars(0.0, 15), 0);
+        assert_eq!(calculate_basic_use_bars(1.0, 15), 0);
+        assert_eq!(calculate_basic_use_bars(5.0, 15), 1);
+        assert_eq!(calculate_basic_use_bars(10.0, 15), 2);
+        assert_eq!(calculate_basic_use_bars(40.0, 15), 6);
+        assert_eq!(calculate_basic_use_bars(45.0, 15), 7);
+        assert_eq!(calculate_basic_use_bars(50.0, 15), 8);
+        assert_eq!(calculate_basic_use_bars(100.0, 15), 15);
+        assert_eq!(calculate_basic_use_bars(150.0, 15), 15);
     }
 }

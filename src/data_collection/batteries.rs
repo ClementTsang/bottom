@@ -10,14 +10,13 @@
 //!
 //! For more information, refer to the [starship_battery](https://github.com/starship/rust-battery) repo/docs.
 
-#[cfg(feature = "battery")]
 use starship_battery::{
     units::{power::watt, ratio::percent, time::second},
     Battery, Manager, State,
 };
 
 /// Battery state.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub enum BatteryState {
     Charging {
         /// Time to full in seconds.
@@ -29,7 +28,6 @@ pub enum BatteryState {
     },
     Empty,
     Full,
-    #[default]
     Unknown,
 }
 
@@ -68,7 +66,6 @@ impl BatteryData {
     }
 }
 
-#[cfg(feature = "battery")]
 pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<BatteryData> {
     batteries
         .iter_mut()

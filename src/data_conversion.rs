@@ -8,12 +8,13 @@ use std::borrow::Cow;
 use crate::{
     app::{data_farmer::DataCollection, AxisScaling},
     canvas::components::time_chart::Point,
-    data_collection::{
-        batteries::BatteryData, cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType,
-    },
+    data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
     utils::{data_prefixes::*, data_units::DataUnit},
     widgets::{DiskWidgetData, TempWidgetData},
 };
+
+#[cfg(feature = "battery")]
+use crate::data_collection::batteries::BatteryData;
 
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
@@ -74,7 +75,9 @@ pub struct ConvertedData {
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<CpuWidgetData>,
 
+    #[cfg(feature = "battery")]
     pub battery_data: Vec<BatteryData>,
+
     pub disk_data: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
 }
