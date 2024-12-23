@@ -124,7 +124,7 @@ pub struct DataCollection {
     pub io_labels: Vec<(String, String)>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
     #[cfg(feature = "battery")]
-    pub battery_harvest: Vec<batteries::BatteryHarvest>,
+    pub battery_harvest: Vec<batteries::BatteryData>,
     #[cfg(feature = "zfs")]
     pub arc_harvest: memory::MemHarvest,
     #[cfg(feature = "gpu")]
@@ -451,7 +451,7 @@ impl DataCollection {
     }
 
     #[cfg(feature = "battery")]
-    fn eat_battery(&mut self, list_of_batteries: Vec<batteries::BatteryHarvest>) {
+    fn eat_battery(&mut self, list_of_batteries: Vec<batteries::BatteryData>) {
         self.battery_harvest = list_of_batteries;
     }
 

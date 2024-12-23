@@ -45,7 +45,7 @@ pub struct Data {
     pub disks: Option<Vec<disks::DiskHarvest>>,
     pub io: Option<disks::IoHarvest>,
     #[cfg(feature = "battery")]
-    pub list_of_batteries: Option<Vec<batteries::BatteryHarvest>>,
+    pub list_of_batteries: Option<Vec<batteries::BatteryData>>,
     #[cfg(feature = "zfs")]
     pub arc: Option<memory::MemHarvest>,
     #[cfg(feature = "gpu")]

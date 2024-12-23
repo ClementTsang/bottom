@@ -13,7 +13,7 @@ use crate::{
         Painter,
     },
     constants::*,
-    data_conversion::BatteryDuration,
+    data_collection::batteries::BatteryState,
 };
 
 impl Painter {
@@ -124,13 +124,14 @@ impl Painter {
             {
                 let full_width = draw_loc.width.saturating_sub(2);
                 let bar_length = usize::from(full_width.saturating_sub(6));
-                let charge_percentage = battery_details.charge_percentage;
-                let num_bars = calculate_basic_use_bars(charge_percentage, bar_length);
+                let charge_percent = battery_details.charge_percent;
+
+                let num_bars = calculate_basic_use_bars(charge_percent, bar_length);
                 let bars = format!(
                     "[{}{}{:3.0}%]",
                     "|".repeat(num_bars),
                     " ".repeat(bar_length - num_bars),
-                    charge_percentage,
+                    charge_percent,
                 );
 
                 let mut battery_charge_rows = Vec::with_capacity(2);
@@ -138,9 +139,9 @@ impl Painter {
                     Cell::from("Charge").style(self.styles.text_style)
                 ]));
                 battery_charge_rows.push(Row::new([Cell::from(bars).style(
-                    if charge_percentage < 10.0 {
+                    if charge_percent < 10.0 {
                         self.styles.low_battery
-                    } else if charge_percentage < 50.0 {
+                    } else if charge_percent < 50.0 {
                         self.styles.medium_battery
                     } else {
                         self.styles.high_battery
@@ -148,49 +149,53 @@ impl Painter {
                 )]));
 
                 let mut battery_rows = Vec::with_capacity(3);
+                let watt_consumption = battery_details.watt_consumption();
+                let health = battery_details.health();
+
                 battery_rows.push(Row::new([""]).bottom_margin(table_gap + 1));
-                battery_rows.push(
-                    Row::new(["Rate", &battery_details.watt_consumption])
-                        .style(self.styles.text_style),
-                );
+                battery_rows
+                    .push(Row::new(["Rate", &watt_consumption]).style(self.styles.text_style));
 
                 battery_rows.push(
-                    Row::new(["State", &battery_details.state]).style(self.styles.text_style),
+                    Row::new(["State", battery_details.state.as_str()])
+                        .style(self.styles.text_style),
                 );
 
                 let mut time: String; // Keep string lifetime in scope.
                 {
                     let style = self.styles.text_style;
-                    match &battery_details.battery_duration {
-                        BatteryDuration::ToEmpty(secs) => {
-                            time = long_time(*secs);
+                    match &battery_details.state {
+                        BatteryState::Charging { time_to_full } => {
+                            if let Some(secs) = time_to_full {
+                                time = long_time(*secs);
 
-                            if full_width as usize > time.len() {
-                                battery_rows.push(Row::new(["Time to empty", &time]).style(style));
-                            } else {
-                                time = short_time(*secs);
-                                battery_rows.push(Row::new(["To empty", &time]).style(style));
+                                if full_width as usize > time.len() {
+                                    battery_rows
+                                        .push(Row::new(["Time to empty", &time]).style(style));
+                                } else {
+                                    time = short_time(*secs);
+                                    battery_rows.push(Row::new(["To empty", &time]).style(style));
+                                }
                             }
                         }
-                        BatteryDuration::ToFull(secs) => {
-                            time = long_time(*secs);
+                        BatteryState::Discharging { time_to_empty } => {
+                            if let Some(secs) = time_to_empty {
+                                time = long_time(*secs);
 
-                            if full_width as usize > time.len() {
-                                battery_rows.push(Row::new(["Time to full", &time]).style(style));
-                            } else {
-                                time = short_time(*secs);
-                                battery_rows.push(Row::new(["To full", &time]).style(style));
+                                if full_width as usize > time.len() {
+                                    battery_rows
+                                        .push(Row::new(["Time to full", &time]).style(style));
+                                } else {
+                                    time = short_time(*secs);
+                                    battery_rows.push(Row::new(["To full", &time]).style(style));
+                                }
                             }
                         }
-                        BatteryDuration::Empty
-                        | BatteryDuration::Full
-                        | BatteryDuration::Unknown => {}
+                        _ => {}
                     }
                 }
 
-                battery_rows.push(
-                    Row::new(["Health", &battery_details.health]).style(self.styles.text_style),
-                );
+                battery_rows.push(Row::new(["Health", &health]).style(self.styles.text_style));
 
                 let header = if app_state.converted_data.battery_data.len() > 1 {
                     Row::new([""]).bottom_margin(table_gap)
@@ -241,7 +246,7 @@ impl Painter {
     }
 }
 
-fn get_hms(secs: i64) -> (i64, i64, i64) {
+fn get_hms(secs: u32) -> (u32, u32, u32) {
     let hours = secs / (60 * 60);
     let minutes = (secs / 60) - hours * 60;
     let seconds = secs - minutes * 60 - hours * 60 * 60;
@@ -249,7 +254,7 @@ fn get_hms(secs: i64) -> (i64, i64, i64) {
     (hours, minutes, seconds)
 }
 
-fn long_time(secs: i64) -> String {
+fn long_time(secs: u32) -> String {
     let (hours, minutes, seconds) = get_hms(secs);
 
     if hours > 0 {
@@ -266,7 +271,7 @@ fn long_time(secs: i64) -> String {
     }
 }
 
-fn short_time(secs: i64) -> String {
+fn short_time(secs: u32) -> String {
     let (hours, minutes, seconds) = get_hms(secs);
 
     if hours > 0 {

@@ -21,7 +21,7 @@ pub struct AppWidgetStates {
     pub proc_state: ProcState,
     pub temp_state: TempState,
     pub disk_state: DiskState,
-    pub battery_state: BatteryState,
+    pub battery_state: AppBatteryState,
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
 }
 
@@ -381,13 +381,13 @@ pub struct BasicTableWidgetState {
     pub right_brc: Option<(u16, u16)>,
 }
 
-pub struct BatteryState {
+pub struct AppBatteryState {
     pub widget_states: HashMap<u64, BatteryWidgetState>,
 }
 
-impl BatteryState {
+impl AppBatteryState {
     pub fn init(widget_states: HashMap<u64, BatteryWidgetState>) -> Self {
-        BatteryState { widget_states }
+        AppBatteryState { widget_states }
     }
 
     pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut BatteryWidgetState> {
