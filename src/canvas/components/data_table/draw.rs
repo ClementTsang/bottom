@@ -133,11 +133,10 @@ where
         &mut self, f: &mut Frame<'_>, draw_info: &DrawInfo, widget: Option<&mut BottomWidget>,
         painter: &Painter,
     ) {
-        let draw_horizontal = !self.props.is_basic || draw_info.is_on_widget();
         let draw_loc = draw_info.loc;
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)])
-            .horizontal_margin(u16::from(!draw_horizontal))
+            .horizontal_margin(u16::from(self.props.is_basic && !draw_info.is_on_widget()))
             .direction(Direction::Horizontal)
             .split(draw_loc)[0];
 

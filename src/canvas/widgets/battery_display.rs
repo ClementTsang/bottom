@@ -27,8 +27,8 @@ impl Painter {
             .widget_states
             .get_mut(&widget_id)
         {
-            let is_on_widget = widget_id == app_state.current_widget.widget_id;
-            let border_style = if is_on_widget {
+            let is_selected = widget_id == app_state.current_widget.widget_id;
+            let border_style = if is_selected {
                 self.styles.highlighted_border_style
             } else {
                 self.styles.border_style
@@ -42,7 +42,7 @@ impl Painter {
             let block = {
                 let mut block = widget_block(
                     app_state.app_config_fields.use_basic_mode,
-                    is_on_widget,
+                    is_selected,
                     self.styles.border_type,
                 )
                 .border_style(border_style)
@@ -113,7 +113,7 @@ impl Painter {
 
             let margined_draw_loc = Layout::default()
                 .constraints([Constraint::Percentage(100)])
-                .horizontal_margin(u16::from(!(is_on_widget || is_basic)))
+                .horizontal_margin(u16::from(is_basic && !is_selected))
                 .direction(Direction::Horizontal)
                 .split(draw_loc)[0];
 
