@@ -165,30 +165,28 @@ impl Painter {
                 {
                     let style = self.styles.text_style;
                     match &battery_details.state {
-                        BatteryState::Charging { time_to_full } => {
-                            if let Some(secs) = time_to_full {
-                                time = long_time(*secs);
+                        BatteryState::Charging {
+                            time_to_full: Some(secs),
+                        } => {
+                            time = long_time(*secs);
 
-                                if full_width as usize > time.len() {
-                                    battery_rows
-                                        .push(Row::new(["Time to empty", &time]).style(style));
-                                } else {
-                                    time = short_time(*secs);
-                                    battery_rows.push(Row::new(["To empty", &time]).style(style));
-                                }
+                            if full_width as usize > time.len() {
+                                battery_rows.push(Row::new(["Time to full", &time]).style(style));
+                            } else {
+                                time = short_time(*secs);
+                                battery_rows.push(Row::new(["To full", &time]).style(style));
                             }
                         }
-                        BatteryState::Discharging { time_to_empty } => {
-                            if let Some(secs) = time_to_empty {
-                                time = long_time(*secs);
+                        BatteryState::Discharging {
+                            time_to_empty: Some(secs),
+                        } => {
+                            time = long_time(*secs);
 
-                                if full_width as usize > time.len() {
-                                    battery_rows
-                                        .push(Row::new(["Time to full", &time]).style(style));
-                                } else {
-                                    time = short_time(*secs);
-                                    battery_rows.push(Row::new(["To full", &time]).style(style));
-                                }
+                            if full_width as usize > time.len() {
+                                battery_rows.push(Row::new(["Time to empty", &time]).style(style));
+                            } else {
+                                time = short_time(*secs);
+                                battery_rows.push(Row::new(["To empty", &time]).style(style));
                             }
                         }
                         _ => {}

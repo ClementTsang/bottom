@@ -73,6 +73,7 @@ pub struct ConvertedData {
 
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<CpuWidgetData>,
+
     pub battery_data: Vec<BatteryData>,
     pub disk_data: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
