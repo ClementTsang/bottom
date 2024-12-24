@@ -425,11 +425,6 @@ pub fn get_amd_vecs(
                     MemHarvest {
                         total_bytes: mem.total,
                         used_bytes: mem.used,
-                        use_percent: if mem.total == 0 {
-                            None
-                        } else {
-                            Some(mem.used as f64 / mem.total as f64 * 100.0)
-                        },
                     },
                 ));
             }

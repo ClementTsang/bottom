@@ -66,10 +66,5 @@ pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
     Some(MemHarvest {
         total_bytes: mem_total,
         used_bytes: mem_used,
-        use_percent: if mem_total == 0 {
-            None
-        } else {
-            Some(mem_used as f64 / mem_total as f64 * 100.0)
-        },
     })
 }

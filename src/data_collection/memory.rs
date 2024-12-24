@@ -19,7 +19,18 @@ pub mod arc;
 pub struct MemHarvest {
     pub used_bytes: u64,
     pub total_bytes: u64,
-    // TODO: Might be find to just make this an f64, and any
-    // consumer checks NaN.
-    pub use_percent: Option<f64>,
+}
+
+impl MemHarvest {
+    /// Return the use percentage. If the total bytes is 0, then this returns `None`.
+    pub fn checked_percent(&self) -> Option<f64> {
+        let used = self.used_bytes as f64;
+        let total = self.total_bytes as f64;
+
+        if total == 0.0 {
+            None
+        } else {
+            Some(used / total * 100.0)
+        }
+    }
 }

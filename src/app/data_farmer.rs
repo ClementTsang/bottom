@@ -33,7 +33,6 @@ pub struct TimedData {
     pub rx_data: f64,
     pub tx_data: f64,
     pub cpu_data: Vec<f64>,
-    pub load_avg_data: [f32; 3],
     pub mem_data: Option<f64>,
     #[cfg(not(target_os = "windows"))]
     pub cache_data: Option<f64>,
@@ -244,7 +243,7 @@ impl DataCollection {
 
         // Load average
         if let Some(load_avg) = harvested_data.load_avg {
-            self.eat_load_avg(load_avg, &mut new_entry);
+            self.eat_load_avg(load_avg);
         }
 
         // Temp
@@ -280,11 +279,8 @@ impl DataCollection {
     fn eat_memory_and_swap(
         &mut self, memory: memory::MemHarvest, swap: memory::MemHarvest, new_entry: &mut TimedData,
     ) {
-        // Memory
-        new_entry.mem_data = memory.use_percent;
-
-        // Swap
-        new_entry.swap_data = swap.use_percent;
+        new_entry.mem_data = memory.checked_percent();
+        new_entry.swap_data = swap.checked_percent();
 
         // In addition copy over latest data for easy reference
         self.memory_harvest = memory;
@@ -294,7 +290,7 @@ impl DataCollection {
     #[cfg(not(target_os = "windows"))]
     fn eat_cache(&mut self, cache: memory::MemHarvest, new_entry: &mut TimedData) {
         // Cache and buffer memory
-        new_entry.cache_data = cache.use_percent;
+        new_entry.cache_data = cache.checked_percent();
 
         // In addition copy over latest data for easy reference
         self.cache_harvest = cache;
@@ -325,9 +321,7 @@ impl DataCollection {
         self.cpu_harvest = cpu;
     }
 
-    fn eat_load_avg(&mut self, load_avg: cpu::LoadAvgHarvest, new_entry: &mut TimedData) {
-        new_entry.load_avg_data = load_avg;
-
+    fn eat_load_avg(&mut self, load_avg: cpu::LoadAvgHarvest) {
         self.load_avg_harvest = load_avg;
     }
 
@@ -455,7 +449,7 @@ impl DataCollection {
 
     #[cfg(feature = "zfs")]
     fn eat_arc(&mut self, arc: memory::MemHarvest, new_entry: &mut TimedData) {
-        new_entry.arc_data = arc.use_percent;
+        new_entry.arc_data = arc.checked_percent();
         self.arc_harvest = arc;
     }
 
@@ -465,7 +459,7 @@ impl DataCollection {
         // within the local copy of gpu_harvest. Since it's all sequential
         // it probably doesn't matter anyways.
         gpu.iter().for_each(|data| {
-            new_entry.gpu_data.push(data.1.use_percent);
+            new_entry.gpu_data.push(data.1.checked_percent());
         });
         self.gpu_harvest = gpu;
     }
