@@ -20,31 +20,14 @@ use crate::{
 // min_tx: f64,
 // max_tx: f64,
 // mean_tx: f64,
-#[derive(Debug)]
-pub enum ConvertedNetworkData {
-    Normal {
-        rx: Vec<Point>,
-        tx: Vec<Point>,
-        rx_display: String,
-        tx_display: String,
-    },
-    Basic {
-        rx_display: String,
-        tx_display: String,
-        total_rx_display: String,
-        total_tx_display: String,
-    },
-}
-
-impl Default for ConvertedNetworkData {
-    fn default() -> Self {
-        Self::Normal {
-            rx: Default::default(),
-            tx: Default::default(),
-            rx_display: Default::default(),
-            tx_display: Default::default(),
-        }
-    }
+#[derive(Default, Debug)]
+pub struct ConvertedNetworkData {
+    pub rx: Vec<Point>,
+    pub tx: Vec<Point>,
+    pub rx_display: String,
+    pub tx_display: String,
+    pub total_rx_display: Option<String>,
+    pub total_tx_display: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -60,7 +43,12 @@ pub enum CpuWidgetData {
 
 #[derive(Default)]
 pub struct ConvertedData {
-    pub network: ConvertedNetworkData,
+    pub rx_display: String,
+    pub tx_display: String,
+    pub total_rx_display: String,
+    pub total_tx_display: String,
+    pub network_data_rx: Vec<Point>,
+    pub network_data_tx: Vec<Point>,
 
     pub mem_labels: Option<(String, String)>,
     #[cfg(not(target_os = "windows"))]
