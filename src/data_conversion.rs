@@ -8,13 +8,18 @@ use std::borrow::Cow;
 use crate::{
     app::{data_farmer::DataCollection, AxisScaling},
     canvas::components::time_chart::Point,
-    data_collection::{
-        batteries::BatteryData, cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType,
-    },
+    data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
     utils::{data_prefixes::*, data_units::DataUnit},
     widgets::{DiskWidgetData, TempWidgetData},
 };
 
+// TODO: [NETWORKING] add min/max/mean of each
+// min_rx : f64,
+// max_rx : f64,
+// mean_rx: f64,
+// min_tx: f64,
+// max_tx: f64,
+// mean_tx: f64,
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
     pub rx: Vec<Point>,
@@ -23,13 +28,6 @@ pub struct ConvertedNetworkData {
     pub tx_display: String,
     pub total_rx_display: Option<String>,
     pub total_tx_display: Option<String>,
-    // TODO: [NETWORKING] add min/max/mean of each
-    // min_rx : f64,
-    // max_rx : f64,
-    // mean_rx: f64,
-    // min_tx: f64,
-    // max_tx: f64,
-    // mean_tx: f64,
 }
 
 #[derive(Clone, Debug)]
@@ -58,6 +56,10 @@ pub struct ConvertedData {
     pub swap_labels: Option<(String, String)>,
 
     // TODO: Switch this and all data points over to a better data structure.
+    //
+    // We can dedupe the f64 for time by storing it alongside this data structure.
+    // We can also just store everything via an references and iterators to avoid
+    // duplicating data, I guess.
     pub mem_data: Vec<Point>,
     #[cfg(not(target_os = "windows"))]
     pub cache_data: Vec<Point>,
@@ -74,7 +76,6 @@ pub struct ConvertedData {
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<CpuWidgetData>,
 
-    pub battery_data: Vec<BatteryData>,
     pub disk_data: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
 }
@@ -268,8 +269,9 @@ fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
 /// Returns the unit type and denominator for given total amount of memory in
 /// kibibytes.
 pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
-    if harvest.total_bytes > 0 {
-        Some((format!("{:3.0}%", harvest.use_percent.unwrap_or(0.0)), {
+    (harvest.total_bytes > 0).then(|| {
+        let percentage = harvest.used_bytes as f64 / harvest.total_bytes as f64 * 100.0;
+        (format!("{percentage:3.0}%"), {
             let (unit, denominator) = get_binary_unit_and_denominator(harvest.total_bytes);
 
             format!(
@@ -279,10 +281,8 @@ pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
                 (harvest.total_bytes as f64 / denominator),
                 unit
             )
-        }))
-    } else {
-        None
-    }
+        })
+    })
 }
 
 pub fn get_network_points(
@@ -549,27 +549,32 @@ pub fn convert_gpu_data(current_data: &DataCollection) -> Option<Vec<ConvertedGp
         .gpu_harvest
         .iter()
         .zip(point_vec)
-        .map(|(gpu, points)| {
-            let short_name = {
-                let last_words = gpu.0.split_whitespace().rev().take(2).collect::<Vec<_>>();
-                let short_name = format!("{} {}", last_words[1], last_words[0]);
-                short_name
-            };
+        .filter_map(|(gpu, points)| {
+            (gpu.1.total_bytes > 0).then(|| {
+                let short_name = {
+                    let last_words = gpu.0.split_whitespace().rev().take(2).collect::<Vec<_>>();
+                    let short_name = format!("{} {}", last_words[1], last_words[0]);
+                    short_name
+                };
 
-            ConvertedGpuData {
-                name: short_name,
-                points,
-                mem_percent: format!("{:3.0}%", gpu.1.use_percent.unwrap_or(0.0)),
-                mem_total: {
-                    let (unit, denominator) = get_binary_unit_and_denominator(gpu.1.total_bytes);
+                let percent = gpu.1.used_bytes as f64 / gpu.1.total_bytes as f64 * 100.0;
 
-                    format!(
-                        "   {:.1}{unit}/{:.1}{unit}",
-                        gpu.1.used_bytes as f64 / denominator,
-                        (gpu.1.total_bytes as f64 / denominator),
-                    )
-                },
-            }
+                ConvertedGpuData {
+                    name: short_name,
+                    points,
+                    mem_percent: format!("{percent:3.0}%"),
+                    mem_total: {
+                        let (unit, denominator) =
+                            get_binary_unit_and_denominator(gpu.1.total_bytes);
+
+                        format!(
+                            "   {:.1}{unit}/{:.1}{unit}",
+                            gpu.1.used_bytes as f64 / denominator,
+                            (gpu.1.total_bytes as f64 / denominator),
+                        )
+                    },
+                }
+            })
         })
         .collect::<Vec<ConvertedGpuData>>();
 

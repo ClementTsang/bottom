@@ -509,14 +509,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                             }
                         }
 
-                        #[cfg(feature = "battery")]
-                        {
-                            if app.used_widgets.use_battery {
-                                app.converted_data.battery_data =
-                                    app.data_collection.battery_harvest.clone();
-                            }
-                        }
-
                         app.update_data();
                         try_drawing(&mut terminal, &mut app, &mut painter)?;
                     }

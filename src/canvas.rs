@@ -335,7 +335,9 @@ impl Painter {
 
                         self.draw_process(f, app_state, rect[0], widget_id);
                     }
-                    Battery => {
+                    Battery =>
+                    {
+                        #[cfg(feature = "battery")]
                         self.draw_battery(f, app_state, rect[0], app_state.current_widget.widget_id)
                     }
                     _ => {}
@@ -445,7 +447,9 @@ impl Painter {
                             Temp => {
                                 self.draw_temp_table(f, app_state, vertical_chunks[3], widget_id)
                             }
-                            Battery => {
+                            Battery =>
+                            {
+                                #[cfg(feature = "battery")]
                                 self.draw_battery(f, app_state, vertical_chunks[3], widget_id)
                             }
                             _ => {}
@@ -722,7 +726,11 @@ impl Painter {
                     Temp => self.draw_temp_table(f, app_state, *draw_loc, widget.widget_id),
                     Disk => self.draw_disk_table(f, app_state, *draw_loc, widget.widget_id),
                     Proc => self.draw_process(f, app_state, *draw_loc, widget.widget_id),
-                    Battery => self.draw_battery(f, app_state, *draw_loc, widget.widget_id),
+                    Battery =>
+                    {
+                        #[cfg(feature = "battery")]
+                        self.draw_battery(f, app_state, *draw_loc, widget.widget_id)
+                    }
                     _ => {}
                 }
             }

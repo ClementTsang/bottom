@@ -6,6 +6,7 @@ pub mod nvidia;
 #[cfg(all(target_os = "linux", feature = "gpu"))]
 pub mod amd;
 
+#[cfg(feature = "battery")]
 pub mod batteries;
 pub mod cpu;
 pub mod disks;
