@@ -289,10 +289,7 @@ impl DataCollection {
 
     #[cfg(not(target_os = "windows"))]
     fn eat_cache(&mut self, cache: memory::MemHarvest, new_entry: &mut TimedData) {
-        // Cache and buffer memory
         new_entry.cache_data = cache.checked_percent();
-
-        // In addition copy over latest data for easy reference
         self.cache_harvest = cache;
     }
 
