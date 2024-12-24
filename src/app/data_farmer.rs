@@ -28,22 +28,20 @@ use crate::{
     dec_bytes_per_second_string,
 };
 
-pub type Value = f64;
-
 #[derive(Debug, Default, Clone)]
 pub struct TimedData {
-    pub rx_data: Value,
-    pub tx_data: Value,
-    pub cpu_data: Vec<Value>,
+    pub rx_data: f64,
+    pub tx_data: f64,
+    pub cpu_data: Vec<f64>,
     pub load_avg_data: [f32; 3],
-    pub mem_data: Option<Value>,
+    pub mem_data: Option<f64>,
     #[cfg(not(target_os = "windows"))]
-    pub cache_data: Option<Value>,
-    pub swap_data: Option<Value>,
+    pub cache_data: Option<f64>,
+    pub swap_data: Option<f64>,
     #[cfg(feature = "zfs")]
-    pub arc_data: Option<Value>,
+    pub arc_data: Option<f64>,
     #[cfg(feature = "gpu")]
-    pub gpu_data: Vec<Option<Value>>,
+    pub gpu_data: Vec<Option<f64>>,
 }
 
 #[derive(Clone, Debug, Default)]
