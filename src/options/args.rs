@@ -346,6 +346,13 @@ pub struct ProcessArgs {
         help = "Enables whole-word matching by default while searching."
     )]
     pub whole_word: bool,
+
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Collapse process tree by default."
+    )]
+    pub tree_collapse: bool,
 }
 
 /// Temperature arguments/config options.

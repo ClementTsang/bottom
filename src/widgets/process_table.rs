@@ -62,7 +62,10 @@ impl ProcessSearchState {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ProcWidgetMode {
-    Tree { collapsed_pids: HashSet<Pid> },
+    Tree {
+        collapsed_pids: HashSet<Pid>,
+        collapse: bool,
+    },
     Grouped,
     Normal,
 }
@@ -400,15 +403,16 @@ impl ProcWidgetState {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
                 self.get_normal_data(&data_collection.process_data.process_harvest)
             }
-            ProcWidgetMode::Tree { collapsed_pids } => {
-                self.get_tree_data(collapsed_pids, data_collection)
-            }
+            ProcWidgetMode::Tree {
+                collapsed_pids,
+                collapse,
+            } => self.get_tree_data(collapsed_pids, data_collection, collapse),
         };
         self.table.set_data(data);
     }
 
     fn get_tree_data(
-        &self, collapsed_pids: &HashSet<Pid>, data_collection: &DataCollection,
+        &self, collapsed_pids: &HashSet<Pid>, data_collection: &DataCollection, collapse: &bool,
     ) -> Vec<ProcWidgetData> {
         const BRANCH_END: char = '└';
         const BRANCH_SPLIT: char = '├';
@@ -567,8 +571,18 @@ impl ProcWidgetState {
             let disabled = !kept_pids.contains(&process.pid);
             let is_last = *siblings_left == 0;
 
-            if collapsed_pids.contains(&process.pid) {
+            if collapsed_pids.contains(&process.pid).eq(&!collapse) {
                 let mut summed_process = process.clone();
+                let mut prefix = if prefixes.is_empty() {
+                    String::default()
+                } else {
+                    format!(
+                        "{}{}{} ",
+                        prefixes.join(""),
+                        if is_last { BRANCH_END } else { BRANCH_SPLIT },
+                        BRANCH_HORIZONTAL
+                    )
+                };
 
                 if let Some(children_pids) = filtered_tree.get(&process.pid) {
                     let mut sum_queue = children_pids
@@ -591,18 +605,19 @@ impl ProcWidgetState {
                             }));
                         }
                     }
+                    if !children_pids.is_empty() {
+                        prefix = if prefixes.is_empty() {
+                            "+ ".to_string()
+                        } else {
+                            format!(
+                                "{}{}{} + ",
+                                prefixes.join(""),
+                                if is_last { BRANCH_END } else { BRANCH_SPLIT },
+                                BRANCH_HORIZONTAL
+                            )
+                        };
+                    }
                 }
-
-                let prefix = if prefixes.is_empty() {
-                    "+ ".to_string()
-                } else {
-                    format!(
-                        "{}{}{} + ",
-                        prefixes.join(""),
-                        if is_last { BRANCH_END } else { BRANCH_SPLIT },
-                        BRANCH_HORIZONTAL
-                    )
-                };
 
                 data.push(summed_process.prefix(Some(prefix)).disabled(disabled));
             } else {
@@ -817,7 +832,7 @@ impl ProcWidgetState {
     }
 
     pub fn toggle_current_tree_branch_entry(&mut self) {
-        if let ProcWidgetMode::Tree { collapsed_pids } = &mut self.mode {
+        if let ProcWidgetMode::Tree { collapsed_pids, .. } = &mut self.mode {
             if let Some(process) = self.table.current_item() {
                 let pid = process.pid;
 
