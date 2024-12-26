@@ -15,7 +15,7 @@ use sort_table::SortTableColumn;
 
 use crate::{
     app::{
-        data_farmer::{DataCollection, ProcessData},
+        data::{DataCollection, ProcessData},
         AppConfigFields, AppSearchState,
     },
     canvas::components::data_table::{

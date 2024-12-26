@@ -23,6 +23,7 @@ pub struct MemHarvest {
 
 impl MemHarvest {
     /// Return the use percentage. If the total bytes is 0, then this returns `None`.
+    #[inline]
     pub fn checked_percent(&self) -> Option<f64> {
         let used = self.used_bytes as f64;
         let total = self.total_bytes as f64;
