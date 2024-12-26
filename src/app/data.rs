@@ -150,6 +150,19 @@ impl ValueChunk {
             }
         }
     }
+
+    /// Check if a [`DataChunk`] has no data in it.
+    pub fn is_empty(&self) -> bool {
+        if let Some(current) = &self.current {
+            if !current.data.is_empty() {
+                return false;
+            }
+        }
+
+        // If any of the previous chunks are not empty, return false.
+        // If there are no previous chunks, return true.
+        !self.previous_chunks.iter().any(|c| !c.data.is_empty())
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -175,8 +188,16 @@ pub struct TimeSeriesData {
     /// new offset from the new time to the original value.
     current_time: DefaultInstant,
 
-    /// All time offsets, first element is the oldest value.
-    time_offsets: Vec<f32>,
+    /// All time offsets relative to the previous value, first element is the oldest value,
+    /// and is relvative to `current_time`.
+    ///
+    /// For example:
+    /// [1, 5, 3], with current_time of 9 and starting initially from 0,
+    /// would represent values of [0, 1, 6, 9], 9 being the last-read value.
+    ///
+    /// We store this as u32 to save memory; in theory we can store this as
+    /// an even smaller, compressible data format.
+    time_offsets: Vec<u32>,
 
     /// Time offset ranges to help faciliate pruning. Must be in
     /// sorted order. Offset ranges are [start, end) (that is, exclusive).
@@ -191,7 +212,7 @@ pub struct TimeSeriesData {
     tx: ValueChunk,
 
     /// CPU data chunks.
-    cpu: ValueChunk,
+    cpu: Vec<ValueChunk>,
 
     /// Memory data chunks.
     mem: ValueChunk,
@@ -218,7 +239,7 @@ impl TimeSeriesData {
         let time = data
             .collection_time
             .duration_since(self.current_time.0)
-            .as_millis() as f32;
+            .as_millis() as u32;
         self.current_time.0 = data.collection_time;
         self.time_offsets.push(time);
 
@@ -227,6 +248,53 @@ impl TimeSeriesData {
         if let Some(network) = data.network {
             self.rx.add(network.rx as f64, index);
             self.tx.add(network.tx as f64, index);
+        }
+
+        if let Some(cpu) = data.cpu {
+            for (itx, c) in cpu.into_iter().enumerate() {
+                todo!()
+            }
+        }
+
+        if let Some(memory) = data.memory {
+            if let Some(val) = memory.checked_percent() {
+                self.mem.add(val, index);
+            } else {
+                self.mem.end_chunk();
+            }
+        }
+
+        if let Some(swap) = data.swap {
+            if let Some(val) = swap.checked_percent() {
+                self.swap.add(val, index);
+            } else {
+                self.swap.end_chunk();
+            }
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        if let Some(cache) = data.cache {
+            if let Some(val) = cache.checked_percent() {
+                self.cache_mem.add(val, index);
+            } else {
+                self.cache_mem.end_chunk();
+            }
+        }
+
+        #[cfg(feature = "zfs")]
+        if let Some(arc) = data.arc {
+            if let Some(val) = arc.checked_percent() {
+                self.arc_mem.add(val, index);
+            } else {
+                self.arc_mem.end_chunk();
+            }
+        }
+
+        #[cfg(feature = "gpu")]
+        if let Some(gpu) = data.gpu {
+            for g in gpu {
+                todo!()
+            }
         }
     }
 
@@ -249,7 +317,25 @@ impl TimeSeriesData {
 
             self.rx.prune(end);
             self.tx.prune(end);
-            self.cpu.prune(end);
+
+            // TODO: Maybe make a wrapper around a Vec<DataChunk>?
+            {
+                let mut to_delete = vec![];
+
+                for (itx, cpu) in self.cpu.iter_mut().enumerate() {
+                    cpu.prune(end);
+
+                    // We don't want to retain things if there is no data at all.
+                    if cpu.is_empty() {
+                        to_delete.push(itx);
+                    }
+                }
+
+                for itx in to_delete.into_iter().rev() {
+                    self.cpu.remove(itx);
+                }
+            }
+
             self.mem.prune(end);
             self.swap.prune(end);
 
@@ -260,8 +346,21 @@ impl TimeSeriesData {
             self.arc_mem.prune(end);
 
             #[cfg(feature = "gpu")]
-            for gpu in &mut self.gpu_mem {
-                gpu.prune(end);
+            {
+                let mut to_delete = vec![];
+
+                for (itx, gpu) in self.gpu_mem.iter_mut().enumerate() {
+                    gpu.prune(end);
+
+                    // We don't want to retain things if there is no data at all.
+                    if gpu.is_empty() {
+                        to_delete.push(itx);
+                    }
+                }
+
+                for itx in to_delete.into_iter().rev() {
+                    self.gpu_mem.remove(itx);
+                }
             }
         }
     }
