@@ -6,7 +6,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    app::{data_farmer::DataCollection, AxisScaling},
+    app::{data::DataCollection, AxisScaling},
     canvas::components::time_chart::Point,
     data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
     utils::{data_prefixes::*, data_units::DataUnit},
@@ -35,7 +35,6 @@ pub enum CpuWidgetData {
     All,
     Entry {
         data_type: CpuDataType,
-        /// A point here represents time (x) and value (y).
         data: Vec<Point>,
         last_entry: f64,
     },

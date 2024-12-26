@@ -1,4 +1,4 @@
-pub mod data_farmer;
+pub mod data;
 pub mod filter;
 pub mod frozen_state;
 pub mod layout_manager;
@@ -12,7 +12,7 @@ use std::{
 
 use anyhow::bail;
 use concat_string::concat_string;
-use data_farmer::*;
+use data::*;
 use filter::*;
 use frozen_state::FrozenState;
 use hashbrown::HashMap;

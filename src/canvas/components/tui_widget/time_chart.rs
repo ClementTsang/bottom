@@ -391,7 +391,7 @@ pub struct TimeChart<'a> {
 }
 
 impl<'a> TimeChart<'a> {
-    /// Creates a chart with the given [datasets](Dataset)
+    /// Creates a chart with the given [datasets](Dataset),
     ///
     /// A chart can render multiple datasets.
     pub fn new(datasets: Vec<Dataset<'a>>) -> TimeChart<'a> {
