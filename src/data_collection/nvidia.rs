@@ -21,12 +21,35 @@ pub struct GpusData {
     pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
 }
 
+/// Wrapper around Nvml::init
+///
+/// On Linux, if `Nvml::init()` fails, this function attempts to explicitly load
+/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls `Nvml::init`.
+///
+/// This is a workaround until https://github.com/Cldfire/nvml-wrapper/pull/63 is accepted.
+/// Then, we can go back to calling `Nvml::init` directly on all platforms.
+fn init_nvml() -> Result<Nvml, NvmlError> {
+    #[cfg(not(target_os = "linux"))]
+    {
+        Nvml::init()
+    }
+    #[cfg(target_os = "linux")]
+    {
+        match Nvml::init() {
+            Ok(nvml) => Ok(nvml),
+            Err(_) => Nvml::builder()
+                .lib_path(std::ffi::OsStr::new("libnvidia-ml.so.1"))
+                .init(),
+        }
+    }
+}
+
 /// Returns the GPU data from NVIDIA cards.
 #[inline]
 pub fn get_nvidia_vecs(
     temp_type: &TemperatureType, filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
 ) -> Option<GpusData> {
-    if let Ok(nvml) = NVML_DATA.get_or_init(Nvml::init) {
+    if let Ok(nvml) = NVML_DATA.get_or_init(init_nvml) {
         if let Ok(num_gpu) = nvml.device_count() {
             let mut temp_vec = Vec::with_capacity(num_gpu as usize);
             let mut mem_vec = Vec::with_capacity(num_gpu as usize);
