@@ -21,7 +21,7 @@ use crate::{
 
 /// A chunk of data, corresponding to the indices of time slice.
 #[derive(Debug)]
-pub struct DataChunk {
+struct DataChunk {
     /// The start offset of this chunk, should correspond to the time_offsets. If that updates,
     /// this MUST also update.
     start_offset: usize,
@@ -78,7 +78,7 @@ impl DataChunk {
 
 /// Represents timeseries _value_ data in a chunked fashion.
 #[derive(Debug, Default)]
-pub struct ValueChunk {
+struct ValueChunk {
     /// The currently-updated chunk.
     current: Option<DataChunk>,
 
@@ -165,6 +165,12 @@ impl ValueChunk {
     }
 }
 
+/// A wrapper around a list of [`ValueChunk`].
+struct ValueChunkList(Vec<ValueChunk>);
+
+
+
+/// A wrapper around an [`Instant`], with the default being [`Instant::now`].
 #[derive(Debug, Clone, Copy)]
 struct DefaultInstant(Instant);
 
