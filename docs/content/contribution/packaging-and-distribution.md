@@ -54,6 +54,9 @@ This will automatically generate completion and manpage files in `target/tmp/bot
 files, modify/delete either these files or set `BTM_GENERATE` to some other non-empty value to retrigger the build
 script.
 
+You may override the default diretories used to generate both completion and manpage files by specifying the
+`COMPLETION_DIR` and `MANPAGE_DIR` environment variables respectively.
+
 For more information, you may want to look at either the [`build.rs`](https://github.com/ClementTsang/bottom/blob/main/build.rs)
 file or the [binary build CI workflow](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml).
 

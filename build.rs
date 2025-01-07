@@ -38,11 +38,12 @@ fn btm_generate() -> io::Result<()> {
 
     match env::var_os(ENV_KEY) {
         Some(var) if !var.is_empty() => {
-            const COMPLETION_DIR: &str = "./target/tmp/bottom/completion/";
-            const MANPAGE_DIR: &str = "./target/tmp/bottom/manpage/";
+            let completion_dir =
+                option_env!("COMPLETION_DIR").unwrap_or("./target/tmp/bottom/completion/");
+            let manpage_dir = option_env!("MANPAGE_DIR").unwrap_or("./target/tmp/bottom/manpage/");
 
-            let completion_out_dir = PathBuf::from(COMPLETION_DIR);
-            let manpage_out_dir = PathBuf::from(MANPAGE_DIR);
+            let completion_out_dir = PathBuf::from(completion_dir);
+            let manpage_out_dir = PathBuf::from(manpage_dir);
 
             create_dir(&completion_out_dir)?;
             create_dir(&manpage_out_dir)?;
