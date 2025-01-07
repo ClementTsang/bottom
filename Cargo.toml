@@ -72,7 +72,7 @@ logging = ["fern", "log", "time"]
 generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
-anyhow = "1.0.94"
+anyhow = "1.0.95"
 backtrace = "0.3.74"
 cfg-if = "1.0.0"
 clap = { version = "4.5.23", features = ["default", "cargo", "wrap_help", "derive"] }
@@ -85,15 +85,15 @@ hashbrown = "0.15.2"
 humantime = "2.1.0"
 indexmap = "2.7.0"
 indoc = "2.0.5"
-itertools = "0.13.0"
+itertools = "0.14.0"
 nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
 regex = "1.11.1"
-serde = { version = "1.0.216", features = ["derive"] }
+serde = { version = "1.0.217", features = ["derive"] }
 starship-battery = { version = "0.10.0", optional = true }
 sysinfo = "=0.30.13"
 toml_edit = { version = "0.22.22", features = ["serde"] }
 tui = { version = "0.29.0", package = "ratatui" }
-unicode-ellipsis = "0.2.0"
+unicode-ellipsis = "0.3.0"
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2.0"
 
@@ -104,7 +104,7 @@ time = { version = "0.3.37", features = ["local-offset", "formatting", "macros"]
 
 # These are just used for JSON schema generation.
 schemars = { version = "0.8.21", optional = true }
-serde_json = { version = "1.0.133", optional = true }
+serde_json = { version = "1.0.135", optional = true }
 strum = { version = "0.26.3", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
@@ -137,7 +137,7 @@ filedescriptor = "0.8.2"
 assert_cmd = "2.0.16"
 cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
 predicates = "3.1.3"
-tempfile = "3.14.0"
+tempfile = "3.15.0"
 
 [target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
 portable-pty = "0.8.1"
@@ -145,7 +145,7 @@ portable-pty = "0.8.1"
 [build-dependencies]
 clap = { version = "4.5.23", features = ["default", "cargo", "wrap_help", "derive"] }
 clap_complete = "4.5.40"
-clap_complete_nushell = "4.5.4"
+clap_complete_nushell = "4.5.5"
 clap_complete_fig = "4.5.2"
 clap_mangen = "0.2.24"
 indoc = "2.0.5"
