@@ -6,7 +6,8 @@ use std::{
     vec::Vec,
 };
 
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
+use timeless::data::ChunkedData;
 
 #[cfg(feature = "battery")]
 use crate::data_collection::batteries;
@@ -19,156 +20,20 @@ use crate::{
     dec_bytes_per_second_string,
 };
 
-/// A chunk of data, corresponding to the indices of time slice.
-#[derive(Debug)]
-struct DataChunk {
-    /// The start offset of this chunk, should correspond to the time_offsets. If that updates,
-    /// this MUST also update.
-    start_offset: usize,
+/// Values corresponding to a time slice.
+type Values = ChunkedData<f64>;
 
-    /// The end offset of this chunk, should correspond to the time_offsets. If that updates,
-    /// this MUST also update.
-    end_offset: usize,
+/// A wrapper around a vector of lists of data.
+struct ValueChunkList(Vec<Values>);
 
-    /// The actual value data!
-    data: Vec<f64>,
-}
-
-impl DataChunk {
-    /// Create a new [`DataChunk`] starting from `offset`.
-    pub fn new(initial_value: f64, start_offset: usize) -> Self {
-        Self {
-            start_offset,
-            end_offset: start_offset + 1,
-            data: vec![initial_value],
-        }
-    }
-
-    /// Try and prune the chunk.
-    pub fn try_prune(&mut self, prune_end_index: usize) -> bool {
-        if prune_end_index > self.end_offset {
-            self.data.clear();
-            self.start_offset = 0;
-            self.end_offset = 0;
-
-            true
-        } else if prune_end_index > self.start_offset {
-            // We know the prune index must be between the start and end, so we're safe
-            // to blindly do subtaction here, assuming our other invariants held.
-
-            let drain_end = prune_end_index - self.start_offset;
-
-            self.data.drain(..drain_end);
-
-            self.start_offset = 0;
-            self.end_offset -= prune_end_index;
-
-            true
-        } else {
-            false
-        }
-    }
-
-    /// Update the offsets of this chunk by `usize`.
-    pub fn update_indices(&mut self, offset: usize) {
-        self.start_offset -= offset;
-        self.end_offset -= offset;
-    }
-}
-
-/// Represents timeseries _value_ data in a chunked fashion.
-#[derive(Debug, Default)]
-struct ValueChunk {
-    /// The currently-updated chunk.
-    current: Option<DataChunk>,
-
-    /// Previous chunks, this should be added to if a data gap is found.
-    previous_chunks: Vec<DataChunk>,
-}
-
-impl ValueChunk {
-    /// Add a value to this chunk.
-    pub fn add(&mut self, value: f64, index: usize) {
-        match self.current.as_mut() {
-            Some(current) => {
-                current.data.push(value);
-                current.end_offset = index + 1;
-            }
-            None => {
-                self.current = Some(DataChunk::new(value, index));
-            }
-        }
-    }
-
-    /// End the current chunk.
-    pub fn end_chunk(&mut self) {
-        if let Some(current) = self.current.take() {
-            self.previous_chunks.push(current);
-        }
-    }
-
-    /// Prune all chunks up to (and not including) the current end index, and update all internal indicies to match this.
+impl ValueChunkList {
+    /// Prune all lists.
     pub fn prune(&mut self, remove_up_to: usize) {
-        // Try to prune the current; if we _can_ prune the current, then it likely means all the
-        // previous chunks should also be pruned.
-
-        let pruned_current = if let Some(current) = self.current.as_mut() {
-            current.try_prune(remove_up_to)
-        } else {
-            false
-        };
-
-        if pruned_current {
-            // If we could prune the current chunk, then it means all other chunks are outdated. Remove them.
-            if !self.previous_chunks.is_empty() {
-                self.previous_chunks.clear();
-                self.previous_chunks.shrink_to_fit();
-            }
-        } else {
-            // Otherwise, try and prune the previous chunks + adjust the remaining chunks' offsets.
-
-            for (index, previous_chunk) in self.previous_chunks.iter_mut().enumerate().rev() {
-                if previous_chunk.try_prune(remove_up_to) {
-                    let end_index = if previous_chunk.end_offset == 0 {
-                        index + 1
-                    } else {
-                        index
-                    };
-
-                    self.previous_chunks.drain(0..end_index);
-
-                    if let Some(current) = &mut self.current {
-                        current.update_indices(remove_up_to);
-                    }
-
-                    for previous_chunk in self.previous_chunks.iter_mut().skip(1) {
-                        previous_chunk.update_indices(remove_up_to);
-                    }
-
-                    return;
-                }
-            }
+        for v in &mut self.0 {
+            v.prune(remove_up_to);
         }
-    }
-
-    /// Check if a [`DataChunk`] has no data in it.
-    pub fn is_empty(&self) -> bool {
-        if let Some(current) = &self.current {
-            if !current.data.is_empty() {
-                return false;
-            }
-        }
-
-        // If any of the previous chunks are not empty, return false.
-        // If there are no previous chunks, return true.
-        !self.previous_chunks.iter().any(|c| !c.data.is_empty())
     }
 }
-
-/// A wrapper around a list of [`ValueChunk`].
-struct ValueChunkList(Vec<ValueChunk>);
-
-
 
 /// A wrapper around an [`Instant`], with the default being [`Instant::now`].
 #[derive(Debug, Clone, Copy)]
@@ -189,186 +54,187 @@ impl Default for DefaultInstant {
 /// - Additional metadata is stored to make data pruning over time easy.
 #[derive(Debug, Default)]
 pub struct TimeSeriesData {
-    /// The last-updated timestamp. The last time offset is based on this value.
-    /// When updating this value ensure you also update time_offsets with the
-    /// new offset from the new time to the original value.
-    current_time: DefaultInstant,
+    /// Time values.
+    time: Vec<Instant>,
 
-    /// All time offsets relative to the previous value, first element is the oldest value,
-    /// and is relvative to `current_time`.
-    ///
-    /// For example:
-    /// [1, 5, 3], with current_time of 9 and starting initially from 0,
-    /// would represent values of [0, 1, 6, 9], 9 being the last-read value.
-    ///
-    /// We store this as u32 to save memory; in theory we can store this as
-    /// an even smaller, compressible data format.
-    time_offsets: Vec<u32>,
+    /// Network RX data.
+    rx: Values,
 
-    /// Time offset ranges to help faciliate pruning. Must be in
-    /// sorted order. Offset ranges are [start, end) (that is, exclusive).
-    ///
-    /// Storing double usize might be wasteful but eh.
-    offset_ranges: Vec<(Instant, usize, usize)>,
+    /// Network TX data.
+    tx: Values,
 
-    /// Network RX data chunks.
-    rx: ValueChunk,
+    /// CPU data.
+    cpu: Vec<Values>,
 
-    /// Network TX data chunks.
-    tx: ValueChunk,
+    /// Memory data.
+    mem: Values,
 
-    /// CPU data chunks.
-    cpu: Vec<ValueChunk>,
-
-    /// Memory data chunks.
-    mem: ValueChunk,
-
-    /// Swap data chunks.
-    swap: ValueChunk,
+    /// Swap data.
+    swap: Values,
 
     #[cfg(not(target_os = "windows"))]
-    /// Cache data chunks.
-    cache_mem: ValueChunk,
+    /// Cache data.
+    cache_mem: Values,
 
     #[cfg(feature = "zfs")]
-    /// Arc data chunks.
-    arc_mem: ValueChunk,
+    /// Arc data.
+    arc_mem: Values,
 
     #[cfg(feature = "gpu")]
-    /// GPU memory data chunks.
-    gpu_mem: Vec<ValueChunk>,
+    /// GPU memory data.
+    gpu_mem: HashMap<String, Values>,
 }
 
 impl TimeSeriesData {
     /// Add a new data point.
     pub fn add(&mut self, data: Data) {
-        let time = data
-            .collection_time
-            .duration_since(self.current_time.0)
-            .as_millis() as u32;
-        self.current_time.0 = data.collection_time;
-        self.time_offsets.push(time);
-
-        let index = self.time_offsets.len() - 1;
+        self.time.push(data.collection_time);
 
         if let Some(network) = data.network {
-            self.rx.add(network.rx as f64, index);
-            self.tx.add(network.tx as f64, index);
+            self.rx.push(network.rx as f64);
+            self.tx.push(network.tx as f64);
+        } else {
+            self.rx.insert_break();
+            self.tx.insert_break();
         }
 
         if let Some(cpu) = data.cpu {
-            for (itx, c) in cpu.into_iter().enumerate() {
-                todo!()
+            if self.cpu.len() < cpu.len() {
+                let diff = cpu.len() - self.cpu.len();
+                self.cpu.reserve_exact(diff);
+
+                for _ in 0..diff {
+                    self.cpu.push(Default::default());
+                }
+            } else if self.cpu.len() > cpu.len() {
+                let diff = self.cpu.len() - cpu.len();
+                let offset = self.cpu.len() - diff;
+
+                for curr in &mut self.cpu[offset..] {
+                    curr.insert_break();
+                }
+            }
+
+            for (curr, new_data) in self.cpu.iter_mut().zip(cpu.into_iter()) {
+                curr.push(new_data.cpu_usage);
+            }
+        } else {
+            for c in &mut self.cpu {
+                c.insert_break();
             }
         }
 
         if let Some(memory) = data.memory {
-            if let Some(val) = memory.checked_percent() {
-                self.mem.add(val, index);
-            } else {
-                self.mem.end_chunk();
-            }
+            self.mem.try_push(memory.checked_percent());
+        } else {
+            self.mem.insert_break();
         }
 
         if let Some(swap) = data.swap {
-            if let Some(val) = swap.checked_percent() {
-                self.swap.add(val, index);
-            } else {
-                self.swap.end_chunk();
-            }
+            self.swap.try_push(swap.checked_percent());
+        } else {
+            self.swap.insert_break();
         }
 
         #[cfg(not(target_os = "windows"))]
-        if let Some(cache) = data.cache {
-            if let Some(val) = cache.checked_percent() {
-                self.cache_mem.add(val, index);
+        {
+            if let Some(cache) = data.cache {
+                self.cache_mem.try_push(cache.checked_percent());
             } else {
-                self.cache_mem.end_chunk();
+                self.cache_mem.insert_break();
             }
         }
 
         #[cfg(feature = "zfs")]
-        if let Some(arc) = data.arc {
-            if let Some(val) = arc.checked_percent() {
-                self.arc_mem.add(val, index);
+        {
+            if let Some(arc) = data.arc {
+                self.arc_mem.try_push(arc.checked_percent());
             } else {
-                self.arc_mem.end_chunk();
+                self.arc_mem.insert_break();
             }
         }
 
         #[cfg(feature = "gpu")]
-        if let Some(gpu) = data.gpu {
-            for g in gpu {
-                todo!()
+        {
+            if let Some(gpu) = data.gpu {
+                let mut not_visited = self
+                    .gpu_mem
+                    .keys()
+                    .map(String::to_owned)
+                    .collect::<HashSet<_>>();
+
+                for (name, new_data) in gpu {
+                    not_visited.remove(&name);
+                    let curr = self.gpu_mem.entry(name).or_default();
+                    curr.try_push(new_data.checked_percent());
+                }
+
+                for nv in not_visited {
+                    if let Some(entry) = self.gpu_mem.get_mut(&nv) {
+                        entry.insert_break();
+                    }
+                }
+            } else {
+                for g in self.gpu_mem.values_mut() {
+                    g.insert_break();
+                }
             }
         }
     }
 
     /// Prune any data older than the given duration.
-    pub fn prune(&mut self, max_age: Duration) {
-        let remove_index = match self.offset_ranges.binary_search_by(|(instant, _, _)| {
-            self.current_time
-                .0
-                .duration_since(*instant)
-                .cmp(&max_age)
-                .reverse()
-        }) {
+    pub fn prune(&mut self, max_age: Duration) -> Result<(), usize> {
+        if self.time.is_empty() {
+            return Ok(());
+        }
+
+        let now = Instant::now();
+
+        let end = match self
+            .time
+            .binary_search_by(|then| now.duration_since(*then).cmp(&max_age).reverse())
+        {
             Ok(index) => index,
-            Err(index) => index,
+            Err(index) => index - 1, // Safe as length is > 0.
         };
 
-        if let Some((_offset, start, end)) = self.offset_ranges.drain(0..remove_index).last() {
-            // Note that end here is _exclusive_.
-            self.time_offsets.drain(0..end);
+        // Note that end here is _inclusive_.
+        self.time.drain(0..=end);
 
-            self.rx.prune(end);
-            self.tx.prune(end);
+        self.rx.prune(end)?;
+        self.tx.prune(end)?;
 
-            // TODO: Maybe make a wrapper around a Vec<DataChunk>?
-            {
-                let mut to_delete = vec![];
+        for cpu in &mut self.cpu {
+            cpu.prune(end)?;
 
-                for (itx, cpu) in self.cpu.iter_mut().enumerate() {
-                    cpu.prune(end);
+            // // We don't want to retain things if there is no data at all.
+            // if cpu.is_empty() {
+            //     to_delete.push(itx);
+            // }
+        }
 
-                    // We don't want to retain things if there is no data at all.
-                    if cpu.is_empty() {
-                        to_delete.push(itx);
-                    }
-                }
+        self.mem.prune(end)?;
+        self.swap.prune(end)?;
 
-                for itx in to_delete.into_iter().rev() {
-                    self.cpu.remove(itx);
-                }
-            }
+        #[cfg(not(target_os = "windows"))]
+        self.cache_mem.prune(end)?;
 
-            self.mem.prune(end);
-            self.swap.prune(end);
+        #[cfg(feature = "zfs")]
+        self.arc_mem.prune(end)?;
 
-            #[cfg(not(target_os = "windows"))]
-            self.cache_mem.prune(end);
+        #[cfg(feature = "gpu")]
+        {
+            for gpu in self.gpu_mem.values_mut() {
+                gpu.prune(end)?;
 
-            #[cfg(feature = "zfs")]
-            self.arc_mem.prune(end);
-
-            #[cfg(feature = "gpu")]
-            {
-                let mut to_delete = vec![];
-
-                for (itx, gpu) in self.gpu_mem.iter_mut().enumerate() {
-                    gpu.prune(end);
-
-                    // We don't want to retain things if there is no data at all.
-                    if gpu.is_empty() {
-                        to_delete.push(itx);
-                    }
-                }
-
-                for itx in to_delete.into_iter().rev() {
-                    self.gpu_mem.remove(itx);
-                }
+                // // We don't want to retain things if there is no data at all.
+                // if gpu.is_empty() {
+                //     to_delete.push(itx);
+                // }
             }
         }
+
+        Ok(())
     }
 }
 
@@ -808,182 +674,5 @@ impl DataCollection {
             new_entry.gpu_data.push(data.1.checked_percent());
         });
         self.gpu_harvest = gpu;
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    /// Basic sanity test for current chunk adding/pruning behaviour.
-
-    #[test]
-    fn prune_current_chunk() {
-        let mut vc = ValueChunk::default();
-        let times = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0];
-
-        let mut index = 1;
-        for time in &times[index..] {
-            vc.add(*time * 2.0, index);
-            index += 1
-        }
-
-        assert_eq!(
-            (&vc).current.as_ref().unwrap().data,
-            &[4.0, 6.0, 8.0, 10.0, 12.0]
-        );
-        assert_eq!((&vc).current.as_ref().unwrap().start_offset, 1);
-        assert_eq!((&vc).current.as_ref().unwrap().end_offset, 6);
-
-        // Test removing partially.
-        vc.prune(3);
-        assert_eq!((&vc).current.as_ref().unwrap().data, &[8.0, 10.0, 12.0]);
-        assert_eq!((&vc).current.as_ref().unwrap().start_offset, 0);
-        assert_eq!((&vc).current.as_ref().unwrap().end_offset, 3);
-
-        // Test fully clearing house.
-        vc.prune(3);
-        assert_eq!((&vc).current.as_ref().unwrap().data, &[]);
-        assert_eq!((&vc).current.as_ref().unwrap().start_offset, 0);
-        assert_eq!((&vc).current.as_ref().unwrap().end_offset, 0);
-
-        // Test re-adding values and clearing again.
-        let second_input = [1.0, 2.0, 3.0, 4.0];
-        for (index, val) in second_input.into_iter().enumerate() {
-            vc.add(val, index);
-        }
-
-        assert_eq!((&vc).current.as_ref().unwrap().data, &second_input);
-        assert_eq!((&vc).current.as_ref().unwrap().start_offset, 0);
-        assert_eq!((&vc).current.as_ref().unwrap().end_offset, 4);
-
-        vc.prune(3);
-        assert_eq!((&vc).current.as_ref().unwrap().data, &[4.0]);
-        assert_eq!((&vc).current.as_ref().unwrap().start_offset, 0);
-        assert_eq!((&vc).current.as_ref().unwrap().end_offset, 1);
-
-        vc.prune(0);
-        assert_eq!((&vc).current.as_ref().unwrap().data, &[4.0]);
-        assert_eq!((&vc).current.as_ref().unwrap().start_offset, 0);
-        assert_eq!((&vc).current.as_ref().unwrap().end_offset, 1);
-
-        vc.prune(1);
-        assert_eq!((&vc).current.as_ref().unwrap().data, &[]);
-        assert_eq!((&vc).current.as_ref().unwrap().start_offset, 0);
-        assert_eq!((&vc).current.as_ref().unwrap().end_offset, 0);
-    }
-
-    /// Test pruning multiple chunks.
-    #[test]
-    fn prune_multi() {
-        // Let's simulate the following:
-        //
-        // |_________________|_________________|____________|
-        // 0    chunk 1      5     no data    10  chunk 2   20
-
-        let mut vc = ValueChunk::default();
-
-        for i in 0..5 {
-            vc.add((i * 10) as f64, i);
-        }
-
-        vc.end_chunk();
-
-        for i in 10..20 {
-            vc.add((i * 100) as f64, i);
-        }
-
-        assert!(vc.current.is_some());
-        assert_eq!(vc.previous_chunks.len(), 1);
-
-        assert_eq!(vc.current.as_ref().unwrap().data.len(), 10);
-        assert_eq!(vc.current.as_ref().unwrap().start_offset, 10);
-        assert_eq!(vc.current.as_ref().unwrap().end_offset, 20);
-
-        assert_eq!(vc.previous_chunks.get(0).as_ref().unwrap().data.len(), 5);
-        assert_eq!(vc.previous_chunks.get(0).as_ref().unwrap().start_offset, 0);
-        assert_eq!(vc.previous_chunks.get(0).as_ref().unwrap().end_offset, 5);
-
-        // Try partial pruning previous, make sure it affects current indices too.
-        vc.prune(3);
-
-        assert!(vc.current.is_some());
-        assert_eq!(vc.previous_chunks.len(), 1);
-
-        assert_eq!(vc.current.as_ref().unwrap().data.len(), 10);
-        assert_eq!(vc.current.as_ref().unwrap().start_offset, 7);
-        assert_eq!(vc.current.as_ref().unwrap().end_offset, 17);
-
-        assert_eq!(vc.previous_chunks.get(0).as_ref().unwrap().data.len(), 2);
-        assert_eq!(vc.previous_chunks.get(0).as_ref().unwrap().start_offset, 0);
-        assert_eq!(vc.previous_chunks.get(0).as_ref().unwrap().end_offset, 2);
-
-        // Try full pruning previous.
-        vc.prune(2);
-
-        assert!(vc.current.is_some());
-        assert!(vc.previous_chunks.is_empty());
-
-        assert_eq!(vc.current.as_ref().unwrap().data.len(), 10);
-        assert_eq!(vc.current.as_ref().unwrap().start_offset, 5);
-        assert_eq!(vc.current.as_ref().unwrap().end_offset, 15);
-
-        // End chunk, then add a new one. Then end chunk and add a new one. Then end chunk and add a new one.
-        vc.end_chunk();
-        for i in 15..30 {
-            vc.add((i * 1000) as f64, i);
-        }
-
-        vc.end_chunk();
-        for i in 35..50 {
-            vc.add((i * 10000) as f64, i);
-        }
-
-        vc.end_chunk();
-        for i in 58..60 {
-            vc.add((i * 100000) as f64, i);
-        }
-
-        assert!(vc.current.is_some());
-        assert_eq!(vc.previous_chunks.len(), 3);
-
-        // Ensure current chunk is downgraded to previous_chunks.
-        assert_eq!(vc.previous_chunks[0].data.len(), 10);
-
-        // Try pruning the middle chunk, ensure older chunks are cleared and newer chunks are updated.
-        vc.prune(25);
-
-        assert!(vc.current.is_some());
-        assert_eq!(vc.previous_chunks.len(), 2);
-
-        assert_eq!(vc.previous_chunks.get(0).as_ref().unwrap().data.len(), 5);
-        assert_eq!(vc.previous_chunks.get(0).as_ref().unwrap().start_offset, 0);
-        assert_eq!(vc.previous_chunks.get(0).as_ref().unwrap().end_offset, 5);
-
-        // Gap of 5, so 5 + 5 = 10
-        assert_eq!(vc.previous_chunks.get(1).as_ref().unwrap().data.len(), 15);
-        assert_eq!(vc.previous_chunks.get(1).as_ref().unwrap().start_offset, 10);
-        assert_eq!(vc.previous_chunks.get(1).as_ref().unwrap().end_offset, 25);
-
-        // Gap of 8, so 25 + 8 = 33
-        assert_eq!(vc.current.as_ref().unwrap().data.len(), 2);
-        assert_eq!(vc.current.as_ref().unwrap().start_offset, 33);
-        assert_eq!(vc.current.as_ref().unwrap().end_offset, 35);
-
-        // Try pruning current. Ensure previous chunks are cleared.
-        vc.prune(34);
-
-        assert!(vc.current.is_some());
-        assert!(vc.previous_chunks.is_empty());
-
-        assert_eq!(vc.current.as_ref().unwrap().data.len(), 1);
-        assert_eq!(vc.current.as_ref().unwrap().start_offset, 0);
-        assert_eq!(vc.current.as_ref().unwrap().end_offset, 1);
-
-        vc.prune(1);
-
-        assert!(vc.current.as_ref().unwrap().data.is_empty());
-        assert_eq!(vc.current.as_ref().unwrap().start_offset, 0);
-        assert_eq!(vc.current.as_ref().unwrap().end_offset, 0);
     }
 }
