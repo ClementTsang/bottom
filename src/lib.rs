@@ -520,7 +520,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                 }
                 BottomEvent::Clean => {
                     app.data_collection
-                        .clean_data(app.app_config_fields.retention_ms);
+                        .clean_data(app.app_config_fields.retention_ms)?;
                 }
             }
         }

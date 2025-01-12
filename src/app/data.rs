@@ -1,12 +1,13 @@
 //! In charge of cleaning, processing, and managing data.
 
 use std::{
+    cmp::Ordering,
     collections::BTreeMap,
     time::{Duration, Instant},
     vec::Vec,
 };
 
-use hashbrown::{HashMap, HashSet};
+use hashbrown::{HashMap, HashSet}; // TODO: Try fxhash again.
 use timeless::data::ChunkedData;
 
 #[cfg(feature = "battery")]
@@ -23,28 +24,6 @@ use crate::{
 /// Values corresponding to a time slice.
 type Values = ChunkedData<f64>;
 
-/// A wrapper around a vector of lists of data.
-struct ValueChunkList(Vec<Values>);
-
-impl ValueChunkList {
-    /// Prune all lists.
-    pub fn prune(&mut self, remove_up_to: usize) {
-        for v in &mut self.0 {
-            v.prune(remove_up_to);
-        }
-    }
-}
-
-/// A wrapper around an [`Instant`], with the default being [`Instant::now`].
-#[derive(Debug, Clone, Copy)]
-struct DefaultInstant(Instant);
-
-impl Default for DefaultInstant {
-    fn default() -> Self {
-        Self(Instant::now())
-    }
-}
-
 /// Represents timeseries data in a chunked, deduped manner.
 ///
 /// Properties:
@@ -52,7 +31,7 @@ impl Default for DefaultInstant {
 /// - All data is stored in SoA fashion.
 /// - Values are stored in a chunked format, which facilitates gaps in data collection if needed.
 /// - Additional metadata is stored to make data pruning over time easy.
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct TimeSeriesData {
     /// Time values.
     time: Vec<Instant>,
@@ -87,10 +66,10 @@ pub struct TimeSeriesData {
 
 impl TimeSeriesData {
     /// Add a new data point.
-    pub fn add(&mut self, data: Data) {
+    pub fn add(&mut self, data: &Data) {
         self.time.push(data.collection_time);
 
-        if let Some(network) = data.network {
+        if let Some(network) = &data.network {
             self.rx.push(network.rx as f64);
             self.tx.push(network.tx as f64);
         } else {
@@ -98,24 +77,28 @@ impl TimeSeriesData {
             self.tx.insert_break();
         }
 
-        if let Some(cpu) = data.cpu {
-            if self.cpu.len() < cpu.len() {
-                let diff = cpu.len() - self.cpu.len();
-                self.cpu.reserve_exact(diff);
+        if let Some(cpu) = &data.cpu {
+            match self.cpu.len().cmp(&cpu.len()) {
+                Ordering::Less => {
+                    let diff = cpu.len() - self.cpu.len();
+                    self.cpu.reserve_exact(diff);
 
-                for _ in 0..diff {
-                    self.cpu.push(Default::default());
+                    for _ in 0..diff {
+                        self.cpu.push(Default::default());
+                    }
                 }
-            } else if self.cpu.len() > cpu.len() {
-                let diff = self.cpu.len() - cpu.len();
-                let offset = self.cpu.len() - diff;
+                Ordering::Greater => {
+                    let diff = self.cpu.len() - cpu.len();
+                    let offset = self.cpu.len() - diff;
 
-                for curr in &mut self.cpu[offset..] {
-                    curr.insert_break();
+                    for curr in &mut self.cpu[offset..] {
+                        curr.insert_break();
+                    }
                 }
+                Ordering::Equal => {}
             }
 
-            for (curr, new_data) in self.cpu.iter_mut().zip(cpu.into_iter()) {
+            for (curr, new_data) in self.cpu.iter_mut().zip(cpu.iter()) {
                 curr.push(new_data.cpu_usage);
             }
         } else {
@@ -124,13 +107,13 @@ impl TimeSeriesData {
             }
         }
 
-        if let Some(memory) = data.memory {
+        if let Some(memory) = &data.memory {
             self.mem.try_push(memory.checked_percent());
         } else {
             self.mem.insert_break();
         }
 
-        if let Some(swap) = data.swap {
+        if let Some(swap) = &data.swap {
             self.swap.try_push(swap.checked_percent());
         } else {
             self.swap.insert_break();
@@ -138,7 +121,7 @@ impl TimeSeriesData {
 
         #[cfg(not(target_os = "windows"))]
         {
-            if let Some(cache) = data.cache {
+            if let Some(cache) = &data.cache {
                 self.cache_mem.try_push(cache.checked_percent());
             } else {
                 self.cache_mem.insert_break();
@@ -147,7 +130,7 @@ impl TimeSeriesData {
 
         #[cfg(feature = "zfs")]
         {
-            if let Some(arc) = data.arc {
+            if let Some(arc) = &data.arc {
                 self.arc_mem.try_push(arc.checked_percent());
             } else {
                 self.arc_mem.insert_break();
@@ -156,7 +139,7 @@ impl TimeSeriesData {
 
         #[cfg(feature = "gpu")]
         {
-            if let Some(gpu) = data.gpu {
+            if let Some(gpu) = &data.gpu {
                 let mut not_visited = self
                     .gpu_mem
                     .keys()
@@ -164,8 +147,17 @@ impl TimeSeriesData {
                     .collect::<HashSet<_>>();
 
                 for (name, new_data) in gpu {
-                    not_visited.remove(&name);
-                    let curr = self.gpu_mem.entry(name).or_default();
+                    not_visited.remove(name);
+
+                    if !self.gpu_mem.contains_key(name) {
+                        self.gpu_mem
+                            .insert(name.to_string(), ChunkedData::default());
+                    }
+
+                    let curr = self
+                        .gpu_mem
+                        .get_mut(name)
+                        .expect("entry must exist as it was created above");
                     curr.try_push(new_data.checked_percent());
                 }
 
@@ -317,6 +309,7 @@ impl ProcessData {
 pub struct DataCollection {
     pub current_instant: Instant,
     pub timed_data_vec: Vec<(Instant, TimedData)>,
+    pub timeseries_data: TimeSeriesData,
     pub network_harvest: network::NetworkHarvest,
     pub memory_harvest: memory::MemHarvest,
     #[cfg(not(target_os = "windows"))]
@@ -343,6 +336,7 @@ impl Default for DataCollection {
         DataCollection {
             current_instant: Instant::now(),
             timed_data_vec: Vec::default(),
+            timeseries_data: TimeSeriesData::default(),
             network_harvest: network::NetworkHarvest::default(),
             memory_harvest: memory::MemHarvest::default(),
             #[cfg(not(target_os = "windows"))]
@@ -369,6 +363,7 @@ impl Default for DataCollection {
 impl DataCollection {
     pub fn reset(&mut self) {
         self.timed_data_vec = Vec::default();
+        self.timeseries_data = TimeSeriesData::default();
         self.network_harvest = network::NetworkHarvest::default();
         self.memory_harvest = memory::MemHarvest::default();
         self.swap_harvest = memory::MemHarvest::default();
@@ -392,148 +387,87 @@ impl DataCollection {
         }
     }
 
-    pub fn clean_data(&mut self, max_time_millis: u64) {
-        let current_time = Instant::now();
+    pub fn clean_data(&mut self, max_time_millis: u64) -> anyhow::Result<()> {
+        self.timeseries_data
+            .prune(Duration::from_millis(max_time_millis))
+            .map_err(|err| anyhow::anyhow!(err.to_string()))?;
 
-        let remove_index = match self
-            .timed_data_vec
-            .binary_search_by(|(instant, _timed_data)| {
-                current_time
-                    .duration_since(*instant)
-                    .as_millis()
-                    .cmp(&(max_time_millis.into()))
-                    .reverse()
-            }) {
-            Ok(index) => index,
-            Err(index) => index,
-        };
-
-        self.timed_data_vec.drain(0..remove_index);
-        self.timed_data_vec.shrink_to_fit();
+        Ok(())
     }
 
     #[allow(
         clippy::boxed_local,
-        reason = "Clippy allow to avoid warning on certain platforms (e.g. 32-bit)."
+        reason = "This avoids warnings on certain platforms (e.g. 32-bit)."
     )]
-    pub fn eat_data(&mut self, harvested_data: Box<Data>) {
-        let harvested_time = harvested_data.collection_time;
-        let mut new_entry = TimedData::default();
+    pub fn eat_data(&mut self, data: Box<Data>) {
+        let harvested_time = data.collection_time;
+
+        self.timeseries_data.add(&data);
 
         // Network
-        if let Some(network) = harvested_data.network {
-            self.eat_network(network, &mut new_entry);
+        if let Some(network) = data.network {
+            self.network_harvest = network;
         }
 
         // Memory, Swap
-        if let (Some(memory), Some(swap)) = (harvested_data.memory, harvested_data.swap) {
-            self.eat_memory_and_swap(memory, swap, &mut new_entry);
+        if let (Some(memory), Some(swap)) = (data.memory, data.swap) {
+            self.memory_harvest = memory;
+            self.swap_harvest = swap;
         }
 
         // Cache memory
         #[cfg(not(target_os = "windows"))]
-        if let Some(cache) = harvested_data.cache {
-            self.eat_cache(cache, &mut new_entry);
+        if let Some(cache) = data.cache {
+            self.cache_harvest = cache;
         }
 
         #[cfg(feature = "zfs")]
-        if let Some(arc) = harvested_data.arc {
-            self.eat_arc(arc, &mut new_entry);
+        if let Some(arc) = data.arc {
+            self.arc_harvest = arc;
         }
 
         #[cfg(feature = "gpu")]
-        if let Some(gpu) = harvested_data.gpu {
-            self.eat_gpu(gpu, &mut new_entry);
+        if let Some(gpu) = data.gpu {
+            self.gpu_harvest = gpu;
         }
 
         // CPU
-        if let Some(cpu) = harvested_data.cpu {
-            self.eat_cpu(cpu, &mut new_entry);
+        if let Some(cpu) = data.cpu {
+            self.cpu_harvest = cpu;
         }
 
         // Load average
-        if let Some(load_avg) = harvested_data.load_avg {
-            self.eat_load_avg(load_avg);
+        if let Some(load_avg) = data.load_avg {
+            self.load_avg_harvest = load_avg;
         }
 
         // Temp
-        if let Some(temperature_sensors) = harvested_data.temperature_sensors {
-            self.eat_temp(temperature_sensors);
+        if let Some(temperature_sensors) = data.temperature_sensors {
+            self.temp_harvest = temperature_sensors;
         }
 
         // Disks
-        if let Some(disks) = harvested_data.disks {
-            if let Some(io) = harvested_data.io {
+        if let Some(disks) = data.disks {
+            if let Some(io) = data.io {
                 self.eat_disks(disks, io, harvested_time);
             }
         }
 
         // Processes
-        if let Some(list_of_processes) = harvested_data.list_of_processes {
-            self.eat_proc(list_of_processes);
+        if let Some(list_of_processes) = data.list_of_processes {
+            self.process_data.ingest(list_of_processes);
         }
 
         #[cfg(feature = "battery")]
         {
             // Battery
-            if let Some(list_of_batteries) = harvested_data.list_of_batteries {
-                self.eat_battery(list_of_batteries);
+            if let Some(list_of_batteries) = data.list_of_batteries {
+                self.battery_harvest = list_of_batteries;
             }
         }
 
         // And we're done eating.  Update time and push the new entry!
         self.current_instant = harvested_time;
-        self.timed_data_vec.push((harvested_time, new_entry));
-    }
-
-    fn eat_memory_and_swap(
-        &mut self, memory: memory::MemHarvest, swap: memory::MemHarvest, new_entry: &mut TimedData,
-    ) {
-        new_entry.mem_data = memory.checked_percent();
-        new_entry.swap_data = swap.checked_percent();
-
-        // In addition copy over latest data for easy reference
-        self.memory_harvest = memory;
-        self.swap_harvest = swap;
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    fn eat_cache(&mut self, cache: memory::MemHarvest, new_entry: &mut TimedData) {
-        new_entry.cache_data = cache.checked_percent();
-        self.cache_harvest = cache;
-    }
-
-    fn eat_network(&mut self, network: network::NetworkHarvest, new_entry: &mut TimedData) {
-        // RX
-        if network.rx > 0 {
-            new_entry.rx_data = network.rx as f64;
-        }
-
-        // TX
-        if network.tx > 0 {
-            new_entry.tx_data = network.tx as f64;
-        }
-
-        // In addition copy over latest data for easy reference
-        self.network_harvest = network;
-    }
-
-    fn eat_cpu(&mut self, cpu: Vec<cpu::CpuData>, new_entry: &mut TimedData) {
-        // Note this only pre-calculates the data points - the names will be
-        // within the local copy of cpu_harvest.  Since it's all sequential
-        // it probably doesn't matter anyways.
-        cpu.iter()
-            .for_each(|cpu| new_entry.cpu_data.push(cpu.cpu_usage));
-
-        self.cpu_harvest = cpu;
-    }
-
-    fn eat_load_avg(&mut self, load_avg: cpu::LoadAvgHarvest) {
-        self.load_avg_harvest = load_avg;
-    }
-
-    fn eat_temp(&mut self, temperature_sensors: Vec<temperature::TempHarvest>) {
-        self.temp_harvest = temperature_sensors;
     }
 
     fn eat_disks(
@@ -648,31 +582,5 @@ impl DataCollection {
 
         self.disk_harvest = disks;
         self.io_harvest = io;
-    }
-
-    fn eat_proc(&mut self, list_of_processes: Vec<ProcessHarvest>) {
-        self.process_data.ingest(list_of_processes);
-    }
-
-    #[cfg(feature = "battery")]
-    fn eat_battery(&mut self, list_of_batteries: Vec<batteries::BatteryData>) {
-        self.battery_harvest = list_of_batteries;
-    }
-
-    #[cfg(feature = "zfs")]
-    fn eat_arc(&mut self, arc: memory::MemHarvest, new_entry: &mut TimedData) {
-        new_entry.arc_data = arc.checked_percent();
-        self.arc_harvest = arc;
-    }
-
-    #[cfg(feature = "gpu")]
-    fn eat_gpu(&mut self, gpu: Vec<(String, memory::MemHarvest)>, new_entry: &mut TimedData) {
-        // Note this only pre-calculates the data points - the names will be
-        // within the local copy of gpu_harvest. Since it's all sequential
-        // it probably doesn't matter anyways.
-        gpu.iter().for_each(|data| {
-            new_entry.gpu_data.push(data.1.checked_percent());
-        });
-        self.gpu_harvest = gpu;
     }
 }
