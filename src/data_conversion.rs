@@ -6,7 +6,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    app::{data::DataCollection, AxisScaling},
+    app::{data::CollectedData, AxisScaling},
     canvas::components::time_chart::Point,
     data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
     utils::{data_prefixes::*, data_units::DataUnit},
@@ -81,7 +81,7 @@ pub struct ConvertedData {
 
 impl ConvertedData {
     // TODO: Can probably heavily reduce this step to avoid clones.
-    pub fn convert_disk_data(&mut self, data: &DataCollection) {
+    pub fn convert_disk_data(&mut self, data: &CollectedData) {
         self.disk_data.clear();
 
         data.disk_harvest
@@ -109,7 +109,7 @@ impl ConvertedData {
         self.disk_data.shrink_to_fit();
     }
 
-    pub fn convert_temp_data(&mut self, data: &DataCollection, temperature_type: TemperatureType) {
+    pub fn convert_temp_data(&mut self, data: &CollectedData, temperature_type: TemperatureType) {
         self.temp_data.clear();
 
         data.temp_harvest.iter().for_each(|temp_harvest| {
@@ -123,7 +123,7 @@ impl ConvertedData {
         self.temp_data.shrink_to_fit();
     }
 
-    pub fn convert_cpu_data(&mut self, current_data: &DataCollection) {
+    pub fn convert_cpu_data(&mut self, current_data: &CollectedData) {
         let current_time = current_data.current_instant;
 
         // (Re-)initialize the vector if the lengths don't match...
@@ -193,7 +193,7 @@ impl ConvertedData {
     }
 }
 
-pub fn convert_mem_data_points(data: &DataCollection) -> Vec<Point> {
+pub fn convert_mem_data_points(data: &CollectedData) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = data.current_instant;
 
@@ -212,7 +212,7 @@ pub fn convert_mem_data_points(data: &DataCollection) -> Vec<Point> {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn convert_cache_data_points(data: &DataCollection) -> Vec<Point> {
+pub fn convert_cache_data_points(data: &CollectedData) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = data.current_instant;
 
@@ -230,7 +230,7 @@ pub fn convert_cache_data_points(data: &DataCollection) -> Vec<Point> {
     result
 }
 
-pub fn convert_swap_data_points(data: &DataCollection) -> Vec<Point> {
+pub fn convert_swap_data_points(data: &CollectedData) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = data.current_instant;
 
@@ -285,7 +285,7 @@ pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
 }
 
 pub fn get_network_points(
-    data: &DataCollection, scale_type: &AxisScaling, unit_type: &DataUnit, use_binary_prefix: bool,
+    data: &CollectedData, scale_type: &AxisScaling, unit_type: &DataUnit, use_binary_prefix: bool,
 ) -> (Vec<Point>, Vec<Point>) {
     let mut rx: Vec<Point> = Vec::new();
     let mut tx: Vec<Point> = Vec::new();
@@ -331,7 +331,7 @@ pub fn get_network_points(
 }
 
 pub fn convert_network_points(
-    data: &DataCollection, need_four_points: bool, scale_type: &AxisScaling, unit_type: &DataUnit,
+    data: &CollectedData, need_four_points: bool, scale_type: &AxisScaling, unit_type: &DataUnit,
     use_binary_prefix: bool,
 ) -> ConvertedNetworkData {
     let (rx, tx) = get_network_points(data, scale_type, unit_type, use_binary_prefix);
@@ -492,7 +492,7 @@ pub fn dec_bytes_string(value: u64) -> String {
 }
 
 #[cfg(feature = "zfs")]
-pub fn convert_arc_data_points(current_data: &DataCollection) -> Vec<Point> {
+pub fn convert_arc_data_points(current_data: &CollectedData) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = current_data.current_instant;
 
@@ -520,7 +520,7 @@ pub struct ConvertedGpuData {
 }
 
 #[cfg(feature = "gpu")]
-pub fn convert_gpu_data(current_data: &DataCollection) -> Option<Vec<ConvertedGpuData>> {
+pub fn convert_gpu_data(current_data: &CollectedData) -> Option<Vec<ConvertedGpuData>> {
     let current_time = current_data.current_instant;
 
     // convert points

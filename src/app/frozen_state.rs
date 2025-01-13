@@ -1,11 +1,11 @@
-use super::DataCollection;
+use super::CollectedData;
 
 /// The [`FrozenState`] indicates whether the application state should be
 /// frozen. It is either not frozen or frozen and containing a copy of the state
 /// at the time.
 pub enum FrozenState {
     NotFrozen,
-    Frozen(Box<DataCollection>),
+    Frozen(Box<CollectedData>),
 }
 
 impl Default for FrozenState {
@@ -23,7 +23,7 @@ impl FrozenState {
     }
 
     /// Freezes the [`FrozenState`].
-    pub fn freeze(&mut self, data: Box<DataCollection>) {
+    fn freeze(&mut self, data: Box<CollectedData>) {
         *self = FrozenState::Frozen(data);
     }
 
@@ -33,7 +33,7 @@ impl FrozenState {
     }
 
     /// Toggles the [`FrozenState`] and returns whether it is now frozen.
-    pub fn toggle(&mut self, data: &DataCollection) -> IsFrozen {
+    pub fn toggle(&mut self, data: &CollectedData) -> IsFrozen {
         if self.is_frozen() {
             self.thaw();
             false

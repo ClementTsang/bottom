@@ -306,7 +306,7 @@ impl ProcessData {
 /// Note that with this method, the *app* thread is responsible for cleaning -
 /// not the data collector.
 #[derive(Debug, Clone)]
-pub struct DataCollection {
+pub struct CollectedData {
     pub current_instant: Instant,
     pub timed_data_vec: Vec<(Instant, TimedData)>,
     pub timeseries_data: TimeSeriesData,
@@ -331,9 +331,9 @@ pub struct DataCollection {
     pub gpu_harvest: Vec<(String, memory::MemHarvest)>,
 }
 
-impl Default for DataCollection {
+impl Default for CollectedData {
     fn default() -> Self {
-        DataCollection {
+        CollectedData {
             current_instant: Instant::now(),
             timed_data_vec: Vec::default(),
             timeseries_data: TimeSeriesData::default(),
@@ -360,7 +360,7 @@ impl Default for DataCollection {
     }
 }
 
-impl DataCollection {
+impl CollectedData {
     pub fn reset(&mut self) {
         self.timed_data_vec = Vec::default();
         self.timeseries_data = TimeSeriesData::default();
@@ -582,5 +582,45 @@ impl DataCollection {
 
         self.disk_harvest = disks;
         self.io_harvest = io;
+    }
+}
+
+/// If we freeze data collection updates, we want to return a "frozen" copy
+/// of the data at the time, while still updating things in the background.
+#[derive(Default)]
+pub enum FrozenState {
+    #[default]
+    NotFrozen,
+    Frozen(Box<CollectedData>),
+}
+
+/// A wrapper around the currently collected data.
+pub struct DataState {
+    frozen_state: FrozenState,
+    main: CollectedData,
+}
+
+impl DataState {
+    /// Toggle whether the [`DataState`] is frozen or not.
+    pub fn toggle_frozen(&mut self) {
+        match &self.frozen_state {
+            FrozenState::NotFrozen => {
+                self.frozen_state = FrozenState::Frozen(Box::new(self.main.clone()));
+            }
+            FrozenState::Frozen(_) => self.frozen_state = FrozenState::NotFrozen,
+        }
+    }
+
+    /// Return whether the [`DataState`] is frozen or not.
+    pub fn is_frozen(&self) -> bool {
+        matches!(self.frozen_state, FrozenState::Frozen(_))
+    }
+
+    /// Return a reference to the current [`DataCollection`] based on state.
+    pub fn data(&self) -> &CollectedData {
+        match &self.frozen_state {
+            FrozenState::NotFrozen => &self.main,
+            FrozenState::Frozen(collected_data) => collected_data,
+        }
     }
 }

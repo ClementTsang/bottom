@@ -15,7 +15,7 @@ use sort_table::SortTableColumn;
 
 use crate::{
     app::{
-        data::{DataCollection, ProcessData},
+        data::{CollectedData, ProcessData},
         AppConfigFields, AppSearchState,
     },
     canvas::components::data_table::{
@@ -395,7 +395,7 @@ impl ProcWidgetState {
     /// This function *only* updates the displayed process data. If there is a
     /// need to update the actual *stored* data, call it before this
     /// function.
-    pub fn set_table_data(&mut self, data_collection: &DataCollection) {
+    pub fn set_table_data(&mut self, data_collection: &CollectedData) {
         let data = match &self.mode {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
                 self.get_normal_data(&data_collection.process_data.process_harvest)
@@ -408,7 +408,7 @@ impl ProcWidgetState {
     }
 
     fn get_tree_data(
-        &self, collapsed_pids: &HashSet<Pid>, data_collection: &DataCollection,
+        &self, collapsed_pids: &HashSet<Pid>, data_collection: &CollectedData,
     ) -> Vec<ProcWidgetData> {
         const BRANCH_END: char = '└';
         const BRANCH_SPLIT: char = '├';
