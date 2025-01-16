@@ -9,7 +9,7 @@ use crate::{
     app::data::CollectedData,
     canvas::components::time_chart::Point,
     data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
-    utils::data_prefixes::*,
+    utils::data_units::*,
     widgets::{DiskWidgetData, TempWidgetData},
 };
 

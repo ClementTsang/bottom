@@ -9,7 +9,7 @@ use crate::{
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
     options::config::style::Styles,
-    utils::{data_prefixes::get_decimal_bytes, general::sort_partial_fn},
+    utils::{data_units::get_decimal_bytes, general::sort_partial_fn},
 };
 
 #[derive(Clone, Debug)]

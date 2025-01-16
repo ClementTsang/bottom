@@ -8,7 +8,7 @@ use tui::{
 use crate::{
     app::App,
     canvas::{drawing_utils::widget_block, Painter},
-    utils::data_prefixes::{convert_bytes, get_unit_prefix},
+    utils::data_units::{convert_bits, get_unit_prefix},
 };
 
 impl Painter {
@@ -41,11 +41,12 @@ impl Painter {
         }
 
         let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
+        let unit_type = app_state.app_config_fields.network_unit_type;
         let network_data = &(app_state.shared_data.data().network_harvest);
-        let rx = get_unit_prefix(network_data.rx, use_binary_prefix);
-        let tx = get_unit_prefix(network_data.tx, use_binary_prefix);
-        let total_rx = convert_bytes(network_data.total_rx, use_binary_prefix);
-        let total_tx = convert_bytes(network_data.total_tx, use_binary_prefix);
+        let rx = get_unit_prefix(network_data.rx, unit_type, use_binary_prefix);
+        let tx = get_unit_prefix(network_data.tx, unit_type, use_binary_prefix);
+        let total_rx = convert_bits(network_data.total_rx, use_binary_prefix);
+        let total_tx = convert_bits(network_data.total_tx, use_binary_prefix);
 
         let rx_label = format!("RX: {:.1}{}", rx.0, rx.1);
         let tx_label = format!("TX: {:.1}{}", tx.0, tx.1);

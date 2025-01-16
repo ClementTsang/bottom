@@ -10,7 +10,6 @@
 pub(crate) mod app;
 mod utils {
     pub(crate) mod cancellation_token;
-    pub(crate) mod data_prefixes;
     pub(crate) mod data_units;
     pub(crate) mod general;
     pub(crate) mod logging;

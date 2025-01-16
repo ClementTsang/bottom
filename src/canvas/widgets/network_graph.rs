@@ -16,7 +16,7 @@ use crate::{
         drawing_utils::should_hide_x_label,
         Painter,
     },
-    utils::{data_prefixes::*, data_units::DataUnit, general::partial_ordering},
+    utils::{data_units::DataUnit, data_units::*, general::partial_ordering},
 };
 
 impl Painter {
@@ -54,7 +54,7 @@ impl Painter {
 
     pub fn draw_network_graph(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-        not_full_screen: bool,
+        full_screen: bool,
     ) {
         if let Some(network_widget_state) =
             app_state.states.net_state.widget_states.get_mut(&widget_id)
@@ -72,7 +72,7 @@ impl Painter {
                 .map(|i| {
                     i.map(|(t, v)| {
                         (
-                            last_time.duration_since(*t).as_millis() as f64,
+                            -(last_time.duration_since(*t).as_millis() as f64),
                             get_network_point(
                                 *v,
                                 &app_state.app_config_fields.network_scale_type,
@@ -90,7 +90,7 @@ impl Painter {
                 .map(|i| {
                     i.map(|(t, v)| {
                         (
-                            last_time.duration_since(*t).as_millis() as f64,
+                            -(last_time.duration_since(*t).as_millis() as f64),
                             get_network_point(
                                 *v,
                                 &app_state.app_config_fields.network_scale_type,
@@ -138,7 +138,7 @@ impl Painter {
             let y_labels = labels.iter().map(|label| label.into()).collect::<Vec<_>>();
             let y_bounds = [0.0, max_range];
 
-            let legend_constraints = if not_full_screen {
+            let legend_constraints = if full_screen {
                 (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
             } else {
                 (Constraint::Ratio(1, 1), Constraint::Ratio(3, 4))
@@ -147,19 +147,24 @@ impl Painter {
             // TODO: Add support for clicking on legend to only show that value on chart.
 
             let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
+            let unit_type = app_state.app_config_fields.network_unit_type;
+            let unit = match unit_type {
+                DataUnit::Byte => "B/s",
+                DataUnit::Bit => "b/s",
+            };
 
-            let rx = get_unit_prefix(network_latest_data.rx, use_binary_prefix);
-            let tx = get_unit_prefix(network_latest_data.tx, use_binary_prefix);
-            let rx_label = format!("RX: {:.1}{}", rx.0, rx.1);
-            let tx_label = format!("TX: {:.1}{}", tx.0, tx.1);
+            let rx = get_unit_prefix(network_latest_data.rx, unit_type, use_binary_prefix);
+            let tx = get_unit_prefix(network_latest_data.tx, unit_type, use_binary_prefix);
+            let total_rx = convert_bits(network_latest_data.total_rx, use_binary_prefix);
+            let total_tx = convert_bits(network_latest_data.total_tx, use_binary_prefix);
 
             // TODO: This behaviour is pretty weird, we should probably just make it so if you use old network legend
-            // and go full screen you don't get this weird state.
-            let points = if app_state.app_config_fields.use_old_network_legend && !not_full_screen {
-                let total_rx = convert_bytes(network_latest_data.total_rx, use_binary_prefix);
-                let total_tx = convert_bytes(network_latest_data.total_tx, use_binary_prefix);
-                let total_rx_label = format!("Total RX{:.1}{}", total_rx.0, total_rx.1);
-                let total_tx_label = format!("Total TX{:.1}{}", total_tx.0, total_tx.1);
+            // you don't do whatever this is...
+            let points = if app_state.app_config_fields.use_old_network_legend && !full_screen {
+                let rx_label = format!("RX: {:.1}{}{}", rx.0, rx.1, unit);
+                let tx_label = format!("TX: {:.1}{}{}", tx.0, tx.1, unit);
+                let total_rx_label = format!("Total RX: {:.1}{}", total_rx.0, total_rx.1);
+                let total_tx_label = format!("Total TX: {:.1}{}", total_tx.0, total_tx.1);
 
                 vec![
                     GraphData {
@@ -184,16 +189,21 @@ impl Painter {
                     },
                 ]
             } else {
+                let rx_label = format!("{:.1}{}{}", rx.0, rx.1, unit);
+                let tx_label = format!("{:.1}{}{}", tx.0, tx.1, unit);
+                let total_rx_label = format!("{:.1}{}", total_rx.0, total_rx.1);
+                let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
+
                 vec![
                     GraphData {
                         points: &network_data_rx,
                         style: self.styles.rx_style,
-                        name: Some(rx_label.into()),
+                        name: Some(format!("RX: {:<10}  All: {}", rx_label, total_rx_label).into()),
                     },
                     GraphData {
                         points: &network_data_tx,
                         style: self.styles.tx_style,
-                        name: Some(tx_label.into()),
+                        name: Some(format!("TX: {:<10}  All: {}", tx_label, total_tx_label).into()),
                     },
                 ]
             };
@@ -231,16 +241,22 @@ impl Painter {
 
         let network_latest_data = &(app_state.shared_data.data().network_harvest);
         let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
+        let unit_type = app_state.app_config_fields.network_unit_type;
+        let unit = match unit_type {
+            DataUnit::Byte => "B/s",
+            DataUnit::Bit => "b/s",
+        };
 
-        let rx = get_unit_prefix(network_latest_data.rx, use_binary_prefix);
-        let tx = get_unit_prefix(network_latest_data.tx, use_binary_prefix);
-        let rx_label = format!("RX: {:.1}{}", rx.0, rx.1);
-        let tx_label = format!("TX: {:.1}{}", tx.0, tx.1);
+        let rx = get_unit_prefix(network_latest_data.rx, unit_type, use_binary_prefix);
+        let tx = get_unit_prefix(network_latest_data.tx, unit_type, use_binary_prefix);
 
-        let total_rx = convert_bytes(network_latest_data.total_rx, use_binary_prefix);
-        let total_tx = convert_bytes(network_latest_data.total_tx, use_binary_prefix);
-        let total_rx_label = format!("Total RX{:.1}{}", total_rx.0, total_rx.1);
-        let total_tx_label = format!("Total TX{:.1}{}", total_tx.0, total_tx.1);
+        let rx_label = format!("{:.1}{}{}", rx.0, rx.1, unit);
+        let tx_label = format!("{:.1}{}{}", tx.0, tx.1, unit);
+
+        let total_rx = convert_bits(network_latest_data.total_rx, use_binary_prefix);
+        let total_tx = convert_bits(network_latest_data.total_tx, use_binary_prefix);
+        let total_rx_label = format!("{:.1}{}", total_rx.0, total_rx.1);
+        let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
 
         // Gross but I need it to work...
         let total_network = vec![Row::new([
