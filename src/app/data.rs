@@ -387,9 +387,9 @@ impl CollectedData {
         }
     }
 
-    pub fn clean_data(&mut self, max_time_millis: u64) -> anyhow::Result<()> {
+    fn clean_data(&mut self, max_duration: Duration) -> anyhow::Result<()> {
         self.timeseries_data
-            .prune(Duration::from_millis(max_time_millis))
+            .prune(max_duration)
             .map_err(|err| anyhow::anyhow!(err.to_string()))?;
 
         Ok(())
@@ -399,7 +399,7 @@ impl CollectedData {
         clippy::boxed_local,
         reason = "This avoids warnings on certain platforms (e.g. 32-bit)."
     )]
-    pub fn eat_data(&mut self, data: Box<Data>) {
+    fn eat_data(&mut self, data: Box<Data>) {
         let harvested_time = data.collection_time;
 
         self.timeseries_data.add(&data);
@@ -623,6 +623,18 @@ impl SharedData {
             FrozenState::NotFrozen => &self.main,
             FrozenState::Frozen(collected_data) => collected_data,
         }
+    }
+
+    /// Eat data.
+    pub fn eat_data(&mut self, data: Box<Data>) {
+        self.main.eat_data(data);
+    }
+
+    /// Clean data.
+    pub fn clean_data(&mut self, max_duration: Duration) -> anyhow::Result<()> {
+        self.main.clean_data(max_duration)?;
+
+        Ok(())
     }
 
     /// Reset data state.

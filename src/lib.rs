@@ -407,7 +407,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::Update(data) => {
-                    app.data_collection.eat_data(data);
+                    app.shared_data.eat_data(data);
 
                     // This thing is required as otherwise, some widgets can't draw correctly w/o
                     // some data (or they need to be re-drawn).
@@ -416,12 +416,14 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         app.is_force_redraw = true;
                     }
 
-                    if !app.data.is_frozen() {
+                    let collected_data = app.shared_data.data();
+
+                    if !app.shared_data.is_frozen() {
                         // Convert all data into data for the displayed widgets.
 
                         if app.used_widgets.use_net {
                             let network_data = convert_network_points(
-                                &app.data_collection,
+                                collected_data,
                                 app.app_config_fields.use_basic_mode
                                     || app.app_config_fields.use_old_network_legend,
                                 &app.app_config_fields.network_scale_type,
@@ -441,7 +443,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         }
 
                         if app.used_widgets.use_disk {
-                            app.converted_data.convert_disk_data(&app.data_collection);
+                            app.converted_data.convert_disk_data(collected_data);
 
                             for disk in app.states.disk_state.widget_states.values_mut() {
                                 disk.force_data_update();
@@ -450,7 +452,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
 
                         if app.used_widgets.use_temp {
                             app.converted_data.convert_temp_data(
-                                &app.data_collection,
+                                collected_data,
                                 app.app_config_fields.temperature_type,
                             );
 
@@ -460,52 +462,49 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         }
 
                         if app.used_widgets.use_mem {
-                            app.converted_data.mem_data =
-                                convert_mem_data_points(&app.data_collection);
+                            app.converted_data.mem_data = convert_mem_data_points(collected_data);
 
                             #[cfg(not(target_os = "windows"))]
                             {
                                 app.converted_data.cache_data =
-                                    convert_cache_data_points(&app.data_collection);
+                                    convert_cache_data_points(collected_data);
                             }
 
-                            app.converted_data.swap_data =
-                                convert_swap_data_points(&app.data_collection);
+                            app.converted_data.swap_data = convert_swap_data_points(collected_data);
 
                             #[cfg(feature = "zfs")]
                             {
                                 app.converted_data.arc_data =
-                                    convert_arc_data_points(&app.data_collection);
+                                    convert_arc_data_points(collected_data);
                             }
 
                             #[cfg(feature = "gpu")]
                             {
-                                app.converted_data.gpu_data =
-                                    convert_gpu_data(&app.data_collection);
+                                app.converted_data.gpu_data = convert_gpu_data(collected_data);
                             }
 
                             app.converted_data.mem_labels =
-                                convert_mem_label(&app.data_collection.memory_harvest);
+                                convert_mem_label(&collected_data.memory_harvest);
 
                             app.converted_data.swap_labels =
-                                convert_mem_label(&app.data_collection.swap_harvest);
+                                convert_mem_label(&collected_data.swap_harvest);
 
                             #[cfg(not(target_os = "windows"))]
                             {
                                 app.converted_data.cache_labels =
-                                    convert_mem_label(&app.data_collection.cache_harvest);
+                                    convert_mem_label(&collected_data.cache_harvest);
                             }
 
                             #[cfg(feature = "zfs")]
                             {
                                 app.converted_data.arc_labels =
-                                    convert_mem_label(&app.data_collection.arc_harvest);
+                                    convert_mem_label(&collected_data.arc_harvest);
                             }
                         }
 
                         if app.used_widgets.use_cpu {
-                            app.converted_data.convert_cpu_data(&app.data_collection);
-                            app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;
+                            app.converted_data.convert_cpu_data(collected_data);
+                            app.converted_data.load_avg_data = collected_data.load_avg_harvest;
                         }
 
                         if app.used_widgets.use_proc {
@@ -519,8 +518,8 @@ pub fn start_bottom() -> anyhow::Result<()> {
                     }
                 }
                 BottomEvent::Clean => {
-                    app.data_collection
-                        .clean_data(app.app_config_fields.retention_ms)?;
+                    app.shared_data
+                        .clean_data(Duration::from_millis(app.app_config_fields.retention_ms))?;
                 }
             }
         }

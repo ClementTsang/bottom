@@ -103,10 +103,9 @@ pub struct App {
     second_char: Option<char>,
     pub dd_err: Option<String>, // FIXME: The way we do deletes is really gross.
     to_delete_process_list: Option<(String, Vec<Pid>)>,
-    pub data: SharedData,
+    pub shared_data: SharedData,
     last_key_press: Instant,
     pub converted_data: ConvertedData,
-    pub data_collection: CollectedData,
     pub delete_dialog_state: AppDeleteDialogState,
     pub help_dialog_state: AppHelpDialogState,
     pub is_expanded: bool,
@@ -133,10 +132,9 @@ impl App {
             second_char: None,
             dd_err: None,
             to_delete_process_list: None,
-            data: SharedData::default(),
+            shared_data: SharedData::default(),
             last_key_press: Instant::now(),
             converted_data: ConvertedData::default(),
-            data_collection: CollectedData::default(),
             delete_dialog_state: AppDeleteDialogState::default(),
             help_dialog_state: AppHelpDialogState::default(),
             is_expanded,
@@ -154,7 +152,7 @@ impl App {
 
     /// Update the data in the [`App`].
     pub fn update_data(&mut self) {
-        let data_source = self.data.data();
+        let data_source = self.shared_data.data();
 
         for proc in self.states.proc_state.widget_states.values_mut() {
             if proc.force_update_data {
@@ -251,7 +249,7 @@ impl App {
         self.to_delete_process_list = None;
         self.dd_err = None;
 
-        self.data.reset();
+        self.shared_data.reset();
 
         // Reset zoom
         self.reset_cpu_zoom();
@@ -756,7 +754,7 @@ impl App {
                 BottomWidgetType::Battery =>
                 {
                     #[cfg(feature = "battery")]
-                    if self.data_collection.battery_harvest.len() > 1 {
+                    if self.shared_data.data().battery_harvest.len() > 1 {
                         if let Some(battery_widget_state) = self
                             .states
                             .battery_state
@@ -816,20 +814,21 @@ impl App {
                         }
                     }
                 }
-                BottomWidgetType::Battery =>
-                {
+                BottomWidgetType::Battery => {
                     #[cfg(feature = "battery")]
-                    if self.data_collection.battery_harvest.len() > 1 {
-                        let battery_count = self.data_collection.battery_harvest.len();
-                        if let Some(battery_widget_state) = self
-                            .states
-                            .battery_state
-                            .get_mut_widget_state(self.current_widget.widget_id)
-                        {
-                            if battery_widget_state.currently_selected_battery_index
-                                < battery_count - 1
+                    {
+                        let battery_count = self.shared_data.data().battery_harvest.len();
+                        if battery_count > 1 {
+                            if let Some(battery_widget_state) = self
+                                .states
+                                .battery_state
+                                .get_mut_widget_state(self.current_widget.widget_id)
                             {
-                                battery_widget_state.currently_selected_battery_index += 1;
+                                if battery_widget_state.currently_selected_battery_index
+                                    < battery_count - 1
+                                {
+                                    battery_widget_state.currently_selected_battery_index += 1;
+                                }
                             }
                         }
                     }
@@ -1268,7 +1267,7 @@ impl App {
             'G' => self.skip_to_last(),
             'k' => self.on_up_key(),
             'j' => self.on_down_key(),
-            'f' => self.data.toggle_frozen(),
+            'f' => self.shared_data.toggle_frozen(),
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
@@ -2794,10 +2793,12 @@ impl App {
                                 {
                                     if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y)
                                     {
-                                        if itx >= self.data_collection.battery_harvest.len() {
+                                        let num_batteries =
+                                            self.shared_data.data().battery_harvest.len();
+                                        if itx >= num_batteries {
                                             // range check to keep within current data
                                             battery_widget_state.currently_selected_battery_index =
-                                                self.data_collection.battery_harvest.len() - 1;
+                                                num_batteries - 1;
                                         } else {
                                             battery_widget_state.currently_selected_battery_index =
                                                 itx;
