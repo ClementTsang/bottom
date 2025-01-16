@@ -103,7 +103,7 @@ pub struct App {
     second_char: Option<char>,
     pub dd_err: Option<String>, // FIXME: The way we do deletes is really gross.
     to_delete_process_list: Option<(String, Vec<Pid>)>,
-    pub data: DataState,
+    pub data: SharedData,
     last_key_press: Instant,
     pub converted_data: ConvertedData,
     pub data_collection: CollectedData,
@@ -133,7 +133,7 @@ impl App {
             second_char: None,
             dd_err: None,
             to_delete_process_list: None,
-            data: DataState::default(),
+            data: SharedData::default(),
             last_key_press: Instant::now(),
             converted_data: ConvertedData::default(),
             data_collection: CollectedData::default(),

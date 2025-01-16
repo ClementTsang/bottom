@@ -594,14 +594,14 @@ pub enum FrozenState {
     Frozen(Box<CollectedData>),
 }
 
-/// A wrapper around the currently collected data.
+/// What data to share to other parts of the application.
 #[derive(Default)]
-pub struct DataState {
+pub struct SharedData {
     frozen_state: FrozenState,
     main: CollectedData,
 }
 
-impl DataState {
+impl SharedData {
     /// Toggle whether the [`DataState`] is frozen or not.
     pub fn toggle_frozen(&mut self) {
         match &self.frozen_state {
