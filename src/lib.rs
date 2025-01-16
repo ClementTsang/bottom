@@ -416,7 +416,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         app.is_force_redraw = true;
                     }
 
-                    if !app.frozen_state.is_frozen() {
+                    if !app.data.is_frozen() {
                         // Convert all data into data for the displayed widgets.
 
                         if app.used_widgets.use_net {

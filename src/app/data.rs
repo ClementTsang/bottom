@@ -595,6 +595,7 @@ pub enum FrozenState {
 }
 
 /// A wrapper around the currently collected data.
+#[derive(Default)]
 pub struct DataState {
     frozen_state: FrozenState,
     main: CollectedData,
@@ -622,5 +623,11 @@ impl DataState {
             FrozenState::NotFrozen => &self.main,
             FrozenState::Frozen(collected_data) => collected_data,
         }
+    }
+
+    /// Reset data state.
+    pub fn reset(&mut self) {
+        self.frozen_state = FrozenState::NotFrozen;
+        self.main = CollectedData::default();
     }
 }

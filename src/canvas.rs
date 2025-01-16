@@ -174,7 +174,7 @@ impl Painter {
         use BottomWidgetType::*;
 
         terminal.draw(|f| {
-            let (terminal_size, frozen_draw_loc) = if app_state.frozen_state.is_frozen() {
+            let (terminal_size, frozen_draw_loc) = if app_state.data.is_frozen() {
                 // TODO: Remove built-in cache?
                 let split_loc = Layout::default()
                     .constraints([Constraint::Min(0), Constraint::Length(1)])

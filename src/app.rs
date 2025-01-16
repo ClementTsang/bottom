@@ -1,6 +1,5 @@
 pub mod data;
 pub mod filter;
-pub mod frozen_state;
 pub mod layout_manager;
 mod process_killer;
 pub mod states;
@@ -14,7 +13,6 @@ use anyhow::bail;
 use concat_string::concat_string;
 use data::*;
 use filter::*;
-use frozen_state::FrozenState;
 use hashbrown::HashMap;
 use layout_manager::*;
 pub use states::*;
@@ -105,7 +103,7 @@ pub struct App {
     second_char: Option<char>,
     pub dd_err: Option<String>, // FIXME: The way we do deletes is really gross.
     to_delete_process_list: Option<(String, Vec<Pid>)>,
-    pub frozen_state: FrozenState,
+    pub data: DataState,
     last_key_press: Instant,
     pub converted_data: ConvertedData,
     pub data_collection: CollectedData,
@@ -135,7 +133,7 @@ impl App {
             second_char: None,
             dd_err: None,
             to_delete_process_list: None,
-            frozen_state: FrozenState::default(),
+            data: DataState::default(),
             last_key_press: Instant::now(),
             converted_data: ConvertedData::default(),
             data_collection: CollectedData::default(),
@@ -156,10 +154,7 @@ impl App {
 
     /// Update the data in the [`App`].
     pub fn update_data(&mut self) {
-        let data_source = match &self.frozen_state {
-            FrozenState::NotFrozen => &self.data_collection,
-            FrozenState::Frozen(data) => data,
-        };
+        let data_source = self.data.data();
 
         for proc in self.states.proc_state.widget_states.values_mut() {
             if proc.force_update_data {
@@ -256,16 +251,12 @@ impl App {
         self.to_delete_process_list = None;
         self.dd_err = None;
 
-        // Unfreeze.
-        self.frozen_state.thaw();
+        self.data.reset();
 
         // Reset zoom
         self.reset_cpu_zoom();
         self.reset_mem_zoom();
         self.reset_net_zoom();
-
-        // Reset data
-        self.data_collection.reset();
     }
 
     pub fn should_get_widget_bounds(&self) -> bool {
@@ -1277,9 +1268,7 @@ impl App {
             'G' => self.skip_to_last(),
             'k' => self.on_up_key(),
             'j' => self.on_down_key(),
-            'f' => {
-                self.frozen_state.toggle(&self.data_collection); // TODO: Thawing should force a full data refresh and redraw immediately.
-            }
+            'f' => self.data.toggle_frozen(),
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
