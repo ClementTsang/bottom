@@ -175,9 +175,9 @@ impl TimeSeriesData {
     }
 
     /// Prune any data older than the given duration.
-    pub fn prune(&mut self, max_age: Duration) -> Result<(), usize> {
+    pub fn prune(&mut self, max_age: Duration) {
         if self.time.is_empty() {
-            return Ok(());
+            return;
         }
 
         let now = Instant::now();
@@ -193,11 +193,11 @@ impl TimeSeriesData {
         // Note that end here is _inclusive_.
         self.time.drain(0..=end);
 
-        self.rx.prune(end)?;
-        self.tx.prune(end)?;
+        let _ = self.rx.prune(end);
+        let _ = self.tx.prune(end);
 
         for cpu in &mut self.cpu {
-            cpu.prune(end)?;
+            let _ = cpu.prune(end);
 
             // // We don't want to retain things if there is no data at all.
             // if cpu.is_empty() {
@@ -205,19 +205,19 @@ impl TimeSeriesData {
             // }
         }
 
-        self.mem.prune(end)?;
-        self.swap.prune(end)?;
+        let _ = self.mem.prune(end);
+        let _ = self.swap.prune(end);
 
         #[cfg(not(target_os = "windows"))]
-        self.cache_mem.prune(end)?;
+        let _ = self.cache_mem.prune(end);
 
         #[cfg(feature = "zfs")]
-        self.arc_mem.prune(end)?;
+        let _ = self.arc_mem.prune(end);
 
         #[cfg(feature = "gpu")]
         {
             for gpu in self.gpu_mem.values_mut() {
-                gpu.prune(end)?;
+                let _ = gpu.prune(end);
 
                 // // We don't want to retain things if there is no data at all.
                 // if gpu.is_empty() {
@@ -225,8 +225,6 @@ impl TimeSeriesData {
                 // }
             }
         }
-
-        Ok(())
     }
 }
 
@@ -385,14 +383,6 @@ impl CollectedData {
         {
             self.gpu_harvest = Vec::default();
         }
-    }
-
-    fn clean_data(&mut self, max_duration: Duration) -> anyhow::Result<()> {
-        self.timeseries_data
-            .prune(max_duration)
-            .map_err(|err| anyhow::anyhow!(err.to_string()))?;
-
-        Ok(())
     }
 
     #[allow(
@@ -631,10 +621,8 @@ impl SharedData {
     }
 
     /// Clean data.
-    pub fn clean_data(&mut self, max_duration: Duration) -> anyhow::Result<()> {
-        self.main.clean_data(max_duration)?;
-
-        Ok(())
+    pub fn clean_data(&mut self, max_duration: Duration) {
+        self.main.timeseries_data.prune(max_duration);
     }
 
     /// Reset data state.

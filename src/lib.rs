@@ -50,6 +50,7 @@ use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, Collecti
 use options::{args, get_or_create_config, init_app};
 use tui::{backend::CrosstermBackend, Terminal};
 use utils::cancellation_token::CancellationToken;
+
 #[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;
 
@@ -497,7 +498,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                 }
                 BottomEvent::Clean => {
                     app.shared_data
-                        .clean_data(Duration::from_millis(app.app_config_fields.retention_ms))?;
+                        .clean_data(Duration::from_millis(app.app_config_fields.retention_ms));
                 }
             }
         }
