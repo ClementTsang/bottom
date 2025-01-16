@@ -54,13 +54,55 @@ impl Painter {
 
     pub fn draw_network_graph(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-        hide_legend: bool,
+        not_full_screen: bool,
     ) {
         if let Some(network_widget_state) =
             app_state.states.net_state.widget_states.get_mut(&widget_id)
         {
-            let network_data_rx = &app_state.converted_data.network_data_rx;
-            let network_data_tx = &app_state.converted_data.network_data_tx;
+            let shared_data = app_state.shared_data.data();
+            let network_latest_data = &(shared_data.network_harvest);
+            let rx_points = &(shared_data.timeseries_data.rx);
+            let tx_points = &(shared_data.timeseries_data.tx);
+            let time = &(shared_data.timeseries_data.time);
+            let last_time = shared_data.current_instant;
+
+            // FIXME: THIS IS TEMPORARY.
+            let network_data_rx = rx_points
+                .iter_along_base(time)
+                .map(|i| {
+                    i.map(|(t, v)| {
+                        (
+                            last_time.duration_since(*t).as_millis() as f64,
+                            get_network_point(
+                                *v,
+                                &app_state.app_config_fields.network_scale_type,
+                                &app_state.app_config_fields.network_unit_type,
+                                app_state.app_config_fields.network_use_binary_prefix,
+                            ),
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                })
+                .unwrap_or_default();
+
+            let network_data_tx = tx_points
+                .iter_along_base(time)
+                .map(|i| {
+                    i.map(|(t, v)| {
+                        (
+                            last_time.duration_since(*t).as_millis() as f64,
+                            get_network_point(
+                                *v,
+                                &app_state.app_config_fields.network_scale_type,
+                                &app_state.app_config_fields.network_unit_type,
+                                app_state.app_config_fields.network_use_binary_prefix,
+                            ),
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                })
+                .unwrap_or_default();
+
             let time_start = -(network_widget_state.current_display_time as f64);
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let x_bounds = [0, network_widget_state.current_display_time];
@@ -78,9 +120,9 @@ impl Painter {
             //   last checked; we only want to update if it is TOO big!)
 
             // Find the maximal rx/tx so we know how to scale, and return it.
-            let (_best_time, max_entry) = get_max_entry(
-                network_data_rx,
-                network_data_tx,
+            let max_entry = get_max_entry(
+                &network_data_rx,
+                &network_data_tx,
                 time_start,
                 &app_state.app_config_fields.network_scale_type,
                 app_state.app_config_fields.network_use_binary_prefix,
@@ -96,53 +138,62 @@ impl Painter {
             let y_labels = labels.iter().map(|label| label.into()).collect::<Vec<_>>();
             let y_bounds = [0.0, max_range];
 
-            let legend_constraints = if hide_legend {
+            let legend_constraints = if not_full_screen {
                 (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
             } else {
                 (Constraint::Ratio(1, 1), Constraint::Ratio(3, 4))
             };
 
             // TODO: Add support for clicking on legend to only show that value on chart.
-            let points = if app_state.app_config_fields.use_old_network_legend && !hide_legend {
+
+            let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
+
+            let rx = get_unit_prefix(network_latest_data.rx, use_binary_prefix);
+            let tx = get_unit_prefix(network_latest_data.tx, use_binary_prefix);
+            let rx_label = format!("RX: {:.1}{}", rx.0, rx.1);
+            let tx_label = format!("TX: {:.1}{}", tx.0, tx.1);
+
+            // TODO: This behaviour is pretty weird, we should probably just make it so if you use old network legend
+            // and go full screen you don't get this weird state.
+            let points = if app_state.app_config_fields.use_old_network_legend && !not_full_screen {
+                let total_rx = convert_bytes(network_latest_data.total_rx, use_binary_prefix);
+                let total_tx = convert_bytes(network_latest_data.total_tx, use_binary_prefix);
+                let total_rx_label = format!("Total RX{:.1}{}", total_rx.0, total_rx.1);
+                let total_tx_label = format!("Total TX{:.1}{}", total_tx.0, total_tx.1);
+
                 vec![
                     GraphData {
-                        points: network_data_rx,
+                        points: &network_data_rx,
                         style: self.styles.rx_style,
-                        name: Some(format!("RX: {:7}", app_state.converted_data.rx_display).into()),
+                        name: Some(rx_label.into()),
                     },
                     GraphData {
-                        points: network_data_tx,
+                        points: &network_data_tx,
                         style: self.styles.tx_style,
-                        name: Some(format!("TX: {:7}", app_state.converted_data.tx_display).into()),
+                        name: Some(tx_label.into()),
                     },
                     GraphData {
                         points: &[],
                         style: self.styles.total_rx_style,
-                        name: Some(
-                            format!("Total RX: {:7}", app_state.converted_data.total_rx_display)
-                                .into(),
-                        ),
+                        name: Some(total_rx_label.into()),
                     },
                     GraphData {
                         points: &[],
                         style: self.styles.total_tx_style,
-                        name: Some(
-                            format!("Total TX: {:7}", app_state.converted_data.total_tx_display)
-                                .into(),
-                        ),
+                        name: Some(total_tx_label.into()),
                     },
                 ]
             } else {
                 vec![
                     GraphData {
-                        points: network_data_rx,
+                        points: &network_data_rx,
                         style: self.styles.rx_style,
-                        name: Some((&app_state.converted_data.rx_display).into()),
+                        name: Some(rx_label.into()),
                     },
                     GraphData {
-                        points: network_data_tx,
+                        points: &network_data_tx,
                         style: self.styles.tx_style,
-                        name: Some((&app_state.converted_data.tx_display).into()),
+                        name: Some(tx_label.into()),
                     },
                 ]
             };
@@ -178,17 +229,25 @@ impl Painter {
     ) {
         const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 
-        let rx_display = &app_state.converted_data.rx_display;
-        let tx_display = &app_state.converted_data.tx_display;
-        let total_rx_display = &app_state.converted_data.total_rx_display;
-        let total_tx_display = &app_state.converted_data.total_tx_display;
+        let network_latest_data = &(app_state.shared_data.data().network_harvest);
+        let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
+
+        let rx = get_unit_prefix(network_latest_data.rx, use_binary_prefix);
+        let tx = get_unit_prefix(network_latest_data.tx, use_binary_prefix);
+        let rx_label = format!("RX: {:.1}{}", rx.0, rx.1);
+        let tx_label = format!("TX: {:.1}{}", tx.0, tx.1);
+
+        let total_rx = convert_bytes(network_latest_data.total_rx, use_binary_prefix);
+        let total_tx = convert_bytes(network_latest_data.total_tx, use_binary_prefix);
+        let total_rx_label = format!("Total RX{:.1}{}", total_rx.0, total_rx.1);
+        let total_tx_label = format!("Total TX{:.1}{}", total_tx.0, total_tx.1);
 
         // Gross but I need it to work...
         let total_network = vec![Row::new([
-            Text::styled(rx_display, self.styles.rx_style),
-            Text::styled(tx_display, self.styles.tx_style),
-            Text::styled(total_rx_display, self.styles.total_rx_style),
-            Text::styled(total_tx_display, self.styles.total_tx_style),
+            Text::styled(rx_label, self.styles.rx_style),
+            Text::styled(tx_label, self.styles.tx_style),
+            Text::styled(total_rx_label, self.styles.total_rx_style),
+            Text::styled(total_tx_label, self.styles.total_tx_style),
         ])];
 
         // Draw
@@ -218,7 +277,7 @@ impl Painter {
 fn get_max_entry(
     rx: &[Point], tx: &[Point], time_start: f64, network_scale_type: &AxisScaling,
     network_use_binary_prefix: bool,
-) -> Point {
+) -> f64 {
     /// Determines a "fake" max value in circumstances where we couldn't find
     /// one from the data.
     fn calculate_missing_max(
@@ -265,29 +324,20 @@ fn get_max_entry(
 
     // Then, find the maximal rx/tx so we know how to scale, and return it.
     match (filtered_rx, filtered_tx) {
-        (None, None) => (
-            time_start,
-            calculate_missing_max(network_scale_type, network_use_binary_prefix),
-        ),
+        (None, None) => calculate_missing_max(network_scale_type, network_use_binary_prefix),
         (None, Some(filtered_tx)) => {
             match filtered_tx
                 .iter()
                 .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
-                Some((best_time, max_val)) => {
+                Some((_best_time, max_val)) => {
                     if *max_val == 0.0 {
-                        (
-                            time_start,
-                            calculate_missing_max(network_scale_type, network_use_binary_prefix),
-                        )
+                        calculate_missing_max(network_scale_type, network_use_binary_prefix)
                     } else {
-                        (*best_time, *max_val)
+                        *max_val
                     }
                 }
-                None => (
-                    time_start,
-                    calculate_missing_max(network_scale_type, network_use_binary_prefix),
-                ),
+                None => calculate_missing_max(network_scale_type, network_use_binary_prefix),
             }
         }
         (Some(filtered_rx), None) => {
@@ -295,20 +345,14 @@ fn get_max_entry(
                 .iter()
                 .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
-                Some((best_time, max_val)) => {
+                Some((_best_time, max_val)) => {
                     if *max_val == 0.0 {
-                        (
-                            time_start,
-                            calculate_missing_max(network_scale_type, network_use_binary_prefix),
-                        )
+                        calculate_missing_max(network_scale_type, network_use_binary_prefix)
                     } else {
-                        (*best_time, *max_val)
+                        *max_val
                     }
                 }
-                None => (
-                    time_start,
-                    calculate_missing_max(network_scale_type, network_use_binary_prefix),
-                ),
+                None => calculate_missing_max(network_scale_type, network_use_binary_prefix),
             }
         }
         (Some(filtered_rx), Some(filtered_tx)) => {
@@ -317,20 +361,14 @@ fn get_max_entry(
                 .chain(filtered_tx)
                 .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
-                Some((best_time, max_val)) => {
+                Some((_best_time, max_val)) => {
                     if *max_val == 0.0 {
-                        (
-                            *best_time,
-                            calculate_missing_max(network_scale_type, network_use_binary_prefix),
-                        )
+                        calculate_missing_max(network_scale_type, network_use_binary_prefix)
                     } else {
-                        (*best_time, *max_val)
+                        *max_val
                     }
                 }
-                None => (
-                    time_start,
-                    calculate_missing_max(network_scale_type, network_use_binary_prefix),
-                ),
+                None => calculate_missing_max(network_scale_type, network_use_binary_prefix),
             }
         }
     }
@@ -543,5 +581,29 @@ fn adjust_network_data_point(
                 )
             }
         }
+    }
+}
+
+fn get_network_point(
+    value: f64, scale_type: &AxisScaling, unit_type: &DataUnit, use_binary_unit: bool,
+) -> f64 {
+    match scale_type {
+        AxisScaling::Log => {
+            if use_binary_unit {
+                match unit_type {
+                    DataUnit::Byte => value.log2() - 4.0, // As dividing by 8 is equal to subtracting 4 in base 2!
+                    DataUnit::Bit => value.log2(),
+                }
+            } else {
+                match unit_type {
+                    DataUnit::Byte => (value / 8.0).log10(),
+                    DataUnit::Bit => value.log10(),
+                }
+            }
+        }
+        AxisScaling::Linear => match unit_type {
+            DataUnit::Byte => value / 8.0,
+            DataUnit::Bit => value,
+        },
     }
 }

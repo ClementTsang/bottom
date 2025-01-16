@@ -421,27 +421,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                     if !app.shared_data.is_frozen() {
                         // Convert all data into data for the displayed widgets.
 
-                        if app.used_widgets.use_net {
-                            let network_data = convert_network_points(
-                                collected_data,
-                                app.app_config_fields.use_basic_mode
-                                    || app.app_config_fields.use_old_network_legend,
-                                &app.app_config_fields.network_scale_type,
-                                &app.app_config_fields.network_unit_type,
-                                app.app_config_fields.network_use_binary_prefix,
-                            );
-                            app.converted_data.network_data_rx = network_data.rx;
-                            app.converted_data.network_data_tx = network_data.tx;
-                            app.converted_data.rx_display = network_data.rx_display;
-                            app.converted_data.tx_display = network_data.tx_display;
-                            if let Some(total_rx_display) = network_data.total_rx_display {
-                                app.converted_data.total_rx_display = total_rx_display;
-                            }
-                            if let Some(total_tx_display) = network_data.total_tx_display {
-                                app.converted_data.total_tx_display = total_tx_display;
-                            }
-                        }
-
                         if app.used_widgets.use_disk {
                             app.converted_data.convert_disk_data(collected_data);
 

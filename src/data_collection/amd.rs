@@ -49,7 +49,7 @@ pub struct AMDGPUProc {
 static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, HashMap<u32, AMDGPUProc>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
-pub fn get_amd_devs() -> Option<Vec<PathBuf>> {
+fn get_amd_devs() -> Option<Vec<PathBuf>> {
     let mut devices = Vec::new();
 
     // read all PCI devices controlled by the AMDGPU module
@@ -75,7 +75,7 @@ pub fn get_amd_devs() -> Option<Vec<PathBuf>> {
     }
 }
 
-pub fn get_amd_name(device_path: &Path) -> Option<String> {
+fn get_amd_name(device_path: &Path) -> Option<String> {
     // get revision and device ids from sysfs
     let rev_path = device_path.join("revision");
     let dev_path = device_path.join("device");
@@ -113,7 +113,7 @@ pub fn get_amd_name(device_path: &Path) -> Option<String> {
         .map(|tuple| tuple.2.to_string())
 }
 
-pub fn get_amd_vram(device_path: &Path) -> Option<AMDGPUMemory> {
+fn get_amd_vram(device_path: &Path) -> Option<AMDGPUMemory> {
     // get vram memory info from sysfs
     let vram_total_path = device_path.join("mem_info_vram_total");
     let vram_used_path = device_path.join("mem_info_vram_used");
@@ -142,7 +142,7 @@ pub fn get_amd_vram(device_path: &Path) -> Option<AMDGPUMemory> {
     })
 }
 
-pub fn get_amd_temp(device_path: &Path) -> Option<Vec<AMDGPUTemperature>> {
+fn get_amd_temp(device_path: &Path) -> Option<Vec<AMDGPUTemperature>> {
     let mut temperatures = Vec::new();
 
     // get hardware monitoring sensor info from sysfs
@@ -224,7 +224,7 @@ pub fn get_amd_temp(device_path: &Path) -> Option<Vec<AMDGPUTemperature>> {
 }
 
 // from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L114
-pub fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
+fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
     use std::ops::Mul;
 
     let diff_ns = if pre == 0 || cur < pre {
@@ -240,7 +240,7 @@ pub fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
 }
 
 // from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L13-L27
-pub fn get_amdgpu_pid_fds(pid: u32, device_path: Vec<PathBuf>) -> Option<Vec<u32>> {
+fn get_amdgpu_pid_fds(pid: u32, device_path: Vec<PathBuf>) -> Option<Vec<u32>> {
     let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else {
         return None;
     };
@@ -266,7 +266,7 @@ pub fn get_amdgpu_pid_fds(pid: u32, device_path: Vec<PathBuf>) -> Option<Vec<u32
     }
 }
 
-pub fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
+fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
     let mut drm_devices = Vec::new();
     let drm_root = device_path.join("drm");
 
@@ -300,7 +300,7 @@ pub fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
     }
 }
 
-pub fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AMDGPUProc>> {
+fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AMDGPUProc>> {
     let mut fdinfo = HashMap::new();
 
     let drm_paths = get_amdgpu_drm(device_path)?;
@@ -401,7 +401,6 @@ pub fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AMDGPUProc>> {
     Some(fdinfo)
 }
 
-#[inline]
 pub fn get_amd_vecs(
     temp_type: &TemperatureType, filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
     prev_time: Instant,

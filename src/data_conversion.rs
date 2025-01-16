@@ -6,29 +6,12 @@
 use std::borrow::Cow;
 
 use crate::{
-    app::{data::CollectedData, AxisScaling},
+    app::data::CollectedData,
     canvas::components::time_chart::Point,
     data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
-    utils::{data_prefixes::*, data_units::DataUnit},
+    utils::data_prefixes::*,
     widgets::{DiskWidgetData, TempWidgetData},
 };
-
-// TODO: [NETWORKING] add min/max/mean of each
-// min_rx : f64,
-// max_rx : f64,
-// mean_rx: f64,
-// min_tx: f64,
-// max_tx: f64,
-// mean_tx: f64,
-#[derive(Default, Debug)]
-pub struct ConvertedNetworkData {
-    pub rx: Vec<Point>,
-    pub tx: Vec<Point>,
-    pub rx_display: String,
-    pub tx_display: String,
-    pub total_rx_display: Option<String>,
-    pub total_tx_display: Option<String>,
-}
 
 #[derive(Clone, Debug)]
 pub enum CpuWidgetData {
@@ -42,13 +25,6 @@ pub enum CpuWidgetData {
 
 #[derive(Default)]
 pub struct ConvertedData {
-    pub rx_display: String,
-    pub tx_display: String,
-    pub total_rx_display: String,
-    pub total_tx_display: String,
-    pub network_data_rx: Vec<Point>,
-    pub network_data_tx: Vec<Point>,
-
     pub mem_labels: Option<(String, String)>,
     #[cfg(not(target_os = "windows"))]
     pub cache_labels: Option<(String, String)>,
@@ -282,176 +258,6 @@ pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
             )
         })
     })
-}
-
-pub fn get_network_points(
-    data: &CollectedData, scale_type: &AxisScaling, unit_type: &DataUnit, use_binary_prefix: bool,
-) -> (Vec<Point>, Vec<Point>) {
-    let mut rx: Vec<Point> = Vec::new();
-    let mut tx: Vec<Point> = Vec::new();
-
-    let current_time = data.current_instant;
-
-    for (time, data) in &data.timed_data_vec {
-        let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
-
-        let (rx_data, tx_data) = match scale_type {
-            AxisScaling::Log => {
-                if use_binary_prefix {
-                    match unit_type {
-                        DataUnit::Byte => {
-                            // As dividing by 8 is equal to subtracting 4 in base 2!
-                            ((data.rx_data).log2() - 4.0, (data.tx_data).log2() - 4.0)
-                        }
-                        DataUnit::Bit => ((data.rx_data).log2(), (data.tx_data).log2()),
-                    }
-                } else {
-                    match unit_type {
-                        DataUnit::Byte => {
-                            ((data.rx_data / 8.0).log10(), (data.tx_data / 8.0).log10())
-                        }
-                        DataUnit::Bit => ((data.rx_data).log10(), (data.tx_data).log10()),
-                    }
-                }
-            }
-            AxisScaling::Linear => match unit_type {
-                DataUnit::Byte => (data.rx_data / 8.0, data.tx_data / 8.0),
-                DataUnit::Bit => (data.rx_data, data.tx_data),
-            },
-        };
-
-        rx.push((-time_from_start, rx_data));
-        tx.push((-time_from_start, tx_data));
-        if *time == current_time {
-            break;
-        }
-    }
-
-    (rx, tx)
-}
-
-pub fn convert_network_points(
-    data: &CollectedData, need_four_points: bool, scale_type: &AxisScaling, unit_type: &DataUnit,
-    use_binary_prefix: bool,
-) -> ConvertedNetworkData {
-    let (rx, tx) = get_network_points(data, scale_type, unit_type, use_binary_prefix);
-
-    let unit = match unit_type {
-        DataUnit::Byte => "B/s",
-        DataUnit::Bit => "b/s",
-    };
-
-    let (rx_data, tx_data, total_rx_data, total_tx_data) = match unit_type {
-        DataUnit::Byte => (
-            data.network_harvest.rx / 8,
-            data.network_harvest.tx / 8,
-            data.network_harvest.total_rx / 8,
-            data.network_harvest.total_tx / 8,
-        ),
-        DataUnit::Bit => (
-            data.network_harvest.rx,
-            data.network_harvest.tx,
-            data.network_harvest.total_rx / 8, // We always make this bytes...
-            data.network_harvest.total_tx / 8,
-        ),
-    };
-
-    let (rx_converted_result, total_rx_converted_result): ((f64, String), (f64, &'static str)) =
-        if use_binary_prefix {
-            (
-                get_binary_prefix(rx_data, unit), /* If this isn't obvious why there's two
-                                                   * functions, one you can configure the unit,
-                                                   * the other is always bytes */
-                get_binary_bytes(total_rx_data),
-            )
-        } else {
-            (
-                get_decimal_prefix(rx_data, unit),
-                get_decimal_bytes(total_rx_data),
-            )
-        };
-
-    let (tx_converted_result, total_tx_converted_result): ((f64, String), (f64, &'static str)) =
-        if use_binary_prefix {
-            (
-                get_binary_prefix(tx_data, unit),
-                get_binary_bytes(total_tx_data),
-            )
-        } else {
-            (
-                get_decimal_prefix(tx_data, unit),
-                get_decimal_bytes(total_tx_data),
-            )
-        };
-
-    if need_four_points {
-        let rx_display = format!("{:.1}{}", rx_converted_result.0, rx_converted_result.1);
-        let total_rx_display = Some(format!(
-            "{:.1}{}",
-            total_rx_converted_result.0, total_rx_converted_result.1
-        ));
-        let tx_display = format!("{:.1}{}", tx_converted_result.0, tx_converted_result.1);
-        let total_tx_display = Some(format!(
-            "{:.1}{}",
-            total_tx_converted_result.0, total_tx_converted_result.1
-        ));
-        ConvertedNetworkData {
-            rx,
-            tx,
-            rx_display,
-            tx_display,
-            total_rx_display,
-            total_tx_display,
-        }
-    } else {
-        let rx_display = format!(
-            "RX: {:<10}  All: {}",
-            if use_binary_prefix {
-                format!("{:.1}{:3}", rx_converted_result.0, rx_converted_result.1)
-            } else {
-                format!("{:.1}{:2}", rx_converted_result.0, rx_converted_result.1)
-            },
-            if use_binary_prefix {
-                format!(
-                    "{:.1}{:3}",
-                    total_rx_converted_result.0, total_rx_converted_result.1
-                )
-            } else {
-                format!(
-                    "{:.1}{:2}",
-                    total_rx_converted_result.0, total_rx_converted_result.1
-                )
-            }
-        );
-        let tx_display = format!(
-            "TX: {:<10}  All: {}",
-            if use_binary_prefix {
-                format!("{:.1}{:3}", tx_converted_result.0, tx_converted_result.1)
-            } else {
-                format!("{:.1}{:2}", tx_converted_result.0, tx_converted_result.1)
-            },
-            if use_binary_prefix {
-                format!(
-                    "{:.1}{:3}",
-                    total_tx_converted_result.0, total_tx_converted_result.1
-                )
-            } else {
-                format!(
-                    "{:.1}{:2}",
-                    total_tx_converted_result.0, total_tx_converted_result.1
-                )
-            }
-        );
-
-        ConvertedNetworkData {
-            rx,
-            tx,
-            rx_display,
-            tx_display,
-            total_rx_display: None,
-            total_tx_display: None,
-        }
-    }
 }
 
 /// Returns a string given a value that is converted to the closest binary

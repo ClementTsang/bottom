@@ -28,7 +28,7 @@ pub const LOG_GIBI_LIMIT: f64 = 30.0;
 pub const LOG_TEBI_LIMIT: f64 = 40.0;
 pub const LOG_PEBI_LIMIT: f64 = 50.0;
 
-/// Returns a tuple containing the value and the unit in bytes.  In units of
+/// Returns a tuple containing the value and the unit in bytes. In units of
 /// 1024. This only supports up to a tebi.  Note the "single" unit will have a
 /// space appended to match the others if `spacing` is true.
 #[inline]
@@ -42,7 +42,7 @@ pub fn get_binary_bytes(bytes: u64) -> (f64, &'static str) {
     }
 }
 
-/// Returns a tuple containing the value and the unit in bytes.  In units of
+/// Returns a tuple containing the value and the unit in bytes. In units of
 /// 1000. This only supports up to a tera.  Note the "single" unit will have a
 /// space appended to match the others if `spacing` is true.
 #[inline]
@@ -56,30 +56,34 @@ pub fn get_decimal_bytes(bytes: u64) -> (f64, &'static str) {
     }
 }
 
-/// Returns a tuple containing the value and the unit.  In units of 1024.
-/// This only supports up to a tebi.  Note the "single" unit will have a space
-/// appended to match the others if `spacing` is true.
+/// Return a tuple containing the value and a unit.
 #[inline]
-pub fn get_binary_prefix(quantity: u64, unit: &str) -> (f64, String) {
-    match quantity {
-        b if b < KIBI_LIMIT => (quantity as f64, unit.to_string()),
-        b if b < MEBI_LIMIT => (quantity as f64 / KIBI_LIMIT_F64, format!("Ki{unit}")),
-        b if b < GIBI_LIMIT => (quantity as f64 / MEBI_LIMIT_F64, format!("Mi{unit}")),
-        b if b < TEBI_LIMIT => (quantity as f64 / GIBI_LIMIT_F64, format!("Gi{unit}")),
-        _ => (quantity as f64 / TEBI_LIMIT_F64, format!("Ti{unit}")),
+pub fn convert_bytes(bytes: u64, base_two: bool) -> (f64, &'static str) {
+    if base_two {
+        get_binary_bytes(bytes)
+    } else {
+        get_decimal_bytes(bytes)
     }
 }
 
-/// Returns a tuple containing the value and the unit.  In units of 1000.
-/// This only supports up to a tera.  Note the "single" unit will have a space
-/// appended to match the others if `spacing` is true.
+/// Return a tuple containing the value and a unit string to be used as a prefix.
 #[inline]
-pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
-    match quantity {
-        b if b < KILO_LIMIT => (quantity as f64, unit.to_string()),
-        b if b < MEGA_LIMIT => (quantity as f64 / KILO_LIMIT_F64, format!("K{unit}")),
-        b if b < GIGA_LIMIT => (quantity as f64 / MEGA_LIMIT_F64, format!("M{unit}")),
-        b if b < TERA_LIMIT => (quantity as f64 / GIGA_LIMIT_F64, format!("G{unit}")),
-        _ => (quantity as f64 / TERA_LIMIT_F64, format!("T{unit}")),
+pub fn get_unit_prefix(bytes: u64, base_two: bool) -> (f64, &'static str) {
+    if base_two {
+        match bytes {
+            b if b < KIBI_LIMIT => (bytes as f64, ""),
+            b if b < MEBI_LIMIT => (bytes as f64 / KIBI_LIMIT_F64, "Ki"),
+            b if b < GIBI_LIMIT => (bytes as f64 / MEBI_LIMIT_F64, "Mi"),
+            b if b < TEBI_LIMIT => (bytes as f64 / GIBI_LIMIT_F64, "Gi"),
+            _ => (bytes as f64 / TEBI_LIMIT_F64, "Ti"),
+        }
+    } else {
+        match bytes {
+            b if b < KILO_LIMIT => (bytes as f64, ""),
+            b if b < MEGA_LIMIT => (bytes as f64 / KILO_LIMIT_F64, "K"),
+            b if b < GIGA_LIMIT => (bytes as f64 / MEGA_LIMIT_F64, "M"),
+            b if b < TERA_LIMIT => (bytes as f64 / GIGA_LIMIT_F64, "G"),
+            _ => (bytes as f64 / TERA_LIMIT_F64, "T"),
+        }
     }
 }

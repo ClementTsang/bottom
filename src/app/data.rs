@@ -34,34 +34,34 @@ type Values = ChunkedData<f64>;
 #[derive(Clone, Debug, Default)]
 pub struct TimeSeriesData {
     /// Time values.
-    time: Vec<Instant>,
+    pub time: Vec<Instant>,
 
     /// Network RX data.
-    rx: Values,
+    pub rx: Values,
 
     /// Network TX data.
-    tx: Values,
+    pub tx: Values,
 
     /// CPU data.
-    cpu: Vec<Values>,
+    pub cpu: Vec<Values>,
 
     /// Memory data.
-    mem: Values,
+    pub mem: Values,
 
     /// Swap data.
-    swap: Values,
+    pub swap: Values,
 
     #[cfg(not(target_os = "windows"))]
     /// Cache data.
-    cache_mem: Values,
+    pub cache_mem: Values,
 
     #[cfg(feature = "zfs")]
     /// Arc data.
-    arc_mem: Values,
+    pub arc_mem: Values,
 
     #[cfg(feature = "gpu")]
     /// GPU memory data.
-    gpu_mem: HashMap<String, Values>,
+    pub gpu_mem: HashMap<String, Values>,
 }
 
 impl TimeSeriesData {

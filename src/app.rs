@@ -23,7 +23,6 @@ use crate::{
     constants, convert_mem_data_points, convert_swap_data_points,
     data_collection::{processes::Pid, temperature},
     data_conversion::ConvertedData,
-    get_network_points,
     utils::data_units::DataUnit,
     widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
@@ -213,18 +212,6 @@ impl App {
                 self.converted_data.gpu_data = crate::convert_gpu_data(data_source);
             }
             self.states.mem_state.force_update = None;
-        }
-
-        if self.states.net_state.force_update.is_some() {
-            let (rx, tx) = get_network_points(
-                data_source,
-                &self.app_config_fields.network_scale_type,
-                &self.app_config_fields.network_unit_type,
-                self.app_config_fields.network_use_binary_prefix,
-            );
-            self.converted_data.network_data_rx = rx;
-            self.converted_data.network_data_tx = tx;
-            self.states.net_state.force_update = None;
         }
     }
 
