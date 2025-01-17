@@ -326,9 +326,9 @@ pub fn start_bottom() -> anyhow::Result<()> {
     let _cleaning_thread = {
         let cancellation_token = cancellation_token.clone();
         let cleaning_sender = sender.clone();
-        let offset_wait_time = app.app_config_fields.retention_ms + 60000;
+        let offset_wait = Duration::from_millis(app.app_config_fields.retention_ms + 60000);
         thread::spawn(move || loop {
-            if cancellation_token.sleep_with_cancellation(Duration::from_millis(offset_wait_time)) {
+            if cancellation_token.sleep_with_cancellation(offset_wait) {
                 break;
             }
 

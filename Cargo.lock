@@ -1584,9 +1584,9 @@ dependencies = [
 
 [[package]]
 name = "timeless"
-version = "0.0.5-alpha"
+version = "0.0.7-alpha"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84f01add8864f8d4148dc2a67db400f7743b2ecac3a3f27e124621d1bfdfa3d7"
+checksum = "9894812c146f841e06b116c84c9bdf07cc804d15583b105d84d1cc85f47861dd"
 
 [[package]]
 name = "toml_datetime"

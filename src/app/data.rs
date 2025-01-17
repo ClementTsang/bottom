@@ -181,17 +181,26 @@ impl TimeSeriesData {
         }
 
         let now = Instant::now();
+        let end = {
+            let partition_point = self
+                .time
+                .partition_point(|then| now.duration_since(*then) > max_age);
 
-        let end = match self
-            .time
-            .binary_search_by(|then| now.duration_since(*then).cmp(&max_age).reverse())
-        {
-            Ok(index) => index,
-            Err(index) => index - 1, // Safe as length is > 0.
+            // Partition point returns the first index that does not match the predicate, so minus one.
+            if partition_point > 0 {
+                partition_point - 1
+            } else {
+                // If the partition point was 0, then it means all values are too new to be pruned.
+                crate::info!("Skipping prune.");
+                return;
+            }
         };
+
+        crate::info!("Pruning up to index {end}.");
 
         // Note that end here is _inclusive_.
         self.time.drain(0..=end);
+        self.time.shrink_to_fit();
 
         let _ = self.rx.prune(end);
         let _ = self.tx.prune(end);
