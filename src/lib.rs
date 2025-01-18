@@ -462,12 +462,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                                 app.converted_data.gpu_data = convert_gpu_data(collected_data);
                             }
 
-                            #[cfg(not(target_os = "windows"))]
-                            {
-                                app.converted_data.cache_labels =
-                                    convert_mem_label(&collected_data.cache_harvest);
-                            }
-
                             #[cfg(feature = "zfs")]
                             {
                                 app.converted_data.arc_labels =

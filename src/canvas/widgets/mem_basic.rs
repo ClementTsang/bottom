@@ -13,6 +13,7 @@ use crate::{
 };
 
 /// Convert memory info into a string representing a fraction.
+#[inline]
 fn memory_fraction_label(data: &MemHarvest) -> Cow<'static, str> {
     if data.total_bytes > 0 {
         let (unit, denominator) = get_binary_unit_and_denominator(data.total_bytes);
@@ -26,12 +27,22 @@ fn memory_fraction_label(data: &MemHarvest) -> Cow<'static, str> {
 }
 
 /// Convert memory info into a string representing a percentage.
+#[inline]
 fn memory_percentage_label(data: &MemHarvest) -> Cow<'static, str> {
     if data.total_bytes > 0 {
         let percentage = data.used_bytes as f64 / data.total_bytes as f64 * 100.0;
         format!("{percentage:3.0}%").into()
     } else {
         "  0%".into()
+    }
+}
+
+#[inline]
+fn memory_label(data: &MemHarvest, is_percentage: bool) -> Cow<'static, str> {
+    if is_percentage {
+        memory_percentage_label(data)
+    } else {
+        memory_fraction_label(data)
     }
 }
 
@@ -58,56 +69,21 @@ impl Painter {
 
         let data = app_state.data_store.get_data();
 
-        let memory_label = if app_state.basic_mode_use_percent {
-            memory_percentage_label(&data.memory_harvest)
-        } else {
-            memory_fraction_label(&data.memory_harvest)
-        };
+        let ram_label = memory_label(&data.memory_harvest, app_state.basic_mode_use_percent);
 
         draw_widgets.push(
             PipeGauge::default()
                 .ratio(ram_percentage / 100.0)
                 .start_label("RAM")
-                .inner_label(memory_label)
+                .inner_label(ram_label)
                 .label_style(self.styles.ram_style)
                 .gauge_style(self.styles.ram_style),
         );
 
-        #[cfg(not(target_os = "windows"))]
-        {
-            if let Some((_, label_frac)) = &app_state.converted_data.cache_labels {
-                let cache_data = &app_state.converted_data.cache_data;
-
-                let cache_percentage = if let Some(cache) = cache_data.last() {
-                    cache.1
-                } else {
-                    0.0
-                };
-
-                let cache_fraction_label = if app_state.basic_mode_use_percent {
-                    format!("{:3.0}%", cache_percentage.round())
-                } else {
-                    label_frac.trim().to_string()
-                };
-                draw_widgets.push(
-                    PipeGauge::default()
-                        .ratio(cache_percentage / 100.0)
-                        .start_label("CHE")
-                        .inner_label(cache_fraction_label)
-                        .label_style(self.styles.cache_style)
-                        .gauge_style(self.styles.cache_style),
-                );
-            }
-        }
-
+        // FIXME: Change all of these to get the last point instead
         if let Some(swap_harvest) = &data.swap_harvest {
             let swap_percentage = swap_harvest.checked_percent().unwrap_or(0.0);
-
-            let swap_label = if app_state.basic_mode_use_percent {
-                memory_percentage_label(swap_harvest)
-            } else {
-                memory_fraction_label(swap_harvest)
-            };
+            let swap_label = memory_label(swap_harvest, app_state.basic_mode_use_percent);
 
             draw_widgets.push(
                 PipeGauge::default()
@@ -117,6 +93,24 @@ impl Painter {
                     .label_style(self.styles.swap_style)
                     .gauge_style(self.styles.swap_style),
             );
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            if let Some(cache_harvest) = &data.cache_harvest {
+                let cache_percentage = cache_harvest.checked_percent().unwrap_or(0.0);
+                let cache_fraction_label =
+                    memory_label(cache_harvest, app_state.basic_mode_use_percent);
+
+                draw_widgets.push(
+                    PipeGauge::default()
+                        .ratio(cache_percentage / 100.0)
+                        .start_label("CHE")
+                        .inner_label(cache_fraction_label)
+                        .label_style(self.styles.cache_style)
+                        .gauge_style(self.styles.cache_style),
+                );
+            }
         }
 
         #[cfg(feature = "zfs")]

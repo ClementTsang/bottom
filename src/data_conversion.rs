@@ -25,9 +25,6 @@ pub enum CpuWidgetData {
 
 #[derive(Default)]
 pub struct ConvertedData {
-    #[cfg(not(target_os = "windows"))]
-    pub cache_labels: Option<(String, String)>,
-
     // TODO: Switch this and all data points over to a better data structure.
     //
     // We can dedupe the f64 for time by storing it alongside this data structure.

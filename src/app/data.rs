@@ -14,7 +14,9 @@ use timeless::data::ChunkedData;
 use crate::data_collection::batteries;
 use crate::{
     data_collection::{
-        cpu, disks, memory, network,
+        cpu, disks,
+        memory::MemHarvest,
+        network,
         processes::{Pid, ProcessHarvest},
         temperature, Data,
     },
@@ -307,13 +309,13 @@ impl ProcessData {
 #[derive(Debug, Clone)]
 pub struct CollectedData {
     pub current_instant: Instant,
-    pub timed_data_vec: Vec<(Instant, TimedData)>,
-    pub timeseries_data: TimeSeriesData,
+    pub timed_data_vec: Vec<(Instant, TimedData)>, // FIXME: REMOVE THIS
+    pub timeseries_data: TimeSeriesData,           // FIXME: In basic mode I can skip this, right?
     pub network_harvest: network::NetworkHarvest,
-    pub memory_harvest: memory::MemHarvest,
+    pub memory_harvest: MemHarvest,
     #[cfg(not(target_os = "windows"))]
-    pub cache_harvest: memory::MemHarvest,
-    pub swap_harvest: Option<memory::MemHarvest>,
+    pub cache_harvest: Option<MemHarvest>,
+    pub swap_harvest: Option<MemHarvest>,
     pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_data: ProcessData,
@@ -325,9 +327,9 @@ pub struct CollectedData {
     #[cfg(feature = "battery")]
     pub battery_harvest: Vec<batteries::BatteryData>,
     #[cfg(feature = "zfs")]
-    pub arc_harvest: memory::MemHarvest,
+    pub arc_harvest: MemHarvest,
     #[cfg(feature = "gpu")]
-    pub gpu_harvest: Vec<(String, memory::MemHarvest)>,
+    pub gpu_harvest: Vec<(String, MemHarvest)>,
 }
 
 impl Default for CollectedData {
@@ -337,9 +339,9 @@ impl Default for CollectedData {
             timed_data_vec: Vec::default(),
             timeseries_data: TimeSeriesData::default(),
             network_harvest: network::NetworkHarvest::default(),
-            memory_harvest: memory::MemHarvest::default(),
+            memory_harvest: MemHarvest::default(),
             #[cfg(not(target_os = "windows"))]
-            cache_harvest: memory::MemHarvest::default(),
+            cache_harvest: None,
             swap_harvest: None,
             cpu_harvest: cpu::CpuHarvest::default(),
             load_avg_harvest: cpu::LoadAvgHarvest::default(),
@@ -352,7 +354,7 @@ impl Default for CollectedData {
             #[cfg(feature = "battery")]
             battery_harvest: Vec::default(),
             #[cfg(feature = "zfs")]
-            arc_harvest: memory::MemHarvest::default(),
+            arc_harvest: MemHarvest::default(),
             #[cfg(feature = "gpu")]
             gpu_harvest: Vec::default(),
         }
@@ -364,7 +366,7 @@ impl CollectedData {
         self.timed_data_vec = Vec::default();
         self.timeseries_data = TimeSeriesData::default();
         self.network_harvest = network::NetworkHarvest::default();
-        self.memory_harvest = memory::MemHarvest::default();
+        self.memory_harvest = MemHarvest::default();
         self.swap_harvest = None;
         self.cpu_harvest = cpu::CpuHarvest::default();
         self.process_data = Default::default();
@@ -378,7 +380,7 @@ impl CollectedData {
         }
         #[cfg(feature = "zfs")]
         {
-            self.arc_harvest = memory::MemHarvest::default();
+            self.arc_harvest = MemHarvest::default();
         }
         #[cfg(feature = "gpu")]
         {
@@ -409,8 +411,8 @@ impl CollectedData {
 
         // Cache memory
         #[cfg(not(target_os = "windows"))]
-        if let Some(cache) = data.cache {
-            self.cache_harvest = cache;
+        {
+            self.cache_harvest = data.cache;
         }
 
         #[cfg(feature = "zfs")]

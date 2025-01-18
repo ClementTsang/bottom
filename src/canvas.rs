@@ -384,7 +384,7 @@ impl Painter {
 
                 #[cfg(not(target_os = "windows"))]
                 {
-                    if app_state.converted_data.cache_labels.is_some() {
+                    if data.cache_harvest.is_some() {
                         mem_rows += 1;
                     }
                 }

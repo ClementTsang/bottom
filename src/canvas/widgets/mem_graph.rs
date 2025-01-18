@@ -88,8 +88,8 @@ impl Painter {
                 }
 
                 #[cfg(not(target_os = "windows"))]
-                if let Some((label_percent, label_frac)) = &app_state.converted_data.cache_labels {
-                    let cache_label = format!("CHE:{label_percent}{label_frac}");
+                if let Some(cache_harvest) = &data.cache_harvest {
+                    let cache_label = memory_legend_label(cache_harvest, "CHE");
                     points.push(GraphData {
                         points: &app_state.converted_data.cache_data,
                         style: self.styles.cache_style,
