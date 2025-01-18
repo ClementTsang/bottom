@@ -27,14 +27,13 @@ pub enum CpuWidgetData {
 pub struct ConvertedData {
     #[cfg(not(target_os = "windows"))]
     pub cache_labels: Option<(String, String)>,
-    pub swap_labels: Option<(String, String)>,
 
     // TODO: Switch this and all data points over to a better data structure.
     //
     // We can dedupe the f64 for time by storing it alongside this data structure.
     // We can also just store everything via an references and iterators to avoid
     // duplicating data, I guess.
-    pub mem_data: Vec<Point>,
+    pub ram_data: Vec<Point>,
     #[cfg(not(target_os = "windows"))]
     pub cache_data: Vec<Point>,
     pub swap_data: Vec<Point>,

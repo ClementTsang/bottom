@@ -441,7 +441,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         }
 
                         if app.used_widgets.use_mem {
-                            app.converted_data.mem_data = convert_mem_data_points(collected_data);
+                            app.converted_data.ram_data = convert_mem_data_points(collected_data);
 
                             #[cfg(not(target_os = "windows"))]
                             {
@@ -461,9 +461,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                             {
                                 app.converted_data.gpu_data = convert_gpu_data(collected_data);
                             }
-
-                            app.converted_data.swap_labels =
-                                convert_mem_label(&collected_data.swap_harvest);
 
                             #[cfg(not(target_os = "windows"))]
                             {

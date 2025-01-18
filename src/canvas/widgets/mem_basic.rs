@@ -39,7 +39,7 @@ impl Painter {
     pub fn draw_basic_memory(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        let mem_data = &app_state.converted_data.mem_data;
+        let mem_data = &app_state.converted_data.ram_data;
         let mut draw_widgets: Vec<PipeGauge<'_>> = Vec::new();
 
         if app_state.current_widget.widget_id == widget_id {
@@ -100,25 +100,20 @@ impl Painter {
             }
         }
 
-        let swap_data = &app_state.converted_data.swap_data;
+        if let Some(swap_harvest) = &data.swap_harvest {
+            let swap_percentage = swap_harvest.checked_percent().unwrap_or(0.0);
 
-        let swap_percentage = if let Some(swap) = swap_data.last() {
-            swap.1
-        } else {
-            0.0
-        };
-
-        if let Some((_, label_frac)) = &app_state.converted_data.swap_labels {
-            let swap_fraction_label = if app_state.basic_mode_use_percent {
-                format!("{:3.0}%", swap_percentage.round())
+            let swap_label = if app_state.basic_mode_use_percent {
+                memory_percentage_label(swap_harvest)
             } else {
-                label_frac.trim().to_string()
+                memory_fraction_label(swap_harvest)
             };
+
             draw_widgets.push(
                 PipeGauge::default()
                     .ratio(swap_percentage / 100.0)
                     .start_label("SWP")
-                    .inner_label(swap_fraction_label)
+                    .inner_label(swap_label)
                     .label_style(self.styles.swap_style)
                     .gauge_style(self.styles.swap_style),
             );

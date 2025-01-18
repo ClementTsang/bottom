@@ -349,6 +349,7 @@ impl Painter {
                     self.draw_frozen_indicator(f, frozen_draw_loc);
                 }
 
+                let data = app_state.data_store.get_data();
                 let actual_cpu_data_len = app_state.converted_data.cpu_data.len().saturating_sub(1);
 
                 // This fixes #397, apparently if the height is 1, it can't render the CPU
@@ -370,7 +371,7 @@ impl Painter {
 
                 let mut mem_rows = 1;
 
-                if app_state.converted_data.swap_labels.is_some() {
+                if data.swap_harvest.is_some() {
                     mem_rows += 1; // add row for swap
                 }
 

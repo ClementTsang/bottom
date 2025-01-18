@@ -50,7 +50,9 @@ impl Painter {
             );
             let points = {
                 let mut size = 1;
-                if app_state.converted_data.swap_labels.is_some() {
+                let data = app_state.data_store.get_data();
+
+                if data.swap_harvest.is_some() {
                     size += 1; // add capacity for SWAP
                 }
                 #[cfg(feature = "zfs")]
@@ -69,12 +71,21 @@ impl Painter {
                 let data = app_state.data_store.get_data();
                 let mut points = Vec::with_capacity(size);
 
-                let mem_label = memory_legend_label(&data.memory_harvest, "RAM");
+                let ram_label = memory_legend_label(&data.memory_harvest, "RAM");
                 points.push(GraphData {
-                    points: &app_state.converted_data.mem_data,
+                    points: &app_state.converted_data.ram_data,
                     style: self.styles.ram_style,
-                    name: Some(mem_label.into()),
+                    name: Some(ram_label.into()),
                 });
+
+                if let Some(swap_harvest) = &data.swap_harvest {
+                    let swap_label = memory_legend_label(swap_harvest, "SWP");
+                    points.push(GraphData {
+                        points: &app_state.converted_data.swap_data,
+                        style: self.styles.swap_style,
+                        name: Some(swap_label.into()),
+                    });
+                }
 
                 #[cfg(not(target_os = "windows"))]
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.cache_labels {
@@ -85,14 +96,7 @@ impl Painter {
                         name: Some(cache_label.into()),
                     });
                 }
-                if let Some((label_percent, label_frac)) = &app_state.converted_data.swap_labels {
-                    let swap_label = format!("SWP:{label_percent}{label_frac}");
-                    points.push(GraphData {
-                        points: &app_state.converted_data.swap_data,
-                        style: self.styles.swap_style,
-                        name: Some(swap_label.into()),
-                    });
-                }
+
                 #[cfg(feature = "zfs")]
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.arc_labels {
                     let arc_label = format!("ARC:{label_percent}{label_frac}");

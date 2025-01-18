@@ -313,7 +313,7 @@ pub struct CollectedData {
     pub memory_harvest: memory::MemHarvest,
     #[cfg(not(target_os = "windows"))]
     pub cache_harvest: memory::MemHarvest,
-    pub swap_harvest: memory::MemHarvest,
+    pub swap_harvest: Option<memory::MemHarvest>,
     pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_data: ProcessData,
@@ -340,7 +340,7 @@ impl Default for CollectedData {
             memory_harvest: memory::MemHarvest::default(),
             #[cfg(not(target_os = "windows"))]
             cache_harvest: memory::MemHarvest::default(),
-            swap_harvest: memory::MemHarvest::default(),
+            swap_harvest: None,
             cpu_harvest: cpu::CpuHarvest::default(),
             load_avg_harvest: cpu::LoadAvgHarvest::default(),
             process_data: Default::default(),
@@ -365,7 +365,7 @@ impl CollectedData {
         self.timeseries_data = TimeSeriesData::default();
         self.network_harvest = network::NetworkHarvest::default();
         self.memory_harvest = memory::MemHarvest::default();
-        self.swap_harvest = memory::MemHarvest::default();
+        self.swap_harvest = None;
         self.cpu_harvest = cpu::CpuHarvest::default();
         self.process_data = Default::default();
         self.disk_harvest = Vec::default();
@@ -401,10 +401,11 @@ impl CollectedData {
         }
 
         // Memory, Swap
-        if let (Some(memory), Some(swap)) = (data.memory, data.swap) {
+        if let Some(memory) = data.memory {
             self.memory_harvest = memory;
-            self.swap_harvest = swap;
         }
+
+        self.swap_harvest = data.swap;
 
         // Cache memory
         #[cfg(not(target_os = "windows"))]
