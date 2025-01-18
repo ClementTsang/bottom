@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use tui::{
     layout::{Constraint, Rect},
+    style::Style,
     symbols::Marker,
     Frame,
 };
@@ -18,7 +19,8 @@ use crate::{
 };
 
 /// Convert memory info into a combined memory label.
-fn memory_legend_label(data: &MemHarvest, name: &str) -> String {
+#[inline]
+fn memory_legend_label(name: &str, data: &MemHarvest) -> String {
     if data.total_bytes > 0 {
         let percentage = data.used_bytes as f64 / data.total_bytes as f64 * 100.0;
         let (unit, denominator) = get_binary_unit_and_denominator(data.total_bytes);
@@ -28,6 +30,23 @@ fn memory_legend_label(data: &MemHarvest, name: &str) -> String {
         format!("{name}:{percentage:3.0}%   {used:.1}{unit}/{total:.1}{unit}")
     } else {
         format!("{name}:   0%   0.0B/0.0B")
+    }
+}
+
+/// Get graph data.
+#[inline]
+fn graph_data<'a>(
+    out: &mut Vec<GraphData<'a>>, name: &str, last_harvest: Option<&'a MemHarvest>,
+    points: &'a [(f64, f64)], style: Style,
+) {
+    if !points.is_empty() {
+        let label = last_harvest.map(|data| memory_legend_label(name, data).into());
+
+        out.push(GraphData {
+            points,
+            style,
+            name: label,
+        });
     }
 }
 
@@ -71,31 +90,30 @@ impl Painter {
                 let data = app_state.data_store.get_data();
                 let mut points = Vec::with_capacity(size);
 
-                let ram_label = memory_legend_label(&data.memory_harvest, "RAM");
-                points.push(GraphData {
-                    points: &app_state.converted_data.ram_data,
-                    style: self.styles.ram_style,
-                    name: Some(ram_label.into()),
-                });
+                graph_data(
+                    &mut points,
+                    "RAM",
+                    Some(&data.memory_harvest),
+                    &app_state.converted_data.ram_data,
+                    self.styles.ram_style,
+                );
 
-                if let Some(swap_harvest) = &data.swap_harvest {
-                    let swap_label = memory_legend_label(swap_harvest, "SWP");
-                    points.push(GraphData {
-                        points: &app_state.converted_data.swap_data,
-                        style: self.styles.swap_style,
-                        name: Some(swap_label.into()),
-                    });
-                }
+                graph_data(
+                    &mut points,
+                    "SWP",
+                    data.swap_harvest.as_ref(),
+                    &app_state.converted_data.swap_data,
+                    self.styles.swap_style,
+                );
 
                 #[cfg(not(target_os = "windows"))]
-                if let Some(cache_harvest) = &data.cache_harvest {
-                    let cache_label = memory_legend_label(cache_harvest, "CHE");
-                    points.push(GraphData {
-                        points: &app_state.converted_data.cache_data,
-                        style: self.styles.cache_style,
-                        name: Some(cache_label.into()),
-                    });
-                }
+                graph_data(
+                    &mut points,
+                    "CHE",
+                    data.cache_harvest.as_ref(),
+                    &app_state.converted_data.cache_data,
+                    self.styles.cache_style,
+                );
 
                 #[cfg(feature = "zfs")]
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.arc_labels {
