@@ -370,6 +370,11 @@ impl DataCollection {
 
                         // Must trim one level further for macOS!
                         static DISK_REGEX: OnceLock<Regex> = OnceLock::new();
+
+                        #[expect(
+                            clippy::regex_creation_in_loops,
+                            reason = "this is fine since it's done via a static OnceLock. In the future though, separate it out."
+                        )]
                         if let Some(new_name) = DISK_REGEX
                             .get_or_init(|| Regex::new(r"disk\d+").unwrap())
                             .find(checked_name)
