@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     Frame,
@@ -6,7 +8,32 @@ use tui::{
 use crate::{
     app::App,
     canvas::{components::pipe_gauge::PipeGauge, drawing_utils::widget_block, Painter},
+    data_collection::memory::MemHarvest,
+    get_binary_unit_and_denominator,
 };
+
+/// Convert memory info into a string representing a fraction.
+fn memory_fraction_label(data: &MemHarvest) -> Cow<'static, str> {
+    if data.total_bytes > 0 {
+        let (unit, denominator) = get_binary_unit_and_denominator(data.total_bytes);
+        let used = data.used_bytes as f64 / denominator;
+        let total = data.total_bytes as f64 / denominator;
+
+        format!("{used:.1}{unit}/{total:.1}{unit}").into()
+    } else {
+        "0.0B/0.0B".into()
+    }
+}
+
+/// Convert memory info into a string representing a percentage.
+fn memory_percentage_label(data: &MemHarvest) -> Cow<'static, str> {
+    if data.total_bytes > 0 {
+        let percentage = data.used_bytes as f64 / data.total_bytes as f64 * 100.0;
+        format!("{percentage:3.0}%").into()
+    } else {
+        "  0%".into()
+    }
+}
 
 impl Painter {
     pub fn draw_basic_memory(
@@ -29,24 +56,19 @@ impl Painter {
             0.0
         };
 
-        const EMPTY_MEMORY_FRAC_STRING: &str = "0.0B/0.0B";
+        let data = app_state.data_store.get_data();
 
-        let memory_fraction_label =
-            if let Some((_, label_frac)) = &app_state.converted_data.mem_labels {
-                if app_state.basic_mode_use_percent {
-                    format!("{:3.0}%", ram_percentage.round())
-                } else {
-                    label_frac.trim().to_string()
-                }
-            } else {
-                EMPTY_MEMORY_FRAC_STRING.to_string()
-            };
+        let memory_label = if app_state.basic_mode_use_percent {
+            memory_percentage_label(&data.memory_harvest)
+        } else {
+            memory_fraction_label(&data.memory_harvest)
+        };
 
         draw_widgets.push(
             PipeGauge::default()
                 .ratio(ram_percentage / 100.0)
                 .start_label("RAM")
-                .inner_label(memory_fraction_label)
+                .inner_label(memory_label)
                 .label_style(self.styles.ram_style)
                 .gauge_style(self.styles.ram_style),
         );

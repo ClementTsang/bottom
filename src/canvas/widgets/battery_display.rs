@@ -65,7 +65,7 @@ impl Painter {
                 block
             };
 
-            let battery_harvest = &(app_state.shared_data.data().battery_harvest);
+            let battery_harvest = &(app_state.data_store.get_data().battery_harvest);
             if battery_harvest.len() > 1 {
                 let battery_names = battery_harvest
                     .iter()

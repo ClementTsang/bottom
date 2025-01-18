@@ -207,11 +207,6 @@ impl TimeSeriesData {
 
         for cpu in &mut self.cpu {
             let _ = cpu.prune(end);
-
-            // // We don't want to retain things if there is no data at all.
-            // if cpu.is_empty() {
-            //     to_delete.push(itx);
-            // }
         }
 
         let _ = self.mem.prune(end);
@@ -228,10 +223,7 @@ impl TimeSeriesData {
             for gpu in self.gpu_mem.values_mut() {
                 let _ = gpu.prune(end);
 
-                // // We don't want to retain things if there is no data at all.
-                // if gpu.is_empty() {
-                //     to_delete.push(itx);
-                // }
+                // TODO: Do we want to filter out any empty gpus?
             }
         }
     }
@@ -595,12 +587,12 @@ pub enum FrozenState {
 
 /// What data to share to other parts of the application.
 #[derive(Default)]
-pub struct SharedData {
+pub struct DataStore {
     frozen_state: FrozenState,
     main: CollectedData,
 }
 
-impl SharedData {
+impl DataStore {
     /// Toggle whether the [`DataState`] is frozen or not.
     pub fn toggle_frozen(&mut self) {
         match &self.frozen_state {
@@ -617,7 +609,7 @@ impl SharedData {
     }
 
     /// Return a reference to the current [`DataCollection`] based on state.
-    pub fn data(&self) -> &CollectedData {
+    pub fn get_data(&self) -> &CollectedData {
         match &self.frozen_state {
             FrozenState::NotFrozen => &self.main,
             FrozenState::Frozen(collected_data) => collected_data,

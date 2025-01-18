@@ -25,7 +25,6 @@ pub enum CpuWidgetData {
 
 #[derive(Default)]
 pub struct ConvertedData {
-    pub mem_labels: Option<(String, String)>,
     #[cfg(not(target_os = "windows"))]
     pub cache_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
@@ -231,7 +230,7 @@ pub fn convert_swap_data_points(data: &CollectedData) -> Vec<Point> {
 /// denominator in order to be able to use it with the returned binary unit
 /// (e.g. divide 3000 bytes by 1024 to have a value in KiB).
 #[inline]
-fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
+pub fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
     match bytes {
         b if b < KIBI_LIMIT => ("B", 1.0),
         b if b < MEBI_LIMIT => ("KiB", KIBI_LIMIT_F64),

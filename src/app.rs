@@ -102,7 +102,7 @@ pub struct App {
     second_char: Option<char>,
     pub dd_err: Option<String>, // FIXME: The way we do deletes is really gross.
     to_delete_process_list: Option<(String, Vec<Pid>)>,
-    pub shared_data: SharedData,
+    pub data_store: DataStore,
     last_key_press: Instant,
     pub converted_data: ConvertedData,
     pub delete_dialog_state: AppDeleteDialogState,
@@ -131,7 +131,7 @@ impl App {
             second_char: None,
             dd_err: None,
             to_delete_process_list: None,
-            shared_data: SharedData::default(),
+            data_store: DataStore::default(),
             last_key_press: Instant::now(),
             converted_data: ConvertedData::default(),
             delete_dialog_state: AppDeleteDialogState::default(),
@@ -151,7 +151,7 @@ impl App {
 
     /// Update the data in the [`App`].
     pub fn update_data(&mut self) {
-        let data_source = self.shared_data.data();
+        let data_source = self.data_store.get_data();
 
         for proc in self.states.proc_state.widget_states.values_mut() {
             if proc.force_update_data {
@@ -236,7 +236,7 @@ impl App {
         self.to_delete_process_list = None;
         self.dd_err = None;
 
-        self.shared_data.reset();
+        self.data_store.reset();
 
         // Reset zoom
         self.reset_cpu_zoom();
@@ -738,10 +738,9 @@ impl App {
                         }
                     }
                 }
-                BottomWidgetType::Battery =>
-                {
+                BottomWidgetType::Battery => {
                     #[cfg(feature = "battery")]
-                    if self.shared_data.data().battery_harvest.len() > 1 {
+                    if self.data_store.get_data().battery_harvest.len() > 1 {
                         if let Some(battery_widget_state) = self
                             .states
                             .battery_state
@@ -804,7 +803,7 @@ impl App {
                 BottomWidgetType::Battery => {
                     #[cfg(feature = "battery")]
                     {
-                        let battery_count = self.shared_data.data().battery_harvest.len();
+                        let battery_count = self.data_store.get_data().battery_harvest.len();
                         if battery_count > 1 {
                             if let Some(battery_widget_state) = self
                                 .states
@@ -1254,7 +1253,7 @@ impl App {
             'G' => self.skip_to_last(),
             'k' => self.on_up_key(),
             'j' => self.on_down_key(),
-            'f' => self.shared_data.toggle_frozen(),
+            'f' => self.data_store.toggle_frozen(),
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
@@ -2781,7 +2780,7 @@ impl App {
                                     if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y)
                                     {
                                         let num_batteries =
-                                            self.shared_data.data().battery_harvest.len();
+                                            self.data_store.get_data().battery_harvest.len();
                                         if itx >= num_batteries {
                                             // range check to keep within current data
                                             battery_widget_state.currently_selected_battery_index =

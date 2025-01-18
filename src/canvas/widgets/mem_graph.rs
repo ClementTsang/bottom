@@ -13,7 +13,23 @@ use crate::{
         drawing_utils::should_hide_x_label,
         Painter,
     },
+    data_collection::memory::MemHarvest,
+    get_binary_unit_and_denominator,
 };
+
+/// Convert memory info into a combined memory label.
+fn memory_legend_label(data: &MemHarvest, name: &str) -> String {
+    if data.total_bytes > 0 {
+        let percentage = data.used_bytes as f64 / data.total_bytes as f64 * 100.0;
+        let (unit, denominator) = get_binary_unit_and_denominator(data.total_bytes);
+        let used = data.used_bytes as f64 / denominator;
+        let total = data.total_bytes as f64 / denominator;
+
+        format!("{name}:{percentage:3.0}%   {used:.1}{unit}/{total:.1}{unit}")
+    } else {
+        format!("{name}:   0%   0.0B/0.0B")
+    }
+}
 
 impl Painter {
     pub fn draw_memory_graph(
@@ -50,15 +66,16 @@ impl Painter {
                     }
                 }
 
+                let data = app_state.data_store.get_data();
                 let mut points = Vec::with_capacity(size);
-                if let Some((label_percent, label_frac)) = &app_state.converted_data.mem_labels {
-                    let mem_label = format!("RAM:{label_percent}{label_frac}");
-                    points.push(GraphData {
-                        points: &app_state.converted_data.mem_data,
-                        style: self.styles.ram_style,
-                        name: Some(mem_label.into()),
-                    });
-                }
+
+                let mem_label = memory_legend_label(&data.memory_harvest, "RAM");
+                points.push(GraphData {
+                    points: &app_state.converted_data.mem_data,
+                    style: self.styles.ram_style,
+                    name: Some(mem_label.into()),
+                });
+
                 #[cfg(not(target_os = "windows"))]
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.cache_labels {
                     let cache_label = format!("CHE:{label_percent}{label_frac}");

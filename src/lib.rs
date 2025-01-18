@@ -407,7 +407,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::Update(data) => {
-                    app.shared_data.eat_data(data);
+                    app.data_store.eat_data(data);
 
                     // This thing is required as otherwise, some widgets can't draw correctly w/o
                     // some data (or they need to be re-drawn).
@@ -416,9 +416,9 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         app.is_force_redraw = true;
                     }
 
-                    let collected_data = app.shared_data.data();
+                    let collected_data = app.data_store.get_data();
 
-                    if !app.shared_data.is_frozen() {
+                    if !app.data_store.is_frozen() {
                         // Convert all data into data for the displayed widgets.
 
                         if app.used_widgets.use_disk {
@@ -462,9 +462,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                                 app.converted_data.gpu_data = convert_gpu_data(collected_data);
                             }
 
-                            app.converted_data.mem_labels =
-                                convert_mem_label(&collected_data.memory_harvest);
-
                             app.converted_data.swap_labels =
                                 convert_mem_label(&collected_data.swap_harvest);
 
@@ -497,7 +494,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                     }
                 }
                 BottomEvent::Clean => {
-                    app.shared_data
+                    app.data_store
                         .clean_data(Duration::from_millis(app.app_config_fields.retention_ms));
                 }
             }

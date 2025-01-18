@@ -42,7 +42,7 @@ impl Painter {
 
         let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
         let unit_type = app_state.app_config_fields.network_unit_type;
-        let network_data = &(app_state.shared_data.data().network_harvest);
+        let network_data = &(app_state.data_store.get_data().network_harvest);
         let rx = get_unit_prefix(network_data.rx, unit_type, use_binary_prefix);
         let tx = get_unit_prefix(network_data.tx, unit_type, use_binary_prefix);
         let total_rx = convert_bits(network_data.total_rx, use_binary_prefix);

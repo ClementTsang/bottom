@@ -59,7 +59,7 @@ impl Painter {
         if let Some(network_widget_state) =
             app_state.states.net_state.widget_states.get_mut(&widget_id)
         {
-            let shared_data = app_state.shared_data.data();
+            let shared_data = app_state.data_store.get_data();
             let network_latest_data = &(shared_data.network_harvest);
             let rx_points = &(shared_data.timeseries_data.rx);
             let tx_points = &(shared_data.timeseries_data.tx);
@@ -239,7 +239,7 @@ impl Painter {
     ) {
         const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 
-        let network_latest_data = &(app_state.shared_data.data().network_harvest);
+        let network_latest_data = &(app_state.data_store.get_data().network_harvest);
         let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
         let unit_type = app_state.app_config_fields.network_unit_type;
         let unit = match unit_type {
