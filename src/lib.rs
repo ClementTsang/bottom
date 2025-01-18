@@ -26,7 +26,7 @@ pub mod widgets;
 
 use std::{
     boxed::Box,
-    io::{stderr, stdout, Write},
+    io::{stderr, stdout, Stdout, Write},
     panic::{self, PanicHookInfo},
     sync::{
         mpsc::{self, Receiver, Sender},
@@ -38,12 +38,12 @@ use std::{
 
 use app::{layout_manager::UsedWidgets, App, AppConfigFields, DataFilters};
 use crossterm::{
+    cursor::{Hide, Show},
     event::{
         poll, read, DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste,
         EnableMouseCapture, Event, KeyEventKind, MouseEventKind,
     },
     execute,
-    style::Print,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use data_conversion::*;
@@ -80,7 +80,8 @@ fn cleanup_terminal(
         terminal.backend_mut(),
         DisableBracketedPaste,
         DisableMouseCapture,
-        LeaveAlternateScreen
+        LeaveAlternateScreen,
+        Show,
     )?;
     terminal.show_cursor()?;
 
@@ -101,11 +102,24 @@ fn check_if_terminal() {
     }
 }
 
+/// This manually resets stdout back to normal state.
+pub fn reset_stdout() -> Stdout {
+    let mut stdout = stdout();
+    let _ = disable_raw_mode();
+    let _ = execute!(
+        stdout,
+        DisableBracketedPaste,
+        DisableMouseCapture,
+        LeaveAlternateScreen,
+        Show,
+    );
+
+    stdout
+}
+
 /// A panic hook to properly restore the terminal in the case of a panic.
 /// Originally based on [spotify-tui's implementation](https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs).
 fn panic_hook(panic_info: &PanicHookInfo<'_>) {
-    let mut stdout = stdout();
-
     let msg = match panic_info.payload().downcast_ref::<&'static str>() {
         Some(s) => *s,
         None => match panic_info.payload().downcast_ref::<String>() {
@@ -116,22 +130,11 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
 
     let backtrace = format!("{:?}", backtrace::Backtrace::new());
 
-    let _ = disable_raw_mode();
-    let _ = execute!(
-        stdout,
-        DisableBracketedPaste,
-        DisableMouseCapture,
-        LeaveAlternateScreen
-    );
+    reset_stdout();
 
     // Print stack trace. Must be done after!
     if let Some(panic_info) = panic_info.location() {
-        let _ = execute!(
-            stdout,
-            Print(format!(
-                "thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}",
-            )),
-        );
+        println!("thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}")
     }
 
     // TODO: Might be cleaner in the future to use a cancellation token, but that causes some fun issues with
@@ -339,6 +342,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
     let mut stdout_val = stdout();
     execute!(
         stdout_val,
+        Hide,
         EnterAlternateScreen,
         EnableMouseCapture,
         EnableBracketedPaste
@@ -365,6 +369,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
     panic::set_hook(Box::new(panic_hook));
 
     // Set termination hook
+    // TODO: On UNIX, use signal-hook to handle cleanup as well.
     ctrlc::set_handler(move || {
         let _ = sender.send(BottomEvent::Terminate);
     })?;
