@@ -25,12 +25,6 @@ pub enum CpuWidgetData {
 
 #[derive(Default)]
 pub struct ConvertedData {
-    // TODO: Switch this and all data points over to a better data structure.
-    //
-    // We can dedupe the f64 for time by storing it alongside this data structure.
-    // We can also just store everything via an references and iterators to avoid
-    // duplicating data, I guess.
-    pub ram_data: Vec<Point>,
     #[cfg(not(target_os = "windows"))]
     pub cache_data: Vec<Point>,
     pub swap_data: Vec<Point>,
@@ -162,24 +156,6 @@ impl ConvertedData {
             }
         }
     }
-}
-
-pub fn convert_mem_data_points(data: &CollectedData) -> Vec<Point> {
-    let mut result: Vec<Point> = Vec::new();
-    let current_time = data.current_instant;
-
-    for (time, data) in &data.timed_data_vec {
-        if let Some(mem_data) = data.mem_data {
-            let time_from_start: f64 =
-                (current_time.duration_since(*time).as_millis() as f64).floor();
-            result.push((-time_from_start, mem_data));
-            if *time == current_time {
-                break;
-            }
-        }
-    }
-
-    result
 }
 
 #[cfg(not(target_os = "windows"))]

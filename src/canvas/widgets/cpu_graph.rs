@@ -185,7 +185,7 @@ impl Painter {
         {
             let cpu_data = &app_state.converted_data.cpu_data;
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
-            let x_bounds = [0, cpu_widget_state.current_display_time];
+            let x_min = -(cpu_widget_state.current_display_time as f64);
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
@@ -224,7 +224,7 @@ impl Painter {
             };
 
             TimeGraph {
-                x_bounds,
+                x_min,
                 hide_x_labels,
                 y_bounds: Y_BOUNDS,
                 y_labels: &Y_LABELS,

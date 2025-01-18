@@ -20,7 +20,7 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
     canvas::components::time_chart::LegendPosition,
-    constants, convert_mem_data_points, convert_swap_data_points,
+    constants, convert_swap_data_points,
     data_collection::{processes::Pid, temperature},
     data_conversion::ConvertedData,
     utils::data_units::DataUnit,
@@ -196,7 +196,6 @@ impl App {
 
         // TODO: [OPT] Prefer reassignment over new vectors?
         if self.states.mem_state.force_update.is_some() {
-            self.converted_data.ram_data = convert_mem_data_points(data_source);
             #[cfg(not(target_os = "windows"))]
             {
                 self.converted_data.cache_data = crate::convert_cache_data_points(data_source);

@@ -441,8 +441,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         }
 
                         if app.used_widgets.use_mem {
-                            app.converted_data.ram_data = convert_mem_data_points(collected_data);
-
                             #[cfg(not(target_os = "windows"))]
                             {
                                 app.converted_data.cache_data =

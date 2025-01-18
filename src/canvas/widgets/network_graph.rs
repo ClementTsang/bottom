@@ -105,7 +105,6 @@ impl Painter {
 
             let time_start = -(network_widget_state.current_display_time as f64);
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
-            let x_bounds = [0, network_widget_state.current_display_time];
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
@@ -215,7 +214,7 @@ impl Painter {
             };
 
             TimeGraph {
-                x_bounds,
+                x_min: time_start,
                 hide_x_labels,
                 y_bounds,
                 y_labels: &y_labels,

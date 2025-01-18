@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, time::Instant};
 
 use tui::{
     layout::{Constraint, Rect},
@@ -8,7 +8,7 @@ use tui::{
 };
 
 use crate::{
-    app::App,
+    app::{data::Values, App},
     canvas::{
         components::time_graph::{GraphData, TimeGraph},
         drawing_utils::should_hide_x_label,
@@ -20,27 +20,65 @@ use crate::{
 
 /// Convert memory info into a combined memory label.
 #[inline]
-fn memory_legend_label(name: &str, data: &MemHarvest) -> String {
-    if data.total_bytes > 0 {
-        let percentage = data.used_bytes as f64 / data.total_bytes as f64 * 100.0;
-        let (unit, denominator) = get_binary_unit_and_denominator(data.total_bytes);
-        let used = data.used_bytes as f64 / denominator;
-        let total = data.total_bytes as f64 / denominator;
+fn memory_legend_label(name: &str, data: Option<&MemHarvest>) -> String {
+    if let Some(data) = data {
+        if data.total_bytes > 0 {
+            let percentage = data.used_bytes as f64 / data.total_bytes as f64 * 100.0;
+            let (unit, denominator) = get_binary_unit_and_denominator(data.total_bytes);
+            let used = data.used_bytes as f64 / denominator;
+            let total = data.total_bytes as f64 / denominator;
 
-        format!("{name}:{percentage:3.0}%   {used:.1}{unit}/{total:.1}{unit}")
+            format!("{name}:{percentage:3.0}%   {used:.1}{unit}/{total:.1}{unit}")
+        } else {
+            format!("{name}:   0%   0.0B/0.0B")
+        }
     } else {
         format!("{name}:   0%   0.0B/0.0B")
     }
 }
 
-/// Get graph data.
+/// FIXME: Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
+/// the needed points.
+///
+/// This should be slated to be removed and functionality moved to the graph drawing outright.
+fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Vec<(f64, f64)> {
+    let Some(iter) = values.iter_along_base(time) else {
+        return vec![];
+    };
+
+    let Some(current_time) = time.last() else {
+        return vec![];
+    };
+
+    let mut take_while_done = false;
+
+    iter.rev()
+        .map(|(&time, &val)| {
+            let from_start: f64 = (current_time.duration_since(time).as_millis() as f64).floor();
+            (-from_start, val)
+        })
+        .take_while(|(time, _)| {
+            // We do things like this so we can take one extra value AFTER (needed for interpolation).
+            if *time >= left_edge {
+                true
+            } else if !take_while_done {
+                take_while_done = true;
+                true
+            } else {
+                false
+            }
+        })
+        .collect()
+}
+
+/// Get graph data from.
 #[inline]
 fn graph_data<'a>(
     out: &mut Vec<GraphData<'a>>, name: &str, last_harvest: Option<&'a MemHarvest>,
     points: &'a [(f64, f64)], style: Style,
 ) {
     if !points.is_empty() {
-        let label = last_harvest.map(|data| memory_legend_label(name, data).into());
+        let label = Some(memory_legend_label(name, last_harvest).into());
 
         out.push(GraphData {
             points,
@@ -57,14 +95,13 @@ impl Painter {
         const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
         const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
 
-        if let Some(mem_widget_state) = app_state.states.mem_state.widget_states.get_mut(&widget_id)
-        {
+        if let Some(mem_state) = app_state.states.mem_state.widget_states.get_mut(&widget_id) {
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
-            let x_bounds = [0, mem_widget_state.current_display_time];
+            let x_min = -(mem_state.current_display_time as f64);
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                &mut mem_widget_state.autohide_timer,
+                &mut mem_state.autohide_timer,
                 draw_loc,
             );
             let points = {
@@ -90,11 +127,14 @@ impl Painter {
                 let data = app_state.data_store.get_data();
                 let mut points = Vec::with_capacity(size);
 
+                mem_state.ram_points_cache =
+                    to_points(&data.timeseries_data.time, &data.timeseries_data.mem, x_min);
+
                 graph_data(
                     &mut points,
                     "RAM",
-                    Some(&data.memory_harvest),
-                    &app_state.converted_data.ram_data,
+                    Some(&data.ram_harvest),
+                    &mem_state.ram_points_cache,
                     self.styles.ram_style,
                 );
 
@@ -163,7 +203,7 @@ impl Painter {
             };
 
             TimeGraph {
-                x_bounds,
+                x_min,
                 hide_x_labels,
                 y_bounds: Y_BOUNDS,
                 y_labels: &Y_LABELS,

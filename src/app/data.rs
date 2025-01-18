@@ -24,7 +24,7 @@ use crate::{
 };
 
 /// Values corresponding to a time slice.
-type Values = ChunkedData<f64>;
+pub type Values = ChunkedData<f64>;
 
 /// Represents timeseries data in a chunked, deduped manner.
 ///
@@ -312,7 +312,7 @@ pub struct CollectedData {
     pub timed_data_vec: Vec<(Instant, TimedData)>, // FIXME: REMOVE THIS
     pub timeseries_data: TimeSeriesData,           // FIXME: In basic mode I can skip this, right?
     pub network_harvest: network::NetworkHarvest,
-    pub memory_harvest: MemHarvest,
+    pub ram_harvest: MemHarvest,
     #[cfg(not(target_os = "windows"))]
     pub cache_harvest: Option<MemHarvest>,
     pub swap_harvest: Option<MemHarvest>,
@@ -339,7 +339,7 @@ impl Default for CollectedData {
             timed_data_vec: Vec::default(),
             timeseries_data: TimeSeriesData::default(),
             network_harvest: network::NetworkHarvest::default(),
-            memory_harvest: MemHarvest::default(),
+            ram_harvest: MemHarvest::default(),
             #[cfg(not(target_os = "windows"))]
             cache_harvest: None,
             swap_harvest: None,
@@ -366,7 +366,7 @@ impl CollectedData {
         self.timed_data_vec = Vec::default();
         self.timeseries_data = TimeSeriesData::default();
         self.network_harvest = network::NetworkHarvest::default();
-        self.memory_harvest = MemHarvest::default();
+        self.ram_harvest = MemHarvest::default();
         self.swap_harvest = None;
         self.cpu_harvest = cpu::CpuHarvest::default();
         self.process_data = Default::default();
@@ -404,7 +404,7 @@ impl CollectedData {
 
         // Memory, Swap
         if let Some(memory) = data.memory {
-            self.memory_harvest = memory;
+            self.ram_harvest = memory;
         }
 
         self.swap_harvest = data.swap;

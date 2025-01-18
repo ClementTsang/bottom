@@ -24,9 +24,8 @@ pub struct GraphData<'a> {
 }
 
 pub struct TimeGraph<'a> {
-    /// The min and max x boundaries. Expects a f64 representing the time range
-    /// in milliseconds.
-    pub x_bounds: [u64; 2],
+    /// The min x value.
+    pub x_min: f64,
 
     /// Whether to hide the time/x-labels.
     pub hide_x_labels: bool,
@@ -73,14 +72,13 @@ impl TimeGraph<'_> {
     /// Generates the [`Axis`] for the x-axis.
     fn generate_x_axis(&self) -> Axis<'_> {
         // Due to how we display things, we need to adjust the time bound values.
-        let time_start = -(self.x_bounds[1] as f64);
-        let adjusted_x_bounds = [time_start, 0.0];
+        let adjusted_x_bounds = [self.x_min, 0.0];
 
         if self.hide_x_labels {
             Axis::default().bounds(adjusted_x_bounds)
         } else {
-            let xb_one = (self.x_bounds[1] / 1000).to_string();
-            let xb_zero = (self.x_bounds[0] / 1000).to_string();
+            let xb_one = (self.x_min as u64 / 1000).to_string();
+            let xb_zero = "0";
 
             let x_labels = vec![
                 Span::styled(concat_string!(xb_one, "s"), self.graph_style),
@@ -196,7 +194,7 @@ mod test {
     fn create_time_graph() -> TimeGraph<'static> {
         TimeGraph {
             title: " Network ".into(),
-            x_bounds: [0, 15000],
+            x_min: -15000.0,
             hide_x_labels: false,
             y_bounds: [0.0, 100.5],
             y_labels: &Y_LABELS,

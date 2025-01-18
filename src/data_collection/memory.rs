@@ -34,4 +34,17 @@ impl MemHarvest {
             Some(used / total * 100.0)
         }
     }
+
+    /// Return the use percentage. If the total bytes is 0, then this returns 0.0.
+    #[inline]
+    pub fn saturating_percentage(&self) -> f64 {
+        let used = self.used_bytes as f64;
+        let total = self.total_bytes as f64;
+
+        if total == 0.0 {
+            0.0
+        } else {
+            used / total * 100.0
+        }
+    }
 }

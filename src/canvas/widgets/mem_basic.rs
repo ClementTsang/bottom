@@ -50,7 +50,6 @@ impl Painter {
     pub fn draw_basic_memory(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        let mem_data = &app_state.converted_data.ram_data;
         let mut draw_widgets: Vec<PipeGauge<'_>> = Vec::new();
 
         if app_state.current_widget.widget_id == widget_id {
@@ -61,15 +60,10 @@ impl Painter {
             );
         }
 
-        let ram_percentage = if let Some(mem) = mem_data.last() {
-            mem.1
-        } else {
-            0.0
-        };
-
         let data = app_state.data_store.get_data();
 
-        let ram_label = memory_label(&data.memory_harvest, app_state.basic_mode_use_percent);
+        let ram_percentage = data.ram_harvest.saturating_percentage();
+        let ram_label = memory_label(&data.ram_harvest, app_state.basic_mode_use_percent);
 
         draw_widgets.push(
             PipeGauge::default()
@@ -82,7 +76,7 @@ impl Painter {
 
         // FIXME: Change all of these to get the last point instead
         if let Some(swap_harvest) = &data.swap_harvest {
-            let swap_percentage = swap_harvest.checked_percent().unwrap_or(0.0);
+            let swap_percentage = swap_harvest.saturating_percentage();
             let swap_label = memory_label(swap_harvest, app_state.basic_mode_use_percent);
 
             draw_widgets.push(
@@ -98,7 +92,7 @@ impl Painter {
         #[cfg(not(target_os = "windows"))]
         {
             if let Some(cache_harvest) = &data.cache_harvest {
-                let cache_percentage = cache_harvest.checked_percent().unwrap_or(0.0);
+                let cache_percentage = cache_harvest.saturating_percentage();
                 let cache_fraction_label =
                     memory_label(cache_harvest, app_state.basic_mode_use_percent);
 
