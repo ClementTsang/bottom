@@ -553,6 +553,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "fgimian",
+      "name": "Fotis Gimian",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1811813?v=4",
+      "profile": "http://fgimian.github.io/",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
