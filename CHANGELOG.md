@@ -36,6 +36,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1593](https://github.com/ClementTsang/bottom/pull/1593): Fix using `"none"` for chart legend position in configs.
 - [#1594](https://github.com/ClementTsang/bottom/pull/1594): Fix incorrect default config definitions for chart legends.
 - [#1596](https://github.com/ClementTsang/bottom/pull/1596): Fix support for nilfs2 file system.
+- [#1660](https://github.com/ClementTsang/bottom/pull/1660): Handle terminal cleanup if the program is terminated due to an `Err` bubbling to the top.
 
 ### Changes
 
