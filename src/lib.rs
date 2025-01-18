@@ -369,6 +369,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
     panic::set_hook(Box::new(panic_hook));
 
     // Set termination hook
+    // TODO: On UNIX, use signal-hook to handle cleanup as well.
     ctrlc::set_handler(move || {
         let _ = sender.send(BottomEvent::Terminate);
     })?;
