@@ -51,7 +51,7 @@ fn volume_io(volume: &Path) -> anyhow::Result<DISK_PERFORMANCE> {
             None,
             OPEN_EXISTING,
             FILE_FLAGS_AND_ATTRIBUTES(0),
-            Foundation::HANDLE::default(),
+            Some(Foundation::HANDLE::default()),
         )?
     };
 
