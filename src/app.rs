@@ -196,11 +196,6 @@ impl App {
 
         // TODO: [OPT] Prefer reassignment over new vectors?
         if self.states.mem_state.force_update.is_some() {
-            #[cfg(feature = "zfs")]
-            {
-                self.converted_data.arc_data = crate::convert_arc_data_points(data_source);
-            }
-
             #[cfg(feature = "gpu")]
             {
                 self.converted_data.gpu_data = crate::convert_gpu_data(data_source);

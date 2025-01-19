@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use crate::{
     app::data::CollectedData,
     canvas::components::time_chart::Point,
-    data_collection::{cpu::CpuDataType, memory::MemHarvest, temperature::TemperatureType},
+    data_collection::{cpu::CpuDataType, temperature::TemperatureType},
     utils::data_units::*,
     widgets::{DiskWidgetData, TempWidgetData},
 };
@@ -25,11 +25,6 @@ pub enum CpuWidgetData {
 
 #[derive(Default)]
 pub struct ConvertedData {
-    #[cfg(feature = "zfs")]
-    pub arc_labels: Option<(String, String)>,
-    #[cfg(feature = "zfs")]
-    pub arc_data: Vec<Point>,
-
     #[cfg(feature = "gpu")]
     pub gpu_data: Option<Vec<ConvertedGpuData>>,
 
@@ -171,25 +166,6 @@ pub fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
     }
 }
 
-/// Returns the unit type and denominator for given total amount of memory in
-/// kibibytes.
-pub fn convert_mem_label(harvest: &MemHarvest) -> Option<(String, String)> {
-    (harvest.total_bytes > 0).then(|| {
-        let percentage = harvest.used_bytes as f64 / harvest.total_bytes as f64 * 100.0;
-        (format!("{percentage:3.0}%"), {
-            let (unit, denominator) = get_binary_unit_and_denominator(harvest.total_bytes);
-
-            format!(
-                "   {:.1}{}/{:.1}{}",
-                harvest.used_bytes as f64 / denominator,
-                unit,
-                (harvest.total_bytes as f64 / denominator),
-                unit
-            )
-        })
-    })
-}
-
 /// Returns a string given a value that is converted to the closest binary
 /// variant. If the value is greater than a gibibyte, then it will return a
 /// decimal place.
@@ -225,25 +201,6 @@ pub fn dec_bytes_string(value: u64) -> String {
     } else {
         format!("{:.0}{}", converted_values.0, converted_values.1)
     }
-}
-
-#[cfg(feature = "zfs")]
-pub fn convert_arc_data_points(current_data: &CollectedData) -> Vec<Point> {
-    let mut result: Vec<Point> = Vec::new();
-    let current_time = current_data.current_instant;
-
-    for (time, data) in &current_data.timed_data_vec {
-        if let Some(arc_data) = data.arc_data {
-            let time_from_start: f64 =
-                (current_time.duration_since(*time).as_millis() as f64).floor();
-            result.push((-time_from_start, arc_data));
-            if *time == current_time {
-                break;
-            }
-        }
-    }
-
-    result
 }
 
 #[cfg(feature = "gpu")]

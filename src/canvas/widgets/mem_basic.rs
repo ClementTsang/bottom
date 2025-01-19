@@ -109,18 +109,11 @@ impl Painter {
 
         #[cfg(feature = "zfs")]
         {
-            let arc_data = &app_state.converted_data.arc_data;
-            let arc_percentage = if let Some(arc) = arc_data.last() {
-                arc.1
-            } else {
-                0.0
-            };
-            if let Some((_, label_frac)) = &app_state.converted_data.arc_labels {
-                let arc_fraction_label = if app_state.basic_mode_use_percent {
-                    format!("{:3.0}%", arc_percentage.round())
-                } else {
-                    label_frac.trim().to_string()
-                };
+            if let Some(arc_harvest) = &data.arc_harvest {
+                let arc_percentage = arc_harvest.saturating_percentage();
+                let arc_fraction_label =
+                    memory_label(arc_harvest, app_state.basic_mode_use_percent);
+
                 draw_widgets.push(
                     PipeGauge::default()
                         .ratio(arc_percentage / 100.0)

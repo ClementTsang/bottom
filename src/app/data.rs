@@ -327,7 +327,7 @@ pub struct CollectedData {
     #[cfg(feature = "battery")]
     pub battery_harvest: Vec<batteries::BatteryData>,
     #[cfg(feature = "zfs")]
-    pub arc_harvest: MemHarvest,
+    pub arc_harvest: Option<MemHarvest>,
     #[cfg(feature = "gpu")]
     pub gpu_harvest: Vec<(String, MemHarvest)>,
 }
@@ -354,7 +354,7 @@ impl Default for CollectedData {
             #[cfg(feature = "battery")]
             battery_harvest: Vec::default(),
             #[cfg(feature = "zfs")]
-            arc_harvest: MemHarvest::default(),
+            arc_harvest: None,
             #[cfg(feature = "gpu")]
             gpu_harvest: Vec::default(),
         }
@@ -363,29 +363,7 @@ impl Default for CollectedData {
 
 impl CollectedData {
     pub fn reset(&mut self) {
-        self.timed_data_vec = Vec::default();
-        self.timeseries_data = TimeSeriesData::default();
-        self.network_harvest = network::NetworkHarvest::default();
-        self.ram_harvest = MemHarvest::default();
-        self.swap_harvest = None;
-        self.cpu_harvest = cpu::CpuHarvest::default();
-        self.process_data = Default::default();
-        self.disk_harvest = Vec::default();
-        self.io_harvest = disks::IoHarvest::default();
-        self.io_labels_and_prev = Vec::default();
-        self.temp_harvest = Vec::default();
-        #[cfg(feature = "battery")]
-        {
-            self.battery_harvest = Vec::default();
-        }
-        #[cfg(feature = "zfs")]
-        {
-            self.arc_harvest = MemHarvest::default();
-        }
-        #[cfg(feature = "gpu")]
-        {
-            self.gpu_harvest = Vec::default();
-        }
+        *self = CollectedData::default();
     }
 
     #[allow(
@@ -416,8 +394,8 @@ impl CollectedData {
         }
 
         #[cfg(feature = "zfs")]
-        if let Some(arc) = data.arc {
-            self.arc_harvest = arc;
+        {
+            self.arc_harvest = data.arc;
         }
 
         #[cfg(feature = "gpu")]

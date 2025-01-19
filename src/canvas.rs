@@ -377,7 +377,7 @@ impl Painter {
 
                 #[cfg(feature = "zfs")]
                 {
-                    if app_state.converted_data.arc_labels.is_some() {
+                    if data.arc_harvest.is_some() {
                         mem_rows += 1; // add row for arc
                     }
                 }

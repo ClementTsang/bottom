@@ -441,21 +441,9 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         }
 
                         if app.used_widgets.use_mem {
-                            #[cfg(feature = "zfs")]
-                            {
-                                app.converted_data.arc_data =
-                                    convert_arc_data_points(collected_data);
-                            }
-
                             #[cfg(feature = "gpu")]
                             {
                                 app.converted_data.gpu_data = convert_gpu_data(collected_data);
-                            }
-
-                            #[cfg(feature = "zfs")]
-                            {
-                                app.converted_data.arc_labels =
-                                    convert_mem_label(&collected_data.arc_harvest);
                             }
                         }
 

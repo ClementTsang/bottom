@@ -115,7 +115,7 @@ impl Painter {
                 }
                 #[cfg(feature = "zfs")]
                 {
-                    if app_state.converted_data.arc_labels.is_some() {
+                    if data.arc_harvest.is_some() {
                         size += 1; // add capacity for ARC
                     }
                 }
@@ -169,14 +169,21 @@ impl Painter {
                 }
 
                 #[cfg(feature = "zfs")]
-                if let Some((label_percent, label_frac)) = &app_state.converted_data.arc_labels {
-                    let arc_label = format!("ARC:{label_percent}{label_frac}");
-                    points.push(GraphData {
-                        points: &app_state.converted_data.arc_data,
-                        style: self.styles.arc_style,
-                        name: Some(arc_label.into()),
-                    });
+                {
+                    mem_state.arc_points_cache = to_points(
+                        &data.timeseries_data.time,
+                        &data.timeseries_data.arc_mem,
+                        x_min,
+                    );
+                    graph_data(
+                        &mut points,
+                        "ARC",
+                        data.arc_harvest.as_ref(),
+                        &mem_state.arc_points_cache,
+                        self.styles.arc_style,
+                    );
                 }
+
                 #[cfg(feature = "gpu")]
                 {
                     if let Some(gpu_data) = &app_state.converted_data.gpu_data {
