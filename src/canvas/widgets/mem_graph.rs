@@ -162,7 +162,7 @@ impl Painter {
                     );
                     graph_data(
                         &mut points,
-                        "CHE",
+                        "CACHE", // TODO: Figure out how to line this up better
                         data.cache_harvest.as_ref(),
                         &mem_state.cache_points_cache,
                         self.styles.cache_style,
@@ -215,7 +215,7 @@ impl Painter {
 
                         graph_data(
                             &mut points,
-                            name,
+                            name, // TODO: REALLY figure out how to line this up better
                             Some(harvest),
                             mem_state
                                 .gpu_points_cache
