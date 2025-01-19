@@ -18,9 +18,10 @@ use crate::{
         memory::MemHarvest,
         network,
         processes::{Pid, ProcessHarvest},
-        temperature, Data,
+        Data,
     },
     dec_bytes_per_second_string,
+    widgets::TempWidgetData,
 };
 
 /// Values corresponding to a time slice.
@@ -327,7 +328,7 @@ pub struct CollectedData {
     // TODO: The IO labels are kinda weird.
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
     pub io_labels: Vec<(String, String)>,
-    pub temp_harvest: Vec<temperature::TempHarvest>,
+    pub temp_data: Vec<TempWidgetData>,
     #[cfg(feature = "battery")]
     pub battery_harvest: Vec<batteries::BatteryData>,
 }
@@ -349,7 +350,7 @@ impl Default for CollectedData {
             disk_harvest: Vec::default(),
             io_labels_and_prev: Vec::default(),
             io_labels: Vec::default(),
-            temp_harvest: Vec::default(),
+            temp_data: Vec::default(),
             #[cfg(feature = "battery")]
             battery_harvest: Vec::default(),
             #[cfg(feature = "zfs")]
@@ -413,9 +414,19 @@ impl CollectedData {
         }
 
         // Temp
-        if let Some(temperature_sensors) = data.temperature_sensors {
-            self.temp_harvest = temperature_sensors;
-        }
+        // TODO: (points_rework_v1) the map might be redundant, the types are the same.
+        self.temp_data = data
+            .temperature_sensors
+            .map(|sensors| {
+                sensors
+                    .into_iter()
+                    .map(|temp| TempWidgetData {
+                        sensor: temp.name,
+                        temperature: temp.temperature.map(|v| v.into()),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
 
         // Disks
         if let Some(disks) = data.disks {

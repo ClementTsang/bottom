@@ -175,7 +175,7 @@ impl App {
             }
         }
         {
-            let data = &self.converted_data.temp_data;
+            let data = &data_source.temp_data;
             for temp in self.states.temp_state.widget_states.values_mut() {
                 if temp.force_update_data {
                     temp.set_table_data(data);

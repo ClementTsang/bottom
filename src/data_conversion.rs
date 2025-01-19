@@ -1,16 +1,13 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
-// TODO: Split this up!
-
-use std::{borrow::Cow, time::Instant};
+use std::time::Instant;
 
 use crate::{
     app::data::{CollectedData, Values},
     canvas::components::time_chart::Point,
-    data_collection::{cpu::CpuDataType, temperature::TemperatureType},
+    data_collection::cpu::CpuDataType,
     utils::data_units::*,
-    widgets::TempWidgetData,
 };
 
 #[derive(Clone, Debug)]
@@ -26,25 +23,9 @@ pub enum CpuWidgetData {
 #[derive(Default)]
 pub struct ConvertedData {
     pub cpu_data: Vec<CpuWidgetData>,
-
-    pub temp_data: Vec<TempWidgetData>,
 }
 
 impl ConvertedData {
-    pub fn convert_temp_data(&mut self, data: &CollectedData, temperature_type: TemperatureType) {
-        self.temp_data.clear();
-
-        data.temp_harvest.iter().for_each(|temp_harvest| {
-            self.temp_data.push(TempWidgetData {
-                sensor: Cow::Owned(temp_harvest.name.to_string()),
-                temperature_value: temp_harvest.temperature.map(|temp| temp.ceil() as u64),
-                temperature_type,
-            });
-        });
-
-        self.temp_data.shrink_to_fit();
-    }
-
     pub fn convert_cpu_data(&mut self, current_data: &CollectedData) {
         let current_time = current_data.current_instant;
 

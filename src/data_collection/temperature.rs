@@ -13,12 +13,12 @@ cfg_if::cfg_if! {
     }
 }
 
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 #[derive(Default, Debug, Clone)]
 pub struct TempHarvest {
     pub name: String,
-    pub temperature: Option<f32>,
+    pub temperature: Option<TypedTemperature>,
 }
 
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Default)]
@@ -47,26 +47,74 @@ impl FromStr for TemperatureType {
 impl TemperatureType {
     /// Given a temperature in Celsius, covert it if necessary for a different
     /// unit.
-    pub fn convert_temp_unit(&self, temp_celsius: f32) -> f32 {
-        fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
-            celsius + 273.15
+    pub fn convert_temp_unit(&self, temp_celsius: f32) -> TypedTemperature {
+        fn celsius_to_kelvin(celsius: f32) -> TypedTemperature {
+            TypedTemperature::Kelvin(celsius + 273.15)
         }
 
-        fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
-            (celsius * (9.0 / 5.0)) + 32.0
+        fn celsius_to_fahrenheit(celsius: f32) -> TypedTemperature {
+            TypedTemperature::Fahrenheit((celsius * (9.0 / 5.0)) + 32.0)
         }
 
         match self {
-            TemperatureType::Celsius => temp_celsius,
-            TemperatureType::Kelvin => convert_celsius_to_kelvin(temp_celsius),
-            TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp_celsius),
+            TemperatureType::Celsius => TypedTemperature::Celsius(temp_celsius),
+            TemperatureType::Kelvin => celsius_to_kelvin(temp_celsius),
+            TemperatureType::Fahrenheit => celsius_to_fahrenheit(temp_celsius),
+        }
+    }
+}
+
+/// A temperature and its type.
+#[derive(Debug, PartialEq, Clone)]
+pub enum TypedTemperature {
+    Celsius(f32),
+    Kelvin(f32),
+    Fahrenheit(f32),
+}
+
+/// A rounded temperature and its type.
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
+pub enum RoundedTypedTemperature {
+    Celsius(u32),
+    Kelvin(u32),
+    Fahrenheit(u32),
+}
+
+impl From<TypedTemperature> for RoundedTypedTemperature {
+    fn from(value: TypedTemperature) -> Self {
+        match value {
+            TypedTemperature::Celsius(val) => RoundedTypedTemperature::Celsius(val.ceil() as u32),
+            TypedTemperature::Kelvin(val) => RoundedTypedTemperature::Kelvin(val.ceil() as u32),
+            TypedTemperature::Fahrenheit(val) => {
+                RoundedTypedTemperature::Fahrenheit(val.ceil() as u32)
+            }
+        }
+    }
+}
+
+impl Display for RoundedTypedTemperature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RoundedTypedTemperature::Celsius(val) => write!(f, "{val}°C"),
+            RoundedTypedTemperature::Kelvin(val) => write!(f, "{val}K"),
+            RoundedTypedTemperature::Fahrenheit(val) => write!(f, "{val}°F"),
+        }
+    }
+}
+
+impl Display for TypedTemperature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TypedTemperature::Celsius(val) => write!(f, "{val}°C"),
+            TypedTemperature::Kelvin(val) => write!(f, "{val}K"),
+            TypedTemperature::Fahrenheit(val) => write!(f, "{val}°F"),
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::data_collection::temperature::TemperatureType;
+    use crate::data_collection::temperature::{TemperatureType, TypedTemperature};
 
     #[test]
     fn temp_conversions() {
@@ -74,12 +122,17 @@ mod test {
 
         assert_eq!(
             TemperatureType::Celsius.convert_temp_unit(TEMP),
-            TEMP,
-            "celsius to celsius is the same"
+            TypedTemperature::Celsius(TEMP),
         );
 
-        assert_eq!(TemperatureType::Kelvin.convert_temp_unit(TEMP), 373.15);
+        assert_eq!(
+            TemperatureType::Kelvin.convert_temp_unit(TEMP),
+            TypedTemperature::Kelvin(373.15)
+        );
 
-        assert_eq!(TemperatureType::Fahrenheit.convert_temp_unit(TEMP), 212.0);
+        assert_eq!(
+            TemperatureType::Fahrenheit.convert_temp_unit(TEMP),
+            TypedTemperature::Fahrenheit(212.0)
+        );
     }
 }

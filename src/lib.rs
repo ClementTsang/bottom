@@ -428,11 +428,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         }
 
                         if app.used_widgets.use_temp {
-                            app.converted_data.convert_temp_data(
-                                collected_data,
-                                app.app_config_fields.temperature_type,
-                            );
-
                             for temp in app.states.temp_state.widget_states.values_mut() {
                                 temp.force_data_update();
                             }
