@@ -22,7 +22,7 @@ use crate::{
     },
 };
 
-/// FIXME: Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
+/// FIXME: (points_rework_v1) Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
 /// the needed points.
 ///
 /// This should be slated to be removed and functionality moved to the graph drawing outright. We should also
@@ -116,7 +116,7 @@ impl Painter {
             let time = &(shared_data.timeseries_data.time);
             let time_start = -(network_widget_state.current_display_time as f64);
 
-            // FIXME: THIS IS TEMPORARY.
+            // FIXME: (points_rework_v1) THIS IS TEMPORARY.
             let network_data_rx =
                 to_points(&app_state.app_config_fields, time, rx_points, time_start);
 

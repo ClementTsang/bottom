@@ -10,7 +10,7 @@ use crate::{
     canvas::components::time_chart::Point,
     data_collection::{cpu::CpuDataType, temperature::TemperatureType},
     utils::data_units::*,
-    widgets::{DiskWidgetData, TempWidgetData},
+    widgets::TempWidgetData,
 };
 
 #[derive(Clone, Debug)]
@@ -28,40 +28,10 @@ pub struct ConvertedData {
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<CpuWidgetData>,
 
-    pub disk_data: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
 }
 
 impl ConvertedData {
-    // TODO: Can probably heavily reduce this step to avoid clones.
-    pub fn convert_disk_data(&mut self, data: &CollectedData) {
-        self.disk_data.clear();
-
-        data.disk_harvest
-            .iter()
-            .zip(&data.io_labels)
-            .for_each(|(disk, (io_read, io_write))| {
-                // Because this sometimes does *not* equal to disk.total.
-                let summed_total_bytes = match (disk.used_space, disk.free_space) {
-                    (Some(used), Some(free)) => Some(used + free),
-                    _ => None,
-                };
-
-                self.disk_data.push(DiskWidgetData {
-                    name: Cow::Owned(disk.name.to_string()),
-                    mount_point: Cow::Owned(disk.mount_point.to_string()),
-                    free_bytes: disk.free_space,
-                    used_bytes: disk.used_space,
-                    total_bytes: disk.total_space,
-                    summed_total_bytes,
-                    io_read: Cow::Owned(io_read.to_string()),
-                    io_write: Cow::Owned(io_write.to_string()),
-                });
-            });
-
-        self.disk_data.shrink_to_fit();
-    }
-
     pub fn convert_temp_data(&mut self, data: &CollectedData, temperature_type: TemperatureType) {
         self.temp_data.clear();
 
@@ -200,7 +170,7 @@ pub fn dec_bytes_string(value: u64) -> String {
     }
 }
 
-/// FIXME: Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
+/// FIXME: (points_rework_v1) Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
 /// the needed points.
 ///
 /// This should be slated to be removed and functionality moved to the graph drawing outright. We should also

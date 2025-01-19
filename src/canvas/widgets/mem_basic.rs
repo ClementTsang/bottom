@@ -75,7 +75,7 @@ impl Painter {
                 .gauge_style(self.styles.ram_style),
         );
 
-        // FIXME: Change all of these to get the last point instead
+        // FIXME: (points_rework_v1) Change all of these to get the last point instead
         if let Some(swap_harvest) = &data.swap_harvest {
             let swap_percentage = swap_harvest.saturating_percentage();
             let swap_label = memory_label(swap_harvest, app_state.basic_mode_use_percent);

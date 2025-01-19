@@ -422,8 +422,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         // Convert all data into data for the displayed widgets.
 
                         if app.used_widgets.use_disk {
-                            app.converted_data.convert_disk_data(collected_data);
-
                             for disk in app.states.disk_state.widget_states.values_mut() {
                                 disk.force_data_update();
                             }

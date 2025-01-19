@@ -309,27 +309,27 @@ impl ProcessData {
 #[derive(Debug, Clone)]
 pub struct CollectedData {
     pub current_instant: Instant,
-    pub timed_data_vec: Vec<(Instant, TimedData)>, // FIXME: REMOVE THIS
-    pub timeseries_data: TimeSeriesData,           // FIXME: In basic mode I can skip this, right?
+    pub timed_data_vec: Vec<(Instant, TimedData)>, // FIXME: (points_rework_v1) REMOVE THIS
+    pub timeseries_data: TimeSeriesData,           // FIXME: (points_rework_v1) Skip in basic?
     pub network_harvest: network::NetworkHarvest,
     pub ram_harvest: MemHarvest,
+    pub swap_harvest: Option<MemHarvest>,
     #[cfg(not(target_os = "windows"))]
     pub cache_harvest: Option<MemHarvest>,
-    pub swap_harvest: Option<MemHarvest>,
+    #[cfg(feature = "zfs")]
+    pub arc_harvest: Option<MemHarvest>,
+    #[cfg(feature = "gpu")]
+    pub gpu_harvest: Vec<(String, MemHarvest)>,
     pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_data: ProcessData,
     pub disk_harvest: Vec<disks::DiskHarvest>,
-    pub io_harvest: disks::IoHarvest,
+    // TODO: The IO labels are kinda weird.
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
     pub io_labels: Vec<(String, String)>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
     #[cfg(feature = "battery")]
     pub battery_harvest: Vec<batteries::BatteryData>,
-    #[cfg(feature = "zfs")]
-    pub arc_harvest: Option<MemHarvest>,
-    #[cfg(feature = "gpu")]
-    pub gpu_harvest: Vec<(String, MemHarvest)>,
 }
 
 impl Default for CollectedData {
@@ -347,7 +347,6 @@ impl Default for CollectedData {
             load_avg_harvest: cpu::LoadAvgHarvest::default(),
             process_data: Default::default(),
             disk_harvest: Vec::default(),
-            io_harvest: disks::IoHarvest::default(),
             io_labels_and_prev: Vec::default(),
             io_labels: Vec::default(),
             temp_harvest: Vec::default(),
@@ -553,7 +552,6 @@ impl CollectedData {
         }
 
         self.disk_harvest = disks;
-        self.io_harvest = io;
     }
 }
 

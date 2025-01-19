@@ -185,10 +185,9 @@ impl App {
             }
         }
         {
-            let data = &self.converted_data.disk_data;
             for disk in self.states.disk_state.widget_states.values_mut() {
                 if disk.force_update_data {
-                    disk.set_table_data(data);
+                    disk.set_table_data(data_source);
                     disk.force_update_data = false;
                 }
             }
@@ -2022,7 +2021,7 @@ impl App {
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        if !self.converted_data.disk_data.is_empty() {
+                        if !self.data_store.get_data().disk_harvest.is_empty() {
                             disk_widget_state.table.scroll_to_last();
                         }
                     }

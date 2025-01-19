@@ -4,7 +4,7 @@ pub struct MemWidgetState {
     pub current_display_time: u64,
     pub autohide_timer: Option<Instant>,
 
-    // FIXME: REMOVE THESE
+    // FIXME: (points_rework_v1) REMOVE THESE
     pub ram_points_cache: Vec<(f64, f64)>,
     pub swap_points_cache: Vec<(f64, f64)>,
     #[cfg(not(target_os = "windows"))]
