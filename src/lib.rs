@@ -440,7 +440,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
 
                         if app.used_widgets.use_cpu {
                             app.converted_data.convert_cpu_data(collected_data);
-                            app.converted_data.load_avg_data = collected_data.load_avg_harvest;
                         }
 
                         if app.used_widgets.use_proc {

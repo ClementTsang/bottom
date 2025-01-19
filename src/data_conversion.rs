@@ -25,7 +25,6 @@ pub enum CpuWidgetData {
 
 #[derive(Default)]
 pub struct ConvertedData {
-    pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<CpuWidgetData>,
 
     pub temp_data: Vec<TempWidgetData>,

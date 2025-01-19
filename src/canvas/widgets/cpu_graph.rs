@@ -183,6 +183,8 @@ impl Painter {
 
         if let Some(cpu_widget_state) = app_state.states.cpu_state.widget_states.get_mut(&widget_id)
         {
+            let data = app_state.data_store.get_data();
+
             let cpu_data = &app_state.converted_data.cpu_data;
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let x_min = -(cpu_widget_state.current_display_time as f64);
@@ -203,7 +205,7 @@ impl Painter {
             let title = {
                 #[cfg(target_family = "unix")]
                 {
-                    let load_avg = app_state.converted_data.load_avg_data;
+                    let load_avg = &data.load_avg_harvest;
                     let load_avg_str = format!(
                         "─ {:.2} {:.2} {:.2} ",
                         load_avg[0], load_avg[1], load_avg[2]

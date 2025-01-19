@@ -163,7 +163,6 @@ impl App {
         // FIXME: Make this CPU force update less terrible.
         if self.states.cpu_state.force_update.is_some() {
             self.converted_data.convert_cpu_data(data_source);
-            self.converted_data.load_avg_data = data_source.load_avg_harvest;
 
             self.states.cpu_state.force_update = None;
         }
