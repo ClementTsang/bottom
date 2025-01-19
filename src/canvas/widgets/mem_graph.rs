@@ -130,7 +130,7 @@ impl Painter {
                 let mut points = Vec::with_capacity(size);
 
                 mem_state.ram_points_cache =
-                    to_points(&data.timeseries_data.time, &data.timeseries_data.mem, x_min);
+                    to_points(&data.timeseries_data.time, &data.timeseries_data.ram, x_min);
                 graph_data(
                     &mut points,
                     "RAM",
@@ -153,13 +153,20 @@ impl Painter {
                 );
 
                 #[cfg(not(target_os = "windows"))]
-                graph_data(
-                    &mut points,
-                    "CHE",
-                    data.cache_harvest.as_ref(),
-                    &app_state.converted_data.cache_data,
-                    self.styles.cache_style,
-                );
+                {
+                    mem_state.cache_points_cache = to_points(
+                        &data.timeseries_data.time,
+                        &data.timeseries_data.cache_mem,
+                        x_min,
+                    );
+                    graph_data(
+                        &mut points,
+                        "CHE",
+                        data.cache_harvest.as_ref(),
+                        &mem_state.cache_points_cache,
+                        self.styles.cache_style,
+                    );
+                }
 
                 #[cfg(feature = "zfs")]
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.arc_labels {

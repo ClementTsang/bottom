@@ -196,10 +196,6 @@ impl App {
 
         // TODO: [OPT] Prefer reassignment over new vectors?
         if self.states.mem_state.force_update.is_some() {
-            #[cfg(not(target_os = "windows"))]
-            {
-                self.converted_data.cache_data = crate::convert_cache_data_points(data_source);
-            }
             #[cfg(feature = "zfs")]
             {
                 self.converted_data.arc_data = crate::convert_arc_data_points(data_source);

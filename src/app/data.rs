@@ -47,8 +47,8 @@ pub struct TimeSeriesData {
     /// CPU data.
     pub cpu: Vec<Values>,
 
-    /// Memory data.
-    pub mem: Values,
+    /// RAM memory data.
+    pub ram: Values,
 
     /// Swap data.
     pub swap: Values,
@@ -110,9 +110,9 @@ impl TimeSeriesData {
         }
 
         if let Some(memory) = &data.memory {
-            self.mem.try_push(memory.checked_percent());
+            self.ram.try_push(memory.checked_percent());
         } else {
-            self.mem.insert_break();
+            self.ram.insert_break();
         }
 
         if let Some(swap) = &data.swap {
@@ -211,7 +211,7 @@ impl TimeSeriesData {
             let _ = cpu.prune(end);
         }
 
-        let _ = self.mem.prune(end);
+        let _ = self.ram.prune(end);
         let _ = self.swap.prune(end);
 
         #[cfg(not(target_os = "windows"))]

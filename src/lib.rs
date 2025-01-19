@@ -441,12 +441,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         }
 
                         if app.used_widgets.use_mem {
-                            #[cfg(not(target_os = "windows"))]
-                            {
-                                app.converted_data.cache_data =
-                                    convert_cache_data_points(collected_data);
-                            }
-
                             #[cfg(feature = "zfs")]
                             {
                                 app.converted_data.arc_data =

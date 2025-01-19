@@ -25,9 +25,6 @@ pub enum CpuWidgetData {
 
 #[derive(Default)]
 pub struct ConvertedData {
-    #[cfg(not(target_os = "windows"))]
-    pub cache_data: Vec<Point>,
-
     #[cfg(feature = "zfs")]
     pub arc_labels: Option<(String, String)>,
     #[cfg(feature = "zfs")]
@@ -155,25 +152,6 @@ impl ConvertedData {
             }
         }
     }
-}
-
-#[cfg(not(target_os = "windows"))]
-pub fn convert_cache_data_points(data: &CollectedData) -> Vec<Point> {
-    let mut result: Vec<Point> = Vec::new();
-    let current_time = data.current_instant;
-
-    for (time, data) in &data.timed_data_vec {
-        if let Some(cache_data) = data.cache_data {
-            let time_from_start: f64 =
-                (current_time.duration_since(*time).as_millis() as f64).floor();
-            result.push((-time_from_start, cache_data));
-            if *time == current_time {
-                break;
-            }
-        }
-    }
-
-    result
 }
 
 /// Returns the most appropriate binary prefix unit type (e.g. kibibyte) and
