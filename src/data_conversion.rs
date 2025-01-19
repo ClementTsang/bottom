@@ -3,10 +3,10 @@
 
 // TODO: Split this up!
 
-use std::borrow::Cow;
+use std::{borrow::Cow, time::Instant};
 
 use crate::{
-    app::data::CollectedData,
+    app::data::{CollectedData, Values},
     canvas::components::time_chart::Point,
     data_collection::{cpu::CpuDataType, temperature::TemperatureType},
     utils::data_units::*,
@@ -198,6 +198,42 @@ pub fn dec_bytes_string(value: u64) -> String {
     } else {
         format!("{:.0}{}", converted_values.0, converted_values.1)
     }
+}
+
+/// FIXME: Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
+/// the needed points.
+///
+/// This should be slated to be removed and functionality moved to the graph drawing outright. We should also
+/// just not cache and filter aggressively via the iter and bounds. We may also need to change the iter/graph to go
+/// from current_time_in_ms - 60000 to current_time_in_ms, reducing the amount of work.
+pub fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Vec<(f64, f64)> {
+    let Some(iter) = values.iter_along_base(time) else {
+        return vec![];
+    };
+
+    let Some(current_time) = time.last() else {
+        return vec![];
+    };
+
+    let mut take_while_done = false;
+
+    iter.rev()
+        .map(|(&time, &val)| {
+            let from_start: f64 = (current_time.duration_since(time).as_millis() as f64).floor();
+            (-from_start, val)
+        })
+        .take_while(|(time, _)| {
+            // We do things like this so we can take one extra value AFTER (needed for interpolation).
+            if *time >= left_edge {
+                true
+            } else if !take_while_done {
+                take_while_done = true;
+                true
+            } else {
+                false
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]

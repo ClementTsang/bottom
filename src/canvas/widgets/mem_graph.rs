@@ -1,4 +1,4 @@
-use std::{borrow::Cow, time::Instant};
+use std::borrow::Cow;
 
 use tui::{
     layout::{Constraint, Rect},
@@ -8,14 +8,14 @@ use tui::{
 };
 
 use crate::{
-    app::{data::Values, App},
+    app::App,
     canvas::{
         components::time_graph::{GraphData, TimeGraph},
         drawing_utils::should_hide_x_label,
         Painter,
     },
     data_collection::memory::MemHarvest,
-    get_binary_unit_and_denominator,
+    get_binary_unit_and_denominator, to_points,
 };
 
 /// Convert memory info into a combined memory label.
@@ -35,42 +35,6 @@ fn memory_legend_label(name: &str, data: Option<&MemHarvest>) -> String {
     } else {
         format!("{name}:   0%   0.0B/0.0B")
     }
-}
-
-/// FIXME: Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
-/// the needed points.
-///
-/// This should be slated to be removed and functionality moved to the graph drawing outright. We should also
-/// just not cache and filter aggressively via the iter and bounds. We may also need to change the iter/graph to go
-/// from current_time_in_ms - 60000 to current_time_in_ms, reducing the amount of work.
-fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Vec<(f64, f64)> {
-    let Some(iter) = values.iter_along_base(time) else {
-        return vec![];
-    };
-
-    let Some(current_time) = time.last() else {
-        return vec![];
-    };
-
-    let mut take_while_done = false;
-
-    iter.rev()
-        .map(|(&time, &val)| {
-            let from_start: f64 = (current_time.duration_since(time).as_millis() as f64).floor();
-            (-from_start, val)
-        })
-        .take_while(|(time, _)| {
-            // We do things like this so we can take one extra value AFTER (needed for interpolation).
-            if *time >= left_edge {
-                true
-            } else if !take_while_done {
-                take_while_done = true;
-                true
-            } else {
-                false
-            }
-        })
-        .collect()
 }
 
 /// Get graph data from.

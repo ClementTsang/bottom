@@ -7,7 +7,7 @@ use tui::{
 };
 
 use crate::{
-    app::{App, AxisScaling},
+    app::{App, AppConfigFields, AxisScaling},
     canvas::{
         components::{
             time_chart::Point,
@@ -16,8 +16,58 @@ use crate::{
         drawing_utils::should_hide_x_label,
         Painter,
     },
-    utils::{data_units::DataUnit, data_units::*, general::partial_ordering},
+    utils::{
+        data_units::{DataUnit, *},
+        general::partial_ordering,
+    },
 };
+
+/// FIXME: Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
+/// the needed points.
+///
+/// This should be slated to be removed and functionality moved to the graph drawing outright. We should also
+/// just not cache and filter aggressively via the iter and bounds. We may also need to change the iter/graph to go
+/// from current_time_in_ms - 60000 to current_time_in_ms, reducing the amount of work.
+fn to_points(
+    config: &AppConfigFields, time: &[std::time::Instant], values: &crate::app::data::Values,
+    left_edge: f64,
+) -> Vec<(f64, f64)> {
+    let Some(iter) = values.iter_along_base(time) else {
+        return vec![];
+    };
+
+    let Some(current_time) = time.last() else {
+        return vec![];
+    };
+
+    let mut take_while_done = false;
+
+    iter.rev()
+        .map(|(&time, &val)| {
+            let from_start: f64 = (current_time.duration_since(time).as_millis() as f64).floor();
+            (
+                -from_start,
+                get_network_point(
+                    val,
+                    &config.network_scale_type,
+                    &config.network_unit_type,
+                    config.network_use_binary_prefix,
+                ),
+            )
+        })
+        .take_while(|(time, _)| {
+            // We do things like this so we can take one extra value AFTER (needed for interpolation).
+            if *time >= left_edge {
+                true
+            } else if !take_while_done {
+                take_while_done = true;
+                true
+            } else {
+                false
+            }
+        })
+        .collect()
+}
 
 impl Painter {
     pub fn draw_network(
@@ -64,46 +114,15 @@ impl Painter {
             let rx_points = &(shared_data.timeseries_data.rx);
             let tx_points = &(shared_data.timeseries_data.tx);
             let time = &(shared_data.timeseries_data.time);
-            let last_time = shared_data.current_instant;
+            let time_start = -(network_widget_state.current_display_time as f64);
 
             // FIXME: THIS IS TEMPORARY.
-            let network_data_rx = rx_points
-                .iter_along_base(time)
-                .map(|i| {
-                    i.map(|(t, v)| {
-                        (
-                            -(last_time.duration_since(*t).as_millis() as f64),
-                            get_network_point(
-                                *v,
-                                &app_state.app_config_fields.network_scale_type,
-                                &app_state.app_config_fields.network_unit_type,
-                                app_state.app_config_fields.network_use_binary_prefix,
-                            ),
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
+            let network_data_rx =
+                to_points(&app_state.app_config_fields, time, rx_points, time_start);
 
-            let network_data_tx = tx_points
-                .iter_along_base(time)
-                .map(|i| {
-                    i.map(|(t, v)| {
-                        (
-                            -(last_time.duration_since(*t).as_millis() as f64),
-                            get_network_point(
-                                *v,
-                                &app_state.app_config_fields.network_scale_type,
-                                &app_state.app_config_fields.network_unit_type,
-                                app_state.app_config_fields.network_use_binary_prefix,
-                            ),
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
+            let network_data_tx =
+                to_points(&app_state.app_config_fields, time, tx_points, time_start);
 
-            let time_start = -(network_widget_state.current_display_time as f64);
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
