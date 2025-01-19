@@ -447,8 +447,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                                     convert_cache_data_points(collected_data);
                             }
 
-                            app.converted_data.swap_data = convert_swap_data_points(collected_data);
-
                             #[cfg(feature = "zfs")]
                             {
                                 app.converted_data.arc_data =

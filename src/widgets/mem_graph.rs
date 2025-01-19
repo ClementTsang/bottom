@@ -4,7 +4,9 @@ pub struct MemWidgetState {
     pub current_display_time: u64,
     pub autohide_timer: Option<Instant>,
 
-    pub ram_points_cache: Vec<(f64, f64)>, // TODO: Cache this, probably in graph widget
+    // FIXME: REMOVE THESE
+    pub ram_points_cache: Vec<(f64, f64)>,
+    pub swap_points_cache: Vec<(f64, f64)>,
 }
 
 impl MemWidgetState {
@@ -13,6 +15,7 @@ impl MemWidgetState {
             current_display_time,
             autohide_timer,
             ram_points_cache: vec![],
+            swap_points_cache: vec![],
         }
     }
 }

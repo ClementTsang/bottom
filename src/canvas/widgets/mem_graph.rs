@@ -40,7 +40,9 @@ fn memory_legend_label(name: &str, data: Option<&MemHarvest>) -> String {
 /// FIXME: Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
 /// the needed points.
 ///
-/// This should be slated to be removed and functionality moved to the graph drawing outright.
+/// This should be slated to be removed and functionality moved to the graph drawing outright. We should also
+/// just not cache and filter aggressively via the iter and bounds. We may also need to change the iter/graph to go
+/// from current_time_in_ms - 60000 to current_time_in_ms, reducing the amount of work.
 fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Vec<(f64, f64)> {
     let Some(iter) = values.iter_along_base(time) else {
         return vec![];
@@ -129,7 +131,6 @@ impl Painter {
 
                 mem_state.ram_points_cache =
                     to_points(&data.timeseries_data.time, &data.timeseries_data.mem, x_min);
-
                 graph_data(
                     &mut points,
                     "RAM",
@@ -138,11 +139,16 @@ impl Painter {
                     self.styles.ram_style,
                 );
 
+                mem_state.swap_points_cache = to_points(
+                    &data.timeseries_data.time,
+                    &data.timeseries_data.swap,
+                    x_min,
+                );
                 graph_data(
                     &mut points,
                     "SWP",
                     data.swap_harvest.as_ref(),
-                    &app_state.converted_data.swap_data,
+                    &mem_state.swap_points_cache,
                     self.styles.swap_style,
                 );
 

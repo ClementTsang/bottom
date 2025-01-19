@@ -27,7 +27,6 @@ pub enum CpuWidgetData {
 pub struct ConvertedData {
     #[cfg(not(target_os = "windows"))]
     pub cache_data: Vec<Point>,
-    pub swap_data: Vec<Point>,
 
     #[cfg(feature = "zfs")]
     pub arc_labels: Option<(String, String)>,
@@ -168,24 +167,6 @@ pub fn convert_cache_data_points(data: &CollectedData) -> Vec<Point> {
             let time_from_start: f64 =
                 (current_time.duration_since(*time).as_millis() as f64).floor();
             result.push((-time_from_start, cache_data));
-            if *time == current_time {
-                break;
-            }
-        }
-    }
-
-    result
-}
-
-pub fn convert_swap_data_points(data: &CollectedData) -> Vec<Point> {
-    let mut result: Vec<Point> = Vec::new();
-    let current_time = data.current_instant;
-
-    for (time, data) in &data.timed_data_vec {
-        if let Some(swap_data) = data.swap_data {
-            let time_from_start: f64 =
-                (current_time.duration_since(*time).as_millis() as f64).floor();
-            result.push((-time_from_start, swap_data));
             if *time == current_time {
                 break;
             }
