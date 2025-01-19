@@ -440,13 +440,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                             }
                         }
 
-                        if app.used_widgets.use_mem {
-                            #[cfg(feature = "gpu")]
-                            {
-                                app.converted_data.gpu_data = convert_gpu_data(collected_data);
-                            }
-                        }
-
                         if app.used_widgets.use_cpu {
                             app.converted_data.convert_cpu_data(collected_data);
                             app.converted_data.load_avg_data = collected_data.load_avg_harvest;

@@ -25,9 +25,6 @@ pub enum CpuWidgetData {
 
 #[derive(Default)]
 pub struct ConvertedData {
-    #[cfg(feature = "gpu")]
-    pub gpu_data: Option<Vec<ConvertedGpuData>>,
-
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<CpuWidgetData>,
 
@@ -200,80 +197,6 @@ pub fn dec_bytes_string(value: u64) -> String {
         format!("{:.1}{}", converted_values.0, converted_values.1)
     } else {
         format!("{:.0}{}", converted_values.0, converted_values.1)
-    }
-}
-
-#[cfg(feature = "gpu")]
-#[derive(Default, Debug)]
-pub struct ConvertedGpuData {
-    pub name: String,
-    pub mem_total: String,
-    pub mem_percent: String,
-    pub points: Vec<Point>,
-}
-
-#[cfg(feature = "gpu")]
-pub fn convert_gpu_data(current_data: &CollectedData) -> Option<Vec<ConvertedGpuData>> {
-    let current_time = current_data.current_instant;
-
-    // convert points
-    let mut point_vec: Vec<Vec<Point>> = Vec::with_capacity(current_data.gpu_harvest.len());
-    for (time, data) in &current_data.timed_data_vec {
-        data.gpu_data.iter().enumerate().for_each(|(index, point)| {
-            if let Some(data_point) = point {
-                let time_from_start: f64 =
-                    (current_time.duration_since(*time).as_millis() as f64).floor();
-                if let Some(point_slot) = point_vec.get_mut(index) {
-                    point_slot.push((-time_from_start, *data_point));
-                } else {
-                    point_vec.push(vec![(-time_from_start, *data_point)]);
-                }
-            }
-        });
-
-        if *time == current_time {
-            break;
-        }
-    }
-
-    // convert labels
-    let results = current_data
-        .gpu_harvest
-        .iter()
-        .zip(point_vec)
-        .filter_map(|(gpu, points)| {
-            (gpu.1.total_bytes > 0).then(|| {
-                let short_name = {
-                    let last_words = gpu.0.split_whitespace().rev().take(2).collect::<Vec<_>>();
-                    let short_name = format!("{} {}", last_words[1], last_words[0]);
-                    short_name
-                };
-
-                let percent = gpu.1.used_bytes as f64 / gpu.1.total_bytes as f64 * 100.0;
-
-                ConvertedGpuData {
-                    name: short_name,
-                    points,
-                    mem_percent: format!("{percent:3.0}%"),
-                    mem_total: {
-                        let (unit, denominator) =
-                            get_binary_unit_and_denominator(gpu.1.total_bytes);
-
-                        format!(
-                            "   {:.1}{unit}/{:.1}{unit}",
-                            gpu.1.used_bytes as f64 / denominator,
-                            (gpu.1.total_bytes as f64 / denominator),
-                        )
-                    },
-                }
-            })
-        })
-        .collect::<Vec<ConvertedGpuData>>();
-
-    if !results.is_empty() {
-        Some(results)
-    } else {
-        None
     }
 }
 

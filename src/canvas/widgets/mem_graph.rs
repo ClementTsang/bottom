@@ -110,6 +110,9 @@ impl Painter {
                 let mut size = 1;
                 let data = app_state.data_store.get_data();
 
+                // TODO: is this optimization really needed...? This just pre-allocates a vec, but it'll probably never
+                // be that big...
+
                 if data.swap_harvest.is_some() {
                     size += 1; // add capacity for SWAP
                 }
@@ -121,13 +124,11 @@ impl Painter {
                 }
                 #[cfg(feature = "gpu")]
                 {
-                    if let Some(gpu_data) = &app_state.converted_data.gpu_data {
-                        size += gpu_data.len(); // add row(s) for gpu
-                    }
+                    size += data.gpu_harvest.len(); // add row(s) for gpu
                 }
+                let mut points = Vec::with_capacity(size);
 
                 let data = app_state.data_store.get_data();
-                let mut points = Vec::with_capacity(size);
 
                 mem_state.ram_points_cache =
                     to_points(&data.timeseries_data.time, &data.timeseries_data.ram, x_min);
@@ -186,30 +187,42 @@ impl Painter {
 
                 #[cfg(feature = "gpu")]
                 {
-                    if let Some(gpu_data) = &app_state.converted_data.gpu_data {
-                        let mut color_index = 0;
-                        let gpu_styles = &self.styles.gpu_colours;
-                        gpu_data.iter().for_each(|gpu| {
-                            let gpu_label =
-                                format!("{}:{}{}", gpu.name, gpu.mem_percent, gpu.mem_total);
-                            let style = {
-                                if gpu_styles.is_empty() {
-                                    tui::style::Style::default()
-                                } else if color_index >= gpu_styles.len() {
-                                    // cycle styles
-                                    color_index = 1;
-                                    gpu_styles[color_index - 1]
-                                } else {
-                                    color_index += 1;
-                                    gpu_styles[color_index - 1]
-                                }
-                            };
-                            points.push(GraphData {
-                                points: gpu.points.as_slice(),
-                                style,
-                                name: Some(gpu_label.into()),
-                            });
-                        });
+                    let mut colour_index = 0;
+                    let gpu_styles = &self.styles.gpu_colours;
+                    mem_state.gpu_points_cache.clear();
+
+                    for (name, _) in &data.gpu_harvest {
+                        if let Some(gpu_data) = data.timeseries_data.gpu_mem.get(name) {
+                            mem_state.gpu_points_cache.push(to_points(
+                                &data.timeseries_data.time,
+                                gpu_data,
+                                x_min,
+                            ));
+                        }
+                    }
+
+                    for (name, harvest) in &data.gpu_harvest {
+                        let style = {
+                            if gpu_styles.is_empty() {
+                                Style::default()
+                            } else {
+                                let colour = gpu_styles[colour_index % gpu_styles.len()];
+                                colour_index += 1;
+
+                                colour
+                            }
+                        };
+
+                        graph_data(
+                            &mut points,
+                            name,
+                            Some(harvest),
+                            mem_state
+                                .gpu_points_cache
+                                .last()
+                                .expect("there must be a value at the end"),
+                            style,
+                        );
                     }
                 }
 

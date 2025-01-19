@@ -11,6 +11,8 @@ pub struct MemWidgetState {
     pub cache_points_cache: Vec<(f64, f64)>,
     #[cfg(feature = "zfs")]
     pub arc_points_cache: Vec<(f64, f64)>,
+    #[cfg(feature = "gpu")]
+    pub gpu_points_cache: Vec<Vec<(f64, f64)>>,
 }
 
 impl MemWidgetState {
@@ -24,6 +26,7 @@ impl MemWidgetState {
             cache_points_cache: vec![],
             #[cfg(feature = "zfs")]
             arc_points_cache: vec![],
+            gpu_points_cache: vec![],
         }
     }
 }

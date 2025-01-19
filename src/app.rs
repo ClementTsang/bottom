@@ -193,15 +193,6 @@ impl App {
                 }
             }
         }
-
-        // TODO: [OPT] Prefer reassignment over new vectors?
-        if self.states.mem_state.force_update.is_some() {
-            #[cfg(feature = "gpu")]
-            {
-                self.converted_data.gpu_data = crate::convert_gpu_data(data_source);
-            }
-            self.states.mem_state.force_update = None;
-        }
     }
 
     pub fn reset(&mut self) {
@@ -2266,7 +2257,6 @@ impl App {
 
                     if new_time <= self.app_config_fields.retention_ms {
                         mem_widget_state.current_display_time = new_time;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2274,7 +2264,6 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         mem_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2294,7 +2283,6 @@ impl App {
 
                     if new_time <= self.app_config_fields.retention_ms {
                         net_widget_state.current_display_time = new_time;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2302,7 +2290,6 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         net_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2356,7 +2343,6 @@ impl App {
 
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         mem_widget_state.current_display_time = new_time;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2364,7 +2350,6 @@ impl App {
                         != constants::STALE_MIN_MILLISECONDS
                     {
                         mem_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2384,7 +2369,6 @@ impl App {
 
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         net_widget_state.current_display_time = new_time;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2392,7 +2376,6 @@ impl App {
                         != constants::STALE_MIN_MILLISECONDS
                     {
                         net_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2426,7 +2409,6 @@ impl App {
             .get_mut(&self.current_widget.widget_id)
         {
             mem_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.states.mem_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 mem_widget_state.autohide_timer = Some(Instant::now());
             }
@@ -2441,7 +2423,6 @@ impl App {
             .get_mut(&self.current_widget.widget_id)
         {
             net_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.states.net_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 net_widget_state.autohide_timer = Some(Instant::now());
             }

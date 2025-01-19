@@ -391,9 +391,7 @@ impl Painter {
 
                 #[cfg(feature = "gpu")]
                 {
-                    if let Some(gpu_data) = &app_state.converted_data.gpu_data {
-                        mem_rows += gpu_data.len() as u16; // add row(s) for gpu
-                    }
+                    mem_rows += data.gpu_harvest.len() as u16; // add row(s) for gpu
                 }
 
                 if mem_rows == 1 {

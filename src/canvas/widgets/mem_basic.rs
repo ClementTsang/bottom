@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
+    style::Style,
     Frame,
 };
 
@@ -127,45 +128,32 @@ impl Painter {
 
         #[cfg(feature = "gpu")]
         {
-            if let Some(gpu_data) = &app_state.converted_data.gpu_data {
-                let gpu_styles = &self.styles.gpu_colours;
-                let mut color_index = 0;
+            let gpu_styles = &self.styles.gpu_colours;
+            let mut colour_index = 0;
 
-                gpu_data.iter().for_each(|gpu_data_vec| {
-                    let gpu_data = gpu_data_vec.points.as_slice();
-                    let gpu_percentage = if let Some(gpu) = gpu_data.last() {
-                        gpu.1
+            for (_, harvest) in data.gpu_harvest.iter() {
+                let percentage = harvest.saturating_percentage();
+                let label = memory_label(harvest, app_state.basic_mode_use_percent);
+
+                let style = {
+                    if gpu_styles.is_empty() {
+                        Style::default()
                     } else {
-                        0.0
-                    };
-                    let trimmed_gpu_frac = {
-                        if app_state.basic_mode_use_percent {
-                            format!("{:3.0}%", gpu_percentage.round())
-                        } else {
-                            gpu_data_vec.mem_total.trim().to_string()
-                        }
-                    };
-                    let style = {
-                        if gpu_styles.is_empty() {
-                            tui::style::Style::default()
-                        } else if color_index >= gpu_styles.len() {
-                            // cycle styles
-                            color_index = 1;
-                            gpu_styles[color_index - 1]
-                        } else {
-                            color_index += 1;
-                            gpu_styles[color_index - 1]
-                        }
-                    };
-                    draw_widgets.push(
-                        PipeGauge::default()
-                            .ratio(gpu_percentage / 100.0)
-                            .start_label("GPU")
-                            .inner_label(trimmed_gpu_frac)
-                            .label_style(style)
-                            .gauge_style(style),
-                    );
-                });
+                        let colour = gpu_styles[colour_index % gpu_styles.len()];
+                        colour_index += 1;
+
+                        colour
+                    }
+                };
+
+                draw_widgets.push(
+                    PipeGauge::default()
+                        .ratio(percentage / 100.0)
+                        .start_label("GPU")
+                        .inner_label(label)
+                        .label_style(style)
+                        .gauge_style(style),
+                );
             }
         }
 

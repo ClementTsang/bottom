@@ -285,16 +285,12 @@ impl ProcState {
 }
 
 pub struct NetState {
-    pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, NetWidgetState>,
 }
 
 impl NetState {
     pub fn init(widget_states: HashMap<u64, NetWidgetState>) -> Self {
-        NetState {
-            force_update: None,
-            widget_states,
-        }
+        NetState { widget_states }
     }
 }
 
@@ -321,16 +317,12 @@ impl CpuState {
 }
 
 pub struct MemState {
-    pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, MemWidgetState>,
 }
 
 impl MemState {
     pub fn init(widget_states: HashMap<u64, MemWidgetState>) -> Self {
-        MemState {
-            force_update: None,
-            widget_states,
-        }
+        MemState { widget_states }
     }
 }
 
