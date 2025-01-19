@@ -77,12 +77,12 @@ impl TimeGraph<'_> {
         if self.hide_x_labels {
             Axis::default().bounds(adjusted_x_bounds)
         } else {
-            let xb_one = (self.x_min as u64 / 1000).to_string();
-            let xb_zero = "0";
+            let x_bound_left = ((-self.x_min) as u64 / 1000).to_string();
+            let x_bound_right = "0s";
 
             let x_labels = vec![
-                Span::styled(concat_string!(xb_one, "s"), self.graph_style),
-                Span::styled(concat_string!(xb_zero, "s"), self.graph_style),
+                Span::styled(concat_string!(x_bound_left, "s"), self.graph_style),
+                Span::styled(x_bound_right, self.graph_style),
             ];
 
             Axis::default()
