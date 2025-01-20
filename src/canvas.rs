@@ -343,14 +343,14 @@ impl Painter {
                     _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
-                // Basic mode.  This basically removes all graphs but otherwise
+                // Basic mode. This basically removes all graphs but otherwise
                 // the same info.
                 if let Some(frozen_draw_loc) = frozen_draw_loc {
                     self.draw_frozen_indicator(f, frozen_draw_loc);
                 }
 
                 let data = app_state.data_store.get_data();
-                let actual_cpu_data_len = app_state.converted_data.cpu_data.len().saturating_sub(1);
+                let actual_cpu_data_len = data.cpu_harvest.len();
 
                 // This fixes #397, apparently if the height is 1, it can't render the CPU
                 // bars...

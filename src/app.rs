@@ -22,7 +22,6 @@ use crate::{
     canvas::components::time_chart::LegendPosition,
     constants,
     data_collection::{processes::Pid, temperature},
-    data_conversion::ConvertedData,
     utils::data_units::DataUnit,
     widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
@@ -104,7 +103,6 @@ pub struct App {
     to_delete_process_list: Option<(String, Vec<Pid>)>,
     pub data_store: DataStore,
     last_key_press: Instant,
-    pub converted_data: ConvertedData,
     pub delete_dialog_state: AppDeleteDialogState,
     pub help_dialog_state: AppHelpDialogState,
     pub is_expanded: bool,
@@ -133,7 +131,6 @@ impl App {
             to_delete_process_list: None,
             data_store: DataStore::default(),
             last_key_press: Instant::now(),
-            converted_data: ConvertedData::default(),
             delete_dialog_state: AppDeleteDialogState::default(),
             help_dialog_state: AppHelpDialogState::default(),
             is_expanded,
@@ -160,35 +157,17 @@ impl App {
             }
         }
 
-        // FIXME: Make this CPU force update less terrible.
-        if self.states.cpu_state.force_update.is_some() {
-            self.converted_data.convert_cpu_data(data_source);
-
-            self.states.cpu_state.force_update = None;
-        }
-
-        // FIXME: This is a bit of a temp hack to move data over.
-        {
-            let data = &self.converted_data.cpu_data;
-            for cpu in self.states.cpu_state.widget_states.values_mut() {
-                cpu.update_table(data);
+        for temp in self.states.temp_state.widget_states.values_mut() {
+            if temp.force_update_data {
+                temp.set_table_data(&data_source.temp_data);
+                temp.force_update_data = false;
             }
         }
-        {
-            let data = &data_source.temp_data;
-            for temp in self.states.temp_state.widget_states.values_mut() {
-                if temp.force_update_data {
-                    temp.set_table_data(data);
-                    temp.force_update_data = false;
-                }
-            }
-        }
-        {
-            for disk in self.states.disk_state.widget_states.values_mut() {
-                if disk.force_update_data {
-                    disk.set_table_data(data_source);
-                    disk.force_update_data = false;
-                }
+
+        for disk in self.states.disk_state.widget_states.values_mut() {
+            if disk.force_update_data {
+                disk.set_table_data(data_source); // FIXME: (points_rework_v1) do more work when eating data, not in set table data
+                disk.force_update_data = false;
             }
         }
     }
@@ -2227,7 +2206,6 @@ impl App {
 
                     if new_time <= self.app_config_fields.retention_ms {
                         cpu_widget_state.current_display_time = new_time;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2235,7 +2213,6 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         cpu_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2313,7 +2290,6 @@ impl App {
 
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         cpu_widget_state.current_display_time = new_time;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2321,7 +2297,6 @@ impl App {
                         != constants::STALE_MIN_MILLISECONDS
                     {
                         cpu_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2392,7 +2367,6 @@ impl App {
             .get_mut(&self.current_widget.widget_id)
         {
             cpu_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 cpu_widget_state.autohide_timer = Some(Instant::now());
             }

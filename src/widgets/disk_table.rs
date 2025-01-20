@@ -3,7 +3,7 @@ use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 use serde::Deserialize;
 
 use crate::{
-    app::{data::CollectedData, AppConfigFields},
+    app::{data::StoredData, AppConfigFields},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
@@ -316,7 +316,7 @@ impl DiskTableWidget {
     /// Update the current table data.
     ///
     /// TODO: Move the conversion step into the eating part.
-    pub fn set_table_data(&mut self, data: &CollectedData) {
+    pub fn set_table_data(&mut self, data: &StoredData) {
         let mut data = data
             .disk_harvest
             .iter()

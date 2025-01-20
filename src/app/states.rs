@@ -295,16 +295,12 @@ impl NetState {
 }
 
 pub struct CpuState {
-    pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, CpuWidgetState>,
 }
 
 impl CpuState {
     pub fn init(widget_states: HashMap<u64, CpuWidgetState>) -> Self {
-        CpuState {
-            force_update: None,
-            widget_states,
-        }
+        CpuState { widget_states }
     }
 
     pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut CpuWidgetState> {

@@ -416,8 +416,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         app.is_force_redraw = true;
                     }
 
-                    let collected_data = app.data_store.get_data();
-
                     if !app.data_store.is_frozen() {
                         // Convert all data into data for the displayed widgets.
 
@@ -431,10 +429,6 @@ pub fn start_bottom() -> anyhow::Result<()> {
                             for temp in app.states.temp_state.widget_states.values_mut() {
                                 temp.force_data_update();
                             }
-                        }
-
-                        if app.used_widgets.use_cpu {
-                            app.converted_data.convert_cpu_data(collected_data);
                         }
 
                         if app.used_widgets.use_proc {

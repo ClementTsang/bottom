@@ -1,317 +1,23 @@
-//! In charge of cleaning, processing, and managing data.
-
 use std::{
-    cmp::Ordering,
-    collections::BTreeMap,
     time::{Duration, Instant},
     vec::Vec,
 };
 
-use hashbrown::{HashMap, HashSet}; // TODO: Try fxhash again.
-use timeless::data::ChunkedData;
-
 #[cfg(feature = "battery")]
 use crate::data_collection::batteries;
 use crate::{
-    data_collection::{
-        cpu, disks,
-        memory::MemHarvest,
-        network,
-        processes::{Pid, ProcessHarvest},
-        Data,
-    },
+    data_collection::{cpu, disks, memory::MemHarvest, network, Data},
     dec_bytes_per_second_string,
     widgets::TempWidgetData,
 };
 
-/// Values corresponding to a time slice.
-pub type Values = ChunkedData<f64>;
+use super::{ProcessData, TimeSeriesData};
 
-/// Represents timeseries data in a chunked, deduped manner.
-///
-/// Properties:
-/// - Time in this manner is represented in a reverse-offset fashion from the current time.
-/// - All data is stored in SoA fashion.
-/// - Values are stored in a chunked format, which facilitates gaps in data collection if needed.
-/// - Additional metadata is stored to make data pruning over time easy.
-#[derive(Clone, Debug, Default)]
-pub struct TimeSeriesData {
-    /// Time values.
-    pub time: Vec<Instant>,
-
-    /// Network RX data.
-    pub rx: Values,
-
-    /// Network TX data.
-    pub tx: Values,
-
-    /// CPU data.
-    pub cpu: Vec<Values>,
-
-    /// RAM memory data.
-    pub ram: Values,
-
-    /// Swap data.
-    pub swap: Values,
-
-    #[cfg(not(target_os = "windows"))]
-    /// Cache data.
-    pub cache_mem: Values,
-
-    #[cfg(feature = "zfs")]
-    /// Arc data.
-    pub arc_mem: Values,
-
-    #[cfg(feature = "gpu")]
-    /// GPU memory data.
-    pub gpu_mem: HashMap<String, Values>,
-}
-
-impl TimeSeriesData {
-    /// Add a new data point.
-    pub fn add(&mut self, data: &Data) {
-        self.time.push(data.collection_time);
-
-        if let Some(network) = &data.network {
-            self.rx.push(network.rx as f64);
-            self.tx.push(network.tx as f64);
-        } else {
-            self.rx.insert_break();
-            self.tx.insert_break();
-        }
-
-        if let Some(cpu) = &data.cpu {
-            match self.cpu.len().cmp(&cpu.len()) {
-                Ordering::Less => {
-                    let diff = cpu.len() - self.cpu.len();
-                    self.cpu.reserve_exact(diff);
-
-                    for _ in 0..diff {
-                        self.cpu.push(Default::default());
-                    }
-                }
-                Ordering::Greater => {
-                    let diff = self.cpu.len() - cpu.len();
-                    let offset = self.cpu.len() - diff;
-
-                    for curr in &mut self.cpu[offset..] {
-                        curr.insert_break();
-                    }
-                }
-                Ordering::Equal => {}
-            }
-
-            for (curr, new_data) in self.cpu.iter_mut().zip(cpu.iter()) {
-                curr.push(new_data.cpu_usage);
-            }
-        } else {
-            for c in &mut self.cpu {
-                c.insert_break();
-            }
-        }
-
-        if let Some(memory) = &data.memory {
-            self.ram.try_push(memory.checked_percent());
-        } else {
-            self.ram.insert_break();
-        }
-
-        if let Some(swap) = &data.swap {
-            self.swap.try_push(swap.checked_percent());
-        } else {
-            self.swap.insert_break();
-        }
-
-        #[cfg(not(target_os = "windows"))]
-        {
-            if let Some(cache) = &data.cache {
-                self.cache_mem.try_push(cache.checked_percent());
-            } else {
-                self.cache_mem.insert_break();
-            }
-        }
-
-        #[cfg(feature = "zfs")]
-        {
-            if let Some(arc) = &data.arc {
-                self.arc_mem.try_push(arc.checked_percent());
-            } else {
-                self.arc_mem.insert_break();
-            }
-        }
-
-        #[cfg(feature = "gpu")]
-        {
-            if let Some(gpu) = &data.gpu {
-                let mut not_visited = self
-                    .gpu_mem
-                    .keys()
-                    .map(String::to_owned)
-                    .collect::<HashSet<_>>();
-
-                for (name, new_data) in gpu {
-                    not_visited.remove(name);
-
-                    if !self.gpu_mem.contains_key(name) {
-                        self.gpu_mem
-                            .insert(name.to_string(), ChunkedData::default());
-                    }
-
-                    let curr = self
-                        .gpu_mem
-                        .get_mut(name)
-                        .expect("entry must exist as it was created above");
-                    curr.try_push(new_data.checked_percent());
-                }
-
-                for nv in not_visited {
-                    if let Some(entry) = self.gpu_mem.get_mut(&nv) {
-                        entry.insert_break();
-                    }
-                }
-            } else {
-                for g in self.gpu_mem.values_mut() {
-                    g.insert_break();
-                }
-            }
-        }
-    }
-
-    /// Prune any data older than the given duration.
-    pub fn prune(&mut self, max_age: Duration) {
-        if self.time.is_empty() {
-            return;
-        }
-
-        let now = Instant::now();
-        let end = {
-            let partition_point = self
-                .time
-                .partition_point(|then| now.duration_since(*then) > max_age);
-
-            // Partition point returns the first index that does not match the predicate, so minus one.
-            if partition_point > 0 {
-                partition_point - 1
-            } else {
-                // If the partition point was 0, then it means all values are too new to be pruned.
-                crate::info!("Skipping prune.");
-                return;
-            }
-        };
-
-        crate::info!("Pruning up to index {end}.");
-
-        // Note that end here is _inclusive_.
-        self.time.drain(0..=end);
-        self.time.shrink_to_fit();
-
-        let _ = self.rx.prune(end);
-        let _ = self.tx.prune(end);
-
-        for cpu in &mut self.cpu {
-            let _ = cpu.prune(end);
-        }
-
-        let _ = self.ram.prune(end);
-        let _ = self.swap.prune(end);
-
-        #[cfg(not(target_os = "windows"))]
-        let _ = self.cache_mem.prune(end);
-
-        #[cfg(feature = "zfs")]
-        let _ = self.arc_mem.prune(end);
-
-        #[cfg(feature = "gpu")]
-        {
-            for gpu in self.gpu_mem.values_mut() {
-                let _ = gpu.prune(end);
-
-                // TODO: Do we want to filter out any empty gpus?
-            }
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct TimedData {
-    pub rx_data: f64,
-    pub tx_data: f64,
-    pub cpu_data: Vec<f64>,
-    pub mem_data: Option<f64>,
-    #[cfg(not(target_os = "windows"))]
-    pub cache_data: Option<f64>,
-    pub swap_data: Option<f64>,
-    #[cfg(feature = "zfs")]
-    pub arc_data: Option<f64>,
-    #[cfg(feature = "gpu")]
-    pub gpu_data: Vec<Option<f64>>,
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct ProcessData {
-    /// A PID to process data map.
-    pub process_harvest: BTreeMap<Pid, ProcessHarvest>,
-
-    /// A mapping between a process PID to any children process PIDs.
-    pub process_parent_mapping: HashMap<Pid, Vec<Pid>>,
-
-    /// PIDs corresponding to processes that have no parents.
-    pub orphan_pids: Vec<Pid>,
-}
-
-impl ProcessData {
-    fn ingest(&mut self, list_of_processes: Vec<ProcessHarvest>) {
-        self.process_parent_mapping.clear();
-
-        // Reverse as otherwise the pid mappings are in the wrong order.
-        list_of_processes.iter().rev().for_each(|process_harvest| {
-            if let Some(parent_pid) = process_harvest.parent_pid {
-                if let Some(entry) = self.process_parent_mapping.get_mut(&parent_pid) {
-                    entry.push(process_harvest.pid);
-                } else {
-                    self.process_parent_mapping
-                        .insert(parent_pid, vec![process_harvest.pid]);
-                }
-            }
-        });
-
-        self.process_parent_mapping.shrink_to_fit();
-
-        let process_pid_map = list_of_processes
-            .into_iter()
-            .map(|process| (process.pid, process))
-            .collect();
-        self.process_harvest = process_pid_map;
-
-        // We collect all processes that either:
-        // - Do not have a parent PID (that is, they are orphan processes)
-        // - Have a parent PID but we don't have the parent (we promote them as orphans)
-        self.orphan_pids = self
-            .process_harvest
-            .iter()
-            .filter_map(|(pid, process_harvest)| match process_harvest.parent_pid {
-                Some(parent_pid) if self.process_harvest.contains_key(&parent_pid) => None,
-                _ => Some(*pid),
-            })
-            .collect();
-    }
-}
-
-/// AppCollection represents the pooled data stored within the main app
-/// thread.  Basically stores a (occasionally cleaned) record of the data
-/// collected, and what is needed to convert into a displayable form.
-///
-/// If the app is *frozen* - that is, we do not want to *display* any changing
-/// data, keep updating this. As of 2021-09-08, we just clone the current
-/// collection when it freezes to have a snapshot floating around.
-///
-/// Note that with this method, the *app* thread is responsible for cleaning -
-/// not the data collector.
+/// A collection of data. This is where we dump data into.
 #[derive(Debug, Clone)]
-pub struct CollectedData {
-    pub current_instant: Instant,
-    pub timed_data_vec: Vec<(Instant, TimedData)>, // FIXME: (points_rework_v1) REMOVE THIS
-    pub timeseries_data: TimeSeriesData,           // FIXME: (points_rework_v1) Skip in basic?
+pub struct StoredData {
+    pub current_instant: Instant, // FIXME: (points_rework_v1) remove this?
+    pub timeseries_data: TimeSeriesData, // FIXME: (points_rework_v1) Skip in basic?
     pub network_harvest: network::NetworkHarvest,
     pub ram_harvest: MemHarvest,
     pub swap_harvest: Option<MemHarvest>,
@@ -333,11 +39,10 @@ pub struct CollectedData {
     pub battery_harvest: Vec<batteries::BatteryData>,
 }
 
-impl Default for CollectedData {
+impl Default for StoredData {
     fn default() -> Self {
-        CollectedData {
+        StoredData {
             current_instant: Instant::now(),
-            timed_data_vec: Vec::default(),
             timeseries_data: TimeSeriesData::default(),
             network_harvest: network::NetworkHarvest::default(),
             ram_harvest: MemHarvest::default(),
@@ -361,9 +66,9 @@ impl Default for CollectedData {
     }
 }
 
-impl CollectedData {
+impl StoredData {
     pub fn reset(&mut self) {
-        *self = CollectedData::default();
+        *self = StoredData::default();
     }
 
     #[allow(
@@ -572,14 +277,14 @@ impl CollectedData {
 pub enum FrozenState {
     #[default]
     NotFrozen,
-    Frozen(Box<CollectedData>),
+    Frozen(Box<StoredData>),
 }
 
 /// What data to share to other parts of the application.
 #[derive(Default)]
 pub struct DataStore {
     frozen_state: FrozenState,
-    main: CollectedData,
+    main: StoredData,
 }
 
 impl DataStore {
@@ -598,8 +303,9 @@ impl DataStore {
         matches!(self.frozen_state, FrozenState::Frozen(_))
     }
 
-    /// Return a reference to the current [`DataCollection`] based on state.
-    pub fn get_data(&self) -> &CollectedData {
+    /// Return a reference to the currently available data. Note that if the data is
+    /// in a frozen state, it will return the snapshot of data from when it was frozen.
+    pub fn get_data(&self) -> &StoredData {
         match &self.frozen_state {
             FrozenState::NotFrozen => &self.main,
             FrozenState::Frozen(collected_data) => collected_data,
@@ -619,6 +325,6 @@ impl DataStore {
     /// Reset data state.
     pub fn reset(&mut self) {
         self.frozen_state = FrozenState::NotFrozen;
-        self.main = CollectedData::default();
+        self.main = StoredData::default();
     }
 }

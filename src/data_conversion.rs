@@ -4,9 +4,7 @@
 use std::time::Instant;
 
 use crate::{
-    app::data::{CollectedData, Values},
-    canvas::components::time_chart::Point,
-    data_collection::cpu::CpuDataType,
+    app::data::Values, canvas::components::time_chart::Point, data_collection::cpu::CpuDataType,
     utils::data_units::*,
 };
 
@@ -18,82 +16,6 @@ pub enum CpuWidgetData {
         data: Vec<Point>,
         last_entry: f64,
     },
-}
-
-#[derive(Default)]
-pub struct ConvertedData {
-    pub cpu_data: Vec<CpuWidgetData>,
-}
-
-impl ConvertedData {
-    pub fn convert_cpu_data(&mut self, current_data: &CollectedData) {
-        let current_time = current_data.current_instant;
-
-        // (Re-)initialize the vector if the lengths don't match...
-        if let Some((_time, data)) = &current_data.timed_data_vec.last() {
-            if data.cpu_data.len() + 1 != self.cpu_data.len() {
-                self.cpu_data = Vec::with_capacity(data.cpu_data.len() + 1);
-                self.cpu_data.push(CpuWidgetData::All);
-                self.cpu_data.extend(
-                    data.cpu_data
-                        .iter()
-                        .zip(&current_data.cpu_harvest)
-                        .map(|(cpu_usage, data)| CpuWidgetData::Entry {
-                            data_type: data.data_type,
-                            data: vec![],
-                            last_entry: *cpu_usage,
-                        })
-                        .collect::<Vec<CpuWidgetData>>(),
-                );
-            } else {
-                self.cpu_data
-                    .iter_mut()
-                    .skip(1)
-                    .zip(&data.cpu_data)
-                    .for_each(|(mut cpu, cpu_usage)| match &mut cpu {
-                        CpuWidgetData::All => unreachable!(),
-                        CpuWidgetData::Entry {
-                            data_type: _,
-                            data,
-                            last_entry,
-                        } => {
-                            // A bit faster to just update all the times, so we just clear the
-                            // vector.
-                            data.clear();
-                            *last_entry = *cpu_usage;
-                        }
-                    });
-            }
-        }
-
-        // TODO: [Opt] Can probably avoid data deduplication - store the shift + data +
-        // original once. Now push all the data.
-        for (itx, mut cpu) in &mut self.cpu_data.iter_mut().skip(1).enumerate() {
-            match &mut cpu {
-                CpuWidgetData::All => unreachable!(),
-                CpuWidgetData::Entry {
-                    data_type: _,
-                    data,
-                    last_entry: _,
-                } => {
-                    for (time, timed_data) in &current_data.timed_data_vec {
-                        let time_start: f64 =
-                            (current_time.duration_since(*time).as_millis() as f64).floor();
-
-                        if let Some(val) = timed_data.cpu_data.get(itx) {
-                            data.push((-time_start, *val));
-                        }
-
-                        if *time == current_time {
-                            break;
-                        }
-                    }
-
-                    data.shrink_to_fit();
-                }
-            }
-        }
-    }
 }
 
 /// Returns the most appropriate binary prefix unit type (e.g. kibibyte) and
@@ -164,6 +86,8 @@ pub(crate) fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Ve
     let Some(current_time) = time.last() else {
         return vec![];
     };
+
+    // TODO: Maybe find the left edge (approx) first before building iterator? Is that faster?
 
     let mut take_while_done = false;
 

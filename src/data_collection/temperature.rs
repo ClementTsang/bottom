@@ -73,6 +73,8 @@ pub enum TypedTemperature {
 }
 
 /// A rounded temperature and its type.
+///
+/// TODO: (points_rework_v1) this is kinda a hack, but it does work for now...
 #[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub enum RoundedTypedTemperature {
     Celsius(u32),
