@@ -48,7 +48,7 @@ impl Painter {
                 .iter()
                 .find_position(|&datum| matches!(datum.data_type, CpuDataType::Avg))
             {
-                let (outer, inner, ratio, style) = self.cpu_info(&avg);
+                let (outer, inner, ratio, style) = self.cpu_info(avg);
                 let [cores_loc, mut avg_loc] =
                     Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(draw_loc);
 

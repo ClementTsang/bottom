@@ -130,6 +130,8 @@ impl Painter {
         let cpu_points = &data.timeseries_data.cpu;
         let time = &data.timeseries_data.time;
 
+        cpu_widget_state.points_cache.clear();
+
         if current_scroll_position == ALL_POSITION {
             // This case ensures the other cases cannot have the position be equal to 0.
 
@@ -173,7 +175,7 @@ impl Painter {
             cpu_widget_state.points_cache.push(points);
 
             vec![GraphData {
-                points: &cpu_widget_state.points_cache.last().expect("must exist"),
+                points: cpu_widget_state.points_cache.last().expect("must exist"),
                 style,
                 name: None,
             }]
