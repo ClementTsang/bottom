@@ -15,7 +15,7 @@ use crate::{
         components::data_table::{DataTableColumn, DataToCell},
         Painter,
     },
-    data_collection::processes::{Pid, ProcessHarvest},
+    collection::processes::{Pid, ProcessHarvest},
     data_conversion::dec_bytes_per_second_string,
     utils::data_units::{get_binary_bytes, get_decimal_bytes, GIBI_LIMIT, GIGA_LIMIT},
 };

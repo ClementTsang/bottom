@@ -16,7 +16,7 @@ use crate::{
         drawing_utils::should_hide_x_label,
         Painter,
     },
-    data_collection::cpu::CpuData,
+    collection::cpu::CpuData,
     to_points,
     widgets::CpuWidgetState,
 };

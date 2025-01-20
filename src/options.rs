@@ -32,8 +32,8 @@ use self::{
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
     canvas::components::time_chart::LegendPosition,
+    collection::temperature::TemperatureType,
     constants::*,
-    data_collection::temperature::TemperatureType,
     utils::data_units::DataUnit,
     widgets::*,
 };

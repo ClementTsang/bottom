@@ -11,8 +11,8 @@ use unicode_width::UnicodeWidthStr;
 use crate::{
     app::App,
     canvas::{drawing_utils::widget_block, Painter},
+    collection::batteries::BatteryState,
     constants::*,
-    data_collection::batteries::BatteryState,
 };
 
 /// Calculate how many bars are to be drawn within basic mode's components.

@@ -14,7 +14,7 @@ use crate::{
         drawing_utils::should_hide_x_label,
         Painter,
     },
-    data_collection::memory::MemHarvest,
+    collection::memory::MemHarvest,
     get_binary_unit_and_denominator, to_points,
 };
 

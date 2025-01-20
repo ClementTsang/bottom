@@ -6,7 +6,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKi
 
 use crate::{
     app::{layout_manager::WidgetDirection, App},
-    data_collection::Data,
+    collection::Data,
 };
 
 /// Events sent to the main thread.

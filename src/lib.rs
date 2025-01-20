@@ -16,8 +16,8 @@ mod utils {
     pub(crate) mod strings;
 }
 pub(crate) mod canvas;
+pub(crate) mod collection;
 pub(crate) mod constants;
-pub(crate) mod data_collection;
 pub(crate) mod data_conversion;
 pub(crate) mod event;
 pub mod options;
@@ -225,9 +225,9 @@ fn create_collection_thread(
     let update_time = app_config_fields.update_rate;
 
     thread::spawn(move || {
-        let mut data_state = data_collection::DataCollector::new(filters);
+        let mut data_state = collection::DataCollector::new(filters);
 
-        data_state.set_data_collection(used_widget_set);
+        data_state.set_collection(used_widget_set);
         data_state.set_temperature_type(temp_type);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
         data_state.set_unnormalized_cpu(unnormalized_cpu);
@@ -262,7 +262,7 @@ fn create_collection_thread(
             }
 
             let event = BottomEvent::Update(Box::from(data_state.data));
-            data_state.data = data_collection::Data::default();
+            data_state.data = collection::Data::default();
             if sender.send(event).is_err() {
                 break;
             }

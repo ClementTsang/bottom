@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, vec::Vec};
 
-use crate::data_collection::processes::{Pid, ProcessHarvest};
+use crate::collection::processes::{Pid, ProcessHarvest};
 use hashbrown::HashMap;
 
 #[derive(Clone, Debug, Default)]

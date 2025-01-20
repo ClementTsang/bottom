@@ -12,7 +12,7 @@ use crate::{
         },
         Painter,
     },
-    data_collection::cpu::{CpuData, CpuDataType},
+    collection::cpu::{CpuData, CpuDataType},
     options::config::{cpu::CpuDefault, style::Styles},
 };
 

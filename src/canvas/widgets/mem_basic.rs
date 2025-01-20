@@ -8,7 +8,7 @@ use tui::{
 use crate::{
     app::App,
     canvas::{components::pipe_gauge::PipeGauge, drawing_utils::widget_block, Painter},
-    data_collection::memory::MemHarvest,
+    collection::memory::MemHarvest,
     get_binary_unit_and_denominator,
 };
 

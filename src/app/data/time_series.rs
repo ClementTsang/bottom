@@ -10,7 +10,7 @@ use std::{
 use hashbrown::{HashMap, HashSet}; // TODO: Try fxhash again.
 use timeless::data::ChunkedData;
 
-use crate::data_collection::Data;
+use crate::collection::Data;
 
 /// Values corresponding to a time slice.
 pub type Values = ChunkedData<f64>;

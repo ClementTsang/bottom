@@ -6,7 +6,7 @@ use crate::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    data_collection::temperature::RoundedTypedTemperature,
+    collection::temperature::RoundedTypedTemperature,
     options::config::style::Styles,
     utils::general::sort_partial_fn,
 };

@@ -4,9 +4,9 @@ use std::{
 };
 
 #[cfg(feature = "battery")]
-use crate::data_collection::batteries;
+use crate::collection::batteries;
 use crate::{
-    data_collection::{cpu, disks, memory::MemHarvest, network, Data},
+    collection::{cpu, disks, memory::MemHarvest, network, Data},
     dec_bytes_per_second_string,
     widgets::TempWidgetData,
 };

@@ -13,7 +13,7 @@ use crate::{
         drawing_utils::widget_block,
         Painter,
     },
-    data_collection::cpu::{CpuData, CpuDataType},
+    collection::cpu::{CpuData, CpuDataType},
 };
 
 impl Painter {

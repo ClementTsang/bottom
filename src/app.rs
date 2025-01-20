@@ -20,8 +20,8 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
     canvas::components::time_chart::LegendPosition,
+    collection::{processes::Pid, temperature},
     constants,
-    data_collection::{processes::Pid, temperature},
     utils::data_units::DataUnit,
     widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
