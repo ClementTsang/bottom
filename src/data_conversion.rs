@@ -167,7 +167,8 @@ pub(crate) fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Ve
 
     let mut take_while_done = false;
 
-    iter.rev()
+    let mut out: Vec<_> = iter
+        .rev()
         .map(|(&time, &val)| {
             let from_start: f64 = (current_time.duration_since(time).as_millis() as f64).floor();
             (-from_start, val)
@@ -183,7 +184,11 @@ pub(crate) fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Ve
                 false
             }
         })
-        .collect()
+        .collect();
+
+    out.reverse();
+
+    out
 }
 
 #[cfg(test)]

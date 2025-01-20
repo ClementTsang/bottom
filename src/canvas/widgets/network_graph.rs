@@ -42,7 +42,8 @@ fn to_points(
 
     let mut take_while_done = false;
 
-    iter.rev()
+    let mut out: Vec<_> = iter
+        .rev()
         .map(|(&time, &val)| {
             let from_start: f64 = (current_time.duration_since(time).as_millis() as f64).floor();
             (
@@ -66,7 +67,11 @@ fn to_points(
                 false
             }
         })
-        .collect()
+        .collect();
+
+    out.reverse();
+
+    out
 }
 
 impl Painter {
