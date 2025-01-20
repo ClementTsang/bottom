@@ -103,7 +103,7 @@ impl ConvertedData {
 /// denominator in order to be able to use it with the returned binary unit
 /// (e.g. divide 3000 bytes by 1024 to have a value in KiB).
 #[inline]
-pub fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
+pub(crate) fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
     match bytes {
         b if b < KIBI_LIMIT => ("B", 1.0),
         b if b < MEBI_LIMIT => ("KiB", KIBI_LIMIT_F64),
@@ -117,7 +117,7 @@ pub fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64) {
 /// variant. If the value is greater than a gibibyte, then it will return a
 /// decimal place.
 #[inline]
-pub fn binary_byte_string(value: u64) -> String {
+pub(crate) fn binary_byte_string(value: u64) -> String {
     let converted_values = get_binary_bytes(value);
     if value >= GIBI_LIMIT {
         format!("{:.1}{}", converted_values.0, converted_values.1)
@@ -130,7 +130,7 @@ pub fn binary_byte_string(value: u64) -> String {
 /// per second. If the value is greater than a giga-X, then it will return a
 /// decimal place.
 #[inline]
-pub fn dec_bytes_per_second_string(value: u64) -> String {
+pub(crate) fn dec_bytes_per_second_string(value: u64) -> String {
     let converted_values = get_decimal_bytes(value);
     if value >= GIGA_LIMIT {
         format!("{:.1}{}/s", converted_values.0, converted_values.1)
@@ -141,7 +141,7 @@ pub fn dec_bytes_per_second_string(value: u64) -> String {
 
 /// Returns a string given a value that is converted to the closest SI-variant.
 /// If the value is greater than a giga-X, then it will return a decimal place.
-pub fn dec_bytes_string(value: u64) -> String {
+pub(crate) fn dec_bytes_string(value: u64) -> String {
     let converted_values = get_decimal_bytes(value);
     if value >= GIGA_LIMIT {
         format!("{:.1}{}", converted_values.0, converted_values.1)
@@ -156,7 +156,7 @@ pub fn dec_bytes_string(value: u64) -> String {
 /// This should be slated to be removed and functionality moved to the graph drawing outright. We should also
 /// just not cache and filter aggressively via the iter and bounds. We may also need to change the iter/graph to go
 /// from current_time_in_ms - 60000 to current_time_in_ms, reducing the amount of work.
-pub fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Vec<(f64, f64)> {
+pub(crate) fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Vec<(f64, f64)> {
     let Some(iter) = values.iter_along_base(time) else {
         return vec![];
     };
