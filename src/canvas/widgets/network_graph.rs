@@ -122,10 +122,11 @@ impl Painter {
             let time_start = -(network_widget_state.current_display_time as f64);
 
             // FIXME: (points_rework_v1) THIS IS TEMPORARY.
-            let network_data_rx =
+            // In theory you can optimize this more by reusing the buffer, but this is temporary, right?
+            network_widget_state.rx_cache =
                 to_points(&app_state.app_config_fields, time, rx_points, time_start);
 
-            let network_data_tx =
+            network_widget_state.tx_cache =
                 to_points(&app_state.app_config_fields, time, tx_points, time_start);
 
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
@@ -144,8 +145,8 @@ impl Painter {
 
             // Find the maximal rx/tx so we know how to scale, and return it.
             let max_entry = get_max_entry(
-                &network_data_rx,
-                &network_data_tx,
+                &network_widget_state.rx_cache,
+                &network_widget_state.tx_cache,
                 time_start,
                 &app_state.app_config_fields.network_scale_type,
                 app_state.app_config_fields.network_use_binary_prefix,
@@ -191,12 +192,12 @@ impl Painter {
 
                 vec![
                     GraphData {
-                        points: &network_data_rx,
+                        points: &network_widget_state.rx_cache,
                         style: self.styles.rx_style,
                         name: Some(rx_label.into()),
                     },
                     GraphData {
-                        points: &network_data_tx,
+                        points: &network_widget_state.tx_cache,
                         style: self.styles.tx_style,
                         name: Some(tx_label.into()),
                     },
@@ -219,12 +220,12 @@ impl Painter {
 
                 vec![
                     GraphData {
-                        points: &network_data_rx,
+                        points: &network_widget_state.rx_cache,
                         style: self.styles.rx_style,
                         name: Some(format!("RX: {:<10}  All: {}", rx_label, total_rx_label).into()),
                     },
                     GraphData {
-                        points: &network_data_tx,
+                        points: &network_widget_state.tx_cache,
                         style: self.styles.tx_style,
                         name: Some(format!("TX: {:<10}  All: {}", tx_label, total_tx_label).into()),
                     },
