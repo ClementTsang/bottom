@@ -37,7 +37,7 @@ fn memory_legend_label(name: &str, data: Option<&MemHarvest>) -> String {
     }
 }
 
-/// Get graph data from.
+/// Get graph data.
 #[inline]
 fn graph_data<'a>(
     out: &mut Vec<GraphData<'a>>, name: &str, last_harvest: Option<&'a MemHarvest>,

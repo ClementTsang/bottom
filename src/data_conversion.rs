@@ -3,20 +3,7 @@
 
 use std::time::Instant;
 
-use crate::{
-    app::data::Values, canvas::components::time_chart::Point, data_collection::cpu::CpuDataType,
-    utils::data_units::*,
-};
-
-#[derive(Clone, Debug)]
-pub enum CpuWidgetData {
-    All,
-    Entry {
-        data_type: CpuDataType,
-        data: Vec<Point>,
-        last_entry: f64,
-    },
-}
+use crate::{app::data::Values, utils::data_units::*};
 
 /// Returns the most appropriate binary prefix unit type (e.g. kibibyte) and
 /// denominator for the given amount of bytes.

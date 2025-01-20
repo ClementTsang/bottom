@@ -12,8 +12,7 @@ use crate::{
         },
         Painter,
     },
-    data_collection::cpu::CpuDataType,
-    data_conversion::CpuWidgetData,
+    data_collection::cpu::{CpuData, CpuDataType},
     options::config::{cpu::CpuDefault, style::Styles},
 };
 
@@ -33,24 +32,14 @@ impl ColumnHeader for CpuWidgetColumn {
 
 pub enum CpuWidgetTableData {
     All,
-    Entry {
-        data_type: CpuDataType,
-        last_entry: f64,
-    },
+    Entry { data_type: CpuDataType, usage: f64 },
 }
 
 impl CpuWidgetTableData {
-    pub fn from_cpu_widget_data(data: &CpuWidgetData) -> CpuWidgetTableData {
-        match data {
-            CpuWidgetData::All => CpuWidgetTableData::All,
-            CpuWidgetData::Entry {
-                data_type,
-                data: _,
-                last_entry,
-            } => CpuWidgetTableData::Entry {
-                data_type: *data_type,
-                last_entry: *last_entry,
-            },
+    pub fn from_cpu_data(data: &CpuData) -> CpuWidgetTableData {
+        CpuWidgetTableData::Entry {
+            data_type: data.data_type,
+            usage: data.cpu_usage,
         }
     }
 }
@@ -77,7 +66,7 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
             },
             CpuWidgetTableData::Entry {
                 data_type,
-                last_entry,
+                usage: last_entry,
             } => {
                 if calculated_width == 0 {
                     None
@@ -109,7 +98,7 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
             CpuWidgetTableData::All => painter.styles.all_cpu_colour,
             CpuWidgetTableData::Entry {
                 data_type,
-                last_entry: _,
+                usage: _,
             } => match data_type {
                 CpuDataType::Avg => painter.styles.avg_cpu_colour,
                 CpuDataType::Cpu(index) => {
@@ -136,6 +125,10 @@ pub struct CpuWidgetState {
     pub is_legend_hidden: bool,
     pub autohide_timer: Option<Instant>,
     pub table: DataTable<CpuWidgetTableData, CpuWidgetColumn>,
+    pub force_update_data: bool,
+
+    /// FIXME: (points_rework_v1) REMOVE THIS
+    pub points_cache: Vec<Vec<(f64, f64)>>,
 }
 
 impl CpuWidgetState {
@@ -172,13 +165,21 @@ impl CpuWidgetState {
             is_legend_hidden: false,
             autohide_timer,
             table,
+            force_update_data: false,
+            points_cache: vec![],
         }
     }
 
-    pub fn update_table(&mut self, data: &[CpuWidgetData]) {
+    /// Forces an update of the data stored.
+    #[inline]
+    pub fn force_data_update(&mut self) {
+        self.force_update_data = true;
+    }
+
+    pub fn set_legend_data(&mut self, data: &[CpuData]) {
         self.table.set_data(
-            data.iter()
-                .map(CpuWidgetTableData::from_cpu_widget_data)
+            std::iter::once(CpuWidgetTableData::All)
+                .chain(data.iter().map(CpuWidgetTableData::from_cpu_data))
                 .collect(),
         );
     }

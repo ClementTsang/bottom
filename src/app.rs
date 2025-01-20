@@ -164,6 +164,13 @@ impl App {
             }
         }
 
+        for cpu in self.states.cpu_state.widget_states.values_mut() {
+            if cpu.force_update_data {
+                cpu.set_legend_data(&data_source.cpu_harvest);
+                cpu.force_update_data = false;
+            }
+        }
+
         for disk in self.states.disk_state.widget_states.values_mut() {
             if disk.force_update_data {
                 disk.set_table_data(data_source); // FIXME: (points_rework_v1) do more work when eating data, not in set table data

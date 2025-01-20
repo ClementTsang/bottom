@@ -7,7 +7,7 @@ use tui::{
 };
 
 use crate::{
-    app::{layout_manager::WidgetDirection, App},
+    app::{data::StoredData, layout_manager::WidgetDirection, App},
     canvas::{
         components::{
             data_table::{DrawInfo, SelectionState},
@@ -16,7 +16,8 @@ use crate::{
         drawing_utils::should_hide_x_label,
         Painter,
     },
-    data_conversion::CpuWidgetData,
+    data_collection::cpu::CpuData,
+    to_points,
     widgets::CpuWidgetState,
 };
 
@@ -120,43 +121,46 @@ impl Painter {
     }
 
     fn generate_points<'a>(
-        &self, cpu_widget_state: &CpuWidgetState, cpu_data: &'a [CpuWidgetData], show_avg_cpu: bool,
+        &self, cpu_widget_state: &'a mut CpuWidgetState, data: &StoredData, show_avg_cpu: bool,
+        x_min: f64,
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
-
         let current_scroll_position = cpu_widget_state.table.state.current_index;
+        let cpu_entries = &data.cpu_harvest;
+        let cpu_points = &data.timeseries_data.cpu;
+        let time = &data.timeseries_data.time;
+
         if current_scroll_position == ALL_POSITION {
             // This case ensures the other cases cannot have the position be equal to 0.
-            cpu_data
+
+            for points in cpu_points {
+                let points = to_points(time, points, x_min);
+                cpu_widget_state.points_cache.push(points);
+            }
+
+            cpu_widget_state
+                .points_cache
                 .iter()
                 .enumerate()
-                .rev()
-                .filter_map(|(itx, cpu)| {
-                    match &cpu {
-                        CpuWidgetData::All => None,
-                        CpuWidgetData::Entry { data, .. } => {
-                            let style = if show_avg_cpu && itx == AVG_POSITION {
-                                self.styles.avg_cpu_colour
-                            } else if itx == ALL_POSITION {
-                                self.styles.all_cpu_colour
-                            } else {
-                                let offset_position = itx - 1; // Because of the all position
-                                self.styles.cpu_colour_styles[(offset_position - show_avg_offset)
-                                    % self.styles.cpu_colour_styles.len()]
-                            };
+                .map(|(itx, points)| {
+                    let style = if show_avg_cpu && itx == AVG_POSITION {
+                        self.styles.avg_cpu_colour
+                    } else if itx == ALL_POSITION {
+                        self.styles.all_cpu_colour
+                    } else {
+                        let offset_position = itx - 1; // Because of the all position
+                        self.styles.cpu_colour_styles[(offset_position - show_avg_offset)
+                            % self.styles.cpu_colour_styles.len()]
+                    };
 
-                            Some(GraphData {
-                                points: &data[..],
-                                style,
-                                name: None,
-                            })
-                        }
+                    GraphData {
+                        points,
+                        style,
+                        name: None,
                     }
                 })
-                .collect::<Vec<_>>()
-        } else if let Some(CpuWidgetData::Entry { data, .. }) =
-            cpu_data.get(current_scroll_position)
-        {
+                .collect()
+        } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position) {
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.styles.avg_cpu_colour
             } else {
@@ -165,8 +169,11 @@ impl Painter {
                     [(offset_position - show_avg_offset) % self.styles.cpu_colour_styles.len()]
             };
 
+            let points = to_points(time, &cpu_points[current_scroll_position], x_min);
+            cpu_widget_state.points_cache.push(points);
+
             vec![GraphData {
-                points: &data[..],
+                points: &cpu_widget_state.points_cache.last().expect("must exist"),
                 style,
                 name: None,
             }]
@@ -185,7 +192,6 @@ impl Painter {
         {
             let data = app_state.data_store.get_data();
 
-            let cpu_data = &app_state.converted_data.cpu_data;
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let x_min = -(cpu_widget_state.current_display_time as f64);
             let hide_x_labels = should_hide_x_label(
@@ -197,8 +203,9 @@ impl Painter {
 
             let points = self.generate_points(
                 cpu_widget_state,
-                cpu_data,
+                data,
                 app_state.app_config_fields.show_average_cpu,
+                x_min,
             );
 
             // TODO: Maybe hide load avg if too long? Or maybe the CPU part.

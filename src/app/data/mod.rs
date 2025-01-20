@@ -1,4 +1,4 @@
-//! In charge of cleaning, processing, and managing data.
+//! How we manage data internally.
 
 mod time_series;
 pub use time_series::{TimeSeriesData, Values};

@@ -43,5 +43,5 @@ pub(crate) struct FlagConfig {
     pub(crate) disable_gpu: Option<bool>,
     pub(crate) enable_cache_memory: Option<bool>,
     pub(crate) retention: Option<StringOrNum>,
-    pub(crate) average_cpu_row: Option<bool>,
+    pub(crate) average_cpu_row: Option<bool>, // FIXME: This makes no sense outside of basic mode, add a basic mode config section.
 }
