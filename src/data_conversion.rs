@@ -22,19 +22,6 @@ pub(crate) fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64)
     }
 }
 
-/// Returns a string given a value that is converted to the closest binary
-/// variant. If the value is greater than a gibibyte, then it will return a
-/// decimal place.
-#[inline]
-pub(crate) fn binary_byte_string(value: u64) -> String {
-    let converted_values = get_binary_bytes(value);
-    if value >= GIBI_LIMIT {
-        format!("{:.1}{}", converted_values.0, converted_values.1)
-    } else {
-        format!("{:.0}{}", converted_values.0, converted_values.1)
-    }
-}
-
 /// Returns a string given a value that is converted to the closest SI-variant,
 /// per second. If the value is greater than a giga-X, then it will return a
 /// decimal place.
@@ -45,17 +32,6 @@ pub(crate) fn dec_bytes_per_second_string(value: u64) -> String {
         format!("{:.1}{}/s", converted_values.0, converted_values.1)
     } else {
         format!("{:.0}{}/s", converted_values.0, converted_values.1)
-    }
-}
-
-/// Returns a string given a value that is converted to the closest SI-variant.
-/// If the value is greater than a giga-X, then it will return a decimal place.
-pub(crate) fn dec_bytes_string(value: u64) -> String {
-    let converted_values = get_decimal_bytes(value);
-    if value >= GIGA_LIMIT {
-        format!("{:.1}{}", converted_values.0, converted_values.1)
-    } else {
-        format!("{:.0}{}", converted_values.0, converted_values.1)
     }
 }
 
@@ -105,31 +81,6 @@ pub(crate) fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Ve
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn test_binary_byte_string() {
-        assert_eq!(binary_byte_string(0), "0B".to_string());
-        assert_eq!(binary_byte_string(1), "1B".to_string());
-        assert_eq!(binary_byte_string(1000), "1000B".to_string());
-        assert_eq!(binary_byte_string(1023), "1023B".to_string());
-        assert_eq!(binary_byte_string(KIBI_LIMIT), "1KiB".to_string());
-        assert_eq!(binary_byte_string(KIBI_LIMIT + 1), "1KiB".to_string());
-        assert_eq!(binary_byte_string(MEBI_LIMIT), "1MiB".to_string());
-        assert_eq!(binary_byte_string(GIBI_LIMIT), "1.0GiB".to_string());
-        assert_eq!(binary_byte_string(2 * GIBI_LIMIT), "2.0GiB".to_string());
-        assert_eq!(
-            binary_byte_string((2.5 * GIBI_LIMIT as f64) as u64),
-            "2.5GiB".to_string()
-        );
-        assert_eq!(
-            binary_byte_string((10.34 * TEBI_LIMIT as f64) as u64),
-            "10.3TiB".to_string()
-        );
-        assert_eq!(
-            binary_byte_string((10.36 * TEBI_LIMIT as f64) as u64),
-            "10.4TiB".to_string()
-        );
-    }
 
     #[test]
     fn test_dec_bytes_per_second_string() {
