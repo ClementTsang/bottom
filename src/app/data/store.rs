@@ -14,6 +14,8 @@ use crate::{
 use super::{ProcessData, TimeSeriesData};
 
 /// A collection of data. This is where we dump data into.
+///
+/// TODO: Maybe reduce visibility of internal data, make it only accessible through DataStore?
 #[derive(Debug, Clone)]
 pub struct StoredData {
     pub current_instant: Instant, // FIXME: (points_rework_v1) remove this?

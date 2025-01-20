@@ -1,4 +1,6 @@
 //! This is the main file to house data collection functions.
+//!
+//! TODO: Rename this to intake?
 
 #[cfg(feature = "nvidia")]
 pub mod nvidia;

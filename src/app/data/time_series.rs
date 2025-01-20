@@ -6,6 +6,7 @@ use std::{
     vec::Vec,
 };
 
+#[cfg(feature = "gpu")]
 use hashbrown::{HashMap, HashSet}; // TODO: Try fxhash again.
 use timeless::data::ChunkedData;
 

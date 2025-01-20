@@ -26,6 +26,7 @@ impl MemWidgetState {
             cache_points_cache: vec![],
             #[cfg(feature = "zfs")]
             arc_points_cache: vec![],
+            #[cfg(feature = "gpu")]
             gpu_points_cache: vec![],
         }
     }

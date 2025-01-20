@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::Style,
     Frame,
 };
 
@@ -137,7 +136,7 @@ impl Painter {
 
                 let style = {
                     if gpu_styles.is_empty() {
-                        Style::default()
+                        tui::style::Style::default()
                     } else {
                         let colour = gpu_styles[colour_index % gpu_styles.len()];
                         colour_index += 1;

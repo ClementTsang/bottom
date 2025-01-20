@@ -150,6 +150,9 @@ impl App {
     pub fn update_data(&mut self) {
         let data_source = self.data_store.get_data();
 
+        // FIXME: (points_rework_v1) maybe separate PR but would it make more sense to store references of data?
+        // Would it also make more sense to move the "data set" step to the draw step, and make it only set if force
+        // update is set here?
         for proc in self.states.proc_state.widget_states.values_mut() {
             if proc.force_update_data {
                 proc.set_table_data(data_source);
@@ -173,7 +176,7 @@ impl App {
 
         for disk in self.states.disk_state.widget_states.values_mut() {
             if disk.force_update_data {
-                disk.set_table_data(data_source); // FIXME: (points_rework_v1) do more work when eating data, not in set table data
+                disk.set_table_data(data_source); // FIXME: (points_rework_v1) do more work when eating data, not in set table data; maybe separate PR
                 disk.force_update_data = false;
             }
         }
