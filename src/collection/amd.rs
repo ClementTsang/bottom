@@ -2,10 +2,7 @@ mod amdgpu_marketing;
 
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
-    collection::{
-        memory::MemHarvest,
-        temperature::{TempHarvest, TemperatureType},
-    },
+    collection::{memory::MemHarvest, temperature::TempSensorData},
 };
 use hashbrown::{HashMap, HashSet};
 use std::{
@@ -18,7 +15,7 @@ use std::{
 
 pub struct AMDGPUData {
     pub memory: Option<Vec<(String, MemHarvest)>>,
-    pub temperature: Option<Vec<TempHarvest>>,
+    pub temperature: Option<Vec<TempSensorData>>,
     pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
 }
 
@@ -402,8 +399,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AMDGPUProc>> {
 }
 
 pub fn get_amd_vecs(
-    temp_type: &TemperatureType, filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
-    prev_time: Instant,
+    filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets, prev_time: Instant,
 ) -> Option<AMDGPUData> {
     let device_path_list = get_amd_devs()?;
     let interval = Instant::now().duration_since(prev_time);
@@ -435,11 +431,9 @@ pub fn get_amd_vecs(
         if widgets_to_harvest.use_temp && Filter::optional_should_keep(filter, &device_name) {
             if let Some(temperatures) = get_amd_temp(&device_path) {
                 for info in temperatures {
-                    let temperature = temp_type.convert_temp_unit(info.temperature);
-
-                    temp_vec.push(TempHarvest {
+                    temp_vec.push(TempSensorData {
                         name: format!("{} {}", device_name, info.name),
-                        temperature: Some(temperature),
+                        temperature: Some(info.temperature),
                     });
                 }
             }

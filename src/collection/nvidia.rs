@@ -7,17 +7,14 @@ use nvml_wrapper::{
 
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
-    collection::{
-        memory::MemHarvest,
-        temperature::{TempHarvest, TemperatureType},
-    },
+    collection::{memory::MemHarvest, temperature::TempSensorData},
 };
 
 pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
 
 pub struct GpusData {
     pub memory: Option<Vec<(String, MemHarvest)>>,
-    pub temperature: Option<Vec<TempHarvest>>,
+    pub temperature: Option<Vec<TempSensorData>>,
     pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
 }
 
@@ -47,7 +44,7 @@ fn init_nvml() -> Result<Nvml, NvmlError> {
 /// Returns the GPU data from NVIDIA cards.
 #[inline]
 pub fn get_nvidia_vecs(
-    temp_type: &TemperatureType, filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
+    filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
 ) -> Option<GpusData> {
     if let Ok(nvml) = NVML_DATA.get_or_init(init_nvml) {
         if let Ok(num_gpu) = nvml.device_count() {
@@ -75,14 +72,12 @@ pub fn get_nvidia_vecs(
                             && Filter::optional_should_keep(filter, &name)
                         {
                             if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
-                                let temperature = temp_type.convert_temp_unit(temperature as f32);
-
-                                temp_vec.push(TempHarvest {
+                                temp_vec.push(TempSensorData {
                                     name,
-                                    temperature: Some(temperature),
+                                    temperature: Some(temperature as f32),
                                 });
                             } else {
-                                temp_vec.push(TempHarvest {
+                                temp_vec.push(TempSensorData {
                                     name,
                                     temperature: None,
                                 });

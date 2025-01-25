@@ -218,7 +218,6 @@ fn create_collection_thread(
     cancellation_token: Arc<CancellationToken>, app_config_fields: &AppConfigFields,
     filters: DataFilters, used_widget_set: UsedWidgets,
 ) -> JoinHandle<()> {
-    let temp_type = app_config_fields.temperature_type;
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
     let unnormalized_cpu = app_config_fields.unnormalized_cpu;
     let show_average_cpu = app_config_fields.show_average_cpu;
@@ -228,7 +227,6 @@ fn create_collection_thread(
         let mut data_state = collection::DataCollector::new(filters);
 
         data_state.set_collection(used_widget_set);
-        data_state.set_temperature_type(temp_type);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
         data_state.set_unnormalized_cpu(unnormalized_cpu);
         data_state.set_show_average_cpu(show_average_cpu);
@@ -407,7 +405,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::Update(data) => {
-                    app.data_store.eat_data(data);
+                    app.data_store.eat_data(data, &app.app_config_fields);
 
                     // This thing is required as otherwise, some widgets can't draw correctly w/o
                     // some data (or they need to be re-drawn).

@@ -20,7 +20,7 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
     canvas::components::time_chart::LegendPosition,
-    collection::{processes::Pid, temperature},
+    collection::processes::Pid,
     constants,
     utils::data_units::DataUnit,
     widgets::{ProcWidgetColumn, ProcWidgetMode},
@@ -38,7 +38,7 @@ pub enum AxisScaling {
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct AppConfigFields {
     pub update_rate: u64,
-    pub temperature_type: temperature::TemperatureType,
+    pub temperature_type: TemperatureType,
     pub use_dot: bool,
     pub cpu_left_legend: bool,
     pub show_average_cpu: bool, // TODO: Unify this in CPU options

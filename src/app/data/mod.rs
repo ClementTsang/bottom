@@ -8,3 +8,6 @@ pub use process::ProcessData;
 
 mod store;
 pub use store::*;
+
+mod temperature;
+pub use temperature::*;

@@ -6,6 +6,7 @@ use std::{
 #[cfg(feature = "battery")]
 use crate::collection::batteries;
 use crate::{
+    app::AppConfigFields,
     collection::{cpu, disks, memory::MemHarvest, network, Data},
     dec_bytes_per_second_string,
     widgets::TempWidgetData,
@@ -18,7 +19,7 @@ use super::{ProcessData, TimeSeriesData};
 /// TODO: Maybe reduce visibility of internal data, make it only accessible through DataStore?
 #[derive(Debug, Clone)]
 pub struct StoredData {
-    pub current_instant: Instant, // FIXME: (points_rework_v1) remove this?
+    pub last_update_time: Instant, // FIXME: (points_rework_v1) remove this?
     pub timeseries_data: TimeSeriesData, // FIXME: (points_rework_v1) Skip in basic?
     pub network_harvest: network::NetworkHarvest,
     pub ram_harvest: MemHarvest,
@@ -44,7 +45,7 @@ pub struct StoredData {
 impl Default for StoredData {
     fn default() -> Self {
         StoredData {
-            current_instant: Instant::now(),
+            last_update_time: Instant::now(),
             timeseries_data: TimeSeriesData::default(),
             network_harvest: network::NetworkHarvest::default(),
             ram_harvest: MemHarvest::default(),
@@ -77,24 +78,21 @@ impl StoredData {
         clippy::boxed_local,
         reason = "This avoids warnings on certain platforms (e.g. 32-bit)."
     )]
-    fn eat_data(&mut self, data: Box<Data>) {
+    fn eat_data(&mut self, data: Box<Data>, settings: &AppConfigFields) {
         let harvested_time = data.collection_time;
 
         self.timeseries_data.add(&data);
 
-        // Network
         if let Some(network) = data.network {
             self.network_harvest = network;
         }
 
-        // Memory, Swap
         if let Some(memory) = data.memory {
             self.ram_harvest = memory;
         }
 
         self.swap_harvest = data.swap;
 
-        // Cache memory
         #[cfg(not(target_os = "windows"))]
         {
             self.cache_harvest = data.cache;
@@ -110,17 +108,14 @@ impl StoredData {
             self.gpu_harvest = gpu;
         }
 
-        // CPU
         if let Some(cpu) = data.cpu {
             self.cpu_harvest = cpu;
         }
 
-        // Load average
         if let Some(load_avg) = data.load_avg {
             self.load_avg_harvest = load_avg;
         }
 
-        // Temp
         // TODO: (points_rework_v1) the map might be redundant, the types are the same.
         self.temp_data = data
             .temperature_sensors
@@ -129,41 +124,40 @@ impl StoredData {
                     .into_iter()
                     .map(|temp| TempWidgetData {
                         sensor: temp.name,
-                        temperature: temp.temperature.map(|v| v.into()),
+                        temperature: temp
+                            .temperature
+                            .map(|c| settings.temperature_type.convert_temp_unit(c)),
                     })
                     .collect()
             })
             .unwrap_or_default();
 
-        // Disks
         if let Some(disks) = data.disks {
             if let Some(io) = data.io {
                 self.eat_disks(disks, io, harvested_time);
             }
         }
 
-        // Processes
         if let Some(list_of_processes) = data.list_of_processes {
             self.process_data.ingest(list_of_processes);
         }
 
         #[cfg(feature = "battery")]
         {
-            // Battery
             if let Some(list_of_batteries) = data.list_of_batteries {
                 self.battery_harvest = list_of_batteries;
             }
         }
 
-        // And we're done eating.  Update time and push the new entry!
-        self.current_instant = harvested_time;
+        // And we're done eating. Update time and push the new entry!
+        self.last_update_time = harvested_time;
     }
 
     fn eat_disks(
         &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IoHarvest, harvested_time: Instant,
     ) {
         let time_since_last_harvest = harvested_time
-            .duration_since(self.current_instant)
+            .duration_since(self.last_update_time)
             .as_secs_f64();
 
         for (itx, device) in disks.iter().enumerate() {
@@ -315,8 +309,8 @@ impl DataStore {
     }
 
     /// Eat data.
-    pub fn eat_data(&mut self, data: Box<Data>) {
-        self.main.eat_data(data);
+    pub fn eat_data(&mut self, data: Box<Data>, settings: &AppConfigFields) {
+        self.main.eat_data(data, settings);
     }
 
     /// Clean data.

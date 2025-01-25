@@ -1,12 +1,11 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use crate::{
-    app::AppConfigFields,
+    app::{data::TypedTemperature, AppConfigFields},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    collection::temperature::RoundedTypedTemperature,
     options::config::style::Styles,
     utils::general::sort_partial_fn,
 };
@@ -14,7 +13,7 @@ use crate::{
 #[derive(Clone, Debug)]
 pub struct TempWidgetData {
     pub sensor: String,
-    pub temperature: Option<RoundedTypedTemperature>,
+    pub temperature: Option<TypedTemperature>,
 }
 
 pub enum TempWidgetColumn {

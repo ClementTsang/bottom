@@ -2,21 +2,21 @@
 
 use anyhow::Result;
 
-use super::{TempHarvest, TemperatureType};
+use super::TempSensorData;
 use crate::app::filter::Filter;
 
 pub fn get_temperature_data(
-    components: &sysinfo::Components, temp_type: &TemperatureType, filter: &Option<Filter>,
-) -> Result<Option<Vec<TempHarvest>>> {
-    let mut temperatures: Vec<TempHarvest> = Vec::new();
+    components: &sysinfo::Components, filter: &Option<Filter>,
+) -> Result<Option<Vec<TempSensorData>>> {
+    let mut temperatures: Vec<TempSensorData> = Vec::new();
 
     for component in components {
         let name = component.label().to_string();
 
         if Filter::optional_should_keep(filter, &name) {
-            temperatures.push(TempHarvest {
+            temperatures.push(TempSensorData {
                 name,
-                temperature: Some(temp_type.convert_temp_unit(component.temperature())),
+                temperature: Some(component.temperature()),
             });
         }
     }
@@ -25,7 +25,6 @@ pub fn get_temperature_data(
     // sensors.
     #[cfg(target_os = "freebsd")]
     {
-        use super::TypedTemperature;
         use sysctl::Sysctl;
 
         const KEY: &str = "hw.temperature";
@@ -33,17 +32,9 @@ pub fn get_temperature_data(
             for ctl in sysctl::CtlIter::below(root).flatten() {
                 if let (Ok(name), Ok(temp)) = (ctl.name(), ctl.value()) {
                     if let Some(temp) = temp.as_temperature() {
-                        temperatures.push(TempHarvest {
+                        temperatures.push(TempSensorData {
                             name,
-                            temperature: Some(match temp_type {
-                                TemperatureType::Celsius => {
-                                    TypedTemperature::Celsius(temp.celsius())
-                                }
-                                TemperatureType::Kelvin => TypedTemperature::Kelvin(temp.kelvin()),
-                                TemperatureType::Fahrenheit => {
-                                    TypedTemperature::Fahrenheit(temp.fahrenheit())
-                                }
-                            }),
+                            temperature: Some(temp.celsius()),
                         });
                     }
                 }

@@ -27,7 +27,6 @@ use processes::Pid;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
 
-use self::temperature::TemperatureType;
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
@@ -40,7 +39,7 @@ pub struct Data {
     #[cfg(not(target_os = "windows"))]
     pub cache: Option<memory::MemHarvest>,
     pub swap: Option<memory::MemHarvest>,
-    pub temperature_sensors: Option<Vec<temperature::TempHarvest>>,
+    pub temperature_sensors: Option<Vec<temperature::TempSensorData>>,
     pub network: Option<network::NetworkHarvest>,
     pub list_of_processes: Option<Vec<processes::ProcessHarvest>>,
     pub disks: Option<Vec<disks::DiskHarvest>>,
@@ -145,7 +144,6 @@ impl Default for SysinfoSource {
 pub struct DataCollector {
     pub data: Data,
     sys: SysinfoSource,
-    temperature_type: TemperatureType,
     use_current_cpu_total: bool,
     unnormalized_cpu: bool,
     last_collection_time: Instant,
@@ -191,7 +189,6 @@ impl DataCollector {
             prev_idle: 0_f64,
             #[cfg(target_os = "linux")]
             prev_non_idle: 0_f64,
-            temperature_type: TemperatureType::Celsius,
             use_current_cpu_total: false,
             unnormalized_cpu: false,
             last_collection_time,
@@ -240,10 +237,6 @@ impl DataCollector {
 
     pub fn set_collection(&mut self, used_widgets: UsedWidgets) {
         self.widgets_to_harvest = used_widgets;
-    }
-
-    pub fn set_temperature_type(&mut self, temperature_type: TemperatureType) {
-        self.temperature_type = temperature_type;
     }
 
     pub fn set_use_current_cpu_total(&mut self, use_current_cpu_total: bool) {
@@ -356,11 +349,9 @@ impl DataCollector {
             let mut local_gpu_total_mem: u64 = 0;
 
             #[cfg(feature = "nvidia")]
-            if let Some(data) = nvidia::get_nvidia_vecs(
-                &self.temperature_type,
-                &self.filters.temp_filter,
-                &self.widgets_to_harvest,
-            ) {
+            if let Some(data) =
+                nvidia::get_nvidia_vecs(&self.filters.temp_filter, &self.widgets_to_harvest)
+            {
                 if let Some(mut temp) = data.temperature {
                     if let Some(sensors) = &mut self.data.temperature_sensors {
                         sensors.append(&mut temp);
@@ -379,7 +370,6 @@ impl DataCollector {
 
             #[cfg(target_os = "linux")]
             if let Some(data) = amd::get_amd_vecs(
-                &self.temperature_type,
                 &self.filters.temp_filter,
                 &self.widgets_to_harvest,
                 self.last_collection_time,
@@ -435,18 +425,14 @@ impl DataCollector {
     fn update_temps(&mut self) {
         if self.widgets_to_harvest.use_temp {
             #[cfg(not(target_os = "linux"))]
-            if let Ok(data) = temperature::get_temperature_data(
-                &self.sys.temps,
-                &self.temperature_type,
-                &self.filters.temp_filter,
-            ) {
+            if let Ok(data) =
+                temperature::get_temperature_data(&self.sys.temps, &self.filters.temp_filter)
+            {
                 self.data.temperature_sensors = data;
             }
 
             #[cfg(target_os = "linux")]
-            if let Ok(data) =
-                temperature::get_temperature_data(&self.temperature_type, &self.filters.temp_filter)
-            {
+            if let Ok(data) = temperature::get_temperature_data(&self.filters.temp_filter) {
                 self.data.temperature_sensors = data;
             }
         }
