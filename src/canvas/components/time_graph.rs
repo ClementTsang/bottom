@@ -1,7 +1,7 @@
 mod time_chart;
 pub use time_chart::*;
 
-use std::borrow::Cow;
+use std::{borrow::Cow, time::Instant};
 
 use concat_string::concat_string;
 use tui::{
@@ -13,13 +13,43 @@ use tui::{
     Frame,
 };
 
-use crate::canvas::drawing_utils::widget_block;
+use crate::{app::data::Values, canvas::drawing_utils::widget_block};
 
 /// Represents the data required by the [`TimeGraph`].
+///
+/// TODO: We may be able to get rid of this intermediary data structure.
+#[derive(Default)]
 pub struct GraphData<'a> {
-    pub points: &'a [Point],
-    pub style: Style,
-    pub name: Option<Cow<'a, str>>,
+    time: &'a [Instant],
+    values: Option<&'a Values>,
+    style: Style,
+    name: Option<Cow<'a, str>>,
+}
+
+impl<'a> GraphData<'a> {
+    pub fn time(mut self, time: &'a [Instant]) -> Self {
+        self.time = time;
+
+        self
+    }
+
+    pub fn values(mut self, values: &'a Values) -> Self {
+        self.values = Some(values);
+
+        self
+    }
+
+    pub fn style(mut self, style: Style) -> Self {
+        self.style = style;
+
+        self
+    }
+
+    pub fn name(mut self, name: Cow<'a, str>) -> Self {
+        self.name = Some(name);
+
+        self
+    }
 }
 
 pub struct TimeGraph<'a> {
@@ -30,7 +60,7 @@ pub struct TimeGraph<'a> {
     pub hide_x_labels: bool,
 
     /// The min and max y boundaries.
-    pub y_bounds: [f64; 2],
+    pub y_bounds: AxisBound,
 
     /// Any y-labels.
     pub y_labels: &'a [Cow<'a, str>],
@@ -71,7 +101,7 @@ impl TimeGraph<'_> {
     /// Generates the [`Axis`] for the x-axis.
     fn generate_x_axis(&self) -> Axis<'_> {
         // Due to how we display things, we need to adjust the time bound values.
-        let adjusted_x_bounds = [self.x_min, 0.0];
+        let adjusted_x_bounds = AxisBound::TimeMin(self.x_min);
 
         if self.hide_x_labels {
             Axis::default().bounds(adjusted_x_bounds)
@@ -116,9 +146,6 @@ impl TimeGraph<'_> {
     pub fn draw_time_graph(&self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: &[GraphData<'_>]) {
         let x_axis = self.generate_x_axis();
         let y_axis = self.generate_y_axis();
-
-        // This is some ugly manual loop unswitching. Maybe unnecessary.
-        // TODO: Optimize this step. Cut out unneeded points.
         let data = graph_data.iter().map(create_dataset).collect();
 
         let block = {
@@ -153,14 +180,19 @@ impl TimeGraph<'_> {
 /// Creates a new [`Dataset`].
 fn create_dataset<'a>(data: &'a GraphData<'a>) -> Dataset<'a> {
     let GraphData {
-        points,
+        time,
+        values,
         style,
         name,
     } = data;
 
+    let Some(values) = values else {
+        return Dataset::default();
+    };
+
     let dataset = Dataset::default()
         .style(*style)
-        .data(points)
+        .data(time, values)
         .graph_type(GraphType::Line);
 
     if let Some(name) = name {
@@ -181,7 +213,7 @@ mod test {
         widgets::BorderType,
     };
 
-    use super::TimeGraph;
+    use super::{AxisBound, TimeGraph};
     use crate::canvas::components::time_graph::Axis;
 
     const Y_LABELS: [Cow<'static, str>; 3] = [
@@ -195,7 +227,7 @@ mod test {
             title: " Network ".into(),
             x_min: -15000.0,
             hide_x_labels: false,
-            y_bounds: [0.0, 100.5],
+            y_bounds: AxisBound::Max(100.5),
             y_labels: &Y_LABELS,
             graph_style: Style::default().fg(Color::Red),
             border_style: Style::default().fg(Color::Blue),
@@ -216,7 +248,7 @@ mod test {
         let x_axis = tg.generate_x_axis();
 
         let actual = Axis::default()
-            .bounds([-15000.0, 0.0])
+            .bounds(AxisBound::TimeMin(-15000.0))
             .labels(vec![Span::styled("15s", style), Span::styled("0s", style)])
             .style(style);
         assert_eq!(x_axis.bounds, actual.bounds);
@@ -231,7 +263,7 @@ mod test {
         let y_axis = tg.generate_y_axis();
 
         let actual = Axis::default()
-            .bounds([0.0, 100.5])
+            .bounds(AxisBound::Max(100.5))
             .labels(vec![
                 Span::styled("0%", style),
                 Span::styled("50%", style),

@@ -401,28 +401,7 @@ impl Grid for HalfBlockGrid {
 }
 
 impl Painter<'_, '_> {
-    /// Convert the (x, y) coordinates to location of a point on the grid
-    ///
-    /// # Examples:
-    /// ```
-    /// use tui::{
-    ///     symbols,
-    ///     widgets::canvas::{Context, Painter},
-    /// };
-    ///
-    /// let mut ctx = Context::new(2, 2, [1.0, 2.0], [0.0, 2.0], symbols::Marker::Braille);
-    /// let mut painter = Painter::from(&mut ctx);
-    /// let point = painter.get_point(1.0, 0.0);
-    /// assert_eq!(point, Some((0, 7)));
-    /// let point = painter.get_point(1.5, 1.0);
-    /// assert_eq!(point, Some((1, 3)));
-    /// let point = painter.get_point(0.0, 0.0);
-    /// assert_eq!(point, None);
-    /// let point = painter.get_point(2.0, 2.0);
-    /// assert_eq!(point, Some((3, 0)));
-    /// let point = painter.get_point(1.0, 2.0);
-    /// assert_eq!(point, Some((0, 0)));
-    /// ```
+    /// Convert the (x, y) coordinates to location of a point on the grid.
     pub fn get_point(&self, x: f64, y: f64) -> Option<(usize, usize)> {
         let left = self.context.x_bounds[0];
         let right = self.context.x_bounds[1];
@@ -441,20 +420,7 @@ impl Painter<'_, '_> {
         Some((x, y))
     }
 
-    /// Paint a point of the grid
-    ///
-    /// # Examples:
-    /// ```
-    /// use tui::{
-    ///     style::Color,
-    ///     symbols,
-    ///     widgets::canvas::{Context, Painter},
-    /// };
-    ///
-    /// let mut ctx = Context::new(1, 1, [0.0, 2.0], [0.0, 2.0], symbols::Marker::Braille);
-    /// let mut painter = Painter::from(&mut ctx);
-    /// let cell = painter.paint(1, 3, Color::Red);
-    /// ```
+    /// Paint a point of the grid.
     pub fn paint(&mut self, x: usize, y: usize, color: Color) {
         self.context.grid.paint(x, y, color);
     }
@@ -570,24 +536,6 @@ where
     /// braille patterns are used as they provide a more fine grained result
     /// but you might want to use the simple dot or block instead if the
     /// targeted terminal does not support those symbols.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use tui::widgets::canvas::Canvas;
-    /// # use tui::symbols;
-    /// Canvas::default()
-    ///     .marker(symbols::Marker::Braille)
-    ///     .paint(|ctx| {});
-    ///
-    /// Canvas::default()
-    ///     .marker(symbols::Marker::Dot)
-    ///     .paint(|ctx| {});
-    ///
-    /// Canvas::default()
-    ///     .marker(symbols::Marker::Block)
-    ///     .paint(|ctx| {});
-    /// ```
     pub fn marker(mut self, marker: symbols::Marker) -> Canvas<'a, F> {
         self.marker = marker;
         self

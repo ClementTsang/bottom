@@ -1,9 +1,7 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
-use std::time::Instant;
-
-use crate::{app::data::Values, utils::data_units::*};
+use crate::utils::data_units::*;
 
 /// Returns the most appropriate binary prefix unit type (e.g. kibibyte) and
 /// denominator for the given amount of bytes.
@@ -33,49 +31,6 @@ pub(crate) fn dec_bytes_per_second_string(value: u64) -> String {
     } else {
         format!("{:.0}{}/s", converted_values.0, converted_values.1)
     }
-}
-
-/// FIXME: (points_rework_v1) Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
-/// the needed points.
-///
-/// This should be slated to be removed and functionality moved to the graph drawing outright. We should also
-/// just not cache and filter aggressively via the iter and bounds. We may also need to change the iter/graph to go
-/// from current_time_in_ms - 60000 to current_time_in_ms, reducing the amount of work.
-pub(crate) fn to_points(time: &[Instant], values: &Values, left_edge: f64) -> Vec<(f64, f64)> {
-    let Some(iter) = values.iter_along_base(time) else {
-        return vec![];
-    };
-
-    let Some(current_time) = time.last() else {
-        return vec![];
-    };
-
-    // TODO: Maybe find the left edge (approx) first before building iterator? Is that faster?
-
-    let mut take_while_done = false;
-
-    let mut out: Vec<_> = iter
-        .rev()
-        .map(|(&time, &val)| {
-            let from_start: f64 = (current_time.duration_since(time).as_millis() as f64).floor();
-            (-from_start, val)
-        })
-        .take_while(|(time, _)| {
-            // We do things like this so we can take one extra value AFTER (needed for interpolation).
-            if *time >= left_edge {
-                true
-            } else if !take_while_done {
-                take_while_done = true;
-                true
-            } else {
-                false
-            }
-        })
-        .collect();
-
-    out.reverse();
-
-    out
 }
 
 #[cfg(test)]

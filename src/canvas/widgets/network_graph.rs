@@ -108,151 +108,147 @@ impl Painter {
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
         full_screen: bool,
     ) {
-        if let Some(network_widget_state) =
-            app_state.states.net_state.widget_states.get_mut(&widget_id)
-        {
-            let shared_data = app_state.data_store.get_data();
-            let network_latest_data = &(shared_data.network_harvest);
-            let rx_points = &(shared_data.timeseries_data.rx);
-            let tx_points = &(shared_data.timeseries_data.tx);
-            let time = &(shared_data.timeseries_data.time);
-            let time_start = -(network_widget_state.current_display_time as f64);
+        // if let Some(network_widget_state) =
+        //     app_state.states.net_state.widget_states.get_mut(&widget_id)
+        // {
+        //     let shared_data = app_state.data_store.get_data();
+        //     let network_latest_data = &(shared_data.network_harvest);
+        //     let rx_points = &(shared_data.timeseries_data.rx);
+        //     let tx_points = &(shared_data.timeseries_data.tx);
+        //     let time = &(shared_data.timeseries_data.time);
+        //     let time_start = -(network_widget_state.current_display_time as f64);
 
-            // FIXME: (points_rework_v1) THIS IS TEMPORARY.
-            // In theory you can optimize this more by reusing the buffer, but this is temporary, right?
-            network_widget_state.rx_cache =
-                to_points(&app_state.app_config_fields, time, rx_points, time_start);
+        //     // FIXME: (points_rework_v1) THIS IS TEMPORARY.
+        //     // In theory you can optimize this more by reusing the buffer, but this is temporary, right?
+        //     network_widget_state.rx_cache =
+        //         to_points(&app_state.app_config_fields, time, rx_points, time_start);
 
-            network_widget_state.tx_cache =
-                to_points(&app_state.app_config_fields, time, tx_points, time_start);
+        //     network_widget_state.tx_cache =
+        //         to_points(&app_state.app_config_fields, time, tx_points, time_start);
 
-            let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
-            let hide_x_labels = should_hide_x_label(
-                app_state.app_config_fields.hide_time,
-                app_state.app_config_fields.autohide_time,
-                &mut network_widget_state.autohide_timer,
-                draw_loc,
-            );
+        //     let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
+        //     let hide_x_labels = should_hide_x_label(
+        //         app_state.app_config_fields.hide_time,
+        //         app_state.app_config_fields.autohide_time,
+        //         &mut network_widget_state.autohide_timer,
+        //         draw_loc,
+        //     );
 
-            // TODO: Cache network results: Only update if:
-            // - Force update (includes time interval change)
-            // - Old max time is off screen
-            // - A new time interval is better and does not fit (check from end of vector to
-            //   last checked; we only want to update if it is TOO big!)
+        //     // TODO: Cache network results: Only update if:
+        //     // - Force update (includes time interval change)
+        //     // - Old max time is off screen
+        //     // - A new time interval is better and does not fit (check from end of vector to
+        //     //   last checked; we only want to update if it is TOO big!)
 
-            // Find the maximal rx/tx so we know how to scale, and return it.
-            let max_entry = get_max_entry(
-                &network_widget_state.rx_cache,
-                &network_widget_state.tx_cache,
-                time_start,
-                &app_state.app_config_fields.network_scale_type,
-                app_state.app_config_fields.network_use_binary_prefix,
-            );
+        //     // Find the maximal rx/tx so we know how to scale, and return it.
+        //     let max_entry = get_max_entry(
+        //         &network_widget_state.rx_cache,
+        //         &network_widget_state.tx_cache,
+        //         time_start,
+        //         &app_state.app_config_fields.network_scale_type,
+        //         app_state.app_config_fields.network_use_binary_prefix,
+        //     );
 
-            let (max_range, labels) = adjust_network_data_point(
-                max_entry,
-                &app_state.app_config_fields.network_scale_type,
-                &app_state.app_config_fields.network_unit_type,
-                app_state.app_config_fields.network_use_binary_prefix,
-            );
+        //     let (max_range, labels) = adjust_network_data_point(
+        //         max_entry,
+        //         &app_state.app_config_fields.network_scale_type,
+        //         &app_state.app_config_fields.network_unit_type,
+        //         app_state.app_config_fields.network_use_binary_prefix,
+        //     );
 
-            let y_labels = labels.iter().map(|label| label.into()).collect::<Vec<_>>();
-            let y_bounds = [0.0, max_range];
+        //     let y_labels = labels.iter().map(|label| label.into()).collect::<Vec<_>>();
+        //     let y_bounds = [0.0, max_range];
 
-            let legend_constraints = if full_screen {
-                (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
-            } else {
-                (Constraint::Ratio(1, 1), Constraint::Ratio(3, 4))
-            };
+        //     let legend_constraints = if full_screen {
+        //         (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
+        //     } else {
+        //         (Constraint::Ratio(1, 1), Constraint::Ratio(3, 4))
+        //     };
 
-            // TODO: Add support for clicking on legend to only show that value on chart.
+        //     // TODO: Add support for clicking on legend to only show that value on chart.
 
-            let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
-            let unit_type = app_state.app_config_fields.network_unit_type;
-            let unit = match unit_type {
-                DataUnit::Byte => "B/s",
-                DataUnit::Bit => "b/s",
-            };
+        //     let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
+        //     let unit_type = app_state.app_config_fields.network_unit_type;
+        //     let unit = match unit_type {
+        //         DataUnit::Byte => "B/s",
+        //         DataUnit::Bit => "b/s",
+        //     };
 
-            let rx = get_unit_prefix(network_latest_data.rx, unit_type, use_binary_prefix);
-            let tx = get_unit_prefix(network_latest_data.tx, unit_type, use_binary_prefix);
-            let total_rx = convert_bits(network_latest_data.total_rx, use_binary_prefix);
-            let total_tx = convert_bits(network_latest_data.total_tx, use_binary_prefix);
+        //     let rx = get_unit_prefix(network_latest_data.rx, unit_type, use_binary_prefix);
+        //     let tx = get_unit_prefix(network_latest_data.tx, unit_type, use_binary_prefix);
+        //     let total_rx = convert_bits(network_latest_data.total_rx, use_binary_prefix);
+        //     let total_tx = convert_bits(network_latest_data.total_tx, use_binary_prefix);
 
-            // TODO: This behaviour is pretty weird, we should probably just make it so if you use old network legend
-            // you don't do whatever this is...
-            let points = if app_state.app_config_fields.use_old_network_legend && !full_screen {
-                let rx_label = format!("RX: {:.1}{}{}", rx.0, rx.1, unit);
-                let tx_label = format!("TX: {:.1}{}{}", tx.0, tx.1, unit);
-                let total_rx_label = format!("Total RX: {:.1}{}", total_rx.0, total_rx.1);
-                let total_tx_label = format!("Total TX: {:.1}{}", total_tx.0, total_tx.1);
+        //     // TODO: This behaviour is pretty weird, we should probably just make it so if you use old network legend
+        //     // you don't do whatever this is...
+        //     let points = if app_state.app_config_fields.use_old_network_legend && !full_screen {
+        //         let rx_label = format!("RX: {:.1}{}{}", rx.0, rx.1, unit);
+        //         let tx_label = format!("TX: {:.1}{}{}", tx.0, tx.1, unit);
+        //         let total_rx_label = format!("Total RX: {:.1}{}", total_rx.0, total_rx.1);
+        //         let total_tx_label = format!("Total TX: {:.1}{}", total_tx.0, total_tx.1);
 
-                vec![
-                    GraphData {
-                        points: &network_widget_state.rx_cache,
-                        style: self.styles.rx_style,
-                        name: Some(rx_label.into()),
-                    },
-                    GraphData {
-                        points: &network_widget_state.tx_cache,
-                        style: self.styles.tx_style,
-                        name: Some(tx_label.into()),
-                    },
-                    GraphData {
-                        points: &[],
-                        style: self.styles.total_rx_style,
-                        name: Some(total_rx_label.into()),
-                    },
-                    GraphData {
-                        points: &[],
-                        style: self.styles.total_tx_style,
-                        name: Some(total_tx_label.into()),
-                    },
-                ]
-            } else {
-                let rx_label = format!("{:.1}{}{}", rx.0, rx.1, unit);
-                let tx_label = format!("{:.1}{}{}", tx.0, tx.1, unit);
-                let total_rx_label = format!("{:.1}{}", total_rx.0, total_rx.1);
-                let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
+        //         vec![
+        //             GraphData::default()
+        //                 .name(rx_label.into())
+        //                 .time(time)
+        //                 .values(rx_points)
+        //                 .style(self.styles.rx_style),
+        //             GraphData::default()
+        //                 .name(tx_label.into())
+        //                 .time(time)
+        //                 .values(tx_points)
+        //                 .style(self.styles.tx_style),
+        //             GraphData::default()
+        //                 .style(self.styles.total_rx_style)
+        //                 .name(total_rx_label.into()),
+        //             GraphData::default()
+        //                 .style(self.styles.total_tx_style)
+        //                 .name(total_tx_label.into()),
+        //         ]
+        //     } else {
+        //         let rx_label = format!("{:.1}{}{}", rx.0, rx.1, unit);
+        //         let tx_label = format!("{:.1}{}{}", tx.0, tx.1, unit);
+        //         let total_rx_label = format!("{:.1}{}", total_rx.0, total_rx.1);
+        //         let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
 
-                vec![
-                    GraphData {
-                        points: &network_widget_state.rx_cache,
-                        style: self.styles.rx_style,
-                        name: Some(format!("RX: {:<10}  All: {}", rx_label, total_rx_label).into()),
-                    },
-                    GraphData {
-                        points: &network_widget_state.tx_cache,
-                        style: self.styles.tx_style,
-                        name: Some(format!("TX: {:<10}  All: {}", tx_label, total_tx_label).into()),
-                    },
-                ]
-            };
+        //         vec![
+        //             GraphData::default()
+        //                 .name(format!("RX: {:<10}  All: {}", rx_label, total_rx_label).into())
+        //                 .time(time)
+        //                 .values(rx_points)
+        //                 .style(self.styles.rx_style),
+        //             GraphData::default()
+        //                 .name(format!("TX: {:<10}  All: {}", tx_label, total_tx_label).into())
+        //                 .time(time)
+        //                 .values(tx_points)
+        //                 .style(self.styles.tx_style),
+        //         ]
+        //     };
 
-            let marker = if app_state.app_config_fields.use_dot {
-                Marker::Dot
-            } else {
-                Marker::Braille
-            };
+        //     let marker = if app_state.app_config_fields.use_dot {
+        //         Marker::Dot
+        //     } else {
+        //         Marker::Braille
+        //     };
 
-            TimeGraph {
-                x_min: time_start,
-                hide_x_labels,
-                y_bounds,
-                y_labels: &y_labels,
-                graph_style: self.styles.graph_style,
-                border_style,
-                border_type: self.styles.border_type,
-                title: " Network ".into(),
-                is_selected: app_state.current_widget.widget_id == widget_id,
-                is_expanded: app_state.is_expanded,
-                title_style: self.styles.widget_title_style,
-                legend_position: app_state.app_config_fields.network_legend_position,
-                legend_constraints: Some(legend_constraints),
-                marker,
-            }
-            .draw_time_graph(f, draw_loc, &points);
-        }
+        //     TimeGraph {
+        //         x_min: time_start,
+        //         hide_x_labels,
+        //         y_bounds,
+        //         y_labels: &y_labels,
+        //         graph_style: self.styles.graph_style,
+        //         border_style,
+        //         border_type: self.styles.border_type,
+        //         title: " Network ".into(),
+        //         is_selected: app_state.current_widget.widget_id == widget_id,
+        //         is_expanded: app_state.is_expanded,
+        //         title_style: self.styles.widget_title_style,
+        //         legend_position: app_state.app_config_fields.network_legend_position,
+        //         legend_constraints: Some(legend_constraints),
+        //         marker,
+        //     }
+        //     .draw_time_graph(f, draw_loc, &points);
+        // }
     }
 
     fn draw_network_labels(

@@ -126,9 +126,6 @@ pub struct CpuWidgetState {
     pub autohide_timer: Option<Instant>,
     pub table: DataTable<CpuWidgetTableData, CpuWidgetColumn>,
     pub force_update_data: bool,
-
-    /// FIXME: (points_rework_v1) REMOVE THIS
-    pub points_cache: Vec<Vec<(f64, f64)>>,
 }
 
 impl CpuWidgetState {
@@ -166,7 +163,6 @@ impl CpuWidgetState {
             autohide_timer,
             table,
             force_update_data: false,
-            points_cache: vec![],
         }
     }
 

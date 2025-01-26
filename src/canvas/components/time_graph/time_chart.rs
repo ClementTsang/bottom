@@ -7,7 +7,7 @@
 mod canvas;
 mod points;
 
-use std::{cmp::max, str::FromStr};
+use std::{cmp::max, str::FromStr, time::Instant};
 
 use canvas::*;
 use tui::{
@@ -20,11 +20,38 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
+use crate::app::data::Values;
+
 pub const DEFAULT_LEGEND_CONSTRAINTS: (Constraint, Constraint) =
     (Constraint::Ratio(1, 4), Constraint::Length(4));
 
 /// A single graph point.
 pub type Point = (f64, f64);
+
+/// An axis bound type.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub enum AxisBound {
+    /// Just 0.
+    #[default]
+    Zero,
+    /// Bound by 0 and a dynamic max value.
+    DynamicMax { current_max: f64 },
+    /// Bound by a minimum value to 0.
+    TimeMin(f64),
+    /// Bound by 0 and a max value.
+    Max(f64),
+}
+
+impl AxisBound {
+    fn to_bounds(&self) -> [f64; 2] {
+        match self {
+            AxisBound::Zero => [0.0, 0.0],
+            AxisBound::DynamicMax { current_max } => [0.0, *current_max],
+            AxisBound::TimeMin(min) => [*min, 0.0],
+            AxisBound::Max(max) => [0.0, *max],
+        }
+    }
+}
 
 /// An X or Y axis for the [`TimeChart`] widget
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -33,7 +60,7 @@ pub struct Axis<'a> {
     pub(crate) title: Option<Line<'a>>,
     /// Bounds for the axis (all data points outside these limits will not be
     /// represented)
-    pub(crate) bounds: [f64; 2],
+    pub(crate) bounds: AxisBound,
     /// A list of labels to put to the left or below the axis
     pub(crate) labels: Option<Vec<Span<'a>>>,
     /// The style used to draw the axis itself
@@ -47,9 +74,6 @@ impl<'a> Axis<'a> {
     ///
     /// It will be displayed at the end of the axis. For an X axis this is the
     /// right, for a Y axis, this is the top.
-    ///
-    /// This is a fluent setter method which must be chained or used as it
-    /// consumes self
     #[must_use = "method moves the value of self and returns the modified value"]
     #[cfg_attr(not(test), expect(dead_code))]
     pub fn title<T>(mut self, title: T) -> Axis<'a>
@@ -60,14 +84,9 @@ impl<'a> Axis<'a> {
         self
     }
 
-    /// Sets the bounds of this axis
-    ///
-    /// In other words, sets the min and max value on this axis.
-    ///
-    /// This is a fluent setter method which must be chained or used as it
-    /// consumes self
+    /// Sets the bounds of this axis.
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn bounds(mut self, bounds: [f64; 2]) -> Axis<'a> {
+    pub fn bounds(mut self, bounds: AxisBound) -> Axis<'a> {
         self.bounds = bounds;
         self
     }
@@ -239,23 +258,28 @@ impl FromStr for LegendPosition {
     }
 }
 
+#[derive(Debug, Default, Clone)]
+enum Data<'a> {
+    Some {
+        times: &'a [Instant],
+        values: &'a Values,
+    },
+    #[default]
+    None,
+}
+
 /// A group of data points
 ///
 /// This is the main element composing a [`TimeChart`].
 ///
 /// A dataset can be [named](Dataset::name). Only named datasets will be
 /// rendered in the legend.
-///
-/// After that, you can pass it data with [`Dataset::data`]. Data is an array of
-/// `f64` tuples (`(f64, f64)`), the first element being X and the second Y.
-/// It's also worth noting that, unlike the [`Rect`], here the Y axis is bottom
-/// to top, as in math.
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone)]
 pub struct Dataset<'a> {
     /// Name of the dataset (used in the legend if shown)
     name: Option<Line<'a>>,
-    /// A reference to the actual data
-    data: &'a [(f64, f64)],
+    /// A reference to data.
+    data: Data<'a>,
     /// Symbol used for each points of this dataset
     marker: symbols::Marker,
     /// Determines graph type used for drawing points
@@ -284,8 +308,8 @@ impl<'a> Dataset<'a> {
     /// element being X and the second Y. It's also worth noting that,
     /// unlike the [`Rect`], here the Y axis is bottom to top, as in math.
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn data(mut self, data: &'a [(f64, f64)]) -> Dataset<'a> {
-        self.data = data;
+    pub fn data(mut self, times: &'a [Instant], values: &'a Values) -> Dataset<'a> {
+        self.data = Data::Some { times, values };
         self
     }
 
@@ -297,9 +321,6 @@ impl<'a> Dataset<'a> {
     ///
     /// Note [`Marker::Braille`] requires a font that supports Unicode Braille
     /// Patterns.
-    ///
-    /// This is a fluent setter method which must be chained or used as it
-    /// consumes self
     #[must_use = "method moves the value of self and returns the modified value"]
     #[expect(dead_code)]
     pub fn marker(mut self, marker: symbols::Marker) -> Dataset<'a> {
@@ -367,7 +388,7 @@ struct ChartLayout {
 /// - Automatic interpolation to points that fall *just* outside of the screen.
 ///
 /// TODO: Support for putting the legend on the left side.
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone)]
 pub struct TimeChart<'a> {
     /// A block to display around the widget eventually
     block: Option<Block<'a>>,
@@ -383,7 +404,7 @@ pub struct TimeChart<'a> {
     legend_style: Style,
     /// Constraints used to determine whether the legend should be shown or not
     hidden_legend_constraints: (Constraint, Constraint),
-    /// The position detnermine where the legenth is shown or hide regaurdless
+    /// The position determining whether the length is shown or hidden, regardless
     /// of `hidden_legend_constraints`
     legend_position: Option<LegendPosition>,
     /// The marker type.
@@ -725,7 +746,7 @@ impl Widget for TimeChart<'_> {
 
         // Sample the style of the entire widget. This sample will be used to reset the
         // style of the cells that are part of the components put on top of the
-        // grah area (i.e legend and axis names).
+        // graph area (i.e legend and axis names).
         let Some(original_style) = buf.cell((area.left(), area.top())).map(|cell| cell.style())
         else {
             return;
@@ -767,10 +788,13 @@ impl Widget for TimeChart<'_> {
             }
         }
 
+        let x_bounds = self.x_axis.bounds.to_bounds();
+        let y_bounds = self.y_axis.bounds.to_bounds();
+
         Canvas::default()
             .background_color(self.style.bg.unwrap_or(Color::Reset))
-            .x_bounds(self.x_axis.bounds)
-            .y_bounds(self.y_axis.bounds)
+            .x_bounds(x_bounds)
+            .y_bounds(y_bounds)
             .marker(self.marker)
             .paint(|ctx| {
                 self.draw_points(ctx);
@@ -930,6 +954,8 @@ mod tests {
         };
     }
 
+    use std::time::Duration;
+
     use tui::style::{Modifier, Stylize};
 
     use super::*;
@@ -942,7 +968,17 @@ mod tests {
 
     #[test]
     fn it_should_hide_the_legend() {
-        let data = [(0.0, 5.0), (1.0, 6.0), (3.0, 7.0)];
+        let now = Instant::now();
+        let times = [
+            now,
+            now.checked_add(Duration::from_secs(1)).unwrap(),
+            now.checked_add(Duration::from_secs(2)).unwrap(),
+        ];
+        let mut values = Values::default();
+        values.push(5.0);
+        values.push(6.0);
+        values.push(7.0);
+
         let cases = [
             LegendTestCase {
                 chart_area: Rect::new(0, 0, 100, 100),
@@ -959,7 +995,7 @@ mod tests {
             let datasets = (0..10)
                 .map(|i| {
                     let name = format!("Dataset #{i}");
-                    Dataset::default().name(name).data(&data)
+                    Dataset::default().name(name).data(&times, &values)
                 })
                 .collect::<Vec<_>>();
             let chart = TimeChart::new(datasets)

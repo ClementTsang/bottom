@@ -11,13 +11,12 @@ use crate::{
     canvas::{
         components::{
             data_table::{DrawInfo, SelectionState},
-            time_graph::{GraphData, TimeGraph},
+            time_graph::{AxisBound, GraphData, TimeGraph},
         },
         drawing_utils::should_hide_x_label,
         Painter,
     },
     collection::cpu::CpuData,
-    to_points,
     widgets::CpuWidgetState,
 };
 
@@ -121,8 +120,7 @@ impl Painter {
     }
 
     fn generate_points<'a>(
-        &self, cpu_widget_state: &'a mut CpuWidgetState, data: &StoredData, show_avg_cpu: bool,
-        x_min: f64,
+        &self, cpu_widget_state: &'a mut CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
         let current_scroll_position = cpu_widget_state.table.state.current_index;
@@ -130,21 +128,13 @@ impl Painter {
         let cpu_points = &data.timeseries_data.cpu;
         let time = &data.timeseries_data.time;
 
-        cpu_widget_state.points_cache.clear();
-
         if current_scroll_position == ALL_POSITION {
             // This case ensures the other cases cannot have the position be equal to 0.
 
-            for points in cpu_points {
-                let points = to_points(time, points, x_min);
-                cpu_widget_state.points_cache.push(points);
-            }
-
-            cpu_widget_state
-                .points_cache
+            cpu_points
                 .iter()
                 .enumerate()
-                .map(|(itx, points)| {
+                .map(|(itx, values)| {
                     let style = if show_avg_cpu && itx == AVG_POSITION {
                         self.styles.avg_cpu_colour
                     } else if itx == ALL_POSITION {
@@ -155,30 +145,24 @@ impl Painter {
                             % self.styles.cpu_colour_styles.len()]
                     };
 
-                    GraphData {
-                        points,
-                        style,
-                        name: None,
-                    }
+                    GraphData::default().style(style).time(time).values(values)
                 })
                 .collect()
-        } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position) {
+        } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position - 1) {
+            // We generally subtract one from current scroll position because of the all entry.
+
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.styles.avg_cpu_colour
             } else {
-                let offset_position = current_scroll_position - 1; // Because of the all position
+                let offset_position = current_scroll_position - 1;
                 self.styles.cpu_colour_styles
                     [(offset_position - show_avg_offset) % self.styles.cpu_colour_styles.len()]
             };
 
-            let points = to_points(time, &cpu_points[current_scroll_position], x_min);
-            cpu_widget_state.points_cache.push(points);
-
-            vec![GraphData {
-                points: cpu_widget_state.points_cache.last().expect("must exist"),
-                style,
-                name: None,
-            }]
+            vec![GraphData::default()
+                .style(style)
+                .time(time)
+                .values(&cpu_points[current_scroll_position - 1])]
         } else {
             vec![]
         }
@@ -187,7 +171,7 @@ impl Painter {
     fn draw_cpu_graph(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
+        const Y_BOUNDS: AxisBound = AxisBound::Max(100.5);
         const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
 
         if let Some(cpu_widget_state) = app_state.states.cpu_state.widget_states.get_mut(&widget_id)
@@ -207,7 +191,6 @@ impl Painter {
                 cpu_widget_state,
                 data,
                 app_state.app_config_fields.show_average_cpu,
-                x_min,
             );
 
             // TODO: Maybe hide load avg if too long? Or maybe the CPU part.

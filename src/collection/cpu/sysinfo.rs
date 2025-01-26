@@ -9,26 +9,29 @@ use super::{CpuData, CpuDataType, CpuHarvest};
 use crate::collection::error::CollectionResult;
 
 pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResult<CpuHarvest> {
-    let mut cpu_deque: VecDeque<_> = sys
-        .cpus()
-        .iter()
-        .enumerate()
-        .map(|(i, cpu)| CpuData {
-            data_type: CpuDataType::Cpu(i),
-            cpu_usage: cpu.cpu_usage() as f64,
-        })
-        .collect();
+    let mut cpus = vec![];
 
     if show_average_cpu {
         let cpu = sys.global_cpu_info();
 
-        cpu_deque.push_front(CpuData {
+        cpus.push(CpuData {
             data_type: CpuDataType::Avg,
             cpu_usage: cpu.cpu_usage() as f64,
         })
     }
 
-    Ok(Vec::from(cpu_deque))
+    cpus.extend(
+        sys.cpus()
+            .iter()
+            .enumerate()
+            .map(|(i, cpu)| CpuData {
+                data_type: CpuDataType::Cpu(i),
+                cpu_usage: cpu.cpu_usage() as f64,
+            })
+            .collect::<Vec<_>>(),
+    );
+
+    Ok(cpus)
 }
 
 #[cfg(target_family = "unix")]
