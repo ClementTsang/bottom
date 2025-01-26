@@ -9,10 +9,7 @@ use tui::{
 use crate::{
     app::{App, AppConfigFields, AxisScaling},
     canvas::{
-        components::{
-            time_chart::Point,
-            time_graph::{GraphData, TimeGraph},
-        },
+        components::time_graph::{GraphData, Point, TimeGraph},
         drawing_utils::should_hide_x_label,
         Painter,
     },

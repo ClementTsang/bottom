@@ -1,3 +1,6 @@
+mod time_chart;
+pub use time_chart::*;
+
 use std::borrow::Cow;
 
 use concat_string::concat_string;
@@ -11,10 +14,6 @@ use tui::{
 };
 
 use crate::canvas::drawing_utils::widget_block;
-
-use super::time_chart::{
-    Axis, Dataset, LegendPosition, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS,
-};
 
 /// Represents the data required by the [`TimeGraph`].
 pub struct GraphData<'a> {
@@ -183,7 +182,7 @@ mod test {
     };
 
     use super::TimeGraph;
-    use crate::canvas::components::time_chart::Axis;
+    use crate::canvas::components::time_graph::Axis;
 
     const Y_LABELS: [Cow<'static, str>; 3] = [
         Cow::Borrowed("0%"),

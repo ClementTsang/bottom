@@ -19,7 +19,7 @@ pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
-    canvas::components::time_chart::LegendPosition,
+    canvas::components::time_graph::LegendPosition,
     collection::processes::Pid,
     constants,
     utils::data_units::DataUnit,
