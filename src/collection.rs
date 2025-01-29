@@ -30,6 +30,7 @@ use starship_battery::{Battery, Manager};
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
+// TODO: We can possibly re-use an internal buffer for this to reduce allocs.
 #[derive(Clone, Debug)]
 pub struct Data {
     pub collection_time: Instant,
@@ -41,7 +42,7 @@ pub struct Data {
     pub swap: Option<memory::MemHarvest>,
     pub temperature_sensors: Option<Vec<temperature::TempSensorData>>,
     pub network: Option<network::NetworkHarvest>,
-    pub list_of_processes: Vec<processes::ProcessHarvest>,
+    pub list_of_processes: Option<Vec<processes::ProcessHarvest>>,
     pub disks: Option<Vec<disks::DiskHarvest>>,
     pub io: Option<disks::IoHarvest>,
     #[cfg(feature = "battery")]
@@ -63,7 +64,7 @@ impl Default for Data {
             cache: None,
             swap: None,
             temperature_sensors: None,
-            list_of_processes: vec![],
+            list_of_processes: None,
             disks: None,
             io: None,
             network: None,
@@ -81,7 +82,7 @@ impl Data {
     pub fn cleanup(&mut self) {
         self.io = None;
         self.temperature_sensors = None;
-        self.list_of_processes = vec![];
+        self.list_of_processes = None;
         self.disks = None;
         self.memory = None;
         self.swap = None;
@@ -411,13 +412,12 @@ impl DataCollector {
     #[inline]
     fn update_processes(&mut self) {
         if self.widgets_to_harvest.use_proc {
-            // Do it this way to reuse the buffer.
-
-            if self.get_processes().is_ok() {
+            if let Ok(mut process_list) = self.get_processes() {
                 // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
                 // PID here. We also want to avoid re-sorting *again* later on
                 // if we're sorting by PID, since we already did it here!
-                self.data.list_of_processes.sort_unstable_by_key(|p| p.pid);
+                process_list.sort_unstable_by_key(|p| p.pid);
+                self.data.list_of_processes = Some(process_list);
             }
         }
     }

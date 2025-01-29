@@ -297,7 +297,7 @@ pub(crate) struct ReadProcArgs {
 
 pub(crate) fn linux_process_data(
     collector: &mut DataCollector, time_difference_in_secs: u64,
-) -> CollectionResult<()> {
+) -> CollectionResult<Vec<ProcessHarvest>> {
     let total_memory = collector.total_memory();
     let prev_proc = PrevProc {
         prev_idle: &mut collector.prev_idle,
@@ -354,49 +354,50 @@ pub(crate) fn linux_process_data(
         uptime: sysinfo::System::uptime(),
     };
 
-    let process_vector = &mut collector.data.list_of_processes;
-    process_vector.clear();
-    process_vector.extend(pids.filter_map(|pid_path| {
-        if let Ok(process) = Process::from_path(pid_path) {
-            let pid = process.pid;
-            let prev_proc_details = pid_mapping.entry(pid).or_default();
+    let process_vector: Vec<ProcessHarvest> = pids
+        .filter_map(|pid_path| {
+            if let Ok(process) = Process::from_path(pid_path) {
+                let pid = process.pid;
+                let prev_proc_details = pid_mapping.entry(pid).or_default();
 
-            #[cfg_attr(not(feature = "gpu"), expect(unused_mut))]
-            if let Ok((mut process_harvest, new_process_times)) =
-                read_proc(prev_proc_details, process, args, user_table)
-            {
-                #[cfg(feature = "gpu")]
-                if let Some(gpus) = &collector.gpu_pids {
-                    gpus.iter().for_each(|gpu| {
-                        // add mem/util for all gpus to pid
-                        if let Some((mem, util)) = gpu.get(&(pid as u32)) {
-                            process_harvest.gpu_mem += mem;
-                            process_harvest.gpu_util += util;
+                #[cfg_attr(not(feature = "gpu"), expect(unused_mut))]
+                if let Ok((mut process_harvest, new_process_times)) =
+                    read_proc(prev_proc_details, process, args, user_table)
+                {
+                    #[cfg(feature = "gpu")]
+                    if let Some(gpus) = &collector.gpu_pids {
+                        gpus.iter().for_each(|gpu| {
+                            // add mem/util for all gpus to pid
+                            if let Some((mem, util)) = gpu.get(&(pid as u32)) {
+                                process_harvest.gpu_mem += mem;
+                                process_harvest.gpu_util += util;
+                            }
+                        });
+                        if let Some(gpu_total_mem) = &collector.gpus_total_mem {
+                            process_harvest.gpu_mem_percent =
+                                (process_harvest.gpu_mem as f64 / *gpu_total_mem as f64 * 100.0)
+                                    as f32;
                         }
-                    });
-                    if let Some(gpu_total_mem) = &collector.gpus_total_mem {
-                        process_harvest.gpu_mem_percent =
-                            (process_harvest.gpu_mem as f64 / *gpu_total_mem as f64 * 100.0) as f32;
                     }
+
+                    prev_proc_details.cpu_time = new_process_times;
+                    prev_proc_details.total_read_bytes = process_harvest.total_read_bytes;
+                    prev_proc_details.total_write_bytes = process_harvest.total_write_bytes;
+
+                    pids_to_clear.remove(&pid);
+                    return Some(process_harvest);
                 }
-
-                prev_proc_details.cpu_time = new_process_times;
-                prev_proc_details.total_read_bytes = process_harvest.total_read_bytes;
-                prev_proc_details.total_write_bytes = process_harvest.total_write_bytes;
-
-                pids_to_clear.remove(&pid);
-                return Some(process_harvest);
             }
-        }
 
-        None
-    }));
+            None
+        })
+        .collect();
 
     pids_to_clear.iter().for_each(|pid| {
         pid_mapping.remove(pid);
     });
 
-    Ok(())
+    Ok(process_vector)
 }
 
 #[cfg(test)]

@@ -15,9 +15,7 @@ pub fn sysinfo_process_data(
     let unnormalized_cpu = collector.unnormalized_cpu;
     let total_memory = collector.total_memory();
 
-    let process_vector = &mut collector.data.list_of_processes;
-    process_vector.clear();
-
+    let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
     let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;
     let num_processors = sys.cpus().len();
@@ -123,5 +121,5 @@ pub fn sysinfo_process_data(
         });
     }
 
-    Ok(())
+    Ok(process_vector)
 }

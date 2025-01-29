@@ -131,7 +131,7 @@ impl ProcessHarvest {
 }
 
 impl DataCollector {
-    pub(crate) fn get_processes(&mut self) -> CollectionResult<()> {
+    pub(crate) fn get_processes(&mut self) -> CollectionResult<Vec<ProcessHarvest>> {
         cfg_if! {
             if #[cfg(target_os = "linux")] {
                 let time_diff = self.data.collection_time
