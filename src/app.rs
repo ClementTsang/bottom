@@ -58,7 +58,7 @@ pub struct AppConfigFields {
     pub is_advanced_kill: bool,
     pub memory_legend_position: Option<LegendPosition>,
     // TODO: Remove these, move network details state-side.
-    pub network_unit_type: DataUnit,
+    pub unit_type: DataUnit,
     pub network_legend_position: Option<LegendPosition>,
     pub network_scale_type: AxisScaling,
     pub network_use_binary_prefix: bool,

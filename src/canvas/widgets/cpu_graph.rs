@@ -187,7 +187,7 @@ impl Painter {
                 draw_loc,
             );
 
-            let points = self.generate_points(
+            let graph_data = self.generate_points(
                 cpu_widget_state,
                 data,
                 app_state.app_config_fields.show_average_cpu,
@@ -233,7 +233,7 @@ impl Painter {
                 legend_constraints: None,
                 marker,
             }
-            .draw_time_graph(f, draw_loc, &points);
+            .draw_time_graph(f, draw_loc, graph_data);
         }
     }
 

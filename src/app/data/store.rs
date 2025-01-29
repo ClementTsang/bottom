@@ -138,9 +138,7 @@ impl StoredData {
             }
         }
 
-        if let Some(list_of_processes) = data.list_of_processes {
-            self.process_data.ingest(list_of_processes);
-        }
+        self.process_data.ingest(data.list_of_processes);
 
         #[cfg(feature = "battery")]
         {

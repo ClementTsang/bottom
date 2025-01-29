@@ -34,10 +34,9 @@ pub enum AxisBound {
     /// Just 0.
     #[default]
     Zero,
-    /// Bound by 0 and a dynamic max value.
-    DynamicMax { current_max: f64 },
+
     /// Bound by a minimum value to 0.
-    TimeMin(f64),
+    Min(f64),
     /// Bound by 0 and a max value.
     Max(f64),
 }
@@ -46,8 +45,7 @@ impl AxisBound {
     fn to_bounds(&self) -> [f64; 2] {
         match self {
             AxisBound::Zero => [0.0, 0.0],
-            AxisBound::DynamicMax { current_max } => [0.0, *current_max],
-            AxisBound::TimeMin(min) => [*min, 0.0],
+            AxisBound::Min(min) => [*min, 0.0],
             AxisBound::Max(max) => [0.0, *max],
         }
     }
@@ -412,9 +410,7 @@ pub struct TimeChart<'a> {
 }
 
 impl<'a> TimeChart<'a> {
-    /// Creates a chart with the given [datasets](Dataset),
-    ///
-    /// A chart can render multiple datasets.
+    /// Creates a chart with the given [datasets](Dataset).
     pub fn new(datasets: Vec<Dataset<'a>>) -> TimeChart<'a> {
         TimeChart {
             block: None,
@@ -716,6 +712,8 @@ impl<'a> TimeChart<'a> {
     fn render_y_labels(
         &self, buf: &mut Buffer, layout: &ChartLayout, chart_area: Rect, graph_area: Rect,
     ) {
+        // FIXME: Control how many y-axis labels are rendered based on height.
+
         let Some(x) = layout.label_y else { return };
         let labels = self.y_axis.labels.as_ref().unwrap();
         let labels_len = labels.len() as u16;

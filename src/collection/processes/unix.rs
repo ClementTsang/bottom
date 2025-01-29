@@ -16,19 +16,17 @@ cfg_if! {
         use crate::collection::error::CollectionResult;
 
         pub fn sysinfo_process_data(collector: &mut DataCollector) -> CollectionResult<Vec<ProcessHarvest>> {
-            let sys = &collector.sys.system;
             let use_current_cpu_total = collector.use_current_cpu_total;
             let unnormalized_cpu = collector.unnormalized_cpu;
             let total_memory = collector.total_memory();
-            let user_table = &mut collector.user_table;
 
             cfg_if! {
                 if #[cfg(target_os = "macos")] {
-                    MacOSProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                    MacOSProcessExt::sysinfo_process_data(collector, use_current_cpu_total, unnormalized_cpu, total_memory)
                 } else if #[cfg(target_os = "freebsd")] {
-                    FreeBSDProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                    FreeBSDProcessExt::sysinfo_process_data(collector, use_current_cpu_total, unnormalized_cpu, total_memory)
                 } else {
-                    GenericProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
+                    GenericProcessExt::sysinfo_process_data(collector, use_current_cpu_total, unnormalized_cpu, total_memory)
                 }
             }
         }

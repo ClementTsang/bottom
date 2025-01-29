@@ -154,7 +154,7 @@ trait Grid: Debug {
 struct BrailleGrid {
     width: u16,
     height: u16,
-    cells: Vec<u16>,
+    cells: Vec<u16>, // FIXME: (points_rework_v1) isn't this really inefficient to go u16 -> String from utf16?
     colors: Vec<Color>,
 }
 
@@ -171,14 +171,6 @@ impl BrailleGrid {
 }
 
 impl Grid for BrailleGrid {
-    // fn width(&self) -> u16 {
-    //     self.width
-    // }
-
-    // fn height(&self) -> u16 {
-    //     self.height
-    // }
-
     fn resolution(&self) -> (f64, f64) {
         (
             f64::from(self.width) * 2.0 - 1.0,
@@ -242,14 +234,6 @@ impl CharGrid {
 }
 
 impl Grid for CharGrid {
-    // fn width(&self) -> u16 {
-    //     self.width
-    // }
-
-    // fn height(&self) -> u16 {
-    //     self.height
-    // }
-
     fn resolution(&self) -> (f64, f64) {
         (f64::from(self.width) - 1.0, f64::from(self.height) - 1.0)
     }
@@ -325,14 +309,6 @@ impl HalfBlockGrid {
 }
 
 impl Grid for HalfBlockGrid {
-    // fn width(&self) -> u16 {
-    //     self.width
-    // }
-
-    // fn height(&self) -> u16 {
-    //     self.height
-    // }
-
     fn resolution(&self) -> (f64, f64) {
         (f64::from(self.width), f64::from(self.height) * 2.0)
     }
@@ -362,8 +338,9 @@ impl Grid for HalfBlockGrid {
 
         // Note we implement this slightly differently to what is done in ratatui's
         // repo, since their version doesn't seem to compile for me...
+        //
         // TODO: Whenever I add this as a valid marker, make sure this works fine with
-        // the overriden time_chart drawing-layer-thing.
+        // the overridden time_chart drawing-layer-thing.
 
         // Join the upper and lower rows, and emit a tuple vector of strings to print,
         // and their colours.

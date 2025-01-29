@@ -72,7 +72,7 @@ impl Painter {
                 &mut mem_state.autohide_timer,
                 draw_loc,
             );
-            let points = {
+            let graph_data = {
                 let mut size = 1;
                 let data = app_state.data_store.get_data();
 
@@ -194,7 +194,7 @@ impl Painter {
                 legend_constraints: Some((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
                 marker,
             }
-            .draw_time_graph(f, draw_loc, &points);
+            .draw_time_graph(f, draw_loc, graph_data);
         }
 
         if app_state.should_get_widget_bounds() {

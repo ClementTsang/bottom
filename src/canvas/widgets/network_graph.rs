@@ -9,67 +9,12 @@ use tui::{
 use crate::{
     app::{App, AppConfigFields, AxisScaling},
     canvas::{
-        components::time_graph::{GraphData, Point, TimeGraph},
+        components::time_graph::{AxisBound, GraphData, TimeGraph},
         drawing_utils::should_hide_x_label,
         Painter,
     },
-    utils::{
-        data_units::{DataUnit, *},
-        general::partial_ordering,
-    },
+    utils::data_units::*,
 };
-
-/// FIXME: (points_rework_v1) Glue code to convert from timeseries data to points. This does some automatic work such that it'll only keep
-/// the needed points.
-///
-/// This should be slated to be removed and functionality moved to the graph drawing outright. We should also
-/// just not cache and filter aggressively via the iter and bounds. We may also need to change the iter/graph to go
-/// from current_time_in_ms - 60000 to current_time_in_ms, reducing the amount of work.
-fn to_points(
-    config: &AppConfigFields, time: &[std::time::Instant], values: &crate::app::data::Values,
-    left_edge: f64,
-) -> Vec<(f64, f64)> {
-    let Some(iter) = values.iter_along_base(time) else {
-        return vec![];
-    };
-
-    let Some(current_time) = time.last() else {
-        return vec![];
-    };
-
-    let mut take_while_done = false;
-
-    let mut out: Vec<_> = iter
-        .rev()
-        .map(|(&time, &val)| {
-            let from_start: f64 = (current_time.duration_since(time).as_millis() as f64).floor();
-            (
-                -from_start,
-                get_network_point(
-                    val,
-                    &config.network_scale_type,
-                    &config.network_unit_type,
-                    config.network_use_binary_prefix,
-                ),
-            )
-        })
-        .take_while(|(time, _)| {
-            // We do things like this so we can take one extra value AFTER (needed for interpolation).
-            if *time >= left_edge {
-                true
-            } else if !take_while_done {
-                take_while_done = true;
-                true
-            } else {
-                false
-            }
-        })
-        .collect();
-
-    out.reverse();
-
-    out
-}
 
 impl Painter {
     pub fn draw_network(
@@ -108,147 +53,137 @@ impl Painter {
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
         full_screen: bool,
     ) {
-        // if let Some(network_widget_state) =
-        //     app_state.states.net_state.widget_states.get_mut(&widget_id)
-        // {
-        //     let shared_data = app_state.data_store.get_data();
-        //     let network_latest_data = &(shared_data.network_harvest);
-        //     let rx_points = &(shared_data.timeseries_data.rx);
-        //     let tx_points = &(shared_data.timeseries_data.tx);
-        //     let time = &(shared_data.timeseries_data.time);
-        //     let time_start = -(network_widget_state.current_display_time as f64);
+        if let Some(network_widget_state) =
+            app_state.states.net_state.widget_states.get_mut(&widget_id)
+        {
+            let shared_data = app_state.data_store.get_data();
+            let network_latest_data = &(shared_data.network_harvest);
+            let rx_points = &(shared_data.timeseries_data.rx);
+            let tx_points = &(shared_data.timeseries_data.tx);
+            let time = &(shared_data.timeseries_data.time);
+            let time_start = -(network_widget_state.current_display_time as f64);
 
-        //     // FIXME: (points_rework_v1) THIS IS TEMPORARY.
-        //     // In theory you can optimize this more by reusing the buffer, but this is temporary, right?
-        //     network_widget_state.rx_cache =
-        //         to_points(&app_state.app_config_fields, time, rx_points, time_start);
+            let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
+            let hide_x_labels = should_hide_x_label(
+                app_state.app_config_fields.hide_time,
+                app_state.app_config_fields.autohide_time,
+                &mut network_widget_state.autohide_timer,
+                draw_loc,
+            );
 
-        //     network_widget_state.tx_cache =
-        //         to_points(&app_state.app_config_fields, time, tx_points, time_start);
+            let y_max = {
+                if let Some(last_time) = time.last() {
+                    if let Some(last_checked) = network_widget_state.cached_height_adjustment_range
+                    {
+                        // let max_rx = rx_points
+                        //     .iter_along_base(time)
+                        //     .rev()
+                        //     .take_while(|(&instant, &value)| {})
+                        //     .map(|(_, v)| *v)
+                        //     .max();
+                    } else {
+                    }
 
-        //     let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
-        //     let hide_x_labels = should_hide_x_label(
-        //         app_state.app_config_fields.hide_time,
-        //         app_state.app_config_fields.autohide_time,
-        //         &mut network_widget_state.autohide_timer,
-        //         draw_loc,
-        //     );
+                    // network_widget_state.cached_height_adjustment_range = Some(*last_time);
 
-        //     // TODO: Cache network results: Only update if:
-        //     // - Force update (includes time interval change)
-        //     // - Old max time is off screen
-        //     // - A new time interval is better and does not fit (check from end of vector to
-        //     //   last checked; we only want to update if it is TOO big!)
+                    0.0
+                } else {
+                    0.0
+                }
+            };
+            let (y_max, y_labels) = adjust_network_data_point(y_max, &app_state.app_config_fields);
+            let y_bounds = AxisBound::Max(y_max);
 
-        //     // Find the maximal rx/tx so we know how to scale, and return it.
-        //     let max_entry = get_max_entry(
-        //         &network_widget_state.rx_cache,
-        //         &network_widget_state.tx_cache,
-        //         time_start,
-        //         &app_state.app_config_fields.network_scale_type,
-        //         app_state.app_config_fields.network_use_binary_prefix,
-        //     );
+            let legend_constraints = if full_screen {
+                (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
+            } else {
+                (Constraint::Ratio(1, 1), Constraint::Ratio(3, 4))
+            };
 
-        //     let (max_range, labels) = adjust_network_data_point(
-        //         max_entry,
-        //         &app_state.app_config_fields.network_scale_type,
-        //         &app_state.app_config_fields.network_unit_type,
-        //         app_state.app_config_fields.network_use_binary_prefix,
-        //     );
+            // TODO: Add support for clicking on legend to only show that value on chart.
 
-        //     let y_labels = labels.iter().map(|label| label.into()).collect::<Vec<_>>();
-        //     let y_bounds = [0.0, max_range];
+            let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
+            let unit_type = app_state.app_config_fields.unit_type;
+            let unit = match unit_type {
+                DataUnit::Byte => "B/s",
+                DataUnit::Bit => "b/s",
+            };
 
-        //     let legend_constraints = if full_screen {
-        //         (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
-        //     } else {
-        //         (Constraint::Ratio(1, 1), Constraint::Ratio(3, 4))
-        //     };
+            let rx = get_unit_prefix(network_latest_data.rx, unit_type, use_binary_prefix);
+            let tx = get_unit_prefix(network_latest_data.tx, unit_type, use_binary_prefix);
+            let total_rx = convert_bits(network_latest_data.total_rx, use_binary_prefix);
+            let total_tx = convert_bits(network_latest_data.total_tx, use_binary_prefix);
 
-        //     // TODO: Add support for clicking on legend to only show that value on chart.
+            // TODO: This behaviour is pretty weird, we should probably just make it so if you use old network legend
+            // you don't do whatever this is...
+            let graph_data = if app_state.app_config_fields.use_old_network_legend && !full_screen {
+                let rx_label = format!("RX: {:.1}{}{}", rx.0, rx.1, unit);
+                let tx_label = format!("TX: {:.1}{}{}", tx.0, tx.1, unit);
+                let total_rx_label = format!("Total RX: {:.1}{}", total_rx.0, total_rx.1);
+                let total_tx_label = format!("Total TX: {:.1}{}", total_tx.0, total_tx.1);
 
-        //     let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
-        //     let unit_type = app_state.app_config_fields.network_unit_type;
-        //     let unit = match unit_type {
-        //         DataUnit::Byte => "B/s",
-        //         DataUnit::Bit => "b/s",
-        //     };
+                vec![
+                    GraphData::default()
+                        .name(rx_label.into())
+                        .time(time)
+                        .values(rx_points)
+                        .style(self.styles.rx_style),
+                    GraphData::default()
+                        .name(tx_label.into())
+                        .time(time)
+                        .values(tx_points)
+                        .style(self.styles.tx_style),
+                    GraphData::default()
+                        .style(self.styles.total_rx_style)
+                        .name(total_rx_label.into()),
+                    GraphData::default()
+                        .style(self.styles.total_tx_style)
+                        .name(total_tx_label.into()),
+                ]
+            } else {
+                let rx_label = format!("{:.1}{}{}", rx.0, rx.1, unit);
+                let tx_label = format!("{:.1}{}{}", tx.0, tx.1, unit);
+                let total_rx_label = format!("{:.1}{}", total_rx.0, total_rx.1);
+                let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
 
-        //     let rx = get_unit_prefix(network_latest_data.rx, unit_type, use_binary_prefix);
-        //     let tx = get_unit_prefix(network_latest_data.tx, unit_type, use_binary_prefix);
-        //     let total_rx = convert_bits(network_latest_data.total_rx, use_binary_prefix);
-        //     let total_tx = convert_bits(network_latest_data.total_tx, use_binary_prefix);
+                vec![
+                    GraphData::default()
+                        .name(format!("RX: {:<10}  All: {}", rx_label, total_rx_label).into())
+                        .time(time)
+                        .values(rx_points)
+                        .style(self.styles.rx_style),
+                    GraphData::default()
+                        .name(format!("TX: {:<10}  All: {}", tx_label, total_tx_label).into())
+                        .time(time)
+                        .values(tx_points)
+                        .style(self.styles.tx_style),
+                ]
+            };
 
-        //     // TODO: This behaviour is pretty weird, we should probably just make it so if you use old network legend
-        //     // you don't do whatever this is...
-        //     let points = if app_state.app_config_fields.use_old_network_legend && !full_screen {
-        //         let rx_label = format!("RX: {:.1}{}{}", rx.0, rx.1, unit);
-        //         let tx_label = format!("TX: {:.1}{}{}", tx.0, tx.1, unit);
-        //         let total_rx_label = format!("Total RX: {:.1}{}", total_rx.0, total_rx.1);
-        //         let total_tx_label = format!("Total TX: {:.1}{}", total_tx.0, total_tx.1);
+            let marker = if app_state.app_config_fields.use_dot {
+                Marker::Dot
+            } else {
+                Marker::Braille
+            };
 
-        //         vec![
-        //             GraphData::default()
-        //                 .name(rx_label.into())
-        //                 .time(time)
-        //                 .values(rx_points)
-        //                 .style(self.styles.rx_style),
-        //             GraphData::default()
-        //                 .name(tx_label.into())
-        //                 .time(time)
-        //                 .values(tx_points)
-        //                 .style(self.styles.tx_style),
-        //             GraphData::default()
-        //                 .style(self.styles.total_rx_style)
-        //                 .name(total_rx_label.into()),
-        //             GraphData::default()
-        //                 .style(self.styles.total_tx_style)
-        //                 .name(total_tx_label.into()),
-        //         ]
-        //     } else {
-        //         let rx_label = format!("{:.1}{}{}", rx.0, rx.1, unit);
-        //         let tx_label = format!("{:.1}{}{}", tx.0, tx.1, unit);
-        //         let total_rx_label = format!("{:.1}{}", total_rx.0, total_rx.1);
-        //         let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
-
-        //         vec![
-        //             GraphData::default()
-        //                 .name(format!("RX: {:<10}  All: {}", rx_label, total_rx_label).into())
-        //                 .time(time)
-        //                 .values(rx_points)
-        //                 .style(self.styles.rx_style),
-        //             GraphData::default()
-        //                 .name(format!("TX: {:<10}  All: {}", tx_label, total_tx_label).into())
-        //                 .time(time)
-        //                 .values(tx_points)
-        //                 .style(self.styles.tx_style),
-        //         ]
-        //     };
-
-        //     let marker = if app_state.app_config_fields.use_dot {
-        //         Marker::Dot
-        //     } else {
-        //         Marker::Braille
-        //     };
-
-        //     TimeGraph {
-        //         x_min: time_start,
-        //         hide_x_labels,
-        //         y_bounds,
-        //         y_labels: &y_labels,
-        //         graph_style: self.styles.graph_style,
-        //         border_style,
-        //         border_type: self.styles.border_type,
-        //         title: " Network ".into(),
-        //         is_selected: app_state.current_widget.widget_id == widget_id,
-        //         is_expanded: app_state.is_expanded,
-        //         title_style: self.styles.widget_title_style,
-        //         legend_position: app_state.app_config_fields.network_legend_position,
-        //         legend_constraints: Some(legend_constraints),
-        //         marker,
-        //     }
-        //     .draw_time_graph(f, draw_loc, &points);
-        // }
+            TimeGraph {
+                x_min: time_start,
+                hide_x_labels,
+                y_bounds,
+                y_labels: &(y_labels.into_iter().map(Into::into).collect::<Vec<_>>()),
+                graph_style: self.styles.graph_style,
+                border_style,
+                border_type: self.styles.border_type,
+                title: " Network ".into(),
+                is_selected: app_state.current_widget.widget_id == widget_id,
+                is_expanded: app_state.is_expanded,
+                title_style: self.styles.widget_title_style,
+                legend_position: app_state.app_config_fields.network_legend_position,
+                legend_constraints: Some(legend_constraints),
+                marker,
+            }
+            .draw_time_graph(f, draw_loc, graph_data);
+        }
     }
 
     fn draw_network_labels(
@@ -258,7 +193,7 @@ impl Painter {
 
         let network_latest_data = &(app_state.data_store.get_data().network_harvest);
         let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
-        let unit_type = app_state.app_config_fields.network_unit_type;
+        let unit_type = app_state.app_config_fields.unit_type;
         let unit = match unit_type {
             DataUnit::Byte => "B/s",
             DataUnit::Bit => "b/s",
@@ -306,112 +241,10 @@ impl Painter {
     }
 }
 
-/// Returns the max data point and time given a time.
-fn get_max_entry(
-    rx: &[Point], tx: &[Point], time_start: f64, network_scale_type: &AxisScaling,
-    network_use_binary_prefix: bool,
-) -> f64 {
-    /// Determines a "fake" max value in circumstances where we couldn't find
-    /// one from the data.
-    fn calculate_missing_max(
-        network_scale_type: &AxisScaling, network_use_binary_prefix: bool,
-    ) -> f64 {
-        match network_scale_type {
-            AxisScaling::Log => {
-                if network_use_binary_prefix {
-                    LOG_KIBI_LIMIT
-                } else {
-                    LOG_KILO_LIMIT
-                }
-            }
-            AxisScaling::Linear => {
-                if network_use_binary_prefix {
-                    KIBI_LIMIT_F64
-                } else {
-                    KILO_LIMIT_F64
-                }
-            }
-        }
-    }
-
-    // First, let's shorten our ranges to actually look.  We can abuse the fact that
-    // our rx and tx arrays are sorted, so we can short-circuit our search to
-    // filter out only the relevant data points...
-    let filtered_rx = if let (Some(rx_start), Some(rx_end)) = (
-        rx.iter().position(|(time, _data)| *time >= time_start),
-        rx.iter().rposition(|(time, _data)| *time <= 0.0),
-    ) {
-        Some(&rx[rx_start..=rx_end])
-    } else {
-        None
-    };
-
-    let filtered_tx = if let (Some(tx_start), Some(tx_end)) = (
-        tx.iter().position(|(time, _data)| *time >= time_start),
-        tx.iter().rposition(|(time, _data)| *time <= 0.0),
-    ) {
-        Some(&tx[tx_start..=tx_end])
-    } else {
-        None
-    };
-
-    // Then, find the maximal rx/tx so we know how to scale, and return it.
-    match (filtered_rx, filtered_tx) {
-        (None, None) => calculate_missing_max(network_scale_type, network_use_binary_prefix),
-        (None, Some(filtered_tx)) => {
-            match filtered_tx
-                .iter()
-                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
-            {
-                Some((_best_time, max_val)) => {
-                    if *max_val == 0.0 {
-                        calculate_missing_max(network_scale_type, network_use_binary_prefix)
-                    } else {
-                        *max_val
-                    }
-                }
-                None => calculate_missing_max(network_scale_type, network_use_binary_prefix),
-            }
-        }
-        (Some(filtered_rx), None) => {
-            match filtered_rx
-                .iter()
-                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
-            {
-                Some((_best_time, max_val)) => {
-                    if *max_val == 0.0 {
-                        calculate_missing_max(network_scale_type, network_use_binary_prefix)
-                    } else {
-                        *max_val
-                    }
-                }
-                None => calculate_missing_max(network_scale_type, network_use_binary_prefix),
-            }
-        }
-        (Some(filtered_rx), Some(filtered_tx)) => {
-            match filtered_rx
-                .iter()
-                .chain(filtered_tx)
-                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
-            {
-                Some((_best_time, max_val)) => {
-                    if *max_val == 0.0 {
-                        calculate_missing_max(network_scale_type, network_use_binary_prefix)
-                    } else {
-                        *max_val
-                    }
-                }
-                None => calculate_missing_max(network_scale_type, network_use_binary_prefix),
-            }
-        }
-    }
-}
-
 /// Returns the required max data point and labels.
-fn adjust_network_data_point(
-    max_entry: f64, network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
-    network_use_binary_prefix: bool,
-) -> (f64, Vec<String>) {
+///
+/// TODO: This is _really_ ugly...
+fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, Vec<String>) {
     // So, we're going with an approach like this for linear data:
     // - Main goal is to maximize the amount of information displayed given a
     //   specific height. We don't want to drown out some data if the ranges are too
@@ -424,9 +257,9 @@ fn adjust_network_data_point(
     // drew 4 segments, it would be 97.5, 195, 292.5, 390, and
     // probably something like 438.75?
     //
-    // So, how do we do this in ratatui?  Well, if we  are using intervals that tie
+    // So, how do we do this in ratatui?  Well, if we are using intervals that tie
     // in perfectly to the max value we want... then it's actually not that
-    // hard.  Since ratatui accepts a vector as labels and will properly space
+    // hard. Since ratatui accepts a vector as labels and will properly space
     // them all out... we just work with that and space it out properly.
     //
     // Dynamic chart idea based off of FreeNAS's chart design.
@@ -439,14 +272,18 @@ fn adjust_network_data_point(
     // Now just check the largest unit we correspond to... then proceed to build
     // some entries from there!
 
+    let scale_type = &config.network_scale_type;
+    let use_binary_prefix = config.network_use_binary_prefix;
+    let network_unit_type = config.unit_type;
+
     let unit_char = match network_unit_type {
         DataUnit::Byte => "B",
         DataUnit::Bit => "b",
     };
 
-    match network_scale_type {
+    match scale_type {
         AxisScaling::Linear => {
-            let (k_limit, m_limit, g_limit, t_limit) = if network_use_binary_prefix {
+            let (k_limit, m_limit, g_limit, t_limit) = if use_binary_prefix {
                 (
                     KIBI_LIMIT_F64,
                     MEBI_LIMIT_F64,
@@ -469,25 +306,25 @@ fn adjust_network_data_point(
                 } else if bumped_max_entry < m_limit {
                     (
                         max_entry / k_limit,
-                        if network_use_binary_prefix { "Ki" } else { "K" },
+                        if use_binary_prefix { "Ki" } else { "K" },
                         unit_char,
                     )
                 } else if bumped_max_entry < g_limit {
                     (
                         max_entry / m_limit,
-                        if network_use_binary_prefix { "Mi" } else { "M" },
+                        if use_binary_prefix { "Mi" } else { "M" },
                         unit_char,
                     )
                 } else if bumped_max_entry < t_limit {
                     (
                         max_entry / g_limit,
-                        if network_use_binary_prefix { "Gi" } else { "G" },
+                        if use_binary_prefix { "Gi" } else { "G" },
                         unit_char,
                     )
                 } else {
                     (
                         max_entry / t_limit,
-                        if network_use_binary_prefix { "Ti" } else { "T" },
+                        if use_binary_prefix { "Ti" } else { "T" },
                         unit_char,
                     )
                 };
@@ -511,7 +348,7 @@ fn adjust_network_data_point(
             (bumped_max_entry, labels)
         }
         AxisScaling::Log => {
-            let (m_limit, g_limit, t_limit) = if network_use_binary_prefix {
+            let (m_limit, g_limit, t_limit) = if use_binary_prefix {
                 (LOG_MEBI_LIMIT, LOG_GIBI_LIMIT, LOG_TEBI_LIMIT)
             } else {
                 (LOG_MEGA_LIMIT, LOG_GIGA_LIMIT, LOG_TERA_LIMIT)
@@ -569,74 +406,50 @@ fn adjust_network_data_point(
                 (
                     m_limit,
                     vec![
-                        get_zero(network_use_binary_prefix, unit_char),
-                        get_k(network_use_binary_prefix, unit_char),
-                        get_m(network_use_binary_prefix, unit_char),
+                        get_zero(use_binary_prefix, unit_char),
+                        get_k(use_binary_prefix, unit_char),
+                        get_m(use_binary_prefix, unit_char),
                     ],
                 )
             } else if max_entry < g_limit {
                 (
                     g_limit,
                     vec![
-                        get_zero(network_use_binary_prefix, unit_char),
-                        get_k(network_use_binary_prefix, unit_char),
-                        get_m(network_use_binary_prefix, unit_char),
-                        get_g(network_use_binary_prefix, unit_char),
+                        get_zero(use_binary_prefix, unit_char),
+                        get_k(use_binary_prefix, unit_char),
+                        get_m(use_binary_prefix, unit_char),
+                        get_g(use_binary_prefix, unit_char),
                     ],
                 )
             } else if max_entry < t_limit {
                 (
                     t_limit,
                     vec![
-                        get_zero(network_use_binary_prefix, unit_char),
-                        get_k(network_use_binary_prefix, unit_char),
-                        get_m(network_use_binary_prefix, unit_char),
-                        get_g(network_use_binary_prefix, unit_char),
-                        get_t(network_use_binary_prefix, unit_char),
+                        get_zero(use_binary_prefix, unit_char),
+                        get_k(use_binary_prefix, unit_char),
+                        get_m(use_binary_prefix, unit_char),
+                        get_g(use_binary_prefix, unit_char),
+                        get_t(use_binary_prefix, unit_char),
                     ],
                 )
             } else {
                 // I really doubt anyone's transferring beyond petabyte speeds...
                 (
-                    if network_use_binary_prefix {
+                    if use_binary_prefix {
                         LOG_PEBI_LIMIT
                     } else {
                         LOG_PETA_LIMIT
                     },
                     vec![
-                        get_zero(network_use_binary_prefix, unit_char),
-                        get_k(network_use_binary_prefix, unit_char),
-                        get_m(network_use_binary_prefix, unit_char),
-                        get_g(network_use_binary_prefix, unit_char),
-                        get_t(network_use_binary_prefix, unit_char),
-                        get_p(network_use_binary_prefix, unit_char),
+                        get_zero(use_binary_prefix, unit_char),
+                        get_k(use_binary_prefix, unit_char),
+                        get_m(use_binary_prefix, unit_char),
+                        get_g(use_binary_prefix, unit_char),
+                        get_t(use_binary_prefix, unit_char),
+                        get_p(use_binary_prefix, unit_char),
                     ],
                 )
             }
         }
-    }
-}
-
-fn get_network_point(
-    value: f64, scale_type: &AxisScaling, unit_type: &DataUnit, use_binary_unit: bool,
-) -> f64 {
-    match scale_type {
-        AxisScaling::Log => {
-            if use_binary_unit {
-                match unit_type {
-                    DataUnit::Byte => value.log2() - 4.0, // As dividing by 8 is equal to subtracting 4 in base 2!
-                    DataUnit::Bit => value.log2(),
-                }
-            } else {
-                match unit_type {
-                    DataUnit::Byte => (value / 8.0).log10(),
-                    DataUnit::Bit => value.log10(),
-                }
-            }
-        }
-        AxisScaling::Linear => match unit_type {
-            DataUnit::Byte => value / 8.0,
-            DataUnit::Bit => value,
-        },
     }
 }

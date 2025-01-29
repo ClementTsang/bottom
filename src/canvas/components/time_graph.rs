@@ -19,7 +19,7 @@ use crate::{app::data::Values, canvas::drawing_utils::widget_block};
 ///
 /// TODO: We may be able to get rid of this intermediary data structure.
 #[derive(Default)]
-pub struct GraphData<'a> {
+pub(crate) struct GraphData<'a> {
     time: &'a [Instant],
     values: Option<&'a Values>,
     style: Style,
@@ -29,25 +29,21 @@ pub struct GraphData<'a> {
 impl<'a> GraphData<'a> {
     pub fn time(mut self, time: &'a [Instant]) -> Self {
         self.time = time;
-
         self
     }
 
     pub fn values(mut self, values: &'a Values) -> Self {
         self.values = Some(values);
-
         self
     }
 
     pub fn style(mut self, style: Style) -> Self {
         self.style = style;
-
         self
     }
 
     pub fn name(mut self, name: Cow<'a, str>) -> Self {
         self.name = Some(name);
-
         self
     }
 }
@@ -101,7 +97,7 @@ impl TimeGraph<'_> {
     /// Generates the [`Axis`] for the x-axis.
     fn generate_x_axis(&self) -> Axis<'_> {
         // Due to how we display things, we need to adjust the time bound values.
-        let adjusted_x_bounds = AxisBound::TimeMin(self.x_min);
+        let adjusted_x_bounds = AxisBound::Min(self.x_min);
 
         if self.hide_x_labels {
             Axis::default().bounds(adjusted_x_bounds)
@@ -143,10 +139,14 @@ impl TimeGraph<'_> {
     ///   graph.
     /// - Expects `graph_data`, which represents *what* data to draw, and
     ///   various details like style and optional legends.
-    pub fn draw_time_graph(&self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: &[GraphData<'_>]) {
+    pub fn draw_time_graph(
+        &self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: Vec<GraphData<'_>>,
+    ) {
+        // TODO: (points_rework_v1) can we reduce allocations in the underlying graph by saving some sort of state?
+
         let x_axis = self.generate_x_axis();
         let y_axis = self.generate_y_axis();
-        let data = graph_data.iter().map(create_dataset).collect();
+        let data = graph_data.into_iter().map(create_dataset).collect();
 
         let block = {
             let mut b = widget_block(false, self.is_selected, self.border_type)
@@ -178,7 +178,7 @@ impl TimeGraph<'_> {
 }
 
 /// Creates a new [`Dataset`].
-fn create_dataset<'a>(data: &'a GraphData<'a>) -> Dataset<'a> {
+fn create_dataset<'a>(data: GraphData<'a>) -> Dataset<'a> {
     let GraphData {
         time,
         values,
@@ -191,15 +191,17 @@ fn create_dataset<'a>(data: &'a GraphData<'a>) -> Dataset<'a> {
     };
 
     let dataset = Dataset::default()
-        .style(*style)
+        .style(style)
         .data(time, values)
         .graph_type(GraphType::Line);
 
-    if let Some(name) = name {
-        dataset.name(name.as_ref())
+    let dataset = if let Some(name) = name {
+        dataset.name(name)
     } else {
         dataset
-    }
+    };
+
+    dataset
 }
 
 #[cfg(test)]
@@ -248,7 +250,7 @@ mod test {
         let x_axis = tg.generate_x_axis();
 
         let actual = Axis::default()
-            .bounds(AxisBound::TimeMin(-15000.0))
+            .bounds(AxisBound::Min(-15000.0))
             .labels(vec![Span::styled("15s", style), Span::styled("0s", style)])
             .style(style);
         assert_eq!(x_axis.bounds, actual.bounds);

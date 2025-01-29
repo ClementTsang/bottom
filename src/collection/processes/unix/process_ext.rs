@@ -10,10 +10,15 @@ use crate::collection::{error::CollectionResult, processes::UserTable, Pid};
 
 pub(crate) trait UnixProcessExt {
     fn sysinfo_process_data(
-        sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
-        user_table: &mut UserTable,
-    ) -> CollectionResult<Vec<ProcessHarvest>> {
-        let mut process_vector: Vec<ProcessHarvest> = Vec::new();
+        collector: &mut DataCollector, use_current_cpu_total: bool, unnormalized_cpu: bool,
+        total_memory: u64,
+    ) -> CollectionResult<()> {
+        let sys = &collector.sys.system;
+        let user_table = &mut collector.user_table;
+
+        let process_vector = &mut collector.data.list_of_processes;
+        process_vector.clear();
+
         let process_hashmap = sys.processes();
         let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;
         let num_processors = sys.cpus().len() as f64;
@@ -128,7 +133,7 @@ pub(crate) trait UnixProcessExt {
             }
         }
 
-        Ok(process_vector)
+        Ok(())
     }
 
     #[inline]

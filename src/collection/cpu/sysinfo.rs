@@ -1,8 +1,6 @@
 //! CPU stats through sysinfo.
 //! Supports FreeBSD.
 
-use std::collections::VecDeque;
-
 use sysinfo::System;
 
 use super::{CpuData, CpuDataType, CpuHarvest};

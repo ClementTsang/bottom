@@ -37,14 +37,14 @@ impl TimeChart<'_> {
                 continue;
             };
 
-            let Some(iter) = values.iter_along_base(times) else {
-                continue;
-            };
-
             let color = dataset.style.fg.unwrap_or(Color::Reset);
             let left_edge = self.x_axis.bounds.to_bounds()[0];
 
-            for (curr, next) in iter
+            // TODO: (points_rework_v1) Can we instead modify the range so it's based on the epoch rather than having to convert?
+            // TODO: (points_rework_v1) Is this efficient? Or should I prune using take_while first?
+            // TODO: (points_rework_v1) Should this be generic over dataset.graph_type?
+            for (curr, next) in values
+                .iter_along_base(times)
                 .rev()
                 .map(|(&time, &val)| {
                     let from_start: f64 =
