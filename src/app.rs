@@ -26,7 +26,7 @@ use crate::{
     widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
 
-#[derive(Debug, Clone, Eq, PartialEq, Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Default, Copy)]
 pub enum AxisScaling {
     #[default]
     Log,

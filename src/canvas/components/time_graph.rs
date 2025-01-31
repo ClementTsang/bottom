@@ -174,14 +174,15 @@ impl TimeGraph<'_> {
                 .hidden_legend_constraints(
                     self.legend_constraints
                         .unwrap_or(DEFAULT_LEGEND_CONSTRAINTS),
-                ).scaling(self.scaling),
+                )
+                .scaling(self.scaling),
             draw_loc,
         )
     }
 }
 
 /// Creates a new [`Dataset`].
-fn create_dataset<'a>(data: GraphData<'a>) -> Dataset<'a> {
+fn create_dataset(data: GraphData<'_>) -> Dataset<'_> {
     let GraphData {
         time,
         values,

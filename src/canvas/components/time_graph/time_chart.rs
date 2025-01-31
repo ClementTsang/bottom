@@ -20,7 +20,10 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::app::data::Values;
+use crate::{
+    app::data::Values,
+    utils::general::{saturating_log10, saturating_log2},
+};
 
 pub const DEFAULT_LEGEND_CONSTRAINTS: (Constraint, Constraint) =
     (Constraint::Ratio(1, 4), Constraint::Length(4));
@@ -42,7 +45,7 @@ pub enum AxisBound {
 }
 
 impl AxisBound {
-    fn to_bounds(&self) -> [f64; 2] {
+    fn get_bounds(&self) -> [f64; 2] {
         match self {
             AxisBound::Zero => [0.0, 0.0],
             AxisBound::Min(min) => [*min, 0.0],
@@ -388,10 +391,12 @@ pub(crate) enum ChartScaling {
 impl ChartScaling {
     /// Scale a value.
     pub(super) fn scale(&self, value: f64) -> f64 {
+        // Remember to do saturating log checks as otherwise 0.0 becomes inf, and you get
+        // gaps!
         match self {
             ChartScaling::Linear => value,
-            ChartScaling::Log10 => value.log10(),
-            ChartScaling::Log2 => value.log2(),
+            ChartScaling::Log10 => saturating_log10(value),
+            ChartScaling::Log2 => saturating_log2(value),
         }
     }
 }
@@ -816,8 +821,8 @@ impl Widget for TimeChart<'_> {
             }
         }
 
-        let x_bounds = self.x_axis.bounds.to_bounds();
-        let y_bounds = self.y_axis.bounds.to_bounds();
+        let x_bounds = self.x_axis.bounds.get_bounds();
+        let y_bounds = self.y_axis.bounds.get_bounds();
 
         Canvas::default()
             .background_color(self.style.bg.unwrap_or(Color::Reset))

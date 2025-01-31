@@ -38,23 +38,21 @@ impl TimeChart<'_> {
             };
 
             let color = dataset.style.fg.unwrap_or(Color::Reset);
-            let left_edge = self.x_axis.bounds.to_bounds()[0];
+            let left_edge = self.x_axis.bounds.get_bounds()[0];
 
             // TODO: (points_rework_v1) Can we instead modify the range so it's based on the epoch rather than having to convert?
             // TODO: (points_rework_v1) Is this efficient? Or should I prune using take_while first?
             // TODO: (points_rework_v1) Should this be generic over dataset.graph_type?
-            for (mut curr, next) in values
+            for (curr, next) in values
                 .iter_along_base(times)
                 .rev()
                 .map(|(&time, &val)| {
                     let from_start: f64 =
                         (current_time.duration_since(time).as_millis() as f64).floor();
-                    (-from_start, val)
+                    (-from_start, self.scaling.scale(val))
                 })
                 .tuple_windows()
             {
-                curr.1 = self.scaling.scale(curr.1);
-
                 if curr.0 == left_edge {
                     // The current point hits the left edge. Draw just the current point and halt.
                     ctx.draw(&Points {

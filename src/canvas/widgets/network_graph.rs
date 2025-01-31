@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
@@ -13,7 +15,10 @@ use crate::{
         drawing_utils::should_hide_x_label,
         Painter,
     },
-    utils::data_units::*,
+    utils::{
+        data_units::*,
+        general::{saturating_log10, saturating_log2},
+    },
 };
 
 impl Painter {
@@ -76,11 +81,13 @@ impl Painter {
                     // For now, just do it each time. Might want to cache this later though.
 
                     let mut biggest = 0.0;
+                    let first_time = *last_time
+                        - Duration::from_millis(network_widget_state.current_display_time);
 
                     for (_, &v) in rx_points
                         .iter_along_base(time)
                         .rev()
-                        .take_while(|(&time, _)| time >= *last_time)
+                        .take_while(|(&time, _)| time >= first_time)
                     {
                         if v > biggest {
                             biggest = v;
@@ -90,7 +97,7 @@ impl Painter {
                     for (_, &v) in tx_points
                         .iter_along_base(time)
                         .rev()
-                        .take_while(|(&time, _)| time >= *last_time)
+                        .take_while(|(&time, _)| time >= first_time)
                     {
                         if v > biggest {
                             biggest = v;
@@ -120,8 +127,8 @@ impl Painter {
                 DataUnit::Bit => "b/s",
             };
 
-            let rx = get_unit_prefix(network_latest_data.rx, unit_type, use_binary_prefix);
-            let tx = get_unit_prefix(network_latest_data.tx, unit_type, use_binary_prefix);
+            let rx = get_unit_prefix(network_latest_data.rx, use_binary_prefix);
+            let tx = get_unit_prefix(network_latest_data.tx, use_binary_prefix);
             let total_rx = convert_bits(network_latest_data.total_rx, use_binary_prefix);
             let total_tx = convert_bits(network_latest_data.total_tx, use_binary_prefix);
 
@@ -223,8 +230,8 @@ impl Painter {
             DataUnit::Bit => "b/s",
         };
 
-        let rx = get_unit_prefix(network_latest_data.rx, unit_type, use_binary_prefix);
-        let tx = get_unit_prefix(network_latest_data.tx, unit_type, use_binary_prefix);
+        let rx = get_unit_prefix(network_latest_data.rx, use_binary_prefix);
+        let tx = get_unit_prefix(network_latest_data.tx, use_binary_prefix);
 
         let rx_label = format!("{:.1}{}{}", rx.0, rx.1, unit);
         let tx_label = format!("{:.1}{}{}", tx.0, tx.1, unit);
@@ -265,7 +272,7 @@ impl Painter {
     }
 }
 
-/// Returns the required max data point and labels.
+/// Returns the required labels.
 ///
 /// TODO: This is _really_ ugly... also there might be a bug with certain heights and too many labels.
 /// We may need to take draw height into account, either here, or in the time graph itself.
@@ -297,7 +304,7 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
     // Now just check the largest unit we correspond to... then proceed to build
     // some entries from there!
 
-    let scale_type = &config.network_scale_type;
+    let scale_type = config.network_scale_type;
     let use_binary_prefix = config.network_use_binary_prefix;
     let network_unit_type = config.network_unit_type;
 
@@ -308,6 +315,8 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
 
     match scale_type {
         AxisScaling::Linear => {
+            let max_entry = max_entry * 1.5;
+
             let (k_limit, m_limit, g_limit, t_limit) = if use_binary_prefix {
                 (
                     KIBI_LIMIT_F64,
@@ -324,23 +333,22 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
                 )
             };
 
-            let bumped_max_entry = max_entry * 1.5; // We use the bumped up version to calculate our unit type.
             let (max_value_scaled, unit_prefix, unit_type): (f64, &str, &str) =
-                if bumped_max_entry < k_limit {
+                if max_entry < k_limit {
                     (max_entry, "", unit_char)
-                } else if bumped_max_entry < m_limit {
+                } else if max_entry < m_limit {
                     (
                         max_entry / k_limit,
                         if use_binary_prefix { "Ki" } else { "K" },
                         unit_char,
                     )
-                } else if bumped_max_entry < g_limit {
+                } else if max_entry < g_limit {
                     (
                         max_entry / m_limit,
                         if use_binary_prefix { "Mi" } else { "M" },
                         unit_char,
                     )
-                } else if bumped_max_entry < t_limit {
+                } else if max_entry < t_limit {
                     (
                         max_entry / g_limit,
                         if use_binary_prefix { "Gi" } else { "G" },
@@ -357,7 +365,6 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
             // Finally, build an acceptable range starting from there, using the given
             // height! Note we try to put more of a weight on the bottom section
             // vs. the top, since the top has less data.
-
             let base_unit = max_value_scaled;
             let labels: Vec<String> = vec![
                 format!("0{unit_prefix}{unit_type}"),
@@ -366,17 +373,27 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
                 format!("{:.1}", base_unit * 1.5),
             ]
             .into_iter()
-            .map(|s| format!("{s:>5}")) // Pull 5 as the longest legend value is generally going to be 5 digits (if they somehow
-            // hit over 5 terabits per second)
+            .map(|s| {
+                // Pull 5 as the longest legend value is generally going to be 5 digits (if they somehow hit over 5 terabits per second)
+                format!("{s:>5}")
+            })
             .collect();
 
-            (bumped_max_entry, labels)
+            (max_entry, labels)
         }
         AxisScaling::Log => {
             let (m_limit, g_limit, t_limit) = if use_binary_prefix {
                 (LOG_MEBI_LIMIT, LOG_GIBI_LIMIT, LOG_TEBI_LIMIT)
             } else {
                 (LOG_MEGA_LIMIT, LOG_GIGA_LIMIT, LOG_TERA_LIMIT)
+            };
+
+            // Remember to do saturating log checks as otherwise 0.0 becomes inf, and you get
+            // gaps!
+            let max_entry = if use_binary_prefix {
+                saturating_log2(max_entry)
+            } else {
+                saturating_log10(max_entry)
             };
 
             fn get_zero(network_use_binary_prefix: bool, unit_char: &str) -> String {

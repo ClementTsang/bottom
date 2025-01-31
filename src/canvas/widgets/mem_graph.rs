@@ -101,7 +101,7 @@ impl Painter {
                     &mut points,
                     "RAM",
                     Some(&data.ram_harvest),
-                    &time,
+                    time,
                     &timeseries.ram,
                     self.styles.ram_style,
                 );
@@ -110,7 +110,7 @@ impl Painter {
                     &mut points,
                     "SWP",
                     data.swap_harvest.as_ref(),
-                    &time,
+                    time,
                     &timeseries.swap,
                     self.styles.swap_style,
                 );
@@ -121,7 +121,7 @@ impl Painter {
                         &mut points,
                         "CACHE", // TODO: Figure out how to line this up better
                         data.cache_harvest.as_ref(),
-                        &time,
+                        time,
                         &timeseries.cache_mem,
                         self.styles.cache_style,
                     );
@@ -133,7 +133,7 @@ impl Painter {
                         &mut points,
                         "ARC",
                         data.arc_harvest.as_ref(),
-                        &time,
+                        time,
                         &timeseries.arc_mem,
                         self.styles.arc_style,
                     );
@@ -161,7 +161,7 @@ impl Painter {
                                 &mut points,
                                 name, // TODO: REALLY figure out how to line this up better
                                 Some(harvest),
-                                &time,
+                                time,
                                 gpu_data,
                                 style,
                             );

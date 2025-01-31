@@ -75,11 +75,8 @@ pub fn convert_bits(bits: u64, base_two: bool) -> (f64, &'static str) {
 
 /// Return a tuple containing the value and a unit string to be used as a prefix.
 #[inline]
-pub fn get_unit_prefix(value: u64, unit: DataUnit, base_two: bool) -> (f64, &'static str) {
-    let float_value = match unit {
-        DataUnit::Byte => value / 8,
-        DataUnit::Bit => value,
-    } as f64;
+pub fn get_unit_prefix(value: u64, base_two: bool) -> (f64, &'static str) {
+    let float_value = value as f64;
 
     if base_two {
         match value {
