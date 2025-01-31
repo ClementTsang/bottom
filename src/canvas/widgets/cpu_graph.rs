@@ -232,6 +232,7 @@ impl Painter {
                 legend_position: None,
                 legend_constraints: None,
                 marker,
+                scaling: Default::default(),
             }
             .draw_time_graph(f, draw_loc, graph_data);
         }

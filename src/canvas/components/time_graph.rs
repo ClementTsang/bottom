@@ -91,6 +91,9 @@ pub struct TimeGraph<'a> {
     /// The marker type. Unlike ratatui's native charts, we assume
     /// only a single type of marker.
     pub marker: Marker,
+
+    /// The chart scaling.
+    pub scaling: ChartScaling,
 }
 
 impl TimeGraph<'_> {
@@ -171,7 +174,7 @@ impl TimeGraph<'_> {
                 .hidden_legend_constraints(
                     self.legend_constraints
                         .unwrap_or(DEFAULT_LEGEND_CONSTRAINTS),
-                ),
+                ).scaling(self.scaling),
             draw_loc,
         )
     }
@@ -215,7 +218,7 @@ mod test {
         widgets::BorderType,
     };
 
-    use super::{AxisBound, TimeGraph};
+    use super::{AxisBound, ChartScaling, TimeGraph};
     use crate::canvas::components::time_graph::Axis;
 
     const Y_LABELS: [Cow<'static, str>; 3] = [
@@ -240,6 +243,7 @@ mod test {
             legend_position: None,
             legend_constraints: None,
             marker: Marker::Braille,
+            scaling: ChartScaling::Linear,
         }
     }
 

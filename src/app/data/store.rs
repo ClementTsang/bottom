@@ -9,6 +9,7 @@ use crate::{
     app::AppConfigFields,
     collection::{cpu, disks, memory::MemHarvest, network, Data},
     dec_bytes_per_second_string,
+    utils::data_units::DataUnit,
     widgets::TempWidgetData,
 };
 
@@ -78,8 +79,16 @@ impl StoredData {
         clippy::boxed_local,
         reason = "This avoids warnings on certain platforms (e.g. 32-bit)."
     )]
-    fn eat_data(&mut self, data: Box<Data>, settings: &AppConfigFields) {
+    fn eat_data(&mut self, mut data: Box<Data>, settings: &AppConfigFields) {
         let harvested_time = data.collection_time;
+
+        // We must adjust all the network values to their selected type (defaults to bits).
+        if matches!(settings.network_unit_type, DataUnit::Byte) {
+            if let Some(network) = &mut data.network {
+                network.rx /= 8;
+                network.tx /= 8;
+            }
+        }
 
         self.timeseries_data.add(&data);
 

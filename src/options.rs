@@ -300,7 +300,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         memory_legend_position,
         network_legend_position,
         network_scale_type,
-        unit_type: network_unit_type,
+        network_unit_type,
         network_use_binary_prefix,
         retention_ms,
         dedicated_average_row: get_dedicated_avg_row(config),

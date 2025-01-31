@@ -43,7 +43,7 @@ impl TimeChart<'_> {
             // TODO: (points_rework_v1) Can we instead modify the range so it's based on the epoch rather than having to convert?
             // TODO: (points_rework_v1) Is this efficient? Or should I prune using take_while first?
             // TODO: (points_rework_v1) Should this be generic over dataset.graph_type?
-            for (curr, next) in values
+            for (mut curr, next) in values
                 .iter_along_base(times)
                 .rev()
                 .map(|(&time, &val)| {
@@ -53,6 +53,8 @@ impl TimeChart<'_> {
                 })
                 .tuple_windows()
             {
+                curr.1 = self.scaling.scale(curr.1);
+
                 if curr.0 == left_edge {
                     // The current point hits the left edge. Draw just the current point and halt.
                     ctx.draw(&Points {

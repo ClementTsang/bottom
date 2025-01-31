@@ -23,13 +23,11 @@ pub const MEBI_LIMIT_F64: f64 = 1024.0 * 1024.0;
 pub const GIBI_LIMIT_F64: f64 = 1024.0 * 1024.0 * 1024.0;
 pub const TEBI_LIMIT_F64: f64 = 1024.0 * 1024.0 * 1024.0 * 1024.0;
 
-pub const LOG_KILO_LIMIT: f64 = 3.0;
 pub const LOG_MEGA_LIMIT: f64 = 6.0;
 pub const LOG_GIGA_LIMIT: f64 = 9.0;
 pub const LOG_TERA_LIMIT: f64 = 12.0;
 pub const LOG_PETA_LIMIT: f64 = 15.0;
 
-pub const LOG_KIBI_LIMIT: f64 = 10.0;
 pub const LOG_MEBI_LIMIT: f64 = 20.0;
 pub const LOG_GIBI_LIMIT: f64 = 30.0;
 pub const LOG_TEBI_LIMIT: f64 = 40.0;

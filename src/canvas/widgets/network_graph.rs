@@ -9,7 +9,7 @@ use tui::{
 use crate::{
     app::{App, AppConfigFields, AxisScaling},
     canvas::{
-        components::time_graph::{AxisBound, GraphData, TimeGraph},
+        components::time_graph::{AxisBound, ChartScaling, GraphData, TimeGraph},
         drawing_utils::should_hide_x_label,
         Painter,
     },
@@ -73,20 +73,31 @@ impl Painter {
 
             let y_max = {
                 if let Some(last_time) = time.last() {
-                    if let Some(last_checked) = network_widget_state.cached_height_adjustment_range
+                    // For now, just do it each time. Might want to cache this later though.
+
+                    let mut biggest = 0.0;
+
+                    for (_, &v) in rx_points
+                        .iter_along_base(time)
+                        .rev()
+                        .take_while(|(&time, _)| time >= *last_time)
                     {
-                        // let max_rx = rx_points
-                        //     .iter_along_base(time)
-                        //     .rev()
-                        //     .take_while(|(&instant, &value)| {})
-                        //     .map(|(_, v)| *v)
-                        //     .max();
-                    } else {
+                        if v > biggest {
+                            biggest = v;
+                        }
                     }
 
-                    // network_widget_state.cached_height_adjustment_range = Some(*last_time);
+                    for (_, &v) in tx_points
+                        .iter_along_base(time)
+                        .rev()
+                        .take_while(|(&time, _)| time >= *last_time)
+                    {
+                        if v > biggest {
+                            biggest = v;
+                        }
+                    }
 
-                    0.0
+                    biggest
                 } else {
                     0.0
                 }
@@ -103,7 +114,7 @@ impl Painter {
             // TODO: Add support for clicking on legend to only show that value on chart.
 
             let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
-            let unit_type = app_state.app_config_fields.unit_type;
+            let unit_type = app_state.app_config_fields.network_unit_type;
             let unit = match unit_type {
                 DataUnit::Byte => "B/s",
                 DataUnit::Bit => "b/s",
@@ -166,6 +177,18 @@ impl Painter {
                 Marker::Braille
             };
 
+            let scaling = match app_state.app_config_fields.network_scale_type {
+                AxisScaling::Log => {
+                    // TODO: I might change this behaviour later.
+                    if app_state.app_config_fields.network_use_binary_prefix {
+                        ChartScaling::Log2
+                    } else {
+                        ChartScaling::Log10
+                    }
+                }
+                AxisScaling::Linear => ChartScaling::Linear,
+            };
+
             TimeGraph {
                 x_min: time_start,
                 hide_x_labels,
@@ -181,6 +204,7 @@ impl Painter {
                 legend_position: app_state.app_config_fields.network_legend_position,
                 legend_constraints: Some(legend_constraints),
                 marker,
+                scaling,
             }
             .draw_time_graph(f, draw_loc, graph_data);
         }
@@ -193,7 +217,7 @@ impl Painter {
 
         let network_latest_data = &(app_state.data_store.get_data().network_harvest);
         let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
-        let unit_type = app_state.app_config_fields.unit_type;
+        let unit_type = app_state.app_config_fields.network_unit_type;
         let unit = match unit_type {
             DataUnit::Byte => "B/s",
             DataUnit::Bit => "b/s",
@@ -243,7 +267,8 @@ impl Painter {
 
 /// Returns the required max data point and labels.
 ///
-/// TODO: This is _really_ ugly...
+/// TODO: This is _really_ ugly... also there might be a bug with certain heights and too many labels.
+/// We may need to take draw height into account, either here, or in the time graph itself.
 fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, Vec<String>) {
     // So, we're going with an approach like this for linear data:
     // - Main goal is to maximize the amount of information displayed given a
@@ -274,7 +299,7 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
 
     let scale_type = &config.network_scale_type;
     let use_binary_prefix = config.network_use_binary_prefix;
-    let network_unit_type = config.unit_type;
+    let network_unit_type = config.network_unit_type;
 
     let unit_char = match network_unit_type {
         DataUnit::Byte => "B",

@@ -193,6 +193,7 @@ impl Painter {
                 legend_position: app_state.app_config_fields.memory_legend_position,
                 legend_constraints: Some((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
                 marker,
+                scaling: Default::default(),
             }
             .draw_time_graph(f, draw_loc, graph_data);
         }

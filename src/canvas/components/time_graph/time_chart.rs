@@ -28,13 +28,13 @@ pub const DEFAULT_LEGEND_CONSTRAINTS: (Constraint, Constraint) =
 /// A single graph point.
 pub type Point = (f64, f64);
 
-/// An axis bound type.
+/// An axis bound type. Allows us to save a f64 since we know that we are
+/// usually bound from some values [0.0, a], or [-b, 0.0].
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum AxisBound {
     /// Just 0.
     #[default]
     Zero,
-
     /// Bound by a minimum value to 0.
     Min(f64),
     /// Bound by 0 and a max value.
@@ -376,6 +376,26 @@ struct ChartLayout {
     graph_area: Rect,
 }
 
+/// Whether to additionally scale all values before displaying them. Defaults to none.
+#[derive(Default, Debug, Clone, Copy)]
+pub(crate) enum ChartScaling {
+    #[default]
+    Linear,
+    Log10,
+    Log2,
+}
+
+impl ChartScaling {
+    /// Scale a value.
+    pub(super) fn scale(&self, value: f64) -> f64 {
+        match self {
+            ChartScaling::Linear => value,
+            ChartScaling::Log10 => value.log10(),
+            ChartScaling::Log2 => value.log2(),
+        }
+    }
+}
+
 /// A "custom" chart, just a slightly tweaked [`tui::widgets::Chart`] from
 /// ratatui, but with greater control over the legend, and built with the idea
 /// of drawing data points relative to a time-based x-axis.
@@ -407,6 +427,8 @@ pub struct TimeChart<'a> {
     legend_position: Option<LegendPosition>,
     /// The marker type.
     marker: Marker,
+    /// Whether to scale the values differently.
+    scaling: ChartScaling,
 }
 
 impl<'a> TimeChart<'a> {
@@ -422,6 +444,7 @@ impl<'a> TimeChart<'a> {
             hidden_legend_constraints: (Constraint::Ratio(1, 4), Constraint::Ratio(1, 4)),
             legend_position: Some(LegendPosition::default()),
             marker: Marker::Braille,
+            scaling: ChartScaling::default(),
         }
     }
 
@@ -495,7 +518,7 @@ impl<'a> TimeChart<'a> {
         self
     }
 
-    /// Sets the position of a legend or hide it
+    /// Sets the position of a legend or hide it.
     ///
     /// The default is [`LegendPosition::TopRight`].
     ///
@@ -510,6 +533,13 @@ impl<'a> TimeChart<'a> {
     #[must_use = "method moves the value of self and returns the modified value"]
     pub fn legend_position(mut self, position: Option<LegendPosition>) -> TimeChart<'a> {
         self.legend_position = position;
+        self
+    }
+
+    /// Set chart scaling.
+    #[must_use = "method moves the value of self and returns the modified value"]
+    pub fn scaling(mut self, scaling: ChartScaling) -> TimeChart<'a> {
+        self.scaling = scaling;
         self
     }
 
