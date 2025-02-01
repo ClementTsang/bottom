@@ -140,9 +140,8 @@ impl Painter {
                     } else if itx == ALL_POSITION {
                         self.styles.all_cpu_colour
                     } else {
-                        let offset_position = itx - 1; // Because of the all position
-                        self.styles.cpu_colour_styles[(offset_position - show_avg_offset)
-                            % self.styles.cpu_colour_styles.len()]
+                        self.styles.cpu_colour_styles
+                            [(itx - show_avg_offset) % self.styles.cpu_colour_styles.len()]
                     };
 
                     GraphData::default().style(style).time(time).values(values)
