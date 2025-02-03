@@ -230,7 +230,7 @@ impl StoredData {
                 }
             };
 
-            let (mut io_read, mut io_write) = ("N/A".to_string(), "N/A".to_string());
+            let (mut io_read, mut io_write) = ("N/A".into(), "N/A".into());
             if let Some(Some(io_device)) = io_device {
                 if let Some(prev_io) = self.prev_io.get_mut(itx) {
                     let r_rate = ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
@@ -243,8 +243,8 @@ impl StoredData {
 
                     *prev_io = (io_device.read_bytes, io_device.write_bytes);
 
-                    io_read = dec_bytes_per_second_string(r_rate);
-                    io_write = dec_bytes_per_second_string(w_rate);
+                    io_read = dec_bytes_per_second_string(r_rate).into();
+                    io_write = dec_bytes_per_second_string(w_rate).into();
                 }
             }
 
