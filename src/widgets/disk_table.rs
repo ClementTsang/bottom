@@ -20,8 +20,8 @@ pub struct DiskWidgetData {
     pub used_bytes: Option<u64>,
     pub total_bytes: Option<u64>,
     pub summed_total_bytes: Option<u64>,
-    pub io_read: String,
-    pub io_write: String,
+    pub io_read: Cow<'static, str>,
+    pub io_write: Cow<'static, str>,
 }
 
 impl DiskWidgetData {
@@ -177,8 +177,8 @@ impl DataToCell<DiskColumn> for DiskWidgetData {
             DiskColumn::UsedPercent => percent_string(self.used_percent()),
             DiskColumn::FreePercent => percent_string(self.free_percent()),
             DiskColumn::Total => self.total_space(),
-            DiskColumn::IoRead => self.io_read.clone().into(),
-            DiskColumn::IoWrite => self.io_write.clone().into(),
+            DiskColumn::IoRead => self.io_read.clone(),
+            DiskColumn::IoWrite => self.io_write.clone(),
         };
 
         Some(text)
