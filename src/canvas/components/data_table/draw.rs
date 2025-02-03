@@ -199,9 +199,28 @@ where
                 self.props.table_gap
             };
 
-            if !self.data.is_empty() || !self.first_draw {
+            // Handle empty data case
+            if self.data.is_empty() {
+                let no_data_message = if self.first_draw {
+                    "Loading..."
+                } else {
+                    "No data available"
+                };
+
+                let table = Table::new(
+                    once(Row::new(Text::raw(no_data_message))),
+                    [Constraint::Percentage(100)],
+                )
+                .block(block)
+                .style(self.styling.text_style);
+                f.render_widget(table, margined_draw_loc);
+
+              
+                self.first_draw = false;
+            } else {
+                // Handle non-empty data case
                 if self.first_draw {
-                    self.first_draw = false; // TODO: Doing it this way is fine, but it could be done better (e.g. showing custom no results/entries message)
+                    self.first_draw = false; 
                     if let Some(first_index) = self.first_index {
                         self.set_position(first_index);
                     }
@@ -249,7 +268,7 @@ where
                     };
                     let mut table = Table::new(
                         rows,
-                        &(self
+                        (self
                             .state
                             .calculated_widths
                             .iter()
@@ -275,14 +294,6 @@ where
 
                 let table_state = &mut self.state.table_state;
                 f.render_stateful_widget(widget, margined_draw_loc, table_state);
-            } else {
-                let table = Table::new(
-                    once(Row::new(Text::raw("No data"))),
-                    [Constraint::Percentage(100)],
-                )
-                .block(block)
-                .style(self.styling.text_style);
-                f.render_widget(table, margined_draw_loc);
             }
         }
     }

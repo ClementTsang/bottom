@@ -41,12 +41,12 @@ pub struct ConvertedNetworkData {
     pub total_rx_display: Option<String>,
     pub total_tx_display: Option<String>,
     // TODO: [NETWORKING] add min/max/mean of each
-    // min_rx : f64,
-    // max_rx : f64,
-    // mean_rx: f64,
-    // min_tx: f64,
-    // max_tx: f64,
-    // mean_tx: f64,
+    min_rx : f64,
+    max_rx : f64,
+    mean_rx: f64,
+    min_tx: f64,
+    max_tx: f64,
+    mean_tx: f64,
 }
 
 #[derive(Clone, Debug)]
@@ -353,6 +353,16 @@ pub fn convert_network_data_points(
 ) -> ConvertedNetworkData {
     let (rx, tx) = get_rx_tx_data_points(data, scale_type, unit_type, use_binary_prefix);
 
+    //fac eu
+    let min_rx = rx.iter().map(|p| p.1).fold(f64::INFINITY, f64::min);
+    let max_rx = rx.iter().map(|p| p.1).fold(f64::NEG_INFINITY, f64::max);
+    let mean_rx = rx.iter().map(|p| p.1).sum::<f64>() / rx.len() as f64;
+
+    let min_tx = tx.iter().map(|p| p.1).fold(f64::INFINITY, f64::min);
+    let max_tx = tx.iter().map(|p| p.1).fold(f64::NEG_INFINITY, f64::max);
+    let mean_tx = tx.iter().map(|p| p.1).sum::<f64>() / tx.len() as f64;
+    
+
     let unit = match unit_type {
         DataUnit::Byte => "B/s",
         DataUnit::Bit => "b/s",
@@ -413,10 +423,16 @@ pub fn convert_network_data_points(
         ConvertedNetworkData {
             rx,
             tx,
-            rx_display,
-            tx_display,
-            total_rx_display,
-            total_tx_display,
+            rx_display: String::new(),
+            tx_display: String::new(),
+            total_rx_display: None,
+            total_tx_display: None,
+            min_rx,
+            max_rx,
+            mean_rx,
+            min_tx,
+            max_tx,
+            mean_tx,
         }
     } else {
         let rx_display = format!(
@@ -461,13 +477,20 @@ pub fn convert_network_data_points(
         ConvertedNetworkData {
             rx,
             tx,
-            rx_display,
-            tx_display,
+            rx_display: String::new(),
+            tx_display: String::new(),
             total_rx_display: None,
             total_tx_display: None,
+            min_rx,
+            max_rx,
+            mean_rx,
+            min_tx,
+            max_tx,
+            mean_tx,
         }
     }
 }
+
 
 /// Returns a string given a value that is converted to the closest binary variant.
 /// If the value is greater than a gibibyte, then it will return a decimal place.
