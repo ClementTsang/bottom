@@ -405,6 +405,7 @@ impl ProcWidgetState {
             }
         };
         self.table.set_data(data);
+        self.force_update_data = false;
     }
 
     fn get_tree_data(

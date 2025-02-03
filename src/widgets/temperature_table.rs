@@ -127,5 +127,6 @@ impl TempWidgetState {
             column.sort_by(&mut data, self.table.order());
         }
         self.table.set_data(data);
+        self.force_update_data = false;
     }
 }

@@ -156,28 +156,24 @@ impl App {
         for proc in self.states.proc_state.widget_states.values_mut() {
             if proc.force_update_data {
                 proc.set_table_data(data_source);
-                proc.force_update_data = false;
             }
         }
 
         for temp in self.states.temp_state.widget_states.values_mut() {
             if temp.force_update_data {
                 temp.set_table_data(&data_source.temp_data);
-                temp.force_update_data = false;
             }
         }
 
         for cpu in self.states.cpu_state.widget_states.values_mut() {
             if cpu.force_update_data {
                 cpu.set_legend_data(&data_source.cpu_harvest);
-                cpu.force_update_data = false;
             }
         }
 
         for disk in self.states.disk_state.widget_states.values_mut() {
             if disk.force_update_data {
-                disk.set_table_data(data_source); // FIXME: (points_rework_v1) do more work when eating data, not in set table data; maybe separate PR
-                disk.force_update_data = false;
+                disk.set_table_data(data_source);
             }
         }
     }

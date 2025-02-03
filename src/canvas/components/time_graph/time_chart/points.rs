@@ -42,13 +42,15 @@ impl TimeChart<'_> {
 
             // TODO: (points_rework_v1) Can we instead modify the range so it's based on the epoch rather than having to convert?
             // TODO: (points_rework_v1) Is this efficient? Or should I prune using take_while first?
-            // TODO: (points_rework_v1) Should this be generic over dataset.graph_type?
             for (curr, next) in values
                 .iter_along_base(times)
                 .rev()
                 .map(|(&time, &val)| {
                     let from_start: f64 =
                         (current_time.duration_since(time).as_millis() as f64).floor();
+
+                    // XXX: Should this be generic over dataset.graph_type instead? That would allow us to move
+                    // transformations behind a type - however, that also means that there's some complexity added.
                     (-from_start, self.scaling.scale(val))
                 })
                 .tuple_windows()

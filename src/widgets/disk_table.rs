@@ -314,36 +314,14 @@ impl DiskTableWidget {
     }
 
     /// Update the current table data.
-    ///
-    /// TODO: Move the conversion step into the eating part.
     pub fn set_table_data(&mut self, data: &StoredData) {
-        let mut data = data
-            .disk_harvest
-            .iter()
-            .zip(&data.io_labels)
-            .map(|(disk, (io_read, io_write))| {
-                let summed_total_bytes = match (disk.used_space, disk.free_space) {
-                    (Some(used), Some(free)) => Some(used + free),
-                    _ => None,
-                };
-
-                DiskWidgetData {
-                    name: disk.name.to_string(),
-                    mount_point: disk.mount_point.to_string(),
-                    free_bytes: disk.free_space,
-                    used_bytes: disk.used_space,
-                    total_bytes: disk.total_space,
-                    summed_total_bytes,
-                    io_read: io_read.to_string(),
-                    io_write: io_write.to_string(),
-                }
-            })
-            .collect::<Vec<_>>();
+        let mut data = data.disk_harvest.clone();
 
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
             column.sort_by(&mut data, self.table.order());
         }
         self.table.set_data(data);
+        self.force_update_data = false;
     }
 
     pub fn set_index(&mut self, index: usize) {

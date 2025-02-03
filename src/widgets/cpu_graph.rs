@@ -178,5 +178,6 @@ impl CpuWidgetState {
                 .chain(data.iter().map(CpuWidgetTableData::from_cpu_data))
                 .collect(),
         );
+        self.force_update_data = false;
     }
 }

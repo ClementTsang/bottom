@@ -10,7 +10,7 @@ use crate::{
     collection::{cpu, disks, memory::MemHarvest, network, Data},
     dec_bytes_per_second_string,
     utils::data_units::DataUnit,
-    widgets::TempWidgetData,
+    widgets::{DiskWidgetData, TempWidgetData},
 };
 
 use super::{ProcessData, TimeSeriesData};
@@ -34,10 +34,9 @@ pub struct StoredData {
     pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_data: ProcessData,
-    pub disk_harvest: Vec<disks::DiskHarvest>,
-    // TODO: The IO labels are kinda weird.
-    pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
-    pub io_labels: Vec<(String, String)>,
+    /// TODO: (points_rework_v1) Might be a better way to do this without having to store here?
+    pub prev_io: Vec<(u64, u64)>,
+    pub disk_harvest: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
     #[cfg(feature = "battery")]
     pub battery_harvest: Vec<batteries::BatteryData>,
@@ -56,9 +55,8 @@ impl Default for StoredData {
             cpu_harvest: cpu::CpuHarvest::default(),
             load_avg_harvest: cpu::LoadAvgHarvest::default(),
             process_data: Default::default(),
+            prev_io: Vec::default(),
             disk_harvest: Vec::default(),
-            io_labels_and_prev: Vec::default(),
-            io_labels: Vec::default(),
             temp_data: Vec::default(),
             #[cfg(feature = "battery")]
             battery_harvest: Vec::default(),
@@ -125,7 +123,6 @@ impl StoredData {
             self.load_avg_harvest = load_avg;
         }
 
-        // TODO: (points_rework_v1) the map might be redundant, the types are the same.
         self.temp_data = data
             .temperature_sensors
             .map(|sensors| {
@@ -169,8 +166,14 @@ impl StoredData {
             .duration_since(self.last_update_time)
             .as_secs_f64();
 
-        for (itx, device) in disks.iter().enumerate() {
-            let checked_name = {
+        self.disk_harvest.clear();
+
+        let prev_io_diff = disks.len().saturating_sub(self.prev_io.len());
+        self.prev_io.reserve(prev_io_diff);
+        self.prev_io.extend((0..prev_io_diff).map(|_| (0, 0)));
+
+        for (itx, device) in disks.into_iter().enumerate() {
+            let Some(checked_name) = ({
                 #[cfg(target_os = "windows")]
                 {
                     match &device.volume_name {
@@ -194,85 +197,73 @@ impl StoredData {
                         device.name.split('/').last()
                     }
                 }
+            }) else {
+                continue;
             };
 
-            if let Some(checked_name) = checked_name {
-                let io_device = {
-                    #[cfg(target_os = "macos")]
+            let io_device = {
+                #[cfg(target_os = "macos")]
+                {
+                    use std::sync::OnceLock;
+
+                    use regex::Regex;
+
+                    // Must trim one level further for macOS!
+                    static DISK_REGEX: OnceLock<Regex> = OnceLock::new();
+
+                    #[expect(
+                        clippy::regex_creation_in_loops,
+                        reason = "this is fine since it's done via a static OnceLock. In the future though, separate it out."
+                    )]
+                    if let Some(new_name) = DISK_REGEX
+                        .get_or_init(|| Regex::new(r"disk\d+").unwrap())
+                        .find(checked_name)
                     {
-                        use std::sync::OnceLock;
-
-                        use regex::Regex;
-
-                        // Must trim one level further for macOS!
-                        static DISK_REGEX: OnceLock<Regex> = OnceLock::new();
-
-                        #[expect(
-                            clippy::regex_creation_in_loops,
-                            reason = "this is fine since it's done via a static OnceLock. In the future though, separate it out."
-                        )]
-                        if let Some(new_name) = DISK_REGEX
-                            .get_or_init(|| Regex::new(r"disk\d+").unwrap())
-                            .find(checked_name)
-                        {
-                            io.get(new_name.as_str())
-                        } else {
-                            None
-                        }
-                    }
-                    #[cfg(not(target_os = "macos"))]
-                    {
-                        io.get(checked_name)
-                    }
-                };
-
-                if let Some(io_device) = io_device {
-                    let (io_r_pt, io_w_pt) = if let Some(io) = io_device {
-                        (io.read_bytes, io.write_bytes)
+                        io.get(new_name.as_str())
                     } else {
-                        (0, 0)
-                    };
-
-                    if self.io_labels.len() <= itx {
-                        self.io_labels.push((String::default(), String::default()));
-                    }
-
-                    if self.io_labels_and_prev.len() <= itx {
-                        self.io_labels_and_prev.push(((0, 0), (io_r_pt, io_w_pt)));
-                    }
-
-                    if let Some((io_curr, io_prev)) = self.io_labels_and_prev.get_mut(itx) {
-                        let r_rate = ((io_r_pt.saturating_sub(io_prev.0)) as f64
-                            / time_since_last_harvest)
-                            .round() as u64;
-                        let w_rate = ((io_w_pt.saturating_sub(io_prev.1)) as f64
-                            / time_since_last_harvest)
-                            .round() as u64;
-
-                        *io_curr = (r_rate, w_rate);
-                        *io_prev = (io_r_pt, io_w_pt);
-
-                        // TODO: idk why I'm generating this here tbh
-                        if let Some(io_labels) = self.io_labels.get_mut(itx) {
-                            *io_labels = (
-                                dec_bytes_per_second_string(r_rate),
-                                dec_bytes_per_second_string(w_rate),
-                            );
-                        }
-                    }
-                } else {
-                    if self.io_labels.len() <= itx {
-                        self.io_labels.push((String::default(), String::default()));
-                    }
-
-                    if let Some(io_labels) = self.io_labels.get_mut(itx) {
-                        *io_labels = ("N/A".to_string(), "N/A".to_string());
+                        None
                     }
                 }
-            }
-        }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    io.get(checked_name)
+                }
+            };
 
-        self.disk_harvest = disks;
+            let (mut io_read, mut io_write) = ("N/A".to_string(), "N/A".to_string());
+            if let Some(Some(io_device)) = io_device {
+                if let Some(prev_io) = self.prev_io.get_mut(itx) {
+                    let r_rate = ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
+                        / time_since_last_harvest)
+                        .round() as u64;
+
+                    let w_rate = ((io_device.write_bytes.saturating_sub(prev_io.1)) as f64
+                        / time_since_last_harvest)
+                        .round() as u64;
+
+                    *prev_io = (io_device.read_bytes, io_device.write_bytes);
+
+                    io_read = dec_bytes_per_second_string(r_rate);
+                    io_write = dec_bytes_per_second_string(w_rate);
+                }
+            }
+
+            let summed_total_bytes = match (device.used_space, device.free_space) {
+                (Some(used), Some(free)) => Some(used + free),
+                _ => None,
+            };
+
+            self.disk_harvest.push(DiskWidgetData {
+                name: device.name,
+                mount_point: device.mount_point,
+                free_bytes: device.free_space,
+                used_bytes: device.used_space,
+                total_bytes: device.total_space,
+                summed_total_bytes,
+                io_read,
+                io_write,
+            });
+        }
     }
 }
 
