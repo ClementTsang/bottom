@@ -187,6 +187,7 @@ dependencies = [
  "sysinfo",
  "tempfile",
  "time",
+ "timeless",
  "toml_edit",
  "unicode-ellipsis",
  "unicode-segmentation",
@@ -1580,6 +1581,12 @@ dependencies = [
  "num-conv",
  "time-core",
 ]
+
+[[package]]
+name = "timeless"
+version = "0.0.14-alpha"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04121e3f47427f2604066a4c4af25102e6c5794b167f6dee85958898ebf7f131"
 
 [[package]]
 name = "toml_datetime"

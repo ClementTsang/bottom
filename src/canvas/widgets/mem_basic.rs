@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     Frame,
@@ -6,13 +8,48 @@ use tui::{
 use crate::{
     app::App,
     canvas::{components::pipe_gauge::PipeGauge, drawing_utils::widget_block, Painter},
+    collection::memory::MemHarvest,
+    get_binary_unit_and_denominator,
 };
+
+/// Convert memory info into a string representing a fraction.
+#[inline]
+fn memory_fraction_label(data: &MemHarvest) -> Cow<'static, str> {
+    if data.total_bytes > 0 {
+        let (unit, denominator) = get_binary_unit_and_denominator(data.total_bytes);
+        let used = data.used_bytes as f64 / denominator;
+        let total = data.total_bytes as f64 / denominator;
+
+        format!("{used:.1}{unit}/{total:.1}{unit}").into()
+    } else {
+        "0.0B/0.0B".into()
+    }
+}
+
+/// Convert memory info into a string representing a percentage.
+#[inline]
+fn memory_percentage_label(data: &MemHarvest) -> Cow<'static, str> {
+    if data.total_bytes > 0 {
+        let percentage = data.used_bytes as f64 / data.total_bytes as f64 * 100.0;
+        format!("{percentage:3.0}%").into()
+    } else {
+        "  0%".into()
+    }
+}
+
+#[inline]
+fn memory_label(data: &MemHarvest, is_percentage: bool) -> Cow<'static, str> {
+    if is_percentage {
+        memory_percentage_label(data)
+    } else {
+        memory_fraction_label(data)
+    }
+}
 
 impl Painter {
     pub fn draw_basic_memory(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        let mem_data = &app_state.converted_data.mem_data;
         let mut draw_widgets: Vec<PipeGauge<'_>> = Vec::new();
 
         if app_state.current_widget.widget_id == widget_id {
@@ -23,50 +60,41 @@ impl Painter {
             );
         }
 
-        let ram_percentage = if let Some(mem) = mem_data.last() {
-            mem.1
-        } else {
-            0.0
-        };
+        let data = app_state.data_store.get_data();
 
-        const EMPTY_MEMORY_FRAC_STRING: &str = "0.0B/0.0B";
-
-        let memory_fraction_label =
-            if let Some((_, label_frac)) = &app_state.converted_data.mem_labels {
-                if app_state.basic_mode_use_percent {
-                    format!("{:3.0}%", ram_percentage.round())
-                } else {
-                    label_frac.trim().to_string()
-                }
-            } else {
-                EMPTY_MEMORY_FRAC_STRING.to_string()
-            };
+        let ram_percentage = data.ram_harvest.saturating_percentage();
+        let ram_label = memory_label(&data.ram_harvest, app_state.basic_mode_use_percent);
 
         draw_widgets.push(
             PipeGauge::default()
                 .ratio(ram_percentage / 100.0)
                 .start_label("RAM")
-                .inner_label(memory_fraction_label)
+                .inner_label(ram_label)
                 .label_style(self.styles.ram_style)
                 .gauge_style(self.styles.ram_style),
         );
 
+        if let Some(swap_harvest) = &data.swap_harvest {
+            let swap_percentage = swap_harvest.saturating_percentage();
+            let swap_label = memory_label(swap_harvest, app_state.basic_mode_use_percent);
+
+            draw_widgets.push(
+                PipeGauge::default()
+                    .ratio(swap_percentage / 100.0)
+                    .start_label("SWP")
+                    .inner_label(swap_label)
+                    .label_style(self.styles.swap_style)
+                    .gauge_style(self.styles.swap_style),
+            );
+        }
+
         #[cfg(not(target_os = "windows"))]
         {
-            if let Some((_, label_frac)) = &app_state.converted_data.cache_labels {
-                let cache_data = &app_state.converted_data.cache_data;
+            if let Some(cache_harvest) = &data.cache_harvest {
+                let cache_percentage = cache_harvest.saturating_percentage();
+                let cache_fraction_label =
+                    memory_label(cache_harvest, app_state.basic_mode_use_percent);
 
-                let cache_percentage = if let Some(cache) = cache_data.last() {
-                    cache.1
-                } else {
-                    0.0
-                };
-
-                let cache_fraction_label = if app_state.basic_mode_use_percent {
-                    format!("{:3.0}%", cache_percentage.round())
-                } else {
-                    label_frac.trim().to_string()
-                };
                 draw_widgets.push(
                     PipeGauge::default()
                         .ratio(cache_percentage / 100.0)
@@ -78,44 +106,13 @@ impl Painter {
             }
         }
 
-        let swap_data = &app_state.converted_data.swap_data;
-
-        let swap_percentage = if let Some(swap) = swap_data.last() {
-            swap.1
-        } else {
-            0.0
-        };
-
-        if let Some((_, label_frac)) = &app_state.converted_data.swap_labels {
-            let swap_fraction_label = if app_state.basic_mode_use_percent {
-                format!("{:3.0}%", swap_percentage.round())
-            } else {
-                label_frac.trim().to_string()
-            };
-            draw_widgets.push(
-                PipeGauge::default()
-                    .ratio(swap_percentage / 100.0)
-                    .start_label("SWP")
-                    .inner_label(swap_fraction_label)
-                    .label_style(self.styles.swap_style)
-                    .gauge_style(self.styles.swap_style),
-            );
-        }
-
         #[cfg(feature = "zfs")]
         {
-            let arc_data = &app_state.converted_data.arc_data;
-            let arc_percentage = if let Some(arc) = arc_data.last() {
-                arc.1
-            } else {
-                0.0
-            };
-            if let Some((_, label_frac)) = &app_state.converted_data.arc_labels {
-                let arc_fraction_label = if app_state.basic_mode_use_percent {
-                    format!("{:3.0}%", arc_percentage.round())
-                } else {
-                    label_frac.trim().to_string()
-                };
+            if let Some(arc_harvest) = &data.arc_harvest {
+                let arc_percentage = arc_harvest.saturating_percentage();
+                let arc_fraction_label =
+                    memory_label(arc_harvest, app_state.basic_mode_use_percent);
+
                 draw_widgets.push(
                     PipeGauge::default()
                         .ratio(arc_percentage / 100.0)
@@ -129,45 +126,32 @@ impl Painter {
 
         #[cfg(feature = "gpu")]
         {
-            if let Some(gpu_data) = &app_state.converted_data.gpu_data {
-                let gpu_styles = &self.styles.gpu_colours;
-                let mut color_index = 0;
+            let gpu_styles = &self.styles.gpu_colours;
+            let mut colour_index = 0;
 
-                gpu_data.iter().for_each(|gpu_data_vec| {
-                    let gpu_data = gpu_data_vec.points.as_slice();
-                    let gpu_percentage = if let Some(gpu) = gpu_data.last() {
-                        gpu.1
+            for (_, harvest) in data.gpu_harvest.iter() {
+                let percentage = harvest.saturating_percentage();
+                let label = memory_label(harvest, app_state.basic_mode_use_percent);
+
+                let style = {
+                    if gpu_styles.is_empty() {
+                        tui::style::Style::default()
                     } else {
-                        0.0
-                    };
-                    let trimmed_gpu_frac = {
-                        if app_state.basic_mode_use_percent {
-                            format!("{:3.0}%", gpu_percentage.round())
-                        } else {
-                            gpu_data_vec.mem_total.trim().to_string()
-                        }
-                    };
-                    let style = {
-                        if gpu_styles.is_empty() {
-                            tui::style::Style::default()
-                        } else if color_index >= gpu_styles.len() {
-                            // cycle styles
-                            color_index = 1;
-                            gpu_styles[color_index - 1]
-                        } else {
-                            color_index += 1;
-                            gpu_styles[color_index - 1]
-                        }
-                    };
-                    draw_widgets.push(
-                        PipeGauge::default()
-                            .ratio(gpu_percentage / 100.0)
-                            .start_label("GPU")
-                            .inner_label(trimmed_gpu_frac)
-                            .label_style(style)
-                            .gauge_style(style),
-                    );
-                });
+                        let colour = gpu_styles[colour_index % gpu_styles.len()];
+                        colour_index += 1;
+
+                        colour
+                    }
+                };
+
+                draw_widgets.push(
+                    PipeGauge::default()
+                        .ratio(percentage / 100.0)
+                        .start_label("GPU")
+                        .inner_label(label)
+                        .label_style(style)
+                        .gauge_style(style),
+                );
             }
         }
 

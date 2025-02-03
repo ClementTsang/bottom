@@ -18,6 +18,7 @@ use std::{
 use anyhow::{Context, Result};
 use config::style::Styles;
 pub use config::Config;
+use data::TemperatureType;
 pub(crate) use error::{OptionError, OptionResult};
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
@@ -31,9 +32,8 @@ use self::{
 };
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::components::time_chart::LegendPosition,
+    canvas::components::time_graph::LegendPosition,
     constants::*,
-    data_collection::temperature::TemperatureType,
     utils::data_units::DataUnit,
     widgets::*,
 };

@@ -29,6 +29,8 @@ use crate::utils::general::ClampExt;
 /// - [`Sortable`]: This table expects sorted data, and there are helper
 ///   functions to facilitate things like sorting based on a selected column,
 ///   shortcut column selection support, mouse column selection support, etc.
+///
+/// FIXME: We already do all the text width checks - can we skip the underlying ones?
 pub struct DataTable<DataType, Header, S = Unsortable, C = Column<Header>> {
     pub columns: Vec<C>,
     pub state: DataTableState,

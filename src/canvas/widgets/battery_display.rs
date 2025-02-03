@@ -11,8 +11,8 @@ use unicode_width::UnicodeWidthStr;
 use crate::{
     app::App,
     canvas::{drawing_utils::widget_block, Painter},
+    collection::batteries::BatteryState,
     constants::*,
-    data_collection::batteries::BatteryState,
 };
 
 /// Calculate how many bars are to be drawn within basic mode's components.
@@ -65,10 +65,9 @@ impl Painter {
                 block
             };
 
-            if app_state.data_collection.battery_harvest.len() > 1 {
-                let battery_names = app_state
-                    .data_collection
-                    .battery_harvest
+            let battery_harvest = &(app_state.data_store.get_data().battery_harvest);
+            if battery_harvest.len() > 1 {
+                let battery_names = battery_harvest
                     .iter()
                     .enumerate()
                     .map(|(itx, _)| format!("Battery {itx}"))
@@ -124,10 +123,8 @@ impl Painter {
                 .direction(Direction::Horizontal)
                 .split(draw_loc)[0];
 
-            if let Some(battery_details) = app_state
-                .data_collection
-                .battery_harvest
-                .get(battery_widget_state.currently_selected_battery_index)
+            if let Some(battery_details) =
+                battery_harvest.get(battery_widget_state.currently_selected_battery_index)
             {
                 let full_width = draw_loc.width.saturating_sub(2);
                 let bar_length = usize::from(full_width.saturating_sub(6));
@@ -202,7 +199,7 @@ impl Painter {
 
                 battery_rows.push(Row::new(["Health", &health]).style(self.styles.text_style));
 
-                let header = if app_state.data_collection.battery_harvest.len() > 1 {
+                let header = if battery_harvest.len() > 1 {
                     Row::new([""]).bottom_margin(table_gap)
                 } else {
                     Row::default()

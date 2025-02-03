@@ -174,7 +174,7 @@ impl Painter {
         use BottomWidgetType::*;
 
         terminal.draw(|f| {
-            let (terminal_size, frozen_draw_loc) = if app_state.frozen_state.is_frozen() {
+            let (terminal_size, frozen_draw_loc) = if app_state.data_store.is_frozen() {
                 // TODO: Remove built-in cache?
                 let split_loc = Layout::default()
                     .constraints([Constraint::Min(0), Constraint::Length(1)])
@@ -343,13 +343,14 @@ impl Painter {
                     _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
-                // Basic mode.  This basically removes all graphs but otherwise
+                // Basic mode. This basically removes all graphs but otherwise
                 // the same info.
                 if let Some(frozen_draw_loc) = frozen_draw_loc {
                     self.draw_frozen_indicator(f, frozen_draw_loc);
                 }
 
-                let actual_cpu_data_len = app_state.converted_data.cpu_data.len().saturating_sub(1);
+                let data = app_state.data_store.get_data();
+                let actual_cpu_data_len = data.cpu_harvest.len();
 
                 // This fixes #397, apparently if the height is 1, it can't render the CPU
                 // bars...
@@ -370,29 +371,27 @@ impl Painter {
 
                 let mut mem_rows = 1;
 
-                if app_state.converted_data.swap_labels.is_some() {
+                if data.swap_harvest.is_some() {
                     mem_rows += 1; // add row for swap
                 }
 
                 #[cfg(feature = "zfs")]
                 {
-                    if app_state.converted_data.arc_labels.is_some() {
+                    if data.arc_harvest.is_some() {
                         mem_rows += 1; // add row for arc
                     }
                 }
 
                 #[cfg(not(target_os = "windows"))]
                 {
-                    if app_state.converted_data.cache_labels.is_some() {
+                    if data.cache_harvest.is_some() {
                         mem_rows += 1;
                     }
                 }
 
                 #[cfg(feature = "gpu")]
                 {
-                    if let Some(gpu_data) = &app_state.converted_data.gpu_data {
-                        mem_rows += gpu_data.len() as u16; // add row(s) for gpu
-                    }
+                    mem_rows += data.gpu_harvest.len() as u16; // add row(s) for gpu
                 }
 
                 if mem_rows == 1 {

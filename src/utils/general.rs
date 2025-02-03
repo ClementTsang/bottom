@@ -62,6 +62,24 @@ macro_rules! clamp_num_impl {
 
 clamp_num_impl!(u8, u16, u32, u64, usize);
 
+/// Checked log2.
+pub fn saturating_log2(value: f64) -> f64 {
+    if value > 0.0 {
+        value.log2()
+    } else {
+        0.0
+    }
+}
+
+/// Checked log10.
+pub fn saturating_log10(value: f64) -> f64 {
+    if value > 0.0 {
+        value.log10()
+    } else {
+        0.0
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

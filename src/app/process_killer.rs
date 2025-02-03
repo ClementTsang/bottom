@@ -10,7 +10,7 @@ use windows::Win32::{
     },
 };
 
-use crate::data_collection::processes::Pid;
+use crate::collection::processes::Pid;
 
 /// Based from [this SO answer](https://stackoverflow.com/a/55231715).
 #[cfg(target_os = "windows")]

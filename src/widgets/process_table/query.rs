@@ -9,7 +9,7 @@ use humantime::parse_duration;
 use regex::Regex;
 
 use crate::{
-    data_collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case, utils::data_prefixes::*,
+    collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case, utils::data_units::*,
 };
 
 #[derive(Debug)]

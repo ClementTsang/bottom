@@ -1,4 +1,7 @@
-use std::borrow::Cow;
+mod time_chart;
+pub use time_chart::*;
+
+use std::{borrow::Cow, time::Instant};
 
 use concat_string::concat_string;
 use tui::{
@@ -10,29 +13,50 @@ use tui::{
     Frame,
 };
 
-use crate::canvas::drawing_utils::widget_block;
-
-use super::time_chart::{
-    Axis, Dataset, LegendPosition, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS,
-};
+use crate::{app::data::Values, canvas::drawing_utils::widget_block};
 
 /// Represents the data required by the [`TimeGraph`].
-pub struct GraphData<'a> {
-    pub points: &'a [Point],
-    pub style: Style,
-    pub name: Option<Cow<'a, str>>,
+///
+/// TODO: We may be able to get rid of this intermediary data structure.
+#[derive(Default)]
+pub(crate) struct GraphData<'a> {
+    time: &'a [Instant],
+    values: Option<&'a Values>,
+    style: Style,
+    name: Option<Cow<'a, str>>,
+}
+
+impl<'a> GraphData<'a> {
+    pub fn time(mut self, time: &'a [Instant]) -> Self {
+        self.time = time;
+        self
+    }
+
+    pub fn values(mut self, values: &'a Values) -> Self {
+        self.values = Some(values);
+        self
+    }
+
+    pub fn style(mut self, style: Style) -> Self {
+        self.style = style;
+        self
+    }
+
+    pub fn name(mut self, name: Cow<'a, str>) -> Self {
+        self.name = Some(name);
+        self
+    }
 }
 
 pub struct TimeGraph<'a> {
-    /// The min and max x boundaries. Expects a f64 representing the time range
-    /// in milliseconds.
-    pub x_bounds: [u64; 2],
+    /// The min x value.
+    pub x_min: f64,
 
     /// Whether to hide the time/x-labels.
     pub hide_x_labels: bool,
 
     /// The min and max y boundaries.
-    pub y_bounds: [f64; 2],
+    pub y_bounds: AxisBound,
 
     /// Any y-labels.
     pub y_labels: &'a [Cow<'a, str>],
@@ -67,24 +91,26 @@ pub struct TimeGraph<'a> {
     /// The marker type. Unlike ratatui's native charts, we assume
     /// only a single type of marker.
     pub marker: Marker,
+
+    /// The chart scaling.
+    pub scaling: ChartScaling,
 }
 
 impl TimeGraph<'_> {
     /// Generates the [`Axis`] for the x-axis.
     fn generate_x_axis(&self) -> Axis<'_> {
         // Due to how we display things, we need to adjust the time bound values.
-        let time_start = -(self.x_bounds[1] as f64);
-        let adjusted_x_bounds = [time_start, 0.0];
+        let adjusted_x_bounds = AxisBound::Min(self.x_min);
 
         if self.hide_x_labels {
             Axis::default().bounds(adjusted_x_bounds)
         } else {
-            let xb_one = (self.x_bounds[1] / 1000).to_string();
-            let xb_zero = (self.x_bounds[0] / 1000).to_string();
+            let x_bound_left = ((-self.x_min) as u64 / 1000).to_string();
+            let x_bound_right = "0s";
 
             let x_labels = vec![
-                Span::styled(concat_string!(xb_one, "s"), self.graph_style),
-                Span::styled(concat_string!(xb_zero, "s"), self.graph_style),
+                Span::styled(concat_string!(x_bound_left, "s"), self.graph_style),
+                Span::styled(x_bound_right, self.graph_style),
             ];
 
             Axis::default()
@@ -116,13 +142,14 @@ impl TimeGraph<'_> {
     ///   graph.
     /// - Expects `graph_data`, which represents *what* data to draw, and
     ///   various details like style and optional legends.
-    pub fn draw_time_graph(&self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: &[GraphData<'_>]) {
+    pub fn draw_time_graph(
+        &self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: Vec<GraphData<'_>>,
+    ) {
+        // TODO: (points_rework_v1) can we reduce allocations in the underlying graph by saving some sort of state?
+
         let x_axis = self.generate_x_axis();
         let y_axis = self.generate_y_axis();
-
-        // This is some ugly manual loop unswitching. Maybe unnecessary.
-        // TODO: Optimize this step. Cut out unneeded points.
-        let data = graph_data.iter().map(create_dataset).collect();
+        let data = graph_data.into_iter().map(create_dataset).collect();
 
         let block = {
             let mut b = widget_block(false, self.is_selected, self.border_type)
@@ -147,30 +174,38 @@ impl TimeGraph<'_> {
                 .hidden_legend_constraints(
                     self.legend_constraints
                         .unwrap_or(DEFAULT_LEGEND_CONSTRAINTS),
-                ),
+                )
+                .scaling(self.scaling),
             draw_loc,
         )
     }
 }
 
 /// Creates a new [`Dataset`].
-fn create_dataset<'a>(data: &'a GraphData<'a>) -> Dataset<'a> {
+fn create_dataset(data: GraphData<'_>) -> Dataset<'_> {
     let GraphData {
-        points,
+        time,
+        values,
         style,
         name,
     } = data;
 
+    let Some(values) = values else {
+        return Dataset::default();
+    };
+
     let dataset = Dataset::default()
-        .style(*style)
-        .data(points)
+        .style(style)
+        .data(time, values)
         .graph_type(GraphType::Line);
 
-    if let Some(name) = name {
-        dataset.name(name.as_ref())
+    let dataset = if let Some(name) = name {
+        dataset.name(name)
     } else {
         dataset
-    }
+    };
+
+    dataset
 }
 
 #[cfg(test)]
@@ -184,8 +219,8 @@ mod test {
         widgets::BorderType,
     };
 
-    use super::TimeGraph;
-    use crate::canvas::components::time_chart::Axis;
+    use super::{AxisBound, ChartScaling, TimeGraph};
+    use crate::canvas::components::time_graph::Axis;
 
     const Y_LABELS: [Cow<'static, str>; 3] = [
         Cow::Borrowed("0%"),
@@ -196,9 +231,9 @@ mod test {
     fn create_time_graph() -> TimeGraph<'static> {
         TimeGraph {
             title: " Network ".into(),
-            x_bounds: [0, 15000],
+            x_min: -15000.0,
             hide_x_labels: false,
-            y_bounds: [0.0, 100.5],
+            y_bounds: AxisBound::Max(100.5),
             y_labels: &Y_LABELS,
             graph_style: Style::default().fg(Color::Red),
             border_style: Style::default().fg(Color::Blue),
@@ -209,6 +244,7 @@ mod test {
             legend_position: None,
             legend_constraints: None,
             marker: Marker::Braille,
+            scaling: ChartScaling::Linear,
         }
     }
 
@@ -219,7 +255,7 @@ mod test {
         let x_axis = tg.generate_x_axis();
 
         let actual = Axis::default()
-            .bounds([-15000.0, 0.0])
+            .bounds(AxisBound::Min(-15000.0))
             .labels(vec![Span::styled("15s", style), Span::styled("0s", style)])
             .style(style);
         assert_eq!(x_axis.bounds, actual.bounds);
@@ -234,7 +270,7 @@ mod test {
         let y_axis = tg.generate_y_axis();
 
         let actual = Axis::default()
-            .bounds([0.0, 100.5])
+            .bounds(AxisBound::Max(100.5))
             .labels(vec![
                 Span::styled("0%", style),
                 Span::styled("50%", style),

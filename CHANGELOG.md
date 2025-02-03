@@ -36,13 +36,17 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1593](https://github.com/ClementTsang/bottom/pull/1593): Fix using `"none"` for chart legend position in configs.
 - [#1594](https://github.com/ClementTsang/bottom/pull/1594): Fix incorrect default config definitions for chart legends.
 - [#1596](https://github.com/ClementTsang/bottom/pull/1596): Fix support for nilfs2 file system.
-- [#1660](https://github.com/ClementTsang/bottom/pull/1660): Handle terminal cleanup if the program is terminated due to an `Err` bubbling to the top.
+- [#1660](https://github.com/ClementTsang/bottom/pull/1660): Fix properly cleaning up the terminal if the program is terminated due to an `Err` bubbling to the top.
+- [#1663](https://github.com/ClementTsang/bottom/pull/1663): Fix network graphs using log scaling having broken lines when a point was 0.
 
 ### Changes
 
 - [#1559](https://github.com/ClementTsang/bottom/pull/1559): Rename `--enable_gpu` to `--disable_gpu`, and make GPU features enabled by default.
-- [#1570](https://github.com/ClementTsang/bottom/pull/1570): Consider `$XDG_CONFIG_HOME` on macOS when looking for a default config path in a
-  backwards-compatible fashion.
+- [#1570](https://github.com/ClementTsang/bottom/pull/1570): Consider `$XDG_CONFIG_HOME` on macOS when looking for a default config path in a backwards-compatible fashion.
+
+### Other
+
+- [#1663](https://github.com/ClementTsang/bottom/pull/1663): Rework how data is stored internally, reducing memory usage a bit.
 
 ## [0.10.2] - 2024-08-05
 

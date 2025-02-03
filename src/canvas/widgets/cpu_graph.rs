@@ -7,16 +7,16 @@ use tui::{
 };
 
 use crate::{
-    app::{layout_manager::WidgetDirection, App},
+    app::{data::StoredData, layout_manager::WidgetDirection, App},
     canvas::{
         components::{
             data_table::{DrawInfo, SelectionState},
-            time_graph::{GraphData, TimeGraph},
+            time_graph::{AxisBound, GraphData, TimeGraph},
         },
         drawing_utils::should_hide_x_label,
         Painter,
     },
-    data_conversion::CpuWidgetData,
+    collection::cpu::CpuData,
     widgets::CpuWidgetState,
 };
 
@@ -120,56 +120,48 @@ impl Painter {
     }
 
     fn generate_points<'a>(
-        &self, cpu_widget_state: &CpuWidgetState, cpu_data: &'a [CpuWidgetData], show_avg_cpu: bool,
+        &self, cpu_widget_state: &'a mut CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
-
         let current_scroll_position = cpu_widget_state.table.state.current_index;
+        let cpu_entries = &data.cpu_harvest;
+        let cpu_points = &data.timeseries_data.cpu;
+        let time = &data.timeseries_data.time;
+
         if current_scroll_position == ALL_POSITION {
             // This case ensures the other cases cannot have the position be equal to 0.
-            cpu_data
+
+            cpu_points
                 .iter()
                 .enumerate()
-                .rev()
-                .filter_map(|(itx, cpu)| {
-                    match &cpu {
-                        CpuWidgetData::All => None,
-                        CpuWidgetData::Entry { data, .. } => {
-                            let style = if show_avg_cpu && itx == AVG_POSITION {
-                                self.styles.avg_cpu_colour
-                            } else if itx == ALL_POSITION {
-                                self.styles.all_cpu_colour
-                            } else {
-                                let offset_position = itx - 1; // Because of the all position
-                                self.styles.cpu_colour_styles[(offset_position - show_avg_offset)
-                                    % self.styles.cpu_colour_styles.len()]
-                            };
+                .map(|(itx, values)| {
+                    let style = if show_avg_cpu && itx == AVG_POSITION {
+                        self.styles.avg_cpu_colour
+                    } else if itx == ALL_POSITION {
+                        self.styles.all_cpu_colour
+                    } else {
+                        self.styles.cpu_colour_styles
+                            [(itx - show_avg_offset) % self.styles.cpu_colour_styles.len()]
+                    };
 
-                            Some(GraphData {
-                                points: &data[..],
-                                style,
-                                name: None,
-                            })
-                        }
-                    }
+                    GraphData::default().style(style).time(time).values(values)
                 })
-                .collect::<Vec<_>>()
-        } else if let Some(CpuWidgetData::Entry { data, .. }) =
-            cpu_data.get(current_scroll_position)
-        {
+                .collect()
+        } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position - 1) {
+            // We generally subtract one from current scroll position because of the all entry.
+
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.styles.avg_cpu_colour
             } else {
-                let offset_position = current_scroll_position - 1; // Because of the all position
+                let offset_position = current_scroll_position - 1;
                 self.styles.cpu_colour_styles
                     [(offset_position - show_avg_offset) % self.styles.cpu_colour_styles.len()]
             };
 
-            vec![GraphData {
-                points: &data[..],
-                style,
-                name: None,
-            }]
+            vec![GraphData::default()
+                .style(style)
+                .time(time)
+                .values(&cpu_points[current_scroll_position - 1])]
         } else {
             vec![]
         }
@@ -178,14 +170,15 @@ impl Painter {
     fn draw_cpu_graph(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
+        const Y_BOUNDS: AxisBound = AxisBound::Max(100.5);
         const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
 
         if let Some(cpu_widget_state) = app_state.states.cpu_state.widget_states.get_mut(&widget_id)
         {
-            let cpu_data = &app_state.converted_data.cpu_data;
+            let data = app_state.data_store.get_data();
+
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
-            let x_bounds = [0, cpu_widget_state.current_display_time];
+            let x_min = -(cpu_widget_state.current_display_time as f64);
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
@@ -193,9 +186,9 @@ impl Painter {
                 draw_loc,
             );
 
-            let points = self.generate_points(
+            let graph_data = self.generate_points(
                 cpu_widget_state,
-                cpu_data,
+                data,
                 app_state.app_config_fields.show_average_cpu,
             );
 
@@ -203,7 +196,7 @@ impl Painter {
             let title = {
                 #[cfg(target_family = "unix")]
                 {
-                    let load_avg = app_state.converted_data.load_avg_data;
+                    let load_avg = &data.load_avg_harvest;
                     let load_avg_str = format!(
                         "─ {:.2} {:.2} {:.2} ",
                         load_avg[0], load_avg[1], load_avg[2]
@@ -224,7 +217,7 @@ impl Painter {
             };
 
             TimeGraph {
-                x_bounds,
+                x_min,
                 hide_x_labels,
                 y_bounds: Y_BOUNDS,
                 y_labels: &Y_LABELS,
@@ -238,8 +231,9 @@ impl Painter {
                 legend_position: None,
                 legend_constraints: None,
                 marker,
+                scaling: Default::default(),
             }
-            .draw_time_graph(f, draw_loc, &points);
+            .draw_time_graph(f, draw_loc, graph_data);
         }
     }
 

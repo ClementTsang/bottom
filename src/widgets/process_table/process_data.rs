@@ -15,8 +15,9 @@ use crate::{
         components::data_table::{DataTableColumn, DataToCell},
         Painter,
     },
-    data_collection::processes::{Pid, ProcessHarvest},
-    data_conversion::{binary_byte_string, dec_bytes_per_second_string, dec_bytes_string},
+    collection::processes::{Pid, ProcessHarvest},
+    data_conversion::dec_bytes_per_second_string,
+    utils::data_units::{get_binary_bytes, get_decimal_bytes, GIBI_LIMIT, GIGA_LIMIT},
 };
 
 #[derive(Clone, Debug)]
@@ -163,6 +164,30 @@ fn format_time(dur: Duration) -> String {
         )
     } else {
         format!("{}.{:03}s", dur.as_secs(), dur.as_millis() % 1000)
+    }
+}
+
+/// Returns a string given a value that is converted to the closest binary
+/// variant. If the value is greater than a gibibyte, then it will return a
+/// decimal place.
+#[inline]
+fn binary_byte_string(value: u64) -> String {
+    let converted_values = get_binary_bytes(value);
+    if value >= GIBI_LIMIT {
+        format!("{:.1}{}", converted_values.0, converted_values.1)
+    } else {
+        format!("{:.0}{}", converted_values.0, converted_values.1)
+    }
+}
+
+/// Returns a string given a value that is converted to the closest SI-variant.
+/// If the value is greater than a giga-X, then it will return a decimal place.
+fn dec_bytes_string(value: u64) -> String {
+    let converted_values = get_decimal_bytes(value);
+    if value >= GIGA_LIMIT {
+        format!("{:.1}{}", converted_values.0, converted_values.1)
+    } else {
+        format!("{:.0}{}", converted_values.0, converted_values.1)
     }
 }
 
@@ -366,7 +391,9 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
 mod test {
     use std::time::Duration;
 
-    use crate::widgets::process_data::format_time;
+    use crate::utils::data_units::*;
+
+    use super::*;
 
     #[test]
     fn test_format_time() {
@@ -396,6 +423,31 @@ mod test {
         assert_eq!(
             format_time(Duration::from_secs(ONE_DAY * 365 - 1)),
             "364d 23h 59m"
+        );
+    }
+
+    #[test]
+    fn test_binary_byte_string() {
+        assert_eq!(binary_byte_string(0), "0B".to_string());
+        assert_eq!(binary_byte_string(1), "1B".to_string());
+        assert_eq!(binary_byte_string(1000), "1000B".to_string());
+        assert_eq!(binary_byte_string(1023), "1023B".to_string());
+        assert_eq!(binary_byte_string(KIBI_LIMIT), "1KiB".to_string());
+        assert_eq!(binary_byte_string(KIBI_LIMIT + 1), "1KiB".to_string());
+        assert_eq!(binary_byte_string(MEBI_LIMIT), "1MiB".to_string());
+        assert_eq!(binary_byte_string(GIBI_LIMIT), "1.0GiB".to_string());
+        assert_eq!(binary_byte_string(2 * GIBI_LIMIT), "2.0GiB".to_string());
+        assert_eq!(
+            binary_byte_string((2.5 * GIBI_LIMIT as f64) as u64),
+            "2.5GiB".to_string()
+        );
+        assert_eq!(
+            binary_byte_string((10.34 * TEBI_LIMIT as f64) as u64),
+            "10.3TiB".to_string()
+        );
+        assert_eq!(
+            binary_byte_string((10.36 * TEBI_LIMIT as f64) as u64),
+            "10.4TiB".to_string()
         );
     }
 }

@@ -10,15 +10,14 @@
 pub(crate) mod app;
 mod utils {
     pub(crate) mod cancellation_token;
-    pub(crate) mod data_prefixes;
     pub(crate) mod data_units;
     pub(crate) mod general;
     pub(crate) mod logging;
     pub(crate) mod strings;
 }
 pub(crate) mod canvas;
+pub(crate) mod collection;
 pub(crate) mod constants;
-pub(crate) mod data_collection;
 pub(crate) mod data_conversion;
 pub(crate) mod event;
 pub mod options;
@@ -51,6 +50,7 @@ use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, Collecti
 use options::{args, get_or_create_config, init_app};
 use tui::{backend::CrosstermBackend, Terminal};
 use utils::cancellation_token::CancellationToken;
+
 #[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;
 
@@ -218,17 +218,15 @@ fn create_collection_thread(
     cancellation_token: Arc<CancellationToken>, app_config_fields: &AppConfigFields,
     filters: DataFilters, used_widget_set: UsedWidgets,
 ) -> JoinHandle<()> {
-    let temp_type = app_config_fields.temperature_type;
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
     let unnormalized_cpu = app_config_fields.unnormalized_cpu;
     let show_average_cpu = app_config_fields.show_average_cpu;
     let update_time = app_config_fields.update_rate;
 
     thread::spawn(move || {
-        let mut data_state = data_collection::DataCollector::new(filters);
+        let mut data_state = collection::DataCollector::new(filters);
 
-        data_state.set_data_collection(used_widget_set);
-        data_state.set_temperature_type(temp_type);
+        data_state.set_collection(used_widget_set);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
         data_state.set_unnormalized_cpu(unnormalized_cpu);
         data_state.set_show_average_cpu(show_average_cpu);
@@ -262,7 +260,7 @@ fn create_collection_thread(
             }
 
             let event = BottomEvent::Update(Box::from(data_state.data));
-            data_state.data = data_collection::Data::default();
+            data_state.data = collection::Data::default();
             if sender.send(event).is_err() {
                 break;
             }
@@ -326,9 +324,9 @@ pub fn start_bottom() -> anyhow::Result<()> {
     let _cleaning_thread = {
         let cancellation_token = cancellation_token.clone();
         let cleaning_sender = sender.clone();
-        let offset_wait_time = app.app_config_fields.retention_ms + 60000;
+        let offset_wait = Duration::from_millis(app.app_config_fields.retention_ms + 60000);
         thread::spawn(move || loop {
-            if cancellation_token.sleep_with_cancellation(Duration::from_millis(offset_wait_time)) {
+            if cancellation_token.sleep_with_cancellation(offset_wait) {
                 break;
             }
 
@@ -407,7 +405,7 @@ pub fn start_bottom() -> anyhow::Result<()> {
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::Update(data) => {
-                    app.data_collection.eat_data(data);
+                    app.data_store.eat_data(data, &app.app_config_fields);
 
                     // This thing is required as otherwise, some widgets can't draw correctly w/o
                     // some data (or they need to be re-drawn).
@@ -416,96 +414,19 @@ pub fn start_bottom() -> anyhow::Result<()> {
                         app.is_force_redraw = true;
                     }
 
-                    if !app.frozen_state.is_frozen() {
+                    if !app.data_store.is_frozen() {
                         // Convert all data into data for the displayed widgets.
 
-                        if app.used_widgets.use_net {
-                            let network_data = convert_network_points(
-                                &app.data_collection,
-                                app.app_config_fields.use_basic_mode
-                                    || app.app_config_fields.use_old_network_legend,
-                                &app.app_config_fields.network_scale_type,
-                                &app.app_config_fields.network_unit_type,
-                                app.app_config_fields.network_use_binary_prefix,
-                            );
-                            app.converted_data.network_data_rx = network_data.rx;
-                            app.converted_data.network_data_tx = network_data.tx;
-                            app.converted_data.rx_display = network_data.rx_display;
-                            app.converted_data.tx_display = network_data.tx_display;
-                            if let Some(total_rx_display) = network_data.total_rx_display {
-                                app.converted_data.total_rx_display = total_rx_display;
-                            }
-                            if let Some(total_tx_display) = network_data.total_tx_display {
-                                app.converted_data.total_tx_display = total_tx_display;
-                            }
-                        }
-
                         if app.used_widgets.use_disk {
-                            app.converted_data.convert_disk_data(&app.data_collection);
-
                             for disk in app.states.disk_state.widget_states.values_mut() {
                                 disk.force_data_update();
                             }
                         }
 
                         if app.used_widgets.use_temp {
-                            app.converted_data.convert_temp_data(
-                                &app.data_collection,
-                                app.app_config_fields.temperature_type,
-                            );
-
                             for temp in app.states.temp_state.widget_states.values_mut() {
                                 temp.force_data_update();
                             }
-                        }
-
-                        if app.used_widgets.use_mem {
-                            app.converted_data.mem_data =
-                                convert_mem_data_points(&app.data_collection);
-
-                            #[cfg(not(target_os = "windows"))]
-                            {
-                                app.converted_data.cache_data =
-                                    convert_cache_data_points(&app.data_collection);
-                            }
-
-                            app.converted_data.swap_data =
-                                convert_swap_data_points(&app.data_collection);
-
-                            #[cfg(feature = "zfs")]
-                            {
-                                app.converted_data.arc_data =
-                                    convert_arc_data_points(&app.data_collection);
-                            }
-
-                            #[cfg(feature = "gpu")]
-                            {
-                                app.converted_data.gpu_data =
-                                    convert_gpu_data(&app.data_collection);
-                            }
-
-                            app.converted_data.mem_labels =
-                                convert_mem_label(&app.data_collection.memory_harvest);
-
-                            app.converted_data.swap_labels =
-                                convert_mem_label(&app.data_collection.swap_harvest);
-
-                            #[cfg(not(target_os = "windows"))]
-                            {
-                                app.converted_data.cache_labels =
-                                    convert_mem_label(&app.data_collection.cache_harvest);
-                            }
-
-                            #[cfg(feature = "zfs")]
-                            {
-                                app.converted_data.arc_labels =
-                                    convert_mem_label(&app.data_collection.arc_harvest);
-                            }
-                        }
-
-                        if app.used_widgets.use_cpu {
-                            app.converted_data.convert_cpu_data(&app.data_collection);
-                            app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;
                         }
 
                         if app.used_widgets.use_proc {
@@ -514,13 +435,19 @@ pub fn start_bottom() -> anyhow::Result<()> {
                             }
                         }
 
+                        if app.used_widgets.use_cpu {
+                            for cpu in app.states.cpu_state.widget_states.values_mut() {
+                                cpu.force_data_update();
+                            }
+                        }
+
                         app.update_data();
                         try_drawing(&mut terminal, &mut app, &mut painter)?;
                     }
                 }
                 BottomEvent::Clean => {
-                    app.data_collection
-                        .clean_data(app.app_config_fields.retention_ms);
+                    app.data_store
+                        .clean_data(Duration::from_millis(app.app_config_fields.retention_ms));
                 }
             }
         }

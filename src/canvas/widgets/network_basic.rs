@@ -8,6 +8,7 @@ use tui::{
 use crate::{
     app::App,
     canvas::{drawing_utils::widget_block, Painter},
+    utils::data_units::{convert_bits, get_unit_prefix},
 };
 
 impl Painter {
@@ -39,10 +40,17 @@ impl Painter {
             );
         }
 
-        let rx_label = format!("RX: {}", app_state.converted_data.rx_display);
-        let tx_label = format!("TX: {}", app_state.converted_data.tx_display);
-        let total_rx_label = format!("Total RX: {}", app_state.converted_data.total_rx_display);
-        let total_tx_label = format!("Total TX: {}", app_state.converted_data.total_tx_display);
+        let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
+        let network_data = &(app_state.data_store.get_data().network_harvest);
+        let rx = get_unit_prefix(network_data.rx, use_binary_prefix);
+        let tx = get_unit_prefix(network_data.tx, use_binary_prefix);
+        let total_rx = convert_bits(network_data.total_rx, use_binary_prefix);
+        let total_tx = convert_bits(network_data.total_tx, use_binary_prefix);
+
+        let rx_label = format!("RX: {:.1}{}", rx.0, rx.1);
+        let tx_label = format!("TX: {:.1}{}", tx.0, tx.1);
+        let total_rx_label = format!("Total RX: {:.1}{}", total_rx.0, total_rx.1);
+        let total_tx_label = format!("Total TX: {:.1}{}", total_tx.0, total_tx.1);
 
         let net_text = vec![
             Line::from(Span::styled(rx_label, self.styles.rx_style)),

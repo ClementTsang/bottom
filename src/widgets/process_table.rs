@@ -15,14 +15,14 @@ use sort_table::SortTableColumn;
 
 use crate::{
     app::{
-        data_farmer::{DataCollection, ProcessData},
+        data::{ProcessData, StoredData},
         AppConfigFields, AppSearchState,
     },
     canvas::components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    data_collection::processes::{Pid, ProcessHarvest},
+    collection::processes::{Pid, ProcessHarvest},
     options::config::style::Styles,
 };
 
@@ -395,20 +395,21 @@ impl ProcWidgetState {
     /// This function *only* updates the displayed process data. If there is a
     /// need to update the actual *stored* data, call it before this
     /// function.
-    pub fn set_table_data(&mut self, data_collection: &DataCollection) {
+    pub fn set_table_data(&mut self, stored_data: &StoredData) {
         let data = match &self.mode {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
-                self.get_normal_data(&data_collection.process_data.process_harvest)
+                self.get_normal_data(&stored_data.process_data.process_harvest)
             }
             ProcWidgetMode::Tree { collapsed_pids } => {
-                self.get_tree_data(collapsed_pids, data_collection)
+                self.get_tree_data(collapsed_pids, stored_data)
             }
         };
         self.table.set_data(data);
+        self.force_update_data = false;
     }
 
     fn get_tree_data(
-        &self, collapsed_pids: &HashSet<Pid>, data_collection: &DataCollection,
+        &self, collapsed_pids: &HashSet<Pid>, stored_data: &StoredData,
     ) -> Vec<ProcWidgetData> {
         const BRANCH_END: char = '└';
         const BRANCH_SPLIT: char = '├';
@@ -424,10 +425,10 @@ impl ProcWidgetState {
             process_parent_mapping,
             orphan_pids,
             ..
-        } = &data_collection.process_data;
+        } = &stored_data.process_data;
 
         // Only keep a set of the kept PIDs.
-        let kept_pids = data_collection
+        let kept_pids = stored_data
             .process_data
             .process_harvest
             .iter()
