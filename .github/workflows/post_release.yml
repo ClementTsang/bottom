@@ -116,7 +116,7 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Automatically create PR for winget repos
-        uses: vedantmgoyal2009/winget-releaser@0db4f0a478166abd0fa438c631849f0b8dcfb99f
+        uses: vedantmgoyal2009/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e
         with:
           identifier: Clement.bottom
           installers-regex: '^bottom_x86_64_installer\.msi$'
