@@ -188,6 +188,12 @@
             -->
             <ComponentRef Id='License'/>
             
+            <ComponentRef Id='btmPowershell'/>
+            <ComponentRef Id='btmNu'/>
+            <ComponentRef Id='btmFish'/>
+            <ComponentRef Id='btmBash'/>
+            <ComponentRef Id='btmZsh'/>
+
             <ComponentRef Id='binary0'/>
 
             <Feature

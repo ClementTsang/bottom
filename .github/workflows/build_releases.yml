@@ -333,7 +333,7 @@ jobs:
       - name: Build MSI file
         shell: powershell
         env:
-          BTM_GENERATE: ""
+          BTM_GENERATE: true
         run: |
           cargo wix --nocapture
 
