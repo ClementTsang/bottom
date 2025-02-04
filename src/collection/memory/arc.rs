@@ -63,8 +63,12 @@ pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
         }
     };
 
-    Some(MemHarvest {
-        total_bytes: mem_total,
-        used_bytes: mem_used,
-    })
+    if mem_total > 0 {
+        Some(MemHarvest {
+            total_bytes: mem_total,
+            used_bytes: mem_used,
+        })
+    } else {
+        None
+    }
 }

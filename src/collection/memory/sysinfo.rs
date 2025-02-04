@@ -19,11 +19,14 @@ pub(crate) fn get_ram_usage(sys: &System) -> Option<MemHarvest> {
 pub(crate) fn get_swap_usage(sys: &System) -> Option<MemHarvest> {
     let mem_used = sys.used_swap();
     let mem_total = sys.total_swap();
-
-    Some(MemHarvest {
-        used_bytes: mem_used,
-        total_bytes: mem_total,
-    })
+    if mem_total > 0 {
+        Some(MemHarvest {
+            used_bytes: mem_used,
+            total_bytes: mem_total,
+        })
+    } else {
+        None
+    }
 }
 
 /// Returns cache usage. sysinfo has no way to do this directly but it should
