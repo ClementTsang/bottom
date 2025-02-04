@@ -301,7 +301,7 @@ jobs:
           path: release
 
   build-msi:
-    name: "Build MSI installer"
+    name: "Build MSI (WiX) installer"
     runs-on: "windows-2019"
     timeout-minutes: 12
     steps:
@@ -325,13 +325,17 @@ jobs:
           toolchain: stable
           target: x86_64-pc-windows-msvc
 
+      - name: Install cargo-wix
+        shell: powershell
+        run: |
+          cargo install cargo-wix --version 0.3.8 --locked
+
       - name: Build MSI file
         shell: powershell
         env:
           BTM_GENERATE: ""
         run: |
-          cargo install cargo-wix --version 0.3.8 --locked
-          cargo wix
+          cargo wix --nocapture
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
