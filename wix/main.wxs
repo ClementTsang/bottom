@@ -101,6 +101,53 @@
                             Source='wix\License.rtf'
                             KeyPath='yes'/>
                     </Component>
+
+                    <Directory Id='Completions' Name='completions'>
+                      <Component Id='btmPowershell' Guid='*'>
+                        <File
+                            Id='btmPs1'
+                            Name='_btm.ps1'
+                            DiskId='1'
+                            Source='target\tmp\bottom\completion\_btm.ps1'
+                            KeyPath='yes'/>
+                      </Component>
+
+                      <Component Id='btmNu' Guid='*'>
+                        <File
+                            Id='btmNu'
+                            Name='btm.nu'
+                            DiskId='1'
+                            Source='target\tmp\bottom\completion\btm.nu'
+                            KeyPath='yes'/>
+                      </Component>
+
+                      <Component Id='btmFish' Guid='*'>
+                        <File
+                            Id='btmFish'
+                            Name='btm.fish'
+                            DiskId='1'
+                            Source='target\tmp\bottom\completion\btm.fish'
+                            KeyPath='yes'/>
+                      </Component>
+
+                      <Component Id='btmBash' Guid='*'>
+                        <File
+                            Id='btmBash'
+                            Name='btm.bash'
+                            DiskId='1'
+                            Source='target\tmp\bottom\completion\btm.bash'
+                            KeyPath='yes'/>
+                      </Component>
+
+                      <Component Id='btmZsh' Guid='*'>
+                        <File
+                            Id='btmZsh'
+                            Name='_btm'
+                            DiskId='1'
+                            Source='target\tmp\bottom\completion\_btm'
+                            KeyPath='yes'/>
+                      </Component>
+                    </Directory>
                     
                     <Directory Id='Bin' Name='bin'>
                         <Component Id='Path' Guid='15D841CF-0363-4DBB-BF55-ECCB43B9EB03' KeyPath='yes'>
