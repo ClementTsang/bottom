@@ -44,6 +44,7 @@
   - [Scoop](#scoop)
   - [winget](#winget)
   - [Windows installer](#windows-installer)
+  - [Conda](#conda)
   - [Pre-built binaries](#pre-built-binaries)
     - [Auto-completion](#auto-completion)
 - [Usage](#usage)
@@ -347,6 +348,19 @@ You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 
 You can also manually install bottom as a Windows program by going to the [latest release](https://github.com/ClementTsang/bottom/releases/latest)
 and installing via the `.msi` file.
+
+### Conda
+
+You can install using `conda` with [this conda-smithy repository](https://github.com/conda-forge/bottom-feedstock):
+
+```bash
+# Add the channel
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+
+# Install
+conda install bottom
+```
 
 ### Pre-built binaries
 
