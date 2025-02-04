@@ -108,7 +108,7 @@
                             Id='btmPs1'
                             Name='_btm.ps1'
                             DiskId='1'
-                            Source='target\tmp\bottom\completion\_btm.ps1'
+                            Source='$(var.CargoTargetDir)\tmp\bottom\completion\_btm.ps1'
                             KeyPath='yes'/>
                       </Component>
 
@@ -117,7 +117,7 @@
                             Id='btmNu'
                             Name='btm.nu'
                             DiskId='1'
-                            Source='target\tmp\bottom\completion\btm.nu'
+                            Source='$(var.CargoTargetDir)\tmp\bottom\completion\btm.nu'
                             KeyPath='yes'/>
                       </Component>
 
@@ -126,7 +126,7 @@
                             Id='btmFish'
                             Name='btm.fish'
                             DiskId='1'
-                            Source='target\tmp\bottom\completion\btm.fish'
+                            Source='$(var.CargoTargetDir)\tmp\bottom\completion\btm.fish'
                             KeyPath='yes'/>
                       </Component>
 
@@ -135,7 +135,7 @@
                             Id='btmBash'
                             Name='btm.bash'
                             DiskId='1'
-                            Source='target\tmp\bottom\completion\btm.bash'
+                            Source='$(var.CargoTargetDir)\tmp\bottom\completion\btm.bash'
                             KeyPath='yes'/>
                       </Component>
 
@@ -144,7 +144,7 @@
                             Id='btmZsh'
                             Name='_btm'
                             DiskId='1'
-                            Source='target\tmp\bottom\completion\_btm'
+                            Source='$(var.CargoTargetDir)\tmp\bottom\completion\_btm'
                             KeyPath='yes'/>
                       </Component>
                     </Directory>
