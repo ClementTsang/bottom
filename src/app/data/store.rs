@@ -88,7 +88,9 @@ impl StoredData {
             }
         }
 
-        self.timeseries_data.add(&data);
+        if !settings.use_basic_mode {
+            self.timeseries_data.add(&data);
+        }
 
         if let Some(network) = data.network {
             self.network_harvest = network;
