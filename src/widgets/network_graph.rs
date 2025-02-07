@@ -3,7 +3,13 @@ use std::time::Instant;
 pub struct NetWidgetState {
     pub current_display_time: u64,
     pub autohide_timer: Option<Instant>,
-    pub last_height_check: Option<(Instant, f64, u64)>,
+    pub height_cache: Option<NetWidgetHeightCache>,
+}
+
+pub struct NetWidgetHeightCache {
+    pub best_point: (Instant, f64),
+    pub right_edge: Instant,
+    pub period: u64,
 }
 
 impl NetWidgetState {
@@ -11,7 +17,7 @@ impl NetWidgetState {
         NetWidgetState {
             current_display_time,
             autohide_timer,
-            last_height_check: None,
+            height_cache: None,
         }
     }
 }

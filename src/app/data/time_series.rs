@@ -25,7 +25,7 @@ pub type Values = ChunkedData<f64>;
 #[derive(Clone, Debug, Default)]
 pub struct TimeSeriesData {
     /// Time values.
-    pub time: Vec<Instant>,
+    pub time: Vec<Instant>, // TODO: (points_rework_v1) should we not store instant, and just store the millisecond component? Write a compatible wrapper!
 
     /// Network RX data.
     pub rx: Values,

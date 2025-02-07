@@ -19,6 +19,7 @@ use crate::{
         data_units::*,
         general::{saturating_log10, saturating_log2},
     },
+    widgets::NetWidgetHeightCache,
 };
 
 impl Painter {
@@ -78,49 +79,57 @@ impl Painter {
 
             let y_max = {
                 if let Some(last_time) = time.last() {
-                    let (first_time, mut biggest) = {
-                        let curr_first_time = *last_time
+                    // For now, just do it each time. Might want to cache this later though.
+
+                    let (mut biggest, mut biggest_time, first_time) = {
+                        let initial_first_time = *last_time
                             - Duration::from_millis(network_widget_state.current_display_time);
 
-                        // Basically works as a cache to check ;ess va;ies/
-                        if let Some(prev) = network_widget_state.last_height_check {
-                            if prev.2 != network_widget_state.current_display_time
-                                || curr_first_time > prev.0
-                            {
-                                (curr_first_time, 0.0)
-                            } else {
-                                (prev.0, prev.1)
+                        match &network_widget_state.height_cache {
+                            Some(NetWidgetHeightCache {
+                                best_point,
+                                right_edge,
+                                period,
+                            }) => {
+                                if *period != network_widget_state.current_display_time
+                                    || best_point.0 < initial_first_time
+                                {
+                                    (0.0, initial_first_time, initial_first_time)
+                                } else {
+                                    (best_point.1, best_point.0, *right_edge)
+                                }
                             }
-                        } else {
-                            (curr_first_time, 0.0)
+                            None => (0.0, initial_first_time, initial_first_time),
                         }
                     };
 
-                    for (_, &v) in rx_points
+                    for (&time, &v) in rx_points
                         .iter_along_base(time)
                         .rev()
                         .take_while(|(&time, _)| time >= first_time)
                     {
                         if v > biggest {
                             biggest = v;
+                            biggest_time = time;
                         }
                     }
 
-                    for (_, &v) in tx_points
+                    for (&time, &v) in tx_points
                         .iter_along_base(time)
                         .rev()
                         .take_while(|(&time, _)| time >= first_time)
                     {
                         if v > biggest {
                             biggest = v;
+                            biggest_time = time;
                         }
                     }
 
-                    network_widget_state.last_height_check = Some((
-                        *last_time,
-                        biggest,
-                        network_widget_state.current_display_time,
-                    ));
+                    network_widget_state.height_cache = Some(NetWidgetHeightCache {
+                        best_point: (biggest_time, biggest),
+                        right_edge: *last_time,
+                        period: network_widget_state.current_display_time,
+                    });
 
                     biggest
                 } else {
