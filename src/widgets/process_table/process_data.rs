@@ -16,7 +16,7 @@ use crate::{
         Painter,
     },
     collection::processes::{Pid, ProcessHarvest},
-    data_conversion::dec_bytes_per_second_string,
+    dec_bytes_per_second_string,
     utils::data_units::{get_binary_bytes, get_decimal_bytes, GIBI_LIMIT, GIGA_LIMIT},
 };
 

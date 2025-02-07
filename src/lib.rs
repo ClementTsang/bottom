@@ -10,6 +10,7 @@
 pub(crate) mod app;
 mod utils {
     pub(crate) mod cancellation_token;
+    pub(crate) mod conversion;
     pub(crate) mod data_units;
     pub(crate) mod general;
     pub(crate) mod logging;
@@ -18,7 +19,6 @@ mod utils {
 pub(crate) mod canvas;
 pub(crate) mod collection;
 pub(crate) mod constants;
-pub(crate) mod data_conversion;
 pub(crate) mod event;
 pub mod options;
 pub mod widgets;
@@ -45,11 +45,11 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use data_conversion::*;
 use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, CollectionThreadEvent};
 use options::{args, get_or_create_config, init_app};
 use tui::{backend::CrosstermBackend, Terminal};
 use utils::cancellation_token::CancellationToken;
+use utils::conversion::*;
 
 #[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;

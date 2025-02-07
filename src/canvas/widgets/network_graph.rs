@@ -19,6 +19,7 @@ use crate::{
         data_units::*,
         general::{saturating_log10, saturating_log2},
     },
+    widgets::NetWidgetHeightCache,
 };
 
 impl Painter {
@@ -80,29 +81,55 @@ impl Painter {
                 if let Some(last_time) = time.last() {
                     // For now, just do it each time. Might want to cache this later though.
 
-                    let mut biggest = 0.0;
-                    let first_time = *last_time
-                        - Duration::from_millis(network_widget_state.current_display_time);
+                    let (mut biggest, mut biggest_time, first_time) = {
+                        let initial_first_time = *last_time
+                            - Duration::from_millis(network_widget_state.current_display_time);
 
-                    for (_, &v) in rx_points
+                        match &network_widget_state.height_cache {
+                            Some(NetWidgetHeightCache {
+                                best_point,
+                                right_edge,
+                                period,
+                            }) => {
+                                if *period != network_widget_state.current_display_time
+                                    || best_point.0 < initial_first_time
+                                {
+                                    (0.0, initial_first_time, initial_first_time)
+                                } else {
+                                    (best_point.1, best_point.0, *right_edge)
+                                }
+                            }
+                            None => (0.0, initial_first_time, initial_first_time),
+                        }
+                    };
+
+                    for (&time, &v) in rx_points
                         .iter_along_base(time)
                         .rev()
                         .take_while(|(&time, _)| time >= first_time)
                     {
                         if v > biggest {
                             biggest = v;
+                            biggest_time = time;
                         }
                     }
 
-                    for (_, &v) in tx_points
+                    for (&time, &v) in tx_points
                         .iter_along_base(time)
                         .rev()
                         .take_while(|(&time, _)| time >= first_time)
                     {
                         if v > biggest {
                             biggest = v;
+                            biggest_time = time;
                         }
                     }
+
+                    network_widget_state.height_cache = Some(NetWidgetHeightCache {
+                        best_point: (biggest_time, biggest),
+                        right_edge: *last_time,
+                        period: network_widget_state.current_display_time,
+                    });
 
                     biggest
                 } else {
@@ -315,8 +342,6 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
 
     match scale_type {
         AxisScaling::Linear => {
-            let max_entry = max_entry * 1.5;
-
             let (k_limit, m_limit, g_limit, t_limit) = if use_binary_prefix {
                 (
                     KIBI_LIMIT_F64,
@@ -333,22 +358,23 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
                 )
             };
 
+            let max_entry_upper = max_entry * 1.5; // We use the bumped up version to calculate our unit type.
             let (max_value_scaled, unit_prefix, unit_type): (f64, &str, &str) =
-                if max_entry < k_limit {
+                if max_entry_upper < k_limit {
                     (max_entry, "", unit_char)
-                } else if max_entry < m_limit {
+                } else if max_entry_upper < m_limit {
                     (
                         max_entry / k_limit,
                         if use_binary_prefix { "Ki" } else { "K" },
                         unit_char,
                     )
-                } else if max_entry < g_limit {
+                } else if max_entry_upper < g_limit {
                     (
                         max_entry / m_limit,
                         if use_binary_prefix { "Mi" } else { "M" },
                         unit_char,
                     )
-                } else if max_entry < t_limit {
+                } else if max_entry_upper < t_limit {
                     (
                         max_entry / g_limit,
                         if use_binary_prefix { "Gi" } else { "G" },
@@ -379,7 +405,7 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
             })
             .collect();
 
-            (max_entry, labels)
+            (max_entry_upper, labels)
         }
         AxisScaling::Log => {
             let (m_limit, g_limit, t_limit) = if use_binary_prefix {
