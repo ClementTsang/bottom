@@ -65,12 +65,8 @@ pub(crate) fn get_arc_usage() -> Option<MemData> {
         }
     };
 
-    if let Some(total_bytes) = NonZeroU64::new(mem_total) {
-        Some(MemData {
-            total_bytes,
-            used_bytes: mem_used,
-        })
-    } else {
-        None
-    }
+    NonZeroU64::new(mem_total).map(|total_bytes| MemData {
+        total_bytes,
+        used_bytes: mem_used,
+    })
 }

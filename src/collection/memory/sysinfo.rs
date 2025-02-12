@@ -8,14 +8,10 @@ use crate::collection::memory::MemData;
 
 #[inline]
 fn get_usage(used: u64, total: u64) -> Option<MemData> {
-    if let Some(total_bytes) = NonZeroU64::new(total) {
-        Some(MemData {
-            used_bytes: used,
-            total_bytes,
-        })
-    } else {
-        None
-    }
+    NonZeroU64::new(total).map(|total_bytes| MemData {
+        total_bytes,
+        used_bytes: used,
+    })
 }
 
 /// Returns RAM usage.
