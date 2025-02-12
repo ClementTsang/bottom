@@ -1,8 +1,10 @@
-use super::MemHarvest;
+use super::MemData;
 
 /// Return ARC usage.
 #[cfg(feature = "zfs")]
-pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
+pub(crate) fn get_arc_usage() -> Option<MemData> {
+    use std::num::NonZeroU64;
+
     let (mem_total, mem_used) = {
         cfg_if::cfg_if! {
             if #[cfg(target_os = "linux")] {
@@ -63,9 +65,9 @@ pub(crate) fn get_arc_usage() -> Option<MemHarvest> {
         }
     };
 
-    if mem_total > 0 {
-        Some(MemHarvest {
-            total_bytes: mem_total,
+    if let Some(total_bytes) = NonZeroU64::new(mem_total) {
+        Some(MemData {
+            total_bytes,
             used_bytes: mem_used,
         })
     } else {

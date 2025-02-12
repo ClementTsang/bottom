@@ -8,37 +8,31 @@ use tui::{
 use crate::{
     app::App,
     canvas::{components::pipe_gauge::PipeGauge, drawing_utils::widget_block, Painter},
-    collection::memory::MemHarvest,
+    collection::memory::MemData,
     get_binary_unit_and_denominator,
 };
 
 /// Convert memory info into a string representing a fraction.
 #[inline]
-fn memory_fraction_label(data: &MemHarvest) -> Cow<'static, str> {
-    if data.total_bytes > 0 {
-        let (unit, denominator) = get_binary_unit_and_denominator(data.total_bytes);
-        let used = data.used_bytes as f64 / denominator;
-        let total = data.total_bytes as f64 / denominator;
+fn memory_fraction_label(data: &MemData) -> Cow<'static, str> {
+    let total_bytes = data.total_bytes.get();
+    let (unit, denominator) = get_binary_unit_and_denominator(total_bytes);
+    let used = data.used_bytes as f64 / denominator;
+    let total = total_bytes as f64 / denominator;
 
-        format!("{used:.1}{unit}/{total:.1}{unit}").into()
-    } else {
-        "0.0B/0.0B".into()
-    }
+    format!("{used:.1}{unit}/{total:.1}{unit}").into()
 }
 
 /// Convert memory info into a string representing a percentage.
 #[inline]
-fn memory_percentage_label(data: &MemHarvest) -> Cow<'static, str> {
-    if data.total_bytes > 0 {
-        let percentage = data.used_bytes as f64 / data.total_bytes as f64 * 100.0;
-        format!("{percentage:3.0}%").into()
-    } else {
-        "  0%".into()
-    }
+fn memory_percentage_label(data: &MemData) -> Cow<'static, str> {
+    let total_bytes = data.total_bytes.get();
+    let percentage = data.used_bytes as f64 / total_bytes as f64 * 100.0;
+    format!("{percentage:3.0}%").into()
 }
 
 #[inline]
-fn memory_label(data: &MemHarvest, is_percentage: bool) -> Cow<'static, str> {
+fn memory_label(data: &MemData, is_percentage: bool) -> Cow<'static, str> {
     if is_percentage {
         memory_percentage_label(data)
     } else {
@@ -62,8 +56,21 @@ impl Painter {
 
         let data = app_state.data_store.get_data();
 
-        let ram_percentage = data.ram_harvest.saturating_percentage();
-        let ram_label = memory_label(&data.ram_harvest, app_state.basic_mode_use_percent);
+        let (ram_percentage, ram_label) = if let Some(ram_harvest) = &data.ram_harvest {
+            (
+                ram_harvest.percentage(),
+                memory_label(ram_harvest, app_state.basic_mode_use_percent),
+            )
+        } else {
+            (
+                0.0,
+                if app_state.basic_mode_use_percent {
+                    "0.0B/0.0B".into()
+                } else {
+                    "  0%".into()
+                },
+            )
+        };
 
         draw_widgets.push(
             PipeGauge::default()
@@ -75,7 +82,7 @@ impl Painter {
         );
 
         if let Some(swap_harvest) = &data.swap_harvest {
-            let swap_percentage = swap_harvest.saturating_percentage();
+            let swap_percentage = swap_harvest.percentage();
             let swap_label = memory_label(swap_harvest, app_state.basic_mode_use_percent);
 
             draw_widgets.push(
@@ -91,7 +98,7 @@ impl Painter {
         #[cfg(not(target_os = "windows"))]
         {
             if let Some(cache_harvest) = &data.cache_harvest {
-                let cache_percentage = cache_harvest.saturating_percentage();
+                let cache_percentage = cache_harvest.percentage();
                 let cache_fraction_label =
                     memory_label(cache_harvest, app_state.basic_mode_use_percent);
 
@@ -109,7 +116,7 @@ impl Painter {
         #[cfg(feature = "zfs")]
         {
             if let Some(arc_harvest) = &data.arc_harvest {
-                let arc_percentage = arc_harvest.saturating_percentage();
+                let arc_percentage = arc_harvest.percentage();
                 let arc_fraction_label =
                     memory_label(arc_harvest, app_state.basic_mode_use_percent);
 
@@ -130,7 +137,7 @@ impl Painter {
             let mut colour_index = 0;
 
             for (_, harvest) in data.gpu_harvest.iter() {
-                let percentage = harvest.saturating_percentage();
+                let percentage = harvest.percentage();
                 let label = memory_label(harvest, app_state.basic_mode_use_percent);
 
                 let style = {

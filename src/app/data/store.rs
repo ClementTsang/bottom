@@ -7,7 +7,7 @@ use std::{
 use crate::collection::batteries;
 use crate::{
     app::AppConfigFields,
-    collection::{cpu, disks, memory::MemHarvest, network, Data},
+    collection::{cpu, disks, memory::MemData, network, Data},
     dec_bytes_per_second_string,
     utils::data_units::DataUnit,
     widgets::{DiskWidgetData, TempWidgetData},
@@ -23,14 +23,14 @@ pub struct StoredData {
     pub last_update_time: Instant, // FIXME: (points_rework_v1) remove this?
     pub timeseries_data: TimeSeriesData, // FIXME: (points_rework_v1) Skip in basic?
     pub network_harvest: network::NetworkHarvest,
-    pub ram_harvest: MemHarvest,
-    pub swap_harvest: Option<MemHarvest>,
+    pub ram_harvest: Option<MemData>,
+    pub swap_harvest: Option<MemData>,
     #[cfg(not(target_os = "windows"))]
-    pub cache_harvest: Option<MemHarvest>,
+    pub cache_harvest: Option<MemData>,
     #[cfg(feature = "zfs")]
-    pub arc_harvest: Option<MemHarvest>,
+    pub arc_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
-    pub gpu_harvest: Vec<(String, MemHarvest)>,
+    pub gpu_harvest: Vec<(String, MemData)>,
     pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_data: ProcessData,
@@ -48,7 +48,7 @@ impl Default for StoredData {
             last_update_time: Instant::now(),
             timeseries_data: TimeSeriesData::default(),
             network_harvest: network::NetworkHarvest::default(),
-            ram_harvest: MemHarvest::default(),
+            ram_harvest: None,
             #[cfg(not(target_os = "windows"))]
             cache_harvest: None,
             swap_harvest: None,
@@ -96,10 +96,7 @@ impl StoredData {
             self.network_harvest = network;
         }
 
-        if let Some(memory) = data.memory {
-            self.ram_harvest = memory;
-        }
-
+        self.ram_harvest = data.memory;
         self.swap_harvest = data.swap;
 
         #[cfg(not(target_os = "windows"))]

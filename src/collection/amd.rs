@@ -2,19 +2,20 @@ mod amdgpu_marketing;
 
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
-    collection::{memory::MemHarvest, temperature::TempSensorData},
+    collection::{memory::MemData, temperature::TempSensorData},
 };
 use hashbrown::{HashMap, HashSet};
 use std::{
-    fs,
-    fs::read_to_string,
+    fs::{self, read_to_string},
+    num::NonZeroU64,
     path::{Path, PathBuf},
     sync::{LazyLock, Mutex},
     time::{Duration, Instant},
 };
 
+// TODO: May be able to clean up some of these, Option<Vec> for example is a bit redundant.
 pub struct AMDGPUData {
-    pub memory: Option<Vec<(String, MemHarvest)>>,
+    pub memory: Option<Vec<(String, MemData)>>,
     pub temperature: Option<Vec<TempSensorData>>,
     pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
 }
@@ -415,13 +416,15 @@ pub fn get_amd_vecs(
 
         if let Some(mem) = get_amd_vram(&device_path) {
             if widgets_to_harvest.use_mem {
-                mem_vec.push((
-                    device_name.clone(),
-                    MemHarvest {
-                        total_bytes: mem.total,
-                        used_bytes: mem.used,
-                    },
-                ));
+                if let Some(total_bytes) = NonZeroU64::new(mem.total) {
+                    mem_vec.push((
+                        device_name.clone(),
+                        MemData {
+                            total_bytes,
+                            used_bytes: mem.used,
+                        },
+                    ));
+                }
             }
 
             total_mem += mem.total

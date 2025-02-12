@@ -14,24 +14,21 @@ use crate::{
         drawing_utils::should_hide_x_label,
         Painter,
     },
-    collection::memory::MemHarvest,
+    collection::memory::MemData,
     get_binary_unit_and_denominator,
 };
 
 /// Convert memory info into a combined memory label.
 #[inline]
-fn memory_legend_label(name: &str, data: Option<&MemHarvest>) -> String {
+fn memory_legend_label(name: &str, data: Option<&MemData>) -> String {
     if let Some(data) = data {
-        if data.total_bytes > 0 {
-            let percentage = data.used_bytes as f64 / data.total_bytes as f64 * 100.0;
-            let (unit, denominator) = get_binary_unit_and_denominator(data.total_bytes);
-            let used = data.used_bytes as f64 / denominator;
-            let total = data.total_bytes as f64 / denominator;
+        let total_bytes = data.total_bytes.get();
+        let percentage = data.used_bytes as f64 / total_bytes as f64 * 100.0;
+        let (unit, denominator) = get_binary_unit_and_denominator(total_bytes);
+        let used = data.used_bytes as f64 / denominator;
+        let total = total_bytes as f64 / denominator;
 
-            format!("{name}:{percentage:3.0}%   {used:.1}{unit}/{total:.1}{unit}")
-        } else {
-            format!("{name}:   0%   0.0B/0.0B")
-        }
+        format!("{name}:{percentage:3.0}%   {used:.1}{unit}/{total:.1}{unit}")
     } else {
         format!("{name}:   0%   0.0B/0.0B")
     }
@@ -40,7 +37,7 @@ fn memory_legend_label(name: &str, data: Option<&MemHarvest>) -> String {
 /// Get graph data.
 #[inline]
 fn graph_data<'a>(
-    out: &mut Vec<GraphData<'a>>, name: &str, last_harvest: Option<&'a MemHarvest>,
+    out: &mut Vec<GraphData<'a>>, name: &str, last_harvest: Option<&'a MemData>,
     time: &'a [Instant], values: &'a Values, style: Style,
 ) {
     if !values.no_elements() {
@@ -100,7 +97,7 @@ impl Painter {
                 graph_data(
                     &mut points,
                     "RAM",
-                    Some(&data.ram_harvest),
+                    data.ram_harvest.as_ref(),
                     time,
                     &timeseries.ram,
                     self.styles.ram_style,

@@ -36,10 +36,10 @@ pub struct Data {
     pub collection_time: Instant,
     pub cpu: Option<cpu::CpuHarvest>,
     pub load_avg: Option<cpu::LoadAvgHarvest>,
-    pub memory: Option<memory::MemHarvest>,
+    pub memory: Option<memory::MemData>,
     #[cfg(not(target_os = "windows"))]
-    pub cache: Option<memory::MemHarvest>,
-    pub swap: Option<memory::MemHarvest>,
+    pub cache: Option<memory::MemData>,
+    pub swap: Option<memory::MemData>,
     pub temperature_sensors: Option<Vec<temperature::TempSensorData>>,
     pub network: Option<network::NetworkHarvest>,
     pub list_of_processes: Option<Vec<processes::ProcessHarvest>>,
@@ -48,9 +48,9 @@ pub struct Data {
     #[cfg(feature = "battery")]
     pub list_of_batteries: Option<Vec<batteries::BatteryData>>,
     #[cfg(feature = "zfs")]
-    pub arc: Option<memory::MemHarvest>,
+    pub arc: Option<memory::MemData>,
     #[cfg(feature = "gpu")]
-    pub gpu: Option<Vec<(String, memory::MemHarvest)>>,
+    pub gpu: Option<Vec<(String, memory::MemData)>>,
 }
 
 impl Default for Data {
@@ -345,7 +345,7 @@ impl DataCollector {
     #[inline]
     fn update_gpus(&mut self) {
         if self.widgets_to_harvest.use_gpu {
-            let mut local_gpu: Vec<(String, memory::MemHarvest)> = Vec::new();
+            let mut local_gpu: Vec<(String, memory::MemData)> = Vec::new();
             let mut local_gpu_pids: Vec<HashMap<u32, (u64, u32)>> = Vec::new();
             let mut local_gpu_total_mem: u64 = 0;
 
@@ -501,7 +501,7 @@ impl DataCollector {
     #[inline]
     fn total_memory(&self) -> u64 {
         if let Some(memory) = &self.data.memory {
-            memory.total_bytes
+            memory.total_bytes.get()
         } else {
             self.sys.system.total_memory()
         }

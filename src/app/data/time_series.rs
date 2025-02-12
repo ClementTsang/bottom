@@ -99,13 +99,13 @@ impl TimeSeriesData {
         }
 
         if let Some(memory) = &data.memory {
-            self.ram.try_push(memory.checked_percent());
+            self.ram.push(memory.percentage());
         } else {
             self.ram.insert_break();
         }
 
         if let Some(swap) = &data.swap {
-            self.swap.try_push(swap.checked_percent());
+            self.swap.push(swap.percentage());
         } else {
             self.swap.insert_break();
         }
@@ -113,7 +113,7 @@ impl TimeSeriesData {
         #[cfg(not(target_os = "windows"))]
         {
             if let Some(cache) = &data.cache {
-                self.cache_mem.try_push(cache.checked_percent());
+                self.cache_mem.push(cache.percentage());
             } else {
                 self.cache_mem.insert_break();
             }
@@ -122,7 +122,7 @@ impl TimeSeriesData {
         #[cfg(feature = "zfs")]
         {
             if let Some(arc) = &data.arc {
-                self.arc_mem.try_push(arc.checked_percent());
+                self.arc_mem.push(arc.percentage());
             } else {
                 self.arc_mem.insert_break();
             }
@@ -149,7 +149,7 @@ impl TimeSeriesData {
                         .gpu_mem
                         .get_mut(name)
                         .expect("entry must exist as it was created above");
-                    curr.try_push(new_data.checked_percent());
+                    curr.push(new_data.percentage());
                 }
 
                 for nv in not_visited {
