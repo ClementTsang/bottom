@@ -1,4 +1,4 @@
-use std::sync::OnceLock;
+use std::{num::NonZeroU64, sync::OnceLock};
 
 use hashbrown::HashMap;
 use nvml_wrapper::{
@@ -7,13 +7,13 @@ use nvml_wrapper::{
 
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
-    collection::{memory::MemHarvest, temperature::TempSensorData},
+    collection::{memory::MemData, temperature::TempSensorData},
 };
 
 pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
 
 pub struct GpusData {
-    pub memory: Option<Vec<(String, MemHarvest)>>,
+    pub memory: Option<Vec<(String, MemData)>>,
     pub temperature: Option<Vec<TempSensorData>>,
     pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
 }
@@ -58,13 +58,15 @@ pub fn get_nvidia_vecs(
                     if let Ok(name) = device.name() {
                         if widgets_to_harvest.use_mem {
                             if let Ok(mem) = device.memory_info() {
-                                mem_vec.push((
-                                    name.clone(),
-                                    MemHarvest {
-                                        total_bytes: mem.total,
-                                        used_bytes: mem.used,
-                                    },
-                                ));
+                                if let Some(total_bytes) = NonZeroU64::new(mem.total) {
+                                    mem_vec.push((
+                                        name.clone(),
+                                        MemData {
+                                            total_bytes,
+                                            used_bytes: mem.used,
+                                        },
+                                    ));
+                                }
                             }
                         }
 
