@@ -94,6 +94,7 @@ impl Painter {
                 let timeseries = &data.timeseries_data;
                 let time = &timeseries.time;
 
+                // TODO: Add a "no data" option here/to time graph if there is no entries
                 graph_data(
                     &mut points,
                     "RAM",
