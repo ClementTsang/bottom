@@ -563,6 +563,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "SigmaSquadron",
+      "name": "Fernando Rodrigues",
+      "avatar_url": "https://avatars.githubusercontent.com/u/174749595?v=4",
+      "profile": "https://sigmasquadron.net",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
