@@ -262,10 +262,18 @@ sudo emerge --ask sys-process/bottom
 
 ### Nix
 
-Available [in the nix-community repo](https://github.com/nix-community/home-manager/blob/master/modules/programs/bottom.nix):
+Available [in Nixpkgs](https://search.nixos.org/packages?channel=unstable&show=bottom&from=0&size=1&sort=relevance&type=packages) as `bottom`:
 
 ```bash
-nix-env -i bottom
+nix profile install nixpkgs#bottom
+```
+
+`bottom` can also be installed and configured through the [home-manager](https://nix-community.github.io/home-manager) module:
+
+```nix
+{
+  programs.bottom.enable = true;
+}
 ```
 
 ### Snap
