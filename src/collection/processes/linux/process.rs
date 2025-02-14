@@ -222,7 +222,11 @@ impl Process {
     /// methods. Therefore, this struct is only useful for either fields
     /// that are unlikely to change, or are short-lived and
     /// will be discarded quickly.
+    ///
+    /// This takes in a buffer to avoid allocs; this function will clear the buffer.
     pub(crate) fn from_path(pid_path: PathBuf, buffer: &mut String) -> anyhow::Result<Process> {
+        buffer.clear();
+
         let fd = rustix::fs::openat(
             rustix::fs::CWD,
             &pid_path,
