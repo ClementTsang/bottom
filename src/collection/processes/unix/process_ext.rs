@@ -182,6 +182,7 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
             const SSLEEP: u8 = assert_u8(libc::SSLEEP);
             const SSTOP: u8 = assert_u8(libc::SSTOP);
             const SZOMB: u8 = assert_u8(libc::SZOMB);
+            const SWAIT: u8 = assert_u8(libc::SWAIT);
             const SLOCK: u8 = assert_u8(libc::SLOCK);
 
             match status {
