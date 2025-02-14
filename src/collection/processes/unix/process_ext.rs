@@ -149,23 +149,49 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
     // TODO: Based on https://github.com/GuillaumeGomez/sysinfo/blob/baa46efb46d82f21b773088603720262f4a34646/src/unix/freebsd/process.rs#L13?
     cfg_if::cfg_if! {
         if #[cfg(target_os = "macos")] {
+            // SAFETY: These are all const and should be valid characters.
+            const SIDL: char = unsafe { char::from_u32_unchecked(libc::SIDL) };
+
+            // SAFETY: These are all const and should be valid characters.
+            const SRUN: char = unsafe { char::from_u32_unchecked(libc::SRUN) };
+
+            // SAFETY: These are all const and should be valid characters.
+            const SSLEEP: char = unsafe { char::from_u32_unchecked(libc::SSLEEP) };
+
+            // SAFETY: These are all const and should be valid characters.
+            const SSTOP: char = unsafe { char::from_u32_unchecked(libc::SSTOP) };
+
+            // SAFETY: These are all const and should be valid characters.
+            const SZOMB: char = unsafe { char::from_u32_unchecked(libc::SZOMB) };
+
             match status {
-                ProcessStatus::Idle => libc::SIDL as char,
-                ProcessStatus::Run => libc::SRUN as char,
-                ProcessStatus::Sleep => libc::SSLEEP as char,
-                ProcessStatus::Stop => libc::SSTOP as char,
-                ProcessStatus::Zombie => libc::SZOMB as char,
+                ProcessStatus::Idle => SIDL,
+                ProcessStatus::Run => SRUN,
+                ProcessStatus::Sleep => SSLEEP,
+                ProcessStatus::Stop => SSTOP,
+                ProcessStatus::Zombie => SZOMB,
                 _ => '?'
             }
         } else if #[cfg(target_os = "freebsd")] {
+            const fn assert_u8(val: i8) -> u8 {
+                if val < 0 { panic!("there was an invalid i8 constant that is supposed to be a char") } else { val as u8 }
+            }
+
+            const SIDL: u8 = assert_u8(libc::SIDL);
+            const SRUN: u8 = assert_u8(libc::SRUN);
+            const SSLEEP: u8 = assert_u8(libc::SSLEEP);
+            const SSTOP: u8 = assert_u8(libc::SSTOP);
+            const SZOMB: u8 = assert_u8(libc::SZOMB);
+            const SLOCK: u8 = assert_u8(libc::SLOCK);
+
             match status {
-                ProcessStatus::Idle => libc::SIDL as char,
-                ProcessStatus::Run => libc::SRUN as char,
-                ProcessStatus::Sleep => libc::SSLEEP as char,
-                ProcessStatus::Stop => libc::SSTOP as char,
-                ProcessStatus::Zombie => libc::SZOMB as char,
-                ProcessStatus::Dead => libc::SWAIT as char,
-                ProcessStatus::LockBlocked => libc::SLOCK as char,
+                ProcessStatus::Idle => SIDL as char,
+                ProcessStatus::Run => SRUN as char,
+                ProcessStatus::Sleep => SSLEEP as char,
+                ProcessStatus::Stop => SSTOP as char,
+                ProcessStatus::Zombie => SZOMB as char,
+                ProcessStatus::Dead => SWAIT as char,
+                ProcessStatus::LockBlocked => SLOCK as char,
                 _ => '?'
             }
         } else {
