@@ -8,11 +8,12 @@ use std::{
     time::Duration,
 };
 
+use concat_string::concat_string;
 use hashbrown::HashSet;
 use process::*;
 use sysinfo::ProcessStatus;
 
-use super::{Pid, ProcessHarvest, UserTable};
+use super::{process_status_str, Pid, ProcessHarvest, UserTable};
 use crate::collection::{error::CollectionResult, DataCollector};
 
 /// Maximum character length of a `/proc/<PID>/stat`` process name.
@@ -151,7 +152,7 @@ fn read_proc(
 
     let process_state_char = stat.state;
     let process_state = (
-        ProcessStatus::from(process_state_char).to_string(),
+        process_status_str(ProcessStatus::from(process_state_char)),
         process_state_char,
     );
     let (cpu_usage_percent, new_process_times) = get_linux_cpu_usage(
@@ -216,7 +217,7 @@ fn read_proc(
         let truncated_name = stat.comm;
         if let Some(cmdline) = cmdline {
             if cmdline.is_empty() {
-                (format!("[{truncated_name}]"), truncated_name)
+                (concat_string!("[", truncated_name, "]"), truncated_name)
             } else {
                 let name = if truncated_name.len() >= MAX_STAT_NAME_LEN {
                     let first_part = match cmdline.split_once(' ') {
@@ -355,9 +356,11 @@ pub(crate) fn linux_process_data(
         uptime: sysinfo::System::uptime(),
     };
 
+    let mut buffer = String::new();
+
     let process_vector: Vec<ProcessHarvest> = pids
         .filter_map(|pid_path| {
-            if let Ok(process) = Process::from_path(pid_path) {
+            if let Ok(process) = Process::from_path(pid_path, &mut buffer) {
                 let pid = process.pid;
                 let prev_proc_details = pid_mapping.entry(pid).or_default();
 

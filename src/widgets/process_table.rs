@@ -1040,7 +1040,7 @@ mod test {
             wps: 0,
             total_read: 0,
             total_write: 0,
-            process_state: "N/A".to_string(),
+            process_state: "N/A",
             process_char: '?',
             #[cfg(target_family = "unix")]
             user: "root".to_string(),

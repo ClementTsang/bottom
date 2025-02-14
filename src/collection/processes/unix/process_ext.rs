@@ -5,7 +5,7 @@ use std::{io, time::Duration};
 use hashbrown::HashMap;
 use sysinfo::{ProcessStatus, System};
 
-use super::ProcessHarvest;
+use super::{process_status_str, ProcessHarvest};
 use crate::collection::{error::CollectionResult, processes::UserTable, Pid};
 
 pub(crate) trait UnixProcessExt {
@@ -60,7 +60,7 @@ pub(crate) trait UnixProcessExt {
             let disk_usage = process_val.disk_usage();
             let process_state = {
                 let ps = process_val.status();
-                (ps.to_string(), convert_process_status_to_char(ps))
+                (process_status_str(ps), convert_process_status_to_char(ps))
             };
             let uid = process_val.user_id().map(|u| **u);
             let pid = process_val.pid().as_u32() as Pid;
@@ -146,11 +146,30 @@ pub(crate) trait UnixProcessExt {
 }
 
 fn convert_process_status_to_char(status: ProcessStatus) -> char {
-    match status {
-        ProcessStatus::Run => 'R',
-        ProcessStatus::Sleep => 'S',
-        ProcessStatus::Idle => 'D',
-        ProcessStatus::Zombie => 'Z',
-        _ => '?',
+    // TODO: Based on https://github.com/GuillaumeGomez/sysinfo/blob/baa46efb46d82f21b773088603720262f4a34646/src/unix/freebsd/process.rs#L13?
+    cfg_if::cfg_if! {
+        if #[cfg(target_os = "macos")] {
+            match status {
+                ProcessStatus::Idle => libc::SIDL as char,
+                ProcessStatus::Run => libc::SRUN as char,
+                ProcessStatus::Sleep => libc::SSLEEP as char,
+                ProcessStatus::Stop => libc::SSTOP as char,
+                ProcessStatus::Zombie => libc::SZOMB as char,
+                _ => '?'
+            }
+        } else if #[cfg(target_os = "freebsd")] {
+            match status {
+                ProcessStatus::Idle => libc::SIDL as char,
+                ProcessStatus::Run => libc::SRUN as char,
+                ProcessStatus::Sleep => libc::SSLEEP as char,
+                ProcessStatus::Stop => libc::SSTOP as char,
+                ProcessStatus::Zombie => libc::SZOMB as char,
+                ProcessStatus::Dead => libc::SWAIT as char,
+                ProcessStatus::LockBlocked => libc::SLOCK as char,
+                _ => '?'
+            }
+        } else {
+            '?'
+        }
     }
 }
