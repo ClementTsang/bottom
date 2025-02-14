@@ -263,9 +263,8 @@ impl Process {
         reset(&mut root, &mut buffer);
 
         let cmdline = if cmdline(&mut root, &fd, &mut buffer).is_ok() {
-            let mut out = buffer.to_string();
-            out.shrink_to_fit();
-            Some(out)
+            // The clone will give a string with the capacity of the length of buffer, don't worry.
+            Some(buffer.clone())
         } else {
             None
         };
