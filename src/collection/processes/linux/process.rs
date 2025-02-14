@@ -204,8 +204,8 @@ pub(crate) struct Process {
     pub pid: Pid,
     pub uid: Option<uid_t>,
     pub stat: Stat,
-    pub io: anyhow::Result<Io>,
-    pub cmdline: anyhow::Result<Vec<String>>,
+    pub io: Option<Io>,
+    pub cmdline: Option<String>,
 }
 
 #[inline]
@@ -262,10 +262,18 @@ impl Process {
             open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, &mut buffer))?;
         reset(&mut root, &mut buffer);
 
-        let cmdline = cmdline(&mut root, &fd, &mut buffer);
+        let cmdline = if cmdline(&mut root, &fd, &mut buffer).is_ok() {
+            let mut out = buffer.to_string();
+            out.shrink_to_fit();
+            Some(out)
+        } else {
+            None
+        };
         reset(&mut root, &mut buffer);
 
-        let io = open_at(&mut root, "io", &fd).and_then(|file| Io::from_file(file, &mut buffer));
+        let io = open_at(&mut root, "io", &fd)
+            .and_then(|file| Io::from_file(file, &mut buffer))
+            .ok();
 
         Ok(Process {
             pid,
@@ -278,22 +286,22 @@ impl Process {
 }
 
 #[inline]
-fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Result<Vec<String>> {
-    open_at(root, "cmdline", fd)
+fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Result<()> {
+    let _ = open_at(root, "cmdline", fd)
         .map(|mut file| file.read_to_string(buffer))
-        .map(|_| {
-            buffer
-                .split('\0')
-                .filter_map(|s| {
-                    if !s.is_empty() {
-                        Some(s.to_string())
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<_>>()
-        })
-        .map_err(Into::into)
+        .inspect(|_| {
+            // SAFETY: We are only replacing a single char (NUL) with another single char (space).
+            let buf_mut = unsafe { buffer.as_mut_vec() };
+
+            for byte in buf_mut {
+                if *byte == 0 {
+                    const SPACE: u8 = ' '.to_ascii_lowercase() as u8;
+                    *byte = SPACE;
+                }
+            }
+        })?;
+
+    Ok(())
 }
 
 /// Opens a path. Note that this function takes in a mutable root - this will
