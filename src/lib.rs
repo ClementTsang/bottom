@@ -25,7 +25,7 @@ pub mod widgets;
 
 use std::{
     boxed::Box,
-    io::{stderr, stdout, Stdout, Write},
+    io::{stderr, stdout, Write},
     panic::{self, PanicHookInfo},
     sync::{
         mpsc::{self, Receiver, Sender},
@@ -78,8 +78,8 @@ fn cleanup_terminal(
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),
-        DisableBracketedPaste,
         DisableMouseCapture,
+        DisableBracketedPaste,
         LeaveAlternateScreen,
         Show,
     )?;
@@ -103,18 +103,16 @@ fn check_if_terminal() {
 }
 
 /// This manually resets stdout back to normal state.
-pub fn reset_stdout() -> Stdout {
+pub fn reset_stdout() {
     let mut stdout = stdout();
     let _ = disable_raw_mode();
     let _ = execute!(
         stdout,
-        DisableBracketedPaste,
         DisableMouseCapture,
+        DisableBracketedPaste,
         LeaveAlternateScreen,
         Show,
     );
-
-    stdout
 }
 
 /// A panic hook to properly restore the terminal in the case of a panic.
@@ -275,7 +273,7 @@ fn create_collection_thread(
 
 /// Main code to call.
 #[inline]
-pub fn start_bottom() -> anyhow::Result<()> {
+pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
 
     let args = args::get_args();
@@ -337,13 +335,15 @@ pub fn start_bottom() -> anyhow::Result<()> {
     };
 
     // Set up tui and crossterm
+    *enable_error_hook = true;
+
     let mut stdout_val = stdout();
     execute!(
         stdout_val,
         Hide,
         EnterAlternateScreen,
+        EnableBracketedPaste,
         EnableMouseCapture,
-        EnableBracketedPaste
     )?;
     enable_raw_mode()?;
 
