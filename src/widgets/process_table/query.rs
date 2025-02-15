@@ -814,7 +814,7 @@ impl Prefix {
                         process.name.as_str()
                     }),
                     PrefixType::Pid => r.is_match(process.pid.to_string().as_str()),
-                    PrefixType::State => r.is_match(process.process_state.0.as_str()),
+                    PrefixType::State => r.is_match(process.process_state.0),
                     PrefixType::User => r.is_match(process.user.as_ref()),
                     _ => true,
                 }

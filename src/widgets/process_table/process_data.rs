@@ -203,7 +203,7 @@ pub struct ProcWidgetData {
     pub wps: u64,
     pub total_read: u64,
     pub total_write: u64,
-    pub process_state: String,
+    pub process_state: &'static str,
     pub process_char: char,
     pub user: String,
     pub num_similar: u64,
@@ -242,7 +242,7 @@ impl ProcWidgetData {
             wps: process.write_bytes_per_sec,
             total_read: process.total_read_bytes,
             total_write: process.total_write_bytes,
-            process_state: process.process_state.0.clone(),
+            process_state: process.process_state.0,
             process_char: process.process_state.1,
             user: process.user.to_string(),
             num_similar: 1,
@@ -348,7 +348,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                 if calculated_width < 8 {
                     self.process_char.to_string().into()
                 } else {
-                    self.process_state.clone().into()
+                    self.process_state.into()
                 }
             }
             ProcColumn::User => self.user.clone().into(),

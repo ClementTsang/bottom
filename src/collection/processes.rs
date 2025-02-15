@@ -4,6 +4,7 @@
 //! For Windows, macOS, FreeBSD, Android, and Linux, this is handled by sysinfo.
 
 use cfg_if::cfg_if;
+use sysinfo::ProcessStatus;
 
 cfg_if! {
     if #[cfg(target_os = "linux")] {
@@ -81,7 +82,7 @@ pub struct ProcessHarvest {
     pub total_write_bytes: u64,
 
     /// The current state of the process (e.g. zombie, asleep).
-    pub process_state: (String, char),
+    pub process_state: (&'static str, char),
 
     /// Cumulative process uptime.
     pub time: Duration,
@@ -147,6 +148,55 @@ impl DataCollector {
             } else {
                 Err(crate::collection::error::CollectionError::Unsupported)
             }
+        }
+    }
+}
+
+/// Pulled from [`ProcessStatus::to_string`] to avoid an alloc.
+pub(super) fn process_status_str(status: ProcessStatus) -> &'static str {
+    cfg_if::cfg_if! {
+        if #[cfg(target_os = "linux")] {
+            match status {
+                ProcessStatus::Idle => "Idle",
+                ProcessStatus::Run => "Runnable",
+                ProcessStatus::Sleep => "Sleeping",
+                ProcessStatus::Stop => "Stopped",
+                ProcessStatus::Zombie => "Zombie",
+                ProcessStatus::Tracing => "Tracing",
+                ProcessStatus::Dead => "Dead",
+                ProcessStatus::Wakekill => "Wakekill",
+                ProcessStatus::Waking => "Waking",
+                ProcessStatus::Parked => "Parked",
+                ProcessStatus::UninterruptibleDiskSleep => "UninterruptibleDiskSleep",
+                _ => "Unknown",
+            }
+        } else if #[cfg(target_os = "windows")] {
+            match status {
+                ProcessStatus::Run => "Runnable",
+                _ => "Unknown",
+            }
+        } else if #[cfg(target_os = "macos")] {
+            match status {
+                ProcessStatus::Idle => "Idle",
+                ProcessStatus::Run => "Runnable",
+                ProcessStatus::Sleep => "Sleeping",
+                ProcessStatus::Stop => "Stopped",
+                ProcessStatus::Zombie => "Zombie",
+                _ => "Unknown",
+            }
+        } else if #[cfg(target_os = "freebsd")] {
+            match status {
+                ProcessStatus::Idle => "Idle",
+                ProcessStatus::Run => "Runnable",
+                ProcessStatus::Sleep => "Sleeping",
+                ProcessStatus::Stop => "Stopped",
+                ProcessStatus::Zombie => "Zombie",
+                ProcessStatus::Dead => "Dead",
+                ProcessStatus::LockBlocked => "LockBlocked",
+                _ => "Unknown",
+            }
+        } else {
+            "Unknown"
         }
     }
 }

@@ -58,14 +58,13 @@ pub(crate) struct Stat {
 }
 
 impl Stat {
-    #[inline]
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
         // Since this is just one line, we can read it all at once. However, since it
-        // might have non-utf8 characters, we can't just use read_to_string.
+        // (technically) might have non-utf8 characters, we can't just use read_to_string.
         f.read_to_end(unsafe { buffer.as_mut_vec() })?;
 
-        let line = buffer.to_string_lossy();
-        let line = line.trim();
+        // TODO: Is this needed?
+        let line = buffer.trim();
 
         let (comm, rest) = {
             let start_paren = line
@@ -204,8 +203,8 @@ pub(crate) struct Process {
     pub pid: Pid,
     pub uid: Option<uid_t>,
     pub stat: Stat,
-    pub io: anyhow::Result<Io>,
-    pub cmdline: anyhow::Result<Vec<String>>,
+    pub io: Option<Io>,
+    pub cmdline: Option<String>,
 }
 
 #[inline]
@@ -223,8 +222,10 @@ impl Process {
     /// methods. Therefore, this struct is only useful for either fields
     /// that are unlikely to change, or are short-lived and
     /// will be discarded quickly.
-    pub(crate) fn from_path(pid_path: PathBuf) -> anyhow::Result<Process> {
-        // TODO: Pass in a buffer vec/string to share?
+    ///
+    /// This takes in a buffer to avoid allocs; this function will clear the buffer.
+    pub(crate) fn from_path(pid_path: PathBuf, buffer: &mut String) -> anyhow::Result<Process> {
+        buffer.clear();
 
         let fd = rustix::fs::openat(
             rustix::fs::CWD,
@@ -254,18 +255,26 @@ impl Process {
         };
 
         let mut root = pid_path;
-        let mut buffer = String::new();
 
         // NB: Whenever you add a new stat, make sure to pop the root and clear the
         // buffer!
+
+        // Stat is pretty long, do this first to pre-allocate up-front.
         let stat =
-            open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, &mut buffer))?;
-        reset(&mut root, &mut buffer);
+            open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, buffer))?;
+        reset(&mut root, buffer);
 
-        let cmdline = cmdline(&mut root, &fd, &mut buffer);
-        reset(&mut root, &mut buffer);
+        let cmdline = if cmdline(&mut root, &fd, buffer).is_ok() {
+            // The clone will give a string with the capacity of the length of buffer, don't worry.
+            Some(buffer.clone())
+        } else {
+            None
+        };
+        reset(&mut root, buffer);
 
-        let io = open_at(&mut root, "io", &fd).and_then(|file| Io::from_file(file, &mut buffer));
+        let io = open_at(&mut root, "io", &fd)
+            .and_then(|file| Io::from_file(file, buffer))
+            .ok();
 
         Ok(Process {
             pid,
@@ -278,22 +287,22 @@ impl Process {
 }
 
 #[inline]
-fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Result<Vec<String>> {
-    open_at(root, "cmdline", fd)
+fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Result<()> {
+    let _ = open_at(root, "cmdline", fd)
         .map(|mut file| file.read_to_string(buffer))
-        .map(|_| {
-            buffer
-                .split('\0')
-                .filter_map(|s| {
-                    if !s.is_empty() {
-                        Some(s.to_string())
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<_>>()
-        })
-        .map_err(Into::into)
+        .inspect(|_| {
+            // SAFETY: We are only replacing a single char (NUL) with another single char (space).
+            let buf_mut = unsafe { buffer.as_mut_vec() };
+
+            for byte in buf_mut {
+                if *byte == 0 {
+                    const SPACE: u8 = ' '.to_ascii_lowercase() as u8;
+                    *byte = SPACE;
+                }
+            }
+        })?;
+
+    Ok(())
 }
 
 /// Opens a path. Note that this function takes in a mutable root - this will

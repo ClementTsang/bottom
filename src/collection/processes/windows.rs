@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use super::ProcessHarvest;
+use super::{process_status_str, ProcessHarvest};
 use crate::collection::{error::CollectionResult, DataCollector};
 
 // TODO: There's a lot of shared code with this and the unix impl.
@@ -60,7 +60,7 @@ pub fn sysinfo_process_data(
         } as f32;
 
         let disk_usage = process_val.disk_usage();
-        let process_state = (process_val.status().to_string(), 'R');
+        let process_state = (process_status_str(process_val.status()), 'R');
 
         #[cfg(feature = "gpu")]
         let (gpu_mem, gpu_util, gpu_mem_percent) = {

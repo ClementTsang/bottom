@@ -1,7 +1,11 @@
 use bottom::{reset_stdout, start_bottom};
 
 fn main() -> anyhow::Result<()> {
-    start_bottom().inspect_err(|_| {
-        reset_stdout();
+    let mut run_error_hook = false;
+
+    start_bottom(&mut run_error_hook).inspect_err(|_| {
+        if run_error_hook {
+            reset_stdout();
+        }
     })
 }
