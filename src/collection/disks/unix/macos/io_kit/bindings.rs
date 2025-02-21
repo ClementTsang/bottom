@@ -32,8 +32,9 @@ pub const kIOServicePlane: &str = "IOService\0";
 #[expect(non_upper_case_globals)]
 pub const kIOMediaClass: &str = "IOMedia\0";
 
-// See [here](https://developer.apple.com/documentation/iokit) for more details.
-extern "C" {
+// SAFETY: Bindings like this are inherently unsafe. See [here](https://developer.apple.com/documentation/iokit) for
+// more details.
+unsafe extern "C" {
 
     pub fn IOServiceGetMatchingServices(
         mainPort: mach_port_t, matching: CFMutableDictionaryRef, existing: *mut io_iterator_t,

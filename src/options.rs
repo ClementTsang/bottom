@@ -1237,7 +1237,7 @@ mod test {
         use super::{DEFAULT_CONFIG_FILE_LOCATION, get_config_path};
 
         // Case three: no previous config, no XDG var.
-        // SAFETY: this is the only test that does this
+        // SAFETY: This is fine, this is just a test, and no other test affects env vars.
         unsafe {
             std::env::remove_var("XDG_CONFIG_HOME");
         }
@@ -1255,7 +1255,10 @@ mod test {
         }
 
         // Case two: no previous config, XDG var exists.
-        std::env::set_var("XDG_CONFIG_HOME", "/tmp");
+        // SAFETY: This is fine, this is just a test, and no other test affects env vars.
+        unsafe {
+            std::env::set_var("XDG_CONFIG_HOME", "/tmp");
+        }
         let mut case_2 = PathBuf::new();
         case_2.push("/tmp");
         case_2.push(DEFAULT_CONFIG_FILE_LOCATION);

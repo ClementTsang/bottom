@@ -5,7 +5,8 @@ use std::io::Error;
 
 const MNT_NOWAIT: libc::c_int = 2;
 
-extern "C" {
+// SAFETY: Bindings like this are inherently unsafe.
+unsafe extern "C" {
     fn getfsstat64(buf: *mut libc::statfs, bufsize: libc::c_int, flags: libc::c_int)
     -> libc::c_int;
 }
