@@ -38,9 +38,9 @@ exclude = [
     "profile.json.gz",
     "rustfmt.toml",
 ]
-edition = "2021"
+edition = "2024"
 # The oldest version I've tested that should still build - note this is not an official MSRV!
-rust-version = "1.81"
+rust-version = "1.85"
 
 [lib]
 test = true
