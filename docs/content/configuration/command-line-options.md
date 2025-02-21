@@ -30,7 +30,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `-S, --case_sensitive`      | Enables case sensitivity by default.                                                   |
 | `-u, --current_usage`       | Calculates process CPU usage as a percentage of current usage rather than total usage. |
 | `--disable_advanced_kill`   | Hides additional stopping options Unix-like systems.                                   |
-| `-g, --group_processes`     | Groups processes with the same name by default.                                        |
+| `-g, --group_processes`     | Groups processes with the same name by default. No effect if `--tree` is set.          |
 | `--process_memory_as_value` | Defaults to showing process memory usage by value.                                     |
 | `--process_command`         | Shows the full command name instead of the process name by default.                    |
 | `-R, --regex`               | Enables regex by default while searching.                                              |
