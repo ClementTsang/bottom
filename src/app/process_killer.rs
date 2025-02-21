@@ -6,7 +6,7 @@ use anyhow::bail;
 use windows::Win32::{
     Foundation::{CloseHandle, HANDLE},
     System::Threading::{
-        OpenProcess, TerminateProcess, PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE,
+        OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE, TerminateProcess,
     },
 };
 
@@ -68,9 +68,11 @@ pub fn kill_process_given_pid(pid: Pid, signal: usize) -> anyhow::Result<()> {
         let err_code = std::io::Error::last_os_error().raw_os_error();
         let err = match err_code {
             Some(libc::ESRCH) => "the target process did not exist.",
-            Some(libc::EPERM) => "the calling process does not have the permissions to terminate the target process(es).",
+            Some(libc::EPERM) => {
+                "the calling process does not have the permissions to terminate the target process(es)."
+            }
             Some(libc::EINVAL) => "an invalid signal was specified.",
-            _ => "Unknown error occurred."
+            _ => "Unknown error occurred.",
         };
 
         if let Some(err_code) = err_code {

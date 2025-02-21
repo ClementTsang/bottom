@@ -5,8 +5,8 @@ use std::{io, time::Duration};
 use hashbrown::HashMap;
 use sysinfo::{ProcessStatus, System};
 
-use super::{process_status_str, ProcessHarvest};
-use crate::collection::{error::CollectionResult, processes::UserTable, Pid};
+use super::{ProcessHarvest, process_status_str};
+use crate::collection::{Pid, error::CollectionResult, processes::UserTable};
 
 pub(crate) trait UnixProcessExt {
     fn sysinfo_process_data(

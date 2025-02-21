@@ -1,6 +1,6 @@
 //! Fallback disk info using sysinfo.
 
-use super::{keep_disk_entry, DiskHarvest};
+use super::{DiskHarvest, keep_disk_entry};
 use crate::collection::DataCollector;
 
 pub(crate) fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<DiskHarvest>> {

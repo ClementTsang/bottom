@@ -5,8 +5,8 @@ mod bindings;
 use bindings::*;
 use itertools::Itertools;
 
-use super::{keep_disk_entry, DiskHarvest};
-use crate::collection::{disks::IoCounters, DataCollector};
+use super::{DiskHarvest, keep_disk_entry};
+use crate::collection::{DataCollector, disks::IoCounters};
 
 /// Returns I/O stats.
 pub(crate) fn io_stats() -> anyhow::Result<Vec<IoCounters>> {

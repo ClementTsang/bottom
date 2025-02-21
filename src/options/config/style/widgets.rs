@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{borders::WidgetBorderType, ColorStr, TextStyleConfig};
+use super::{ColorStr, TextStyleConfig, borders::WidgetBorderType};
 
 /// General styling for generic widgets.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]

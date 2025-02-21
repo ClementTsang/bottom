@@ -3,17 +3,16 @@ use std::{
     vec::Vec,
 };
 
+use super::{ProcessData, TimeSeriesData};
 #[cfg(feature = "battery")]
 use crate::collection::batteries;
 use crate::{
     app::AppConfigFields,
-    collection::{cpu, disks, memory::MemData, network, Data},
+    collection::{Data, cpu, disks, memory::MemData, network},
     dec_bytes_per_second_string,
     utils::data_units::DataUnit,
     widgets::{DiskWidgetData, TempWidgetData},
 };
-
-use super::{ProcessData, TimeSeriesData};
 
 /// A collection of data. This is where we dump data into.
 ///
@@ -186,7 +185,7 @@ impl StoredData {
                     {
                         if !device.name.starts_with('/') {
                             Some(device.name.as_str()) // use the whole zfs
-                                                       // dataset name
+                        // dataset name
                         } else {
                             device.name.split('/').last()
                         }

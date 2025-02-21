@@ -16,8 +16,8 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use config::style::Styles;
 pub use config::Config;
+use config::style::Styles;
 use data::TemperatureType;
 pub(crate) use error::{OptionError, OptionResult};
 use hashbrown::{HashMap, HashSet};
@@ -28,7 +28,7 @@ use starship_battery::Manager;
 
 use self::{
     args::BottomArgs,
-    config::{layout::Row, IgnoreList, StringOrNum},
+    config::{IgnoreList, StringOrNum, layout::Row},
 };
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
@@ -1009,7 +1009,7 @@ fn get_memory_legend_position(
 mod test {
     use clap::Parser;
 
-    use super::{get_time_interval, Config};
+    use super::{Config, get_time_interval};
     use crate::{
         app::App,
         args::BottomArgs,
@@ -1234,7 +1234,7 @@ mod test {
     fn test_get_config_path_macos() {
         use std::path::PathBuf;
 
-        use super::{get_config_path, DEFAULT_CONFIG_FILE_LOCATION};
+        use super::{DEFAULT_CONFIG_FILE_LOCATION, get_config_path};
 
         // Case three: no previous config, no XDG var.
         // SAFETY: this is the only test that does this

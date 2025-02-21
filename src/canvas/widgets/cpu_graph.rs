@@ -1,20 +1,20 @@
 use std::borrow::Cow;
 
 use tui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
-    Frame,
 };
 
 use crate::{
-    app::{data::StoredData, layout_manager::WidgetDirection, App},
+    app::{App, data::StoredData, layout_manager::WidgetDirection},
     canvas::{
+        Painter,
         components::{
             data_table::{DrawInfo, SelectionState},
             time_graph::{AxisBound, GraphData, TimeGraph},
         },
         drawing_utils::should_hide_x_label,
-        Painter,
     },
     collection::cpu::CpuData,
     widgets::CpuWidgetState,
@@ -158,10 +158,12 @@ impl Painter {
                     [(offset_position - show_avg_offset) % self.styles.cpu_colour_styles.len()]
             };
 
-            vec![GraphData::default()
-                .style(style)
-                .time(time)
-                .values(&cpu_points[current_scroll_position - 1])]
+            vec![
+                GraphData::default()
+                    .style(style)
+                    .time(time)
+                    .values(&cpu_points[current_scroll_position - 1]),
+            ]
         } else {
             vec![]
         }

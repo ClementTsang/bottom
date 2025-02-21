@@ -7,7 +7,7 @@ const MNT_NOWAIT: libc::c_int = 2;
 
 extern "C" {
     fn getfsstat64(buf: *mut libc::statfs, bufsize: libc::c_int, flags: libc::c_int)
-        -> libc::c_int;
+    -> libc::c_int;
 }
 
 /// Returns all the mounts on the system at the moment.

@@ -2,7 +2,7 @@ use std::{num::NonZeroU64, sync::OnceLock};
 
 use hashbrown::HashMap;
 use nvml_wrapper::{
-    enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError, Nvml,
+    Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError,
 };
 
 use crate::{

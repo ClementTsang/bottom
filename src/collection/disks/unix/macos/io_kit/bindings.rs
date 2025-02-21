@@ -6,7 +6,7 @@
 //! Ideally, we can remove this if sysinfo ever gains disk I/O capabilities.
 
 use core_foundation::{
-    base::{mach_port_t, CFAllocatorRef},
+    base::{CFAllocatorRef, mach_port_t},
     dictionary::CFMutableDictionaryRef,
 };
 use libc::c_char;

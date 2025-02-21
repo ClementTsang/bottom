@@ -1,7 +1,8 @@
 use std::{collections::BTreeMap, vec::Vec};
 
-use crate::collection::processes::{Pid, ProcessHarvest};
 use hashbrown::HashMap;
+
+use crate::collection::processes::{Pid, ProcessHarvest};
 
 #[derive(Clone, Debug, Default)]
 pub struct ProcessData {

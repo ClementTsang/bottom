@@ -34,7 +34,7 @@ cfg_if! {
 
 use std::{borrow::Cow, time::Duration};
 
-use super::{error::CollectionResult, DataCollector};
+use super::{DataCollector, error::CollectionResult};
 
 cfg_if! {
     if #[cfg(target_family = "windows")] {

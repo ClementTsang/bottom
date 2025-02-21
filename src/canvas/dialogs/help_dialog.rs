@@ -1,16 +1,16 @@
 use std::cmp::{max, min};
 
 use tui::{
+    Frame,
     layout::{Alignment, Rect},
     text::{Line, Span},
     widgets::{Paragraph, Wrap},
-    Frame,
 };
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::App,
-    canvas::{drawing_utils::dialog_block, Painter},
+    canvas::{Painter, drawing_utils::dialog_block},
     constants::{self, HELP_TEXT},
 };
 

@@ -10,13 +10,13 @@ use indexmap::IndexSet;
 use itertools::Itertools;
 pub use process_columns::*;
 pub use process_data::*;
-use query::{parse_query, ProcessQuery};
+use query::{ProcessQuery, parse_query};
 use sort_table::SortTableColumn;
 
 use crate::{
     app::{
-        data::{ProcessData, StoredData},
         AppConfigFields, AppSearchState,
+        data::{ProcessData, StoredData},
     },
     canvas::components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,

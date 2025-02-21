@@ -25,7 +25,7 @@ use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
 
 use super::Config;
-use crate::options::{args::BottomArgs, OptionError, OptionResult};
+use crate::options::{OptionError, OptionResult, args::BottomArgs};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]

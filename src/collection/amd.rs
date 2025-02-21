@@ -1,16 +1,18 @@
 mod amdgpu_marketing;
 
-use crate::{
-    app::{filter::Filter, layout_manager::UsedWidgets},
-    collection::{memory::MemData, temperature::TempSensorData},
-};
-use hashbrown::{HashMap, HashSet};
 use std::{
     fs::{self, read_to_string},
     num::NonZeroU64,
     path::{Path, PathBuf},
     sync::{LazyLock, Mutex},
     time::{Duration, Instant},
+};
+
+use hashbrown::{HashMap, HashSet};
+
+use crate::{
+    app::{filter::Filter, layout_manager::UsedWidgets},
+    collection::{memory::MemData, temperature::TempSensorData},
 };
 
 // TODO: May be able to clean up some of these, Option<Vec> for example is a bit redundant.

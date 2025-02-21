@@ -16,13 +16,13 @@ use tui::{
     style::{Color, Style, Styled},
     symbols::{self, Marker},
     text::{Line, Span},
-    widgets::{block::BlockExt, Block, Borders, GraphType, Widget},
+    widgets::{Block, Borders, GraphType, Widget, block::BlockExt},
 };
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::data::Values,
-    utils::general::{saturating_log10, saturating_log2},
+    utils::general::{saturating_log2, saturating_log10},
 };
 
 pub const DEFAULT_LEGEND_CONSTRAINTS: (Constraint, Constraint) =
@@ -1116,7 +1116,7 @@ mod tests {
 
         assert!(layout.legend_area.is_some());
         assert_eq!(layout.legend_area.unwrap().height, 4); // 2 for borders, 2
-                                                           // for rows
+        // for rows
     }
 
     #[test]

@@ -663,21 +663,20 @@ impl BottomLayout {
         BottomLayout {
             total_row_height_ratio: 3,
             rows: vec![
-                BottomRow::new(vec![BottomCol::new(vec![
-                    BottomColRow::new(vec![cpu]).canvas_handled()
+                BottomRow::new(vec![
+                    BottomCol::new(vec![BottomColRow::new(vec![cpu]).canvas_handled()])
+                        .canvas_handled(),
                 ])
-                .canvas_handled()])
                 .canvas_handled(),
-                BottomRow::new(vec![BottomCol::new(vec![BottomColRow::new(vec![
-                    mem, net,
+                BottomRow::new(vec![
+                    BottomCol::new(vec![BottomColRow::new(vec![mem, net]).canvas_handled()])
+                        .canvas_handled(),
                 ])
-                .canvas_handled()])
-                .canvas_handled()])
                 .canvas_handled(),
-                BottomRow::new(vec![BottomCol::new(vec![
-                    BottomColRow::new(vec![table]).canvas_handled()
+                BottomRow::new(vec![
+                    BottomCol::new(vec![BottomColRow::new(vec![table]).canvas_handled()])
+                        .canvas_handled(),
                 ])
-                .canvas_handled()])
                 .canvas_handled(),
                 BottomRow::new(table_widgets).canvas_handled(),
             ],

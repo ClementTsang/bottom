@@ -3,7 +3,7 @@ use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 use serde::Deserialize;
 
 use crate::{
-    app::{data::StoredData, AppConfigFields},
+    app::{AppConfigFields, data::StoredData},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,

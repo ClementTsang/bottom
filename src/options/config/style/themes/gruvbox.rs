@@ -4,7 +4,7 @@ use tui::{
 };
 
 use super::{color, hex};
-use crate::options::config::style::{utils::convert_hex_to_color, Styles};
+use crate::options::config::style::{Styles, utils::convert_hex_to_color};
 
 impl Styles {
     pub(crate) fn gruvbox_palette() -> Self {

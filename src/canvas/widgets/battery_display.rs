@@ -1,16 +1,16 @@
 use std::cmp::min;
 
 use tui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span},
     widgets::{Cell, Paragraph, Row, Table, Tabs},
-    Frame,
 };
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::App,
-    canvas::{drawing_utils::widget_block, Painter},
+    canvas::{Painter, drawing_utils::widget_block},
     collection::batteries::BatteryState,
     constants::*,
 };

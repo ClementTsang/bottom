@@ -329,7 +329,7 @@ pub(crate) fn parse_query(
                                 or: None,
                                 regex_prefix: Some((prefix_type, StringQuery::Value(content))),
                                 compare_prefix: None,
-                            })
+                            });
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
                             // We have to check if someone put an "="...

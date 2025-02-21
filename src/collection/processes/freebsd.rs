@@ -5,7 +5,7 @@ use std::{io, process::Command};
 use hashbrown::HashMap;
 use serde::{Deserialize, Deserializer};
 
-use crate::collection::{deserialize_xo, processes::UnixProcessExt, Pid};
+use crate::collection::{Pid, deserialize_xo, processes::UnixProcessExt};
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]

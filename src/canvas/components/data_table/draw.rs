@@ -5,10 +5,10 @@ use std::{
 
 use concat_string::concat_string;
 use tui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span, Text},
     widgets::{Block, Row, Table},
-    Frame,
 };
 
 use super::{
@@ -17,7 +17,7 @@ use super::{
 };
 use crate::{
     app::layout_manager::BottomWidget,
-    canvas::{drawing_utils::widget_block, Painter},
+    canvas::{Painter, drawing_utils::widget_block},
     constants::TABLE_GAP_HEIGHT_LIMIT,
     utils::strings::truncate_to_text,
 };

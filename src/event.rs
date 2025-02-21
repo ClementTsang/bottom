@@ -5,7 +5,7 @@ use std::sync::mpsc::Sender;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
 
 use crate::{
-    app::{layout_manager::WidgetDirection, App},
+    app::{App, layout_manager::WidgetDirection},
     collection::Data,
 };
 

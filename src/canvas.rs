@@ -5,17 +5,17 @@ mod widgets;
 
 use itertools::izip;
 use tui::{
+    Frame, Terminal,
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     text::Span,
     widgets::Paragraph,
-    Frame, Terminal,
 };
 
 use crate::{
     app::{
-        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType, IntermediaryConstraint},
         App,
+        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType, IntermediaryConstraint},
     },
     constants::*,
     options::config::style::Styles,
@@ -362,11 +362,7 @@ impl Painter {
                                 && actual_cpu_data_len.saturating_sub(1) % 4 != 0,
                         );
 
-                    if c <= 1 {
-                        1
-                    } else {
-                        c
-                    }
+                    if c <= 1 { 1 } else { c }
                 };
 
                 let mut mem_rows = 1;

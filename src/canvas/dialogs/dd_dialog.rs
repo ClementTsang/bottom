@@ -2,15 +2,15 @@
 use std::cmp::min;
 
 use tui::{
+    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     text::{Line, Span, Text},
     widgets::{Block, Paragraph, Wrap},
-    Frame,
 };
 
 use crate::{
     app::{App, KillSignal, MAX_PROCESS_SIGNAL},
-    canvas::{drawing_utils::dialog_block, Painter},
+    canvas::{Painter, drawing_utils::dialog_block},
     widgets::ProcWidgetMode,
 };
 

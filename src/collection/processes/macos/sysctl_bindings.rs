@@ -3,10 +3,10 @@
 
 use std::mem;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use libc::{
-    boolean_t, c_char, c_long, c_short, c_uchar, c_ushort, c_void, dev_t, gid_t, itimerval, pid_t,
-    rusage, sigset_t, timeval, uid_t, xucred, CTL_KERN, KERN_PROC, KERN_PROC_PID, MAXCOMLEN,
+    CTL_KERN, KERN_PROC, KERN_PROC_PID, MAXCOMLEN, boolean_t, c_char, c_long, c_short, c_uchar,
+    c_ushort, c_void, dev_t, gid_t, itimerval, pid_t, rusage, sigset_t, timeval, uid_t, xucred,
 };
 use mach2::vm_types::user_addr_t;
 

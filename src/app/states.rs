@@ -9,8 +9,8 @@ use crate::{
     app::layout_manager::BottomWidgetType,
     constants,
     widgets::{
-        query::ProcessQuery, BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState,
-        NetWidgetState, ProcWidgetState, TempWidgetState,
+        BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
+        ProcWidgetState, TempWidgetState, query::ProcessQuery,
     },
 };
 
