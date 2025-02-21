@@ -64,11 +64,11 @@ is added together when displayed.
     <img src="../../../assets/screenshots/process/process_grouped.webp" alt="A picture of grouped mode in a process widget."/>
 </figure>
 
-!!! note
+!!! info
 
     Note that the process state and user columns are disabled in this mode.
 
-!!! note
+!!! info
 
     Note that if tree mode is also active, processes cannot be grouped together due to the behaviour of the two modes
     somewhat clashing. This also reflects with default modes like `group_processes`.
@@ -101,7 +101,7 @@ Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, d
 
 A process in tree mode can also be "collapsed", hiding its children and any descendants, using either the ++minus++ or ++plus++ keys, or double-clicking on an entry.
 
-!!! note
+!!! info
 
     Note that if tree mode is active, processes cannot be grouped together due to the behaviour of the two modes
     somewhat clashing. This also reflects with default modes like `group_processes`.
