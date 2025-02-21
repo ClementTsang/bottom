@@ -301,7 +301,9 @@ pub struct ProcessArgs {
         short = 'g',
         long,
         action = ArgAction::SetTrue,
-        help = "Groups processes with the same name by default."
+        help = "Groups processes with the same name by default.",
+        long_help = "Groups processes with the same name by default. Doesn't do anything if --tree is also set, or \
+                    tree=true in the config."
     )]
     pub group_processes: bool,
 

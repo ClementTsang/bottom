@@ -283,7 +283,8 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to set CPU% on a process to be based on the total CPU or per-core CPU% (not divided by the number of cpus).
 #unnormalized_cpu = false
 
-# Whether to group processes with the same name together by default.
+# Whether to group processes with the same name together by default. Doesn't do anything
+# if tree is set to true or --tree is set.
 #group_processes = false
 
 # Whether to make process searching case sensitive by default.
