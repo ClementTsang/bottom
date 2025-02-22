@@ -1,23 +1,23 @@
 use std::time::Duration;
 
 use tui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
     text::Text,
     widgets::{Block, Borders, Row, Table},
-    Frame,
 };
 
 use crate::{
     app::{App, AppConfigFields, AxisScaling},
     canvas::{
+        Painter,
         components::time_graph::{AxisBound, ChartScaling, GraphData, TimeGraph},
         drawing_utils::should_hide_x_label,
-        Painter,
     },
     utils::{
         data_units::*,
-        general::{saturating_log10, saturating_log2},
+        general::{saturating_log2, saturating_log10},
     },
     widgets::NetWidgetHeightCache,
 };
@@ -106,7 +106,7 @@ impl Painter {
                     for (&time, &v) in rx_points
                         .iter_along_base(time)
                         .rev()
-                        .take_while(|(&time, _)| time >= first_time)
+                        .take_while(|&(&time, _)| time >= first_time)
                     {
                         if v > biggest {
                             biggest = v;
@@ -117,7 +117,7 @@ impl Painter {
                     for (&time, &v) in tx_points
                         .iter_along_base(time)
                         .rev()
-                        .take_while(|(&time, _)| time >= first_time)
+                        .take_while(|&(&time, _)| time >= first_time)
                     {
                         if v > biggest {
                             biggest = v;

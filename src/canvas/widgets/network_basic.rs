@@ -1,13 +1,13 @@
 use tui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span},
     widgets::{Block, Paragraph},
-    Frame,
 };
 
 use crate::{
     app::App,
-    canvas::{drawing_utils::widget_block, Painter},
+    canvas::{Painter, drawing_utils::widget_block},
     utils::data_units::{convert_bits, get_unit_prefix},
 };
 

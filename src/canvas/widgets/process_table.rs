@@ -1,18 +1,18 @@
 use tui::{
+    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
     text::{Line, Span},
     widgets::Paragraph,
-    Frame,
 };
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{App, AppSearchState},
     canvas::{
+        Painter,
         components::data_table::{DrawInfo, SelectionState},
         drawing_utils::widget_block,
-        Painter,
     },
 };
 

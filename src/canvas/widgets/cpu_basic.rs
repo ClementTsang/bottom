@@ -2,16 +2,16 @@ use std::cmp::min;
 
 use itertools::{Either, Itertools};
 use tui::{
-    layout::{Constraint, Direction, Layout, Rect},
     Frame,
+    layout::{Constraint, Direction, Layout, Rect},
 };
 
 use crate::{
     app::App,
     canvas::{
+        Painter,
         components::pipe_gauge::{LabelLimit, PipeGauge},
         drawing_utils::widget_block,
-        Painter,
     },
     collection::cpu::{CpuData, CpuDataType},
 };

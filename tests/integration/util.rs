@@ -2,7 +2,7 @@ use std::{env, ffi::OsString, path::Path, process::Command};
 
 use hashbrown::HashMap;
 #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
-use portable_pty::{native_pty_system, Child, CommandBuilder, MasterPty, PtySize};
+use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
 
 pub fn abs_path(path: &str) -> OsString {
     let path = Path::new(path);

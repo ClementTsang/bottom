@@ -6,11 +6,11 @@ use tui::widgets::Row;
 use crate::{
     app::AppConfigFields,
     canvas::{
+        Painter,
         components::data_table::{
             Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
             DataToCell,
         },
-        Painter,
     },
     collection::cpu::{CpuData, CpuDataType},
     options::config::{cpu::CpuDefault, style::Styles},

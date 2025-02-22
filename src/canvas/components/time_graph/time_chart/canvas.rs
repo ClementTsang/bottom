@@ -22,8 +22,8 @@ use tui::{
     symbols,
     text::Line,
     widgets::{
-        canvas::{Line as CanvasLine, Points},
         Block, Widget,
+        canvas::{Line as CanvasLine, Points},
     },
 };
 

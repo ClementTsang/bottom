@@ -1,13 +1,13 @@
 use std::borrow::Cow;
 
 use tui::{
-    layout::{Constraint, Direction, Layout, Rect},
     Frame,
+    layout::{Constraint, Direction, Layout, Rect},
 };
 
 use crate::{
     app::App,
-    canvas::{components::pipe_gauge::PipeGauge, drawing_utils::widget_block, Painter},
+    canvas::{Painter, components::pipe_gauge::PipeGauge, drawing_utils::widget_block},
     collection::memory::MemData,
     get_binary_unit_and_denominator,
 };

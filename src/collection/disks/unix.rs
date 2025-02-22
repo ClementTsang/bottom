@@ -24,7 +24,7 @@ cfg_if::cfg_if! {
 use file_systems::*;
 use usage::*;
 
-use super::{keep_disk_entry, DiskHarvest};
+use super::{DiskHarvest, keep_disk_entry};
 use crate::collection::DataCollector;
 
 /// Returns the disk usage of the mounted (and for now, physical) disks.

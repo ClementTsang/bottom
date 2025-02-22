@@ -57,7 +57,7 @@ fn partitions_iter() -> anyhow::Result<impl Iterator<Item = Partition>> {
     let mounts = bindings::mounts()?;
 
     unsafe fn ptr_to_cow<'a>(ptr: *const i8) -> std::borrow::Cow<'a, str> {
-        CStr::from_ptr(ptr).to_string_lossy()
+        unsafe { CStr::from_ptr(ptr).to_string_lossy() }
     }
 
     Ok(mounts.into_iter().map(|stat| {

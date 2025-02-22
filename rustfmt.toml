@@ -5,6 +5,7 @@ fn_params_layout = "Compressed"
 use_field_init_shorthand = true
 tab_spaces = 4
 max_width = 100
+style_edition = "2024"
 
 # Unstable options, disabled by default.
 # imports_granularity = "Crate"

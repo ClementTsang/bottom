@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    cmp::{max, Ordering},
+    cmp::{Ordering, max},
     fmt::Display,
     num::NonZeroU16,
     time::Duration,
@@ -12,12 +12,12 @@ use tui::widgets::Row;
 use super::process_columns::ProcColumn;
 use crate::{
     canvas::{
-        components::data_table::{DataTableColumn, DataToCell},
         Painter,
+        components::data_table::{DataTableColumn, DataToCell},
     },
     collection::processes::{Pid, ProcessHarvest},
     dec_bytes_per_second_string,
-    utils::data_units::{get_binary_bytes, get_decimal_bytes, GIBI_LIMIT, GIGA_LIMIT},
+    utils::data_units::{GIBI_LIMIT, GIGA_LIMIT, get_binary_bytes, get_decimal_bytes},
 };
 
 #[derive(Clone, Debug)]
@@ -391,9 +391,8 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
 mod test {
     use std::time::Duration;
 
-    use crate::utils::data_units::*;
-
     use super::*;
+    use crate::utils::data_units::*;
 
     #[test]
     fn test_format_time() {

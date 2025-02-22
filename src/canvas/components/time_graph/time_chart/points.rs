@@ -2,8 +2,8 @@ use itertools::Itertools;
 use tui::{
     style::Color,
     widgets::{
-        canvas::{Line as CanvasLine, Points},
         GraphType,
+        canvas::{Line as CanvasLine, Points},
     },
 };
 

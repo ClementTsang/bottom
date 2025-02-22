@@ -5,8 +5,8 @@ use std::io;
 use hashbrown::HashMap;
 use serde::Deserialize;
 
-use super::{keep_disk_entry, DiskHarvest, IoHarvest};
-use crate::collection::{deserialize_xo, disks::IoData, error::CollectionResult, DataCollector};
+use super::{DiskHarvest, IoHarvest, keep_disk_entry};
+use crate::collection::{DataCollector, deserialize_xo, disks::IoData, error::CollectionResult};
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]

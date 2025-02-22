@@ -65,11 +65,7 @@ pub fn zfs_io_stats() -> anyhow::Result<Vec<IoCounters>> {
             .filter_map(|e| {
                 e.ok().and_then(|d| {
                     let p = d.path();
-                    if p.is_dir() {
-                        Some(p)
-                    } else {
-                        None
-                    }
+                    if p.is_dir() { Some(p) } else { None }
                 })
             })
             .collect();

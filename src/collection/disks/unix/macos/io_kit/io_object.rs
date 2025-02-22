@@ -5,7 +5,7 @@ use std::mem;
 
 use anyhow::{anyhow, bail};
 use core_foundation::{
-    base::{kCFAllocatorDefault, CFType, TCFType, ToVoid},
+    base::{CFType, TCFType, ToVoid, kCFAllocatorDefault},
     dictionary::{
         CFDictionary, CFDictionaryGetTypeID, CFDictionaryRef, CFMutableDictionary,
         CFMutableDictionaryRef,

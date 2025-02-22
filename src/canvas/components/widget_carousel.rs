@@ -1,12 +1,12 @@
 use tui::{
+    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     text::{Line, Span},
     widgets::{Block, Paragraph},
-    Frame,
 };
 
 use crate::{
-    app::{layout_manager::BottomWidgetType, App},
+    app::{App, layout_manager::BottomWidgetType},
     canvas::Painter,
 };
 

@@ -1,16 +1,15 @@
 mod time_chart;
-pub use time_chart::*;
-
 use std::{borrow::Cow, time::Instant};
 
 use concat_string::concat_string;
+pub use time_chart::*;
 use tui::{
+    Frame,
     layout::{Constraint, Rect},
     style::Style,
     symbols::Marker,
     text::{Line, Span},
     widgets::{BorderType, GraphType},
-    Frame,
 };
 
 use crate::{app::data::Values, canvas::drawing_utils::widget_block};

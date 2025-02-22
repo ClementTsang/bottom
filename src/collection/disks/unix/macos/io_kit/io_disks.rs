@@ -1,7 +1,7 @@
 use anyhow::bail;
 use mach2::kern_return;
 
-use super::{bindings::*, IoIterator};
+use super::{IoIterator, bindings::*};
 
 pub fn get_disks() -> anyhow::Result<IoIterator> {
     let mut media_iter: io_iterator_t = 0;
