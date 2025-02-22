@@ -36,9 +36,9 @@ exclude = [
     "rust-toolchain.toml",
     "rustfmt.toml",
 ]
-edition = "2024"
+edition = "2021"
 # The oldest version I've tested that should still build - note this is not an official MSRV!
-rust-version = "1.85"
+rust-version = "1.81"
 
 [lib]
 test = true
