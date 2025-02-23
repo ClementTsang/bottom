@@ -1,4 +1,4 @@
-mod amdgpu_marketing;
+mod amd_gpu_marketing;
 
 use std::{
     fs::{self, read_to_string},
@@ -16,24 +16,24 @@ use crate::{
 };
 
 // TODO: May be able to clean up some of these, Option<Vec> for example is a bit redundant.
-pub struct AMDGPUData {
+pub struct AmdGpuData {
     pub memory: Option<Vec<(String, MemData)>>,
     pub temperature: Option<Vec<TempSensorData>>,
     pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
 }
 
-pub struct AMDGPUMemory {
+pub struct AmdGpuMemory {
     pub total: u64,
     pub used: u64,
 }
 
-pub struct AMDGPUTemperature {
+pub struct AmdGpuTemperature {
     pub name: String,
     pub temperature: f32,
 }
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
-pub struct AMDGPUProc {
+pub struct AmdGpuProc {
     pub vram_usage: u64,
     pub gfx_usage: u64,
     pub dma_usage: u64,
@@ -46,7 +46,7 @@ pub struct AMDGPUProc {
 }
 
 // needs previous state for usage calculation
-static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, HashMap<u32, AMDGPUProc>>>> =
+static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, HashMap<u32, AmdGpuProc>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 fn get_amd_devs() -> Option<Vec<PathBuf>> {
@@ -107,13 +107,13 @@ fn get_amd_name(device_path: &Path) -> Option<String> {
     }
 
     // if it exists in our local database, use that name
-    amdgpu_marketing::AMDGPU_MARKETING_NAME
+    amd_gpu_marketing::AMD_GPU_MARKETING_NAME
         .iter()
         .find(|(did, rid, _)| (did, rid) == (&device_id, &revision_id))
         .map(|tuple| tuple.2.to_string())
 }
 
-fn get_amd_vram(device_path: &Path) -> Option<AMDGPUMemory> {
+fn get_amd_vram(device_path: &Path) -> Option<AmdGpuMemory> {
     // get vram memory info from sysfs
     let vram_total_path = device_path.join("mem_info_vram_total");
     let vram_used_path = device_path.join("mem_info_vram_used");
@@ -136,13 +136,13 @@ fn get_amd_vram(device_path: &Path) -> Option<AMDGPUMemory> {
         return None;
     };
 
-    Some(AMDGPUMemory {
+    Some(AmdGpuMemory {
         total: vram_total,
         used: vram_used,
     })
 }
 
-fn get_amd_temp(device_path: &Path) -> Option<Vec<AMDGPUTemperature>> {
+fn get_amd_temp(device_path: &Path) -> Option<Vec<AmdGpuTemperature>> {
     let mut temperatures = Vec::new();
 
     // get hardware monitoring sensor info from sysfs
@@ -209,7 +209,7 @@ fn get_amd_temp(device_path: &Path) -> Option<Vec<AMDGPUTemperature>> {
             }
 
             // 1 C is reported as 1000
-            temperatures.push(AMDGPUTemperature {
+            temperatures.push(AmdGpuTemperature {
                 name: hwmon_sensor_label,
                 temperature: (hwmon_sensor as f32) / 1000.0f32,
             });
@@ -300,7 +300,7 @@ fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
     }
 }
 
-fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AMDGPUProc>> {
+fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
     let mut fdinfo = HashMap::new();
 
     let drm_paths = get_amdgpu_drm(device_path)?;
@@ -336,7 +336,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AMDGPUProc>> {
             continue;
         };
 
-        let mut usage: AMDGPUProc = Default::default();
+        let mut usage: AmdGpuProc = Default::default();
 
         let mut observed_ids: HashSet<usize> = HashSet::new();
 
@@ -403,7 +403,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AMDGPUProc>> {
 
 pub fn get_amd_vecs(
     filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets, prev_time: Instant,
-) -> Option<AMDGPUData> {
+) -> Option<AmdGpuData> {
     let device_path_list = get_amd_devs()?;
     let interval = Instant::now().duration_since(prev_time);
     let num_gpu = device_path_list.len();
@@ -413,8 +413,8 @@ pub fn get_amd_vecs(
     let mut total_mem = 0;
 
     for device_path in device_path_list {
-        let device_name =
-            get_amd_name(&device_path).unwrap_or(amdgpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
+        let device_name = get_amd_name(&device_path)
+            .unwrap_or(amd_gpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
 
         if let Some(mem) = get_amd_vram(&device_path) {
             if widgets_to_harvest.use_mem {
@@ -497,7 +497,7 @@ pub fn get_amd_vecs(
         }
     }
 
-    Some(AMDGPUData {
+    Some(AmdGpuData {
         memory: (!mem_vec.is_empty()).then_some(mem_vec),
         temperature: (!temp_vec.is_empty()).then_some(temp_vec),
         procs: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),

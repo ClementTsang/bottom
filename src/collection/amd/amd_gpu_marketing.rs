@@ -2,7 +2,7 @@
 
 pub const AMDGPU_DEFAULT_NAME: &str = "AMD Radeon Graphics";
 
-pub const AMDGPU_MARKETING_NAME: &[(u32, u32, &str)] = &[
+pub const AMD_GPU_MARKETING_NAME: &[(u32, u32, &str)] = &[
     (0x6798, 0x00, "AMD Radeon R9 200 / HD 7900 Series"),
     (0x6799, 0x00, "AMD Radeon HD 7900 Series"),
     (0x679A, 0x00, "AMD Radeon HD 7900 Series"),

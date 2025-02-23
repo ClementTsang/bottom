@@ -1,7 +1,7 @@
 //! Data collection for temperature metrics.
 //!
-//! For Linux and macOS, this is handled by Heim.
-//! For Windows, this is handled by sysinfo.
+//! For Linux, this is handled by custom code.
+//! For everything else, this is handled by sysinfo.
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
