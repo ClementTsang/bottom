@@ -10,26 +10,19 @@ use std::{
 
 use hashbrown::{HashMap, HashSet};
 
-use crate::{
-    app::{filter::Filter, layout_manager::UsedWidgets},
-    collection::{memory::MemData, temperature::TempSensorData},
-};
+use crate::{app::layout_manager::UsedWidgets, collection::memory::MemData};
+
+use super::linux::utils::is_device_awake;
 
 // TODO: May be able to clean up some of these, Option<Vec> for example is a bit redundant.
 pub struct AmdGpuData {
     pub memory: Option<Vec<(String, MemData)>>,
-    pub temperature: Option<Vec<TempSensorData>>,
     pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
 }
 
 pub struct AmdGpuMemory {
     pub total: u64,
     pub used: u64,
-}
-
-pub struct AmdGpuTemperature {
-    pub name: String,
-    pub temperature: f32,
 }
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
@@ -62,7 +55,18 @@ fn get_amd_devs() -> Option<Vec<PathBuf>> {
 
         // test if it has a valid vendor path
         let device_path = path.path();
-        let test_path = device_path.join("vendor");
+        if !device_path.is_dir() {
+            continue;
+        }
+
+        // Skip if asleep to avoid wakeups.
+        if !is_device_awake(&device_path) {
+            continue;
+        }
+
+        // This will exist for GPUs but not others, this is how we find their kernel
+        // name.
+        let test_path = device_path.join("drm");
         if test_path.as_path().exists() {
             devices.push(device_path);
         }
@@ -75,7 +79,7 @@ fn get_amd_devs() -> Option<Vec<PathBuf>> {
     }
 }
 
-fn get_amd_name(device_path: &Path) -> Option<String> {
+pub fn get_amd_name(device_path: &Path) -> Option<String> {
     // get revision and device ids from sysfs
     let rev_path = device_path.join("revision");
     let dev_path = device_path.join("device");
@@ -140,87 +144,6 @@ fn get_amd_vram(device_path: &Path) -> Option<AmdGpuMemory> {
         total: vram_total,
         used: vram_used,
     })
-}
-
-fn get_amd_temp(device_path: &Path) -> Option<Vec<AmdGpuTemperature>> {
-    let mut temperatures = Vec::new();
-
-    // get hardware monitoring sensor info from sysfs
-    let hwmon_root = device_path.join("hwmon");
-
-    let Ok(hwmon_paths) = fs::read_dir(hwmon_root) else {
-        return None;
-    };
-
-    for hwmon_dir in hwmon_paths {
-        let Ok(hwmon_dir) = hwmon_dir else {
-            continue;
-        };
-
-        let hwmon_binding = hwmon_dir.path();
-        let hwmon_path = hwmon_binding.as_path();
-        let Ok(hwmon_sensors) = fs::read_dir(hwmon_path) else {
-            continue;
-        };
-
-        for hwmon_sensor_ent in hwmon_sensors {
-            let Ok(hwmon_sensor_ent) = hwmon_sensor_ent else {
-                continue;
-            };
-
-            let hwmon_sensor_path = hwmon_sensor_ent.path();
-            let hwmon_sensor_binding = hwmon_sensor_ent.file_name();
-            let Some(hwmon_sensor_name) = hwmon_sensor_binding.to_str() else {
-                continue;
-            };
-
-            // temperature sensors are temp{number}_{input,label}
-            if !hwmon_sensor_name.starts_with("temp") || !hwmon_sensor_name.ends_with("_input") {
-                continue; // filename does not start with temp or ends with input
-            }
-
-            // construct label path
-            let hwmon_sensor_label_name = hwmon_sensor_name.replace("_input", "_label");
-            let hwmon_sensor_label_path = hwmon_path.join(hwmon_sensor_label_name);
-
-            // read and remove newlines
-            let Ok(mut hwmon_sensor_data) = read_to_string(hwmon_sensor_path) else {
-                continue;
-            };
-
-            let Ok(mut hwmon_sensor_label) = read_to_string(hwmon_sensor_label_path) else {
-                continue;
-            };
-
-            hwmon_sensor_data = hwmon_sensor_data.trim_end().to_string();
-            hwmon_sensor_label = hwmon_sensor_label.trim_end().to_string();
-
-            let Ok(hwmon_sensor) = hwmon_sensor_data.parse::<u64>() else {
-                continue;
-            };
-
-            // uppercase first character
-            if hwmon_sensor_label.is_ascii() {
-                let (hwmon_sensor_label_head, hwmon_sensor_label_tail) =
-                    hwmon_sensor_label.split_at(1);
-
-                hwmon_sensor_label =
-                    hwmon_sensor_label_head.to_uppercase() + hwmon_sensor_label_tail;
-            }
-
-            // 1 C is reported as 1000
-            temperatures.push(AmdGpuTemperature {
-                name: hwmon_sensor_label,
-                temperature: (hwmon_sensor as f32) / 1000.0f32,
-            });
-        }
-    }
-
-    if temperatures.is_empty() {
-        None
-    } else {
-        Some(temperatures)
-    }
 }
 
 // from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L114
@@ -401,13 +324,10 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
     Some(fdinfo)
 }
 
-pub fn get_amd_vecs(
-    filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets, prev_time: Instant,
-) -> Option<AmdGpuData> {
+pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Option<AmdGpuData> {
     let device_path_list = get_amd_devs()?;
     let interval = Instant::now().duration_since(prev_time);
     let num_gpu = device_path_list.len();
-    let mut temp_vec = Vec::with_capacity(num_gpu);
     let mut mem_vec = Vec::with_capacity(num_gpu);
     let mut proc_vec = Vec::with_capacity(num_gpu);
     let mut total_mem = 0;
@@ -430,18 +350,6 @@ pub fn get_amd_vecs(
             }
 
             total_mem += mem.total
-        }
-
-        // TODO: Not sure if this overlaps with the existing generic temperature code.
-        if widgets_to_harvest.use_temp && Filter::optional_should_keep(filter, &device_name) {
-            if let Some(temperatures) = get_amd_temp(&device_path) {
-                for info in temperatures {
-                    temp_vec.push(TempSensorData {
-                        name: format!("{} {}", device_name, info.name),
-                        temperature: Some(info.temperature),
-                    });
-                }
-            }
         }
 
         if widgets_to_harvest.use_proc {
@@ -499,7 +407,6 @@ pub fn get_amd_vecs(
 
     Some(AmdGpuData {
         memory: (!mem_vec.is_empty()).then_some(mem_vec),
-        temperature: (!temp_vec.is_empty()).then_some(temp_vec),
         procs: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),
     })
 }

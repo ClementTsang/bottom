@@ -8,6 +8,11 @@ pub mod nvidia;
 #[cfg(all(target_os = "linux", feature = "gpu"))]
 pub mod amd;
 
+#[cfg(target_os = "linux")]
+mod linux {
+    pub mod utils;
+}
+
 #[cfg(feature = "battery")]
 pub mod batteries;
 pub mod cpu;
@@ -370,18 +375,9 @@ impl DataCollector {
             }
 
             #[cfg(target_os = "linux")]
-            if let Some(data) = amd::get_amd_vecs(
-                &self.filters.temp_filter,
-                &self.widgets_to_harvest,
-                self.last_collection_time,
-            ) {
-                if let Some(mut temp) = data.temperature {
-                    if let Some(sensors) = &mut self.data.temperature_sensors {
-                        sensors.append(&mut temp);
-                    } else {
-                        self.data.temperature_sensors = Some(temp);
-                    }
-                }
+            if let Some(data) =
+                amd::get_amd_vecs(&self.widgets_to_harvest, self.last_collection_time)
+            {
                 if let Some(mut mem) = data.memory {
                     local_gpu.append(&mut mem);
                 }
