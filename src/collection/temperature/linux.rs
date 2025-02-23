@@ -9,12 +9,15 @@ use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
 use super::TempSensorData;
-use crate::app::filter::Filter;
+use crate::{app::filter::Filter, collection::linux::utils::is_device_awake};
+
+#[cfg(feature = "gpu")]
+use crate::collection::amd::get_amd_name;
 
 const EMPTY_NAME: &str = "Unknown";
 
 /// Returned results from grabbing hwmon/coretemp temperature sensor
-/// values/names.
+/// values or names.
 struct HwmonResults {
     temperatures: Vec<TempSensorData>,
     num_hwmon: usize,
@@ -115,40 +118,42 @@ fn counted_name(seen_names: &mut HashMap<String, u32>, name: String) -> String {
     }
 }
 
-#[inline]
+fn uppercase_first_letter(s: &mut str) {
+    if let Some(r) = s.get_mut(0..1) {
+        r.make_ascii_uppercase();
+    }
+}
+
 fn finalize_name(
     hwmon_name: Option<String>, sensor_label: Option<String>,
     fallback_sensor_name: &Option<String>, seen_names: &mut HashMap<String, u32>,
 ) -> String {
     let candidate_name = match (hwmon_name, sensor_label) {
-        (Some(name), Some(label)) => match (name.is_empty(), label.is_empty()) {
+        (Some(name), Some(mut label)) => match (name.is_empty(), label.is_empty()) {
             (false, false) => {
+                uppercase_first_letter(&mut label);
                 format!("{name}: {label}")
             }
-            (true, false) => match fallback_sensor_name {
-                Some(fallback) if !fallback.is_empty() => {
-                    if label.is_empty() {
-                        fallback.to_owned()
-                    } else {
+            (true, false) => {
+                uppercase_first_letter(&mut label);
+
+                // We assume label must not be empty.
+                match fallback_sensor_name {
+                    Some(fallback) if !fallback.is_empty() => {
                         format!("{fallback}: {label}")
                     }
+                    _ => label,
                 }
-                _ => {
-                    if label.is_empty() {
-                        EMPTY_NAME.to_string()
-                    } else {
-                        label
-                    }
-                }
-            },
+            }
             (false, true) => name.to_owned(),
             (true, true) => EMPTY_NAME.to_string(),
         },
-        (None, Some(label)) => match fallback_sensor_name {
+        (None, Some(mut label)) => match fallback_sensor_name {
             Some(fallback) if !fallback.is_empty() => {
                 if label.is_empty() {
                     fallback.to_owned()
                 } else {
+                    uppercase_first_letter(&mut label);
                     format!("{fallback}: {label}")
                 }
             }
@@ -156,6 +161,7 @@ fn finalize_name(
                 if label.is_empty() {
                     EMPTY_NAME.to_string()
                 } else {
+                    uppercase_first_letter(&mut label);
                     label
                 }
             }
@@ -174,34 +180,6 @@ fn finalize_name(
     };
 
     counted_name(seen_names, candidate_name)
-}
-
-/// Whether the temperature should *actually* be read during enumeration.
-/// Will return false if the state is not D0/unknown, or if it does not support
-/// `device/power_state`.
-#[inline]
-fn is_device_awake(path: &Path) -> bool {
-    // Whether the temperature should *actually* be read during enumeration.
-    // Set to false if the device is in ACPI D3cold.
-    // Documented at https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power_state
-    let device = path.join("device");
-    let power_state = device.join("power_state");
-    if power_state.exists() {
-        if let Ok(state) = fs::read_to_string(power_state) {
-            let state = state.trim();
-            // The zenpower3 kernel module (incorrectly?) reports "unknown", causing this
-            // check to fail and temperatures to appear as zero instead of
-            // having the file not exist.
-            //
-            // Their self-hosted git instance has disabled sign up, so this bug cant be
-            // reported either.
-            state == "D0" || state == "unknown"
-        } else {
-            true
-        }
-    } else {
-        true
-    }
 }
 
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon`
@@ -243,8 +221,9 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
     // also allow easy cancellation/timeouts.
     for file_path in dirs {
         let sensor_name = read_to_string_lossy(file_path.join("name"));
+        let device = file_path.join("device");
 
-        if !is_device_awake(&file_path) {
+        if !is_device_awake(&device) {
             let name = finalize_name(None, None, &sensor_name, &mut seen_names);
             temperatures.push(TempSensorData {
                 name,
@@ -284,23 +263,44 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
                     if drm.exists() {
                         // This should never actually be empty. If it is though, we'll fall back to
                         // the sensor name later on.
-                        let mut gpu = None;
 
-                        if let Ok(cards) = drm.read_dir() {
-                            for card in cards.flatten() {
-                                if let Some(name) = card.file_name().to_str() {
-                                    if name.starts_with("card") {
-                                        gpu = Some(humanize_name(
-                                            name.trim().to_string(),
-                                            sensor_name.as_ref(),
-                                        ));
-                                        break;
-                                    }
-                                }
+                        #[cfg(feature = "gpu")]
+                        {
+                            if let Some(amd_gpu_name) = get_amd_name(&device) {
+                                Some(amd_gpu_name)
+                            } else if let Ok(cards) = drm.read_dir() {
+                                cards.flatten().find_map(|card| {
+                                    card.file_name().to_str().and_then(|name| {
+                                        name.starts_with("card").then(|| {
+                                            humanize_name(
+                                                name.trim().to_string(),
+                                                sensor_name.as_ref(),
+                                            )
+                                        })
+                                    })
+                                })
+                            } else {
+                                None
                             }
                         }
 
-                        gpu
+                        #[cfg(not(feature = "gpu"))]
+                        {
+                            if let Ok(cards) = drm.read_dir() {
+                                cards.flatten().find_map(|card| {
+                                    card.file_name().to_str().and_then(|name| {
+                                        name.starts_with("card").then(|| {
+                                            humanize_name(
+                                                name.trim().to_string(),
+                                                sensor_name.as_ref(),
+                                            )
+                                        })
+                                    })
+                                })
+                            } else {
+                                None
+                            }
+                        }
                     } else {
                         // This little mess is to account for stuff like k10temp. This is needed
                         // because the `device` symlink points to `nvme*`
@@ -419,7 +419,7 @@ mod tests {
                 &Some("test".to_string()),
                 &mut seen_names
             ),
-            "hwmon: sensor"
+            "hwmon: Sensor"
         );
 
         assert_eq!(
@@ -439,7 +439,7 @@ mod tests {
                 &Some("test".to_string()),
                 &mut seen_names
             ),
-            "test: sensor"
+            "test: Sensor"
         );
 
         assert_eq!(
@@ -449,7 +449,7 @@ mod tests {
                 &Some("test".to_string()),
                 &mut seen_names
             ),
-            "hwmon: sensor (1)"
+            "hwmon: Sensor (1)"
         );
 
         assert_eq!(
