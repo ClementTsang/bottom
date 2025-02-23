@@ -104,6 +104,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
   - `--colors` is now `--theme`
 - [#1513](https://github.com/ClementTsang/bottom/pull/1513): Table headers are now bold by default.
 - [#1515](https://github.com/ClementTsang/bottom/pull/1515): Show the config path in the error message if unable to read/create a config.
+- [#1682](https://github.com/ClementTsang/bottom/pull/1682): On Linux, temperature sensor labels now always have their first letter capitalized (e.g. "k10temp: tctl" -> "k10temp: Tctl").
 
 ### Bug Fixes
 

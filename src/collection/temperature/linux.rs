@@ -148,11 +148,12 @@ fn finalize_name(
             (false, true) => name.to_owned(),
             (true, true) => EMPTY_NAME.to_string(),
         },
-        (None, Some(label)) => match fallback_sensor_name {
+        (None, Some(mut label)) => match fallback_sensor_name {
             Some(fallback) if !fallback.is_empty() => {
                 if label.is_empty() {
                     fallback.to_owned()
                 } else {
+                    uppercase_first_letter(&mut label);
                     format!("{fallback}: {label}")
                 }
             }
@@ -160,6 +161,7 @@ fn finalize_name(
                 if label.is_empty() {
                     EMPTY_NAME.to_string()
                 } else {
+                    uppercase_first_letter(&mut label);
                     label
                 }
             }
@@ -393,7 +395,7 @@ mod tests {
                 &Some("test".to_string()),
                 &mut seen_names
             ),
-            "hwmon: sensor"
+            "hwmon: Sensor"
         );
 
         assert_eq!(
@@ -413,7 +415,7 @@ mod tests {
                 &Some("test".to_string()),
                 &mut seen_names
             ),
-            "test: sensor"
+            "test: Sensor"
         );
 
         assert_eq!(
@@ -423,7 +425,7 @@ mod tests {
                 &Some("test".to_string()),
                 &mut seen_names
             ),
-            "hwmon: sensor (1)"
+            "hwmon: Sensor (1)"
         );
 
         assert_eq!(
