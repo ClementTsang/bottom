@@ -9,10 +9,10 @@ use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
 use super::TempSensorData;
-use crate::{
-    app::filter::Filter,
-    collection::{amd::get_amd_name, linux::utils::is_device_awake},
-};
+use crate::{app::filter::Filter, collection::linux::utils::is_device_awake};
+
+#[cfg(feature = "gpu")]
+use crate::collection::amd::get_amd_name;
 
 const EMPTY_NAME: &str = "Unknown";
 
@@ -264,18 +264,42 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
                         // This should never actually be empty. If it is though, we'll fall back to
                         // the sensor name later on.
 
-                        if let Some(amd_gpu_name) = get_amd_name(&device) {
-                            Some(amd_gpu_name)
-                        } else if let Ok(cards) = drm.read_dir() {
-                            cards.flatten().find_map(|card| {
-                                card.file_name().to_str().and_then(|name| {
-                                    name.starts_with("card").then(|| {
-                                        humanize_name(name.trim().to_string(), sensor_name.as_ref())
+                        #[cfg(feature = "gpu")]
+                        {
+                            if let Some(amd_gpu_name) = get_amd_name(&device) {
+                                Some(amd_gpu_name)
+                            } else if let Ok(cards) = drm.read_dir() {
+                                cards.flatten().find_map(|card| {
+                                    card.file_name().to_str().and_then(|name| {
+                                        name.starts_with("card").then(|| {
+                                            humanize_name(
+                                                name.trim().to_string(),
+                                                sensor_name.as_ref(),
+                                            )
+                                        })
                                     })
                                 })
-                            })
-                        } else {
-                            None
+                            } else {
+                                None
+                            }
+                        }
+
+                        #[cfg(not(feature = "gpu"))]
+                        {
+                            if let Ok(cards) = drm.read_dir() {
+                                cards.flatten().find_map(|card| {
+                                    card.file_name().to_str().and_then(|name| {
+                                        name.starts_with("card").then(|| {
+                                            humanize_name(
+                                                name.trim().to_string(),
+                                                sensor_name.as_ref(),
+                                            )
+                                        })
+                                    })
+                                })
+                            } else {
+                                None
+                            }
                         }
                     } else {
                         // This little mess is to account for stuff like k10temp. This is needed
