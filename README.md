@@ -513,6 +513,7 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/al42and"><img src="https://avatars.githubusercontent.com/u/933873?v=4?s=100" width="100px;" alt="Andrey Alekseenko"/><br /><sub><b>Andrey Alekseenko</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=al42and" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://fgimian.github.io/"><img src="https://avatars.githubusercontent.com/u/1811813?v=4?s=100" width="100px;" alt="Fotis Gimian"/><br /><sub><b>Fotis Gimian</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=fgimian" title="Code">💻</a> <a href="https://github.com/ClementTsang/bottom/commits?author=fgimian" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://sigmasquadron.net"><img src="https://avatars.githubusercontent.com/u/174749595?v=4?s=100" width="100px;" alt="Fernando Rodrigues"/><br /><sub><b>Fernando Rodrigues</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=SigmaSquadron" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://mtoohey.com"><img src="https://avatars.githubusercontent.com/u/36740602?v=4?s=100" width="100px;" alt="Matthew Toohey"/><br /><sub><b>Matthew Toohey</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mtoohey31" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
