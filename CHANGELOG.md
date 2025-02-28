@@ -38,6 +38,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1596](https://github.com/ClementTsang/bottom/pull/1596): Fix support for nilfs2 file system.
 - [#1660](https://github.com/ClementTsang/bottom/pull/1660): Fix properly cleaning up the terminal if the program is terminated due to an `Err` bubbling to the top.
 - [#1663](https://github.com/ClementTsang/bottom/pull/1663): Fix network graphs using log scaling having broken lines when a point was 0.
+- [#1683](https://github.com/ClementTsang/bottom/pull/1683): Fix graph lines potentially showing up behind legends.
 
 ### Changes
 
