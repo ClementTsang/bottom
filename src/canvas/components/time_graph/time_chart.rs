@@ -872,10 +872,15 @@ impl Widget for TimeChart<'_> {
 
         if let Some(legend_area) = layout.legend_area {
             buf.set_style(legend_area, original_style);
-            Block::default()
+            let block = Block::default()
                 .borders(Borders::ALL)
-                .border_style(self.legend_style)
-                .render(legend_area, buf);
+                .border_style(self.legend_style);
+            for pos in block.inner(legend_area).positions() {
+                if let Some(cell) = buf.cell_mut(pos) {
+                    cell.set_symbol(" ");
+                }
+            }
+            block.render(legend_area, buf);
 
             for (i, (dataset_name, dataset_style)) in self
                 .datasets
