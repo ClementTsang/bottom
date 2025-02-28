@@ -12,7 +12,7 @@ use std::{cmp::max, str::FromStr, time::Instant};
 use canvas::*;
 use tui::{
     buffer::Buffer,
-    layout::{Alignment, Constraint, Flex, Layout, Position, Rect},
+    layout::{Alignment, Constraint, Flex, Layout, Rect},
     style::{Color, Style, Styled},
     symbols::{self, Marker},
     text::{Line, Span},
@@ -875,8 +875,10 @@ impl Widget for TimeChart<'_> {
             let block = Block::default()
                 .borders(Borders::ALL)
                 .border_style(self.legend_style);
-            for Position { x, y } in block.inner(legend_area).positions() {
-                buf[(x, y)].set_symbol(" ");
+            for pos in block.inner(legend_area).positions() {
+                if let Some(cell) = buf.cell_mut(pos) {
+                    cell.set_symbol(" ");
+                }
             }
             block.render(legend_area, buf);
 
