@@ -96,7 +96,8 @@ pub struct GeneralArgs {
         action = ArgAction::SetTrue,
         help = "Temporarily shows the time scale in graphs.",
         long_help = "Automatically hides the time scale in graphs after being shown for a brief moment when zoomed \
-                in/out. If time is disabled using --hide_time then this will have no effect."
+                in/out. If time is disabled using --hide_time then this will have no effect.",
+        alias = "autohide-time"
     )]
     pub autohide_time: bool,
 
@@ -117,7 +118,8 @@ pub struct GeneralArgs {
         help = "Sets the location of the config file.",
         long_help = "Sets the location of the config file. Expects a config file in the TOML format. \
                     If it doesn't exist, a default config file is created at the path. If no path is provided, \
-                    the default config location will be used."
+                    the default config location will be used.",
+        alias = "config-location"
     )]
     pub config_location: Option<PathBuf>,
 
@@ -127,7 +129,8 @@ pub struct GeneralArgs {
         value_name = "TIME",
         help = "Default time value for graphs.",
         long_help = "Default time value for graphs. Either a number in milliseconds or a 'human duration' \
-                    (e.g. 60s, 10m). Defaults to 60s, must be at least 30s."
+                (e.g. 60s, 10m). Defaults to 60s, must be at least 30s.",
+        alias = "default-time-value"
     )]
     pub default_time_value: Option<String>,
 
@@ -151,7 +154,8 @@ pub struct GeneralArgs {
             And we set our default widget type to 'CPU'. If we set '--default_widget_count 1', then it would use the \
             CPU (1) as the default widget. If we set '--default_widget_count 3', it would use CPU (3) as the default \
             instead."
-        }
+        },
+        alias = "default-widget-count"
     )]
     pub default_widget_count: Option<u64>,
 
@@ -189,6 +193,7 @@ pub struct GeneralArgs {
             #[cfg(feature = "battery")]
             "battery",
         ],
+        alias = "default-widget-type"
     )]
     pub default_widget_type: Option<String>,
 
@@ -196,7 +201,8 @@ pub struct GeneralArgs {
         long,
         action = ArgAction::SetTrue,
         help = "Disables mouse clicks.",
-        long_help = "Disables mouse clicks from interacting with bottom."
+        long_help = "Disables mouse clicks from interacting with bottom.",
+        alias = "disable-click"
     )]
     pub disable_click: bool,
 
@@ -206,7 +212,8 @@ pub struct GeneralArgs {
         long,
         action = ArgAction::SetTrue,
         help = "Uses a dot marker for graphs.",
-        long_help = "Uses a dot marker for graphs as opposed to the default braille marker."
+        long_help = "Uses a dot marker for graphs as opposed to the default braille marker.",
+        alias = "dot-marker"
     )]
     pub dot_marker: bool,
 
@@ -219,10 +226,15 @@ pub struct GeneralArgs {
     )]
     pub expanded: bool,
 
-    #[arg(long, action = ArgAction::SetTrue, help = "Hides spacing between table headers and entries.")]
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Hides spacing between table headers and entries.",
+        alias = "hide-table-gap"
+    )]
     pub hide_table_gap: bool,
 
-    #[arg(long, action = ArgAction::SetTrue, help = "Hides the time scale from being shown.")]
+    #[arg(long, action = ArgAction::SetTrue, help = "Hides the time scale from being shown.", alias = "hide-time")]
     pub hide_time: bool,
 
     #[arg(
@@ -249,7 +261,8 @@ pub struct GeneralArgs {
     #[arg(
         long,
         action = ArgAction::SetTrue,
-        help = "Shows the list scroll position tracker in the widget title for table widgets."
+        help = "Shows the list scroll position tracker in the widget title for table widgets.",
+        alias = "show-table-scroll-position"
     )]
     pub show_table_scroll_position: bool,
 
@@ -260,7 +273,8 @@ pub struct GeneralArgs {
         help = "The amount of time changed upon zooming.",
         long_help = "The amount of time changed when zooming in/out. Takes a number in \
                     milliseconds or a human duration (e.g. 30s). The minimum is 1s, and \
-                    defaults to 15s."
+                    defaults to 15s.",
+        alias = "time-delta"
     )]
     pub time_delta: Option<String>,
 }
@@ -274,7 +288,8 @@ pub struct ProcessArgs {
         long,
         action = ArgAction::SetTrue,
         help = "Enables case sensitivity by default.",
-        long_help = "Enables case sensitivity by default when searching for a process."
+        long_help = "Enables case sensitivity by default when searching for a process.",
+        alias = "case-sensitive"
     )]
     pub case_sensitive: bool,
 
@@ -283,7 +298,8 @@ pub struct ProcessArgs {
         short = 'u',
         long,
         action = ArgAction::SetTrue,
-        help = "Calculates process CPU usage as a percentage of current usage rather than total usage."
+        help = "Calculates process CPU usage as a percentage of current usage rather than total usage.",
+        alias = "current-usage"
     )]
     pub current_usage: bool,
 
@@ -293,7 +309,8 @@ pub struct ProcessArgs {
         action = ArgAction::SetTrue,
         help = "Hides additional stopping options Unix-like systems.",
         long_help = "Hides additional stopping options Unix-like systems. Signal 15 (TERM) will be sent when \
-                    stopping a process."
+                    stopping a process.",
+        alias = "disable-advanced-kill"
     )]
     pub disable_advanced_kill: bool,
 
@@ -303,7 +320,8 @@ pub struct ProcessArgs {
         action = ArgAction::SetTrue,
         help = "Groups processes with the same name by default.",
         long_help = "Groups processes with the same name by default. Doesn't do anything if --tree is also set, or \
-                    tree=true in the config."
+                    tree=true in the config.",
+        alias = "group-processes"
     )]
     pub group_processes: bool,
 
@@ -311,14 +329,16 @@ pub struct ProcessArgs {
         long,
         action = ArgAction::SetTrue,
         help = "Defaults to showing process memory usage by value.",
-        long_help = "Defaults to showing process memory usage by value. Otherwise, it defaults to showing it by percentage."
+        long_help = "Defaults to showing process memory usage by value. Otherwise, it defaults to showing it by percentage.",
+        alias = "process-memory-as-value"
     )]
     pub process_memory_as_value: bool,
 
     #[arg(
         long,
         action = ArgAction::SetTrue,
-        help = "Shows the full command name instead of the process name by default."
+        help = "Shows the full command name instead of the process name by default.",
+        alias = "process-command"
     )]
     pub process_command: bool,
 
@@ -337,7 +357,8 @@ pub struct ProcessArgs {
         short = 'n',
         long,
         action = ArgAction::SetTrue,
-        help = "Show process CPU% usage without averaging over the number of CPU cores."
+        help = "Show process CPU% usage without averaging over the number of CPU cores.",
+        alias = "unnormalized-cpu"
     )]
     pub unnormalized_cpu: bool,
 
@@ -345,7 +366,8 @@ pub struct ProcessArgs {
         short = 'W',
         long,
         action = ArgAction::SetTrue,
-        help = "Enables whole-word matching by default while searching."
+        help = "Enables whole-word matching by default while searching.",
+        alias = "whole-word"
     )]
     pub whole_word: bool,
 }
@@ -415,7 +437,8 @@ pub struct CpuArgs {
         short = 'l',
         long,
         action = ArgAction::SetTrue,
-        help = "Puts the CPU chart legend on the left side."
+        help = "Puts the CPU chart legend on the left side.",
+        alias = "cpu-left-legend"
     )]
     pub cpu_left_legend: bool,
 
@@ -424,10 +447,17 @@ pub struct CpuArgs {
         help = "Sets which CPU entry type is selected by default.",
         value_name = "ENTRY",
         value_parser = value_parser!(CpuDefault),
+        alias = "default-cpu-entry"
     )]
     pub default_cpu_entry: Option<CpuDefault>,
 
-    #[arg(short = 'a', long, action = ArgAction::SetTrue, help = "Hides the average CPU usage entry.")]
+    #[arg(
+        short = 'a',
+        long,
+        action = ArgAction::SetTrue,
+        help = "Hides the average CPU usage entry.", 
+        alias = "hide-avg-cpu"
+    )]
     pub hide_avg_cpu: bool,
 }
 
@@ -441,6 +471,7 @@ pub struct MemoryArgs {
         value_name = "POSITION",
         ignore_case = true,
         help = "Where to place the legend for the memory chart widget.",
+        alias = "memory-legend"
     )]
     pub memory_legend: Option<String>,
 
@@ -448,7 +479,8 @@ pub struct MemoryArgs {
     #[arg(
         long,
         action = ArgAction::SetTrue,
-        help = "Enables collecting and displaying cache and buffer memory."
+        help = "Enables collecting and displaying cache and buffer memory.",
+        alias = "enable-cache-memory"
     )]
     pub enable_cache_memory: bool,
 }
@@ -463,6 +495,7 @@ pub struct NetworkArgs {
         value_name = "POSITION",
         ignore_case = true,
         help = "Where to place the legend for the network chart widget.",
+        alias = "network-legend"
     )]
     pub network_legend: Option<String>,
 
@@ -471,7 +504,8 @@ pub struct NetworkArgs {
         long,
         action = ArgAction::SetTrue,
         help = "Displays the network widget using bytes.",
-        long_help = "Displays the network widget using bytes. Defaults to bits."
+        long_help = "Displays the network widget using bytes. Defaults to bits.",
+        alias = "network-use-bytes"
     )]
     pub network_use_bytes: bool,
 
@@ -480,7 +514,8 @@ pub struct NetworkArgs {
         action = ArgAction::SetTrue,
         help = "Displays the network widget with binary prefixes.",
         long_help = "Displays the network widget with binary prefixes (e.g. kibibits, mebibits) rather than a decimal \
-                    prefixes (e.g. kilobits, megabits). Defaults to decimal prefixes."
+                    prefixes (e.g. kilobits, megabits). Defaults to decimal prefixes.",
+        alias = "network-use-binary-prefix"
     )]
     pub network_use_binary_prefix: bool,
 
@@ -488,7 +523,8 @@ pub struct NetworkArgs {
         long,
         action = ArgAction::SetTrue,
         help = "Displays the network widget with a log scale.",
-        long_help = "Displays the network widget with a log scale. Defaults to a non-log scale."
+        long_help = "Displays the network widget with a log scale. Defaults to a non-log scale.",
+        alias = "network-use-log"
     )]
     pub network_use_log: bool,
 
@@ -496,7 +532,8 @@ pub struct NetworkArgs {
         long,
         action = ArgAction::SetTrue,
         help = "(DEPRECATED) Uses a separate network legend.",
-        long_help = "(DEPRECATED) Uses separate network widget legend. This display is not tested and may be broken."
+        long_help = "(DEPRECATED) Uses separate network widget legend. This display is not tested and may be broken.",
+        alias = "use-old-network-legend"
     )]
     pub use_old_network_legend: bool,
 }
@@ -522,7 +559,7 @@ pub struct BatteryArgs {
 #[derive(Args, Clone, Debug, Default)]
 #[command(next_help_heading = "GPU Options", rename_all = "snake_case")]
 pub struct GpuArgs {
-    #[arg(long, action = ArgAction::SetTrue, help = "Disable collecting and displaying NVIDIA and AMD GPU information.")]
+    #[arg(long, action = ArgAction::SetTrue, help = "Disable collecting and displaying NVIDIA and AMD GPU information.", alias = "disable-gpu")]
     pub disable_gpu: bool,
 }
 
@@ -570,7 +607,7 @@ pub struct OtherArgs {
     version: (),
 }
 
-/// Returns a [`BottomArgs`].
+/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the program.
 pub fn get_args() -> BottomArgs {
     BottomArgs::parse()
 }
@@ -617,13 +654,33 @@ mod test {
         let allow_list: HashSet<&str> = vec![].into_iter().collect();
         let cmd = build_cmd();
 
-        for opts in cmd.get_opts() {
-            let long_flag = opts.get_long().unwrap();
+        for opt in cmd.get_opts() {
+            let long_flag = opt.get_long().unwrap();
 
             if !allow_list.contains(long_flag) {
                 assert!(
                     long_flag.len() < 30,
                     "the long help arg '{long_flag}' might be set wrong, please take a look!"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn catch_missing_hyphen_alias() {
+        let cmd = build_cmd();
+
+        for opt in cmd.get_opts() {
+            let long_flag = opt.get_long().unwrap();
+            if long_flag.contains("_") {
+                let aliased_version = long_flag.replace("_", "-");
+                let stored_alias = opt.get_aliases().unwrap_or_else(|| {
+                    panic!("'{long_flag}' should have an alias, if not, it's missing")
+                });
+
+                assert!(
+                    stored_alias.contains(&aliased_version.as_str()),
+                    "'{long_flag}' has an incorrectly defined alias"
                 );
             }
         }
