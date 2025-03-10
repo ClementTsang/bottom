@@ -29,6 +29,7 @@
   - [Unofficial](#unofficial)
 - [Installation](#installation)
   - [Cargo](#cargo)
+  - [Alpine](#alpine)
   - [Arch Linux](#arch-linux)
   - [Debian / Ubuntu](#debian--ubuntu)
   - [Exherbo Linux](#exherbo-linux)
@@ -177,6 +178,16 @@ cargo install --git https://github.com/ClementTsang/bottom --locked
 # better CPU-specific optimizations. For example:
 RUSTFLAGS="-C target-cpu=native" cargo install --path . --locked
 ```
+
+### Alpine
+
+bottom is available as a [package](https://pkgs.alpinelinux.org/packages?name=bottom&branch=edge&repo=&arch=&origin=&flagged=&maintainer=) for Alpine Linux via `apk`:
+
+```bash
+apk add bottom
+```
+
+Packages for documentation ([`bottom-doc`](https://pkgs.alpinelinux.org/packages?name=bottom-doc&branch=edge&repo=&arch=&origin=&flagged=&maintainer=)) and completions for Bash ([`bottom-bash-completion`](https://pkgs.alpinelinux.org/packages?name=bottom-bash-completion&branch=edge&repo=&arch=&origin=&flagged=&maintainer=)), Fish ([`bottom-fish-completion`](https://pkgs.alpinelinux.org/packages?name=bottom-fish-completion&branch=edge&repo=&arch=&origin=&flagged=&maintainer=)), and Zsh ([`bottom-zsh-completion`](https://pkgs.alpinelinux.org/packages?name=bottom-zsh-completion&branch=edge&repo=&arch=&origin=&flagged=&maintainer=)) are also available.
 
 ### Arch Linux
 
