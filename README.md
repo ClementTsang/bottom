@@ -35,6 +35,7 @@
   - [Fedora / CentOS / AlmaLinux / Rocky Linux](#fedora--centos--almalinux--rocky-linux)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
+  - [openSUSE](#opensuse)
   - [Snap](#snap)
   - [Solus](#solus)
   - [Void](#void)
@@ -274,6 +275,14 @@ nix profile install nixpkgs#bottom
 {
   programs.bottom.enable = true;
 }
+```
+
+### openSUSE
+
+Available in openSUSE Tumbleweed:
+
+```bash
+zypper in bottom
 ```
 
 ### Snap
