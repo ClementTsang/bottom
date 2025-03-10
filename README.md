@@ -515,6 +515,9 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://sigmasquadron.net"><img src="https://avatars.githubusercontent.com/u/174749595?v=4?s=100" width="100px;" alt="Fernando Rodrigues"/><br /><sub><b>Fernando Rodrigues</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=SigmaSquadron" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://mtoohey.com"><img src="https://avatars.githubusercontent.com/u/36740602?v=4?s=100" width="100px;" alt="Matthew Toohey"/><br /><sub><b>Matthew Toohey</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mtoohey31" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://meander.site"><img src="https://avatars.githubusercontent.com/u/11584387?v=4?s=100" width="100px;" alt="Julius Enriquez"/><br /><sub><b>Julius Enriquez</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=win8linux" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 
