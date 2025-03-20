@@ -72,27 +72,26 @@ logging = ["fern", "log", "time"]
 generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
-anyhow = "1.0.95"
+anyhow = "1.0.97"
 backtrace = "0.3.74"
 cfg-if = "1.0.0"
-clap = { version = "4.5.26", features = ["default", "cargo", "wrap_help", "derive"] }
+clap = { version = "4.5.32", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
 crossterm = "0.28.1"
 ctrlc = { version = "3.4.5", features = ["termination"] }
 dirs = "6.0.0"
-# Maybe consider https://github.com/rust-lang/rustc-hash for some cases too?
 hashbrown = "0.15.2"
-humantime = "2.1.0"
-indexmap = "2.7.0"
-indoc = "2.0.5"
+humantime = "2.2.0"
+indexmap = "2.8.0"
+indoc = "2.0.6"
 itertools = "0.14.0"
 nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
 regex = "1.11.1"
-serde = { version = "1.0.217", features = ["derive"] }
-starship-battery = { version = "0.10.0", optional = true }
+serde = { version = "1.0.219", features = ["derive"] }
+starship-battery = { version = "0.10.1", optional = true }
 sysinfo = "=0.30.13"
 timeless = "0.0.14-alpha"
-toml_edit = { version = "0.22.22", features = ["serde"] }
+toml_edit = { version = "0.22.24", features = ["serde"] }
 tui = { version = "0.29.0", package = "ratatui" }
 unicode-ellipsis = "0.3.0"
 unicode-segmentation = "1.12.0"
@@ -100,26 +99,26 @@ unicode-width = "0.2.0"
 
 # Used for logging. Mostly a debugging tool.
 fern = { version = "0.7.1", optional = true }
-log = { version = "0.4.25", optional = true }
-time = { version = "0.3.37", features = ["local-offset", "formatting", "macros"], optional = true }
+log = { version = "0.4.26", optional = true }
+time = { version = "0.3.40", features = ["local-offset", "formatting", "macros"], optional = true }
 
 # These are just used for JSON schema generation.
-schemars = { version = "0.8.21", optional = true }
-serde_json = { version = "1.0.135", optional = true }
-strum = { version = "0.26.3", features = ["derive"], optional = true }
+schemars = { version = "0.8.22", optional = true }
+serde_json = { version = "1.0.140", optional = true }
+strum = { version = "0.27.1", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.169"
+libc = "0.2.171"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "0.38.43", features = ["fs", "param"] }
+rustix = { version = "1.0.3", features = ["fs", "param"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10.0"
 mach2 = "0.4.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.59.0", features = [
+windows = { version = "0.61.1", features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_Storage_FileSystem",
@@ -130,26 +129,26 @@ windows = { version = "0.59.0", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.133" }
+serde_json = { version = "1.0.140" }
 sysctl = { version = "0.6.0" }
-filedescriptor = "0.8.2"
+filedescriptor = "0.8.3"
 
 [dev-dependencies]
 assert_cmd = "2.0.16"
 cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
 predicates = "3.1.3"
-tempfile = "3.15.0"
+tempfile = "3.19.1"
 
 [target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
-portable-pty = "0.8.1"
+portable-pty = "0.9.0"
 
 [build-dependencies]
-clap = { version = "4.5.26", features = ["default", "cargo", "wrap_help", "derive"] }
-clap_complete = "4.5.42"
+clap = { version = "4.5.32", features = ["default", "cargo", "wrap_help", "derive"] }
+clap_complete = "4.5.47"
 clap_complete_nushell = "4.5.5"
 clap_complete_fig = "4.5.2"
 clap_mangen = "0.2.26"
-indoc = "2.0.5"
+indoc = "2.0.6"
 
 # Compile dependencies with optimizations enabled, even in debug mode.
 [profile.dev.package."*"]
