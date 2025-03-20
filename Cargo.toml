@@ -105,13 +105,13 @@ time = { version = "0.3.37", features = ["local-offset", "formatting", "macros"]
 # These are just used for JSON schema generation.
 schemars = { version = "0.8.21", optional = true }
 serde_json = { version = "1.0.135", optional = true }
-strum = { version = "0.26.3", features = ["derive"], optional = true }
+strum = { version = "0.27.1", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.169"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "0.38.43", features = ["fs", "param"] }
+rustix = { version = "1.0.3", features = ["fs", "param"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10.0"
@@ -140,7 +140,7 @@ predicates = "3.1.3"
 tempfile = "3.15.0"
 
 [target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
-portable-pty = "0.8.1"
+portable-pty = "0.9.0"
 
 [build-dependencies]
 clap = { version = "4.5.32", features = ["default", "cargo", "wrap_help", "derive"] }
