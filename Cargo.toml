@@ -14,7 +14,7 @@ categories = ["command-line-utilities", "visualization"]
 exclude = [
     ".cargo-husky/",
     ".github/",
-    ".idea",
+    ".idea/",
     ".vscode/",
     "assets/",
     "desktop/",
