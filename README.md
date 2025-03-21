@@ -565,6 +565,6 @@ Thanks to all contributors:
 - Also thanks to JetBrains for providing access to tools that I use to develop bottom
   as part of their [open source support program](https://jb.gg/OpenSourceSupport).
 
-  <svg>
-    <image xlink:href="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
-  </svg>
+  <a href="https://jb.gg/OpenSourceSupport">
+  <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
+  </a>
