@@ -555,4 +555,12 @@ Thanks to all contributors:
   work of many talented people. This application would be impossible without their
   work. I used to thank them all individually but the list got too large...
 
-- And of course, another round of thanks to all the contributors and package maintainers!
+- And of course, thanks again to all contributors and package maintainers!
+
+- I also really appreciate anyone who uses bottom and find it useful, and those
+  who go out of their way to report bugs or suggest ways to improve things. Thanks!
+
+- Also thanks to Jetbrains for providing access to tools that I use to develop bottom
+  as part of their [open source support program](https://jb.gg/OpenSourceSupport).
+  
+  [![JetBrains logo](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSourceSupport)
