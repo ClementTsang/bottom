@@ -566,5 +566,5 @@ Thanks to all contributors:
   as part of their [open source support program](https://jb.gg/OpenSourceSupport).
 
   <a href="https://jb.gg/OpenSourceSupport">
-  <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
+    <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
   </a>
