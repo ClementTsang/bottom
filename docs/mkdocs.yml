@@ -161,6 +161,7 @@ nav:
           - "Disk Widget": usage/widgets/disk.md
           - "Temperature Widget": usage/widgets/temperature.md
           - "Battery Widget": usage/widgets/battery.md
+      - "Auto-Complete": usage/autocomplete.md
   - "Configuration":
       - "Command-line Options": configuration/command-line-options.md
       - "Config File":
