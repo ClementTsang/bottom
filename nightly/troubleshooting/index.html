@@ -1466,18 +1466,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#braille-font-issues-on-linuxmacosunix-like" class="md-nav__link">
+  <a href="#linuxmacosunix" class="md-nav__link">
     <span class="md-ellipsis">
-      Braille font issues on Linux/macOS/Unix-like
+      Linux/macOS/Unix
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#installing-fonts-for-windows-command-promptpowershell" class="md-nav__link">
+  <a href="#windowspowershell" class="md-nav__link">
     <span class="md-ellipsis">
-      Installing fonts for Windows Command Prompt/PowerShell
+      Windows/Powershell
     </span>
   </a>
   
@@ -1627,14 +1627,22 @@ which generally seems better supported out of the box, at the expense of looking
 <p>Another (better) alternative is to install a font that supports braille fonts, and configure your terminal emulator to use it.
 For example, installing something like <a href="https://yudit.org/download/fonts/UBraille/">UBraille</a> or <a href="https://github.com/be5invis/Iosevka">Iosevka</a>
 and ensuring your terminal uses it should work.</p>
-<h3 id="braille-font-issues-on-linuxmacosunix-like"><a class="toclink" href="#braille-font-issues-on-linuxmacosunix-like">Braille font issues on Linux/macOS/Unix-like</a></h3>
-<p>Generally, the problem comes down to you either not having a font that supports the braille markers, or your terminal
-emulator is not using the correct font for the braille markers.</p>
-<p>See <a href="https://github.com/cjbassi/gotop/issues/18">here</a> for possible fixes if you're having font issues on Linux, which
-may also be helpful for macOS or other Unix-like systems.</p>
+<h3 id="linuxmacosunix"><a class="toclink" href="#linuxmacosunix">Linux/macOS/Unix</a></h3>
+<p>If you're on a Unix-like system, generally, the problem comes down to you either not having a font that supports the
+braille markers, or your terminal emulator is not using the correct font for the braille markers.</p>
+<p>Some possible solutions include:</p>
+<ul>
+<li>Uninstalling <code>gnu-free-fonts</code> if installed, as that is known to cause problems with braille markers</li>
+<li>Installing a font like <code>ttf-symbola</code> or <code>ttf-ubraille</code> for your terminal emulator to try and automatically fall back to</li>
+<li>Configuring your terminal emulator to use specific fonts for the <code>U+2800</code> to <code>U+28FF</code> range.<ul>
+<li>For example for kitty, do <code>symbol_map U+2800-U+28FF Symbola</code>.</li>
+</ul>
+</li>
+</ul>
+<p>See <a href="https://github.com/cjbassi/gotop/issues/18">this issue</a> for more possible fixes.</p>
 <p>If you're still having issues, feel free to open a <a href="https://github.com/ClementTsang/bottom/discussions/new/">discussion</a>
 question about it.</p>
-<h3 id="installing-fonts-for-windows-command-promptpowershell"><a class="toclink" href="#installing-fonts-for-windows-command-promptpowershell">Installing fonts for Windows Command Prompt/PowerShell</a></h3>
+<h3 id="windowspowershell"><a class="toclink" href="#windowspowershell">Windows/Powershell</a></h3>
 <p><strong>Note: I would advise backing up your registry beforehand if you aren't sure what you are doing!</strong></p>
 <p>Let's say you're installing <a href="https://github.com/be5invis/Iosevka">Iosevka</a>. The steps you can take are:</p>
 <ol>
@@ -1647,20 +1655,22 @@ question about it.</p>
 </li>
 <li>
 <p>Here, add a new <code>String value</code>, and set the <code>Name</code> to a bunch of 0's (e.g. <code>000</code> - make sure the name isn't already used), then set the <code>Data</code> to the font name (e.g. <code>Iosevka</code>).</p>
-<p><figure>
-      <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
-      <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
-  </figure></p>
 </li>
-<li>
-<p>Then, open the Command Prompt/PowerShell, and right-click on the top bar, and open "Properties":</p>
-<p><figure>
-      <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
-  </figure></p>
-</li>
-<li>
-<p>From here, go to "Font", and set the font to your new font (so in this example, Iosevka):</p>
-</li>
+</ol>
+<figure>
+    <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
+    <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
+</figure>
+
+<ol>
+<li>Then, open the Command Prompt/PowerShell, and right-click on the top bar, and open "Properties":</li>
+</ol>
+<figure>
+    <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
+</figure>
+
+<ol>
+<li>From here, go to "Font", and set the font to your new font (so in this example, Iosevka):</li>
 </ol>
 <figure>
     <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
@@ -1757,7 +1767,7 @@ sudo<span class="w"> </span>snap<span class="w"> </span>connect<span class="w"> 
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 29, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 21, 2025</span>
   </span>
 
     
