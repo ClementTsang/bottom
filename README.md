@@ -551,16 +551,22 @@ Thanks to all contributors:
 - This project is very much inspired by [gotop](https://github.com/xxxserxxx/gotop),
   [gtop](https://github.com/aksakalli/gtop), and [htop](https://github.com/htop-dev/htop/).
 
-- This application was written with many, _many_ libraries, and built on the
-  work of many talented people. This application would be impossible without their
-  work. I used to thank them all individually but the list got too large...
+- This application was written with [many](https://github.com/ClementTsang/bottom/blob/main/Cargo.toml), [_many_ libraries](https://github.com/ClementTsang/bottom/blob/main/Cargo.lock), as well as many services and programs, all built on top of the
+  work of many talented people. bottom would not exist without all of this.
 
-- And of course, thanks again to all contributors and package maintainers!
+- And of course, thank you again to all contributors and package maintainers!
 
-- I also really appreciate anyone who uses bottom and find it useful, and those
-  who go out of their way to report bugs or suggest ways to improve things. Thanks!
+- I also really appreciate anyone who has used bottom, and those
+  who go out of their way to report bugs or suggest ways to improve things. I hope
+  it's been a useful tool for others.
 
-- Also thanks to Jetbrains for providing access to tools that I use to develop bottom
+- To those who support my work financially via donations, thank you so much.
+
+- Also thanks to JetBrains for providing access to tools that I use to develop bottom
   as part of their [open source support program](https://jb.gg/OpenSourceSupport).
-  
-  [![JetBrains logo](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSourceSupport)
+
+  <a href="https://jb.gg/OpenSourceSupport">
+    <svg>
+        <image xlink:href="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
+    </svg>
+  </a>
