@@ -33,7 +33,7 @@ The command to run bottom is `btm`.
 
 You can refer to the [usage](usage/general-usage.md) pages for more details on using bottom (e.g. keybinds, some features, a general overview of what each widget does).
 
-To configure bottom (e.g. how it behaves, how it looks, etc.) refer to the [command-line options page](configuration/command-line-options.md) for temporary settings, or [the config file page](configuration/config-file) for more permanent settings.
+To configure bottom (e.g. how it behaves, how it looks, etc.) refer to the [command-line options page](configuration/command-line-options.md) for temporary settings, or [the config file page](configuration/config-file/index.md) for more permanent settings.
 
 ## Contribution
 

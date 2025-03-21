@@ -2,7 +2,7 @@
   <h1>bottom (btm)</h1>
 
   <p>
-  A customizable cross-platform graphical process/system monitor for the terminal.<br />Supports Linux, macOS, and Windows. Inspired by <a href=https://github.com/aksakalli/gtop>gtop</a>, <a href=https://github.com/xxxserxxx/gotop>gotop</a>, and <a href=https://github.com/htop-dev/htop/>htop</a>.
+    A customizable cross-platform graphical process/system monitor for the terminal.<br />Supports Linux, macOS, and Windows. Inspired by <a href=https://github.com/aksakalli/gtop>gtop</a>, <a href=https://github.com/xxxserxxx/gotop>gotop</a>, and <a href=https://github.com/htop-dev/htop>htop</a>.
   </p>
 
 [<img src="https://img.shields.io/github/actions/workflow/status/ClementTsang/bottom/ci.yml?branch=main&style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%main)
@@ -154,7 +154,7 @@ cargo +stable install bottom --locked
 cargo install bottom
 ```
 
-Alternatively, if you can use `cargo install` using the repo as the source.
+Alternatively, you can use `cargo install` using the repo as the source.
 
 ```bash
 # You might need to update the stable version of Rust first.
@@ -174,8 +174,8 @@ cargo install --path . --locked
 # Option 3 - Install using cargo with the repo as the source
 cargo install --git https://github.com/ClementTsang/bottom --locked
 
-# You can also pass in the target-cpu=native flag for
-# better CPU-specific optimizations. For example:
+# You can also pass in the target-cpu=native flag to try to
+# use better CPU-specific optimizations. For example:
 RUSTFLAGS="-C target-cpu=native" cargo install --path . --locked
 ```
 
@@ -379,7 +379,7 @@ and installing via the `.msi` file.
 
 ### Conda
 
-You can install using `conda` with [this conda-smithy repository](https://github.com/conda-forge/bottom-feedstock):
+You can install bottom using `conda` with [this conda-smithy repository](https://github.com/conda-forge/bottom-feedstock):
 
 ```bash
 # Add the channel
@@ -407,37 +407,40 @@ or by installing to your system following the procedures for installing binaries
 
 #### Auto-completion
 
-The release binaries are packaged with shell auto-completion files for bash, fish, zsh, and Powershell. To install them:
+The release binaries in [the releases page](https://github.com/ClementTsang/bottom/releases) are packaged with
+shell auto-completion files for Bash, Zsh, fish, Powershell, Elvish, Fig, and Nushell. To install them:
 
-- For bash, move `btm.bash` to `$XDG_CONFIG_HOME/bash_completion or /etc/bash_completion.d/`.
+- For Bash, move `btm.bash` to `$XDG_CONFIG_HOME/bash_completion or /etc/bash_completion.d/`.
+- For Zsh, move `_btm` to one of your `$fpath` directories.
 - For fish, move `btm.fish` to `$HOME/.config/fish/completions/`.
-- For zsh, move `_btm` to one of your `$fpath` directories.
-- For PowerShell, add `_btm.ps1` to your PowerShell
-  [profile](<https://docs.microsoft.com/en-us/previous-versions//bb613488(v=vs.85)>).
+- For PowerShell, add `_btm.ps1` to your PowerShell [profile](<https://docs.microsoft.com/en-us/previous-versions//bb613488(v=vs.85)>).
+- For Elvish, the completion file is `btm.elv`.
+- For Fig, the completion file is `btm.ts`.
+- For Nushell, source `btm.nu`.
 
-The individual auto-completion files are also included in the stable/nightly releases as `completion.tar.gz`.
+The individual auto-completion files are also included in the stable/nightly releases as `completion.tar.gz` if needed.
 
 ## Usage
 
 You can run bottom using `btm`.
 
 - For help on flags, use `btm -h` for a quick overview or `btm --help` for more details.
-- For info on key and mouse bindings, press `?` inside bottom or refer to the [documentation](https://clementtsang.github.io/bottom/nightly/).
+- For info on key and mouse bindings, press `?` inside bottom or refer to the [documentation page](https://clementtsang.github.io/bottom/nightly/).
 
 You can find more information on usage in the [documentation](https://clementtsang.github.io/bottom/nightly/).
 
 ## Configuration
 
-bottom accepts a number of command-line arguments to change the behaviour of the application as desired. Additionally, bottom will automatically
-generate a configuration file on the first launch, which one can change as appropriate.
+bottom accepts a number of command-line arguments to change the behaviour of the application as desired.
+Additionally, bottom will automatically generate a configuration file on the first launch, which can be changed.
 
 More details on configuration can be found [in the documentation](https://clementtsang.github.io/bottom/nightly/configuration/config-file/).
 
 ## Troubleshooting
 
-If some things aren't working, give the [troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting) a look.
-If things still aren't working, then consider opening [a question](https://github.com/ClementTsang/bottom/discussions)
-or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose).
+If some things aren't working, give the [troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting)
+a look. If things still aren't working, then consider asking [a question](https://github.com/ClementTsang/bottom/discussions)
+or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose) if you think it's a bug.
 
 ## Contribution
 
@@ -551,8 +554,9 @@ Thanks to all contributors:
 - This project is very much inspired by [gotop](https://github.com/xxxserxxx/gotop),
   [gtop](https://github.com/aksakalli/gtop), and [htop](https://github.com/htop-dev/htop/).
 
-- This application was written with [many](https://github.com/ClementTsang/bottom/blob/main/Cargo.toml), [_many_ libraries](https://github.com/ClementTsang/bottom/blob/main/Cargo.lock), as well as many services and programs, all built on top of the
-  work of many talented people. bottom would not exist without all of this.
+- This application was written with [many](https://github.com/ClementTsang/bottom/blob/main/Cargo.toml),
+  [_many_ libraries](https://github.com/ClementTsang/bottom/blob/main/Cargo.lock), as well as many services and
+  programs, all built on top of the work of many talented people. bottom would not exist without all of this.
 
 - And of course, thank you again to all contributors and package maintainers!
 
