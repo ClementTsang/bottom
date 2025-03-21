@@ -567,6 +567,6 @@ Thanks to all contributors:
 
   <a href="https://jb.gg/OpenSourceSupport">
   <svg>
-      <image xlink:href="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
+    <image xlink:href="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
   </svg>
   </a>
