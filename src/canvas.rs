@@ -4,7 +4,7 @@
 //! or components.
 
 pub mod components;
-mod dialogs;
+pub mod dialogs;
 mod drawing_utils;
 mod widgets;
 
@@ -249,13 +249,13 @@ impl Painter {
 
                 self.draw_help_dialog(f, app_state, middle_dialog_chunk[1]);
             } else if app_state.delete_dialog_state.is_showing_dd {
-                let dd_text = self.get_dd_spans(app_state);
-
                 let text_width = if terminal_width < 100 {
                     terminal_width * 90 / 100
                 } else {
                     terminal_width * 50 / 100
                 };
+
+                let dd_text = self.get_dd_spans(app_state, text_width);
 
                 let text_height = if cfg!(target_os = "windows")
                     || !app_state.app_config_fields.is_advanced_kill

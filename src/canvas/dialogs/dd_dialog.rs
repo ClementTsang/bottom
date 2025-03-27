@@ -157,7 +157,7 @@ cfg_if::cfg_if! {
 }
 
 impl Painter {
-    pub fn get_dd_spans(&self, app_state: &App) -> Option<Text<'_>> {
+    pub fn get_dd_spans(&self, app_state: &App, text_width: u16) -> Option<Text<'_>> {
         if let Some(dd_err) = &app_state.dd_err {
             return Some(Text::from(vec![
                 Line::default(),
@@ -166,6 +166,9 @@ impl Painter {
                 Line::from("Please press ENTER or ESC to close this dialog."),
             ]));
         } else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
+            let truncated_process_name =
+                unicode_ellipsis::truncate_str(&to_kill_processes.0, text_width.into());
+
             if let Some(first_pid) = to_kill_processes.1.first() {
                 return Some(Text::from(vec![
                     Line::from(""),
@@ -179,20 +182,20 @@ impl Painter {
                     {
                         if to_kill_processes.1.len() != 1 {
                             Line::from(format!(
-                                "Kill {} processes with the name '{}'?  Press ENTER to confirm.",
+                                "Kill {} processes with the name '{}'? Press ENTER to confirm.",
                                 to_kill_processes.1.len(),
-                                to_kill_processes.0
+                                truncated_process_name
                             ))
                         } else {
                             Line::from(format!(
-                                "Kill 1 process with the name '{}'?  Press ENTER to confirm.",
-                                to_kill_processes.0
+                                "Kill 1 process with the name '{}'? Press ENTER to confirm.",
+                                truncated_process_name
                             ))
                         }
                     } else {
                         Line::from(format!(
-                            "Kill process '{}' with PID {}?  Press ENTER to confirm.",
-                            to_kill_processes.0, first_pid
+                            "Kill process '{}' with PID {}? Press ENTER to confirm.",
+                            truncated_process_name, first_pid
                         ))
                     },
                 ]));
@@ -205,6 +208,7 @@ impl Painter {
     fn draw_dd_confirm_buttons(
         &self, f: &mut Frame<'_>, button_draw_loc: &Rect, app_state: &mut App,
     ) {
+        // TODO: CHECK HEIGHT
         if MAX_PROCESS_SIGNAL == 1 || !app_state.app_config_fields.is_advanced_kill {
             let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
                 KillSignal::Kill(_) => (
@@ -258,7 +262,7 @@ impl Painter {
                 app_state.delete_dialog_state.button_positions = vec![
                     // Yes
                     (
-                        button_layout[0].x + button_layout[0].width - 4,
+                        (button_layout[0].x + button_layout[0].width).saturating_sub(4),
                         button_layout[0].y,
                         button_layout[0].x + button_layout[0].width,
                         button_layout[0].y,
@@ -266,7 +270,7 @@ impl Painter {
                     ),
                     // No
                     (
-                        button_layout[2].x - 1,
+                        button_layout[2].x.saturating_sub(1),
                         button_layout[2].y,
                         button_layout[2].x + 2,
                         button_layout[2].y,
@@ -282,9 +286,9 @@ impl Painter {
                     .margin(1)
                     .constraints(
                         [
-                            Constraint::Length((button_draw_loc.width - 14) / 2),
+                            Constraint::Length((button_draw_loc.width.saturating_sub(14)) / 2),
                             Constraint::Min(0),
-                            Constraint::Length((button_draw_loc.width - 14) / 2),
+                            Constraint::Length((button_draw_loc.width.saturating_sub(14)) / 2),
                         ]
                         .as_ref(),
                     )
@@ -299,6 +303,7 @@ impl Painter {
                     selected -= 2;
                 }
 
+                // FIXME: THIS IS BROKEN! USE A LIST!
                 let layout = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(vec![Constraint::Min(1); button_rect.height.into()])
@@ -322,8 +327,9 @@ impl Painter {
                     .map(|text| Span::styled(*text, self.styles.text_style))
                     .collect::<Vec<Span<'_>>>();
                 buttons.insert(0, Span::styled(SIGNAL_TEXT[0], self.styles.text_style));
-                buttons[selected - scroll_offset] =
-                    Span::styled(SIGNAL_TEXT[selected], self.styles.selected_text_style);
+                if let Some(button) = buttons.get_mut(selected - scroll_offset) {
+                    *button = Span::styled(SIGNAL_TEXT[selected], self.styles.selected_text_style);
+                }
 
                 app_state.delete_dialog_state.button_positions = layout
                     .iter()
