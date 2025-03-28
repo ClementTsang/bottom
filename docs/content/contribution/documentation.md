@@ -12,7 +12,7 @@ There are a few areas where documentation changes are often needed:
 
 - The [`README.md`](https://github.com/ClementTsang/bottom/blob/main/README.md)
 - The help menu inside of the application (located [here](https://github.com/ClementTsang/bottom/blob/main/src/constants.rs))
-- The [extended documentation](https://clementtsang.github.io/bottom/nightly/) (here)
+- The [extended documentation](../index.md) (what you're reading right now)
 - The [`CHANGELOG.md`](https://github.com/ClementTsang/bottom/blob/main/CHANGELOG.md)
 
 ## How should I add/update documentation?
