@@ -56,10 +56,7 @@
       ]
     },
     "row": {
-      "type": [
-        "array",
-        "null"
-      ],
+      "type": ["array", "null"],
       "items": {
         "$ref": "#/$defs/row"
       }
@@ -140,10 +137,7 @@
     "CpuDefault": {
       "description": "The default selection of the CPU widget. If the given selection is invalid,\n we will fall back to all.",
       "type": "string",
-      "enum": [
-        "all",
-        "average"
-      ]
+      "enum": ["all", "average"]
     },
     "CpuStyle": {
       "description": "Styling specific to the CPU widget.",
@@ -173,10 +167,7 @@
         },
         "cpu_core_colors": {
           "description": "Colour of each CPU threads' label and graph line. Read in order.",
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "$ref": "#/$defs/ColorStr"
           }
@@ -242,21 +233,19 @@
     "FinalWidget": {
       "description": "Represents a widget.",
       "type": "object",
+<<<<<<< HEAD
+=======
+      "required": ["type"],
+>>>>>>> 13ad660c (docs: use bottom.pages.dev)
       "properties": {
         "type": {
           "type": "string"
         },
         "default": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "ratio": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0
         }
@@ -269,46 +258,25 @@
       "type": "object",
       "properties": {
         "autohide_time": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "average_cpu_row": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "basic": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "battery": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "case_sensitive": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "cpu_left_legend": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "current_usage": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "default_time_value": {
           "anyOf": [
@@ -321,36 +289,21 @@
           ]
         },
         "default_widget_count": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "format": "uint64",
           "minimum": 0
         },
         "default_widget_type": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "disable_advanced_kill": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "disable_click": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "disable_gpu": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "disable_keys": {
           "type": [
@@ -359,34 +312,19 @@
           ]
         },
         "dot_marker": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "enable_cache_memory": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "expanded": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "group_processes": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "hide_avg_cpu": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "hide_k_threads": {
           "type": [
@@ -395,64 +333,34 @@
           ]
         },
         "hide_table_gap": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "hide_time": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "memory_legend": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "network_legend": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "network_use_binary_prefix": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "network_use_bytes": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "network_use_log": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "no_write": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "process_command": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "process_memory_as_value": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "rate": {
           "anyOf": [
@@ -465,10 +373,7 @@
           ]
         },
         "regex": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "retention": {
           "anyOf": [
@@ -481,16 +386,10 @@
           ]
         },
         "show_table_scroll_position": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "temperature_type": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "time_delta": {
           "anyOf": [
@@ -503,10 +402,7 @@
           ]
         },
         "tree": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "tree_collapse": {
           "type": [
@@ -515,22 +411,13 @@
           ]
         },
         "unnormalized_cpu": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "use_old_network_legend": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "whole_word": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         }
       }
     },
@@ -564,6 +451,10 @@
     },
     "IgnoreList": {
       "type": "object",
+<<<<<<< HEAD
+=======
+      "required": ["list"],
+>>>>>>> 13ad660c (docs: use bottom.pages.dev)
       "properties": {
         "case_sensitive": {
           "type": "boolean",
@@ -620,10 +511,7 @@
         },
         "gpu_colors": {
           "description": "Colour of each GPU's memory label and graph line. Read in order.",
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "$ref": "#/$defs/ColorStr"
           }
@@ -784,6 +672,10 @@
         },
         {
           "type": "object",
+<<<<<<< HEAD
+=======
+          "required": ["child"],
+>>>>>>> 13ad660c (docs: use bottom.pages.dev)
           "properties": {
             "child": {
               "type": "array",
@@ -792,10 +684,7 @@
               }
             },
             "ratio": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": ["integer", "null"],
               "format": "uint32",
               "minimum": 0
             }
@@ -889,11 +778,16 @@
           ]
         },
         "theme": {
+<<<<<<< HEAD
           "description": "A built-in theme.\n\n If this is and a custom colour are both set, in the config file,\n the custom colour scheme will be prioritized first. If a theme\n is set in the command-line args, however, it will always be\n prioritized first.",
           "type": [
             "string",
             "null"
           ]
+=======
+          "description": "A built-in theme.\n\nIf this is and a custom colour are both set, in the config file, the custom colour scheme will be prioritized first. If a theme is set in the command-line args, however, it will always be prioritized first.",
+          "type": ["string", "null"]
+>>>>>>> 13ad660c (docs: use bottom.pages.dev)
         },
         "widgets": {
           "description": "Styling for general widgets.",
@@ -963,11 +857,16 @@
               ]
             },
             "bold": {
+<<<<<<< HEAD
               "description": "Whether to make this text bolded or not. If not set,\n will default to built-in defaults.",
               "type": [
                 "boolean",
                 "null"
               ]
+=======
+              "description": "Whether to make this text bolded or not. If not set, will default to built-in defaults.",
+              "type": ["boolean", "null"]
+>>>>>>> 13ad660c (docs: use bottom.pages.dev)
             },
             "color": {
               "description": "A built-in ANSI colour, RGB hex, or RGB colour code.",
@@ -981,11 +880,16 @@
               ]
             },
             "italics": {
+<<<<<<< HEAD
               "description": "Whether to make this text italicized or not. If not set,\n will default to built-in defaults.",
               "type": [
                 "boolean",
                 "null"
               ]
+=======
+              "description": "Whether to make this text italicized or not. If not set, will default to built-in defaults.",
+              "type": ["boolean", "null"]
+>>>>>>> 13ad660c (docs: use bottom.pages.dev)
             }
           }
         }
@@ -993,12 +897,7 @@
     },
     "WidgetBorderType": {
       "type": "string",
-      "enum": [
-        "Default",
-        "Rounded",
-        "Double",
-        "Thick"
-      ]
+      "enum": ["Default", "Rounded", "Double", "Thick"]
     },
     "WidgetStyle": {
       "description": "General styling for generic widgets.",
@@ -1099,19 +998,13 @@
       "type": "object",
       "properties": {
         "child": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "$ref": "#/$defs/RowChildren"
           }
         },
         "ratio": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0
         }
