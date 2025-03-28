@@ -20,7 +20,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct StoredData {
     pub last_update_time: Instant, // FIXME: (points_rework_v1) remove this?
-    pub timeseries_data: TimeSeriesData, // FIXME: (points_rework_v1) Skip in basic?
+    pub timeseries_data: TimeSeriesData,
     pub network_harvest: network::NetworkHarvest,
     pub ram_harvest: Option<MemData>,
     pub swap_harvest: Option<MemData>,
