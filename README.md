@@ -540,6 +540,7 @@ Thanks to all contributors:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://meander.site"><img src="https://avatars.githubusercontent.com/u/11584387?v=4?s=100" width="100px;" alt="Julius Enriquez"/><br /><sub><b>Julius Enriquez</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=win8linux" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/benjamb"><img src="https://avatars.githubusercontent.com/u/8291297?v=4?s=100" width="100px;" alt="Ben Brown"/><br /><sub><b>Ben Brown</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=benjamb" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
