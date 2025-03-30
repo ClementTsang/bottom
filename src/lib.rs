@@ -62,7 +62,7 @@ fn try_drawing(
     painter: &mut canvas::Painter,
 ) -> anyhow::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
-        cleanup_terminal(terminal)?;
+        cleanup_terminal(terminal, &app.app_config_fields)?;
         Err(err.into())
     } else {
         Ok(())
@@ -71,12 +71,14 @@ fn try_drawing(
 
 /// Clean up the terminal before returning it to the user.
 fn cleanup_terminal(
-    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app_config_fields: &AppConfigFields,
 ) -> anyhow::Result<()> {
     disable_raw_mode()?;
+    if app_config_fields.disable_click {
+        execute!(terminal.backend_mut(), DisableMouseCapture)?;
+    }
     execute!(
         terminal.backend_mut(),
-        DisableMouseCapture,
         DisableBracketedPaste,
         LeaveAlternateScreen,
         Show,
@@ -338,13 +340,12 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     *enable_error_hook = true;
 
     let mut stdout_val = stdout();
-    execute!(
-        stdout_val,
-        Hide,
-        EnterAlternateScreen,
-        EnableBracketedPaste,
-        EnableMouseCapture,
-    )?;
+    execute!(stdout_val, Hide, EnterAlternateScreen, EnableBracketedPaste)?;
+    if app.app_config_fields.disable_click {
+        execute!(stdout_val, DisableMouseCapture)?;
+    } else {
+        execute!(stdout_val, EnableMouseCapture)?;
+    }
     enable_raw_mode()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
@@ -456,7 +457,7 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // I think doing it in this order is safe...
     // TODO: maybe move the cancellation token to the ctrl-c handler?
     cancellation_token.cancel();
-    cleanup_terminal(&mut terminal)?;
+    cleanup_terminal(&mut terminal, &app.app_config_fields)?;
 
     Ok(())
 }
