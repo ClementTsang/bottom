@@ -237,7 +237,7 @@ impl Process {
         let pid = pid_path
             .as_path()
             .components()
-            .last()
+            .next_back()
             .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             .or_else(|| {
                 rustix::fs::readlinkat(rustix::fs::CWD, &pid_path, vec![])

@@ -63,13 +63,7 @@ fn convert_rgb_to_color(rgb_str: &str) -> Result<Color, String> {
 
     let rgb = rgb_list
         .iter()
-        .filter_map(|val| {
-            if let Ok(res) = (*(*val)).to_string().trim().parse::<u8>() {
-                Some(res)
-            } else {
-                None
-            }
-        })
+        .filter_map(|val| (*(*val)).to_string().trim().parse::<u8>().ok())
         .collect::<Vec<_>>();
 
     if rgb.len() == 3 {

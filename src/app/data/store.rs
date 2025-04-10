@@ -187,7 +187,7 @@ impl StoredData {
                             Some(device.name.as_str()) // use the whole zfs
                         // dataset name
                         } else {
-                            device.name.split('/').last()
+                            device.name.split('/').next_back()
                         }
                     }
                     #[cfg(not(feature = "zfs"))]
