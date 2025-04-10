@@ -176,7 +176,7 @@ impl StoredData {
                 {
                     match &device.volume_name {
                         Some(volume_name) => Some(volume_name.as_str()),
-                        None => device.name.split('/').last(),
+                        None => device.name.split('/').next_back(),
                     }
                 }
                 #[cfg(not(target_os = "windows"))]
@@ -187,12 +187,12 @@ impl StoredData {
                             Some(device.name.as_str()) // use the whole zfs
                         // dataset name
                         } else {
-                            device.name.split('/').last()
+                            device.name.split('/').next_back()
                         }
                     }
                     #[cfg(not(feature = "zfs"))]
                     {
-                        device.name.split('/').last()
+                        device.name.split('/').next_back()
                     }
                 }
             }) else {
