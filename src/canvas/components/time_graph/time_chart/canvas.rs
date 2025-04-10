@@ -165,7 +165,7 @@ struct BrailleGrid {
     width: u16,
     /// Height of the grid in number of terminal rows
     height: u16,
-    /// Represents the unicode braille patterns. Will take a value between `0x2800` and `0x28FF`
+    /// Represents the unicode braille patterns. Will take a value between `0x2800` and `0x28FF`;
     /// this is converted to an utf16 string when converting to a layer. See
     /// <https://en.wikipedia.org/wiki/Braille_Patterns> for more info.
     utf16_code_points: Vec<u16>,
@@ -207,13 +207,27 @@ impl Grid for BrailleGrid {
 
     fn paint(&mut self, x: usize, y: usize, color: Color) {
         let index = y / 4 * self.width as usize + x / 2;
-        // using get_mut here because we are indexing the vector with usize values
-        // and we want to make sure we don't panic if the index is out of bounds
-        if let Some(c) = self.utf16_code_points.get_mut(index) {
-            *c |= symbols::braille::DOTS[y % 4][x % 2];
-        }
-        if let Some(c) = self.colors.get_mut(index) {
-            *c = color;
+
+        // // using get_mut here because we are indexing the vector with usize values
+        // // and we want to make sure we don't panic if the index is out of bounds
+        // if let Some(c) = self.utf16_code_points.get_mut(index) {
+        //     *c |= symbols::braille::DOTS[y % 4][x % 2];
+        // }
+        // if let Some(c) = self.colors.get_mut(index) {
+        //     *c = color;
+        // }
+
+        // Custom implementation to distinguish between lines better.
+        if let Some(curr_color) = self.colors.get_mut(index) {
+            if *curr_color != color {
+                *curr_color = color;
+                if let Some(cell) = self.utf16_code_points.get_mut(index) {
+                    *cell = symbols::braille::BLANK;
+                    *cell |= symbols::braille::DOTS[y % 4][x % 2];
+                }
+            } else if let Some(cell) = self.utf16_code_points.get_mut(index) {
+                *cell |= symbols::braille::DOTS[y % 4][x % 2];
+            }
         }
     }
 }
