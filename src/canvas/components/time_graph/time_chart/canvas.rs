@@ -168,6 +168,8 @@ struct BrailleGrid {
     /// Represents the unicode braille patterns. Will take a value between `0x2800` and `0x28FF`;
     /// this is converted to an utf16 string when converting to a layer. See
     /// <https://en.wikipedia.org/wiki/Braille_Patterns> for more info.
+    ///
+    /// FIXME: (points_rework_v1) isn't this really inefficient to go u16 -> String from utf16?
     utf16_code_points: Vec<u16>,
     /// The color of each cell only supports foreground colors for now as there's no way to
     /// individually set the background color of each dot in the braille pattern.
@@ -208,8 +210,6 @@ impl Grid for BrailleGrid {
     fn paint(&mut self, x: usize, y: usize, color: Color) {
         let index = y / 4 * self.width as usize + x / 2;
 
-        // // using get_mut here because we are indexing the vector with usize values
-        // // and we want to make sure we don't panic if the index is out of bounds
         // if let Some(c) = self.utf16_code_points.get_mut(index) {
         //     *c |= symbols::braille::DOTS[y % 4][x % 2];
         // }
@@ -357,6 +357,9 @@ impl Grid for HalfBlockGrid {
 
         // first we join each adjacent row together to get an iterator that contains vertical pairs
         // of pixels, with the lower row being the first element in the pair
+        //
+        // TODO: Whenever I add this as a valid marker, make sure this works fine with
+        // the overridden time_chart drawing-layer-thing.
         let vertical_color_pairs = self
             .pixels
             .iter()
