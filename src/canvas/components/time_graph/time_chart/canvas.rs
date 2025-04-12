@@ -142,11 +142,20 @@ struct Layer {
 }
 
 trait Grid: Debug {
-    // fn width(&self) -> u16;
-    // fn height(&self) -> u16;
+    /// Get the resolution of the grid in number of dots.
+    ///
+    /// This doesn't have to be the same as the number of rows and columns of the grid. For example,
+    /// a grid of Braille patterns will have a resolution of 2x4 dots per cell. This means that a
+    /// grid of 10x10 cells will have a resolution of 20x40 dots.
     fn resolution(&self) -> (f64, f64);
+    /// Paint a point of the grid.
+    ///
+    /// The point is expressed in number of dots starting at the origin of the grid in the top left
+    /// corner. Note that this is not the same as the `(x, y)` coordinates of the canvas.
     fn paint(&mut self, x: usize, y: usize, color: Color);
+    /// Save the current state of the [`Grid`] as a layer to be rendered
     fn save(&self) -> Layer;
+    /// Reset the grid to its initial state
     fn reset(&mut self);
 }
 
@@ -210,6 +219,7 @@ impl Grid for BrailleGrid {
     fn paint(&mut self, x: usize, y: usize, color: Color) {
         let index = y / 4 * self.width as usize + x / 2;
 
+        // ratatui impl
         // if let Some(c) = self.utf16_code_points.get_mut(index) {
         //     *c |= symbols::braille::DOTS[y % 4][x % 2];
         // }
@@ -417,20 +427,18 @@ pub struct Painter<'a, 'b> {
 impl Painter<'_, '_> {
     /// Convert the (x, y) coordinates to location of a point on the grid.
     pub fn get_point(&self, x: f64, y: f64) -> Option<(usize, usize)> {
-        let left = self.context.x_bounds[0];
-        let right = self.context.x_bounds[1];
-        let top = self.context.y_bounds[1];
-        let bottom = self.context.y_bounds[0];
+        let [left, right] = self.context.x_bounds;
+        let [bottom, top] = self.context.y_bounds;
         if x < left || x > right || y < bottom || y > top {
             return None;
         }
-        let width = (self.context.x_bounds[1] - self.context.x_bounds[0]).abs();
-        let height = (self.context.y_bounds[1] - self.context.y_bounds[0]).abs();
-        if width == 0.0 || height == 0.0 {
+        let width = right - left;
+        let height = top - bottom;
+        if width <= 0.0 || height <= 0.0 {
             return None;
         }
-        let x = ((x - left) * self.resolution.0 / width) as usize;
-        let y = ((top - y) * self.resolution.1 / height) as usize;
+        let x = ((x - left) * (self.resolution.0 - 1.0) / width).round() as usize;
+        let y = ((top - y) * (self.resolution.1 - 1.0) / height).round() as usize;
         Some((x, y))
     }
 
