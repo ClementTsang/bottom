@@ -5,6 +5,7 @@
 //! the specializations are factored out to `time_chart/points.rs`.
 
 mod canvas;
+mod grid;
 mod points;
 
 use std::{cmp::max, str::FromStr, time::Instant};
@@ -302,7 +303,7 @@ impl<'a> Dataset<'a> {
 
     /// Sets the data points of this dataset
     ///
-    /// Points will then either be rendered as scrattered points or with lines
+    /// Points will then either be rendered as scattered points or with lines
     /// between them depending on [`Dataset::graph_type`].
     ///
     /// Data consist in an array of `f64` tuples (`(f64, f64)`), the first
@@ -1111,7 +1112,7 @@ mod tests {
     }
 
     #[test]
-    fn datasets_without_name_dont_contribute_to_legend_height() {
+    fn datasets_without_name_do_not_contribute_to_legend_height() {
         let data_named_1 = Dataset::default().name("data1"); // must occupy a row in legend
         let data_named_2 = Dataset::default().name(""); // must occupy a row in legend, even if name is empty
         let data_unnamed = Dataset::default(); // must not occupy a row in legend

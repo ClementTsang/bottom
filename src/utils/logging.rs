@@ -115,7 +115,7 @@ macro_rules! info_every_n_secs {
     ($n:expr, $($x:tt)*) => {
         #[cfg(feature = "logging")]
         {
-            crate::log_every_n_secs!(log::Level::Info, $n, $($x)*);
+            $crate::log_every_n_secs!(log::Level::Info, $n, $($x)*);
         }
     };
 }
@@ -146,8 +146,7 @@ mod test {
     /// This doesn't do anything if you use something like nextest, which runs
     /// a test-per-process, but that's fine.
     fn init_test_logger() {
-        use std::sync::atomic::AtomicBool;
-        use std::sync::atomic::Ordering;
+        use std::sync::atomic::{AtomicBool, Ordering};
 
         static LOG_INIT: AtomicBool = AtomicBool::new(false);
 

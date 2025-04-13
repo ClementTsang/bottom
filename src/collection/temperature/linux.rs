@@ -9,10 +9,9 @@ use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 
 use super::TempSensorData;
-use crate::{app::filter::Filter, collection::linux::utils::is_device_awake};
-
 #[cfg(feature = "gpu")]
 use crate::collection::amd::get_amd_name;
+use crate::{app::filter::Filter, collection::linux::utils::is_device_awake};
 
 const EMPTY_NAME: &str = "Unknown";
 
