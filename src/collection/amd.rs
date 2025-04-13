@@ -10,9 +10,8 @@ use std::{
 
 use hashbrown::{HashMap, HashSet};
 
-use crate::{app::layout_manager::UsedWidgets, collection::memory::MemData};
-
 use super::linux::utils::is_device_awake;
+use crate::{app::layout_manager::UsedWidgets, collection::memory::MemData};
 
 // TODO: May be able to clean up some of these, Option<Vec> for example is a bit redundant.
 pub struct AmdGpuData {
