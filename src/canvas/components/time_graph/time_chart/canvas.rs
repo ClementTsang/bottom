@@ -33,14 +33,14 @@ pub trait Shape {
 
 impl Shape for CanvasLine {
     fn draw(&self, painter: &mut Painter<'_, '_>) {
-        let (x1, y1) = match painter.get_point(self.x1, self.y1) {
-            Some(c) => c,
-            None => return,
+        let Some((x1, y1)) = painter.get_point(self.x1, self.y1) else {
+            return;
         };
-        let (x2, y2) = match painter.get_point(self.x2, self.y2) {
-            Some(c) => c,
-            None => return,
+
+        let Some((x2, y2)) = painter.get_point(self.x2, self.y2) else {
+            return;
         };
+
         let (dx, x_range) = if x2 >= x1 {
             (x2 - x1, x1..=x2)
         } else {
@@ -70,6 +70,39 @@ impl Shape for CanvasLine {
             draw_line_high(painter, x2, y2, x1, y1, self.color);
         } else {
             draw_line_high(painter, x1, y1, x2, y2, self.color);
+        }
+
+        draw_line(painter, x1, y1, x2, y2, self.color);
+    }
+}
+
+/// Based on <https://github.com/gizak/termui/blob/master/drawille/drawille.go>
+fn draw_line(
+    painter: &mut Painter<'_, '_>, x1: usize, y1: usize, x2: usize, y2: usize, colour: Color,
+) {
+    let (left_point, right_point) = if x1 < x2 {
+        ((x1, y1), (x2, y2))
+    } else {
+        ((x2, y2), (x1, y1))
+    };
+
+    let dx = (left_point.0 as isize - right_point.0 as isize).abs();
+    let dy = (left_point.1 as isize - right_point.1 as isize).abs();
+
+    let slope = dy as f64 / dx as f64;
+    let slope_sign: isize = if left_point.1 < right_point.1 { 1 } else { -1 };
+
+    let mut target_y = left_point.1 as f64;
+    let mut current_y = left_point.1 as isize;
+
+    for current_x in (left_point.0)..(right_point.0) {
+        painter.paint(current_x, current_y as usize, colour);
+
+        target_y += slope * slope_sign as f64;
+
+        while current_y != target_y as isize && current_y >= 0 {
+            painter.paint(current_x, current_y as usize, colour);
+            current_y += slope_sign;
         }
     }
 }

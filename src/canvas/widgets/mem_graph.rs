@@ -62,7 +62,7 @@ impl Painter {
 
         if let Some(mem_state) = app_state.states.mem_state.widget_states.get_mut(&widget_id) {
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
-            let x_min = -(mem_state.current_display_time as f64);
+            let x_min = -(mem_state.current_display_time as f64) / 1000.0;
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,

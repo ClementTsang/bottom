@@ -104,7 +104,7 @@ impl TimeGraph<'_> {
         if self.hide_x_labels {
             Axis::default().bounds(adjusted_x_bounds)
         } else {
-            let x_bound_left = ((-self.x_min) as u64 / 1000).to_string();
+            let x_bound_left = ((-self.x_min) as u64).to_string();
             let x_bound_right = "0s";
 
             let x_labels = vec![
