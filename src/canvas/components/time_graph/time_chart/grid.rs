@@ -96,7 +96,7 @@ impl Grid for BrailleGrid {
         let index = y / 4 * self.width as usize + x / 2;
 
         // The ratatui/tui-rs implementation; this gives a more merged
-        // look but it also makes it a bit harder to read.
+        // look but it also makes it a bit harder to read in some cases.
 
         // if let Some(c) = self.utf16_code_points.get_mut(index) {
         //     *c |= symbols::braille::DOTS[y % 4][x % 2];
