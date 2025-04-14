@@ -104,7 +104,7 @@ impl TimeGraph<'_> {
         if self.hide_x_labels {
             Axis::default().bounds(adjusted_x_bounds)
         } else {
-            let x_bound_left = ((-self.x_min) as u64).to_string();
+            let x_bound_left = ((-self.x_min) as u64 / 1000).to_string();
             let x_bound_right = "0s";
 
             let x_labels = vec![
@@ -230,7 +230,7 @@ mod test {
     fn create_time_graph() -> TimeGraph<'static> {
         TimeGraph {
             title: " Network ".into(),
-            x_min: -15.0,
+            x_min: -15000.0,
             hide_x_labels: false,
             y_bounds: AxisBound::Max(100.5),
             y_labels: &Y_LABELS,
@@ -254,7 +254,7 @@ mod test {
         let x_axis = tg.generate_x_axis();
 
         let actual = Axis::default()
-            .bounds(AxisBound::Min(-15.0))
+            .bounds(AxisBound::Min(-15000.0))
             .labels(vec![Span::styled("15s", style), Span::styled("0s", style)])
             .style(style);
         assert_eq!(x_axis.bounds, actual.bounds);
