@@ -35,7 +35,9 @@ Some possible solutions include:
 - Configuring your terminal emulator to use specific fonts for the `U+2800` to `U+28FF` range.
   - For example for kitty, do `symbol_map U+2800-U+28FF Symbola`.
 
-See [this issue](https://github.com/cjbassi/gotop/issues/18) for more possible fixes.
+See [this issue](https://github.com/cjbassi/gotop/issues/18) for more possible fixes, or the
+[ratatui](https://ratatui.rs/faq/#some-characters-appear-to-be-missing--look-weird) FAQ (ratatui is the underlying
+library that bottom uses to draw things).
 
 If you're still having issues, feel free to open a [discussion](https://github.com/ClementTsang/bottom/discussions/new/)
 question about it.
