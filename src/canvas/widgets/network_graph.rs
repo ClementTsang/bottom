@@ -67,7 +67,7 @@ impl Painter {
             let rx_points = &(shared_data.timeseries_data.rx);
             let tx_points = &(shared_data.timeseries_data.tx);
             let time = &(shared_data.timeseries_data.time);
-            let time_start = -(network_widget_state.current_display_time as f64) / 1000.0;
+            let time_start = -(network_widget_state.current_display_time as f64);
 
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let hide_x_labels = should_hide_x_label(
