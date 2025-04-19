@@ -211,26 +211,26 @@ Note that key bindings are generally case-sensitive.
 
 ### Process table
 
-| Binding                | Action                                                           |
-| ---------------------- | ---------------------------------------------------------------- |
-| ++up++ , ++k++         | Move up within a widget                                          |
-| ++down++ , ++j++       | Move down within a widget                                        |
-| ++g+g++ , ++home++     | Jump to the first entry in the table                             |
-| ++G++ , ++end++        | Jump to the last entry in the table                              |
-| ++d+d++ , ++f9++       | Send a kill signal to the selected process                       |
-| ++c++                  | Sort by CPU usage, press again to reverse sorting order          |
-| ++m++                  | Sort by memory usage, press again to reverse sorting order       |
-| ++p++                  | Sort by PID name, press again to reverse sorting order           |
-| ++n++                  | Sort by process name, press again to reverse sorting order       |
-| ++tab++                | Toggle grouping processes with the same name                     |
-| ++P++                  | Toggle between showing the full command or just the process name |
-| ++ctrl+f++ , ++slash++ | Toggle showing the search sub-widget                             |
-| ++s++ , ++f6++         | Toggle showing the sort sub-widget                               |
-| ++I++                  | Invert the current sort                                          |
-| ++"%"++                | Toggle between values and percentages for memory usage           |
-| ++t++ , ++f5++         | Toggle tree mode                                                 |
-| ++M++                  | Sort by gpu memory usage, press again to reverse sorting order   |
-| ++C++                  | Sort by gpu usage, press again to reverse sorting order          |
+| Binding                    | Action                                                           |
+| -------------------------- | ---------------------------------------------------------------- |
+| ++up++ , ++k++             | Move up within a widget                                          |
+| ++down++ , ++j++           | Move down within a widget                                        |
+| ++g+g++ , ++home++         | Jump to the first entry in the table                             |
+| ++G++ , ++end++            | Jump to the last entry in the table                              |
+| ++d+d++ , ++f9++           | Send a kill signal to the selected process                       |
+| ++c++                      | Sort by CPU usage, press again to reverse sorting order          |
+| ++m++                      | Sort by memory usage, press again to reverse sorting order       |
+| ++p++                      | Sort by PID name, press again to reverse sorting order           |
+| ++n++                      | Sort by process name, press again to reverse sorting order       |
+| ++tab++                    | Toggle grouping processes with the same name                     |
+| ++P++                      | Toggle between showing the full command or just the process name |
+| ++ctrl+f++ , ++slash++     | Toggle showing the search sub-widget                             |
+| ++s++ , ++f6++, ++delete++ | Toggle showing the sort sub-widget                               |
+| ++I++                      | Invert the current sort                                          |
+| ++"%"++                    | Toggle between values and percentages for memory usage           |
+| ++t++ , ++f5++             | Toggle tree mode                                                 |
+| ++M++                      | Sort by gpu memory usage, press again to reverse sorting order   |
+| ++C++                      | Sort by gpu usage, press again to reverse sorting order          |
 
 ### Sort sub-widget
 
