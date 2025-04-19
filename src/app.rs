@@ -525,37 +525,36 @@ impl App {
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if is_in_search_widget {
-                        if proc_widget_state.proc_search.search_state.is_enabled
-                            && proc_widget_state.cursor_char_index()
-                                < proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len()
-                        {
-                            let current_cursor = proc_widget_state.cursor_char_index();
-                            proc_widget_state.search_walk_forward();
-
-                            let _ = proc_widget_state
+                    if is_in_search_widget
+                        && proc_widget_state.proc_search.search_state.is_enabled
+                        && proc_widget_state.cursor_char_index()
+                            < proc_widget_state
                                 .proc_search
                                 .search_state
                                 .current_search_query
-                                .drain(current_cursor..proc_widget_state.cursor_char_index());
+                                .len()
+                    {
+                        let current_cursor = proc_widget_state.cursor_char_index();
+                        proc_widget_state.search_walk_forward();
 
-                            proc_widget_state.proc_search.search_state.grapheme_cursor =
-                                GraphemeCursor::new(
-                                    current_cursor,
-                                    proc_widget_state
-                                        .proc_search
-                                        .search_state
-                                        .current_search_query
-                                        .len(),
-                                    true,
-                                );
+                        let _ = proc_widget_state
+                            .proc_search
+                            .search_state
+                            .current_search_query
+                            .drain(current_cursor..proc_widget_state.cursor_char_index());
 
-                            proc_widget_state.update_query();
-                        }
+                        proc_widget_state.proc_search.search_state.grapheme_cursor =
+                            GraphemeCursor::new(
+                                current_cursor,
+                                proc_widget_state
+                                    .proc_search
+                                    .search_state
+                                    .current_search_query
+                                    .len(),
+                                true,
+                            );
+
+                        proc_widget_state.update_query();
                     }
                 }
             }
