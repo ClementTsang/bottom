@@ -27,6 +27,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1625](https://github.com/ClementTsang/bottom/pull/1625): Add the ability to configure the disk widget's table columns.
 - [#1641](https://github.com/ClementTsang/bottom/pull/1641): Support AMD GPU data collection on Linux.
 - [#1642](https://github.com/ClementTsang/bottom/pull/1642): Support changing the widget borders.
+- [#1717](https://github.com/ClementTsang/bottom/pull/1717): Support delete key (fn + delete on macOS) to kill processes.
 
 ### Bug Fixes
 

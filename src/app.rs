@@ -516,16 +516,17 @@ impl App {
     }
 
     pub fn on_delete(&mut self) {
-        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
-            let is_in_search_widget = self.is_in_search_widget();
-            if let Some(proc_widget_state) = self
-                .states
-                .proc_state
-                .widget_states
-                .get_mut(&(self.current_widget.widget_id - 1))
-            {
-                if is_in_search_widget {
-                    if proc_widget_state.proc_search.search_state.is_enabled
+        match self.current_widget.widget_type {
+            BottomWidgetType::ProcSearch => {
+                let is_in_search_widget = self.is_in_search_widget();
+                if let Some(proc_widget_state) = self
+                    .states
+                    .proc_state
+                    .widget_states
+                    .get_mut(&(self.current_widget.widget_id - 1))
+                {
+                    if is_in_search_widget
+                        && proc_widget_state.proc_search.search_state.is_enabled
                         && proc_widget_state.cursor_char_index()
                             < proc_widget_state
                                 .proc_search
@@ -555,10 +556,12 @@ impl App {
 
                         proc_widget_state.update_query();
                     }
-                } else {
-                    self.start_killing_process()
                 }
             }
+            BottomWidgetType::Proc => {
+                self.start_killing_process();
+            }
+            _ => {}
         }
     }
 
