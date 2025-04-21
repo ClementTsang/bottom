@@ -599,6 +599,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "nyurik",
+      "name": "Yuri Astrakhan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1641515?v=4",
+      "profile": "https://github.com/nyurik",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
