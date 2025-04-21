@@ -83,7 +83,7 @@ Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, d
     <img src="../../../assets/screenshots/process/process_tree.webp" alt="A picture of tree mode in a process widget."/>
 </figure>
 
-A process in tree mode can also be "collapsed", hiding its children and any descendants, using either the ++minus++ or ++Left++ keys, or clicking on an entry.  To expand, use the ++plus++ or ++Right++ keys, or click on the entry again.
+A process in tree mode can also be "collapsed", hiding its children and any descendants, using either the ++minus++ or ++plus++ keys, or double clicking on an entry.
 
 Lastly, note that in tree mode, processes cannot be grouped together due to the behaviour of the two modes somewhat clashing.
 

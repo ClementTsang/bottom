@@ -794,29 +794,15 @@ impl ProcWidgetState {
         }
     }
 
-    /// Change the state of a tree branch:
-    ///   None - toggle the branch between collapsed and expanded
-    ///   Some(true) - expand the branch, or do nothing if it's already expanded
-    ///   Some(false) - collapse the branch, or do nothing if it's already collapsed
-    pub fn toggle_current_tree_branch_entry(&mut self, force_expand: Option<bool>) {
+    pub fn toggle_current_tree_branch_entry(&mut self) {
         if let ProcWidgetMode::Tree { collapsed_pids } = &mut self.mode {
             if let Some(process) = self.table.current_item() {
                 let pid = process.pid;
 
-                let refresh = match force_expand {
-                    Some(true) => collapsed_pids.remove(&pid),
-                    Some(false) => collapsed_pids.insert(pid),
-                    None => {
-                        if !collapsed_pids.remove(&pid) {
-                            collapsed_pids.insert(pid);
-                        }
-                        true
-                    }
-                };
-
-                if refresh {
-                    self.force_data_update();
+                if !collapsed_pids.remove(&pid) {
+                    collapsed_pids.insert(pid);
                 }
+                self.force_data_update();
             }
         }
     }

@@ -327,7 +327,7 @@ pub const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-pub const PROCESS_HELP_TEXT: [&str; 16] = [
+pub const PROCESS_HELP_TEXT: [&str; 15] = [
     "3 - Process widget",
     "dd, F9           Kill the selected process",
     "c                Sort by CPU usage, press again to reverse",
@@ -341,8 +341,7 @@ pub const PROCESS_HELP_TEXT: [&str; 16] = [
     "I                Invert current sort",
     "%                Toggle between values and percentages for memory usage",
     "t, F5            Toggle tree mode",
-    "-, Left, click   Collapse a branch while in tree mode",
-    "+, Right, click  Expand a branch while in tree mode",
+    "+, -, click      Collapse/expand a branch while in tree mode",
     "click on header  Sorts the entries by that column, click again to invert the sort",
 ];
 

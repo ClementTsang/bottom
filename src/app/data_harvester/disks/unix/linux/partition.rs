@@ -110,7 +110,7 @@ impl FromStr for Partition {
         let mut parts = line.splitn(5, ' ');
 
         let device = match parts.next() {
-            Some("none") => None,
+            Some(device) if device == "none" => None,
             Some(device) => Some(device.to_string()),
             None => {
                 bail!("missing device");
