@@ -687,6 +687,15 @@ impl App {
     pub fn on_left_key(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
+                BottomWidgetType::Proc => {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        proc_widget_state.collapse_current_tree_branch_entry();
+                    }
+                }
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
@@ -749,6 +758,15 @@ impl App {
     pub fn on_right_key(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
+                BottomWidgetType::Proc => {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        proc_widget_state.expand_current_tree_branch_entry();
+                    }
+                }
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self

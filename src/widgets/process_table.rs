@@ -817,6 +817,28 @@ impl ProcWidgetState {
         }
     }
 
+    pub fn collapse_current_tree_branch_entry(&mut self) {
+        if let ProcWidgetMode::Tree { collapsed_pids } = &mut self.mode {
+            if let Some(process) = self.table.current_item() {
+                let pid = process.pid;
+
+                collapsed_pids.insert(pid);
+                self.force_data_update();
+            }
+        }
+    }
+
+    pub fn expand_current_tree_branch_entry(&mut self) {
+        if let ProcWidgetMode::Tree { collapsed_pids } = &mut self.mode {
+            if let Some(process) = self.table.current_item() {
+                let pid = process.pid;
+
+                collapsed_pids.remove(&pid);
+                self.force_data_update();
+            }
+        }
+    }
+
     pub fn toggle_current_tree_branch_entry(&mut self) {
         if let ProcWidgetMode::Tree { collapsed_pids } = &mut self.mode {
             if let Some(process) = self.table.current_item() {
