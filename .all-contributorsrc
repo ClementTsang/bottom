@@ -118,15 +118,6 @@
       ]
     },
     {
-      "login": "vlakreeh",
-      "name": "Zeb Piasecki",
-      "avatar_url": "https://avatars.githubusercontent.com/u/14242997?v=4",
-      "profile": "https://zebulon.dev/",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "briandipalma",
       "name": "Brian Di Palma",
       "avatar_url": "https://avatars.githubusercontent.com/u/1597820?v=4",
@@ -383,7 +374,7 @@
     },
     {
       "login": "aragonnetje6",
-      "name": "Twan Stok",
+      "name": "Grace Stok",
       "avatar_url": "https://avatars.githubusercontent.com/u/69118097?v=4",
       "profile": "https://github.com/aragonnetje6",
       "contributions": [
@@ -598,6 +589,16 @@
       "profile": "https://github.com/benjamb",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "nyurik",
+      "name": "Yuri Astrakhan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1641515?v=4",
+      "profile": "https://github.com/nyurik",
+      "contributions": [
+        "code",
+        "doc"
       ]
     }
   ],
