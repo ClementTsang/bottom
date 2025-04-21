@@ -223,7 +223,7 @@ jobs:
               os: "ubuntu-latest",
               target: "aarch64-linux-android",
               cross: true,
-              cross-version: "git:cabfc3b02d1edec03869fabdabf6a7f8b0519160",
+              cross-version: "git:df3309709a4a26b3dc3b1567239c3f38b9da0425", # latest version that I've found works so far
               no-default-features: true,
               no-clippy: true,
             }
