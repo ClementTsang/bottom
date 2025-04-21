@@ -28,6 +28,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1641](https://github.com/ClementTsang/bottom/pull/1641): Support AMD GPU data collection on Linux.
 - [#1642](https://github.com/ClementTsang/bottom/pull/1642): Support changing the widget borders.
 - [#1717](https://github.com/ClementTsang/bottom/pull/1717): Support delete key (fn + delete on macOS) to kill processes.
+- [#1719](https://github.com/ClementTsang/bottom/pull/1719): Support ignoring all keypresses.
 
 ### Bug Fixes
 
