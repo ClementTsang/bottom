@@ -1,68 +1,31 @@
-use std::str::FromStr;
-
-use canvas_styling::*;
-use itertools::izip;
-use tui::{
-    backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
-    text::{Line, Span},
-    widgets::Paragraph,
-    Frame, Terminal,
-};
-
-use crate::{
-    app::{
-        self,
-        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType},
-        App,
-    },
-    constants::*,
-    utils::error,
-    utils::error::BottomError,
-};
-
-pub mod canvas_styling;
+pub mod components;
 mod dialogs;
 mod drawing_utils;
 mod widgets;
 
-#[derive(Debug)]
-pub enum ColourScheme {
-    Default,
-    DefaultLight,
-    Gruvbox,
-    GruvboxLight,
-    Nord,
-    NordLight,
-    Custom,
-}
+use itertools::izip;
+use tui::{
+    Frame, Terminal,
+    backend::Backend,
+    layout::{Constraint, Direction, Layout, Rect},
+    text::Span,
+    widgets::Paragraph,
+};
 
-impl FromStr for ColourScheme {
-    type Err = BottomError;
-
-    fn from_str(s: &str) -> error::Result<Self> {
-        let lower_case = s.to_lowercase();
-        match lower_case.as_str() {
-            "default" => Ok(ColourScheme::Default),
-            "default-light" => Ok(ColourScheme::DefaultLight),
-            "gruvbox" => Ok(ColourScheme::Gruvbox),
-            "gruvbox-light" => Ok(ColourScheme::GruvboxLight),
-            "nord" => Ok(ColourScheme::Nord),
-            "nord-light" => Ok(ColourScheme::NordLight),
-            _ => Err(BottomError::ConfigError(format!(
-                "\"{}\" is an invalid built-in color scheme.",
-                s
-            ))),
-        }
-    }
-}
+use crate::{
+    app::{
+        App,
+        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType, IntermediaryConstraint},
+    },
+    constants::*,
+    options::config::style::Styles,
+};
 
 /// Handles the canvas' state.
 pub struct Painter {
-    pub colours: CanvasStyling,
-    height: u16,
-    width: u16,
-    styled_help_text: Vec<Line<'static>>,
+    pub styles: Styles,
+    previous_height: u16,
+    previous_width: u16,
 
     // TODO: Redo this entire thing.
     row_constraints: Vec<LayoutConstraint>,
@@ -73,15 +36,18 @@ pub struct Painter {
     widget_layout: BottomLayout,
 }
 
-// Part of a temporary fix for https://github.com/ClementTsang/bottom/issues/896
-enum LayoutConstraint {
+/// The constraints of a widget relative to its parent.
+///
+/// This is used over ratatui's internal representation due to
+/// <https://github.com/ClementTsang/bottom/issues/896>.
+pub enum LayoutConstraint {
     CanvasHandled,
     Grow,
     Ratio(u32, u32),
 }
 
 impl Painter {
-    pub fn init(widget_layout: BottomLayout, styling: CanvasStyling) -> anyhow::Result<Self> {
+    pub fn init(layout: BottomLayout, styling: Styles) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -91,56 +57,69 @@ impl Painter {
         let mut col_row_constraints = Vec::new();
         let mut layout_constraints = Vec::new();
 
-        widget_layout.rows.iter().for_each(|row| {
-            if row.canvas_handle_height {
-                row_constraints.push(LayoutConstraint::CanvasHandled);
-            } else {
-                row_constraints.push(LayoutConstraint::Ratio(
-                    row.row_height_ratio,
-                    widget_layout.total_row_height_ratio,
-                ));
+        layout.rows.iter().for_each(|row| {
+            match row.constraint {
+                IntermediaryConstraint::PartialRatio(val) => {
+                    row_constraints
+                        .push(LayoutConstraint::Ratio(val, layout.total_row_height_ratio));
+                }
+                IntermediaryConstraint::CanvasHandled { .. } => {
+                    row_constraints.push(LayoutConstraint::CanvasHandled);
+                }
+                IntermediaryConstraint::Grow { .. } => {
+                    row_constraints.push(LayoutConstraint::Grow);
+                }
             }
 
             let mut new_col_constraints = Vec::new();
             let mut new_widget_constraints = Vec::new();
             let mut new_col_row_constraints = Vec::new();
             row.children.iter().for_each(|col| {
-                if col.canvas_handle_width {
-                    new_col_constraints.push(LayoutConstraint::CanvasHandled);
-                } else {
-                    new_col_constraints.push(LayoutConstraint::Ratio(
-                        col.col_width_ratio,
-                        row.total_col_ratio,
-                    ));
+                match col.constraint {
+                    IntermediaryConstraint::PartialRatio(val) => {
+                        new_col_constraints.push(LayoutConstraint::Ratio(val, row.total_col_ratio));
+                    }
+                    IntermediaryConstraint::CanvasHandled { .. } => {
+                        new_col_constraints.push(LayoutConstraint::CanvasHandled);
+                    }
+                    IntermediaryConstraint::Grow { .. } => {
+                        new_col_constraints.push(LayoutConstraint::Grow);
+                    }
                 }
 
                 let mut new_new_col_row_constraints = Vec::new();
                 let mut new_new_widget_constraints = Vec::new();
                 col.children.iter().for_each(|col_row| {
-                    if col_row.canvas_handle_height {
-                        new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
-                    } else if col_row.flex_grow {
-                        new_new_col_row_constraints.push(LayoutConstraint::Grow);
-                    } else {
-                        new_new_col_row_constraints.push(LayoutConstraint::Ratio(
-                            col_row.col_row_height_ratio,
-                            col.total_col_row_ratio,
-                        ));
+                    match col_row.constraint {
+                        IntermediaryConstraint::PartialRatio(val) => {
+                            new_new_col_row_constraints
+                                .push(LayoutConstraint::Ratio(val, col.total_col_row_ratio));
+                        }
+                        IntermediaryConstraint::CanvasHandled { .. } => {
+                            new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
+                        }
+                        IntermediaryConstraint::Grow { .. } => {
+                            new_new_col_row_constraints.push(LayoutConstraint::Grow);
+                        }
                     }
 
                     let mut new_new_new_widget_constraints = Vec::new();
-                    col_row.children.iter().for_each(|widget| {
-                        if widget.canvas_handle_width {
-                            new_new_new_widget_constraints.push(LayoutConstraint::CanvasHandled);
-                        } else if widget.flex_grow {
-                            new_new_new_widget_constraints.push(LayoutConstraint::Grow);
-                        } else {
-                            new_new_new_widget_constraints.push(LayoutConstraint::Ratio(
-                                widget.width_ratio,
-                                col_row.total_widget_ratio,
-                            ));
-                        }
-                    });
+                    col_row
+                        .children
+                        .iter()
+                        .for_each(|widget| match widget.constraint {
+                            IntermediaryConstraint::PartialRatio(val) => {
+                                new_new_new_widget_constraints
+                                    .push(LayoutConstraint::Ratio(val, col_row.total_widget_ratio));
+                            }
+                            IntermediaryConstraint::CanvasHandled { .. } => {
+                                new_new_new_widget_constraints
+                                    .push(LayoutConstraint::CanvasHandled);
+                            }
+                            IntermediaryConstraint::Grow { .. } => {
+                                new_new_new_widget_constraints.push(LayoutConstraint::Grow);
+                            }
+                        });
                     new_new_widget_constraints.push(new_new_new_widget_constraints);
                 });
                 new_col_row_constraints.push(new_new_col_row_constraints);
@@ -151,20 +130,17 @@ impl Painter {
             col_constraints.push(new_col_constraints);
         });
 
-        let mut painter = Painter {
-            colours: styling,
-            height: 0,
-            width: 0,
-            styled_help_text: Vec::default(),
+        let painter = Painter {
+            styles: styling,
+            previous_height: 0,
+            previous_width: 0,
             row_constraints,
             col_constraints,
             col_row_constraints,
             layout_constraints,
-            widget_layout,
+            widget_layout: layout,
             derived_widget_draw_locs: Vec::default(),
         };
-
-        painter.complete_painter_init();
 
         Ok(painter)
     }
@@ -173,51 +149,17 @@ impl Painter {
     pub fn get_border_style(&self, widget_id: u64, selected_widget_id: u64) -> tui::style::Style {
         let is_on_widget = widget_id == selected_widget_id;
         if is_on_widget {
-            self.colours.highlighted_border_style
+            self.styles.highlighted_border_style
         } else {
-            self.colours.border_style
+            self.styles.border_style
         }
     }
 
-    /// Must be run once before drawing, but after setting colours.
-    /// This is to set some remaining styles and text.
-    fn complete_painter_init(&mut self) {
-        let mut styled_help_spans = Vec::new();
-
-        // Init help text:
-        HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
-            if itx == 0 {
-                styled_help_spans.extend(
-                    section
-                        .iter()
-                        .map(|&text| Span::styled(text, self.colours.text_style))
-                        .collect::<Vec<_>>(),
-                );
-            } else {
-                // Not required check but it runs only a few times... so whatever ig, prevents me from
-                // being dumb and leaving a help text section only one line long.
-                if section.len() > 1 {
-                    styled_help_spans.push(Span::raw(""));
-                    styled_help_spans
-                        .push(Span::styled(section[0], self.colours.table_header_style));
-                    styled_help_spans.extend(
-                        section[1..]
-                            .iter()
-                            .map(|&text| Span::styled(text, self.colours.text_style))
-                            .collect::<Vec<_>>(),
-                    );
-                }
-            }
-        });
-
-        self.styled_help_text = styled_help_spans.into_iter().map(Line::from).collect();
-    }
-
-    fn draw_frozen_indicator<B: Backend>(&self, f: &mut Frame<'_, B>, draw_loc: Rect) {
+    fn draw_frozen_indicator(&self, f: &mut Frame<'_>, draw_loc: Rect) {
         f.render_widget(
             Paragraph::new(Span::styled(
                 "Frozen, press 'f' to unfreeze",
-                self.colours.currently_selected_text_style,
+                self.styles.selected_text_style,
             )),
             Layout::default()
                 .horizontal_margin(1)
@@ -227,28 +169,30 @@ impl Painter {
     }
 
     pub fn draw_data<B: Backend>(
-        &mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
-    ) -> error::Result<()> {
+        &mut self, terminal: &mut Terminal<B>, app_state: &mut App,
+    ) -> Result<(), std::io::Error> {
         use BottomWidgetType::*;
 
         terminal.draw(|f| {
-            let (terminal_size, frozen_draw_loc) = if app_state.frozen_state.is_frozen() {
+            let (terminal_size, frozen_draw_loc) = if app_state.data_store.is_frozen() {
+                // TODO: Remove built-in cache?
                 let split_loc = Layout::default()
                     .constraints([Constraint::Min(0), Constraint::Length(1)])
-                    .split(f.size());
+                    .split(f.area());
                 (split_loc[0], Some(split_loc[1]))
             } else {
-                (f.size(), None)
+                (f.area(), None)
             };
             let terminal_height = terminal_size.height;
             let terminal_width = terminal_size.width;
 
-            if (self.height == 0 && self.width == 0)
-                || (self.height != terminal_height || self.width != terminal_width)
+            if (self.previous_height == 0 && self.previous_width == 0)
+                || (self.previous_height != terminal_height
+                    || self.previous_width != terminal_width)
             {
                 app_state.is_force_redraw = true;
-                self.height = terminal_height;
-                self.width = terminal_width;
+                self.previous_height = terminal_height;
+                self.previous_width = terminal_width;
             }
 
             if app_state.should_get_widget_bounds() {
@@ -282,7 +226,8 @@ impl Painter {
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(if terminal_width < 100 {
-                        // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
+                        // TODO: [REFACTOR] The point we start changing size at currently hard-coded
+                        // in.
                         [
                             Constraint::Percentage(0),
                             Constraint::Percentage(100),
@@ -388,63 +333,61 @@ impl Painter {
                                 _ => 0,
                             };
 
-                        self.draw_process_widget(f, app_state, rect[0], true, widget_id);
+                        self.draw_process(f, app_state, rect[0], widget_id);
                     }
-                    Battery => self.draw_battery_display(
-                        f,
-                        app_state,
-                        rect[0],
-                        true,
-                        app_state.current_widget.widget_id,
-                    ),
+                    Battery =>
+                    {
+                        #[cfg(feature = "battery")]
+                        self.draw_battery(f, app_state, rect[0], app_state.current_widget.widget_id)
+                    }
                     _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
-                // Basic mode.  This basically removes all graphs but otherwise
+                // Basic mode. This basically removes all graphs but otherwise
                 // the same info.
                 if let Some(frozen_draw_loc) = frozen_draw_loc {
                     self.draw_frozen_indicator(f, frozen_draw_loc);
                 }
 
-                let actual_cpu_data_len = app_state.converted_data.cpu_data.len().saturating_sub(1);
+                let data = app_state.data_store.get_data();
+                let actual_cpu_data_len = data.cpu_harvest.len();
 
-                // This fixes #397, apparently if the height is 1, it can't render the CPU bars...
+                // This fixes #397, apparently if the height is 1, it can't render the CPU
+                // bars...
                 let cpu_height = {
-                    let c =
-                        (actual_cpu_data_len / 4) as u16 + u16::from(actual_cpu_data_len % 4 != 0);
+                    let c = (actual_cpu_data_len / 4) as u16
+                        + u16::from(actual_cpu_data_len % 4 != 0)
+                        + u16::from(
+                            app_state.app_config_fields.dedicated_average_row
+                                && actual_cpu_data_len.saturating_sub(1) % 4 != 0,
+                        );
 
-                    if c <= 1 {
-                        1
-                    } else {
-                        c
-                    }
+                    if c <= 1 { 1 } else { c }
                 };
 
                 let mut mem_rows = 1;
 
-                if app_state.converted_data.swap_labels.is_some() {
+                if data.swap_harvest.is_some() {
                     mem_rows += 1; // add row for swap
                 }
 
                 #[cfg(feature = "zfs")]
                 {
-                    if app_state.converted_data.arc_labels.is_some() {
+                    if data.arc_harvest.is_some() {
                         mem_rows += 1; // add row for arc
                     }
                 }
 
                 #[cfg(not(target_os = "windows"))]
                 {
-                    if app_state.converted_data.cache_labels.is_some() {
+                    if data.cache_harvest.is_some() {
                         mem_rows += 1;
                     }
                 }
 
                 #[cfg(feature = "gpu")]
                 {
-                    if let Some(gpu_data) = &app_state.converted_data.gpu_data {
-                        mem_rows += gpu_data.len() as u16; // add row(s) for gpu
-                    }
+                    mem_rows += data.gpu_harvest.len() as u16; // add row(s) for gpu
                 }
 
                 if mem_rows == 1 {
@@ -494,24 +437,16 @@ impl Painter {
                                         ProcSort => 2,
                                         _ => 0,
                                     };
-                                self.draw_process_widget(
-                                    f,
-                                    app_state,
-                                    vertical_chunks[3],
-                                    false,
-                                    wid,
-                                );
+                                self.draw_process(f, app_state, vertical_chunks[3], wid);
                             }
                             Temp => {
                                 self.draw_temp_table(f, app_state, vertical_chunks[3], widget_id)
                             }
-                            Battery => self.draw_battery_display(
-                                f,
-                                app_state,
-                                vertical_chunks[3],
-                                false,
-                                widget_id,
-                            ),
+                            Battery =>
+                            {
+                                #[cfg(feature = "battery")]
+                                self.draw_battery(f, app_state, vertical_chunks[3], widget_id)
+                            }
                             _ => {}
                         }
                     }
@@ -527,13 +462,15 @@ impl Painter {
                 }
 
                 if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
+                    // TODO: Can I remove this? Does ratatui's layout constraints work properly for
+                    // fixing https://github.com/ClementTsang/bottom/issues/896 now?
                     fn get_constraints(
                         direction: Direction, constraints: &[LayoutConstraint], area: Rect,
                     ) -> Vec<Rect> {
                         // Order of operations:
                         // - Ratios first + canvas-handled (which is just zero)
-                        // - Then any flex-grows to take up remaining space; divide amongst remaining
-                        //   hand out any remaining space
+                        // - Then any flex-grows to take up remaining space; divide amongst
+                        //   remaining hand out any remaining space
 
                         #[derive(Debug, Default, Clone, Copy)]
                         struct Size {
@@ -714,7 +651,8 @@ impl Painter {
                                     &col_rows.children
                                 )
                                 .map(|(draw_loc, col_row_constraint_vec, widgets)| {
-                                    // Note that col_row_constraint_vec CONTAINS the widget constraints
+                                    // Note that col_row_constraint_vec CONTAINS the widget
+                                    // constraints
                                     let widget_draw_locs = get_constraints(
                                         Direction::Horizontal,
                                         col_row_constraint_vec.as_slice(),
@@ -769,34 +707,25 @@ impl Painter {
         Ok(())
     }
 
-    fn draw_widgets_with_constraints<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, widgets: &BottomColRow,
+    fn draw_widgets_with_constraints(
+        &self, f: &mut Frame<'_>, app_state: &mut App, widgets: &BottomColRow,
         widget_draw_locs: &[Rect],
     ) {
         use BottomWidgetType::*;
-        for (widget, widget_draw_loc) in widgets.children.iter().zip(widget_draw_locs) {
-            if widget_draw_loc.width >= 2 && widget_draw_loc.height >= 2 {
+        for (widget, draw_loc) in widgets.children.iter().zip(widget_draw_locs) {
+            if draw_loc.width >= 2 && draw_loc.height >= 2 {
                 match &widget.widget_type {
-                    Empty => {}
-                    Cpu => self.draw_cpu(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Mem => self.draw_memory_graph(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Net => self.draw_network(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Temp => self.draw_temp_table(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Disk => self.draw_disk_table(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Proc => self.draw_process_widget(
-                        f,
-                        app_state,
-                        *widget_draw_loc,
-                        true,
-                        widget.widget_id,
-                    ),
-                    Battery => self.draw_battery_display(
-                        f,
-                        app_state,
-                        *widget_draw_loc,
-                        true,
-                        widget.widget_id,
-                    ),
+                    Cpu => self.draw_cpu(f, app_state, *draw_loc, widget.widget_id),
+                    Mem => self.draw_memory_graph(f, app_state, *draw_loc, widget.widget_id),
+                    Net => self.draw_network(f, app_state, *draw_loc, widget.widget_id),
+                    Temp => self.draw_temp_table(f, app_state, *draw_loc, widget.widget_id),
+                    Disk => self.draw_disk_table(f, app_state, *draw_loc, widget.widget_id),
+                    Proc => self.draw_process(f, app_state, *draw_loc, widget.widget_id),
+                    Battery =>
+                    {
+                        #[cfg(feature = "battery")]
+                        self.draw_battery(f, app_state, *draw_loc, widget.widget_id)
+                    }
                     _ => {}
                 }
             }

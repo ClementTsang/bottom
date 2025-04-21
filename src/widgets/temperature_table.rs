@@ -1,24 +1,19 @@
-use std::{borrow::Cow, cmp::max};
-
-use concat_string::concat_string;
-use kstring::KString;
-use tui::text::Text;
+use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use crate::{
-    app::{data_harvester::temperature::TemperatureType, AppConfigFields},
-    canvas::canvas_styling::CanvasStyling,
-    components::data_table::{
+    app::{AppConfigFields, data::TypedTemperature},
+    canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    utils::gen_util::{sort_partial_fn, truncate_to_text},
+    options::config::style::Styles,
+    utils::general::sort_partial_fn,
 };
 
 #[derive(Clone, Debug)]
 pub struct TempWidgetData {
-    pub sensor: KString,
-    pub temperature_value: u64,
-    pub temperature_type: TemperatureType,
+    pub sensor: String,
+    pub temperature: Option<TypedTemperature>,
 }
 
 pub enum TempWidgetColumn {
@@ -36,26 +31,21 @@ impl ColumnHeader for TempWidgetColumn {
 }
 
 impl TempWidgetData {
-    pub fn temperature(&self) -> KString {
-        let temp_val = self.temperature_value.to_string();
-        let temp_type = match self.temperature_type {
-            TemperatureType::Celsius => "°C",
-            TemperatureType::Kelvin => "K",
-            TemperatureType::Fahrenheit => "°F",
-        };
-        concat_string!(temp_val, temp_type).into()
+    pub fn temperature(&self) -> Cow<'static, str> {
+        match &self.temperature {
+            Some(temp) => temp.to_string().into(),
+            None => "N/A".into(),
+        }
     }
 }
 
 impl DataToCell<TempWidgetColumn> for TempWidgetData {
-    fn to_cell<'a>(&'a self, column: &TempWidgetColumn, calculated_width: u16) -> Option<Text<'a>> {
-        if calculated_width == 0 {
-            return None;
-        }
-
+    fn to_cell(
+        &self, column: &TempWidgetColumn, _calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
         Some(match column {
-            TempWidgetColumn::Sensor => truncate_to_text(&self.sensor, calculated_width),
-            TempWidgetColumn::Temp => truncate_to_text(&self.temperature(), calculated_width),
+            TempWidgetColumn::Sensor => self.sensor.clone().into(),
+            TempWidgetColumn::Temp => self.temperature(),
         })
     }
 
@@ -85,9 +75,7 @@ impl SortsRow for TempWidgetColumn {
                 data.sort_by(move |a, b| sort_partial_fn(descending)(&a.sensor, &b.sensor));
             }
             TempWidgetColumn::Temp => {
-                data.sort_by(|a, b| {
-                    sort_partial_fn(descending)(a.temperature_value, b.temperature_value)
-                });
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.temperature, &b.temperature));
             }
         }
     }
@@ -99,7 +87,7 @@ pub struct TempWidgetState {
 }
 
 impl TempWidgetState {
-    pub fn new(config: &AppConfigFields, colours: &CanvasStyling) -> Self {
+    pub(crate) fn new(config: &AppConfigFields, palette: &Styles) -> Self {
         let columns = [
             SortColumn::soft(TempWidgetColumn::Sensor, Some(0.8)),
             SortColumn::soft(TempWidgetColumn::Temp, None).default_descending(),
@@ -118,7 +106,7 @@ impl TempWidgetState {
             order: SortOrder::Ascending,
         };
 
-        let styling = DataTableStyling::from_colours(colours);
+        let styling = DataTableStyling::from_palette(palette);
 
         Self {
             table: SortDataTable::new_sortable(columns, props, styling),
@@ -132,11 +120,13 @@ impl TempWidgetState {
         self.force_update_data = true;
     }
 
-    pub fn ingest_data(&mut self, data: &[TempWidgetData]) {
+    /// Update the current table data.
+    pub fn set_table_data(&mut self, data: &[TempWidgetData]) {
         let mut data = data.to_vec();
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
             column.sort_by(&mut data, self.table.order());
         }
         self.table.set_data(data);
+        self.force_update_data = false;
     }
 }

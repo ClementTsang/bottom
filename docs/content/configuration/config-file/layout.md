@@ -31,7 +31,7 @@ The second column is split into two rows with a 1:1 ratio. The first is the temp
 
 This is what the layout would look like when run:
 
-![Sample layout](../../../assets/screenshots/config/layout/sample_layout.webp)
+![Sample layout](../../assets/screenshots/config/layout/sample_layout.webp)
 
 Each `[[row]]` represents a _row_ in the layout. A row can have any number of `child` values. Each `[[row.child]]`
 represents either a _column or a widget_. A column can have any number of `child` values as well. Each `[[row.child.child]]`
@@ -54,4 +54,4 @@ Each component of the layout accepts a `ratio` value. If this is not set, it def
 
 Furthermore, you can have duplicate widgets.
 
-For an example, look at the [default config](https://github.com/ClementTsang/bottom/blob/master/sample_configs/default_config.toml), which contains the default layout.
+For an example, look at the [default config](https://github.com/ClementTsang/bottom/blob/main/sample_configs/default_config.toml), which contains the default layout.

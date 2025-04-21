@@ -1,0 +1,44 @@
+# Simple job to clear the cache used by a workflow. This automatically runs when a PR is closed/merged
+# to clean up the corresponding PR's cache.
+
+name: "clear workflow cache"
+
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: "Which id to clear. Type main/master/all to clean all, and keep-main/keep-master to clean all but the main branch."
+        required: false
+  pull_request:
+    types:
+      - closed
+  schedule:
+    - cron: "0 11 * * 0"
+
+jobs:
+  clear-cache:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 1
+
+      # We run each script twice with a small delay in between to try and catch everything.
+      - name: Clear cache
+        run: |
+          if [[ -n "${{ github.event.schedule }}" ]]; then
+            python ./scripts/clear_cache.py keep-main
+            sleep 5
+            python ./scripts/clear_cache.py keep-main
+          elif [[ -z "${{ github.event.inputs.id }}" ]]; then
+            python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
+            sleep 5
+            python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
+          else
+            python ./scripts/clear_cache.py ${{ github.event.inputs.id }}
+            sleep 5
+            python ./scripts/clear_cache.py ${{ github.event.inputs.id }}
+          fi

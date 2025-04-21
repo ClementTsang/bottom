@@ -1,11 +1,17 @@
+pub mod data;
+pub mod filter;
+pub mod layout_manager;
+mod process_killer;
+pub mod states;
+
 use std::{
     cmp::{max, min},
     time::Instant,
 };
 
+use anyhow::bail;
 use concat_string::concat_string;
-use data_farmer::*;
-use data_harvester::temperature;
+use data::*;
 use filter::*;
 use hashbrown::HashMap;
 use layout_manager::*;
@@ -13,28 +19,14 @@ pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
+    canvas::components::time_graph::LegendPosition,
+    collection::processes::Pid,
     constants,
-    data_conversion::ConvertedData,
-    utils::error::{BottomError, Result},
-    Pid,
-};
-use crate::{
     utils::data_units::DataUnit,
     widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
 
-pub mod data_farmer;
-pub mod data_harvester;
-pub mod filter;
-pub mod frozen_state;
-pub mod layout_manager;
-mod process_killer;
-pub mod query;
-pub mod states;
-
-use frozen_state::FrozenState;
-
-#[derive(Debug, Clone, Eq, PartialEq, Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Default, Copy)]
 pub enum AxisScaling {
     #[default]
     Log,
@@ -46,10 +38,10 @@ pub enum AxisScaling {
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct AppConfigFields {
     pub update_rate: u64,
-    pub temperature_type: temperature::TemperatureType,
+    pub temperature_type: TemperatureType,
     pub use_dot: bool,
-    pub left_legend: bool,
-    pub show_average_cpu: bool,
+    pub cpu_left_legend: bool,
+    pub show_average_cpu: bool, // TODO: Unify this in CPU options
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
     pub use_basic_mode: bool,
@@ -60,15 +52,18 @@ pub struct AppConfigFields {
     pub use_old_network_legend: bool,
     pub table_gap: u16,
     pub disable_click: bool,
-    pub enable_gpu_memory: bool,
+    pub enable_gpu: bool,
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,
     pub is_advanced_kill: bool,
+    pub memory_legend_position: Option<LegendPosition>,
     // TODO: Remove these, move network details state-side.
     pub network_unit_type: DataUnit,
+    pub network_legend_position: Option<LegendPosition>,
     pub network_scale_type: AxisScaling,
     pub network_use_binary_prefix: bool,
     pub retention_ms: u64,
+    pub dedicated_average_row: bool,
 }
 
 /// For filtering out information
@@ -106,18 +101,14 @@ pub struct App {
     second_char: Option<char>,
     pub dd_err: Option<String>, // FIXME: The way we do deletes is really gross.
     to_delete_process_list: Option<(String, Vec<Pid>)>,
-    pub frozen_state: FrozenState,
+    pub data_store: DataStore,
     last_key_press: Instant,
-    pub converted_data: ConvertedData,
-    pub data_collection: DataCollection,
     pub delete_dialog_state: AppDeleteDialogState,
     pub help_dialog_state: AppHelpDialogState,
     pub is_expanded: bool,
     pub is_force_redraw: bool,
     pub is_determining_widget_boundary: bool,
     pub basic_mode_use_percent: bool,
-    #[cfg(target_family = "unix")]
-    pub user_table: data_harvester::processes::UserTable,
     pub states: AppWidgetStates,
     pub app_config_fields: AppConfigFields,
     pub widget_map: HashMap<u64, BottomWidget>,
@@ -127,6 +118,7 @@ pub struct App {
 }
 
 impl App {
+    /// Create a new [`App`].
     pub fn new(
         app_config_fields: AppConfigFields, states: AppWidgetStates,
         widget_map: HashMap<u64, BottomWidget>, current_widget: BottomWidget,
@@ -137,24 +129,52 @@ impl App {
             second_char: None,
             dd_err: None,
             to_delete_process_list: None,
-            frozen_state: FrozenState::default(),
+            data_store: DataStore::default(),
             last_key_press: Instant::now(),
-            converted_data: ConvertedData::default(),
-            data_collection: DataCollection::default(),
             delete_dialog_state: AppDeleteDialogState::default(),
             help_dialog_state: AppHelpDialogState::default(),
             is_expanded,
             is_force_redraw: false,
             is_determining_widget_boundary: false,
             basic_mode_use_percent: false,
-            #[cfg(target_family = "unix")]
-            user_table: data_harvester::processes::UserTable::default(),
             states,
             app_config_fields,
             widget_map,
             current_widget,
             used_widgets,
             filters,
+        }
+    }
+
+    /// Update the data in the [`App`].
+    pub fn update_data(&mut self) {
+        let data_source = self.data_store.get_data();
+
+        // FIXME: (points_rework_v1) maybe separate PR but would it make more sense to store references of data?
+        // Would it also make more sense to move the "data set" step to the draw step, and make it only set if force
+        // update is set here?
+        for proc in self.states.proc_state.widget_states.values_mut() {
+            if proc.force_update_data {
+                proc.set_table_data(data_source);
+            }
+        }
+
+        for temp in self.states.temp_state.widget_states.values_mut() {
+            if temp.force_update_data {
+                temp.set_table_data(&data_source.temp_data);
+            }
+        }
+
+        for cpu in self.states.cpu_state.widget_states.values_mut() {
+            if cpu.force_update_data {
+                cpu.set_legend_data(&data_source.cpu_harvest);
+            }
+        }
+
+        for disk in self.states.disk_state.widget_states.values_mut() {
+            if disk.force_update_data {
+                disk.set_table_data(data_source);
+            }
         }
     }
 
@@ -179,16 +199,12 @@ impl App {
         self.to_delete_process_list = None;
         self.dd_err = None;
 
-        // Unfreeze.
-        self.frozen_state.thaw();
+        self.data_store.reset();
 
         // Reset zoom
         self.reset_cpu_zoom();
         self.reset_mem_zoom();
         self.reset_net_zoom();
-
-        // Reset data
-        self.data_collection.reset();
     }
 
     pub fn should_get_widget_bounds(&self) -> bool {
@@ -338,7 +354,8 @@ impl App {
             pws.is_sort_open = !pws.is_sort_open;
             pws.force_rerender = true;
 
-            // If the sort is now open, move left. Otherwise, if the proc sort was selected, force move right.
+            // If the sort is now open, move left. Otherwise, if the proc sort was selected,
+            // force move right.
             if pws.is_sort_open {
                 pws.sort_table.set_position(pws.table.sort_index());
                 self.move_widget_selection(&WidgetDirection::Left);
@@ -499,16 +516,17 @@ impl App {
     }
 
     pub fn on_delete(&mut self) {
-        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
-            let is_in_search_widget = self.is_in_search_widget();
-            if let Some(proc_widget_state) = self
-                .states
-                .proc_state
-                .widget_states
-                .get_mut(&(self.current_widget.widget_id - 1))
-            {
-                if is_in_search_widget {
-                    if proc_widget_state.proc_search.search_state.is_enabled
+        match self.current_widget.widget_type {
+            BottomWidgetType::ProcSearch => {
+                let is_in_search_widget = self.is_in_search_widget();
+                if let Some(proc_widget_state) = self
+                    .states
+                    .proc_state
+                    .widget_states
+                    .get_mut(&(self.current_widget.widget_id - 1))
+                {
+                    if is_in_search_widget
+                        && proc_widget_state.proc_search.search_state.is_enabled
                         && proc_widget_state.cursor_char_index()
                             < proc_widget_state
                                 .proc_search
@@ -538,10 +556,12 @@ impl App {
 
                         proc_widget_state.update_query();
                     }
-                } else {
-                    self.start_killing_process()
                 }
             }
+            BottomWidgetType::Proc => {
+                self.start_killing_process();
+            }
+            _ => {}
         }
     }
 
@@ -585,14 +605,6 @@ impl App {
                     proc_widget_state.update_query();
                 }
             }
-        }
-    }
-
-    pub fn get_process_filter(&self, widget_id: u64) -> &Option<query::Query> {
-        if let Some(process_widget_state) = self.states.proc_state.widget_states.get(&widget_id) {
-            &process_widget_state.proc_search.search_state.query
-        } else {
-            &None
         }
     }
 
@@ -693,7 +705,8 @@ impl App {
                     }
                 }
                 BottomWidgetType::Battery => {
-                    if self.converted_data.battery_data.len() > 1 {
+                    #[cfg(feature = "battery")]
+                    if self.data_store.get_data().battery_harvest.len() > 1 {
                         if let Some(battery_widget_state) = self
                             .states
                             .battery_state
@@ -754,17 +767,20 @@ impl App {
                     }
                 }
                 BottomWidgetType::Battery => {
-                    if self.converted_data.battery_data.len() > 1 {
-                        let battery_count = self.converted_data.battery_data.len();
-                        if let Some(battery_widget_state) = self
-                            .states
-                            .battery_state
-                            .get_mut_widget_state(self.current_widget.widget_id)
-                        {
-                            if battery_widget_state.currently_selected_battery_index
-                                < battery_count - 1
+                    #[cfg(feature = "battery")]
+                    {
+                        let battery_count = self.data_store.get_data().battery_harvest.len();
+                        if battery_count > 1 {
+                            if let Some(battery_widget_state) = self
+                                .states
+                                .battery_state
+                                .get_mut_widget_state(self.current_widget.widget_id)
                             {
-                                battery_widget_state.currently_selected_battery_index += 1;
+                                if battery_widget_state.currently_selected_battery_index
+                                    < battery_count - 1
+                                {
+                                    battery_widget_state.currently_selected_battery_index += 1;
+                                }
                             }
                         }
                     }
@@ -971,13 +987,15 @@ impl App {
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
-                // Traverse backwards from the current cursor location until you hit non-whitespace characters,
-                // then continue to traverse (and delete) backwards until you hit a whitespace character.  Halt.
+                // Traverse backwards from the current cursor location until you hit
+                // non-whitespace characters, then continue to traverse (and
+                // delete) backwards until you hit a whitespace character.  Halt.
 
                 // So... first, let's get our current cursor position in terms of char indices.
                 let end_index = proc_widget_state.cursor_char_index();
 
-                // Then, let's crawl backwards until we hit our location, and store the "head"...
+                // Then, let's crawl backwards until we hit our location, and store the
+                // "head"...
                 let query = proc_widget_state.current_search_query();
                 let mut start_index = 0;
                 let mut saw_non_whitespace = false;
@@ -1201,9 +1219,7 @@ impl App {
             'G' => self.skip_to_last(),
             'k' => self.on_up_key(),
             'j' => self.on_down_key(),
-            'f' => {
-                self.frozen_state.toggle(&self.data_collection); // TODO: Thawing should force a full data refresh and redraw immediately.
-            }
+            'f' => self.data_store.toggle_frozen(),
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
@@ -1275,6 +1291,30 @@ impl App {
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
                     disk.set_index(3);
+                }
+            }
+            #[cfg(feature = "gpu")]
+            'M' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        proc_widget_state.select_column(ProcWidgetColumn::GpuMem);
+                    }
+                }
+            }
+            #[cfg(feature = "gpu")]
+            'C' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        proc_widget_state.select_column(ProcWidgetColumn::GpuUtil);
+                    }
                 }
             }
             '?' => {
@@ -1359,7 +1399,7 @@ impl App {
         }
     }
 
-    pub fn kill_highlighted_process(&mut self) -> Result<()> {
+    pub fn kill_highlighted_process(&mut self) -> anyhow::Result<()> {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
             if let Some((_, pids)) = &self.to_delete_process_list {
                 #[cfg(target_family = "unix")]
@@ -1381,10 +1421,7 @@ impl App {
             self.to_delete_process_list = None;
             Ok(())
         } else {
-            Err(BottomError::GenericError(
-                "Cannot kill processes if the current widget is not the Process widget!"
-                    .to_string(),
-            ))
+            bail!("Cannot kill processes if the current widget is not the Process widget!");
         }
     }
 
@@ -1424,16 +1461,14 @@ impl App {
     }
 
     fn move_widget_selection_logic(&mut self, direction: &WidgetDirection) {
-        /*
-            The actual logic for widget movement.
+        // The actual logic for widget movement.
 
-            We follow these following steps:
-            1. Send a movement signal in `direction`.
-            2. Check if this new widget we've landed on is hidden.  If not, halt.
-            3. If it hidden, loop and either send:
-               - A signal equal to the current direction, if it is opposite of the reflection.
-               - Reflection direction.
-        */
+        // We follow these following steps:
+        // 1. Send a movement signal in `direction`.
+        // 2. Check if this new widget we've landed on is hidden.  If not, halt.
+        // 3. If it hidden, loop and either send:
+        //    - A signal equal to the current direction, if it is opposite of the reflection.
+        //    - Reflection direction.
 
         if !self.ignore_normal_keybinds() && !self.is_expanded {
             if let Some(new_widget_id) = &(match direction {
@@ -1510,7 +1545,8 @@ impl App {
                                     if let Some(basic_table_widget_state) =
                                         &mut self.states.basic_table_widget_state
                                     {
-                                        // We also want to move towards Proc if we had set it to ProcSort.
+                                        // We also want to move towards Proc if we had set it to
+                                        // ProcSort.
                                         if let BottomWidgetType::ProcSort =
                                             basic_table_widget_state.currently_displayed_widget_type
                                         {
@@ -1810,7 +1846,7 @@ impl App {
                     }
                 }
             }
-        } else if self.app_config_fields.left_legend {
+        } else if self.app_config_fields.cpu_left_legend {
             if let BottomWidgetType::Cpu = self.current_widget.widget_type {
                 if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                     if let Some(cpu_widget_state) = self
@@ -1847,7 +1883,7 @@ impl App {
                     self.current_widget = proc_sort_widget.clone();
                 }
             }
-        } else if self.app_config_fields.left_legend {
+        } else if self.app_config_fields.cpu_left_legend {
             if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {
                 if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                     if let Some(new_widget_id) = current_widget.right_neighbour {
@@ -1886,7 +1922,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.table.set_first();
+                        proc_widget_state.table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::ProcSort => {
@@ -1895,7 +1931,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table.set_first();
+                        proc_widget_state.sort_table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -1904,7 +1940,7 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        temp_widget_state.table.set_first();
+                        temp_widget_state.table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -1913,7 +1949,7 @@ impl App {
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        disk_widget_state.table.set_first();
+                        disk_widget_state.table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::CpuLegend => {
@@ -1922,7 +1958,7 @@ impl App {
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
-                        cpu_widget_state.table.set_first();
+                        cpu_widget_state.table.scroll_to_first();
                     }
                 }
 
@@ -1945,7 +1981,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.table.set_last();
+                        proc_widget_state.table.scroll_to_last();
                     }
                 }
                 BottomWidgetType::ProcSort => {
@@ -1954,7 +1990,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table.set_last();
+                        proc_widget_state.sort_table.scroll_to_last();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -1963,7 +1999,7 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        temp_widget_state.table.set_last();
+                        temp_widget_state.table.scroll_to_last();
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -1972,8 +2008,8 @@ impl App {
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        if !self.converted_data.disk_data.is_empty() {
-                            disk_widget_state.table.set_last();
+                        if !self.data_store.get_data().disk_harvest.is_empty() {
+                            disk_widget_state.table.scroll_to_last();
                         }
                     }
                 }
@@ -1983,7 +2019,7 @@ impl App {
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
-                        cpu_widget_state.table.set_last();
+                        cpu_widget_state.table.scroll_to_last();
                     }
                 }
                 _ => {}
@@ -2179,7 +2215,6 @@ impl App {
 
                     if new_time <= self.app_config_fields.retention_ms {
                         cpu_widget_state.current_display_time = new_time;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2187,7 +2222,6 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         cpu_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2207,7 +2241,6 @@ impl App {
 
                     if new_time <= self.app_config_fields.retention_ms {
                         mem_widget_state.current_display_time = new_time;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2215,7 +2248,6 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         mem_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2235,7 +2267,6 @@ impl App {
 
                     if new_time <= self.app_config_fields.retention_ms {
                         net_widget_state.current_display_time = new_time;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2243,7 +2274,6 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         net_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2269,7 +2299,6 @@ impl App {
 
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         cpu_widget_state.current_display_time = new_time;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2277,7 +2306,6 @@ impl App {
                         != constants::STALE_MIN_MILLISECONDS
                     {
                         cpu_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2297,7 +2325,6 @@ impl App {
 
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         mem_widget_state.current_display_time = new_time;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2305,7 +2332,6 @@ impl App {
                         != constants::STALE_MIN_MILLISECONDS
                     {
                         mem_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2325,7 +2351,6 @@ impl App {
 
                     if new_time >= constants::STALE_MIN_MILLISECONDS {
                         net_widget_state.current_display_time = new_time;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2333,7 +2358,6 @@ impl App {
                         != constants::STALE_MIN_MILLISECONDS
                     {
                         net_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2352,7 +2376,6 @@ impl App {
             .get_mut(&self.current_widget.widget_id)
         {
             cpu_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 cpu_widget_state.autohide_timer = Some(Instant::now());
             }
@@ -2367,7 +2390,6 @@ impl App {
             .get_mut(&self.current_widget.widget_id)
         {
             mem_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.states.mem_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 mem_widget_state.autohide_timer = Some(Instant::now());
             }
@@ -2382,7 +2404,6 @@ impl App {
             .get_mut(&self.current_widget.widget_id)
         {
             net_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.states.net_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 net_widget_state.autohide_timer = Some(Instant::now());
             }
@@ -2398,20 +2419,22 @@ impl App {
         }
     }
 
-    /// Moves the mouse to the widget that was clicked on, then propagates the click down to be
-    /// handled by the widget specifically.
+    /// Moves the mouse to the widget that was clicked on, then propagates the
+    /// click down to be handled by the widget specifically.
     pub fn on_left_mouse_up(&mut self, x: u16, y: u16) {
-        // Pretty dead simple - iterate through the widget map and go to the widget where the click
-        // is within.
+        // Pretty dead simple - iterate through the widget map and go to the widget
+        // where the click is within.
 
         // TODO: [REFACTOR] might want to refactor this, it's really ugly.
-        // TODO: [REFACTOR] Might wanna refactor ALL state things in general, currently everything
-        // is grouped up as an app state.  We should separate stuff like event state and gui state and etc.
+        // TODO: [REFACTOR] Might wanna refactor ALL state things in general, currently
+        // everything is grouped up as an app state.  We should separate stuff
+        // like event state and gui state and etc.
 
-        // TODO: [MOUSE] double click functionality...?  We would do this above all other actions and SC if needed.
+        // TODO: [MOUSE] double click functionality...?  We would do this above all
+        // other actions and SC if needed.
 
-        // Short circuit if we're in basic table... we might have to handle the basic table arrow
-        // case here...
+        // Short circuit if we're in basic table... we might have to handle the basic
+        // table arrow case here...
 
         if let Some(bt) = &mut self.states.basic_table_widget_state {
             if let (
@@ -2475,8 +2498,8 @@ impl App {
             }
         }
 
-        // Second short circuit --- are we in the dd dialog state?  If so, only check yes/no/signals
-        // and bail after.
+        // Second short circuit --- are we in the dd dialog state?  If so, only check
+        // yes/no/signals and bail after.
         if self.is_in_dialog() {
             match self.delete_dialog_state.button_positions.iter().find(
                 |(tl_x, tl_y, br_x, br_y, _idx)| {
@@ -2542,7 +2565,8 @@ impl App {
         ) {
             let border_offset = u16::from(self.is_drawing_border());
 
-            // This check ensures the click isn't actually just clicking on the bottom border.
+            // This check ensures the click isn't actually just clicking on the bottom
+            // border.
             if y < (brc_y - border_offset) {
                 match &self.current_widget.widget_type {
                     BottomWidgetType::Proc
@@ -2564,7 +2588,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
                                         if let Some(visual_index) =
-                                            proc_widget_state.table.tui_selected()
+                                            proc_widget_state.table.ratatui_selected()
                                         {
                                             let is_tree_mode = matches!(
                                                 proc_widget_state.mode,
@@ -2575,8 +2599,10 @@ impl App {
 
                                             self.change_process_position(change);
 
-                                            // If in tree mode, also check to see if this click is on
-                                            // the same entry as the already selected one - if it is,
+                                            // If in tree mode, also check to see if this click is
+                                            // on
+                                            // the same entry as the already selected one - if it
+                                            // is,
                                             // then we minimize.
                                             if is_tree_mode && change == 0 {
                                                 self.toggle_collapsing_process_branch();
@@ -2592,7 +2618,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id - 2)
                                     {
                                         if let Some(visual_index) =
-                                            proc_widget_state.sort_table.tui_selected()
+                                            proc_widget_state.sort_table.ratatui_selected()
                                         {
                                             self.change_process_sort_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,
@@ -2607,7 +2633,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id - 1)
                                     {
                                         if let Some(visual_index) =
-                                            cpu_widget_state.table.tui_selected()
+                                            cpu_widget_state.table.ratatui_selected()
                                         {
                                             self.change_cpu_legend_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,
@@ -2622,7 +2648,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
                                         if let Some(visual_index) =
-                                            temp_widget_state.table.tui_selected()
+                                            temp_widget_state.table.ratatui_selected()
                                         {
                                             self.change_temp_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,
@@ -2637,7 +2663,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
                                         if let Some(visual_index) =
-                                            disk_widget_state.table.tui_selected()
+                                            disk_widget_state.table.ratatui_selected()
                                         {
                                             self.change_disk_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,
@@ -2648,8 +2674,9 @@ impl App {
                                 _ => {}
                             }
                         } else {
-                            // We might have clicked on a header!  Check if we only exceeded the table + border offset, and
-                            // it's implied we exceeded the gap offset.
+                            // We might have clicked on a header!  Check if we only exceeded the
+                            // table + border offset, and it's implied
+                            // we exceeded the gap offset.
                             if clicked_entry == border_offset {
                                 match &self.current_widget.widget_type {
                                     BottomWidgetType::Proc => {
@@ -2691,6 +2718,7 @@ impl App {
                         }
                     }
                     BottomWidgetType::Battery => {
+                        #[cfg(feature = "battery")]
                         if let Some(battery_widget_state) = self
                             .states
                             .battery_state
@@ -2702,7 +2730,16 @@ impl App {
                                 {
                                     if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y)
                                     {
-                                        battery_widget_state.currently_selected_battery_index = itx;
+                                        let num_batteries =
+                                            self.data_store.get_data().battery_harvest.len();
+                                        if itx >= num_batteries {
+                                            // range check to keep within current data
+                                            battery_widget_state.currently_selected_battery_index =
+                                                num_batteries - 1;
+                                        } else {
+                                            battery_widget_state.currently_selected_battery_index =
+                                                itx;
+                                        }
                                         break;
                                     }
                                 }
@@ -2737,8 +2774,9 @@ impl App {
 
     /// A quick and dirty way to handle paste events.
     pub fn handle_paste(&mut self, paste: String) {
-        // Partially copy-pasted from the single-char variant; should probably clean up this process in the future.
-        // In particular, encapsulate this entire logic and add some tests to make it less potentially error-prone.
+        // Partially copy-pasted from the single-char variant; should probably clean up
+        // this process in the future. In particular, encapsulate this entire
+        // logic and add some tests to make it less potentially error-prone.
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .states

@@ -1,0 +1,125 @@
+# Actions to run after releasing a version, like:
+# - Generating documentation via mkdocs
+# - Notifying packaging repos
+# - Automatically creating winget packages
+
+name: post-release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Which tag to deploy as:"
+        required: true
+
+env:
+  # Assign commit authorship to official GitHub Actions bot when pushing to the `gh-pages` branch:
+  GIT_USER: "github-actions[bot]"
+  GIT_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
+
+jobs:
+  initialize:
+    name: initialize
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ env.VERSION }}
+    steps:
+      - name: Get the release version from the tag
+        run: |
+          if [[ -n "${{ github.event.inputs.tag }}" ]]; then
+            echo "Manual run against a tag; overriding actual tag in the environment..."
+            echo "VERSION=${{ github.event.inputs.tag }}" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Make sure you're not on master/main/nightly
+        run: |
+          echo ${{ env.VERSION }} 
+          if [[ ${{ env.VERSION }} == "master" || ${{ env.VERSION }}  == "main" || ${{ env.VERSION }}  == "nightly" ]]; then
+            exit 1
+          fi
+
+  docs:
+    needs: [initialize]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set release version
+        shell: bash
+        run: |
+          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Validate release version
+        run: |
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
+
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: 3.12
+
+      - name: Install Python dependencies
+        run: pip install -r docs/requirements.txt
+
+      - name: Configure git user and email
+        run: |
+          git config --global user.name ${GIT_USER}
+          git config --global user.email ${GIT_EMAIL}
+          echo Name: $(git config --get user.name)
+          echo Email: $(git config --get user.email)
+
+      - name: Build and deploy docs with mike as the latest stable branch
+        run: |
+          cd docs
+          OLD_STABLE_VERSION=$(mike list stable | grep -Po '([0-9]+.[0-9]+.[0-9]+)' | head -n1)
+          echo ${OLD_STABLE_VERSION}
+          mike retitle --push stable ${OLD_STABLE_VERSION}
+          mike deploy --push --update-aliases ${RELEASE_VERSION} stable
+          mike retitle --push ${RELEASE_VERSION} "${RELEASE_VERSION} (stable)"
+
+  chocolatey:
+    needs: [initialize]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set release version
+        shell: bash
+        run: |
+          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Validate release version
+        run: |
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
+      - name: Trigger choco
+        run: |
+          curl -X POST https://api.github.com/repos/ClementTsang/choco-bottom/dispatches \
+          -H 'Accept: application/vnd.github.everest-preview+json' \
+          -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
+          --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
+
+  winget:
+    needs: [initialize]
+    runs-on: windows-latest
+    steps:
+      - name: Set release version
+        shell: bash
+        run: |
+          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Validate release version
+        run: |
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
+
+      - name: Automatically create PR for winget repos
+        uses: vedantmgoyal2009/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e
+        with:
+          identifier: Clement.bottom
+          installers-regex: '^bottom_x86_64_installer\.msi$'
+          version: ${{ env.RELEASE_VERSION }}
+          release-tag: ${{ env.RELEASE_VERSION }}
+          token: ${{ secrets.WINGET_TOKEN }}

@@ -1,277 +1,86 @@
-//! A customizable cross-platform graphical process/system monitor for the terminal.
-//! Supports Linux, macOS, and Windows. Inspired by gtop, gotop, and htop.
+//! A customizable cross-platform graphical process/system monitor for the
+//! terminal. Supports Linux, macOS, and Windows. Inspired by gtop, gotop, and
+//! htop.
 //!
-//! **Note:** The following documentation is primarily intended for people to refer to for development purposes rather
-//! than the actual usage of the application. If you are instead looking for documentation regarding the *usage* of
-//! bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
+//! **Note:** The following documentation is primarily intended for people to
+//! refer to for development purposes rather than the actual usage of the
+//! application. If you are instead looking for documentation regarding the
+//! *usage* of bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
 
-#![deny(rust_2018_idioms)]
-#![deny(clippy::todo)]
-#![deny(clippy::unimplemented)]
-#![deny(clippy::missing_safety_doc)]
+pub(crate) mod app;
+mod utils {
+    pub(crate) mod cancellation_token;
+    pub(crate) mod conversion;
+    pub(crate) mod data_units;
+    pub(crate) mod general;
+    pub(crate) mod logging;
+    pub(crate) mod strings;
+}
+pub(crate) mod canvas;
+pub(crate) mod collection;
+pub(crate) mod constants;
+pub(crate) mod event;
+pub mod options;
+pub mod widgets;
 
 use std::{
     boxed::Box,
-    fs,
-    io::{stderr, stdout, Write},
-    panic::PanicInfo,
-    path::PathBuf,
-    sync::Mutex,
+    io::{Write, stderr, stdout},
+    panic::{self, PanicHookInfo},
     sync::{
-        mpsc::{Receiver, Sender},
-        Arc, Condvar,
+        Arc,
+        mpsc::{self, Receiver, Sender},
     },
     thread::{self, JoinHandle},
     time::{Duration, Instant},
 };
 
-use app::{
-    data_harvester,
-    frozen_state::FrozenState,
-    layout_manager::{UsedWidgets, WidgetDirection},
-    App, AppConfigFields, DataFilters,
-};
-use constants::*;
+use app::{App, AppConfigFields, DataFilters, layout_manager::UsedWidgets};
 use crossterm::{
+    cursor::{Hide, Show},
     event::{
-        poll, read, DisableBracketedPaste, DisableMouseCapture, Event, KeyCode, KeyEvent,
-        KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind,
+        DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
+        Event, KeyEventKind, MouseEventKind, poll, read,
     },
     execute,
-    style::Print,
-    terminal::{disable_raw_mode, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use data_conversion::*;
-use options::*;
-use utils::error;
+use event::{BottomEvent, CollectionThreadEvent, handle_key_event_or_break, handle_mouse_event};
+use options::{args, get_or_create_config, init_app};
+use tui::{Terminal, backend::CrosstermBackend};
+#[allow(unused_imports, reason = "this is needed if logging is enabled")]
+use utils::logging::*;
+use utils::{cancellation_token::CancellationToken, conversion::*};
 
-pub mod app;
-pub mod utils {
-    pub mod data_units;
-    pub mod error;
-    pub mod gen_util;
-    pub mod logging;
-}
-pub mod args;
-pub mod canvas;
-pub mod components;
-pub mod constants;
-pub mod data_conversion;
-pub mod options;
-pub mod widgets;
+// Used for heap allocation debugging purposes.
+// #[global_allocator]
+// static ALLOC: dhat::Alloc = dhat::Alloc;
 
-pub use utils::logging::*;
-
-#[cfg(target_family = "windows")]
-pub type Pid = usize;
-
-#[cfg(target_family = "unix")]
-pub type Pid = libc::pid_t;
-
-/// Events sent to the main thread.
-#[derive(Debug)]
-pub enum BottomEvent {
-    Resize,
-    KeyInput(KeyEvent),
-    MouseInput(MouseEvent),
-    PasteEvent(String),
-    Update(Box<data_harvester::Data>),
-    Clean,
-    Terminate,
-}
-
-/// Events sent to the collection thread.
-#[derive(Debug)]
-pub enum CollectionThreadEvent {
-    Reset,
-}
-
-pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
-    match event.kind {
-        MouseEventKind::ScrollUp => app.handle_scroll_up(),
-        MouseEventKind::ScrollDown => app.handle_scroll_down(),
-        MouseEventKind::Down(button) => {
-            let (x, y) = (event.column, event.row);
-            if !app.app_config_fields.disable_click {
-                match button {
-                    crossterm::event::MouseButton::Left => {
-                        // Trigger left click widget activity
-                        app.on_left_mouse_up(x, y);
-                    }
-                    crossterm::event::MouseButton::Right => {}
-                    _ => {}
-                }
-            }
-        }
-        _ => {}
-    };
-}
-
-pub fn handle_key_event_or_break(
-    event: KeyEvent, app: &mut App, reset_sender: &Sender<CollectionThreadEvent>,
-) -> bool {
-    // c_debug!("KeyEvent: {:?}", event);
-
-    if event.modifiers.is_empty() {
-        // Required catch for searching - otherwise you couldn't search with q.
-        if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
-            return true;
-        }
-        match event.code {
-            KeyCode::End => app.skip_to_last(),
-            KeyCode::Home => app.skip_to_first(),
-            KeyCode::Up => app.on_up_key(),
-            KeyCode::Down => app.on_down_key(),
-            KeyCode::Left => app.on_left_key(),
-            KeyCode::Right => app.on_right_key(),
-            KeyCode::Char(caught_char) => app.on_char_key(caught_char),
-            KeyCode::Esc => app.on_esc(),
-            KeyCode::Enter => app.on_enter(),
-            KeyCode::Tab => app.on_tab(),
-            KeyCode::Backspace => app.on_backspace(),
-            KeyCode::Delete => app.on_delete(),
-            KeyCode::F(1) => app.toggle_ignore_case(),
-            KeyCode::F(2) => app.toggle_search_whole_word(),
-            KeyCode::F(3) => app.toggle_search_regex(),
-            KeyCode::F(5) => app.toggle_tree_mode(),
-            KeyCode::F(6) => app.toggle_sort_menu(),
-            KeyCode::F(9) => app.start_killing_process(),
-            KeyCode::PageDown => app.on_page_down(),
-            KeyCode::PageUp => app.on_page_up(),
-            _ => {}
-        }
-    } else {
-        // Otherwise, track the modifier as well...
-        if let KeyModifiers::ALT = event.modifiers {
-            match event.code {
-                KeyCode::Char('c') | KeyCode::Char('C') => app.toggle_ignore_case(),
-                KeyCode::Char('w') | KeyCode::Char('W') => app.toggle_search_whole_word(),
-                KeyCode::Char('r') | KeyCode::Char('R') => app.toggle_search_regex(),
-                KeyCode::Char('h') => app.on_left_key(),
-                KeyCode::Char('l') => app.on_right_key(),
-                _ => {}
-            }
-        } else if let KeyModifiers::CONTROL = event.modifiers {
-            if event.code == KeyCode::Char('c') {
-                return true;
-            }
-
-            match event.code {
-                KeyCode::Char('f') => app.on_slash(),
-                KeyCode::Left => app.move_widget_selection(&WidgetDirection::Left),
-                KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
-                KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
-                KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
-                KeyCode::Char('r') => {
-                    if reset_sender.send(CollectionThreadEvent::Reset).is_ok() {
-                        app.reset();
-                    }
-                }
-                KeyCode::Char('a') => app.skip_cursor_beginning(),
-                KeyCode::Char('e') => app.skip_cursor_end(),
-                KeyCode::Char('u') if app.is_in_search_widget() => app.clear_search(),
-                KeyCode::Char('w') => app.clear_previous_word(),
-                KeyCode::Char('h') => app.on_backspace(),
-                KeyCode::Char('d') => app.scroll_half_page_down(),
-                KeyCode::Char('u') => app.scroll_half_page_up(),
-                // KeyCode::Char('j') => {}, // Move down
-                // KeyCode::Char('k') => {}, // Move up
-                // KeyCode::Char('h') => {}, // Move right
-                // KeyCode::Char('l') => {}, // Move left
-                // Can't do now, CTRL+BACKSPACE doesn't work and graphemes
-                // are hard to iter while truncating last (eloquently).
-                // KeyCode::Backspace => app.skip_word_backspace(),
-                _ => {}
-            }
-        } else if let KeyModifiers::SHIFT = event.modifiers {
-            match event.code {
-                KeyCode::Left => app.move_widget_selection(&WidgetDirection::Left),
-                KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
-                KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
-                KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
-                KeyCode::Char(caught_char) => app.on_char_key(caught_char),
-                _ => {}
-            }
-        }
-    }
-
-    false
-}
-
-pub fn read_config(config_location: Option<&String>) -> error::Result<Option<PathBuf>> {
-    let config_path = if let Some(conf_loc) = config_location {
-        Some(PathBuf::from(conf_loc.as_str()))
-    } else if cfg!(target_os = "windows") {
-        if let Some(home_path) = dirs::config_dir() {
-            let mut path = home_path;
-            path.push(DEFAULT_CONFIG_FILE_PATH);
-            Some(path)
-        } else {
-            None
-        }
-    } else if let Some(home_path) = dirs::home_dir() {
-        let mut path = home_path;
-        path.push(".config/");
-        path.push(DEFAULT_CONFIG_FILE_PATH);
-        if path.exists() {
-            // If it already exists, use the old one.
-            Some(path)
-        } else {
-            // If it does not, use the new one!
-            if let Some(config_path) = dirs::config_dir() {
-                let mut path = config_path;
-                path.push(DEFAULT_CONFIG_FILE_PATH);
-                Some(path)
-            } else {
-                None
-            }
-        }
-    } else {
-        None
-    };
-
-    Ok(config_path)
-}
-
-pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Config> {
-    if let Some(path) = config_path {
-        if let Ok(config_string) = fs::read_to_string(path) {
-            Ok(toml_edit::de::from_str(config_string.as_str())?)
-        } else {
-            if let Some(parent_path) = path.parent() {
-                fs::create_dir_all(parent_path)?;
-            }
-
-            fs::File::create(path)?.write_all(CONFIG_TEXT.as_bytes())?;
-            Ok(Config::default())
-        }
-    } else {
-        // Don't write...
-        Ok(Config::default())
-    }
-}
-
-pub fn try_drawing(
-    terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-    app: &mut App, painter: &mut canvas::Painter,
-) -> error::Result<()> {
+/// Try drawing. If not, clean up the terminal and return an error.
+fn try_drawing(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App,
+    painter: &mut canvas::Painter,
+) -> anyhow::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
-        Err(err)
+        Err(err.into())
     } else {
         Ok(())
     }
 }
 
-pub fn cleanup_terminal(
-    terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-) -> error::Result<()> {
+/// Clean up the terminal before returning it to the user.
+fn cleanup_terminal(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+) -> anyhow::Result<()> {
     disable_raw_mode()?;
+
     execute!(
         terminal.backend_mut(),
-        DisableBracketedPaste,
         DisableMouseCapture,
-        LeaveAlternateScreen
+        DisableBracketedPaste,
+        LeaveAlternateScreen,
+        Show,
     )?;
     terminal.show_cursor()?;
 
@@ -279,7 +88,7 @@ pub fn cleanup_terminal(
 }
 
 /// Check and report to the user if the current environment is not a terminal.
-pub fn check_if_terminal() {
+fn check_if_terminal() {
     use crossterm::tty::IsTty;
 
     if !stdout().is_tty() {
@@ -292,11 +101,22 @@ pub fn check_if_terminal() {
     }
 }
 
+/// This manually resets stdout back to normal state.
+pub fn reset_stdout() {
+    let mut stdout = stdout();
+    let _ = disable_raw_mode();
+    let _ = execute!(
+        stdout,
+        DisableMouseCapture,
+        DisableBracketedPaste,
+        LeaveAlternateScreen,
+        Show,
+    );
+}
+
 /// A panic hook to properly restore the terminal in the case of a panic.
 /// Originally based on [spotify-tui's implementation](https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs).
-pub fn panic_hook(panic_info: &PanicInfo<'_>) {
-    let mut stdout = stdout();
-
+fn panic_hook(panic_info: &PanicHookInfo<'_>) {
     let msg = match panic_info.payload().downcast_ref::<&'static str>() {
         Some(s) => *s,
         None => match panic_info.payload().downcast_ref::<String>() {
@@ -307,127 +127,43 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
 
     let backtrace = format!("{:?}", backtrace::Backtrace::new());
 
-    let _ = disable_raw_mode();
-    let _ = execute!(
-        stdout,
-        DisableBracketedPaste,
-        DisableMouseCapture,
-        LeaveAlternateScreen
-    );
+    reset_stdout();
 
     // Print stack trace. Must be done after!
     if let Some(panic_info) = panic_info.location() {
-        let _ = execute!(
-            stdout,
-            Print(format!(
-                "thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}",
-            )),
-        );
+        println!("thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}")
     }
+
+    // TODO: Might be cleaner in the future to use a cancellation token, but that causes some fun issues with
+    // lifetimes; for now if it panics then shut down the main program entirely ASAP.
+    std::process::exit(1);
 }
 
-pub fn update_data(app: &mut App) {
-    let data_source = match &app.frozen_state {
-        FrozenState::NotFrozen => &app.data_collection,
-        FrozenState::Frozen(data) => data,
-    };
-
-    for proc in app.states.proc_state.widget_states.values_mut() {
-        if proc.force_update_data {
-            proc.ingest_data(data_source);
-            proc.force_update_data = false;
-        }
-    }
-
-    // FIXME: Make this CPU force update less terrible.
-    if app.states.cpu_state.force_update.is_some() {
-        app.converted_data.ingest_cpu_data(data_source);
-        app.converted_data.load_avg_data = data_source.load_avg_harvest;
-
-        app.states.cpu_state.force_update = None;
-    }
-
-    // FIXME: This is a bit of a temp hack to move data over.
-    {
-        let data = &app.converted_data.cpu_data;
-        for cpu in app.states.cpu_state.widget_states.values_mut() {
-            cpu.update_table(data);
-        }
-    }
-    {
-        let data = &app.converted_data.temp_data;
-        for temp in app.states.temp_state.widget_states.values_mut() {
-            if temp.force_update_data {
-                temp.ingest_data(data);
-                temp.force_update_data = false;
-            }
-        }
-    }
-    {
-        let data = &app.converted_data.disk_data;
-        for disk in app.states.disk_state.widget_states.values_mut() {
-            if disk.force_update_data {
-                disk.ingest_data(data);
-                disk.force_update_data = false;
-            }
-        }
-    }
-
-    // TODO: [OPT] Prefer reassignment over new vectors?
-    if app.states.mem_state.force_update.is_some() {
-        app.converted_data.mem_data = convert_mem_data_points(data_source);
-        #[cfg(not(target_os = "windows"))]
-        {
-            app.converted_data.cache_data = convert_cache_data_points(data_source);
-        }
-        app.converted_data.swap_data = convert_swap_data_points(data_source);
-        #[cfg(feature = "zfs")]
-        {
-            app.converted_data.arc_data = convert_arc_data_points(data_source);
-        }
-
-        #[cfg(feature = "gpu")]
-        {
-            app.converted_data.gpu_data = convert_gpu_data(data_source);
-        }
-        app.states.mem_state.force_update = None;
-    }
-
-    if app.states.net_state.force_update.is_some() {
-        let (rx, tx) = get_rx_tx_data_points(
-            data_source,
-            &app.app_config_fields.network_scale_type,
-            &app.app_config_fields.network_unit_type,
-            app.app_config_fields.network_use_binary_prefix,
-        );
-        app.converted_data.network_data_rx = rx;
-        app.converted_data.network_data_tx = tx;
-        app.states.net_state.force_update = None;
-    }
-}
-
-pub fn create_input_thread(
-    sender: Sender<BottomEvent>, termination_ctrl_lock: Arc<Mutex<bool>>,
+/// Create a thread to poll for user inputs and forward them to the main thread.
+fn create_input_thread(
+    sender: Sender<BottomEvent>, cancellation_token: Arc<CancellationToken>,
 ) -> JoinHandle<()> {
     thread::spawn(move || {
         let mut mouse_timer = Instant::now();
 
         loop {
-            if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
-                // We don't block.
-                if *is_terminated {
-                    drop(is_terminated);
+            // We don't block.
+            if let Some(is_terminated) = cancellation_token.try_check() {
+                if is_terminated {
                     break;
                 }
             }
+
             if let Ok(poll) = poll(Duration::from_millis(20)) {
                 if poll {
                     if let Ok(event) = read() {
                         match event {
                             Event::Resize(_, _) => {
-                                // TODO: Might want to debounce this in the future, or take into account the actual resize
-                                // values. Maybe we want to keep the current implementation in case the resize event might
-                                // not fire... not sure.
+                                // TODO: Might want to debounce this in the future, or take into
+                                // account the actual resize values.
+                                // Maybe we want to keep the current implementation in case the
+                                // resize event might not fire...
+                                // not sure.
 
                                 if sender.send(BottomEvent::Resize).is_err() {
                                     break;
@@ -439,7 +175,8 @@ pub fn create_input_thread(
                                 }
                             }
                             Event::Key(key) if key.kind == KeyEventKind::Press => {
-                                // For now, we only care about key down events. This may change in the future.
+                                // For now, we only care about key down events. This may change in
+                                // the future.
                                 if sender.send(BottomEvent::KeyInput(key)).is_err() {
                                     break;
                                 }
@@ -472,22 +209,21 @@ pub fn create_input_thread(
     })
 }
 
-pub fn create_collection_thread(
+/// Create a thread to handle data collection.
+fn create_collection_thread(
     sender: Sender<BottomEvent>, control_receiver: Receiver<CollectionThreadEvent>,
-    termination_lock: Arc<Mutex<bool>>, termination_cvar: Arc<Condvar>,
-    app_config_fields: &AppConfigFields, filters: DataFilters, used_widget_set: UsedWidgets,
+    cancellation_token: Arc<CancellationToken>, app_config_fields: &AppConfigFields,
+    filters: DataFilters, used_widget_set: UsedWidgets,
 ) -> JoinHandle<()> {
-    let temp_type = app_config_fields.temperature_type;
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
     let unnormalized_cpu = app_config_fields.unnormalized_cpu;
     let show_average_cpu = app_config_fields.show_average_cpu;
     let update_time = app_config_fields.update_rate;
 
     thread::spawn(move || {
-        let mut data_state = data_harvester::DataCollector::new(filters);
+        let mut data_state = collection::DataCollector::new(filters);
 
-        data_state.set_data_collection(used_widget_set);
-        data_state.set_temperature_type(temp_type);
+        data_state.set_collection(used_widget_set);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
         data_state.set_unnormalized_cpu(unnormalized_cpu);
         data_state.set_show_average_cpu(show_average_cpu);
@@ -496,15 +232,14 @@ pub fn create_collection_thread(
 
         loop {
             // Check once at the very top... don't block though.
-            if let Ok(is_terminated) = termination_lock.try_lock() {
-                if *is_terminated {
-                    drop(is_terminated);
+            if let Some(is_terminated) = cancellation_token.try_check() {
+                if is_terminated {
                     break;
                 }
             }
 
             if let Ok(message) = control_receiver.try_recv() {
-                // trace!("Received message in collection thread: {:?}", message);
+                // trace!("Received message in collection thread: {message:?}");
                 match message {
                     CollectionThreadEvent::Reset => {
                         data_state.data.cleanup();
@@ -515,29 +250,213 @@ pub fn create_collection_thread(
             data_state.update_data();
 
             // Yet another check to bail if needed... do not block!
-            if let Ok(is_terminated) = termination_lock.try_lock() {
-                if *is_terminated {
-                    drop(is_terminated);
+            if let Some(is_terminated) = cancellation_token.try_check() {
+                if is_terminated {
                     break;
                 }
             }
 
             let event = BottomEvent::Update(Box::from(data_state.data));
-            data_state.data = data_harvester::Data::default();
+            data_state.data = collection::Data::default();
             if sender.send(event).is_err() {
                 break;
             }
 
-            // This is actually used as a "sleep" that can be interrupted by another thread.
-            if let Ok((is_terminated, _)) = termination_cvar.wait_timeout(
-                termination_lock.lock().unwrap(),
-                Duration::from_millis(update_time),
-            ) {
-                if *is_terminated {
-                    drop(is_terminated);
-                    break;
-                }
+            // Sleep while allowing for interruptions...
+            if cancellation_token.sleep_with_cancellation(Duration::from_millis(update_time)) {
+                break;
             }
         }
     })
+}
+
+/// Main code to call.
+#[inline]
+pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
+    // let _profiler = dhat::Profiler::new_heap();
+
+    let args = args::get_args();
+
+    #[cfg(feature = "logging")]
+    {
+        if let Err(err) = init_logger(
+            log::LevelFilter::Debug,
+            Some(std::ffi::OsStr::new("debug.log")),
+        ) {
+            println!("Issue initializing logger: {err}");
+        }
+    }
+
+    // Read from config file.
+    let config = get_or_create_config(args.general.config_location.as_deref())?;
+
+    // Create the "app" and initialize a bunch of stuff.
+    let (mut app, widget_layout, styling) = init_app(args, config)?;
+
+    // Create painter and set colours.
+    let mut painter = canvas::Painter::init(widget_layout, styling)?;
+
+    // Check if the current environment is in a terminal.
+    check_if_terminal();
+
+    let cancellation_token = Arc::new(CancellationToken::default());
+    let (sender, receiver) = mpsc::channel();
+
+    // Set up the event loop thread; we set this up early to speed up
+    // first-time-to-data.
+    let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
+    let _collection_thread = create_collection_thread(
+        sender.clone(),
+        collection_thread_ctrl_receiver,
+        cancellation_token.clone(),
+        &app.app_config_fields,
+        app.filters.clone(),
+        app.used_widgets,
+    );
+
+    // Set up the input handling loop thread.
+    let _input_thread = create_input_thread(sender.clone(), cancellation_token.clone());
+
+    // Set up the cleaning loop thread.
+    let _cleaning_thread = {
+        let cancellation_token = cancellation_token.clone();
+        let cleaning_sender = sender.clone();
+        let offset_wait = Duration::from_millis(app.app_config_fields.retention_ms + 60000);
+        thread::spawn(move || {
+            loop {
+                if cancellation_token.sleep_with_cancellation(offset_wait) {
+                    break;
+                }
+
+                if cleaning_sender.send(BottomEvent::Clean).is_err() {
+                    break;
+                }
+            }
+        })
+    };
+
+    // Set up tui and crossterm
+    *enable_error_hook = true;
+
+    let mut stdout_val = stdout();
+    execute!(stdout_val, Hide, EnterAlternateScreen, EnableBracketedPaste)?;
+    if app.app_config_fields.disable_click {
+        execute!(stdout_val, DisableMouseCapture)?;
+    } else {
+        execute!(stdout_val, EnableMouseCapture)?;
+    }
+    enable_raw_mode()?;
+
+    let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
+    terminal.clear()?;
+    terminal.hide_cursor()?;
+
+    #[cfg(target_os = "freebsd")]
+    let _stderr_fd = {
+        // A really ugly band-aid to suppress stderr warnings on FreeBSD due to sysinfo.
+        // For more information, see https://github.com/ClementTsang/bottom/issues/798.
+        use std::fs::OpenOptions;
+
+        use filedescriptor::{FileDescriptor, StdioDescriptor};
+
+        let path = OpenOptions::new().write(true).open("/dev/null")?;
+        FileDescriptor::redirect_stdio(&path, StdioDescriptor::Stderr)?
+    };
+
+    // Set panic hook
+    panic::set_hook(Box::new(panic_hook));
+
+    // Set termination hook
+    // TODO: On UNIX, use signal-hook to handle cleanup as well.
+    ctrlc::set_handler(move || {
+        let _ = sender.send(BottomEvent::Terminate);
+    })?;
+
+    let mut first_run = true;
+
+    // Draw once first to initialize the canvas, so it doesn't feel like it's
+    // frozen.
+    try_drawing(&mut terminal, &mut app, &mut painter)?;
+
+    loop {
+        if let Ok(recv) = receiver.recv() {
+            match recv {
+                BottomEvent::Terminate => {
+                    break;
+                }
+                BottomEvent::Resize => {
+                    try_drawing(&mut terminal, &mut app, &mut painter)?;
+                }
+                BottomEvent::KeyInput(event) => {
+                    if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
+                        break;
+                    }
+                    app.update_data();
+                    try_drawing(&mut terminal, &mut app, &mut painter)?;
+                }
+                BottomEvent::MouseInput(event) => {
+                    handle_mouse_event(event, &mut app);
+                    app.update_data();
+                    try_drawing(&mut terminal, &mut app, &mut painter)?;
+                }
+                BottomEvent::PasteEvent(paste) => {
+                    app.handle_paste(paste);
+                    app.update_data();
+                    try_drawing(&mut terminal, &mut app, &mut painter)?;
+                }
+                BottomEvent::Update(data) => {
+                    app.data_store.eat_data(data, &app.app_config_fields);
+
+                    // This thing is required as otherwise, some widgets can't draw correctly w/o
+                    // some data (or they need to be re-drawn).
+                    if first_run {
+                        first_run = false;
+                        app.is_force_redraw = true;
+                    }
+
+                    if !app.data_store.is_frozen() {
+                        // Convert all data into data for the displayed widgets.
+
+                        if app.used_widgets.use_disk {
+                            for disk in app.states.disk_state.widget_states.values_mut() {
+                                disk.force_data_update();
+                            }
+                        }
+
+                        if app.used_widgets.use_temp {
+                            for temp in app.states.temp_state.widget_states.values_mut() {
+                                temp.force_data_update();
+                            }
+                        }
+
+                        if app.used_widgets.use_proc {
+                            for proc in app.states.proc_state.widget_states.values_mut() {
+                                proc.force_data_update();
+                            }
+                        }
+
+                        if app.used_widgets.use_cpu {
+                            for cpu in app.states.cpu_state.widget_states.values_mut() {
+                                cpu.force_data_update();
+                            }
+                        }
+
+                        app.update_data();
+                        try_drawing(&mut terminal, &mut app, &mut painter)?;
+                    }
+                }
+                BottomEvent::Clean => {
+                    app.data_store
+                        .clean_data(Duration::from_millis(app.app_config_fields.retention_ms));
+                }
+            }
+        }
+    }
+
+    // I think doing it in this order is safe...
+    // TODO: maybe move the cancellation token to the ctrl-c handler?
+    cancellation_token.cancel();
+    cleanup_terminal(&mut terminal)?;
+
+    Ok(())
 }

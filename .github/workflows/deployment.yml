@@ -1,6 +1,7 @@
 # How we deploy a release. Covers binary builds. Also manages packaging for choco.
 #
-# Based on https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
+# Binaries are primarily built by GHA, though some Linux, M1 macOS, and FreeBSD builds are
+# handled by CirrusCI.
 
 name: deployment
 
@@ -53,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
@@ -67,10 +68,11 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Get release artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
-          name: release
+          pattern: release-*
           path: release
+          merge-multiple: true
 
       - name: Execute choco packaging script
         run: |
@@ -83,10 +85,10 @@ jobs:
           mv choco.zip release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-choco
           path: release
 
   upload-release:
@@ -104,18 +106,19 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Get release artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
-          name: release
+          pattern: release-*
           path: release
+          merge-multiple: true
 
       - name: Print out all release files
         run: |
           echo "Generated $(ls ./release | wc -l) files:"
           du -h -d 0 ./release/*
 
-      - name: Upload all saved release files
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # 0.1.15
+      - name: Create release and add release files
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # 2.0.8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false

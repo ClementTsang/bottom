@@ -27,7 +27,7 @@ This is a nuspec. It mostly adheres to https://docs.nuget.org/create/Nuspec-Refe
     <title>bottom</title>
     <authors>Clement Tsang</authors>
     <projectUrl>https://github.com/ClementTsang/bottom</projectUrl>
-    <licenseUrl>https://github.com/ClementTsang/bottom/blob/master/LICENSE</licenseUrl>
+    <licenseUrl>https://github.com/ClementTsang/bottom/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <projectSourceUrl>https://github.com/ClementTsang/bottom</projectSourceUrl>
     <packageSourceUrl>https://github.com/ClementTsang/choco-bottom</packageSourceUrl>
@@ -41,7 +41,7 @@ This is a nuspec. It mostly adheres to https://docs.nuget.org/create/Nuspec-Refe
     **Usage**
     To use, run `btm` in a terminal.
     
-    For more [documentation and usage](https://github.com/ClementTsang/bottom/blob/master/README.md), see the [official repo](https://github.com/ClementTsang/bottom).
+    For more documentation and usage information, go to the [official repo](https://github.com/ClementTsang/bottom).
 
     Please report any issues with the Chocolatey package [here](https://github.com/ClementTsang/choco-bottom).
     

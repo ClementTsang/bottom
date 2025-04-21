@@ -1,25 +1,29 @@
 [package]
 name = "bottom"
-version = "0.9.6"
-authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
-edition = "2021"
+version = "0.11.0"
 repository = "https://github.com/ClementTsang/bottom"
-keywords = ["cross-platform", "monitoring", "cli", "top", "tui"]
 license = "MIT"
-categories = ["command-line-utilities", "visualization"]
 description = "A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows."
 documentation = "https://clementtsang.github.io/bottom/stable"
 readme = "README.md"
 default-run = "btm"
 build = "build.rs"
+authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
+keywords = ["cross-platform", "monitoring", "cli", "top", "tui"]
+categories = ["command-line-utilities", "visualization"]
 exclude = [
     ".cargo-husky/",
     ".github/",
+    ".idea/",
+    ".vscode/",
     "assets/",
     "desktop/",
     "docs/",
+    "flamegraphs/",
     "sample_configs/",
+    "schema/",
     "scripts/",
+    "wix/",
     ".all-contributorsrc",
     ".cirrus.yml",
     ".gitignore",
@@ -29,26 +33,126 @@ exclude = [
     "codecov.yml",
     "CONTRIBUTING.md",
     "Cross.toml",
+    "rust-toolchain.toml",
     "rustfmt.toml",
 ]
-rust-version = "1.70.0"
-
-[[bin]]
-name = "btm"
-path = "src/bin/main.rs"
-doc = false
+edition = "2021"
+# The oldest version I've tested that should still build - note this is not an official MSRV!
+rust-version = "1.81"
 
 [lib]
 test = true
 doctest = true
 doc = true
 
-[profile.dev.package."*"]
-opt-level = 3 # Compile dependencies with optimizations on even in debug mode.
+[[bin]]
+name = "btm"
+path = "src/bin/main.rs"
+doc = false
 
-[profile.no-opt]
-inherits = "dev"
-opt-level = 0
+[[bin]]
+name = "schema"
+path = "src/bin/schema.rs"
+test = false
+doctest = false
+doc = false
+required-features = ["generate_schema"]
+
+[features]
+# Used for general builds.
+battery = ["starship-battery"]
+nvidia = ["nvml-wrapper"]
+gpu = ["nvidia"]
+zfs = []
+deploy = ["battery", "gpu", "zfs"]
+default = ["deploy"]
+
+# Should not be included in builds.
+logging = ["fern", "log", "time"]
+generate_schema = ["schemars", "serde_json", "strum"]
+
+[dependencies]
+anyhow = "1.0.97"
+backtrace = "0.3.74"
+cfg-if = "1.0.0"
+clap = { version = "4.5.32", features = ["default", "cargo", "wrap_help", "derive"] }
+concat-string = "1.0.1"
+crossterm = "0.28.1"
+ctrlc = { version = "3.4.5", features = ["termination"] }
+dirs = "6.0.0"
+hashbrown = "0.15.2"
+humantime = "2.2.0"
+indexmap = "2.8.0"
+indoc = "2.0.6"
+itertools = "0.14.0"
+nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
+regex = "1.11.1"
+serde = { version = "1.0.219", features = ["derive"] }
+starship-battery = { version = "0.10.1", optional = true }
+sysinfo = "=0.30.13"
+timeless = "0.0.14-alpha"
+toml_edit = { version = "0.22.24", features = ["serde"] }
+tui = { version = "0.29.0", package = "ratatui" }
+unicode-ellipsis = "0.3.0"
+unicode-segmentation = "1.12.0"
+unicode-width = "0.2.0"
+
+# Used for logging. Mostly a debugging tool.
+fern = { version = "0.7.1", optional = true }
+log = { version = "0.4.26", optional = true }
+time = { version = "0.3.40", features = ["local-offset", "formatting", "macros"], optional = true }
+
+# These are just used for JSON schema generation.
+schemars = { version = "0.8.22", optional = true }
+serde_json = { version = "1.0.140", optional = true }
+strum = { version = "0.27.1", features = ["derive"], optional = true }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.171"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+rustix = { version = "1.0.3", features = ["fs", "param"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "0.10.0"
+mach2 = "0.4.2"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.61.1", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_System_IO",
+    "Win32_System_Ioctl",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Threading",
+] }
+
+[target.'cfg(target_os = "freebsd")'.dependencies]
+serde_json = { version = "1.0.140" }
+sysctl = { version = "0.6.0" }
+filedescriptor = "0.8.3"
+
+[dev-dependencies]
+assert_cmd = "2.0.16"
+cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
+predicates = "3.1.3"
+tempfile = "3.19.1"
+
+[target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
+portable-pty = "0.9.0"
+
+[build-dependencies]
+clap = { version = "4.5.32", features = ["default", "cargo", "wrap_help", "derive"] }
+clap_complete = "4.5.47"
+clap_complete_nushell = "4.5.5"
+clap_complete_fig = "4.5.2"
+clap_mangen = "0.2.26"
+indoc = "2.0.6"
+
+# Compile dependencies with optimizations enabled, even in debug mode.
+[profile.dev.package."*"]
+opt-level = 3
 
 [profile.release]
 debug = 0
@@ -61,90 +165,6 @@ codegen-units = 1
 inherits = "release"
 debug = true
 strip = false
-
-[features]
-battery = ["starship-battery"]
-gpu = ["nvidia"]
-nvidia = ["nvml-wrapper"]
-zfs = []
-
-# Including logging for debugging purposes.
-logging = ["fern", "log"]
-
-# The features we use on deploy. Logging is not included as that is primarily (for now) just for debugging locally.
-deploy = ["battery", "gpu", "zfs"]
-
-default = ["deploy"]
-
-[dependencies]
-anyhow = "1.0.75"
-backtrace = "0.3.69"
-cfg-if = "1.0.0"
-clap = { version = "4.4.2", features = ["default", "cargo", "wrap_help"] }
-concat-string = "1.0.1"
-crossterm = "0.27.0"
-ctrlc = { version = "3.4.0", features = ["termination"] }
-# dhat = "0.3.2"
-dirs = "5.0.1"
-fern = { version = "0.6.2", optional = true }
-hashbrown = "0.14.0"
-humantime = "2.1.0"
-indexmap = "2.0.0"
-itertools = "0.11.0"
-kstring = { version = "2.0.0", features = ["arc"] }
-log = { version = "0.4.20", optional = true }
-nvml-wrapper = { version = "0.9.0", optional = true }
-once_cell = "1.18.0"
-regex = "1.9.4"
-serde = { version = "=1.0.188 ", features = ["derive"] }
-starship-battery = { version = "0.8.2", optional = true }
-sysinfo = "=0.29.10"
-thiserror = "1.0.47"
-time = { version = "0.3.26", features = ["formatting", "macros"] }
-toml_edit = { version = "0.19.14", features = ["serde"] }
-tui = { version = "0.22.0", package = "ratatui" }
-unicode-segmentation = "1.10.1"
-unicode-width = "0.1.10"
-
-[target.'cfg(unix)'.dependencies]
-libc = "0.2.147"
-
-[target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "0.38.9", features = ["fs", "param", "process"] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-core-foundation = "0.9.3"
-mach2 = "0.4.1"
-
-[target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.51.1", features = [
-    "Win32_Foundation",
-    "Win32_Security",
-    "Win32_Storage_FileSystem",
-    "Win32_System_IO",
-    "Win32_System_Ioctl",
-    "Win32_System_ProcessStatus",
-    "Win32_System_Threading",
-] }
-
-[target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.105" }
-sysctl = { version = "0.5.4" }
-filedescriptor = "0.8.2"
-
-[dev-dependencies]
-assert_cmd = "2.0.12"
-cargo-husky = { version = "1.5.0", default-features = false, features = [
-    "user-hooks",
-] }
-predicates = "3.0.3"
-
-[build-dependencies]
-clap = { version = "4.4.2", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "4.4.1"
-clap_complete_fig = "4.4.0"
-clap_complete_nushell = "4.4.0"
-clap_mangen = "0.2.13"
 
 [package.metadata.deb]
 section = "utility"
@@ -201,6 +221,7 @@ depends = "libc6:armhf (>= 2.28)"
 [package.metadata.wix]
 output = "bottom_x86_64_installer.msi"
 
+
 [package.metadata.generate-rpm]
 assets = [
     { source = "target/release/btm", dest = "/usr/bin/", mode = "755" },
@@ -211,3 +232,16 @@ assets = [
     { source = "completion/_btm", dest = "/usr/share/zsh/vendor-completions/", mode = "644" },
     { source = "desktop/bottom.desktop", dest = "/usr/share/applications/bottom.desktop", mode = "644" },
 ]
+
+[lints.rust]
+rust_2018_idioms = "deny"
+# missing_docs = "deny"
+
+[lints.rustdoc]
+broken_intra_doc_links = "deny"
+missing_crate_level_docs = "deny"
+
+[lints.clippy]
+todo = "deny"
+unimplemented = "deny"
+missing_safety_doc = "deny"

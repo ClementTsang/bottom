@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::constants::DEFAULT_WIDGET_ID;
-use crate::error::{BottomError, Result};
+use crate::{constants::DEFAULT_WIDGET_ID, options::OptionError};
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.
@@ -20,7 +19,7 @@ type ColumnMappings = (u32, BTreeMap<LineSegment, ColumnRowMappings>);
 
 impl BottomLayout {
     pub fn get_movement_mappings(&mut self) {
-        #[allow(clippy::suspicious_operation_groupings)] // Have to enable this, clippy really doesn't like me doing this with tuples...
+        #[expect(clippy::suspicious_operation_groupings)] // Have to enable this, clippy really doesn't like me doing this with tuples...
         fn is_intersecting(a: LineSegment, b: LineSegment) -> bool {
             a.0 >= b.0 && a.1 <= b.1
                 || a.1 >= b.1 && a.0 <= b.0
@@ -64,20 +63,20 @@ impl BottomLayout {
                                 col_row_mapping.insert(
                                     (
                                         widget_width * 100 / col_row.total_widget_ratio,
-                                        (widget_width + widget.width_ratio) * 100
+                                        (widget_width + widget.constraint.ratio()) * 100
                                             / col_row.total_widget_ratio,
                                     ),
                                     widget.widget_id,
                                 );
                             }
                         }
-                        widget_width += widget.width_ratio;
+                        widget_width += widget.constraint.ratio();
                     }
                     if is_valid_col_row {
                         col_mapping.insert(
                             (
                                 col_row_height * 100 / col.total_col_row_ratio,
-                                (col_row_height + col_row.col_row_height_ratio) * 100
+                                (col_row_height + col_row.constraint.ratio()) * 100
                                     / col.total_col_row_ratio,
                             ),
                             (col.total_col_row_ratio, col_row_mapping),
@@ -85,31 +84,31 @@ impl BottomLayout {
                         is_valid_col = true;
                     }
 
-                    col_row_height += col_row.col_row_height_ratio;
+                    col_row_height += col_row.constraint.ratio();
                 }
                 if is_valid_col {
                     row_mapping.insert(
                         (
                             row_width * 100 / row.total_col_ratio,
-                            (row_width + col.col_width_ratio) * 100 / row.total_col_ratio,
+                            (row_width + col.constraint.ratio()) * 100 / row.total_col_ratio,
                         ),
                         (row.total_col_ratio, col_mapping),
                     );
                     is_valid_row = true;
                 }
 
-                row_width += col.col_width_ratio;
+                row_width += col.constraint.ratio();
             }
             if is_valid_row {
                 layout_mapping.insert(
                     (
                         total_height * 100 / self.total_row_height_ratio,
-                        (total_height + row.row_height_ratio) * 100 / self.total_row_height_ratio,
+                        (total_height + row.constraint.ratio()) * 100 / self.total_row_height_ratio,
                     ),
                     (self.total_row_height_ratio, row_mapping),
                 );
             }
-            total_height += row.row_height_ratio;
+            total_height += row.constraint.ratio();
         }
 
         // Now pass through a second time; this time we want to build up
@@ -119,20 +118,20 @@ impl BottomLayout {
             let mut col_cursor = 0;
             let row_height_percentage_start = height_cursor * 100 / self.total_row_height_ratio;
             let row_height_percentage_end =
-                (height_cursor + row.row_height_ratio) * 100 / self.total_row_height_ratio;
+                (height_cursor + row.constraint.ratio()) * 100 / self.total_row_height_ratio;
 
             for col in &mut row.children {
                 let mut col_row_cursor = 0;
                 let col_width_percentage_start = col_cursor * 100 / row.total_col_ratio;
                 let col_width_percentage_end =
-                    (col_cursor + col.col_width_ratio) * 100 / row.total_col_ratio;
+                    (col_cursor + col.constraint.ratio()) * 100 / row.total_col_ratio;
 
                 for col_row in &mut col.children {
                     let mut widget_cursor = 0;
                     let col_row_height_percentage_start =
                         col_row_cursor * 100 / col.total_col_row_ratio;
                     let col_row_height_percentage_end =
-                        (col_row_cursor + col_row.col_row_height_ratio) * 100
+                        (col_row_cursor + col_row.constraint.ratio()) * 100
                             / col.total_col_row_ratio;
                     let col_row_children_len = col_row.children.len();
 
@@ -145,7 +144,8 @@ impl BottomLayout {
                         let widget_width_percentage_start =
                             widget_cursor * 100 / col_row.total_widget_ratio;
                         let widget_width_percentage_end =
-                            (widget_cursor + widget.width_ratio) * 100 / col_row.total_widget_ratio;
+                            (widget_cursor + widget.constraint.ratio()) * 100
+                                / col_row.total_widget_ratio;
 
                         if let Some(current_row) = layout_mapping
                             .get(&(row_height_percentage_start, row_height_percentage_end))
@@ -521,91 +521,85 @@ impl BottomLayout {
                                 }
                             }
                         }
-                        widget_cursor += widget.width_ratio;
+                        widget_cursor += widget.constraint.ratio();
                     }
-                    col_row_cursor += col_row.col_row_height_ratio;
+                    col_row_cursor += col_row.constraint.ratio();
                 }
-                col_cursor += col.col_width_ratio;
+                col_cursor += col.constraint.ratio();
             }
-            height_cursor += row.row_height_ratio;
+            height_cursor += row.constraint.ratio();
         }
     }
 
     pub fn init_basic_default(use_battery: bool) -> Self {
         let table_widgets = if use_battery {
             let disk_widget = BottomWidget::new(BottomWidgetType::Disk, 4)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .up_neighbour(Some(100))
                 .left_neighbour(Some(8))
                 .right_neighbour(Some(DEFAULT_WIDGET_ID + 2));
 
             let proc_sort = BottomWidget::new(BottomWidgetType::ProcSort, DEFAULT_WIDGET_ID + 2)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .up_neighbour(Some(100))
                 .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                 .left_neighbour(Some(4))
                 .right_neighbour(Some(DEFAULT_WIDGET_ID))
-                .width_ratio(1)
+                .ratio(1)
                 .parent_reflector(Some((WidgetDirection::Right, 2)));
 
             let proc = BottomWidget::new(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .up_neighbour(Some(100))
                 .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                 .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
                 .right_neighbour(Some(7))
-                .width_ratio(2);
+                .ratio(2);
 
             let proc_search =
                 BottomWidget::new(BottomWidgetType::ProcSearch, DEFAULT_WIDGET_ID + 1)
-                    .canvas_handle_width(true)
+                    .canvas_handled()
                     .up_neighbour(Some(DEFAULT_WIDGET_ID))
                     .left_neighbour(Some(4))
                     .right_neighbour(Some(7))
                     .parent_reflector(Some((WidgetDirection::Up, 1)));
 
             let temp = BottomWidget::new(BottomWidgetType::Temp, 7)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .up_neighbour(Some(100))
                 .left_neighbour(Some(DEFAULT_WIDGET_ID))
                 .right_neighbour(Some(8));
 
             let battery = BottomWidget::new(BottomWidgetType::Battery, 8)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .up_neighbour(Some(100))
                 .left_neighbour(Some(7))
                 .right_neighbour(Some(4));
 
             vec![
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![disk_widget]).canvas_handle_height(true)
-                ])
-                .canvas_handle_width(true),
+                BottomCol::new(vec![BottomColRow::new(vec![disk_widget]).canvas_handled()])
+                    .canvas_handled(),
                 BottomCol::new(vec![
                     BottomColRow::new(vec![proc_sort, proc])
-                        .canvas_handle_height(true)
+                        .canvas_handled()
                         .total_widget_ratio(3),
-                    BottomColRow::new(vec![proc_search]).canvas_handle_height(true),
+                    BottomColRow::new(vec![proc_search]).canvas_handled(),
                 ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![temp]).canvas_handle_height(true)
-                ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![battery]).canvas_handle_height(true)
-                ])
-                .canvas_handle_width(true),
+                .canvas_handled(),
+                BottomCol::new(vec![BottomColRow::new(vec![temp]).canvas_handled()])
+                    .canvas_handled(),
+                BottomCol::new(vec![BottomColRow::new(vec![battery]).canvas_handled()])
+                    .canvas_handled(),
             ]
         } else {
             let disk = BottomWidget::new(BottomWidgetType::Disk, 4)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .up_neighbour(Some(100))
                 .left_neighbour(Some(7))
                 .right_neighbour(Some(DEFAULT_WIDGET_ID + 2));
 
             let proc_sort = BottomWidget::new(BottomWidgetType::ProcSort, DEFAULT_WIDGET_ID + 2)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .up_neighbour(Some(100))
                 .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                 .left_neighbour(Some(4))
@@ -613,7 +607,7 @@ impl BottomLayout {
                 .parent_reflector(Some((WidgetDirection::Right, 2)));
 
             let proc = BottomWidget::new(BottomWidgetType::Proc, DEFAULT_WIDGET_ID)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .up_neighbour(Some(100))
                 .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                 .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
@@ -621,110 +615,110 @@ impl BottomLayout {
 
             let proc_search =
                 BottomWidget::new(BottomWidgetType::ProcSearch, DEFAULT_WIDGET_ID + 1)
-                    .canvas_handle_width(true)
+                    .canvas_handled()
                     .up_neighbour(Some(DEFAULT_WIDGET_ID))
                     .left_neighbour(Some(4))
                     .right_neighbour(Some(7))
                     .parent_reflector(Some((WidgetDirection::Up, 1)));
 
             let temp = BottomWidget::new(BottomWidgetType::Temp, 7)
-                .canvas_handle_width(true)
+                .canvas_handled()
                 .up_neighbour(Some(100))
                 .left_neighbour(Some(DEFAULT_WIDGET_ID))
                 .right_neighbour(Some(4));
 
             vec![
+                BottomCol::new(vec![BottomColRow::new(vec![disk]).canvas_handled()])
+                    .canvas_handled(),
                 BottomCol::new(vec![
-                    BottomColRow::new(vec![disk]).canvas_handle_height(true)
+                    BottomColRow::new(vec![proc_sort, proc]).canvas_handled(),
+                    BottomColRow::new(vec![proc_search]).canvas_handled(),
                 ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![proc_sort, proc]).canvas_handle_height(true),
-                    BottomColRow::new(vec![proc_search]).canvas_handle_height(true),
-                ])
-                .canvas_handle_width(true),
-                BottomCol::new(vec![
-                    BottomColRow::new(vec![temp]).canvas_handle_height(true)
-                ])
-                .canvas_handle_width(true),
+                .canvas_handled(),
+                BottomCol::new(vec![BottomColRow::new(vec![temp]).canvas_handled()])
+                    .canvas_handled(),
             ]
         };
 
         let cpu = BottomWidget::new(BottomWidgetType::BasicCpu, 1)
-            .canvas_handle_width(true)
+            .canvas_handled()
             .down_neighbour(Some(2));
 
         let mem = BottomWidget::new(BottomWidgetType::BasicMem, 2)
-            .canvas_handle_width(true)
+            .canvas_handled()
             .up_neighbour(Some(1))
             .down_neighbour(Some(100))
             .right_neighbour(Some(3));
 
         let net = BottomWidget::new(BottomWidgetType::BasicNet, 3)
-            .canvas_handle_width(true)
+            .canvas_handled()
             .up_neighbour(Some(1))
             .down_neighbour(Some(100))
             .left_neighbour(Some(2));
 
         let table = BottomWidget::new(BottomWidgetType::BasicTables, 100)
-            .canvas_handle_width(true)
+            .canvas_handled()
             .up_neighbour(Some(2));
 
         BottomLayout {
             total_row_height_ratio: 3,
             rows: vec![
-                BottomRow::new(vec![BottomCol::new(vec![
-                    BottomColRow::new(vec![cpu]).canvas_handle_height(true)
+                BottomRow::new(vec![
+                    BottomCol::new(vec![BottomColRow::new(vec![cpu]).canvas_handled()])
+                        .canvas_handled(),
                 ])
-                .canvas_handle_width(true)])
-                .canvas_handle_height(true),
-                BottomRow::new(vec![BottomCol::new(vec![BottomColRow::new(vec![
-                    mem, net,
+                .canvas_handled(),
+                BottomRow::new(vec![
+                    BottomCol::new(vec![BottomColRow::new(vec![mem, net]).canvas_handled()])
+                        .canvas_handled(),
                 ])
-                .canvas_handle_height(true)])
-                .canvas_handle_width(true)])
-                .canvas_handle_height(true),
-                BottomRow::new(vec![BottomCol::new(vec![
-                    BottomColRow::new(vec![table]).canvas_handle_height(true)
+                .canvas_handled(),
+                BottomRow::new(vec![
+                    BottomCol::new(vec![BottomColRow::new(vec![table]).canvas_handled()])
+                        .canvas_handled(),
                 ])
-                .canvas_handle_width(true)])
-                .canvas_handle_height(true),
-                BottomRow::new(table_widgets).canvas_handle_height(true),
+                .canvas_handled(),
+                BottomRow::new(table_widgets).canvas_handled(),
             ],
         }
     }
 }
 
-// pub enum BottomLayoutNode {
-//     Container(BottomContainer),
-//     Widget(BottomWidget),
-// }
+#[derive(Clone, Debug)]
+pub enum IntermediaryConstraint {
+    PartialRatio(u32),
+    CanvasHandled { ratio: Option<u32> },
+    Grow { minimum: Option<u32> },
+}
 
-// pub struct BottomContainer {
-//     children: Vec<BottomLayoutNode>,
-//     root_ratio: u32,
-//     growth_type: BottomLayoutNodeSizing,
-// }
+impl Default for IntermediaryConstraint {
+    fn default() -> Self {
+        IntermediaryConstraint::PartialRatio(1)
+    }
+}
 
-// pub enum BottomContainerType {
-//     Row,
-//     Col,
-// }
-
-// pub enum BottomLayoutNodeSizing {
-//     Ratio(u32),
-//     CanvasHandles,
-//     FlexGrow,
-// }
+impl IntermediaryConstraint {
+    pub fn ratio(&self) -> u32 {
+        match self {
+            IntermediaryConstraint::PartialRatio(val) => *val,
+            IntermediaryConstraint::Grow { minimum } => match minimum {
+                Some(val) => *val,
+                None => 1,
+            },
+            IntermediaryConstraint::CanvasHandled { ratio } => match ratio {
+                Some(val) => *val,
+                None => 1,
+            },
+        }
+    }
+}
 
 /// Represents a single row in the layout.
 #[derive(Clone, Debug)]
 pub struct BottomRow {
     pub children: Vec<BottomCol>,
     pub total_col_ratio: u32,
-    pub row_height_ratio: u32,
-    pub canvas_handle_height: bool,
-    pub flex_grow: bool,
+    pub constraint: IntermediaryConstraint,
 }
 
 impl BottomRow {
@@ -732,9 +726,7 @@ impl BottomRow {
         Self {
             children,
             total_col_ratio: 1,
-            row_height_ratio: 1,
-            canvas_handle_height: false,
-            flex_grow: false,
+            constraint: IntermediaryConstraint::default(),
         }
     }
 
@@ -743,18 +735,13 @@ impl BottomRow {
         self
     }
 
-    pub fn row_height_ratio(mut self, row_height_ratio: u32) -> Self {
-        self.row_height_ratio = row_height_ratio;
+    pub fn ratio(mut self, row_height_ratio: u32) -> Self {
+        self.constraint = IntermediaryConstraint::PartialRatio(row_height_ratio);
         self
     }
 
-    pub fn canvas_handle_height(mut self, canvas_handle_height: bool) -> Self {
-        self.canvas_handle_height = canvas_handle_height;
-        self
-    }
-
-    pub fn flex_grow(mut self, flex_grow: bool) -> Self {
-        self.flex_grow = flex_grow;
+    pub fn canvas_handled(mut self) -> Self {
+        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
         self
     }
 }
@@ -766,9 +753,7 @@ impl BottomRow {
 pub struct BottomCol {
     pub children: Vec<BottomColRow>,
     pub total_col_row_ratio: u32,
-    pub col_width_ratio: u32,
-    pub canvas_handle_width: bool,
-    pub flex_grow: bool,
+    pub constraint: IntermediaryConstraint,
 }
 
 impl BottomCol {
@@ -776,9 +761,7 @@ impl BottomCol {
         Self {
             children,
             total_col_row_ratio: 1,
-            col_width_ratio: 1,
-            canvas_handle_width: false,
-            flex_grow: false,
+            constraint: IntermediaryConstraint::default(),
         }
     }
 
@@ -787,18 +770,13 @@ impl BottomCol {
         self
     }
 
-    pub fn col_width_ratio(mut self, col_width_ratio: u32) -> Self {
-        self.col_width_ratio = col_width_ratio;
+    pub fn ratio(mut self, col_width_ratio: u32) -> Self {
+        self.constraint = IntermediaryConstraint::PartialRatio(col_width_ratio);
         self
     }
 
-    pub fn canvas_handle_width(mut self, canvas_handle_width: bool) -> Self {
-        self.canvas_handle_width = canvas_handle_width;
-        self
-    }
-
-    pub fn flex_grow(mut self, flex_grow: bool) -> Self {
-        self.flex_grow = flex_grow;
+    pub fn canvas_handled(mut self) -> Self {
+        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
         self
     }
 }
@@ -807,9 +785,7 @@ impl BottomCol {
 pub struct BottomColRow {
     pub children: Vec<BottomWidget>,
     pub total_widget_ratio: u32,
-    pub col_row_height_ratio: u32,
-    pub canvas_handle_height: bool,
-    pub flex_grow: bool,
+    pub constraint: IntermediaryConstraint,
 }
 
 impl BottomColRow {
@@ -817,9 +793,7 @@ impl BottomColRow {
         Self {
             children,
             total_widget_ratio: 1,
-            col_row_height_ratio: 1,
-            canvas_handle_height: false,
-            flex_grow: false,
+            constraint: IntermediaryConstraint::default(),
         }
     }
 
@@ -828,18 +802,18 @@ impl BottomColRow {
         self
     }
 
-    pub(crate) fn col_row_height_ratio(mut self, col_row_height_ratio: u32) -> Self {
-        self.col_row_height_ratio = col_row_height_ratio;
+    pub fn ratio(mut self, col_row_height_ratio: u32) -> Self {
+        self.constraint = IntermediaryConstraint::PartialRatio(col_row_height_ratio);
         self
     }
 
-    pub(crate) fn canvas_handle_height(mut self, canvas_handle_height: bool) -> Self {
-        self.canvas_handle_height = canvas_handle_height;
+    pub fn canvas_handled(mut self) -> Self {
+        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
         self
     }
 
-    pub(crate) fn flex_grow(mut self, flex_grow: bool) -> Self {
-        self.flex_grow = flex_grow;
+    pub fn grow(mut self, minimum: Option<u32>) -> Self {
+        self.constraint = IntermediaryConstraint::Grow { minimum };
         self
     }
 }
@@ -870,17 +844,11 @@ impl WidgetDirection {
 pub struct BottomWidget {
     pub widget_type: BottomWidgetType,
     pub widget_id: u64,
-    pub width_ratio: u32,
+    pub constraint: IntermediaryConstraint,
     pub left_neighbour: Option<u64>,
     pub right_neighbour: Option<u64>,
     pub up_neighbour: Option<u64>,
     pub down_neighbour: Option<u64>,
-
-    /// If set to true, the canvas will override any ratios.
-    pub canvas_handle_width: bool,
-
-    /// Whether we want this widget to take up all available room (and ignore any ratios).
-    pub flex_grow: bool,
 
     /// The value is the direction to bounce, as well as the parent offset.
     pub parent_reflector: Option<(WidgetDirection, u64)>,
@@ -897,22 +865,15 @@ impl BottomWidget {
         Self {
             widget_type,
             widget_id,
-            width_ratio: 1,
+            constraint: IntermediaryConstraint::default(),
             left_neighbour: None,
             right_neighbour: None,
             up_neighbour: None,
             down_neighbour: None,
-            canvas_handle_width: false,
-            flex_grow: false,
             parent_reflector: None,
             top_left_corner: None,
             bottom_right_corner: None,
         }
-    }
-
-    pub(crate) fn width_ratio(mut self, width_ratio: u32) -> Self {
-        self.width_ratio = width_ratio;
-        self
     }
 
     pub(crate) fn left_neighbour(mut self, left_neighbour: Option<u64>) -> Self {
@@ -935,13 +896,23 @@ impl BottomWidget {
         self
     }
 
-    pub(crate) fn canvas_handle_width(mut self, canvas_handle_width: bool) -> Self {
-        self.canvas_handle_width = canvas_handle_width;
+    pub(crate) fn ratio(mut self, width_ratio: u32) -> Self {
+        self.constraint = IntermediaryConstraint::PartialRatio(width_ratio);
         self
     }
 
-    pub(crate) fn flex_grow(mut self, flex_grow: bool) -> Self {
-        self.flex_grow = flex_grow;
+    pub fn canvas_handled(mut self) -> Self {
+        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
+        self
+    }
+
+    pub fn canvas_with_ratio(mut self, ratio: u32) -> Self {
+        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: Some(ratio) };
+        self
+    }
+
+    pub fn grow(mut self, minimum: Option<u32>) -> Self {
+        self.constraint = IntermediaryConstraint::Grow { minimum };
         self
     }
 
@@ -1000,9 +971,9 @@ impl BottomWidgetType {
 }
 
 impl std::str::FromStr for BottomWidgetType {
-    type Err = BottomError;
+    type Err = OptionError;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let lower_case = s.to_lowercase();
         match lower_case.as_str() {
             "cpu" => Ok(BottomWidgetType::Cpu),
@@ -1017,8 +988,8 @@ impl std::str::FromStr for BottomWidgetType {
             _ => {
                 #[cfg(feature = "battery")]
                 {
-                    Err(BottomError::ConfigError(format!(
-                        "\"{}\" is an invalid widget name.
+                    Err(OptionError::config(format!(
+                        "'{s}' is an invalid widget name.
         
 Supported widget names:
 +--------------------------+
@@ -1036,14 +1007,15 @@ Supported widget names:
 +--------------------------+
 |       batt, battery      |
 +--------------------------+
+|           empty          |
++--------------------------+
                 ",
-                        s
                     )))
                 }
                 #[cfg(not(feature = "battery"))]
                 {
-                    Err(BottomError::ConfigError(format!(
-                        "\"{}\" is an invalid widget name.
+                    Err(OptionError::config(format!(
+                        "'{s}' is an invalid widget name.
 
 Supported widget names:
 +--------------------------+
@@ -1059,8 +1031,9 @@ Supported widget names:
 +--------------------------+
 |           disk           |
 +--------------------------+
+|           empty          |
++--------------------------+
                 ",
-                        s
                     )))
                 }
             }

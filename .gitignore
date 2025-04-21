@@ -24,9 +24,6 @@ rust-unmangle
 # For testing
 sample_configs/testing*.toml
 
-# Wix
-/wix/
-
 # Cargo-deny
 deny.toml
 
@@ -42,3 +39,11 @@ dhat/
 
 # cargo vet
 supply-chain/
+
+# samply profiling
+profile.json
+
+**/venv/
+
+# Sometimes used for scripts
+.ruff_cache

@@ -1,2 +1,2 @@
-[colors]
-table_header_color="50, 50, 50, 50"
+[styles.tables.headers]
+color="50, 50, 50, 50"

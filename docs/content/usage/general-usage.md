@@ -6,7 +6,7 @@ You can run bottom with:
 btm
 ```
 
-For help regarding the command-line flags, use:
+For help regarding the command-line options, use:
 
 ```bash
 # For a simple overview of flags

@@ -15,6 +15,8 @@ if [ ! -d $VENV_PATH ]; then
 else
     echo "venv already found.";
     source ./venv/bin/activate;
+    pip install --upgrade pip;
+    pip install -r requirements.txt;
     ./venv/bin/mkdocs serve;
 fi;
 

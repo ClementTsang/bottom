@@ -1,2 +1,2 @@
-[colors]
-table_header_color="this is not a colour"
+[styles.tables.headers]
+color="this is not a colour"

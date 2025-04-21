@@ -2,15 +2,15 @@ use std::{ops::Range, time::Instant};
 
 use hashbrown::HashMap;
 use indexmap::IndexMap;
+use unicode_ellipsis::grapheme_width;
 use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete, UnicodeSegmentation};
 
 use crate::{
-    app::{layout_manager::BottomWidgetType, query::*},
+    app::layout_manager::BottomWidgetType,
     constants,
-    utils::gen_util::str_width,
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
-        ProcWidgetState, TempWidgetState,
+        ProcWidgetState, TempWidgetState, query::ProcessQuery,
     },
 };
 
@@ -21,7 +21,7 @@ pub struct AppWidgetStates {
     pub proc_state: ProcState,
     pub temp_state: TempState,
     pub disk_state: DiskState,
-    pub battery_state: BatteryState,
+    pub battery_state: AppBatteryState,
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
 }
 
@@ -90,7 +90,7 @@ pub struct AppSearchState {
     pub size_mappings: IndexMap<usize, Range<usize>>,
 
     /// The query. TODO: Merge this as one enum.
-    pub query: Option<Query>,
+    pub query: Option<ProcessQuery>,
     pub error_message: Option<String>,
 }
 
@@ -112,7 +112,8 @@ impl Default for AppSearchState {
 }
 
 impl AppSearchState {
-    /// Resets the [`AppSearchState`] to its default state, albeit still enabled.
+    /// Resets the [`AppSearchState`] to its default state, albeit still
+    /// enabled.
     pub fn reset(&mut self) {
         *self = AppSearchState {
             is_enabled: self.is_enabled,
@@ -161,7 +162,8 @@ impl AppSearchState {
                         // Use the current index.
                         start_index
                     } else if cursor_range.end >= available_width {
-                        // If the current position is past the last visible element, skip until we see it.
+                        // If the current position is past the last visible element, skip until we
+                        // see it.
 
                         let mut index = 0;
                         for i in 0..(cursor_index + 1) {
@@ -211,7 +213,8 @@ impl AppSearchState {
             Ok(_) => {}
             Err(err) => match err {
                 GraphemeIncomplete::PreContext(ctx) => {
-                    // Provide the entire string as context. Not efficient but should resolve failures.
+                    // Provide the entire string as context. Not efficient but should resolve
+                    // failures.
                     self.grapheme_cursor
                         .provide_context(&self.current_search_query[0..ctx], 0);
 
@@ -233,7 +236,8 @@ impl AppSearchState {
             Ok(_) => {}
             Err(err) => match err {
                 GraphemeIncomplete::PreContext(ctx) => {
-                    // Provide the entire string as context. Not efficient but should resolve failures.
+                    // Provide the entire string as context. Not efficient but should resolve
+                    // failures.
                     self.grapheme_cursor
                         .provide_context(&self.current_search_query[0..ctx], 0);
 
@@ -250,7 +254,7 @@ impl AppSearchState {
         for (index, grapheme) in
             UnicodeSegmentation::grapheme_indices(self.current_search_query.as_str(), true)
         {
-            let width = str_width(grapheme);
+            let width = grapheme_width(grapheme);
             let end = curr_offset + width;
 
             self.size_mappings.insert(index, curr_offset..end);
@@ -281,38 +285,22 @@ impl ProcState {
 }
 
 pub struct NetState {
-    pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, NetWidgetState>,
 }
 
 impl NetState {
     pub fn init(widget_states: HashMap<u64, NetWidgetState>) -> Self {
-        NetState {
-            force_update: None,
-            widget_states,
-        }
-    }
-
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut NetWidgetState> {
-        self.widget_states.get_mut(&widget_id)
-    }
-
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&NetWidgetState> {
-        self.widget_states.get(&widget_id)
+        NetState { widget_states }
     }
 }
 
 pub struct CpuState {
-    pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, CpuWidgetState>,
 }
 
 impl CpuState {
     pub fn init(widget_states: HashMap<u64, CpuWidgetState>) -> Self {
-        CpuState {
-            force_update: None,
-            widget_states,
-        }
+        CpuState { widget_states }
     }
 
     pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut CpuWidgetState> {
@@ -325,24 +313,12 @@ impl CpuState {
 }
 
 pub struct MemState {
-    pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, MemWidgetState>,
 }
 
 impl MemState {
     pub fn init(widget_states: HashMap<u64, MemWidgetState>) -> Self {
-        MemState {
-            force_update: None,
-            widget_states,
-        }
-    }
-
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut MemWidgetState> {
-        self.widget_states.get_mut(&widget_id)
-    }
-
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&MemWidgetState> {
-        self.widget_states.get(&widget_id)
+        MemState { widget_states }
     }
 }
 
@@ -387,28 +363,23 @@ pub struct BasicTableWidgetState {
     // then we can expand outwards with a normal BasicTableState and a hashmap
     pub currently_displayed_widget_type: BottomWidgetType,
     pub currently_displayed_widget_id: u64,
-    pub widget_id: i64,
     pub left_tlc: Option<(u16, u16)>,
     pub left_brc: Option<(u16, u16)>,
     pub right_tlc: Option<(u16, u16)>,
     pub right_brc: Option<(u16, u16)>,
 }
 
-pub struct BatteryState {
+pub struct AppBatteryState {
     pub widget_states: HashMap<u64, BatteryWidgetState>,
 }
 
-impl BatteryState {
+impl AppBatteryState {
     pub fn init(widget_states: HashMap<u64, BatteryWidgetState>) -> Self {
-        BatteryState { widget_states }
+        AppBatteryState { widget_states }
     }
 
     pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut BatteryWidgetState> {
         self.widget_states.get_mut(&widget_id)
-    }
-
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&BatteryWidgetState> {
-        self.widget_states.get(&widget_id)
     }
 }
 

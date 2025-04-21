@@ -1,24 +1,29 @@
+//! General build script used by bottom to generate completion files and set binary version.
+
+#[expect(dead_code)]
+#[path = "src/options/args.rs"]
+mod args;
+
 use std::{
     env, fs, io,
     path::{Path, PathBuf},
 };
 
-use clap_complete::{generate_to, shells::Shell, Generator};
+use clap::{Command, CommandFactory};
+use clap_complete::{Generator, generate_to, shells::Shell};
 use clap_complete_fig::Fig;
 use clap_complete_nushell::Nushell;
 
-include!("src/args.rs");
+use crate::args::BottomArgs;
 
 fn create_dir(dir: &Path) -> io::Result<()> {
-    let res = fs::create_dir_all(dir);
-    match &res {
-        Ok(()) => {}
-        Err(err) => {
-            eprintln!("Failed to create a directory at location {dir:?}, encountered error {err:?}.  Aborting...",);
-        }
-    }
-
-    res
+    fs::create_dir_all(dir).inspect_err(|err| {
+        eprintln!(
+            "Couldn't create a directory at {} ({:?}). Aborting.",
+            dir.display(),
+            err
+        )
+    })
 }
 
 fn generate_completions<G>(to_generate: G, cmd: &mut Command, out_dir: &Path) -> io::Result<PathBuf>
@@ -33,17 +38,18 @@ fn btm_generate() -> io::Result<()> {
 
     match env::var_os(ENV_KEY) {
         Some(var) if !var.is_empty() => {
-            const COMPLETION_DIR: &str = "./target/tmp/bottom/completion/";
-            const MANPAGE_DIR: &str = "./target/tmp/bottom/manpage/";
+            let completion_dir =
+                option_env!("COMPLETION_DIR").unwrap_or("./target/tmp/bottom/completion/");
+            let manpage_dir = option_env!("MANPAGE_DIR").unwrap_or("./target/tmp/bottom/manpage/");
 
-            let completion_out_dir = PathBuf::from(COMPLETION_DIR);
-            let manpage_out_dir = PathBuf::from(MANPAGE_DIR);
+            let completion_out_dir = PathBuf::from(completion_dir);
+            let manpage_out_dir = PathBuf::from(manpage_dir);
 
             create_dir(&completion_out_dir)?;
             create_dir(&manpage_out_dir)?;
 
             // Generate completions
-            let mut app = build_app();
+            let mut app = BottomArgs::command();
             generate_completions(Shell::Bash, &mut app, &completion_out_dir)?;
             generate_completions(Shell::Zsh, &mut app, &completion_out_dir)?;
             generate_completions(Shell::Fish, &mut app, &completion_out_dir)?;
@@ -57,7 +63,7 @@ fn btm_generate() -> io::Result<()> {
             let man = clap_mangen::Man::new(app);
             let mut buffer: Vec<u8> = Default::default();
             man.render(&mut buffer)?;
-            std::fs::write(manpage_out_dir.join("btm.1"), buffer)?;
+            fs::write(manpage_out_dir.join("btm.1"), buffer)?;
         }
         _ => {}
     }
@@ -79,7 +85,7 @@ fn nightly_version() {
     const ENV_KEY: &str = "BTM_BUILD_RELEASE_CALLER";
 
     match env::var_os(ENV_KEY) {
-        Some(var) if !var.is_empty() && var == "nightly" => {
+        Some(var) if !var.is_empty() && var == "ci" => {
             let version = env!("CARGO_PKG_VERSION");
 
             if let Some(hash) = extract_sha(option_env!("CIRRUS_CHANGE_IN_REPO")) {

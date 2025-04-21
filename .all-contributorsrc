@@ -425,6 +425,180 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Freed-Wu",
+      "name": "wzy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32936898?v=4",
+      "profile": "https://freed-wu.github.io/",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "john-s-lin",
+      "name": "john-s-lin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66440371?v=4",
+      "profile": "https://johnlin.ca/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "lyuha",
+      "name": "Lee Wonjoon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4014016?v=4",
+      "profile": "https://github.com/lyuha",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "davlgd",
+      "name": "David Legrand",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1110600?v=4",
+      "profile": "https://www.davlgd.fr",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "MichalBryxi",
+      "name": "Michal Bryxí",
+      "avatar_url": "https://avatars.githubusercontent.com/u/847473?v=4",
+      "profile": "https://github.com/MichalBryxi",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "TheSkyentist",
+      "name": "Raphael Erik Hviding",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17031860?v=4",
+      "profile": "http://mpia.de/~hviding/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "CosmicHorrorDev",
+      "name": "CosmicHorror",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30302768?v=4",
+      "profile": "http://cosmichorror.dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "woodsb02",
+      "name": "Ben Woods",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7113557?v=4",
+      "profile": "https://www.woods.am/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "stephen-huan",
+      "name": "Stephen Huan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20411956?v=4",
+      "profile": "http://cgdct.moe",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jasongwartz",
+      "name": "Jason Gwartz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10981911?v=4",
+      "profile": "https://github.com/jasongwartz",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "llc0930",
+      "name": "llc0930",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14966910?v=4",
+      "profile": "https://github.com/llc0930",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "yretenai",
+      "name": "Ada Ahmed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/614231?v=4",
+      "profile": "https://chronovore.dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Wateir",
+      "name": "Wateir",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78731687?v=4",
+      "profile": "https://github.com/Wateir",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "al42and",
+      "name": "Andrey Alekseenko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/933873?v=4",
+      "profile": "https://github.com/al42and",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "fgimian",
+      "name": "Fotis Gimian",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1811813?v=4",
+      "profile": "http://fgimian.github.io/",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "SigmaSquadron",
+      "name": "Fernando Rodrigues",
+      "avatar_url": "https://avatars.githubusercontent.com/u/174749595?v=4",
+      "profile": "https://sigmasquadron.net",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mtoohey31",
+      "name": "Matthew Toohey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36740602?v=4",
+      "profile": "https://mtoohey.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "win8linux",
+      "name": "Julius Enriquez",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11584387?v=4",
+      "profile": "https://meander.site",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "benjamb",
+      "name": "Ben Brown",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8291297?v=4",
+      "profile": "https://github.com/benjamb",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

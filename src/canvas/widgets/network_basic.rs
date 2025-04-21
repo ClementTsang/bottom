@@ -1,16 +1,19 @@
 use tui::{
-    backend::Backend,
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    terminal::Frame,
     text::{Line, Span},
     widgets::{Block, Paragraph},
 };
 
-use crate::{app::App, canvas::Painter, constants::*};
+use crate::{
+    app::App,
+    canvas::{Painter, drawing_utils::widget_block},
+    utils::data_units::{convert_bits, get_unit_prefix},
+};
 
 impl Painter {
-    pub fn draw_basic_network<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    pub fn draw_basic_network(
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let divided_loc = Layout::default()
             .direction(Direction::Horizontal)
@@ -31,26 +34,32 @@ impl Painter {
 
         if app_state.current_widget.widget_id == widget_id {
             f.render_widget(
-                Block::default()
-                    .borders(SIDE_BORDERS)
-                    .border_style(self.colours.highlighted_border_style),
+                widget_block(true, true, self.styles.border_type)
+                    .border_style(self.styles.highlighted_border_style),
                 draw_loc,
             );
         }
 
-        let rx_label = format!("RX: {}", &app_state.converted_data.rx_display);
-        let tx_label = format!("TX: {}", &app_state.converted_data.tx_display);
-        let total_rx_label = format!("Total RX: {}", &app_state.converted_data.total_rx_display);
-        let total_tx_label = format!("Total TX: {}", &app_state.converted_data.total_tx_display);
+        let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
+        let network_data = &(app_state.data_store.get_data().network_harvest);
+        let rx = get_unit_prefix(network_data.rx, use_binary_prefix);
+        let tx = get_unit_prefix(network_data.tx, use_binary_prefix);
+        let total_rx = convert_bits(network_data.total_rx, use_binary_prefix);
+        let total_tx = convert_bits(network_data.total_tx, use_binary_prefix);
+
+        let rx_label = format!("RX: {:.1}{}", rx.0, rx.1);
+        let tx_label = format!("TX: {:.1}{}", tx.0, tx.1);
+        let total_rx_label = format!("Total RX: {:.1}{}", total_rx.0, total_rx.1);
+        let total_tx_label = format!("Total TX: {:.1}{}", total_tx.0, total_tx.1);
 
         let net_text = vec![
-            Line::from(Span::styled(rx_label, self.colours.rx_style)),
-            Line::from(Span::styled(tx_label, self.colours.tx_style)),
+            Line::from(Span::styled(rx_label, self.styles.rx_style)),
+            Line::from(Span::styled(tx_label, self.styles.tx_style)),
         ];
 
         let total_net_text = vec![
-            Line::from(Span::styled(total_rx_label, self.colours.total_rx_style)),
-            Line::from(Span::styled(total_tx_label, self.colours.total_tx_style)),
+            Line::from(Span::styled(total_rx_label, self.styles.total_rx_style)),
+            Line::from(Span::styled(total_tx_label, self.styles.total_tx_style)),
         ];
 
         f.render_widget(Paragraph::new(net_text).block(Block::default()), net_loc[0]);

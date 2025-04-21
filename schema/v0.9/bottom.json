@@ -1,0 +1,385 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/v0.9/bottom.json",
+  "$comment": "https://clementtsang.github.io/bottom/0.9.6/configuration/config-file/default-config/",
+  "title": "Schema for bottom's configs (v0.9)",
+  "type": "object",
+  "definitions": {
+    "row": {
+      "items": {
+        "properties": {
+          "ratio": {
+            "default": 1,
+            "type": "integer"
+          },
+          "type": {
+            "enum": ["cpu", "mem", "proc", "net", "temp", "disk", "empty"],
+            "type": "string"
+          },
+          "default": {
+            "default": true,
+            "type": "boolean"
+          }
+        },
+        "patternProperties": {
+          "row(.child)+": {
+            "$ref": "#/definitions/row"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "filter": {
+      "description": "hide specific temperature sensors, network interfaces, and disks using filters",
+      "properties": {
+        "is_list_ignored": {
+          "default": true,
+          "type": "boolean"
+        },
+        "list": {
+          "type": "array"
+        },
+        "regex": {
+          "default": true,
+          "type": "boolean"
+        },
+        "case_sensitive": {
+          "default": false,
+          "type": "boolean"
+        },
+        "whole_word": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "flags": {
+      "description": "This group of options represents a command-line flag/option.  Flags explicitly added when running (ie: btm -a) will override this config file if an option is also set here",
+      "properties": {
+        "hide_avg_cpu": {
+          "default": false,
+          "description": "Whether to hide the average cpu entry",
+          "type": "boolean"
+        },
+        "dot_marker": {
+          "default": false,
+          "description": "Whether to use dot markers rather than braille",
+          "type": "boolean"
+        },
+        "rate": {
+          "default": 1000,
+          "description": "The update rate of the application",
+          "type": "integer"
+        },
+        "left_legend": {
+          "default": false,
+          "description": "Whether to put the CPU legend to the left",
+          "type": "boolean"
+        },
+        "current_usage": {
+          "default": false,
+          "description": "Whether to set CPU% on a process to be based on the total CPU or just current usage",
+          "type": "boolean"
+        },
+        "unnormalized_cpu": {
+          "default": false,
+          "description": "Whether to set CPU% on a process to be based on the total CPU or per-core CPU% (not divided by the number of cpus)",
+          "type": "boolean"
+        },
+        "group_processes": {
+          "default": false,
+          "description": "Whether to group processes with the same name together by default",
+          "type": "boolean"
+        },
+        "case_sensitive": {
+          "default": false,
+          "description": "Whether to make process searching case sensitive by default",
+          "type": "boolean"
+        },
+        "whole_word": {
+          "default": false,
+          "description": "Whether to make process searching look for matching the entire word by default",
+          "type": "boolean"
+        },
+        "regex": {
+          "default": false,
+          "description": "Whether to make process searching use regex by default",
+          "type": "boolean"
+        },
+        "temperature_type": {
+          "default": "k",
+          "enum": ["k", "f", "c", "kelvin", "fahrenheit", "celsius"],
+          "description": "Defaults to Celsius",
+          "type": "string"
+        },
+        "default_time_value": {
+          "default": 60000,
+          "description": "The default time interval in milliseconds",
+          "type": "integer"
+        },
+        "time_delta": {
+          "default": 15000,
+          "description": "The time delta on each zoom in/out action in milliseconds",
+          "type": "integer"
+        },
+        "hide_time": {
+          "default": false,
+          "description": "Hides the time scale",
+          "type": "boolean"
+        },
+        "default_widget_type": {
+          "default": "proc",
+          "description": "Override layout default widget",
+          "type": "string"
+        },
+        "default_widget_count": {
+          "default": 1,
+          "description": "Override layout default widget",
+          "type": "integer"
+        },
+        "expanded_on_startup": {
+          "default": true,
+          "description": "Expand selected widget upon starting the app",
+          "type": "boolean"
+        },
+        "basic": {
+          "default": false,
+          "description": "Use basic mode",
+          "type": "boolean"
+        },
+        "use_old_network_legend": {
+          "default": false,
+          "description": "Use the old network legend style",
+          "type": "boolean"
+        },
+        "hide_table_gap": {
+          "default": false,
+          "description": "Remove space in tables",
+          "type": "boolean"
+        },
+        "battery": {
+          "default": false,
+          "description": "Show the battery widgets",
+          "type": "boolean"
+        },
+        "disable_click": {
+          "default": false,
+          "description": "Disable mouse clicks",
+          "type": "boolean"
+        },
+        "color": {
+          "default": "default",
+          "enum": [
+            "default",
+            "default-light",
+            "gruvbox",
+            "gruvbox-light",
+            "nord",
+            "nord-light"
+          ],
+          "description": "Built-in themes",
+          "type": "string"
+        },
+        "process_memory_as_value": {
+          "default": false,
+          "description": "Show memory values in the processes widget as values by default",
+          "type": "boolean"
+        },
+        "tree": {
+          "default": false,
+          "description": "Show tree mode by default in the processes widget",
+          "type": "boolean"
+        },
+        "show_table_scroll_position": {
+          "default": false,
+          "description": "Shows an indicator in table widgets tracking where in the list you are",
+          "type": "boolean"
+        },
+        "process_command": {
+          "default": false,
+          "description": "Show processes as their commands by default in the process widget",
+          "type": "boolean"
+        },
+        "network_use_binary_prefix": {
+          "default": false,
+          "description": "Displays the network widget with binary prefixes",
+          "type": "boolean"
+        },
+        "network_use_bytes": {
+          "default": false,
+          "description": "Displays the network widget using bytes",
+          "type": "boolean"
+        },
+        "network_use_log": {
+          "default": false,
+          "description": "Displays the network widget with a log scale",
+          "type": "boolean"
+        },
+        "disable_advanced_kill": {
+          "default": false,
+          "description": "Hides advanced options to stop a process on Unix-like systems",
+          "type": "boolean"
+        },
+        "enable_gpu_memory": {
+          "default": false,
+          "description": "Shows GPU(s) memory",
+          "type": "boolean"
+        },
+        "retention": {
+          "default": "10m",
+          "description": "How much data is stored at once in terms of time",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "colors": {
+      "description": "These are all the components that support custom theming.  Note that colour support will depend on terminal support",
+      "properties": {
+        "table_header_color": {
+          "default": "LightBlue",
+          "description": "Represents the colour of table headers (processes, CPU, disks, temperature)",
+          "type": "string"
+        },
+        "widget_title_color": {
+          "default": "Gray",
+          "description": "Represents the colour of the label each widget has",
+          "type": "string"
+        },
+        "avg_cpu_color": {
+          "default": "Red",
+          "description": "Represents the average CPU color",
+          "type": "string"
+        },
+        "cpu_core_colors": {
+          "items": {
+            "uniqueItems": true,
+            "minItems": 1,
+            "type": "string"
+          },
+          "default": [
+            "LightMagenta",
+            "LightYellow",
+            "LightCyan",
+            "LightGreen",
+            "LightBlue",
+            "LightRed",
+            "Cyan",
+            "Green",
+            "Blue",
+            "Red"
+          ],
+          "description": "Represents the colour the core will use in the CPU legend and graph",
+          "type": "array"
+        },
+        "ram_color": {
+          "default": "LightMagenta",
+          "description": "Represents the colour RAM will use in the memory legend and graph",
+          "type": "string"
+        },
+        "swap_color": {
+          "default": "LightYellow",
+          "description": "Represents the colour SWAP will use in the memory legend and graph",
+          "type": "string"
+        },
+        "arc_color": {
+          "default": "LightCyan",
+          "description": "Represents the colour ARC will use in the memory legend and graph",
+          "type": "string"
+        },
+        "gpu_core_colors": {
+          "items": {
+            "uniqueItems": true,
+            "minItems": 1,
+            "type": "string"
+          },
+          "default": [
+            "LightGreen",
+            "LightBlue",
+            "LightRed",
+            "Cyan",
+            "Green",
+            "Blue",
+            "Red"
+          ],
+          "description": "Represents the colour the GPU will use in the memory legend and graph",
+          "type": "array"
+        },
+        "rx_color": {
+          "default": "LightCyan",
+          "description": "Represents the colour rx will use in the network legend and graph",
+          "type": "string"
+        },
+        "tx_color": {
+          "default": "LightGreen",
+          "description": "Represents the colour tx will use in the network legend and graph",
+          "type": "string"
+        },
+        "border_color": {
+          "default": "Gray",
+          "description": "Represents the colour of the border of unselected widgets",
+          "type": "string"
+        },
+        "highlighted_border_color": {
+          "default": "LightBlue",
+          "description": "Represents the colour of the border of selected widgets",
+          "type": "string"
+        },
+        "text_color": {
+          "default": "Gray",
+          "description": "Represents the colour of most text",
+          "type": "string"
+        },
+        "selected_text_color": {
+          "default": "Black",
+          "description": "Represents the colour of text that is selected",
+          "type": "string"
+        },
+        "selected_bg_color": {
+          "default": "LightBlue",
+          "description": "Represents the background colour of text that is selected",
+          "type": "string"
+        },
+        "graph_color": {
+          "default": "Gray",
+          "description": "Represents the colour of the lines and text of the graph",
+          "type": "string"
+        },
+        "high_battery_color": {
+          "default": "green",
+          "description": "Represents the colours of the battery based on charge",
+          "type": "string"
+        },
+        "medium_battery_color": {
+          "default": "yellow",
+          "description": "Represents the colours of the battery based on charge",
+          "type": "string"
+        },
+        "low_battery_color": {
+          "default": "red",
+          "description": "Represents the colours of the battery based on charge",
+          "type": "string"
+        }
+      }
+    },
+    "row": {
+      "$ref": "#/definitions/row"
+    },
+    "disk_filter": {
+      "$ref": "#/definitions/filter"
+    },
+    "mount_filter": {
+      "$ref": "#/definitions/filter"
+    },
+    "temp_filter": {
+      "$ref": "#/definitions/filter"
+    },
+    "net_filter": {
+      "$ref": "#/definitions/filter"
+    }
+  }
+}

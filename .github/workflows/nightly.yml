@@ -9,9 +9,10 @@ on:
   workflow_dispatch:
     inputs:
       isMock:
-        description: "Replace with any word other than 'mock' to trigger a non-mock run."
-        default: "mock"
+        description: "Mock run"
+        default: true
         required: false
+        type: boolean
 
 env:
   CARGO_INCREMENTAL: 0
@@ -19,25 +20,33 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
 
 jobs:
-  # TODO: Add a pre-job check to skip if no change; may want to add something to check if there is a new rust version/week limit of skips?
-
+  # Check if things should be skipped, or if this is a mock job.
   initialize-job:
     name: initialize-job
     runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
+      - name: Check if this action should be skipped
+        id: skip_check
+        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
+        with:
+          skip_after_successful_duplicate: "true"
+          do_not_skip: '["workflow_dispatch"]'
+
       - name: Check if mock
         run: |
-          echo "${{ github.event.inputs.isMock }}";
           if [[ -z "${{ github.event.inputs.isMock }}" ]]; then
             echo "This is a scheduled nightly run."
-          elif [[ "${{ github.event.inputs.isMock }}" == "mock" ]]; then
+          elif [[ "${{ github.event.inputs.isMock }}" == "true" ]]; then
             echo "This is a mock run."
           else
             echo "This is NOT a mock run. Watch for the generated files!"
           fi
 
   build-release:
-    needs: [initialize-job]
+    needs: initialize-job
+    if: ${{ needs.initialize-job.outputs.should_skip != 'true' }}
     uses: ./.github/workflows/build_releases.yml
     with:
       caller: "nightly"
@@ -45,36 +54,39 @@ jobs:
 
   upload-release:
     name: upload-release
+    needs: build-release
     runs-on: ubuntu-latest
-    needs: [build-release]
     steps:
-      - name: Get release artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
-          name: release
+          fetch-depth: 1
+
+      - name: Get release artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          pattern: release-*
           path: release
+          merge-multiple: true
 
       - name: Print out all release files
         run: |
           echo "Generated $(ls ./release | wc -l) files:"
           du -h -d 0 ./release/*
 
-      - name: Delete tag and release
-        uses: ClementTsang/delete-tag-and-release@v0.3.1
-        if: github.event.inputs.isMock != 'mock'
-        with:
-          delete_release: true
-          tag_name: nightly
+      - name: Delete tag and release if not mock
+        if: github.event.inputs.isMock != 'true'
+        run: gh release delete nightly --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release
         run: sleep 10
-        if: github.event.inputs.isMock != 'mock'
+        if: github.event.inputs.isMock != 'true'
 
-      - name: Upload all saved release files if not mock
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # 0.1.15
-        if: github.event.inputs.isMock != 'mock'
+      - name: Add all release files and create nightly release if not mock
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # 2.0.8
+        if: github.event.inputs.isMock != 'true'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true

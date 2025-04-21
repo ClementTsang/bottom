@@ -1,0 +1,5 @@
+#:schema none
+# Adding this to avoid a warning from some schema linters
+
+[styles]
+theme = "gruvbox"

@@ -1,35 +1,33 @@
+pub mod process_columns;
+pub mod process_data;
+pub mod query;
+mod sort_table;
+
 use std::{borrow::Cow, collections::BTreeMap};
 
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use itertools::Itertools;
-use serde::{de::Error, Deserialize};
+pub use process_columns::*;
+pub use process_data::*;
+use query::{ProcessQuery, parse_query};
+use sort_table::SortTableColumn;
 
 use crate::{
     app::{
-        data_farmer::{DataCollection, ProcessData},
-        data_harvester::processes::ProcessHarvest,
-        query::*,
         AppConfigFields, AppSearchState,
+        data::{ProcessData, StoredData},
     },
-    canvas::canvas_styling::CanvasStyling,
-    components::data_table::{
+    canvas::components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    Pid,
+    collection::processes::{Pid, ProcessHarvest},
+    options::config::style::Styles,
 };
 
-pub mod proc_widget_column;
-pub use proc_widget_column::*;
-
-pub mod proc_widget_data;
-pub use proc_widget_data::*;
-
-mod sort_table;
-use sort_table::SortTableColumn;
-
-/// ProcessSearchState only deals with process' search's current settings and state.
+/// ProcessSearchState only deals with process' search's current settings and
+/// state.
 pub struct ProcessSearchState {
     pub search_state: AppSearchState,
     pub is_ignoring_case: bool,
@@ -78,8 +76,8 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
 
     match column {
         CpuPercent => SortColumn::new(CpuPercent).default_descending(),
-        MemoryVal => SortColumn::new(MemoryVal).default_descending(),
-        MemoryPercent => SortColumn::new(MemoryPercent).default_descending(),
+        MemValue => SortColumn::new(MemValue).default_descending(),
+        MemPercent => SortColumn::new(MemPercent).default_descending(),
         Pid => SortColumn::new(Pid),
         Count => SortColumn::new(Count),
         Name => SortColumn::soft(Name, Some(0.3)),
@@ -89,8 +87,14 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         TotalRead => SortColumn::hard(TotalRead, 8).default_descending(),
         TotalWrite => SortColumn::hard(TotalWrite, 8).default_descending(),
         User => SortColumn::soft(User, Some(0.05)),
-        State => SortColumn::hard(State, 7),
+        State => SortColumn::hard(State, 9),
         Time => SortColumn::new(Time),
+        #[cfg(feature = "gpu")]
+        GpuMemValue => SortColumn::new(GpuMemValue).default_descending(),
+        #[cfg(feature = "gpu")]
+        GpuMemPercent => SortColumn::new(GpuMemPercent).default_descending(),
+        #[cfg(feature = "gpu")]
+        GpuUtilPercent => SortColumn::new(GpuUtilPercent).default_descending(),
     }
 }
 
@@ -117,32 +121,10 @@ pub enum ProcWidgetColumn {
     User,
     State,
     Time,
-}
-
-impl<'de> Deserialize<'de> for ProcWidgetColumn {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let value = String::deserialize(deserializer)?.to_lowercase();
-        match value.as_str() {
-            "cpu%" => Ok(ProcWidgetColumn::Cpu),
-            "mem" => Ok(ProcWidgetColumn::Mem),
-            "mem%" => Ok(ProcWidgetColumn::Mem),
-            "pid" => Ok(ProcWidgetColumn::PidOrCount),
-            "count" => Ok(ProcWidgetColumn::PidOrCount),
-            "name" => Ok(ProcWidgetColumn::ProcNameOrCommand),
-            "command" => Ok(ProcWidgetColumn::ProcNameOrCommand),
-            "read" | "r/s" | "rps" => Ok(ProcWidgetColumn::ReadPerSecond),
-            "write" | "w/s" | "wps" => Ok(ProcWidgetColumn::WritePerSecond),
-            "tread" | "t.read" => Ok(ProcWidgetColumn::TotalRead),
-            "twrite" | "t.write" => Ok(ProcWidgetColumn::TotalWrite),
-            "state" => Ok(ProcWidgetColumn::State),
-            "user" => Ok(ProcWidgetColumn::User),
-            "time" => Ok(ProcWidgetColumn::Time),
-            _ => Err(D::Error::custom("doesn't match any column type")),
-        }
-    }
+    #[cfg(feature = "gpu")]
+    GpuMem,
+    #[cfg(feature = "gpu")]
+    GpuUtil,
 }
 
 // This is temporary. Switch back to `ProcColumn` later!
@@ -159,7 +141,8 @@ pub struct ProcWidgetState {
     /// The state of the togglable table that controls sorting.
     pub sort_table: SortTable,
 
-    /// The internal column mapping as an [`IndexSet`], to allow us to do quick mappings of column type -> index.
+    /// The internal column mapping as an [`IndexSet`], to allow us to do quick
+    /// mappings of column type -> index.
     pub column_mapping: IndexSet<ProcWidgetColumn>,
 
     /// A name-to-pid mapping.
@@ -177,7 +160,7 @@ pub struct ProcWidgetState {
 }
 
 impl ProcWidgetState {
-    fn new_sort_table(config: &AppConfigFields, colours: &CanvasStyling) -> SortTable {
+    fn new_sort_table(config: &AppConfigFields, palette: &Styles) -> SortTable {
         const COLUMNS: [Column<SortTableColumn>; 1] = [Column::hard(SortTableColumn, 7)];
 
         let props = DataTableProps {
@@ -188,13 +171,13 @@ impl ProcWidgetState {
             show_table_scroll_position: false,
             show_current_entry_when_unfocused: false,
         };
-        let styling = DataTableStyling::from_colours(colours);
+        let styling = DataTableStyling::from_palette(palette);
 
         DataTable::new(COLUMNS, props, styling)
     }
 
     fn new_process_table(
-        config: &AppConfigFields, colours: &CanvasStyling, columns: Vec<SortColumn<ProcColumn>>,
+        config: &AppConfigFields, colours: &Styles, columns: Vec<SortColumn<ProcColumn>>,
         default_index: usize, default_order: SortOrder,
     ) -> ProcessTable {
         let inner_props = DataTableProps {
@@ -210,14 +193,14 @@ impl ProcWidgetState {
             sort_index: default_index,
             order: default_order,
         };
-        let styling = DataTableStyling::from_colours(colours);
+        let styling = DataTableStyling::from_palette(colours);
 
         DataTable::new_sortable(columns, props, styling)
     }
 
     pub fn new(
         config: &AppConfigFields, mode: ProcWidgetMode, table_config: ProcTableConfig,
-        colours: &CanvasStyling, config_columns: &Option<IndexSet<ProcWidgetColumn>>,
+        colours: &Styles, config_columns: &Option<IndexSet<ProcWidgetColumn>>,
     ) -> Self {
         let process_search_state = {
             let mut pss = ProcessSearchState::default();
@@ -241,7 +224,7 @@ impl ProcWidgetState {
 
             let is_count = matches!(mode, ProcWidgetMode::Grouped);
             let is_command = table_config.is_command;
-            let mem_vals = table_config.show_memory_as_values;
+            let mem_as_values = table_config.show_memory_as_values;
 
             match config_columns {
                 Some(columns) if !columns.is_empty() => columns
@@ -264,10 +247,10 @@ impl ProcWidgetState {
                             }
                             ProcWidgetColumn::Cpu => CpuPercent,
                             ProcWidgetColumn::Mem => {
-                                if mem_vals {
-                                    MemoryVal
+                                if mem_as_values {
+                                    MemValue
                                 } else {
-                                    MemoryPercent
+                                    MemPercent
                                 }
                             }
                             ProcWidgetColumn::ReadPerSecond => ReadPerSecond,
@@ -277,6 +260,16 @@ impl ProcWidgetState {
                             ProcWidgetColumn::User => User,
                             ProcWidgetColumn::State => State,
                             ProcWidgetColumn::Time => Time,
+                            #[cfg(feature = "gpu")]
+                            ProcWidgetColumn::GpuMem => {
+                                if mem_as_values {
+                                    GpuMemValue
+                                } else {
+                                    GpuMemPercent
+                                }
+                            }
+                            #[cfg(feature = "gpu")]
+                            ProcWidgetColumn::GpuUtil => GpuUtilPercent,
                         };
 
                         make_column(col)
@@ -287,13 +280,14 @@ impl ProcWidgetState {
                         if is_count { Count } else { Pid },
                         if is_command { Command } else { Name },
                         CpuPercent,
-                        if mem_vals { MemoryVal } else { MemoryPercent },
+                        if mem_as_values { MemValue } else { MemPercent },
                         ReadPerSecond,
                         WritePerSecond,
                         TotalRead,
                         TotalWrite,
                         User,
                         State,
+                        Time,
                     ];
 
                     default_columns.into_iter().map(make_column).collect()
@@ -308,7 +302,7 @@ impl ProcWidgetState {
 
                 match col.inner() {
                     CpuPercent => ProcWidgetColumn::Cpu,
-                    MemoryVal | MemoryPercent => ProcWidgetColumn::Mem,
+                    MemValue | MemPercent => ProcWidgetColumn::Mem,
                     Pid | Count => ProcWidgetColumn::PidOrCount,
                     Name | Command => ProcWidgetColumn::ProcNameOrCommand,
                     ReadPerSecond => ProcWidgetColumn::ReadPerSecond,
@@ -318,6 +312,10 @@ impl ProcWidgetState {
                     State => ProcWidgetColumn::State,
                     User => ProcWidgetColumn::User,
                     Time => ProcWidgetColumn::Time,
+                    #[cfg(feature = "gpu")]
+                    GpuMemValue | GpuMemPercent => ProcWidgetColumn::GpuMem,
+                    #[cfg(feature = "gpu")]
+                    GpuUtilPercent => ProcWidgetColumn::GpuUtil,
                 }
             })
             .collect::<IndexSet<_>>();
@@ -380,11 +378,11 @@ impl ProcWidgetState {
         self.column_mapping
             .get_index_of(&ProcWidgetColumn::Mem)
             .and_then(|index| self.table.columns.get(index))
-            .map(|col| matches!(col.inner(), ProcColumn::MemoryPercent))
+            .map(|col| matches!(col.inner(), ProcColumn::MemPercent))
             .unwrap_or(false)
     }
 
-    fn get_query(&self) -> &Option<Query> {
+    fn get_query(&self) -> &Option<ProcessQuery> {
         if self.proc_search.search_state.is_invalid_or_blank_search() {
             &None
         } else {
@@ -392,22 +390,26 @@ impl ProcWidgetState {
         }
     }
 
-    /// This function *only* updates the displayed process data. If there is a need to update the actual *stored* data,
-    /// call it before this function.
-    pub fn ingest_data(&mut self, data_collection: &DataCollection) {
+    /// Update the current table data.
+    ///
+    /// This function *only* updates the displayed process data. If there is a
+    /// need to update the actual *stored* data, call it before this
+    /// function.
+    pub fn set_table_data(&mut self, stored_data: &StoredData) {
         let data = match &self.mode {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
-                self.get_normal_data(&data_collection.process_data.process_harvest)
+                self.get_normal_data(&stored_data.process_data.process_harvest)
             }
             ProcWidgetMode::Tree { collapsed_pids } => {
-                self.get_tree_data(collapsed_pids, data_collection)
+                self.get_tree_data(collapsed_pids, stored_data)
             }
         };
         self.table.set_data(data);
+        self.force_update_data = false;
     }
 
     fn get_tree_data(
-        &self, collapsed_pids: &HashSet<Pid>, data_collection: &DataCollection,
+        &self, collapsed_pids: &HashSet<Pid>, stored_data: &StoredData,
     ) -> Vec<ProcWidgetData> {
         const BRANCH_END: char = '└';
         const BRANCH_SPLIT: char = '├';
@@ -423,10 +425,10 @@ impl ProcWidgetState {
             process_parent_mapping,
             orphan_pids,
             ..
-        } = &data_collection.process_data;
+        } = &stored_data.process_data;
 
         // Only keep a set of the kept PIDs.
-        let kept_pids = data_collection
+        let kept_pids = stored_data
             .process_data
             .process_harvest
             .iter()
@@ -461,7 +463,8 @@ impl ProcWidgetState {
             }
         }
 
-        // A process is shown under the filtered tree if at least one of these conditions hold:
+        // A process is shown under the filtered tree if at least one of these
+        // conditions hold:
         // - The process itself matches.
         // - The process contains some descendant that matches.
         // - The process's parent (and only parent, not any ancestor) matches.
@@ -490,7 +493,8 @@ impl ProcWidgetState {
 
                         // Show the entry if it is:
                         // - Matches the filter.
-                        // - Has at least one child (doesn't have to be direct) that matches the filter.
+                        // - Has at least one child (doesn't have to be direct) that matches the
+                        //   filter.
                         // - Is the child of a shown process.
                         let is_shown = is_process_matching
                             || !shown_children.is_empty()
@@ -690,7 +694,8 @@ impl ProcWidgetState {
                 if let Some(grouped_process_harvest) = id_process_mapping.get_mut(id) {
                     grouped_process_harvest.add(process);
                 } else {
-                    // FIXME: [PERF] could maybe eliminate an allocation here in the grouped mode... or maybe just avoid the entire transformation step, making an alloc fine.
+                    // FIXME: [PERF] could maybe eliminate an allocation here in the grouped mode...
+                    // or maybe just avoid the entire transformation step, making an alloc fine.
                     id_process_mapping.insert(id, process.clone());
                 }
             }
@@ -734,11 +739,28 @@ impl ProcWidgetState {
         if let Some(index) = self.column_mapping.get_index_of(&ProcWidgetColumn::Mem) {
             if let Some(mem) = self.get_mut_proc_col(index) {
                 match mem {
-                    ProcColumn::MemoryVal => {
-                        *mem = ProcColumn::MemoryPercent;
+                    ProcColumn::MemValue => {
+                        *mem = ProcColumn::MemPercent;
                     }
-                    ProcColumn::MemoryPercent => {
-                        *mem = ProcColumn::MemoryVal;
+                    ProcColumn::MemPercent => {
+                        *mem = ProcColumn::MemValue;
+                    }
+                    _ => unreachable!(),
+                }
+
+                self.sort_table.set_data(self.column_text());
+                self.force_data_update();
+            }
+        }
+        #[cfg(feature = "gpu")]
+        if let Some(index) = self.column_mapping.get_index_of(&ProcWidgetColumn::GpuMem) {
+            if let Some(mem) = self.get_mut_proc_col(index) {
+                match mem {
+                    ProcColumn::GpuMemValue => {
+                        *mem = ProcColumn::GpuMemPercent;
+                    }
+                    ProcColumn::GpuMemPercent => {
+                        *mem = ProcColumn::GpuMemValue;
                     }
                     _ => unreachable!(),
                 }
@@ -762,8 +784,8 @@ impl ProcWidgetState {
         self.force_update_data = true;
     }
 
-    /// Marks the selected column as hidden, and automatically resets the selected column to the default
-    /// sort index and order.
+    /// Marks the selected column as hidden, and automatically resets the
+    /// selected column to the default sort index and order.
     fn hide_column(&mut self, column: ProcWidgetColumn) {
         if let Some(index) = self.column_mapping.get_index_of(&column) {
             if let Some(col) = self.table.columns.get_mut(index) {
@@ -786,7 +808,8 @@ impl ProcWidgetState {
         }
     }
 
-    /// Select a column. If the column is already selected, then just toggle the sort order.
+    /// Select a column. If the column is already selected, then just toggle the
+    /// sort order.
     pub fn select_column(&mut self, column: ProcWidgetColumn) {
         if let Some(index) = self.column_mapping.get_index_of(&column) {
             self.table.set_sort_index(index);
@@ -840,12 +863,15 @@ impl ProcWidgetState {
 
     /// Toggles the appropriate columns/settings when tab is pressed.
     ///
-    /// If count is enabled, we should set the mode to [`ProcWidgetMode::Grouped`], and switch off the User and State
-    /// columns. We should also move the user off of the columns if they were selected, as those columns are now hidden
-    /// (handled by internal method calls), and go back to the "defaults".
+    /// If count is enabled, we should set the mode to
+    /// [`ProcWidgetMode::Grouped`], and switch off the User and State
+    /// columns. We should also move the user off of the columns if they were
+    /// selected, as those columns are now hidden (handled by internal
+    /// method calls), and go back to the "defaults".
     ///
-    /// Otherwise, if count is disabled, then if the columns exist, the User and State columns should be re-enabled,
-    /// and the mode switched to [`ProcWidgetMode::Normal`].
+    /// Otherwise, if count is disabled, then if the columns exist, the User and
+    /// State columns should be re-enabled, and the mode switched to
+    /// [`ProcWidgetMode::Normal`].
     pub fn toggle_tab(&mut self) {
         if !matches!(self.mode, ProcWidgetMode::Tree { .. }) {
             if let Some(index) = self
@@ -954,14 +980,8 @@ impl ProcWidgetState {
         self.proc_search.search_state.walk_backward();
     }
 
-    /// Returns the number of columns *enabled*. Note this differs from *visible* - a column may be enabled but not
-    /// visible (e.g. off screen).
-    pub fn num_enabled_columns(&self) -> usize {
-        self.table.columns.iter().filter(|c| !c.is_hidden).count()
-    }
-
-    /// Sets the [`ProcWidget`]'s current sort index to whatever was in the sort table if possible, then closes the
-    /// sort table.
+    /// Sets the [`ProcWidgetState`]'s current sort index to whatever was in the
+    /// sort table if possible, then closes the sort table.
     pub(crate) fn use_sort_table_value(&mut self) {
         self.table.set_sort_index(self.sort_table.current_index());
 
@@ -1020,7 +1040,7 @@ mod test {
             wps: 0,
             total_read: 0,
             total_write: 0,
-            process_state: "N/A".to_string(),
+            process_state: "N/A",
             process_char: '?',
             #[cfg(target_family = "unix")]
             user: "root".to_string(),
@@ -1029,6 +1049,10 @@ mod test {
             num_similar: 0,
             disabled: false,
             time: Duration::from_secs(0),
+            #[cfg(feature = "gpu")]
+            gpu_mem_usage: MemUsage::Percent(1.1),
+            #[cfg(feature = "gpu")]
+            gpu_usage: 0,
         };
 
         let b = ProcWidgetData {
@@ -1076,7 +1100,7 @@ mod test {
         );
 
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::MemoryPercent, &mut data, SortOrder::Descending);
+        sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Descending);
         assert_eq!(
             [&b, &a, &c, &d].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
             data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
@@ -1084,7 +1108,7 @@ mod test {
 
         // Note that the PID ordering for ties is still ascending.
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::MemoryPercent, &mut data, SortOrder::Ascending);
+        sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
             [&c, &d, &a, &b].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
             data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
@@ -1107,7 +1131,7 @@ mod test {
 
     fn init_state(table_config: ProcTableConfig, columns: &[ProcWidgetColumn]) -> ProcWidgetState {
         let config = AppConfigFields::default();
-        let styling = CanvasStyling::default();
+        let styling = Styles::default();
         let columns = Some(columns.iter().cloned().collect());
 
         ProcWidgetState::new(
@@ -1134,7 +1158,7 @@ mod test {
         let columns = vec![
             ProcColumn::Pid,
             ProcColumn::Name,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
             ProcColumn::State,
         ];
         let state = init_default_state(&init_columns);
@@ -1152,14 +1176,10 @@ mod test {
         let original_columns = vec![
             ProcColumn::Pid,
             ProcColumn::Name,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
             ProcColumn::State,
         ];
-        let new_columns = vec![
-            ProcColumn::Count,
-            ProcColumn::Name,
-            ProcColumn::MemoryPercent,
-        ];
+        let new_columns = vec![ProcColumn::Count, ProcColumn::Name, ProcColumn::MemPercent];
 
         let mut state = init_default_state(&init_columns);
         assert_eq!(get_columns(&state.table), original_columns);
@@ -1184,16 +1204,12 @@ mod test {
         ];
         let original_columns = vec![
             ProcColumn::Name,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
             ProcColumn::User,
             ProcColumn::State,
             ProcColumn::Pid,
         ];
-        let new_columns = vec![
-            ProcColumn::Name,
-            ProcColumn::MemoryPercent,
-            ProcColumn::Count,
-        ];
+        let new_columns = vec![ProcColumn::Name, ProcColumn::MemPercent, ProcColumn::Count];
 
         let mut state = init_default_state(&init_columns);
         assert_eq!(get_columns(&state.table), original_columns);
@@ -1218,13 +1234,13 @@ mod test {
         let original_columns = vec![
             ProcColumn::Pid,
             ProcColumn::State,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
             ProcColumn::Command,
         ];
         let new_columns = vec![
             ProcColumn::Pid,
             ProcColumn::State,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
             ProcColumn::Name,
         ];
 
@@ -1252,13 +1268,13 @@ mod test {
         ];
         let original_columns = vec![
             ProcColumn::Pid,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
             ProcColumn::State,
             ProcColumn::Name,
         ];
         let new_columns = vec![
             ProcColumn::Pid,
-            ProcColumn::MemoryVal,
+            ProcColumn::MemValue,
             ProcColumn::State,
             ProcColumn::Name,
         ];
@@ -1283,13 +1299,13 @@ mod test {
         ];
         let original_columns = vec![
             ProcColumn::Pid,
-            ProcColumn::MemoryVal,
+            ProcColumn::MemValue,
             ProcColumn::State,
             ProcColumn::Name,
         ];
         let new_columns = vec![
             ProcColumn::Pid,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
             ProcColumn::State,
             ProcColumn::Name,
         ];
@@ -1318,7 +1334,7 @@ mod test {
         ];
         let original_columns = vec![
             ProcColumn::Pid,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
             ProcColumn::State,
             ProcColumn::Command,
         ];
@@ -1348,7 +1364,7 @@ mod test {
         ];
         let original_columns = vec![
             ProcColumn::Pid,
-            ProcColumn::MemoryVal,
+            ProcColumn::MemValue,
             ProcColumn::State,
             ProcColumn::Name,
         ];
@@ -1370,8 +1386,9 @@ mod test {
 
     /// Tests toggling if both mem and mem% columns are configured.
     ///
-    /// Currently, this test doesn't really do much, since we treat these two columns as the same - this test is
-    /// intended for use later when we might allow both at the same time.
+    /// Currently, this test doesn't really do much, since we treat these two
+    /// columns as the same - this test is intended for use later when we
+    /// might allow both at the same time.
     #[test]
     fn double_memory_sim_toggle() {
         let init_columns = [
@@ -1382,13 +1399,13 @@ mod test {
             ProcWidgetColumn::Mem,
         ];
         let original_columns = vec![
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
             ProcColumn::Pid,
             ProcColumn::State,
             ProcColumn::Name,
         ];
         let new_columns = vec![
-            ProcColumn::MemoryVal,
+            ProcColumn::MemValue,
             ProcColumn::Pid,
             ProcColumn::State,
             ProcColumn::Name,
@@ -1406,8 +1423,9 @@ mod test {
 
     /// Tests toggling if both pid and count columns are configured.
     ///
-    /// Currently, this test doesn't really do much, since we treat these two columns as the same - this test is
-    /// intended for use later when we might allow both at the same time.
+    /// Currently, this test doesn't really do much, since we treat these two
+    /// columns as the same - this test is intended for use later when we
+    /// might allow both at the same time.
     #[test]
     fn pid_and_count_sim_toggle() {
         let init_columns = [
@@ -1420,14 +1438,10 @@ mod test {
         let original_columns = vec![
             ProcColumn::Name,
             ProcColumn::Pid,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
             ProcColumn::State,
         ];
-        let new_columns = vec![
-            ProcColumn::Name,
-            ProcColumn::Count,
-            ProcColumn::MemoryPercent,
-        ];
+        let new_columns = vec![ProcColumn::Name, ProcColumn::Count, ProcColumn::MemPercent];
 
         let mut state = init_default_state(&init_columns);
         assert_eq!(get_columns(&state.table), original_columns);
@@ -1443,8 +1457,9 @@ mod test {
 
     /// Tests toggling if both command and name columns are configured.
     ///
-    /// Currently, this test doesn't really do much, since we treat these two columns as the same - this test is
-    /// intended for use later when we might allow both at the same time.
+    /// Currently, this test doesn't really do much, since we treat these two
+    /// columns as the same - this test is intended for use later when we
+    /// might allow both at the same time.
     #[test]
     fn command_name_sim_toggle() {
         let init_columns = [
@@ -1458,13 +1473,13 @@ mod test {
             ProcColumn::Command,
             ProcColumn::Pid,
             ProcColumn::State,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
         ];
         let new_columns = vec![
             ProcColumn::Name,
             ProcColumn::Pid,
             ProcColumn::State,
-            ProcColumn::MemoryPercent,
+            ProcColumn::MemPercent,
         ];
 
         let table_config = ProcTableConfig {

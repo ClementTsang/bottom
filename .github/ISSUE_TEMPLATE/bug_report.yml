@@ -8,8 +8,8 @@ body:
       label: Checklist
       options:
         - label: >
-            I've looked through [troubleshooting](https://clementtsang.github.io/bottom/nightly/troubleshooting),
-            [known problems](https://clementtsang.github.io/bottom/nightly/support/official/#known-problems), and 
+            I've looked through the [troubleshooting docs](https://clementtsang.github.io/bottom/nightly/troubleshooting),
+            [the known problems list](https://clementtsang.github.io/bottom/nightly/support/official/#known-problems), and 
             [existing open issues](https://github.com/ClementTsang/bottom/issues?q=is%3Aopen+is%3Aissue) for similar
             issues.
           required: true
@@ -19,47 +19,55 @@ body:
     attributes:
       label: What operating system and version are you using?
       description: >
-        Please provide what operating system(s) and version(s) you are running that experiences the described issue.
-        Note that operating systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
+        Please provide the operating system(s) and version(s) that are experiencing the problem.
+        Note that issues on operating systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
         may not be prioritized/resolved.
-      placeholder: Arch Linux 5.18.15
+      placeholder: Arch Linux 6.6.2
 
   - type: dropdown
     id: architecture
     attributes:
       label: What architecture are you using?
       description: >
-        Please select the architecture(s) that are experiencing the described issue.
+        Please select the architecture(s) that are experiencing the problem.
         Note that systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
         may not be prioritized/resolved.
       multiple: true
       options:
-        - x86_64 / AMD64
+        - x86_64/AMD64
         - arm64
-        - arm32
         - x86
-        - Other (*please specify above in description*)
+        - arm32
+        - Other (please specify in the Additional Information area at the end)
 
   - type: textarea
     id: terminal
     attributes:
-      label: What terminal(s) are you running bottom on?
+      label: What terminal(s) are you running bottom on that are experiencing the problem?
       description: >
-        Please provide what terminal(s) you are running `bottom` on (e.g. Konsole, kitty)
+        Please provide what terminal(s) you are running `bottom` on (e.g. Konsole, kitty, urxvt)
         that are experiencing the issue, as well as their version and any relevant settings (e.g. terminal theme).
       placeholder: kitty 0.25.2
 
   - type: dropdown
-    id: zfs
+    id: filesystem
+    validations:
+      required: false
     attributes:
-      label: Are you using ZFS?
+      label: (Optional) What filesystem(s) are you using?
       description: >
-        Are you using ZFS on your system(s)?
-      multiple: false
+        If you know, please select what filesystem(s) you are using on the system that is experiencing the problem. This
+        can be especially helpful if the issue is related to either the disk or memory widgets.
+      multiple: true
       options:
-        - "Yes"
-        - "No"
-        - "Not sure"
+        - ext4
+        - NTFS
+        - exFAT
+        - FAT
+        - ZFS
+        - Btrfs
+        - APFS
+        - Other (please specify in the Additional Information area at the end)"
 
   - type: input
     id: version
@@ -68,9 +76,12 @@ body:
     attributes:
       label: What version of bottom are you running?
       description: >
-        Please provide which version of `bottom` you're running, which you can find with `btm -V`. If you are using
-        a nightly/non-release version, please also specify that.
-      placeholder: 0.9.6
+        Please specify which version of `bottom` you're running that is causing problems. You can find this with
+        `btm -V`. If you are using a nightly/non-release version, please also specify that.
+
+        It would also be helpful if you are not running [the latest version](https://github.com/ClementTsang/bottom/releases/latest)
+        to try that as well to see if the issue has already been resolved.
+      placeholder: 0.10.2
 
   - type: textarea
     id: install
@@ -79,9 +90,9 @@ body:
     attributes:
       label: How did you install bottom?
       description: >
-        Please mention how you installed `bottom`. If you manually compiled it, please also mention your _Rust version_.
+        Please describe how you installed `bottom`. If you manually compiled it, please also mention your _Rust version_.
 
-        **Note: if you installed from `bottom` from cargo, please ensure that you installed the right crate (https://crates.io/crates/bottom).**
+        **Note: if you installed `bottom` from cargo, please ensure that you installed the right crate (https://crates.io/crates/bottom).**
       placeholder: Installed bottom through the Arch official repos.
 
   # TODO: After some point also add in a `btm check` invocation

@@ -1,0 +1,47 @@
+# Small CI workflow to test if mkdocs documentation can be successfully built.
+
+name: test docs
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.repository != 'ClementTsang/bottom' }}
+
+jobs:
+  pre-job:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
+        with:
+          skip_after_successful_duplicate: "true"
+          paths: '["docs/**", ".github/workflows/docs.yml", ".github/workflows/test_docs.yml"]'
+          do_not_skip: '["workflow_dispatch"]'
+
+  test-build-documentation:
+    name: Test building docs
+    needs: pre-job
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: 3.12
+
+      - name: Install Python dependencies
+        run: pip install -r docs/requirements.txt
+
+      - name: Build docs with mkdocs
+        run: |
+          cd docs
+          mkdocs build

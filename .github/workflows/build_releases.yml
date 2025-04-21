@@ -1,11 +1,10 @@
 # Builds the following releases:
-# - Binary releases
+# - Binaries
+# - Binaries via VMs
+# - Cirrus binaries (currently just Linux 2.17)
+# - MSI installer for Windows (.msi)
 # - .deb releases
 # - .rpm releases
-# - MSI installer for Windows (.msi)
-# - Cirrus CI binaries
-#   - FreeBSD (x86_64)
-#   - macOS (aarch64)
 
 name: "build releases"
 
@@ -27,31 +26,31 @@ env:
   COMPLETION_DIR: "target/tmp/bottom/completion/"
   MANPAGE_DIR: "target/tmp/bottom/manpage/"
 
+permissions:
+  id-token: write
+  contents: read
+  attestations: write
+
 # TODO: Maybe add retry job in case of timeouts?
 jobs:
   build-binaries:
     name: "Build binaries"
     runs-on: ${{ matrix.info.os }}
     container: ${{ matrix.info.container }}
-    timeout-minutes: 30
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
         info:
           # ======= Supported targets =======
-          # Linux (x64, x86, aarch64)
+          # Linux (x86-64, x86, aarch64)
+          #
+          # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
           - {
               os: "ubuntu-20.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               generate-other-artifacts: true,
-            }
-          - {
-              os: "ubuntu-20.04",
-              target: "x86_64-unknown-linux-gnu",
-              cross: false,
-              container: quay.io/pypa/manylinux2014_x86_64,
-              suffix: "2-17",
             }
           - {
               os: "ubuntu-20.04",
@@ -79,10 +78,11 @@ jobs:
               cross: true,
             }
 
-          # macOS (x64), M1 is built via CirrusCI.
-          - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
+          # macOS (x86-64 and aarch64)
+          - { os: "macos-13", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
 
-          # Windows (x64, x86)
+          # Windows (x86-64, x86)
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
@@ -121,15 +121,20 @@ jobs:
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
             }
+
+          # Seems like cross' FreeBSD image is a bit broken? I
+          # get build errors, may be related to this issue:
+          # https://github.com/cross-rs/cross/issues/1291
     steps:
       - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        if: matrix.info.container == ''
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
       - name: Set up Rust toolchain
         if: matrix.info.container == ''
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
         with:
           toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
@@ -173,8 +178,13 @@ jobs:
         shell: bash
         run: |
           cp target/${{ matrix.info.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz" >> $GITHUB_ENV
+          tar -czvf bottom_${{ matrix.info.target }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.info.target }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        with:
+          subject-path: ${{ env.ASSET }}
 
       - name: Create release directory for artifact, move file
         shell: bash
@@ -204,18 +214,99 @@ jobs:
           cp ./desktop/bottom.desktop release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: "release-${{ matrix.info.target }}"
+          path: release
+
+  build-vm:
+    name: "Build binaries via VMs"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          # Seems like cross' FreeBSD image is a bit broken? I get build errors, may be related to this issue:
+          # https://github.com/cross-rs/cross/issues/1291
+          #
+          # Alas, that's why we do it with VMs.
+          - {
+              type: "freebsd",
+              os_release: "15.0",
+              target: "x86_64-unknown-freebsd",
+            }
+          - {
+              type: "freebsd",
+              os_release: "14.1",
+              target: "x86_64-unknown-freebsd",
+            }
+          - {
+              type: "freebsd",
+              os_release: "13.3",
+              target: "x86_64-unknown-freebsd",
+            }
+    steps:
+      - name: Checkout repository
+        if: matrix.info.container == ''
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 1
+
+      - name: Build (FreeBSD)
+        if: ${{ matrix.info.type == 'freebsd' }}
+        uses: vmactions/freebsd-vm@debf37ca7b7fa40e19c542ef7ba30d6054a706a4 # v1.1.5
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
+
+      - name: Move automatically generated completion/manpage
+        shell: bash
+        run: |
+          mv "$COMPLETION_DIR" completion
+          mv "$MANPAGE_DIR" manpage
+
+      - name: Bundle release and completion
+        shell: bash
+        run: |
+          cp target/${{ matrix.info.target }}/release/btm ./btm
+          tar -czvf bottom_${{ matrix.info.target }}-${{ matrix.info.os_release }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.info.target }}-${{ matrix.info.os_release }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        with:
+          subject-path: ${{ env.ASSET }}
+
+      - name: Create release directory for artifact, move file
+        shell: bash
+        run: |
+          mkdir release
+          mv ${{ env.ASSET }} release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        with:
+          retention-days: 3
+          name: "release-${{ matrix.info.target }}-${{ matrix.info.os_release }}"
           path: release
 
   build-msi:
-    name: "Build MSI installer"
+    name: "Build MSI (WiX) installer"
     runs-on: "windows-2019"
+    timeout-minutes: 12
     steps:
       - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
@@ -224,24 +315,32 @@ jobs:
         run: Install-WindowsFeature Net-Framework-Core
 
       - name: Install wixtoolset
-        uses: crazy-max/ghaction-chocolatey@5a5864861ce2c988001531e48993aa687c51f6c8 # 2.2.0
+        uses: crazy-max/ghaction-chocolatey@0e015857dd851f84fcb7fb53380eb5c4c8202333 # v3.0.0
         with:
           args: install -y wixtoolset
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
         with:
           toolchain: stable
           target: x86_64-pc-windows-msvc
 
+      - name: Install cargo-wix
+        shell: powershell
+        run: |
+          cargo install cargo-wix --version 0.3.8 --locked
+
       - name: Build MSI file
         shell: powershell
         env:
-          BTM_GENERATE: ""
+          BTM_GENERATE: true
         run: |
-          cargo install cargo-wix --version 0.3.1 --locked
-          cargo wix init
-          cargo wix
+          cargo wix --nocapture
+
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        with:
+          subject-path: "bottom_x86_64_installer.msi"
 
       - name: Create release directory for artifact, move files
         shell: bash
@@ -250,18 +349,19 @@ jobs:
           mv bottom_x86_64_installer.msi release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: "release-build-msi"
           path: release
 
   build-cirrus:
     name: "Build using Cirrus CI"
     runs-on: "ubuntu-latest"
+    timeout-minutes: 12
     steps:
       - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
 
@@ -279,21 +379,28 @@ jobs:
             raw=$(git branch -r --contains '${{ github.ref_name }}');
             BRANCH=${raw##*/};
           fi
-          python ./scripts/cirrus/build.py "$BRANCH" "release/" "${{ inputs.caller }}"
+          python ./scripts/cirrus/release.py "$BRANCH" "release/" "${{ inputs.caller }}"
+
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        with:
+          subject-path: "release/**/*.tar.gz"
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-build-cirrus
           path: release
 
   build-deb:
     name: "Build .deb software packages"
     runs-on: "ubuntu-20.04"
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
+        # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
         info:
           - { target: "x86_64-unknown-linux-gnu", dpkg: amd64 }
           - { target: "x86_64-unknown-linux-musl", cross: true, dpkg: amd64 }
@@ -323,12 +430,12 @@ jobs:
             }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
         with:
           toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
@@ -360,7 +467,7 @@ jobs:
         env:
           BTM_GENERATE: true
         run: |
-          cargo install cargo-deb --version 1.41.3 --locked
+          cargo install cargo-deb --version 2.5.1 --locked
           cargo deb --no-build --target ${{ matrix.info.target }}
           cp ./target/${{ matrix.info.target }}/debian/bottom_*.deb .
 
@@ -396,6 +503,11 @@ jobs:
           sudo chown $USER ./target/${{ matrix.info.target }}/debian/ 2>/dev/null || true
           rm -r ./target/${{ matrix.info.target }}/debian/
 
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        with:
+          subject-path: ${{ steps.verify.outputs.DEB_FILE }}
+
       - name: Create release directory for artifact, move file
         shell: bash
         run: |
@@ -403,16 +515,17 @@ jobs:
           mv ${{ steps.verify.outputs.DEB_FILE }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-build-deb-${{ matrix.info.target }}
           path: release
 
   build-rpm:
     name: "Build .rpm software packages"
     runs-on: ubuntu-latest
     container: ghcr.io/clementtsang/almalinux-8
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
@@ -421,12 +534,12 @@ jobs:
           - { target: "x86_64-unknown-linux-musl", cross: true }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
         with:
           toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
@@ -480,6 +593,11 @@ jobs:
           sudo chown $USER ./target/${{ matrix.info.target }}/generate-rpm/ 2>/dev/null || true
           rm -r ./target/${{ matrix.info.target }}/generate-rpm/
 
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        with:
+          subject-path: ${{ steps.verify.outputs.RPM_FILE }}
+
       - name: Create release directory for artifact, move file
         shell: bash
         run: |
@@ -487,8 +605,8 @@ jobs:
           mv ${{ steps.verify.outputs.RPM_FILE }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: release
+          name: release-build-rpm-${{ matrix.info.target }}
           path: release

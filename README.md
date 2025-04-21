@@ -1,11 +1,11 @@
 <div align="center">
-  <h1>bottom</h1>
+  <h1>bottom (btm)</h1>
 
   <p>
-  A customizable cross-platform graphical process/system monitor for the terminal.<br />Supports Linux, macOS, and Windows. Inspired by <a href=https://github.com/aksakalli/gtop>gtop</a>, <a href=https://github.com/xxxserxxx/gotop>gotop</a>, and <a href=https://github.com/htop-dev/htop/>htop</a>.
+    A customizable cross-platform graphical process/system monitor for the terminal.<br />Supports Linux, macOS, and Windows. Inspired by <a href=https://github.com/aksakalli/gtop>gtop</a>, <a href=https://github.com/xxxserxxx/gotop>gotop</a>, and <a href=https://github.com/htop-dev/htop>htop</a>.
   </p>
 
-[<img src="https://img.shields.io/github/actions/workflow/status/ClementTsang/bottom/ci.yml?branch=master&style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%3Amaster)
+[<img src="https://img.shields.io/github/actions/workflow/status/ClementTsang/bottom/ci.yml?branch=main&style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%main)
 [<img src="https://img.shields.io/crates/v/bottom.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/bottom)
 [<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://clementtsang.github.io/bottom/stable)
 [<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://clementtsang.github.io/bottom/nightly)
@@ -16,7 +16,7 @@
   <img src="assets/demo.gif" alt="Quick demo recording showing off bottom's searching, expanding, and process killing."/>
   <p>
     <sub>
-      Demo using the <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> theme (<code>--color gruvbox</code>), along with <a href="https://www.ibm.com/plex/">IBM Plex Mono</a> and <a href="https://sw.kovidgoyal.net/kitty/">Kitty</a>
+      Demo using the <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> theme (<code>--theme gruvbox</code>), along with <a href="https://www.ibm.com/plex/">IBM Plex Mono</a> and <a href="https://sw.kovidgoyal.net/kitty/">Kitty</a>
     </sub>
   </p>
 </div>
@@ -29,22 +29,25 @@
   - [Unofficial](#unofficial)
 - [Installation](#installation)
   - [Cargo](#cargo)
+  - [Alpine](#alpine)
   - [Arch Linux](#arch-linux)
   - [Debian / Ubuntu](#debian--ubuntu)
-  - [Snap](#snap)
+  - [Exherbo Linux](#exherbo-linux)
   - [Fedora / CentOS / AlmaLinux / Rocky Linux](#fedora--centos--almalinux--rocky-linux)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
+  - [openSUSE](#opensuse)
+  - [Snap](#snap)
   - [Solus](#solus)
   - [Void](#void)
   - [Homebrew](#homebrew)
   - [MacPorts](#macports)
-  - [Scoop](#scoop)
   - [Chocolatey](#chocolatey)
+  - [Scoop](#scoop)
   - [winget](#winget)
   - [Windows installer](#windows-installer)
-  - [Manual installation](#manual-installation)
-  - [Binaries](#binaries)
+  - [Conda](#conda)
+  - [Pre-built binaries](#pre-built-binaries)
     - [Auto-completion](#auto-completion)
 - [Usage](#usage)
 - [Configuration](#configuration)
@@ -78,14 +81,14 @@ As (yet another) process/system visualization and management application, bottom
 
 - [Cross-platform support](https://github.com/ClementTsang/bottom#support) for Linux, macOS, and Windows, with more planned in the future.
 
-- [Customizable behaviour](https://clementtsang.github.io/bottom/nightly/configuration/command-line-flags/) that can be controlled with command-line flags or a config file, such as:
+- [Customizable behaviour](https://clementtsang.github.io/bottom/nightly/configuration/command-line-options/) that can be controlled with command-line options or a config file, such as:
 
   - Custom and built-in colour themes
   - Customizing widget behaviour
   - Changing the layout of widgets
   - Filtering out entries in some widgets
 
-- Some other nice stuff, like:
+- And more:
 
   - [An htop-inspired basic mode](https://clementtsang.github.io/bottom/nightly/usage/basic-mode/)
   - [Expansion, which focuses on just one widget](https://clementtsang.github.io/bottom/nightly/usage/general-usage/#expansion)
@@ -105,7 +108,7 @@ bottom _officially_ supports the following operating systems and corresponding a
 - Windows (`x86_64`, `i686`)
 
 These platforms are tested to work for the most part and issues on these platforms will be fixed if possible.
-Furthermore, binaries are expected to be built and tested using the most recent version of stable Rust at the time.
+Furthermore, binaries are built and tested using the most recent version of stable Rust at the time.
 
 For more details on supported platforms and known problems, check out [the documentation](https://clementtsang.github.io/bottom/nightly/support/official/).
 
@@ -119,10 +122,11 @@ bottom may work on a number of platforms that aren't officially supported. Note 
 
 Note that some unsupported platforms may eventually be officially supported (e.g., FreeBSD).
 
-A non-comprehensive list of some currently unofficially supported platforms that may compile/work include:
+A non-comprehensive list of some currently unofficially-supported platforms that may compile/work include:
 
 - FreeBSD (`x86_64`)
 - Linux (`armv6`, `armv7`, `powerpc64le`, `riscv64gc`)
+- Android (`arm64`)
 
 For more details on unsupported platforms and known problems, check out [the documentation](https://clementtsang.github.io/bottom/nightly/support/unofficial/).
 
@@ -130,17 +134,18 @@ For more details on unsupported platforms and known problems, check out [the doc
 
 ### Cargo
 
-Installation via cargo can be done by installing the [`bottom`](https://crates.io/crates/bottom) crate:
+Installation via `cargo` can be done by installing the [`bottom`](https://crates.io/crates/bottom) crate:
 
 ```bash
-# If required, update Rust to the stable channel first:
+# You might need to update the stable version of Rust first.
+# Other versions might work, but this is not guaranteed.
 rustup update stable
 
-# Install
+# Install the binary from crates.io.
 cargo install bottom --locked
 
 # If you use another channel by default, you can specify
-# the stable channel like so:
+# the what channel to use like so:
 cargo +stable install bottom --locked
 
 # --locked may be omitted if you wish to not use the
@@ -148,6 +153,41 @@ cargo +stable install bottom --locked
 # aware that this may cause problems with dependencies.
 cargo install bottom
 ```
+
+Alternatively, you can use `cargo install` using the repo as the source.
+
+```bash
+# You might need to update the stable version of Rust first.
+# Other versions might work, but this is not guaranteed.
+rustup update stable
+
+# Option 1 - Download an archive from releases and install
+curl -LO https://github.com/ClementTsang/bottom/archive/0.10.2.tar.gz
+tar -xzvf 0.10.2.tar.gz
+cargo install --path . --locked
+
+# Option 2 - Manually clone the repo and install
+git clone https://github.com/ClementTsang/bottom
+cd bottom
+cargo install --path . --locked
+
+# Option 3 - Install using cargo with the repo as the source
+cargo install --git https://github.com/ClementTsang/bottom --locked
+
+# You can also pass in the target-cpu=native flag to try to
+# use better CPU-specific optimizations. For example:
+RUSTFLAGS="-C target-cpu=native" cargo install --path . --locked
+```
+
+### Alpine
+
+bottom is available as a [package](https://pkgs.alpinelinux.org/packages?name=bottom&branch=edge&repo=&arch=&origin=&flagged=&maintainer=) for Alpine Linux via `apk`:
+
+```bash
+apk add bottom
+```
+
+Packages for documentation ([`bottom-doc`](https://pkgs.alpinelinux.org/packages?name=bottom-doc&branch=edge&repo=&arch=&origin=&flagged=&maintainer=)) and completions for Bash ([`bottom-bash-completion`](https://pkgs.alpinelinux.org/packages?name=bottom-bash-completion&branch=edge&repo=&arch=&origin=&flagged=&maintainer=)), Fish ([`bottom-fish-completion`](https://pkgs.alpinelinux.org/packages?name=bottom-fish-completion&branch=edge&repo=&arch=&origin=&flagged=&maintainer=)), and Zsh ([`bottom-zsh-completion`](https://pkgs.alpinelinux.org/packages?name=bottom-zsh-completion&branch=edge&repo=&arch=&origin=&flagged=&maintainer=)) are also available.
 
 ### Arch Linux
 
@@ -157,24 +197,103 @@ bottom is available as an [official package](https://archlinux.org/packages/extr
 sudo pacman -S bottom
 ```
 
+If you want the latest changes that are not yet stable, you can also install `bottom-git` [from the AUR](https://aur.archlinux.org/packages/bottom-git):
+
+```bash
+# Using paru
+paru -S bottom-git
+
+# Using yay
+yay -S bottom-git
+```
+
 ### Debian / Ubuntu
 
 A `.deb` file is provided on each [stable release](https://github.com/ClementTsang/bottom/releases/latest) and
-[nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly) for x86, aarch64, and armv7
-(note stable ARM builds are only available for 0.6.8 and later). An example of installing this way:
+[nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly) for x86, aarch64, and armv7.
+Some examples of installing it this way:
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.6/bottom_0.9.6_amd64.deb
-sudo dpkg -i bottom_0.9.6_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2-1_amd64.deb
+sudo dpkg -i bottom_0.10.2-1_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.6/bottom_0.9.6_arm64.deb
-sudo dpkg -i bottom_0.9.6_arm64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2-1_arm64.deb
+sudo dpkg -i bottom_0.10.2-1_arm64.deb
 
 # ARM
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.6/bottom_0.9.6_armhf.deb
-sudo dpkg -i bottom_0.9.6_armhf.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_0.10.2-1_armhf.deb
+sudo dpkg -i bottom_0.10.2-1_armhf.deb
+
+# musl-based
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom-musl_0.10.2-1_amd64.deb
+sudo dpkg -i bottom-musl_0.10.2-1_amd64.deb
+```
+
+### Exherbo Linux
+
+bottom is available as a [rust package](https://gitlab.exherbo.org/exherbo/rust/-/tree/master/packages/sys-process/bottom) that can be installed with `cave`:
+
+```bash
+cave resolve -x repository/rust
+cave resolve -x bottom
+```
+
+### Fedora / CentOS / AlmaLinux / Rocky Linux
+
+bottom is available on [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
+
+```bash
+sudo dnf copr enable atim/bottom -y
+sudo dnf install bottom
+```
+
+bottom is also available via [Terra](https://terra.fyralabs.com/):
+
+```bash
+sudo dnf install --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' --setopt='terra.gpgkey=https://repos.fyralabs.com/terra$releasever/key.asc' terra-release
+sudo dnf install bottom
+```
+
+`.rpm` files are also generated for x86 in the [releases](https://github.com/ClementTsang/bottom/releases) page.
+For example:
+
+```bash
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom-0.10.2-1.x86_64.rpm
+sudo rpm -i bottom-0.10.2-1.x86_64.rpm
+```
+
+### Gentoo
+
+Available in the [official Gentoo repo](https://packages.gentoo.org/packages/sys-process/bottom):
+
+```bash
+sudo emerge --ask sys-process/bottom
+```
+
+### Nix
+
+Available [in Nixpkgs](https://search.nixos.org/packages?channel=unstable&show=bottom&from=0&size=1&sort=relevance&type=packages) as `bottom`:
+
+```bash
+nix profile install nixpkgs#bottom
+```
+
+`bottom` can also be installed and configured through the [home-manager](https://nix-community.github.io/home-manager) module:
+
+```nix
+{
+  programs.bottom.enable = true;
+}
+```
+
+### openSUSE
+
+Available in openSUSE Tumbleweed:
+
+```bash
+zypper in bottom
 ```
 
 ### Snap
@@ -189,44 +308,6 @@ sudo snap connect bottom:mount-observe
 sudo snap connect bottom:hardware-observe
 sudo snap connect bottom:system-observe
 sudo snap connect bottom:process-control
-```
-
-### Fedora / CentOS / AlmaLinux / Rocky Linux
-
-bottom is available in [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
-
-```bash
-sudo dnf copr enable atim/bottom -y
-sudo dnf install bottom
-```
-
-`.rpm` files are also generated (starting from 0.9.3) for x86. If you wish to install this way, then you can do
-something like:
-
-```bash
-# x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.9.6/bottom-0.9.6-1.x86_64.rpm
-sudo rpm -i bottom-0.9.6-1.x86_64.rpm
-
-# Nightly x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/nightly/bottom-0.9.6-1.x86_64.rpm
-sudo rpm -i bottom-0.9.6-1.x86_64.rpm
-```
-
-### Gentoo
-
-Available in the [official Gentoo repo](https://packages.gentoo.org/packages/sys-process/bottom):
-
-```bash
-sudo emerge --ask sys-process/bottom
-```
-
-### Nix
-
-Available [in the nix-community repo](https://github.com/nix-community/home-manager/blob/master/modules/programs/bottom.nix):
-
-```bash
-nix-env -i bottom
 ```
 
 ### Solus
@@ -262,20 +343,20 @@ sudo port selfupdate
 sudo port install bottom
 ```
 
-### Scoop
-
-Available in the [Main bucket](https://github.com/ScoopInstaller/Main):
-
-```bash
-scoop install bottom
-```
-
 ### Chocolatey
 
 Chocolatey packages are located [here](https://chocolatey.org/packages/bottom):
 
 ```bash
 choco install bottom
+```
+
+### Scoop
+
+Available in the [Main bucket](https://github.com/ScoopInstaller/Main):
+
+```bash
+scoop install bottom
 ```
 
 ### winget
@@ -296,39 +377,25 @@ You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 You can also manually install bottom as a Windows program by going to the [latest release](https://github.com/ClementTsang/bottom/releases/latest)
 and installing via the `.msi` file.
 
-### Manual installation
+### Conda
 
-There are a few ways to go about doing this manually. Note that you probably want
-to do so using the most recent version of stable Rust, which is how the binaries are built:
+You can install bottom using `conda` with [this conda-smithy repository](https://github.com/conda-forge/bottom-feedstock):
 
 ```bash
-# If required, update Rust on the stable channel first
-rustup update stable
+# Add the channel
+conda config --add channels conda-forge
+conda config --set channel_priority strict
 
-# Option 1 - Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.9.6.tar.gz
-tar -xzvf 0.9.6.tar.gz
-cargo install --path . --locked
-
-# Option 2 - Clone from master and install manually
-git clone https://github.com/ClementTsang/bottom
-cd bottom
-cargo install --path . --locked
-
-# Option 3 - Clone and install directly from the repo all via Cargo
-cargo install --git https://github.com/ClementTsang/bottom --locked
-
-# You can also pass in the target-cpu=native flag for
-# better CPU-specific optimizations. For example:
-RUSTFLAGS="-C target-cpu=native" cargo install --path . --locked
+# Install
+conda install bottom
 ```
 
-### Binaries
+### Pre-built binaries
 
-You can also use the pre-built release binaries manually:
+You can also use the pre-built release binaries:
 
-- [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), generated off of the release branch
-- [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated daily off of the master branch at 00:00 UTC
+- [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), built using the release branch
+- [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), built using the `main` branch at 00:00 UTC daily
 
 To use, download and extract the binary that matches your system. You can then run by doing:
 
@@ -336,40 +403,44 @@ To use, download and extract the binary that matches your system. You can then r
 ./btm
 ```
 
-or by installing to your system following whatever the procedure is for installing a binary to your system.
+or by installing to your system following the procedures for installing binaries to your system.
 
 #### Auto-completion
 
-The release binaries are packaged with shell auto-completion files for bash, fish, zsh, and Powershell. To install them:
+The release binaries in [the releases page](https://github.com/ClementTsang/bottom/releases) are packaged with
+shell auto-completion files for Bash, Zsh, fish, Powershell, Elvish, Fig, and Nushell. To install them:
 
-- For bash, move `btm.bash` to `$XDG_CONFIG_HOME/bash_completion or /etc/bash_completion.d/`.
+- For Bash, move `btm.bash` to `$XDG_CONFIG_HOME/bash_completion or /etc/bash_completion.d/`.
+- For Zsh, move `_btm` to one of your `$fpath` directories.
 - For fish, move `btm.fish` to `$HOME/.config/fish/completions/`.
-- For zsh, move `_btm` to one of your `$fpath` directories.
-- For PowerShell, add `_btm.ps1` to your PowerShell
-  [profile](<https://docs.microsoft.com/en-us/previous-versions//bb613488(v=vs.85)>).
+- For PowerShell, add `_btm.ps1` to your PowerShell [profile](<https://docs.microsoft.com/en-us/previous-versions//bb613488(v=vs.85)>).
+- For Elvish, the completion file is `btm.elv`.
+- For Fig, the completion file is `btm.ts`.
+- For Nushell, source `btm.nu`.
 
-The individual auto-completion files are also included in the stable/nightly releases as `completion.tar.gz`.
+The individual auto-completion files are also included in the stable/nightly releases as `completion.tar.gz` if needed.
 
 ## Usage
 
 You can run bottom using `btm`.
 
 - For help on flags, use `btm -h` for a quick overview or `btm --help` for more details.
-- For info on key and mouse bindings, press `?` inside bottom or refer to the [documentation](https://clementtsang.github.io/bottom/nightly/).
+- For info on key and mouse bindings, press `?` inside bottom or refer to the [documentation page](https://clementtsang.github.io/bottom/nightly/).
 
 You can find more information on usage in the [documentation](https://clementtsang.github.io/bottom/nightly/).
 
 ## Configuration
 
-bottom accepts a number of command-line arguments to change the behaviour of the application as desired. Additionally, bottom will automatically
-generate a configuration file on the first launch, which one can change as appropriate.
+bottom accepts a number of command-line arguments to change the behaviour of the application as desired.
+Additionally, bottom will automatically generate a configuration file on the first launch, which can be changed.
 
-More details on configuration can be found [in the documentation](https://clementtsang.github.io/bottom/nightly/configuration/config-file/default-config/).
+More details on configuration can be found [in the documentation](https://clementtsang.github.io/bottom/nightly/configuration/config-file/).
 
 ## Troubleshooting
 
-If some things aren't working, give the [troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting) a look. If things still aren't
-working, then consider opening [a question](https://github.com/ClementTsang/bottom/discussions) or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose).
+If some things aren't working, give the [troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting)
+a look. If things still aren't working, then consider asking [a question](https://github.com/ClementTsang/bottom/discussions)
+or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose) if you think it's a bug.
 
 ## Contribution
 
@@ -438,13 +509,38 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/spital"><img src="https://avatars.githubusercontent.com/u/11034264?v=4?s=100" width="100px;" alt="spital"/><br /><sub><b>spital</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=spital" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://bikodbg.com/"><img src="https://avatars.githubusercontent.com/u/1389811?v=4?s=100" width="100px;" alt="Michael Bikovitsky"/><br /><sub><b>Michael Bikovitsky</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mbikovitsky" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dvalter"><img src="https://avatars.githubusercontent.com/u/38795282?v=4?s=100" width="100px;" alt="Dmitry Valter"/><br /><sub><b>Dmitry Valter</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=dvalter" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/aragonnetje6"><img src="https://avatars.githubusercontent.com/u/69118097?v=4?s=100" width="100px;" alt="Twan Stok"/><br /><sub><b>Twan Stok</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=aragonnetje6" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/aragonnetje6"><img src="https://avatars.githubusercontent.com/u/69118097?v=4?s=100" width="100px;" alt="Grace Stok"/><br /><sub><b>Grace Stok</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=aragonnetje6" title="Code">💻</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/yshui"><img src="https://avatars.githubusercontent.com/u/366851?v=4?s=100" width="100px;" alt="Yuxuan Shui"/><br /><sub><b>Yuxuan Shui</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=yshui" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://zongwenqing.com"><img src="https://avatars.githubusercontent.com/u/43934749?v=4?s=100" width="100px;" alt="Wenqing Zong"/><br /><sub><b>Wenqing Zong</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=WenqingZong" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://gabelluardo.github.io"><img src="https://avatars.githubusercontent.com/u/42920247?v=4?s=100" width="100px;" alt="Gabriele Belluardo"/><br /><sub><b>Gabriele Belluardo</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=gabelluardo" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://zebulon.dev/"><img src="https://avatars.githubusercontent.com/u/14242997?v=4?s=100" width="100px;" alt="Zeb Piasecki"/><br /><sub><b>Zeb Piasecki</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=zebp" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://freed-wu.github.io/"><img src="https://avatars.githubusercontent.com/u/32936898?v=4?s=100" width="100px;" alt="wzy"/><br /><sub><b>wzy</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Freed-Wu" title="Code">💻</a> <a href="https://github.com/ClementTsang/bottom/commits?author=Freed-Wu" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://johnlin.ca/"><img src="https://avatars.githubusercontent.com/u/66440371?v=4?s=100" width="100px;" alt="john-s-lin"/><br /><sub><b>john-s-lin</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=john-s-lin" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lyuha"><img src="https://avatars.githubusercontent.com/u/4014016?v=4?s=100" width="100px;" alt="Lee Wonjoon"/><br /><sub><b>Lee Wonjoon</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=lyuha" title="Code">💻</a> <a href="https://github.com/ClementTsang/bottom/commits?author=lyuha" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.davlgd.fr"><img src="https://avatars.githubusercontent.com/u/1110600?v=4?s=100" width="100px;" alt="David Legrand"/><br /><sub><b>David Legrand</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=davlgd" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MichalBryxi"><img src="https://avatars.githubusercontent.com/u/847473?v=4?s=100" width="100px;" alt="Michal Bryxí"/><br /><sub><b>Michal Bryxí</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=MichalBryxi" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://mpia.de/~hviding/"><img src="https://avatars.githubusercontent.com/u/17031860?v=4?s=100" width="100px;" alt="Raphael Erik Hviding"/><br /><sub><b>Raphael Erik Hviding</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=TheSkyentist" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://cosmichorror.dev"><img src="https://avatars.githubusercontent.com/u/30302768?v=4?s=100" width="100px;" alt="CosmicHorror"/><br /><sub><b>CosmicHorror</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=CosmicHorrorDev" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.woods.am/"><img src="https://avatars.githubusercontent.com/u/7113557?v=4?s=100" width="100px;" alt="Ben Woods"/><br /><sub><b>Ben Woods</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=woodsb02" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://cgdct.moe"><img src="https://avatars.githubusercontent.com/u/20411956?v=4?s=100" width="100px;" alt="Stephen Huan"/><br /><sub><b>Stephen Huan</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=stephen-huan" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jasongwartz"><img src="https://avatars.githubusercontent.com/u/10981911?v=4?s=100" width="100px;" alt="Jason Gwartz"/><br /><sub><b>Jason Gwartz</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=jasongwartz" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/llc0930"><img src="https://avatars.githubusercontent.com/u/14966910?v=4?s=100" width="100px;" alt="llc0930"/><br /><sub><b>llc0930</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=llc0930" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://chronovore.dev"><img src="https://avatars.githubusercontent.com/u/614231?v=4?s=100" width="100px;" alt="Ada Ahmed"/><br /><sub><b>Ada Ahmed</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=yretenai" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Wateir"><img src="https://avatars.githubusercontent.com/u/78731687?v=4?s=100" width="100px;" alt="Wateir"/><br /><sub><b>Wateir</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Wateir" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/al42and"><img src="https://avatars.githubusercontent.com/u/933873?v=4?s=100" width="100px;" alt="Andrey Alekseenko"/><br /><sub><b>Andrey Alekseenko</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=al42and" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://fgimian.github.io/"><img src="https://avatars.githubusercontent.com/u/1811813?v=4?s=100" width="100px;" alt="Fotis Gimian"/><br /><sub><b>Fotis Gimian</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=fgimian" title="Code">💻</a> <a href="https://github.com/ClementTsang/bottom/commits?author=fgimian" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://sigmasquadron.net"><img src="https://avatars.githubusercontent.com/u/174749595?v=4?s=100" width="100px;" alt="Fernando Rodrigues"/><br /><sub><b>Fernando Rodrigues</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=SigmaSquadron" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://mtoohey.com"><img src="https://avatars.githubusercontent.com/u/36740602?v=4?s=100" width="100px;" alt="Matthew Toohey"/><br /><sub><b>Matthew Toohey</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mtoohey31" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://meander.site"><img src="https://avatars.githubusercontent.com/u/11584387?v=4?s=100" width="100px;" alt="Julius Enriquez"/><br /><sub><b>Julius Enriquez</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=win8linux" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/benjamb"><img src="https://avatars.githubusercontent.com/u/8291297?v=4?s=100" width="100px;" alt="Ben Brown"/><br /><sub><b>Ben Brown</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=benjamb" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -459,8 +555,21 @@ Thanks to all contributors:
 - This project is very much inspired by [gotop](https://github.com/xxxserxxx/gotop),
   [gtop](https://github.com/aksakalli/gtop), and [htop](https://github.com/htop-dev/htop/).
 
-- This application was written with many, _many_ libraries, and built on the
-  work of many talented people. This application would be impossible without their
-  work. I used to thank them all individually but the list got too large...
+- This application was written with [many](https://github.com/ClementTsang/bottom/blob/main/Cargo.toml),
+  [_many_ libraries](https://github.com/ClementTsang/bottom/blob/main/Cargo.lock), as well as many services and
+  programs, all built on top of the work of many talented people. bottom would not exist without all of this.
 
-- And of course, another round of thanks to all the contributors and package maintainers!
+- And of course, thank you again to all contributors and package maintainers!
+
+- I also really appreciate anyone who has used bottom, and those
+  who go out of their way to report bugs or suggest ways to improve things. I hope
+  it's been a useful tool for others.
+
+- To those who support my work financially via donations, thank you so much.
+
+- Also thanks to JetBrains for providing access to tools that I use to develop bottom
+  as part of their [open source support program](https://jb.gg/OpenSourceSupport).
+
+  <a href="https://jb.gg/OpenSourceSupport">
+    <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
+  </a>

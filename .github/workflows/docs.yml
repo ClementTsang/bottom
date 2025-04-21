@@ -1,17 +1,18 @@
 # Workflow to deploy mkdocs documentation.
 
 name: docs
+
 on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - main
     paths:
       - "docs/**"
       - ".github/workflows/docs.yml"
 
 env:
-  # Assign commit authorship to official Github Actions bot when pushing to the `gh-pages` branch:
+  # Assign commit authorship to official GitHub Actions bot when pushing to the `gh-pages` branch:
   GIT_USER: "github-actions[bot]"
   GIT_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -21,13 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
-          python-version: 3.11
+          python-version: 3.12
 
       - name: Install Python dependencies
         run: pip install -r docs/requirements.txt

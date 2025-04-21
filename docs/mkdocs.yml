@@ -8,33 +8,52 @@ docs_dir: "content/"
 # Project information
 repo_name: ClementTsang/bottom
 repo_url: https://github.com/ClementTsang/bottom
-edit_uri: "edit/master/docs/content/"
+edit_uri: "edit/main/docs/content/"
+copyright: Copyright &copy; 2019 - 2024 Clement Tsang
 
 # Theming
 theme:
   name: material
+  font:
+    code: IBM Plex Mono
   features:
+    - content.action.edit
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.sections
     - navigation.tabs
     - navigation.top
-    - navigation.expand
-    - navigation.instant
-    - navigation.sections
-    - toc.integrate
-    - search.suggest
     - search.highlight
+    - search.suggest
+    - toc.integrate
+    - toc.follow
+  icon:
+    edit: material/pencil
   palette:
-    # Light mode
-    - media: "(prefers-color-scheme: light)"
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
       scheme: default
       toggle:
-        icon: material/weather-night
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
         name: Switch to dark mode
     # Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
+      primary: black
+      accent: indigo
       toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
+        icon: material/weather-night
+        name: Switch to system preference
   custom_dir: "content/overrides"
 extra_css:
   - stylesheets/extra.css
@@ -113,6 +132,11 @@ markdown_extensions:
 plugins:
   - tags
   - search
+  - mike:
+      canonical_version: stable
+  - git-revision-date-localized:
+      type: date
+  - privacy
 
 extra:
   # Versioning
@@ -137,15 +161,17 @@ nav:
           - "Disk Widget": usage/widgets/disk.md
           - "Temperature Widget": usage/widgets/temperature.md
           - "Battery Widget": usage/widgets/battery.md
+      - "Auto-Complete": usage/autocomplete.md
   - "Configuration":
-      - "Command-line Flags": configuration/command-line-flags.md
+      - "Command-line Options": configuration/command-line-options.md
       - "Config File":
-          - "Default Config": configuration/config-file/default-config.md
-          - "Flags": configuration/config-file/flags.md
-          - "Theming": configuration/config-file/theming.md
-          - "Layout": configuration/config-file/layout.md
+          - configuration/config-file/index.md
+          - "CPU Widget": configuration/config-file/cpu.md
           - "Data Filtering": configuration/config-file/data-filtering.md
-          - "Processes": configuration/config-file/processes.md
+          - "Flags": configuration/config-file/flags.md
+          - "Layout": configuration/config-file/layout.md
+          - "Processes Widget": configuration/config-file/processes.md
+          - "Styling": configuration/config-file/styling.md
   - "Contribution":
       - "Issues, Pull Requests, and Discussions": contribution/issues-and-pull-requests.md
       - "Documentation": contribution/documentation.md

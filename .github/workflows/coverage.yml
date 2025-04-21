@@ -10,7 +10,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
 
 env:
   CARGO_INCREMENTAL: 0
@@ -27,7 +27,7 @@ jobs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
       - id: skip_check
-        uses: fkirc/skip-duplicate-actions@12aca0a884f6137d619d6a8a09fcc3406ced5281 # v5.3.0
+        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
         with:
           skip_after_successful_duplicate: "false"
           paths: '["tests/**", "src/**", ".github/workflows/coverage.yml", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
@@ -37,25 +37,25 @@ jobs:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: ${{ matrix.info.os }}
-    timeout-minutes: 18
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
         info:
           - { os: "ubuntu-latest", target: "x86_64-unknown-linux-gnu" }
-          - { os: "macos-12", target: "x86_64-apple-darwin" }
+          - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
           - { os: "windows-2019", target: "x86_64-pc-windows-msvc" }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
         with:
           toolchain: stable
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # 2.4.0
+        uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
@@ -64,16 +64,21 @@ jobs:
       - name: Install cargo-llvm-cov
         run: |
           rustup component add llvm-tools-preview
-          cargo install cargo-llvm-cov --version 0.5.9 --locked
+          cargo install cargo-llvm-cov --version 0.6.11 --locked
 
       - name: Generate code coverage
         run: |
           cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --locked --target=${{ matrix.info.target }}
 
+      # The token is generally not needed, but sometimes the default shared token hits limits.
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@d9f34f8cd5cb3b3eb79b3e4b5dae3a16df499a70 # 3.1.1
+        uses: Wandalen/wretry.action@6feedb7dedadeb826de0f45ff482b53b379a7844 # v3.5.0
         with:
-          files: lcov.info
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }} # This is generally not needed, but sometimes the default shared token hits limits.
-          flags: ${{ matrix.info.os }}
+          action: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+          with: |
+            files: lcov.info
+            fail_ci_if_error: true
+            token: ${{ secrets.CODECOV_TOKEN }}
+            flags: ${{ matrix.info.os }}
+          attempt_limit: 5
+          attempt_delay: 1500

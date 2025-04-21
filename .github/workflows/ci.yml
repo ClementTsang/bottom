@@ -1,5 +1,5 @@
-# Main CI workflow to validate PRs and branches are correctly formatted
-# and pass tests.
+# Main CI workflow to validate that files are formatted correctly, pass tests,
+# and pass lints.
 #
 # CI workflow was based on a lot of work from other people:
 # - https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
@@ -8,16 +8,12 @@
 # - https://matklad.github.io/2021/09/04/fast-rust-builds.html
 #
 # Supported platforms run the following tasks:
-# - cargo fmt
-# - cargo test (built/test in separate steps)
-# - cargo clippy (apparently faster to do it after the build/test)
+# - Format
+# - Test (built/test in separate steps)
+# - Clippy (apparently faster to do it after the build/test)
 #
 # Unsupported platforms run the following tasks:
-# - cargo build
-#
-# Note that not all platforms are tested using this CI action! There are some
-# tested by Cirrus CI due to (free) platform limitations on GitHub. Currently,
-# this is just macOS M1 and FreeBSD.
+# - Clippy
 
 name: ci
 
@@ -26,7 +22,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
 
 env:
   RUST_BACKTRACE: 1
@@ -49,7 +45,7 @@ jobs:
     steps:
       - name: Check if this action should be skipped
         id: skip_check
-        uses: fkirc/skip-duplicate-actions@12aca0a884f6137d619d6a8a09fcc3406ced5281 # v5.3.0
+        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
         with:
           skip_after_successful_duplicate: "true"
           paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml", "Cross.toml"]'
@@ -57,12 +53,12 @@ jobs:
 
   # Runs rustfmt + tests + clippy on the main supported platforms.
   #
-  # Note that m1 macOS is tested via CirrusCI.
+  # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
   supported:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: ${{ matrix.info.os }}
-    timeout-minutes: 18
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
@@ -77,7 +73,8 @@ jobs:
               target: "aarch64-unknown-linux-gnu",
               cross: true,
             }
-          - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-13", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
@@ -86,17 +83,17 @@ jobs:
         features: ["--all-features", "--no-default-features"]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
         with:
           toolchain: stable
           components: rustfmt, clippy
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # 2.4.0
+        uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
@@ -136,46 +133,40 @@ jobs:
           RUST_BACKTRACE: full
 
   # Try running cargo build on all other platforms.
-  # TODO: Maybe some of these should be allowed to fail.
+  #
+  # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
+  # I would also put android there.
   other-check:
     needs: pre-job
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    timeout-minutes: 20
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
         info:
-          # x86 or x64
+          # x86 or x86-64
           - {
               os: "ubuntu-latest",
               target: "i686-unknown-linux-gnu",
               cross: true,
-              rust: stable,
             }
           - {
               os: "ubuntu-latest",
               target: "x86_64-unknown-linux-musl",
               cross: false,
-              rust: stable,
             }
           - {
               os: "ubuntu-latest",
               target: "i686-unknown-linux-musl",
               cross: true,
-              rust: stable,
             }
-          - {
-              os: "windows-2019",
-              target: "i686-pc-windows-msvc",
-              cross: false,
-              rust: stable,
-            }
+
+          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: false }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-gnu",
               cross: false,
-              rust: stable,
             }
 
           # Beta
@@ -183,19 +174,19 @@ jobs:
               os: "ubuntu-latest",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
-              rust: beta,
+              rust: "beta",
             }
           - {
-              os: "macos-12",
-              target: "x86_64-apple-darwin",
+              os: "macos-14",
+              target: "aarch64-apple-darwin",
               cross: false,
-              rust: beta,
+              rust: "beta",
             }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
               cross: false,
-              rust: beta,
+              rust: "beta",
             }
 
           # armv7
@@ -203,7 +194,6 @@ jobs:
               os: "ubuntu-latest",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
-              rust: stable,
             }
 
           # armv6
@@ -211,7 +201,6 @@ jobs:
               os: "ubuntu-latest",
               target: "arm-unknown-linux-gnueabihf",
               cross: true,
-              rust: stable,
             }
 
           # PowerPC 64 LE
@@ -219,15 +208,14 @@ jobs:
               os: "ubuntu-latest",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
-              rust: stable,
             }
 
           # Risc-V 64gc
+          # Note: seems like this breaks with tests?
           - {
               os: "ubuntu-latest",
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
-              rust: stable,
             }
 
           # Android ARM64
@@ -235,59 +223,123 @@ jobs:
               os: "ubuntu-latest",
               target: "aarch64-linux-android",
               cross: true,
-              rust: stable,
-              cross-version: "git:d6511b7b166c18640f81b8f6a74d9eef380f7ded",
+              cross-version: "git:cabfc3b02d1edec03869fabdabf6a7f8b0519160",
               no-default-features: true,
+              no-clippy: true,
             }
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@b44cb146d03e8d870c57ab64b80f04586349ca5d
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
         with:
-          toolchain: ${{ matrix.info.rust }}
+          toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
+          components: "clippy"
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # 2.4.0
+        uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      - name: Try building with only default features enabled
+      - name: Clippy (default features)
         uses: ClementTsang/cargo-action@v0.0.5
         if: ${{ matrix.info.no-default-features != true }}
         with:
-          command: build
-          args: --all-targets --verbose --target=${{ matrix.info.target }} --locked
+          command: clippy
+          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
-      - name: Try building with no features enabled
+      - name: Clippy (no features enabled)
         uses: ClementTsang/cargo-action@v0.0.5
         if: ${{ matrix.info.no-default-features == true  }}
         with:
-          command: build
-          args: --all-targets --verbose --target=${{ matrix.info.target }} --locked --no-default-features
+          command: clippy
+          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
+  vm-check:
+    name: "Test using VMs"
+    needs: pre-job
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          # Seems like cross' FreeBSD image is a bit broken? I get build errors, may be related to this issue:
+          # https://github.com/cross-rs/cross/issues/1291
+          #
+          # Alas, that's why we do it with VMs.
+          - {
+              type: "freebsd",
+              os_release: "15.0",
+              target: "x86_64-unknown-freebsd",
+            }
+          - {
+              type: "freebsd",
+              os_release: "14.1",
+              target: "x86_64-unknown-freebsd",
+            }
+          - {
+              type: "freebsd",
+              os_release: "13.3",
+              target: "x86_64-unknown-freebsd",
+            }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 1
+
+      - name: Enable Rust cache
+        uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
+        if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
+        with:
+          key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
+          cache-all-crates: true
+
+      - name: Clippy (FreeBSD)
+        if: ${{ matrix.info.type == 'freebsd' }}
+        uses: vmactions/freebsd-vm@debf37ca7b7fa40e19c542ef7ba30d6054a706a4 # v1.1.5
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            cargo clippy --all-targets --workspace -- -D warnings
+
   completion:
     name: "CI Pass Check"
-    needs: [supported, other-check]
-    if: ${{ success() || failure() }}
+    needs: [supported, other-check, vm-check]
+    if: ${{ needs.supported.result != 'skipped' && needs.other-check.result != 'skipped' && needs.vm-check.result != 'skipped' }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
-        if: ${{ (needs.supported.result == 'success' && needs.other-check.result == 'success') || (needs.supported.result == 'skipped' && needs.other-check.result == 'skipped') }}
+        if: ${{ needs.supported.result == 'success' && needs.other-check.result == 'success' && needs.vm-check.result == 'success' }}
         run: |
           echo "CI workflow completed successfully.";
 
       - name: CI Failed
-        if: ${{ needs.supported.result == 'failure' && needs.other-check.result == 'failure' }}
+        if: ${{ needs.supported.result == 'failure' && needs.other-check.result == 'failure' && needs.vm-check.result == 'failure' }}
         run: |
-          echo "CI workflow failed at some point.";
+          echo "CI workflow failed.";
+          exit 1;
+
+      - name: CI Cancelled
+        if: ${{ needs.supported.result == 'cancelled' && needs.other-check.result == 'cancelled' && needs.vm-check.result == 'cancelled' }}
+        run: |
+          echo "CI workflow was cancelled.";
           exit 1;

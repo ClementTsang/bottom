@@ -1,130 +1,268 @@
-# This is a default config file for bottom.  All of the settings are commented
+# This is a default config file for bottom. All of the settings are commented
 # out by default; if you wish to change them uncomment and modify as you see
 # fit.
 
-# This group of options represents a command-line flag/option.  Flags explicitly
+# This group of options represents a command-line option. Flags explicitly
 # added when running (ie: btm -a) will override this config file if an option
 # is also set here.
-
 [flags]
 # Whether to hide the average cpu entry.
 #hide_avg_cpu = false
+
 # Whether to use dot markers rather than braille.
 #dot_marker = false
+
 # The update rate of the application.
 #rate = "1s"
+
 # Whether to put the CPU legend to the left.
-#left_legend = false
+#cpu_left_legend = false
+
 # Whether to set CPU% on a process to be based on the total CPU or just current usage.
 #current_usage = false
+
 # Whether to set CPU% on a process to be based on the total CPU or per-core CPU% (not divided by the number of cpus).
 #unnormalized_cpu = false
-# Whether to group processes with the same name together by default.
+
+# Whether to group processes with the same name together by default. Doesn't do anything
+# if tree is set to true or --tree is set.
 #group_processes = false
+
 # Whether to make process searching case sensitive by default.
 #case_sensitive = false
+
 # Whether to make process searching look for matching the entire word by default.
 #whole_word = false
+
 # Whether to make process searching use regex by default.
 #regex = false
-# Defaults to Celsius.  Temperature is one of:
-#temperature_type = "k"
-#temperature_type = "f"
+
+# The temperature unit. One of the following, defaults to "c" for Celsius:
 #temperature_type = "c"
-#temperature_type = "kelvin"
-#temperature_type = "fahrenheit"
-#temperature_type = "celsius"
+##temperature_type = "k"
+##temperature_type = "f"
+##temperature_type = "kelvin"
+##temperature_type = "fahrenheit"
+##temperature_type = "celsius"
+
 # The default time interval (in milliseconds).
 #default_time_value = "60s"
+
 # The time delta on each zoom in/out action (in milliseconds).
 #time_delta = 15000
+
 # Hides the time scale.
 #hide_time = false
+
 # Override layout default widget
 #default_widget_type = "proc"
 #default_widget_count = 1
+
 # Expand selected widget upon starting the app
-#expanded_on_startup = true
+#expanded = true
+
 # Use basic mode
 #basic = false
+
 # Use the old network legend style
 #use_old_network_legend = false
+
 # Remove space in tables
 #hide_table_gap = false
+
 # Show the battery widgets
 #battery = false
+
 # Disable mouse clicks
 #disable_click = false
-# Built-in themes.  Valid values are "default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"
-#color = "default"
+
 # Show memory values in the processes widget as values by default
-#mem_as_value = false
+#process_memory_as_value = false
+
 # Show tree mode by default in the processes widget.
 #tree = false
+
 # Shows an indicator in table widgets tracking where in the list you are.
 #show_table_scroll_position = false
+
 # Show processes as their commands by default in the process widget.
 #process_command = false
+
 # Displays the network widget with binary prefixes.
 #network_use_binary_prefix = false
+
 # Displays the network widget using bytes.
 #network_use_bytes = false
+
 # Displays the network widget with a log scale.
 #network_use_log = false
+
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
-# Shows GPU(s) memory
-#enable_gpu_memory = false
+
+# Hide GPU(s) information
+#disable_gpu = false
+
 # Shows cache and buffer memory
 #enable_cache_memory = false
+
 # How much data is stored at once in terms of time.
 #retention = "10m"
 
-# These are flags around the process widget.
+# Where to place the legend for the memory widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
+#memory_legend = "top-right"
 
+# Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
+#network_legend = "top-right"
+
+
+# Processes widget configuration
 #[processes]
-#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State"]
+# The columns shown by the process widget. The following columns are supported (the GPU columns are only available if the GPU feature is enabled when built):
+# PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
+#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%"]
+
+
+# CPU widget configuration
+#[cpu]
+# One of "all" (default), "average"/"avg"
+#default = "average"
+
+
+# Disk widget configuration
+#[disk]
+# The columns shown by the process widget. The following columns are supported:
+# Disk, Mount, Used, Free, Total, Used%, Free%, R/s, W/s
+#columns = ["Disk", "Mount", "Used", "Free", "Total", "Used%", "R/s", "W/s"]
+
+# By default, there are no disk name filters enabled. These can be turned on to filter out specific data entries if you
+# don't want to see them. An example use case is provided below.
+#[disk.name_filter]
+# Whether to ignore any matches. Defaults to true.
+#is_list_ignored = true
+
+# A list of filters to try and match.
+#list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
+
+# Whether to use regex. Defaults to false.
+#regex = true
+
+# Whether to be case-sensitive. Defaults to false.
+#case_sensitive = false
+
+# Whether to be require matching the whole word. Defaults to false.
+#whole_word = false
+
+# By default, there are no mount name filters enabled. An example use case is provided below.
+#[disk.mount_filter]
+# Whether to ignore any matches. Defaults to true.
+#is_list_ignored = true
+
+# A list of filters to try and match.
+#list = ["/mnt/.*", "/boot"]
+
+# Whether to use regex. Defaults to false.
+#regex = true
+
+# Whether to be case-sensitive. Defaults to false.
+#case_sensitive = false
+
+# Whether to be require matching the whole word. Defaults to false.
+#whole_word = false
+
+
+# Temperature widget configuration
+#[temperature]
+# By default, there are no temperature sensor filters enabled. An example use case is provided below.
+#[temperature.sensor_filter]
+# Whether to ignore any matches. Defaults to true.
+#is_list_ignored = true
+
+# A list of filters to try and match.
+#list = ["cpu", "wifi"]
+
+# Whether to use regex. Defaults to false.
+#regex = false
+
+# Whether to be case-sensitive. Defaults to false.
+#case_sensitive = false
+
+# Whether to be require matching the whole word. Defaults to false.
+#whole_word = false
+
+
+# Network widget configuration
+#[network]
+# By default, there are no network interface filters enabled. An example use case is provided below.
+#[network.interface_filter]
+# Whether to ignore any matches. Defaults to true.
+#is_list_ignored = true
+
+# A list of filters to try and match.
+#list = ["virbr0.*"]
+
+# Whether to use regex. Defaults to false.
+#regex = true
+
+# Whether to be case-sensitive. Defaults to false.
+#case_sensitive = false
+
+# Whether to be require matching the whole word. Defaults to false.
+#whole_word = false
+
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
+#[styles] # Uncomment if you want to use custom styling
+# Built-in themes. Valid values are:
+# - "default"
+# - "default-light"
+# - "gruvbox"
+# - "gruvbox-light"
+# - "nord"
+# - "nord-light".
+#
+# This will have the lowest precedence if a custom colour palette is set,
+# or overridden if the command-line flag for a built-in theme is set.
+#theme = "default"
 
-#[colors] # Uncomment if you want to use custom colors
-# Represents the colour of table headers (processes, CPU, disks, temperature).
-#table_header_color="LightBlue"
-# Represents the colour of the label each widget has.
-#widget_title_color="Gray"
-# Represents the average CPU color.
-#avg_cpu_color="Red"
-# Represents the colour the core will use in the CPU legend and graph.
-#cpu_core_colors=["LightMagenta", "LightYellow", "LightCyan", "LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
-# Represents the colour RAM will use in the memory legend and graph.
-#ram_color="LightMagenta"
-# Represents the colour SWAP will use in the memory legend and graph.
-#swap_color="LightYellow"
-# Represents the colour ARC will use in the memory legend and graph.
-#arc_color="LightCyan"
-# Represents the colour the GPU will use in the memory legend and graph.
-#gpu_core_colors=["LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
-# Represents the colour rx will use in the network legend and graph.
-#rx_color="LightCyan"
-# Represents the colour tx will use in the network legend and graph.
-#tx_color="LightGreen"
-# Represents the colour of the border of unselected widgets.
-#border_color="Gray"
-# Represents the colour of the border of selected widgets.
-#highlighted_border_color="LightBlue"
-# Represents the colour of most text.
-#text_color="Gray"
-# Represents the colour of text that is selected.
-#selected_text_color="Black"
-# Represents the background colour of text that is selected.
-#selected_bg_color="LightBlue"
-# Represents the colour of the lines and text of the graph.
-#graph_color="Gray"
-# Represents the colours of the battery based on charge
-#high_battery_color="green"
-#medium_battery_color="yellow"
-#low_battery_color="red"
+#[styles.cpu]
+#all_entry_color = "green"
+#avg_entry_color = "red"
+#cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+
+#[styles.memory]
+#ram_color = "light magenta"
+#cache_color = "light red"
+#swap_color = "light yellow"
+#arc_color = "light cyan"
+#gpu_colors = ["light blue", "light red", "cyan", "green", "blue", "red"]
+
+#[styles.network]
+#rx_color = "light magenta"
+#tx_color = "light yellow"
+#rx_total_color = "light cyan"
+#tx_total_color = "light green"
+
+#[styles.battery]
+#high_battery_color = "green"
+#medium_battery_color = "yellow"
+#low_battery_color = "red"
+
+#[styles.tables]
+#headers = {color = "light blue", bold = true}
+
+#[styles.graphs]
+#graph_color = "gray"
+#legend_text = {color = "gray"}
+
+#[styles.widgets]
+#border_color = "gray"
+#selected_border_color = "light blue"
+#widget_title = {color = "gray"}
+#text = {color = "gray"}
+#selected_text = {color = "black", bg_color = "light blue"}
+#disabled_text = {color = "dark gray"}
 
 # Layout - layouts follow a pattern like this:
 # [[row]] represents a row in the application.
@@ -156,33 +294,3 @@
 #  [[row.child]]
 #    type="proc"
 #    default=true
-
-# Filters - you can hide specific temperature sensors, network interfaces, and disks using filters.  This is admittedly
-# a bit hard to use as of now, and there is a planned in-app interface for managing this in the future:
-#[disk_filter]
-#is_list_ignored = true
-#list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
-#regex = true
-#case_sensitive = false
-#whole_word = false
-
-#[mount_filter]
-#is_list_ignored = true
-#list = ["/mnt/.*", "/boot"]
-#regex = true
-#case_sensitive = false
-#whole_word = false
-
-#[temp_filter]
-#is_list_ignored = true
-#list = ["cpu", "wifi"]
-#regex = false
-#case_sensitive = false
-#whole_word = false
-
-#[net_filter]
-#is_list_ignored = true
-#list = ["virbr0.*"]
-#regex = true
-#case_sensitive = false
-#whole_word = false

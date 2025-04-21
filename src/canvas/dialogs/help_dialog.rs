@@ -1,48 +1,58 @@
 use std::cmp::{max, min};
 
 use tui::{
-    backend::Backend,
+    Frame,
     layout::{Alignment, Rect},
-    terminal::Frame,
-    text::Line,
-    text::Span,
-    widgets::{Block, Borders, Paragraph, Wrap},
+    text::{Line, Span},
+    widgets::{Paragraph, Wrap},
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::{app::App, canvas::Painter, constants};
-
-const HELP_BASE: &str = " Help ── Esc to close ";
+use crate::{
+    app::App,
+    canvas::{Painter, drawing_utils::dialog_block},
+    constants::{self, HELP_TEXT},
+};
 
 // TODO: [REFACTOR] Make generic dialog boxes to build off of instead?
 impl Painter {
-    pub fn draw_help_dialog<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
-    ) {
-        let help_title = Line::from(vec![
-            Span::styled(" Help ", self.colours.widget_title_style),
-            Span::styled(
-                format!(
-                    "─{}─ Esc to close ",
-                    "─".repeat(
-                        usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2)
-                    )
-                ),
-                self.colours.border_style,
-            ),
-        ]);
+    fn help_text_lines(&self) -> Vec<Line<'_>> {
+        let mut styled_help_spans = Vec::new();
 
-        let block = Block::default()
-            .title(help_title)
-            .style(self.colours.border_style)
-            .borders(Borders::ALL)
-            .border_style(self.colours.border_style);
+        // Init help text:
+        HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
+            let mut section = section.iter();
+
+            if itx > 0 {
+                if let Some(header) = section.next() {
+                    styled_help_spans.push(Span::default());
+                    styled_help_spans.push(Span::styled(*header, self.styles.table_header_style));
+                }
+            }
+
+            section.for_each(|&text| {
+                styled_help_spans.push(Span::styled(text, self.styles.text_style))
+            });
+        });
+
+        styled_help_spans.into_iter().map(Line::from).collect()
+    }
+
+    pub fn draw_help_dialog(&self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect) {
+        let styled_help_text = self.help_text_lines();
+
+        let block = dialog_block(self.styles.border_type)
+            .border_style(self.styles.border_style)
+            .title_top(Line::styled(" Help ", self.styles.widget_title_style))
+            .title_top(
+                Line::styled(" Esc to close ", self.styles.widget_title_style).right_aligned(),
+            );
 
         if app_state.should_get_widget_bounds() {
-            app_state.help_dialog_state.height = block.inner(draw_loc).height;
+            // We must also recalculate how many lines are wrapping to properly get
+            // scrolling to work on small terminal sizes... oh joy.
 
-            // We must also recalculate how many lines are wrapping to properly get scrolling to work on
-            // small terminal sizes... oh joy.
+            app_state.help_dialog_state.height = block.inner(draw_loc).height;
 
             let mut overflow_buffer = 0;
             let paragraph_width = max(draw_loc.width.saturating_sub(2), 1);
@@ -77,10 +87,10 @@ impl Painter {
                 });
 
             let max_scroll_index = &mut app_state.help_dialog_state.scroll_state.max_scroll_index;
-            *max_scroll_index = (self.styled_help_text.len() as u16 + 3 + overflow_buffer)
+            *max_scroll_index = (styled_help_text.len() as u16 + 3 + overflow_buffer)
                 .saturating_sub(draw_loc.height + 1);
 
-            // Fix if over-scrolled
+            // Fix the scroll index if it is over-scrolled
             let index = &mut app_state
                 .help_dialog_state
                 .scroll_state
@@ -90,9 +100,9 @@ impl Painter {
         }
 
         f.render_widget(
-            Paragraph::new(self.styled_help_text.clone())
+            Paragraph::new(styled_help_text.clone())
                 .block(block)
-                .style(self.colours.text_style)
+                .style(self.styles.text_style)
                 .alignment(Alignment::Left)
                 .wrap(Wrap { trim: true })
                 .scroll((

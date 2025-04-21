@@ -2,21 +2,17 @@
 use std::cmp::min;
 
 use tui::{
-    backend::Backend,
+    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    terminal::Frame,
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Block, Paragraph, Wrap},
 };
 
 use crate::{
     app::{App, KillSignal, MAX_PROCESS_SIGNAL},
-    canvas::Painter,
+    canvas::{Painter, drawing_utils::dialog_block},
     widgets::ProcWidgetMode,
 };
-
-const DD_BASE: &str = " Confirm Kill Process ── Esc to close ";
-const DD_ERROR_BASE: &str = " Error ── Esc to close ";
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
@@ -183,19 +179,19 @@ impl Painter {
                     {
                         if to_kill_processes.1.len() != 1 {
                             Line::from(format!(
-                                "Kill {} processes with the name \"{}\"?  Press ENTER to confirm.",
+                                "Kill {} processes with the name '{}'?  Press ENTER to confirm.",
                                 to_kill_processes.1.len(),
                                 to_kill_processes.0
                             ))
                         } else {
                             Line::from(format!(
-                                "Kill 1 process with the name \"{}\"?  Press ENTER to confirm.",
+                                "Kill 1 process with the name '{}'?  Press ENTER to confirm.",
                                 to_kill_processes.0
                             ))
                         }
                     } else {
                         Line::from(format!(
-                            "Kill process \"{}\" with PID {}?  Press ENTER to confirm.",
+                            "Kill process '{}' with PID {}?  Press ENTER to confirm.",
                             to_kill_processes.0, first_pid
                         ))
                     },
@@ -206,18 +202,18 @@ impl Painter {
         None
     }
 
-    fn draw_dd_confirm_buttons<B: Backend>(
-        &self, f: &mut Frame<'_, B>, button_draw_loc: &Rect, app_state: &mut App,
+    fn draw_dd_confirm_buttons(
+        &self, f: &mut Frame<'_>, button_draw_loc: &Rect, app_state: &mut App,
     ) {
         if MAX_PROCESS_SIGNAL == 1 || !app_state.app_config_fields.is_advanced_kill {
             let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
                 KillSignal::Kill(_) => (
-                    Span::styled("Yes", self.colours.currently_selected_text_style),
-                    Span::styled("No", self.colours.text_style),
+                    Span::styled("Yes", self.styles.selected_text_style),
+                    Span::styled("No", self.styles.text_style),
                 ),
                 KillSignal::Cancel => (
-                    Span::styled("Yes", self.colours.text_style),
-                    Span::styled("No", self.colours.currently_selected_text_style),
+                    Span::styled("Yes", self.styles.text_style),
+                    Span::styled("No", self.styles.selected_text_style),
                 ),
             };
 
@@ -250,14 +246,15 @@ impl Painter {
                 const SIGNAL: usize = if cfg!(target_os = "windows") { 1 } else { 15 };
 
                 // This is kinda weird, but the gist is:
-                // - We have three sections; we put our mouse bounding box for the "yes" button at the very right edge
-                //   of the left section and 3 characters back.  We then give it a buffer size of 1 on the x-coordinate.
-                // - Same for the "no" button, except it is the right section and we do it from the start of the right
-                //   section.
+                // - We have three sections; we put our mouse bounding box for the "yes" button
+                //   at the very right edge of the left section and 3 characters back.  We then
+                //   give it a buffer size of 1 on the x-coordinate.
+                // - Same for the "no" button, except it is the right section and we do it from
+                //   the start of the right section.
                 //
-                // Lastly, note that mouse detection for the dd buttons assume correct widths.  As such, we correct
-                // them here and check with >= and <= mouse bound checks, as opposed to how we do it elsewhere with
-                // >= and <.  See https://github.com/ClementTsang/bottom/pull/459 for details.
+                // Lastly, note that mouse detection for the dd buttons assume correct widths.
+                // As such, we correct them here and check with >= and <= mouse
+                // bound checks, as opposed to how we do it elsewhere with >= and <.  See https://github.com/ClementTsang/bottom/pull/459 for details.
                 app_state.delete_dialog_state.button_positions = vec![
                     // Yes
                     (
@@ -322,13 +319,11 @@ impl Painter {
                 let mut buttons = SIGNAL_TEXT
                     [scroll_offset + 1..min((layout.len()) + scroll_offset, SIGNAL_TEXT.len())]
                     .iter()
-                    .map(|text| Span::styled(*text, self.colours.text_style))
+                    .map(|text| Span::styled(*text, self.styles.text_style))
                     .collect::<Vec<Span<'_>>>();
-                buttons.insert(0, Span::styled(SIGNAL_TEXT[0], self.colours.text_style));
-                buttons[selected - scroll_offset] = Span::styled(
-                    SIGNAL_TEXT[selected],
-                    self.colours.currently_selected_text_style,
-                );
+                buttons.insert(0, Span::styled(SIGNAL_TEXT[0], self.styles.text_style));
+                buttons[selected - scroll_offset] =
+                    Span::styled(SIGNAL_TEXT[selected], self.styles.selected_text_style);
 
                 app_state.delete_dialog_state.button_positions = layout
                     .iter()
@@ -351,50 +346,29 @@ impl Painter {
         }
     }
 
-    pub fn draw_dd_dialog<B: Backend>(
-        &self, f: &mut Frame<'_, B>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
+    pub fn draw_dd_dialog(
+        &self, f: &mut Frame<'_>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
     ) -> bool {
         if let Some(dd_text) = dd_text {
             let dd_title = if app_state.dd_err.is_some() {
-                Line::from(vec![
-                    Span::styled(" Error ", self.colours.widget_title_style),
-                    Span::styled(
-                        format!(
-                            "─{}─ Esc to close ",
-                            "─".repeat(
-                                usize::from(draw_loc.width)
-                                    .saturating_sub(DD_ERROR_BASE.chars().count() + 2)
-                            )
-                        ),
-                        self.colours.border_style,
-                    ),
-                ])
+                Line::styled(" Error ", self.styles.widget_title_style)
             } else {
-                Line::from(vec![
-                    Span::styled(" Confirm Kill Process ", self.colours.widget_title_style),
-                    Span::styled(
-                        format!(
-                            "─{}─ Esc to close ",
-                            "─".repeat(
-                                usize::from(draw_loc.width)
-                                    .saturating_sub(DD_BASE.chars().count() + 2)
-                            )
-                        ),
-                        self.colours.border_style,
-                    ),
-                ])
+                Line::styled(" Confirm Kill Process ", self.styles.widget_title_style)
             };
 
             f.render_widget(
                 Paragraph::new(dd_text)
                     .block(
-                        Block::default()
-                            .title(dd_title)
-                            .style(self.colours.border_style)
-                            .borders(Borders::ALL)
-                            .border_style(self.colours.border_style),
+                        dialog_block(self.styles.border_type)
+                            .title_top(dd_title)
+                            .title_top(
+                                Line::styled(" Esc to close ", self.styles.widget_title_style)
+                                    .right_aligned(),
+                            )
+                            .style(self.styles.border_style)
+                            .border_style(self.styles.border_style),
                     )
-                    .style(self.colours.text_style)
+                    .style(self.styles.text_style)
                     .alignment(Alignment::Center)
                     .wrap(Wrap { trim: true }),
                 draw_loc,

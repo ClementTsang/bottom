@@ -1,173 +1,46 @@
+//! How to handle config files and arguments.
+
+// TODO: Break this apart or do something a bit smarter.
+
+pub mod args;
+pub mod config;
+mod error;
+
 use std::{
-    borrow::Cow,
     convert::TryInto,
+    fs,
+    io::Write,
+    path::{Path, PathBuf},
     str::FromStr,
     time::{Duration, Instant},
 };
 
-use clap::ArgMatches;
+use anyhow::{Context, Result};
+pub use config::Config;
+use config::style::Styles;
+use data::TemperatureType;
+pub(crate) use error::{OptionError, OptionResult};
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
-use layout_options::*;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
-
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
 
+use self::{
+    args::BottomArgs,
+    config::{IgnoreList, StringOrNum, layout::Row},
+};
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::{canvas_styling::CanvasStyling, ColourScheme},
+    canvas::components::time_graph::LegendPosition,
     constants::*,
-    utils::{
-        data_units::DataUnit,
-        error::{self, BottomError},
-    },
+    utils::data_units::DataUnit,
     widgets::*,
 };
 
-pub mod layout_options;
-
-pub mod process_columns;
-use self::process_columns::ProcessConfig;
-
-use anyhow::{Context, Result};
-
-#[derive(Clone, Debug, Default, Deserialize)]
-pub struct Config {
-    pub flags: Option<ConfigFlags>,
-    pub colors: Option<ConfigColours>,
-    pub row: Option<Vec<Row>>,
-    pub disk_filter: Option<IgnoreList>,
-    pub mount_filter: Option<IgnoreList>,
-    pub temp_filter: Option<IgnoreList>,
-    pub net_filter: Option<IgnoreList>,
-    pub processes: Option<ProcessConfig>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(untagged)]
-enum StringOrNum {
-    String(String),
-    Num(u64),
-}
-
-impl From<String> for StringOrNum {
-    fn from(value: String) -> Self {
-        StringOrNum::String(value)
-    }
-}
-
-impl From<u64> for StringOrNum {
-    fn from(value: u64) -> Self {
-        StringOrNum::Num(value)
-    }
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct ConfigFlags {
-    hide_avg_cpu: Option<bool>,
-    dot_marker: Option<bool>,
-    temperature_type: Option<String>,
-    rate: Option<StringOrNum>,
-    left_legend: Option<bool>,
-    current_usage: Option<bool>,
-    unnormalized_cpu: Option<bool>,
-    group_processes: Option<bool>,
-    case_sensitive: Option<bool>,
-    whole_word: Option<bool>,
-    regex: Option<bool>,
-    basic: Option<bool>,
-    default_time_value: Option<StringOrNum>,
-    time_delta: Option<StringOrNum>,
-    autohide_time: Option<bool>,
-    hide_time: Option<bool>,
-    default_widget_type: Option<String>,
-    default_widget_count: Option<u64>,
-    expanded_on_startup: Option<bool>,
-    use_old_network_legend: Option<bool>,
-    hide_table_gap: Option<bool>,
-    battery: Option<bool>,
-    disable_click: Option<bool>,
-    no_write: Option<bool>,
-    /// For built-in colour palettes.
-    color: Option<String>,
-    mem_as_value: Option<bool>,
-    tree: Option<bool>,
-    show_table_scroll_position: Option<bool>,
-    process_command: Option<bool>,
-    disable_advanced_kill: Option<bool>,
-    network_use_bytes: Option<bool>,
-    network_use_log: Option<bool>,
-    network_use_binary_prefix: Option<bool>,
-    enable_gpu_memory: Option<bool>,
-    enable_cache_memory: Option<bool>,
-    retention: Option<StringOrNum>,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct ConfigColours {
-    pub table_header_color: Option<Cow<'static, str>>,
-    pub all_cpu_color: Option<Cow<'static, str>>,
-    pub avg_cpu_color: Option<Cow<'static, str>>,
-    pub cpu_core_colors: Option<Vec<Cow<'static, str>>>,
-    pub ram_color: Option<Cow<'static, str>>,
-    #[cfg(not(target_os = "windows"))]
-    pub cache_color: Option<Cow<'static, str>>,
-    pub swap_color: Option<Cow<'static, str>>,
-    pub arc_color: Option<Cow<'static, str>>,
-    pub gpu_core_colors: Option<Vec<Cow<'static, str>>>,
-    pub rx_color: Option<Cow<'static, str>>,
-    pub tx_color: Option<Cow<'static, str>>,
-    pub rx_total_color: Option<Cow<'static, str>>, // These only affect basic mode.
-    pub tx_total_color: Option<Cow<'static, str>>, // These only affect basic mode.
-    pub border_color: Option<Cow<'static, str>>,
-    pub highlighted_border_color: Option<Cow<'static, str>>,
-    pub disabled_text_color: Option<Cow<'static, str>>,
-    pub text_color: Option<Cow<'static, str>>,
-    pub selected_text_color: Option<Cow<'static, str>>,
-    pub selected_bg_color: Option<Cow<'static, str>>,
-    pub widget_title_color: Option<Cow<'static, str>>,
-    pub graph_color: Option<Cow<'static, str>>,
-    pub high_battery_color: Option<Cow<'static, str>>,
-    pub medium_battery_color: Option<Cow<'static, str>>,
-    pub low_battery_color: Option<Cow<'static, str>>,
-}
-
-impl ConfigColours {
-    /// Returns `true` if there is a [`ConfigColours`] that is empty or there isn't one at all.
-    pub fn is_empty(&self) -> bool {
-        if let Ok(serialized_string) = toml_edit::ser::to_string(self) {
-            return serialized_string.is_empty();
-        }
-
-        true
-    }
-}
-
-/// Workaround as per https://github.com/serde-rs/serde/issues/1030
-fn default_as_true() -> bool {
-    true
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct IgnoreList {
-    #[serde(default = "default_as_true")]
-    // TODO: Deprecate and/or rename, current name sounds awful.
-    // Maybe to something like "deny_entries"?  Currently it defaults to a denylist anyways, so maybe "allow_entries"?
-    pub is_list_ignored: bool,
-    pub list: Vec<String>,
-    #[serde(default = "bool::default")]
-    pub regex: bool,
-    #[serde(default = "bool::default")]
-    pub case_sensitive: bool,
-    #[serde(default = "bool::default")]
-    pub whole_word: bool,
-}
-
 macro_rules! is_flag_enabled {
-    ($flag_name:ident, $matches:expr, $config:expr) => {
-        if $matches.get_flag(stringify!($flag_name)) {
+    ($flag_name:ident, $arg:expr, $config:expr) => {
+        if $arg.$flag_name {
             true
         } else if let Some(flags) = &$config.flags {
             flags.$flag_name.unwrap_or(false)
@@ -187,30 +60,175 @@ macro_rules! is_flag_enabled {
     };
 }
 
-pub fn build_app(
-    matches: ArgMatches, config: Config, widget_layout: &BottomLayout, default_widget_id: u64,
-    default_widget_type_option: &Option<BottomWidgetType>, styling: &CanvasStyling,
-) -> Result<App> {
+/// The default config file sub-path.
+const DEFAULT_CONFIG_FILE_LOCATION: &str = "bottom/bottom.toml";
+
+/// Returns the config path to use. If `override_config_path` is specified, then
+/// we will use that. If not, then return the "default" config path, which is:
+///
+/// - If a path already exists at `<HOME>/bottom/bottom.toml`, then use that for
+///   legacy reasons.
+/// - Otherwise, use `<SYSTEM_CONFIG_FOLDER>/bottom/bottom.toml`.
+///
+/// For more details on this, see [dirs](https://docs.rs/dirs/latest/dirs/fn.config_dir.html)'
+/// documentation.
+///
+/// XXX: For macOS, we additionally will manually check `$XDG_CONFIG_HOME` as well first
+/// before falling back to `dirs`.
+fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
+    if let Some(conf_loc) = override_config_path {
+        return Some(conf_loc.to_path_buf());
+    } else if let Some(home_path) = dirs::home_dir() {
+        let mut old_home_path = home_path;
+        old_home_path.push(".config/");
+        old_home_path.push(DEFAULT_CONFIG_FILE_LOCATION);
+        if let Ok(res) = old_home_path.try_exists() {
+            if res {
+                // We used to create it at `<HOME>/DEFAULT_CONFIG_FILE_PATH`, but changed it
+                // to be more correct later. However, for legacy reasons, if it already exists,
+                // use the old one.
+                return Some(old_home_path);
+            }
+        }
+    }
+
+    let config_path = dirs::config_dir().map(|mut path| {
+        path.push(DEFAULT_CONFIG_FILE_LOCATION);
+        path
+    });
+
+    if cfg!(target_os = "macos") {
+        if let Ok(xdg_config_path) = std::env::var("XDG_CONFIG_HOME") {
+            if !xdg_config_path.is_empty() {
+                // If XDG_CONFIG_HOME exists and is non-empty, _but_ we previously used the Library-based path
+                // for a config and it exists, then use that instead for backwards-compatibility.
+                if let Some(old_macos_path) = &config_path {
+                    if let Ok(res) = old_macos_path.try_exists() {
+                        if res {
+                            return config_path;
+                        }
+                    }
+                }
+
+                // Otherwise, try and use the XDG_CONFIG_HOME-based path.
+                let mut cfg_path = PathBuf::new();
+                cfg_path.push(xdg_config_path);
+                cfg_path.push(DEFAULT_CONFIG_FILE_LOCATION);
+
+                return Some(cfg_path);
+            }
+        }
+    }
+
+    config_path
+}
+
+fn create_config_at_path(path: &Path) -> anyhow::Result<Config> {
+    if let Some(parent_path) = path.parent() {
+        fs::create_dir_all(parent_path)?;
+    }
+
+    let mut file = fs::File::create(path)?;
+    file.write_all(CONFIG_TEXT.as_bytes())?;
+
+    Ok(Config::default())
+}
+
+/// Get the config at `config_path`. If there is no config file at the specified
+/// path, it will try to create a new file with the default settings, and return
+/// the default config.
+///
+/// We're going to use the following behaviour on when we'll return an error rather
+/// than just "silently" continuing on:
+/// - If the user passed in a path explicitly, then we will be loud and error out.
+/// - If the user does NOT pass in a path explicitly, then just show a warning,
+///   but continue. This is in case they do not want to write a default config file at
+///   the XDG locations, for example.
+pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config> {
+    let adjusted_config_path = get_config_path(config_path);
+
+    match &adjusted_config_path {
+        Some(path) => {
+            if let Ok(config_string) = fs::read_to_string(path) {
+                Ok(toml_edit::de::from_str(&config_string)?)
+            } else {
+                match create_config_at_path(path) {
+                    Ok(cfg) => Ok(cfg),
+                    Err(err) => {
+                        if config_path.is_some() {
+                            Err(err.context(format!(
+                                "bottom could not create a new config file at '{}'.",
+                                path.display()
+                            )))
+                        } else {
+                            indoc::eprintdoc!(
+                                "Note: bottom couldn't create a default config file at '{}', and the \
+                                application has fallen back to the default configuration.
+                                    
+                                Caused by:
+                                    {err}
+                                ",
+                                path.display()
+                            );
+
+                            Ok(Config::default())
+                        }
+                    }
+                }
+            }
+        }
+        None => {
+            // If we somehow don't have any config path, then just assume the default config
+            // but don't write to any file.
+            //
+            // TODO: For now, just print a message to stderr indicating this. In the future,
+            // probably show in-app (too).
+
+            eprintln!(
+                "Note: bottom couldn't find a location to create or read a config file, so \
+                the application has fallen back to the default configuration. \
+                This could be for a variety of reasons, such as issues with file permissions."
+            );
+
+            Ok(Config::default())
+        }
+    }
+}
+
+/// Initialize the app.
+pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomLayout, Styles)> {
     use BottomWidgetType::*;
 
-    // Since everything takes a reference, but we want to take ownership here to drop matches/config later...
-    let matches = &matches;
+    // Since everything takes a reference, but we want to take ownership here to
+    // drop matches/config later...
+    let args = &args;
     let config = &config;
 
-    let retention_ms =
-        get_retention(matches, config).context("Update `retention` in your config file.")?;
-    let autohide_time = is_flag_enabled!(autohide_time, matches, config);
-    let default_time_value = get_default_time_value(matches, config, retention_ms)
-        .context("Update 'default_time_value' in your config file.")?;
+    let styling = Styles::new(args, config)?;
 
-    let use_basic_mode = is_flag_enabled!(basic, matches, config);
-    let expanded_upon_startup = is_flag_enabled!(expanded_on_startup, matches, config);
+    let (widget_layout, default_widget_id, default_widget_type_option) =
+        get_widget_layout(args, config)
+            .context("Found an issue while trying to build the widget layout.")?;
+
+    let retention_ms = get_retention(args, config)?;
+    let autohide_time = is_flag_enabled!(autohide_time, args.general, config);
+    let default_time_value = get_default_time_value(args, config, retention_ms)?;
+
+    let use_basic_mode = is_flag_enabled!(basic, args.general, config);
+    let expanded = is_flag_enabled!(expanded, args.general, config);
 
     // For processes
-    let is_grouped = is_flag_enabled!("group", group_processes, matches, config);
-    let is_case_sensitive = is_flag_enabled!(case_sensitive, matches, config);
-    let is_match_whole_word = is_flag_enabled!(whole_word, matches, config);
-    let is_use_regex = is_flag_enabled!(regex, matches, config);
+    let is_grouped = is_flag_enabled!(group_processes, args.process, config);
+    let is_case_sensitive = is_flag_enabled!(case_sensitive, args.process, config);
+    let is_match_whole_word = is_flag_enabled!(whole_word, args.process, config);
+    let is_use_regex = is_flag_enabled!(regex, args.process, config);
+    let is_default_tree = is_flag_enabled!(tree, args.process, config);
+    let is_default_command = is_flag_enabled!(process_command, args.process, config);
+    let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, args.process, config));
+    let process_memory_as_value = is_flag_enabled!(process_memory_as_value, args.process, config);
+
+    // For CPU
+    let default_cpu_selection = get_default_cpu_selection(args, config);
 
     let mut widget_map = HashMap::new();
     let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
@@ -232,67 +250,67 @@ pub fn build_app(
     let is_custom_layout = config.row.is_some();
     let mut used_widget_set = HashSet::new();
 
-    let show_memory_as_values = is_flag_enabled!(mem_as_value, matches, config);
-    let is_default_tree = is_flag_enabled!(tree, matches, config);
-    let is_default_command = is_flag_enabled!(process_command, matches, config);
-    let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, matches, config));
-
-    let network_unit_type = get_network_unit_type(matches, config);
-    let network_scale_type = get_network_scale_type(matches, config);
-    let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, matches, config);
+    let network_unit_type = get_network_unit_type(args, config);
+    let network_scale_type = get_network_scale_type(args, config);
+    let network_use_binary_prefix =
+        is_flag_enabled!(network_use_binary_prefix, args.network, config);
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
-        let columns = config
-            .processes
-            .as_ref()
-            .and_then(|cfg| cfg.columns.clone());
-
-        match columns {
-            Some(columns) => {
-                if columns.is_empty() {
-                    None
-                } else {
-                    Some(IndexSet::from_iter(columns))
-                }
+        config.processes.as_ref().and_then(|cfg| {
+            if cfg.columns.is_empty() {
+                None
+            } else {
+                // TODO: Should we be using an indexmap? Or maybe allow dupes.
+                Some(IndexSet::from_iter(
+                    cfg.columns.iter().map(ProcWidgetColumn::from),
+                ))
             }
-            None => None,
-        }
+        })
     };
 
+    let network_legend_position = get_network_legend_position(args, config)?;
+    let memory_legend_position = get_memory_legend_position(args, config)?;
+
+    // TODO: Can probably just reuse the options struct.
     let app_config_fields = AppConfigFields {
-        update_rate: get_update_rate(matches, config)
-            .context("Update 'rate' in your config file.")?,
-        temperature_type: get_temperature(matches, config)
+        update_rate: get_update_rate(args, config)?,
+        temperature_type: get_temperature(args, config)
             .context("Update 'temperature_type' in your config file.")?,
-        show_average_cpu: get_show_average_cpu(matches, config),
-        use_dot: is_flag_enabled!(dot_marker, matches, config),
-        left_legend: is_flag_enabled!(left_legend, matches, config),
-        use_current_cpu_total: is_flag_enabled!(current_usage, matches, config),
-        unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, matches, config),
+        show_average_cpu: get_show_average_cpu(args, config),
+        use_dot: is_flag_enabled!(dot_marker, args.general, config),
+        cpu_left_legend: is_flag_enabled!(cpu_left_legend, args.cpu, config),
+        use_current_cpu_total: is_flag_enabled!(current_usage, args.process, config),
+        unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, args.process, config),
         use_basic_mode,
         default_time_value,
-        time_interval: get_time_interval(matches, config, retention_ms)
-            .context("Update 'time_delta' in your config file.")?,
-        hide_time: is_flag_enabled!(hide_time, matches, config),
+        time_interval: get_time_interval(args, config, retention_ms)?,
+        hide_time: is_flag_enabled!(hide_time, args.general, config),
         autohide_time,
-        use_old_network_legend: is_flag_enabled!(use_old_network_legend, matches, config),
-        table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, matches, config))),
-        disable_click: is_flag_enabled!(disable_click, matches, config),
-        enable_gpu_memory: get_enable_gpu_memory(matches, config),
-        enable_cache_memory: get_enable_cache_memory(matches, config),
-        show_table_scroll_position: is_flag_enabled!(show_table_scroll_position, matches, config),
+        use_old_network_legend: is_flag_enabled!(use_old_network_legend, args.network, config),
+        table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, args.general, config))),
+        disable_click: is_flag_enabled!(disable_click, args.general, config),
+        enable_gpu: get_enable_gpu(args, config),
+        enable_cache_memory: get_enable_cache_memory(args, config),
+        show_table_scroll_position: is_flag_enabled!(
+            show_table_scroll_position,
+            args.general,
+            config
+        ),
         is_advanced_kill,
+        memory_legend_position,
+        network_legend_position,
         network_scale_type,
         network_unit_type,
         network_use_binary_prefix,
         retention_ms,
+        dedicated_average_row: get_dedicated_avg_row(config),
     };
 
     let table_config = ProcTableConfig {
         is_case_sensitive,
         is_match_whole_word,
         is_use_regex,
-        show_memory_as_values,
+        show_memory_as_values: process_memory_as_value,
         is_command: is_default_command,
     };
 
@@ -340,9 +358,10 @@ pub fn build_app(
                                 widget.widget_id,
                                 CpuWidgetState::new(
                                     &app_config_fields,
+                                    default_cpu_selection,
                                     default_time_value,
                                     autohide_timer,
-                                    styling,
+                                    &styling,
                                 ),
                             );
                         }
@@ -375,7 +394,7 @@ pub fn build_app(
                                     &app_config_fields,
                                     mode,
                                     table_config,
-                                    styling,
+                                    &styling,
                                     &proc_columns,
                                 ),
                             );
@@ -383,13 +402,17 @@ pub fn build_app(
                         Disk => {
                             disk_state_map.insert(
                                 widget.widget_id,
-                                DiskTableWidget::new(&app_config_fields, styling),
+                                DiskTableWidget::new(
+                                    &app_config_fields,
+                                    &styling,
+                                    config.disk.as_ref().map(|cfg| cfg.columns.as_slice()),
+                                ),
                             );
                         }
                         Temp => {
                             temp_state_map.insert(
                                 widget.widget_id,
-                                TempWidgetState::new(&app_config_fields, styling),
+                                TempWidgetState::new(&app_config_fields, &styling),
                             );
                         }
                         Battery => {
@@ -408,7 +431,6 @@ pub fn build_app(
             Proc | Disk | Temp => BasicTableWidgetState {
                 currently_displayed_widget_type: initial_widget_type,
                 currently_displayed_widget_id: initial_widget_id,
-                widget_id: 100,
                 left_tlc: None,
                 left_brc: None,
                 right_tlc: None,
@@ -417,7 +439,6 @@ pub fn build_app(
             _ => BasicTableWidgetState {
                 currently_displayed_widget_type: Proc,
                 currently_displayed_widget_id: DEFAULT_WIDGET_ID,
-                widget_id: 100,
                 left_tlc: None,
                 left_brc: None,
                 right_tlc: None,
@@ -432,8 +453,8 @@ pub fn build_app(
     let used_widgets = UsedWidgets {
         use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
         use_mem,
-        use_cache: use_mem && get_enable_cache_memory(matches, config),
-        use_gpu: use_mem && get_enable_gpu_memory(matches, config),
+        use_cache: use_mem && get_enable_cache_memory(args, config),
+        use_gpu: get_enable_gpu(args, config),
         use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
         use_proc: used_widget_set.get(&Proc).is_some(),
         use_disk: used_widget_set.get(&Disk).is_some(),
@@ -441,14 +462,29 @@ pub fn build_app(
         use_battery: used_widget_set.get(&Battery).is_some(),
     };
 
-    let disk_filter =
-        get_ignore_list(&config.disk_filter).context("Update 'disk_filter' in your config file")?;
-    let mount_filter = get_ignore_list(&config.mount_filter)
-        .context("Update 'mount_filter' in your config file")?;
-    let temp_filter =
-        get_ignore_list(&config.temp_filter).context("Update 'temp_filter' in your config file")?;
-    let net_filter =
-        get_ignore_list(&config.net_filter).context("Update 'net_filter' in your config file")?;
+    let (disk_name_filter, disk_mount_filter) = {
+        match &config.disk {
+            Some(cfg) => {
+                let df = get_ignore_list(&cfg.name_filter)
+                    .context("Update 'disk.name_filter' in your config file")?;
+                let mf = get_ignore_list(&cfg.mount_filter)
+                    .context("Update 'disk.mount_filter' in your config file")?;
+
+                (df, mf)
+            }
+            None => (None, None),
+        }
+    };
+    let temp_sensor_filter = match &config.temperature {
+        Some(cfg) => get_ignore_list(&cfg.sensor_filter)
+            .context("Update 'temperature.sensor_filter' in your config file")?,
+        None => None,
+    };
+    let net_interface_filter = match &config.network {
+        Some(cfg) => get_ignore_list(&cfg.interface_filter)
+            .context("Update 'network.interface_filter' in your config file")?,
+        None => None,
+    };
 
     let states = AppWidgetStates {
         cpu_state: CpuState::init(cpu_state_map),
@@ -457,50 +493,54 @@ pub fn build_app(
         proc_state: ProcState::init(proc_state_map),
         temp_state: TempState::init(temp_state_map),
         disk_state: DiskState::init(disk_state_map),
-        battery_state: BatteryState::init(battery_state_map),
+        battery_state: AppBatteryState::init(battery_state_map),
         basic_table_widget_state,
     };
 
     let current_widget = widget_map.get(&initial_widget_id).unwrap().clone();
     let filters = DataFilters {
-        disk_filter,
-        mount_filter,
-        temp_filter,
-        net_filter,
+        disk_filter: disk_name_filter,
+        mount_filter: disk_mount_filter,
+        temp_filter: temp_sensor_filter,
+        net_filter: net_interface_filter,
     };
-    let is_expanded = expanded_upon_startup && !use_basic_mode;
+    let is_expanded = expanded && !use_basic_mode;
 
-    Ok(App::new(
-        app_config_fields,
-        states,
-        widget_map,
-        current_widget,
-        used_widgets,
-        filters,
-        is_expanded,
+    Ok((
+        App::new(
+            app_config_fields,
+            states,
+            widget_map,
+            current_widget,
+            used_widgets,
+            filters,
+            is_expanded,
+        ),
+        widget_layout,
+        styling,
     ))
 }
 
-pub fn get_widget_layout(
-    matches: &ArgMatches, config: &Config,
-) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
-    let left_legend = is_flag_enabled!(left_legend, matches, config);
+fn get_widget_layout(
+    args: &BottomArgs, config: &Config,
+) -> OptionResult<(BottomLayout, u64, Option<BottomWidgetType>)> {
+    let cpu_left_legend = is_flag_enabled!(cpu_left_legend, args.cpu, config);
 
     let (default_widget_type, mut default_widget_count) =
-        get_default_widget_and_count(matches, config)?;
+        get_default_widget_and_count(args, config)?;
     let mut default_widget_id = 1;
 
-    let bottom_layout = if is_flag_enabled!(basic, matches, config) {
+    let bottom_layout = if is_flag_enabled!(basic, args.general, config) {
         default_widget_id = DEFAULT_WIDGET_ID;
 
-        BottomLayout::init_basic_default(get_use_battery(matches, config))
+        BottomLayout::init_basic_default(get_use_battery(args, config))
     } else {
         let ref_row: Vec<Row>; // Required to handle reference
         let rows = match &config.row {
             Some(r) => r,
             None => {
                 // This cannot (like it really shouldn't) fail!
-                ref_row = toml_edit::de::from_str::<Config>(if get_use_battery(matches, config) {
+                ref_row = toml_edit::de::from_str::<Config>(if get_use_battery(args, config) {
                     DEFAULT_BATTERY_LAYOUT
                 } else {
                     DEFAULT_LAYOUT
@@ -524,22 +564,21 @@ pub fn get_widget_layout(
                         &mut default_widget_id,
                         &default_widget_type,
                         &mut default_widget_count,
-                        left_legend,
+                        cpu_left_legend,
                     )
+                    .map_err(|err| OptionError::config(err.to_string()))
                 })
-                .collect::<error::Result<Vec<_>>>()?,
+                .collect::<OptionResult<Vec<_>>>()?,
             total_row_height_ratio: total_height_ratio,
         };
 
         // Confirm that we have at least ONE widget left - if not, error out!
         if iter_id > 0 {
             ret_bottom_layout.get_movement_mappings();
-            // debug!("Bottom layout: {:#?}", ret_bottom_layout);
-
             ret_bottom_layout
         } else {
-            return Err(error::BottomError::ConfigError(
-                "please have at least one widget under the '[[row]]' section.".to_string(),
+            return Err(OptionError::config(
+                "have at least one widget under the '[[row]]' section.",
             ));
         }
     };
@@ -547,60 +586,120 @@ pub fn get_widget_layout(
     Ok((bottom_layout, default_widget_id, default_widget_type))
 }
 
-fn get_update_rate(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
-    let update_rate = if let Some(update_rate) = matches.get_one::<String>("rate") {
-        try_parse_ms(update_rate)?
-    } else if let Some(flags) = &config.flags {
-        if let Some(rate) = &flags.rate {
-            match rate {
-                StringOrNum::String(s) => try_parse_ms(s)?,
-                StringOrNum::Num(n) => *n,
-            }
-        } else {
-            DEFAULT_REFRESH_RATE_IN_MILLISECONDS
-        }
+#[inline]
+fn try_parse_ms(s: &str) -> Result<u64, ()> {
+    Ok(if let Ok(val) = humantime::parse_duration(s) {
+        val.as_millis().try_into().map_err(|_| ())?
+    } else if let Ok(val) = s.parse::<u64>() {
+        val
     } else {
-        DEFAULT_REFRESH_RATE_IN_MILLISECONDS
-    };
-
-    if update_rate < 250 {
-        return Err(BottomError::ConfigError(
-            "set your update rate to be at least 250 ms.".to_string(),
-        ));
-    }
-
-    Ok(update_rate)
+        return Err(());
+    })
 }
 
-fn get_temperature(
-    matches: &ArgMatches, config: &Config,
-) -> error::Result<data_harvester::temperature::TemperatureType> {
-    if matches.get_flag("fahrenheit") {
-        return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
-    } else if matches.get_flag("kelvin") {
-        return Ok(data_harvester::temperature::TemperatureType::Kelvin);
-    } else if matches.get_flag("celsius") {
-        return Ok(data_harvester::temperature::TemperatureType::Celsius);
+macro_rules! parse_arg_value {
+    ($to_try:expr, $flag:literal) => {
+        $to_try.map_err(|_| OptionError::invalid_arg_value($flag))
+    };
+}
+
+macro_rules! parse_config_value {
+    ($to_try:expr, $setting:literal) => {
+        $to_try.map_err(|_| OptionError::invalid_config_value($setting))
+    };
+}
+
+macro_rules! parse_ms_option {
+    ($arg_expr:expr, $config_expr:expr, $default_value:expr, $setting:literal, $low:expr, $high:expr $(,)?) => {{
+        use humantime::format_duration;
+
+        if let Some(to_parse) = $arg_expr {
+            let value = parse_arg_value!(try_parse_ms(to_parse), $setting)?;
+
+            if let Some(limit) = $low {
+                if value < limit {
+                    return Err(OptionError::arg(format!(
+                        "'--{}' must be greater than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            if let Some(limit) = $high {
+                if value > limit {
+                    return Err(OptionError::arg(format!(
+                        "'--{}' must be less than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            Ok(value)
+        } else if let Some(to_parse) = $config_expr {
+            let value = match to_parse {
+                StringOrNum::String(s) => parse_config_value!(try_parse_ms(s), $setting)?,
+                StringOrNum::Num(n) => *n,
+            };
+
+            if let Some(limit) = $low {
+                if value < limit {
+                    return Err(OptionError::arg(format!(
+                        "'{}' must be greater than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            if let Some(limit) = $high {
+                if value > limit {
+                    return Err(OptionError::arg(format!(
+                        "'{}' must be less than {}",
+                        $setting,
+                        format_duration(Duration::from_millis(limit))
+                    )));
+                }
+            }
+
+            Ok(value)
+        } else {
+            Ok($default_value)
+        }
+    }};
+}
+
+#[inline]
+fn get_update_rate(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
+    parse_ms_option!(
+        &args.general.rate,
+        config.flags.as_ref().and_then(|flags| flags.rate.as_ref()),
+        DEFAULT_REFRESH_RATE_IN_MILLISECONDS,
+        "rate",
+        Some(250),
+        None,
+    )
+}
+
+fn get_temperature(args: &BottomArgs, config: &Config) -> OptionResult<TemperatureType> {
+    if args.temperature.fahrenheit {
+        return Ok(TemperatureType::Fahrenheit);
+    } else if args.temperature.kelvin {
+        return Ok(TemperatureType::Kelvin);
+    } else if args.temperature.celsius {
+        return Ok(TemperatureType::Celsius);
     } else if let Some(flags) = &config.flags {
         if let Some(temp_type) = &flags.temperature_type {
-            // Give lowest priority to config.
-            return match temp_type.as_str() {
-                "fahrenheit" | "f" => Ok(data_harvester::temperature::TemperatureType::Fahrenheit),
-                "kelvin" | "k" => Ok(data_harvester::temperature::TemperatureType::Kelvin),
-                "celsius" | "c" => Ok(data_harvester::temperature::TemperatureType::Celsius),
-                _ => Err(BottomError::ConfigError(format!(
-                    "\"{}\" is an invalid temperature type, use \"<kelvin|k|celsius|c|fahrenheit|f>\".",
-                    temp_type
-                ))),
-            };
+            return parse_config_value!(TemperatureType::from_str(temp_type), "temperature_type");
         }
     }
-    Ok(data_harvester::temperature::TemperatureType::Celsius)
+    Ok(TemperatureType::Celsius)
 }
 
-/// Yes, this function gets whether to show average CPU (true) or not (false)
-fn get_show_average_cpu(matches: &ArgMatches, config: &Config) -> bool {
-    if matches.get_flag("hide_avg_cpu") {
+/// Yes, this function gets whether to show average CPU (true) or not (false).
+fn get_show_average_cpu(args: &BottomArgs, config: &Config) -> bool {
+    if args.cpu.hide_avg_cpu {
         return false;
     } else if let Some(flags) = &config.flags {
         if let Some(avg_cpu) = flags.hide_avg_cpu {
@@ -611,88 +710,64 @@ fn get_show_average_cpu(matches: &ArgMatches, config: &Config) -> bool {
     true
 }
 
-fn try_parse_ms(s: &str) -> error::Result<u64> {
-    if let Ok(val) = humantime::parse_duration(s) {
-        Ok(val.as_millis().try_into()?)
-    } else if let Ok(val) = s.parse::<u64>() {
-        Ok(val)
-    } else {
-        Err(BottomError::ConfigError(
-            "could not parse as a valid 64-bit unsigned integer or a human time".to_string(),
-        ))
+// I hate this too.
+fn get_default_cpu_selection(args: &BottomArgs, config: &Config) -> config::cpu::CpuDefault {
+    match &args.cpu.default_cpu_entry {
+        Some(default) => match default {
+            args::CpuDefault::All => config::cpu::CpuDefault::All,
+            args::CpuDefault::Average => config::cpu::CpuDefault::Average,
+        },
+        None => config.cpu.as_ref().map(|c| c.default).unwrap_or_default(),
     }
 }
 
+fn get_dedicated_avg_row(config: &Config) -> bool {
+    let conf = config
+        .flags
+        .as_ref()
+        .and_then(|flags| flags.average_cpu_row)
+        .unwrap_or(false);
+
+    conf
+}
+
+#[inline]
 fn get_default_time_value(
-    matches: &ArgMatches, config: &Config, retention_ms: u64,
-) -> error::Result<u64> {
-    let default_time =
-        if let Some(default_time_value) = matches.get_one::<String>("default_time_value") {
-            try_parse_ms(default_time_value)?
-        } else if let Some(flags) = &config.flags {
-            if let Some(default_time_value) = &flags.default_time_value {
-                match default_time_value {
-                    StringOrNum::String(s) => try_parse_ms(s)?,
-                    StringOrNum::Num(n) => *n,
-                }
-            } else {
-                DEFAULT_TIME_MILLISECONDS
-            }
-        } else {
-            DEFAULT_TIME_MILLISECONDS
-        };
-
-    if default_time < 30000 {
-        return Err(BottomError::ConfigError(
-            "set your default value to be at least 30s.".to_string(),
-        ));
-    } else if default_time > retention_ms {
-        return Err(BottomError::ConfigError(format!(
-            "set your default value to be at most {}.",
-            humantime::Duration::from(Duration::from_millis(retention_ms))
-        )));
-    }
-
-    Ok(default_time)
+    args: &BottomArgs, config: &Config, retention_ms: u64,
+) -> OptionResult<u64> {
+    parse_ms_option!(
+        &args.general.default_time_value,
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.default_time_value.as_ref()),
+        DEFAULT_TIME_MILLISECONDS,
+        "default_time_value",
+        Some(30000),
+        Some(retention_ms),
+    )
 }
 
-fn get_time_interval(
-    matches: &ArgMatches, config: &Config, retention_ms: u64,
-) -> error::Result<u64> {
-    let time_interval = if let Some(time_interval) = matches.get_one::<String>("time_delta") {
-        try_parse_ms(time_interval)?
-    } else if let Some(flags) = &config.flags {
-        if let Some(time_interval) = &flags.time_delta {
-            match time_interval {
-                StringOrNum::String(s) => try_parse_ms(s)?,
-                StringOrNum::Num(n) => *n,
-            }
-        } else {
-            TIME_CHANGE_MILLISECONDS
-        }
-    } else {
-        TIME_CHANGE_MILLISECONDS
-    };
-
-    if time_interval < 1000 {
-        return Err(BottomError::ConfigError(
-            "set your time delta to be at least 1s.".to_string(),
-        ));
-    } else if time_interval > retention_ms {
-        return Err(BottomError::ConfigError(format!(
-            "set your time delta to be at most {}.",
-            humantime::Duration::from(Duration::from_millis(retention_ms))
-        )));
-    }
-
-    Ok(time_interval)
+#[inline]
+fn get_time_interval(args: &BottomArgs, config: &Config, retention_ms: u64) -> OptionResult<u64> {
+    parse_ms_option!(
+        &args.general.time_delta,
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.time_delta.as_ref()),
+        TIME_CHANGE_MILLISECONDS,
+        "time_delta",
+        Some(1000),
+        Some(retention_ms),
+    )
 }
 
 fn get_default_widget_and_count(
-    matches: &ArgMatches, config: &Config,
-) -> error::Result<(Option<BottomWidgetType>, u64)> {
-    let widget_type = if let Some(widget_type) = matches.get_one::<String>("default_widget_type") {
-        let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
+    args: &BottomArgs, config: &Config,
+) -> OptionResult<(Option<BottomWidgetType>, u64)> {
+    let widget_type = if let Some(widget_type) = &args.general.default_widget_type {
+        let parsed_widget = parse_arg_value!(widget_type.parse(), "default_widget_type")?;
         if let BottomWidgetType::Empty = parsed_widget {
             None
         } else {
@@ -700,7 +775,7 @@ fn get_default_widget_and_count(
         }
     } else if let Some(flags) = &config.flags {
         if let Some(widget_type) = &flags.default_widget_type {
-            let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
+            let parsed_widget = parse_config_value!(widget_type.parse(), "default_widget_type")?;
             if let BottomWidgetType::Empty = parsed_widget {
                 None
             } else {
@@ -713,89 +788,96 @@ fn get_default_widget_and_count(
         None
     };
 
-    let widget_count = if let Some(widget_count) = matches.get_one::<String>("default_widget_count")
-    {
-        Some(widget_count.parse::<u128>()?)
-    } else if let Some(flags) = &config.flags {
-        flags
-            .default_widget_count
-            .map(|widget_count| widget_count.into())
+    let widget_count: Option<u128> = if let Some(widget_count) = args.general.default_widget_count {
+        Some(widget_count.into())
     } else {
-        None
+        config.flags.as_ref().and_then(|flags| {
+            flags
+                .default_widget_count
+                .map(|widget_count| widget_count.into())
+        })
     };
 
     match (widget_type, widget_count) {
         (Some(widget_type), Some(widget_count)) => {
-            let widget_count = widget_count.try_into().map_err(|_| BottomError::ConfigError(
-                "set your widget count to be at most unsigned INT_MAX.".to_string()
+            let widget_count = widget_count.try_into().map_err(|_| OptionError::other(
+                "set your widget count to be at most 18446744073709551615.".to_string()
             ))?;
             Ok((Some(widget_type), widget_count))
         }
         (Some(widget_type), None) => Ok((Some(widget_type), 1)),
-        (None, Some(_widget_count)) =>  Err(BottomError::ConfigError(
+        (None, Some(_widget_count)) =>  Err(OptionError::other(
             "cannot set 'default_widget_count' by itself, it must be used with 'default_widget_type'.".to_string(),
         )),
         (None, None) => Ok((None, 1))
     }
 }
 
-#[allow(unused_variables)]
-fn get_use_battery(matches: &ArgMatches, config: &Config) -> bool {
-    #[cfg(feature = "battery")]
-    {
-        if let Ok(battery_manager) = Manager::new() {
-            if let Ok(batteries) = battery_manager.batteries() {
-                if batteries.count() == 0 {
-                    return false;
-                }
+#[cfg(feature = "battery")]
+fn get_use_battery(args: &BottomArgs, config: &Config) -> bool {
+    // TODO: Move this so it's dynamic in the app itself and automatically hide if
+    // there are no batteries?
+    if let Ok(battery_manager) = Manager::new() {
+        if let Ok(batteries) = battery_manager.batteries() {
+            if batteries.count() == 0 {
+                return false;
             }
         }
+    }
 
-        if matches.get_flag("battery") {
-            return true;
-        } else if let Some(flags) = &config.flags {
-            if let Some(battery) = flags.battery {
-                return battery;
-            }
+    if args.battery.battery {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(battery) = flags.battery {
+            return battery;
         }
     }
 
     false
 }
 
-#[allow(unused_variables)]
-fn get_enable_gpu_memory(matches: &ArgMatches, config: &Config) -> bool {
-    #[cfg(feature = "gpu")]
-    {
-        if matches.get_flag("enable_gpu_memory") {
-            return true;
-        } else if let Some(flags) = &config.flags {
-            if let Some(enable_gpu_memory) = flags.enable_gpu_memory {
-                return enable_gpu_memory;
-            }
+#[cfg(not(feature = "battery"))]
+fn get_use_battery(_args: &BottomArgs, _config: &Config) -> bool {
+    false
+}
+
+#[cfg(feature = "gpu")]
+fn get_enable_gpu(args: &BottomArgs, config: &Config) -> bool {
+    if args.gpu.disable_gpu {
+        return false;
+    }
+
+    !config
+        .flags
+        .as_ref()
+        .and_then(|f| f.disable_gpu)
+        .unwrap_or(false)
+}
+
+#[cfg(not(feature = "gpu"))]
+fn get_enable_gpu(_: &BottomArgs, _: &Config) -> bool {
+    false
+}
+
+#[cfg(not(target_os = "windows"))]
+fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
+    if args.memory.enable_cache_memory {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(enable_cache_memory) = flags.enable_cache_memory {
+            return enable_cache_memory;
         }
     }
 
     false
 }
 
-#[allow(unused_variables)]
-fn get_enable_cache_memory(matches: &ArgMatches, config: &Config) -> bool {
-    #[cfg(not(target_os = "windows"))]
-    {
-        if matches.get_flag("enable_cache_memory") {
-            return true;
-        } else if let Some(flags) = &config.flags {
-            if let Some(enable_cache_memory) = flags.enable_cache_memory {
-                return enable_cache_memory;
-            }
-        }
-    }
-
+#[cfg(target_os = "windows")]
+fn get_enable_cache_memory(_args: &BottomArgs, _config: &Config) -> bool {
     false
 }
 
-fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Filter>> {
+fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> OptionResult<Option<Filter>> {
     if let Some(ignore_list) = ignore_list {
         let list: Result<Vec<_>, _> = ignore_list
             .list
@@ -823,42 +905,16 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Fil
             })
             .collect();
 
-        Ok(Some(Filter {
-            list: list?,
-            is_list_ignored: ignore_list.is_list_ignored,
-        }))
+        let list = list.map_err(|err| OptionError::config(err.to_string()))?;
+
+        Ok(Some(Filter::new(ignore_list.is_list_ignored, list)))
     } else {
         Ok(None)
     }
 }
 
-pub fn get_color_scheme(matches: &ArgMatches, config: &Config) -> error::Result<ColourScheme> {
-    if let Some(color) = matches.get_one::<String>("color") {
-        // Highest priority is always command line flags...
-        return ColourScheme::from_str(color);
-    } else if let Some(colors) = &config.colors {
-        if !colors.is_empty() {
-            // Then, give priority to custom colours...
-            return Ok(ColourScheme::Custom);
-        } else if let Some(flags) = &config.flags {
-            // Last priority is config file flags...
-            if let Some(color) = &flags.color {
-                return ColourScheme::from_str(color);
-            }
-        }
-    } else if let Some(flags) = &config.flags {
-        // Last priority is config file flags...
-        if let Some(color) = &flags.color {
-            return ColourScheme::from_str(color);
-        }
-    }
-
-    // And lastly, the final case is just "default".
-    Ok(ColourScheme::Default)
-}
-
-fn get_network_unit_type(matches: &ArgMatches, config: &Config) -> DataUnit {
-    if matches.get_flag("network_use_bytes") {
+fn get_network_unit_type(args: &BottomArgs, config: &Config) -> DataUnit {
+    if args.network.network_use_bytes {
         return DataUnit::Byte;
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_bytes) = flags.network_use_bytes {
@@ -871,8 +927,8 @@ fn get_network_unit_type(matches: &ArgMatches, config: &Config) -> DataUnit {
     DataUnit::Bit
 }
 
-fn get_network_scale_type(matches: &ArgMatches, config: &Config) -> AxisScaling {
-    if matches.get_flag("network_use_log") {
+fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
+    if args.network.network_use_log {
         return AxisScaling::Log;
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_log) = flags.network_use_log {
@@ -885,35 +941,81 @@ fn get_network_scale_type(matches: &ArgMatches, config: &Config) -> AxisScaling 
     AxisScaling::Linear
 }
 
-fn get_retention(matches: &ArgMatches, config: &Config) -> error::Result<u64> {
+fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
-    if let Some(retention) = matches.get_one::<String>("retention") {
-        try_parse_ms(retention)
+    parse_ms_option!(
+        &args.general.retention,
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.retention.as_ref()),
+        DEFAULT_RETENTION_MS,
+        "retention",
+        None,
+        None,
+    )
+}
+
+fn get_network_legend_position(
+    args: &BottomArgs, config: &Config,
+) -> OptionResult<Option<LegendPosition>> {
+    let result = if let Some(s) = &args.network.network_legend {
+        match s.to_ascii_lowercase().trim() {
+            "none" => None,
+            position => Some(parse_arg_value!(position.parse(), "network_legend")?),
+        }
     } else if let Some(flags) = &config.flags {
-        if let Some(retention) = &flags.retention {
-            Ok(match retention {
-                StringOrNum::String(s) => try_parse_ms(s)?,
-                StringOrNum::Num(n) => *n,
-            })
+        if let Some(s) = &flags.network_legend {
+            match s.to_ascii_lowercase().trim() {
+                "none" => None,
+                position => Some(parse_config_value!(position.parse(), "network_legend")?),
+            }
         } else {
-            Ok(DEFAULT_RETENTION_MS)
+            Some(LegendPosition::default())
         }
     } else {
-        Ok(DEFAULT_RETENTION_MS)
-    }
+        Some(LegendPosition::default())
+    };
+
+    Ok(result)
+}
+
+fn get_memory_legend_position(
+    args: &BottomArgs, config: &Config,
+) -> OptionResult<Option<LegendPosition>> {
+    let result = if let Some(s) = &args.memory.memory_legend {
+        match s.to_ascii_lowercase().trim() {
+            "none" => None,
+            position => Some(parse_arg_value!(position.parse(), "memory_legend")?),
+        }
+    } else if let Some(flags) = &config.flags {
+        if let Some(s) = &flags.memory_legend {
+            match s.to_ascii_lowercase().trim() {
+                "none" => None,
+                position => Some(parse_config_value!(position.parse(), "memory_legend")?),
+            }
+        } else {
+            Some(LegendPosition::default())
+        }
+    } else {
+        Some(LegendPosition::default())
+    };
+
+    Ok(result)
 }
 
 #[cfg(test)]
 mod test {
-    use clap::ArgMatches;
+    use clap::Parser;
 
-    use super::{get_color_scheme, get_time_interval, get_widget_layout, Config};
+    use super::{Config, get_time_interval};
     use crate::{
         app::App,
-        canvas::canvas_styling::CanvasStyling,
+        args::BottomArgs,
         options::{
-            get_default_time_value, get_retention, get_update_rate, try_parse_ms, ConfigFlags,
+            config::flags::FlagConfig, get_default_time_value, get_retention, get_update_rate,
+            try_parse_ms,
         },
     };
 
@@ -939,25 +1041,23 @@ mod test {
     #[test]
     fn matches_human_times() {
         let config = Config::default();
-        let app = crate::args::build_app();
 
         {
-            let app = app.clone();
             let delta_args = vec!["btm", "--time_delta", "2 min"];
-            let matches = app.get_matches_from(delta_args);
+            let args = BottomArgs::parse_from(delta_args);
 
             assert_eq!(
-                get_time_interval(&matches, &config, 60 * 60 * 1000),
+                get_time_interval(&args, &config, 60 * 60 * 1000),
                 Ok(2 * 60 * 1000)
             );
         }
 
         {
             let default_time_args = vec!["btm", "--default_time_value", "300s"];
-            let matches = app.get_matches_from(default_time_args);
+            let args = BottomArgs::parse_from(default_time_args);
 
             assert_eq!(
-                get_default_time_value(&matches, &config, 60 * 60 * 1000),
+                get_default_time_value(&args, &config, 60 * 60 * 1000),
                 Ok(5 * 60 * 1000)
             );
         }
@@ -966,25 +1066,23 @@ mod test {
     #[test]
     fn matches_number_times() {
         let config = Config::default();
-        let app = crate::args::build_app();
 
         {
-            let app = app.clone();
             let delta_args = vec!["btm", "--time_delta", "120000"];
-            let matches = app.get_matches_from(delta_args);
+            let args = BottomArgs::parse_from(delta_args);
 
             assert_eq!(
-                get_time_interval(&matches, &config, 60 * 60 * 1000),
+                get_time_interval(&args, &config, 60 * 60 * 1000),
                 Ok(2 * 60 * 1000)
             );
         }
 
         {
             let default_time_args = vec!["btm", "--default_time_value", "300000"];
-            let matches = app.get_matches_from(default_time_args);
+            let args = BottomArgs::parse_from(default_time_args);
 
             assert_eq!(
-                get_default_time_value(&matches, &config, 60 * 60 * 1000),
+                get_default_time_value(&args, &config, 60 * 60 * 1000),
                 Ok(5 * 60 * 1000)
             );
         }
@@ -992,11 +1090,10 @@ mod test {
 
     #[test]
     fn config_human_times() {
-        let app = crate::args::build_app();
-        let matches = app.get_matches_from(["btm"]);
+        let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = Config::default();
-        let flags = ConfigFlags {
+        let flags = FlagConfig {
             time_delta: Some("2 min".to_string().into()),
             default_time_value: Some("300s".to_string().into()),
             rate: Some("1s".to_string().into()),
@@ -1007,27 +1104,26 @@ mod test {
         config.flags = Some(flags);
 
         assert_eq!(
-            get_time_interval(&matches, &config, 60 * 60 * 1000),
+            get_time_interval(&args, &config, 60 * 60 * 1000),
             Ok(2 * 60 * 1000)
         );
 
         assert_eq!(
-            get_default_time_value(&matches, &config, 60 * 60 * 1000),
+            get_default_time_value(&args, &config, 60 * 60 * 1000),
             Ok(5 * 60 * 1000)
         );
 
-        assert_eq!(get_update_rate(&matches, &config), Ok(1000));
+        assert_eq!(get_update_rate(&args, &config), Ok(1000));
 
-        assert_eq!(get_retention(&matches, &config), Ok(600000));
+        assert_eq!(get_retention(&args, &config), Ok(600000));
     }
 
     #[test]
     fn config_number_times_as_string() {
-        let app = crate::args::build_app();
-        let matches = app.get_matches_from(["btm"]);
+        let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = Config::default();
-        let flags = ConfigFlags {
+        let flags = FlagConfig {
             time_delta: Some("120000".to_string().into()),
             default_time_value: Some("300000".to_string().into()),
             rate: Some("1000".to_string().into()),
@@ -1038,27 +1134,26 @@ mod test {
         config.flags = Some(flags);
 
         assert_eq!(
-            get_time_interval(&matches, &config, 60 * 60 * 1000),
+            get_time_interval(&args, &config, 60 * 60 * 1000),
             Ok(2 * 60 * 1000)
         );
 
         assert_eq!(
-            get_default_time_value(&matches, &config, 60 * 60 * 1000),
+            get_default_time_value(&args, &config, 60 * 60 * 1000),
             Ok(5 * 60 * 1000)
         );
 
-        assert_eq!(get_update_rate(&matches, &config), Ok(1000));
+        assert_eq!(get_update_rate(&args, &config), Ok(1000));
 
-        assert_eq!(get_retention(&matches, &config), Ok(600000));
+        assert_eq!(get_retention(&args, &config), Ok(600000));
     }
 
     #[test]
     fn config_number_times_as_num() {
-        let app = crate::args::build_app();
-        let matches = app.get_matches_from(["btm"]);
+        let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = Config::default();
-        let flags = ConfigFlags {
+        let flags = FlagConfig {
             time_delta: Some(120000.into()),
             default_time_value: Some(300000.into()),
             rate: Some(1000.into()),
@@ -1069,44 +1164,37 @@ mod test {
         config.flags = Some(flags);
 
         assert_eq!(
-            get_time_interval(&matches, &config, 60 * 60 * 1000),
+            get_time_interval(&args, &config, 60 * 60 * 1000),
             Ok(2 * 60 * 1000)
         );
 
         assert_eq!(
-            get_default_time_value(&matches, &config, 60 * 60 * 1000),
+            get_default_time_value(&args, &config, 60 * 60 * 1000),
             Ok(5 * 60 * 1000)
         );
 
-        assert_eq!(get_update_rate(&matches, &config), Ok(1000));
+        assert_eq!(get_update_rate(&args, &config), Ok(1000));
 
-        assert_eq!(get_retention(&matches, &config), Ok(600000));
+        assert_eq!(get_retention(&args, &config), Ok(600000));
     }
 
-    fn create_app(config: Config, matches: ArgMatches) -> App {
-        let (layout, id, ty) = get_widget_layout(&matches, &config).unwrap();
-        let styling =
-            CanvasStyling::new(get_color_scheme(&matches, &config).unwrap(), &config).unwrap();
-
-        super::build_app(matches, config, &layout, id, &ty, &styling).unwrap()
+    fn create_app(args: BottomArgs) -> App {
+        let config = Config::default();
+        super::init_app(args, config).unwrap().0
     }
 
-    // TODO: There's probably a better way to create clap options AND unify together to avoid the possibility of
-    // typos/mixing up. Use proc macros to unify on one struct?
+    // TODO: There's probably a better way to create clap options AND unify together
+    // to avoid the possibility of typos/mixing up. Use proc macros to unify on
+    // one struct?
     #[test]
     fn verify_cli_options_build() {
-        let app = crate::args::build_app();
+        let app = crate::args::build_cmd();
 
-        let default_app = {
-            let app = app.clone();
-            let config = Config::default();
-            let matches = app.get_matches_from([""]);
+        let default_app = create_app(BottomArgs::parse_from(["btm"]));
 
-            create_app(config, matches)
-        };
-
-        // Skip battery since it's tricky to test depending on the platform/features we're testing with.
-        let skip = ["help", "version", "celsius", "battery"];
+        // Skip battery since it's tricky to test depending on the platform/features
+        // we're testing with.
+        let skip = ["help", "version", "celsius", "battery", "generate_schema"];
 
         for arg in app.get_arguments().collect::<Vec<_>>() {
             let arg_name = arg
@@ -1120,11 +1208,8 @@ mod test {
                 let arg = format!("--{arg_name}");
 
                 let arguments = vec!["btm", &arg];
-                let app = app.clone();
-                let config = Config::default();
-                let matches = app.get_matches_from(arguments);
-
-                let testing_app = create_app(config, matches);
+                let args = BottomArgs::parse_from(arguments);
+                let testing_app = create_app(args);
 
                 if (default_app.app_config_fields == testing_app.app_config_fields)
                     && default_app.is_expanded == testing_app.is_expanded
@@ -1140,5 +1225,51 @@ mod test {
                 }
             }
         }
+    }
+
+    /// This one has slightly more complex behaviour due to `dirs` not respecting XDG on macOS, so we manually
+    /// handle it. However, to ensure backwards-compatibility, we also have to do some special cases.
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn test_get_config_path_macos() {
+        use std::path::PathBuf;
+
+        use super::{DEFAULT_CONFIG_FILE_LOCATION, get_config_path};
+
+        // Case three: no previous config, no XDG var.
+        // SAFETY: This is fine, this is just a test, and no other test affects env vars.
+        unsafe {
+            std::env::remove_var("XDG_CONFIG_HOME");
+        }
+
+        let case_1 = dirs::config_dir()
+            .map(|mut path| {
+                path.push(DEFAULT_CONFIG_FILE_LOCATION);
+                path
+            })
+            .unwrap();
+
+        // Skip this test if the file already exists.
+        if !case_1.exists() {
+            assert_eq!(get_config_path(None), Some(case_1));
+        }
+
+        // Case two: no previous config, XDG var exists.
+        // SAFETY: This is fine, this is just a test, and no other test affects env vars.
+        unsafe {
+            std::env::set_var("XDG_CONFIG_HOME", "/tmp");
+        }
+        let mut case_2 = PathBuf::new();
+        case_2.push("/tmp");
+        case_2.push(DEFAULT_CONFIG_FILE_LOCATION);
+
+        // Skip this test if the file already exists.
+        if !case_2.exists() {
+            assert_eq!(get_config_path(None), Some(case_2));
+        }
+
+        // Case one: old non-XDG exists already, XDG var exists.
+        // let case_3 = case_1;
+        // assert_eq!(get_config_path(None), Some(case_1));
     }
 }

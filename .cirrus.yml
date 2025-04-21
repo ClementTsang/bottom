@@ -1,10 +1,9 @@
 %YAML 1.1
 ---
-# Configuration for CirrusCI. This is primarily used for testing and building FreeBSD and macOS M1, since other
-# CI platforms don't seem to support these platforms as of writing.
+# Configuration for CirrusCI. This is primarily used for testing and building FreeBSD and old versions of Linux,
+# since other CI platforms don't support build jobs for these configurations.
 #
-# Note that we set the YAML directive above to prevent some linting errors around the
-# templates.
+# Note that we set the YAML directive above to prevent some linting errors around the templates.
 
 setup_template: &SETUP_TEMPLATE
   setup_script:
@@ -14,17 +13,18 @@ setup_template: &SETUP_TEMPLATE
 cache_template: &CACHE_TEMPLATE
   registry_cache:
     folder: $HOME/.cargo/registry
-    reupload_on_changes: true
+    reupload_on_changes: "true"
     fingerprint_script:
-      - md5 Cargo.lock
+      - $HOME/.cargo/bin/rustc --version
+      - cat Cargo.lock
       - echo $CIRRUS_OS
       - echo $CIRRUS_TASK_NAME
   target_cache:
     folder: target
-    reupload_on_changes: true
+    reupload_on_changes: "true"
     fingerprint_script:
-      - . $HOME/.cargo/env && rustc --version
-      - md5 Cargo.lock
+      - $HOME/.cargo/bin/rustc --version
+      - cat Cargo.lock
       - echo $CIRRUS_OS
       - echo $CIRRUS_TASK_NAME
 
@@ -35,70 +35,27 @@ cleanup_template: &CLEANUP_TEMPLATE
     - rm -f ./target/.rustc_info.json
 
 env:
-  CARGO_INCREMENTAL: 0
-  CARGO_PROFILE_DEV_DEBUG: 0
-  CARGO_HUSKY_DONT_INSTALL_HOOKS: true
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: "0"
+  CARGO_HUSKY_DONT_INSTALL_HOOKS: "true"
 
-test_task:
-  auto_cancellation: false
-  only_if: $CIRRUS_BUILD_SOURCE != "api" && ($CIRRUS_BRANCH == "master" || $CIRRUS_PR != "")
-  skip: "!changesInclude('.cargo/**', '.cirrus.yml', 'sample_configs/**', 'src/**', 'tests/**', 'build.rs', 'Cargo.lock', 'Cargo.toml', 'clippy.toml', 'rustfmt.toml')"
-  matrix:
-    - name: "FreeBSD 13 Test"
-      freebsd_instance:
-        image_family: freebsd-13-1
-    - name: "FreeBSD 12 Test"
-      freebsd_instance:
-        image_family: freebsd-12-3
-    - name: "macOS M1 Test"
-      macos_instance:
-        image: ghcr.io/cirruslabs/macos-monterey-base:latest
-  <<: *SETUP_TEMPLATE
-  <<: *CACHE_TEMPLATE
-  test_no_feature_script:
-    - . $HOME/.cargo/env
-    - cargo fmt --all -- --check
-    - cargo test --no-run --locked --no-default-features
-    - cargo test --no-fail-fast --no-default-features -- --nocapture --quiet
-    - cargo clippy --all-targets --workspace --no-default-features -- -D warnings
-  test_all_feature_script:
-    - . $HOME/.cargo/env
-    - cargo fmt --all -- --check
-    - cargo test --no-run --locked --all-features
-    - cargo test --no-fail-fast --all-features -- --nocapture --quiet
-    - cargo clippy --all-targets --workspace --all-features -- -D warnings
-  <<: *CLEANUP_TEMPLATE
-
-build_task:
-  auto_cancellation: false
-  only_if: $CIRRUS_BUILD_SOURCE == "api"
+release_task:
+  auto_cancellation: "false"
+  only_if: $CIRRUS_BUILD_SOURCE == "api" && $BTM_BUILD_RELEASE_CALLER == "ci"
+  timeout_in: "30m"
   env:
-    BTM_GENERATE: true
+    BTM_GENERATE: "true"
     COMPLETION_DIR: "target/tmp/bottom/completion/"
     MANPAGE_DIR: "target/tmp/bottom/manpage/"
     # -PLACEHOLDER FOR CI-
   matrix:
-    - name: "FreeBSD 13 Build"
-      alias: "freebsd_13_1_build"
-      freebsd_instance:
-        image_family: freebsd-13-1
+    - name: "Legacy Linux (2.17)"
+      alias: "linux_2_17_build"
+      container:
+        image: quay.io/pypa/manylinux2014_x86_64
       env:
-        TARGET: "x86_64-unknown-freebsd"
-        NAME: "x86_64-unknown-freebsd-13-1"
-    - name: "FreeBSD 12 Build"
-      alias: "freebsd_12_3_build"
-      freebsd_instance:
-        image_family: freebsd-12-3
-      env:
-        TARGET: "x86_64-unknown-freebsd"
-        NAME: "x86_64-unknown-freebsd-12-3"
-    - name: "macOS M1 Build"
-      alias: "macos_build"
-      macos_instance:
-        image: ghcr.io/cirruslabs/macos-monterey-base:latest
-      env:
-        TARGET: "aarch64-apple-darwin"
-        NAME: "aarch64-apple-darwin"
+        TARGET: "x86_64-unknown-linux-gnu"
+        NAME: "x86_64-unknown-linux-gnu-2-17"
   <<: *SETUP_TEMPLATE
   <<: *CACHE_TEMPLATE
   build_script:

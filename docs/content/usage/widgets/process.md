@@ -21,16 +21,25 @@ By default, the main process table displays the following information for each p
 - Name of the process
 - CPU use percentage (note this is averaged out per available thread by default)
 - Memory use percentage
-- Reads per second
-- Writes per second
-- Total amount read
-- Total amount written
+- Disk reads per second
+- Disk writes per second
+- Total amount read from disk
+- Total amount written from disk
 - User
 - Process state
+- Process uptime
 
-It can also additionally display the following columns:
+  <!-- 2-space indent here because mdx_truly_sane_lists interferes, see https://github.com/squidfunk/mkdocs-material/discussions/3763#discussioncomment-2833731 -->
+  !!! info indent
 
-- Process running time
+      On Windows, the I/O counters will report _all_ reads/writes, not just disk. See
+      [here](https://docs.rs/sysinfo/latest/sysinfo/struct.Process.html#method.disk_usage)
+      for more details.
+
+With the feature flag (`--disable_gpu` on Linux/Windows to disable) and gpu process columns enabled in the configuration:
+
+- GPU memory use percentage
+- GPU core utilization percentage
 
 See [the processes configuration page](../../configuration/config-file/processes.md) on how to customize which columns
 are shown.
@@ -55,7 +64,14 @@ is added together when displayed.
     <img src="../../../assets/screenshots/process/process_grouped.webp" alt="A picture of grouped mode in a process widget."/>
 </figure>
 
-Note that the process state and user columns are disabled in this mode.
+!!! info
+
+    Note that the process state and user columns are disabled in this mode.
+
+!!! info
+
+    Note that if tree mode is also active, processes cannot be grouped together due to the behaviour of the two modes
+    somewhat clashing. This also reflects with default modes like `group_processes`.
 
 ### Process termination
 
@@ -77,15 +93,18 @@ screen will be shown to confirm whether you want to kill that process/process gr
 
 ### Tree mode
 
-Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, displaying processes in regards to their parent-child process relationships.
+Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, displaying processes in regard to their parent-child process relationships.
 
 <figure>
     <img src="../../../assets/screenshots/process/process_tree.webp" alt="A picture of tree mode in a process widget."/>
 </figure>
 
-A process in tree mode can also be "collapsed", hiding its children and any descendants, using either the ++minus++ or ++plus++ keys, or double clicking on an entry.
+A process in tree mode can also be "collapsed", hiding its children and any descendants, using either the ++minus++ or ++plus++ keys, or double-clicking on an entry.
 
-Lastly, note that in tree mode, processes cannot be grouped together due to the behaviour of the two modes somewhat clashing.
+!!! info
+
+    Note that if tree mode is active, processes cannot be grouped together due to the behaviour of the two modes
+    somewhat clashing. This also reflects with default modes like `group_processes`.
 
 ### Full command
 
@@ -133,20 +152,23 @@ You can also paste search queries (e.g. ++shift+insert++, ++ctrl+shift+v++).
 
 Note all keywords are case-insensitive. To search for a process/command that collides with a keyword, surround the term with quotes (e.x. `"cpu"`).
 
-| Keywords                        | Example                               | Description                                                                     |
-| ------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------- |
-|                                 | `btm`                                 | Matches by process or command name; supports regex                              |
-| `pid`                           | `pid=1044`                            | Matches by PID; supports regex                                                  |
-| `cpu` <br/> `cpu%`              | `cpu > 0.5`                           | Matches the CPU column; supports comparison operators                           |
-| `memb`                          | `memb > 1000 b`                       | Matches the memory column in terms of bytes; supports comparison operators      |
-| `mem` <br/> `mem%`              | `mem < 0.5`                           | Matches the memory column in terms of percent; supports comparison operators    |
-| `read` <br/> `r/s` <br/> `rps`  | `read = 1 mb`                         | Matches the read/s column in terms of bytes; supports comparison operators      |
-| `write` <br/> `w/s` <br/> `wps` | `write >= 1 kb`                       | Matches the write/s column in terms of bytes; supports comparison operators     |
-| `tread` <br/> `t.read`          | `tread <= 1024 gb`                    | Matches he total read column in terms of bytes; supports comparison operators   |
-| `twrite` <br/> `t.write`        | `twrite > 1024 tb`                    | Matches the total write column in terms of bytes; supports comparison operators |
-| `user`                          | `user=root`                           | Matches by user; supports regex                                                 |
-| `state`                         | `state=running`                       | Matches by state; supports regex                                                |
-| `()`                            | `(<COND 1> AND <COND 2>) OR <COND 3>` | Group together a condition                                                      |
+| Keywords                        | Example                               | Description                                                                      |
+| ------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
+|                                 | `btm`                                 | Matches by process or command name; supports regex                               |
+| `pid`                           | `pid=1044`                            | Matches by PID; supports regex                                                   |
+| `cpu` <br/> `cpu%`              | `cpu > 0.5`                           | Matches the CPU column; supports comparison operators                            |
+| `memb`                          | `memb > 1000 b`                       | Matches the memory column in terms of bytes; supports comparison operators       |
+| `mem` <br/> `mem%`              | `mem < 0.5`                           | Matches the memory column in terms of percent; supports comparison operators     |
+| `read` <br/> `r/s` <br/> `rps`  | `read = 1 mb`                         | Matches the read/s column in terms of bytes; supports comparison operators       |
+| `write` <br/> `w/s` <br/> `wps` | `write >= 1 kb`                       | Matches the write/s column in terms of bytes; supports comparison operators      |
+| `tread` <br/> `t.read`          | `tread <= 1024 gb`                    | Matches he total read column in terms of bytes; supports comparison operators    |
+| `twrite` <br/> `t.write`        | `twrite > 1024 tb`                    | Matches the total write column in terms of bytes; supports comparison operators  |
+| `user`                          | `user=root`                           | Matches by user; supports regex                                                  |
+| `state`                         | `state=running`                       | Matches by state; supports regex                                                 |
+| `()`                            | `(<COND 1> AND <COND 2>) OR <COND 3>` | Group together a condition                                                       |
+| `gmem`                          | `gmem > 1000 b`                       | Matches the gpu memory column in terms of bytes; supports comparison operators   |
+| `gmem%`                         | `gmem% < 0.5`                         | Matches the gpu memory column in terms of percent; supports comparison operators |
+| `gpu%`                          | `gpu% > 0`                            | Matches the gpu usage column in terms of percent; supports comparison operators  |
 
 #### Comparison operators
 
@@ -189,24 +211,26 @@ Note that key bindings are generally case-sensitive.
 
 ### Process table
 
-| Binding                | Action                                                           |
-| ---------------------- | ---------------------------------------------------------------- |
-| ++up++ , ++k++         | Move up within a widget                                          |
-| ++down++ , ++j++       | Move down within a widget                                        |
-| ++g+g++ , ++home++     | Jump to the first entry in the table                             |
-| ++G++ , ++end++        | Jump to the last entry in the table                              |
-| ++d+d++ , ++f9++       | Send a kill signal to the selected process                       |
-| ++c++                  | Sort by CPU usage, press again to reverse sorting order          |
-| ++m++                  | Sort by memory usage, press again to reverse sorting order       |
-| ++p++                  | Sort by PID name, press again to reverse sorting order           |
-| ++n++                  | Sort by process name, press again to reverse sorting order       |
-| ++tab++                | Toggle grouping processes with the same name                     |
-| ++P++                  | Toggle between showing the full command or just the process name |
-| ++ctrl+f++ , ++slash++ | Toggle showing the search sub-widget                             |
-| ++s++ , ++f6++         | Toggle showing the sort sub-widget                               |
-| ++I++                  | Invert the current sort                                          |
-| ++"%"++                | Toggle between values and percentages for memory usage           |
-| ++t++ , ++f5++         | Toggle tree mode                                                 |
+| Binding                                             | Action                                                           |
+| --------------------------------------------------- | ---------------------------------------------------------------- |
+| ++up++ , ++k++                                      | Move up within a widget                                          |
+| ++down++ , ++j++                                    | Move down within a widget                                        |
+| ++g+g++ , ++home++                                  | Jump to the first entry in the table                             |
+| ++G++ , ++end++                                     | Jump to the last entry in the table                              |
+| ++d+d++ , ++f9++                                    | Send a kill signal to the selected process                       |
+| ++c++                                               | Sort by CPU usage, press again to reverse sorting order          |
+| ++m++                                               | Sort by memory usage, press again to reverse sorting order       |
+| ++p++                                               | Sort by PID name, press again to reverse sorting order           |
+| ++n++                                               | Sort by process name, press again to reverse sorting order       |
+| ++tab++                                             | Toggle grouping processes with the same name                     |
+| ++P++                                               | Toggle between showing the full command or just the process name |
+| ++ctrl+f++ , ++slash++                              | Toggle showing the search sub-widget                             |
+| ++s++ , ++f6++, ++delete++ (++fn+delete++ on macOS) | Toggle showing the sort sub-widget                               |
+| ++I++                                               | Invert the current sort                                          |
+| ++"%"++                                             | Toggle between values and percentages for memory usage           |
+| ++t++ , ++f5++                                      | Toggle tree mode                                                 |
+| ++M++                                               | Sort by gpu memory usage, press again to reverse sorting order   |
+| ++C++                                               | Sort by gpu usage, press again to reverse sorting order          |
 
 ### Sort sub-widget
 
@@ -232,7 +256,7 @@ Note that key bindings are generally case-sensitive.
 | ++ctrl+w++                            | Delete a word behind the cursor              |
 | ++ctrl+h++                            | Delete the character behind the cursor       |
 | ++backspace++                         | Delete the character behind the cursor       |
-| ++delete++                            | Delete the character at the cursor           |
+| ++delete++ (++fn+delete++ on macOS)   | Delete the character at the cursor           |
 | ++alt+c++ , ++f1++                    | Toggle matching case                         |
 | ++alt+w++ , ++f2++                    | Toggle matching the entire word              |
 | ++alt+r++ , ++f3++                    | Toggle using regex                           |
