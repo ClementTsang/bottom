@@ -91,7 +91,7 @@ serde = { version = "1.0.219", features = ["derive"] }
 starship-battery = { version = "0.10.1", optional = true }
 sysinfo = "=0.30.13"
 timeless = "0.0.14-alpha"
-toml_edit = { version = "0.22.24", features = ["serde"] }
+toml_edit = { version = "0.22.26", features = ["serde"] }
 tui = { version = "0.29.0", package = "ratatui" }
 unicode-ellipsis = "0.3.0"
 unicode-segmentation = "1.12.0"
@@ -144,7 +144,7 @@ portable-pty = "0.9.0"
 
 [build-dependencies]
 clap = { version = "4.5.37", features = ["default", "cargo", "wrap_help", "derive"] }
-clap_complete = "4.5.47"
+clap_complete = "4.5.48"
 clap_complete_nushell = "4.5.5"
 clap_complete_fig = "4.5.2"
 clap_mangen = "0.2.26"
