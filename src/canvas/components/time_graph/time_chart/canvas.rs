@@ -33,14 +33,14 @@ pub trait Shape {
 
 impl Shape for CanvasLine {
     fn draw(&self, painter: &mut Painter<'_, '_>) {
-        let (x1, y1) = match painter.get_point(self.x1, self.y1) {
-            Some(c) => c,
-            None => return,
+        let Some((x1, y1)) = painter.get_point(self.x1, self.y1) else {
+            return;
         };
-        let (x2, y2) = match painter.get_point(self.x2, self.y2) {
-            Some(c) => c,
-            None => return,
+
+        let Some((x2, y2)) = painter.get_point(self.x2, self.y2) else {
+            return;
         };
+
         let (dx, x_range) = if x2 >= x1 {
             (x2 - x1, x1..=x2)
         } else {
