@@ -676,7 +676,8 @@ impl ProcWidgetState {
 
         let mut id_pid_map: HashMap<String, Vec<Pid>> = HashMap::default();
         let mut filtered_data: Vec<ProcWidgetData> = if let ProcWidgetMode::Grouped = self.mode {
-            let mut id_process_mapping: HashMap<&String, ProcessHarvest> = HashMap::default();
+            let mut id_process_mapping: HashMap<&String, ProcWidgetData> = HashMap::default();
+
             for process in filtered_iter {
                 let id = if is_using_command {
                     &process.command
@@ -691,30 +692,46 @@ impl ProcWidgetState {
                     id_pid_map.insert(id.clone(), vec![pid]);
                 }
 
-                if let Some(grouped_process_harvest) = id_process_mapping.get_mut(id) {
-                    grouped_process_harvest.add(process);
+                if let Some(pwd) = id_process_mapping.get_mut(id) {
+                    pwd.cpu_usage_percent += process.cpu_usage_percent;
+
+                    match &mut pwd.mem_usage {
+                        MemUsage::Percent(usage) => {
+                            *usage += process.mem_usage_percent;
+                        }
+                        MemUsage::Bytes(usage) => {
+                            *usage += process.mem_usage_bytes;
+                        }
+                    }
+
+                    pwd.rps += process.read_bytes_per_sec;
+                    pwd.wps += process.write_bytes_per_sec;
+                    pwd.total_read += process.total_read_bytes;
+                    pwd.total_write += process.total_write_bytes;
+                    pwd.time = pwd.time.max(process.time);
+                    #[cfg(feature = "gpu")]
+                    {
+                        pwd.gpu_usage += process.gpu_util;
+                        match &mut pwd.gpu_mem_usage {
+                            MemUsage::Percent(usage) => {
+                                *usage += process.gpu_mem_percent;
+                            }
+                            MemUsage::Bytes(usage) => {
+                                *usage += process.gpu_mem;
+                            }
+                        }
+                    }
+
+                    pwd.num_similar += 1;
                 } else {
-                    // FIXME: [PERF] could maybe eliminate an allocation here in the grouped mode...
-                    // or maybe just avoid the entire transformation step, making an alloc fine.
-                    id_process_mapping.insert(id, process.clone());
+                    id_process_mapping.insert(
+                        id,
+                        ProcWidgetData::from_data(process, is_using_command, is_mem_percent),
+                    );
                 }
             }
 
-            id_process_mapping
-                .values()
-                .map(|process| {
-                    let id = if is_using_command {
-                        &process.command
-                    } else {
-                        &process.name
-                    };
-
-                    let num_similar = id_pid_map.get(id).map(|val| val.len()).unwrap_or(1) as u64;
-
-                    ProcWidgetData::from_data(process, is_using_command, is_mem_percent)
-                        .num_similar(num_similar)
-                })
-                .collect()
+            id_process_mapping.into_values().collect()
         } else {
             filtered_iter
                 .map(|process| ProcWidgetData::from_data(process, is_using_command, is_mem_percent))

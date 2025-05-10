@@ -19,7 +19,7 @@ use crate::{
 /// TODO: Maybe reduce visibility of internal data, make it only accessible through DataStore?
 #[derive(Debug, Clone)]
 pub struct StoredData {
-    pub last_update_time: Instant, // FIXME: (points_rework_v1) remove this?
+    pub last_update_time: Instant, // FIXME: (points_rework_v1) we could be able to remove this with some more refactoring.
     pub timeseries_data: TimeSeriesData,
     pub network_harvest: network::NetworkHarvest,
     pub ram_harvest: Option<MemData>,
