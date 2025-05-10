@@ -112,25 +112,6 @@ pub struct ProcessHarvest {
     // pub virt_kb: u64,
 }
 
-impl ProcessHarvest {
-    pub(crate) fn add(&mut self, rhs: &ProcessHarvest) {
-        self.cpu_usage_percent += rhs.cpu_usage_percent;
-        self.mem_usage_bytes += rhs.mem_usage_bytes;
-        self.mem_usage_percent += rhs.mem_usage_percent;
-        self.read_bytes_per_sec += rhs.read_bytes_per_sec;
-        self.write_bytes_per_sec += rhs.write_bytes_per_sec;
-        self.total_read_bytes += rhs.total_read_bytes;
-        self.total_write_bytes += rhs.total_write_bytes;
-        self.time = self.time.max(rhs.time);
-        #[cfg(feature = "gpu")]
-        {
-            self.gpu_mem += rhs.gpu_mem;
-            self.gpu_util += rhs.gpu_util;
-            self.gpu_mem_percent += rhs.gpu_mem_percent;
-        }
-    }
-}
-
 impl DataCollector {
     pub(crate) fn get_processes(&mut self) -> CollectionResult<Vec<ProcessHarvest>> {
         cfg_if! {

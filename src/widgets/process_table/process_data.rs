@@ -259,11 +259,6 @@ impl ProcWidgetData {
         }
     }
 
-    pub fn num_similar(mut self, num_similar: u64) -> Self {
-        self.num_similar = num_similar;
-        self
-    }
-
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self

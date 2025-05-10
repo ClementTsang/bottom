@@ -270,7 +270,7 @@ fn create_collection_thread(
     })
 }
 
-/// Main code to call.
+/// Main code to call to start bottom.
 #[inline]
 pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
@@ -367,8 +367,9 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     panic::set_hook(Box::new(panic_hook));
 
     // Set termination hook
-    // TODO: On UNIX, use signal-hook to handle cleanup as well.
     ctrlc::set_handler(move || {
+        // TODO: Consider using signal-hook (https://github.com/vorner/signal-hook) to handle
+        // more types of signals?
         let _ = sender.send(BottomEvent::Terminate);
     })?;
 
@@ -381,9 +382,7 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     loop {
         if let Ok(recv) = receiver.recv() {
             match recv {
-                BottomEvent::Terminate => {
-                    break;
-                }
+                BottomEvent::Terminate => break,
                 BottomEvent::Resize => {
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
