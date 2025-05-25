@@ -519,7 +519,7 @@ impl App {
                 }
             }
             BottomWidgetType::Proc => {
-                self.process_kill_dialog.on_delete();
+                self.kill_current_process();
             }
             _ => {}
         }

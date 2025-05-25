@@ -195,9 +195,9 @@ impl ProcessKillDialog {
         !(matches!(self.state, ProcessKillDialogState::NotEnabled))
     }
 
-    pub fn on_esc(&mut self) {}
-
-    pub fn on_delete(&mut self) {}
+    pub fn on_esc(&mut self) {
+        self.state = ProcessKillDialogState::NotEnabled;
+    }
 
     pub fn on_enter(&mut self) {
         let mut current = ProcessKillDialogState::NotEnabled;
@@ -308,6 +308,34 @@ impl ProcessKillDialog {
 
     /// Scroll up in the signal list.
     pub fn on_scroll_up(&mut self) {
+        self.on_up_key();
+    }
+
+    /// Scroll down in the signal list.
+    pub fn on_scroll_down(&mut self) {
+        self.on_down_key();
+    }
+
+    /// Handle a left key press.
+    pub fn on_left_key(&mut self) {
+        if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
+            if let ButtonState::Simple { yes } = button_state {
+                *yes = true;
+            }
+        }
+    }
+
+    /// Handle a right key press.
+    pub fn on_right_key(&mut self) {
+        if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
+            if let ButtonState::Simple { yes } = button_state {
+                *yes = false;
+            }
+        }
+    }
+
+    /// Handle an up key press.
+    pub fn on_up_key(&mut self) {
         if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
             if let ButtonState::Signals(list_state) = button_state {
                 if let Some(selected) = list_state.selected() {
@@ -319,8 +347,8 @@ impl ProcessKillDialog {
         }
     }
 
-    /// Scroll down in the signal list.
-    pub fn on_scroll_down(&mut self) {
+    /// Handle a down key press.
+    pub fn on_down_key(&mut self) {
         if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
             if let ButtonState::Signals(list_state) = button_state {
                 if let Some(selected) = list_state.selected() {
@@ -331,18 +359,6 @@ impl ProcessKillDialog {
             }
         }
     }
-
-    /// Handle a left key press.
-    pub fn on_left_key(&mut self) {}
-
-    /// Handle a right key press.
-    pub fn on_right_key(&mut self) {}
-
-    /// Handle an up key press.
-    pub fn on_up_key(&mut self) {}
-
-    /// Handle a down key press.
-    pub fn on_down_key(&mut self) {}
 
     // Handle page up.
     pub fn on_page_up(&mut self) {
@@ -371,9 +387,21 @@ impl ProcessKillDialog {
         // self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
     }
 
-    pub fn scroll_to_first(&mut self) {}
+    pub fn scroll_to_first(&mut self) {
+        if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
+            if let ButtonState::Signals(list_state) = button_state {
+                list_state.select(Some(0));
+            }
+        }
+    }
 
-    pub fn scroll_to_last(&mut self) {}
+    pub fn scroll_to_last(&mut self) {
+        if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
+            if let ButtonState::Signals(list_state) = button_state {
+                list_state.select(Some(SIGNAL_TEXT.len() - 1));
+            }
+        }
+    }
 
     /// Enable the process kill process.
     pub fn start_process_kill(
@@ -620,5 +648,15 @@ impl ProcessKillDialog {
                 self.draw_no_button_dialog(f, draw_loc, styles, text, title);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn signal_test_length() {
+        assert!(SIGNAL_TEXT.len() > 0);
     }
 }
