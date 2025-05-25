@@ -992,6 +992,50 @@ impl App {
         }
     }
 
+    /// Kill the currently selected process if we are in the process widget.
+    ///
+    /// TODO: This ideally gets abstracted out into a separate widget.
+    pub(crate) fn kill_current_process(&mut self) {
+        if let Some(pws) = self
+            .states
+            .proc_state
+            .widget_states
+            .get(&self.current_widget.widget_id)
+        {
+            if let Some(current) = pws.table.current_item() {
+                let id = current.id.to_string();
+                if let Some(pids) = pws
+                    .id_pid_map
+                    .get(&id)
+                    .cloned()
+                    .or_else(|| Some(vec![current.pid]))
+                {
+                    let current_process = (id, pids);
+
+                    let use_simple_selection = {
+                        #[cfg(target_os = "windows")]
+                        {
+                            true
+                        }
+                        #[cfg(not(target_os = "windows"))]
+                        {
+                            !self.app_config_fields.is_advanced_kill
+                        }
+                    };
+
+                    self.process_kill_dialog.start_process_kill(
+                        current_process.0,
+                        current_process.1,
+                        use_simple_selection,
+                    );
+
+                    // TODO: I don't think most of this is needed.
+                    self.is_determining_widget_boundary = true;
+                }
+            }
+        }
+    }
+
     // FIXME: Refactor this system...
     fn handle_char(&mut self, caught_char: char) {
         match caught_char {
@@ -1009,43 +1053,7 @@ impl App {
 
                             self.reset_multi_tap_keys();
 
-                            if let Some(pws) = self
-                                .states
-                                .proc_state
-                                .widget_states
-                                .get(&self.current_widget.widget_id)
-                            {
-                                if let Some(current) = pws.table.current_item() {
-                                    let id = current.id.to_string();
-                                    if let Some(pids) = pws
-                                        .id_pid_map
-                                        .get(&id)
-                                        .cloned()
-                                        .or_else(|| Some(vec![current.pid]))
-                                    {
-                                        let current_process = (id, pids);
-
-                                        let simple_selection = {
-                                            #[cfg(target_os = "windows")]
-                                            {
-                                                true
-                                            }
-                                            #[cfg(not(target_os = "windows"))]
-                                            {
-                                                self.app_config_fields.is_advanced_kill
-                                            }
-                                        };
-                                        self.process_kill_dialog.start_process_kill(
-                                            current_process.0,
-                                            current_process.1,
-                                            simple_selection,
-                                        );
-
-                                        // TODO: I don't think most of this is needed.
-                                        self.is_determining_widget_boundary = true;
-                                    }
-                                }
-                            }
+                            self.kill_current_process();
                         }
                     }
 
