@@ -224,6 +224,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let is_use_regex = is_flag_enabled!(regex, args.process, config);
     let is_default_tree = is_flag_enabled!(tree, args.process, config);
     let is_default_command = is_flag_enabled!(process_command, args.process, config);
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, args.process, config));
     let process_memory_as_value = is_flag_enabled!(process_memory_as_value, args.process, config);
 
@@ -296,6 +297,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             args.general,
             config
         ),
+        #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         is_advanced_kill,
         memory_legend_position,
         network_legend_position,
