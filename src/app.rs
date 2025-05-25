@@ -53,6 +53,7 @@ pub struct AppConfigFields {
     pub enable_gpu: bool,
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub is_advanced_kill: bool,
     pub memory_legend_position: Option<LegendPosition>,
     // TODO: Remove these, move network details state-side.
@@ -1013,13 +1014,12 @@ impl App {
                     let current_process = (id, pids);
 
                     let use_simple_selection = {
-                        #[cfg(target_os = "windows")]
-                        {
-                            true
-                        }
-                        #[cfg(not(target_os = "windows"))]
-                        {
-                            !self.app_config_fields.is_advanced_kill
+                        cfg_if::cfg_if! {
+                            if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+                                !self.app_config_fields.is_advanced_kill
+                            } else {
+                                true
+                            }
                         }
                     };
 

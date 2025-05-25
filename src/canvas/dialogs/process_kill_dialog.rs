@@ -12,6 +12,7 @@ use crate::{
     canvas::drawing_utils::dialog_block, collection::processes::Pid, options::config::style::Styles,
 };
 
+// Configure signal text based on the target OS.
 cfg_if! {
     if #[cfg(target_os = "linux")] {
         const SIGNAL_TEXT: [&str; 63] = [
@@ -151,6 +152,8 @@ cfg_if! {
             "32: THR",
             "33: LIBRT",
         ];
+    } else {
+        const SIGNAL_TEXT: [&str; 0] = [];
     }
 }
 
@@ -162,7 +165,7 @@ cfg_if! {
 /// Note that signals are not available for Windows.
 #[derive(Debug)]
 pub(crate) enum ButtonState {
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     Signals(ListState),
     Simple {
         yes: bool,
@@ -206,6 +209,7 @@ impl ProcessKillDialog {
         match &self.state {
             ProcessKillDialogState::NotEnabled => {} // Do nothing
             ProcessKillDialogState::Selecting(name, pids, button_state) => match button_state {
+                #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
                 ButtonState::Signals(list_state) => {}
                 ButtonState::Simple { yes } => {
                     if *yes {
@@ -336,12 +340,13 @@ impl ProcessKillDialog {
 
     /// Handle an up key press.
     pub fn on_up_key(&mut self) {
-        if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
-            if let ButtonState::Signals(list_state) = button_state {
-                if let Some(selected) = list_state.selected() {
-                    if selected > 0 {
-                        list_state.select(Some(selected - 1));
-                    }
+        #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals(list_state)) =
+            &mut self.state
+        {
+            if let Some(selected) = list_state.selected() {
+                if selected > 0 {
+                    list_state.select(Some(selected - 1));
                 }
             }
         }
@@ -349,12 +354,13 @@ impl ProcessKillDialog {
 
     /// Handle a down key press.
     pub fn on_down_key(&mut self) {
-        if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
-            if let ButtonState::Signals(list_state) = button_state {
-                if let Some(selected) = list_state.selected() {
-                    if selected < SIGNAL_TEXT.len() - 1 {
-                        list_state.select(Some(selected + 1));
-                    }
+        #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals(list_state)) =
+            &mut self.state
+        {
+            if let Some(selected) = list_state.selected() {
+                if selected < SIGNAL_TEXT.len() - 1 {
+                    list_state.select(Some(selected + 1));
                 }
             }
         }
@@ -388,18 +394,20 @@ impl ProcessKillDialog {
     }
 
     pub fn scroll_to_first(&mut self) {
-        if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
-            if let ButtonState::Signals(list_state) = button_state {
-                list_state.select(Some(0));
-            }
+        #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals(list_state)) =
+            &mut self.state
+        {
+            list_state.select(Some(0));
         }
     }
 
     pub fn scroll_to_last(&mut self) {
-        if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
-            if let ButtonState::Signals(list_state) = button_state {
-                list_state.select(Some(SIGNAL_TEXT.len() - 1));
-            }
+        #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals(list_state)) =
+            &mut self.state
+        {
+            list_state.select(Some(SIGNAL_TEXT.len() - 1));
         }
     }
 
@@ -407,15 +415,20 @@ impl ProcessKillDialog {
     pub fn start_process_kill(
         &mut self, process_name: String, pids: Vec<Pid>, use_simple_selection: bool,
     ) {
-        self.state = ProcessKillDialogState::Selecting(
-            process_name,
-            pids,
-            if use_simple_selection {
-                ButtonState::Simple { yes: false }
-            } else {
-                ButtonState::Signals(ListState::default().with_selected(Some(0)))
-            },
-        );
+        // This should hopefully get optimized out.
+        let button_state = if use_simple_selection {
+            ButtonState::Simple { yes: false }
+        } else {
+            cfg_if::cfg_if! {
+                if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+                    ButtonState::Signals(ListState::default().with_selected(Some(0)))
+                } else {
+                    ButtonState::Simple { yes: false }
+                }
+            }
+        };
+
+        self.state = ProcessKillDialogState::Selecting(process_name, pids, button_state);
     }
 
     pub fn reset_button_draw_locations(&mut self) {
@@ -551,7 +564,7 @@ impl ProcessKillDialog {
             .wrap(Wrap { trim: true });
 
         let title = match button_state {
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
             ButtonState::Signals(_) => Line::styled(" Select Signal ", styles.widget_title_style),
             ButtonState::Simple { .. } => {
                 Line::styled(" Confirm Kill Process ", styles.widget_title_style)
@@ -567,7 +580,7 @@ impl ProcessKillDialog {
         let num_lines = text.line_count(block.inner(draw_loc).width) as u16;
 
         match button_state {
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
             ButtonState::Signals(list_state) => {
                 ProcessKillDialog::draw_selecting_advanced(
                     f, draw_loc, styles, block, text, num_lines, list_state,
@@ -653,10 +666,17 @@ impl ProcessKillDialog {
 
 #[cfg(test)]
 mod test {
-    use super::*;
 
+    /// We test this as some things assume that the signal text length is more than 0. However, for unsupported
+    /// signal services, we do not want them to be able to use signals.
     #[test]
     fn signal_test_length() {
-        assert!(SIGNAL_TEXT.len() > 0);
+        cfg_if::cfg_if! {
+            if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+                assert!(super::SIGNAL_TEXT.len() > 0);
+            } else {
+                assert!(super::SIGNAL_TEXT.len() == 0);
+            }
+        }
     }
 }
