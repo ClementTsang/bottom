@@ -160,6 +160,7 @@ cfg_if! {
 /// a list of signals to send.
 ///
 /// Note that signals are not available for Windows.
+#[derive(Debug)]
 pub(crate) enum ButtonState {
     #[cfg(not(target_os = "windows"))]
     Signals(ListState),
@@ -169,7 +170,7 @@ pub(crate) enum ButtonState {
 }
 
 /// The current state of the process kill dialog.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub(crate) enum ProcessKillDialogState {
     #[default]
     NotEnabled,
@@ -179,7 +180,7 @@ pub(crate) enum ProcessKillDialogState {
 }
 
 /// Process kill dialog.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub(crate) struct ProcessKillDialog {
     state: ProcessKillDialogState,
 }
@@ -376,17 +377,21 @@ impl ProcessKillDialog {
 
     /// Enable the process kill process.
     pub fn start_process_kill(
-        &mut self, process_name: String, pids: Vec<Pid>, simple_selection: bool,
+        &mut self, process_name: String, pids: Vec<Pid>, use_simple_selection: bool,
     ) {
         self.state = ProcessKillDialogState::Selecting(
             process_name,
             pids,
-            if simple_selection {
+            if use_simple_selection {
                 ButtonState::Simple { yes: false }
             } else {
                 ButtonState::Signals(ListState::default().with_selected(Some(0)))
             },
-        )
+        );
+    }
+
+    pub fn reset_button_draw_locations(&mut self) {
+        // Not sure if we need this.
     }
 
     #[inline]
@@ -422,7 +427,7 @@ impl ProcessKillDialog {
             }
         };
 
-        let text = Paragraph::new(text)
+        let text: Paragraph<'_> = Paragraph::new(text)
             .style(styles.text_style)
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
@@ -451,14 +456,13 @@ impl ProcessKillDialog {
 
                 // Make the rect only as big as it needs to be, which is the height of the text,
                 // the buttons, and up to 2 spaces (margin and space between).
-                let draw_loc = Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2)])
-                    .flex(Flex::Center)
-                    .areas::<1>(draw_loc)[0];
+                let [draw_loc] =
+                    Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2)])
+                        .flex(Flex::Center)
+                        .areas::<1>(draw_loc);
 
-                // // If there's enough room, add padding to the top.
-                // if draw_loc.height > num_lines + 2 + 2 {
-                //     block = block.padding(Padding::top(1));
-                // }
+                // Render the block.
+                f.render_widget(block, draw_loc);
 
                 // Now we need to divide the block into one area for the paragraph,
                 // and one for the buttons.
@@ -469,8 +473,8 @@ impl ProcessKillDialog {
                 .flex(Flex::SpaceAround)
                 .areas::<2>(draw_loc);
 
-                // Now render the text + block...
-                f.render_widget(text.block(block), draw_locs[0]);
+                // Now render the text.
+                f.render_widget(text, draw_locs[0]);
 
                 // And the tricky part, rendering the buttons.
                 let selected = list_state.selected().unwrap_or(0);
@@ -493,23 +497,21 @@ impl ProcessKillDialog {
 
                 // Make the rect only as big as it needs to be, which is the height of the text,
                 // the buttons, and up to 3 spaces (margin and space between).
-                let draw_loc = Layout::vertical([Constraint::Max(num_lines + 1 + 3)])
+                let [draw_loc] = Layout::vertical([Constraint::Max(num_lines + 1 + 3)])
                     .flex(Flex::Center)
-                    .areas::<1>(draw_loc)[0];
+                    .areas::<1>(draw_loc);
 
-                // // If there's enough room, add padding.
-                // if draw_loc.height > num_lines + 2 + 2 {
-                //     block = block.padding(Padding::vertical(1));
-                // }
+                // Render things, starting from the block.
+                f.render_widget(block, draw_loc);
 
                 // Now we need to divide the block into one area for the paragraph,
                 // and one for the buttons.
-                let draw_locs =
+                let [text_area, button_area] =
                     Layout::vertical([Constraint::Max(num_lines), Constraint::Length(1)])
                         .flex(Flex::SpaceAround)
                         .areas::<2>(draw_loc);
 
-                f.render_widget(text.block(block), draw_locs[0]);
+                f.render_widget(text, text_area);
 
                 let (yes, no) = {
                     let (yes_style, no_style) = if *yes {
@@ -526,7 +528,7 @@ impl ProcessKillDialog {
 
                 let button_locs = Layout::horizontal([Constraint::Length(3 + 2); 2])
                     .flex(Flex::SpaceAround)
-                    .areas::<2>(draw_locs[1]);
+                    .areas::<2>(button_area);
 
                 f.render_widget(yes, button_locs[0]);
                 f.render_widget(no, button_locs[1]);

@@ -78,7 +78,7 @@ pub fn handle_key_event_or_break(
             KeyCode::F(3) => app.toggle_search_regex(),
             KeyCode::F(5) => app.toggle_tree_mode(),
             KeyCode::F(6) => app.toggle_sort_menu(),
-            KeyCode::F(9) => app.start_killing_process(),
+            KeyCode::F(9) => app.kill_current_process(),
             KeyCode::PageDown => app.on_page_down(),
             KeyCode::PageUp => app.on_page_up(),
             _ => {}
