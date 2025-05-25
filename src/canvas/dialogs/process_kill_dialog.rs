@@ -5,7 +5,7 @@ use tui::{
     Frame,
     layout::{Alignment, Constraint, Flex, Layout, Rect},
     text::{Line, Span, Text},
-    widgets::{List, ListState, Padding, Paragraph, Wrap},
+    widgets::{Block, List, ListState, Padding, Paragraph, Wrap},
 };
 
 use crate::{
@@ -394,6 +394,96 @@ impl ProcessKillDialog {
         // Not sure if we need this.
     }
 
+    /// Draw a dialog box with a scrollable list of signals.
+    #[inline]
+    fn draw_selecting_advanced(
+        f: &mut Frame<'_>, draw_loc: Rect, styles: &Styles, block: Block<'_>, text: Paragraph<'_>,
+        num_lines: u16, list_state: &mut ListState,
+    ) {
+        // A list of options, displayed vertically.
+        const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;
+
+        // Make the rect only as big as it needs to be, which is the height of the text,
+        // the buttons, and up to 2 spaces (margin and space between).
+        let [draw_loc] = Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2)])
+            .flex(Flex::Center)
+            .areas::<1>(draw_loc);
+
+        // Render the block.
+        f.render_widget(block, draw_loc);
+
+        // Now we need to divide the block into one area for the paragraph,
+        // and one for the buttons.
+        let draw_locs =
+            Layout::vertical([Constraint::Max(num_lines), Constraint::Max(SIGNAL_TEXT_LEN)])
+                .flex(Flex::SpaceAround)
+                .areas::<2>(draw_loc);
+
+        // Now render the text.
+        f.render_widget(text, draw_locs[0]);
+
+        // And the tricky part, rendering the buttons.
+        let selected = list_state.selected().unwrap_or(0);
+
+        let buttons = List::new(SIGNAL_TEXT.iter().enumerate().map(|(index, &signal)| {
+            let style = if index == selected {
+                styles.selected_text_style
+            } else {
+                styles.text_style
+            };
+
+            Span::styled(signal, style)
+        }));
+
+        // FIXME: I have no idea what will happen here...
+        f.render_stateful_widget(buttons, draw_locs[0], list_state);
+    }
+
+    /// Draw a simple yes/no dialog box.
+    #[inline]
+    fn draw_selecting_simple(
+        f: &mut Frame<'_>, draw_loc: Rect, styles: &Styles, block: Block<'_>, text: Paragraph<'_>,
+        num_lines: u16, yes: bool,
+    ) {
+        // Make the rect only as big as it needs to be, which is the height of the text,
+        // the buttons, and up to 3 spaces (margin and space between).
+        let [draw_loc] = Layout::vertical([Constraint::Max(num_lines + 1 + 3)])
+            .flex(Flex::Center)
+            .areas::<1>(draw_loc);
+
+        // Render things, starting from the block.
+        f.render_widget(block, draw_loc);
+
+        // Now we need to divide the block into one area for the paragraph,
+        // and one for the buttons.
+        let [text_area, button_area] =
+            Layout::vertical([Constraint::Max(num_lines), Constraint::Length(1)])
+                .flex(Flex::SpaceAround)
+                .areas::<2>(draw_loc);
+
+        f.render_widget(text, text_area);
+
+        let (yes, no) = {
+            let (yes_style, no_style) = if yes {
+                (styles.selected_text_style, styles.text_style)
+            } else {
+                (styles.text_style, styles.selected_text_style)
+            };
+
+            (
+                Paragraph::new(Span::styled("Yes", yes_style)),
+                Paragraph::new(Span::styled("No", no_style)),
+            )
+        };
+
+        let button_locs = Layout::horizontal([Constraint::Length(3 + 2); 2])
+            .flex(Flex::SpaceAround)
+            .areas::<2>(button_area);
+
+        f.render_widget(yes, button_locs[0]);
+        f.render_widget(no, button_locs[1]);
+    }
+
     #[inline]
     fn draw_selecting(
         f: &mut Frame<'_>, draw_loc: Rect, styles: &Styles, name: &str, pids: &[Pid],
@@ -451,87 +541,14 @@ impl ProcessKillDialog {
         match button_state {
             #[cfg(not(target_os = "windows"))]
             ButtonState::Signals(list_state) => {
-                // A list of options, displayed vertically.
-                const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;
-
-                // Make the rect only as big as it needs to be, which is the height of the text,
-                // the buttons, and up to 2 spaces (margin and space between).
-                let [draw_loc] =
-                    Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2)])
-                        .flex(Flex::Center)
-                        .areas::<1>(draw_loc);
-
-                // Render the block.
-                f.render_widget(block, draw_loc);
-
-                // Now we need to divide the block into one area for the paragraph,
-                // and one for the buttons.
-                let draw_locs = Layout::vertical([
-                    Constraint::Max(num_lines),
-                    Constraint::Max(SIGNAL_TEXT_LEN),
-                ])
-                .flex(Flex::SpaceAround)
-                .areas::<2>(draw_loc);
-
-                // Now render the text.
-                f.render_widget(text, draw_locs[0]);
-
-                // And the tricky part, rendering the buttons.
-                let selected = list_state.selected().unwrap_or(0);
-
-                let buttons = List::new(SIGNAL_TEXT.iter().enumerate().map(|(index, &signal)| {
-                    let style = if index == selected {
-                        styles.selected_text_style
-                    } else {
-                        styles.text_style
-                    };
-
-                    Span::styled(signal, style)
-                }));
-
-                // FIXME: I have no idea what will happen here...
-                f.render_stateful_widget(buttons, draw_locs[0], list_state);
+                ProcessKillDialog::draw_selecting_advanced(
+                    f, draw_loc, styles, block, text, num_lines, list_state,
+                );
             }
             ButtonState::Simple { yes } => {
-                // Just a yes/no, horizontally.
-
-                // Make the rect only as big as it needs to be, which is the height of the text,
-                // the buttons, and up to 3 spaces (margin and space between).
-                let [draw_loc] = Layout::vertical([Constraint::Max(num_lines + 1 + 3)])
-                    .flex(Flex::Center)
-                    .areas::<1>(draw_loc);
-
-                // Render things, starting from the block.
-                f.render_widget(block, draw_loc);
-
-                // Now we need to divide the block into one area for the paragraph,
-                // and one for the buttons.
-                let [text_area, button_area] =
-                    Layout::vertical([Constraint::Max(num_lines), Constraint::Length(1)])
-                        .flex(Flex::SpaceAround)
-                        .areas::<2>(draw_loc);
-
-                f.render_widget(text, text_area);
-
-                let (yes, no) = {
-                    let (yes_style, no_style) = if *yes {
-                        (styles.selected_text_style, styles.text_style)
-                    } else {
-                        (styles.text_style, styles.selected_text_style)
-                    };
-
-                    (
-                        Paragraph::new(Span::styled("Yes", yes_style)),
-                        Paragraph::new(Span::styled("No", no_style)),
-                    )
-                };
-
-                let button_locs = Layout::horizontal([Constraint::Length(3 + 2); 2])
-                    .flex(Flex::SpaceAround)
-                    .areas::<2>(button_area);
-
-                f.render_widget(yes, button_locs[0]);
-                f.render_widget(no, button_locs[1]);
+                ProcessKillDialog::draw_selecting_simple(
+                    f, draw_loc, styles, block, text, num_lines, *yes,
+                );
             }
         }
     }
