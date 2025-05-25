@@ -99,7 +99,7 @@ pub struct App {
     second_char: Option<char>,
     pub data_store: DataStore,
     last_key_press: Instant,
-    pub process_kill_dialog: ProcessKillDialog,
+    pub(crate) process_kill_dialog: ProcessKillDialog,
     pub help_dialog_state: AppHelpDialogState,
     pub is_expanded: bool,
     pub is_force_redraw: bool,
