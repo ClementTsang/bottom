@@ -274,8 +274,8 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          # Seems like cross' FreeBSD image is a bit broken? I get build errors, may be related to this issue:
-          # https://github.com/cross-rs/cross/issues/1291
+          # Seems like cross's FreeBSD image is a bit broken? I get build errors,
+          # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
           #
           # Alas, that's why we do it with VMs.
           - {
@@ -285,12 +285,12 @@ jobs:
             }
           - {
               type: "freebsd",
-              os_release: "14.1",
+              os_release: "14.2",
               target: "x86_64-unknown-freebsd",
             }
           - {
               type: "freebsd",
-              os_release: "13.3",
+              os_release: "13.5",
               target: "x86_64-unknown-freebsd",
             }
     steps:
@@ -308,7 +308,7 @@ jobs:
 
       - name: Clippy (FreeBSD)
         if: ${{ matrix.info.type == 'freebsd' }}
-        uses: vmactions/freebsd-vm@debf37ca7b7fa40e19c542ef7ba30d6054a706a4 # v1.1.5
+        uses: vmactions/freebsd-vm@c3ae29a132c8ef1924775414107a97cac042aad5 # v1.2.0
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
@@ -324,22 +324,22 @@ jobs:
   completion:
     name: "CI Pass Check"
     needs: [supported, other-check, vm-check]
-    if: ${{ needs.supported.result != 'skipped' && needs.other-check.result != 'skipped' && needs.vm-check.result != 'skipped' }}
+    if: ${{ needs.supported.result != 'skipped' || needs.other-check.result != 'skipped' || needs.vm-check.result != 'skipped' }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
-        if: ${{ needs.supported.result == 'success' && needs.other-check.result == 'success' && needs.vm-check.result == 'success' }}
+        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.other-check.result == 'success' || needs.other-check.result == 'skipped') && (needs.vm-check.result == 'success' || needs.vm-check.result == 'skipped') }}
         run: |
           echo "CI workflow completed successfully.";
 
       - name: CI Failed
-        if: ${{ needs.supported.result == 'failure' && needs.other-check.result == 'failure' && needs.vm-check.result == 'failure' }}
+        if: ${{ needs.supported.result == 'failure' || needs.other-check.result == 'failure' || needs.vm-check.result == 'failure' }}
         run: |
           echo "CI workflow failed.";
           exit 1;
 
       - name: CI Cancelled
-        if: ${{ needs.supported.result == 'cancelled' && needs.other-check.result == 'cancelled' && needs.vm-check.result == 'cancelled' }}
+        if: ${{ needs.supported.result == 'cancelled' || needs.other-check.result == 'cancelled' || needs.vm-check.result == 'cancelled' }}
         run: |
           echo "CI workflow was cancelled.";
           exit 1;
