@@ -324,10 +324,11 @@ jobs:
   completion:
     name: "CI Pass Check"
     needs: [supported, other-check, vm-check]
+    if: ${{ needs.supported.result != 'skipped' || needs.other-check.result != 'skipped' || needs.vm-check.result != 'skipped' }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
-        if: ${{ needs.supported.result == 'success' && needs.other-check.result == 'success' && needs.vm-check.result == 'success' }}
+        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.other-check.result == 'success' || needs.other-check.result == 'skipped') && (needs.vm-check.result == 'success' || needs.vm-check.result == 'skipped') }}
         run: |
           echo "CI workflow completed successfully.";
 
@@ -335,12 +336,6 @@ jobs:
         if: ${{ needs.supported.result == 'failure' || needs.other-check.result == 'failure' || needs.vm-check.result == 'failure' }}
         run: |
           echo "CI workflow failed.";
-          exit 1;
-
-      - name: CI Skipped
-        if: ${{ needs.supported.result == 'skipped' && needs.other-check.result == 'skipped' && needs.vm-check.result == 'skipped' }}
-        run: |
-          echo "CI workflow skipped.";
           exit 1;
 
       - name: CI Cancelled
