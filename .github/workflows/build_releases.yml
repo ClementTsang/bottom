@@ -239,12 +239,12 @@ jobs:
             }
           - {
               type: "freebsd",
-              os_release: "14.1",
+              os_release: "14.2",
               target: "x86_64-unknown-freebsd",
             }
           - {
               type: "freebsd",
-              os_release: "13.3",
+              os_release: "13.5",
               target: "x86_64-unknown-freebsd",
             }
     steps:
