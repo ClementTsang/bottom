@@ -184,12 +184,12 @@ impl TimeSeriesData {
                 partition_point - 1
             } else {
                 // If the partition point was 0, then it means all values are too new to be pruned.
-                crate::info!("Skipping prune.");
+                // crate::info!("Skipping prune.");
                 return;
             }
         };
 
-        crate::info!("Pruning up to index {end}.");
+        // crate::info!("Pruning up to index {end}.");
 
         // Note that end here is _inclusive_.
         self.time.drain(0..=end);

@@ -36,6 +36,7 @@ pub(crate) struct FlagConfig {
     pub(crate) tree: Option<bool>,
     pub(crate) show_table_scroll_position: Option<bool>,
     pub(crate) process_command: Option<bool>,
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub(crate) disable_advanced_kill: Option<bool>,
     pub(crate) network_use_bytes: Option<bool>,
     pub(crate) network_use_log: Option<bool>,
