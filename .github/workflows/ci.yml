@@ -274,8 +274,8 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          # Seems like cross' FreeBSD image is a bit broken? I get build errors, may be related to this issue:
-          # https://github.com/cross-rs/cross/issues/1291
+          # Seems like cross's FreeBSD image is a bit broken? I get build errors,
+          # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
           #
           # Alas, that's why we do it with VMs.
           - {
@@ -324,7 +324,6 @@ jobs:
   completion:
     name: "CI Pass Check"
     needs: [supported, other-check, vm-check]
-    if: ${{ needs.supported.result != 'skipped' && needs.other-check.result != 'skipped' && needs.vm-check.result != 'skipped' }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
@@ -333,13 +332,19 @@ jobs:
           echo "CI workflow completed successfully.";
 
       - name: CI Failed
-        if: ${{ needs.supported.result == 'failure' && needs.other-check.result == 'failure' && needs.vm-check.result == 'failure' }}
+        if: ${{ needs.supported.result == 'failure' || needs.other-check.result == 'failure' || needs.vm-check.result == 'failure' }}
         run: |
           echo "CI workflow failed.";
           exit 1;
 
+      - name: CI Skipped
+        if: ${{ needs.supported.result == 'skipped' && needs.other-check.result == 'skipped' && needs.vm-check.result == 'skipped' }}
+        run: |
+          echo "CI workflow skipped.";
+          exit 1;
+
       - name: CI Cancelled
-        if: ${{ needs.supported.result == 'cancelled' && needs.other-check.result == 'cancelled' && needs.vm-check.result == 'cancelled' }}
+        if: ${{ needs.supported.result == 'cancelled' || needs.other-check.result == 'cancelled' || needs.vm-check.result == 'cancelled' }}
         run: |
           echo "CI workflow was cancelled.";
           exit 1;

@@ -228,8 +228,8 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          # Seems like cross' FreeBSD image is a bit broken? I get build errors, may be related to this issue:
-          # https://github.com/cross-rs/cross/issues/1291
+          # Seems like cross's FreeBSD image is a bit broken? I get build errors,
+          # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
           #
           # Alas, that's why we do it with VMs.
           - {

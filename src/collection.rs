@@ -539,6 +539,6 @@ where
     value
         .as_object_mut()
         .and_then(|map| map.remove(key))
-        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "key not found"))
+        .ok_or_else(|| std::io::Error::other("key not found"))
         .and_then(|val| serde_json::from_value(val).map_err(|err| err.into()))
 }
