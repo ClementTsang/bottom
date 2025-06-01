@@ -70,7 +70,7 @@ fn generate_schema(schema_options: SchemaOptions) -> anyhow::Result<()> {
     schema.insert(
         "description".into(),
         format!(
-            "https://clementtsang.github.io/bottom/{}/configuration/config-file",
+            "https://bottom.pages.dev/{}/configuration/config-file/",
             if version == "nightly" {
                 "nightly"
             } else {
