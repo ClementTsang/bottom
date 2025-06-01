@@ -2,6 +2,10 @@
   // This is an adaption of https://github.com/jimporter/mike/issues/72#issuecomment-1545646389;
   // but simplified - just redirect to the stable 404.
   // This is needed because otherwise, stuff like Cloudflare Pages will redirect endlessly.
-  
-  window.location.href = "/stable/404.html";
+
+  if (window.location.pathname.startsWith("/bottom")) {
+    window.location.href = "/bottom/stable/404.html";
+  } else {
+    window.location.href = "/stable/404.html";
+  }
 </script>
