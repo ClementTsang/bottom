@@ -3,6 +3,7 @@
 use bottom::{options::config, widgets};
 use clap::Parser;
 use itertools::Itertools;
+use serde_json::Value;
 use strum::VariantArray;
 
 #[derive(Parser)]
@@ -16,10 +17,16 @@ fn generate_schema(schema_options: SchemaOptions) -> anyhow::Result<()> {
     {
         // TODO: Maybe make this case insensitive? See https://stackoverflow.com/a/68639341
 
-        let proc_columns = schema.definitions.get_mut("ProcColumn").unwrap();
-        match proc_columns {
-            schemars::schema::Schema::Object(proc_columns) => {
-                let enums = proc_columns.enum_values.as_mut().unwrap();
+        match schema
+            .as_object_mut()
+            .unwrap()
+            .get_mut("$defs")
+            .unwrap()
+            .get_mut("ProcColumn")
+            .unwrap()
+        {
+            Value::Object(proc_columns) => {
+                let enums = proc_columns.get_mut("enum").unwrap();
                 *enums = widgets::ProcColumn::VARIANTS
                     .iter()
                     .flat_map(|var| var.get_schema_names())
@@ -31,10 +38,16 @@ fn generate_schema(schema_options: SchemaOptions) -> anyhow::Result<()> {
             _ => anyhow::bail!("missing proc columns definition"),
         }
 
-        let disk_columns = schema.definitions.get_mut("DiskColumn").unwrap();
-        match disk_columns {
-            schemars::schema::Schema::Object(disk_columns) => {
-                let enums = disk_columns.enum_values.as_mut().unwrap();
+        match schema
+            .as_object_mut()
+            .unwrap()
+            .get_mut("$defs")
+            .unwrap()
+            .get_mut("DiskColumn")
+            .unwrap()
+        {
+            Value::Object(disk_columns) => {
+                let enums = disk_columns.get_mut("enum").unwrap();
                 *enums = widgets::DiskColumn::VARIANTS
                     .iter()
                     .flat_map(|var| var.get_schema_names())
@@ -47,20 +60,31 @@ fn generate_schema(schema_options: SchemaOptions) -> anyhow::Result<()> {
         }
     }
 
-    let metadata = schema.schema.metadata.as_mut().unwrap();
     let version = schema_options.version.unwrap_or("nightly".to_string());
-    metadata.id = Some(format!(
-        "https://github.com/ClementTsang/bottom/blob/main/schema/{version}/bottom.json"
-    ));
-    metadata.description = Some(format!(
-        "https://clementtsang.github.io/bottom/{}/configuration/config-file",
-        if version == "nightly" {
-            "nightly"
-        } else {
-            "stable"
-        }
-    ));
-    metadata.title = Some(format!("Schema for bottom's config file ({version})",));
+    schema.insert(
+        "$id".into(),
+        format!("https://github.com/ClementTsang/bottom/blob/main/schema/{version}/bottom.json")
+            .into(),
+    );
+
+    schema.insert(
+        "description".into(),
+        format!(
+            "https://clementtsang.github.io/bottom/{}/configuration/config-file",
+            if version == "nightly" {
+                "nightly"
+            } else {
+                "stable"
+            }
+        )
+        .into(),
+    );
+
+    schema.insert(
+        "title".into(),
+        format!("Schema for bottom's config file ({version})").into(),
+    );
+
     println!("{}", serde_json::to_string_pretty(&schema).unwrap());
 
     Ok(())

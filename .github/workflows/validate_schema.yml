@@ -11,6 +11,8 @@ on:
       - "schema/**"
       - "scripts/schema/**"
       - ".github/workflows/validate_schema.yml"
+      - "src/bin/schema.rs"
+      - "Cargo.toml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
