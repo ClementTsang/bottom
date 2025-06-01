@@ -116,7 +116,7 @@ For more details on supported platforms and known problems, check out [the docum
 
 bottom may work on a number of platforms that aren't officially supported. Note that unsupported platforms:
 
-- Might not be tested in CI to build or pass tests (see [here](./.github/workflows/ci.yml) for checked platforms).
+- Might not be tested in CI to build or pass tests ([checked platforms can be found here](./.github/workflows/ci.yml)).
 - Might not be properly tested by maintainers prior to a stable release.
 - May only receive limited support, such as missing features or bugs that may not be fixed.
 
@@ -328,7 +328,7 @@ sudo xbps-install bottom
 
 ### Homebrew
 
-Formula available [here](https://formulae.brew.sh/formula/bottom):
+[Formula available here](https://formulae.brew.sh/formula/bottom):
 
 ```bash
 brew install bottom
@@ -336,7 +336,7 @@ brew install bottom
 
 ### MacPorts
 
-Available [here](https://ports.macports.org/port/bottom/):
+[Available here](https://ports.macports.org/port/bottom/):
 
 ```bash
 sudo port selfupdate
@@ -345,7 +345,7 @@ sudo port install bottom
 
 ### Chocolatey
 
-Chocolatey packages are located [here](https://chocolatey.org/packages/bottom):
+[Chocolatey packages are located here](https://chocolatey.org/packages/bottom):
 
 ```bash
 choco install bottom
@@ -361,7 +361,7 @@ scoop install bottom
 
 ### winget
 
-The winget package can be found [here](https://github.com/microsoft/winget-pkgs/tree/master/manifests/c/Clement/bottom):
+[The winget package can be found here](https://github.com/microsoft/winget-pkgs/tree/master/manifests/c/Clement/bottom):
 
 ```bash
 winget install bottom
