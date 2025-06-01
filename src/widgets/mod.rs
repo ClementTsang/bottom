@@ -19,3 +19,9 @@ pub use network_graph::*;
 pub use process_table::*;
 pub use temperature_graph::*;
 pub use temperature_table::*;
+
+/// Whether an event is handled by the current element or not.
+pub enum EventHandled {
+    Handled,
+    NotHandled,
+}
