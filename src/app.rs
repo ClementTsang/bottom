@@ -26,6 +26,8 @@ use crate::{
     widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
 
+const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
+
 #[derive(Debug, Clone, Eq, PartialEq, Default, Copy)]
 pub enum AxisScaling {
     #[default]
@@ -1091,13 +1093,15 @@ impl App {
             return;
         }
 
+        const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
+
         // Forbid any char key presses when showing a dialog box...
         if !self.ignore_normal_keybinds() {
             let current_key_press_inst = Instant::now();
             if current_key_press_inst
                 .duration_since(self.last_key_press)
                 .as_millis()
-                > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS.into()
+                > MAX_KEY_TIMEOUT_IN_MILLISECONDS.into()
             {
                 self.reset_multi_tap_keys();
             }
@@ -2315,15 +2319,13 @@ impl App {
                         .current_display_time
                         .saturating_sub(self.app_config_fields.time_interval);
 
-                    if new_time >= constants::STALE_MIN_MILLISECONDS {
+                    if new_time >= STALE_MIN_MILLISECONDS {
                         cpu_widget_state.current_display_time = new_time;
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
-                    } else if cpu_widget_state.current_display_time
-                        != constants::STALE_MIN_MILLISECONDS
-                    {
-                        cpu_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
+                    } else if cpu_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
+                        cpu_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2341,15 +2343,13 @@ impl App {
                         .current_display_time
                         .saturating_sub(self.app_config_fields.time_interval);
 
-                    if new_time >= constants::STALE_MIN_MILLISECONDS {
+                    if new_time >= STALE_MIN_MILLISECONDS {
                         mem_widget_state.current_display_time = new_time;
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
-                    } else if mem_widget_state.current_display_time
-                        != constants::STALE_MIN_MILLISECONDS
-                    {
-                        mem_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
+                    } else if mem_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
+                        mem_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2367,15 +2367,13 @@ impl App {
                         .current_display_time
                         .saturating_sub(self.app_config_fields.time_interval);
 
-                    if new_time >= constants::STALE_MIN_MILLISECONDS {
+                    if new_time >= STALE_MIN_MILLISECONDS {
                         net_widget_state.current_display_time = new_time;
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
-                    } else if net_widget_state.current_display_time
-                        != constants::STALE_MIN_MILLISECONDS
-                    {
-                        net_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
+                    } else if net_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
+                        net_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }

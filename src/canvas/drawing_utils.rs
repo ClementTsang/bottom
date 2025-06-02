@@ -5,14 +5,14 @@ use tui::{
     widgets::{Block, BorderType, Borders},
 };
 
-// Side borders
 pub const SIDE_BORDERS: Borders = Borders::LEFT.union(Borders::RIGHT);
+pub const AUTOHIDE_TIMEOUT_MILLISECONDS: u64 = 5000; // 5 seconds to autohide
 
 /// Determine whether a graph x-label should be hidden.
 pub fn should_hide_x_label(
     always_hide_time: bool, autohide_time: bool, timer: &mut Option<Instant>, draw_loc: Rect,
 ) -> bool {
-    use crate::constants::*;
+    const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 
     if always_hide_time || (autohide_time && timer.is_none()) {
         true
