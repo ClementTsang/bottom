@@ -8,12 +8,10 @@ use tui::{
 
 use crate::{
     app::App,
-    canvas::{
-        Painter,
-        components::pipe_gauge::{LabelLimit, PipeGauge},
-        drawing_utils::widget_block,
-    },
+    canvas::Painter,
     collection::cpu::{CpuData, CpuDataType},
+    drawing::components::pipe_gauge::{LabelLimit, PipeGauge},
+    drawing::drawing_utils::widget_block,
 };
 
 impl Painter {

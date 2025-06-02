@@ -11,12 +11,10 @@ use tui::widgets::Row;
 
 use super::process_columns::ProcColumn;
 use crate::{
-    canvas::{
-        Painter,
-        components::data_table::{DataTableColumn, DataToCell},
-    },
+    canvas::Painter,
     collection::processes::{Pid, ProcessHarvest},
     dec_bytes_per_second_string,
+    drawing::components::data_table::{DataTableColumn, DataToCell},
     utils::data_units::{GIBI_LIMIT, GIGA_LIMIT, get_binary_bytes, get_decimal_bytes},
 };
 

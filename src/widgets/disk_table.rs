@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::{
     app::{AppConfigFields, data::StoredData},
-    canvas::components::data_table::{
+    drawing::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },

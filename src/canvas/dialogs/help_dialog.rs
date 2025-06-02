@@ -10,8 +10,9 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::App,
-    canvas::{Painter, drawing_utils::dialog_block},
+    canvas::Painter,
     constants::{self, HELP_TEXT},
+    drawing::drawing_utils::dialog_block,
 };
 
 // TODO: [REFACTOR] Make generic dialog boxes to build off of instead?

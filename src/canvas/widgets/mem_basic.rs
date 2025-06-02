@@ -6,9 +6,8 @@ use tui::{
 };
 
 use crate::{
-    app::App,
-    canvas::{Painter, components::pipe_gauge::PipeGauge, drawing_utils::widget_block},
-    collection::memory::MemData,
+    app::App, canvas::Painter, collection::memory::MemData,
+    drawing::components::pipe_gauge::PipeGauge, drawing::drawing_utils::widget_block,
     get_binary_unit_and_denominator,
 };
 

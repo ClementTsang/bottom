@@ -16,10 +16,8 @@ use super::{
     SortType,
 };
 use crate::{
-    app::layout_manager::BottomWidget,
-    canvas::{Painter, drawing_utils::widget_block},
-    constants::TABLE_GAP_HEIGHT_LIMIT,
-    utils::strings::truncate_to_text,
+    app::layout_manager::BottomWidget, canvas::Painter, constants::TABLE_GAP_HEIGHT_LIMIT,
+    drawing::drawing_utils::widget_block, utils::strings::truncate_to_text,
 };
 
 pub enum SelectionState {

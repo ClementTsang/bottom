@@ -18,11 +18,11 @@ use crate::{
         AppConfigFields, AppSearchState,
         data::{ProcessData, StoredData},
     },
-    canvas::components::data_table::{
+    collection::processes::{Pid, ProcessHarvest},
+    drawing::components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    collection::processes::{Pid, ProcessHarvest},
     options::config::style::Styles,
 };
 

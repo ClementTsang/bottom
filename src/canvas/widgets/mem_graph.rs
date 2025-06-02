@@ -9,12 +9,12 @@ use tui::{
 
 use crate::{
     app::{App, data::Values},
-    canvas::{
-        Painter,
+    canvas::Painter,
+    collection::memory::MemData,
+    drawing::{
         components::time_graph::{AxisBound, GraphData, TimeGraph},
         drawing_utils::should_hide_x_label,
     },
-    collection::memory::MemData,
     get_binary_unit_and_denominator,
 };
 

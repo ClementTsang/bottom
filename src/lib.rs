@@ -19,6 +19,7 @@ mod utils {
 pub(crate) mod canvas;
 pub(crate) mod collection;
 pub(crate) mod constants;
+pub(crate) mod drawing;
 pub(crate) mod event;
 pub mod options;
 pub mod widgets;

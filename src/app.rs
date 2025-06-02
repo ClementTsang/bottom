@@ -19,9 +19,9 @@ pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
-    canvas::components::time_graph::LegendPosition,
     collection::processes::Pid,
     constants,
+    drawing::components::time_graph::LegendPosition,
     utils::data_units::DataUnit,
     widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
