@@ -5,7 +5,8 @@ use tui::{
     widgets::{Block, BorderType, Borders},
 };
 
-use super::SIDE_BORDERS;
+// Side borders
+pub const SIDE_BORDERS: Borders = Borders::LEFT.union(Borders::RIGHT);
 
 /// Determine whether a graph x-label should be hidden.
 pub fn should_hide_x_label(
@@ -90,5 +91,15 @@ mod test {
             small_rect
         ));
         assert!(over_timer.is_none());
+    }
+
+    /// This test exists because previously, [`SIDE_BORDERS`] was set
+    /// incorrectly after I moved from tui-rs to ratatui.
+    #[test]
+    fn assert_side_border_bits_match() {
+        assert_eq!(
+            SIDE_BORDERS,
+            Borders::ALL.difference(Borders::TOP.union(Borders::BOTTOM))
+        )
     }
 }

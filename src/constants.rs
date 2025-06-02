@@ -1,5 +1,3 @@
-use tui::widgets::Borders;
-
 // Default widget ID
 pub const DEFAULT_WIDGET_ID: u64 = 56709;
 
@@ -17,9 +15,6 @@ pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
 // not shown)
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
-
-// Side borders
-pub const SIDE_BORDERS: Borders = Borders::LEFT.union(Borders::RIGHT);
 
 // Help text
 const HELP_CONTENTS_TEXT: [&str; 10] = [
@@ -579,16 +574,6 @@ mod test {
                 assert!(line[0].contains(" - "), "each section should have a header");
             }
         }
-    }
-
-    /// This test exists because previously, [`SIDE_BORDERS`] was set
-    /// incorrectly after I moved from tui-rs to ratatui.
-    #[test]
-    fn assert_side_border_bits_match() {
-        assert_eq!(
-            SIDE_BORDERS,
-            Borders::ALL.difference(Borders::TOP.union(Borders::BOTTOM))
-        )
     }
 
     /// Checks that the default config is valid.
