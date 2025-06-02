@@ -63,8 +63,6 @@ mod test {
 
         use tui::layout::Rect;
 
-        use crate::constants::*;
-
         let rect = Rect::new(0, 0, 10, 10);
         let small_rect = Rect::new(0, 0, 10, 6);
 
