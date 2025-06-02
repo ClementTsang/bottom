@@ -8,15 +8,15 @@ use tui::{
 
 use crate::{
     app::{App, data::StoredData, layout_manager::WidgetDirection},
-    canvas::Painter,
-    collection::cpu::CpuData,
-    drawing::{
+    canvas::{
+        Painter,
         components::{
             data_table::{DrawInfo, SelectionState},
             time_graph::{AxisBound, GraphData, TimeGraph},
         },
         drawing_utils::should_hide_x_label,
     },
+    collection::cpu::CpuData,
     widgets::CpuWidgetState,
 };
 

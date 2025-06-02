@@ -2,7 +2,7 @@ use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use crate::{
     app::{AppConfigFields, data::TypedTemperature},
-    drawing::components::data_table::{
+    canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },

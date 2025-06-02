@@ -1,6 +1,6 @@
 use std::{borrow::Cow, num::NonZeroU16};
 
-use crate::drawing::components::data_table::{ColumnHeader, DataTableColumn, DataToCell};
+use crate::canvas::components::data_table::{ColumnHeader, DataTableColumn, DataToCell};
 
 pub struct SortTableColumn;
 

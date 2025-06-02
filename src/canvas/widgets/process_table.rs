@@ -9,9 +9,11 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{App, AppSearchState},
-    canvas::Painter,
-    drawing::components::data_table::{DrawInfo, SelectionState},
-    drawing::drawing_utils::widget_block,
+    canvas::{
+        Painter,
+        components::data_table::{DrawInfo, SelectionState},
+        drawing_utils::widget_block,
+    },
 };
 
 const SORT_MENU_WIDTH: u16 = 7;

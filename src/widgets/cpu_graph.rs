@@ -5,12 +5,14 @@ use tui::widgets::Row;
 
 use crate::{
     app::AppConfigFields,
-    canvas::Painter,
-    collection::cpu::{CpuData, CpuDataType},
-    drawing::components::data_table::{
-        Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
-        DataToCell,
+    canvas::{
+        Painter,
+        components::data_table::{
+            Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
+            DataToCell,
+        },
     },
+    collection::cpu::{CpuData, CpuDataType},
     options::config::{cpu::CpuDefault, style::Styles},
 };
 

@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use super::{ProcWidgetColumn, ProcWidgetData};
 use crate::{
-    drawing::components::data_table::{ColumnHeader, SortsRow},
+    canvas::components::data_table::{ColumnHeader, SortsRow},
     utils::general::sort_partial_fn,
 };
 

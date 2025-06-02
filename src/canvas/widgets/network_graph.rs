@@ -10,9 +10,11 @@ use tui::{
 
 use crate::{
     app::{App, AppConfigFields, AxisScaling},
-    canvas::Painter,
-    drawing::components::time_graph::{AxisBound, ChartScaling, GraphData, TimeGraph},
-    drawing::drawing_utils::should_hide_x_label,
+    canvas::{
+        Painter,
+        components::time_graph::{AxisBound, ChartScaling, GraphData, TimeGraph},
+        drawing_utils::should_hide_x_label,
+    },
     utils::{
         data_units::*,
         general::{saturating_log2, saturating_log10},

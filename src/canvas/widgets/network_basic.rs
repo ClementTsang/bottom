@@ -7,8 +7,7 @@ use tui::{
 
 use crate::{
     app::App,
-    canvas::Painter,
-    drawing::drawing_utils::widget_block,
+    canvas::{Painter, drawing_utils::widget_block},
     utils::data_units::{convert_bits, get_unit_prefix},
 };
 

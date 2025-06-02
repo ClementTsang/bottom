@@ -12,7 +12,7 @@ use tui::{
     widgets::{BorderType, GraphType},
 };
 
-use crate::{app::data::Values, drawing::drawing_utils::widget_block};
+use crate::{app::data::Values, canvas::drawing_utils::widget_block};
 
 /// Represents the data required by the [`TimeGraph`].
 ///
@@ -219,7 +219,7 @@ mod test {
     };
 
     use super::{AxisBound, ChartScaling, TimeGraph};
-    use crate::drawing::components::time_graph::Axis;
+    use crate::canvas::components::time_graph::Axis;
 
     const Y_LABELS: [Cow<'static, str>; 3] = [
         Cow::Borrowed("0%"),

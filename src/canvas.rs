@@ -1,4 +1,6 @@
+pub mod components;
 mod dialogs;
+mod drawing_utils;
 mod widgets;
 
 use itertools::izip;

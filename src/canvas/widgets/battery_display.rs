@@ -9,8 +9,10 @@ use tui::{
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
-    app::App, canvas::Painter, collection::batteries::BatteryState, constants::*,
-    drawing::drawing_utils::widget_block,
+    app::App,
+    canvas::{Painter, drawing_utils::widget_block},
+    collection::batteries::BatteryState,
+    constants::*,
 };
 
 /// Calculate how many bars are to be drawn within basic mode's components.
