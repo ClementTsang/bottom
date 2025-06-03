@@ -1,4 +1,4 @@
-//! Lower-level components used throughout bottom.
+//! Lower-level or shared drawing components used throughout bottom.
 
 pub mod data_table;
 pub mod pipe_gauge;
