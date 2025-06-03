@@ -240,7 +240,7 @@ impl Painter {
                 marker,
                 scaling,
             }
-            .draw_time_graph(f, draw_loc, graph_data);
+            .draw(f, draw_loc, graph_data);
         }
     }
 

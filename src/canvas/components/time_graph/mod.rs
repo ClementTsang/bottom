@@ -1,4 +1,4 @@
 mod base;
-mod variants;
+pub mod variants;
 
 pub(crate) use base::*;
