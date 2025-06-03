@@ -670,8 +670,11 @@ macro_rules! parse_ms_option {
     }};
 }
 
+/// How fast the screen refreshes
 #[inline]
 fn get_update_rate(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
+    const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
+
     parse_ms_option!(
         &args.general.rate,
         config.flags.as_ref().and_then(|flags| flags.rate.as_ref()),
@@ -735,6 +738,8 @@ fn get_dedicated_avg_row(config: &Config) -> bool {
 fn get_default_time_value(
     args: &BottomArgs, config: &Config, retention_ms: u64,
 ) -> OptionResult<u64> {
+    const DEFAULT_TIME_MILLISECONDS: u64 = 60 * 1000; // Defaults to 1 min.
+
     parse_ms_option!(
         &args.general.default_time_value,
         config
@@ -750,6 +755,8 @@ fn get_default_time_value(
 
 #[inline]
 fn get_time_interval(args: &BottomArgs, config: &Config, retention_ms: u64) -> OptionResult<u64> {
+    const TIME_CHANGE_MILLISECONDS: u64 = 15 * 1000; // How much to increment each time
+
     parse_ms_option!(
         &args.general.time_delta,
         config

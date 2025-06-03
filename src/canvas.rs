@@ -1,3 +1,8 @@
+//! Code related to drawing.
+//!
+//! Note that eventually this should not contain any widget-specific draw code, but rather just generic code
+//! or components.
+
 pub mod components;
 mod dialogs;
 mod drawing_utils;

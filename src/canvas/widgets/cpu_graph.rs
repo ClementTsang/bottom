@@ -1,9 +1,6 @@
-use std::borrow::Cow;
-
 use tui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    symbols::Marker,
 };
 
 use crate::{
@@ -12,7 +9,7 @@ use crate::{
         Painter,
         components::{
             data_table::{DrawInfo, SelectionState},
-            time_graph::{AxisBound, GraphData, TimeGraph},
+            time_graph::{GraphData, variants::percent::PercentTimeGraph},
         },
         drawing_utils::should_hide_x_label,
     },
@@ -120,7 +117,7 @@ impl Painter {
     }
 
     fn generate_points<'a>(
-        &self, cpu_widget_state: &'a mut CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
+        &self, cpu_widget_state: &'a CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
         let current_scroll_position = cpu_widget_state.table.state.current_index;
@@ -172,15 +169,10 @@ impl Painter {
     fn draw_cpu_graph(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        const Y_BOUNDS: AxisBound = AxisBound::Max(100.5);
-        const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
-
         if let Some(cpu_widget_state) = app_state.states.cpu_state.widget_states.get_mut(&widget_id)
         {
             let data = app_state.data_store.get_data();
 
-            let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
-            let x_min = -(cpu_widget_state.current_display_time as f64);
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
@@ -212,30 +204,20 @@ impl Painter {
                 }
             };
 
-            let marker = if app_state.app_config_fields.use_dot {
-                Marker::Dot
-            } else {
-                Marker::Braille
-            };
-
-            TimeGraph {
-                x_min,
+            PercentTimeGraph {
+                display_range: cpu_widget_state.current_display_time,
                 hide_x_labels,
-                y_bounds: Y_BOUNDS,
-                y_labels: &Y_LABELS,
-                graph_style: self.styles.graph_style,
-                border_style,
-                border_type: self.styles.border_type,
-                title,
-                is_selected: app_state.current_widget.widget_id == widget_id,
+                app_config_fields: &app_state.app_config_fields,
+                current_widget: app_state.current_widget.widget_id,
                 is_expanded: app_state.is_expanded,
-                title_style: self.styles.widget_title_style,
+                title,
+                styles: &self.styles,
+                widget_id,
                 legend_position: None,
                 legend_constraints: None,
-                marker,
-                scaling: Default::default(),
             }
-            .draw_time_graph(f, draw_loc, graph_data);
+            .build()
+            .draw(f, draw_loc, graph_data);
         }
     }
 

@@ -1,17 +1,16 @@
-use std::{borrow::Cow, time::Instant};
+use std::time::Instant;
 
 use tui::{
     Frame,
     layout::{Constraint, Rect},
     style::Style,
-    symbols::Marker,
 };
 
 use crate::{
     app::{App, data::Values},
     canvas::{
         Painter,
-        components::time_graph::{AxisBound, GraphData, TimeGraph},
+        components::time_graph::{GraphData, variants::percent::PercentTimeGraph},
         drawing_utils::should_hide_x_label,
     },
     collection::memory::MemData,
@@ -57,12 +56,7 @@ impl Painter {
     pub fn draw_memory_graph(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        const Y_BOUNDS: AxisBound = AxisBound::Max(100.5);
-        const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
-
         if let Some(mem_state) = app_state.states.mem_state.widget_states.get_mut(&widget_id) {
-            let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
-            let x_min = -(mem_state.current_display_time as f64);
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
@@ -170,30 +164,20 @@ impl Painter {
                 points
             };
 
-            let marker = if app_state.app_config_fields.use_dot {
-                Marker::Dot
-            } else {
-                Marker::Braille
-            };
-
-            TimeGraph {
-                x_min,
+            PercentTimeGraph {
+                display_range: mem_state.current_display_time,
                 hide_x_labels,
-                y_bounds: Y_BOUNDS,
-                y_labels: &Y_LABELS,
-                graph_style: self.styles.graph_style,
-                border_style,
-                border_type: self.styles.border_type,
-                title: " Memory ".into(),
-                is_selected: app_state.current_widget.widget_id == widget_id,
+                app_config_fields: &app_state.app_config_fields,
+                current_widget: app_state.current_widget.widget_id,
                 is_expanded: app_state.is_expanded,
-                title_style: self.styles.widget_title_style,
+                title: " Memory ".into(),
+                styles: &self.styles,
+                widget_id,
                 legend_position: app_state.app_config_fields.memory_legend_position,
                 legend_constraints: Some((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
-                marker,
-                scaling: Default::default(),
             }
-            .draw_time_graph(f, draw_loc, graph_data);
+            .build()
+            .draw(f, draw_loc, graph_data);
         }
 
         if app_state.should_get_widget_bounds() {
