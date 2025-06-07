@@ -4,7 +4,7 @@
 //! or components.
 
 pub mod components;
-mod dialogs;
+pub mod dialogs;
 mod drawing_utils;
 mod widgets;
 
@@ -200,6 +200,7 @@ impl Painter {
                 self.previous_width = terminal_width;
             }
 
+            // TODO: We should probably remove this or make it done elsewhere, not the responsibility of the app.
             if app_state.should_get_widget_bounds() {
                 // If we're force drawing, reset ALL mouse boundaries.
                 for widget in app_state.widget_map.values_mut() {
@@ -207,15 +208,16 @@ impl Painter {
                     widget.bottom_right_corner = None;
                 }
 
-                // Reset dd_dialog...
-                app_state.delete_dialog_state.button_positions = vec![];
+                // Reset process kill dialog button locations...
+                app_state.process_kill_dialog.handle_redraw();
 
-                // Reset battery dialog...
+                // Reset battery dialog button locations...
                 for battery_widget in app_state.states.battery_state.widget_states.values_mut() {
                     battery_widget.tab_click_locs = None;
                 }
             }
 
+            // TODO: Make drawing dialog generic.
             if app_state.help_dialog_state.is_showing_help {
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
                 let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
@@ -248,46 +250,32 @@ impl Painter {
                     .split(vertical_dialog_chunk[1]);
 
                 self.draw_help_dialog(f, app_state, middle_dialog_chunk[1]);
-            } else if app_state.delete_dialog_state.is_showing_dd {
-                let dd_text = self.get_dd_spans(app_state);
+            } else if app_state.process_kill_dialog.is_open() {
+                // FIXME: For width, just limit to a max size or full width. For height, not sure. Maybe pass max and let child handle?
+                let horizontal_padding = if terminal_width < 100 { 0 } else { 5 };
+                let vertical_padding = if terminal_height < 100 { 0 } else { 5 };
 
-                let text_width = if terminal_width < 100 {
-                    terminal_width * 90 / 100
-                } else {
-                    terminal_width * 50 / 100
-                };
-
-                let text_height = if cfg!(target_os = "windows")
-                    || !app_state.app_config_fields.is_advanced_kill
-                {
-                    7
-                } else {
-                    22
-                };
-
-                let vertical_bordering = terminal_height.saturating_sub(text_height) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([
-                        Constraint::Length(vertical_bordering),
-                        Constraint::Length(text_height),
-                        Constraint::Length(vertical_bordering),
+                        Constraint::Length(vertical_padding),
+                        Constraint::Fill(1),
+                        Constraint::Length(vertical_padding),
                     ])
-                    .split(terminal_size);
+                    .areas::<3>(terminal_size)[1];
 
-                let horizontal_bordering = terminal_width.saturating_sub(text_width) / 2;
-                let middle_dialog_chunk = Layout::default()
+                let dialog_draw_area = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints([
-                        Constraint::Length(horizontal_bordering),
-                        Constraint::Length(text_width),
-                        Constraint::Length(horizontal_bordering),
+                        Constraint::Length(horizontal_padding),
+                        Constraint::Fill(1),
+                        Constraint::Length(horizontal_padding),
                     ])
-                    .split(vertical_dialog_chunk[1]);
+                    .areas::<3>(vertical_dialog_chunk)[1];
 
-                // This is a bit nasty, but it works well... I guess.
-                app_state.delete_dialog_state.is_showing_dd =
-                    self.draw_dd_dialog(f, dd_text, app_state, middle_dialog_chunk[1]);
+                app_state
+                    .process_kill_dialog
+                    .draw(f, dialog_draw_area, &self.styles);
             } else if app_state.is_expanded {
                 if let Some(frozen_draw_loc) = frozen_draw_loc {
                     self.draw_frozen_indicator(f, frozen_draw_loc);
