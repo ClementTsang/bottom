@@ -176,7 +176,12 @@ pub(crate) enum ProcessKillDialogState {
     #[default]
     NotEnabled,
     Selecting(String, Vec<Pid>, ButtonState),
-    Killing(Vec<Pid>),
+    Killing {
+        process_name: String,
+        pids: Vec<Pid>,
+        signal: Option<i32>,
+        is_done: bool,
+    },
     Error(String),
 }
 
@@ -206,24 +211,34 @@ impl ProcessKillDialog {
         std::mem::swap(&mut self.state, &mut current);
 
         match current {
-            ProcessKillDialogState::NotEnabled => {}
-            ProcessKillDialogState::Selecting(name, pids, button_state) => match button_state {
-                #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-                ButtonState::Signals(list_state) => {
-                    if let Some(signal) = list_state.selected() {
-                        if signal != 0 {
-                            self.state = ProcessKillDialogState::Killing(pids);
+            ProcessKillDialogState::Selecting(process_name, pids, button_state) => {
+                match button_state {
+                    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+                    ButtonState::Signals(list_state) => {
+                        if let Some(signal) = list_state.selected() {
+                            if signal != 0 {
+                                self.state = ProcessKillDialogState::Killing {
+                                    process_name,
+                                    pids,
+                                    signal: Some(signal as i32),
+                                    is_done: false,
+                                };
+                            }
+                        }
+                    }
+                    ButtonState::Simple { yes } => {
+                        if yes {
+                            self.state = ProcessKillDialogState::Killing {
+                                process_name,
+                                pids,
+                                signal: None,
+                                is_done: false,
+                            };
                         }
                     }
                 }
-                ButtonState::Simple { yes } => {
-                    if yes {
-                        self.state = ProcessKillDialogState::Killing(pids);
-                    }
-                }
-            },
-            ProcessKillDialogState::Killing(_) => {}
-            ProcessKillDialogState::Error(_) => {}
+            }
+            _ => {}
         }
 
         // Fall through behaviour is just to close the dialog.
@@ -672,9 +687,32 @@ impl ProcessKillDialog {
                 // Draw a text box. If buttons are yes/no, fit it, otherwise, use max space.
                 Self::draw_selecting(f, draw_area, styles, name, pids, button_state);
             }
-            ProcessKillDialogState::Killing(pids) => {
+            ProcessKillDialogState::Killing {
+                process_name,
+                pids,
+                signal,
+                is_done: _,
+            } => {
                 // Only draw a text box the size of the text + any margins if possible
-                let text = Text::from(format!("Killing {} processes...", pids.len()));
+                let text = if let Some(signal) = signal {
+                    if pids.len() > 1 {
+                        Text::from(format!(
+                            "Sending signal {} to {} processes...",
+                            signal,
+                            pids.len()
+                        ))
+                    } else {
+                        Text::from(format!(
+                            "Sending signal {signal} to process '{process_name}'..."
+                        ))
+                    }
+                } else {
+                    if pids.len() > 1 {
+                        Text::from(format!("Killing {} processes...", pids.len()))
+                    } else {
+                        Text::from(format!("Killing process '{process_name}'..."))
+                    }
+                };
                 let title = Line::styled(" Killing Process ", styles.widget_title_style);
 
                 self.draw_no_button_dialog(f, draw_area, styles, text, title);
