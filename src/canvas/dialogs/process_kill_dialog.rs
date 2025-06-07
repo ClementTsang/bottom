@@ -3,9 +3,9 @@
 use cfg_if::cfg_if;
 use tui::{
     Frame,
-    layout::{Alignment, Constraint, Flex, Layout, Rect},
+    layout::{Alignment, Constraint, Flex, Layout, Position, Rect},
     text::{Line, Span, Text},
-    widgets::{Block, List, ListState, Padding, Paragraph, Wrap},
+    widgets::{List, ListState, Padding, Paragraph, Wrap},
 };
 
 use crate::{
@@ -164,9 +164,14 @@ cfg_if! {
 #[derive(Debug)]
 pub(crate) enum ButtonState {
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-    Signals(ListState),
+    Signals {
+        state: ListState,
+        last_button_draw_area: Rect,
+    },
     Simple {
         yes: bool,
+        last_yes_button_area: Rect,
+        last_no_button_area: Rect,
     },
 }
 
@@ -214,8 +219,8 @@ impl ProcessKillDialog {
             ProcessKillDialogState::Selecting(process_name, pids, button_state) => {
                 match button_state {
                     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-                    ButtonState::Signals(list_state) => {
-                        if let Some(signal) = list_state.selected() {
+                    ButtonState::Signals { state, .. } => {
+                        if let Some(signal) = state.selected() {
                             if signal != 0 {
                                 self.state = ProcessKillDialogState::Killing {
                                     process_name,
@@ -226,7 +231,7 @@ impl ProcessKillDialog {
                             }
                         }
                     }
-                    ButtonState::Simple { yes } => {
+                    ButtonState::Simple { yes, .. } => {
                         if yes {
                             self.state = ProcessKillDialogState::Killing {
                                 process_name,
@@ -257,17 +262,17 @@ impl ProcessKillDialog {
                         if let ProcessKillDialogState::Selecting(
                             _,
                             _,
-                            ButtonState::Signals(list_state),
+                            ButtonState::Signals { state, .. },
                         ) = &mut self.state
                         {
-                            let current = list_state.selected().unwrap_or(0);
+                            let current = state.selected().unwrap_or(0);
                             let new = current * 10 + value as usize;
 
                             // If the new value is too large, then just assume we instead want the value itself.
                             if new >= SIGNAL_TEXT.len() {
-                                list_state.select(Some(value as usize));
+                                state.select(Some(value as usize));
                             } else {
-                                list_state.select(Some(new))
+                                state.select(Some(new))
                             }
                         }
                     }
@@ -296,27 +301,37 @@ impl ProcessKillDialog {
         }
     }
 
-    pub fn on_click(&mut self) -> bool {
-        // if self.is_in_dialog() {
-        //     match self.delete_dialog_state.button_positions.iter().find(
-        //         |(tl_x, tl_y, br_x, br_y, _idx)| {
-        //             (x >= *tl_x && y >= *tl_y) && (x <= *br_x && y <= *br_y)
-        //         },
-        //     ) {
-        //         Some((_, _, _, _, 0)) => {
-        //             self.delete_dialog_state.selected_signal = KillSignal::Cancel
-        //         }
-        //         Some((_, _, _, _, idx)) => {
-        //             if *idx > 31 {
-        //                 self.delete_dialog_state.selected_signal = KillSignal::Kill(*idx + 2)
-        //             } else {
-        //                 self.delete_dialog_state.selected_signal = KillSignal::Kill(*idx)
-        //             }
-        //         }
-        //         _ => {}
-        //     }
-        //     return;
-        // }
+    pub fn on_click(&mut self, x: u16, y: u16) -> bool {
+        match &mut self.state {
+            #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+            ProcessKillDialogState::Selecting(_, _, button_state) => match button_state {
+                ButtonState::Signals {
+                    state,
+                    last_button_draw_area,
+                } => {
+                    if last_button_draw_area.contains(Position { x, y }) {
+                        let relative_y =
+                            y.saturating_sub(last_button_draw_area.y) as usize + state.offset();
+                        if relative_y < SIGNAL_TEXT.len() {
+                            state.select(Some(relative_y));
+                        }
+                    }
+                }
+                ButtonState::Simple {
+                    yes,
+                    last_yes_button_area,
+                    last_no_button_area,
+                } => {
+                    if last_yes_button_area.contains(Position { x, y }) {
+                        *yes = true;
+                    } else if last_no_button_area.contains(Position { x, y }) {
+                        *yes = false;
+                    }
+                }
+            },
+            _ => {}
+        }
+
         false
     }
 
@@ -333,7 +348,7 @@ impl ProcessKillDialog {
     /// Handle a left key press.
     pub fn on_left_key(&mut self) {
         if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
-            if let ButtonState::Simple { yes } = button_state {
+            if let ButtonState::Simple { yes, .. } = button_state {
                 *yes = true;
             }
         }
@@ -342,7 +357,7 @@ impl ProcessKillDialog {
     /// Handle a right key press.
     pub fn on_right_key(&mut self) {
         if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
-            if let ButtonState::Simple { yes } = button_state {
+            if let ButtonState::Simple { yes, .. } = button_state {
                 *yes = false;
             }
         }
@@ -351,12 +366,12 @@ impl ProcessKillDialog {
     /// Handle an up key press.
     pub fn on_up_key(&mut self) {
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals(list_state)) =
+        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals { state, .. }) =
             &mut self.state
         {
-            if let Some(selected) = list_state.selected() {
+            if let Some(selected) = state.selected() {
                 if selected > 0 {
-                    list_state.select(Some(selected - 1));
+                    state.select(Some(selected - 1));
                 }
             }
         }
@@ -365,12 +380,12 @@ impl ProcessKillDialog {
     /// Handle a down key press.
     pub fn on_down_key(&mut self) {
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals(list_state)) =
+        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals { state, .. }) =
             &mut self.state
         {
-            if let Some(selected) = list_state.selected() {
+            if let Some(selected) = state.selected() {
                 if selected < SIGNAL_TEXT.len() - 1 {
-                    list_state.select(Some(selected + 1));
+                    state.select(Some(selected + 1));
                 }
             }
         }
@@ -405,19 +420,19 @@ impl ProcessKillDialog {
 
     pub fn go_to_first(&mut self) {
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals(list_state)) =
+        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals { state, .. }) =
             &mut self.state
         {
-            list_state.select(Some(0));
+            state.select(Some(0));
         }
     }
 
     pub fn go_to_last(&mut self) {
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals(list_state)) =
+        if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals { state, .. }) =
             &mut self.state
         {
-            list_state.select(Some(SIGNAL_TEXT.len() - 1));
+            state.select(Some(SIGNAL_TEXT.len() - 1));
         }
     }
 
@@ -426,13 +441,17 @@ impl ProcessKillDialog {
         &mut self, process_name: String, pids: Vec<Pid>, use_simple_selection: bool,
     ) {
         let button_state = if use_simple_selection {
-            ButtonState::Simple { yes: false }
+            ButtonState::Simple {
+                yes: false,
+                last_yes_button_area: Rect::default(),
+                last_no_button_area: Rect::default(),
+            }
         } else {
             cfg_if::cfg_if! {
                 if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
-                    ButtonState::Signals(ListState::default().with_selected(Some(0)))
+                    ButtonState::Signals { state: ListState::default().with_selected(Some(0)), last_button_draw_area: Rect::default() }
                 } else {
-                    ButtonState::Simple { yes: false }
+                    ButtonState::Simple { yes: false, yes_button_area: Rect::default(), no_button_area: Rect::default()}
                 }
             }
         };
@@ -446,120 +465,12 @@ impl ProcessKillDialog {
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         {
             if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
-                if let ButtonState::Signals(list_state) = button_state {
+                if let ButtonState::Signals { state, .. } = button_state {
                     // Fix the button offset state when we do things like resize.
-                    *list_state.offset_mut() = 0;
+                    *state.offset_mut() = 0;
                 }
             }
         }
-    }
-
-    /// Draw a dialog box with a scrollable list of signals.
-    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-    fn draw_selecting_advanced(
-        f: &mut Frame<'_>, draw_area: Rect, styles: &Styles, block: Block<'_>, text: Paragraph<'_>,
-        num_lines: u16, list_state: &mut ListState,
-    ) {
-        // A list of options, displayed vertically.
-        const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;
-
-        // Make the rect only as big as it needs to be, which is the height of the text,
-        // the buttons, and up to 2 spaces (margin and space between), and the size of the block.
-        let [draw_area] = Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2 + 3)])
-            .flex(Flex::Center)
-            .areas(draw_area);
-
-        // Now we need to divide the block into one area for the paragraph,
-        // and one for the buttons.
-        let [text_draw_area, button_draw_area] =
-            Layout::vertical([Constraint::Max(num_lines), Constraint::Max(SIGNAL_TEXT_LEN)])
-                .flex(Flex::SpaceAround)
-                .areas(block.inner(draw_area));
-
-        // Render the block.
-        f.render_widget(block, draw_area);
-
-        // Now render the text.
-        f.render_widget(text, text_draw_area);
-
-        // And the tricky part, rendering the buttons.
-        let selected = list_state
-            .selected()
-            .expect("the list state should always be initialized with a selection!");
-
-        let buttons = List::new(SIGNAL_TEXT.iter().enumerate().map(|(index, &signal)| {
-            let style = if index == selected {
-                styles.selected_text_style
-            } else {
-                styles.text_style
-            };
-
-            Span::styled(signal, style)
-        }));
-
-        // This is kinda dumb how you have to set the constraint, but ok.
-        const LONGEST_SIGNAL_TEXT_LENGTH: u16 = const {
-            let mut i = 0;
-            let mut max = 0;
-            while i < SIGNAL_TEXT.len() {
-                if SIGNAL_TEXT[i].len() > max {
-                    max = SIGNAL_TEXT[i].len();
-                }
-                i += 1;
-            }
-
-            max as u16
-        };
-        let [button_draw_area] =
-            Layout::horizontal([Constraint::Length(LONGEST_SIGNAL_TEXT_LENGTH)])
-                .flex(Flex::Center)
-                .areas(button_draw_area);
-
-        f.render_stateful_widget(buttons, button_draw_area, list_state);
-    }
-
-    /// Draw a simple yes/no dialog box.
-    fn draw_selecting_simple(
-        f: &mut Frame<'_>, draw_area: Rect, styles: &Styles, block: Block<'_>, text: Paragraph<'_>,
-        num_lines: u16, yes: bool,
-    ) {
-        // Make the rect only as big as it needs to be, which is the height of the text,
-        // the buttons, and up to 3 spaces (margin and space between) + 2 for block.
-        let [draw_area] = Layout::vertical([Constraint::Max(num_lines + 1 + 3 + 2)])
-            .flex(Flex::Center)
-            .areas(draw_area);
-
-        // Render things, starting from the block.
-        f.render_widget(block, draw_area);
-
-        // Now we need to divide the block into one area for the paragraph,
-        // and one for the buttons.
-        let [text_area, button_area] =
-            Layout::vertical([Constraint::Max(num_lines), Constraint::Length(1)])
-                .flex(Flex::SpaceAround)
-                .areas(draw_area);
-
-        f.render_widget(text, text_area);
-
-        let (yes, no) = {
-            let (yes_style, no_style) = if yes {
-                (styles.selected_text_style, styles.text_style)
-            } else {
-                (styles.text_style, styles.selected_text_style)
-            };
-
-            (
-                Paragraph::new(Span::styled("Yes", yes_style)),
-                Paragraph::new(Span::styled("No", no_style)),
-            )
-        };
-
-        let [yes_area, no_area] = Layout::horizontal([Constraint::Length(3 + 2); 2])
-            .flex(Flex::SpaceAround)
-            .areas(button_area);
-
-        f.render_widget(yes, yes_area);
-        f.render_widget(no, no_area);
     }
 
     #[inline]
@@ -603,7 +514,9 @@ impl ProcessKillDialog {
 
         let title = match button_state {
             #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-            ButtonState::Signals(_) => Line::styled(" Select Signal ", styles.widget_title_style),
+            ButtonState::Signals { .. } => {
+                Line::styled(" Select Signal ", styles.widget_title_style)
+            }
             ButtonState::Simple { .. } => {
                 Line::styled(" Confirm Kill Process ", styles.widget_title_style)
             }
@@ -624,15 +537,116 @@ impl ProcessKillDialog {
 
         match button_state {
             #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-            ButtonState::Signals(list_state) => {
-                ProcessKillDialog::draw_selecting_advanced(
-                    f, draw_area, styles, block, text, num_lines, list_state,
-                );
+            ButtonState::Signals {
+                state,
+                last_button_draw_area,
+            } => {
+                // A list of options, displayed vertically.
+                const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;
+
+                // Make the rect only as big as it needs to be, which is the height of the text,
+                // the buttons, and up to 2 spaces (margin and space between), and the size of the block.
+                let [draw_area] =
+                    Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2 + 3)])
+                        .flex(Flex::Center)
+                        .areas(draw_area);
+
+                // Now we need to divide the block into one area for the paragraph,
+                // and one for the buttons.
+                let [text_draw_area, button_draw_area] = Layout::vertical([
+                    Constraint::Max(num_lines),
+                    Constraint::Max(SIGNAL_TEXT_LEN),
+                ])
+                .flex(Flex::SpaceAround)
+                .areas(block.inner(draw_area));
+
+                // Render the block.
+                f.render_widget(block, draw_area);
+
+                // Now render the text.
+                f.render_widget(text, text_draw_area);
+
+                // And the tricky part, rendering the buttons.
+                let selected = state
+                    .selected()
+                    .expect("the list state should always be initialized with a selection!");
+
+                let buttons = List::new(SIGNAL_TEXT.iter().enumerate().map(|(index, &signal)| {
+                    let style = if index == selected {
+                        styles.selected_text_style
+                    } else {
+                        styles.text_style
+                    };
+
+                    Span::styled(signal, style)
+                }));
+
+                // This is kinda dumb how you have to set the constraint, but ok.
+                const LONGEST_SIGNAL_TEXT_LENGTH: u16 = const {
+                    let mut i = 0;
+                    let mut max = 0;
+                    while i < SIGNAL_TEXT.len() {
+                        if SIGNAL_TEXT[i].len() > max {
+                            max = SIGNAL_TEXT[i].len();
+                        }
+                        i += 1;
+                    }
+
+                    max as u16
+                };
+                let [button_draw_area] =
+                    Layout::horizontal([Constraint::Length(LONGEST_SIGNAL_TEXT_LENGTH)])
+                        .flex(Flex::Center)
+                        .areas(button_draw_area);
+
+                *last_button_draw_area = button_draw_area;
+                f.render_stateful_widget(buttons, button_draw_area, state);
             }
-            ButtonState::Simple { yes } => {
-                ProcessKillDialog::draw_selecting_simple(
-                    f, draw_area, styles, block, text, num_lines, *yes,
-                );
+            ButtonState::Simple {
+                yes,
+                last_yes_button_area,
+                last_no_button_area,
+            } => {
+                // Make the rect only as big as it needs to be, which is the height of the text,
+                // the buttons, and up to 3 spaces (margin and space between) + 2 for block.
+                let [draw_area] = Layout::vertical([Constraint::Max(num_lines + 1 + 3 + 2)])
+                    .flex(Flex::Center)
+                    .areas(draw_area);
+
+                // Render things, starting from the block.
+                f.render_widget(block, draw_area);
+
+                // Now we need to divide the block into one area for the paragraph,
+                // and one for the buttons.
+                let [text_area, button_area] =
+                    Layout::vertical([Constraint::Max(num_lines), Constraint::Length(1)])
+                        .flex(Flex::SpaceAround)
+                        .areas(draw_area);
+
+                f.render_widget(text, text_area);
+
+                let (yes, no) = {
+                    let (yes_style, no_style) = if *yes {
+                        (styles.selected_text_style, styles.text_style)
+                    } else {
+                        (styles.text_style, styles.selected_text_style)
+                    };
+
+                    (
+                        Paragraph::new(Span::styled("Yes", yes_style)),
+                        Paragraph::new(Span::styled("No", no_style)),
+                    )
+                };
+
+                let [yes_area, no_area] = Layout::horizontal([Constraint::Length(3); 2])
+                    .flex(Flex::SpaceAround)
+                    .areas(button_area);
+
+                *last_yes_button_area = yes_area;
+                *last_no_button_area = no_area;
+
+                f.render_widget(yes, yes_area);
+                f.render_widget(no, no_area);
             }
         }
     }

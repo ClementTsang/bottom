@@ -2293,7 +2293,7 @@ impl App {
 
         // Second short circuit --- are we in the dd dialog state?  If so, only check
         // yes/no/signals and bail after.
-        if self.process_kill_dialog.is_open() && self.process_kill_dialog.on_click() {
+        if self.process_kill_dialog.is_open() && self.process_kill_dialog.on_click(x, y) {
             return;
         }
 
