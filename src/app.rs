@@ -548,15 +548,6 @@ impl App {
         }
     }
 
-    #[cfg(target_family = "unix")]
-    pub fn on_number(&mut self, number_char: char) {
-        if self.process_kill_dialog.is_open() {
-            if let Some(value) = number_char.to_digit(10) {
-                self.process_kill_dialog.on_number(value);
-            }
-        }
-    }
-
     pub fn on_up_key(&mut self) {
         if !self.is_in_dialog() {
             self.decrement_position_count();
@@ -1786,7 +1777,7 @@ impl App {
         } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = 0;
         } else if self.process_kill_dialog.is_open() {
-            self.process_kill_dialog.scroll_to_first();
+            self.process_kill_dialog.go_to_first();
         }
     }
 
@@ -1847,7 +1838,7 @@ impl App {
             self.help_dialog_state.scroll_state.current_scroll_index =
                 self.help_dialog_state.scroll_state.max_scroll_index;
         } else if self.process_kill_dialog.is_open() {
-            self.process_kill_dialog.scroll_to_last();
+            self.process_kill_dialog.go_to_last();
         }
     }
 

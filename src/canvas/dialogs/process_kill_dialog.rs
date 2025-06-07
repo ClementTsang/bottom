@@ -12,21 +12,6 @@ use crate::{
     canvas::drawing_utils::dialog_block, collection::processes::Pid, options::config::style::Styles,
 };
 
-cfg_if::cfg_if! {
-    if #[cfg(target_os = "linux")] {
-        /// The max signal we can send to a process on Linux.
-        pub const MAX_PROCESS_SIGNAL: usize = 64;
-    } else if #[cfg(target_os = "macos")] {
-        /// The max signal we can send to a process on macOS.
-        pub const MAX_PROCESS_SIGNAL: usize = 31;
-    } else if #[cfg(target_os = "freebsd")] {
-        /// The max signal we can send to a process on FreeBSD.
-        /// See [https://www.freebsd.org/cgi/man.cgi?query=signal&apropos=0&sektion=3&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html]
-        /// for more details.
-        pub const MAX_PROCESS_SIGNAL: usize = 33;
-    }
-}
-
 // Configure signal text based on the target OS.
 cfg_if! {
     if #[cfg(target_os = "linux")] {
@@ -216,35 +201,63 @@ impl ProcessKillDialog {
     }
 
     pub fn on_enter(&mut self) {
+        // We do this to get around borrow issues.
         let mut current = ProcessKillDialogState::NotEnabled;
         std::mem::swap(&mut self.state, &mut current);
 
-        match &self.state {
-            ProcessKillDialogState::NotEnabled => {} // Do nothing
+        match current {
+            ProcessKillDialogState::NotEnabled => {}
             ProcessKillDialogState::Selecting(name, pids, button_state) => match button_state {
                 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-                ButtonState::Signals(list_state) => {}
+                ButtonState::Signals(list_state) => {
+                    if let Some(signal) = list_state.selected() {
+                        if signal != 0 {
+                            self.state = ProcessKillDialogState::Killing(pids);
+                        }
+                    }
+                }
                 ButtonState::Simple { yes } => {
-                    if *yes {
-                    } else {
+                    if yes {
+                        self.state = ProcessKillDialogState::Killing(pids);
                     }
                 }
             },
-            ProcessKillDialogState::Killing(items) => {}
+            ProcessKillDialogState::Killing(_) => {}
             ProcessKillDialogState::Error(_) => {}
         }
+
+        // Fall through behaviour is just to close the dialog.
     }
 
     pub fn on_char(&mut self, c: char) {
         match c {
-            // 'h' => self.on_left_key(),
-            // 'j' => self.on_down_key(),
-            // 'k' => self.on_up_key(),
-            // 'l' => self.on_right_key(),
-            // #[cfg(target_family = "unix")]
-            // '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
-            //     self.on_number(caught_char)
-            // }
+            'h' => self.on_left_key(),
+            'j' => self.on_down_key(),
+            'k' => self.on_up_key(),
+            'l' => self.on_right_key(),
+            '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+                if let Some(value) = c.to_digit(10) {
+                    {
+                        if let ProcessKillDialogState::Selecting(
+                            _,
+                            _,
+                            ButtonState::Signals(list_state),
+                        ) = &mut self.state
+                        {
+                            let current = list_state.selected().unwrap_or(0);
+                            let new = current * 10 + value as usize;
+
+                            // If the new value is too large, then just assume we instead want the value itself.
+                            if new >= SIGNAL_TEXT.len() {
+                                list_state.select(Some(value as usize));
+                            } else {
+                                list_state.select(Some(new))
+                            }
+                        }
+                    }
+                }
+            }
             // 'g' => {
             //     let mut is_first_g = true;
             //     if let Some(second_char) = self.second_char {
@@ -255,48 +268,17 @@ impl ProcessKillDialog {
             //             self.skip_to_first();
             //         }
             //     }
-            //
+
             //     if is_first_g {
             //         self.awaiting_second_char = true;
             //         self.second_char = Some('g');
             //     }
             // }
-            // 'G' => self.skip_to_last(),
+            'G' => {
+                self.go_to_last();
+            }
             _ => {}
         }
-    }
-
-    pub fn on_number(&mut self, value: u32) {
-        // if self.delete_dialog_state.is_showing_dd {
-        //     if self
-        //         .delete_dialog_state
-        //         .last_number_press
-        //         .map_or(100, |ins| ins.elapsed().as_millis())
-        //         >= 400
-        //     {
-        //         self.delete_dialog_state.keyboard_signal_select = 0;
-        //     }
-        //     let mut kbd_signal = self.delete_dialog_state.keyboard_signal_select * 10;
-        //     kbd_signal += number_char.to_digit(10).unwrap() as usize;
-        //     if kbd_signal > 64 {
-        //         kbd_signal %= 100;
-        //     }
-        //     #[cfg(target_os = "linux")]
-        //     if kbd_signal > 64 || kbd_signal == 32 || kbd_signal == 33 {
-        //         kbd_signal %= 10;
-        //     }
-        //     #[cfg(target_os = "macos")]
-        //     if kbd_signal > 31 {
-        //         kbd_signal %= 10;
-        //     }
-        //     self.delete_dialog_state.selected_signal = KillSignal::Kill(kbd_signal);
-        //     if kbd_signal < 10 {
-        //         self.delete_dialog_state.keyboard_signal_select = kbd_signal;
-        //     } else {
-        //         self.delete_dialog_state.keyboard_signal_select = 0;
-        //     }
-        //     self.delete_dialog_state.last_number_press = Some(Instant::now());
-        // }
     }
 
     pub fn on_click(&mut self) -> bool {
@@ -406,7 +388,7 @@ impl ProcessKillDialog {
         // self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
     }
 
-    pub fn scroll_to_first(&mut self) {
+    pub fn go_to_first(&mut self) {
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals(list_state)) =
             &mut self.state
@@ -415,7 +397,7 @@ impl ProcessKillDialog {
         }
     }
 
-    pub fn scroll_to_last(&mut self) {
+    pub fn go_to_last(&mut self) {
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         if let ProcessKillDialogState::Selecting(_, _, ButtonState::Signals(list_state)) =
             &mut self.state
@@ -450,6 +432,7 @@ impl ProcessKillDialog {
         {
             if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
                 if let ButtonState::Signals(list_state) = button_state {
+                    // Fix the button offset state when we do things like resize.
                     *list_state.offset_mut() = 0;
                 }
             }
@@ -566,7 +549,7 @@ impl ProcessKillDialog {
 
     #[inline]
     fn draw_selecting(
-        f: &mut Frame<'_>, draw_loc: Rect, styles: &Styles, name: &str, pids: &[Pid],
+        f: &mut Frame<'_>, draw_area: Rect, styles: &Styles, name: &str, pids: &[Pid],
         button_state: &mut ButtonState,
     ) {
         // FIXME: Add some colour to this!
@@ -611,24 +594,29 @@ impl ProcessKillDialog {
             }
         };
 
+        const MAX_DIALOG_WIDTH: u16 = 100;
+        let [draw_area] = Layout::horizontal([Constraint::Max(MAX_DIALOG_WIDTH)])
+            .flex(Flex::Center)
+            .areas(draw_area);
+
         let block = dialog_block(styles.border_type)
             .title_top(title)
             .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned())
             .style(styles.border_style)
             .border_style(styles.border_style);
 
-        let num_lines = text.line_count(block.inner(draw_loc).width) as u16;
+        let num_lines = text.line_count(block.inner(draw_area).width) as u16;
 
         match button_state {
             #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
             ButtonState::Signals(list_state) => {
                 ProcessKillDialog::draw_selecting_advanced(
-                    f, draw_loc, styles, block, text, num_lines, list_state,
+                    f, draw_area, styles, block, text, num_lines, list_state,
                 );
             }
             ButtonState::Simple { yes } => {
                 ProcessKillDialog::draw_selecting_simple(
-                    f, draw_loc, styles, block, text, num_lines, *yes,
+                    f, draw_area, styles, block, text, num_lines, *yes,
                 );
             }
         }
@@ -636,7 +624,7 @@ impl ProcessKillDialog {
 
     #[inline]
     fn draw_no_button_dialog(
-        &self, f: &mut Frame<'_>, draw_loc: Rect, styles: &Styles, text: Text<'_>, title: Line<'_>,
+        &self, f: &mut Frame<'_>, draw_area: Rect, styles: &Styles, text: Text<'_>, title: Line<'_>,
     ) {
         let text = Paragraph::new(text)
             .style(styles.text_style)
@@ -649,27 +637,27 @@ impl ProcessKillDialog {
             .style(styles.border_style)
             .border_style(styles.border_style);
 
-        let num_lines = text.line_count(block.inner(draw_loc).width) as u16;
+        let num_lines = text.line_count(block.inner(draw_area).width) as u16;
 
         // Also calculate how big of a draw loc we actually need. For this
         // one, we want it to be shorter if possible.
         //
         // Note the +2 is for the margin, and another +2 for border.
-        let draw_loc = Layout::vertical([Constraint::Max(num_lines + 2 + 2)])
+        let [draw_area] = Layout::vertical([Constraint::Max(num_lines + 2 + 2)])
             .flex(Flex::Center)
-            .areas::<1>(draw_loc)[0];
+            .areas(draw_area);
 
         // If there's enough room, add padding. I think this is also faster than doing another Layout
         // for this case since there's just one object anyway.
-        if draw_loc.height > num_lines + 2 + 2 {
+        if draw_area.height > num_lines + 2 + 2 {
             block = block.padding(Padding::vertical(1));
         }
 
-        f.render_widget(text.block(block), draw_loc);
+        f.render_widget(text.block(block), draw_area);
     }
 
     /// Draw the [`ProcessKillDialog`].
-    pub fn draw(&mut self, f: &mut Frame<'_>, draw_loc: Rect, styles: &Styles) {
+    pub fn draw(&mut self, f: &mut Frame<'_>, draw_area: Rect, styles: &Styles) {
         // The idea is:
         // - Use as big of a dialog box as needed (within the maximal draw loc)
         //  - So the non-button ones are going to be smaller... probably
@@ -677,45 +665,29 @@ impl ProcessKillDialog {
         //  - Meanwhile for the button one, it'll likely be full height if it's
         //    "advanced" kill.
 
+        // FIXME: Add some colour to this!
         match &mut self.state {
             ProcessKillDialogState::NotEnabled => {}
             ProcessKillDialogState::Selecting(name, pids, button_state) => {
                 // Draw a text box. If buttons are yes/no, fit it, otherwise, use max space.
-                Self::draw_selecting(f, draw_loc, styles, name, pids, button_state);
+                Self::draw_selecting(f, draw_area, styles, name, pids, button_state);
             }
             ProcessKillDialogState::Killing(pids) => {
                 // Only draw a text box the size of the text + any margins if possible
                 let text = Text::from(format!("Killing {} processes...", pids.len()));
                 let title = Line::styled(" Killing Process ", styles.widget_title_style);
 
-                self.draw_no_button_dialog(f, draw_loc, styles, text, title);
+                self.draw_no_button_dialog(f, draw_area, styles, text, title);
             }
             ProcessKillDialogState::Error(err) => {
                 let text = Text::from(vec![
                     "Failed to kill process:".into(),
-                    err.clone().into(),
+                    err.to_owned().into(),
                     "Please press ENTER or ESC to close this dialog.".into(),
                 ]);
                 let title = Line::styled(" Error ", styles.widget_title_style);
 
-                self.draw_no_button_dialog(f, draw_loc, styles, text, title);
-            }
-        }
-    }
-}
-
-#[cfg(test)]
-mod test {
-
-    /// We test this as some things assume that the signal text length is more than 0. However, for unsupported
-    /// signal services, we do not want them to be able to use signals.
-    #[test]
-    fn signal_test_length() {
-        cfg_if::cfg_if! {
-            if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
-                assert!(super::SIGNAL_TEXT.len() > 0);
-            } else {
-                assert!(super::SIGNAL_TEXT.len() == 0);
+                self.draw_no_button_dialog(f, draw_area, styles, text, title);
             }
         }
     }
