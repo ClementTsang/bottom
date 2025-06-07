@@ -74,27 +74,6 @@ pub struct DataFilters {
     pub net_filter: Option<Filter>,
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(target_os = "linux")] {
-        /// The max signal we can send to a process on Linux.
-        pub const MAX_PROCESS_SIGNAL: usize = 64;
-    } else if #[cfg(target_os = "macos")] {
-        /// The max signal we can send to a process on macOS.
-        pub const MAX_PROCESS_SIGNAL: usize = 31;
-    } else if #[cfg(target_os = "freebsd")] {
-        /// The max signal we can send to a process on FreeBSD.
-        /// See [https://www.freebsd.org/cgi/man.cgi?query=signal&apropos=0&sektion=3&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html]
-        /// for more details.
-        pub const MAX_PROCESS_SIGNAL: usize = 33;
-    } else if #[cfg(target_os = "windows")] {
-        /// The max signal we can send to a process. For Windows, we only have support for one signal (kill).
-        pub const MAX_PROCESS_SIGNAL: usize = 1;
-    } else {
-        /// The max signal we can send to a process. As a fallback, we only support one signal (kill).
-        pub const MAX_PROCESS_SIGNAL: usize = 1;
-    }
-}
-
 pub struct App {
     awaiting_second_char: bool,
     second_char: Option<char>,

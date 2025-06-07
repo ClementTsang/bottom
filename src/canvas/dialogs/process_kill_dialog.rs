@@ -12,6 +12,21 @@ use crate::{
     canvas::drawing_utils::dialog_block, collection::processes::Pid, options::config::style::Styles,
 };
 
+cfg_if::cfg_if! {
+    if #[cfg(target_os = "linux")] {
+        /// The max signal we can send to a process on Linux.
+        pub const MAX_PROCESS_SIGNAL: usize = 64;
+    } else if #[cfg(target_os = "macos")] {
+        /// The max signal we can send to a process on macOS.
+        pub const MAX_PROCESS_SIGNAL: usize = 31;
+    } else if #[cfg(target_os = "freebsd")] {
+        /// The max signal we can send to a process on FreeBSD.
+        /// See [https://www.freebsd.org/cgi/man.cgi?query=signal&apropos=0&sektion=3&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html]
+        /// for more details.
+        pub const MAX_PROCESS_SIGNAL: usize = 33;
+    }
+}
+
 // Configure signal text based on the target OS.
 cfg_if! {
     if #[cfg(target_os = "linux")] {
@@ -152,8 +167,6 @@ cfg_if! {
             "32: THR",
             "33: LIBRT",
         ];
-    } else {
-        const SIGNAL_TEXT: [&str; 0] = [];
     }
 }
 
@@ -415,7 +428,6 @@ impl ProcessKillDialog {
     pub fn start_process_kill(
         &mut self, process_name: String, pids: Vec<Pid>, use_simple_selection: bool,
     ) {
-        // This should hopefully get optimized out.
         let button_state = if use_simple_selection {
             ButtonState::Simple { yes: false }
         } else {
@@ -431,40 +443,51 @@ impl ProcessKillDialog {
         self.state = ProcessKillDialogState::Selecting(process_name, pids, button_state);
     }
 
-    pub fn reset_button_draw_locations(&mut self) {
-        // Not sure if we need this.
+    pub fn handle_redraw(&mut self) {
+        // FIXME: Not sure if we need this.
+
+        #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+        {
+            if let ProcessKillDialogState::Selecting(_, _, button_state) = &mut self.state {
+                if let ButtonState::Signals(list_state) = button_state {
+                    *list_state.offset_mut() = 0;
+                }
+            }
+        }
     }
 
     /// Draw a dialog box with a scrollable list of signals.
-    #[inline]
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     fn draw_selecting_advanced(
-        f: &mut Frame<'_>, draw_loc: Rect, styles: &Styles, block: Block<'_>, text: Paragraph<'_>,
+        f: &mut Frame<'_>, draw_area: Rect, styles: &Styles, block: Block<'_>, text: Paragraph<'_>,
         num_lines: u16, list_state: &mut ListState,
     ) {
         // A list of options, displayed vertically.
         const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;
 
         // Make the rect only as big as it needs to be, which is the height of the text,
-        // the buttons, and up to 2 spaces (margin and space between).
-        let [draw_loc] = Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2)])
+        // the buttons, and up to 2 spaces (margin and space between), and the size of the block.
+        let [draw_area] = Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2 + 3)])
             .flex(Flex::Center)
-            .areas::<1>(draw_loc);
-
-        // Render the block.
-        f.render_widget(block, draw_loc);
+            .areas(draw_area);
 
         // Now we need to divide the block into one area for the paragraph,
         // and one for the buttons.
-        let draw_locs =
+        let [text_draw_area, button_draw_area] =
             Layout::vertical([Constraint::Max(num_lines), Constraint::Max(SIGNAL_TEXT_LEN)])
                 .flex(Flex::SpaceAround)
-                .areas::<2>(draw_loc);
+                .areas(block.inner(draw_area));
+
+        // Render the block.
+        f.render_widget(block, draw_area);
 
         // Now render the text.
-        f.render_widget(text, draw_locs[0]);
+        f.render_widget(text, text_draw_area);
 
         // And the tricky part, rendering the buttons.
-        let selected = list_state.selected().unwrap_or(0);
+        let selected = list_state
+            .selected()
+            .expect("the list state should always be initialized with a selection!");
 
         let buttons = List::new(SIGNAL_TEXT.iter().enumerate().map(|(index, &signal)| {
             let style = if index == selected {
@@ -476,31 +499,47 @@ impl ProcessKillDialog {
             Span::styled(signal, style)
         }));
 
-        // FIXME: I have no idea what will happen here...
-        f.render_stateful_widget(buttons, draw_locs[0], list_state);
+        // This is kinda dumb how you have to set the constraint, but ok.
+        const LONGEST_SIGNAL_TEXT_LENGTH: u16 = const {
+            let mut i = 0;
+            let mut max = 0;
+            while i < SIGNAL_TEXT.len() {
+                if SIGNAL_TEXT[i].len() > max {
+                    max = SIGNAL_TEXT[i].len();
+                }
+                i += 1;
+            }
+
+            max as u16
+        };
+        let [button_draw_area] =
+            Layout::horizontal([Constraint::Length(LONGEST_SIGNAL_TEXT_LENGTH)])
+                .flex(Flex::Center)
+                .areas(button_draw_area);
+
+        f.render_stateful_widget(buttons, button_draw_area, list_state);
     }
 
     /// Draw a simple yes/no dialog box.
-    #[inline]
     fn draw_selecting_simple(
-        f: &mut Frame<'_>, draw_loc: Rect, styles: &Styles, block: Block<'_>, text: Paragraph<'_>,
+        f: &mut Frame<'_>, draw_area: Rect, styles: &Styles, block: Block<'_>, text: Paragraph<'_>,
         num_lines: u16, yes: bool,
     ) {
         // Make the rect only as big as it needs to be, which is the height of the text,
-        // the buttons, and up to 3 spaces (margin and space between).
-        let [draw_loc] = Layout::vertical([Constraint::Max(num_lines + 1 + 3)])
+        // the buttons, and up to 3 spaces (margin and space between) + 2 for block.
+        let [draw_area] = Layout::vertical([Constraint::Max(num_lines + 1 + 3 + 2)])
             .flex(Flex::Center)
-            .areas::<1>(draw_loc);
+            .areas(draw_area);
 
         // Render things, starting from the block.
-        f.render_widget(block, draw_loc);
+        f.render_widget(block, draw_area);
 
         // Now we need to divide the block into one area for the paragraph,
         // and one for the buttons.
         let [text_area, button_area] =
             Layout::vertical([Constraint::Max(num_lines), Constraint::Length(1)])
                 .flex(Flex::SpaceAround)
-                .areas::<2>(draw_loc);
+                .areas(draw_area);
 
         f.render_widget(text, text_area);
 
@@ -517,12 +556,12 @@ impl ProcessKillDialog {
             )
         };
 
-        let button_locs = Layout::horizontal([Constraint::Length(3 + 2); 2])
+        let [yes_area, no_area] = Layout::horizontal([Constraint::Length(3 + 2); 2])
             .flex(Flex::SpaceAround)
-            .areas::<2>(button_area);
+            .areas(button_area);
 
-        f.render_widget(yes, button_locs[0]);
-        f.render_widget(no, button_locs[1]);
+        f.render_widget(yes, yes_area);
+        f.render_widget(no, no_area);
     }
 
     #[inline]
@@ -530,6 +569,7 @@ impl ProcessKillDialog {
         f: &mut Frame<'_>, draw_loc: Rect, styles: &Styles, name: &str, pids: &[Pid],
         button_state: &mut ButtonState,
     ) {
+        // FIXME: Add some colour to this!
         let text = {
             const MAX_PROCESS_NAME_WIDTH: usize = 20;
 

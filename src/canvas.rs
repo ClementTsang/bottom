@@ -209,7 +209,7 @@ impl Painter {
                 }
 
                 // Reset process kill dialog button locations...
-                app_state.process_kill_dialog.reset_button_draw_locations();
+                app_state.process_kill_dialog.handle_redraw();
 
                 // Reset battery dialog button locations...
                 for battery_widget in app_state.states.battery_state.widget_states.values_mut() {
