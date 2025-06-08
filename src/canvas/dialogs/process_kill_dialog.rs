@@ -319,8 +319,7 @@ impl ProcessKillDialog {
                     }) = &mut self.state
                     {
                         if let Some((prev, last_press)) = self.last_char {
-                            if matches!(prev, '0'..='9') && last_press.elapsed() <= MAX_KEY_TIMEOUT
-                            {
+                            if prev.is_ascii_digit() && last_press.elapsed() <= MAX_KEY_TIMEOUT {
                                 let current = state.selected().unwrap_or(0);
                                 let new = {
                                     let new = current * 10 + value as usize;
