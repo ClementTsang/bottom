@@ -196,7 +196,7 @@ enum ProcessKillDialogState {
     Selecting(ProcessKillSelectingInner),
     Error {
         process_name: String,
-        pid: Pid,
+        pid: Option<Pid>,
         err: String,
     },
 }
@@ -245,7 +245,7 @@ impl ProcessKillDialog {
                                 {
                                     self.state = ProcessKillDialogState::Error {
                                         process_name,
-                                        pid,
+                                        pid: Some(pid),
                                         err: err.to_string(),
                                     };
                                     return;
@@ -262,7 +262,7 @@ impl ProcessKillDialog {
 
                                 for pid in pids {
                                     if let Err(err) = process_killer::kill_process_given_pid(pid) {
-                                        self.state = ProcessKillDialogState::Error { process_name, pid, err: err.to_string() };
+                                        self.state = ProcessKillDialogState::Error { process_name, pid: Some(pid), err: err.to_string() };
                                         break;
                                     }
                                 }
@@ -272,12 +272,12 @@ impl ProcessKillDialog {
                                 for pid in pids {
                                     // Send a SIGTERM by default.
                                     if let Err(err) = process_killer::kill_process_given_pid(pid, DEFAULT_KILL_SIGNAL) {
-                                        self.state = ProcessKillDialogState::Error { process_name, pid, err: err.to_string() };
+                                        self.state = ProcessKillDialogState::Error { process_name, pid: Some(pid), err: err.to_string() };
                                         break;
                                     }
                                 }
                             } else {
-                                self.state = ProcessKillDialogState::Error { process_name, pid, err: "Killing processes is not supported on this platform.".into() };
+                                self.state = ProcessKillDialogState::Error { process_name, pid: None, err: "Killing processes is not supported on this platform.".into() };
 
                             }
                         }
@@ -535,6 +535,15 @@ impl ProcessKillDialog {
                 }
             }
         };
+
+        if pids.is_empty() {
+            self.state = ProcessKillDialogState::Error {
+                process_name,
+                pid: None,
+                err: "No PIDs found for the given process name.".into(),
+            };
+            return;
+        }
 
         self.state = ProcessKillDialogState::Selecting(ProcessKillSelectingInner {
             process_name,
@@ -799,7 +808,11 @@ impl ProcessKillDialog {
                 err,
             } => {
                 let text = Text::from(vec![
-                    format!("Failed to kill process {process_name} ({pid}):").into(),
+                    if let Some(pid) = pid {
+                        format!("Failed to kill process {process_name} ({pid}):").into()
+                    } else {
+                        format!("Failed to kill process '{process_name}':").into()
+                    },
                     err.to_owned().into(),
                     "Please press ENTER or ESC to close this dialog.".into(),
                 ])
