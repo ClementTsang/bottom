@@ -5,7 +5,7 @@ use tui::{
     Frame,
     layout::{Alignment, Constraint, Flex, Layout, Position, Rect},
     text::{Line, Span, Text},
-    widgets::{List, ListState, Padding, Paragraph, Wrap},
+    widgets::{List, ListState, Paragraph, Wrap},
 };
 
 use crate::{
@@ -16,6 +16,7 @@ use crate::{
 // Configure signal text based on the target OS.
 cfg_if! {
     if #[cfg(target_os = "linux")] {
+        const DEFAULT_KILL_SIGNAL: usize = 15;
         const SIGNAL_TEXT: [&str; 63] = [
             "0: Cancel",
             "1: HUP",
@@ -82,6 +83,7 @@ cfg_if! {
             "64: RTMAX",
         ];
     } else if #[cfg(target_os = "macos")] {
+        const DEFAULT_KILL_SIGNAL: usize = 15;
         const SIGNAL_TEXT: [&str; 32] = [
             "0: Cancel",
             "1: HUP",
@@ -117,6 +119,7 @@ cfg_if! {
             "31: USR2",
         ];
     } else if #[cfg(target_os = "freebsd")] {
+        const DEFAULT_KILL_SIGNAL: usize = 15;
         const SIGNAL_TEXT: [&str; 34] = [
             "0: Cancel",
             "1: HUP",
@@ -189,7 +192,11 @@ enum ProcessKillDialogState {
     #[default]
     NotEnabled,
     Selecting(ProcessKillSelectingInner),
-    Error(String),
+    Error {
+        process_name: String,
+        pid: Pid,
+        err: String,
+    },
 }
 
 /// Process kill dialog.
@@ -219,6 +226,7 @@ impl ProcessKillDialog {
         std::mem::swap(&mut self.state, &mut current);
 
         if let ProcessKillDialogState::Selecting(state) = current {
+            let process_name = state.process_name;
             let button_state = state.button_state;
             let pids = state.pids;
 
@@ -228,10 +236,14 @@ impl ProcessKillDialog {
                     if let Some(signal) = state.selected() {
                         if signal != 0 {
                             for pid in pids {
-                                if let Err(err) =
+                                if let Err(error) =
                                     process_killer::kill_process_given_pid(pid, signal)
                                 {
-                                    self.state = ProcessKillDialogState::Error(err.to_string());
+                                    self.state = ProcessKillDialogState::Error {
+                                        process_name,
+                                        pid,
+                                        err: error.to_string(),
+                                    };
                                     return;
                                 }
                             }
@@ -244,16 +256,16 @@ impl ProcessKillDialog {
                             if #[cfg(target_os = "windows")] {
                                 for pid in pids {
                                     if let Err(err) = process_killer::kill_process_given_pid(pid) {
-                                        self.state = ProcessKillDialogState::Error(err.to_string());
-                                    return;
+                                        self.state = ProcessKillDialogState::Error { process_name, pid, error: err.to_string() };
+                                        break;
                                     }
                                 }
                             } else if #[cfg(target_family = "unix")] {
                                 for pid in pids {
                                     // Send a SIGTERM by default.
-                                    if let Err(err) = process_killer::kill_process_given_pid(pid, 15) {
-                                        self.state = ProcessKillDialogState::Error(err.to_string());
-                                    return;
+                                    if let Err(err) = process_killer::kill_process_given_pid(pid, DEFAULT_KILL_SIGNAL) {
+                                        self.state = ProcessKillDialogState::Error { process_name, pid, err: err.to_string() };
+                                        break;
                                     }
                                 }
                             } else {
@@ -501,7 +513,7 @@ impl ProcessKillDialog {
         } else {
             cfg_if! {
                 if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
-                    ButtonState::Signals { state: ListState::default().with_selected(Some(0)), last_button_draw_area: Rect::default() }
+                    ButtonState::Signals { state: ListState::default().with_selected(Some(DEFAULT_KILL_SIGNAL)), last_button_draw_area: Rect::default() }
                 } else {
                     ButtonState::Simple { yes: false, yes_button_area: Rect::default(), no_button_area: Rect::default()}
                 }
@@ -677,16 +689,15 @@ impl ProcessKillDialog {
                     .flex(Flex::Center)
                     .areas(draw_area);
 
-                // Render things, starting from the block.
-                f.render_widget(block, draw_area);
-
                 // Now we need to divide the block into one area for the paragraph,
                 // and one for the buttons.
                 let [text_area, button_area] =
                     Layout::vertical([Constraint::Max(num_lines), Constraint::Length(1)])
                         .flex(Flex::SpaceAround)
-                        .areas(draw_area);
+                        .areas(block.inner(draw_area));
 
+                // Render things, starting from the block.
+                f.render_widget(block, draw_area);
                 f.render_widget(text, text_area);
 
                 let (yes, no) = {
@@ -724,7 +735,7 @@ impl ProcessKillDialog {
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
-        let mut block = dialog_block(styles.border_type)
+        let block = dialog_block(styles.border_type)
             .title_top(title)
             .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned())
             .style(styles.border_style)
@@ -740,13 +751,12 @@ impl ProcessKillDialog {
             .flex(Flex::Center)
             .areas(draw_area);
 
-        // If there's enough room, add padding. I think this is also faster than doing another Layout
-        // for this case since there's just one object anyway.
-        if draw_area.height > num_lines + 2 + 2 {
-            block = block.padding(Padding::vertical(1));
-        }
+        let [text_draw_area] = Layout::vertical([Constraint::Length(num_lines)])
+            .flex(Flex::Center)
+            .areas(block.inner(draw_area));
 
-        f.render_widget(text.block(block), draw_area);
+        f.render_widget(block, draw_area);
+        f.render_widget(text, text_draw_area);
     }
 
     /// Draw the [`ProcessKillDialog`].
@@ -765,12 +775,17 @@ impl ProcessKillDialog {
                 // Draw a text box. If buttons are yes/no, fit it, otherwise, use max space.
                 Self::draw_selecting(f, draw_area, styles, state);
             }
-            ProcessKillDialogState::Error(err) => {
+            ProcessKillDialogState::Error {
+                process_name,
+                pid,
+                err,
+            } => {
                 let text = Text::from(vec![
-                    "Failed to kill process:".into(),
+                    format!("Failed to kill process {process_name} ({pid}):").into(),
                     err.to_owned().into(),
                     "Please press ENTER or ESC to close this dialog.".into(),
-                ]);
+                ])
+                .alignment(Alignment::Center);
                 let title = Line::styled(" Error ", styles.widget_title_style);
 
                 self.draw_no_button_dialog(f, draw_area, styles, text, title);
