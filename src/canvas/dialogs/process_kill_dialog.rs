@@ -3,9 +3,9 @@
 use cfg_if::cfg_if;
 use tui::{
     Frame,
-    layout::{Alignment, Constraint, Flex, Layout, Position, Rect},
+    layout::{Alignment, Constraint, Flex, Layout, Rect},
     text::{Line, Span, Text},
-    widgets::{List, ListState, Paragraph, Wrap},
+    widgets::{ListState, Paragraph, Wrap},
 };
 
 use crate::{
@@ -324,31 +324,35 @@ impl ProcessKillDialog {
     pub fn on_click(&mut self, x: u16, y: u16) -> bool {
         match &mut self.state {
             #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-            ProcessKillDialogState::Selecting(state) => match &mut state.button_state {
-                ButtonState::Signals {
-                    state,
-                    last_button_draw_area,
-                } => {
-                    if last_button_draw_area.contains(Position { x, y }) {
-                        let relative_y =
-                            y.saturating_sub(last_button_draw_area.y) as usize + state.offset();
-                        if relative_y < SIGNAL_TEXT.len() {
-                            state.select(Some(relative_y));
+            ProcessKillDialogState::Selecting(state) => {
+                use tui::layout::Position;
+
+                match &mut state.button_state {
+                    ButtonState::Signals {
+                        state,
+                        last_button_draw_area,
+                    } => {
+                        if last_button_draw_area.contains(Position { x, y }) {
+                            let relative_y =
+                                y.saturating_sub(last_button_draw_area.y) as usize + state.offset();
+                            if relative_y < SIGNAL_TEXT.len() {
+                                state.select(Some(relative_y));
+                            }
+                        }
+                    }
+                    ButtonState::Simple {
+                        yes,
+                        last_yes_button_area,
+                        last_no_button_area,
+                    } => {
+                        if last_yes_button_area.contains(Position { x, y }) {
+                            *yes = true;
+                        } else if last_no_button_area.contains(Position { x, y }) {
+                            *yes = false;
                         }
                     }
                 }
-                ButtonState::Simple {
-                    yes,
-                    last_yes_button_area,
-                    last_no_button_area,
-                } => {
-                    if last_yes_button_area.contains(Position { x, y }) {
-                        *yes = true;
-                    } else if last_no_button_area.contains(Position { x, y }) {
-                        *yes = false;
-                    }
-                }
-            },
+            }
             _ => {}
         }
 
@@ -387,6 +391,7 @@ impl ProcessKillDialog {
         }
     }
 
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     fn scroll_up_by(state: &mut ListState, amount: usize) {
         if let Some(selected) = state.selected() {
             if let Some(new_position) = selected.checked_sub(amount) {
@@ -397,6 +402,7 @@ impl ProcessKillDialog {
         }
     }
 
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     fn scroll_down_by(state: &mut ListState, amount: usize) {
         if let Some(selected) = state.selected() {
             let new_position = selected + amount;
@@ -598,11 +604,6 @@ impl ProcessKillDialog {
             }
         };
 
-        const MAX_DIALOG_WIDTH: u16 = 100;
-        let [draw_area] = Layout::horizontal([Constraint::Max(MAX_DIALOG_WIDTH)])
-            .flex(Flex::Center)
-            .areas(draw_area);
-
         let block = dialog_block(styles.border_type)
             .title_top(title)
             .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned())
@@ -617,6 +618,8 @@ impl ProcessKillDialog {
                 state,
                 last_button_draw_area,
             } => {
+                use tui::widgets::List;
+
                 // A list of options, displayed vertically.
                 const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;
 
@@ -767,6 +770,11 @@ impl ProcessKillDialog {
         //    whatever the height of the text is.
         //  - Meanwhile for the button one, it'll likely be full height if it's
         //    "advanced" kill.
+
+        const MAX_DIALOG_WIDTH: u16 = 100;
+        let [draw_area] = Layout::horizontal([Constraint::Max(MAX_DIALOG_WIDTH)])
+            .flex(Flex::Center)
+            .areas(draw_area);
 
         // FIXME: Add some colour to this!
         match &mut self.state {
