@@ -32,14 +32,14 @@ impl ColumnHeader for CpuWidgetColumn {
 
 pub enum CpuWidgetTableData {
     All,
-    Entry { data_type: CpuDataType, usage: f64 },
+    Entry { data_type: CpuDataType, usage: f32 },
 }
 
 impl CpuWidgetTableData {
     pub fn from_cpu_data(data: &CpuData) -> CpuWidgetTableData {
         CpuWidgetTableData::Entry {
             data_type: data.data_type,
-            usage: data.cpu_usage,
+            usage: data.usage,
         }
     }
 }
