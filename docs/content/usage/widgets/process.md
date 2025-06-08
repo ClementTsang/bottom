@@ -83,8 +83,8 @@ operating systems, you are also able to control which specific signals to send (
     <figcaption><sub>The process termination menu on Linux</sub></figcaption>
 </figure>
 
-If you're on Windows, or if the `disable_advanced_kill` flag is set in the options or command-line, then a simpler termination
-screen will be shown to confirm whether you want to kill that process/process group.
+If you're on Windows, or if the `disable_advanced_kill` flag is set in the options or command-line (only available on
+Linux, macOS, and FreeBSD), then a simpler termination screen with just yes or no options will be shown.
 
 <figure>
     <img src="../../../assets/screenshots/process/process_kill_simple.webp" alt="A picture of the process kill menu on Windows."/>

@@ -303,7 +303,7 @@ pub struct ProcessArgs {
     )]
     pub current_usage: bool,
 
-    // TODO: Disable this on Windows?
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     #[arg(
         long,
         action = ArgAction::SetTrue,

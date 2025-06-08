@@ -14,6 +14,7 @@ mod utils {
     pub(crate) mod data_units;
     pub(crate) mod general;
     pub(crate) mod logging;
+    pub(crate) mod process_killer;
     pub(crate) mod strings;
 }
 pub(crate) mod canvas;

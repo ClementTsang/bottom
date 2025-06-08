@@ -1,4 +1,4 @@
-use std::{ops::Range, time::Instant};
+use std::ops::Range;
 
 use hashbrown::HashMap;
 use indexmap::IndexMap;
@@ -29,34 +29,6 @@ pub struct AppWidgetStates {
 pub enum CursorDirection {
     Left,
     Right,
-}
-
-#[derive(PartialEq, Eq)]
-pub enum KillSignal {
-    Cancel,
-    Kill(usize),
-}
-
-impl Default for KillSignal {
-    #[cfg(target_family = "unix")]
-    fn default() -> Self {
-        KillSignal::Kill(15)
-    }
-    #[cfg(target_os = "windows")]
-    fn default() -> Self {
-        KillSignal::Kill(1)
-    }
-}
-
-#[derive(Default)]
-pub struct AppDeleteDialogState {
-    pub is_showing_dd: bool,
-    pub selected_signal: KillSignal,
-    /// tl x, tl y, br x, br y, index/signal
-    pub button_positions: Vec<(u16, u16, u16, u16, usize)>,
-    pub keyboard_signal_select: usize,
-    pub last_number_press: Option<Instant>,
-    pub scroll_pos: usize,
 }
 
 pub struct AppHelpDialogState {

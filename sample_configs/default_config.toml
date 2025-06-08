@@ -97,7 +97,7 @@
 # Displays the network widget with a log scale.
 #network_use_log = false
 
-# Hides advanced options to stop a process on Unix-like systems.
+# Hides advanced options to stop a process on Unix-like systems. Only available on Linux, macOS, and FreeBSD
 #disable_advanced_kill = false
 
 # Hide GPU(s) information
@@ -115,19 +115,16 @@
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "top-right"
 
-
 # Processes widget configuration
 #[processes]
 # The columns shown by the process widget. The following columns are supported (the GPU columns are only available if the GPU feature is enabled when built):
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
 #columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%"]
 
-
 # CPU widget configuration
 #[cpu]
 # One of "all" (default), "average"/"avg"
 #default = "average"
-
 
 # Disk widget configuration
 #[disk]
@@ -170,7 +167,6 @@
 # Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Temperature widget configuration
 #[temperature]
 # By default, there are no temperature sensor filters enabled. An example use case is provided below.
@@ -190,7 +186,6 @@
 # Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Network widget configuration
 #[network]
 # By default, there are no network interface filters enabled. An example use case is provided below.
@@ -209,7 +204,6 @@
 
 # Whether to be require matching the whole word. Defaults to false.
 #whole_word = false
-
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.

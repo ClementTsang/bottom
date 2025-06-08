@@ -1,15 +1,10 @@
 pub mod data;
 pub mod filter;
 pub mod layout_manager;
-mod process_killer;
 pub mod states;
 
-use std::{
-    cmp::{max, min},
-    time::Instant,
-};
+use std::time::Instant;
 
-use anyhow::bail;
 use concat_string::concat_string;
 use data::*;
 use filter::*;
@@ -18,9 +13,9 @@ use layout_manager::*;
 pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
+use crate::canvas::dialogs::process_kill_dialog::ProcessKillDialog;
 use crate::{
     canvas::components::time_graph::LegendPosition,
-    collection::processes::Pid,
     constants,
     utils::data_units::DataUnit,
     widgets::{ProcWidgetColumn, ProcWidgetMode},
@@ -57,6 +52,7 @@ pub struct AppConfigFields {
     pub enable_gpu: bool,
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub is_advanced_kill: bool,
     pub memory_legend_position: Option<LegendPosition>,
     // TODO: Remove these, move network details state-side.
@@ -77,35 +73,12 @@ pub struct DataFilters {
     pub net_filter: Option<Filter>,
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(target_os = "linux")] {
-        /// The max signal we can send to a process on Linux.
-        pub const MAX_PROCESS_SIGNAL: usize = 64;
-    } else if #[cfg(target_os = "macos")] {
-        /// The max signal we can send to a process on macOS.
-        pub const MAX_PROCESS_SIGNAL: usize = 31;
-    } else if #[cfg(target_os = "freebsd")] {
-        /// The max signal we can send to a process on FreeBSD.
-        /// See [https://www.freebsd.org/cgi/man.cgi?query=signal&apropos=0&sektion=3&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html]
-        /// for more details.
-        pub const MAX_PROCESS_SIGNAL: usize = 33;
-    } else if #[cfg(target_os = "windows")] {
-        /// The max signal we can send to a process. For Windows, we only have support for one signal (kill).
-        pub const MAX_PROCESS_SIGNAL: usize = 1;
-    } else {
-        /// The max signal we can send to a process. As a fallback, we only support one signal (kill).
-        pub const MAX_PROCESS_SIGNAL: usize = 1;
-    }
-}
-
 pub struct App {
     awaiting_second_char: bool,
     second_char: Option<char>,
-    pub dd_err: Option<String>, // FIXME: The way we do deletes is really gross.
-    to_delete_process_list: Option<(String, Vec<Pid>)>,
     pub data_store: DataStore,
     last_key_press: Instant,
-    pub delete_dialog_state: AppDeleteDialogState,
+    pub(crate) process_kill_dialog: ProcessKillDialog,
     pub help_dialog_state: AppHelpDialogState,
     pub is_expanded: bool,
     pub is_force_redraw: bool,
@@ -129,11 +102,9 @@ impl App {
         Self {
             awaiting_second_char: false,
             second_char: None,
-            dd_err: None,
-            to_delete_process_list: None,
             data_store: DataStore::default(),
             last_key_press: Instant::now(),
-            delete_dialog_state: AppDeleteDialogState::default(),
+            process_kill_dialog: ProcessKillDialog::default(),
             help_dialog_state: AppHelpDialogState::default(),
             is_expanded,
             is_force_redraw: false,
@@ -186,7 +157,7 @@ impl App {
 
         // Reset dialog state
         self.help_dialog_state.is_showing_help = false;
-        self.delete_dialog_state.is_showing_dd = false;
+        self.process_kill_dialog.reset();
 
         // Close all searches and reset it
         self.states
@@ -196,10 +167,6 @@ impl App {
             .for_each(|state| {
                 state.proc_search.search_state.reset();
             });
-
-        // Clear current delete list
-        self.to_delete_process_list = None;
-        self.dd_err = None;
 
         self.data_store.reset();
 
@@ -213,24 +180,15 @@ impl App {
         self.is_force_redraw || self.is_determining_widget_boundary
     }
 
-    fn close_dd(&mut self) {
-        self.delete_dialog_state.is_showing_dd = false;
-        self.delete_dialog_state.selected_signal = KillSignal::default();
-        self.delete_dialog_state.scroll_pos = 0;
-        self.to_delete_process_list = None;
-        self.dd_err = None;
-    }
-
     pub fn on_esc(&mut self) {
         self.reset_multi_tap_keys();
-        if self.is_in_dialog() {
-            if self.help_dialog_state.is_showing_help {
-                self.help_dialog_state.is_showing_help = false;
-                self.help_dialog_state.scroll_state.current_scroll_index = 0;
-            } else {
-                self.close_dd();
-            }
 
+        if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_esc();
+            self.is_force_redraw = true;
+        } else if self.help_dialog_state.is_showing_help {
+            self.help_dialog_state.is_showing_help = false;
+            self.help_dialog_state.scroll_state.current_scroll_index = 0;
             self.is_force_redraw = true;
         } else {
             match self.current_widget.widget_type {
@@ -299,7 +257,7 @@ impl App {
     }
 
     fn is_in_dialog(&self) -> bool {
-        self.help_dialog_state.is_showing_help || self.delete_dialog_state.is_showing_dd
+        self.help_dialog_state.is_showing_help || self.process_kill_dialog.is_open()
     }
 
     fn ignore_normal_keybinds(&self) -> bool {
@@ -477,30 +435,9 @@ impl App {
 
     /// One of two functions allowed to run while in a dialog...
     pub fn on_enter(&mut self) {
-        if self.delete_dialog_state.is_showing_dd {
-            if self.dd_err.is_some() {
-                self.close_dd();
-            } else if self.delete_dialog_state.selected_signal != KillSignal::Cancel {
-                // If within dd...
-                if self.dd_err.is_none() {
-                    // Also ensure that we didn't just fail a dd...
-                    let dd_result = self.kill_highlighted_process();
-                    self.delete_dialog_state.scroll_pos = 0;
-                    self.delete_dialog_state.selected_signal = KillSignal::default();
-
-                    // Check if there was an issue... if so, inform the user.
-                    if let Err(dd_err) = dd_result {
-                        self.dd_err = Some(dd_err.to_string());
-                    } else {
-                        self.delete_dialog_state.is_showing_dd = false;
-                    }
-                }
-            } else {
-                self.delete_dialog_state.scroll_pos = 0;
-                self.delete_dialog_state.selected_signal = KillSignal::default();
-                self.delete_dialog_state.is_showing_dd = false;
-            }
-            self.is_force_redraw = true;
+        if self.process_kill_dialog.is_open() {
+            // Not the best way of doing things for now but works as glue.
+            self.process_kill_dialog.on_enter();
         } else if !self.is_in_dialog() {
             if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
                 if let Some(proc_widget_state) = self
@@ -561,7 +498,7 @@ impl App {
                 }
             }
             BottomWidgetType::Proc => {
-                self.start_killing_process();
+                self.kill_current_process();
             }
             _ => {}
         }
@@ -610,80 +547,28 @@ impl App {
         }
     }
 
-    #[cfg(target_family = "unix")]
-    pub fn on_number(&mut self, number_char: char) {
-        if self.delete_dialog_state.is_showing_dd {
-            if self
-                .delete_dialog_state
-                .last_number_press
-                .map_or(100, |ins| ins.elapsed().as_millis())
-                >= 400
-            {
-                self.delete_dialog_state.keyboard_signal_select = 0;
-            }
-            let mut kbd_signal = self.delete_dialog_state.keyboard_signal_select * 10;
-            kbd_signal += number_char.to_digit(10).unwrap() as usize;
-            if kbd_signal > 64 {
-                kbd_signal %= 100;
-            }
-            #[cfg(target_os = "linux")]
-            if kbd_signal > 64 || kbd_signal == 32 || kbd_signal == 33 {
-                kbd_signal %= 10;
-            }
-            #[cfg(target_os = "macos")]
-            if kbd_signal > 31 {
-                kbd_signal %= 10;
-            }
-            self.delete_dialog_state.selected_signal = KillSignal::Kill(kbd_signal);
-            if kbd_signal < 10 {
-                self.delete_dialog_state.keyboard_signal_select = kbd_signal;
-            } else {
-                self.delete_dialog_state.keyboard_signal_select = 0;
-            }
-            self.delete_dialog_state.last_number_press = Some(Instant::now());
-        }
-    }
-
     pub fn on_up_key(&mut self) {
         if !self.is_in_dialog() {
             self.decrement_position_count();
+            self.reset_multi_tap_keys();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
-        } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_os = "windows")]
-            self.on_right_key();
-            #[cfg(target_family = "unix")]
-            {
-                if self.app_config_fields.is_advanced_kill {
-                    self.on_left_key();
-                } else {
-                    self.on_right_key();
-                }
-            }
-            return;
+            self.reset_multi_tap_keys();
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_up_key();
         }
-        self.reset_multi_tap_keys();
     }
 
     pub fn on_down_key(&mut self) {
         if !self.is_in_dialog() {
             self.increment_position_count();
+            self.reset_multi_tap_keys();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
-        } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_os = "windows")]
-            self.on_left_key();
-            #[cfg(target_family = "unix")]
-            {
-                if self.app_config_fields.is_advanced_kill {
-                    self.on_right_key();
-                } else {
-                    self.on_left_key();
-                }
-            }
-            return;
+            self.reset_multi_tap_keys();
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_down_key();
         }
-        self.reset_multi_tap_keys();
     }
 
     pub fn on_left_key(&mut self) {
@@ -731,29 +616,8 @@ impl App {
                 }
                 _ => {}
             }
-        } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                if self.app_config_fields.is_advanced_kill {
-                    match self.delete_dialog_state.selected_signal {
-                        KillSignal::Kill(prev_signal) => {
-                            self.delete_dialog_state.selected_signal = match prev_signal - 1 {
-                                0 => KillSignal::Cancel,
-                                // 32 + 33 are skipped
-                                33 => KillSignal::Kill(31),
-                                signal => KillSignal::Kill(signal),
-                            };
-                        }
-                        KillSignal::Cancel => {}
-                    };
-                } else {
-                    self.delete_dialog_state.selected_signal = KillSignal::default();
-                }
-            }
-            #[cfg(target_os = "windows")]
-            {
-                self.delete_dialog_state.selected_signal = KillSignal::Kill(1);
-            }
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_left_key();
         }
     }
 
@@ -807,45 +671,14 @@ impl App {
                 }
                 _ => {}
             }
-        } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                if self.app_config_fields.is_advanced_kill {
-                    let new_signal = match self.delete_dialog_state.selected_signal {
-                        KillSignal::Cancel => 1,
-                        // 32+33 are skipped
-                        #[cfg(target_os = "linux")]
-                        KillSignal::Kill(31) => 34,
-                        #[cfg(target_os = "macos")]
-                        KillSignal::Kill(31) => 31,
-                        KillSignal::Kill(64) => 64,
-                        KillSignal::Kill(signal) => signal + 1,
-                    };
-                    self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
-                } else {
-                    self.delete_dialog_state.selected_signal = KillSignal::Cancel;
-                }
-            }
-            #[cfg(target_os = "windows")]
-            {
-                self.delete_dialog_state.selected_signal = KillSignal::Cancel;
-            }
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_right_key();
         }
     }
 
     pub fn on_page_up(&mut self) {
-        if self.delete_dialog_state.is_showing_dd {
-            let mut new_signal = match self.delete_dialog_state.selected_signal {
-                KillSignal::Cancel => 0,
-                KillSignal::Kill(signal) => max(signal, 8) - 8,
-            };
-            if new_signal > 23 && new_signal < 33 {
-                new_signal -= 2;
-            }
-            self.delete_dialog_state.selected_signal = match new_signal {
-                0 => KillSignal::Cancel,
-                sig => KillSignal::Kill(sig),
-            };
+        if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_page_up();
         } else if self.help_dialog_state.is_showing_help {
             let current = &mut self.help_dialog_state.scroll_state.current_scroll_index;
             let amount = self.help_dialog_state.height;
@@ -864,15 +697,8 @@ impl App {
     }
 
     pub fn on_page_down(&mut self) {
-        if self.delete_dialog_state.is_showing_dd {
-            let mut new_signal = match self.delete_dialog_state.selected_signal {
-                KillSignal::Cancel => 8,
-                KillSignal::Kill(signal) => min(signal + 8, MAX_PROCESS_SIGNAL),
-            };
-            if new_signal > 31 && new_signal < 42 {
-                new_signal += 2;
-            }
-            self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
+        if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_page_down();
         } else if self.help_dialog_state.is_showing_help {
             let current = self.help_dialog_state.scroll_state.current_scroll_index;
             let amount = self.help_dialog_state.height;
@@ -1059,34 +885,6 @@ impl App {
         }
     }
 
-    pub fn start_killing_process(&mut self) {
-        self.reset_multi_tap_keys();
-
-        if let Some(pws) = self
-            .states
-            .proc_state
-            .widget_states
-            .get(&self.current_widget.widget_id)
-        {
-            if let Some(current) = pws.table.current_item() {
-                let id = current.id.to_string();
-                if let Some(pids) = pws
-                    .id_pid_map
-                    .get(&id)
-                    .cloned()
-                    .or_else(|| Some(vec![current.pid]))
-                {
-                    let current_process = (id, pids);
-
-                    self.to_delete_process_list = Some(current_process);
-                    self.delete_dialog_state.is_showing_dd = true;
-                    self.is_determining_widget_boundary = true;
-                }
-            }
-        }
-        // FIXME: This should handle errors.
-    }
-
     pub fn on_char_key(&mut self, caught_char: char) {
         // Skip control code chars
         if caught_char.is_control() {
@@ -1159,34 +957,50 @@ impl App {
                 'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                 _ => {}
             }
-        } else if self.delete_dialog_state.is_showing_dd {
-            match caught_char {
-                'h' => self.on_left_key(),
-                'j' => self.on_down_key(),
-                'k' => self.on_up_key(),
-                'l' => self.on_right_key(),
-                #[cfg(target_family = "unix")]
-                '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
-                    self.on_number(caught_char)
-                }
-                'g' => {
-                    let mut is_first_g = true;
-                    if let Some(second_char) = self.second_char {
-                        if self.awaiting_second_char && second_char == 'g' {
-                            is_first_g = false;
-                            self.awaiting_second_char = false;
-                            self.second_char = None;
-                            self.skip_to_first();
-                        }
-                    }
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_char(caught_char);
+        }
+    }
 
-                    if is_first_g {
-                        self.awaiting_second_char = true;
-                        self.second_char = Some('g');
-                    }
+    /// Kill the currently selected process if we are in the process widget.
+    ///
+    /// TODO: This ideally gets abstracted out into a separate widget.
+    pub(crate) fn kill_current_process(&mut self) {
+        if let Some(pws) = self
+            .states
+            .proc_state
+            .widget_states
+            .get(&self.current_widget.widget_id)
+        {
+            if let Some(current) = pws.table.current_item() {
+                let id = current.id.to_string();
+                if let Some(pids) = pws
+                    .id_pid_map
+                    .get(&id)
+                    .cloned()
+                    .or_else(|| Some(vec![current.pid]))
+                {
+                    let current_process = (id, pids);
+
+                    let use_simple_selection = {
+                        cfg_if::cfg_if! {
+                            if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+                                !self.app_config_fields.is_advanced_kill
+                            } else {
+                                true
+                            }
+                        }
+                    };
+
+                    self.process_kill_dialog.start_process_kill(
+                        current_process.0,
+                        current_process.1,
+                        use_simple_selection,
+                    );
+
+                    // TODO: I don't think most of this is needed.
+                    self.is_determining_widget_boundary = true;
                 }
-                'G' => self.skip_to_last(),
-                _ => {}
             }
         }
     }
@@ -1206,7 +1020,9 @@ impl App {
                             self.awaiting_second_char = false;
                             self.second_char = None;
 
-                            self.start_killing_process();
+                            self.reset_multi_tap_keys();
+
+                            self.kill_current_process();
                         }
                     }
 
@@ -1419,36 +1235,6 @@ impl App {
                 self.awaiting_second_char = false;
             }
         }
-    }
-
-    pub fn kill_highlighted_process(&mut self) -> anyhow::Result<()> {
-        if let BottomWidgetType::Proc = self.current_widget.widget_type {
-            if let Some((_, pids)) = &self.to_delete_process_list {
-                #[cfg(target_family = "unix")]
-                let signal = match self.delete_dialog_state.selected_signal {
-                    KillSignal::Kill(sig) => sig,
-                    KillSignal::Cancel => 15, // should never happen, so just TERM
-                };
-                for pid in pids {
-                    #[cfg(target_family = "unix")]
-                    {
-                        process_killer::kill_process_given_pid(*pid, signal)?;
-                    }
-                    #[cfg(target_os = "windows")]
-                    {
-                        process_killer::kill_process_given_pid(*pid)?;
-                    }
-                }
-            }
-            self.to_delete_process_list = None;
-            Ok(())
-        } else {
-            bail!("Cannot kill processes if the current widget is not the Process widget!");
-        }
-    }
-
-    pub fn get_to_delete_processes(&self) -> Option<(String, Vec<Pid>)> {
-        self.to_delete_process_list.clone()
     }
 
     fn toggle_expand_widget(&mut self) {
@@ -1989,8 +1775,8 @@ impl App {
             self.reset_multi_tap_keys();
         } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = 0;
-        } else if self.delete_dialog_state.is_showing_dd {
-            self.delete_dialog_state.selected_signal = KillSignal::Cancel;
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.go_to_first();
         }
     }
 
@@ -2050,8 +1836,8 @@ impl App {
         } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index =
                 self.help_dialog_state.scroll_state.max_scroll_index;
-        } else if self.delete_dialog_state.is_showing_dd {
-            self.delete_dialog_state.selected_signal = KillSignal::Kill(MAX_PROCESS_SIGNAL);
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.go_to_last();
         }
     }
 
@@ -2160,14 +1946,9 @@ impl App {
     }
 
     pub fn handle_scroll_up(&mut self) {
-        if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                self.on_up_key();
-                return;
-            }
-        }
-        if self.help_dialog_state.is_showing_help {
+        if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_scroll_up();
+        } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
         } else if self.current_widget.widget_type.is_widget_graph() {
             self.zoom_in();
@@ -2177,14 +1958,9 @@ impl App {
     }
 
     pub fn handle_scroll_down(&mut self) {
-        if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                self.on_down_key();
-                return;
-            }
-        }
-        if self.help_dialog_state.is_showing_help {
+        if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_scroll_down();
+        } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
         } else if self.current_widget.widget_type.is_widget_graph() {
             self.zoom_out();
@@ -2516,24 +2292,7 @@ impl App {
 
         // Second short circuit --- are we in the dd dialog state?  If so, only check
         // yes/no/signals and bail after.
-        if self.is_in_dialog() {
-            match self.delete_dialog_state.button_positions.iter().find(
-                |(tl_x, tl_y, br_x, br_y, _idx)| {
-                    (x >= *tl_x && y >= *tl_y) && (x <= *br_x && y <= *br_y)
-                },
-            ) {
-                Some((_, _, _, _, 0)) => {
-                    self.delete_dialog_state.selected_signal = KillSignal::Cancel
-                }
-                Some((_, _, _, _, idx)) => {
-                    if *idx > 31 {
-                        self.delete_dialog_state.selected_signal = KillSignal::Kill(*idx + 2)
-                    } else {
-                        self.delete_dialog_state.selected_signal = KillSignal::Kill(*idx)
-                    }
-                }
-                _ => {}
-            }
+        if self.process_kill_dialog.is_open() && self.process_kill_dialog.on_click(x, y) {
             return;
         }
 
