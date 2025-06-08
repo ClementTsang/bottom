@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 #[inline]
-pub const fn sort_partial_fn<T: PartialOrd>(is_descending: bool) -> fn(T, T) -> Ordering {
+pub(crate) const fn sort_partial_fn<T: PartialOrd>(is_descending: bool) -> fn(T, T) -> Ordering {
     if is_descending {
         partial_ordering_desc
     } else {
@@ -11,7 +11,7 @@ pub const fn sort_partial_fn<T: PartialOrd>(is_descending: bool) -> fn(T, T) -> 
 
 /// Returns an [`Ordering`] between two [`PartialOrd`]s.
 #[inline]
-pub fn partial_ordering<T: PartialOrd>(a: T, b: T) -> Ordering {
+pub(crate) fn partial_ordering<T: PartialOrd>(a: T, b: T) -> Ordering {
     a.partial_cmp(&b).unwrap_or(Ordering::Equal)
 }
 
@@ -20,12 +20,12 @@ pub fn partial_ordering<T: PartialOrd>(a: T, b: T) -> Ordering {
 /// This is simply a wrapper function around [`partial_ordering`] that reverses
 /// the result.
 #[inline]
-pub fn partial_ordering_desc<T: PartialOrd>(a: T, b: T) -> Ordering {
+pub(crate) fn partial_ordering_desc<T: PartialOrd>(a: T, b: T) -> Ordering {
     partial_ordering(a, b).reverse()
 }
 
 /// A trait for additional clamping functions on numeric types.
-pub trait ClampExt {
+pub(crate) trait ClampExt {
     /// Restrict a value by a lower bound. If the current value is _lower_ than
     /// `lower_bound`, it will be set to `_lower_bound`.
     #[cfg_attr(not(test), expect(dead_code))]
@@ -63,12 +63,12 @@ macro_rules! clamp_num_impl {
 clamp_num_impl!(u8, u16, u32, u64, usize);
 
 /// Checked log2.
-pub fn saturating_log2(value: f64) -> f64 {
+pub(crate) fn saturating_log2(value: f64) -> f64 {
     if value > 0.0 { value.log2() } else { 0.0 }
 }
 
 /// Checked log10.
-pub fn saturating_log10(value: f64) -> f64 {
+pub(crate) fn saturating_log10(value: f64) -> f64 {
     if value > 0.0 { value.log10() } else { 0.0 }
 }
 
