@@ -3,7 +3,7 @@
 use cfg_if::cfg_if;
 use tui::{
     Frame,
-    layout::{Alignment, Constraint, Flex, Layout, Rect},
+    layout::{Alignment, Constraint, Flex, Layout, Position, Rect},
     text::{Line, Span, Text},
     widgets::{ListState, Paragraph, Wrap},
 };
@@ -321,39 +321,36 @@ impl ProcessKillDialog {
         self.last_char = Some(c);
     }
 
+    /// Handle a click at the given coordinates. Returns true if the click was
+    /// handled, false otherwise.
     pub fn on_click(&mut self, x: u16, y: u16) -> bool {
-        match &mut self.state {
-            #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-            ProcessKillDialogState::Selecting(state) => {
-                use tui::layout::Position;
-
-                match &mut state.button_state {
-                    ButtonState::Signals {
-                        state,
-                        last_button_draw_area,
-                    } => {
-                        if last_button_draw_area.contains(Position { x, y }) {
-                            let relative_y =
-                                y.saturating_sub(last_button_draw_area.y) as usize + state.offset();
-                            if relative_y < SIGNAL_TEXT.len() {
-                                state.select(Some(relative_y));
-                            }
-                        }
-                    }
-                    ButtonState::Simple {
-                        yes,
-                        last_yes_button_area,
-                        last_no_button_area,
-                    } => {
-                        if last_yes_button_area.contains(Position { x, y }) {
-                            *yes = true;
-                        } else if last_no_button_area.contains(Position { x, y }) {
-                            *yes = false;
+        if let ProcessKillDialogState::Selecting(state) = &mut self.state {
+            match &mut state.button_state {
+                #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+                ButtonState::Signals {
+                    state,
+                    last_button_draw_area,
+                } => {
+                    if last_button_draw_area.contains(Position { x, y }) {
+                        let relative_y =
+                            y.saturating_sub(last_button_draw_area.y) as usize + state.offset();
+                        if relative_y < SIGNAL_TEXT.len() {
+                            state.select(Some(relative_y));
                         }
                     }
                 }
+                ButtonState::Simple {
+                    yes,
+                    last_yes_button_area,
+                    last_no_button_area,
+                } => {
+                    if last_yes_button_area.contains(Position { x, y }) {
+                        *yes = true;
+                    } else if last_no_button_area.contains(Position { x, y }) {
+                        *yes = false;
+                    }
+                }
             }
-            _ => {}
         }
 
         false
@@ -373,10 +370,12 @@ impl ProcessKillDialog {
     pub fn on_left_key(&mut self) {
         self.last_char = None;
 
-        if let ProcessKillDialogState::Selecting(state) = &mut self.state {
-            if let ButtonState::Simple { yes, .. } = &mut state.button_state {
-                *yes = true;
-            }
+        if let ProcessKillDialogState::Selecting(ProcessKillSelectingInner {
+            button_state: ButtonState::Simple { yes, .. },
+            ..
+        }) = &mut self.state
+        {
+            *yes = true;
         }
     }
 
@@ -384,10 +383,12 @@ impl ProcessKillDialog {
     pub fn on_right_key(&mut self) {
         self.last_char = None;
 
-        if let ProcessKillDialogState::Selecting(state) = &mut self.state {
-            if let ButtonState::Simple { yes, .. } = &mut state.button_state {
-                *yes = false;
-            }
+        if let ProcessKillDialogState::Selecting(ProcessKillSelectingInner {
+            button_state: ButtonState::Simple { yes, .. },
+            ..
+        }) = &mut self.state
+        {
+            *yes = false;
         }
     }
 
@@ -521,7 +522,7 @@ impl ProcessKillDialog {
                 if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
                     ButtonState::Signals { state: ListState::default().with_selected(Some(DEFAULT_KILL_SIGNAL)), last_button_draw_area: Rect::default() }
                 } else {
-                    ButtonState::Simple { yes: false, yes_button_area: Rect::default(), no_button_area: Rect::default()}
+                    ButtonState::Simple { yes: false, last_yes_button_area: Rect::default(), last_no_button_area: Rect::default()}
                 }
             }
         };
