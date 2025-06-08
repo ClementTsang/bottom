@@ -218,54 +218,51 @@ impl ProcessKillDialog {
         let mut current = ProcessKillDialogState::NotEnabled;
         std::mem::swap(&mut self.state, &mut current);
 
-        match current {
-            ProcessKillDialogState::Selecting(state) => {
-                let button_state = state.button_state;
-                let pids = state.pids;
+        if let ProcessKillDialogState::Selecting(state) = current {
+            let button_state = state.button_state;
+            let pids = state.pids;
 
-                match button_state {
-                    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-                    ButtonState::Signals { state, .. } => {
-                        if let Some(signal) = state.selected() {
-                            if signal != 0 {
-                                for pid in pids {
-                                    if let Err(err) =
-                                        process_killer::kill_process_given_pid(pid, signal)
-                                    {
-                                        self.state = ProcessKillDialogState::Error(err.to_string());
-                                        return;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    ButtonState::Simple { yes, .. } => {
-                        if yes {
-                            cfg_if! {
-                                if #[cfg(target_os = "windows")] {
-                                    for pid in pids {
-                                        if let Err(err) = process_killer::kill_process_given_pid(pid) {
-                                            self.state = ProcessKillDialogState::Error(err.to_string());
-                                        return;
-                                        }
-                                    }
-                                } else if #[cfg(target_family = "unix")] {
-                                    for pid in pids {
-                                        // Send a SIGTERM by default.
-                                        if let Err(err) = process_killer::kill_process_given_pid(pid, 15) {
-                                            self.state = ProcessKillDialogState::Error(err.to_string());
-                                        return;
-                                        }
-                                    }
-                                } else {
-                                    self.state = ProcessKillDialogState::Error("Killing processes is not supported on this platform.".into());
+            match button_state {
+                #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+                ButtonState::Signals { state, .. } => {
+                    if let Some(signal) = state.selected() {
+                        if signal != 0 {
+                            for pid in pids {
+                                if let Err(err) =
+                                    process_killer::kill_process_given_pid(pid, signal)
+                                {
+                                    self.state = ProcessKillDialogState::Error(err.to_string());
+                                    return;
                                 }
                             }
                         }
                     }
                 }
+                ButtonState::Simple { yes, .. } => {
+                    if yes {
+                        cfg_if! {
+                            if #[cfg(target_os = "windows")] {
+                                for pid in pids {
+                                    if let Err(err) = process_killer::kill_process_given_pid(pid) {
+                                        self.state = ProcessKillDialogState::Error(err.to_string());
+                                    return;
+                                    }
+                                }
+                            } else if #[cfg(target_family = "unix")] {
+                                for pid in pids {
+                                    // Send a SIGTERM by default.
+                                    if let Err(err) = process_killer::kill_process_given_pid(pid, 15) {
+                                        self.state = ProcessKillDialogState::Error(err.to_string());
+                                    return;
+                                    }
+                                }
+                            } else {
+                                self.state = ProcessKillDialogState::Error("Killing processes is not supported on this platform.".into());
+                            }
+                        }
+                    }
+                }
             }
-            _ => {}
         }
 
         // Fall through behaviour is just to close the dialog.
@@ -519,19 +516,17 @@ impl ProcessKillDialog {
     }
 
     pub fn handle_redraw(&mut self) {
-        // FIXME: Not sure if we need this.
+        // FIXME: Not sure if we need this. We can probably handle this better in the draw function later.
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         {
             if let ProcessKillDialogState::Selecting(ProcessKillSelectingInner {
-                button_state,
+                button_state: ButtonState::Signals { state, .. },
                 ..
             }) = &mut self.state
             {
-                if let ButtonState::Signals { state, .. } = button_state {
-                    // Fix the button offset state when we do things like resize.
-                    *state.offset_mut() = 0;
-                }
+                // Fix the button offset state when we do things like resize.
+                *state.offset_mut() = 0;
             }
         }
     }
