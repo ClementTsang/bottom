@@ -12,8 +12,7 @@ use tui::{
 use tui::widgets::ListState;
 
 use crate::{
-    canvas::drawing_utils::dialog_block, collection::processes::Pid,
-    options::config::style::Styles, utils::process_killer,
+    canvas::drawing_utils::dialog_block, collection::processes::Pid, options::config::style::Styles,
 };
 
 // Configure signal text based on the target OS.
@@ -236,6 +235,8 @@ impl ProcessKillDialog {
             match button_state {
                 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
                 ButtonState::Signals { state, .. } => {
+                    use crate::utils::process_killer;
+
                     if let Some(signal) = state.selected() {
                         if signal != 0 {
                             for pid in pids {
@@ -257,6 +258,8 @@ impl ProcessKillDialog {
                     if yes {
                         cfg_if! {
                             if #[cfg(target_os = "windows")] {
+                                use crate::utils::process_killer;
+
                                 for pid in pids {
                                     if let Err(err) = process_killer::kill_process_given_pid(pid) {
                                         self.state = ProcessKillDialogState::Error { process_name, pid, err: err.to_string() };
@@ -264,6 +267,8 @@ impl ProcessKillDialog {
                                     }
                                 }
                             } else if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+                                use crate::utils::process_killer;
+
                                 for pid in pids {
                                     // Send a SIGTERM by default.
                                     if let Err(err) = process_killer::kill_process_given_pid(pid, DEFAULT_KILL_SIGNAL) {
@@ -272,7 +277,8 @@ impl ProcessKillDialog {
                                     }
                                 }
                             } else {
-                                self.state = ProcessKillDialogState::Error("Killing processes is not supported on this platform.".into());
+                                self.state = ProcessKillDialogState::Error { process_name, pid, err: "Killing processes is not supported on this platform.".into() };
+
                             }
                         }
                     }
