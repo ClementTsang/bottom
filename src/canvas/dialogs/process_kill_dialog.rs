@@ -1,5 +1,7 @@
 //! A dialog box to handle killing processes.
 
+use std::time::Instant;
+
 use cfg_if::cfg_if;
 use tui::{
     Frame,
@@ -205,7 +207,7 @@ enum ProcessKillDialogState {
 #[derive(Default, Debug)]
 pub(crate) struct ProcessKillDialog {
     state: ProcessKillDialogState,
-    last_char: Option<char>,
+    last_char: Option<(char, Instant)>,
 }
 
 impl ProcessKillDialog {
@@ -237,8 +239,17 @@ impl ProcessKillDialog {
                 ButtonState::Signals { state, .. } => {
                     use crate::utils::process_killer;
 
-                    if let Some(signal) = state.selected() {
-                        if signal != 0 {
+                    if let Some(selected) = state.selected() {
+                        if selected != 0 {
+                            // On Linux, we need to skip 32 and 33.
+                            let signal = if cfg!(target_os = "linux")
+                                && (selected == 32 || selected == 33)
+                            {
+                                selected + 2
+                            } else {
+                                selected
+                            };
+
                             for pid in pids {
                                 if let Err(err) =
                                     process_killer::kill_process_given_pid(pid, signal)
@@ -291,6 +302,9 @@ impl ProcessKillDialog {
     }
 
     pub fn on_char(&mut self, c: char) {
+        #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+        const MAX_KEY_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(1);
+
         match c {
             'h' => self.on_left_key(),
             'j' => self.on_down_key(),
@@ -304,30 +318,72 @@ impl ProcessKillDialog {
                         ..
                     }) = &mut self.state
                     {
-                        let current = state.selected().unwrap_or(0);
-                        let new = current * 10 + value as usize;
+                        if let Some((prev, last_press)) = self.last_char {
+                            if matches!(prev, '0'..='9') && last_press.elapsed() <= MAX_KEY_TIMEOUT
+                            {
+                                let current = state.selected().unwrap_or(0);
+                                let new = {
+                                    let new = current * 10 + value as usize;
 
-                        // If the new value is too large, then just assume we instead want the value itself.
-                        if new >= SIGNAL_TEXT.len() {
-                            state.select(Some(value as usize));
+                                    // Note that 32 and 33 are skipped on linux.
+                                    if cfg!(target_os = "linux") {
+                                        if new == 32 || new == 33 {
+                                            value as usize
+                                        } else if new >= 34 {
+                                            new - 2
+                                        } else {
+                                            new
+                                        }
+                                    } else {
+                                        new
+                                    }
+                                };
+
+                                if new >= SIGNAL_TEXT.len() {
+                                    // If the new value is too large, then just assume we instead want the value itself.
+                                    state.select(Some(value as usize));
+                                    self.last_char = Some((c, Instant::now()));
+                                } else {
+                                    state.select(Some(new));
+                                    self.last_char = None;
+                                }
+                            } else {
+                                state.select(Some(value as usize));
+                                self.last_char = Some((c, Instant::now()));
+                            }
                         } else {
-                            state.select(Some(new))
+                            state.select(Some(value as usize));
+                            self.last_char = Some((c, Instant::now()));
                         }
+
+                        return; // Needed to avoid accidentally clearing last_char.
                     }
                 }
             }
             'g' => {
-                if let Some('g') = self.last_char {
-                    self.go_to_first();
+                #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+                {
+                    if let Some(('g', last_press)) = self.last_char {
+                        if last_press.elapsed() <= MAX_KEY_TIMEOUT {
+                            self.go_to_first();
+                            self.last_char = None;
+                        } else {
+                            self.last_char = Some(('g', Instant::now()));
+                        }
+                    } else {
+                        self.last_char = Some(('g', Instant::now()));
+                    }
+                    return;
                 }
             }
             'G' => {
+                #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
                 self.go_to_last();
             }
             _ => {}
         }
 
-        self.last_char = Some(c);
+        self.last_char = None;
     }
 
     /// Handle a click at the given coordinates. Returns true if the click was
