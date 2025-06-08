@@ -5,8 +5,11 @@ use tui::{
     Frame,
     layout::{Alignment, Constraint, Flex, Layout, Position, Rect},
     text::{Line, Span, Text},
-    widgets::{ListState, Paragraph, Wrap},
+    widgets::{Paragraph, Wrap},
 };
+
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+use tui::widgets::ListState;
 
 use crate::{
     canvas::drawing_utils::dialog_block, collection::processes::Pid,
@@ -236,13 +239,13 @@ impl ProcessKillDialog {
                     if let Some(signal) = state.selected() {
                         if signal != 0 {
                             for pid in pids {
-                                if let Err(error) =
+                                if let Err(err) =
                                     process_killer::kill_process_given_pid(pid, signal)
                                 {
                                     self.state = ProcessKillDialogState::Error {
                                         process_name,
                                         pid,
-                                        err: error.to_string(),
+                                        err: err.to_string(),
                                     };
                                     return;
                                 }
@@ -256,11 +259,11 @@ impl ProcessKillDialog {
                             if #[cfg(target_os = "windows")] {
                                 for pid in pids {
                                     if let Err(err) = process_killer::kill_process_given_pid(pid) {
-                                        self.state = ProcessKillDialogState::Error { process_name, pid, error: err.to_string() };
+                                        self.state = ProcessKillDialogState::Error { process_name, pid, err: err.to_string() };
                                         break;
                                     }
                                 }
-                            } else if #[cfg(target_family = "unix")] {
+                            } else if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
                                 for pid in pids {
                                     // Send a SIGTERM by default.
                                     if let Err(err) = process_killer::kill_process_given_pid(pid, DEFAULT_KILL_SIGNAL) {
