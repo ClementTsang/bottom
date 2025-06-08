@@ -134,7 +134,7 @@ impl Default for SysinfoSource {
         use sysinfo::*;
 
         Self {
-            system: System::new_with_specifics(RefreshKind::new()),
+            system: System::new(),
             network: Networks::new(),
             #[cfg(not(target_os = "linux"))]
             temps: Components::new(),
@@ -267,11 +267,9 @@ impl DataCollector {
     fn refresh_sysinfo_data(&mut self) {
         // Refresh the list of objects once every minute. If it's too frequent it can
         // cause segfaults.
-        const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
-        let refresh_start = Instant::now();
 
         if self.widgets_to_harvest.use_cpu || self.widgets_to_harvest.use_proc {
-            self.sys.system.refresh_cpu();
+            self.sys.system.refresh_cpu_all();
         }
 
         if self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_proc {
@@ -279,10 +277,7 @@ impl DataCollector {
         }
 
         if self.widgets_to_harvest.use_net {
-            if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
-                self.sys.network.refresh_list();
-            }
-            self.sys.network.refresh();
+            self.sys.network.refresh(true);
         }
 
         // sysinfo is used on non-Linux systems for the following:
@@ -293,6 +288,8 @@ impl DataCollector {
         {
             if self.widgets_to_harvest.use_proc {
                 self.sys.system.refresh_processes_specifics(
+                    sysinfo::ProcessesToUpdate::All,
+                    true,
                     sysinfo::ProcessRefreshKind::everything()
                         .without_environ()
                         .without_cwd()
