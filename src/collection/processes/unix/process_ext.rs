@@ -3,6 +3,7 @@
 use std::{io, time::Duration};
 
 use hashbrown::HashMap;
+use itertools::Itertools;
 use sysinfo::{ProcessStatus, System};
 
 use super::{ProcessHarvest, process_status_str};
@@ -22,7 +23,7 @@ pub(crate) trait UnixProcessExt {
             let name = if process_val.name().is_empty() {
                 let process_cmd = process_val.cmd();
                 if let Some(name) = process_cmd.first() {
-                    name.to_string_lossy().to_string()
+                    name.display().to_string()
                 } else {
                     process_val
                         .exe()
@@ -32,10 +33,10 @@ pub(crate) trait UnixProcessExt {
                         .unwrap_or(String::new())
                 }
             } else {
-                process_val.name().to_string_lossy().to_string()
+                process_val.name().display().to_string()
             };
             let command = {
-                let command = process_val.cmd().to_string_lossy().join(" ");
+                let command = process_val.cmd().iter().map(|s| s.display()).join(" ");
                 if command.is_empty() {
                     name.clone()
                 } else {

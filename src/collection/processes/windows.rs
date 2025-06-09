@@ -2,6 +2,8 @@
 
 use std::time::Duration;
 
+use itertools::Itertools;
+
 use super::{ProcessHarvest, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult};
 
@@ -34,10 +36,10 @@ pub fn sysinfo_process_data(
                     .unwrap_or(String::new())
             }
         } else {
-            process_val.name().to_string_lossy().to_string()
+            process_val.name().display().to_string()
         };
         let command = {
-            let command = process_val.cmd().to_string_lossy().join(" ");
+            let command = process_val.cmd().iter().map(|s| s.display()).join(" ");
             if command.is_empty() {
                 name.clone()
             } else {
