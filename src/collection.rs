@@ -286,6 +286,9 @@ impl DataCollector {
         // - Temperatures and temperature components list.
         #[cfg(not(target_os = "linux"))]
         {
+            const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
+            let refresh_start = Instant::now();
+
             if self.widgets_to_harvest.use_proc {
                 self.sys.system.refresh_processes_specifics(
                     sysinfo::ProcessesToUpdate::All,
@@ -299,24 +302,27 @@ impl DataCollector {
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
                 if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
-                    self.sys.users.refresh_list();
+                    self.sys.users.refresh();
                 }
             }
 
             if self.widgets_to_harvest.use_temp {
                 if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
-                    self.sys.temps.refresh_list();
+                    self.sys.temps.refresh(true);
                 }
-                self.sys.temps.refresh();
-            }
-        }
 
-        #[cfg(target_os = "windows")]
-        if self.widgets_to_harvest.use_disk {
-            if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
-                self.sys.disks.refresh_list();
+                for component in self.sys.temps.iter_mut() {
+                    component.refresh();
+                }
             }
-            self.sys.disks.refresh();
+
+            #[cfg(target_os = "windows")]
+            if self.widgets_to_harvest.use_disk {
+                if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                    self.sys.disks.refresh_list();
+                }
+                self.sys.disks.refresh();
+            }
         }
     }
 

@@ -15,14 +15,14 @@ pub(crate) trait UnixProcessExt {
     ) -> CollectionResult<Vec<ProcessHarvest>> {
         let mut process_vector: Vec<ProcessHarvest> = Vec::new();
         let process_hashmap = sys.processes();
-        let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;
-        let num_processors = sys.cpus().len() as f64;
+        let cpu_usage = sys.global_cpu_usage() / 100.0;
+        let num_processors = sys.cpus().len() as f32;
 
         for process_val in process_hashmap.values() {
             let name = if process_val.name().is_empty() {
                 let process_cmd = process_val.cmd();
-                if process_cmd.len() > 1 {
-                    process_cmd[0].clone()
+                if let Some(name) = process_cmd.first() {
+                    name.to_string_lossy().to_string()
                 } else {
                     process_val
                         .exe()
@@ -44,7 +44,7 @@ pub(crate) trait UnixProcessExt {
             };
 
             let pcu = {
-                let usage = process_val.cpu_usage() as f64;
+                let usage = process_val.cpu_usage();
                 if unnormalized_cpu || num_processors == 0.0 {
                     usage
                 } else {
@@ -55,7 +55,7 @@ pub(crate) trait UnixProcessExt {
                 pcu / cpu_usage
             } else {
                 pcu
-            } as f32;
+            };
 
             let disk_usage = process_val.disk_usage();
             let process_state = {

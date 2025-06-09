@@ -17,7 +17,7 @@ pub fn sysinfo_process_data(
 
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
-    let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;
+    let cpu_usage = sys.global_cpu_usage() / 100.0;
     let num_processors = sys.cpus().len();
 
     for process_val in process_hashmap.values() {
@@ -46,18 +46,19 @@ pub fn sysinfo_process_data(
         };
 
         let pcu = {
-            let usage = process_val.cpu_usage() as f64;
+            let usage = process_val.cpu_usage();
             if unnormalized_cpu || num_processors == 0 {
                 usage
             } else {
-                usage / (num_processors as f64)
+                usage / num_processors
             }
         };
+
         let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0.0 {
             pcu / cpu_usage
         } else {
             pcu
-        } as f32;
+        };
 
         let disk_usage = process_val.disk_usage();
         let process_state = (process_status_str(process_val.status()), 'R');
