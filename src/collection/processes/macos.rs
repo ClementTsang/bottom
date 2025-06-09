@@ -18,7 +18,7 @@ impl UnixProcessExt for MacOSProcessExt {
         true
     }
 
-    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<HashMap<Pid, f64>> {
+    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<HashMap<Pid, f32>> {
         let output = Command::new("ps")
             .args(["-o", "pid=,pcpu=", "-p"])
             .arg(

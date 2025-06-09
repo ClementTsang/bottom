@@ -35,9 +35,9 @@ pub(crate) trait UnixProcessExt {
                 process_val.name().to_string()
             };
             let command = {
-                let command = process_val.cmd().join(" ");
+                let command = process_val.cmd().to_string_lossy().join(" ");
                 if command.is_empty() {
-                    name.to_string()
+                    name.clone()
                 } else {
                     command
                 }
@@ -136,7 +136,7 @@ pub(crate) trait UnixProcessExt {
         false
     }
 
-    fn backup_proc_cpu(_pids: &[Pid]) -> io::Result<HashMap<Pid, f64>> {
+    fn backup_proc_cpu(_pids: &[Pid]) -> io::Result<HashMap<Pid, f32>> {
         Ok(HashMap::default())
     }
 

@@ -30,7 +30,7 @@ impl UnixProcessExt for FreeBSDProcessExt {
         true
     }
 
-    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<HashMap<Pid, f64>> {
+    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<HashMap<Pid, f32>> {
         if pids.is_empty() {
             return Ok(HashMap::new());
         }
