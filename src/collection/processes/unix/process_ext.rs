@@ -128,7 +128,7 @@ pub(crate) trait UnixProcessExt {
                         *cpu_usages.get(&process.pid).unwrap()
                     } else {
                         *cpu_usages.get(&process.pid).unwrap() / num_processors as f32
-                    } as f32;
+                    };
                 }
             }
         }
