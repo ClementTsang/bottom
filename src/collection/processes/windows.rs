@@ -2,6 +2,8 @@
 
 use std::time::Duration;
 
+use itertools::Itertools;
+
 use super::{ProcessHarvest, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult};
 
@@ -17,14 +19,14 @@ pub fn sysinfo_process_data(
 
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
-    let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;
+    let cpu_usage = sys.global_cpu_usage() / 100.0;
     let num_processors = sys.cpus().len();
 
     for process_val in process_hashmap.values() {
         let name = if process_val.name().is_empty() {
             let process_cmd = process_val.cmd();
             if process_cmd.len() > 1 {
-                process_cmd[0].clone()
+                process_cmd[0].to_string_lossy().to_string()
             } else {
                 process_val
                     .exe()
@@ -34,30 +36,35 @@ pub fn sysinfo_process_data(
                     .unwrap_or(String::new())
             }
         } else {
-            process_val.name().to_string()
+            process_val.name().to_string_lossy().to_string()
         };
         let command = {
-            let command = process_val.cmd().join(" ");
+            let command = process_val
+                .cmd()
+                .iter()
+                .map(|s| s.to_string_lossy())
+                .join(" ");
             if command.is_empty() {
-                name.to_string()
+                name.clone()
             } else {
                 command
             }
         };
 
         let pcu = {
-            let usage = process_val.cpu_usage() as f64;
+            let usage = process_val.cpu_usage();
             if unnormalized_cpu || num_processors == 0 {
                 usage
             } else {
-                usage / (num_processors as f64)
+                usage / num_processors as f32
             }
         };
+
         let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0.0 {
             pcu / cpu_usage
         } else {
             pcu
-        } as f32;
+        };
 
         let disk_usage = process_val.disk_usage();
         let process_state = (process_status_str(process_val.status()), 'R');

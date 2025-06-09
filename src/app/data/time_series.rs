@@ -92,7 +92,7 @@ impl TimeSeriesData {
             }
 
             for (curr, new_data) in self.cpu.iter_mut().zip(cpu.iter()) {
-                curr.push(new_data.cpu_usage);
+                curr.push(new_data.usage.into());
             }
         } else {
             for c in &mut self.cpu {

@@ -10,11 +10,9 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResu
     let mut cpus = vec![];
 
     if show_average_cpu {
-        let cpu = sys.global_cpu_info();
-
         cpus.push(CpuData {
             data_type: CpuDataType::Avg,
-            cpu_usage: cpu.cpu_usage() as f64,
+            usage: sys.global_cpu_usage(),
         })
     }
 
@@ -24,7 +22,7 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResu
             .enumerate()
             .map(|(i, cpu)| CpuData {
                 data_type: CpuDataType::Cpu(i),
-                cpu_usage: cpu.cpu_usage() as f64,
+                usage: cpu.cpu_usage(),
             })
             .collect::<Vec<_>>(),
     );

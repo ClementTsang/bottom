@@ -63,7 +63,7 @@ impl Painter {
                         .label_style(style)
                         .inner_label(inner)
                         .start_label(outer)
-                        .ratio(ratio),
+                        .ratio(ratio.into()),
                     avg_loc,
                 );
 
@@ -124,7 +124,7 @@ impl Painter {
                                 .label_style(style)
                                 .inner_label(inner_label)
                                 .start_label(start_label)
-                                .ratio(ratio)
+                                .ratio(ratio.into())
                                 .hide_parts(hide_parts),
                             *row,
                         );
@@ -144,7 +144,7 @@ impl Painter {
     }
 
     #[inline]
-    fn cpu_info(&self, data: &CpuData) -> (String, String, f64, tui::style::Style) {
+    fn cpu_info(&self, data: &CpuData) -> (String, String, f32, tui::style::Style) {
         let (outer, style) = match data.data_type {
             CpuDataType::Avg => ("AVG".to_string(), self.styles.avg_cpu_colour),
             CpuDataType::Cpu(index) => (
@@ -153,8 +153,8 @@ impl Painter {
             ),
         };
 
-        let inner = format!("{:>3.0}%", data.cpu_usage.round());
-        let ratio = data.cpu_usage / 100.0;
+        let inner = format!("{:>3.0}%", data.usage.round());
+        let ratio = data.usage / 100.0;
 
         (outer, inner, ratio, style)
     }

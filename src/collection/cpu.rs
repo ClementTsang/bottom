@@ -14,7 +14,7 @@ pub enum CpuDataType {
 #[derive(Debug, Clone)]
 pub struct CpuData {
     pub data_type: CpuDataType,
-    pub cpu_usage: f64,
+    pub usage: f32,
 }
 
 pub type CpuHarvest = Vec<CpuData>;

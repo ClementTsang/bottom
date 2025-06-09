@@ -16,7 +16,7 @@ pub fn get_temperature_data(
         if Filter::optional_should_keep(filter, &name) {
             temperatures.push(TempSensorData {
                 name,
-                temperature: Some(component.temperature()),
+                temperature: component.temperature(),
             });
         }
     }
