@@ -16,7 +16,7 @@ pub(crate) trait UnixProcessExt {
         let mut process_vector: Vec<ProcessHarvest> = Vec::new();
         let process_hashmap = sys.processes();
         let cpu_usage = sys.global_cpu_usage() / 100.0;
-        let num_processors = sys.cpus().len() as f32;
+        let num_processors = sys.cpus().len();
 
         for process_val in process_hashmap.values() {
             let name = if process_val.name().is_empty() {
@@ -32,7 +32,7 @@ pub(crate) trait UnixProcessExt {
                         .unwrap_or(String::new())
                 }
             } else {
-                process_val.name().to_string()
+                process_val.name().to_string_lossy().to_string()
             };
             let command = {
                 let command = process_val.cmd().to_string_lossy().join(" ");
@@ -45,10 +45,10 @@ pub(crate) trait UnixProcessExt {
 
             let pcu = {
                 let usage = process_val.cpu_usage();
-                if unnormalized_cpu || num_processors == 0.0 {
+                if unnormalized_cpu || num_processors == 0 {
                     usage
                 } else {
-                    usage / num_processors
+                    usage / num_processors as f32
                 }
             };
             let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0.0 {
@@ -119,10 +119,10 @@ pub(crate) trait UnixProcessExt {
             let cpu_usages = Self::backup_proc_cpu(&cpu_usage_unknown_pids)?;
             for process in &mut process_vector {
                 if cpu_usages.contains_key(&process.pid) {
-                    process.cpu_usage_percent = if unnormalized_cpu || num_processors == 0.0 {
+                    process.cpu_usage_percent = if unnormalized_cpu || num_processors == 0 {
                         *cpu_usages.get(&process.pid).unwrap()
                     } else {
-                        *cpu_usages.get(&process.pid).unwrap() / num_processors
+                        *cpu_usages.get(&process.pid).unwrap() / num_processors as f32
                     } as f32;
                 }
             }

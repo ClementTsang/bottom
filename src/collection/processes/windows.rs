@@ -34,12 +34,12 @@ pub fn sysinfo_process_data(
                     .unwrap_or(String::new())
             }
         } else {
-            process_val.name().to_string()
+            process_val.name().to_string_lossy().to_string()
         };
         let command = {
-            let command = process_val.cmd().join(" ");
+            let command = process_val.cmd().to_string_lossy().join(" ");
             if command.is_empty() {
-                name.to_string()
+                name.clone()
             } else {
                 command
             }
@@ -50,7 +50,7 @@ pub fn sysinfo_process_data(
             if unnormalized_cpu || num_processors == 0 {
                 usage
             } else {
-                usage / num_processors
+                usage / num_processors as f32
             }
         };
 
