@@ -26,7 +26,7 @@ pub fn sysinfo_process_data(
         let name = if process_val.name().is_empty() {
             let process_cmd = process_val.cmd();
             if process_cmd.len() > 1 {
-                process_cmd[0].clone()
+                process_cmd[0].to_string_lossy().to_string()
             } else {
                 process_val
                     .exe()
@@ -36,10 +36,14 @@ pub fn sysinfo_process_data(
                     .unwrap_or(String::new())
             }
         } else {
-            process_val.name().display().to_string()
+            process_val.name().to_string_lossy().to_string()
         };
         let command = {
-            let command = process_val.cmd().iter().map(|s| s.display()).join(" ");
+            let command = process_val
+                .cmd()
+                .iter()
+                .map(|s| s.to_string_lossy())
+                .join(" ");
             if command.is_empty() {
                 name.clone()
             } else {
