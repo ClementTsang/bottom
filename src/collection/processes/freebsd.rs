@@ -19,7 +19,7 @@ struct ProcessRow {
     #[serde(deserialize_with = "pid")]
     pid: i32,
     #[serde(deserialize_with = "percent_cpu")]
-    percent_cpu: f64,
+    percent_cpu: f32,
 }
 
 pub(crate) struct FreeBSDProcessExt;
@@ -60,7 +60,7 @@ where
     s.parse().map_err(serde::de::Error::custom)
 }
 
-fn percent_cpu<'de, D>(deserializer: D) -> Result<f64, D::Error>
+fn percent_cpu<'de, D>(deserializer: D) -> Result<f32, D::Error>
 where
     D: Deserializer<'de>,
 {
