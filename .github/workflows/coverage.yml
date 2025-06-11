@@ -11,8 +11,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - ".github/workflows/coverage.yml"
 
 env:
   CARGO_INCREMENTAL: 0
