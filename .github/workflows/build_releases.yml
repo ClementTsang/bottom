@@ -47,33 +47,33 @@ jobs:
           #
           # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               generate-other-artifacts: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "x86_64-unknown-linux-musl",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "i686-unknown-linux-musl",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "aarch64-unknown-linux-gnu",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "aarch64-unknown-linux-musl",
               cross: true,
             }
@@ -98,26 +98,26 @@ jobs:
           # ======= Unsupported targets =======
           # armv7
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "armv7-unknown-linux-musleabihf",
               cross: true,
             }
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
             }
 
           # Risc-V 64gc
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
             }
@@ -395,7 +395,7 @@ jobs:
 
   build-deb:
     name: "Build .deb software packages"
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-22.04"
     timeout-minutes: 12
     strategy:
       fail-fast: false
