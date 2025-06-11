@@ -71,14 +71,36 @@ jobs:
           cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --locked --target=${{ matrix.info.target }}
 
       # The token is generally not needed, but sometimes the default shared token hits limits.
-      - name: Upload to codecov.io
-        uses: Wandalen/wretry.action@6feedb7dedadeb826de0f45ff482b53b379a7844 # v3.5.0
+      # Yes this is ugly as hell. Why this is not a built-in feature of GHA, I have no idea.
+
+      - name: Upload to codecov.io (Attempt 1)
+        id: upload_attempt_1
+        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
         with:
-          action: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
-          with: |
-            files: lcov.info
-            fail_ci_if_error: true
-            token: ${{ secrets.CODECOV_TOKEN }}
-            flags: ${{ matrix.info.os }}
-          attempt_limit: 5
-          attempt_delay: 1500
+          files: lcov.info
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.info.os }}
+        continue-on-error: true
+
+      - name: Upload to codecov.io (Attempt 2)
+        id: upload_attempt_2
+        if: steps.upload_attempt_1.outcome == 'failure'
+        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+        with:
+          files: lcov.info
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.info.os }}
+        continue-on-error: true
+
+      - name: Upload to codecov.io (Attempt 3)
+        id: upload_attempt_3
+        if: steps.upload_attempt_2.outcome == 'failure'
+        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+        with:
+          files: lcov.info
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.info.os }}
+        continue-on-error: true
