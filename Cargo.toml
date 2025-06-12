@@ -74,8 +74,8 @@ generate_schema = ["schemars", "serde_json", "strum"]
 [dependencies]
 anyhow = "1.0.98"
 backtrace = "0.3.75"
-cfg-if = "1.0.0"
-clap = { version = "4.5.39", features = ["default", "cargo", "wrap_help", "derive"] }
+cfg-if = "1.0.1"
+clap = { version = "4.5.40", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
 crossterm = "0.29.0"
 ctrlc = { version = "3.4.7", features = ["termination"] }
@@ -118,7 +118,7 @@ core-foundation = "0.10.1"
 mach2 = "0.4.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.61.1", features = [
+windows = { version = "0.61.2", features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_Storage_FileSystem",
@@ -137,17 +137,17 @@ filedescriptor = "0.8.3"
 assert_cmd = "2.0.17"
 cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
 predicates = "3.1.3"
-tempfile = "3.20.0"
+tempfile = { version = "3.20.0", default-features = false }
 
 [target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
 portable-pty = "0.9.0"
 
 [build-dependencies]
-clap = { version = "4.5.39", features = ["default", "cargo", "wrap_help", "derive"] }
-clap_complete = "4.5.52"
-clap_complete_nushell = "4.5.6"
+clap = { version = "4.5.40", features = ["default", "cargo", "wrap_help", "derive"] }
+clap_complete = "4.5.54"
+clap_complete_nushell = "4.5.7"
 clap_complete_fig = "4.5.2"
-clap_mangen = "0.2.26"
+clap_mangen = "0.2.27"
 indoc = "2.0.6"
 
 # Compile dependencies with optimizations enabled, even in debug mode.
