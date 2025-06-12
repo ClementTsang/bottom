@@ -137,7 +137,7 @@ filedescriptor = "0.8.3"
 assert_cmd = "2.0.17"
 cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
 predicates = "3.1.3"
-tempfile = "3.20.0"
+tempfile = { version = "3.20.0", default-features = false }
 
 [target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
 portable-pty = "0.9.0"
