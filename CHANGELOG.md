@@ -41,12 +41,14 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1660](https://github.com/ClementTsang/bottom/pull/1660): Fix properly cleaning up the terminal if the program is terminated due to an `Err` bubbling to the top.
 - [#1663](https://github.com/ClementTsang/bottom/pull/1663): Fix network graphs using log scaling having broken lines when a point was 0.
 - [#1683](https://github.com/ClementTsang/bottom/pull/1683): Fix graph lines potentially showing up behind legends.
+- [#1701](https://github.com/ClementTsang/bottom/pull/1701): Fix process kill dialog occasionally causing panics.
 
 ### Changes
 
 - [#1559](https://github.com/ClementTsang/bottom/pull/1559): Rename `--enable_gpu` to `--disable_gpu`, and make GPU features enabled by default.
 - [#1570](https://github.com/ClementTsang/bottom/pull/1570): Consider `$XDG_CONFIG_HOME` on macOS when looking for a default config path in a backwards-compatible fashion.
 - [#1686](https://github.com/ClementTsang/bottom/pull/1686): Allow hyphenated arguments to work as well (e.g. `--autohide-time`).
+- [#1701](https://github.com/ClementTsang/bottom/pull/1701): Redesign process kill dialog.
 
 ### Other
 
