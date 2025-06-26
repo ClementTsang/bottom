@@ -193,12 +193,12 @@ impl Painter {
 
                 vec![
                     GraphData::default()
-                        .name(format!("RX: {:<10}  All: {}", rx_label, total_rx_label).into())
+                        .name(format!("RX: {rx_label:<10}  All: {total_rx_label}").into())
                         .time(time)
                         .values(rx_points)
                         .style(self.styles.rx_style),
                     GraphData::default()
-                        .name(format!("TX: {:<10}  All: {}", tx_label, total_tx_label).into())
+                        .name(format!("TX: {tx_label:<10}  All: {total_tx_label}").into())
                         .time(time)
                         .values(tx_points)
                         .style(self.styles.tx_style),
