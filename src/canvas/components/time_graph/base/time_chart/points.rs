@@ -46,7 +46,7 @@ impl TimeChart<'_> {
                 .iter_along_base(times)
                 .rev()
                 .map(|(&time, &val)| {
-                    let from_start = current_time.duration_since(time).as_millis() as f64 * -1.0;
+                    let from_start = -(current_time.duration_since(time).as_millis() as f64);
 
                     // XXX: Should this be generic over dataset.graph_type instead? That would allow us to move
                     // transformations behind a type - however, that also means that there's some complexity added.
