@@ -55,6 +55,10 @@ pub struct TimeSeriesData {
     #[cfg(feature = "gpu")]
     /// GPU memory data.
     pub gpu_mem: HashMap<String, Values>,
+
+    /// Temperature data, if needed. A mapping of sensor names to
+    /// their temperature values.
+    pub temp: HashMap<String, Values>,
 }
 
 impl TimeSeriesData {
