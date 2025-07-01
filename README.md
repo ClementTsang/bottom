@@ -527,7 +527,7 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://www.woods.am/"><img src="https://avatars.githubusercontent.com/u/7113557?v=4?s=100" width="100px;" alt="Ben Woods"/><br /><sub><b>Ben Woods</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=woodsb02" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://cgdct.moe"><img src="https://avatars.githubusercontent.com/u/20411956?v=4?s=100" width="100px;" alt="Stephen Huan"/><br /><sub><b>Stephen Huan</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=stephen-huan" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jasongwartz"><img src="https://avatars.githubusercontent.com/u/10981911?v=4?s=100" width="100px;" alt="Jason Gwartz"/><br /><sub><b>Jason Gwartz</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=jasongwartz" title="Documentation">📖</a></td>
-        <td align="center" valign="top" width="14.28%"><a href="https://github.com/llc0930"><img src="https://avatars.githubusercontent.com/u/14966910?v=4?s=100" width="100px;" alt="llc0930"/><br /><sub><b>llc0930</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=llc0930" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/llc0930"><img src="https://avatars.githubusercontent.com/u/14966910?v=4?s=100" width="100px;" alt="llc0930"/><br /><sub><b>llc0930</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=llc0930" title="Code">💻</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://chronovore.dev"><img src="https://avatars.githubusercontent.com/u/614231?v=4?s=100" width="100px;" alt="Ada Ahmed"/><br /><sub><b>Ada Ahmed</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=yretenai" title="Code">💻</a></td>
@@ -541,6 +541,7 @@ Thanks to all contributors:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/benjamb"><img src="https://avatars.githubusercontent.com/u/8291297?v=4?s=100" width="100px;" alt="Ben Brown"/><br /><sub><b>Ben Brown</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=benjamb" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/nyurik"><img src="https://avatars.githubusercontent.com/u/1641515?v=4?s=100" width="100px;" alt="Yuri Astrakhan"/><br /><sub><b>Yuri Astrakhan</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=nyurik" title="Code">💻</a> <a href="https://github.com/ClementTsang/bottom/commits?author=nyurik" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://kachick.github.io/"><img src="https://avatars.githubusercontent.com/u/1180335?v=4?s=100" width="100px;" alt="Kenichi Kamiya"/><br /><sub><b>Kenichi Kamiya</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=kachick" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
