@@ -600,6 +600,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "kachick",
+      "name": "Kenichi Kamiya",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1180335?v=4",
+      "profile": "https://kachick.github.io/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
