@@ -84,13 +84,13 @@ jobs:
 
           # Windows (x86-64, x86)
           - {
-              os: "windows-2019",
+              os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
             }
-          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: false }
+          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false }
           - {
-              os: "windows-2019",
+              os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
               cross: false,
             }
@@ -165,7 +165,7 @@ jobs:
           mv "$MANPAGE_DIR" manpage
 
       - name: Bundle release and completion (Windows)
-        if: matrix.info.os == 'windows-2019'
+        if: matrix.info.os == 'windows-2022'
         shell: bash
         run: |
           cp target/${{ matrix.info.target }}/release/btm.exe btm.exe
@@ -174,7 +174,7 @@ jobs:
           echo "ASSET=bottom_${{ matrix.info.target }}.zip" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
-        if: matrix.info.os != 'windows-2019'
+        if: matrix.info.os != 'windows-2022'
         shell: bash
         run: |
           cp target/${{ matrix.info.target }}/release/btm ./btm
@@ -302,7 +302,7 @@ jobs:
 
   build-msi:
     name: "Build MSI (WiX) installer"
-    runs-on: "windows-2019"
+    runs-on: "windows-2022"
     timeout-minutes: 12
     steps:
       - name: Checkout repository

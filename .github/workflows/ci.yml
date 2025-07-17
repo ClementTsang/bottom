@@ -76,7 +76,7 @@ jobs:
           - { os: "macos-13", target: "x86_64-apple-darwin", cross: false }
           - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
           - {
-              os: "windows-2019",
+              os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
             }
@@ -163,9 +163,9 @@ jobs:
               cross: true,
             }
 
-          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: false }
+          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false }
           - {
-              os: "windows-2019",
+              os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
               cross: false,
             }
@@ -184,7 +184,7 @@ jobs:
               rust: "beta",
             }
           - {
-              os: "windows-2019",
+              os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
               rust: "beta",
