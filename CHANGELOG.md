@@ -42,6 +42,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1663](https://github.com/ClementTsang/bottom/pull/1663): Fix network graphs using log scaling having broken lines when a point was 0.
 - [#1683](https://github.com/ClementTsang/bottom/pull/1683): Fix graph lines potentially showing up behind legends.
 - [#1701](https://github.com/ClementTsang/bottom/pull/1701): Fix process kill dialog occasionally causing panics.
+- [#1755](https://github.com/ClementTsang/bottom/pull/1755): Fix missing stats/incorrect mount name for certain entries in the disk widget.
 
 ### Changes
 
