@@ -4,8 +4,9 @@
 use std::{
     ffi::CString,
     fs::File,
-    io::{self, BufRead, BufReader},
+    io::{BufRead, BufReader},
     mem,
+    os::unix::ffi::OsStrExt,
     path::{Path, PathBuf},
     str::FromStr,
 };
@@ -76,14 +77,7 @@ impl Partition {
 
     /// Returns the usage stats for this partition.
     pub fn usage(&self) -> anyhow::Result<Usage> {
-        let path = self
-            .mount_point
-            .to_str()
-            .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidInput))
-            .and_then(|string| {
-                CString::new(string).map_err(|_| io::Error::from(io::ErrorKind::InvalidInput))
-            })
-            .map_err(|e| anyhow::anyhow!("invalid path: {e:?}"))?;
+        let path = CString::new(self.mount_point.as_os_str().as_bytes())?;
 
         let mut vfs = mem::MaybeUninit::<libc::statvfs>::uninit();
 
@@ -108,7 +102,7 @@ impl FromStr for Partition {
 
     fn from_str(line: &str) -> anyhow::Result<Partition> {
         // Example: `/dev/sda3 /home ext4 rw,relatime,data=ordered 0 0`
-        let mut parts = line.splitn(5, ' ');
+        let mut parts = line.trim_start().splitn(5, ' ');
 
         let device = match parts.next() {
             Some("none") => None,
@@ -118,7 +112,13 @@ impl FromStr for Partition {
             }
         };
         let mount_point = match parts.next() {
-            Some(point) => PathBuf::from(point),
+            Some(point) => PathBuf::from(
+                point
+                    .replace("\\134", "\\")
+                    .replace("\\040", " ")
+                    .replace("\\011", "\t")
+                    .replace("\\012", "\n"),
+            ),
             None => {
                 bail!("missing mount point");
             }
