@@ -4,9 +4,8 @@
 use std::{
     ffi::CString,
     fs::File,
-    io::{BufRead, BufReader},
+    io::{self, BufRead, BufReader},
     mem,
-    os::unix::ffi::OsStrExt,
     path::{Path, PathBuf},
     str::FromStr,
 };
@@ -77,7 +76,14 @@ impl Partition {
 
     /// Returns the usage stats for this partition.
     pub fn usage(&self) -> anyhow::Result<Usage> {
-        let path = CString::new(self.mount_point.as_os_str().as_bytes())?;
+        let path = self
+            .mount_point
+            .to_str()
+            .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidInput))
+            .and_then(|string| {
+                CString::new(string).map_err(|_| io::Error::from(io::ErrorKind::InvalidInput))
+            })
+            .map_err(|e| anyhow::anyhow!("invalid path: {e:?}"))?;
 
         let mut vfs = mem::MaybeUninit::<libc::statvfs>::uninit();
 
