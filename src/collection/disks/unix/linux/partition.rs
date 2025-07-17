@@ -76,6 +76,7 @@ impl Partition {
 
     /// Returns the usage stats for this partition.
     pub fn usage(&self) -> anyhow::Result<Usage> {
+        // TODO: This might be unoptimal.
         let path = self
             .mount_point
             .to_str()
@@ -103,6 +104,18 @@ impl Partition {
     }
 }
 
+fn fix_mount_point(s: &str) -> String {
+    const ESCAPED_BACKSLASH: &str = "\\134";
+    const ESCAPED_SPACE: &str = "\\040";
+    const ESCAPED_TAB: &str = "\\011";
+    const ESCAPED_NEWLINE: &str = "\\012";
+
+    s.replace(ESCAPED_BACKSLASH, "\\")
+        .replace(ESCAPED_SPACE, " ")
+        .replace(ESCAPED_TAB, "\t")
+        .replace(ESCAPED_NEWLINE, "\n")
+}
+
 impl FromStr for Partition {
     type Err = anyhow::Error;
 
@@ -117,14 +130,9 @@ impl FromStr for Partition {
                 bail!("missing device");
             }
         };
+
         let mount_point = match parts.next() {
-            Some(point) => PathBuf::from(
-                point
-                    .replace("\\134", "\\")
-                    .replace("\\040", " ")
-                    .replace("\\011", "\t")
-                    .replace("\\012", "\n"),
-            ),
+            Some(mount_point) => PathBuf::from(fix_mount_point(mount_point)),
             None => {
                 bail!("missing mount point");
             }
@@ -196,4 +204,16 @@ pub(crate) fn physical_partitions() -> anyhow::Result<Vec<Partition>> {
     }
 
     Ok(results)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fix_mount_point() {
+        let line = "/run/media/test/Samsung\\040980";
+
+        assert_eq!(fix_mount_point(line), "/run/media/test/Samsung 980");
+    }
 }
