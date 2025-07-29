@@ -114,6 +114,8 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
         // than the number of entries left from the current index. This gives
         // a more intuitive behaviour when using things like page up/down.
         let proposed = current_index + change;
+
+        // We check num_entries > 0 above.
         self.state.current_index = proposed.clamp(0, (num_entries - 1) as i64) as usize;
 
         self.state.scroll_direction = if change < 0 {
