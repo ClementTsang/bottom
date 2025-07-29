@@ -97,45 +97,29 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     /// offset. If there is a valid change, this function will also return
     /// the new position wrapped in an [`Option`].
     pub fn increment_position(&mut self, change: i64) -> Option<usize> {
-        let max_index = self.data.len();
-        let current_index = self.state.current_index;
+        let num_entries = self.data.len();
 
-        if change == 0
-            || (change > 0 && current_index == max_index)
-            || (change < 0 && current_index == 0)
-        {
+        if num_entries == 0 {
             return None;
         }
 
-        let csp: Result<i64, _> = self.state.current_index.try_into();
-        if let Ok(csp) = csp {
-            let proposed = csp + change;
+        let Ok(current_index): Result<i64, _> = self.state.current_index.try_into() else {
+            return None;
+        };
 
-            let proposed: Result<usize, _> = if proposed.is_negative() {
-                Ok(0)
-            } else {
-                proposed.try_into()
-            };
+        // We do this to clamp the proposed index to 0 if the change is greater
+        // than the number of entries left from the current index. This gives
+        // a more intuitive behaviour when using things like page up/down.
+        let proposed = current_index + change;
+        self.state.current_index = proposed.clamp(0, (num_entries - 1) as i64) as usize;
 
-            if let Ok(proposed) = proposed {
-                let proposed = if proposed >= max_index {
-                    max_index - 1
-                } else {
-                    proposed
-                };
+        self.state.scroll_direction = if change < 0 {
+            ScrollDirection::Up
+        } else {
+            ScrollDirection::Down
+        };
 
-                self.state.current_index = proposed;
-                self.state.scroll_direction = if change < 0 {
-                    ScrollDirection::Up
-                } else {
-                    ScrollDirection::Down
-                };
-
-                return Some(self.state.current_index);
-            }
-        }
-
-        None
+        Some(self.state.current_index)
     }
 
     /// Updates the scroll position to a selected index.
@@ -194,8 +178,7 @@ mod test {
         }
     }
 
-    #[test]
-    fn test_data_table_operations() {
+    fn create_test_table() -> DataTable<TestType, &'static str> {
         let columns = [Column::hard("a", 10), Column::hard("b", 10)];
         let props = DataTableProps {
             title: Some("test".into()),
@@ -207,7 +190,12 @@ mod test {
         };
         let styling = DataTableStyling::default();
 
-        let mut table = DataTable::new(columns, props, styling);
+        DataTable::new(columns, props, styling)
+    }
+
+    #[test]
+    fn test_scrolling() {
+        let mut table = create_test_table();
         table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
 
         table.scroll_to_last();
@@ -217,6 +205,12 @@ mod test {
         table.scroll_to_first();
         assert_eq!(table.current_index(), 0);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Up);
+    }
+
+    #[test]
+    fn test_set_position() {
+        let mut table = create_test_table();
+        table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
 
         table.set_position(4);
         assert_eq!(table.current_index(), 4);
@@ -226,6 +220,16 @@ mod test {
         assert_eq!(table.current_index(), 4);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
         assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
+    }
+
+    #[test]
+    fn test_increment_position() {
+        let mut table = create_test_table();
+        table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
+
+        table.set_position(4);
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
 
         table.increment_position(-1);
         assert_eq!(table.current_index(), 3);
@@ -253,6 +257,30 @@ mod test {
         assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
 
         table.increment_position(10);
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+        assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
+
+        // Make sure that overscrolling up causes clamping.
+        table.increment_position(-10);
+        assert_eq!(table.current_index(), 0);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Up);
+        assert_eq!(table.current_item(), Some(&TestType { index: 0 }));
+
+        // Make sure that overscrolling down causes clamping.
+        table.increment_position(100);
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+        assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
+    }
+
+    /// A test to ensure that scroll offsets are correctly handled when we "lose" rows.
+    #[test]
+    fn test_lose_data() {
+        let mut table = create_test_table();
+        table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
+
+        table.set_position(4);
         assert_eq!(table.current_index(), 4);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
         assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
