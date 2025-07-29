@@ -96,6 +96,9 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     /// Increments the scroll position if possible by a positive/negative
     /// offset. If there is a valid change, this function will also return
     /// the new position wrapped in an [`Option`].
+    ///
+    /// Note that despite the name, this handles both incrementing (positive
+    /// change) and decrementing (negative change).
     pub fn increment_position(&mut self, change: i64) -> Option<usize> {
         let num_entries = self.data.len();
 
@@ -285,6 +288,7 @@ mod test {
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
         assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
 
+        let mut table = create_test_table();
         table.set_data((0..=2).map(|index| TestType { index }).collect::<Vec<_>>());
         assert_eq!(table.current_index(), 2);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
