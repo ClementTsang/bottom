@@ -109,18 +109,29 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
 
         let csp: Result<i64, _> = self.state.current_index.try_into();
         if let Ok(csp) = csp {
-            let proposed: Result<usize, _> = (csp + change).try_into();
-            if let Ok(proposed) = proposed {
-                if proposed < self.data.len() {
-                    self.state.current_index = proposed;
-                    self.state.scroll_direction = if change < 0 {
-                        ScrollDirection::Up
-                    } else {
-                        ScrollDirection::Down
-                    };
+            let proposed = csp + change;
 
-                    return Some(self.state.current_index);
-                }
+            let proposed: Result<usize, _> = if proposed.is_negative() {
+                Ok(0)
+            } else {
+                proposed.try_into()
+            };
+
+            if let Ok(proposed) = proposed {
+                let proposed = if proposed >= max_index {
+                    max_index - 1
+                } else {
+                    proposed
+                };
+
+                self.state.current_index = proposed;
+                self.state.scroll_direction = if change < 0 {
+                    ScrollDirection::Up
+                } else {
+                    ScrollDirection::Down
+                };
+
+                return Some(self.state.current_index);
             }
         }
 
