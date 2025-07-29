@@ -288,7 +288,6 @@ mod test {
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
         assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
 
-        let mut table = create_test_table();
         table.set_data((0..=2).map(|index| TestType { index }).collect::<Vec<_>>());
         assert_eq!(table.current_index(), 2);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
