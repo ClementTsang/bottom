@@ -66,7 +66,7 @@ pub struct ProcessHarvest {
     pub mem_usage: Bytes,
 
     /// Virtual memory.
-    pub virt_mem: Bytes,
+    pub virtual_mem: Bytes,
 
     /// The name of the process.
     pub name: String,

@@ -78,6 +78,7 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         CpuPercent => SortColumn::new(CpuPercent).default_descending(),
         MemValue => SortColumn::new(MemValue).default_descending(),
         MemPercent => SortColumn::new(MemPercent).default_descending(),
+        VirtualMem => SortColumn::new(VirtualMem).default_descending(),
         Pid => SortColumn::new(Pid),
         Count => SortColumn::new(Count),
         Name => SortColumn::soft(Name, Some(0.3)),
@@ -114,6 +115,7 @@ pub enum ProcWidgetColumn {
     ProcNameOrCommand,
     Cpu,
     Mem,
+    VirtualMem,
     ReadPerSecond,
     WritePerSecond,
     TotalRead,
@@ -253,6 +255,7 @@ impl ProcWidgetState {
                                     MemPercent
                                 }
                             }
+                            ProcWidgetColumn::VirtualMem => VirtualMem,
                             ProcWidgetColumn::ReadPerSecond => ReadPerSecond,
                             ProcWidgetColumn::WritePerSecond => WritePerSecond,
                             ProcWidgetColumn::TotalRead => TotalRead,
@@ -303,6 +306,7 @@ impl ProcWidgetState {
                 match col.inner() {
                     CpuPercent => ProcWidgetColumn::Cpu,
                     MemValue | MemPercent => ProcWidgetColumn::Mem,
+                    VirtualMem => ProcWidgetColumn::VirtualMem,
                     Pid | Count => ProcWidgetColumn::PidOrCount,
                     Name | Command => ProcWidgetColumn::ProcNameOrCommand,
                     ReadPerSecond => ProcWidgetColumn::ReadPerSecond,
@@ -1075,6 +1079,7 @@ mod test {
             id: "A".into(),
             cpu_usage_percent: 0.0,
             mem_usage: MemUsage::Percent(1.1),
+            virtual_mem: 100,
             rps: 0,
             wps: 0,
             total_read: 0,

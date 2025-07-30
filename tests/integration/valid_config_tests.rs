@@ -184,3 +184,8 @@ fn test_styling_sanity_check_2() {
 fn test_filtering() {
     run_and_kill(&["-C", "./tests/valid_configs/filtering.toml"]);
 }
+
+#[test]
+fn test_proc_columns() {
+    run_and_kill(&["-C", "./tests/valid_configs/proc_columns.toml"]);
+}

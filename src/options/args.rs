@@ -119,7 +119,8 @@ pub struct GeneralArgs {
         long_help = "Sets the location of the config file. Expects a config file in the TOML format. \
                     If it doesn't exist, a default config file is created at the path. If no path is provided, \
                     the default config location will be used.",
-        alias = "config-location"
+        alias = "config-location",
+        alias = "config",
     )]
     pub config_location: Option<PathBuf>,
 

@@ -246,7 +246,7 @@ fn read_proc(
             cpu_usage_percent,
             mem_usage_percent,
             mem_usage,
-            virt_mem,
+            virtual_mem: virt_mem,
             name,
             command,
             read_per_sec,
