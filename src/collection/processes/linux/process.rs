@@ -51,13 +51,18 @@ pub(crate) struct Stat {
 
     /// The resident set size, or the number of pages the process has in real
     /// memory.
-    pub rss: u64,
+    rss: u64,
+
+    /// The virtual memory size in bytes.
+    pub vsize: u64,
 
     /// The start time of the process, represented in clock ticks.
     pub start_time: u64,
 }
 
 impl Stat {
+    /// Get process stats from a file; this assumes the file is located at
+    /// `/proc/<PID>/stat`.
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
         // Since this is just one line, we can read it all at once. However, since it
         // (technically) might have non-utf8 characters, we can't just use read_to_string.
@@ -96,8 +101,7 @@ impl Stat {
         let mut rest = rest.skip(6);
         let start_time: u64 = next_part(&mut rest)?.parse()?;
 
-        // Skip one field until rss (vsize)
-        let mut rest = rest.skip(1);
+        let vsize: u64 = next_part(&mut rest)?.parse()?;
         let rss: u64 = next_part(&mut rest)?.parse()?;
 
         Ok(Stat {
@@ -107,6 +111,7 @@ impl Stat {
             utime,
             stime,
             rss,
+            vsize,
             start_time,
         })
     }

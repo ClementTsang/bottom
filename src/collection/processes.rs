@@ -46,6 +46,8 @@ cfg_if! {
     }
 }
 
+pub type Bytes = u64;
+
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
     /// The pid of the process.
@@ -61,7 +63,10 @@ pub struct ProcessHarvest {
     pub mem_usage_percent: f32,
 
     /// Memory usage as bytes.
-    pub mem_usage_bytes: u64,
+    pub mem_usage: Bytes,
+
+    /// Virtual memory.
+    pub virtual_mem: Bytes,
 
     /// The name of the process.
     pub name: String,
@@ -70,16 +75,16 @@ pub struct ProcessHarvest {
     pub command: String,
 
     /// Bytes read per second.
-    pub read_bytes_per_sec: u64,
+    pub read_per_sec: Bytes,
 
     /// Bytes written per second.
-    pub write_bytes_per_sec: u64,
+    pub write_per_sec: Bytes,
 
     /// The total number of bytes read by the process.
-    pub total_read_bytes: u64,
+    pub total_read: Bytes,
 
     /// The total number of bytes written by the process.
-    pub total_write_bytes: u64,
+    pub total_write: Bytes,
 
     /// The current state of the process (e.g. zombie, asleep).
     pub process_state: (&'static str, char),
@@ -90,7 +95,6 @@ pub struct ProcessHarvest {
     /// This is the *effective* user ID of the process. This is only used on
     /// Unix platforms.
     #[cfg(target_family = "unix")]
-    #[allow(dead_code)]
     pub uid: Option<libc::uid_t>,
 
     /// This is the process' user.

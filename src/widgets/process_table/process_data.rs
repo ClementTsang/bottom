@@ -199,6 +199,7 @@ pub struct ProcWidgetData {
     pub id: Id,
     pub cpu_usage_percent: f32,
     pub mem_usage: MemUsage,
+    pub virtual_mem: u64,
     pub rps: u64,
     pub wps: u64,
     pub total_read: u64,
@@ -229,7 +230,7 @@ impl ProcWidgetData {
         let mem_usage = if is_mem_percent {
             MemUsage::Percent(process.mem_usage_percent)
         } else {
-            MemUsage::Bytes(process.mem_usage_bytes)
+            MemUsage::Bytes(process.mem_usage)
         };
 
         Self {
@@ -238,10 +239,11 @@ impl ProcWidgetData {
             id,
             cpu_usage_percent: process.cpu_usage_percent,
             mem_usage,
-            rps: process.read_bytes_per_sec,
-            wps: process.write_bytes_per_sec,
-            total_read: process.total_read_bytes,
-            total_write: process.total_write_bytes,
+            virtual_mem: process.virtual_mem,
+            rps: process.read_per_sec,
+            wps: process.write_per_sec,
+            total_read: process.total_read,
+            total_write: process.total_write,
             process_state: process.process_state.0,
             process_char: process.process_state.1,
             user: process.user.to_string(),
@@ -302,6 +304,7 @@ impl ProcWidgetData {
         match column {
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),
+            ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem),
             ProcColumn::Pid => self.pid.to_string(),
             ProcColumn::Count => self.num_similar.to_string(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string(),
@@ -332,6 +335,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
         Some(match column {
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),
+            ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem).into(),
             ProcColumn::Pid => self.pid.to_string().into(),
             ProcColumn::Count => self.num_similar.to_string().into(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string().into(),

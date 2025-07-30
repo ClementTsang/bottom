@@ -79,12 +79,13 @@ pub(crate) trait UnixProcessExt {
                 } else {
                     0.0
                 },
-                mem_usage_bytes: process_val.memory(),
+                mem_usage: process_val.memory(),
+                virtual_mem: process_val.virtual_memory(),
                 cpu_usage_percent: process_cpu_usage,
-                read_bytes_per_sec: disk_usage.read_bytes,
-                write_bytes_per_sec: disk_usage.written_bytes,
-                total_read_bytes: disk_usage.total_read_bytes,
-                total_write_bytes: disk_usage.total_written_bytes,
+                read_per_sec: disk_usage.read_bytes,
+                write_per_sec: disk_usage.written_bytes,
+                total_read: disk_usage.total_read_bytes,
+                total_write: disk_usage.total_written_bytes,
                 process_state,
                 uid,
                 user: uid
