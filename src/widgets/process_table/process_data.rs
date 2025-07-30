@@ -229,7 +229,7 @@ impl ProcWidgetData {
         let mem_usage = if is_mem_percent {
             MemUsage::Percent(process.mem_usage_percent)
         } else {
-            MemUsage::Bytes(process.mem_usage_bytes)
+            MemUsage::Bytes(process.mem_usage)
         };
 
         Self {
@@ -238,10 +238,10 @@ impl ProcWidgetData {
             id,
             cpu_usage_percent: process.cpu_usage_percent,
             mem_usage,
-            rps: process.read_bytes_per_sec,
-            wps: process.write_bytes_per_sec,
-            total_read: process.total_read_bytes,
-            total_write: process.total_write_bytes,
+            rps: process.read_per_sec,
+            wps: process.write_per_sec,
+            total_read: process.tota_read,
+            total_write: process.total_write,
             process_state: process.process_state.0,
             process_char: process.process_state.1,
             user: process.user.to_string(),

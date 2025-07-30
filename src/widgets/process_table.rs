@@ -700,14 +700,14 @@ impl ProcWidgetState {
                             *usage += process.mem_usage_percent;
                         }
                         MemUsage::Bytes(usage) => {
-                            *usage += process.mem_usage_bytes;
+                            *usage += process.mem_usage;
                         }
                     }
 
-                    pwd.rps += process.read_bytes_per_sec;
-                    pwd.wps += process.write_bytes_per_sec;
-                    pwd.total_read += process.total_read_bytes;
-                    pwd.total_write += process.total_write_bytes;
+                    pwd.rps += process.read_per_sec;
+                    pwd.wps += process.write_per_sec;
+                    pwd.total_read += process.tota_read;
+                    pwd.total_write += process.total_write;
                     pwd.time = pwd.time.max(process.time);
                     #[cfg(feature = "gpu")]
                     {

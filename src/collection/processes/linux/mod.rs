@@ -163,36 +163,30 @@ fn read_proc(
         use_current_cpu_total,
     );
     let parent_pid = Some(stat.ppid);
-    let mem_usage_bytes = stat.rss_bytes();
-    let mem_usage_percent = (mem_usage_bytes as f64 / total_memory as f64 * 100.0) as f32;
+    let mem_usage = stat.rss_bytes();
+    let mem_usage_percent = (mem_usage as f64 / total_memory as f64 * 100.0) as f32;
 
-    // This can fail if permission is denied!
-    let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
-        if let Some(io) = io {
-            let total_read_bytes = io.read_bytes;
-            let total_write_bytes = io.write_bytes;
-            let prev_total_read_bytes = prev_proc.total_read_bytes;
-            let prev_total_write_bytes = prev_proc.total_write_bytes;
+    // XXX: This can fail if permission is denied.
+    let (total_read, total_write, read_per_sec, write_per_sec) = if let Some(io) = io {
+        let total_read = io.read_bytes;
+        let total_write = io.write_bytes;
+        let prev_total_read = prev_proc.total_read_bytes;
+        let prev_total_write = prev_proc.total_write_bytes;
 
-            let read_bytes_per_sec = total_read_bytes
-                .saturating_sub(prev_total_read_bytes)
-                .checked_div(time_difference_in_secs)
-                .unwrap_or(0);
+        let read_per_sec = total_read
+            .saturating_sub(prev_total_read)
+            .checked_div(time_difference_in_secs)
+            .unwrap_or(0);
 
-            let write_bytes_per_sec = total_write_bytes
-                .saturating_sub(prev_total_write_bytes)
-                .checked_div(time_difference_in_secs)
-                .unwrap_or(0);
+        let write_per_sec = total_write
+            .saturating_sub(prev_total_write)
+            .checked_div(time_difference_in_secs)
+            .unwrap_or(0);
 
-            (
-                total_read_bytes,
-                total_write_bytes,
-                read_bytes_per_sec,
-                write_bytes_per_sec,
-            )
-        } else {
-            (0, 0, 0, 0)
-        };
+        (total_read, total_write, read_per_sec, write_per_sec)
+    } else {
+        (0, 0, 0, 0)
+    };
 
     let user = uid
         .and_then(|uid| {
@@ -250,13 +244,13 @@ fn read_proc(
             parent_pid,
             cpu_usage_percent,
             mem_usage_percent,
-            mem_usage_bytes,
+            mem_usage,
             name,
             command,
-            read_bytes_per_sec,
-            write_bytes_per_sec,
-            total_read_bytes,
-            total_write_bytes,
+            read_per_sec,
+            write_per_sec,
+            tota_read: total_read,
+            total_write,
             process_state,
             uid,
             user,
@@ -385,8 +379,8 @@ pub(crate) fn linux_process_data(
                     }
 
                     prev_proc_details.cpu_time = new_process_times;
-                    prev_proc_details.total_read_bytes = process_harvest.total_read_bytes;
-                    prev_proc_details.total_write_bytes = process_harvest.total_write_bytes;
+                    prev_proc_details.total_read_bytes = process_harvest.tota_read;
+                    prev_proc_details.total_write_bytes = process_harvest.total_write;
 
                     pids_to_clear.remove(&pid);
                     return Some(process_harvest);

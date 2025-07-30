@@ -836,27 +836,27 @@ impl Prefix {
                     ),
                     PrefixType::MemBytes => matches_condition(
                         &numerical_query.condition,
-                        process.mem_usage_bytes as f64,
+                        process.mem_usage as f64,
                         numerical_query.value,
                     ),
                     PrefixType::Rps => matches_condition(
                         &numerical_query.condition,
-                        process.read_bytes_per_sec as f64,
+                        process.read_per_sec as f64,
                         numerical_query.value,
                     ),
                     PrefixType::Wps => matches_condition(
                         &numerical_query.condition,
-                        process.write_bytes_per_sec as f64,
+                        process.write_per_sec as f64,
                         numerical_query.value,
                     ),
                     PrefixType::TRead => matches_condition(
                         &numerical_query.condition,
-                        process.total_read_bytes as f64,
+                        process.tota_read as f64,
                         numerical_query.value,
                     ),
                     PrefixType::TWrite => matches_condition(
                         &numerical_query.condition,
-                        process.total_write_bytes as f64,
+                        process.total_write as f64,
                         numerical_query.value,
                     ),
                     #[cfg(feature = "gpu")]
