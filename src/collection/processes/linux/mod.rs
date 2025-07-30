@@ -165,7 +165,7 @@ fn read_proc(
     let parent_pid = Some(stat.ppid);
     let mem_usage = stat.rss_bytes();
     let mem_usage_percent = (mem_usage as f64 / total_memory as f64 * 100.0) as f32;
-    let virt_mem = stat.vsize;
+    let virtual_mem = stat.vsize;
 
     // XXX: This can fail if permission is denied.
     let (total_read, total_write, read_per_sec, write_per_sec) = if let Some(io) = io {
@@ -246,7 +246,7 @@ fn read_proc(
             cpu_usage_percent,
             mem_usage_percent,
             mem_usage,
-            virtual_mem: virt_mem,
+            virtual_mem,
             name,
             command,
             read_per_sec,
