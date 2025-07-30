@@ -99,6 +99,7 @@ pub fn sysinfo_process_data(
                 0.0
             } as f32,
             mem_usage: process_val.memory(),
+            virt_mem: process_val.virtual_memory(),
             cpu_usage_percent: process_cpu_usage,
             read_per_sec: disk_usage.read_bytes,
             write_per_sec: disk_usage.written_bytes,
