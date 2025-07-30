@@ -78,7 +78,7 @@ pub struct ProcessHarvest {
     pub write_per_sec: Bytes,
 
     /// The total number of bytes read by the process.
-    pub tota_read: Bytes,
+    pub total_read: Bytes,
 
     /// The total number of bytes written by the process.
     pub total_write: Bytes,

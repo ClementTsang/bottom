@@ -706,7 +706,7 @@ impl ProcWidgetState {
 
                     pwd.rps += process.read_per_sec;
                     pwd.wps += process.write_per_sec;
-                    pwd.total_read += process.tota_read;
+                    pwd.total_read += process.total_read;
                     pwd.total_write += process.total_write;
                     pwd.time = pwd.time.max(process.time);
                     #[cfg(feature = "gpu")]

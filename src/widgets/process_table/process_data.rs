@@ -240,7 +240,7 @@ impl ProcWidgetData {
             mem_usage,
             rps: process.read_per_sec,
             wps: process.write_per_sec,
-            total_read: process.tota_read,
+            total_read: process.total_read,
             total_write: process.total_write,
             process_state: process.process_state.0,
             process_char: process.process_state.1,

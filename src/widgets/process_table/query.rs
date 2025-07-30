@@ -851,7 +851,7 @@ impl Prefix {
                     ),
                     PrefixType::TRead => matches_condition(
                         &numerical_query.condition,
-                        process.tota_read as f64,
+                        process.total_read as f64,
                         numerical_query.value,
                     ),
                     PrefixType::TWrite => matches_condition(

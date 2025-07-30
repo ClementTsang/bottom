@@ -249,7 +249,7 @@ fn read_proc(
             command,
             read_per_sec,
             write_per_sec,
-            tota_read: total_read,
+            total_read,
             total_write,
             process_state,
             uid,
@@ -379,7 +379,7 @@ pub(crate) fn linux_process_data(
                     }
 
                     prev_proc_details.cpu_time = new_process_times;
-                    prev_proc_details.total_read_bytes = process_harvest.tota_read;
+                    prev_proc_details.total_read_bytes = process_harvest.total_read;
                     prev_proc_details.total_write_bytes = process_harvest.total_write;
 
                     pids_to_clear.remove(&pid);
