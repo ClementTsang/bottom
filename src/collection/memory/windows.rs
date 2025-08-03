@@ -72,3 +72,22 @@ pub(crate) fn get_swap_usage(sys: &System) -> Option<MemData> {
         })
     }
 }
+
+#[cfg(all(target_os = "windows", test))]
+mod tests {
+    use sysinfo::{MemoryRefreshKind, RefreshKind};
+
+    use super::*;
+
+    #[test]
+    fn test_windows_get_swap_usage() {
+        let sys = System::new_with_specifics(
+            RefreshKind::nothing().with_memory(MemoryRefreshKind::nothing().with_swap()),
+        );
+
+        let swap_usage = get_swap_usage(&sys);
+        if sys.total_swap() > 0 {
+            assert!(swap_usage.is_some());
+        }
+    }
+}
