@@ -407,9 +407,10 @@ impl ProcWidgetState {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
                 self.get_normal_data(&stored_data.process_data.process_harvest)
             }
-            ProcWidgetMode::Tree { collapsed_pids, collapse } => {
-                self.get_tree_data(collapsed_pids, stored_data, collapse)
-            }
+            ProcWidgetMode::Tree {
+                collapsed_pids,
+                collapse,
+            } => self.get_tree_data(collapsed_pids, stored_data, collapse),
         };
         self.table.set_data(data);
         self.force_update_data = false;
