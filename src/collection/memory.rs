@@ -2,16 +2,16 @@
 
 use std::num::NonZeroU64;
 
-pub(crate) use self::sysinfo::{get_ram_usage, get_swap_usage};
+pub(crate) use self::sysinfo::get_ram_usage;
 
 pub mod sysinfo;
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "windows")] {
         mod windows;
-        pub(crate) use self::windows::get_committed_usage;
+        pub(crate) use self::windows::get_swap_usage;
     } else {
-        pub(crate) use self::sysinfo::get_cache_usage;
+        pub(crate) use self::sysinfo::{get_cache_usage, get_swap_usage};
     }
 }
 

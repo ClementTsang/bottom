@@ -31,7 +31,9 @@ Note that key bindings are generally case-sensitive.
 | ------------ | -------------------------------------------------------------- |
 | ++"Scroll"++ | Scrolling up or down zooms in or out of the graph respectively |
 
-## Calculations
+## How are memory values determined?
+
+### Linux
 
 Memory usage is calculated using the following formula based on values from `/proc/meminfo` (based on [htop's implementation](https://github.com/htop-dev/htop/blob/976c6123f41492aaf613b9d172eef1842fb7b0a3/linux/LinuxProcessList.c#L1584)):
 
@@ -40,3 +42,10 @@ MemTotal - MemFree - Buffers - (Cached + SReclaimable - Shmem)
 ```
 
 You can find more info on `/proc/meminfo` and its fields [here](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/s2-proc-meminfo).
+
+### Windows
+
+In Windows, we calculate swap by querying `Get-Counter "\Paging File(*)\% Usage"`. This
+is also what some libraries like [psutil](https://github.com/giampaolo/psutil/blob/master/psutil/arch/windows/mem.c) use. However, note there are also a few other valid methods of
+representing "swap" in Windows (e.g. using `GetPerformanceInfo`), which all slightly don't
+match.
