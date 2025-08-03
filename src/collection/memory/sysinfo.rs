@@ -20,6 +20,7 @@ pub(crate) fn get_ram_usage(sys: &System) -> Option<MemData> {
 }
 
 /// Returns SWAP usage.
+#[cfg(not(target_os = "windows"))]
 pub(crate) fn get_swap_usage(sys: &System) -> Option<MemData> {
     get_usage(sys.used_swap(), sys.total_swap())
 }

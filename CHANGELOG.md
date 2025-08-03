@@ -52,6 +52,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1570](https://github.com/ClementTsang/bottom/pull/1570): Consider `$XDG_CONFIG_HOME` on macOS when looking for a default config path in a backwards-compatible fashion.
 - [#1686](https://github.com/ClementTsang/bottom/pull/1686): Allow hyphenated arguments to work as well (e.g. `--autohide-time`).
 - [#1701](https://github.com/ClementTsang/bottom/pull/1701): Redesign process kill dialog.
+- [#1769](https://github.com/ClementTsang/bottom/pull/1769): Change how we calculate swap usage in Windows.
 
 ### Other
 
