@@ -1618,36 +1618,40 @@ mod test {
     /// Sanity test to ensure tree collapse logic works, both when enabled-by-default or disabled-by-default.
     #[test]
     fn test_tree_collapse() {
-        let mut collapsed_by_default = TreeCollapsed::new(true);
+        {
+            let mut collapsed_by_default = TreeCollapsed::new(true);
 
-        assert!(collapsed_by_default.is_collapsed(1));
+            assert!(collapsed_by_default.is_collapsed(1));
 
-        collapsed_by_default.collapse(1);
-        assert!(collapsed_by_default.is_collapsed(1));
+            collapsed_by_default.collapse(1);
+            assert!(collapsed_by_default.is_collapsed(1));
 
-        collapsed_by_default.expand(1);
-        assert!(!collapsed_by_default.is_collapsed(1));
+            collapsed_by_default.expand(1);
+            assert!(!collapsed_by_default.is_collapsed(1));
 
-        collapsed_by_default.toggle(1);
-        assert!(collapsed_by_default.is_collapsed(1));
+            collapsed_by_default.toggle(1);
+            assert!(collapsed_by_default.is_collapsed(1));
 
-        collapsed_by_default.toggle(1);
-        assert!(!collapsed_by_default.is_collapsed(1));
+            collapsed_by_default.toggle(1);
+            assert!(!collapsed_by_default.is_collapsed(1));
+        }
 
-        let mut expanded_by_default = TreeCollapsed::new(false);
+        {
+            let mut expanded_by_default = TreeCollapsed::new(false);
 
-        assert!(!collapsed_by_default.is_collapsed(1));
+            assert!(!expanded_by_default.is_collapsed(1));
 
-        expanded_by_default.collapse(1);
-        assert!(expanded_by_default.is_collapsed(1));
+            expanded_by_default.collapse(1);
+            assert!(expanded_by_default.is_collapsed(1));
 
-        expanded_by_default.expand(1);
-        assert!(!expanded_by_default.is_collapsed(1));
+            expanded_by_default.expand(1);
+            assert!(!expanded_by_default.is_collapsed(1));
 
-        expanded_by_default.toggle(1);
-        assert!(expanded_by_default.is_collapsed(1));
+            expanded_by_default.toggle(1);
+            assert!(expanded_by_default.is_collapsed(1));
 
-        expanded_by_default.toggle(1);
-        assert!(!expanded_by_default.is_collapsed(1));
+            expanded_by_default.toggle(1);
+            assert!(!expanded_by_default.is_collapsed(1));
+        }
     }
 }
