@@ -15,8 +15,8 @@ use windows::{
 
 use crate::collection::memory::MemData;
 
-/// Get swap memory usage on Windows. This does it by using a WMI query; this is based
-/// on the technique done by psutil [here](https://github.com/giampaolo/psutil/pull/2160).
+/// Get swap memory usage on Windows. This does it by using checking Windows' performance counters.
+/// This is based on the technique done by psutil [here](https://github.com/giampaolo/psutil/pull/2160).
 ///
 /// Also see:
 /// - <https://github.com/GuillaumeGomez/sysinfo/blob/master/src/windows/system.rs>
