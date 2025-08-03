@@ -63,13 +63,7 @@ fn convert_rgb_to_color(rgb_str: &str) -> Result<Color, String> {
 
     let rgb = rgb_list
         .iter()
-        .filter_map(|val| {
-            if let Ok(res) = (*(*val)).to_string().trim().parse::<u8>() {
-                Some(res)
-            } else {
-                None
-            }
-        })
+        .filter_map(|val| (*(*val)).to_string().trim().parse::<u8>().ok())
         .collect::<Vec<_>>();
 
     if rgb.len() == 3 {
@@ -135,8 +129,8 @@ macro_rules! set_style {
             match &style {
                 TextStyleConfig::Colour(colour) => {
                     $palette_field = $palette_field.fg(
-                        crate::options::config::style::utils::str_to_colour(&colour.0)
-                            .map_err(|err| match stringify!($config_location).split_once(".") {
+                        crate::options::config::style::utils::str_to_colour(&colour.0).map_err(
+                            |err| match stringify!($config_location).split_once(".") {
                                 Some((_, loc)) => crate::options::OptionError::config(format!(
                                     "Please update 'styles.{loc}.{}' in your config file. {err}",
                                     stringify!($field)
@@ -145,55 +139,71 @@ macro_rules! set_style {
                                     "Please update 'styles.{}' in your config file. {err}",
                                     stringify!($field)
                                 )),
-                            })?
+                            },
+                        )?,
                     );
                 }
-                TextStyleConfig::TextStyle {color, bg_color, bold, italics} => {
+                TextStyleConfig::TextStyle {
+                    color,
+                    bg_color,
+                    bold,
+                    italics,
+                } => {
                     if let Some(fg) = &color {
-                        $palette_field = $palette_field.fg(
-                            crate::options::config::style::utils::str_to_colour(&fg.0)
-                                .map_err(|err| match stringify!($config_location).split_once(".") {
-                                    Some((_, loc)) => crate::options::OptionError::config(format!(
-                                        "Please update 'styles.{loc}.{}' in your config file. {err}",
-                                        stringify!($field)
-                                    )),
-                                    None => crate::options::OptionError::config(format!(
-                                        "Please update 'styles.{}' in your config file. {err}",
-                                        stringify!($field)
-                                    )),
-                                })?
-                        );
+                        $palette_field = $palette_field
+                            .fg(crate::options::config::style::utils::str_to_colour(
+                            &fg.0,
+                        )
+                        .map_err(|err| {
+                            match stringify!($config_location).split_once(".") {
+                                Some((_, loc)) => crate::options::OptionError::config(format!(
+                                    "Please update 'styles.{loc}.{}' in your config file. {err}",
+                                    stringify!($field)
+                                )),
+                                None => crate::options::OptionError::config(format!(
+                                    "Please update 'styles.{}' in your config file. {err}",
+                                    stringify!($field)
+                                )),
+                            }
+                        })?);
                     }
 
                     if let Some(bg) = &bg_color {
-                        $palette_field = $palette_field.bg(
-                            crate::options::config::style::utils::str_to_colour(&bg.0)
-                                .map_err(|err| match stringify!($config_location).split_once(".") {
-                                    Some((_, loc)) => crate::options::OptionError::config(format!(
-                                        "Please update 'styles.{loc}.{}' in your config file. {err}",
-                                        stringify!($field)
-                                    )),
-                                    None => crate::options::OptionError::config(format!(
-                                        "Please update 'styles.{}' in your config file. {err}",
-                                        stringify!($field)
-                                    )),
-                                })?
-                        );
+                        $palette_field = $palette_field
+                            .bg(crate::options::config::style::utils::str_to_colour(
+                            &bg.0,
+                        )
+                        .map_err(|err| {
+                            match stringify!($config_location).split_once(".") {
+                                Some((_, loc)) => crate::options::OptionError::config(format!(
+                                    "Please update 'styles.{loc}.{}' in your config file. {err}",
+                                    stringify!($field)
+                                )),
+                                None => crate::options::OptionError::config(format!(
+                                    "Please update 'styles.{}' in your config file. {err}",
+                                    stringify!($field)
+                                )),
+                            }
+                        })?);
                     }
 
                     if let Some(bold) = &bold {
                         if *bold {
-                            $palette_field = $palette_field.add_modifier(tui::style::Modifier::BOLD);
+                            $palette_field =
+                                $palette_field.add_modifier(tui::style::Modifier::BOLD);
                         } else {
-                            $palette_field = $palette_field.remove_modifier(tui::style::Modifier::BOLD);
+                            $palette_field =
+                                $palette_field.remove_modifier(tui::style::Modifier::BOLD);
                         }
                     }
 
                     if let Some(italics) = &italics {
                         if *italics {
-                            $palette_field = $palette_field.add_modifier(tui::style::Modifier::ITALIC);
+                            $palette_field =
+                                $palette_field.add_modifier(tui::style::Modifier::ITALIC);
                         } else {
-                            $palette_field = $palette_field.remove_modifier(tui::style::Modifier::ITALIC);
+                            $palette_field =
+                                $palette_field.remove_modifier(tui::style::Modifier::ITALIC);
                         }
                     }
                 }
@@ -247,16 +257,18 @@ macro_rules! set_colour_list {
     };
 }
 
-pub(super) use {opt, set_colour, set_colour_list, set_style};
+pub(super) use opt;
+pub(super) use set_colour;
+pub(super) use set_colour_list;
+pub(super) use set_style;
 
 #[cfg(test)]
 mod test {
 
     use tui::style::{Modifier, Style};
 
-    use crate::options::config::style::{ColorStr, TextStyleConfig};
-
     use super::*;
+    use crate::options::config::style::{ColorStr, TextStyleConfig};
 
     #[test]
     fn general_str_to_colour() {

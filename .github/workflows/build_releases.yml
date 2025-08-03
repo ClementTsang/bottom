@@ -1,11 +1,10 @@
 # Builds the following releases:
-# - Binary releases
+# - Binaries
+# - Binaries via VMs
+# - Cirrus binaries (currently just Linux 2.17)
+# - MSI installer for Windows (.msi)
 # - .deb releases
 # - .rpm releases
-# - MSI installer for Windows (.msi)
-# - Cirrus CI binaries
-#   - FreeBSD (x86_64)
-#   - macOS (aarch64)
 
 name: "build releases"
 
@@ -48,50 +47,50 @@ jobs:
           #
           # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               generate-other-artifacts: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "x86_64-unknown-linux-musl",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "i686-unknown-linux-musl",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "aarch64-unknown-linux-gnu",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "aarch64-unknown-linux-musl",
               cross: true,
             }
 
           # macOS (x86-64 and aarch64)
-          - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-13", target: "x86_64-apple-darwin", cross: false }
           - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
 
           # Windows (x86-64, x86)
           - {
-              os: "windows-2019",
+              os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
             }
-          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: false }
+          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false }
           - {
-              os: "windows-2019",
+              os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
               cross: false,
             }
@@ -99,26 +98,26 @@ jobs:
           # ======= Unsupported targets =======
           # armv7
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
             }
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "armv7-unknown-linux-musleabihf",
               cross: true,
             }
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
             }
 
           # Risc-V 64gc
           - {
-              os: "ubuntu-20.04",
+              os: "ubuntu-22.04",
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
             }
@@ -130,12 +129,6 @@ jobs:
       - name: Checkout repository
         if: matrix.info.container == ''
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 1
-
-      - name: Checkout repository (non-GitHub container)
-        if: matrix.info.container != ''
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           fetch-depth: 1
 
@@ -172,7 +165,7 @@ jobs:
           mv "$MANPAGE_DIR" manpage
 
       - name: Bundle release and completion (Windows)
-        if: matrix.info.os == 'windows-2019'
+        if: matrix.info.os == 'windows-2022'
         shell: bash
         run: |
           cp target/${{ matrix.info.target }}/release/btm.exe btm.exe
@@ -181,12 +174,12 @@ jobs:
           echo "ASSET=bottom_${{ matrix.info.target }}.zip" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
-        if: matrix.info.os != 'windows-2019'
+        if: matrix.info.os != 'windows-2022'
         shell: bash
         run: |
           cp target/${{ matrix.info.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz" >> $GITHUB_ENV
+          tar -czvf bottom_${{ matrix.info.target }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.info.target }}.tar.gz" >> $GITHUB_ENV
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
@@ -224,12 +217,92 @@ jobs:
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: "release-${{ matrix.info.target }}${{ matrix.info.suffix }}"
+          name: "release-${{ matrix.info.target }}"
+          path: release
+
+  build-vm:
+    name: "Build binaries via VMs"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          # Seems like cross's FreeBSD image is a bit broken? I get build errors,
+          # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
+          #
+          # Alas, that's why we do it with VMs.
+          - {
+              type: "freebsd",
+              os_release: "15.0",
+              target: "x86_64-unknown-freebsd",
+            }
+          - {
+              type: "freebsd",
+              os_release: "14.2",
+              target: "x86_64-unknown-freebsd",
+            }
+          - {
+              type: "freebsd",
+              os_release: "13.5",
+              target: "x86_64-unknown-freebsd",
+            }
+    steps:
+      - name: Checkout repository
+        if: matrix.info.container == ''
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 1
+
+      - name: Build (FreeBSD)
+        if: ${{ matrix.info.type == 'freebsd' }}
+        uses: vmactions/freebsd-vm@c3ae29a132c8ef1924775414107a97cac042aad5 # v1.2.0
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
+
+      - name: Move automatically generated completion/manpage
+        shell: bash
+        run: |
+          mv "$COMPLETION_DIR" completion
+          mv "$MANPAGE_DIR" manpage
+
+      - name: Bundle release and completion
+        shell: bash
+        run: |
+          cp target/${{ matrix.info.target }}/release/btm ./btm
+          tar -czvf bottom_${{ matrix.info.target }}-${{ matrix.info.os_release }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.info.target }}-${{ matrix.info.os_release }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Generate artifact attestation for file
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        with:
+          subject-path: ${{ env.ASSET }}
+
+      - name: Create release directory for artifact, move file
+        shell: bash
+        run: |
+          mkdir release
+          mv ${{ env.ASSET }} release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        with:
+          retention-days: 3
+          name: "release-${{ matrix.info.target }}-${{ matrix.info.os_release }}"
           path: release
 
   build-msi:
-    name: "Build MSI installer"
-    runs-on: "windows-2019"
+    name: "Build MSI (WiX) installer"
+    runs-on: "windows-2022"
     timeout-minutes: 12
     steps:
       - name: Checkout repository
@@ -252,13 +325,17 @@ jobs:
           toolchain: stable
           target: x86_64-pc-windows-msvc
 
+      - name: Install cargo-wix
+        shell: powershell
+        run: |
+          cargo install cargo-wix --version 0.3.8 --locked
+
       - name: Build MSI file
         shell: powershell
         env:
-          BTM_GENERATE: ""
+          BTM_GENERATE: true
         run: |
-          cargo install cargo-wix --version 0.3.8 --locked
-          cargo wix
+          cargo wix --nocapture
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
@@ -318,7 +395,7 @@ jobs:
 
   build-deb:
     name: "Build .deb software packages"
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-22.04"
     timeout-minutes: 12
     strategy:
       fail-fast: false

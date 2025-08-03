@@ -1,5 +1,5 @@
-# Main CI workflow to validate PRs and branches are correctly formatted
-# and pass tests.
+# Main CI workflow to validate that files are formatted correctly, pass tests,
+# and pass lints.
 #
 # CI workflow was based on a lot of work from other people:
 # - https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
@@ -8,16 +8,12 @@
 # - https://matklad.github.io/2021/09/04/fast-rust-builds.html
 #
 # Supported platforms run the following tasks:
-# - cargo fmt
-# - cargo test (built/test in separate steps)
-# - cargo clippy (apparently faster to do it after the build/test)
+# - Format
+# - Test (built/test in separate steps)
+# - Clippy (apparently faster to do it after the build/test)
 #
 # Unsupported platforms run the following tasks:
-# - cargo build
-#
-# Note that not all platforms are tested using this CI action! There are some
-# tested by Cirrus CI due to (free) platform limitations on GitHub. Currently,
-# this is just macOS M1 and FreeBSD.
+# - Clippy
 
 name: ci
 
@@ -77,10 +73,10 @@ jobs:
               target: "aarch64-unknown-linux-gnu",
               cross: true,
             }
-          - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-13", target: "x86_64-apple-darwin", cross: false }
           - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
           - {
-              os: "windows-2019",
+              os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
             }
@@ -97,7 +93,7 @@ jobs:
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # 2.7.8
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
@@ -106,6 +102,7 @@ jobs:
       - name: Check cargo fmt
         run: cargo fmt --all -- --check
 
+      # TODO: add junit output using nextest for codecov (https://docs.codecov.com/docs/test-analytics)
       - name: Build tests
         uses: ClementTsang/cargo-action@v0.0.5
         with:
@@ -137,6 +134,7 @@ jobs:
           RUST_BACKTRACE: full
 
   # Try running cargo build on all other platforms.
+  #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
   other-check:
@@ -165,9 +163,9 @@ jobs:
               cross: true,
             }
 
-          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: false }
+          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false }
           - {
-              os: "windows-2019",
+              os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
               cross: false,
             }
@@ -180,13 +178,13 @@ jobs:
               rust: "beta",
             }
           - {
-              os: "macos-12",
-              target: "x86_64-apple-darwin",
+              os: "macos-14",
+              target: "aarch64-apple-darwin",
               cross: false,
               rust: "beta",
             }
           - {
-              os: "windows-2019",
+              os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
               rust: "beta",
@@ -226,14 +224,11 @@ jobs:
               os: "ubuntu-latest",
               target: "aarch64-linux-android",
               cross: true,
-              cross-version: "git:cabfc3b02d1edec03869fabdabf6a7f8b0519160",
+              cross-version: "git:df3309709a4a26b3dc3b1567239c3f38b9da0425", # latest version that I've found works so far
               no-default-features: true,
               no-clippy: true,
             }
 
-          # Seems like cross' FreeBSD image is a bit broken? I
-          # get build errors, may be related to this issue:
-          # https://github.com/cross-rs/cross/issues/1291
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -246,31 +241,13 @@ jobs:
           components: "clippy"
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # 2.7.8
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      # - name: Test (default features)
-      #   uses: ClementTsang/cargo-action@v0.0.5
-      #   if: ${{ matrix.info.no-default-features != true }}
-      #   with:
-      #     command: test
-      #     args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
-      #     use-cross: ${{ matrix.info.cross }}
-      #     cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
-
-      # - name: Test (no features enabled)
-      #   uses: ClementTsang/cargo-action@v0.0.5
-      #   if: ${{ matrix.info.no-default-features == true  }}
-      #   with:
-      #     command: test
-      #     args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
-      #     use-cross: ${{ matrix.info.cross }}
-      #     cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
-
-      - name: Check (default features)
+      - name: Clippy (default features)
         uses: ClementTsang/cargo-action@v0.0.5
         if: ${{ matrix.info.no-default-features != true }}
         with:
@@ -279,7 +256,7 @@ jobs:
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
-      - name: Check (no features enabled)
+      - name: Clippy (no features enabled)
         uses: ClementTsang/cargo-action@v0.0.5
         if: ${{ matrix.info.no-default-features == true  }}
         with:
@@ -298,14 +275,23 @@ jobs:
       fail-fast: false
       matrix:
         info:
+          # Seems like cross's FreeBSD image is a bit broken? I get build errors,
+          # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
+          #
+          # Alas, that's why we do it with VMs.
           - {
               type: "freebsd",
-              os_release: "14.1",
+              os_release: "15.0",
               target: "x86_64-unknown-freebsd",
             }
           - {
               type: "freebsd",
-              os_release: "13.3",
+              os_release: "14.2",
+              target: "x86_64-unknown-freebsd",
+            }
+          - {
+              type: "freebsd",
+              os_release: "13.5",
               target: "x86_64-unknown-freebsd",
             }
     steps:
@@ -314,25 +300,19 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
-        with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
-          target: ${{ matrix.info.target }}
-
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # 2.7.8
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
           cache-all-crates: true
 
-      - name: Test FreeBSD
+      - name: Clippy (FreeBSD)
         if: ${{ matrix.info.type == 'freebsd' }}
-        uses: vmactions/freebsd-vm@v1.0.8
+        uses: vmactions/freebsd-vm@c3ae29a132c8ef1924775414107a97cac042aad5 # v1.2.0
         with:
           release: "${{ matrix.info.os_release }}"
-          envs: "CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           prepare: |
             pkg install -y curl bash
@@ -345,22 +325,22 @@ jobs:
   completion:
     name: "CI Pass Check"
     needs: [supported, other-check, vm-check]
-    if: ${{ needs.supported.result != 'skipped' && needs.other-check.result != 'skipped' && needs.vm-check.result != 'skipped' }}
+    if: ${{ needs.supported.result != 'skipped' || needs.other-check.result != 'skipped' || needs.vm-check.result != 'skipped' }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
-        if: ${{ needs.supported.result == 'success' && needs.other-check.result == 'success' && needs.vm-check.result == 'success' }}
+        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.other-check.result == 'success' || needs.other-check.result == 'skipped') && (needs.vm-check.result == 'success' || needs.vm-check.result == 'skipped') }}
         run: |
           echo "CI workflow completed successfully.";
 
       - name: CI Failed
-        if: ${{ needs.supported.result == 'failure' && needs.other-check.result == 'failure' && needs.vm-check.result == 'failure' }}
+        if: ${{ needs.supported.result == 'failure' || needs.other-check.result == 'failure' || needs.vm-check.result == 'failure' }}
         run: |
           echo "CI workflow failed.";
           exit 1;
 
       - name: CI Cancelled
-        if: ${{ needs.supported.result == 'cancelled' && needs.other-check.result == 'cancelled' && needs.vm-check.result == 'cancelled' }}
+        if: ${{ needs.supported.result == 'cancelled' || needs.other-check.result == 'cancelled' || needs.vm-check.result == 'cancelled' }}
         run: |
           echo "CI workflow was cancelled.";
           exit 1;

@@ -16,8 +16,9 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use config::style::ColourPalette;
 pub use config::Config;
+use config::style::Styles;
+use data::TemperatureType;
 pub(crate) use error::{OptionError, OptionResult};
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
@@ -27,13 +28,12 @@ use starship_battery::Manager;
 
 use self::{
     args::BottomArgs,
-    config::{layout::Row, IgnoreList, StringOrNum},
+    config::{IgnoreList, StringOrNum, layout::Row},
 };
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::components::time_chart::LegendPosition,
+    canvas::components::time_graph::LegendPosition,
     constants::*,
-    data_collection::temperature::TemperatureType,
     utils::data_units::DataUnit,
     widgets::*,
 };
@@ -144,7 +144,7 @@ fn create_config_at_path(path: &Path) -> anyhow::Result<Config> {
 /// - If the user does NOT pass in a path explicitly, then just show a warning,
 ///   but continue. This is in case they do not want to write a default config file at
 ///   the XDG locations, for example.
-pub fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config> {
+pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config> {
     let adjusted_config_path = get_config_path(config_path);
 
     match &adjusted_config_path {
@@ -195,9 +195,8 @@ pub fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config
     }
 }
 
-pub(crate) fn init_app(
-    args: BottomArgs, config: Config,
-) -> Result<(App, BottomLayout, ColourPalette)> {
+/// Initialize the app.
+pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomLayout, Styles)> {
     use BottomWidgetType::*;
 
     // Since everything takes a reference, but we want to take ownership here to
@@ -205,7 +204,7 @@ pub(crate) fn init_app(
     let args = &args;
     let config = &config;
 
-    let styling = ColourPalette::new(args, config)?;
+    let styling = Styles::new(args, config)?;
 
     let (widget_layout, default_widget_id, default_widget_type_option) =
         get_widget_layout(args, config)
@@ -225,6 +224,7 @@ pub(crate) fn init_app(
     let is_use_regex = is_flag_enabled!(regex, args.process, config);
     let is_default_tree = is_flag_enabled!(tree, args.process, config);
     let is_default_command = is_flag_enabled!(process_command, args.process, config);
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, args.process, config));
     let process_memory_as_value = is_flag_enabled!(process_memory_as_value, args.process, config);
     let tree_collapse = is_flag_enabled!(tree_collapse, args.process, config);
@@ -298,6 +298,7 @@ pub(crate) fn init_app(
             args.general,
             config
         ),
+        #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         is_advanced_kill,
         memory_legend_position,
         network_legend_position,
@@ -435,7 +436,6 @@ pub(crate) fn init_app(
             Proc | Disk | Temp => BasicTableWidgetState {
                 currently_displayed_widget_type: initial_widget_type,
                 currently_displayed_widget_id: initial_widget_id,
-                widget_id: 100,
                 left_tlc: None,
                 left_brc: None,
                 right_tlc: None,
@@ -444,7 +444,6 @@ pub(crate) fn init_app(
             _ => BasicTableWidgetState {
                 currently_displayed_widget_type: Proc,
                 currently_displayed_widget_id: DEFAULT_WIDGET_ID,
-                widget_id: 100,
                 left_tlc: None,
                 left_brc: None,
                 right_tlc: None,
@@ -499,7 +498,7 @@ pub(crate) fn init_app(
         proc_state: ProcState::init(proc_state_map),
         temp_state: TempState::init(temp_state_map),
         disk_state: DiskState::init(disk_state_map),
-        battery_state: BatteryState::init(battery_state_map),
+        battery_state: AppBatteryState::init(battery_state_map),
         basic_table_widget_state,
     };
 
@@ -676,8 +675,11 @@ macro_rules! parse_ms_option {
     }};
 }
 
+/// How fast the screen refreshes
 #[inline]
 fn get_update_rate(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
+    const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
+
     parse_ms_option!(
         &args.general.rate,
         config.flags.as_ref().and_then(|flags| flags.rate.as_ref()),
@@ -741,6 +743,8 @@ fn get_dedicated_avg_row(config: &Config) -> bool {
 fn get_default_time_value(
     args: &BottomArgs, config: &Config, retention_ms: u64,
 ) -> OptionResult<u64> {
+    const DEFAULT_TIME_MILLISECONDS: u64 = 60 * 1000; // Defaults to 1 min.
+
     parse_ms_option!(
         &args.general.default_time_value,
         config
@@ -756,6 +760,8 @@ fn get_default_time_value(
 
 #[inline]
 fn get_time_interval(args: &BottomArgs, config: &Config, retention_ms: u64) -> OptionResult<u64> {
+    const TIME_CHANGE_MILLISECONDS: u64 = 15 * 1000; // How much to increment each time
+
     parse_ms_option!(
         &args.general.time_delta,
         config
@@ -1015,7 +1021,7 @@ fn get_memory_legend_position(
 mod test {
     use clap::Parser;
 
-    use super::{get_time_interval, Config};
+    use super::{Config, get_time_interval};
     use crate::{
         app::App,
         args::BottomArgs,
@@ -1238,12 +1244,12 @@ mod test {
     #[cfg(target_os = "macos")]
     #[test]
     fn test_get_config_path_macos() {
-        use super::get_config_path;
-        use super::DEFAULT_CONFIG_FILE_LOCATION;
         use std::path::PathBuf;
 
+        use super::{DEFAULT_CONFIG_FILE_LOCATION, get_config_path};
+
         // Case three: no previous config, no XDG var.
-        // SAFETY: this is the only test that does this
+        // SAFETY: This is fine, this is just a test, and no other test affects env vars.
         unsafe {
             std::env::remove_var("XDG_CONFIG_HOME");
         }
@@ -1261,7 +1267,10 @@ mod test {
         }
 
         // Case two: no previous config, XDG var exists.
-        std::env::set_var("XDG_CONFIG_HOME", "/tmp");
+        // SAFETY: This is fine, this is just a test, and no other test affects env vars.
+        unsafe {
+            std::env::set_var("XDG_CONFIG_HOME", "/tmp");
+        }
         let mut case_2 = PathBuf::new();
         case_2.push("/tmp");
         case_2.push(DEFAULT_CONFIG_FILE_LOCATION);

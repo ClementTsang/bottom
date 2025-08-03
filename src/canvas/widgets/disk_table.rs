@@ -1,10 +1,10 @@
-use tui::{layout::Rect, Frame};
+use tui::{Frame, layout::Rect};
 
 use crate::{
     app,
     canvas::{
-        components::data_table::{DrawInfo, SelectionState},
         Painter,
+        components::data_table::{DrawInfo, SelectionState},
     },
 };
 

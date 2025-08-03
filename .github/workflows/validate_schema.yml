@@ -9,7 +9,10 @@ on:
       - main
     paths:
       - "schema/**"
+      - "scripts/schema/**"
       - ".github/workflows/validate_schema.yml"
+      - "src/bin/schema.rs"
+      - "Cargo.toml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,7 +28,7 @@ jobs:
         uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
         with:
           skip_after_successful_duplicate: "true"
-          paths: '["schema/**", ".github/workflows/validate_schema.yml"]'
+          paths: '["schema/**", "scripts/schema/**", ".github/workflows/validate_schema.yml", "src/bin/schema.rs", "Cargo.toml"]'
           do_not_skip: '["workflow_dispatch"]'
 
   test-build-documentation:
@@ -39,9 +42,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
-          python-version: 3.11
+          python-version: 3.12
 
       - name: Install Python dependencies
         run: pip install -r scripts/schema/requirements.txt

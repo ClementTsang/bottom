@@ -29,6 +29,8 @@ use crate::utils::general::ClampExt;
 /// - [`Sortable`]: This table expects sorted data, and there are helper
 ///   functions to facilitate things like sorting based on a selected column,
 ///   shortcut column selection support, mouse column selection support, etc.
+///
+/// FIXME: We already do all the text width checks - can we skip the underlying ones?
 pub struct DataTable<DataType, Header, S = Unsortable, C = Column<Header>> {
     pub columns: Vec<C>,
     pub state: DataTableState,
@@ -69,13 +71,13 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     }
 
     /// Sets the scroll position to the first value.
-    pub fn to_first(&mut self) {
+    pub fn scroll_to_first(&mut self) {
         self.state.current_index = 0;
         self.state.scroll_direction = ScrollDirection::Up;
     }
 
     /// Sets the scroll position to the last value.
-    pub fn to_last(&mut self) {
+    pub fn scroll_to_last(&mut self) {
         self.state.current_index = self.data.len().saturating_sub(1);
         self.state.scroll_direction = ScrollDirection::Down;
     }
@@ -94,35 +96,35 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     /// Increments the scroll position if possible by a positive/negative
     /// offset. If there is a valid change, this function will also return
     /// the new position wrapped in an [`Option`].
+    ///
+    /// Note that despite the name, this handles both incrementing (positive
+    /// change) and decrementing (negative change).
     pub fn increment_position(&mut self, change: i64) -> Option<usize> {
-        let max_index = self.data.len();
-        let current_index = self.state.current_index;
+        let num_entries = self.data.len();
 
-        if change == 0
-            || (change > 0 && current_index == max_index)
-            || (change < 0 && current_index == 0)
-        {
+        if num_entries == 0 {
             return None;
         }
 
-        let csp: Result<i64, _> = self.state.current_index.try_into();
-        if let Ok(csp) = csp {
-            let proposed: Result<usize, _> = (csp + change).try_into();
-            if let Ok(proposed) = proposed {
-                if proposed < self.data.len() {
-                    self.state.current_index = proposed;
-                    self.state.scroll_direction = if change < 0 {
-                        ScrollDirection::Up
-                    } else {
-                        ScrollDirection::Down
-                    };
+        let Ok(current_index): Result<i64, _> = self.state.current_index.try_into() else {
+            return None;
+        };
 
-                    return Some(self.state.current_index);
-                }
-            }
-        }
+        // We do this to clamp the proposed index to 0 if the change is greater
+        // than the number of entries left from the current index. This gives
+        // a more intuitive behaviour when using things like page up/down.
+        let proposed = current_index + change;
 
-        None
+        // We check num_entries > 0 above.
+        self.state.current_index = proposed.clamp(0, (num_entries - 1) as i64) as usize;
+
+        self.state.scroll_direction = if change < 0 {
+            ScrollDirection::Up
+        } else {
+            ScrollDirection::Down
+        };
+
+        Some(self.state.current_index)
     }
 
     /// Updates the scroll position to a selected index.
@@ -181,8 +183,7 @@ mod test {
         }
     }
 
-    #[test]
-    fn test_data_table_operations() {
+    fn create_test_table() -> DataTable<TestType, &'static str> {
         let columns = [Column::hard("a", 10), Column::hard("b", 10)];
         let props = DataTableProps {
             title: Some("test".into()),
@@ -194,16 +195,27 @@ mod test {
         };
         let styling = DataTableStyling::default();
 
-        let mut table = DataTable::new(columns, props, styling);
+        DataTable::new(columns, props, styling)
+    }
+
+    #[test]
+    fn test_scrolling() {
+        let mut table = create_test_table();
         table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
 
-        table.to_last();
+        table.scroll_to_last();
         assert_eq!(table.current_index(), 4);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
 
-        table.to_first();
+        table.scroll_to_first();
         assert_eq!(table.current_index(), 0);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Up);
+    }
+
+    #[test]
+    fn test_set_position() {
+        let mut table = create_test_table();
+        table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
 
         table.set_position(4);
         assert_eq!(table.current_index(), 4);
@@ -213,6 +225,16 @@ mod test {
         assert_eq!(table.current_index(), 4);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
         assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
+    }
+
+    #[test]
+    fn test_increment_position() {
+        let mut table = create_test_table();
+        table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
+
+        table.set_position(4);
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
 
         table.increment_position(-1);
         assert_eq!(table.current_index(), 3);
@@ -240,6 +262,30 @@ mod test {
         assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
 
         table.increment_position(10);
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+        assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
+
+        // Make sure that overscrolling up causes clamping.
+        table.increment_position(-10);
+        assert_eq!(table.current_index(), 0);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Up);
+        assert_eq!(table.current_item(), Some(&TestType { index: 0 }));
+
+        // Make sure that overscrolling down causes clamping.
+        table.increment_position(100);
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+        assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
+    }
+
+    /// A test to ensure that scroll offsets are correctly handled when we "lose" rows.
+    #[test]
+    fn test_lose_data() {
+        let mut table = create_test_table();
+        table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
+
+        table.set_position(4);
         assert_eq!(table.current_index(), 4);
         assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
         assert_eq!(table.current_item(), Some(&TestType { index: 4 }));

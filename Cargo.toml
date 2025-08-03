@@ -1,21 +1,20 @@
 [package]
 name = "bottom"
 version = "0.11.0"
-authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
-edition = "2021"
 repository = "https://github.com/ClementTsang/bottom"
-keywords = ["cross-platform", "monitoring", "cli", "top", "tui"]
 license = "MIT"
-categories = ["command-line-utilities", "visualization"]
 description = "A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows."
 documentation = "https://clementtsang.github.io/bottom/stable"
 readme = "README.md"
 default-run = "btm"
 build = "build.rs"
+authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
+keywords = ["cross-platform", "monitoring", "cli", "top", "tui"]
+categories = ["command-line-utilities", "visualization"]
 exclude = [
     ".cargo-husky/",
     ".github/",
-    ".idea",
+    ".idea/",
     ".vscode/",
     "assets/",
     "desktop/",
@@ -37,15 +36,139 @@ exclude = [
     "rust-toolchain.toml",
     "rustfmt.toml",
 ]
+edition = "2021"
 # The oldest version I've tested that should still build - note this is not an official MSRV!
-rust-version = "1.81.0"
+rust-version = "1.81"
 
-[[bin]]
-name = "btm"
-path = "src/main.rs"
+[lib]
 test = true
 doctest = true
 doc = true
+
+[[bin]]
+name = "btm"
+path = "src/bin/main.rs"
+doc = false
+
+[[bin]]
+name = "schema"
+path = "src/bin/schema.rs"
+test = false
+doctest = false
+doc = false
+required-features = ["generate_schema"]
+
+[features]
+# Used for general builds.
+battery = ["starship-battery"]
+nvidia = ["nvml-wrapper"]
+gpu = ["nvidia"]
+zfs = []
+deploy = ["battery", "gpu", "zfs"]
+default = ["deploy"]
+
+# Should not be included in builds.
+logging = ["fern", "log", "time"]
+generate_schema = ["schemars", "serde_json", "strum"]
+
+[dependencies]
+anyhow = "1.0.98"
+backtrace = "0.3.75"
+cfg-if = "1.0.1"
+clap = { version = "4.5.40", features = [
+    "default",
+    "cargo",
+    "wrap_help",
+    "derive",
+] }
+concat-string = "1.0.1"
+crossterm = "0.29.0"
+ctrlc = { version = "3.4.7", features = ["termination"] }
+dirs = "6.0.0"
+hashbrown = "0.15.4"
+humantime = "2.2.0"
+indexmap = "2.10.0"
+indoc = "2.0.6"
+itertools = "0.14.0"
+nvml-wrapper = { version = "0.11.0", optional = true, features = [
+    "legacy-functions",
+] }
+regex = "1.11.1"
+serde = { version = "1.0.219", features = ["derive"] }
+starship-battery = { version = "0.10.2", optional = true }
+sysinfo = "=0.36.1"
+timeless = "0.0.14-alpha"
+toml_edit = { version = "0.22.27", features = ["serde"] }
+tui = { version = "0.29.0", package = "ratatui", features = [
+    "unstable-rendered-line-info",
+] }
+unicode-ellipsis = "0.3.0"
+unicode-segmentation = "1.12.0"
+unicode-width = "0.2.0"
+
+# Used for logging. Mostly a debugging tool.
+fern = { version = "0.7.1", optional = true }
+log = { version = "0.4.27", optional = true }
+time = { version = "0.3.41", features = [
+    "local-offset",
+    "formatting",
+    "macros",
+], optional = true }
+
+# These are just used for JSON schema generation.
+schemars = { version = "0.9.0", optional = true }
+serde_json = { version = "1.0.140", optional = true }
+strum = { version = "0.27.1", features = ["derive"], optional = true }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.174"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+rustix = { version = "1.0.7", features = ["fs", "param"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "0.10.1"
+mach2 = "0.4.3"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.61.3", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_System_IO",
+    "Win32_System_Ioctl",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Threading",
+] }
+
+[target.'cfg(target_os = "freebsd")'.dependencies]
+serde_json = { version = "1.0.140" }
+sysctl = { version = "0.6.0" }
+filedescriptor = "0.8.3"
+
+[dev-dependencies]
+assert_cmd = "2.0.17"
+cargo-husky = { version = "1.5.0", default-features = false, features = [
+    "user-hooks",
+] }
+predicates = "3.1.3"
+tempfile = { version = "3.20.0", default-features = false }
+
+[target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
+portable-pty = "0.9.0"
+
+[build-dependencies]
+clap = { version = "4.5.40", features = [
+    "default",
+    "cargo",
+    "wrap_help",
+    "derive",
+] }
+clap_complete = "4.5.54"
+clap_complete_nushell = "4.5.7"
+clap_complete_fig = "4.5.2"
+clap_mangen = "0.2.27"
+indoc = "2.0.6"
 
 # Compile dependencies with optimizations enabled, even in debug mode.
 [profile.dev.package."*"]
@@ -62,98 +185,6 @@ codegen-units = 1
 inherits = "release"
 debug = true
 strip = false
-
-[features]
-# Used for general builds.
-battery = ["starship-battery"]
-nvidia = ["nvml-wrapper"]
-gpu = ["nvidia"]
-zfs = []
-deploy = ["battery", "gpu", "zfs"]
-default = ["deploy"]
-
-# Should not be included in builds.
-logging = ["fern", "log", "time"]
-generate_schema = ["schemars", "serde_json", "strum"]
-
-[dependencies]
-anyhow = "1.0.93"
-backtrace = "0.3.74"
-cfg-if = "1.0.0"
-clap = { version = "4.5.21", features = ["default", "cargo", "wrap_help", "derive"] }
-concat-string = "1.0.1"
-crossterm = "0.28.1"
-ctrlc = { version = "3.4.5", features = ["termination"] }
-dirs = "5.0.1"
-# Maybe consider https://github.com/rust-lang/rustc-hash for some cases too?
-hashbrown = "0.15.0"
-humantime = "2.1.0"
-indexmap = "2.6.0"
-indoc = "2.0.5"
-itertools = "0.13.0"
-nvml-wrapper = { version = "0.10.0", optional = true, features = ["legacy-functions"] }
-regex = "1.11.1"
-serde = { version = "1.0.214", features = ["derive"] }
-starship-battery = { version = "0.10.0", optional = true }
-sysinfo = "=0.30.13"
-toml_edit = { version = "0.22.22", features = ["serde"] }
-tui = { version = "0.29.0", package = "ratatui" }
-unicode-ellipsis = "0.2.0"
-unicode-segmentation = "1.12.0"
-unicode-width = "0.2.0"
-
-# Used for logging.
-fern = { version = "0.7.0", optional = true }
-log = { version = "0.4.22", optional = true }
-time = { version = "0.3.36", features = ["local-offset", "formatting", "macros"], optional = true }
-
-# These are just used for JSON schema generation.
-schemars = { version = "0.8.21", optional = true }
-serde_json = { version = "1.0.132", optional = true }
-strum = { version = "0.26.3", features = ["derive"], optional = true }
-
-[target.'cfg(unix)'.dependencies]
-libc = "0.2.162"
-
-[target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "0.38.40", features = ["fs", "param"] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-core-foundation = "0.10.0"
-mach2 = "0.4.2"
-
-[target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.58.0", features = [
-    "Win32_Foundation",
-    "Win32_Security",
-    "Win32_Storage_FileSystem",
-    "Win32_System_IO",
-    "Win32_System_Ioctl",
-    "Win32_System_ProcessStatus",
-    "Win32_System_Threading",
-] }
-
-[target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.132" }
-sysctl = { version = "0.6.0" }
-filedescriptor = "0.8.2"
-
-[dev-dependencies]
-assert_cmd = "2.0.16"
-cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
-predicates = "3.1.2"
-tempfile = "3.14.0"
-
-[target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
-portable-pty = "0.8.1"
-
-[build-dependencies]
-clap = { version = "4.5.21", features = ["default", "cargo", "wrap_help", "derive"] }
-clap_complete = "4.5.38"
-clap_complete_nushell = "4.5.4"
-clap_complete_fig = "4.5.2"
-clap_mangen = "0.2.24"
-indoc = "2.0.5"
 
 [package.metadata.deb]
 section = "utility"

@@ -18,6 +18,7 @@ pub enum ProcColumn {
     CpuPercent,
     MemValue,
     MemPercent,
+    VirtualMem,
     Pid,
     Count,
     Name,
@@ -48,11 +49,12 @@ impl ProcColumn {
             ProcColumn::Command => &["Command"],
             ProcColumn::CpuPercent => &["CPU%"],
             // TODO: Change this
-            ProcColumn::MemValue | ProcColumn::MemPercent => &["Mem", "Mem%"],
+            ProcColumn::MemValue | ProcColumn::MemPercent => &["Mem", "Mem%", "Memory", "Memory%"],
+            ProcColumn::VirtualMem => &["Virt", "Virtual", "VirtMem", "Virtual Memory"],
             ProcColumn::ReadPerSecond => &["R/s", "Read", "Rps"],
             ProcColumn::WritePerSecond => &["W/s", "Write", "Wps"],
-            ProcColumn::TotalRead => &["T.Read", "TWrite"],
-            ProcColumn::TotalWrite => &["T.Write", "TRead"],
+            ProcColumn::TotalRead => &["T.Read", "TRead", "Total Read"],
+            ProcColumn::TotalWrite => &["T.Write", "TWrite", "Total Write"],
             ProcColumn::State => &["State"],
             ProcColumn::User => &["User"],
             ProcColumn::Time => &["Time"],
@@ -71,6 +73,7 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::CpuPercent => "CPU%",
             ProcColumn::MemValue => "Mem",
             ProcColumn::MemPercent => "Mem%",
+            ProcColumn::VirtualMem => "Virt",
             ProcColumn::Pid => "PID",
             ProcColumn::Count => "Count",
             ProcColumn::Name => "Name",
@@ -117,6 +120,9 @@ impl SortsRow for ProcColumn {
             }
             ProcColumn::MemValue | ProcColumn::MemPercent => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.mem_usage, &b.mem_usage));
+            }
+            ProcColumn::VirtualMem => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.virtual_mem, &b.virtual_mem));
             }
             ProcColumn::Pid => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.pid, b.pid));
@@ -184,6 +190,7 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "cpu%" => Ok(ProcColumn::CpuPercent),
             // TODO: Maybe change this in the future.
             "mem" | "mem%" => Ok(ProcColumn::MemPercent),
+            "virt" | "virtual" | "virtmem" | "virtual memory" => Ok(ProcColumn::VirtualMem),
             "pid" => Ok(ProcColumn::Pid),
             "count" => Ok(ProcColumn::Count),
             "name" => Ok(ProcColumn::Name),
@@ -214,6 +221,7 @@ impl From<&ProcColumn> for ProcWidgetColumn {
             ProcColumn::Name | ProcColumn::Command => ProcWidgetColumn::ProcNameOrCommand,
             ProcColumn::CpuPercent => ProcWidgetColumn::Cpu,
             ProcColumn::MemPercent | ProcColumn::MemValue => ProcWidgetColumn::Mem,
+            ProcColumn::VirtualMem => ProcWidgetColumn::VirtualMem,
             ProcColumn::ReadPerSecond => ProcWidgetColumn::ReadPerSecond,
             ProcColumn::WritePerSecond => ProcWidgetColumn::WritePerSecond,
             ProcColumn::TotalRead => ProcWidgetColumn::TotalRead,

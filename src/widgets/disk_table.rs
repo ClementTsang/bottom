@@ -3,19 +3,19 @@ use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 use serde::Deserialize;
 
 use crate::{
-    app::AppConfigFields,
+    app::{AppConfigFields, data::StoredData},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    options::config::style::ColourPalette,
-    utils::{data_prefixes::get_decimal_bytes, general::sort_partial_fn},
+    options::config::style::Styles,
+    utils::{data_units::get_decimal_bytes, general::sort_partial_fn},
 };
 
 #[derive(Clone, Debug)]
 pub struct DiskWidgetData {
-    pub name: Cow<'static, str>,
-    pub mount_point: Cow<'static, str>,
+    pub name: String,
+    pub mount_point: String,
     pub free_bytes: Option<u64>,
     pub used_bytes: Option<u64>,
     pub total_bytes: Option<u64>,
@@ -158,6 +158,7 @@ impl ColumnHeader for DiskColumn {
 }
 
 impl DataToCell<DiskColumn> for DiskWidgetData {
+    // FIXME: (points_rework_v1) Can we change the return type to 'a instead of 'static?
     fn to_cell(
         &self, column: &DiskColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
@@ -169,8 +170,8 @@ impl DataToCell<DiskColumn> for DiskWidgetData {
         }
 
         let text = match column {
-            DiskColumn::Disk => self.name.clone(),
-            DiskColumn::Mount => self.mount_point.clone(),
+            DiskColumn::Disk => self.name.clone().into(),
+            DiskColumn::Mount => self.mount_point.clone().into(),
             DiskColumn::Used => self.used_space(),
             DiskColumn::Free => self.free_space(),
             DiskColumn::UsedPercent => percent_string(self.used_percent()),
@@ -275,9 +276,7 @@ const fn default_disk_columns() -> [SortColumn<DiskColumn>; 8] {
 }
 
 impl DiskTableWidget {
-    pub fn new(
-        config: &AppConfigFields, palette: &ColourPalette, columns: Option<&[DiskColumn]>,
-    ) -> Self {
+    pub fn new(config: &AppConfigFields, palette: &Styles, columns: Option<&[DiskColumn]>) -> Self {
         let props = SortDataTableProps {
             inner: DataTableProps {
                 title: Some(" Disks ".into()),
@@ -315,12 +314,14 @@ impl DiskTableWidget {
     }
 
     /// Update the current table data.
-    pub fn set_table_data(&mut self, data: &[DiskWidgetData]) {
-        let mut data = data.to_vec();
+    pub fn set_table_data(&mut self, data: &StoredData) {
+        let mut data = data.disk_harvest.clone();
+
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
             column.sort_by(&mut data, self.table.order());
         }
         self.table.set_data(data);
+        self.force_update_data = false;
     }
 
     pub fn set_index(&mut self, index: usize) {

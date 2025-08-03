@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/v1.0/bottom.json",
+  "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/v0.9/bottom.json",
   "$comment": "https://clementtsang.github.io/bottom/0.9.6/configuration/config-file/default-config/",
-  "title": "Schema for bottom's configs (v1.0)",
+  "title": "Schema for bottom's configs (v0.9)",
   "type": "object",
   "definitions": {
     "row": {

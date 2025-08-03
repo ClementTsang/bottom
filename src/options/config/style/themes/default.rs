@@ -1,11 +1,13 @@
-use tui::style::{Color, Modifier, Style};
-
-use crate::options::config::style::ColourPalette;
+use tui::{
+    style::{Color, Modifier, Style},
+    widgets::BorderType,
+};
 
 use super::color;
+use crate::options::config::style::Styles;
 
-impl ColourPalette {
-    pub(crate) fn default_palette() -> Self {
+impl Styles {
+    pub(crate) fn default_style() -> Self {
         const FIRST_COLOUR: Color = Color::LightMagenta;
         const SECOND_COLOUR: Color = Color::LightYellow;
         const THIRD_COLOUR: Color = Color::LightCyan;
@@ -15,19 +17,17 @@ impl ColourPalette {
         const HIGHLIGHT_COLOUR: Color = Color::LightBlue;
         const AVG_COLOUR: Color = Color::Red;
         const ALL_COLOUR: Color = Color::Green;
-
         const DEFAULT_SELECTED_TEXT_STYLE: Style = color!(Color::Black).bg(HIGHLIGHT_COLOUR);
-
         const TEXT_COLOUR: Color = Color::Gray;
 
         Self {
-            selected_text_style: DEFAULT_SELECTED_TEXT_STYLE,
-            table_header_style: color!(HIGHLIGHT_COLOUR).add_modifier(Modifier::BOLD),
             ram_style: color!(FIRST_COLOUR),
             #[cfg(not(target_os = "windows"))]
             cache_style: color!(FIFTH_COLOUR),
             swap_style: color!(SECOND_COLOUR),
+            #[cfg(feature = "zfs")]
             arc_style: color!(THIRD_COLOUR),
+            #[cfg(feature = "gpu")]
             gpu_colours: vec![
                 color!(FOURTH_COLOUR),
                 color!(Color::LightBlue),
@@ -56,6 +56,8 @@ impl ColourPalette {
             border_style: color!(TEXT_COLOUR),
             highlighted_border_style: color!(HIGHLIGHT_COLOUR),
             text_style: color!(TEXT_COLOUR),
+            selected_text_style: DEFAULT_SELECTED_TEXT_STYLE,
+            table_header_style: color!(HIGHLIGHT_COLOUR).add_modifier(Modifier::BOLD),
             widget_title_style: color!(TEXT_COLOUR),
             graph_style: color!(TEXT_COLOUR),
             graph_legend_style: color!(TEXT_COLOUR),
@@ -64,18 +66,19 @@ impl ColourPalette {
             low_battery: color!(Color::Red),
             invalid_query_style: color!(Color::Red),
             disabled_text_style: color!(Color::DarkGray),
+            border_type: BorderType::Plain,
         }
     }
 
     pub fn default_light_mode() -> Self {
         Self {
-            selected_text_style: color!(Color::White).bg(Color::LightBlue),
-            table_header_style: color!(Color::Black).add_modifier(Modifier::BOLD),
             ram_style: color!(Color::Blue),
             #[cfg(not(target_os = "windows"))]
             cache_style: color!(Color::LightRed),
             swap_style: color!(Color::Red),
+            #[cfg(feature = "zfs")]
             arc_style: color!(Color::LightBlue),
+            #[cfg(feature = "gpu")]
             gpu_colours: vec![
                 color!(Color::LightGreen),
                 color!(Color::LightCyan),
@@ -100,11 +103,13 @@ impl ColourPalette {
             ],
             border_style: color!(Color::Black),
             text_style: color!(Color::Black),
+            selected_text_style: color!(Color::White).bg(Color::LightBlue),
+            table_header_style: color!(Color::Black).add_modifier(Modifier::BOLD),
             widget_title_style: color!(Color::Black),
             graph_style: color!(Color::Black),
             graph_legend_style: color!(Color::Black),
             disabled_text_style: color!(Color::Gray),
-            ..Self::default_palette()
+            ..Self::default_style()
         }
     }
 }

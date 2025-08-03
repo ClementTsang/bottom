@@ -17,4 +17,5 @@ macro_rules! hex {
     };
 }
 
-pub(super) use {color, hex};
+pub(super) use color;
+pub(super) use hex;

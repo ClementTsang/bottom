@@ -1,54 +1,30 @@
 use std::{borrow::Cow, num::NonZeroU16, time::Instant};
 
 use concat_string::concat_string;
-use tui::{style::Style, widgets::Row};
+use tui::widgets::Row;
 
 use crate::{
     app::AppConfigFields,
     canvas::{
+        Painter,
         components::data_table::{
             Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
             DataToCell,
         },
-        Painter,
     },
-    data_collection::cpu::CpuDataType,
-    data_conversion::CpuWidgetData,
-    options::config::{cpu::CpuDefault, style::ColourPalette},
+    collection::cpu::{CpuData, CpuDataType},
+    options::config::{cpu::CpuDefault, style::Styles},
 };
 
-#[derive(Default)]
-pub struct CpuWidgetStyling {
-    pub all: Style,
-    pub avg: Style,
-    pub entries: Vec<Style>,
-}
-
-impl CpuWidgetStyling {
-    fn from_colours(palette: &ColourPalette) -> Self {
-        let entries = if palette.cpu_colour_styles.is_empty() {
-            vec![Style::default()]
-        } else {
-            palette.cpu_colour_styles.clone()
-        };
-
-        Self {
-            all: palette.all_cpu_colour,
-            avg: palette.avg_cpu_colour,
-            entries,
-        }
-    }
-}
-
 pub enum CpuWidgetColumn {
-    CPU,
+    Cpu,
     Use,
 }
 
 impl ColumnHeader for CpuWidgetColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
-            CpuWidgetColumn::CPU => "CPU".into(),
+            CpuWidgetColumn::Cpu => "CPU".into(),
             CpuWidgetColumn::Use => "Use".into(),
         }
     }
@@ -56,24 +32,14 @@ impl ColumnHeader for CpuWidgetColumn {
 
 pub enum CpuWidgetTableData {
     All,
-    Entry {
-        data_type: CpuDataType,
-        last_entry: f64,
-    },
+    Entry { data_type: CpuDataType, usage: f32 },
 }
 
 impl CpuWidgetTableData {
-    pub fn from_cpu_widget_data(data: &CpuWidgetData) -> CpuWidgetTableData {
-        match data {
-            CpuWidgetData::All => CpuWidgetTableData::All,
-            CpuWidgetData::Entry {
-                data_type,
-                data: _,
-                last_entry,
-            } => CpuWidgetTableData::Entry {
-                data_type: *data_type,
-                last_entry: *last_entry,
-            },
+    pub fn from_cpu_data(data: &CpuData) -> CpuWidgetTableData {
+        CpuWidgetTableData::Entry {
+            data_type: data.data_type,
+            usage: data.usage,
         }
     }
 }
@@ -95,18 +61,18 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
         // *always* hide the CPU column if it is too small.
         match &self {
             CpuWidgetTableData::All => match column {
-                CpuWidgetColumn::CPU => Some("All".into()),
+                CpuWidgetColumn::Cpu => Some("All".into()),
                 CpuWidgetColumn::Use => None,
             },
             CpuWidgetTableData::Entry {
                 data_type,
-                last_entry,
+                usage: last_entry,
             } => {
                 if calculated_width == 0 {
                     None
                 } else {
                     match column {
-                        CpuWidgetColumn::CPU => match data_type {
+                        CpuWidgetColumn::Cpu => match data_type {
                             CpuDataType::Avg => Some("AVG".into()),
                             CpuDataType::Cpu(index) => {
                                 let index_str = index.to_string();
@@ -129,15 +95,14 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
     #[inline(always)]
     fn style_row<'a>(&self, row: Row<'a>, painter: &Painter) -> Row<'a> {
         let style = match self {
-            CpuWidgetTableData::All => painter.colours.all_cpu_colour,
+            CpuWidgetTableData::All => painter.styles.all_cpu_colour,
             CpuWidgetTableData::Entry {
                 data_type,
-                last_entry: _,
+                usage: _,
             } => match data_type {
-                CpuDataType::Avg => painter.colours.avg_cpu_colour,
+                CpuDataType::Avg => painter.styles.avg_cpu_colour,
                 CpuDataType::Cpu(index) => {
-                    painter.colours.cpu_colour_styles
-                        [index % painter.colours.cpu_colour_styles.len()]
+                    painter.styles.cpu_colour_styles[index % painter.styles.cpu_colour_styles.len()]
                 }
             },
         };
@@ -158,19 +123,18 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
 pub struct CpuWidgetState {
     pub current_display_time: u64,
     pub is_legend_hidden: bool,
-    pub show_avg: bool,
     pub autohide_timer: Option<Instant>,
     pub table: DataTable<CpuWidgetTableData, CpuWidgetColumn>,
-    pub styling: CpuWidgetStyling,
+    pub force_update_data: bool,
 }
 
 impl CpuWidgetState {
     pub(crate) fn new(
         config: &AppConfigFields, default_selection: CpuDefault, current_display_time: u64,
-        autohide_timer: Option<Instant>, colours: &ColourPalette,
+        autohide_timer: Option<Instant>, colours: &Styles,
     ) -> Self {
         const COLUMNS: [Column<CpuWidgetColumn>; 2] = [
-            Column::soft(CpuWidgetColumn::CPU, Some(0.5)),
+            Column::soft(CpuWidgetColumn::Cpu, Some(0.5)),
             Column::soft(CpuWidgetColumn::Use, Some(0.5)),
         ];
 
@@ -196,18 +160,24 @@ impl CpuWidgetState {
         CpuWidgetState {
             current_display_time,
             is_legend_hidden: false,
-            show_avg: config.show_average_cpu,
             autohide_timer,
             table,
-            styling: CpuWidgetStyling::from_colours(colours),
+            force_update_data: false,
         }
     }
 
-    pub fn update_table(&mut self, data: &[CpuWidgetData]) {
+    /// Forces an update of the data stored.
+    #[inline]
+    pub fn force_data_update(&mut self) {
+        self.force_update_data = true;
+    }
+
+    pub fn set_legend_data(&mut self, data: &[CpuData]) {
         self.table.set_data(
-            data.iter()
-                .map(CpuWidgetTableData::from_cpu_widget_data)
+            std::iter::once(CpuWidgetTableData::All)
+                .chain(data.iter().map(CpuWidgetTableData::from_cpu_data))
                 .collect(),
         );
+        self.force_update_data = false;
     }
 }

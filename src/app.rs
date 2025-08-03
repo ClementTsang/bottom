@@ -1,36 +1,29 @@
-pub mod data_farmer;
+pub mod data;
 pub mod filter;
-pub mod frozen_state;
 pub mod layout_manager;
-mod process_killer;
 pub mod states;
 
-use std::{
-    cmp::{max, min},
-    time::Instant,
-};
+use std::time::Instant;
 
-use anyhow::bail;
 use concat_string::concat_string;
-use data_farmer::*;
+use data::*;
 use filter::*;
-use frozen_state::FrozenState;
 use hashbrown::HashMap;
 use layout_manager::*;
 pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
+use crate::canvas::dialogs::process_kill_dialog::ProcessKillDialog;
 use crate::{
-    canvas::components::time_chart::LegendPosition,
-    constants, convert_mem_data_points, convert_swap_data_points,
-    data_collection::{processes::Pid, temperature},
-    data_conversion::ConvertedData,
-    get_network_points,
+    canvas::components::time_graph::LegendPosition,
+    constants,
     utils::data_units::DataUnit,
-    widgets::{query::ProcessQuery, ProcWidgetColumn, ProcWidgetMode},
+    widgets::{ProcWidgetColumn, ProcWidgetMode},
 };
 
-#[derive(Debug, Clone, Eq, PartialEq, Default)]
+const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
+
+#[derive(Debug, Clone, Eq, PartialEq, Default, Copy)]
 pub enum AxisScaling {
     #[default]
     Log,
@@ -42,7 +35,7 @@ pub enum AxisScaling {
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct AppConfigFields {
     pub update_rate: u64,
-    pub temperature_type: temperature::TemperatureType,
+    pub temperature_type: TemperatureType,
     pub use_dot: bool,
     pub cpu_left_legend: bool,
     pub show_average_cpu: bool, // TODO: Unify this in CPU options
@@ -59,6 +52,7 @@ pub struct AppConfigFields {
     pub enable_gpu: bool,
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub is_advanced_kill: bool,
     pub memory_legend_position: Option<LegendPosition>,
     // TODO: Remove these, move network details state-side.
@@ -80,44 +74,17 @@ pub struct DataFilters {
     pub net_filter: Option<Filter>,
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(target_os = "linux")] {
-        /// The max signal we can send to a process on Linux.
-        pub const MAX_PROCESS_SIGNAL: usize = 64;
-    } else if #[cfg(target_os = "macos")] {
-        /// The max signal we can send to a process on macOS.
-        pub const MAX_PROCESS_SIGNAL: usize = 31;
-    } else if #[cfg(target_os = "freebsd")] {
-        /// The max signal we can send to a process on FreeBSD.
-        /// See [https://www.freebsd.org/cgi/man.cgi?query=signal&apropos=0&sektion=3&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html]
-        /// for more details.
-        pub const MAX_PROCESS_SIGNAL: usize = 33;
-    } else if #[cfg(target_os = "windows")] {
-        /// The max signal we can send to a process. For Windows, we only have support for one signal (kill).
-        pub const MAX_PROCESS_SIGNAL: usize = 1;
-    } else {
-        /// The max signal we can send to a process. As a fallback, we only support one signal (kill).
-        pub const MAX_PROCESS_SIGNAL: usize = 1;
-    }
-}
-
 pub struct App {
     awaiting_second_char: bool,
     second_char: Option<char>,
-    pub dd_err: Option<String>, // FIXME: The way we do deletes is really gross.
-    to_delete_process_list: Option<(String, Vec<Pid>)>,
-    pub frozen_state: FrozenState,
+    pub data_store: DataStore,
     last_key_press: Instant,
-    pub converted_data: ConvertedData,
-    pub data_collection: DataCollection,
-    pub delete_dialog_state: AppDeleteDialogState,
+    pub(crate) process_kill_dialog: ProcessKillDialog,
     pub help_dialog_state: AppHelpDialogState,
     pub is_expanded: bool,
     pub is_force_redraw: bool,
     pub is_determining_widget_boundary: bool,
     pub basic_mode_use_percent: bool,
-    #[cfg(target_family = "unix")]
-    pub user_table: crate::data_collection::processes::UserTable,
     pub states: AppWidgetStates,
     pub app_config_fields: AppConfigFields,
     pub widget_map: HashMap<u64, BottomWidget>,
@@ -136,20 +103,14 @@ impl App {
         Self {
             awaiting_second_char: false,
             second_char: None,
-            dd_err: None,
-            to_delete_process_list: None,
-            frozen_state: FrozenState::default(),
+            data_store: DataStore::default(),
             last_key_press: Instant::now(),
-            converted_data: ConvertedData::default(),
-            data_collection: DataCollection::default(),
-            delete_dialog_state: AppDeleteDialogState::default(),
+            process_kill_dialog: ProcessKillDialog::default(),
             help_dialog_state: AppHelpDialogState::default(),
             is_expanded,
             is_force_redraw: false,
             is_determining_widget_boundary: false,
             basic_mode_use_percent: false,
-            #[cfg(target_family = "unix")]
-            user_table: crate::data_collection::processes::UserTable::default(),
             states,
             app_config_fields,
             widget_map,
@@ -161,82 +122,33 @@ impl App {
 
     /// Update the data in the [`App`].
     pub fn update_data(&mut self) {
-        let data_source = match &self.frozen_state {
-            FrozenState::NotFrozen => &self.data_collection,
-            FrozenState::Frozen(data) => data,
-        };
+        let data_source = self.data_store.get_data();
 
+        // FIXME: (points_rework_v1) maybe separate PR but would it make more sense to store references of data?
+        // Would it also make more sense to move the "data set" step to the draw step, and make it only set if force
+        // update is set here?
         for proc in self.states.proc_state.widget_states.values_mut() {
             if proc.force_update_data {
                 proc.set_table_data(data_source);
-                proc.force_update_data = false;
             }
         }
 
-        // FIXME: Make this CPU force update less terrible.
-        if self.states.cpu_state.force_update.is_some() {
-            self.converted_data.convert_cpu_data(data_source);
-            self.converted_data.load_avg_data = data_source.load_avg_harvest;
-
-            self.states.cpu_state.force_update = None;
-        }
-
-        // FIXME: This is a bit of a temp hack to move data over.
-        {
-            let data = &self.converted_data.cpu_data;
-            for cpu in self.states.cpu_state.widget_states.values_mut() {
-                cpu.update_table(data);
-            }
-        }
-        {
-            let data = &self.converted_data.temp_data;
-            for temp in self.states.temp_state.widget_states.values_mut() {
-                if temp.force_update_data {
-                    temp.set_table_data(data);
-                    temp.force_update_data = false;
-                }
-            }
-        }
-        {
-            let data = &self.converted_data.disk_data;
-            for disk in self.states.disk_state.widget_states.values_mut() {
-                if disk.force_update_data {
-                    disk.set_table_data(data);
-                    disk.force_update_data = false;
-                }
+        for temp in self.states.temp_state.widget_states.values_mut() {
+            if temp.force_update_data {
+                temp.set_table_data(&data_source.temp_data);
             }
         }
 
-        // TODO: [OPT] Prefer reassignment over new vectors?
-        if self.states.mem_state.force_update.is_some() {
-            self.converted_data.mem_data = convert_mem_data_points(data_source);
-            #[cfg(not(target_os = "windows"))]
-            {
-                self.converted_data.cache_data = crate::convert_cache_data_points(data_source);
+        for cpu in self.states.cpu_state.widget_states.values_mut() {
+            if cpu.force_update_data {
+                cpu.set_legend_data(&data_source.cpu_harvest);
             }
-            self.converted_data.swap_data = convert_swap_data_points(data_source);
-            #[cfg(feature = "zfs")]
-            {
-                self.converted_data.arc_data = crate::convert_arc_data_points(data_source);
-            }
-
-            #[cfg(feature = "gpu")]
-            {
-                self.converted_data.gpu_data = crate::convert_gpu_data(data_source);
-            }
-            self.states.mem_state.force_update = None;
         }
 
-        if self.states.net_state.force_update.is_some() {
-            let (rx, tx) = get_network_points(
-                data_source,
-                &self.app_config_fields.network_scale_type,
-                &self.app_config_fields.network_unit_type,
-                self.app_config_fields.network_use_binary_prefix,
-            );
-            self.converted_data.network_data_rx = rx;
-            self.converted_data.network_data_tx = tx;
-            self.states.net_state.force_update = None;
+        for disk in self.states.disk_state.widget_states.values_mut() {
+            if disk.force_update_data {
+                disk.set_table_data(data_source);
+            }
         }
     }
 
@@ -246,7 +158,7 @@ impl App {
 
         // Reset dialog state
         self.help_dialog_state.is_showing_help = false;
-        self.delete_dialog_state.is_showing_dd = false;
+        self.process_kill_dialog.reset();
 
         // Close all searches and reset it
         self.states
@@ -257,44 +169,27 @@ impl App {
                 state.proc_search.search_state.reset();
             });
 
-        // Clear current delete list
-        self.to_delete_process_list = None;
-        self.dd_err = None;
-
-        // Unfreeze.
-        self.frozen_state.thaw();
+        self.data_store.reset();
 
         // Reset zoom
         self.reset_cpu_zoom();
         self.reset_mem_zoom();
         self.reset_net_zoom();
-
-        // Reset data
-        self.data_collection.reset();
     }
 
     pub fn should_get_widget_bounds(&self) -> bool {
         self.is_force_redraw || self.is_determining_widget_boundary
     }
 
-    fn close_dd(&mut self) {
-        self.delete_dialog_state.is_showing_dd = false;
-        self.delete_dialog_state.selected_signal = KillSignal::default();
-        self.delete_dialog_state.scroll_pos = 0;
-        self.to_delete_process_list = None;
-        self.dd_err = None;
-    }
-
     pub fn on_esc(&mut self) {
         self.reset_multi_tap_keys();
-        if self.is_in_dialog() {
-            if self.help_dialog_state.is_showing_help {
-                self.help_dialog_state.is_showing_help = false;
-                self.help_dialog_state.scroll_state.current_scroll_index = 0;
-            } else {
-                self.close_dd();
-            }
 
+        if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_esc();
+            self.is_force_redraw = true;
+        } else if self.help_dialog_state.is_showing_help {
+            self.help_dialog_state.is_showing_help = false;
+            self.help_dialog_state.scroll_state.current_scroll_index = 0;
             self.is_force_redraw = true;
         } else {
             match self.current_widget.widget_type {
@@ -363,7 +258,7 @@ impl App {
     }
 
     fn is_in_dialog(&self) -> bool {
-        self.help_dialog_state.is_showing_help || self.delete_dialog_state.is_showing_dd
+        self.help_dialog_state.is_showing_help || self.process_kill_dialog.is_open()
     }
 
     fn ignore_normal_keybinds(&self) -> bool {
@@ -542,30 +437,9 @@ impl App {
 
     /// One of two functions allowed to run while in a dialog...
     pub fn on_enter(&mut self) {
-        if self.delete_dialog_state.is_showing_dd {
-            if self.dd_err.is_some() {
-                self.close_dd();
-            } else if self.delete_dialog_state.selected_signal != KillSignal::Cancel {
-                // If within dd...
-                if self.dd_err.is_none() {
-                    // Also ensure that we didn't just fail a dd...
-                    let dd_result = self.kill_highlighted_process();
-                    self.delete_dialog_state.scroll_pos = 0;
-                    self.delete_dialog_state.selected_signal = KillSignal::default();
-
-                    // Check if there was an issue... if so, inform the user.
-                    if let Err(dd_err) = dd_result {
-                        self.dd_err = Some(dd_err.to_string());
-                    } else {
-                        self.delete_dialog_state.is_showing_dd = false;
-                    }
-                }
-            } else {
-                self.delete_dialog_state.scroll_pos = 0;
-                self.delete_dialog_state.selected_signal = KillSignal::default();
-                self.delete_dialog_state.is_showing_dd = false;
-            }
-            self.is_force_redraw = true;
+        if self.process_kill_dialog.is_open() {
+            // Not the best way of doing things for now but works as glue.
+            self.process_kill_dialog.on_enter();
         } else if !self.is_in_dialog() {
             if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
                 if let Some(proc_widget_state) = self
@@ -583,16 +457,17 @@ impl App {
     }
 
     pub fn on_delete(&mut self) {
-        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
-            let is_in_search_widget = self.is_in_search_widget();
-            if let Some(proc_widget_state) = self
-                .states
-                .proc_state
-                .widget_states
-                .get_mut(&(self.current_widget.widget_id - 1))
-            {
-                if is_in_search_widget {
-                    if proc_widget_state.proc_search.search_state.is_enabled
+        match self.current_widget.widget_type {
+            BottomWidgetType::ProcSearch => {
+                let is_in_search_widget = self.is_in_search_widget();
+                if let Some(proc_widget_state) = self
+                    .states
+                    .proc_state
+                    .widget_states
+                    .get_mut(&(self.current_widget.widget_id - 1))
+                {
+                    if is_in_search_widget
+                        && proc_widget_state.proc_search.search_state.is_enabled
                         && proc_widget_state.cursor_char_index()
                             < proc_widget_state
                                 .proc_search
@@ -622,10 +497,12 @@ impl App {
 
                         proc_widget_state.update_query();
                     }
-                } else {
-                    self.start_killing_process()
                 }
             }
+            BottomWidgetType::Proc => {
+                self.kill_current_process();
+            }
+            _ => {}
         }
     }
 
@@ -672,93 +549,42 @@ impl App {
         }
     }
 
-    pub fn get_process_filter(&self, widget_id: u64) -> &Option<ProcessQuery> {
-        if let Some(process_widget_state) = self.states.proc_state.widget_states.get(&widget_id) {
-            &process_widget_state.proc_search.search_state.query
-        } else {
-            &None
-        }
-    }
-
-    #[cfg(target_family = "unix")]
-    pub fn on_number(&mut self, number_char: char) {
-        if self.delete_dialog_state.is_showing_dd {
-            if self
-                .delete_dialog_state
-                .last_number_press
-                .map_or(100, |ins| ins.elapsed().as_millis())
-                >= 400
-            {
-                self.delete_dialog_state.keyboard_signal_select = 0;
-            }
-            let mut kbd_signal = self.delete_dialog_state.keyboard_signal_select * 10;
-            kbd_signal += number_char.to_digit(10).unwrap() as usize;
-            if kbd_signal > 64 {
-                kbd_signal %= 100;
-            }
-            #[cfg(target_os = "linux")]
-            if kbd_signal > 64 || kbd_signal == 32 || kbd_signal == 33 {
-                kbd_signal %= 10;
-            }
-            #[cfg(target_os = "macos")]
-            if kbd_signal > 31 {
-                kbd_signal %= 10;
-            }
-            self.delete_dialog_state.selected_signal = KillSignal::Kill(kbd_signal);
-            if kbd_signal < 10 {
-                self.delete_dialog_state.keyboard_signal_select = kbd_signal;
-            } else {
-                self.delete_dialog_state.keyboard_signal_select = 0;
-            }
-            self.delete_dialog_state.last_number_press = Some(Instant::now());
-        }
-    }
-
     pub fn on_up_key(&mut self) {
         if !self.is_in_dialog() {
             self.decrement_position_count();
+            self.reset_multi_tap_keys();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
-        } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_os = "windows")]
-            self.on_right_key();
-            #[cfg(target_family = "unix")]
-            {
-                if self.app_config_fields.is_advanced_kill {
-                    self.on_left_key();
-                } else {
-                    self.on_right_key();
-                }
-            }
-            return;
+            self.reset_multi_tap_keys();
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_up_key();
         }
-        self.reset_multi_tap_keys();
     }
 
     pub fn on_down_key(&mut self) {
         if !self.is_in_dialog() {
             self.increment_position_count();
+            self.reset_multi_tap_keys();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
-        } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_os = "windows")]
-            self.on_left_key();
-            #[cfg(target_family = "unix")]
-            {
-                if self.app_config_fields.is_advanced_kill {
-                    self.on_right_key();
-                } else {
-                    self.on_left_key();
-                }
-            }
-            return;
+            self.reset_multi_tap_keys();
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_down_key();
         }
-        self.reset_multi_tap_keys();
     }
 
     pub fn on_left_key(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
+                BottomWidgetType::Proc => {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        proc_widget_state.collapse_current_tree_branch_entry();
+                    }
+                }
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
@@ -777,7 +603,8 @@ impl App {
                     }
                 }
                 BottomWidgetType::Battery => {
-                    if self.converted_data.battery_data.len() > 1 {
+                    #[cfg(feature = "battery")]
+                    if self.data_store.get_data().battery_harvest.len() > 1 {
                         if let Some(battery_widget_state) = self
                             .states
                             .battery_state
@@ -791,35 +618,23 @@ impl App {
                 }
                 _ => {}
             }
-        } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                if self.app_config_fields.is_advanced_kill {
-                    match self.delete_dialog_state.selected_signal {
-                        KillSignal::Kill(prev_signal) => {
-                            self.delete_dialog_state.selected_signal = match prev_signal - 1 {
-                                0 => KillSignal::Cancel,
-                                // 32 + 33 are skipped
-                                33 => KillSignal::Kill(31),
-                                signal => KillSignal::Kill(signal),
-                            };
-                        }
-                        KillSignal::Cancel => {}
-                    };
-                } else {
-                    self.delete_dialog_state.selected_signal = KillSignal::default();
-                }
-            }
-            #[cfg(target_os = "windows")]
-            {
-                self.delete_dialog_state.selected_signal = KillSignal::Kill(1);
-            }
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_left_key();
         }
     }
 
     pub fn on_right_key(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
+                BottomWidgetType::Proc => {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        proc_widget_state.expand_current_tree_branch_entry();
+                    }
+                }
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
@@ -838,62 +653,34 @@ impl App {
                     }
                 }
                 BottomWidgetType::Battery => {
-                    if self.converted_data.battery_data.len() > 1 {
-                        let battery_count = self.converted_data.battery_data.len();
-                        if let Some(battery_widget_state) = self
-                            .states
-                            .battery_state
-                            .get_mut_widget_state(self.current_widget.widget_id)
-                        {
-                            if battery_widget_state.currently_selected_battery_index
-                                < battery_count - 1
+                    #[cfg(feature = "battery")]
+                    {
+                        let battery_count = self.data_store.get_data().battery_harvest.len();
+                        if battery_count > 1 {
+                            if let Some(battery_widget_state) = self
+                                .states
+                                .battery_state
+                                .get_mut_widget_state(self.current_widget.widget_id)
                             {
-                                battery_widget_state.currently_selected_battery_index += 1;
+                                if battery_widget_state.currently_selected_battery_index
+                                    < battery_count - 1
+                                {
+                                    battery_widget_state.currently_selected_battery_index += 1;
+                                }
                             }
                         }
                     }
                 }
                 _ => {}
             }
-        } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                if self.app_config_fields.is_advanced_kill {
-                    let new_signal = match self.delete_dialog_state.selected_signal {
-                        KillSignal::Cancel => 1,
-                        // 32+33 are skipped
-                        #[cfg(target_os = "linux")]
-                        KillSignal::Kill(31) => 34,
-                        #[cfg(target_os = "macos")]
-                        KillSignal::Kill(31) => 31,
-                        KillSignal::Kill(64) => 64,
-                        KillSignal::Kill(signal) => signal + 1,
-                    };
-                    self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
-                } else {
-                    self.delete_dialog_state.selected_signal = KillSignal::Cancel;
-                }
-            }
-            #[cfg(target_os = "windows")]
-            {
-                self.delete_dialog_state.selected_signal = KillSignal::Cancel;
-            }
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_right_key();
         }
     }
 
     pub fn on_page_up(&mut self) {
-        if self.delete_dialog_state.is_showing_dd {
-            let mut new_signal = match self.delete_dialog_state.selected_signal {
-                KillSignal::Cancel => 0,
-                KillSignal::Kill(signal) => max(signal, 8) - 8,
-            };
-            if new_signal > 23 && new_signal < 33 {
-                new_signal -= 2;
-            }
-            self.delete_dialog_state.selected_signal = match new_signal {
-                0 => KillSignal::Cancel,
-                sig => KillSignal::Kill(sig),
-            };
+        if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_page_up();
         } else if self.help_dialog_state.is_showing_help {
             let current = &mut self.help_dialog_state.scroll_state.current_scroll_index;
             let amount = self.help_dialog_state.height;
@@ -912,15 +699,8 @@ impl App {
     }
 
     pub fn on_page_down(&mut self) {
-        if self.delete_dialog_state.is_showing_dd {
-            let mut new_signal = match self.delete_dialog_state.selected_signal {
-                KillSignal::Cancel => 8,
-                KillSignal::Kill(signal) => min(signal + 8, MAX_PROCESS_SIGNAL),
-            };
-            if new_signal > 31 && new_signal < 42 {
-                new_signal += 2;
-            }
-            self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
+        if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_page_down();
         } else if self.help_dialog_state.is_showing_help {
             let current = self.help_dialog_state.scroll_state.current_scroll_index;
             let amount = self.help_dialog_state.height;
@@ -1107,39 +887,13 @@ impl App {
         }
     }
 
-    pub fn start_killing_process(&mut self) {
-        self.reset_multi_tap_keys();
-
-        if let Some(pws) = self
-            .states
-            .proc_state
-            .widget_states
-            .get(&self.current_widget.widget_id)
-        {
-            if let Some(current) = pws.table.current_item() {
-                let id = current.id.to_string();
-                if let Some(pids) = pws
-                    .id_pid_map
-                    .get(&id)
-                    .cloned()
-                    .or_else(|| Some(vec![current.pid]))
-                {
-                    let current_process = (id, pids);
-
-                    self.to_delete_process_list = Some(current_process);
-                    self.delete_dialog_state.is_showing_dd = true;
-                    self.is_determining_widget_boundary = true;
-                }
-            }
-        }
-        // FIXME: This should handle errors.
-    }
-
     pub fn on_char_key(&mut self, caught_char: char) {
         // Skip control code chars
         if caught_char.is_control() {
             return;
         }
+
+        const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
 
         // Forbid any char key presses when showing a dialog box...
         if !self.ignore_normal_keybinds() {
@@ -1147,7 +901,7 @@ impl App {
             if current_key_press_inst
                 .duration_since(self.last_key_press)
                 .as_millis()
-                > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS.into()
+                > MAX_KEY_TIMEOUT_IN_MILLISECONDS.into()
             {
                 self.reset_multi_tap_keys();
             }
@@ -1205,34 +959,50 @@ impl App {
                 'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                 _ => {}
             }
-        } else if self.delete_dialog_state.is_showing_dd {
-            match caught_char {
-                'h' => self.on_left_key(),
-                'j' => self.on_down_key(),
-                'k' => self.on_up_key(),
-                'l' => self.on_right_key(),
-                #[cfg(target_family = "unix")]
-                '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
-                    self.on_number(caught_char)
-                }
-                'g' => {
-                    let mut is_first_g = true;
-                    if let Some(second_char) = self.second_char {
-                        if self.awaiting_second_char && second_char == 'g' {
-                            is_first_g = false;
-                            self.awaiting_second_char = false;
-                            self.second_char = None;
-                            self.skip_to_first();
-                        }
-                    }
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_char(caught_char);
+        }
+    }
 
-                    if is_first_g {
-                        self.awaiting_second_char = true;
-                        self.second_char = Some('g');
-                    }
+    /// Kill the currently selected process if we are in the process widget.
+    ///
+    /// TODO: This ideally gets abstracted out into a separate widget.
+    pub(crate) fn kill_current_process(&mut self) {
+        if let Some(pws) = self
+            .states
+            .proc_state
+            .widget_states
+            .get(&self.current_widget.widget_id)
+        {
+            if let Some(current) = pws.table.current_item() {
+                let id = current.id.to_string();
+                if let Some(pids) = pws
+                    .id_pid_map
+                    .get(&id)
+                    .cloned()
+                    .or_else(|| Some(vec![current.pid]))
+                {
+                    let current_process = (id, pids);
+
+                    let use_simple_selection = {
+                        cfg_if::cfg_if! {
+                            if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+                                !self.app_config_fields.is_advanced_kill
+                            } else {
+                                true
+                            }
+                        }
+                    };
+
+                    self.process_kill_dialog.start_process_kill(
+                        current_process.0,
+                        current_process.1,
+                        use_simple_selection,
+                    );
+
+                    // TODO: I don't think most of this is needed.
+                    self.is_determining_widget_boundary = true;
                 }
-                'G' => self.skip_to_last(),
-                _ => {}
             }
         }
     }
@@ -1252,7 +1022,9 @@ impl App {
                             self.awaiting_second_char = false;
                             self.second_char = None;
 
-                            self.start_killing_process();
+                            self.reset_multi_tap_keys();
+
+                            self.kill_current_process();
                         }
                     }
 
@@ -1287,9 +1059,7 @@ impl App {
             'G' => self.skip_to_last(),
             'k' => self.on_up_key(),
             'j' => self.on_down_key(),
-            'f' => {
-                self.frozen_state.toggle(&self.data_collection); // TODO: Thawing should force a full data refresh and redraw immediately.
-            }
+            'f' => self.data_store.toggle_frozen(),
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
@@ -1467,36 +1237,6 @@ impl App {
                 self.awaiting_second_char = false;
             }
         }
-    }
-
-    pub fn kill_highlighted_process(&mut self) -> anyhow::Result<()> {
-        if let BottomWidgetType::Proc = self.current_widget.widget_type {
-            if let Some((_, pids)) = &self.to_delete_process_list {
-                #[cfg(target_family = "unix")]
-                let signal = match self.delete_dialog_state.selected_signal {
-                    KillSignal::Kill(sig) => sig,
-                    KillSignal::Cancel => 15, // should never happen, so just TERM
-                };
-                for pid in pids {
-                    #[cfg(target_family = "unix")]
-                    {
-                        process_killer::kill_process_given_pid(*pid, signal)?;
-                    }
-                    #[cfg(target_os = "windows")]
-                    {
-                        process_killer::kill_process_given_pid(*pid)?;
-                    }
-                }
-            }
-            self.to_delete_process_list = None;
-            Ok(())
-        } else {
-            bail!("Cannot kill processes if the current widget is not the Process widget!");
-        }
-    }
-
-    pub fn get_to_delete_processes(&self) -> Option<(String, Vec<Pid>)> {
-        self.to_delete_process_list.clone()
     }
 
     fn toggle_expand_widget(&mut self) {
@@ -1992,7 +1732,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.table.to_first();
+                        proc_widget_state.table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::ProcSort => {
@@ -2001,7 +1741,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table.to_first();
+                        proc_widget_state.sort_table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -2010,7 +1750,7 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        temp_widget_state.table.to_first();
+                        temp_widget_state.table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -2019,7 +1759,7 @@ impl App {
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        disk_widget_state.table.to_first();
+                        disk_widget_state.table.scroll_to_first();
                     }
                 }
                 BottomWidgetType::CpuLegend => {
@@ -2028,7 +1768,7 @@ impl App {
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
-                        cpu_widget_state.table.to_first();
+                        cpu_widget_state.table.scroll_to_first();
                     }
                 }
 
@@ -2037,8 +1777,8 @@ impl App {
             self.reset_multi_tap_keys();
         } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = 0;
-        } else if self.delete_dialog_state.is_showing_dd {
-            self.delete_dialog_state.selected_signal = KillSignal::Cancel;
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.go_to_first();
         }
     }
 
@@ -2051,7 +1791,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.table.to_last();
+                        proc_widget_state.table.scroll_to_last();
                     }
                 }
                 BottomWidgetType::ProcSort => {
@@ -2060,7 +1800,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table.to_last();
+                        proc_widget_state.sort_table.scroll_to_last();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -2069,7 +1809,7 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        temp_widget_state.table.to_last();
+                        temp_widget_state.table.scroll_to_last();
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -2078,8 +1818,8 @@ impl App {
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        if !self.converted_data.disk_data.is_empty() {
-                            disk_widget_state.table.to_last();
+                        if !self.data_store.get_data().disk_harvest.is_empty() {
+                            disk_widget_state.table.scroll_to_last();
                         }
                     }
                 }
@@ -2089,7 +1829,7 @@ impl App {
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
-                        cpu_widget_state.table.to_last();
+                        cpu_widget_state.table.scroll_to_last();
                     }
                 }
                 _ => {}
@@ -2098,8 +1838,8 @@ impl App {
         } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index =
                 self.help_dialog_state.scroll_state.max_scroll_index;
-        } else if self.delete_dialog_state.is_showing_dd {
-            self.delete_dialog_state.selected_signal = KillSignal::Kill(MAX_PROCESS_SIGNAL);
+        } else if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.go_to_last();
         }
     }
 
@@ -2208,14 +1948,9 @@ impl App {
     }
 
     pub fn handle_scroll_up(&mut self) {
-        if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                self.on_up_key();
-                return;
-            }
-        }
-        if self.help_dialog_state.is_showing_help {
+        if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_scroll_up();
+        } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
         } else if self.current_widget.widget_type.is_widget_graph() {
             self.zoom_in();
@@ -2225,14 +1960,9 @@ impl App {
     }
 
     pub fn handle_scroll_down(&mut self) {
-        if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                self.on_down_key();
-                return;
-            }
-        }
-        if self.help_dialog_state.is_showing_help {
+        if self.process_kill_dialog.is_open() {
+            self.process_kill_dialog.on_scroll_down();
+        } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
         } else if self.current_widget.widget_type.is_widget_graph() {
             self.zoom_out();
@@ -2285,7 +2015,6 @@ impl App {
 
                     if new_time <= self.app_config_fields.retention_ms {
                         cpu_widget_state.current_display_time = new_time;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2293,7 +2022,6 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         cpu_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2313,7 +2041,6 @@ impl App {
 
                     if new_time <= self.app_config_fields.retention_ms {
                         mem_widget_state.current_display_time = new_time;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2321,7 +2048,6 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         mem_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2341,7 +2067,6 @@ impl App {
 
                     if new_time <= self.app_config_fields.retention_ms {
                         net_widget_state.current_display_time = new_time;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2349,7 +2074,6 @@ impl App {
                         != self.app_config_fields.retention_ms
                     {
                         net_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2373,17 +2097,13 @@ impl App {
                         .current_display_time
                         .saturating_sub(self.app_config_fields.time_interval);
 
-                    if new_time >= constants::STALE_MIN_MILLISECONDS {
+                    if new_time >= STALE_MIN_MILLISECONDS {
                         cpu_widget_state.current_display_time = new_time;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
-                    } else if cpu_widget_state.current_display_time
-                        != constants::STALE_MIN_MILLISECONDS
-                    {
-                        cpu_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
+                    } else if cpu_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
+                        cpu_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
                         if self.app_config_fields.autohide_time {
                             cpu_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2401,17 +2121,13 @@ impl App {
                         .current_display_time
                         .saturating_sub(self.app_config_fields.time_interval);
 
-                    if new_time >= constants::STALE_MIN_MILLISECONDS {
+                    if new_time >= STALE_MIN_MILLISECONDS {
                         mem_widget_state.current_display_time = new_time;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
-                    } else if mem_widget_state.current_display_time
-                        != constants::STALE_MIN_MILLISECONDS
-                    {
-                        mem_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.states.mem_state.force_update = Some(self.current_widget.widget_id);
+                    } else if mem_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
+                        mem_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
                         if self.app_config_fields.autohide_time {
                             mem_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2429,17 +2145,13 @@ impl App {
                         .current_display_time
                         .saturating_sub(self.app_config_fields.time_interval);
 
-                    if new_time >= constants::STALE_MIN_MILLISECONDS {
+                    if new_time >= STALE_MIN_MILLISECONDS {
                         net_widget_state.current_display_time = new_time;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
-                    } else if net_widget_state.current_display_time
-                        != constants::STALE_MIN_MILLISECONDS
-                    {
-                        net_widget_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
-                        self.states.net_state.force_update = Some(self.current_widget.widget_id);
+                    } else if net_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
+                        net_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
                         if self.app_config_fields.autohide_time {
                             net_widget_state.autohide_timer = Some(Instant::now());
                         }
@@ -2458,7 +2170,6 @@ impl App {
             .get_mut(&self.current_widget.widget_id)
         {
             cpu_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.states.cpu_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 cpu_widget_state.autohide_timer = Some(Instant::now());
             }
@@ -2473,7 +2184,6 @@ impl App {
             .get_mut(&self.current_widget.widget_id)
         {
             mem_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.states.mem_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 mem_widget_state.autohide_timer = Some(Instant::now());
             }
@@ -2488,7 +2198,6 @@ impl App {
             .get_mut(&self.current_widget.widget_id)
         {
             net_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            self.states.net_state.force_update = Some(self.current_widget.widget_id);
             if self.app_config_fields.autohide_time {
                 net_widget_state.autohide_timer = Some(Instant::now());
             }
@@ -2585,24 +2294,7 @@ impl App {
 
         // Second short circuit --- are we in the dd dialog state?  If so, only check
         // yes/no/signals and bail after.
-        if self.is_in_dialog() {
-            match self.delete_dialog_state.button_positions.iter().find(
-                |(tl_x, tl_y, br_x, br_y, _idx)| {
-                    (x >= *tl_x && y >= *tl_y) && (x <= *br_x && y <= *br_y)
-                },
-            ) {
-                Some((_, _, _, _, 0)) => {
-                    self.delete_dialog_state.selected_signal = KillSignal::Cancel
-                }
-                Some((_, _, _, _, idx)) => {
-                    if *idx > 31 {
-                        self.delete_dialog_state.selected_signal = KillSignal::Kill(*idx + 2)
-                    } else {
-                        self.delete_dialog_state.selected_signal = KillSignal::Kill(*idx)
-                    }
-                }
-                _ => {}
-            }
+        if self.process_kill_dialog.is_open() && self.process_kill_dialog.on_click(x, y) {
             return;
         }
 
@@ -2803,6 +2495,7 @@ impl App {
                         }
                     }
                     BottomWidgetType::Battery => {
+                        #[cfg(feature = "battery")]
                         if let Some(battery_widget_state) = self
                             .states
                             .battery_state
@@ -2814,10 +2507,12 @@ impl App {
                                 {
                                     if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y)
                                     {
-                                        if itx >= self.converted_data.battery_data.len() {
+                                        let num_batteries =
+                                            self.data_store.get_data().battery_harvest.len();
+                                        if itx >= num_batteries {
                                             // range check to keep within current data
                                             battery_widget_state.currently_selected_battery_index =
-                                                self.converted_data.battery_data.len() - 1;
+                                                num_batteries - 1;
                                         } else {
                                             battery_widget_state.currently_selected_battery_index =
                                                 itx;

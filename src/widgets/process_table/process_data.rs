@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    cmp::{max, Ordering},
+    cmp::{Ordering, max},
     fmt::Display,
     num::NonZeroU16,
     time::Duration,
@@ -12,11 +12,12 @@ use tui::widgets::Row;
 use super::process_columns::ProcColumn;
 use crate::{
     canvas::{
-        components::data_table::{DataTableColumn, DataToCell},
         Painter,
+        components::data_table::{DataTableColumn, DataToCell},
     },
-    data_collection::processes::{Pid, ProcessHarvest},
-    data_conversion::{binary_byte_string, dec_bytes_per_second_string, dec_bytes_string},
+    collection::processes::{Pid, ProcessHarvest},
+    dec_bytes_per_second_string,
+    utils::data_units::{GIBI_LIMIT, GIGA_LIMIT, get_binary_bytes, get_decimal_bytes},
 };
 
 #[derive(Clone, Debug)]
@@ -166,18 +167,44 @@ fn format_time(dur: Duration) -> String {
     }
 }
 
-#[derive(Clone, Debug)]
+/// Returns a string given a value that is converted to the closest binary
+/// variant. If the value is greater than a gibibyte, then it will return a
+/// decimal place.
+#[inline]
+fn binary_byte_string(value: u64) -> String {
+    let converted_values = get_binary_bytes(value);
+    if value >= GIBI_LIMIT {
+        format!("{:.1}{}", converted_values.0, converted_values.1)
+    } else {
+        format!("{:.0}{}", converted_values.0, converted_values.1)
+    }
+}
+
+/// Returns a string given a value that is converted to the closest SI-variant.
+/// If the value is greater than a giga-X, then it will return a decimal place.
+fn dec_bytes_string(value: u64) -> String {
+    let converted_values = get_decimal_bytes(value);
+    if value >= GIGA_LIMIT {
+        format!("{:.1}{}", converted_values.0, converted_values.1)
+    } else {
+        format!("{:.0}{}", converted_values.0, converted_values.1)
+    }
+}
+
+#[derive(Clone)]
 pub struct ProcWidgetData {
     pub pid: Pid,
+    #[allow(dead_code)]
     pub ppid: Option<Pid>,
     pub id: Id,
     pub cpu_usage_percent: f32,
     pub mem_usage: MemUsage,
+    pub virtual_mem: u64,
     pub rps: u64,
     pub wps: u64,
     pub total_read: u64,
     pub total_write: u64,
-    pub process_state: String,
+    pub process_state: &'static str,
     pub process_char: char,
     pub user: String,
     pub num_similar: u64,
@@ -203,7 +230,7 @@ impl ProcWidgetData {
         let mem_usage = if is_mem_percent {
             MemUsage::Percent(process.mem_usage_percent)
         } else {
-            MemUsage::Bytes(process.mem_usage_bytes)
+            MemUsage::Bytes(process.mem_usage)
         };
 
         Self {
@@ -212,11 +239,12 @@ impl ProcWidgetData {
             id,
             cpu_usage_percent: process.cpu_usage_percent,
             mem_usage,
-            rps: process.read_bytes_per_sec,
-            wps: process.write_bytes_per_sec,
-            total_read: process.total_read_bytes,
-            total_write: process.total_write_bytes,
-            process_state: process.process_state.0.clone(),
+            virtual_mem: process.virtual_mem,
+            rps: process.read_per_sec,
+            wps: process.write_per_sec,
+            total_read: process.total_read,
+            total_write: process.total_write,
+            process_state: process.process_state.0,
             process_char: process.process_state.1,
             user: process.user.to_string(),
             num_similar: 1,
@@ -231,11 +259,6 @@ impl ProcWidgetData {
             #[cfg(feature = "gpu")]
             gpu_usage: process.gpu_util,
         }
-    }
-
-    pub fn num_similar(mut self, num_similar: u64) -> Self {
-        self.num_similar = num_similar;
-        self
     }
 
     pub fn disabled(mut self, disabled: bool) -> Self {
@@ -281,6 +304,7 @@ impl ProcWidgetData {
         match column {
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),
+            ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem),
             ProcColumn::Pid => self.pid.to_string(),
             ProcColumn::Count => self.num_similar.to_string(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string(),
@@ -311,6 +335,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
         Some(match column {
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),
+            ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem).into(),
             ProcColumn::Pid => self.pid.to_string().into(),
             ProcColumn::Count => self.num_similar.to_string().into(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string().into(),
@@ -322,7 +347,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                 if calculated_width < 8 {
                     self.process_char.to_string().into()
                 } else {
-                    self.process_state.clone().into()
+                    self.process_state.into()
                 }
             }
             ProcColumn::User => self.user.clone().into(),
@@ -339,7 +364,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
     #[inline(always)]
     fn style_row<'a>(&self, row: Row<'a>, painter: &Painter) -> Row<'a> {
         if self.disabled {
-            row.style(painter.colours.disabled_text_style)
+            row.style(painter.styles.disabled_text_style)
         } else {
             row
         }
@@ -365,7 +390,8 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
 mod test {
     use std::time::Duration;
 
-    use crate::widgets::process_data::format_time;
+    use super::*;
+    use crate::utils::data_units::*;
 
     #[test]
     fn test_format_time() {
@@ -395,6 +421,31 @@ mod test {
         assert_eq!(
             format_time(Duration::from_secs(ONE_DAY * 365 - 1)),
             "364d 23h 59m"
+        );
+    }
+
+    #[test]
+    fn test_binary_byte_string() {
+        assert_eq!(binary_byte_string(0), "0B".to_string());
+        assert_eq!(binary_byte_string(1), "1B".to_string());
+        assert_eq!(binary_byte_string(1000), "1000B".to_string());
+        assert_eq!(binary_byte_string(1023), "1023B".to_string());
+        assert_eq!(binary_byte_string(KIBI_LIMIT), "1KiB".to_string());
+        assert_eq!(binary_byte_string(KIBI_LIMIT + 1), "1KiB".to_string());
+        assert_eq!(binary_byte_string(MEBI_LIMIT), "1MiB".to_string());
+        assert_eq!(binary_byte_string(GIBI_LIMIT), "1.0GiB".to_string());
+        assert_eq!(binary_byte_string(2 * GIBI_LIMIT), "2.0GiB".to_string());
+        assert_eq!(
+            binary_byte_string((2.5 * GIBI_LIMIT as f64) as u64),
+            "2.5GiB".to_string()
+        );
+        assert_eq!(
+            binary_byte_string((10.34 * TEBI_LIMIT as f64) as u64),
+            "10.3TiB".to_string()
+        );
+        assert_eq!(
+            binary_byte_string((10.36 * TEBI_LIMIT as f64) as u64),
+            "10.4TiB".to_string()
         );
     }
 }

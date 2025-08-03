@@ -1,26 +1,13 @@
-use tui::widgets::Borders;
+//! A bunch of constants used throughout the application.
+//!
+//! FIXME: Move these to where it makes more sense.
 
 // Default widget ID
 pub const DEFAULT_WIDGET_ID: u64 = 56709;
 
-// How much data is SHOWN
-pub const DEFAULT_TIME_MILLISECONDS: u64 = 60 * 1000; // Defaults to 1 min.
-pub const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
-pub const TIME_CHANGE_MILLISECONDS: u64 = 15 * 1000; // How much to increment each time
-pub const AUTOHIDE_TIMEOUT_MILLISECONDS: u64 = 5000; // 5 seconds to autohide
-
-pub const TICK_RATE_IN_MILLISECONDS: u64 = 200;
-// How fast the screen refreshes
-pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
-pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
-
 // Limits for when we should stop showing table gaps/labels (anything less means
 // not shown)
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
-pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
-
-// Side borders
-pub const SIDE_BORDERS: Borders = Borders::LEFT.union(Borders::RIGHT);
 
 // Help text
 const HELP_CONTENTS_TEXT: [&str; 10] = [
@@ -78,9 +65,9 @@ const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-const PROCESS_HELP_TEXT: [&str; 17] = [
+const PROCESS_HELP_TEXT: [&str; 19] = [
     "3 - Process widget",
-    "dd, F9           Kill the selected process",
+    "dd, F9, Delete   Kill the selected process",
     "c                Sort by CPU usage, press again to reverse",
     "m                Sort by memory usage, press again to reverse",
     "p                Sort by PID name, press again to reverse",
@@ -92,7 +79,9 @@ const PROCESS_HELP_TEXT: [&str; 17] = [
     "I                Invert current sort",
     "%                Toggle between values and percentages for memory usage",
     "t, F5            Toggle tree mode",
-    "+, -, click      Collapse/expand a branch while in tree mode",
+    "Right            Collapse a branch while in tree mode",
+    "Left             Expand a branch while in tree mode",
+    "+, -, click      Toggle whether a branch is expanded or collapsed in tree mode",
     "click on header  Sorts the entries by that column, click again to invert the sort",
     "C                Sort by GPU usage, press again to reverse",
     "M                Sort by GPU memory usage, press again to reverse",
@@ -284,7 +273,8 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to set CPU% on a process to be based on the total CPU or per-core CPU% (not divided by the number of cpus).
 #unnormalized_cpu = false
 
-# Whether to group processes with the same name together by default.
+# Whether to group processes with the same name together by default. Doesn't do anything
+# if tree is set to true or --tree is set.
 #group_processes = false
 
 # Whether to make process searching case sensitive by default.
@@ -577,16 +567,6 @@ mod test {
                 assert!(line[0].contains(" - "), "each section should have a header");
             }
         }
-    }
-
-    /// This test exists because previously, [`SIDE_BORDERS`] was set
-    /// incorrectly after I moved from tui-rs to ratatui.
-    #[test]
-    fn assert_side_border_bits_match() {
-        assert_eq!(
-            SIDE_BORDERS,
-            Borders::ALL.difference(Borders::TOP.union(Borders::BOTTOM))
-        )
     }
 
     /// Checks that the default config is valid.

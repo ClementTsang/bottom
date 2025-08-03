@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{ColorStr, TextStyleConfig};
+use super::{ColorStr, TextStyleConfig, borders::WidgetBorderType};
 
 /// General styling for generic widgets.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -26,4 +26,7 @@ pub(crate) struct WidgetStyle {
 
     /// Text styling for text when representing something that is disabled.
     pub(crate) disabled_text: Option<TextStyleConfig>,
+
+    /// Widget borders type.
+    pub(crate) widget_border_type: Option<WidgetBorderType>,
 }

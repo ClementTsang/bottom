@@ -1,7 +1,6 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
 use std::{io::Read, thread, time::Duration};
-
 #[cfg(feature = "default")]
 use std::{io::Write, path::Path};
 
@@ -184,4 +183,9 @@ fn test_styling_sanity_check_2() {
 #[test]
 fn test_filtering() {
     run_and_kill(&["-C", "./tests/valid_configs/filtering.toml"]);
+}
+
+#[test]
+fn test_proc_columns() {
+    run_and_kill(&["-C", "./tests/valid_configs/proc_columns.toml"]);
 }

@@ -9,7 +9,7 @@ use humantime::parse_duration;
 use regex::Regex;
 
 use crate::{
-    data_collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case, utils::data_prefixes::*,
+    collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case, utils::data_units::*,
 };
 
 #[derive(Debug)]
@@ -329,7 +329,7 @@ pub(crate) fn parse_query(
                                 or: None,
                                 regex_prefix: Some((prefix_type, StringQuery::Value(content))),
                                 compare_prefix: None,
-                            })
+                            });
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
                             // We have to check if someone put an "="...
@@ -814,7 +814,7 @@ impl Prefix {
                         process.name.as_str()
                     }),
                     PrefixType::Pid => r.is_match(process.pid.to_string().as_str()),
-                    PrefixType::State => r.is_match(process.process_state.0.as_str()),
+                    PrefixType::State => r.is_match(process.process_state.0),
                     PrefixType::User => r.is_match(process.user.as_ref()),
                     _ => true,
                 }
@@ -836,27 +836,27 @@ impl Prefix {
                     ),
                     PrefixType::MemBytes => matches_condition(
                         &numerical_query.condition,
-                        process.mem_usage_bytes as f64,
+                        process.mem_usage as f64,
                         numerical_query.value,
                     ),
                     PrefixType::Rps => matches_condition(
                         &numerical_query.condition,
-                        process.read_bytes_per_sec as f64,
+                        process.read_per_sec as f64,
                         numerical_query.value,
                     ),
                     PrefixType::Wps => matches_condition(
                         &numerical_query.condition,
-                        process.write_bytes_per_sec as f64,
+                        process.write_per_sec as f64,
                         numerical_query.value,
                     ),
                     PrefixType::TRead => matches_condition(
                         &numerical_query.condition,
-                        process.total_read_bytes as f64,
+                        process.total_read as f64,
                         numerical_query.value,
                     ),
                     PrefixType::TWrite => matches_condition(
                         &numerical_query.condition,
-                        process.total_write_bytes as f64,
+                        process.total_write as f64,
                         numerical_query.value,
                     ),
                     #[cfg(feature = "gpu")]

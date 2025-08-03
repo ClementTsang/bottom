@@ -1,3 +1,5 @@
+//! General build script used by bottom to generate completion files and set binary version.
+
 #[expect(dead_code)]
 #[path = "src/options/args.rs"]
 mod args;
@@ -8,22 +10,20 @@ use std::{
 };
 
 use clap::{Command, CommandFactory};
-use clap_complete::{generate_to, shells::Shell, Generator};
+use clap_complete::{Generator, generate_to, shells::Shell};
 use clap_complete_fig::Fig;
 use clap_complete_nushell::Nushell;
 
 use crate::args::BottomArgs;
 
 fn create_dir(dir: &Path) -> io::Result<()> {
-    let res = fs::create_dir_all(dir);
-    match &res {
-        Ok(()) => {}
-        Err(err) => {
-            eprintln!("Failed to create a directory at location {dir:?}, encountered error {err:?}.  Aborting...",);
-        }
-    }
-
-    res
+    fs::create_dir_all(dir).inspect_err(|err| {
+        eprintln!(
+            "Couldn't create a directory at {} ({:?}). Aborting.",
+            dir.display(),
+            err
+        )
+    })
 }
 
 fn generate_completions<G>(to_generate: G, cmd: &mut Command, out_dir: &Path) -> io::Result<PathBuf>
@@ -38,11 +38,12 @@ fn btm_generate() -> io::Result<()> {
 
     match env::var_os(ENV_KEY) {
         Some(var) if !var.is_empty() => {
-            const COMPLETION_DIR: &str = "./target/tmp/bottom/completion/";
-            const MANPAGE_DIR: &str = "./target/tmp/bottom/manpage/";
+            let completion_dir =
+                option_env!("COMPLETION_DIR").unwrap_or("./target/tmp/bottom/completion/");
+            let manpage_dir = option_env!("MANPAGE_DIR").unwrap_or("./target/tmp/bottom/manpage/");
 
-            let completion_out_dir = PathBuf::from(COMPLETION_DIR);
-            let manpage_out_dir = PathBuf::from(MANPAGE_DIR);
+            let completion_out_dir = PathBuf::from(completion_dir);
+            let manpage_out_dir = PathBuf::from(manpage_dir);
 
             create_dir(&completion_out_dir)?;
             create_dir(&manpage_out_dir)?;

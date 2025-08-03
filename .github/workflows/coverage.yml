@@ -43,8 +43,8 @@ jobs:
       matrix:
         info:
           - { os: "ubuntu-latest", target: "x86_64-unknown-linux-gnu" }
-          - { os: "macos-12", target: "x86_64-apple-darwin" }
-          - { os: "windows-2019", target: "x86_64-pc-windows-msvc" }
+          - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
+          - { os: "windows-2022", target: "x86_64-pc-windows-msvc" }
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -55,7 +55,7 @@ jobs:
           toolchain: stable
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # 2.7.3
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # 2.7.8
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
@@ -71,14 +71,36 @@ jobs:
           cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --locked --target=${{ matrix.info.target }}
 
       # The token is generally not needed, but sometimes the default shared token hits limits.
-      - name: Upload to codecov.io
-        uses: Wandalen/wretry.action@6feedb7dedadeb826de0f45ff482b53b379a7844 # v3.5.0
+      # Yes this is ugly as hell. Why this is not a built-in feature of GHA, I have no idea.
+
+      - name: Upload to codecov.io (Attempt 1)
+        id: upload_attempt_1
+        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
         with:
-          action: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
-          with: |
-            files: lcov.info
-            fail_ci_if_error: true
-            token: ${{ secrets.CODECOV_TOKEN }}
-            flags: ${{ matrix.info.os }}
-          attempt_limit: 5
-          attempt_delay: 1500
+          files: lcov.info
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.info.os }}
+        continue-on-error: true
+
+      - name: Upload to codecov.io (Attempt 2)
+        id: upload_attempt_2
+        if: steps.upload_attempt_1.outcome == 'failure'
+        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+        with:
+          files: lcov.info
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.info.os }}
+        continue-on-error: true
+
+      - name: Upload to codecov.io (Attempt 3)
+        id: upload_attempt_3
+        if: steps.upload_attempt_2.outcome == 'failure'
+        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+        with:
+          files: lcov.info
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.info.os }}
+        continue-on-error: true

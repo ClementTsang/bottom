@@ -25,6 +25,11 @@ That said, these are more guidelines rather than hardset rules, though the proje
 ### Features
 
 - [#1625](https://github.com/ClementTsang/bottom/pull/1625): Add the ability to configure the disk widget's table columns.
+- [#1641](https://github.com/ClementTsang/bottom/pull/1641): Support AMD GPU data collection on Linux.
+- [#1642](https://github.com/ClementTsang/bottom/pull/1642): Support changing the widget borders.
+- [#1717](https://github.com/ClementTsang/bottom/pull/1717): Support delete key (fn + delete on macOS) to kill processes.
+- [#1306](https://github.com/ClementTsang/bottom/pull/1306): Support using left/right key to collapse/expand process trees respectively.
+- [#1767](https://github.com/ClementTsang/bottom/pull/1767): Add a virtual memory column for processes.
 
 ### Bug Fixes
 
@@ -34,12 +39,24 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1593](https://github.com/ClementTsang/bottom/pull/1593): Fix using `"none"` for chart legend position in configs.
 - [#1594](https://github.com/ClementTsang/bottom/pull/1594): Fix incorrect default config definitions for chart legends.
 - [#1596](https://github.com/ClementTsang/bottom/pull/1596): Fix support for nilfs2 file system.
+- [#1660](https://github.com/ClementTsang/bottom/pull/1660): Fix properly cleaning up the terminal if the program is terminated due to an `Err` bubbling to the top.
+- [#1663](https://github.com/ClementTsang/bottom/pull/1663): Fix network graphs using log scaling having broken lines when a point was 0.
+- [#1683](https://github.com/ClementTsang/bottom/pull/1683): Fix graph lines potentially showing up behind legends.
+- [#1701](https://github.com/ClementTsang/bottom/pull/1701): Fix process kill dialog occasionally causing panics.
+- [#1755](https://github.com/ClementTsang/bottom/pull/1755): Fix missing stats/incorrect mount name for certain entries in the disk widget.
+- [#1759](https://github.com/ClementTsang/bottom/pull/1759): Fix increment for data tables if the change is greater than the number of entries left.
 
 ### Changes
 
 - [#1559](https://github.com/ClementTsang/bottom/pull/1559): Rename `--enable_gpu` to `--disable_gpu`, and make GPU features enabled by default.
-- [#1570](https://github.com/ClementTsang/bottom/pull/1570): Consider `$XDG_CONFIG_HOME` on macOS when looking for a default config path in a
-  backwards-compatible fashion.
+- [#1570](https://github.com/ClementTsang/bottom/pull/1570): Consider `$XDG_CONFIG_HOME` on macOS when looking for a default config path in a backwards-compatible fashion.
+- [#1686](https://github.com/ClementTsang/bottom/pull/1686): Allow hyphenated arguments to work as well (e.g. `--autohide-time`).
+- [#1701](https://github.com/ClementTsang/bottom/pull/1701): Redesign process kill dialog.
+- [#1769](https://github.com/ClementTsang/bottom/pull/1769): Change how we calculate swap usage in Windows.
+
+### Other
+
+- [#1663](https://github.com/ClementTsang/bottom/pull/1663): Rework how data is stored internally, reducing memory usage a bit.
 
 ## [0.10.2] - 2024-08-05
 
@@ -97,6 +114,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
   - `--colors` is now `--theme`
 - [#1513](https://github.com/ClementTsang/bottom/pull/1513): Table headers are now bold by default.
 - [#1515](https://github.com/ClementTsang/bottom/pull/1515): Show the config path in the error message if unable to read/create a config.
+- [#1682](https://github.com/ClementTsang/bottom/pull/1682): On Linux, temperature sensor labels now always have their first letter capitalized (e.g. "k10temp: tctl" -> "k10temp: Tctl").
 
 ### Bug Fixes
 

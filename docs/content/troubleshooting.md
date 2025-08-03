@@ -2,14 +2,18 @@
 
 ## The graph points look broken/strange
 
-It's possible that your graphs won't look great out of the box due to the reliance on braille fonts to draw them. One
-example of this is seeing a bunch of missing font characters, caused when the terminal isn't configured properly to
-render braille fonts.
+It's possible that your graphs don't look great out of the box due to the reliance on
+[braille characters](https://en.wikipedia.org/wiki/Braille_Patterns) to draw them. This could cause problems if
+your terminal's font does not support them, or your terminal is not configured properly to draw them.
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/no_braille.webp" alt="Example of a terminal with no braille font."/>
     <figcaption><sub>An example of missing braille fonts in Powershell</sub></figcaption>
 </figure>
+
+Some possible solutions are included below.
+
+### Use dot markers instead
 
 One alternative is to use the `--dot_marker` option to render graph charts using dots instead of the braille characters,
 which generally seems better supported out of the box, at the expense of looking less intricate:
@@ -19,22 +23,29 @@ which generally seems better supported out of the box, at the expense of looking
     <figcaption><sub>Example using <code>btm --dot_marker</code></sub></figcaption>
 </figure>
 
-Another (better) alternative is to install a font that supports braille fonts, and configure your terminal emulator to use it.
-For example, installing something like [UBraille](https://yudit.org/download/fonts/UBraille/) or [Iosevka](https://github.com/be5invis/Iosevka)
-and ensuring your terminal uses it should work.
+### Use a font that supports braille fonts
 
-### Braille font issues on Linux/macOS/Unix-like
+Another (better) alternative is to install a font that supports braille fonts, and configure your terminal emulator to
+use it. For example, installing something like [UBraille](https://yudit.org/download/fonts/UBraille/) or
+[Iosevka](https://github.com/be5invis/Iosevka) and ensuring your terminal uses it should work.
 
-Generally, the problem comes down to you either not having a font that supports the braille markers, or your terminal
-emulator is not using the correct font for the braille markers.
+#### Linux/macOS/Unix
 
-See [here](https://github.com/cjbassi/gotop/issues/18) for possible fixes if you're having font issues on Linux, which
-may also be helpful for macOS or other Unix-like systems.
+Solutions mostly depend on what terminal emulator you are using, so unfortunately, I can't give specific instructions.
+Here are some possible solutions:
 
-If you're still having issues, feel free to open a [discussion](https://github.com/ClementTsang/bottom/discussions/new/)
-question about it.
+- Uninstalling `gnu-free-fonts` if installed, as that is known to cause problems with braille markers
+- Installing a font like `ttf-symbola` or `ttf-ubraille` for your terminal emulator to try and automatically fall back to
+- Configuring your terminal emulator to use specific fonts for the `U+2800` to `U+28FF` range.
+  - For example for kitty, do `symbol_map U+2800-U+28FF Symbola`.
 
-### Installing fonts for Windows Command Prompt/PowerShell
+For some more possible solutions:
+
+- Check out [this issue](https://github.com/cjbassi/gotop/issues/18) from gotop about the same issue.
+- See ratatui's [FAQ](https://ratatui.rs/faq/#some-characters-appear-to-be-missing--look-weird) (ratatui is the underlying
+  library bottom uses to draw things).
+
+#### Windows and Powershell
 
 **Note: I would advise backing up your registry beforehand if you aren't sure what you are doing!**
 
@@ -50,22 +61,27 @@ Let's say you're installing [Iosevka](https://github.com/be5invis/Iosevka). The 
 
 4. Here, add a new `String value`, and set the `Name` to a bunch of 0's (e.g. `000` - make sure the name isn't already used), then set the `Data` to the font name (e.g. `Iosevka`).
 
-    <figure>
-        <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
-        <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
-    </figure>
+<figure>
+    <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
+    <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
+</figure>
 
 5. Then, open the Command Prompt/PowerShell, and right-click on the top bar, and open "Properties":
 
-    <figure>
-        <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
-    </figure>
+<figure>
+    <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
+</figure>
 
 6. From here, go to "Font", and set the font to your new font (so in this example, Iosevka):
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
 </figure>
+
+### Still having issues?
+
+If you're still having issues, feel free to open a [discussion](https://github.com/ClementTsang/bottom/discussions/new/)
+question about it, and I (or others) can try to help.
 
 ## Why can't I see all my temperature sensors on Windows?
 

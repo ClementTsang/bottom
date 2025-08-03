@@ -1,23 +1,19 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
-use concat_string::concat_string;
-
 use crate::{
-    app::AppConfigFields,
+    app::{AppConfigFields, data::TypedTemperature},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    data_collection::temperature::TemperatureType,
-    options::config::style::ColourPalette,
+    options::config::style::Styles,
     utils::general::sort_partial_fn,
 };
 
 #[derive(Clone, Debug)]
 pub struct TempWidgetData {
-    pub sensor: Cow<'static, str>,
-    pub temperature_value: Option<u64>,
-    pub temperature_type: TemperatureType,
+    pub sensor: String,
+    pub temperature: Option<TypedTemperature>,
 }
 
 pub enum TempWidgetColumn {
@@ -36,16 +32,9 @@ impl ColumnHeader for TempWidgetColumn {
 
 impl TempWidgetData {
     pub fn temperature(&self) -> Cow<'static, str> {
-        match self.temperature_value {
-            Some(temp_val) => {
-                let temp_type = match self.temperature_type {
-                    TemperatureType::Celsius => "°C",
-                    TemperatureType::Kelvin => "K",
-                    TemperatureType::Fahrenheit => "°F",
-                };
-                concat_string!(temp_val.to_string(), temp_type).into()
-            }
-            None => "N/A".to_string().into(),
+        match &self.temperature {
+            Some(temp) => temp.to_string().into(),
+            None => "N/A".into(),
         }
     }
 }
@@ -55,7 +44,7 @@ impl DataToCell<TempWidgetColumn> for TempWidgetData {
         &self, column: &TempWidgetColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         Some(match column {
-            TempWidgetColumn::Sensor => self.sensor.clone(),
+            TempWidgetColumn::Sensor => self.sensor.clone().into(),
             TempWidgetColumn::Temp => self.temperature(),
         })
     }
@@ -86,9 +75,7 @@ impl SortsRow for TempWidgetColumn {
                 data.sort_by(move |a, b| sort_partial_fn(descending)(&a.sensor, &b.sensor));
             }
             TempWidgetColumn::Temp => {
-                data.sort_by(|a, b| {
-                    sort_partial_fn(descending)(a.temperature_value, b.temperature_value)
-                });
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.temperature, &b.temperature));
             }
         }
     }
@@ -100,7 +87,7 @@ pub struct TempWidgetState {
 }
 
 impl TempWidgetState {
-    pub(crate) fn new(config: &AppConfigFields, palette: &ColourPalette) -> Self {
+    pub(crate) fn new(config: &AppConfigFields, palette: &Styles) -> Self {
         let columns = [
             SortColumn::soft(TempWidgetColumn::Sensor, Some(0.8)),
             SortColumn::soft(TempWidgetColumn::Temp, None).default_descending(),
@@ -140,5 +127,6 @@ impl TempWidgetState {
             column.sort_by(&mut data, self.table.order());
         }
         self.table.set_data(data);
+        self.force_update_data = false;
     }
 }

@@ -64,7 +64,14 @@ is added together when displayed.
     <img src="../../../assets/screenshots/process/process_grouped.webp" alt="A picture of grouped mode in a process widget."/>
 </figure>
 
-Note that the process state and user columns are disabled in this mode.
+!!! info
+
+    Note that the process state and user columns are disabled in this mode.
+
+!!! info
+
+    Note that if tree mode is also active, processes cannot be grouped together due to the behaviour of the two modes
+    somewhat clashing. This also reflects with default modes like `group_processes`.
 
 ### Process termination
 
@@ -76,8 +83,8 @@ operating systems, you are also able to control which specific signals to send (
     <figcaption><sub>The process termination menu on Linux</sub></figcaption>
 </figure>
 
-If you're on Windows, or if the `disable_advanced_kill` flag is set in the options or command-line, then a simpler termination
-screen will be shown to confirm whether you want to kill that process/process group.
+If you're on Windows, or if the `disable_advanced_kill` flag is set in the options or command-line (only available on
+Linux, macOS, and FreeBSD), then a simpler termination screen with just yes or no options will be shown.
 
 <figure>
     <img src="../../../assets/screenshots/process/process_kill_simple.webp" alt="A picture of the process kill menu on Windows."/>
@@ -92,9 +99,14 @@ Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, d
     <img src="../../../assets/screenshots/process/process_tree.webp" alt="A picture of tree mode in a process widget."/>
 </figure>
 
-A process in tree mode can also be "collapsed", hiding its children and any descendants, using either the ++minus++ or ++plus++ keys, or double-clicking on an entry.
+A process in tree mode can also be "collapsed", hiding its children and any descendants, using the either the ++minus++,
+++plus++, or ++left++ keys, or clicking on an entry. It can be expanded by using the ++minus++, ++plus++, or ++right++
+keys, or by clicking on the entry again.
 
-Lastly, note that in tree mode, processes cannot be grouped together due to the behaviour of the two modes somewhat clashing.
+!!! info
+
+    Note that if tree mode is active, processes cannot be grouped together due to the behaviour of the two modes
+    somewhat clashing. This also reflects with default modes like `group_processes`.
 
 ### Full command
 
@@ -201,26 +213,26 @@ Note that key bindings are generally case-sensitive.
 
 ### Process table
 
-| Binding                | Action                                                           |
-| ---------------------- | ---------------------------------------------------------------- |
-| ++up++ , ++k++         | Move up within a widget                                          |
-| ++down++ , ++j++       | Move down within a widget                                        |
-| ++g+g++ , ++home++     | Jump to the first entry in the table                             |
-| ++G++ , ++end++        | Jump to the last entry in the table                              |
-| ++d+d++ , ++f9++       | Send a kill signal to the selected process                       |
-| ++c++                  | Sort by CPU usage, press again to reverse sorting order          |
-| ++m++                  | Sort by memory usage, press again to reverse sorting order       |
-| ++p++                  | Sort by PID name, press again to reverse sorting order           |
-| ++n++                  | Sort by process name, press again to reverse sorting order       |
-| ++tab++                | Toggle grouping processes with the same name                     |
-| ++P++                  | Toggle between showing the full command or just the process name |
-| ++ctrl+f++ , ++slash++ | Toggle showing the search sub-widget                             |
-| ++s++ , ++f6++         | Toggle showing the sort sub-widget                               |
-| ++I++                  | Invert the current sort                                          |
-| ++"%"++                | Toggle between values and percentages for memory usage           |
-| ++t++ , ++f5++         | Toggle tree mode                                                 |
-| ++M++                  | Sort by gpu memory usage, press again to reverse sorting order   |
-| ++C++                  | Sort by gpu usage, press again to reverse sorting order          |
+| Binding                                             | Action                                                           |
+| --------------------------------------------------- | ---------------------------------------------------------------- |
+| ++up++ , ++k++                                      | Move up within a widget                                          |
+| ++down++ , ++j++                                    | Move down within a widget                                        |
+| ++g+g++ , ++home++                                  | Jump to the first entry in the table                             |
+| ++G++ , ++end++                                     | Jump to the last entry in the table                              |
+| ++d+d++ , ++f9++                                    | Send a kill signal to the selected process                       |
+| ++c++                                               | Sort by CPU usage, press again to reverse sorting order          |
+| ++m++                                               | Sort by memory usage, press again to reverse sorting order       |
+| ++p++                                               | Sort by PID name, press again to reverse sorting order           |
+| ++n++                                               | Sort by process name, press again to reverse sorting order       |
+| ++tab++                                             | Toggle grouping processes with the same name                     |
+| ++P++                                               | Toggle between showing the full command or just the process name |
+| ++ctrl+f++ , ++slash++                              | Toggle showing the search sub-widget                             |
+| ++s++ , ++f6++, ++delete++ (++fn+delete++ on macOS) | Toggle showing the sort sub-widget                               |
+| ++I++                                               | Invert the current sort                                          |
+| ++"%"++                                             | Toggle between values and percentages for memory usage           |
+| ++t++ , ++f5++                                      | Toggle tree mode                                                 |
+| ++M++                                               | Sort by gpu memory usage, press again to reverse sorting order   |
+| ++C++                                               | Sort by gpu usage, press again to reverse sorting order          |
 
 ### Sort sub-widget
 
@@ -246,7 +258,7 @@ Note that key bindings are generally case-sensitive.
 | ++ctrl+w++                            | Delete a word behind the cursor              |
 | ++ctrl+h++                            | Delete the character behind the cursor       |
 | ++backspace++                         | Delete the character behind the cursor       |
-| ++delete++                            | Delete the character at the cursor           |
+| ++delete++ (++fn+delete++ on macOS)   | Delete the character at the cursor           |
 | ++alt+c++ , ++f1++                    | Toggle matching case                         |
 | ++alt+w++ , ++f2++                    | Toggle matching the entire word              |
 | ++alt+r++ , ++f3++                    | Toggle using regex                           |

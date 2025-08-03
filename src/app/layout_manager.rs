@@ -663,21 +663,20 @@ impl BottomLayout {
         BottomLayout {
             total_row_height_ratio: 3,
             rows: vec![
-                BottomRow::new(vec![BottomCol::new(vec![
-                    BottomColRow::new(vec![cpu]).canvas_handled()
+                BottomRow::new(vec![
+                    BottomCol::new(vec![BottomColRow::new(vec![cpu]).canvas_handled()])
+                        .canvas_handled(),
                 ])
-                .canvas_handled()])
                 .canvas_handled(),
-                BottomRow::new(vec![BottomCol::new(vec![BottomColRow::new(vec![
-                    mem, net,
+                BottomRow::new(vec![
+                    BottomCol::new(vec![BottomColRow::new(vec![mem, net]).canvas_handled()])
+                        .canvas_handled(),
                 ])
-                .canvas_handled()])
-                .canvas_handled()])
                 .canvas_handled(),
-                BottomRow::new(vec![BottomCol::new(vec![
-                    BottomColRow::new(vec![table]).canvas_handled()
+                BottomRow::new(vec![
+                    BottomCol::new(vec![BottomColRow::new(vec![table]).canvas_handled()])
+                        .canvas_handled(),
                 ])
-                .canvas_handled()])
                 .canvas_handled(),
                 BottomRow::new(table_widgets).canvas_handled(),
             ],
@@ -745,11 +744,6 @@ impl BottomRow {
         self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
         self
     }
-
-    pub fn grow(mut self, minimum: Option<u32>) -> Self {
-        self.constraint = IntermediaryConstraint::Grow { minimum };
-        self
-    }
 }
 
 /// Represents a single column in the layout.  We assume that even if the column
@@ -783,11 +777,6 @@ impl BottomCol {
 
     pub fn canvas_handled(mut self) -> Self {
         self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
-        self
-    }
-
-    pub fn grow(mut self, minimum: Option<u32>) -> Self {
-        self.constraint = IntermediaryConstraint::Grow { minimum };
         self
     }
 }

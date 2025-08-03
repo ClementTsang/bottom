@@ -49,22 +49,6 @@ release_task:
     MANPAGE_DIR: "target/tmp/bottom/manpage/"
     # -PLACEHOLDER FOR CI-
   matrix:
-    - name: "FreeBSD 14 Build"
-      alias: "freebsd_14_0_build"
-      freebsd_instance:
-        image_family: freebsd-14-0
-      env:
-        TARGET: "x86_64-unknown-freebsd"
-        NAME: "x86_64-unknown-freebsd-14-0"
-
-    - name: "FreeBSD 13 Build"
-      alias: "freebsd_13_3_build"
-      freebsd_instance:
-        image_family: freebsd-13-3
-      env:
-        TARGET: "x86_64-unknown-freebsd"
-        NAME: "x86_64-unknown-freebsd-13-3"
-
     - name: "Legacy Linux (2.17)"
       alias: "linux_2_17_build"
       container:

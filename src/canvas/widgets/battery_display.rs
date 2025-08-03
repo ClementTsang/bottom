@@ -1,23 +1,31 @@
+use std::cmp::min;
+
 use tui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span},
-    widgets::{Block, Borders, Cell, Paragraph, Row, Table, Tabs},
-    Frame,
+    widgets::{Cell, Paragraph, Row, Table, Tabs},
 };
-use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::App,
-    canvas::{drawing_utils::calculate_basic_use_bars, Painter},
+    canvas::{Painter, drawing_utils::widget_block},
+    collection::batteries::BatteryState,
     constants::*,
-    data_conversion::BatteryDuration,
 };
+
+/// Calculate how many bars are to be drawn within basic mode's components.
+fn calculate_basic_use_bars(use_percentage: f64, num_bars_available: usize) -> usize {
+    min(
+        (num_bars_available as f64 * use_percentage / 100.0).round() as usize,
+        num_bars_available,
+    )
+}
 
 impl Painter {
     pub fn draw_battery(
-        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
-        widget_id: u64,
+        &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(battery_widget_state) = app_state
@@ -26,11 +34,11 @@ impl Painter {
             .widget_states
             .get_mut(&widget_id)
         {
-            let is_on_widget = widget_id == app_state.current_widget.widget_id;
-            let border_style = if is_on_widget {
-                self.colours.highlighted_border_style
+            let is_selected = widget_id == app_state.current_widget.widget_id;
+            let border_style = if is_selected {
+                self.styles.highlighted_border_style
             } else {
-                self.colours.border_style
+                self.styles.border_style
             };
             let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
@@ -38,41 +46,28 @@ impl Painter {
                 app_state.app_config_fields.table_gap
             };
 
-            let title = if app_state.is_expanded {
-                const TITLE_BASE: &str = " Battery ── Esc to go back ";
-                Line::from(vec![
-                    Span::styled(" Battery ", self.colours.widget_title_style),
-                    Span::styled(
-                        format!(
-                            "─{}─ Esc to go back ",
-                            "─".repeat(usize::from(draw_loc.width).saturating_sub(
-                                UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
-                            ))
-                        ),
-                        border_style,
-                    ),
-                ])
-            } else {
-                Line::from(Span::styled(" Battery ", self.colours.widget_title_style))
+            let block = {
+                let mut block = widget_block(
+                    app_state.app_config_fields.use_basic_mode,
+                    is_selected,
+                    self.styles.border_type,
+                )
+                .border_style(border_style)
+                .title_top(Line::styled(" Battery ", self.styles.widget_title_style));
+
+                if app_state.is_expanded {
+                    block = block.title_top(
+                        Line::styled(" Esc to go back ", self.styles.widget_title_style)
+                            .right_aligned(),
+                    )
+                }
+
+                block
             };
 
-            let battery_block = if draw_border {
-                Block::default()
-                    .title(title)
-                    .borders(Borders::ALL)
-                    .border_style(border_style)
-            } else if is_on_widget {
-                Block::default()
-                    .borders(SIDE_BORDERS)
-                    .border_style(self.colours.highlighted_border_style)
-            } else {
-                Block::default().borders(Borders::NONE)
-            };
-
-            if app_state.converted_data.battery_data.len() > 1 {
-                let battery_names = app_state
-                    .converted_data
-                    .battery_data
+            let battery_harvest = &(app_state.data_store.get_data().battery_harvest);
+            if battery_harvest.len() > 1 {
+                let battery_names = battery_harvest
                     .iter()
                     .enumerate()
                     .map(|(itx, _)| format!("Battery {itx}"))
@@ -95,8 +90,8 @@ impl Painter {
                             .collect::<Vec<_>>(),
                     )
                     .divider(tui::symbols::line::VERTICAL)
-                    .style(self.colours.text_style)
-                    .highlight_style(self.colours.selected_text_style)
+                    .style(self.styles.text_style)
+                    .highlight_style(self.styles.selected_text_style)
                     .select(battery_widget_state.currently_selected_battery_index),
                     tab_draw_loc,
                 );
@@ -120,68 +115,63 @@ impl Painter {
                 }
             }
 
+            let is_basic = app_state.app_config_fields.use_basic_mode;
+
             let margined_draw_loc = Layout::default()
                 .constraints([Constraint::Percentage(100)])
-                .horizontal_margin(u16::from(!(is_on_widget || draw_border)))
+                .horizontal_margin(u16::from(is_basic && !is_selected))
                 .direction(Direction::Horizontal)
                 .split(draw_loc)[0];
 
-            if let Some(battery_details) = app_state
-                .converted_data
-                .battery_data
-                .get(battery_widget_state.currently_selected_battery_index)
+            if let Some(battery_details) =
+                battery_harvest.get(battery_widget_state.currently_selected_battery_index)
             {
                 let full_width = draw_loc.width.saturating_sub(2);
                 let bar_length = usize::from(full_width.saturating_sub(6));
-                let charge_percentage = battery_details.charge_percentage;
-                let num_bars = calculate_basic_use_bars(charge_percentage, bar_length);
+                let charge_percent = battery_details.charge_percent;
+
+                let num_bars = calculate_basic_use_bars(charge_percent, bar_length);
                 let bars = format!(
                     "[{}{}{:3.0}%]",
                     "|".repeat(num_bars),
                     " ".repeat(bar_length - num_bars),
-                    charge_percentage,
+                    charge_percent,
                 );
 
                 let mut battery_charge_rows = Vec::with_capacity(2);
                 battery_charge_rows.push(Row::new([
-                    Cell::from("Charge").style(self.colours.text_style)
+                    Cell::from("Charge").style(self.styles.text_style)
                 ]));
                 battery_charge_rows.push(Row::new([Cell::from(bars).style(
-                    if charge_percentage < 10.0 {
-                        self.colours.low_battery
-                    } else if charge_percentage < 50.0 {
-                        self.colours.medium_battery
+                    if charge_percent < 10.0 {
+                        self.styles.low_battery
+                    } else if charge_percent < 50.0 {
+                        self.styles.medium_battery
                     } else {
-                        self.colours.high_battery
+                        self.styles.high_battery
                     },
                 )]));
 
                 let mut battery_rows = Vec::with_capacity(3);
+                let watt_consumption = battery_details.watt_consumption();
+                let health = battery_details.health();
+
                 battery_rows.push(Row::new([""]).bottom_margin(table_gap + 1));
-                battery_rows.push(
-                    Row::new(["Rate", &battery_details.watt_consumption])
-                        .style(self.colours.text_style),
-                );
+                battery_rows
+                    .push(Row::new(["Rate", &watt_consumption]).style(self.styles.text_style));
 
                 battery_rows.push(
-                    Row::new(["State", &battery_details.state]).style(self.colours.text_style),
+                    Row::new(["State", battery_details.state.as_str()])
+                        .style(self.styles.text_style),
                 );
 
                 let mut time: String; // Keep string lifetime in scope.
                 {
-                    let style = self.colours.text_style;
-                    match &battery_details.battery_duration {
-                        BatteryDuration::ToEmpty(secs) => {
-                            time = long_time(*secs);
-
-                            if full_width as usize > time.len() {
-                                battery_rows.push(Row::new(["Time to empty", &time]).style(style));
-                            } else {
-                                time = short_time(*secs);
-                                battery_rows.push(Row::new(["To empty", &time]).style(style));
-                            }
-                        }
-                        BatteryDuration::ToFull(secs) => {
+                    let style = self.styles.text_style;
+                    match &battery_details.state {
+                        BatteryState::Charging {
+                            time_to_full: Some(secs),
+                        } => {
                             time = long_time(*secs);
 
                             if full_width as usize > time.len() {
@@ -191,17 +181,25 @@ impl Painter {
                                 battery_rows.push(Row::new(["To full", &time]).style(style));
                             }
                         }
-                        BatteryDuration::Empty
-                        | BatteryDuration::Full
-                        | BatteryDuration::Unknown => {}
+                        BatteryState::Discharging {
+                            time_to_empty: Some(secs),
+                        } => {
+                            time = long_time(*secs);
+
+                            if full_width as usize > time.len() {
+                                battery_rows.push(Row::new(["Time to empty", &time]).style(style));
+                            } else {
+                                time = short_time(*secs);
+                                battery_rows.push(Row::new(["To empty", &time]).style(style));
+                            }
+                        }
+                        _ => {}
                     }
                 }
 
-                battery_rows.push(
-                    Row::new(["Health", &battery_details.health]).style(self.colours.text_style),
-                );
+                battery_rows.push(Row::new(["Health", &health]).style(self.styles.text_style));
 
-                let header = if app_state.converted_data.battery_data.len() > 1 {
+                let header = if battery_harvest.len() > 1 {
                     Row::new([""]).bottom_margin(table_gap)
                 } else {
                     Row::default()
@@ -210,7 +208,7 @@ impl Painter {
                 // Draw bar
                 f.render_widget(
                     Table::new(battery_charge_rows, [Constraint::Percentage(100)])
-                        .block(battery_block.clone())
+                        .block(block.clone())
                         .header(header.clone()),
                     margined_draw_loc,
                 );
@@ -221,7 +219,7 @@ impl Painter {
                         battery_rows,
                         [Constraint::Percentage(50), Constraint::Percentage(50)],
                     )
-                    .block(battery_block)
+                    .block(block)
                     .header(header),
                     margined_draw_loc,
                 );
@@ -230,13 +228,10 @@ impl Painter {
 
                 contents.push(Line::from(Span::styled(
                     "No data found for this battery",
-                    self.colours.text_style,
+                    self.styles.text_style,
                 )));
 
-                f.render_widget(
-                    Paragraph::new(contents).block(battery_block),
-                    margined_draw_loc,
-                );
+                f.render_widget(Paragraph::new(contents).block(block), margined_draw_loc);
             }
 
             if should_get_widget_bounds {
@@ -253,8 +248,7 @@ impl Painter {
     }
 }
 
-#[inline]
-fn get_hms(secs: i64) -> (i64, i64, i64) {
+fn get_hms(secs: u32) -> (u32, u32, u32) {
     let hours = secs / (60 * 60);
     let minutes = (secs / 60) - hours * 60;
     let seconds = secs - minutes * 60 - hours * 60 * 60;
@@ -262,31 +256,24 @@ fn get_hms(secs: i64) -> (i64, i64, i64) {
     (hours, minutes, seconds)
 }
 
-fn long_time(secs: i64) -> String {
+fn long_time(secs: u32) -> String {
     let (hours, minutes, seconds) = get_hms(secs);
 
     if hours > 0 {
-        format!(
-            "{} hour{}, {} minute{}, {} second{}",
-            hours,
-            if hours == 1 { "" } else { "s" },
-            minutes,
-            if minutes == 1 { "" } else { "s" },
-            seconds,
-            if seconds == 1 { "" } else { "s" },
-        )
+        let h = if hours == 1 { "hour" } else { "hours" };
+        let m = if minutes == 1 { "minute" } else { "minutes" };
+        let s = if seconds == 1 { "second" } else { "seconds" };
+
+        format!("{hours} {h}, {minutes} {m}, {seconds} {s}")
     } else {
-        format!(
-            "{} minute{}, {} second{}",
-            minutes,
-            if minutes == 1 { "" } else { "s" },
-            seconds,
-            if seconds == 1 { "" } else { "s" },
-        )
+        let m = if minutes == 1 { "minute" } else { "minutes" };
+        let s = if seconds == 1 { "second" } else { "seconds" };
+
+        format!("{minutes} {m}, {seconds} {s}")
     }
 }
 
-fn short_time(secs: i64) -> String {
+fn short_time(secs: u32) -> String {
     let (hours, minutes, seconds) = get_hms(secs);
 
     if hours > 0 {
@@ -330,5 +317,19 @@ mod tests {
         assert_eq!(short_time(3600), "1h 0m 0s".to_string());
         assert_eq!(short_time(3601), "1h 0m 1s".to_string());
         assert_eq!(short_time(3661), "1h 1m 1s".to_string());
+    }
+
+    #[test]
+    fn test_calculate_basic_use_bars() {
+        // Testing various breakpoints and edge cases.
+        assert_eq!(calculate_basic_use_bars(0.0, 15), 0);
+        assert_eq!(calculate_basic_use_bars(1.0, 15), 0);
+        assert_eq!(calculate_basic_use_bars(5.0, 15), 1);
+        assert_eq!(calculate_basic_use_bars(10.0, 15), 2);
+        assert_eq!(calculate_basic_use_bars(40.0, 15), 6);
+        assert_eq!(calculate_basic_use_bars(45.0, 15), 7);
+        assert_eq!(calculate_basic_use_bars(50.0, 15), 8);
+        assert_eq!(calculate_basic_use_bars(100.0, 15), 15);
+        assert_eq!(calculate_basic_use_bars(150.0, 15), 15);
     }
 }

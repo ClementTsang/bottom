@@ -36,13 +36,14 @@ pub(crate) struct FlagConfig {
     pub(crate) tree: Option<bool>,
     pub(crate) show_table_scroll_position: Option<bool>,
     pub(crate) process_command: Option<bool>,
-    pub(crate) disable_advanced_kill: Option<bool>,
+    // #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+    pub(crate) disable_advanced_kill: Option<bool>, // This does nothing on Windows, but we leave it enabled to make the config file consistent across platforms.
     pub(crate) network_use_bytes: Option<bool>,
     pub(crate) network_use_log: Option<bool>,
     pub(crate) network_use_binary_prefix: Option<bool>,
     pub(crate) disable_gpu: Option<bool>,
     pub(crate) enable_cache_memory: Option<bool>,
     pub(crate) retention: Option<StringOrNum>,
-    pub(crate) average_cpu_row: Option<bool>,
+    pub(crate) average_cpu_row: Option<bool>, // FIXME: This makes no sense outside of basic mode, add a basic mode config section.
     pub(crate) tree_collapse: Option<bool>,
 }
