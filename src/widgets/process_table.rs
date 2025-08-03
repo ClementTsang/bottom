@@ -646,16 +646,7 @@ impl ProcWidgetState {
 
             if collapsed.is_collapsed(process.pid) {
                 let mut summed_process = process.clone();
-                let mut prefix = if prefixes.is_empty() {
-                    String::default()
-                } else {
-                    format!(
-                        "{}{}{} ",
-                        prefixes.join(""),
-                        if is_last { BRANCH_END } else { BRANCH_SPLIT },
-                        BRANCH_HORIZONTAL
-                    )
-                };
+                let mut has_children = false;
 
                 if let Some(children_pids) = filtered_tree.get(&process.pid) {
                     let mut sum_queue = children_pids
@@ -678,19 +669,32 @@ impl ProcWidgetState {
                             }));
                         }
                     }
-                    if !children_pids.is_empty() {
-                        prefix = if prefixes.is_empty() {
-                            "+ ".to_string()
-                        } else {
-                            format!(
-                                "{}{}{} + ",
-                                prefixes.join(""),
-                                if is_last { BRANCH_END } else { BRANCH_SPLIT },
-                                BRANCH_HORIZONTAL
-                            )
-                        };
-                    }
+
+                    has_children = !children_pids.is_empty();
                 }
+
+                // This is so that if an entry is "collapsed" but there are no children, avoid drawing the "+".
+                let prefix = if has_children {
+                    if prefixes.is_empty() {
+                        "+ ".to_string()
+                    } else {
+                        format!(
+                            "{}{}{} + ",
+                            prefixes.join(""),
+                            if is_last { BRANCH_END } else { BRANCH_SPLIT },
+                            BRANCH_HORIZONTAL
+                        )
+                    }
+                } else if prefixes.is_empty() {
+                    String::default()
+                } else {
+                    format!(
+                        "{}{}{} ",
+                        prefixes.join(""),
+                        if is_last { BRANCH_END } else { BRANCH_SPLIT },
+                        BRANCH_HORIZONTAL
+                    )
+                };
 
                 data.push(summed_process.prefix(Some(prefix)).disabled(disabled));
             } else {
