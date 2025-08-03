@@ -375,7 +375,8 @@ pub struct ProcessArgs {
     #[arg(
         long,
         action = ArgAction::SetTrue,
-        help = "Collapse process tree by default."
+        help = "Collapse process tree by default.",
+        alias = "tree-collapse"
     )]
     pub tree_collapse: bool,
 }

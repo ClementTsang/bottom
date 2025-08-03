@@ -60,12 +60,83 @@ impl ProcessSearchState {
     }
 }
 
+/// Whether to expand or collapse by default.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ProcWidgetMode {
-    Tree {
-        collapsed_pids: HashSet<Pid>,
-        collapse: bool,
-    },
+pub(crate) enum TreeCollapsed {
+    DefaultCollapse { expanded_pids: HashSet<Pid> },
+    DefaultExpand { collapsed_pids: HashSet<Pid> },
+}
+
+impl TreeCollapsed {
+    /// Creates a new [`TreeCollapsed`].
+    pub(crate) fn new(default_collapsed: bool) -> Self {
+        if default_collapsed {
+            TreeCollapsed::DefaultCollapse {
+                expanded_pids: HashSet::new(),
+            }
+        } else {
+            TreeCollapsed::DefaultExpand {
+                collapsed_pids: HashSet::new(),
+            }
+        }
+    }
+
+    /// Check whether the given PID is collapsed.
+    pub(crate) fn is_collapsed(&self, pid: Pid) -> bool {
+        match self {
+            TreeCollapsed::DefaultCollapse { expanded_pids } => !expanded_pids.contains(&pid),
+            TreeCollapsed::DefaultExpand { collapsed_pids } => collapsed_pids.contains(&pid),
+        }
+    }
+
+    /// Collapse the given PID.
+    pub(crate) fn collapse(&mut self, pid: Pid) {
+        match self {
+            TreeCollapsed::DefaultCollapse { expanded_pids } => {
+                expanded_pids.remove(&pid);
+            }
+            TreeCollapsed::DefaultExpand { collapsed_pids } => {
+                collapsed_pids.insert(pid);
+            }
+        }
+    }
+
+    /// Expand the given PID.
+    pub(crate) fn expand(&mut self, pid: Pid) {
+        match self {
+            TreeCollapsed::DefaultCollapse { expanded_pids } => {
+                expanded_pids.insert(pid);
+            }
+            TreeCollapsed::DefaultExpand { collapsed_pids } => {
+                collapsed_pids.remove(&pid);
+            }
+        }
+    }
+
+    /// Toggle the given PID.
+    pub(crate) fn toggle(&mut self, pid: Pid) {
+        match self {
+            TreeCollapsed::DefaultCollapse { expanded_pids } => {
+                if expanded_pids.contains(&pid) {
+                    expanded_pids.remove(&pid);
+                } else {
+                    expanded_pids.insert(pid);
+                }
+            }
+            TreeCollapsed::DefaultExpand { collapsed_pids } => {
+                if collapsed_pids.contains(&pid) {
+                    collapsed_pids.remove(&pid);
+                } else {
+                    collapsed_pids.insert(pid);
+                }
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) enum ProcWidgetMode {
+    Tree(TreeCollapsed),
     Grouped,
     Normal,
 }
@@ -135,7 +206,7 @@ pub enum ProcWidgetColumn {
 // This is temporary. Switch back to `ProcColumn` later!
 
 pub struct ProcWidgetState {
-    pub mode: ProcWidgetMode,
+    pub(crate) mode: ProcWidgetMode,
 
     /// The state of the search box.
     pub proc_search: ProcessSearchState,
@@ -203,7 +274,7 @@ impl ProcWidgetState {
         DataTable::new_sortable(columns, props, styling)
     }
 
-    pub fn new(
+    pub(crate) fn new(
         config: &AppConfigFields, mode: ProcWidgetMode, table_config: ProcTableConfig,
         colours: &Styles, config_columns: &Option<IndexSet<ProcWidgetColumn>>,
     ) -> Self {
@@ -407,17 +478,14 @@ impl ProcWidgetState {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
                 self.get_normal_data(&stored_data.process_data.process_harvest)
             }
-            ProcWidgetMode::Tree {
-                collapsed_pids,
-                collapse,
-            } => self.get_tree_data(collapsed_pids, stored_data, collapse),
+            ProcWidgetMode::Tree(collapse) => self.get_tree_data(collapse, stored_data),
         };
         self.table.set_data(data);
         self.force_update_data = false;
     }
 
     fn get_tree_data(
-        &self, collapsed_pids: &HashSet<Pid>, stored_data: &StoredData, collapse: &bool,
+        &self, collapsed: &TreeCollapsed, stored_data: &StoredData,
     ) -> Vec<ProcWidgetData> {
         const BRANCH_END: char = '└';
         const BRANCH_SPLIT: char = '├';
@@ -576,7 +644,7 @@ impl ProcWidgetState {
             let disabled = !kept_pids.contains(&process.pid);
             let is_last = *siblings_left == 0;
 
-            if collapsed_pids.contains(&process.pid).eq(&!collapse) {
+            if collapsed.is_collapsed(process.pid) {
                 let mut summed_process = process.clone();
                 let mut prefix = if prefixes.is_empty() {
                     String::default()
@@ -854,35 +922,27 @@ impl ProcWidgetState {
     }
 
     pub fn collapse_current_tree_branch_entry(&mut self) {
-        if let ProcWidgetMode::Tree { collapsed_pids } = &mut self.mode {
+        if let ProcWidgetMode::Tree(collapsed) = &mut self.mode {
             if let Some(process) = self.table.current_item() {
-                let pid = process.pid;
-
-                collapsed_pids.insert(pid);
+                collapsed.collapse(process.pid);
                 self.force_data_update();
             }
         }
     }
 
     pub fn expand_current_tree_branch_entry(&mut self) {
-        if let ProcWidgetMode::Tree { collapsed_pids } = &mut self.mode {
+        if let ProcWidgetMode::Tree(collapsed) = &mut self.mode {
             if let Some(process) = self.table.current_item() {
-                let pid = process.pid;
-
-                collapsed_pids.remove(&pid);
+                collapsed.expand(process.pid);
                 self.force_data_update();
             }
         }
     }
 
     pub fn toggle_current_tree_branch_entry(&mut self) {
-        if let ProcWidgetMode::Tree { collapsed_pids, .. } = &mut self.mode {
+        if let ProcWidgetMode::Tree(collapsed) = &mut self.mode {
             if let Some(process) = self.table.current_item() {
-                let pid = process.pid;
-
-                if !collapsed_pids.remove(&pid) {
-                    collapsed_pids.insert(pid);
-                }
+                collapsed.toggle(process.pid);
                 self.force_data_update();
             }
         }
@@ -1553,5 +1613,41 @@ mod test {
 
         state.toggle_command();
         assert_eq!(get_columns(&state.table), original_columns);
+    }
+
+    /// Sanity test to ensure tree collapse logic works, both when enabled-by-default or disabled-by-default.
+    #[test]
+    fn test_tree_collapse() {
+        let mut collapsed_by_default = TreeCollapsed::new(true);
+
+        assert!(collapsed_by_default.is_collapsed(1));
+
+        collapsed_by_default.collapse(1);
+        assert!(collapsed_by_default.is_collapsed(1));
+
+        collapsed_by_default.expand(1);
+        assert!(!collapsed_by_default.is_collapsed(1));
+
+        collapsed_by_default.toggle(1);
+        assert!(collapsed_by_default.is_collapsed(1));
+
+        collapsed_by_default.toggle(1);
+        assert!(!collapsed_by_default.is_collapsed(1));
+
+        let mut expanded_by_default = TreeCollapsed::new(false);
+
+        assert!(!collapsed_by_default.is_collapsed(1));
+
+        expanded_by_default.collapse(1);
+        assert!(expanded_by_default.is_collapsed(1));
+
+        expanded_by_default.expand(1);
+        assert!(!expanded_by_default.is_collapsed(1));
+
+        expanded_by_default.toggle(1);
+        assert!(expanded_by_default.is_collapsed(1));
+
+        expanded_by_default.toggle(1);
+        assert!(!expanded_by_default.is_collapsed(1));
     }
 }
