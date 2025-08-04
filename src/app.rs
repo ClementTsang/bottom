@@ -14,6 +14,7 @@ pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::canvas::dialogs::process_kill_dialog::ProcessKillDialog;
+use crate::widgets::TreeCollapsed;
 use crate::{
     canvas::components::time_graph::LegendPosition,
     constants,
@@ -62,6 +63,7 @@ pub struct AppConfigFields {
     pub network_use_binary_prefix: bool,
     pub retention_ms: u64,
     pub dedicated_average_row: bool,
+    pub default_tree_collapse: bool,
 }
 
 /// For filtering out information
@@ -423,9 +425,9 @@ impl App {
                     proc_widget_state.force_rerender_and_update();
                 }
                 ProcWidgetMode::Normal => {
-                    proc_widget_state.mode = ProcWidgetMode::Tree {
-                        collapsed_pids: Default::default(),
-                    };
+                    proc_widget_state.mode = ProcWidgetMode::Tree(TreeCollapsed::new(
+                        self.app_config_fields.default_tree_collapse,
+                    ));
                     proc_widget_state.force_rerender_and_update();
                 }
                 ProcWidgetMode::Grouped => {}

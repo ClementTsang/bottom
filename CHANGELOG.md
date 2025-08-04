@@ -30,6 +30,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1717](https://github.com/ClementTsang/bottom/pull/1717): Support delete key (fn + delete on macOS) to kill processes.
 - [#1306](https://github.com/ClementTsang/bottom/pull/1306): Support using left/right key to collapse/expand process trees respectively.
 - [#1767](https://github.com/ClementTsang/bottom/pull/1767): Add a virtual memory column for processes.
+- [#1770](https://github.com/ClementTsang/bottom/pull/1770) (originally [#1627](https://github.com/ClementTsang/bottom/pull/1627)): Add option to have process tree entries be collapsed by default.
 
 ### Bug Fixes
 

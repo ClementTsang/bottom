@@ -227,6 +227,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, args.process, config));
     let process_memory_as_value = is_flag_enabled!(process_memory_as_value, args.process, config);
+    let is_default_tree_collapsed = is_flag_enabled!(tree_collapse, args.process, config);
 
     // For CPU
     let default_cpu_selection = get_default_cpu_selection(args, config);
@@ -306,6 +307,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         network_use_binary_prefix,
         retention_ms,
         dedicated_average_row: get_dedicated_avg_row(config),
+        default_tree_collapse: is_default_tree_collapsed,
     };
 
     let table_config = ProcTableConfig {
@@ -383,9 +385,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                             let mode = if is_grouped {
                                 ProcWidgetMode::Grouped
                             } else if is_default_tree {
-                                ProcWidgetMode::Tree {
-                                    collapsed_pids: Default::default(),
-                                }
+                                ProcWidgetMode::Tree(TreeCollapsed::new(is_default_tree_collapsed))
                             } else {
                                 ProcWidgetMode::Normal
                             };
