@@ -1229,6 +1229,19 @@ impl App {
             }
             'I' => self.invert_sort(),
             '%' => self.toggle_percentages(),
+            #[cfg(target_os = "linux")]
+            'z' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .widget_states
+                        .get_mut(&self.current_widget.widget_id)
+                    {
+                        proc_widget_state.toggle_k_thread();
+                    }
+                }
+            }
             _ => {}
         }
 

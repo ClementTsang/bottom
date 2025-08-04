@@ -111,6 +111,9 @@ pub struct ProcessHarvest {
     /// Gpu utilization as a percentage.
     #[cfg(feature = "gpu")]
     pub gpu_util: u32,
+
+    #[cfg(target_os = "linux")]
+    pub k_thread: bool,
     // TODO: Additional fields
     // pub rss_kb: u64,
     // pub virt_kb: u64,

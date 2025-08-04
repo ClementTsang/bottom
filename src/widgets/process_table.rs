@@ -233,6 +233,8 @@ pub struct ProcWidgetState {
     pub is_sort_open: bool,
     pub force_rerender: bool,
     pub force_update_data: bool,
+    #[cfg(target_os = "linux")]
+    pub hide_k_threads: bool,
 }
 
 impl ProcWidgetState {
@@ -434,6 +436,8 @@ impl ProcWidgetState {
             force_update_data: false,
             default_sort_index,
             default_sort_order,
+            #[cfg(target_os = "linux")]
+            hide_k_threads: false,
         };
         table.sort_table.set_data(table.column_text());
 
@@ -514,6 +518,11 @@ impl ProcWidgetState {
                     .map(|q| q.check(process, is_using_command))
                     .unwrap_or(true)
                 {
+                    #[cfg(target_os = "linux")]
+                    if self.hide_k_threads && process.k_thread {
+                        return None;
+                    }
+
                     Some(*pid)
                 } else {
                     None
@@ -759,6 +768,10 @@ impl ProcWidgetState {
         let is_mem_percent = self.is_mem_percent();
 
         let filtered_iter = process_harvest.values().filter(|process| {
+            #[cfg(target_os = "linux")]
+            if self.hide_k_threads && process.k_thread {
+                return false;
+            }
             search_query
                 .as_ref()
                 .map(|query| query.check(process, is_using_command))
@@ -890,6 +903,11 @@ impl ProcWidgetState {
     pub fn force_rerender_and_update(&mut self) {
         self.force_rerender = true;
         self.force_update_data = true;
+    }
+
+    #[cfg(target_os = "linux")]
+    pub fn toggle_k_thread(&mut self) {
+        self.hide_k_threads = !self.hide_k_threads;
     }
 
     /// Marks the selected column as hidden, and automatically resets the

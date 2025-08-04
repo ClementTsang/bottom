@@ -257,6 +257,7 @@ fn read_proc(
             uid,
             user,
             time,
+            k_thread: stat.is_kernel_thread,
             #[cfg(feature = "gpu")]
             gpu_mem: 0,
             #[cfg(feature = "gpu")]
