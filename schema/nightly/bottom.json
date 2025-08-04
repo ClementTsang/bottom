@@ -2,7 +2,7 @@
   "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/nightly/bottom.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Schema for bottom's config file (nightly)",
-  "description": "https://clementtsang.github.io/bottom/nightly/configuration/config-file",
+  "description": "https://bottom.pages.dev/nightly/configuration/config-file/",
   "type": "object",
   "properties": {
     "cpu": {
@@ -493,6 +493,12 @@
             "null"
           ]
         },
+        "tree_collapse": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "unnormalized_cpu": {
           "type": [
             "boolean",
@@ -710,6 +716,8 @@
         "GPU%",
         "Mem",
         "Mem%",
+        "Memory",
+        "Memory%",
         "Name",
         "PID",
         "R/s",
@@ -721,7 +729,13 @@
         "TRead",
         "TWrite",
         "Time",
+        "Total Read",
+        "Total Write",
         "User",
+        "Virt",
+        "VirtMem",
+        "Virtual",
+        "Virtual Memory",
         "W/s",
         "Wps",
         "Write"
