@@ -233,6 +233,7 @@ Note that key bindings are generally case-sensitive.
 | ++t++ , ++f5++                                      | Toggle tree mode                                                 |
 | ++M++                                               | Sort by gpu memory usage, press again to reverse sorting order   |
 | ++C++                                               | Sort by gpu usage, press again to reverse sorting order          |
+| ++z++                                               | Toggle the hiding of kernel threads                              |
 
 ### Sort sub-widget
 
