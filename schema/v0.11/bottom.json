@@ -1,7 +1,7 @@
 {
   "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/nightly/bottom.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Schema for bottom's config file (nightly)",
+  "title": "Schema for bottom's config file (v0.11)",
   "description": "https://bottom.pages.dev/0.11.0/configuration/config-file/",
   "type": "object",
   "properties": {
@@ -488,6 +488,12 @@
           ]
         },
         "tree": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "tree_collapse": {
           "type": [
             "boolean",
             "null"
