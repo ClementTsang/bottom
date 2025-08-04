@@ -226,6 +226,9 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let is_default_command = is_flag_enabled!(process_command, args.process, config);
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, args.process, config));
+    #[cfg(target_os = "linux")]
+    let hide_k_threads = is_flag_enabled!(hide_k_threads, args.process, config);
+
     let process_memory_as_value = is_flag_enabled!(process_memory_as_value, args.process, config);
     let is_default_tree_collapsed = is_flag_enabled!(tree_collapse, args.process, config);
 
@@ -300,6 +303,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         ),
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         is_advanced_kill,
+        #[cfg(target_os = "linux")]
+        hide_k_threads,
         memory_legend_position,
         network_legend_position,
         network_scale_type,

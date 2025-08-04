@@ -437,7 +437,7 @@ impl ProcWidgetState {
             default_sort_index,
             default_sort_order,
             #[cfg(target_os = "linux")]
-            hide_k_threads: false,
+            hide_k_threads: config.hide_k_threads,
         };
         table.sort_table.set_data(table.column_text());
 

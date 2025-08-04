@@ -349,6 +349,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
 
+# Hides the kernel threads
+#hide_k_threads = false
+
 # Hide GPU(s) information
 #disable_gpu = false
 
