@@ -65,7 +65,7 @@ const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-const PROCESS_HELP_TEXT: [&str; 19] = [
+const PROCESS_HELP_TEXT: [&str; 20] = [
     "3 - Process widget",
     "dd, F9, Delete   Kill the selected process",
     "c                Sort by CPU usage, press again to reverse",
@@ -85,6 +85,7 @@ const PROCESS_HELP_TEXT: [&str; 19] = [
     "click on header  Sorts the entries by that column, click again to invert the sort",
     "C                Sort by GPU usage, press again to reverse",
     "M                Sort by GPU memory usage, press again to reverse",
+    "z                Toggle the display of kernel threads",
 ];
 
 const SEARCH_HELP_TEXT: [&str; 51] = [
