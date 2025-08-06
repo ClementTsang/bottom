@@ -1,0 +1,1088 @@
+{
+  "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/nightly/bottom.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Schema for bottom's config file (v0.11)",
+  "description": "https://bottom.pages.dev/0.11.0/configuration/config-file/",
+  "type": "object",
+  "properties": {
+    "cpu": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CpuConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "disk": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DiskConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "flags": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FlagConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "network": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/NetworkConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "processes": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProcessesConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "row": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    },
+    "styles": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StyleConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "temperature": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TempConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "BatteryStyle": {
+      "description": "Styling specific to the battery widget.",
+      "type": "object",
+      "properties": {
+        "high_battery_color": {
+          "description": "The colour of the battery widget bar when the battery is over 50%.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "low_battery_color": {
+          "description": "The colour of the battery widget bar when the battery is under 10%.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "medium_battery_color": {
+          "description": "The colour of the battery widget bar when the battery between 10% to 50%.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ColorStr": {
+      "type": "string"
+    },
+    "CpuConfig": {
+      "description": "CPU column settings.",
+      "type": "object",
+      "properties": {
+        "default": {
+          "$ref": "#/$defs/CpuDefault"
+        }
+      }
+    },
+    "CpuDefault": {
+      "description": "The default selection of the CPU widget. If the given selection is invalid,\n we will fall back to all.",
+      "type": "string",
+      "enum": [
+        "all",
+        "average"
+      ]
+    },
+    "CpuStyle": {
+      "description": "Styling specific to the CPU widget.",
+      "type": "object",
+      "properties": {
+        "all_entry_color": {
+          "description": "The colour of the \"All\" CPU label.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "avg_entry_color": {
+          "description": "The colour of the average CPU label and graph line.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cpu_core_colors": {
+          "description": "Colour of each CPU threads' label and graph line. Read in order.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/ColorStr"
+          }
+        }
+      }
+    },
+    "DiskColumn": {
+      "type": "string",
+      "enum": [
+        "Disk",
+        "Free",
+        "Free%",
+        "Mount",
+        "R/s",
+        "Read",
+        "Rps",
+        "Total",
+        "Used",
+        "Used%",
+        "W/s",
+        "Wps",
+        "Write"
+      ]
+    },
+    "DiskConfig": {
+      "description": "Disk configuration.",
+      "type": "object",
+      "properties": {
+        "columns": {
+          "description": "A list of disk widget columns.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DiskColumn"
+          }
+        },
+        "mount_filter": {
+          "description": "A filter over the mount names.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IgnoreList"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name_filter": {
+          "description": "A filter over the disk names.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IgnoreList"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "FinalWidget": {
+      "description": "Represents a widget.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "default": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "ratio": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "FlagConfig": {
+      "type": "object",
+      "properties": {
+        "autohide_time": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "average_cpu_row": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "basic": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "battery": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "case_sensitive": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "cpu_left_legend": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "current_usage": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "default_time_value": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StringOrNum"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "default_widget_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "default_widget_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disable_advanced_kill": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "disable_click": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "disable_gpu": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "dot_marker": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "enable_cache_memory": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "expanded": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "group_processes": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "hide_avg_cpu": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "hide_table_gap": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "hide_time": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "memory_legend": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "network_legend": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "network_use_binary_prefix": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "network_use_bytes": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "network_use_log": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "no_write": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "process_command": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "process_memory_as_value": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "rate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StringOrNum"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "regex": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "retention": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StringOrNum"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "show_table_scroll_position": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "temperature_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "time_delta": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StringOrNum"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tree": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "tree_collapse": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "unnormalized_cpu": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "use_old_network_legend": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "whole_word": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "GraphStyle": {
+      "description": "General styling for graph widgets.",
+      "type": "object",
+      "properties": {
+        "graph_color": {
+          "description": "The general colour of the parts of the graph.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "legend_text": {
+          "description": "Text styling for graph's legend text.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextStyleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "IgnoreList": {
+      "type": "object",
+      "properties": {
+        "case_sensitive": {
+          "type": "boolean",
+          "default": false
+        },
+        "is_list_ignored": {
+          "type": "boolean",
+          "default": true
+        },
+        "list": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "regex": {
+          "type": "boolean",
+          "default": false
+        },
+        "whole_word": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "list"
+      ]
+    },
+    "MemoryStyle": {
+      "description": "Styling specific to the memory widget.",
+      "type": "object",
+      "properties": {
+        "arc_color": {
+          "description": "The colour of the ARC label and graph line.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cache_color": {
+          "description": "The colour of the cache label and graph line. Does not do anything on Windows.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gpu_colors": {
+          "description": "Colour of each GPU's memory label and graph line. Read in order.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/ColorStr"
+          }
+        },
+        "ram_color": {
+          "description": "The colour of the RAM label and graph line.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "swap_color": {
+          "description": "The colour of the swap label and graph line.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "NetworkConfig": {
+      "description": "Network configuration.",
+      "type": "object",
+      "properties": {
+        "interface_filter": {
+          "description": "A filter over the network interface names.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IgnoreList"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "NetworkStyle": {
+      "description": "Styling specific to the network widget.",
+      "type": "object",
+      "properties": {
+        "rx_color": {
+          "description": "The colour of the RX (download) label and graph line.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rx_total_color": {
+          "description": "he colour of the total RX (download) label in basic mode.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tx_color": {
+          "description": "The colour of the TX (upload) label and graph line.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tx_total_color": {
+          "description": "The colour of the total TX (upload) label in basic mode.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ProcColumn": {
+      "description": "A column in the process widget.",
+      "type": "string",
+      "enum": [
+        "CPU%",
+        "Command",
+        "Count",
+        "GMem",
+        "GMem%",
+        "GPU%",
+        "Mem",
+        "Mem%",
+        "Memory",
+        "Memory%",
+        "Name",
+        "PID",
+        "R/s",
+        "Read",
+        "Rps",
+        "State",
+        "T.Read",
+        "T.Write",
+        "TRead",
+        "TWrite",
+        "Time",
+        "Total Read",
+        "Total Write",
+        "User",
+        "Virt",
+        "VirtMem",
+        "Virtual",
+        "Virtual Memory",
+        "W/s",
+        "Wps",
+        "Write"
+      ]
+    },
+    "ProcessesConfig": {
+      "description": "Process configuration.",
+      "type": "object",
+      "properties": {
+        "columns": {
+          "description": "A list of process widget columns.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProcColumn"
+          }
+        }
+      }
+    },
+    "RowChildren": {
+      "description": "Represents a child of a Row - either a Col (column) or a FinalWidget.\n\n A Col can also have an optional length and children.  We only allow columns\n to have FinalWidgets as children, lest we get some amount of mutual\n recursion between Row and Col.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FinalWidget"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "child": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FinalWidget"
+              }
+            },
+            "ratio": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "child"
+          ]
+        }
+      ]
+    },
+    "StringOrNum": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      ]
+    },
+    "StyleConfig": {
+      "description": "Style-related configs.",
+      "type": "object",
+      "properties": {
+        "battery": {
+          "description": "Styling for the battery widget.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BatteryStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cpu": {
+          "description": "Styling for the CPU widget.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CpuStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "graphs": {
+          "description": "Styling for graph widgets.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GraphStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "memory": {
+          "description": "Styling for the memory widget.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MemoryStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "network": {
+          "description": "Styling for the network widget.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NetworkStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tables": {
+          "description": "Styling for table widgets.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TableStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "theme": {
+          "description": "A built-in theme.\n\n If this is and a custom colour are both set, in the config file,\n the custom colour scheme will be prioritized first. If a theme\n is set in the command-line args, however, it will always be\n prioritized first.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "widgets": {
+          "description": "Styling for general widgets.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WidgetStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "TableStyle": {
+      "description": "General styling for table widgets.",
+      "type": "object",
+      "properties": {
+        "headers": {
+          "description": "Text styling for table headers.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextStyleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "TempConfig": {
+      "description": "Temperature configuration.",
+      "type": "object",
+      "properties": {
+        "sensor_filter": {
+          "description": "A filter over the sensor names.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IgnoreList"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "TextStyleConfig": {
+      "description": "A style for text.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ColorStr"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "bg_color": {
+              "description": "A built-in ANSI colour, RGB hex, or RGB colour code.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ColorStr"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "bold": {
+              "description": "Whether to make this text bolded or not. If not set,\n will default to built-in defaults.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "color": {
+              "description": "A built-in ANSI colour, RGB hex, or RGB colour code.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ColorStr"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "italics": {
+              "description": "Whether to make this text italicized or not. If not set,\n will default to built-in defaults.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "WidgetBorderType": {
+      "type": "string",
+      "enum": [
+        "Default",
+        "Rounded",
+        "Double",
+        "Thick"
+      ]
+    },
+    "WidgetStyle": {
+      "description": "General styling for generic widgets.",
+      "type": "object",
+      "properties": {
+        "border_color": {
+          "description": "The colour of the widgets' borders.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "disabled_text": {
+          "description": "Text styling for text when representing something that is disabled.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextStyleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "selected_border_color": {
+          "description": "The colour of a widget's borders when the widget is selected.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "selected_text": {
+          "description": "Text styling for text when representing something that is selected.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextStyleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "text": {
+          "description": "Text styling for text in general.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextStyleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "widget_border_type": {
+          "description": "Widget borders type.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WidgetBorderType"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "widget_title": {
+          "description": "Text styling for a widget's title.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextStyleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "row": {
+      "description": "Represents a row. This has a length of some sort (optional) and a vector\n of children.",
+      "type": "object",
+      "properties": {
+        "child": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/RowChildren"
+          }
+        },
+        "ratio": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

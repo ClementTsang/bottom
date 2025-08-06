@@ -1,3 +1,5 @@
+//! Main entrypoint for the application.
+
 use bottom::{reset_stdout, start_bottom};
 
 fn main() -> anyhow::Result<()> {
