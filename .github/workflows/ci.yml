@@ -315,7 +315,7 @@ jobs:
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           prepare: |
-            pkg install -y curl bash
+            pkg install -y krb5 curl bash
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
             sh rustup.sh --default-toolchain stable -y
           run: |
