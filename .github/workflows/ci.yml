@@ -279,11 +279,13 @@ jobs:
           # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
           #
           # Alas, that's why we do it with VMs.
-          - {
-              type: "freebsd",
-              os_release: "15.0",
-              target: "x86_64-unknown-freebsd",
-            }
+
+          # Disabled as there's a weird issue with installing curl on FreeBSD 15 at the moment.
+          # - {
+          #     type: "freebsd",
+          #     os_release: "15.0",
+          #     target: "x86_64-unknown-freebsd",
+          #   }
           - {
               type: "freebsd",
               os_release: "14.3",
@@ -315,7 +317,7 @@ jobs:
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           prepare: |
-            pkg install -y krb5 curl bash
+            pkg install -y curl bash
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
             sh rustup.sh --default-toolchain stable -y
           run: |
