@@ -25,7 +25,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 ### Features
 
 - [#1625](https://github.com/ClementTsang/bottom/pull/1625): Add the ability to configure the disk widget's table columns.
-- [#1641](https://github.com/ClementTsang/bottom/pull/1641): Support AMD GPU data collection on Linux.
+- [#1641](https://github.com/ClementTsang/bottom/pull/1641) + [#1692](https://github.com/ClementTsang/bottom/pull/1692): Support AMD GPU data collection on Linux.
 - [#1642](https://github.com/ClementTsang/bottom/pull/1642): Support changing the widget borders.
 - [#1717](https://github.com/ClementTsang/bottom/pull/1717): Support delete key (fn + delete on macOS) to kill processes.
 - [#1306](https://github.com/ClementTsang/bottom/pull/1306): Support using left/right key to collapse/expand process trees respectively.
@@ -36,12 +36,14 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 - [#1551](https://github.com/ClementTsang/bottom/pull/1551): Fix missing parent section names in default config.
 - [#1552](https://github.com/ClementTsang/bottom/pull/1552): Fix typo in default config.
+- [#1565](https://github.com/ClementTsang/bottom/pull/1565): Fix issue where CPU usage in basic mode looks weird if core count isn't divisible by four.
 - [#1578](https://github.com/ClementTsang/bottom/pull/1578): Fix missing selected text background colour in `default-light` theme.
 - [#1593](https://github.com/ClementTsang/bottom/pull/1593): Fix using `"none"` for chart legend position in configs.
 - [#1594](https://github.com/ClementTsang/bottom/pull/1594): Fix incorrect default config definitions for chart legends.
 - [#1596](https://github.com/ClementTsang/bottom/pull/1596): Fix support for nilfs2 file system.
 - [#1660](https://github.com/ClementTsang/bottom/pull/1660): Fix properly cleaning up the terminal if the program is terminated due to an `Err` bubbling to the top.
 - [#1663](https://github.com/ClementTsang/bottom/pull/1663): Fix network graphs using log scaling having broken lines when a point was 0.
+- [#1667](https://github.com/ClementTsang/bottom/pull/1667): Fix for ARC/SWAP not being hidden in basic mode after refactor.
 - [#1683](https://github.com/ClementTsang/bottom/pull/1683): Fix graph lines potentially showing up behind legends.
 - [#1701](https://github.com/ClementTsang/bottom/pull/1701): Fix process kill dialog occasionally causing panics.
 - [#1755](https://github.com/ClementTsang/bottom/pull/1755): Fix missing stats/incorrect mount name for certain entries in the disk widget.
@@ -53,11 +55,15 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1570](https://github.com/ClementTsang/bottom/pull/1570): Consider `$XDG_CONFIG_HOME` on macOS when looking for a default config path in a backwards-compatible fashion.
 - [#1686](https://github.com/ClementTsang/bottom/pull/1686): Allow hyphenated arguments to work as well (e.g. `--autohide-time`).
 - [#1701](https://github.com/ClementTsang/bottom/pull/1701): Redesign process kill dialog.
+- [#1706](https://github.com/ClementTsang/bottom/pull/1706): Disable mouse capture when `disable_click` is set.
 - [#1769](https://github.com/ClementTsang/bottom/pull/1769): Change how we calculate swap usage in Windows.
 
 ### Other
 
+- [#1655](https://github.com/ClementTsang/bottom/pull/1655): Better handle NVIDIA GPUs on Linux with only libnvidia-ml.so.1.
+- [#1658](https://github.com/ClementTsang/bottom/pull/1658): Make it possible to override completion/manpage generation output directory via env.
 - [#1663](https://github.com/ClementTsang/bottom/pull/1663): Rework how data is stored internally, reducing memory usage a bit.
+- [#1749](https://github.com/ClementTsang/bottom/pull/1749): Fix invalid desktop file values.
 
 ## [0.10.2] - 2024-08-05
 
