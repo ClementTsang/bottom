@@ -1,7 +1,6 @@
 # Actions to run after releasing a version, like:
 # - Generating documentation via mkdocs
 # - Notifying packaging repos
-# - Automatically creating winget packages
 
 name: post-release
 
@@ -101,25 +100,3 @@ jobs:
           -H 'Accept: application/vnd.github.everest-preview+json' \
           -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
           --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
-
-  winget:
-    needs: [initialize]
-    runs-on: windows-latest
-    steps:
-      - name: Set release version
-        shell: bash
-        run: |
-          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
-
-      - name: Validate release version
-        run: |
-          echo "Release version: ${{ env.RELEASE_VERSION }}"
-
-      - name: Automatically create PR for winget repos
-        uses: vedantmgoyal2009/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e
-        with:
-          identifier: Clement.bottom
-          installers-regex: '^bottom_x86_64_installer\.msi$'
-          version: ${{ env.RELEASE_VERSION }}
-          release-tag: ${{ env.RELEASE_VERSION }}
-          token: ${{ secrets.WINGET_TOKEN }}
