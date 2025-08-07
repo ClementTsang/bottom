@@ -21,10 +21,10 @@ body:
 
         For any other distribution channel, please first try to contact the package maintainers where appropriate
         to get help regarding distribution-specific issues (e.g. the package has issues installing, the package
-        is outdated, etc.) before reaching out here. This is as while I am happy to help where possible, I do not
-        personally use many of the various ways people distribute bottom. As such, unless specified, I might lack the
-        platform-specific context, knowledge, or tools to be able to help you at all regarding the distribution method,
-        and the best I can do is just point you to the package maintainer.
+        is outdated, etc.) before reaching out here. While I am happy to help where possible, I do not
+        personally use many of the various ways people distribute bottom. As such, I might lack the
+        platform-specific context, knowledge, or tools to be able to help you at all regarding the
+        distribution method, and the best I can do is just point you to the package maintainer.
 
   - type: checkboxes
     id: acknowledgements
