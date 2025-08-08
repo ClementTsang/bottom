@@ -407,7 +407,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                 DiskTableWidget::new(
                                     &app_config_fields,
                                     &styling,
-                                    config.disk.as_ref().map(|cfg| cfg.columns.as_slice()),
+                                    config.disk.as_ref().and_then(|cfg| cfg.columns.as_deref()),
                                 ),
                             );
                         }
