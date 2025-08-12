@@ -128,7 +128,6 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     }
 
     /// Updates the scroll position to a selected index.
-    #[expect(clippy::comparison_chain)]
     pub fn set_position(&mut self, new_index: usize) {
         let new_index = new_index.clamp_upper(self.data.len().saturating_sub(1));
         if self.state.current_index < new_index {

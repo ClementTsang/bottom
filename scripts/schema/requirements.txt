@@ -1,1 +1,1 @@
-jsonschema-rs == 0.26.1
+jsonschema-rs == 0.32.1
