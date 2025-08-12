@@ -18,4 +18,4 @@ default_widget_count = 1
 theme = "gruvbox"
 
 [processes]
-columns = ["PID", "Name", "CPU%", "Mem%", "Rps", "Wps", "TRead", "Twrite", "State", "Time", "Virt"]
+columns = ["PID", "Name", "CPU%", "Mem%", "Rps", "Wps", "TRead", "TWrite", "State", "Time", "Virt"]

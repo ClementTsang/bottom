@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
+## [0.11.1] - Unreleased
+
+### Bug Fixes
+
+- [#1776](https://github.com/ClementTsang/bottom/pull/1776): Fix disk.columns being incorrectly interpreted as blank.
+
 ## [0.11.0] - 2025-08-05
 
 ### Features
