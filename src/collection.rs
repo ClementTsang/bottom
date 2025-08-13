@@ -319,6 +319,8 @@ impl DataCollector {
     }
 
     pub fn update_data(&mut self) {
+        self.data.collection_time = Instant::now();
+
         self.refresh_sysinfo_data();
 
         self.update_cpu_usage();
@@ -329,7 +331,7 @@ impl DataCollector {
         self.update_batteries();
 
         #[cfg(feature = "gpu")]
-        self.update_gpus(); // update_gpus before procs for gpu_pids but after temps for appending
+        self.update_gpus();
 
         self.update_processes();
         self.update_network_usage();
@@ -339,6 +341,8 @@ impl DataCollector {
         self.last_collection_time = self.data.collection_time;
     }
 
+    /// Gets GPU data. Note this will usually append to other previously
+    /// collected data fields at the moment.
     #[cfg(feature = "gpu")]
     #[inline]
     fn update_gpus(&mut self) {
@@ -449,15 +453,13 @@ impl DataCollector {
 
     #[inline]
     fn update_network_usage(&mut self) {
-        let current_instant = self.data.collection_time;
-
         if self.widgets_to_harvest.use_net {
             let net_data = network::get_network_data(
                 &self.sys.network,
                 self.last_collection_time,
                 &mut self.total_rx,
                 &mut self.total_tx,
-                current_instant,
+                self.data.collection_time,
                 &self.filters.net_filter,
             );
 
