@@ -908,6 +908,7 @@ impl ProcWidgetState {
     #[cfg(target_os = "linux")]
     pub fn toggle_k_thread(&mut self) {
         self.hide_k_threads = !self.hide_k_threads;
+        self.force_rerender_and_update();
     }
 
     /// Marks the selected column as hidden, and automatically resets the
