@@ -224,8 +224,10 @@ impl DataCollector {
         }
     }
 
-    /// Check whether we should update things like lists of batteries, etc.
+    /// Update the check for updating things like lists of batteries, etc.
     /// This is useful for things that we don't want to update all the time.
+    ///
+    /// Note this should be set back to false if `self.last_list_collection_time` is updated.
     #[inline]
     #[cfg(any(not(target_os = "linux"), feature = "battery"))]
     fn update_refresh_list_check(&mut self) {
