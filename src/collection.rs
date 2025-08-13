@@ -275,7 +275,7 @@ impl DataCollector {
 
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
-                if self.self.should_update_lists() {
+                if self.should_update_lists() {
                     self.sys.users.refresh();
                 }
             }
