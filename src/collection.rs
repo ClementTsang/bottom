@@ -479,16 +479,25 @@ impl DataCollector {
                 .duration_since(self.last_collection_time)
                 > LIST_REFRESH_TIME
             {
-                self.battery_list = battery_manager
+                let battery_list = battery_manager
                     .batteries()
-                    .ok()
-                    .map(|batteries| batteries.filter_map(Result::ok).collect());
+                    .map(|batteries| batteries.filter_map(Result::ok).collect::<Vec<_>>());
+
+                if let Ok(battery_list) = battery_list {
+                    if battery_list.is_empty() {
+                        self.battery_list = None;
+                    } else {
+                        self.battery_list = Some(battery_list);
+                    }
+                } else {
+                    self.battery_list = None;
+                }
             }
 
-            if let Some(battery_list) = &mut self.battery_list {
-                self.data.list_of_batteries =
-                    Some(batteries::refresh_batteries(battery_manager, battery_list));
-            }
+            self.data.list_of_batteries = self
+                .battery_list
+                .as_mut()
+                .map(|battery_list| batteries::refresh_batteries(battery_manager, battery_list));
         }
     }
 
@@ -508,31 +517,6 @@ impl DataCollector {
         } else {
             self.sys.system.total_memory()
         }
-    }
-}
-
-/// We set a sleep duration between 10ms and 250ms, ideally sysinfo's
-/// [`sysinfo::MINIMUM_CPU_UPDATE_INTERVAL`] + 1.
-///
-/// We bound the upper end to avoid waiting too long (e.g. FreeBSD is 1s, which
-/// I'm fine with losing accuracy on for the first refresh), and we bound the
-/// lower end just to avoid the off-chance that refreshing too quickly causes
-/// problems. This second case should only happen on unsupported systems via
-/// sysinfo, in which case [`sysinfo::MINIMUM_CPU_UPDATE_INTERVAL`] is defined
-/// as 0.
-///
-/// We also do `INTERVAL + 1` for some wiggle room, just in case.
-const fn get_sleep_duration() -> Duration {
-    const MIN_SLEEP: u64 = 10;
-    const MAX_SLEEP: u64 = 250;
-    const INTERVAL: u64 = sysinfo::MINIMUM_CPU_UPDATE_INTERVAL.as_millis() as u64;
-
-    if INTERVAL < MIN_SLEEP {
-        Duration::from_millis(MIN_SLEEP)
-    } else if INTERVAL > MAX_SLEEP {
-        Duration::from_millis(MAX_SLEEP)
-    } else {
-        Duration::from_millis(INTERVAL + 1)
     }
 }
 
