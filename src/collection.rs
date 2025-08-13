@@ -150,14 +150,18 @@ impl Default for SysinfoSource {
 pub struct DataCollector {
     pub data: Data,
     sys: SysinfoSource,
-    use_current_cpu_total: bool,
-    unnormalized_cpu: bool,
     last_collection_time: Instant,
-    total_rx: u64,
-    total_tx: u64,
-    show_average_cpu: bool,
+    last_list_collection_time: Instant,
+    should_refresh_list: bool,
     widgets_to_harvest: UsedWidgets,
     filters: DataFilters,
+
+    total_rx: u64,
+    total_tx: u64,
+
+    unnormalized_cpu: bool,
+    use_current_cpu_total: bool,
+    show_average_cpu: bool,
 
     #[cfg(target_os = "linux")]
     pid_mapping: HashMap<Pid, processes::PrevProcDetails>,
@@ -200,12 +204,14 @@ impl DataCollector {
             use_current_cpu_total: false,
             unnormalized_cpu: false,
             last_collection_time,
+            last_list_collection_time: last_collection_time,
+            should_refresh_list: false,
             total_rx: 0,
             total_tx: 0,
             show_average_cpu: false,
             widgets_to_harvest: UsedWidgets::default(),
             #[cfg(feature = "battery")]
-            battery_manager: Manager::new().ok(),
+            battery_manager: None,
             #[cfg(feature = "battery")]
             battery_list: None,
             filters,
@@ -215,6 +221,22 @@ impl DataCollector {
             gpu_pids: None,
             #[cfg(feature = "gpu")]
             gpus_total_mem: None,
+        }
+    }
+
+    /// Check whether we should update things like lists of batteries, etc.
+    /// This is useful for things that we don't want to update all the time.
+    #[inline]
+    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+    fn update_refresh_list_check(&mut self) {
+        if self
+            .data
+            .collection_time
+            .duration_since(self.last_list_collection_time)
+            > LIST_REFRESH_TIME
+        {
+            self.should_refresh_list = true;
+            self.last_list_collection_time = self.data.collection_time;
         }
     }
 
@@ -275,13 +297,13 @@ impl DataCollector {
 
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
-                if self.should_update_lists() {
+                if self.should_refresh_list {
                     self.sys.users.refresh();
                 }
             }
 
             if self.widgets_to_harvest.use_temp {
-                if self.should_update_lists() {
+                if self.should_refresh_list {
                     self.sys.temps.refresh(true);
                 }
 
@@ -292,7 +314,7 @@ impl DataCollector {
 
             #[cfg(target_os = "windows")]
             if self.widgets_to_harvest.use_disk {
-                if self.should_update_lists() {
+                if self.should_refresh_list {
                     self.sys.disks.refresh(true);
                 }
 
@@ -305,6 +327,11 @@ impl DataCollector {
 
     pub fn update_data(&mut self) {
         self.data.collection_time = Instant::now();
+
+        #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+        {
+            self.update_refresh_list_check();
+        }
 
         self.refresh_sysinfo_data();
 
@@ -321,6 +348,11 @@ impl DataCollector {
         self.update_processes();
         self.update_network_usage();
         self.update_disks();
+
+        #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+        {
+            self.should_refresh_list = false;
+        }
 
         // Update times for future reference.
         self.last_collection_time = self.data.collection_time;
@@ -454,42 +486,64 @@ impl DataCollector {
         }
     }
 
-    /// Whether we should update things like lists of batteries, etc.
-    /// This is useful for things that we don't want to update all the time.
-    #[inline]
-    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
-    fn should_update_lists(&self) -> bool {
-        self.data
-            .collection_time
-            .duration_since(self.last_collection_time)
-            > LIST_REFRESH_TIME
-    }
-
+    /// Update battery information.
+    ///
+    /// If the battery manager is not initialized, it will attempt to initialize it if at least one battery is found.
+    ///
+    /// This function also refreshes the list of batteries if `self.should_refresh_list` is true.
     #[inline]
     #[cfg(feature = "battery")]
     fn update_batteries(&mut self) {
-        if let Some(battery_manager) = &self.battery_manager {
-            if self.should_update_lists() {
-                let battery_list = battery_manager
-                    .batteries()
-                    .map(|batteries| batteries.filter_map(Result::ok).collect::<Vec<_>>());
+        let battery_manager = match &self.battery_manager {
+            Some(manager) => {
+                // Also check if we need to refresh the list of batteries.
+                if self.should_refresh_list {
+                    let battery_list = manager
+                        .batteries()
+                        .map(|batteries| batteries.filter_map(Result::ok).collect::<Vec<_>>());
 
-                if let Ok(battery_list) = battery_list {
-                    if battery_list.is_empty() {
+                    if let Ok(battery_list) = battery_list {
+                        if battery_list.is_empty() {
+                            self.battery_list = None;
+                        } else {
+                            self.battery_list = Some(battery_list);
+                        }
+                    } else {
                         self.battery_list = None;
+                    }
+                }
+
+                manager
+            }
+            None => {
+                if let Ok(manager) = Manager::new() {
+                    let Ok(battery_list) = manager
+                        .batteries()
+                        .map(|batteries| batteries.filter_map(Result::ok).collect::<Vec<_>>())
+                    else {
+                        return;
+                    };
+
+                    if battery_list.is_empty() {
+                        return;
                     } else {
                         self.battery_list = Some(battery_list);
+                        self.battery_manager = Some(manager);
                     }
+
+                    self.battery_manager
+                        .as_ref()
+                        .expect("we just initialized the battery manager")
                 } else {
-                    self.battery_list = None;
+                    return;
                 }
             }
+        };
 
-            self.data.list_of_batteries = self
-                .battery_list
-                .as_mut()
-                .map(|battery_list| batteries::refresh_batteries(battery_manager, battery_list));
-        }
+        self.data.list_of_batteries = self
+            .battery_list
+            .as_mut()
+            .map(|battery_list| batteries::refresh_batteries(battery_manager, battery_list));
     }
 
     #[inline]
