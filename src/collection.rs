@@ -150,14 +150,21 @@ impl Default for SysinfoSource {
 pub struct DataCollector {
     pub data: Data,
     sys: SysinfoSource,
-    use_current_cpu_total: bool,
-    unnormalized_cpu: bool,
     last_collection_time: Instant,
-    total_rx: u64,
-    total_tx: u64,
-    show_average_cpu: bool,
     widgets_to_harvest: UsedWidgets,
     filters: DataFilters,
+
+    total_rx: u64,
+    total_tx: u64,
+
+    unnormalized_cpu: bool,
+    use_current_cpu_total: bool,
+    show_average_cpu: bool,
+
+    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+    last_list_collection_time: Instant,
+    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+    should_refresh_list: bool,
 
     #[cfg(target_os = "linux")]
     pid_mapping: HashMap<Pid, processes::PrevProcDetails>,
@@ -180,11 +187,13 @@ pub struct DataCollector {
     gpus_total_mem: Option<u64>,
 }
 
+const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
+
 impl DataCollector {
     pub fn new(filters: DataFilters) -> Self {
         // Initialize it to the past to force it to load on initialization.
         let now = Instant::now();
-        let last_collection_time = now.checked_sub(Duration::from_secs(600)).unwrap_or(now);
+        let last_collection_time = now.checked_sub(LIST_REFRESH_TIME * 10).unwrap_or(now);
 
         DataCollector {
             data: Data::default(),
@@ -213,32 +222,32 @@ impl DataCollector {
             gpu_pids: None,
             #[cfg(feature = "gpu")]
             gpus_total_mem: None,
+            #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+            last_list_collection_time: last_collection_time,
+            #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+            should_refresh_list: true,
         }
     }
 
-    pub fn init(&mut self) {
-        #[cfg(feature = "battery")]
+    /// Update the check for updating things like lists of batteries, etc.
+    /// This is useful for things that we don't want to update all the time.
+    ///
+    /// Note this should be set back to false if `self.last_list_collection_time` is updated.
+    #[inline]
+    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+    fn update_refresh_list_check(&mut self) {
+        if self
+            .data
+            .collection_time
+            .duration_since(self.last_list_collection_time)
+            > LIST_REFRESH_TIME
         {
-            if self.widgets_to_harvest.use_battery {
-                if let Ok(battery_manager) = Manager::new() {
-                    if let Ok(batteries) = battery_manager.batteries() {
-                        let battery_list: Vec<Battery> = batteries.filter_map(Result::ok).collect();
-                        if !battery_list.is_empty() {
-                            self.battery_list = Some(battery_list);
-                            self.battery_manager = Some(battery_manager);
-                        }
-                    }
-                }
-            }
+            self.should_refresh_list = true;
         }
 
-        self.update_data();
-
-        // Sleep a few seconds to avoid potentially weird data.
-        const SLEEP: Duration = get_sleep_duration();
-
-        std::thread::sleep(SLEEP);
-        self.data.cleanup();
+        if self.should_refresh_list {
+            self.last_list_collection_time = self.data.collection_time;
+        }
     }
 
     pub fn set_collection(&mut self, used_widgets: UsedWidgets) {
@@ -286,9 +295,6 @@ impl DataCollector {
         // - Temperatures and temperature components list.
         #[cfg(not(target_os = "linux"))]
         {
-            const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
-            let refresh_start = Instant::now();
-
             if self.widgets_to_harvest.use_proc {
                 self.sys.system.refresh_processes_specifics(
                     sysinfo::ProcessesToUpdate::All,
@@ -301,13 +307,13 @@ impl DataCollector {
 
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
-                if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                if self.should_refresh_list {
                     self.sys.users.refresh();
                 }
             }
 
             if self.widgets_to_harvest.use_temp {
-                if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                if self.should_refresh_list {
                     self.sys.temps.refresh(true);
                 }
 
@@ -318,7 +324,7 @@ impl DataCollector {
 
             #[cfg(target_os = "windows")]
             if self.widgets_to_harvest.use_disk {
-                if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                if self.should_refresh_list {
                     self.sys.disks.refresh(true);
                 }
 
@@ -330,9 +336,14 @@ impl DataCollector {
     }
 
     pub fn update_data(&mut self) {
-        self.refresh_sysinfo_data();
-
         self.data.collection_time = Instant::now();
+
+        #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+        {
+            self.update_refresh_list_check();
+        }
+
+        self.refresh_sysinfo_data();
 
         self.update_cpu_usage();
         self.update_memory_usage();
@@ -342,16 +353,23 @@ impl DataCollector {
         self.update_batteries();
 
         #[cfg(feature = "gpu")]
-        self.update_gpus(); // update_gpus before procs for gpu_pids but after temps for appending
+        self.update_gpus();
 
         self.update_processes();
         self.update_network_usage();
         self.update_disks();
 
+        #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+        {
+            self.should_refresh_list = false;
+        }
+
         // Update times for future reference.
         self.last_collection_time = self.data.collection_time;
     }
 
+    /// Gets GPU data. Note this will usually append to other previously
+    /// collected data fields at the moment.
     #[cfg(feature = "gpu")]
     #[inline]
     fn update_gpus(&mut self) {
@@ -462,15 +480,13 @@ impl DataCollector {
 
     #[inline]
     fn update_network_usage(&mut self) {
-        let current_instant = self.data.collection_time;
-
         if self.widgets_to_harvest.use_net {
             let net_data = network::get_network_data(
                 &self.sys.network,
                 self.last_collection_time,
                 &mut self.total_rx,
                 &mut self.total_tx,
-                current_instant,
+                self.data.collection_time,
                 &self.filters.net_filter,
             );
 
@@ -480,15 +496,59 @@ impl DataCollector {
         }
     }
 
+    /// Update battery information.
+    ///
+    /// If the battery manager is not initialized, it will attempt to initialize it if at least one battery is found.
+    ///
+    /// This function also refreshes the list of batteries if `self.should_refresh_list` is true.
     #[inline]
     #[cfg(feature = "battery")]
     fn update_batteries(&mut self) {
-        if let Some(battery_manager) = &self.battery_manager {
-            if let Some(battery_list) = &mut self.battery_list {
-                self.data.list_of_batteries =
-                    Some(batteries::refresh_batteries(battery_manager, battery_list));
+        let battery_manager = match &self.battery_manager {
+            Some(manager) => {
+                // Also check if we need to refresh the list of batteries.
+                if self.should_refresh_list {
+                    let battery_list = manager
+                        .batteries()
+                        .map(|batteries| batteries.filter_map(Result::ok).collect::<Vec<_>>());
+
+                    if let Ok(battery_list) = battery_list {
+                        if battery_list.is_empty() {
+                            self.battery_list = None;
+                        } else {
+                            self.battery_list = Some(battery_list);
+                        }
+                    } else {
+                        self.battery_list = None;
+                    }
+                }
+
+                manager
             }
-        }
+            None => {
+                if let Ok(manager) = Manager::new() {
+                    let Ok(batteries) = manager.batteries() else {
+                        return;
+                    };
+
+                    let battery_list = batteries.filter_map(Result::ok).collect::<Vec<_>>();
+
+                    if battery_list.is_empty() {
+                        return;
+                    }
+
+                    self.battery_list = Some(battery_list);
+                    self.battery_manager.insert(manager)
+                } else {
+                    return;
+                }
+            }
+        };
+
+        self.data.list_of_batteries = self
+            .battery_list
+            .as_mut()
+            .map(|battery_list| batteries::refresh_batteries(battery_manager, battery_list));
     }
 
     #[inline]
@@ -507,31 +567,6 @@ impl DataCollector {
         } else {
             self.sys.system.total_memory()
         }
-    }
-}
-
-/// We set a sleep duration between 10ms and 250ms, ideally sysinfo's
-/// [`sysinfo::MINIMUM_CPU_UPDATE_INTERVAL`] + 1.
-///
-/// We bound the upper end to avoid waiting too long (e.g. FreeBSD is 1s, which
-/// I'm fine with losing accuracy on for the first refresh), and we bound the
-/// lower end just to avoid the off-chance that refreshing too quickly causes
-/// problems. This second case should only happen on unsupported systems via
-/// sysinfo, in which case [`sysinfo::MINIMUM_CPU_UPDATE_INTERVAL`] is defined
-/// as 0.
-///
-/// We also do `INTERVAL + 1` for some wiggle room, just in case.
-const fn get_sleep_duration() -> Duration {
-    const MIN_SLEEP: u64 = 10;
-    const MAX_SLEEP: u64 = 250;
-    const INTERVAL: u64 = sysinfo::MINIMUM_CPU_UPDATE_INTERVAL.as_millis() as u64;
-
-    if INTERVAL < MIN_SLEEP {
-        Duration::from_millis(MIN_SLEEP)
-    } else if INTERVAL > MAX_SLEEP {
-        Duration::from_millis(MAX_SLEEP)
-    } else {
-        Duration::from_millis(INTERVAL + 1)
     }
 }
 
