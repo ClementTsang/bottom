@@ -151,8 +151,6 @@ pub struct DataCollector {
     pub data: Data,
     sys: SysinfoSource,
     last_collection_time: Instant,
-    last_list_collection_time: Instant,
-    should_refresh_list: bool,
     widgets_to_harvest: UsedWidgets,
     filters: DataFilters,
 
@@ -162,6 +160,11 @@ pub struct DataCollector {
     unnormalized_cpu: bool,
     use_current_cpu_total: bool,
     show_average_cpu: bool,
+
+    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+    last_list_collection_time: Instant,
+    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+    should_refresh_list: bool,
 
     #[cfg(target_os = "linux")]
     pid_mapping: HashMap<Pid, processes::PrevProcDetails>,
@@ -204,8 +207,6 @@ impl DataCollector {
             use_current_cpu_total: false,
             unnormalized_cpu: false,
             last_collection_time,
-            last_list_collection_time: last_collection_time,
-            should_refresh_list: true,
             total_rx: 0,
             total_tx: 0,
             show_average_cpu: false,
@@ -221,6 +222,10 @@ impl DataCollector {
             gpu_pids: None,
             #[cfg(feature = "gpu")]
             gpus_total_mem: None,
+            #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+            last_list_collection_time: last_collection_time,
+            #[cfg(any(not(target_os = "linux"), feature = "battery"))]
+            should_refresh_list: true,
         }
     }
 
