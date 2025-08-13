@@ -275,23 +275,13 @@ impl DataCollector {
 
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
-                if self
-                    .data
-                    .collection_time
-                    .duration_since(self.last_collection_time)
-                    > LIST_REFRESH_TIME
-                {
+                if self.self.should_update_lists() {
                     self.sys.users.refresh();
                 }
             }
 
             if self.widgets_to_harvest.use_temp {
-                if self
-                    .data
-                    .collection_time
-                    .duration_since(self.last_collection_time)
-                    > LIST_REFRESH_TIME
-                {
+                if self.should_update_lists() {
                     self.sys.temps.refresh(true);
                 }
 
@@ -302,12 +292,7 @@ impl DataCollector {
 
             #[cfg(target_os = "windows")]
             if self.widgets_to_harvest.use_disk {
-                if self
-                    .data
-                    .collection_time
-                    .duration_since(self.last_collection_time)
-                    > LIST_REFRESH_TIME
-                {
+                if self.should_update_lists() {
                     self.sys.disks.refresh(true);
                 }
 
@@ -469,16 +454,22 @@ impl DataCollector {
         }
     }
 
+    /// Whether we should update things like lists of batteries, etc.
+    /// This is useful for things that we don't want to update all the time.
+    #[cfg(any(feature = "battery", not(target_os = "linux")))]
+    #[inline]
+    fn should_update_lists(&self) -> bool {
+        self.data
+            .collection_time
+            .duration_since(self.last_collection_time)
+            > LIST_REFRESH_TIME
+    }
+
     #[inline]
     #[cfg(feature = "battery")]
     fn update_batteries(&mut self) {
         if let Some(battery_manager) = &self.battery_manager {
-            if self
-                .data
-                .collection_time
-                .duration_since(self.last_collection_time)
-                > LIST_REFRESH_TIME
-            {
+            if self.should_update_lists() {
                 let battery_list = battery_manager
                     .batteries()
                     .map(|batteries| batteries.filter_map(Result::ok).collect::<Vec<_>>());
