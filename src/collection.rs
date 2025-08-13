@@ -527,23 +527,18 @@ impl DataCollector {
             }
             None => {
                 if let Ok(manager) = Manager::new() {
-                    let Ok(battery_list) = manager
-                        .batteries()
-                        .map(|batteries| batteries.filter_map(Result::ok).collect::<Vec<_>>())
-                    else {
+                    let Ok(batteries) = manager.batteries() else {
                         return;
                     };
 
+                    let battery_list = batteries.filter_map(Result::ok).collect::<Vec<_>>();
+
                     if battery_list.is_empty() {
                         return;
-                    } else {
-                        self.battery_list = Some(battery_list);
-                        self.battery_manager = Some(manager);
                     }
 
-                    self.battery_manager
-                        .as_ref()
-                        .expect("we just initialized the battery manager")
+                    self.battery_list = Some(battery_list);
+                    self.battery_manager.insert(manager)
                 } else {
                     return;
                 }
