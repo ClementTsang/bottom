@@ -205,7 +205,7 @@ impl DataCollector {
             unnormalized_cpu: false,
             last_collection_time,
             last_list_collection_time: last_collection_time,
-            should_refresh_list: false,
+            should_refresh_list: true,
             total_rx: 0,
             total_tx: 0,
             show_average_cpu: false,
@@ -238,6 +238,9 @@ impl DataCollector {
             > LIST_REFRESH_TIME
         {
             self.should_refresh_list = true;
+        }
+
+        if self.should_refresh_list {
             self.last_list_collection_time = self.data.collection_time;
         }
     }
