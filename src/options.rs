@@ -677,7 +677,7 @@ macro_rules! parse_ms_option {
     }};
 }
 
-/// How fast the screen refreshes
+/// How quickly we update data.
 #[inline]
 fn get_update_rate(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
     const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
