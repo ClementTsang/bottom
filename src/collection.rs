@@ -205,7 +205,7 @@ impl DataCollector {
             show_average_cpu: false,
             widgets_to_harvest: UsedWidgets::default(),
             #[cfg(feature = "battery")]
-            battery_manager: None,
+            battery_manager: Manager::new().ok(),
             #[cfg(feature = "battery")]
             battery_list: None,
             filters,
@@ -456,8 +456,8 @@ impl DataCollector {
 
     /// Whether we should update things like lists of batteries, etc.
     /// This is useful for things that we don't want to update all the time.
-    #[cfg(any(feature = "battery", not(target_os = "linux")))]
     #[inline]
+    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
     fn should_update_lists(&self) -> bool {
         self.data
             .collection_time
