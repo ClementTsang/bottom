@@ -180,11 +180,13 @@ pub struct DataCollector {
     gpus_total_mem: Option<u64>,
 }
 
+const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
+
 impl DataCollector {
     pub fn new(filters: DataFilters) -> Self {
         // Initialize it to the past to force it to load on initialization.
         let now = Instant::now();
-        let last_collection_time = now.checked_sub(Duration::from_secs(600)).unwrap_or(now);
+        let last_collection_time = now.checked_sub(LIST_REFRESH_TIME * 10).unwrap_or(now);
 
         DataCollector {
             data: Data::default(),
@@ -214,31 +216,6 @@ impl DataCollector {
             #[cfg(feature = "gpu")]
             gpus_total_mem: None,
         }
-    }
-
-    pub fn init(&mut self) {
-        #[cfg(feature = "battery")]
-        {
-            if self.widgets_to_harvest.use_battery {
-                if let Ok(battery_manager) = Manager::new() {
-                    if let Ok(batteries) = battery_manager.batteries() {
-                        let battery_list: Vec<Battery> = batteries.filter_map(Result::ok).collect();
-                        if !battery_list.is_empty() {
-                            self.battery_list = Some(battery_list);
-                            self.battery_manager = Some(battery_manager);
-                        }
-                    }
-                }
-            }
-        }
-
-        self.update_data();
-
-        // Sleep a few seconds to avoid potentially weird data.
-        const SLEEP: Duration = get_sleep_duration();
-
-        std::thread::sleep(SLEEP);
-        self.data.cleanup();
     }
 
     pub fn set_collection(&mut self, used_widgets: UsedWidgets) {
@@ -286,9 +263,6 @@ impl DataCollector {
         // - Temperatures and temperature components list.
         #[cfg(not(target_os = "linux"))]
         {
-            const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
-            let refresh_start = Instant::now();
-
             if self.widgets_to_harvest.use_proc {
                 self.sys.system.refresh_processes_specifics(
                     sysinfo::ProcessesToUpdate::All,
@@ -301,13 +275,23 @@ impl DataCollector {
 
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
-                if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                if self
+                    .data
+                    .collection_time
+                    .duration_since(self.last_collection_time)
+                    > LIST_REFRESH_TIME
+                {
                     self.sys.users.refresh();
                 }
             }
 
             if self.widgets_to_harvest.use_temp {
-                if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                if self
+                    .data
+                    .collection_time
+                    .duration_since(self.last_collection_time)
+                    > LIST_REFRESH_TIME
+                {
                     self.sys.temps.refresh(true);
                 }
 
@@ -318,7 +302,12 @@ impl DataCollector {
 
             #[cfg(target_os = "windows")]
             if self.widgets_to_harvest.use_disk {
-                if refresh_start.duration_since(self.last_collection_time) > LIST_REFRESH_TIME {
+                if self
+                    .data
+                    .collection_time
+                    .duration_since(self.last_collection_time)
+                    > LIST_REFRESH_TIME
+                {
                     self.sys.disks.refresh(true);
                 }
 
@@ -331,8 +320,6 @@ impl DataCollector {
 
     pub fn update_data(&mut self) {
         self.refresh_sysinfo_data();
-
-        self.data.collection_time = Instant::now();
 
         self.update_cpu_usage();
         self.update_memory_usage();
@@ -484,6 +471,18 @@ impl DataCollector {
     #[cfg(feature = "battery")]
     fn update_batteries(&mut self) {
         if let Some(battery_manager) = &self.battery_manager {
+            if self
+                .data
+                .collection_time
+                .duration_since(self.last_collection_time)
+                > LIST_REFRESH_TIME
+            {
+                self.battery_list = battery_manager
+                    .batteries()
+                    .ok()
+                    .map(|batteries| batteries.filter_map(Result::ok).collect());
+            }
+
             if let Some(battery_list) = &mut self.battery_list {
                 self.data.list_of_batteries =
                     Some(batteries::refresh_batteries(battery_manager, battery_list));
