@@ -471,7 +471,7 @@ jobs:
         run: |
           cargo install cargo-deb --version 3.5.0 --locked
           cargo deb --no-build --target ${{ matrix.info.target }}
-          cp ./target/${{ matrix.info.target }}/debian/bottom_*.deb .
+          cp ./target/debian/bottom_*.deb .
 
       - name: Build Debian release (ARM)
         if: startsWith(matrix.info.target, 'x86_64') != true
@@ -480,7 +480,7 @@ jobs:
         run: |
           docker pull ${{ matrix.info.container }}
           docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.info.container }} "--no-build --variant ${{ matrix.info.dpkg }} --target ${{ matrix.info.target }}" "/volume"
-          cp ./target/${{ matrix.info.target }}/debian/bottom-*.deb .
+          cp ./target/debian/bottom-*.deb .
           TMP_NAME=$(find bottom-*.deb)
           VERSION=${{ matrix.info.dpkg }}
           mv $TMP_NAME $(echo $TMP_NAME | sed "s/-$VERSION//")
@@ -502,8 +502,8 @@ jobs:
 
       - name: Delete generated Debian folder
         run: |
-          sudo chown $USER ./target/${{ matrix.info.target }}/debian/ 2>/dev/null || true
-          rm -r ./target/${{ matrix.info.target }}/debian/
+          sudo chown $USER ./target/debian/ 2>/dev/null || true
+          rm -r ./target/debian/
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
