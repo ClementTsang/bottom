@@ -75,7 +75,7 @@ generate_schema = ["schemars", "serde_json", "strum"]
 anyhow = "1.0.99"
 backtrace = "0.3.75"
 cfg-if = "1.0.1"
-clap = { version = "4.5.44", features = [
+clap = { version = "4.5.45", features = [
     "default",
     "cargo",
     "wrap_help",
@@ -158,7 +158,7 @@ tempfile = { version = "3.20.0", default-features = false }
 portable-pty = "0.9.0"
 
 [build-dependencies]
-clap = { version = "4.5.44", features = [
+clap = { version = "4.5.45", features = [
     "default",
     "cargo",
     "wrap_help",
