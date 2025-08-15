@@ -231,9 +231,6 @@ fn create_collection_thread(
         data_state.set_unnormalized_cpu(unnormalized_cpu);
         data_state.set_show_average_cpu(show_average_cpu);
 
-        data_state.update_data();
-        data_state.data = Data::default();
-
         loop {
             // Check once at the very top... don't block though.
             if let Some(is_terminated) = cancellation_token.try_check() {
