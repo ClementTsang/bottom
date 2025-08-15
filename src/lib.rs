@@ -53,6 +53,8 @@ use tui::{Terminal, backend::CrosstermBackend};
 use utils::logging::*;
 use utils::{cancellation_token::CancellationToken, conversion::*};
 
+use crate::collection::Data;
+
 // Used for heap allocation debugging purposes.
 // #[global_allocator]
 // static ALLOC: dhat::Alloc = dhat::Alloc;
@@ -230,6 +232,7 @@ fn create_collection_thread(
         data_state.set_show_average_cpu(show_average_cpu);
 
         data_state.update_data();
+        data_state.data = Data::default();
 
         loop {
             // Check once at the very top... don't block though.
@@ -258,7 +261,8 @@ fn create_collection_thread(
             }
 
             let event = BottomEvent::Update(Box::from(data_state.data));
-            data_state.data = collection::Data::default();
+            data_state.data = Data::default();
+
             if sender.send(event).is_err() {
                 break;
             }
