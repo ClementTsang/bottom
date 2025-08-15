@@ -24,7 +24,8 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ### Bug Fixes
 
-- [#1776](https://github.com/ClementTsang/bottom/pull/1776): Fix disk.columns being incorrectly interpreted as blank.
+- [#1776](https://github.com/ClementTsang/bottom/pull/1776): Fix `disk.columns` being incorrectly interpreted as blank.
+- [1787](https://github.com/ClementTsang/bottom/pull/1787): Fix issue with battery widget time and small widths.
 
 ## [0.11.0] - 2025-08-05
 
