@@ -195,7 +195,7 @@ impl DataCollector {
         let now = Instant::now();
         let last_collection_time = now.checked_sub(LIST_REFRESH_TIME * 10).unwrap_or(now);
 
-        let mut collector = DataCollector {
+        DataCollector {
             data: Data::default(),
             sys: SysinfoSource::default(),
             #[cfg(target_os = "linux")]
@@ -226,12 +226,7 @@ impl DataCollector {
             last_list_collection_time: last_collection_time,
             #[cfg(any(not(target_os = "linux"), feature = "battery"))]
             should_refresh_list: true,
-        };
-
-        collector.update_data();
-        collector.data = Data::default();
-
-        collector
+        }
     }
 
     /// Update the check for updating things like lists of batteries, etc.

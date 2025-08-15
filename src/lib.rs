@@ -224,12 +224,15 @@ fn create_collection_thread(
     let update_sleep = app_config_fields.update_rate;
 
     thread::spawn(move || {
-        let mut data_state = collection::DataCollector::new(filters);
+        let mut data_collector = collection::DataCollector::new(filters);
 
-        data_state.set_collection(used_widget_set);
-        data_state.set_use_current_cpu_total(use_current_cpu_total);
-        data_state.set_unnormalized_cpu(unnormalized_cpu);
-        data_state.set_show_average_cpu(show_average_cpu);
+        data_collector.set_collection(used_widget_set);
+        data_collector.set_use_current_cpu_total(use_current_cpu_total);
+        data_collector.set_unnormalized_cpu(unnormalized_cpu);
+        data_collector.set_show_average_cpu(show_average_cpu);
+
+        data_collector.update_data();
+        data_collector.data = Data::default();
 
         loop {
             // Check once at the very top... don't block though.
@@ -243,12 +246,12 @@ fn create_collection_thread(
                 // trace!("Received message in collection thread: {message:?}");
                 match message {
                     CollectionThreadEvent::Reset => {
-                        data_state.data.cleanup();
+                        data_collector.data.cleanup();
                     }
                 }
             }
 
-            data_state.update_data();
+            data_collector.update_data();
 
             // Yet another check to bail if needed... do not block!
             if let Some(is_terminated) = cancellation_token.try_check() {
@@ -257,8 +260,8 @@ fn create_collection_thread(
                 }
             }
 
-            let event = BottomEvent::Update(Box::from(data_state.data));
-            data_state.data = Data::default();
+            let event = BottomEvent::Update(Box::from(data_collector.data));
+            data_collector.data = Data::default();
 
             if sender.send(event).is_err() {
                 break;
