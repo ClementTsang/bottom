@@ -234,6 +234,9 @@ fn create_collection_thread(
         data_collector.update_data();
         data_collector.data = Data::default();
 
+        // Tiny sleep I guess? To go between the first update above and the first update in the loop.
+        std::thread::sleep(Duration::from_millis(5));
+
         loop {
             // Check once at the very top... don't block though.
             if let Some(is_terminated) = cancellation_token.try_check() {
