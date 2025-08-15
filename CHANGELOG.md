@@ -20,11 +20,16 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
-## [0.11.1] - Unreleased
+## [0.11.1] - 2025-08-15
 
 ### Bug Fixes
 
-- [#1776](https://github.com/ClementTsang/bottom/pull/1776): Fix disk.columns being incorrectly interpreted as blank.
+- [#1776](https://github.com/ClementTsang/bottom/pull/1776): Fix `disk.columns` being incorrectly interpreted as blank.
+- [#1787](https://github.com/ClementTsang/bottom/pull/1787): Fix issue with battery widget time and small widths.
+
+### Other
+
+- [#1779](https://github.com/ClementTsang/bottom/pull/1779), [#1788](https://github.com/ClementTsang/bottom/pull/1788): Speed up time between startup and displaying data.
 
 ## [0.11.0] - 2025-08-05
 

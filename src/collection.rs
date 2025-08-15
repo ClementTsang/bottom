@@ -335,6 +335,9 @@ impl DataCollector {
         }
     }
 
+    /// Update and refresh data.
+    ///
+    /// TODO: separate refresh steps and update steps
     pub fn update_data(&mut self) {
         self.data.collection_time = Instant::now();
 
