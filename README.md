@@ -40,6 +40,7 @@
   - [Snap](#snap)
   - [Solus](#solus)
   - [Void](#void)
+  - [gah](#gah)
   - [Homebrew](#homebrew)
   - [MacPorts](#macports)
   - [Chocolatey](#chocolatey)
@@ -324,6 +325,14 @@ Available [in the void-packages repo](https://github.com/void-linux/void-package
 
 ```bash
 sudo xbps-install bottom
+```
+
+### gah
+
+bottom can also be installed on Linux or macOS using [gah](https://github.com/marverix/gah):
+
+```bash
+gah install bottom
 ```
 
 ### Homebrew
