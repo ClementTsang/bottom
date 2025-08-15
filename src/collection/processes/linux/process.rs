@@ -58,6 +58,9 @@ pub(crate) struct Stat {
 
     /// The start time of the process, represented in clock ticks.
     pub start_time: u64,
+
+    /// Kernel thread
+    pub is_kernel_thread: bool,
 }
 
 impl Stat {
@@ -90,9 +93,15 @@ impl Stat {
             .ok_or_else(|| anyhow!("missing state"))?;
         let ppid: Pid = next_part(&mut rest)?.parse()?;
 
-        // Skip 9 fields until utime (pgrp, session, tty_nr, tpgid, flags, minflt,
-        // cminflt, majflt, cmajflt).
-        let mut rest = rest.skip(9);
+        // Skip 4 fields (pgrp, session, tty_nr, tpgid)
+        let mut rest = rest.skip(4);
+
+        // read flags for kernel thread (PF_KTHREAD from include/linux/sched.h)
+        let flags: u32 = next_part(&mut rest)?.parse()?;
+        let is_kernel_thread: bool = flags & 0x00200000 != 0;
+
+        // Skip 4 fields (minflt, cminflt, majflt, cmajflt)
+        let mut rest = rest.skip(4);
         let utime: u64 = next_part(&mut rest)?.parse()?;
         let stime: u64 = next_part(&mut rest)?.parse()?;
 
@@ -113,6 +122,7 @@ impl Stat {
             rss,
             vsize,
             start_time,
+            is_kernel_thread,
         })
     }
 

@@ -38,6 +38,8 @@ pub(crate) struct FlagConfig {
     pub(crate) process_command: Option<bool>,
     // #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub(crate) disable_advanced_kill: Option<bool>, // This does nothing on Windows, but we leave it enabled to make the config file consistent across platforms.
+    // #[cfg(target_os = "linux")]
+    pub(crate) hide_k_threads: Option<bool>,
     pub(crate) network_use_bytes: Option<bool>,
     pub(crate) network_use_log: Option<bool>,
     pub(crate) network_use_binary_prefix: Option<bool>,
