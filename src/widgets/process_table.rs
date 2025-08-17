@@ -1176,6 +1176,8 @@ mod test {
             gpu_mem_usage: MemUsage::Percent(1.1),
             #[cfg(feature = "gpu")]
             gpu_usage: 0,
+            #[cfg(target_os = "linux")]
+            process_type: crate::collection::processes::ProcessType::Regular,
         };
 
         let b = ProcWidgetData {

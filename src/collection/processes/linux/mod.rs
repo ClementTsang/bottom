@@ -16,7 +16,9 @@ use sysinfo::ProcessStatus;
 use super::{Pid, ProcessHarvest, UserTable, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult, processes::ProcessType};
 
-/// Maximum character length of a `/proc/<PID>/stat`` process name.
+/// Maximum character length of a `/proc/<PID>/stat` process name (the length is 16,
+/// but this includes a null terminator).
+///
 /// If it's equal or greater, then we instead refer to the command for the name.
 const MAX_STAT_NAME_LEN: usize = 15;
 
@@ -230,12 +232,15 @@ fn read_proc(
 
                     // We're only interested in the executable part, not the file path (part of command),
                     // so strip everything but the command name if needed.
-                    let last_part = match first_part.rsplit_once('/') {
+                    let command = match first_part.rsplit_once('/') {
                         Some((_, last)) => last,
                         None => first_part,
                     };
 
-                    last_part.to_string()
+                    // Needed as some processes have stuff like "systemd-userwork: waiting..."
+                    // command.trim_end_matches(':').to_string()
+
+                    command.to_string()
                 } else {
                     truncated_name
                 };

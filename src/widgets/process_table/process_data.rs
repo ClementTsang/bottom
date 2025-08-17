@@ -10,6 +10,7 @@ use concat_string::concat_string;
 use tui::widgets::Row;
 
 use super::process_columns::ProcColumn;
+#[cfg(target_os = "linux")]
 use crate::{
     canvas::{
         Painter,
@@ -214,6 +215,9 @@ pub struct ProcWidgetData {
     pub gpu_mem_usage: MemUsage,
     #[cfg(feature = "gpu")]
     pub gpu_usage: u32,
+    /// The process "type". Used to color things.
+    #[cfg(target_os = "linux")]
+    pub process_type: crate::collection::processes::ProcessType,
 }
 
 impl ProcWidgetData {
@@ -258,6 +262,8 @@ impl ProcWidgetData {
             },
             #[cfg(feature = "gpu")]
             gpu_usage: process.gpu_util,
+            #[cfg(target_os = "linux")]
+            process_type: process.process_type,
         }
     }
 
