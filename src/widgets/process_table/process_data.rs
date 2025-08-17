@@ -367,12 +367,11 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
         })
     }
 
+    #[cfg(target_os = "linux")]
     #[inline(always)]
     fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<Style> {
         match column {
-            ProcColumn::Name | ProcColumn::Command
-                if cfg!(target_os = "linux") && self.process_type.is_thread() =>
-            {
+            ProcColumn::Name | ProcColumn::Command if self.process_type.is_thread() => {
                 Some(painter.styles.thread_text_style)
             }
             _ => None,
