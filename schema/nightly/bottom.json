@@ -207,7 +207,10 @@
       "properties": {
         "columns": {
           "description": "A list of disk widget columns.",
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "$ref": "#/$defs/DiskColumn"
           }
@@ -751,6 +754,13 @@
           "items": {
             "$ref": "#/$defs/ProcColumn"
           }
+        },
+        "get_threads": {
+          "description": "Whether to get process child threads.",
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       }
     },

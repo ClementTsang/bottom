@@ -68,7 +68,7 @@ impl Painter {
     }
 
     /// Draws the process sort box.
-    /// - `widget_id` represents the widget ID of the process widget itself.an
+    /// - `widget_id` represents the widget ID of the process widget itself.
     fn draw_processes_table(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {

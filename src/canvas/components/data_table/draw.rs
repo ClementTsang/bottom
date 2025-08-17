@@ -8,7 +8,7 @@ use tui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span, Text},
-    widgets::{Block, Row, Table},
+    widgets::{Block, Cell, Row, Table},
 };
 
 use super::{
@@ -217,9 +217,17 @@ where
                                 .iter()
                                 .zip(&self.state.calculated_widths)
                                 .filter_map(|(column, &width)| {
-                                    data_row
-                                        .to_cell(column.inner(), width)
-                                        .map(|content| truncate_to_text(&content, width.get()))
+                                    data_row.to_cell_text(column.inner(), width).map(|content| {
+                                        let content = truncate_to_text(&content, width.get());
+
+                                        if let Some(style) =
+                                            data_row.style_cell(column.inner(), painter)
+                                        {
+                                            Cell::new(content).style(style)
+                                        } else {
+                                            Cell::new(content)
+                                        }
+                                    })
                                 }),
                         );
 

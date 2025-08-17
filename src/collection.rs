@@ -160,14 +160,13 @@ pub struct DataCollector {
     unnormalized_cpu: bool,
     use_current_cpu_total: bool,
     show_average_cpu: bool,
+    get_process_threads: bool,
 
-    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
     last_list_collection_time: Instant,
-    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
-    should_refresh_list: bool,
+    should_run_less_routine_tasks: bool,
 
     #[cfg(target_os = "linux")]
-    pid_mapping: HashMap<Pid, processes::PrevProcDetails>,
+    prev_process_details: HashMap<Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
     prev_idle: f64,
     #[cfg(target_os = "linux")]
@@ -187,25 +186,26 @@ pub struct DataCollector {
     gpus_total_mem: Option<u64>,
 }
 
-const LIST_REFRESH_TIME: Duration = Duration::from_secs(60);
+const LESS_ROUTINE_TASK_TIME: Duration = Duration::from_secs(60);
 
 impl DataCollector {
     pub fn new(filters: DataFilters) -> Self {
         // Initialize it to the past to force it to load on initialization.
         let now = Instant::now();
-        let last_collection_time = now.checked_sub(LIST_REFRESH_TIME * 10).unwrap_or(now);
+        let last_collection_time = now.checked_sub(LESS_ROUTINE_TASK_TIME * 10).unwrap_or(now);
 
         DataCollector {
             data: Data::default(),
             sys: SysinfoSource::default(),
             #[cfg(target_os = "linux")]
-            pid_mapping: HashMap::default(),
+            prev_process_details: HashMap::default(),
             #[cfg(target_os = "linux")]
             prev_idle: 0_f64,
             #[cfg(target_os = "linux")]
             prev_non_idle: 0_f64,
             use_current_cpu_total: false,
             unnormalized_cpu: false,
+            get_process_threads: false,
             last_collection_time,
             total_rx: 0,
             total_tx: 0,
@@ -222,30 +222,27 @@ impl DataCollector {
             gpu_pids: None,
             #[cfg(feature = "gpu")]
             gpus_total_mem: None,
-            #[cfg(any(not(target_os = "linux"), feature = "battery"))]
             last_list_collection_time: last_collection_time,
-            #[cfg(any(not(target_os = "linux"), feature = "battery"))]
-            should_refresh_list: true,
+            should_run_less_routine_tasks: true,
         }
     }
 
-    /// Update the check for updating things like lists of batteries, etc.
+    /// Update the check for routine tasks like updating lists of batteries, cleanup, etc.
     /// This is useful for things that we don't want to update all the time.
     ///
     /// Note this should be set back to false if `self.last_list_collection_time` is updated.
     #[inline]
-    #[cfg(any(not(target_os = "linux"), feature = "battery"))]
-    fn update_refresh_list_check(&mut self) {
+    fn run_less_routine_tasks(&mut self) {
         if self
             .data
             .collection_time
             .duration_since(self.last_list_collection_time)
-            > LIST_REFRESH_TIME
+            > LESS_ROUTINE_TASK_TIME
         {
-            self.should_refresh_list = true;
+            self.should_run_less_routine_tasks = true;
         }
 
-        if self.should_refresh_list {
+        if self.should_run_less_routine_tasks {
             self.last_list_collection_time = self.data.collection_time;
         }
     }
@@ -264,6 +261,10 @@ impl DataCollector {
 
     pub fn set_show_average_cpu(&mut self, show_average_cpu: bool) {
         self.show_average_cpu = show_average_cpu;
+    }
+
+    pub fn set_get_process_threads(&mut self, get_process_threads: bool) {
+        self.get_process_threads = get_process_threads;
     }
 
     /// Refresh sysinfo data. We use sysinfo for the following data:
@@ -307,13 +308,13 @@ impl DataCollector {
 
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
-                if self.should_refresh_list {
+                if self.should_run_less_routine_tasks {
                     self.sys.users.refresh();
                 }
             }
 
             if self.widgets_to_harvest.use_temp {
-                if self.should_refresh_list {
+                if self.should_run_less_routine_tasks {
                     self.sys.temps.refresh(true);
                 }
 
@@ -324,7 +325,7 @@ impl DataCollector {
 
             #[cfg(target_os = "windows")]
             if self.widgets_to_harvest.use_disk {
-                if self.should_refresh_list {
+                if self.should_run_less_routine_tasks {
                     self.sys.disks.refresh(true);
                 }
 
@@ -341,10 +342,7 @@ impl DataCollector {
     pub fn update_data(&mut self) {
         self.data.collection_time = Instant::now();
 
-        #[cfg(any(not(target_os = "linux"), feature = "battery"))]
-        {
-            self.update_refresh_list_check();
-        }
+        self.run_less_routine_tasks();
 
         self.refresh_sysinfo_data();
 
@@ -362,10 +360,8 @@ impl DataCollector {
         self.update_network_usage();
         self.update_disks();
 
-        #[cfg(any(not(target_os = "linux"), feature = "battery"))]
-        {
-            self.should_refresh_list = false;
-        }
+        // Make sure to run this to refresh the setting.
+        self.should_run_less_routine_tasks = false;
 
         // Update times for future reference.
         self.last_collection_time = self.data.collection_time;
@@ -503,14 +499,14 @@ impl DataCollector {
     ///
     /// If the battery manager is not initialized, it will attempt to initialize it if at least one battery is found.
     ///
-    /// This function also refreshes the list of batteries if `self.should_refresh_list` is true.
+    /// This function also refreshes the list of batteries if `self.should_run_less_routine_tasks` is true.
     #[inline]
     #[cfg(feature = "battery")]
     fn update_batteries(&mut self) {
         let battery_manager = match &self.battery_manager {
             Some(manager) => {
                 // Also check if we need to refresh the list of batteries.
-                if self.should_refresh_list {
+                if self.should_run_less_routine_tasks {
                     let battery_list = manager
                         .batteries()
                         .map(|batteries| batteries.filter_map(Result::ok).collect::<Vec<_>>());
