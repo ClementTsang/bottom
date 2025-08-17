@@ -627,6 +627,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "marverix",
+      "name": "Marek Sierociński",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2142811?v=4",
+      "profile": "http://marek.sierocinscy.pl",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
