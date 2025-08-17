@@ -45,7 +45,7 @@ impl CpuWidgetTableData {
 }
 
 impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
-    fn to_cell(
+    fn to_cell_text(
         &self, column: &CpuWidgetColumn, calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         const CPU_TRUNCATE_BREAKPOINT: u16 = 5;

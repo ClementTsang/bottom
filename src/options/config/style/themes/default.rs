@@ -67,6 +67,8 @@ impl Styles {
             invalid_query_style: color!(Color::Red),
             disabled_text_style: color!(Color::DarkGray),
             border_type: BorderType::Plain,
+            #[cfg(target_os = "linux")]
+            thread_text_style: color!(Color::Green),
         }
     }
 
