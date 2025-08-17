@@ -288,38 +288,7 @@ impl Process {
 
         reset(&mut root, buffer);
 
-        let threads = if get_threads {
-            root.push("task");
-
-            let task_dir = rustix::fs::openat(
-                rustix::fs::CWD,
-                root.as_path(),
-                OFlags::RDONLY | OFlags::DIRECTORY | OFlags::CLOEXEC,
-                Mode::empty(),
-            )?;
-
-            if let Ok(task) = rustix::fs::Dir::read_from(task_dir) {
-                let pid_str = pid.to_string();
-
-                task.flatten()
-                    .filter_map(|thread_dir| {
-                        let file_name = thread_dir.file_name();
-                        let file_name = file_name.to_string_lossy();
-                        let file_name = file_name.trim();
-
-                        if is_str_numeric(file_name) && file_name != pid_str {
-                            Some(root.join(file_name).to_path_buf())
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>()
-            } else {
-                Vec::new()
-            }
-        } else {
-            Vec::new()
-        };
+        let threads = threads(&mut root, pid, get_threads);
 
         Ok((
             Process {
@@ -362,4 +331,41 @@ fn open_at(root: &mut PathBuf, child: &str, fd: &OwnedFd) -> anyhow::Result<File
     let new_fd = rustix::fs::openat(fd, &*root, OFlags::RDONLY | OFlags::CLOEXEC, Mode::empty())?;
 
     Ok(File::from(new_fd))
+}
+
+#[inline]
+fn threads(root: &mut PathBuf, pid: Pid, get_threads: bool) -> Vec<PathBuf> {
+    if get_threads {
+        root.push("task");
+
+        let Ok(task_dir) = rustix::fs::openat(
+            rustix::fs::CWD,
+            root.as_path(),
+            OFlags::RDONLY | OFlags::DIRECTORY | OFlags::CLOEXEC,
+            Mode::empty(),
+        ) else {
+            return Vec::new();
+        };
+
+        if let Ok(task) = rustix::fs::Dir::read_from(task_dir) {
+            let pid_str = pid.to_string();
+
+            return task
+                .flatten()
+                .filter_map(|thread_dir| {
+                    let file_name = thread_dir.file_name();
+                    let file_name = file_name.to_string_lossy();
+                    let file_name = file_name.trim();
+
+                    if is_str_numeric(file_name) && file_name != pid_str {
+                        Some(root.join(file_name).to_path_buf())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+        }
+    }
+
+    Vec::new()
 }
