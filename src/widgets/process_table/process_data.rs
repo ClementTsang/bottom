@@ -10,7 +10,7 @@ use concat_string::concat_string;
 use tui::{style::Style, widgets::Row};
 
 use super::process_columns::ProcColumn;
-#[cfg(target_os = "linux")]
+
 use crate::{
     canvas::{
         Painter,
