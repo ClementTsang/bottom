@@ -360,7 +360,7 @@ mod test {
     }
 
     impl DataToCell<ColumnType> for TestType {
-        fn to_cell(
+        fn to_cell_text(
             &self, _column: &ColumnType, _calculated_width: NonZeroU16,
         ) -> Option<Cow<'static, str>> {
             None

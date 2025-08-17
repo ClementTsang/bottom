@@ -237,7 +237,7 @@ fn read_proc(
                         None => first_part,
                     };
 
-                    // Needed as some processes have stuff like "systemd-userwork: waiting..."
+                    // TODO: Needed as some processes have stuff like "systemd-userwork: waiting..."
                     // command.trim_end_matches(':').to_string()
 
                     command.to_string()

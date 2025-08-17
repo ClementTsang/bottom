@@ -11,7 +11,7 @@ impl ColumnHeader for SortTableColumn {
 }
 
 impl DataToCell<SortTableColumn> for &'static str {
-    fn to_cell(
+    fn to_cell_text(
         &self, _column: &SortTableColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         Some(Cow::Borrowed(self))
@@ -26,7 +26,7 @@ impl DataToCell<SortTableColumn> for &'static str {
 }
 
 impl DataToCell<SortTableColumn> for Cow<'static, str> {
-    fn to_cell(
+    fn to_cell_text(
         &self, _column: &SortTableColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         Some(self.clone())

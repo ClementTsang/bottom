@@ -63,6 +63,19 @@ pub enum ProcessType {
     ProcessThread,
 }
 
+#[cfg(target_os = "linux")]
+impl ProcessType {
+    /// Returns `true` if this is a thread.
+    pub fn is_thread(&self) -> bool {
+        matches!(self, Self::ProcessThread)
+    }
+
+    /// Returns `true` if this is a kernel process.
+    pub fn is_kernel(&self) -> bool {
+        matches!(self, Self::Kernel)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
     /// The pid of the process.

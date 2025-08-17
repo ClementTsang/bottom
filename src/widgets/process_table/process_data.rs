@@ -7,7 +7,7 @@ use std::{
 };
 
 use concat_string::concat_string;
-use tui::widgets::Row;
+use tui::{style::Style, widgets::Row};
 
 use super::process_columns::ProcColumn;
 #[cfg(target_os = "linux")]
@@ -330,7 +330,7 @@ impl ProcWidgetData {
 }
 
 impl DataToCell<ProcColumn> for ProcWidgetData {
-    fn to_cell(
+    fn to_cell_text(
         &self, column: &ProcColumn, calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         let calculated_width = calculated_width.get();
@@ -365,6 +365,18 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage).into(),
         })
+    }
+
+    #[inline(always)]
+    fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<Style> {
+        match column {
+            ProcColumn::Name | ProcColumn::Command
+                if cfg!(target_os = "linux") && self.process_type.is_thread() =>
+            {
+                Some(painter.styles.thread_text_style)
+            }
+            _ => None,
+        }
     }
 
     #[inline(always)]

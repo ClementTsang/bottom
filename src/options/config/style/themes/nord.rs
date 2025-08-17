@@ -55,6 +55,8 @@ impl Styles {
             invalid_query_style: color!(Color::Red),
             disabled_text_style: hex!("#4c566a"),
             border_type: BorderType::Plain,
+            #[cfg(target_os = "linux")]
+            thread_text_style: hex!("#a3be8c"),
         }
     }
 
@@ -106,6 +108,7 @@ impl Styles {
             invalid_query_style: color!(Color::Red),
             disabled_text_style: hex!("#d8dee9"),
             border_type: BorderType::Plain,
+            thread_text_style: hex!("#a3be8c"),
         }
     }
 }

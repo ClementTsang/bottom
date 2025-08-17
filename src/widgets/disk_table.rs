@@ -159,7 +159,7 @@ impl ColumnHeader for DiskColumn {
 
 impl DataToCell<DiskColumn> for DiskWidgetData {
     // FIXME: (points_rework_v1) Can we change the return type to 'a instead of 'static?
-    fn to_cell(
+    fn to_cell_text(
         &self, column: &DiskColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         fn percent_string(value: Option<f64>) -> Cow<'static, str> {

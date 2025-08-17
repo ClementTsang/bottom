@@ -124,6 +124,8 @@ pub struct Styles {
     pub(crate) low_battery: Style,
     pub(crate) invalid_query_style: Style,
     pub(crate) disabled_text_style: Style,
+    #[cfg(target_os = "linux")]
+    pub(crate) thread_text_style: Style,
     pub(crate) border_type: BorderType,
 }
 
