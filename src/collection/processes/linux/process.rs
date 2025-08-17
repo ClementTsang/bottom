@@ -237,7 +237,7 @@ impl Process {
     ) -> anyhow::Result<(Process, Vec<PathBuf>)> {
         buffer.clear();
 
-        let fd = rustix::fs::openat(
+        let pid_dir = rustix::fs::openat(
             rustix::fs::CWD,
             pid_path.as_path(),
             OFlags::PATH | OFlags::DIRECTORY | OFlags::CLOEXEC,
@@ -257,7 +257,7 @@ impl Process {
             .ok_or_else(|| anyhow!("PID for {pid_path:?} was not found"))?;
 
         let uid = {
-            let metadata = rustix::fs::fstat(&fd);
+            let metadata = rustix::fs::fstat(&pid_dir);
             match metadata {
                 Ok(md) => Some(md.st_uid),
                 Err(_) => None,
@@ -271,10 +271,10 @@ impl Process {
 
         // Stat is pretty long, do this first to pre-allocate up-front.
         let stat =
-            open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, buffer))?;
+            open_at(&mut root, "stat", &pid_dir).and_then(|file| Stat::from_file(file, buffer))?;
         reset(&mut root, buffer);
 
-        let cmdline = if cmdline(&mut root, &fd, buffer).is_ok() {
+        let cmdline = if cmdline(&mut root, &pid_dir, buffer).is_ok() {
             // The clone will give a string with the capacity of the length of buffer, don't worry.
             Some(buffer.clone())
         } else {
@@ -282,7 +282,7 @@ impl Process {
         };
         reset(&mut root, buffer);
 
-        let io = open_at(&mut root, "io", &fd)
+        let io = open_at(&mut root, "io", &pid_dir)
             .and_then(|file| Io::from_file(file, buffer))
             .ok();
 
@@ -291,7 +291,14 @@ impl Process {
         let threads = if get_threads {
             root.push("task");
 
-            if let Ok(task) = std::fs::read_dir(root) {
+            let task_dir = rustix::fs::openat(
+                rustix::fs::CWD,
+                root.as_path(),
+                OFlags::RDONLY | OFlags::DIRECTORY | OFlags::CLOEXEC,
+                Mode::empty(),
+            )?;
+
+            if let Ok(task) = rustix::fs::Dir::read_from(task_dir) {
                 let pid_str = pid.to_string();
 
                 task.flatten()
@@ -301,7 +308,7 @@ impl Process {
                         let file_name = file_name.trim();
 
                         if is_str_numeric(file_name) && file_name != pid_str {
-                            Some(thread_dir.path())
+                            Some(root.join(file_name).to_path_buf())
                         } else {
                             None
                         }
