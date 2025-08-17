@@ -48,6 +48,8 @@ cfg_if! {
 
 pub type Bytes = u64;
 
+#[cfg(target_os = "linux")]
+/// The process entry "type".
 #[derive(Debug, Clone, Copy, Default)]
 pub enum ProcessType {
     /// A regular user process.
@@ -129,7 +131,8 @@ pub struct ProcessHarvest {
     #[cfg(feature = "gpu")]
     pub gpu_util: u32,
 
-    /// Is this entry a process thread?
+    /// The process entry "type".
+    #[cfg(target_os = "linux")]
     pub process_type: ProcessType,
     // TODO: Additional fields
     // pub rss_kb: u64,

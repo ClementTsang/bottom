@@ -265,25 +265,24 @@ impl Process {
             }
         };
 
-        let mut root = pid_path;
+        let root = pid_path;
 
         // NB: Whenever you add a new stat, make sure to pop the root and clear the
         // buffer!
 
         // Stat is pretty long, do this first to pre-allocate up-front.
-        let stat =
-            open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, buffer))?;
-        reset(&mut root, buffer);
+        let stat = open_at(root, "stat", &fd).and_then(|file| Stat::from_file(file, buffer))?;
+        reset(root, buffer);
 
-        let cmdline = if cmdline(&mut root, &fd, buffer).is_ok() {
+        let cmdline = if cmdline(root, &fd, buffer).is_ok() {
             // The clone will give a string with the capacity of the length of buffer, don't worry.
             Some(buffer.clone())
         } else {
             None
         };
-        reset(&mut root, buffer);
+        reset(root, buffer);
 
-        let io = open_at(&mut root, "io", &fd)
+        let io = open_at(root, "io", &fd)
             .and_then(|file| Io::from_file(file, buffer))
             .ok();
 
