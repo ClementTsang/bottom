@@ -141,7 +141,7 @@ fn read_proc(
         uid,
         stat,
         io,
-        cmdline, // cmdline is usually empty for kernel threads; could use this to determine that?
+        cmdline, // TODO: cmdline is usually empty for kernel threads; could use this to determine that?
     } = process;
 
     let ReadProcArgs {
@@ -382,8 +382,10 @@ pub(crate) fn linux_process_data(
     let mut process_threads_to_check = HashMap::new();
 
     let mut process_vector: Vec<ProcessHarvest> = pids
-        .filter_map(|mut pid_path| {
-            if let Ok(process) = Process::from_path(&mut pid_path, &mut buffer) {
+        .filter_map(|pid_path| {
+            if let Ok((process, threads)) =
+                Process::from_path(pid_path, &mut buffer, args.get_process_threads)
+            {
                 let pid = process.pid;
                 let prev_proc_details = prev_process_details.entry(pid).or_default();
 
@@ -411,28 +413,8 @@ pub(crate) fn linux_process_data(
                     prev_proc_details.total_read_bytes = process_harvest.total_read;
                     prev_proc_details.total_write_bytes = process_harvest.total_write;
 
-                    if args.get_process_threads {
-                        pid_path.push("task");
-                        if let Ok(task) = fs::read_dir(pid_path) {
-                            let pid_str = pid.to_string();
-
-                            process_threads_to_check.insert(
-                                pid,
-                                task.flatten()
-                                    .filter_map(|thread_dir| {
-                                        let file_name = thread_dir.file_name();
-                                        let file_name = file_name.to_string_lossy();
-                                        let file_name = file_name.trim();
-
-                                        if is_str_numeric(file_name) && file_name != pid_str {
-                                            Some(thread_dir.path())
-                                        } else {
-                                            None
-                                        }
-                                    })
-                                    .collect::<Vec<_>>(),
-                            );
-                        }
+                    if !threads.is_empty() {
+                        process_threads_to_check.insert(pid, threads);
                     }
 
                     seen_pids.insert(pid);
@@ -446,8 +428,8 @@ pub(crate) fn linux_process_data(
 
     // Get thread data.
     for (pid, tid_paths) in process_threads_to_check {
-        for mut tid_path in tid_paths {
-            if let Ok(process) = Process::from_path(&mut tid_path, &mut buffer) {
+        for tid_path in tid_paths {
+            if let Ok((process, _)) = Process::from_path(tid_path, &mut buffer, false) {
                 let tid = process.pid;
                 let prev_proc_details = prev_process_details.entry(tid).or_default();
 

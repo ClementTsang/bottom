@@ -16,7 +16,7 @@ use rustix::{
     path::Arg,
 };
 
-use crate::collection::processes::Pid;
+use crate::collection::processes::{Pid, linux::is_str_numeric};
 
 static PAGESIZE: OnceLock<u64> = OnceLock::new();
 
@@ -231,11 +231,10 @@ impl Process {
     /// will be discarded quickly.
     ///
     /// This takes in a buffer to avoid allocs; this function will clear the buffer.
-    ///
-    /// NOTE: THIS MUST RESET `pid_path` back to normal.
+    #[inline]
     pub(crate) fn from_path(
-        pid_path: &mut PathBuf, buffer: &mut String,
-    ) -> anyhow::Result<Process> {
+        pid_path: PathBuf, buffer: &mut String, get_threads: bool,
+    ) -> anyhow::Result<(Process, Vec<PathBuf>)> {
         buffer.clear();
 
         let fd = rustix::fs::openat(
@@ -265,36 +264,66 @@ impl Process {
             }
         };
 
-        let root = pid_path;
+        let mut root = pid_path;
 
         // NB: Whenever you add a new stat, make sure to pop the root and clear the
         // buffer!
 
         // Stat is pretty long, do this first to pre-allocate up-front.
-        let stat = open_at(root, "stat", &fd).and_then(|file| Stat::from_file(file, buffer))?;
-        reset(root, buffer);
+        let stat =
+            open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, buffer))?;
+        reset(&mut root, buffer);
 
-        let cmdline = if cmdline(root, &fd, buffer).is_ok() {
+        let cmdline = if cmdline(&mut root, &fd, buffer).is_ok() {
             // The clone will give a string with the capacity of the length of buffer, don't worry.
             Some(buffer.clone())
         } else {
             None
         };
-        reset(root, buffer);
+        reset(&mut root, buffer);
 
-        let io = open_at(root, "io", &fd)
+        let io = open_at(&mut root, "io", &fd)
             .and_then(|file| Io::from_file(file, buffer))
             .ok();
 
-        root.pop();
+        reset(&mut root, buffer);
 
-        Ok(Process {
-            pid,
-            uid,
-            stat,
-            io,
-            cmdline,
-        })
+        let threads = if get_threads {
+            root.push("task");
+
+            if let Ok(task) = std::fs::read_dir(root) {
+                let pid_str = pid.to_string();
+
+                task.flatten()
+                    .filter_map(|thread_dir| {
+                        let file_name = thread_dir.file_name();
+                        let file_name = file_name.to_string_lossy();
+                        let file_name = file_name.trim();
+
+                        if is_str_numeric(file_name) && file_name != pid_str {
+                            Some(thread_dir.path())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            } else {
+                Vec::new()
+            }
+        } else {
+            Vec::new()
+        };
+
+        Ok((
+            Process {
+                pid,
+                uid,
+                stat,
+                io,
+                cmdline,
+            },
+            threads,
+        ))
     }
 }
 
