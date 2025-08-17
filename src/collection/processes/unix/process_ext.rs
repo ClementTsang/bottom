@@ -96,7 +96,7 @@ pub(crate) trait UnixProcessExt {
                             .ok()
                     })
                     .unwrap_or_else(|| "N/A".into()),
-                time: if process_val.start_time() == 0 {
+                uptime: if process_val.start_time() == 0 {
                     // Workaround for sysinfo occasionally returning a start time equal to UNIX
                     // epoch, giving a run time in the range of 50+ years. We just
                     // return a time of zero in this case for simplicity.
