@@ -120,7 +120,7 @@ pub struct ProcessHarvest {
     pub process_state: (&'static str, char),
 
     /// Cumulative process uptime.
-    pub uptime: Duration,
+    pub time: Duration,
 
     /// This is the *effective* user ID of the process. This is only used on
     /// Unix platforms.

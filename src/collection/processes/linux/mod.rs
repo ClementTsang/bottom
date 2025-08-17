@@ -150,7 +150,7 @@ fn read_proc(
         cpu_fraction,
         total_memory,
         time_difference_in_secs,
-        uptime,
+        system_uptime,
         get_process_threads: _,
     } = args;
 
@@ -212,7 +212,9 @@ fn read_proc(
         if ticks_per_sec == 0 {
             Duration::ZERO
         } else {
-            Duration::from_secs(uptime.saturating_sub(stat.start_time / ticks_per_sec as u64))
+            Duration::from_secs(
+                system_uptime.saturating_sub(stat.start_time / ticks_per_sec as u64),
+            )
         }
     } else {
         Duration::ZERO
@@ -269,7 +271,7 @@ fn read_proc(
             process_state,
             uid,
             user,
-            uptime: time,
+            time,
             #[cfg(feature = "gpu")]
             gpu_mem: 0,
             #[cfg(feature = "gpu")]
@@ -305,7 +307,7 @@ pub(crate) struct ReadProcArgs {
     pub cpu_fraction: f64,
     pub total_memory: u64,
     pub time_difference_in_secs: u64,
-    pub uptime: u64,
+    pub system_uptime: u64,
     pub get_process_threads: bool,
 }
 
@@ -371,7 +373,7 @@ pub(crate) fn linux_process_data(
         cpu_fraction,
         total_memory,
         time_difference_in_secs,
-        uptime: sysinfo::System::uptime(),
+        system_uptime: sysinfo::System::uptime(),
         get_process_threads: get_threads,
     };
 
