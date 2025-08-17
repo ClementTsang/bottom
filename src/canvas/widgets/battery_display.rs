@@ -117,11 +117,11 @@ impl Painter {
 
             let is_basic = app_state.app_config_fields.use_basic_mode;
 
-            let margined_draw_loc = Layout::default()
+            let [margined_draw_loc] = Layout::default()
                 .constraints([Constraint::Percentage(100)])
                 .horizontal_margin(u16::from(is_basic && !is_selected))
                 .direction(Direction::Horizontal)
-                .split(draw_loc)[0];
+                .areas(draw_loc);
 
             if let Some(battery_details) =
                 battery_harvest.get(battery_widget_state.currently_selected_battery_index)
@@ -168,13 +168,15 @@ impl Painter {
                 let mut time: String; // Keep string lifetime in scope.
                 {
                     let style = self.styles.text_style;
+                    let time_width = (full_width / 2) as usize;
+
                     match &battery_details.state {
                         BatteryState::Charging {
                             time_to_full: Some(secs),
                         } => {
                             time = long_time(*secs);
 
-                            if full_width as usize > time.len() {
+                            if time_width >= time.len() {
                                 battery_rows.push(Row::new(["Time to full", &time]).style(style));
                             } else {
                                 time = short_time(*secs);
@@ -186,7 +188,7 @@ impl Painter {
                         } => {
                             time = long_time(*secs);
 
-                            if full_width as usize > time.len() {
+                            if time_width >= time.len() {
                                 battery_rows.push(Row::new(["Time to empty", &time]).style(style));
                             } else {
                                 time = short_time(*secs);
