@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
+## [0.12.0] - Unreleased
+
+### Features
+
+- [#1793](https://github.com/ClementTsang/bottom/pull/1793): Add support for threads in Linux.
+
 ## [0.11.1] - 2025-08-15
 
 ### Bug Fixes
