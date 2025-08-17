@@ -308,13 +308,13 @@ impl DataCollector {
 
                 // For Windows, sysinfo also handles the users list.
                 #[cfg(target_os = "windows")]
-                if self.should_refresh_list {
+                if self.should_run_less_routine_tasks {
                     self.sys.users.refresh();
                 }
             }
 
             if self.widgets_to_harvest.use_temp {
-                if self.should_refresh_list {
+                if self.should_run_less_routine_tasks {
                     self.sys.temps.refresh(true);
                 }
 
@@ -325,7 +325,7 @@ impl DataCollector {
 
             #[cfg(target_os = "windows")]
             if self.widgets_to_harvest.use_disk {
-                if self.should_refresh_list {
+                if self.should_run_less_routine_tasks {
                     self.sys.disks.refresh(true);
                 }
 
@@ -499,7 +499,7 @@ impl DataCollector {
     ///
     /// If the battery manager is not initialized, it will attempt to initialize it if at least one battery is found.
     ///
-    /// This function also refreshes the list of batteries if `self.should_refresh_list` is true.
+    /// This function also refreshes the list of batteries if `self.should_run_less_routine_tasks` is true.
     #[inline]
     #[cfg(feature = "battery")]
     fn update_batteries(&mut self) {

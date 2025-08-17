@@ -1243,7 +1243,7 @@ mod test {
                         .widget_states
                         .iter()
                         .zip(testing_app.states.proc_state.widget_states.iter())
-                        .all(|(a, b)| (a.1.test_equality(b.1)))
+                        .all(|(a, b)| a.1.test_equality(b.1))
                 {
                     panic!("failed on {arg_name}");
                 }

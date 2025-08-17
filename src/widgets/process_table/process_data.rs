@@ -7,7 +7,7 @@ use std::{
 };
 
 use concat_string::concat_string;
-use tui::{style::Style, widgets::Row};
+use tui::widgets::Row;
 
 use super::process_columns::ProcColumn;
 
@@ -369,7 +369,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
 
     #[cfg(target_os = "linux")]
     #[inline(always)]
-    fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<Style> {
+    fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<tui::style::Style> {
         match column {
             ProcColumn::Name | ProcColumn::Command if self.process_type.is_thread() => {
                 Some(painter.styles.thread_text_style)
