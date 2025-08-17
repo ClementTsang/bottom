@@ -141,7 +141,7 @@ fn read_proc(
         uid,
         stat,
         io,
-        cmdline, // TODO: cmdline is usually empty for kernel threads; could use this to determine that?
+        cmdline,
     } = process;
 
     let ReadProcArgs {
