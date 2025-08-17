@@ -249,7 +249,7 @@ impl ProcWidgetData {
             user: process.user.to_string(),
             num_similar: 1,
             disabled: false,
-            time: process.time,
+            time: process.uptime,
             #[cfg(feature = "gpu")]
             gpu_mem_usage: if is_mem_percent {
                 MemUsage::Percent(process.gpu_mem_percent)

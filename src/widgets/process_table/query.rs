@@ -881,7 +881,7 @@ impl Prefix {
                 },
                 ComparableQuery::Time(time_query) => match prefix_type {
                     PrefixType::Time => {
-                        matches_duration(&time_query.condition, process.time, time_query.duration)
+                        matches_duration(&time_query.condition, process.uptime, time_query.duration)
                     }
                     _ => true,
                 },

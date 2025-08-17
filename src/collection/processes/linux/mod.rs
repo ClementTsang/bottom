@@ -9,12 +9,12 @@ use std::{
 };
 
 use concat_string::concat_string;
-use hashbrown::HashSet;
+use hashbrown::{HashMap, HashSet};
 use process::*;
 use sysinfo::ProcessStatus;
 
 use super::{Pid, ProcessHarvest, UserTable, process_status_str};
-use crate::collection::{DataCollector, error::CollectionResult};
+use crate::collection::{DataCollector, error::CollectionResult, processes::ProcessType};
 
 /// Maximum character length of a `/proc/<PID>/stat`` process name.
 /// If it's equal or greater, then we instead refer to the command for the name.
@@ -132,13 +132,14 @@ fn get_linux_cpu_usage(
 
 fn read_proc(
     prev_proc: &PrevProcDetails, process: Process, args: ReadProcArgs, user_table: &mut UserTable,
+    thread_parent: Option<Pid>,
 ) -> CollectionResult<(ProcessHarvest, u64)> {
     let Process {
         pid: _,
         uid,
         stat,
         io,
-        cmdline,
+        cmdline, // cmdline is usually empty for kernel threads; could use this to determine that?
     } = process;
 
     let ReadProcArgs {
@@ -148,6 +149,7 @@ fn read_proc(
         total_memory,
         time_difference_in_secs,
         uptime,
+        get_process_threads: _,
     } = args;
 
     let process_state_char = stat.state;
@@ -162,7 +164,13 @@ fn read_proc(
         prev_proc.cpu_time,
         use_current_cpu_total,
     );
-    let parent_pid = Some(stat.ppid);
+
+    let (parent_pid, process_type) = if let Some(thread_parent) = thread_parent {
+        (Some(thread_parent), ProcessType::ProcessThread)
+    } else {
+        (Some(stat.ppid), ProcessType::Regular)
+    };
+
     let mem_usage = stat.rss_bytes();
     let mem_usage_percent = (mem_usage as f64 / total_memory as f64 * 100.0) as f32;
     let virtual_mem = stat.vsize;
@@ -256,13 +264,14 @@ fn read_proc(
             process_state,
             uid,
             user,
-            time,
+            uptime: time,
             #[cfg(feature = "gpu")]
             gpu_mem: 0,
             #[cfg(feature = "gpu")]
             gpu_mem_percent: 0.0,
             #[cfg(feature = "gpu")]
             gpu_util: 0,
+            process_type,
         },
         new_process_times,
     ))
@@ -276,6 +285,7 @@ pub(crate) struct PrevProc<'a> {
 pub(crate) struct ProcHarvestOptions {
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
+    pub get_process_threads: bool,
 }
 
 fn is_str_numeric(s: &str) -> bool {
@@ -285,12 +295,13 @@ fn is_str_numeric(s: &str) -> bool {
 /// General args to keep around for reading proc data.
 #[derive(Copy, Clone)]
 pub(crate) struct ReadProcArgs {
-    pub(crate) use_current_cpu_total: bool,
-    pub(crate) cpu_usage: f64,
-    pub(crate) cpu_fraction: f64,
-    pub(crate) total_memory: u64,
-    pub(crate) time_difference_in_secs: u64,
-    pub(crate) uptime: u64,
+    pub use_current_cpu_total: bool,
+    pub cpu_usage: f64,
+    pub cpu_fraction: f64,
+    pub total_memory: u64,
+    pub time_difference_in_secs: u64,
+    pub uptime: u64,
+    pub get_process_threads: bool,
 }
 
 pub(crate) fn linux_process_data(
@@ -304,13 +315,15 @@ pub(crate) fn linux_process_data(
     let proc_harvest_options = ProcHarvestOptions {
         use_current_cpu_total: collector.use_current_cpu_total,
         unnormalized_cpu: collector.unnormalized_cpu,
+        get_process_threads: collector.get_process_threads,
     };
-    let pid_mapping = &mut collector.pid_mapping;
+    let prev_process_details = &mut collector.prev_process_details;
     let user_table = &mut collector.user_table;
 
     let ProcHarvestOptions {
         use_current_cpu_total,
         unnormalized_cpu,
+        get_process_threads: get_threads,
     } = proc_harvest_options;
 
     let PrevProc {
@@ -333,9 +346,13 @@ pub(crate) fn linux_process_data(
         cpu_usage /= num_processors;
     }
 
-    let mut pids_to_clear: HashSet<Pid> = pid_mapping.keys().cloned().collect();
+    // TODO: Could maybe use a double buffer hashmap to avoid allocating this each time?
+    // e.g. we swap which is prev and which is new.
+    let mut seen_pids: HashSet<Pid> = HashSet::new();
 
+    // Note this will only return PIDs of _processes_, not threads. You can get those from /proc/<PID>/task though.
     let pids = fs::read_dir("/proc")?.flatten().filter_map(|dir| {
+        // Need to filter out non-PID entries.
         if is_str_numeric(dir.file_name().to_string_lossy().trim()) {
             Some(dir.path())
         } else {
@@ -350,19 +367,22 @@ pub(crate) fn linux_process_data(
         total_memory,
         time_difference_in_secs,
         uptime: sysinfo::System::uptime(),
+        get_process_threads: get_threads,
     };
 
+    // TODO: Maybe pre-allocate these buffers in the future w/ routine cleanup.
     let mut buffer = String::new();
+    let mut process_threads_to_check = HashMap::new();
 
-    let process_vector: Vec<ProcessHarvest> = pids
-        .filter_map(|pid_path| {
-            if let Ok(process) = Process::from_path(pid_path, &mut buffer) {
+    let mut process_vector: Vec<ProcessHarvest> = pids
+        .filter_map(|mut pid_path| {
+            if let Ok(process) = Process::from_path(&mut pid_path, &mut buffer) {
                 let pid = process.pid;
-                let prev_proc_details = pid_mapping.entry(pid).or_default();
+                let prev_proc_details = prev_process_details.entry(pid).or_default();
 
                 #[cfg_attr(not(feature = "gpu"), expect(unused_mut))]
                 if let Ok((mut process_harvest, new_process_times)) =
-                    read_proc(prev_proc_details, process, args, user_table)
+                    read_proc(prev_proc_details, process, args, user_table, None)
                 {
                     #[cfg(feature = "gpu")]
                     if let Some(gpus) = &collector.gpu_pids {
@@ -384,7 +404,31 @@ pub(crate) fn linux_process_data(
                     prev_proc_details.total_read_bytes = process_harvest.total_read;
                     prev_proc_details.total_write_bytes = process_harvest.total_write;
 
-                    pids_to_clear.remove(&pid);
+                    if args.get_process_threads {
+                        pid_path.push("task");
+                        if let Ok(task) = fs::read_dir(pid_path) {
+                            let pid_str = pid.to_string();
+
+                            process_threads_to_check.insert(
+                                pid,
+                                task.flatten()
+                                    .filter_map(|thread_dir| {
+                                        let file_name = thread_dir.file_name();
+                                        let file_name = file_name.to_string_lossy();
+                                        let file_name = file_name.trim();
+
+                                        if is_str_numeric(file_name) && file_name != pid_str {
+                                            Some(thread_dir.path())
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                    .collect::<Vec<_>>(),
+                            );
+                        }
+                    }
+
+                    seen_pids.insert(pid);
                     return Some(process_harvest);
                 }
             }
@@ -393,10 +437,37 @@ pub(crate) fn linux_process_data(
         })
         .collect();
 
-    pids_to_clear.iter().for_each(|pid| {
-        pid_mapping.remove(pid);
-    });
+    // Get thread data.
+    for (pid, tid_paths) in process_threads_to_check {
+        for mut tid_path in tid_paths {
+            if let Ok(process) = Process::from_path(&mut tid_path, &mut buffer) {
+                let tid = process.pid;
+                let prev_proc_details = prev_process_details.entry(tid).or_default();
 
+                if let Ok((process_harvest, new_process_times)) =
+                    read_proc(prev_proc_details, process, args, user_table, Some(pid))
+                {
+                    prev_proc_details.cpu_time = new_process_times;
+                    prev_proc_details.total_read_bytes = process_harvest.total_read;
+                    prev_proc_details.total_write_bytes = process_harvest.total_write;
+
+                    seen_pids.insert(tid);
+                    process_vector.push(process_harvest);
+                }
+            }
+        }
+    }
+
+    // Clean up values we don't care about anymore.
+    prev_process_details.retain(|pid, _| seen_pids.contains(pid));
+
+    // Occasional garbage collection.
+    if collector.should_run_less_routine_tasks {
+        prev_process_details.shrink_to_fit();
+    }
+
+    // TODO: This might be more efficient to just separate threads into their own list, but for now this works so it
+    // fits with existing code.
     Ok(process_vector)
 }
 

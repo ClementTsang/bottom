@@ -26,8 +26,9 @@ fn next_part<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Result<&'a str, io
         .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidData))
 }
 
-/// A wrapper around the data in `/proc/<PID>/stat`. For documentation, see
-/// [here](https://man7.org/linux/man-pages/man5/proc.5.html).
+/// A wrapper around the data in `/proc/<PID>/stat`. For documentation, see:
+/// - <https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html>
+/// - <https://man7.org/linux/man-pages/man5/proc_pid_status.5.html>
 ///
 /// Note this does not necessarily get all fields, only the ones we use in
 /// bottom.
@@ -62,7 +63,8 @@ pub(crate) struct Stat {
 
 impl Stat {
     /// Get process stats from a file; this assumes the file is located at
-    /// `/proc/<PID>/stat`.
+    /// `/proc/<PID>/stat`. For documentation, see
+    /// [here](https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html) as a reference.
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
         // Since this is just one line, we can read it all at once. However, since it
         // (technically) might have non-utf8 characters, we can't just use read_to_string.
@@ -229,12 +231,16 @@ impl Process {
     /// will be discarded quickly.
     ///
     /// This takes in a buffer to avoid allocs; this function will clear the buffer.
-    pub(crate) fn from_path(pid_path: PathBuf, buffer: &mut String) -> anyhow::Result<Process> {
+    ///
+    /// NOTE: THIS MUST RESET `pid_path` back to normal.
+    pub(crate) fn from_path(
+        pid_path: &mut PathBuf, buffer: &mut String,
+    ) -> anyhow::Result<Process> {
         buffer.clear();
 
         let fd = rustix::fs::openat(
             rustix::fs::CWD,
-            &pid_path,
+            pid_path.as_path(),
             OFlags::PATH | OFlags::DIRECTORY | OFlags::CLOEXEC,
             Mode::empty(),
         )?;
@@ -245,7 +251,7 @@ impl Process {
             .next_back()
             .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             .or_else(|| {
-                rustix::fs::readlinkat(rustix::fs::CWD, &pid_path, vec![])
+                rustix::fs::readlinkat(rustix::fs::CWD, pid_path.as_path(), vec![])
                     .ok()
                     .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             })
@@ -280,6 +286,8 @@ impl Process {
         let io = open_at(&mut root, "io", &fd)
             .and_then(|file| Io::from_file(file, buffer))
             .ok();
+
+        root.pop();
 
         Ok(Process {
             pid,
