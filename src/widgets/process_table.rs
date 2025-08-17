@@ -26,6 +26,9 @@ use crate::{
     options::config::style::Styles,
 };
 
+#[cfg(target_os = "linux")]
+use crate::collection::processes::ProcessType;
+
 /// ProcessSearchState only deals with process' search's current settings and
 /// state.
 pub struct ProcessSearchState {
@@ -519,8 +522,10 @@ impl ProcWidgetState {
                     .unwrap_or(true)
                 {
                     #[cfg(target_os = "linux")]
-                    if self.hide_k_threads && process.k_thread {
-                        return None;
+                    if let ProcessType::Kernel = process.process_type {
+                        if self.hide_k_threads {
+                            return None;
+                        }
                     }
 
                     Some(*pid)
@@ -769,9 +774,12 @@ impl ProcWidgetState {
 
         let filtered_iter = process_harvest.values().filter(|process| {
             #[cfg(target_os = "linux")]
-            if self.hide_k_threads && process.k_thread {
-                return false;
+            if let ProcessType::Kernel = process.process_type {
+                if self.hide_k_threads {
+                    return false;
+                }
             }
+
             search_query
                 .as_ref()
                 .map(|query| query.check(process, is_using_command))
@@ -1195,6 +1203,8 @@ mod test {
             gpu_mem_usage: MemUsage::Percent(1.1),
             #[cfg(feature = "gpu")]
             gpu_usage: 0,
+            #[cfg(target_os = "linux")]
+            process_type: crate::collection::processes::ProcessType::Regular,
         };
 
         let b = ProcWidgetData {
@@ -1229,23 +1239,23 @@ mod test {
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Descending);
         assert_eq!(
-            [&c, &b, &a, &d].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
-            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+            [&c, &b, &a, &d].iter().map(|d| d.pid).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
 
         // Note that the PID ordering for ties is still ascending.
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
-            [&a, &d, &b, &c].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
-            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+            [&a, &d, &b, &c].iter().map(|d| d.pid).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
 
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Descending);
         assert_eq!(
-            [&b, &a, &c, &d].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
-            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+            [&b, &a, &c, &d].iter().map(|d| d.pid).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
 
         // Note that the PID ordering for ties is still ascending.
@@ -1695,7 +1705,7 @@ mod test {
         };
         let k_process_harvest = ProcessHarvest {
             pid: 2,
-            k_thread: true,
+            process_type: ProcessType::Kernel,
             ..Default::default()
         };
         // test get_normal_data default is filtered by toggle_k_thread

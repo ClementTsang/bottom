@@ -166,7 +166,7 @@ mod test {
     }
 
     impl DataToCell<&'static str> for TestType {
-        fn to_cell(
+        fn to_cell_text(
             &self, _column: &&'static str, _calculated_width: NonZeroU16,
         ) -> Option<Cow<'static, str>> {
             None

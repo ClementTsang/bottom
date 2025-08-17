@@ -48,6 +48,36 @@ cfg_if! {
 
 pub type Bytes = u64;
 
+#[cfg(target_os = "linux")]
+/// The process entry "type".
+#[derive(Debug, Clone, Copy, Default)]
+pub enum ProcessType {
+    /// A regular user process.
+    #[default]
+    Regular,
+
+    /// A kernel process.
+    ///
+    /// TODO: Use <https://github.com/htop-dev/htop/commit/07496eafb0166aafd9c33a6a95e16bcbc64c34d4>?
+    Kernel,
+
+    /// A thread spawned by a regular user process.
+    ProcessThread,
+}
+
+#[cfg(target_os = "linux")]
+impl ProcessType {
+    /// Returns `true` if this is a thread.
+    pub fn is_thread(&self) -> bool {
+        matches!(self, Self::ProcessThread)
+    }
+
+    /// Returns `true` if this is a kernel process.
+    pub fn is_kernel(&self) -> bool {
+        matches!(self, Self::Kernel)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
     /// The pid of the process.
@@ -60,6 +90,8 @@ pub struct ProcessHarvest {
     pub cpu_usage_percent: f32,
 
     /// Memory usage as a percentage.
+    ///
+    /// TODO: Maybe calculate this on usage? Store the total mem along with the vector of results.
     pub mem_usage_percent: f32,
 
     /// Memory usage as bytes.
@@ -105,6 +137,8 @@ pub struct ProcessHarvest {
     pub gpu_mem: u64,
 
     /// Gpu memory usage as percentage.
+    ///
+    /// TODO: Maybe calculate this on usage? Store the total GPU mem along with the vector of results.
     #[cfg(feature = "gpu")]
     pub gpu_mem_percent: f32,
 
@@ -112,8 +146,9 @@ pub struct ProcessHarvest {
     #[cfg(feature = "gpu")]
     pub gpu_util: u32,
 
+    /// The process entry "type".
     #[cfg(target_os = "linux")]
-    pub k_thread: bool,
+    pub process_type: ProcessType,
     // TODO: Additional fields
     // pub rss_kb: u64,
     // pub virt_kb: u64,

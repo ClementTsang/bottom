@@ -16,7 +16,7 @@ use rustix::{
     path::Arg,
 };
 
-use crate::collection::processes::Pid;
+use crate::collection::processes::{Pid, linux::is_str_numeric};
 
 static PAGESIZE: OnceLock<u64> = OnceLock::new();
 
@@ -26,8 +26,9 @@ fn next_part<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Result<&'a str, io
         .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidData))
 }
 
-/// A wrapper around the data in `/proc/<PID>/stat`. For documentation, see
-/// [here](https://man7.org/linux/man-pages/man5/proc.5.html).
+/// A wrapper around the data in `/proc/<PID>/stat`. For documentation, see:
+/// - <https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html>
+/// - <https://man7.org/linux/man-pages/man5/proc_pid_status.5.html>
 ///
 /// Note this does not necessarily get all fields, only the ones we use in
 /// bottom.
@@ -65,7 +66,8 @@ pub(crate) struct Stat {
 
 impl Stat {
     /// Get process stats from a file; this assumes the file is located at
-    /// `/proc/<PID>/stat`.
+    /// `/proc/<PID>/stat`. For documentation, see
+    /// [here](https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html) as a reference.
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
         // Since this is just one line, we can read it all at once. However, since it
         // (technically) might have non-utf8 characters, we can't just use read_to_string.
@@ -239,12 +241,15 @@ impl Process {
     /// will be discarded quickly.
     ///
     /// This takes in a buffer to avoid allocs; this function will clear the buffer.
-    pub(crate) fn from_path(pid_path: PathBuf, buffer: &mut String) -> anyhow::Result<Process> {
+    #[inline]
+    pub(crate) fn from_path(
+        pid_path: PathBuf, buffer: &mut String, get_threads: bool,
+    ) -> anyhow::Result<(Process, Vec<PathBuf>)> {
         buffer.clear();
 
         let fd = rustix::fs::openat(
             rustix::fs::CWD,
-            &pid_path,
+            pid_path.as_path(),
             OFlags::PATH | OFlags::DIRECTORY | OFlags::CLOEXEC,
             Mode::empty(),
         )?;
@@ -255,7 +260,7 @@ impl Process {
             .next_back()
             .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             .or_else(|| {
-                rustix::fs::readlinkat(rustix::fs::CWD, &pid_path, vec![])
+                rustix::fs::readlinkat(rustix::fs::CWD, pid_path.as_path(), vec![])
                     .ok()
                     .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             })
@@ -291,13 +296,44 @@ impl Process {
             .and_then(|file| Io::from_file(file, buffer))
             .ok();
 
-        Ok(Process {
-            pid,
-            uid,
-            stat,
-            io,
-            cmdline,
-        })
+        reset(&mut root, buffer);
+
+        let threads = if get_threads {
+            root.push("task");
+
+            if let Ok(task) = std::fs::read_dir(root) {
+                let pid_str = pid.to_string();
+
+                task.flatten()
+                    .filter_map(|thread_dir| {
+                        let file_name = thread_dir.file_name();
+                        let file_name = file_name.to_string_lossy();
+                        let file_name = file_name.trim();
+
+                        if is_str_numeric(file_name) && file_name != pid_str {
+                            Some(thread_dir.path())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            } else {
+                Vec::new()
+            }
+        } else {
+            Vec::new()
+        };
+
+        Ok((
+            Process {
+                pid,
+                uid,
+                stat,
+                io,
+                cmdline,
+            },
+            threads,
+        ))
     }
 }
 

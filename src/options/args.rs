@@ -326,6 +326,14 @@ pub struct ProcessArgs {
     pub hide_k_threads: bool,
 
     #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Also gather process thread information.",
+        alias = "get-threads",
+    )]
+    pub get_threads: bool,
+
+    #[arg(
         short = 'g',
         long,
         action = ArgAction::SetTrue,
@@ -365,6 +373,14 @@ pub struct ProcessArgs {
     pub tree: bool,
 
     #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Collapse process tree by default.",
+        alias = "tree-collapse"
+    )]
+    pub tree_collapse: bool,
+
+    #[arg(
         short = 'n',
         long,
         action = ArgAction::SetTrue,
@@ -381,14 +397,6 @@ pub struct ProcessArgs {
         alias = "whole-word"
     )]
     pub whole_word: bool,
-
-    #[arg(
-        long,
-        action = ArgAction::SetTrue,
-        help = "Collapse process tree by default.",
-        alias = "tree-collapse"
-    )]
-    pub tree_collapse: bool,
 }
 
 /// Temperature arguments/config options.

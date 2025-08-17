@@ -42,6 +42,7 @@ pub struct AppConfigFields {
     pub show_average_cpu: bool, // TODO: Unify this in CPU options
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
+    pub get_process_threads: bool,
     pub use_basic_mode: bool,
     pub default_time_value: u64,
     pub time_interval: u64,
