@@ -220,7 +220,9 @@ where
                                     data_row.to_cell_text(column.inner(), width).map(|content| {
                                         let content = truncate_to_text(&content, width.get());
 
-                                        if let Some(style) = data_row.style_cell(column.inner(), painter) {
+                                        if let Some(style) =
+                                            data_row.style_cell(column.inner(), painter)
+                                        {
                                             Cell::new(content).style(style)
                                         } else {
                                             Cell::new(content)
