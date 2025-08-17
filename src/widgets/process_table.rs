@@ -26,9 +26,6 @@ use crate::{
     options::config::style::Styles,
 };
 
-#[cfg(target_os = "linux")]
-use crate::collection::processes::ProcessType;
-
 /// ProcessSearchState only deals with process' search's current settings and
 /// state.
 pub struct ProcessSearchState {
@@ -522,10 +519,8 @@ impl ProcWidgetState {
                     .unwrap_or(true)
                 {
                     #[cfg(target_os = "linux")]
-                    if let ProcessType::Kernel = process.process_type {
-                        if self.hide_k_threads {
-                            return None;
-                        }
+                    if self.hide_k_threads && process.process_type.is_kernel() {
+                        return None;
                     }
 
                     Some(*pid)
@@ -774,10 +769,8 @@ impl ProcWidgetState {
 
         let filtered_iter = process_harvest.values().filter(|process| {
             #[cfg(target_os = "linux")]
-            if let ProcessType::Kernel = process.process_type {
-                if self.hide_k_threads {
-                    return false;
-                }
+            if self.hide_k_threads && process.process_type.is_kernel() {
+                return false;
             }
 
             search_query
@@ -1176,6 +1169,9 @@ mod test {
 
     use super::*;
     use crate::widgets::MemUsage;
+
+    #[cfg(target_os = "linux")]
+    use crate::collection::processes::ProcessType;
 
     #[test]
     fn test_proc_sort() {
