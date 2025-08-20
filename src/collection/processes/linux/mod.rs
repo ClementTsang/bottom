@@ -231,7 +231,7 @@ fn read_proc(
                 // supposed to be.
                 //
                 // We follow something similar to how htop does it to identify a valid name based on the cmdline.
-                // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c
+                // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268 (kinda)
                 // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L573
                 //
                 // Also note that cmdline is (for us) separated by spaces, not newlines,
@@ -244,6 +244,8 @@ fn read_proc(
                 // - basename (what we're kinda doing now, except we're gating on comm length)
                 // - command (full thing)
                 // - comm (as a separate thing)
+                //
+                // Stuff like htop also offers the option to "highlight" basename and comm in command. Might be neat?
                 let name = if comm.len() >= MAX_STAT_NAME_LEN {
                     let mut start = 0;
                     let mut end = cmdline.len();
