@@ -239,20 +239,22 @@ fn read_proc(
 
                 // TODO: We might want to re-evaluate if we want to do it like this,
                 // as it turns out I was dumb and sometimes comm != process name...
+                //
+                // What we should do is store:
+                // - basename (what we're kinda doing now, except we're gating on comm length)
+                // - command (full thing)
+                // - comm (as a separate thing)
                 let name = if comm.len() >= MAX_STAT_NAME_LEN {
                     let mut start = 0;
                     let mut end = cmdline.len();
 
-                    let mut i = 0;
-                    for c in cmdline.chars() {
+                    for (i, c) in cmdline.chars().enumerate() {
                         if c == '/' {
                             start = i + 1;
                         } else if c == ' ' || c == ':' {
                             end = i;
                             break;
                         }
-
-                        i += 1;
                     }
 
                     cmdline[start..end].to_string()
