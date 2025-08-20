@@ -26,6 +26,10 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 - [#1793](https://github.com/ClementTsang/bottom/pull/1793): Add support for threads in Linux.
 
+### Bug Fixes
+
+- [#1800](https://github.com/ClementTsang/bottom/pull/1800): Fix colon at end of process name in Linux.
+
 ## [0.11.1] - 2025-08-15
 
 ### Bug Fixes
