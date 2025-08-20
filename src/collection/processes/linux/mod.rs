@@ -137,7 +137,7 @@ fn read_proc(
     thread_parent: Option<Pid>,
 ) -> CollectionResult<(ProcessHarvest, u64)> {
     let Process {
-        pid: _,
+        pid: _pid,
         uid,
         stat,
         io,
@@ -221,36 +221,49 @@ fn read_proc(
     };
 
     let (command, name) = {
-        let truncated_name = stat.comm;
+        let comm = stat.comm;
         if let Some(cmdline) = cmdline {
             if cmdline.is_empty() {
-                (concat_string!("[", truncated_name, "]"), truncated_name)
+                (concat_string!("[", comm, "]"), comm)
             } else {
-                let name = if truncated_name.len() >= MAX_STAT_NAME_LEN {
-                    let first_part = match cmdline.split_once(' ') {
-                        Some((first, _)) => first,
-                        None => &cmdline,
-                    };
+                // If the comm fits then we'll default to whatever is set.
+                // If it doesn't, we need to do some magic to determine what it's
+                // supposed to be.
+                //
+                // We follow something similar to how htop does it to identify a valid name based on the cmdline.
+                // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c
+                // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L573
+                //
+                // Also note that cmdline is (for us) separated by spaces, not newlines,
+                // because we pre-processed it already.
 
-                    // We're only interested in the executable part, not the file path (part of command),
-                    // so strip everything but the command name if needed.
-                    let command = match first_part.rsplit_once('/') {
-                        Some((_, last)) => last,
-                        None => first_part,
-                    };
+                // TODO: We might want to re-evaluate if we want to do it like this,
+                // as it turns out I was dumb and sometimes comm != process name...
+                let name = if comm.len() >= MAX_STAT_NAME_LEN {
+                    let mut start = 0;
+                    let mut end = cmdline.len();
 
-                    // TODO: Needed as some processes have stuff like "systemd-userwork: waiting..."
-                    // command.trim_end_matches(':').to_string()
+                    let mut i = 0;
+                    for c in cmdline.chars() {
+                        if c == '/' {
+                            start = i + 1;
+                        } else if c == ' ' || c == ':' {
+                            end = i;
+                            break;
+                        }
 
-                    command.to_string()
+                        i += 1;
+                    }
+
+                    cmdline[start..end].to_string()
                 } else {
-                    truncated_name
+                    comm
                 };
 
                 (cmdline, name)
             }
         } else {
-            (truncated_name.clone(), truncated_name)
+            (comm.clone(), comm)
         }
     };
 
