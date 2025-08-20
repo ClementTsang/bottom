@@ -137,7 +137,7 @@ jobs:
   #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
-  other-check:
+  unsupported-check:
     needs: pre-job
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
@@ -228,6 +228,13 @@ jobs:
               no-default-features: true,
               no-clippy: true,
             }
+          
+            # Windows ARM
+            - {
+              os: "windows-11-arm64",
+              target: "aarch64-pc-windows-msvc",
+              cross: false,
+            }
 
     steps:
       - name: Checkout repository
@@ -265,8 +272,7 @@ jobs:
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
-  vm-check:
-    name: "Test using VMs"
+  unsupported-check-freebsd:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: "ubuntu-latest"
