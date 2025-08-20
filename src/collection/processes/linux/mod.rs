@@ -545,5 +545,9 @@ mod tests {
         assert_eq!(name_from_cmdline("/usr/bin/b tm:"), "b tm");
         assert_eq!(name_from_cmdline("/usr/bin/b tm\0--test"), "b tm");
         assert_eq!(name_from_cmdline("/usr/bin/b tm:\0--test"), "b tm");
+        assert_eq!(
+            name_from_cmdline("/usr/bin/b t m:\0--\"test thing\""),
+            "b t m"
+        );
     }
 }
