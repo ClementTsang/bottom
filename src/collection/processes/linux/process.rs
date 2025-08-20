@@ -305,19 +305,7 @@ impl Process {
 
 #[inline]
 fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Result<()> {
-    let _ = open_at(root, "cmdline", fd)
-        .map(|mut file| file.read_to_string(buffer))
-        .inspect(|_| {
-            // SAFETY: We are only replacing a single char (NUL) with another single char (space).
-            let buf_mut = unsafe { buffer.as_mut_vec() };
-
-            for byte in buf_mut {
-                if *byte == 0 {
-                    const SPACE: u8 = ' '.to_ascii_lowercase() as u8;
-                    *byte = SPACE;
-                }
-            }
-        })?;
+    let _ = open_at(root, "cmdline", fd).map(|mut file| file.read_to_string(buffer))?;
 
     Ok(())
 }

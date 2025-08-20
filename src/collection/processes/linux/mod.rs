@@ -234,8 +234,7 @@ fn read_proc(
                 // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268 (kinda)
                 // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L573
                 //
-                // Also note that cmdline is (for us) separated by spaces, not newlines,
-                // because we pre-processed it already.
+                // Also note that cmdline is (for us) separated by \0.
 
                 // TODO: We might want to re-evaluate if we want to do it like this,
                 // as it turns out I was dumb and sometimes comm != process name...
@@ -247,19 +246,7 @@ fn read_proc(
                 //
                 // Stuff like htop also offers the option to "highlight" basename and comm in command. Might be neat?
                 let name = if comm.len() >= MAX_STAT_NAME_LEN {
-                    let mut start = 0;
-                    let mut end = cmdline.len();
-
-                    for (i, c) in cmdline.chars().enumerate() {
-                        if c == '/' {
-                            start = i + 1;
-                        } else if c == ' ' || c == ':' {
-                            end = i;
-                            break;
-                        }
-                    }
-
-                    cmdline[start..end].to_string()
+                    name_from_cmdline(&cmdline)
                 } else {
                     comm
                 };
@@ -270,6 +257,19 @@ fn read_proc(
             (comm.clone(), comm)
         }
     };
+
+    // We have moved command processing here.
+    // SAFETY: We are only replacing a single char (NUL) with another single char (space).
+
+    let mut command = command;
+    let buf_mut = unsafe { command.as_mut_vec() };
+
+    for byte in buf_mut {
+        if *byte == 0 {
+            const SPACE: u8 = ' '.to_ascii_lowercase() as u8;
+            *byte = SPACE;
+        }
+    }
 
     Ok((
         ProcessHarvest {
@@ -299,6 +299,22 @@ fn read_proc(
         },
         new_process_times,
     ))
+}
+
+fn name_from_cmdline(cmdline: &str) -> String {
+    let mut start = 0;
+    let mut end = cmdline.len();
+
+    for (i, c) in cmdline.chars().enumerate() {
+        if c == '/' {
+            start = i + 1;
+        } else if c == '\0' || c == ':' {
+            end = i;
+            break;
+        }
+    }
+
+    cmdline[start..end].to_string()
 }
 
 pub(crate) struct PrevProc<'a> {
@@ -518,5 +534,16 @@ mod tests {
             fetch_cpu_usage("100 0 100 100 20 30 40 50 100 200"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 10 values"
         );
+    }
+
+    #[test]
+    fn test_name_from_cmdline() {
+        assert_eq!(name_from_cmdline("/usr/bin/btm"), "btm");
+        assert_eq!(name_from_cmdline("/usr/bin/btm\0--asdf\0--asdf/gkj"), "btm");
+        assert_eq!(name_from_cmdline("/usr/bin/btm:"), "btm");
+        assert_eq!(name_from_cmdline("/usr/bin/b tm"), "b tm");
+        assert_eq!(name_from_cmdline("/usr/bin/b tm:"), "b tm");
+        assert_eq!(name_from_cmdline("/usr/bin/b tm\0--test"), "b tm");
+        assert_eq!(name_from_cmdline("/usr/bin/b tm:\0--test"), "b tm");
     }
 }
