@@ -332,12 +332,14 @@ jobs:
       - name: Install Net-Framework-Core
         shell: powershell
         run: |
-          choco install dotnet-sdk --pre -y
+          choco install dotnet-sdk --pre -y --no-progress;
+          refreshenv;
 
       - name: Install wixtoolset
         shell: powershell
         run: |
-          choco install -y wixtoolset
+          choco install -y wixtoolset --no-progress;
+          refreshenv;
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
