@@ -318,7 +318,7 @@ jobs:
               output: "bottom_x86_64_installer.msi"
             }
           - {
-              os: "windows-11-arm64",
+              os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
               output: "bottom_aarch64_installer.msi"
             }
