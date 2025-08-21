@@ -139,9 +139,6 @@ jobs:
   # I would also put android there.
   unsupported-check:
     needs: pre-job
-    runs-on: ${{ matrix.info.os }}
-    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
@@ -235,7 +232,9 @@ jobs:
               target: "aarch64-pc-windows-msvc",
               cross: false,
             }
-
+    runs-on: ${{ matrix.info.os }}
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    timeout-minutes: 12
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
