@@ -228,7 +228,7 @@ jobs:
           
             # Windows ARM
           - {
-              os: "windows-2022",
+              os: "windows-11-arm64",
               target: "aarch64-pc-windows-msvc",
               cross: false,
             }
