@@ -331,12 +331,13 @@ jobs:
 
       - name: Install Net-Framework-Core
         shell: powershell
-        run: Install-WindowsFeature Net-Framework-Core
+        run: |
+          choco install dotnet-sdk --pre -y
 
       - name: Install wixtoolset
-        uses: crazy-max/ghaction-chocolatey@0e015857dd851f84fcb7fb53380eb5c4c8202333 # v3.0.0
-        with:
-          args: install -y wixtoolset
+        shell: powershell
+        run: |
+          choco install -y wixtoolset
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
