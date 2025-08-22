@@ -382,6 +382,12 @@
             "null"
           ]
         },
+        "hide_k_threads": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "hide_table_gap": {
           "type": [
             "boolean",

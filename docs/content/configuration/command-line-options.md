@@ -38,6 +38,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `-n, --unnormalized_cpu`    | Show process CPU% usage without averaging over the number of CPU cores.                       |
 | `-W, --whole_word`          | Enables whole-word matching by default while searching.                                       |
 | `--tree_collapse`           | Collapse process tree by default.                                                             |
+| `--hide_k_threads`          | Enables the hiding of kernel threads.                                                         |
 
 ## Temperature Options
 

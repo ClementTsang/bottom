@@ -57,8 +57,6 @@ pub enum ProcessType {
     Regular,
 
     /// A kernel process.
-    ///
-    /// TODO: Use <https://github.com/htop-dev/htop/commit/07496eafb0166aafd9c33a6a95e16bcbc64c34d4>?
     Kernel,
 
     /// A thread spawned by a regular user process.
