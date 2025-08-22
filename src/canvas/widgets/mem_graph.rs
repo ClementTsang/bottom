@@ -149,9 +149,15 @@ impl Painter {
                                 }
                             };
 
+                            let display_name = if data.gpu_harvest.len() == 1 {
+                                &"GPU".to_string()
+                            } else {
+                                name // TODO: REALLY figure out how to line this up better
+                            };
+
                             graph_data(
                                 &mut points,
-                                name, // TODO: REALLY figure out how to line this up better
+                                display_name,
                                 Some(harvest),
                                 time,
                                 gpu_data,
