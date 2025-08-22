@@ -358,6 +358,7 @@ jobs:
           Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
           refreshenv
           cargo wix --nocapture
+          mv bottom_installer.msi ${{ matrix.info.output }}
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2

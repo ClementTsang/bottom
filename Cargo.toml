@@ -239,7 +239,7 @@ depends = "libc6:arm64 (>= 2.28)"
 depends = "libc6:armhf (>= 2.28)"
 
 [package.metadata.wix]
-output = "bottom_x86_64_installer.msi"
+output = "bottom_installer.msi"
 
 [package.metadata.generate-rpm]
 assets = [
