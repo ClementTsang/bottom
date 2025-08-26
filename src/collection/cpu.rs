@@ -8,7 +8,7 @@ pub type LoadAvgHarvest = [f32; 3];
 #[derive(Debug, Clone, Copy)]
 pub enum CpuDataType {
     Avg,
-    Cpu(usize),
+    Cpu(u32),
 }
 
 #[derive(Debug, Clone)]
@@ -17,4 +17,8 @@ pub struct CpuData {
     pub usage: f32,
 }
 
-pub type CpuHarvest = Vec<CpuData>;
+#[derive(Debug, Clone, Default)]
+pub struct CpuHarvest {
+    pub avg: Option<f32>,
+    pub cpus: Vec<f32>,
+}

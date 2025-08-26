@@ -9,14 +9,16 @@ use std::{
 };
 
 use concat_string::concat_string;
-use hashbrown::HashSet;
+use hashbrown::{HashMap, HashSet};
 use process::*;
 use sysinfo::ProcessStatus;
 
 use super::{Pid, ProcessHarvest, UserTable, process_status_str};
-use crate::collection::{DataCollector, error::CollectionResult};
+use crate::collection::{DataCollector, error::CollectionResult, processes::ProcessType};
 
-/// Maximum character length of a `/proc/<PID>/stat`` process name.
+/// Maximum character length of a `/proc/<PID>/stat` process name (the length is 16,
+/// but this includes a null terminator).
+///
 /// If it's equal or greater, then we instead refer to the command for the name.
 const MAX_STAT_NAME_LEN: usize = 15;
 
@@ -132,9 +134,10 @@ fn get_linux_cpu_usage(
 
 fn read_proc(
     prev_proc: &PrevProcDetails, process: Process, args: ReadProcArgs, user_table: &mut UserTable,
+    thread_parent: Option<Pid>,
 ) -> CollectionResult<(ProcessHarvest, u64)> {
     let Process {
-        pid: _,
+        pid: _pid,
         uid,
         stat,
         io,
@@ -147,7 +150,8 @@ fn read_proc(
         cpu_fraction,
         total_memory,
         time_difference_in_secs,
-        uptime,
+        system_uptime,
+        get_process_threads: _,
     } = args;
 
     let process_state_char = stat.state;
@@ -162,7 +166,13 @@ fn read_proc(
         prev_proc.cpu_time,
         use_current_cpu_total,
     );
-    let parent_pid = Some(stat.ppid);
+
+    let (parent_pid, process_type) = if let Some(thread_parent) = thread_parent {
+        (Some(thread_parent), ProcessType::ProcessThread)
+    } else {
+        (Some(stat.ppid), ProcessType::Regular)
+    };
+
     let mem_usage = stat.rss_bytes();
     let mem_usage_percent = (mem_usage as f64 / total_memory as f64 * 100.0) as f32;
     let virtual_mem = stat.vsize;
@@ -202,42 +212,64 @@ fn read_proc(
         if ticks_per_sec == 0 {
             Duration::ZERO
         } else {
-            Duration::from_secs(uptime.saturating_sub(stat.start_time / ticks_per_sec as u64))
+            Duration::from_secs(
+                system_uptime.saturating_sub(stat.start_time / ticks_per_sec as u64),
+            )
         }
     } else {
         Duration::ZERO
     };
 
     let (command, name) = {
-        let truncated_name = stat.comm;
+        let comm = stat.comm;
         if let Some(cmdline) = cmdline {
             if cmdline.is_empty() {
-                (concat_string!("[", truncated_name, "]"), truncated_name)
+                (concat_string!("[", comm, "]"), comm)
             } else {
-                let name = if truncated_name.len() >= MAX_STAT_NAME_LEN {
-                    let first_part = match cmdline.split_once(' ') {
-                        Some((first, _)) => first,
-                        None => &cmdline,
-                    };
+                // If the comm fits then we'll default to whatever is set.
+                // If it doesn't, we need to do some magic to determine what it's
+                // supposed to be.
+                //
+                // We follow something similar to how htop does it to identify a valid name based on the cmdline.
+                // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268 (kinda)
+                // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L573
+                //
+                // Also note that cmdline is (for us) separated by \0.
 
-                    // We're only interested in the executable part, not the file path (part of command),
-                    // so strip everything but the command name if needed.
-                    let last_part = match first_part.rsplit_once('/') {
-                        Some((_, last)) => last,
-                        None => first_part,
-                    };
-
-                    last_part.to_string()
+                // TODO: We might want to re-evaluate if we want to do it like this,
+                // as it turns out I was dumb and sometimes comm != process name...
+                //
+                // What we should do is store:
+                // - basename (what we're kinda doing now, except we're gating on comm length)
+                // - command (full thing)
+                // - comm (as a separate thing)
+                //
+                // Stuff like htop also offers the option to "highlight" basename and comm in command. Might be neat?
+                let name = if comm.len() >= MAX_STAT_NAME_LEN {
+                    name_from_cmdline(&cmdline)
                 } else {
-                    truncated_name
+                    comm
                 };
 
                 (cmdline, name)
             }
         } else {
-            (truncated_name.clone(), truncated_name)
+            (comm.clone(), comm)
         }
     };
+
+    // We have moved command processing here.
+    // SAFETY: We are only replacing a single char (NUL) with another single char (space).
+
+    let mut command = command;
+    let buf_mut = unsafe { command.as_mut_vec() };
+
+    for byte in buf_mut {
+        if *byte == 0 {
+            const SPACE: u8 = ' '.to_ascii_lowercase() as u8;
+            *byte = SPACE;
+        }
+    }
 
     Ok((
         ProcessHarvest {
@@ -263,9 +295,26 @@ fn read_proc(
             gpu_mem_percent: 0.0,
             #[cfg(feature = "gpu")]
             gpu_util: 0,
+            process_type,
         },
         new_process_times,
     ))
+}
+
+fn name_from_cmdline(cmdline: &str) -> String {
+    let mut start = 0;
+    let mut end = cmdline.len();
+
+    for (i, c) in cmdline.chars().enumerate() {
+        if c == '/' {
+            start = i + 1;
+        } else if c == '\0' || c == ':' {
+            end = i;
+            break;
+        }
+    }
+
+    cmdline[start..end].to_string()
 }
 
 pub(crate) struct PrevProc<'a> {
@@ -276,6 +325,7 @@ pub(crate) struct PrevProc<'a> {
 pub(crate) struct ProcHarvestOptions {
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
+    pub get_process_threads: bool,
 }
 
 fn is_str_numeric(s: &str) -> bool {
@@ -285,12 +335,13 @@ fn is_str_numeric(s: &str) -> bool {
 /// General args to keep around for reading proc data.
 #[derive(Copy, Clone)]
 pub(crate) struct ReadProcArgs {
-    pub(crate) use_current_cpu_total: bool,
-    pub(crate) cpu_usage: f64,
-    pub(crate) cpu_fraction: f64,
-    pub(crate) total_memory: u64,
-    pub(crate) time_difference_in_secs: u64,
-    pub(crate) uptime: u64,
+    pub use_current_cpu_total: bool,
+    pub cpu_usage: f64,
+    pub cpu_fraction: f64,
+    pub total_memory: u64,
+    pub time_difference_in_secs: u64,
+    pub system_uptime: u64,
+    pub get_process_threads: bool,
 }
 
 pub(crate) fn linux_process_data(
@@ -304,13 +355,15 @@ pub(crate) fn linux_process_data(
     let proc_harvest_options = ProcHarvestOptions {
         use_current_cpu_total: collector.use_current_cpu_total,
         unnormalized_cpu: collector.unnormalized_cpu,
+        get_process_threads: collector.get_process_threads,
     };
-    let pid_mapping = &mut collector.pid_mapping;
+    let prev_process_details = &mut collector.prev_process_details;
     let user_table = &mut collector.user_table;
 
     let ProcHarvestOptions {
         use_current_cpu_total,
         unnormalized_cpu,
+        get_process_threads: get_threads,
     } = proc_harvest_options;
 
     let PrevProc {
@@ -333,9 +386,13 @@ pub(crate) fn linux_process_data(
         cpu_usage /= num_processors;
     }
 
-    let mut pids_to_clear: HashSet<Pid> = pid_mapping.keys().cloned().collect();
+    // TODO: Could maybe use a double buffer hashmap to avoid allocating this each time?
+    // e.g. we swap which is prev and which is new.
+    let mut seen_pids: HashSet<Pid> = HashSet::new();
 
+    // Note this will only return PIDs of _processes_, not threads. You can get those from /proc/<PID>/task though.
     let pids = fs::read_dir("/proc")?.flatten().filter_map(|dir| {
+        // Need to filter out non-PID entries.
         if is_str_numeric(dir.file_name().to_string_lossy().trim()) {
             Some(dir.path())
         } else {
@@ -349,20 +406,25 @@ pub(crate) fn linux_process_data(
         cpu_fraction,
         total_memory,
         time_difference_in_secs,
-        uptime: sysinfo::System::uptime(),
+        system_uptime: sysinfo::System::uptime(),
+        get_process_threads: get_threads,
     };
 
+    // TODO: Maybe pre-allocate these buffers in the future w/ routine cleanup.
     let mut buffer = String::new();
+    let mut process_threads_to_check = HashMap::new();
 
-    let process_vector: Vec<ProcessHarvest> = pids
+    let mut process_vector: Vec<ProcessHarvest> = pids
         .filter_map(|pid_path| {
-            if let Ok(process) = Process::from_path(pid_path, &mut buffer) {
+            if let Ok((process, threads)) =
+                Process::from_path(pid_path, &mut buffer, args.get_process_threads)
+            {
                 let pid = process.pid;
-                let prev_proc_details = pid_mapping.entry(pid).or_default();
+                let prev_proc_details = prev_process_details.entry(pid).or_default();
 
                 #[cfg_attr(not(feature = "gpu"), expect(unused_mut))]
                 if let Ok((mut process_harvest, new_process_times)) =
-                    read_proc(prev_proc_details, process, args, user_table)
+                    read_proc(prev_proc_details, process, args, user_table, None)
                 {
                     #[cfg(feature = "gpu")]
                     if let Some(gpus) = &collector.gpu_pids {
@@ -384,7 +446,11 @@ pub(crate) fn linux_process_data(
                     prev_proc_details.total_read_bytes = process_harvest.total_read;
                     prev_proc_details.total_write_bytes = process_harvest.total_write;
 
-                    pids_to_clear.remove(&pid);
+                    if !threads.is_empty() {
+                        process_threads_to_check.insert(pid, threads);
+                    }
+
+                    seen_pids.insert(pid);
                     return Some(process_harvest);
                 }
             }
@@ -393,10 +459,37 @@ pub(crate) fn linux_process_data(
         })
         .collect();
 
-    pids_to_clear.iter().for_each(|pid| {
-        pid_mapping.remove(pid);
-    });
+    // Get thread data.
+    for (pid, tid_paths) in process_threads_to_check {
+        for tid_path in tid_paths {
+            if let Ok((process, _)) = Process::from_path(tid_path, &mut buffer, false) {
+                let tid = process.pid;
+                let prev_proc_details = prev_process_details.entry(tid).or_default();
 
+                if let Ok((process_harvest, new_process_times)) =
+                    read_proc(prev_proc_details, process, args, user_table, Some(pid))
+                {
+                    prev_proc_details.cpu_time = new_process_times;
+                    prev_proc_details.total_read_bytes = process_harvest.total_read;
+                    prev_proc_details.total_write_bytes = process_harvest.total_write;
+
+                    seen_pids.insert(tid);
+                    process_vector.push(process_harvest);
+                }
+            }
+        }
+    }
+
+    // Clean up values we don't care about anymore.
+    prev_process_details.retain(|pid, _| seen_pids.contains(pid));
+
+    // Occasional garbage collection.
+    if collector.should_run_less_routine_tasks {
+        prev_process_details.shrink_to_fit();
+    }
+
+    // TODO: This might be more efficient to just separate threads into their own list, but for now this works so it
+    // fits with existing code.
     Ok(process_vector)
 }
 
@@ -440,6 +533,21 @@ mod tests {
             (120_f64, 320_f64),
             fetch_cpu_usage("100 0 100 100 20 30 40 50 100 200"),
             "Failed to properly calculate idle/non-idle for /proc/stat CPU with 10 values"
+        );
+    }
+
+    #[test]
+    fn test_name_from_cmdline() {
+        assert_eq!(name_from_cmdline("/usr/bin/btm"), "btm");
+        assert_eq!(name_from_cmdline("/usr/bin/btm\0--asdf\0--asdf/gkj"), "btm");
+        assert_eq!(name_from_cmdline("/usr/bin/btm:"), "btm");
+        assert_eq!(name_from_cmdline("/usr/bin/b tm"), "b tm");
+        assert_eq!(name_from_cmdline("/usr/bin/b tm:"), "b tm");
+        assert_eq!(name_from_cmdline("/usr/bin/b tm\0--test"), "b tm");
+        assert_eq!(name_from_cmdline("/usr/bin/b tm:\0--test"), "b tm");
+        assert_eq!(
+            name_from_cmdline("/usr/bin/b t m:\0--\"test thing\""),
+            "b t m"
         );
     }
 }

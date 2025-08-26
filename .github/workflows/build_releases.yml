@@ -122,9 +122,12 @@ jobs:
               cross: true,
             }
 
-          # Seems like cross' FreeBSD image is a bit broken? I
-          # get build errors, may be related to this issue:
-          # https://github.com/cross-rs/cross/issues/1291
+          # Windows ARM
+          - {
+              os: "windows-11-arm",
+              target: "aarch64-pc-windows-msvc",
+              cross: false,
+            }
     steps:
       - name: Checkout repository
         if: matrix.info.container == ''
@@ -220,7 +223,7 @@ jobs:
           name: "release-${{ matrix.info.target }}"
           path: release
 
-  build-vm:
+  build-with-vm:
     name: "Build binaries via VMs"
     runs-on: "ubuntu-latest"
     timeout-minutes: 12
@@ -304,8 +307,22 @@ jobs:
 
   build-msi:
     name: "Build MSI (WiX) installer"
-    runs-on: "windows-2022"
     timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          - {
+              os: "windows-2022",
+              target: "x86_64-pc-windows-msvc",
+              output: "bottom_x86_64_installer.msi"
+            }
+          - {
+              os: "windows-11-arm",
+              target: "aarch64-pc-windows-msvc",
+              output: "bottom_aarch64_installer.msi"
+            }
+    runs-on: ${{ matrix.info.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -314,18 +331,19 @@ jobs:
 
       - name: Install Net-Framework-Core
         shell: powershell
-        run: Install-WindowsFeature Net-Framework-Core
+        run: |
+          choco install dotnet-sdk --pre -y --no-progress;
 
       - name: Install wixtoolset
-        uses: crazy-max/ghaction-chocolatey@0e015857dd851f84fcb7fb53380eb5c4c8202333 # v3.0.0
-        with:
-          args: install -y wixtoolset
+        shell: powershell
+        run: |
+          choco install -y wixtoolset --no-progress;
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
         with:
           toolchain: stable
-          target: x86_64-pc-windows-msvc
+          target: ${{ matrix.info.target }}
 
       - name: Install cargo-wix
         shell: powershell
@@ -337,24 +355,27 @@ jobs:
         env:
           BTM_GENERATE: true
         run: |
+          Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
+          refreshenv
           cargo wix --nocapture
+          mv bottom_installer.msi ${{ matrix.info.output }}
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
         with:
-          subject-path: "bottom_x86_64_installer.msi"
+          subject-path: ${{ matrix.info.output }}
 
       - name: Create release directory for artifact, move files
         shell: bash
         run: |
           mkdir release
-          mv bottom_x86_64_installer.msi release/
+          mv ${{ matrix.info.output }} release/
 
       - name: Save release as artifact
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: "release-build-msi"
+          name: "release-${{ matrix.info.target }}-msi"
           path: release
 
   build-cirrus:

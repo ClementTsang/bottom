@@ -38,6 +38,9 @@ pub struct TimeSeriesData {
     /// CPU data.
     pub cpu: Vec<Values>,
 
+    /// Average CPU data.
+    pub avg_cpu: Values,
+
     /// RAM memory data.
     pub ram: Values,
 
@@ -70,10 +73,12 @@ impl TimeSeriesData {
             self.tx.insert_break();
         }
 
-        if let Some(cpu) = &data.cpu {
-            match self.cpu.len().cmp(&cpu.len()) {
+        if let Some(cpu_harvest) = &data.cpu {
+            let cpus = &cpu_harvest.cpus;
+
+            match self.cpu.len().cmp(&cpus.len()) {
                 Ordering::Less => {
-                    let diff = cpu.len() - self.cpu.len();
+                    let diff = cpus.len() - self.cpu.len();
                     self.cpu.reserve_exact(diff);
 
                     for _ in 0..diff {
@@ -81,7 +86,7 @@ impl TimeSeriesData {
                     }
                 }
                 Ordering::Greater => {
-                    let diff = self.cpu.len() - cpu.len();
+                    let diff = self.cpu.len() - cpus.len();
                     let offset = self.cpu.len() - diff;
 
                     for curr in &mut self.cpu[offset..] {
@@ -91,13 +96,20 @@ impl TimeSeriesData {
                 Ordering::Equal => {}
             }
 
-            for (curr, new_data) in self.cpu.iter_mut().zip(cpu.iter()) {
-                curr.push(new_data.usage.into());
+            for (curr, new_data) in self.cpu.iter_mut().zip(cpus.iter()) {
+                curr.push((*new_data).into());
+            }
+
+            // If there isn't avg then we never had any to begin with.
+            if let Some(avg) = cpu_harvest.avg {
+                self.avg_cpu.push(avg.into());
             }
         } else {
             for c in &mut self.cpu {
                 c.insert_break();
             }
+
+            self.avg_cpu.insert_break();
         }
 
         if let Some(memory) = &data.memory {

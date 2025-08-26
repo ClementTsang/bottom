@@ -60,6 +60,20 @@ macro_rules! is_flag_enabled {
     };
 }
 
+/// A new version if [`is_flag_enabled`] which instead expects the user to pass in `config_section`, which is
+/// the section the flag is located, rather than defaulting to `config.flags` where `config` is passed in.
+macro_rules! is_flag_enabled_new {
+    ($flag_name:ident, $arg:expr, $config_section:expr) => {
+        if $arg.$flag_name {
+            true
+        } else if let Some(options) = &$config_section {
+            options.$flag_name.unwrap_or(false)
+        } else {
+            false
+        }
+    };
+}
+
 /// The default config file sub-path.
 const DEFAULT_CONFIG_FILE_LOCATION: &str = "bottom/bottom.toml";
 
@@ -283,6 +297,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         cpu_left_legend: is_flag_enabled!(cpu_left_legend, args.cpu, config),
         use_current_cpu_total: is_flag_enabled!(current_usage, args.process, config),
         unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, args.process, config),
+        get_process_threads: is_flag_enabled_new!(get_threads, args.process, config.processes),
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(args, config, retention_ms)?,
@@ -1228,7 +1243,7 @@ mod test {
                         .widget_states
                         .iter()
                         .zip(testing_app.states.proc_state.widget_states.iter())
-                        .all(|(a, b)| (a.1.test_equality(b.1)))
+                        .all(|(a, b)| a.1.test_equality(b.1))
                 {
                     panic!("failed on {arg_name}");
                 }

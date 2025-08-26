@@ -40,7 +40,7 @@ impl TempWidgetData {
 }
 
 impl DataToCell<TempWidgetColumn> for TempWidgetData {
-    fn to_cell(
+    fn to_cell_text(
         &self, column: &TempWidgetColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         Some(match column {

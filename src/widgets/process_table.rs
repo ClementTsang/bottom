@@ -1176,6 +1176,8 @@ mod test {
             gpu_mem_usage: MemUsage::Percent(1.1),
             #[cfg(feature = "gpu")]
             gpu_usage: 0,
+            #[cfg(target_os = "linux")]
+            process_type: crate::collection::processes::ProcessType::Regular,
         };
 
         let b = ProcWidgetData {
@@ -1210,23 +1212,23 @@ mod test {
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Descending);
         assert_eq!(
-            [&c, &b, &a, &d].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
-            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+            [&c, &b, &a, &d].iter().map(|d| d.pid).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
 
         // Note that the PID ordering for ties is still ascending.
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
-            [&a, &d, &b, &c].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
-            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+            [&a, &d, &b, &c].iter().map(|d| d.pid).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
 
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Descending);
         assert_eq!(
-            [&b, &a, &c, &d].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
-            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+            [&b, &a, &c, &d].iter().map(|d| d.pid).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
 
         // Note that the PID ordering for ties is still ascending.

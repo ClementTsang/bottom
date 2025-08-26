@@ -16,7 +16,7 @@ use rustix::{
     path::Arg,
 };
 
-use crate::collection::processes::Pid;
+use crate::collection::processes::{Pid, linux::is_str_numeric};
 
 static PAGESIZE: OnceLock<u64> = OnceLock::new();
 
@@ -26,8 +26,9 @@ fn next_part<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Result<&'a str, io
         .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidData))
 }
 
-/// A wrapper around the data in `/proc/<PID>/stat`. For documentation, see
-/// [here](https://man7.org/linux/man-pages/man5/proc.5.html).
+/// A wrapper around the data in `/proc/<PID>/stat`. For documentation, see:
+/// - <https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html>
+/// - <https://man7.org/linux/man-pages/man5/proc_pid_status.5.html>
 ///
 /// Note this does not necessarily get all fields, only the ones we use in
 /// bottom.
@@ -62,7 +63,8 @@ pub(crate) struct Stat {
 
 impl Stat {
     /// Get process stats from a file; this assumes the file is located at
-    /// `/proc/<PID>/stat`.
+    /// `/proc/<PID>/stat`. For documentation, see
+    /// [here](https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html) as a reference.
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
         // Since this is just one line, we can read it all at once. However, since it
         // (technically) might have non-utf8 characters, we can't just use read_to_string.
@@ -229,12 +231,15 @@ impl Process {
     /// will be discarded quickly.
     ///
     /// This takes in a buffer to avoid allocs; this function will clear the buffer.
-    pub(crate) fn from_path(pid_path: PathBuf, buffer: &mut String) -> anyhow::Result<Process> {
+    #[inline]
+    pub(crate) fn from_path(
+        pid_path: PathBuf, buffer: &mut String, get_threads: bool,
+    ) -> anyhow::Result<(Process, Vec<PathBuf>)> {
         buffer.clear();
 
-        let fd = rustix::fs::openat(
+        let pid_dir = rustix::fs::openat(
             rustix::fs::CWD,
-            &pid_path,
+            pid_path.as_path(),
             OFlags::PATH | OFlags::DIRECTORY | OFlags::CLOEXEC,
             Mode::empty(),
         )?;
@@ -245,14 +250,14 @@ impl Process {
             .next_back()
             .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             .or_else(|| {
-                rustix::fs::readlinkat(rustix::fs::CWD, &pid_path, vec![])
+                rustix::fs::readlinkat(rustix::fs::CWD, pid_path.as_path(), vec![])
                     .ok()
                     .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             })
             .ok_or_else(|| anyhow!("PID for {pid_path:?} was not found"))?;
 
         let uid = {
-            let metadata = rustix::fs::fstat(&fd);
+            let metadata = rustix::fs::fstat(&pid_dir);
             match metadata {
                 Ok(md) => Some(md.st_uid),
                 Err(_) => None,
@@ -266,10 +271,10 @@ impl Process {
 
         // Stat is pretty long, do this first to pre-allocate up-front.
         let stat =
-            open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, buffer))?;
+            open_at(&mut root, "stat", &pid_dir).and_then(|file| Stat::from_file(file, buffer))?;
         reset(&mut root, buffer);
 
-        let cmdline = if cmdline(&mut root, &fd, buffer).is_ok() {
+        let cmdline = if cmdline(&mut root, &pid_dir, buffer).is_ok() {
             // The clone will give a string with the capacity of the length of buffer, don't worry.
             Some(buffer.clone())
         } else {
@@ -277,35 +282,30 @@ impl Process {
         };
         reset(&mut root, buffer);
 
-        let io = open_at(&mut root, "io", &fd)
+        let io = open_at(&mut root, "io", &pid_dir)
             .and_then(|file| Io::from_file(file, buffer))
             .ok();
 
-        Ok(Process {
-            pid,
-            uid,
-            stat,
-            io,
-            cmdline,
-        })
+        reset(&mut root, buffer);
+
+        let threads = threads(&mut root, pid, get_threads);
+
+        Ok((
+            Process {
+                pid,
+                uid,
+                stat,
+                io,
+                cmdline,
+            },
+            threads,
+        ))
     }
 }
 
 #[inline]
 fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Result<()> {
-    let _ = open_at(root, "cmdline", fd)
-        .map(|mut file| file.read_to_string(buffer))
-        .inspect(|_| {
-            // SAFETY: We are only replacing a single char (NUL) with another single char (space).
-            let buf_mut = unsafe { buffer.as_mut_vec() };
-
-            for byte in buf_mut {
-                if *byte == 0 {
-                    const SPACE: u8 = ' '.to_ascii_lowercase() as u8;
-                    *byte = SPACE;
-                }
-            }
-        })?;
+    let _ = open_at(root, "cmdline", fd).map(|mut file| file.read_to_string(buffer))?;
 
     Ok(())
 }
@@ -319,4 +319,41 @@ fn open_at(root: &mut PathBuf, child: &str, fd: &OwnedFd) -> anyhow::Result<File
     let new_fd = rustix::fs::openat(fd, &*root, OFlags::RDONLY | OFlags::CLOEXEC, Mode::empty())?;
 
     Ok(File::from(new_fd))
+}
+
+#[inline]
+fn threads(root: &mut PathBuf, pid: Pid, get_threads: bool) -> Vec<PathBuf> {
+    if get_threads {
+        root.push("task");
+
+        let Ok(task_dir) = rustix::fs::openat(
+            rustix::fs::CWD,
+            root.as_path(),
+            OFlags::RDONLY | OFlags::DIRECTORY | OFlags::CLOEXEC,
+            Mode::empty(),
+        ) else {
+            return Vec::new();
+        };
+
+        if let Ok(task) = rustix::fs::Dir::read_from(task_dir) {
+            let pid_str = pid.to_string();
+
+            return task
+                .flatten()
+                .filter_map(|thread_dir| {
+                    let file_name = thread_dir.file_name();
+                    let file_name = file_name.to_string_lossy();
+                    let file_name = file_name.trim();
+
+                    if is_str_numeric(file_name) && file_name != pid_str {
+                        Some(root.join(file_name).to_path_buf())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+        }
+    }
+
+    Vec::new()
 }
