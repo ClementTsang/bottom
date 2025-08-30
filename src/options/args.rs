@@ -324,6 +324,16 @@ pub struct ProcessArgs {
     )]
     pub disable_advanced_kill: bool,
 
+    #[cfg(target_os = "linux")]
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Hides kernel threads.",
+        long_help = "Hides kernel threads",
+        alias = "hide-k-threads"
+    )]
+    pub hide_k_threads: bool,
+
     #[arg(
         long,
         action = ArgAction::SetTrue,

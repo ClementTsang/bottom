@@ -169,6 +169,8 @@ fn read_proc(
 
     let (parent_pid, process_type) = if let Some(thread_parent) = thread_parent {
         (Some(thread_parent), ProcessType::ProcessThread)
+    } else if stat.is_kernel_thread {
+        (Some(stat.ppid), ProcessType::Kernel)
     } else {
         (Some(stat.ppid), ProcessType::Regular)
     };
