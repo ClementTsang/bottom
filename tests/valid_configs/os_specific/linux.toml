@@ -1,0 +1,4 @@
+# Remove things from this if they are no longer OS-specific.
+
+[styles.widgets]
+thread_text = { color = "green" }
