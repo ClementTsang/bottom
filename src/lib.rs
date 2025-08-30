@@ -145,7 +145,10 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
 /// Create a thread to poll for user inputs and forward them to the main thread.
 fn create_input_thread(
     sender: Sender<BottomEvent>, cancellation_token: Arc<CancellationToken>,
+    app_config_fields: &AppConfigFields,
 ) -> JoinHandle<()> {
+    let keys_disabled = app_config_fields.disable_keys;
+
     thread::spawn(move || {
         let mut mouse_timer = Instant::now();
 
@@ -177,7 +180,9 @@ fn create_input_thread(
                                     break;
                                 }
                             }
-                            Event::Key(key) if key.kind == KeyEventKind::Press => {
+                            Event::Key(key)
+                                if !keys_disabled && key.kind == KeyEventKind::Press =>
+                            {
                                 // For now, we only care about key down events. This may change in
                                 // the future.
                                 if sender.send(BottomEvent::KeyInput(key)).is_err() {
@@ -325,7 +330,11 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     );
 
     // Set up the input handling loop thread.
-    let _input_thread = create_input_thread(sender.clone(), cancellation_token.clone());
+    let _input_thread = create_input_thread(
+        sender.clone(),
+        cancellation_token.clone(),
+        &app.app_config_fields,
+    );
 
     // Set up the cleaning loop thread.
     let _cleaning_thread = {

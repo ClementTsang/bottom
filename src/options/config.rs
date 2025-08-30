@@ -9,7 +9,7 @@ pub mod style;
 pub mod temperature;
 
 use disk::DiskConfig;
-use flags::FlagConfig;
+use flags::GeneralConfig;
 use network::NetworkConfig;
 use serde::{Deserialize, Serialize};
 use style::StyleConfig;
@@ -23,7 +23,7 @@ use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub struct Config {
-    pub(crate) flags: Option<FlagConfig>,
+    pub(crate) flags: Option<GeneralConfig>,
     pub(crate) styles: Option<StyleConfig>,
     pub(crate) row: Option<Vec<Row>>,
     pub(crate) processes: Option<ProcessesConfig>,

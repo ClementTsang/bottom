@@ -325,6 +325,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Disable mouse clicks
 #disable_click = false
 
+# Disable keyboard shortcuts
+#disable_keys = false
+
 # Show memory values in the processes widget as values by default
 #process_memory_as_value = false
 

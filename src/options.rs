@@ -306,6 +306,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         use_old_network_legend: is_flag_enabled!(use_old_network_legend, args.network, config),
         table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, args.general, config))),
         disable_click: is_flag_enabled!(disable_click, args.general, config),
+        disable_keys: is_flag_enabled!(disable_keys, args.general, config),
         enable_gpu: get_enable_gpu(args, config),
         enable_cache_memory: get_enable_cache_memory(args, config),
         show_table_scroll_position: is_flag_enabled!(
@@ -1038,7 +1039,7 @@ mod test {
         app::App,
         args::BottomArgs,
         options::{
-            config::flags::FlagConfig, get_default_time_value, get_retention, get_update_rate,
+            config::flags::GeneralConfig, get_default_time_value, get_retention, get_update_rate,
             try_parse_ms,
         },
     };
@@ -1117,7 +1118,7 @@ mod test {
         let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = Config::default();
-        let flags = FlagConfig {
+        let flags = GeneralConfig {
             time_delta: Some("2 min".to_string().into()),
             default_time_value: Some("300s".to_string().into()),
             rate: Some("1s".to_string().into()),
@@ -1147,7 +1148,7 @@ mod test {
         let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = Config::default();
-        let flags = FlagConfig {
+        let flags = GeneralConfig {
             time_delta: Some("120000".to_string().into()),
             default_time_value: Some("300000".to_string().into()),
             rate: Some("1000".to_string().into()),
@@ -1177,7 +1178,7 @@ mod test {
         let args = BottomArgs::parse_from(["btm"]);
 
         let mut config = Config::default();
-        let flags = FlagConfig {
+        let flags = GeneralConfig {
             time_delta: Some(120000.into()),
             default_time_value: Some(300000.into()),
             rate: Some(1000.into()),

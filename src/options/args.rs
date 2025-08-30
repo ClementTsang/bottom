@@ -207,6 +207,15 @@ pub struct GeneralArgs {
     )]
     pub disable_click: bool,
 
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Disables keypresses.",
+        long_help = "Disables keypresses from interacting with bottom. Note this includes keyboard shortcuts to quit bottom.",
+        alias = "disable-keys"
+    )]
+    pub disable_keys: bool,
+
     // TODO: Change this to accept a string with the type of marker.
     #[arg(
         short = 'm',
