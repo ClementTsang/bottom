@@ -16,7 +16,11 @@ You can filter out what entries to show by configuring `[disk.name_filter]` and 
 you can set a list of things to filter with by setting `list`, and configure how that list
 is processed with the other options.
 
-For example, here we are ignoring any entry with a name that matches `/dev/sda<NUMBERS>`, or specifically `/dev/nvme0n1p2`.
+For example, consider a disk widget showing these entries:
+
+![Disk no filter](../../assets/screenshots/config/disk-filtering/disk_no_filter.webp)
+
+If we wanted to ignoring any entry with a name that matches `/dev/sda`:
 
 ```toml
 [disk.name_filter]
@@ -24,7 +28,7 @@ For example, here we are ignoring any entry with a name that matches `/dev/sda<N
 is_list_ignored = true
 
 # A list of filters to try and match.
-list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
+list = ["/dev/sda"]
 
 # Whether to use regex. Defaults to false.
 regex = true
@@ -35,3 +39,29 @@ case_sensitive = false
 # Whether to be require matching the whole word. Defaults to false.
 whole_word = false
 ```
+
+This would give us:
+
+![Disk widget with just disk name filter](../../assets/screenshots/config/disk-filtering/disk_name_filter.webp)
+
+We can also combine both the name filter and mount filter. For example:
+
+```toml
+[disk.name_filter]
+is_list_ignored = false
+list = ["/dev/sda"]
+regex = true
+case_sensitive = false
+whole_word = false
+
+[disk.mount_filter]
+is_list_ignored = true
+list = ["/mnt/.*", "/"]
+regex = true
+case_sensitive = false
+whole_word = true
+```
+
+This gives us:
+
+![Disk widget with disk name and mount filter](../../assets/screenshots/config/disk-filtering/disk_name_mount_filter.webp)

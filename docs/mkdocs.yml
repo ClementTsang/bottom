@@ -167,10 +167,12 @@ nav:
       - "Config File":
           - configuration/config-file/index.md
           - "CPU Widget": configuration/config-file/cpu.md
-          - "Data Filtering": configuration/config-file/data-filtering.md
+          - "Disk Table Widget": configuration/config-file/disk-table.md
+          - "Network Widget": configuration/config-file/network.md
+          - "Processes Widget": configuration/config-file/processes.md
+          - "Temperature Table Widget": configuration/config-file/temperature-table.md
           - "Flags": configuration/config-file/flags.md
           - "Layout": configuration/config-file/layout.md
-          - "Processes Widget": configuration/config-file/processes.md
           - "Styling": configuration/config-file/styling.md
   - "Contribution":
       - "Issues, Pull Requests, and Discussions": contribution/issues-and-pull-requests.md
