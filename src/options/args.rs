@@ -210,7 +210,7 @@ pub struct GeneralArgs {
     #[arg(
         long,
         action = ArgAction::SetTrue,
-        help = "Disables keypresses.",
+        help = "Disables keypresses, INCLUDING the ones to normally quit bottom with.",
         long_help = "Disables keypresses from interacting with bottom. Note this includes keyboard shortcuts to quit bottom.",
         alias = "disable-keys"
     )]
