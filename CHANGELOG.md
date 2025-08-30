@@ -25,6 +25,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 ### Features
 
 - [#1793](https://github.com/ClementTsang/bottom/pull/1793): Add support for threads in Linux.
+- [#1719](https://github.com/ClementTsang/bottom/pull/1719): Support ignoring all keypresses.
 
 ### Bug Fixes
 
