@@ -29,10 +29,6 @@ pub(crate) struct WidgetStyle {
 
     /// Text styling for text when representing process threads. Only usable
     /// on Linux at the moment.
-    #[cfg_attr(
-        not(target_os = "linux"),
-        expect(dead_code, reason = "currently only usable on Linux")
-    )]
     pub(crate) thread_text: Option<TextStyleConfig>,
 
     /// Widget borders type.
