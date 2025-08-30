@@ -211,7 +211,11 @@ impl Styles {
         set_style!(self.text_style, config.widgets, text);
         set_style!(self.selected_text_style, config.widgets, selected_text);
         set_style!(self.disabled_text_style, config.widgets, disabled_text);
-        set_style!(self.thread_text_style, config.widgets, thread_text);
+
+        #[cfg(target_os = "linux")]
+        {
+            set_style!(self.thread_text_style, config.widgets, thread_text);
+        }
 
         // Widget borders
         set_colour!(self.border_style, config.widgets, border_color);
