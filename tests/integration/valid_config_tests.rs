@@ -189,3 +189,9 @@ fn test_filtering() {
 fn test_proc_columns() {
     run_and_kill(&["-C", "./tests/valid_configs/proc_columns.toml"]);
 }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn test_linux_only() {
+    run_and_kill(&["-C", "./tests/valid_configs/os_specific/linux.toml"]);
+}

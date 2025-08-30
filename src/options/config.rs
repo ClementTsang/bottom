@@ -67,12 +67,16 @@ mod test {
         use super::Config;
 
         for config_path in fs::read_dir("./tests/valid_configs").unwrap() {
-            let config_path = config_path.unwrap();
-            let config_path_str = config_path.path().display().to_string();
-            let config_str = fs::read_to_string(config_path.path()).unwrap();
+            let dir_entry = config_path.unwrap();
+            let path = dir_entry.path();
 
-            toml_edit::de::from_str::<Config>(&config_str)
-                .unwrap_or_else(|_| panic!("incorrectly rejected '{config_path_str}'"));
+            if path.is_file() {
+                let config_path_str = path.display().to_string();
+                let config_str = fs::read_to_string(path).unwrap();
+
+                toml_edit::de::from_str::<Config>(&config_str)
+                    .unwrap_or_else(|_| panic!("incorrectly rejected '{config_path_str}'"));
+            }
         }
     }
 
