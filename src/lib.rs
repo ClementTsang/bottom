@@ -406,10 +406,6 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
                 BottomEvent::KeyInput(event) => {
-                    if app.app_config_fields.disable_keys {
-                        continue;
-                    }
-
                     if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
                         break;
                     }
