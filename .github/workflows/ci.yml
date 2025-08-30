@@ -137,11 +137,8 @@ jobs:
   #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
-  other-check:
+  unsupported-check:
     needs: pre-job
-    runs-on: ${{ matrix.info.os }}
-    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
@@ -228,7 +225,16 @@ jobs:
               no-default-features: true,
               no-clippy: true,
             }
-
+          
+            # Windows ARM
+          - {
+              os: "windows-11-arm",
+              target: "aarch64-pc-windows-msvc",
+              cross: false,
+            }
+    runs-on: ${{ matrix.info.os }}
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    timeout-minutes: 12
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -265,8 +271,7 @@ jobs:
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
-  vm-check:
-    name: "Test using VMs"
+  unsupported-check-freebsd:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: "ubuntu-latest"
@@ -326,23 +331,23 @@ jobs:
 
   completion:
     name: "CI Pass Check"
-    needs: [supported, other-check, vm-check]
-    if: ${{ needs.supported.result != 'skipped' || needs.other-check.result != 'skipped' || needs.vm-check.result != 'skipped' }}
+    needs: [supported, unsupported-check, unsupported-check-freebsd]
+    if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' || needs.unsupported-check-freebsd.result != 'skipped' }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
-        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.other-check.result == 'success' || needs.other-check.result == 'skipped') && (needs.vm-check.result == 'success' || needs.vm-check.result == 'skipped') }}
+        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.unsupported-check.result == 'success' || needs.unsupported-check.result == 'skipped') && (needs.unsupported-check-freebsd.result == 'success' || needs.unsupported-check-freebsd.result == 'skipped') }}
         run: |
           echo "CI workflow completed successfully.";
 
       - name: CI Failed
-        if: ${{ needs.supported.result == 'failure' || needs.other-check.result == 'failure' || needs.vm-check.result == 'failure' }}
+        if: ${{ needs.supported.result == 'failure' || needs.unsupported-check.result == 'failure' || needs.unsupported-check-freebsd.result == 'failure' }}
         run: |
           echo "CI workflow failed.";
           exit 1;
 
       - name: CI Cancelled
-        if: ${{ needs.supported.result == 'cancelled' || needs.other-check.result == 'cancelled' || needs.vm-check.result == 'cancelled' }}
+        if: ${{ needs.supported.result == 'cancelled' || needs.unsupported-check.result == 'cancelled' || needs.unsupported-check-freebsd.result == 'cancelled' }}
         run: |
           echo "CI workflow was cancelled.";
           exit 1;

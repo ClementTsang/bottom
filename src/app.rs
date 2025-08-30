@@ -51,6 +51,7 @@ pub struct AppConfigFields {
     pub use_old_network_legend: bool,
     pub table_gap: u16,
     pub disable_click: bool,
+    pub disable_keys: bool,
     pub enable_gpu: bool,
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,

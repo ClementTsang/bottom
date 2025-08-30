@@ -5,40 +5,44 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## General Options
 
-| Option                            | Behaviour                                            |
-| --------------------------------- | ---------------------------------------------------- |
-| `--autohide_time`                 | Temporarily shows the time scale in graphs.          |
-| `-b, --basic`                     | Hides graphs and uses a more basic look.             |
-| `-C, --config <CONFIG PATH>`      | Sets the location of the config file.                |
-| `-t, --default_time_value <TIME>` | Default time value for graphs.                       |
-| `--default_widget_count <N>`      | Sets the N'th selected widget type as the default.   |
-| `--default_widget_type <WIDGET>`  | Sets the default widget type, use `--help` for info. |
-| `--disable_click`                 | Disables mouse clicks.                               |
-| `-m, --dot_marker`                | Uses a dot marker for graphs.                        |
-| `-e, --expanded`                  | Expand the default widget upon starting the app.     |
-| `--hide_table_gap`                | Hides spacing between table headers and entries.     |
-| `--hide_time`                     | Hides the time scale from being shown.               |
-| `-r, --rate <TIME>`               | Sets how often data is refreshed.                    |
-| `--retention <TIME>`              | How far back data will be stored up to.              |
-| `--show_table_scroll_position`    | Shows the scroll position tracker in table widgets.  |
-| `-d, --time_delta <TIME>`         | The amount of time changed upon zooming.             |
+| Option                              | Behaviour                                                  |
+| ----------------------------------- | ---------------------------------------------------------- |
+| `--autohide_time`                   | Temporarily shows the time scale in graphs.                |
+| `-b`, `--basic`                     | Hides graphs and uses a more basic look.                   |
+| `-C`, `--config_location <PATH>`    | Sets the location of the config file.                      |
+| `-t`, `--default_time_value <TIME>` | Default time value for graphs.                             |
+| `--default_widget_count <N>`        | Sets the N'th selected widget type as the default.         |
+| `--default_widget_type <WIDGET>`    | Sets the default widget type. Use --help for more info.    |
+| `--disable_click`                   | Disables mouse clicks.                                     |
+| `--disable_keys`                    | Disables keyboard shortcuts, INCLUDING the ones that stop  |
+|                                     | bottom.                                                    |
+| `-m`, `--dot_marker`                | Uses a dot marker for graphs.                              |
+| `-e`, `--expanded`                  | Expand the default widget upon starting the app.           |
+| `--hide_table_gap`                  | Hides spacing between table headers and entries.           |
+| `--hide_time`                       | Hides the time scale from being shown.                     |
+| `-r`, `--rate <TIME>`               | Sets how often data is refreshed.                          |
+| `--retention <TIME>`                | How far back data will be stored up to.                    |
+| `--show_table_scroll_position`      | Shows the list scroll position tracker in the widget title |
+|                                     | for table widgets.                                         |
+| `-d`, `--time_delta <TIME>`         | The amount of time changed upon zooming.                   |
 
 ## Process Options
 
-| Option                      | Behaviour                                                                                     |
-| --------------------------- | --------------------------------------------------------------------------------------------- |
-| `-S, --case_sensitive`      | Enables case sensitivity by default.                                                          |
-| `-u, --current_usage`       | Calculates process CPU usage as a percentage of current usage rather than total usage.        |
-| `--disable_advanced_kill`   | Disable being able to send signals to processes. Only available on Linux, macOS, and FreeBSD. |
-| `-g, --group_processes`     | Groups processes with the same name by default. No effect if `--tree` is set.                 |
-| `--process_memory_as_value` | Defaults to showing process memory usage by value.                                            |
-| `--process_command`         | Shows the full command name instead of the process name by default.                           |
-| `-R, --regex`               | Enables regex by default while searching.                                                     |
-| `-T, --tree`                | Makes the process widget use tree mode by default.                                            |
-| `-n, --unnormalized_cpu`    | Show process CPU% usage without averaging over the number of CPU cores.                       |
-| `-W, --whole_word`          | Enables whole-word matching by default while searching.                                       |
-| `--tree_collapse`           | Collapse process tree by default.                                                             |
-| `--hide_k_threads`          | Enables the hiding of kernel threads.                                                         |
+| Option                      | Behaviour                                                                              |
+| --------------------------- | -------------------------------------------------------------------------------------- |
+| `-S, --case_sensitive`      | Enables case sensitivity by default when searching.                                    |
+| `-u, --current_usage`       | Calculates process CPU usage as a percentage of current usage rather than total usage. |
+| `--disable_advanced_kill`   | Hides additional stopping options on Unix-like systems.                                |
+| `--get_threads`             | Also gather process thread information.                                                |
+| `-g, --group_processes`     | Groups processes with the same name by default. No effect if `--tree` is set.          |
+| `--hide_k_threads`          | Enables the hiding of kernel threads.                                                  |
+| `--process_memory_as_value` | Defaults to showing process memory usage by value.                                     |
+| `--process_command`         | Shows the full command name instead of the process name by default.                    |
+| `-R, --regex`               | Enables regex by default while searching.                                              |
+| `-T, --tree`                | Makes the process widget use tree mode by default.                                     |
+| `--tree_collapse`           | Collapse process tree by default.                                                      |
+| `-n, --unnormalized_cpu`    | Show process CPU% usage without averaging over the number of CPU cores.                |
+| `-W, --whole_word`          | Enables whole-word matching by default while searching.                                |
 
 ## Temperature Options
 

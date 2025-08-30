@@ -207,6 +207,15 @@ pub struct GeneralArgs {
     )]
     pub disable_click: bool,
 
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Disables keyboard shortcuts, INCLUDING the ones that stop bottom.",
+        long_help = "Disables keyboard shortcuts from interacting with bottom. Note this includes keyboard shortcuts to quit bottom.",
+        alias = "disable-keys"
+    )]
+    pub disable_keys: bool,
+
     // TODO: Change this to accept a string with the type of marker.
     #[arg(
         short = 'm',
@@ -288,7 +297,7 @@ pub struct ProcessArgs {
         short = 'S',
         long,
         action = ArgAction::SetTrue,
-        help = "Enables case sensitivity by default.",
+        help = "Enables case sensitivity by default when searching.",
         long_help = "Enables case sensitivity by default when searching for a process.",
         alias = "case-sensitive"
     )]
@@ -308,8 +317,8 @@ pub struct ProcessArgs {
     #[arg(
         long,
         action = ArgAction::SetTrue,
-        help = "Hides additional stopping options Unix-like systems.",
-        long_help = "Hides additional stopping options Unix-like systems. Signal 15 (TERM) will be sent when \
+        help = "Hides additional stopping options on Unix-like systems.",
+        long_help = "Hides additional stopping options on Unix-like systems. Signal 15 (TERM) will be sent when \
                     stopping a process.",
         alias = "disable-advanced-kill"
     )]
@@ -337,8 +346,8 @@ pub struct ProcessArgs {
         short = 'g',
         long,
         action = ArgAction::SetTrue,
-        help = "Groups processes with the same name by default.",
-        long_help = "Groups processes with the same name by default. Doesn't do anything if --tree is also set, or \
+        help = "Groups processes with the same name by default when searching.",
+        long_help = "Groups processes with the same name by default when searching. Doesn't do anything if --tree is also set, or \
                     tree=true in the config.",
         alias = "group-processes"
     )]

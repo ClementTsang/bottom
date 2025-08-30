@@ -157,11 +157,12 @@ These can be set under `[styles.graphs]`:
 
 These can be set under `[styles.widgets]`:
 
-| Config field            | Details                                                      | Examples                                                              |
-| ----------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------- |
-| `border_color`          | The colour of the widgets' borders                           | `border_color = "white"`                                              |
-| `selected_border_color` | The colour of a widget's borders when the widget is selected | `selected_border_color = "white"`                                     |
-| `widget_title`          | Text styling for a widget's title                            | `widget_title = { color = "black", bg_color = "blue", bold = true }`  |
-| `text`                  | Text styling for text in general                             | `text = { color = "black", bg_color = "blue", bold = true }`          |
-| `selected_text`         | Text styling for text when representing something that is selected   | `selected_text = { color = "black", bg_color = "blue", bold = true }` |
-| `disabled_text`         | Text styling for text when representing something that is disabled   | `disabled_text = { color = "black", bg_color = "blue", bold = true }` |
+| Config field            | Details                                                                                      | Examples                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `border_color`          | The colour of the widgets' borders                                                           | `border_color = "white"`                                              |
+| `selected_border_color` | The colour of a widget's borders when the widget is selected                                 | `selected_border_color = "white"`                                     |
+| `widget_title`          | Text styling for a widget's title                                                            | `widget_title = { color = "black", bg_color = "blue", bold = true }`  |
+| `text`                  | Text styling for text in general                                                             | `text = { color = "black", bg_color = "blue", bold = true }`          |
+| `selected_text`         | Text styling for text when representing something that is selected                           | `selected_text = { color = "black", bg_color = "blue", bold = true }` |
+| `disabled_text`         | Text styling for text when representing something that is disabled                           | `disabled_text = { color = "black", bg_color = "blue", bold = true }` |
+| `thread_text`           | Text styling for text when representing process threads. Only usable on Linux at the moment. | `thread_text = { color = "green", bg_color = "blue", bold = true }`   |

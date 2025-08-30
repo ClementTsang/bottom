@@ -247,7 +247,7 @@ impl Process {
     ) -> anyhow::Result<(Process, Vec<PathBuf>)> {
         buffer.clear();
 
-        let fd = rustix::fs::openat(
+        let pid_dir = rustix::fs::openat(
             rustix::fs::CWD,
             pid_path.as_path(),
             OFlags::PATH | OFlags::DIRECTORY | OFlags::CLOEXEC,
@@ -267,7 +267,7 @@ impl Process {
             .ok_or_else(|| anyhow!("PID for {pid_path:?} was not found"))?;
 
         let uid = {
-            let metadata = rustix::fs::fstat(&fd);
+            let metadata = rustix::fs::fstat(&pid_dir);
             match metadata {
                 Ok(md) => Some(md.st_uid),
                 Err(_) => None,
@@ -281,10 +281,10 @@ impl Process {
 
         // Stat is pretty long, do this first to pre-allocate up-front.
         let stat =
-            open_at(&mut root, "stat", &fd).and_then(|file| Stat::from_file(file, buffer))?;
+            open_at(&mut root, "stat", &pid_dir).and_then(|file| Stat::from_file(file, buffer))?;
         reset(&mut root, buffer);
 
-        let cmdline = if cmdline(&mut root, &fd, buffer).is_ok() {
+        let cmdline = if cmdline(&mut root, &pid_dir, buffer).is_ok() {
             // The clone will give a string with the capacity of the length of buffer, don't worry.
             Some(buffer.clone())
         } else {
@@ -292,37 +292,13 @@ impl Process {
         };
         reset(&mut root, buffer);
 
-        let io = open_at(&mut root, "io", &fd)
+        let io = open_at(&mut root, "io", &pid_dir)
             .and_then(|file| Io::from_file(file, buffer))
             .ok();
 
         reset(&mut root, buffer);
 
-        let threads = if get_threads {
-            root.push("task");
-
-            if let Ok(task) = std::fs::read_dir(root) {
-                let pid_str = pid.to_string();
-
-                task.flatten()
-                    .filter_map(|thread_dir| {
-                        let file_name = thread_dir.file_name();
-                        let file_name = file_name.to_string_lossy();
-                        let file_name = file_name.trim();
-
-                        if is_str_numeric(file_name) && file_name != pid_str {
-                            Some(thread_dir.path())
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>()
-            } else {
-                Vec::new()
-            }
-        } else {
-            Vec::new()
-        };
+        let threads = threads(&mut root, pid, get_threads);
 
         Ok((
             Process {
@@ -339,19 +315,7 @@ impl Process {
 
 #[inline]
 fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Result<()> {
-    let _ = open_at(root, "cmdline", fd)
-        .map(|mut file| file.read_to_string(buffer))
-        .inspect(|_| {
-            // SAFETY: We are only replacing a single char (NUL) with another single char (space).
-            let buf_mut = unsafe { buffer.as_mut_vec() };
-
-            for byte in buf_mut {
-                if *byte == 0 {
-                    const SPACE: u8 = ' '.to_ascii_lowercase() as u8;
-                    *byte = SPACE;
-                }
-            }
-        })?;
+    let _ = open_at(root, "cmdline", fd).map(|mut file| file.read_to_string(buffer))?;
 
     Ok(())
 }
@@ -365,4 +329,41 @@ fn open_at(root: &mut PathBuf, child: &str, fd: &OwnedFd) -> anyhow::Result<File
     let new_fd = rustix::fs::openat(fd, &*root, OFlags::RDONLY | OFlags::CLOEXEC, Mode::empty())?;
 
     Ok(File::from(new_fd))
+}
+
+#[inline]
+fn threads(root: &mut PathBuf, pid: Pid, get_threads: bool) -> Vec<PathBuf> {
+    if get_threads {
+        root.push("task");
+
+        let Ok(task_dir) = rustix::fs::openat(
+            rustix::fs::CWD,
+            root.as_path(),
+            OFlags::RDONLY | OFlags::DIRECTORY | OFlags::CLOEXEC,
+            Mode::empty(),
+        ) else {
+            return Vec::new();
+        };
+
+        if let Ok(task) = rustix::fs::Dir::read_from(task_dir) {
+            let pid_str = pid.to_string();
+
+            return task
+                .flatten()
+                .filter_map(|thread_dir| {
+                    let file_name = thread_dir.file_name();
+                    let file_name = file_name.to_string_lossy();
+                    let file_name = file_name.trim();
+
+                    if is_str_numeric(file_name) && file_name != pid_str {
+                        Some(root.join(file_name).to_path_buf())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+        }
+    }
+
+    Vec::new()
 }

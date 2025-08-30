@@ -326,6 +326,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Disable mouse clicks
 #disable_click = false
 
+# Disable keyboard shortcuts
+#disable_keys = false
+
 # Show memory values in the processes widget as values by default
 #process_memory_as_value = false
 
@@ -516,6 +519,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #text = {color = "gray"}
 #selected_text = {color = "black", bg_color = "light blue"}
 #disabled_text = {color = "dark gray"}
+
+# Only on Linux
+#thread_text = {color = "green"}
 
 # Layout - layouts follow a pattern like this:
 # [[row]] represents a row in the application.

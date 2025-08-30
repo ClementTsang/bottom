@@ -6,7 +6,7 @@ use super::StringOrNum;
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
-pub(crate) struct FlagConfig {
+pub(crate) struct GeneralConfig {
     pub(crate) hide_avg_cpu: Option<bool>,
     pub(crate) dot_marker: Option<bool>,
     pub(crate) temperature_type: Option<String>,
@@ -30,6 +30,7 @@ pub(crate) struct FlagConfig {
     pub(crate) hide_table_gap: Option<bool>,
     pub(crate) battery: Option<bool>,
     pub(crate) disable_click: Option<bool>,
+    pub(crate) disable_keys: Option<bool>,
     pub(crate) no_write: Option<bool>,
     pub(crate) network_legend: Option<String>,
     pub(crate) memory_legend: Option<String>,

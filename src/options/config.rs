@@ -9,7 +9,7 @@ pub mod style;
 pub mod temperature;
 
 use disk::DiskConfig;
-use flags::FlagConfig;
+use flags::GeneralConfig;
 use network::NetworkConfig;
 use serde::{Deserialize, Serialize};
 use style::StyleConfig;
@@ -23,7 +23,7 @@ use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub struct Config {
-    pub(crate) flags: Option<FlagConfig>,
+    pub(crate) flags: Option<GeneralConfig>,
     pub(crate) styles: Option<StyleConfig>,
     pub(crate) row: Option<Vec<Row>>,
     pub(crate) processes: Option<ProcessesConfig>,
@@ -67,12 +67,16 @@ mod test {
         use super::Config;
 
         for config_path in fs::read_dir("./tests/valid_configs").unwrap() {
-            let config_path = config_path.unwrap();
-            let config_path_str = config_path.path().display().to_string();
-            let config_str = fs::read_to_string(config_path.path()).unwrap();
+            let dir_entry = config_path.unwrap();
+            let path = dir_entry.path();
 
-            toml_edit::de::from_str::<Config>(&config_str)
-                .unwrap_or_else(|_| panic!("incorrectly rejected '{config_path_str}'"));
+            if path.is_file() {
+                let config_path_str = path.display().to_string();
+                let config_str = fs::read_to_string(path).unwrap();
+
+                toml_edit::de::from_str::<Config>(&config_str)
+                    .unwrap_or_else(|_| panic!("incorrectly rejected '{config_path_str}'"));
+            }
         }
     }
 
