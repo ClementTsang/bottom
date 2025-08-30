@@ -28,7 +28,7 @@
     "flags": {
       "anyOf": [
         {
-          "$ref": "#/$defs/FlagConfig"
+          "$ref": "#/$defs/GeneralConfig"
         },
         {
           "type": "null"
@@ -265,7 +265,7 @@
         "type"
       ]
     },
-    "FlagConfig": {
+    "GeneralConfig": {
       "type": "object",
       "properties": {
         "autohide_time": {
@@ -347,6 +347,12 @@
           ]
         },
         "disable_gpu": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "disable_keys": {
           "type": [
             "boolean",
             "null"
@@ -1038,6 +1044,17 @@
         },
         "text": {
           "description": "Text styling for text in general.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextStyleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "thread_text": {
+          "description": "Text styling for text when representing process threads. Only usable\n on Linux at the moment.",
           "anyOf": [
             {
               "$ref": "#/$defs/TextStyleConfig"

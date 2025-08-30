@@ -516,6 +516,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #selected_text = {color = "black", bg_color = "light blue"}
 #disabled_text = {color = "dark gray"}
 
+# Only on Linux
+#thread_text = {color = "green"}
+
 # Layout - layouts follow a pattern like this:
 # [[row]] represents a row in the application.
 # [[row.child]] represents either a widget or a column.

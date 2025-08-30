@@ -27,6 +27,11 @@ pub(crate) struct WidgetStyle {
     /// Text styling for text when representing something that is disabled.
     pub(crate) disabled_text: Option<TextStyleConfig>,
 
+    /// Text styling for text when representing process threads. Only usable
+    /// on Linux at the moment.
+    #[cfg(target_os = "linux")]
+    pub(crate) thread_text: Option<TextStyleConfig>,
+
     /// Widget borders type.
     pub(crate) widget_border_type: Option<WidgetBorderType>,
 }

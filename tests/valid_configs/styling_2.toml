@@ -51,3 +51,4 @@ widget_title = { color = "gray" }
 text = { color = "gray" }
 selected_text = { color = "black", bg_color = "light blue" }
 disabled_text = { color = "dark gray" }
+thread_text = { color = "green" }
