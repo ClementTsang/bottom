@@ -250,6 +250,7 @@ impl Process {
             .next_back()
             .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             .or_else(|| {
+                // TODO: Could we reuse the buffer in some way?
                 rustix::fs::readlinkat(rustix::fs::CWD, pid_path.as_path(), vec![])
                     .ok()
                     .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())

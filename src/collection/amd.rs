@@ -170,6 +170,7 @@ fn get_amdgpu_pid_fds(pid: u32, device_path: &[String]) -> Option<Vec<u32>> {
     let valid_fds: Vec<u32> = fd_list
         .filter_map(|fd_link| {
             let dir_entry = fd_link.map(|fd_link| fd_link.path()).ok()?;
+            // TODO: Could we reuse the buffer in some way?
             let link = rustix::fs::readlink(&dir_entry, vec![]).ok()?;
 
             // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
