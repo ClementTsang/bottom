@@ -137,7 +137,7 @@ fn read_proc(
     thread_parent: Option<Pid>,
 ) -> CollectionResult<(ProcessHarvest, u64)> {
     let Process {
-        pid: _pid,
+        pid: _,
         uid,
         stat,
         io,
@@ -365,8 +365,6 @@ pub(crate) fn linux_process_data(
         prev_idle,
         prev_non_idle,
     } = prev_proc;
-
-    // TODO: [PROC THREADS] Add threads
 
     let CpuUsage {
         mut cpu_usage,

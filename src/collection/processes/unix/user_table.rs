@@ -8,11 +8,13 @@ pub struct UserTable {
 }
 
 impl UserTable {
+    /// Get the username associated with a UID. On first access of a name, it will
+    /// be cached for future accesses.
     pub fn uid_to_username(&mut self, uid: libc::uid_t) -> CollectionResult<String> {
         if let Some(user) = self.uid_user_mapping.get(&uid) {
             Ok(user.clone())
         } else {
-            // SAFETY: getpwuid returns a null pointer if no passwd entry is found for the uid.
+            // SAFETY: getpwuid returns a null pointer if no passwd entry is found for the uid which we check.
             let passwd = unsafe { libc::getpwuid(uid) };
 
             if passwd.is_null() {

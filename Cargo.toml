@@ -124,7 +124,7 @@ strum = { version = "0.27.2", features = ["derive"], optional = true }
 libc = "0.2.175"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "1.0.8", features = ["fs", "param"] }
+rustix = { version = "1.0.8", features = ["fs", "param", "alloc"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10.1"
