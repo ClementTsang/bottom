@@ -404,14 +404,16 @@ pub(crate) fn linux_process_data(
     };
 
     // TODO: Maybe pre-allocate these buffers in the future w/ routine cleanup.
-    let mut buffer = String::new();
+    // SAFETY: This is safe, we're converting an empty string.
     let mut process_threads_to_check = HashMap::new();
 
     let mut process_vector: Vec<ProcessHarvest> = pids
         .filter_map(|pid_path| {
-            if let Ok((process, threads)) =
-                Process::from_path(pid_path, &mut buffer, args.get_process_threads)
-            {
+            if let Ok((process, threads)) = Process::from_path(
+                pid_path,
+                &mut collector.process_buffer,
+                args.get_process_threads,
+            ) {
                 let pid = process.pid;
                 let prev_proc_details = prev_process_details.entry(pid).or_default();
 
@@ -455,7 +457,9 @@ pub(crate) fn linux_process_data(
     // Get thread data.
     for (pid, tid_paths) in process_threads_to_check {
         for tid_path in tid_paths {
-            if let Ok((process, _)) = Process::from_path(tid_path, &mut buffer, false) {
+            if let Ok((process, _)) =
+                Process::from_path(tid_path, &mut collector.process_buffer, false)
+            {
                 let tid = process.pid;
                 let prev_proc_details = prev_process_details.entry(tid).or_default();
 
