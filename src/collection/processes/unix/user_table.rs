@@ -8,7 +8,7 @@ pub struct UserTable {
 }
 
 impl UserTable {
-    pub fn get_uid_to_username_mapping(&mut self, uid: libc::uid_t) -> CollectionResult<String> {
+    pub fn uid_to_username(&mut self, uid: libc::uid_t) -> CollectionResult<String> {
         if let Some(user) = self.uid_user_mapping.get(&uid) {
             Ok(user.clone())
         } else {
