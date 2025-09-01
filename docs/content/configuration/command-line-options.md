@@ -35,7 +35,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `--disable_advanced_kill`   | Hides additional stopping options on Unix-like systems.                                |
 | `--get_threads`             | Also gather process thread information.                                                |
 | `-g, --group_processes`     | Groups processes with the same name by default. No effect if `--tree` is set.          |
-| `--hide_k_threads`          | Enables the hiding of kernel threads.                                                  |
+| `--hide_k_threads`          | Hide kernel threads by default.                                                 |
 | `--process_memory_as_value` | Defaults to showing process memory usage by value.                                     |
 | `--process_command`         | Shows the full command name instead of the process name by default.                    |
 | `-R, --regex`               | Enables regex by default while searching.                                              |
