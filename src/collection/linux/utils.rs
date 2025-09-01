@@ -55,4 +55,3 @@ pub(crate) fn read_link<'a>(path: &Path, buffer: &'a mut Vec<u8>) -> std::io::Re
     }
     Ok(String::from_utf8_lossy(&buffer[..len as usize]))
 }
-
