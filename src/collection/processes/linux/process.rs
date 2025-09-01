@@ -76,6 +76,9 @@ impl Stat {
         // TODO: Is this needed?
         let line = buffer.trim();
 
+        // TODO: comm is max 16, so we could in theory pre-allocate this. Also get it from /proc/pid/comm instead?
+        // They slightly differ though, see https://unix.stackexchange.com/questions/769962/thread-name-is-proc-pid-comm-always-identical-to-the-name-line-of-proc-pid-s
+
         let (comm, rest) = {
             let start_paren = line
                 .find('(')

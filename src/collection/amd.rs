@@ -227,9 +227,11 @@ fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<String>> {
     }
 }
 
+// Based on https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L13-L27.
 fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
     let mut fdinfo = HashMap::new();
     let mut buffer = Vec::new();
+    const SYSTEMD_TO_SKIP: &[&str] = &["/lib/systemd", "/usr/lib/systemd"];
 
     let drm_paths = get_amdgpu_drm(device_path)?;
 
@@ -250,6 +252,13 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
 
         // skip init process/systemd
         if pid == 1 {
+            return None;
+        }
+
+        // TODO: We can instead refer to our already-obtained processes? I think we could maybe just do
+        // this with processes at the same time...
+        let cmdline = fs::read_to_string(format!("/proc/{pid}/cmdline")).ok()?;
+        if SYSTEMD_TO_SKIP.iter().any(|path| cmdline.starts_with(path)) {
             return None;
         }
 
@@ -335,6 +344,7 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
     let mut proc_vec = Vec::with_capacity(num_gpu);
     let mut total_mem = 0;
 
+    // TODO: We can optimize this to do this all in one pass, rather than for loop + for loop. This reduces syscalls.
     for device_path in device_path_list {
         let device_name = get_amd_name(&device_path)
             .unwrap_or(amd_gpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
