@@ -237,26 +237,24 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
         return None;
     };
 
-    let pids: Vec<u32> = proc_dir
-        .filter_map(|dir_entry| {
-            // check if pid is valid
-            let dir_entry = dir_entry.ok()?;
-            let metadata = dir_entry.metadata().ok()?;
+    let pids = proc_dir.filter_map(|dir_entry| {
+        // check if pid is valid
+        let dir_entry = dir_entry.ok()?;
+        let metadata = dir_entry.metadata().ok()?;
 
-            if !metadata.is_dir() {
-                return None;
-            }
+        if !metadata.is_dir() {
+            return None;
+        }
 
-            let pid = dir_entry.file_name().to_str()?.parse::<u32>().ok()?;
+        let pid = dir_entry.file_name().to_str()?.parse::<u32>().ok()?;
 
-            // skip init process
-            if pid == 1 {
-                return None;
-            }
+        // skip init process/systemd
+        if pid == 1 {
+            return None;
+        }
 
-            Some(pid)
-        })
-        .collect();
+        Some(pid)
+    });
 
     for pid in pids {
         // collect file descriptors that point to our device renderers
