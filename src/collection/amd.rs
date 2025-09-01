@@ -171,15 +171,15 @@ fn get_amdgpu_pid_fds(pid: u32, device_path: &[String], buffer: &mut Vec<u8>) ->
     };
 
     let valid_fds: Vec<u32> = fd_list
-        .filter_map(|fd_link| {
-            let dir_entry = fd_link.map(|fd_link| fd_link.path()).ok()?;
-            let link = read_link(&dir_entry, buffer).ok()?;
-
-            crate::info!("link: {link}");
+        .flatten()
+        .filter_map(|entry| {
+            let path = entry.path();
+            let link = read_link(path.as_path(), buffer).ok()?;
 
             // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
             if device_path.iter().any(|path| link.starts_with(path)) {
-                dir_entry.file_name()?.to_str()?.parse::<u32>().ok()
+                // TODO: Should we bother parsing here?
+                path.file_name()?.to_str()?.parse::<u32>().ok()
             } else {
                 None
             }
@@ -265,7 +265,6 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
         };
 
         let mut usage: AmdGpuProc = Default::default();
-
         let mut observed_ids: HashSet<usize> = HashSet::new();
 
         for fd in fds {
@@ -277,6 +276,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
             let mut fdinfo_lines = fdinfo_data
                 .lines()
                 .skip_while(|l| !l.starts_with("drm-client-id"));
+
             if let Some(id) = fdinfo_lines.next().and_then(|fdinfo_line| {
                 const LEN: usize = "drm-client-id:\t".len();
                 fdinfo_line.get(LEN..)?.parse().ok()

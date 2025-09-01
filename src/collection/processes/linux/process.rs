@@ -271,6 +271,7 @@ impl Process {
         };
 
         let mut root = pid_path;
+        buffer.clear();
 
         // NB: Whenever you add a new stat, make sure to pop the root and clear the
         // buffer!

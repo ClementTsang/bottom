@@ -31,12 +31,21 @@ pub fn is_device_awake(device: &Path) -> bool {
     }
 }
 
-/// A custom implementation to read a symlink while allowing for buffer reuse.
+/// A custom implementation to read a symlink while allowing for buffer reuse. If the path is
+/// not a symlink, this will also return an error.
 ///
 /// If successful, then a [`Cow`] will be returned referencing the contents of `buffer`.
 pub(crate) fn read_link<'a>(path: &Path, buffer: &'a mut Vec<u8>) -> std::io::Result<Cow<'a, str>> {
+    if !path.is_symlink() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "path is not a symlink",
+        ));
+    }
+
     let c_path = std::ffi::CString::new(path.as_os_str().as_bytes())?;
 
+    buffer.clear();
     if buffer.len() < PATH_MAX as usize {
         buffer.resize(PATH_MAX as usize, 0);
     }
