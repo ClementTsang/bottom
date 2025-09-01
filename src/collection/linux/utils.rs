@@ -1,4 +1,6 @@
-use std::{fs, path::Path};
+use std::{borrow::Cow, fs, os::unix::ffi::OsStrExt, path::Path};
+
+use libc::PATH_MAX;
 
 /// Whether the temperature should *actually* be read during enumeration.
 /// Will return false if the state is not D0/unknown, or if it does not support
@@ -28,3 +30,29 @@ pub fn is_device_awake(device: &Path) -> bool {
         true
     }
 }
+
+/// A custom implementation to read a symlink while allowing for buffer reuse.
+///
+/// If successful, then a [`Cow`] will be returned referencing the contents of `buffer`.
+pub(crate) fn read_link<'a>(path: &Path, buffer: &'a mut Vec<u8>) -> std::io::Result<Cow<'a, str>> {
+    let c_path = std::ffi::CString::new(path.as_os_str().as_bytes())?;
+
+    if buffer.len() < PATH_MAX as usize {
+        buffer.resize(PATH_MAX as usize, 0);
+    }
+
+    // SAFETY: this is a libc API; we must check the length which we do below.
+    let len = unsafe {
+        libc::readlink(
+            c_path.as_ptr(),
+            buffer.as_mut_ptr() as *mut libc::c_char,
+            buffer.len(),
+        )
+    };
+
+    if len < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    Ok(String::from_utf8_lossy(&buffer[..len as usize]))
+}
+

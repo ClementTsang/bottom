@@ -227,8 +227,8 @@ impl DataCollector {
             last_list_collection_time: last_collection_time,
             should_run_less_routine_tasks: true,
             #[cfg(target_os = "linux")]
-            // SAFETY: This is an empty string.
-            process_buffer: unsafe { String::from_utf8_unchecked(Vec::with_capacity(16_384)) }
+            // TODO: Maybe pre-allocate this? I've tried this before with 16_384 bytes and it was ok?
+            process_buffer: String::new()
         }
     }
 

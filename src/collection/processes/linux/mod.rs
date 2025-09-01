@@ -342,6 +342,10 @@ pub(crate) struct ReadProcArgs {
 pub(crate) fn linux_process_data(
     collector: &mut DataCollector, time_difference_in_secs: u64,
 ) -> CollectionResult<Vec<ProcessHarvest>> {
+    if collector.should_run_less_routine_tasks {
+        collector.process_buffer = String::new();
+    }
+
     let total_memory = collector.total_memory();
     let prev_proc = PrevProc {
         prev_idle: &mut collector.prev_idle,
@@ -403,8 +407,6 @@ pub(crate) fn linux_process_data(
         get_process_threads: get_threads,
     };
 
-    // TODO: Maybe pre-allocate these buffers in the future w/ routine cleanup.
-    // SAFETY: This is safe, we're converting an empty string.
     let mut process_threads_to_check = HashMap::new();
 
     let mut process_vector: Vec<ProcessHarvest> = pids

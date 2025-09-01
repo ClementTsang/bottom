@@ -3,7 +3,7 @@
 
 use std::{
     fs::File,
-    io::{self, BufRead, BufReader},
+    io::{self, BufRead, BufReader, Read},
     path::PathBuf,
     sync::OnceLock,
 };
@@ -16,7 +16,10 @@ use rustix::{
     path::Arg,
 };
 
-use crate::collection::processes::{Pid, linux::is_str_numeric};
+use crate::collection::{
+    linux::utils::read_link,
+    processes::{Pid, linux::is_str_numeric},
+};
 
 static PAGESIZE: OnceLock<u64> = OnceLock::new();
 
@@ -65,13 +68,10 @@ impl Stat {
     /// Get process stats from a file; this assumes the file is located at
     /// `/proc/<PID>/stat`. For documentation, see
     /// [here](https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html) as a reference.
-    fn from_file(fd: OwnedFd, buffer: &mut String) -> anyhow::Result<Stat> {
+    fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
         // Since this is just one line, we can read it all at once. However, since it
         // (technically) might have non-utf8 characters, we can't just use read_to_string.
-        //
-        // TODO: Can we read per delim. token to avoid memory?
-        // SAFETY: We are only going to be reading strings.
-        rustix::io::read(&fd, unsafe { buffer.as_mut_vec() })?;
+        f.read_to_end(unsafe { buffer.as_mut_vec() })?;
 
         // TODO: Is this needed?
         let line = buffer.trim();
@@ -139,14 +139,12 @@ pub(crate) struct Io {
 
 impl Io {
     #[inline]
-    fn from_file(fd: OwnedFd, buffer: &mut String) -> anyhow::Result<Io> {
+    fn from_file(f: File, buffer: &mut String) -> anyhow::Result<Io> {
         const NUM_FIELDS: u16 = 0; // Make sure to update this if you want more fields!
         enum Fields {
             ReadBytes,
             WriteBytes,
         }
-
-        let f = File::from(fd);
 
         let mut read_fields = 0;
         let mut reader = BufReader::new(f);
@@ -255,10 +253,12 @@ impl Process {
             .next_back()
             .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             .or_else(|| {
-                // TODO: Could we reuse the buffer in some way?
-                rustix::fs::readlinkat(rustix::fs::CWD, pid_path.as_path(), vec![])
+                // SAFETY: We can do this safely, we plan to only put a valid string in here.
+                let buffer = unsafe { buffer.as_mut_vec() };
+
+                read_link(pid_path.as_path(), buffer)
                     .ok()
-                    .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
+                    .and_then(|s| s.parse::<Pid>().ok())
             })
             .ok_or_else(|| anyhow!("PID for {pid_path:?} was not found"))?;
 
@@ -277,7 +277,7 @@ impl Process {
 
         // Stat is pretty long, do this first to pre-allocate up-front.
         let stat =
-            open_at(&mut root, "stat", &pid_dir).and_then(|fd| Stat::from_file(fd, buffer))?;
+            open_at(&mut root, "stat", &pid_dir).and_then(|file| Stat::from_file(file, buffer))?;
         reset(&mut root, buffer);
 
         let cmdline = if cmdline(&mut root, &pid_dir, buffer).is_ok() {
@@ -311,22 +311,20 @@ impl Process {
 
 #[inline]
 fn cmdline(root: &mut PathBuf, fd: &OwnedFd, buffer: &mut String) -> anyhow::Result<()> {
-    // SAFETY: This is safe, we are only writing strings.
-    let _ = open_at(root, "cmdline", fd)
-        .map(|cmdline_fd| rustix::io::read(cmdline_fd, unsafe { buffer.as_mut_vec() }))?;
+    let _ = open_at(root, "cmdline", fd).map(|mut file| file.read_to_string(buffer))?;
 
     Ok(())
 }
 
-/// Opens a path and return the file. Note that this function takes in a mutable root - this will
+/// Opens a path. Note that this function takes in a mutable root - this will
 /// mutate it to avoid allocations. You probably will want to pop the most
 /// recent child after if you need to use the buffer again.
 #[inline]
-fn open_at(root: &mut PathBuf, child: &str, fd: &OwnedFd) -> anyhow::Result<OwnedFd> {
+fn open_at(root: &mut PathBuf, child: &str, fd: &OwnedFd) -> anyhow::Result<File> {
     root.push(child);
     let new_fd = rustix::fs::openat(fd, &*root, OFlags::RDONLY | OFlags::CLOEXEC, Mode::empty())?;
 
-    Ok(new_fd)
+    Ok(File::from(new_fd))
 }
 
 #[inline]

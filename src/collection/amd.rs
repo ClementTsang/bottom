@@ -11,7 +11,10 @@ use std::{
 use hashbrown::{HashMap, HashSet};
 
 use super::linux::utils::is_device_awake;
-use crate::{app::layout_manager::UsedWidgets, collection::memory::MemData};
+use crate::{
+    app::layout_manager::UsedWidgets,
+    collection::{linux::utils::read_link, memory::MemData},
+};
 
 // TODO: May be able to clean up some of these, Option<Vec> for example is a bit redundant.
 pub struct AmdGpuData {
@@ -162,7 +165,7 @@ fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
 }
 
 // from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L13-L27
-fn get_amdgpu_pid_fds(pid: u32, device_path: &[String]) -> Option<Vec<u32>> {
+fn get_amdgpu_pid_fds(pid: u32, device_path: &[String], buffer: &mut Vec<u8>) -> Option<Vec<u32>> {
     let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else {
         return None;
     };
@@ -170,14 +173,12 @@ fn get_amdgpu_pid_fds(pid: u32, device_path: &[String]) -> Option<Vec<u32>> {
     let valid_fds: Vec<u32> = fd_list
         .filter_map(|fd_link| {
             let dir_entry = fd_link.map(|fd_link| fd_link.path()).ok()?;
-            // TODO: Could we reuse the buffer in some way?
-            let link = rustix::fs::readlink(&dir_entry, vec![]).ok()?;
+            let link = read_link(&dir_entry, buffer).ok()?;
+
+            crate::info!("link: {link}");
 
             // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
-            if device_path
-                .iter()
-                .any(|path| link.to_string_lossy().starts_with(path))
-            {
+            if device_path.iter().any(|path| link.starts_with(path)) {
                 dir_entry.file_name()?.to_str()?.parse::<u32>().ok()
             } else {
                 None
@@ -228,6 +229,7 @@ fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<String>> {
 
 fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
     let mut fdinfo = HashMap::new();
+    let mut buffer = Vec::new();
 
     let drm_paths = get_amdgpu_drm(device_path)?;
 
@@ -258,7 +260,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
 
     for pid in pids {
         // collect file descriptors that point to our device renderers
-        let Some(fds) = get_amdgpu_pid_fds(pid, &drm_paths) else {
+        let Some(fds) = get_amdgpu_pid_fds(pid, &drm_paths, &mut buffer) else {
             continue;
         };
 
