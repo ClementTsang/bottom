@@ -256,9 +256,13 @@ impl Process {
                 // SAFETY: We can do this safely, we plan to only put a valid string in here.
                 let buffer = unsafe { buffer.as_mut_vec() };
 
-                read_link(pid_path.as_path(), buffer)
+                let out = read_link(pid_path.as_path(), buffer)
                     .ok()
-                    .and_then(|s| s.parse::<Pid>().ok())
+                    .and_then(|s| s.parse::<Pid>().ok());
+
+                buffer.clear();
+
+                out
             })
             .ok_or_else(|| anyhow!("PID for {pid_path:?} was not found"))?;
 
@@ -271,7 +275,6 @@ impl Process {
         };
 
         let mut root = pid_path;
-        buffer.clear();
 
         // NB: Whenever you add a new stat, make sure to pop the root and clear the
         // buffer!

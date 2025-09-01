@@ -36,12 +36,12 @@ pub fn is_device_awake(device: &Path) -> bool {
 ///
 /// If successful, then a [`Cow`] will be returned referencing the contents of `buffer`.
 pub(crate) fn read_link<'a>(path: &Path, buffer: &'a mut Vec<u8>) -> std::io::Result<Cow<'a, str>> {
-    if !path.is_symlink() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "path is not a symlink",
-        ));
-    }
+    // if !path.is_symlink() {
+    //     return Err(std::io::Error::new(
+    //         std::io::ErrorKind::InvalidInput,
+    //         "path is not a symlink",
+    //     ));
+    // }
 
     let c_path = std::ffi::CString::new(path.as_os_str().as_bytes())?;
 
