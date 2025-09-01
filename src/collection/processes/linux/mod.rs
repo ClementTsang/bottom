@@ -543,7 +543,10 @@ mod tests {
     #[test]
     fn test_name_from_cmdline() {
         assert_eq!(binary_name_from_cmdline("/usr/bin/btm"), "btm");
-        assert_eq!(binary_name_from_cmdline("/usr/bin/btm\0--asdf\0--asdf/gkj"), "btm");
+        assert_eq!(
+            binary_name_from_cmdline("/usr/bin/btm\0--asdf\0--asdf/gkj"),
+            "btm"
+        );
         assert_eq!(binary_name_from_cmdline("/usr/bin/btm:"), "btm");
         assert_eq!(binary_name_from_cmdline("/usr/bin/b tm"), "b tm");
         assert_eq!(binary_name_from_cmdline("/usr/bin/b tm:"), "b tm");
