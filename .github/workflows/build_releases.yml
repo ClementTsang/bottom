@@ -236,12 +236,11 @@ jobs:
 
           # Alas, that's why we do it with VMs.
 
-          # Disabled as there's a weird issue with installing curl on FreeBSD 15 at the moment.
-          # - {
-          #     type: "freebsd",
-          #     os_release: "15.0",
-          #     target: "x86_64-unknown-freebsd",
-          #   }
+          - {
+              type: "freebsd",
+              os_release: "15.0",
+              target: "x86_64-unknown-freebsd",
+            }
           - {
               type: "freebsd",
               os_release: "14.3",
