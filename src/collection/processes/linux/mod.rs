@@ -137,7 +137,7 @@ fn read_proc(
     thread_parent: Option<Pid>,
 ) -> CollectionResult<(ProcessHarvest, u64)> {
     let Process {
-        pid: _pid,
+        pid: _,
         uid,
         stat,
         io,
@@ -200,12 +200,7 @@ fn read_proc(
     };
 
     let user = uid
-        .and_then(|uid| {
-            user_table
-                .get_uid_to_username_mapping(uid)
-                .map(Into::into)
-                .ok()
-        })
+        .and_then(|uid| user_table.uid_to_username(uid).map(Into::into).ok())
         .unwrap_or_else(|| "N/A".into());
 
     let time = if let Ok(ticks_per_sec) = u32::try_from(rustix::param::clock_ticks_per_second()) {
@@ -351,6 +346,10 @@ pub(crate) struct ReadProcArgs {
 pub(crate) fn linux_process_data(
     collector: &mut DataCollector, time_difference_in_secs: u64,
 ) -> CollectionResult<Vec<ProcessHarvest>> {
+    if collector.should_run_less_routine_tasks {
+        collector.process_buffer = String::new();
+    }
+
     let total_memory = collector.total_memory();
     let prev_proc = PrevProc {
         prev_idle: &mut collector.prev_idle,
@@ -374,8 +373,6 @@ pub(crate) fn linux_process_data(
         prev_idle,
         prev_non_idle,
     } = prev_proc;
-
-    // TODO: [PROC THREADS] Add threads
 
     let CpuUsage {
         mut cpu_usage,
@@ -414,15 +411,15 @@ pub(crate) fn linux_process_data(
         get_process_threads: get_threads,
     };
 
-    // TODO: Maybe pre-allocate these buffers in the future w/ routine cleanup.
-    let mut buffer = String::new();
     let mut process_threads_to_check = HashMap::new();
 
     let mut process_vector: Vec<ProcessHarvest> = pids
         .filter_map(|pid_path| {
-            if let Ok((process, threads)) =
-                Process::from_path(pid_path, &mut buffer, args.get_process_threads)
-            {
+            if let Ok((process, threads)) = Process::from_path(
+                pid_path,
+                &mut collector.process_buffer,
+                args.get_process_threads,
+            ) {
                 let pid = process.pid;
                 let prev_proc_details = prev_process_details.entry(pid).or_default();
 
@@ -466,7 +463,9 @@ pub(crate) fn linux_process_data(
     // Get thread data.
     for (pid, tid_paths) in process_threads_to_check {
         for tid_path in tid_paths {
-            if let Ok((process, _)) = Process::from_path(tid_path, &mut buffer, false) {
+            if let Ok((process, _)) =
+                Process::from_path(tid_path, &mut collector.process_buffer, false)
+            {
                 let tid = process.pid;
                 let prev_proc_details = prev_process_details.entry(tid).or_default();
 
