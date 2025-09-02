@@ -229,12 +229,6 @@ fn read_proc(
                 // If the comm fits then we'll default to whatever is set.
                 // If it doesn't, we need to do some magic to determine what it's
                 // supposed to be.
-                //
-                // We follow something similar to how htop does it to identify a valid name based on the cmdline.
-                // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268 (kinda)
-                // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L573
-                //
-                // Also note that cmdline is (for us) separated by \0.
 
                 // TODO: We might want to re-evaluate if we want to do it like this,
                 // as it turns out I was dumb and sometimes comm != process name...
@@ -246,7 +240,7 @@ fn read_proc(
                 //
                 // Stuff like htop also offers the option to "highlight" basename and comm in command. Might be neat?
                 let name = if comm.len() >= MAX_STAT_NAME_LEN {
-                    name_from_cmdline(&cmdline)
+                    binary_name_from_cmdline(&cmdline)
                 } else {
                     comm
                 };
@@ -301,7 +295,12 @@ fn read_proc(
     ))
 }
 
-fn name_from_cmdline(cmdline: &str) -> String {
+/// We follow something similar to how htop does it to identify a valid name based on the cmdline.
+/// - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268 (kinda)
+/// - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L573
+///
+/// Also note that cmdline is (for us) separated by \0.
+fn binary_name_from_cmdline(cmdline: &str) -> String {
     let mut start = 0;
     let mut end = cmdline.len();
 
@@ -314,7 +313,12 @@ fn name_from_cmdline(cmdline: &str) -> String {
         }
     }
 
-    cmdline[start..end].to_string()
+    // Bit of a hack to handle cases like "firefox -blah"
+    let partial = &cmdline[start..end];
+    partial
+        .split_once(" -")
+        .map(|(name, _)| name.to_string())
+        .unwrap_or_else(|| partial.to_string())
 }
 
 pub(crate) struct PrevProc<'a> {
@@ -538,16 +542,23 @@ mod tests {
 
     #[test]
     fn test_name_from_cmdline() {
-        assert_eq!(name_from_cmdline("/usr/bin/btm"), "btm");
-        assert_eq!(name_from_cmdline("/usr/bin/btm\0--asdf\0--asdf/gkj"), "btm");
-        assert_eq!(name_from_cmdline("/usr/bin/btm:"), "btm");
-        assert_eq!(name_from_cmdline("/usr/bin/b tm"), "b tm");
-        assert_eq!(name_from_cmdline("/usr/bin/b tm:"), "b tm");
-        assert_eq!(name_from_cmdline("/usr/bin/b tm\0--test"), "b tm");
-        assert_eq!(name_from_cmdline("/usr/bin/b tm:\0--test"), "b tm");
+        assert_eq!(binary_name_from_cmdline("/usr/bin/btm"), "btm");
         assert_eq!(
-            name_from_cmdline("/usr/bin/b t m:\0--\"test thing\""),
+            binary_name_from_cmdline("/usr/bin/btm\0--asdf\0--asdf/gkj"),
+            "btm"
+        );
+        assert_eq!(binary_name_from_cmdline("/usr/bin/btm:"), "btm");
+        assert_eq!(binary_name_from_cmdline("/usr/bin/b tm"), "b tm");
+        assert_eq!(binary_name_from_cmdline("/usr/bin/b tm:"), "b tm");
+        assert_eq!(binary_name_from_cmdline("/usr/bin/b tm\0--test"), "b tm");
+        assert_eq!(binary_name_from_cmdline("/usr/bin/b tm:\0--test"), "b tm");
+        assert_eq!(
+            binary_name_from_cmdline("/usr/bin/b t m:\0--\"test thing\""),
             "b t m"
+        );
+        assert_eq!(
+            binary_name_from_cmdline("firefox -contentproc -isForBrowser -prefsHandle 0"),
+            "firefox"
         );
     }
 }
