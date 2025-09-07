@@ -103,6 +103,9 @@
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
 
+# Hides the kernel threads
+#hide_k_threads = false
+
 # Hide GPU(s) information
 #disable_gpu = false
 
@@ -123,7 +126,7 @@
 #[processes]
 # The columns shown by the process widget. The following columns are supported (the GPU columns are only available if the GPU feature is enabled when built):
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
-#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%"]
+#columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%"]
 
 
 # CPU widget configuration

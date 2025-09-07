@@ -65,7 +65,7 @@ const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-const PROCESS_HELP_TEXT: [&str; 19] = [
+const PROCESS_HELP_TEXT: [&str; 20] = [
     "3 - Process widget",
     "dd, F9, Delete   Kill the selected process",
     "c                Sort by CPU usage, press again to reverse",
@@ -85,6 +85,7 @@ const PROCESS_HELP_TEXT: [&str; 19] = [
     "click on header  Sorts the entries by that column, click again to invert the sort",
     "C                Sort by GPU usage, press again to reverse",
     "M                Sort by GPU memory usage, press again to reverse",
+    "z                Toggle the display of kernel threads",
 ];
 
 const SEARCH_HELP_TEXT: [&str; 51] = [
@@ -352,6 +353,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
 
+# Hides the kernel threads
+#hide_k_threads = false
+
 # Hide GPU(s) information
 #disable_gpu = false
 
@@ -372,7 +376,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #[processes]
 # The columns shown by the process widget. The following columns are supported (the GPU columns are only available if the GPU feature is enabled when built):
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
-#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%"]
+#columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%"]
 
 
 # CPU widget configuration

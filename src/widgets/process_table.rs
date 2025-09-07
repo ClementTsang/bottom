@@ -233,6 +233,8 @@ pub struct ProcWidgetState {
     pub is_sort_open: bool,
     pub force_rerender: bool,
     pub force_update_data: bool,
+    #[cfg(target_os = "linux")]
+    pub hide_k_threads: bool,
 }
 
 impl ProcWidgetState {
@@ -434,6 +436,8 @@ impl ProcWidgetState {
             force_update_data: false,
             default_sort_index,
             default_sort_order,
+            #[cfg(target_os = "linux")]
+            hide_k_threads: config.hide_k_threads,
         };
         table.sort_table.set_data(table.column_text());
 
@@ -514,6 +518,11 @@ impl ProcWidgetState {
                     .map(|q| q.check(process, is_using_command))
                     .unwrap_or(true)
                 {
+                    #[cfg(target_os = "linux")]
+                    if self.hide_k_threads && process.process_type.is_kernel() {
+                        return None;
+                    }
+
                     Some(*pid)
                 } else {
                     None
@@ -759,6 +768,11 @@ impl ProcWidgetState {
         let is_mem_percent = self.is_mem_percent();
 
         let filtered_iter = process_harvest.values().filter(|process| {
+            #[cfg(target_os = "linux")]
+            if self.hide_k_threads && process.process_type.is_kernel() {
+                return false;
+            }
+
             search_query
                 .as_ref()
                 .map(|query| query.check(process, is_using_command))
@@ -890,6 +904,12 @@ impl ProcWidgetState {
     pub fn force_rerender_and_update(&mut self) {
         self.force_rerender = true;
         self.force_update_data = true;
+    }
+
+    #[cfg(target_os = "linux")]
+    pub fn toggle_k_thread(&mut self) {
+        self.hide_k_threads = !self.hide_k_threads;
+        self.force_rerender_and_update();
     }
 
     /// Marks the selected column as hidden, and automatically resets the
@@ -1149,6 +1169,9 @@ mod test {
 
     use super::*;
     use crate::widgets::MemUsage;
+
+    #[cfg(target_os = "linux")]
+    use crate::collection::processes::ProcessType;
 
     #[test]
     fn test_proc_sort() {
@@ -1659,5 +1682,61 @@ mod test {
             expanded_by_default.toggle(1);
             assert!(!expanded_by_default.is_collapsed(1));
         }
+    }
+    #[cfg(target_os = "linux")]
+    /// Sanity test to ensure kernel thread processes are toggled
+    #[test]
+    fn test_toggle_k_threads() {
+        let init_columns = [
+            ProcWidgetColumn::ProcNameOrCommand,
+            ProcWidgetColumn::PidOrCount,
+            ProcWidgetColumn::State,
+            ProcWidgetColumn::Mem,
+            ProcWidgetColumn::ProcNameOrCommand,
+        ];
+        let mut state = init_default_state(&init_columns);
+        let process_harvest = ProcessHarvest {
+            pid: 1,
+            ..Default::default()
+        };
+        let k_process_harvest = ProcessHarvest {
+            pid: 2,
+            process_type: ProcessType::Kernel,
+            ..Default::default()
+        };
+        // test get_normal_data default is filtered by toggle_k_thread
+        let mut normal_proc_harvest: BTreeMap<Pid, ProcessHarvest> = BTreeMap::new();
+        normal_proc_harvest.insert(1, process_harvest.clone());
+        normal_proc_harvest.insert(2, k_process_harvest.clone());
+        let default_normal_results = state.get_normal_data(&normal_proc_harvest).len();
+        assert!(default_normal_results == 2);
+        state.toggle_k_thread();
+        let filtered_normal_results = state.get_normal_data(&normal_proc_harvest).len();
+        assert!(filtered_normal_results == 1);
+        // test that get_normal_data in grouped mode is still filtered
+        state.mode = ProcWidgetMode::Grouped;
+        let filtered_grouped_results = state.get_normal_data(&normal_proc_harvest).len();
+        assert!(filtered_grouped_results == 1);
+        // test that get_tree_data is filtered on toggle_k_thread
+        let tree_collapsed = TreeCollapsed::new(false);
+        state.mode = ProcWidgetMode::Tree(tree_collapsed.clone());
+        state.hide_k_threads = false;
+        let mut tree_proc_data = ProcessData::default();
+        tree_proc_data.process_harvest.insert(1, process_harvest);
+        tree_proc_data.process_harvest.insert(2, k_process_harvest);
+        tree_proc_data.orphan_pids = vec![1, 2];
+        let tree_stored_data = StoredData {
+            process_data: tree_proc_data,
+            ..Default::default()
+        };
+        let default_tree_results = state
+            .get_tree_data(&tree_collapsed, &tree_stored_data)
+            .len();
+        assert!(default_tree_results == 2);
+        state.toggle_k_thread();
+        let filtered_tree_results = state
+            .get_tree_data(&tree_collapsed, &tree_stored_data)
+            .len();
+        assert!(filtered_tree_results == 1);
     }
 }
