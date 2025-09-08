@@ -89,12 +89,7 @@ pub(crate) trait UnixProcessExt {
                 process_state,
                 uid,
                 user: uid
-                    .and_then(|uid| {
-                        user_table
-                            .get_uid_to_username_mapping(uid)
-                            .map(Into::into)
-                            .ok()
-                    })
+                    .and_then(|uid| user_table.uid_to_username(uid).map(Into::into).ok())
                     .unwrap_or_else(|| "N/A".into()),
                 time: if process_val.start_time() == 0 {
                     // Workaround for sysinfo occasionally returning a start time equal to UNIX

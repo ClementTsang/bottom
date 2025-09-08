@@ -16,7 +16,10 @@ use rustix::{
     path::Arg,
 };
 
-use crate::collection::processes::{Pid, linux::is_str_numeric};
+use crate::collection::{
+    linux::utils::read_link,
+    processes::{Pid, linux::is_str_numeric},
+};
 
 static PAGESIZE: OnceLock<u64> = OnceLock::new();
 
@@ -75,6 +78,9 @@ impl Stat {
 
         // TODO: Is this needed?
         let line = buffer.trim();
+
+        // TODO: comm is max 16, so we could in theory pre-allocate this. Also get it from /proc/pid/comm instead?
+        // They slightly differ though, see https://unix.stackexchange.com/questions/769962/thread-name-is-proc-pid-comm-always-identical-to-the-name-line-of-proc-pid-s
 
         let (comm, rest) = {
             let start_paren = line
@@ -260,9 +266,16 @@ impl Process {
             .next_back()
             .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
             .or_else(|| {
-                rustix::fs::readlinkat(rustix::fs::CWD, pid_path.as_path(), vec![])
+                // SAFETY: We can do this safely, we plan to only put a valid string in here.
+                let buffer = unsafe { buffer.as_mut_vec() };
+
+                let out = read_link(pid_path.as_path(), buffer)
                     .ok()
-                    .and_then(|s| s.to_string_lossy().parse::<Pid>().ok())
+                    .and_then(|s| s.parse::<Pid>().ok());
+
+                buffer.clear();
+
+                out
             })
             .ok_or_else(|| anyhow!("PID for {pid_path:?} was not found"))?;
 
