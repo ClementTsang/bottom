@@ -66,6 +66,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | ---------------------------- | --------------------------------------------------------- |
 | `--memory_legend <POSITION>` | Where to place the legend for the memory chart widget.    |
 | `--enable_cache_memory`      | Enable collecting and displaying cache and buffer memory. |
+| `--free_arc`                 | Subtract freeable ARC from memory.                        |
 
 ## Network Options
 

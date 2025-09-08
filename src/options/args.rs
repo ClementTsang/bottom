@@ -518,6 +518,14 @@ pub struct MemoryArgs {
         alias = "enable-cache-memory"
     )]
     pub enable_cache_memory: bool,
+
+    #[cfg(feature = "zfs")]
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Subtract reclaimable ARC from memory."
+    )]
+    pub free_arc: bool,
 }
 
 /// Network arguments/config options.

@@ -365,6 +365,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Shows cache and buffer memory
 #enable_cache_memory = false
 
+# Subtract freeable ARC from memory usage
+#free_arc = false
+
 # How much data is stored at once in terms of time.
 #retention = "10m"
 

@@ -2,10 +2,10 @@ use super::MemData;
 
 /// Return ARC usage.
 #[cfg(feature = "zfs")]
-pub(crate) fn get_arc_usage() -> Option<MemData> {
+pub(crate) fn get_arc_usage() -> Option<(MemData, u64)> {
     use std::num::NonZeroU64;
 
-    let (mem_total, mem_used) = {
+    let (mem_total, mem_used, mem_min) = {
         cfg_if::cfg_if! {
             if #[cfg(target_os = "linux")] {
                 // TODO: [OPT] is this efficient?
@@ -13,14 +13,16 @@ pub(crate) fn get_arc_usage() -> Option<MemData> {
                 if let Ok(arc_stats) = read_to_string("/proc/spl/kstat/zfs/arcstats") {
                     let mut mem_arc = 0;
                     let mut mem_total = 0;
+                    let mut mem_min = 0;
                     let mut zfs_keys_read: u8 = 0;
-                    const ZFS_KEYS_NEEDED: u8 = 2;
+                    const ZFS_KEYS_NEEDED: u8 = 3;
 
                     for line in arc_stats.lines() {
                         if let Some((label, value)) = line.split_once(' ') {
                             let to_write = match label {
                                 "size" => &mut mem_arc,
                                 "c_max" => &mut mem_total,
+                                "c_min" => &mut mem_min,
                                 _ => {
                                     continue;
                                 }
@@ -39,34 +41,40 @@ pub(crate) fn get_arc_usage() -> Option<MemData> {
                             }
                         }
                     }
-                    (mem_total, mem_arc)
+                    (mem_total, mem_arc, mem_min)
                 } else {
-                    (0, 0)
+                    (0, 0, 0)
                 }
             } else if #[cfg(target_os = "freebsd")] {
                 use sysctl::Sysctl;
-                if let (Ok(mem_arc_value), Ok(mem_sys_value)) = (
+                if let (Ok(mem_arc_value), Ok(mem_sys_value), Ok(mem_min_value)) = (
                     sysctl::Ctl::new("kstat.zfs.misc.arcstats.size"),
                     sysctl::Ctl::new("kstat.zfs.misc.arcstats.c_max"),
+                    sysctl::Ctl::new("kstat.zfs.misc.arcstats.c_min"),
                 ) {
-                    if let (Ok(sysctl::CtlValue::U64(arc)), Ok(sysctl::CtlValue::Ulong(mem))) =
-                        (mem_arc_value.value(), mem_sys_value.value())
+                    if let (Ok(sysctl::CtlValue::U64(arc)), Ok(sysctl::CtlValue::U64(mem)), Ok(sysctl::CtlValue::U64(min))) =
+                    (mem_arc_value.value(), mem_sys_value.value(), mem_min_value.value())
                     {
-                        (mem, arc)
+                        (mem, arc, min)
                     } else {
-                        (0, 0)
+                        (0, 0, 0)
                     }
                 } else {
-                    (0, 0)
+                    (0, 0, 0)
                 }
             } else {
-                (0, 0)
+                (0, 0, 0)
             }
         }
     };
 
-    NonZeroU64::new(mem_total).map(|total_bytes| MemData {
-        total_bytes,
-        used_bytes: mem_used,
+    NonZeroU64::new(mem_total).map(|total_bytes| {
+        (
+            MemData {
+                total_bytes,
+                used_bytes: mem_used,
+            },
+            mem_min,
+        )
     })
 }
