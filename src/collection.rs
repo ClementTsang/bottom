@@ -171,6 +171,8 @@ pub struct DataCollector {
     prev_idle: f64,
     #[cfg(target_os = "linux")]
     prev_non_idle: f64,
+    #[cfg(target_os = "linux")]
+    process_buffer: String,
 
     #[cfg(feature = "battery")]
     battery_manager: Option<Manager>,
@@ -224,6 +226,9 @@ impl DataCollector {
             gpus_total_mem: None,
             last_list_collection_time: last_collection_time,
             should_run_less_routine_tasks: true,
+            #[cfg(target_os = "linux")]
+            // TODO: Maybe pre-allocate this? I've tried this before with 16_384 bytes and it was ok?
+            process_buffer: String::new()
         }
     }
 

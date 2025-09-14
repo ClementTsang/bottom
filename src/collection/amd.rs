@@ -11,7 +11,10 @@ use std::{
 use hashbrown::{HashMap, HashSet};
 
 use super::linux::utils::is_device_awake;
-use crate::{app::layout_manager::UsedWidgets, collection::memory::MemData};
+use crate::{
+    app::layout_manager::UsedWidgets,
+    collection::{linux::utils::read_link, memory::MemData},
+};
 
 // TODO: May be able to clean up some of these, Option<Vec> for example is a bit redundant.
 pub struct AmdGpuData {
@@ -162,19 +165,21 @@ fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
 }
 
 // from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L13-L27
-fn get_amdgpu_pid_fds(pid: u32, device_path: Vec<PathBuf>) -> Option<Vec<u32>> {
+fn get_amdgpu_pid_fds(pid: u32, device_path: &[String], buffer: &mut Vec<u8>) -> Option<Vec<u32>> {
     let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else {
         return None;
     };
 
     let valid_fds: Vec<u32> = fd_list
-        .filter_map(|fd_link| {
-            let dir_entry = fd_link.map(|fd_link| fd_link.path()).ok()?;
-            let link = fs::read_link(&dir_entry).ok()?;
+        .flatten()
+        .filter_map(|entry| {
+            let path = entry.path();
+            let link = read_link(path.as_path(), buffer).ok()?;
 
             // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
             if device_path.iter().any(|path| link.starts_with(path)) {
-                dir_entry.file_name()?.to_str()?.parse::<u32>().ok()
+                // TODO: Should we bother parsing here?
+                path.file_name()?.to_str()?.parse::<u32>().ok()
             } else {
                 None
             }
@@ -188,7 +193,7 @@ fn get_amdgpu_pid_fds(pid: u32, device_path: Vec<PathBuf>) -> Option<Vec<u32>> {
     }
 }
 
-fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
+fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<String>> {
     let mut drm_devices = Vec::new();
     let drm_root = device_path.join("drm");
 
@@ -212,7 +217,7 @@ fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
             continue;
         }
 
-        drm_devices.push(PathBuf::from(format!("/dev/dri/{drm_name}")));
+        drm_devices.push(format!("/dev/dri/{drm_name}"));
     }
 
     if drm_devices.is_empty() {
@@ -222,8 +227,11 @@ fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
     }
 }
 
+// Based on https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L13-L27.
 fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
     let mut fdinfo = HashMap::new();
+    let mut buffer = Vec::new();
+    const SYSTEMD_TO_SKIP: &[&str] = &["/lib/systemd", "/usr/lib/systemd"];
 
     let drm_paths = get_amdgpu_drm(device_path)?;
 
@@ -231,35 +239,39 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
         return None;
     };
 
-    let pids: Vec<u32> = proc_dir
-        .filter_map(|dir_entry| {
-            // check if pid is valid
-            let dir_entry = dir_entry.ok()?;
-            let metadata = dir_entry.metadata().ok()?;
+    let pids = proc_dir.filter_map(|dir_entry| {
+        // check if pid is valid
+        let dir_entry = dir_entry.ok()?;
+        let metadata = dir_entry.metadata().ok()?;
 
-            if !metadata.is_dir() {
-                return None;
-            }
+        if !metadata.is_dir() {
+            return None;
+        }
 
-            let pid = dir_entry.file_name().to_str()?.parse::<u32>().ok()?;
+        let pid = dir_entry.file_name().to_str()?.parse::<u32>().ok()?;
 
-            // skip init process
-            if pid == 1 {
-                return None;
-            }
+        // skip init process/systemd
+        if pid == 1 {
+            return None;
+        }
 
-            Some(pid)
-        })
-        .collect();
+        // TODO: We can instead refer to our already-obtained processes? I think we could maybe just do
+        // this with processes at the same time...
+        let cmdline = fs::read_to_string(format!("/proc/{pid}/cmdline")).ok()?;
+        if SYSTEMD_TO_SKIP.iter().any(|path| cmdline.starts_with(path)) {
+            return None;
+        }
+
+        Some(pid)
+    });
 
     for pid in pids {
         // collect file descriptors that point to our device renderers
-        let Some(fds) = get_amdgpu_pid_fds(pid, drm_paths.clone()) else {
+        let Some(fds) = get_amdgpu_pid_fds(pid, &drm_paths, &mut buffer) else {
             continue;
         };
 
         let mut usage: AmdGpuProc = Default::default();
-
         let mut observed_ids: HashSet<usize> = HashSet::new();
 
         for fd in fds {
@@ -271,6 +283,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
             let mut fdinfo_lines = fdinfo_data
                 .lines()
                 .skip_while(|l| !l.starts_with("drm-client-id"));
+
             if let Some(id) = fdinfo_lines.next().and_then(|fdinfo_line| {
                 const LEN: usize = "drm-client-id:\t".len();
                 fdinfo_line.get(LEN..)?.parse().ok()
@@ -331,6 +344,7 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
     let mut proc_vec = Vec::with_capacity(num_gpu);
     let mut total_mem = 0;
 
+    // TODO: We can optimize this to do this all in one pass, rather than for loop + for loop. This reduces syscalls.
     for device_path in device_path_list {
         let device_name = get_amd_name(&device_path)
             .unwrap_or(amd_gpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
