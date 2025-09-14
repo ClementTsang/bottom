@@ -1168,10 +1168,9 @@ mod test {
     use std::time::Duration;
 
     use super::*;
-    use crate::widgets::MemUsage;
-
     #[cfg(target_os = "linux")]
     use crate::collection::processes::ProcessType;
+    use crate::widgets::MemUsage;
 
     #[test]
     fn test_proc_sort() {

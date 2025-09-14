@@ -13,13 +13,13 @@ use layout_manager::*;
 pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
-use crate::canvas::dialogs::process_kill_dialog::ProcessKillDialog;
-use crate::widgets::TreeCollapsed;
 use crate::{
-    canvas::components::time_graph::LegendPosition,
+    canvas::{
+        components::time_graph::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
+    },
     constants,
     utils::data_units::DataUnit,
-    widgets::{ProcWidgetColumn, ProcWidgetMode},
+    widgets::{ProcWidgetColumn, ProcWidgetMode, TreeCollapsed},
 };
 
 const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds

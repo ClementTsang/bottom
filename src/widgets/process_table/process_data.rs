@@ -10,7 +10,6 @@ use concat_string::concat_string;
 use tui::widgets::Row;
 
 use super::process_columns::ProcColumn;
-
 use crate::{
     canvas::{
         Painter,
