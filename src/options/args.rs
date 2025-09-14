@@ -523,7 +523,8 @@ pub struct MemoryArgs {
     #[arg(
         long,
         action = ArgAction::SetTrue,
-        help = "Subtract reclaimable ARC from memory."
+        help = "Subtract reclaimable ARC from memory.",
+        alias = "free-arc"
     )]
     pub free_arc: bool,
 }
