@@ -31,6 +31,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 - [#1800](https://github.com/ClementTsang/bottom/pull/1800): Fix colon at end of process name in Linux.
 - [#1804](https://github.com/ClementTsang/bottom/pull/1804): Draw average CPU last again.
+- [#1811](https://github.com/ClementTsang/bottom/pull/1811): Fix drawing average CPU in basic mode when dedicated row is enabled.
 
 ## [0.11.1] - 2025-08-15
 
