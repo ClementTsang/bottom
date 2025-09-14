@@ -1,5 +1,6 @@
 //! Process data collection for Linux.
 
+mod gpu;
 mod process;
 
 use std::{
