@@ -3,15 +3,14 @@
 use std::time::Instant;
 
 use cfg_if::cfg_if;
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+use tui::widgets::ListState;
 use tui::{
     Frame,
     layout::{Alignment, Constraint, Flex, Layout, Position, Rect},
     text::{Line, Span, Text},
     widgets::{Paragraph, Wrap},
 };
-
-#[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-use tui::widgets::ListState;
 
 use crate::{
     canvas::drawing_utils::dialog_block, collection::processes::Pid, options::config::style::Styles,
