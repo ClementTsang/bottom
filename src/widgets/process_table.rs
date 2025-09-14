@@ -1258,8 +1258,8 @@ mod test {
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
-            [&c, &d, &a, &b].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
-            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+            [&c, &d, &a, &b].iter().map(|d| d.pid).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
     }
 
