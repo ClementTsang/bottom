@@ -201,14 +201,7 @@ fn read_proc(
         (0, 0, 0, 0)
     };
 
-    let user = uid
-        .and_then(|uid| {
-            user_table
-                .get_uid_to_username_mapping(uid)
-                .map(Into::into)
-                .ok()
-        })
-        .unwrap_or_else(|| "N/A".into());
+    let user = uid.and_then(|uid| user_table.uid_to_username(uid).ok());
 
     let time = if let Ok(ticks_per_sec) = u32::try_from(rustix::param::clock_ticks_per_second()) {
         if ticks_per_sec == 0 {

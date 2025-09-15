@@ -88,14 +88,7 @@ pub(crate) trait UnixProcessExt {
                 total_write: disk_usage.total_written_bytes,
                 process_state,
                 uid,
-                user: uid
-                    .and_then(|uid| {
-                        user_table
-                            .get_uid_to_username_mapping(uid)
-                            .map(Into::into)
-                            .ok()
-                    })
-                    .unwrap_or_else(|| "N/A".into()),
+                user: uid.and_then(|uid| user_table.uid_to_username(uid).ok()),
                 time: if process_val.start_time() == 0 {
                     // Workaround for sysinfo occasionally returning a start time equal to UNIX
                     // epoch, giving a run time in the range of 50+ years. We just

@@ -151,16 +151,17 @@ impl SortsRow for ProcColumn {
             }
             ProcColumn::State => {
                 if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.process_state.to_lowercase()));
+                    data.sort_by_cached_key(|pd| Reverse(pd.process_state));
                 } else {
-                    data.sort_by_cached_key(|pd| pd.process_state.to_lowercase());
+                    data.sort_by_cached_key(|pd| pd.process_state);
                 }
             }
             ProcColumn::User => {
+                // FIXME: Is there a better way here to keep the to_lowercase? Usually it shouldn't matter but...
                 if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.user.to_lowercase()));
+                    data.sort_by_cached_key(|pd| Reverse(pd.user.clone()));
                 } else {
-                    data.sort_by_cached_key(|pd| pd.user.to_lowercase());
+                    data.sort_by_cached_key(|pd| pd.user.clone());
                 }
             }
             ProcColumn::Time => {

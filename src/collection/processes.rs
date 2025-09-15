@@ -32,7 +32,7 @@ cfg_if! {
     }
 }
 
-use std::{borrow::Cow, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use super::{DataCollector, error::CollectionResult};
 
@@ -128,7 +128,7 @@ pub struct ProcessHarvest {
     pub uid: Option<libc::uid_t>,
 
     /// This is the process' user.
-    pub user: Cow<'static, str>,
+    pub user: Option<Arc<str>>,
 
     /// Gpu memory usage as bytes.
     #[cfg(feature = "gpu")]

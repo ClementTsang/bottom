@@ -815,7 +815,10 @@ impl Prefix {
                     }),
                     PrefixType::Pid => r.is_match(process.pid.to_string().as_str()),
                     PrefixType::State => r.is_match(process.process_state.0),
-                    PrefixType::User => r.is_match(process.user.as_ref()),
+                    PrefixType::User => match process.user.as_ref() {
+                        Some(user) => r.is_match(user),
+                        None => r.is_match("N/A"),
+                    },
                     _ => true,
                 }
             } else {
