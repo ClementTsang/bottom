@@ -384,6 +384,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
 #columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%"]
 
+# Gather process child thread information
+#get_threads = false
+
 
 # CPU widget configuration
 #[cpu]
