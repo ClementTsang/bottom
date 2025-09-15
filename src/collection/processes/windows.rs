@@ -108,8 +108,7 @@ pub fn sysinfo_process_data(
             process_state,
             user: process_val
                 .user_id()
-                .and_then(|uid| users.get_user_by_id(uid))
-                .map_or_else(|| "N/A".into(), |user| user.name().to_owned().into()),
+                .and_then(|uid| users.get_user_by_id(uid).into()),
             time: if process_val.start_time() == 0 {
                 // Workaround for sysinfo occasionally returning a start time equal to UNIX
                 // epoch, giving a run time in the range of 50+ years. We just
