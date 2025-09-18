@@ -196,13 +196,11 @@ fn create_dataset(data: GraphData<'_>) -> Dataset<'_> {
         .data(time, values)
         .graph_type(GraphType::Line);
 
-    let dataset = if let Some(name) = name {
+    if let Some(name) = name {
         dataset.name(name)
     } else {
         dataset
-    };
-
-    dataset
+    }
 }
 
 #[cfg(test)]
