@@ -184,6 +184,8 @@ pub struct DataCollector {
     gpu_pids: Option<Vec<HashMap<u32, (u64, u32)>>>,
     #[cfg(feature = "gpu")]
     gpus_total_mem: Option<u64>,
+    #[cfg(feature = "zfs")]
+    free_arc_mem: bool,
 }
 
 const LESS_ROUTINE_TASK_TIME: Duration = Duration::from_secs(60);
@@ -222,6 +224,8 @@ impl DataCollector {
             gpu_pids: None,
             #[cfg(feature = "gpu")]
             gpus_total_mem: None,
+            #[cfg(feature = "zfs")]
+            free_arc_mem: false,
             last_list_collection_time: last_collection_time,
             should_run_less_routine_tasks: true,
         }
@@ -265,6 +269,11 @@ impl DataCollector {
 
     pub fn set_get_process_threads(&mut self, get_process_threads: bool) {
         self.get_process_threads = get_process_threads;
+    }
+
+    #[cfg(feature = "zfs")]
+    pub fn set_free_arc_mem(&mut self, free_mem: bool) {
+        self.free_arc_mem = free_mem;
     }
 
     /// Refresh sysinfo data. We use sysinfo for the following data:
@@ -463,17 +472,45 @@ impl DataCollector {
         if self.widgets_to_harvest.use_mem {
             self.data.memory = memory::get_ram_usage(&self.sys.system);
 
+            #[cfg(feature = "zfs")]
+            {
+                #[cfg(any(target_os = "linux", target_os = "freebsd"))]
+                if let Some(arc) = memory::arc::get_arc_usage() {
+                    if let Some(mem) = &mut self.data.memory {
+                        if self.free_arc_mem {
+                            if arc.0.used_bytes > arc.1 {
+                                #[cfg(target_os = "linux")]
+                                {
+                                    mem.used_bytes -= arc.0.used_bytes.saturating_sub(arc.1); // keep arc min like htop
+                                }
+                                #[cfg(target_os = "freebsd")]
+                                {
+                                    mem.used_bytes += arc.1; // sysinfo subtracts arc_size on freebsd
+                                }
+                            } else {
+                                #[cfg(target_os = "freebsd")]
+                                {
+                                    mem.used_bytes += arc.0.used_bytes;
+                                }
+                            }
+                        } else {
+                            #[cfg(target_os = "freebsd")]
+                            {
+                                mem.used_bytes += arc.0.used_bytes;
+                            }
+                        }
+                    }
+
+                    self.data.arc = Some(arc.0);
+                }
+            }
+
             #[cfg(not(target_os = "windows"))]
             if self.widgets_to_harvest.use_cache {
                 self.data.cache = memory::get_cache_usage(&self.sys.system);
             }
 
             self.data.swap = memory::get_swap_usage(&self.sys.system);
-
-            #[cfg(feature = "zfs")]
-            {
-                self.data.arc = memory::arc::get_arc_usage();
-            }
         }
     }
 
