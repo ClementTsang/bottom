@@ -1,5 +1,6 @@
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
 use super::MemData;
-
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
 /// Return ARC usage.
 #[cfg(feature = "zfs")]
 pub(crate) fn get_arc_usage() -> Option<(MemData, u64)> {
