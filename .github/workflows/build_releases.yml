@@ -137,7 +137,7 @@ jobs:
 
       - name: Set up Rust toolchain
         if: matrix.info.container == ''
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
@@ -340,7 +340,7 @@ jobs:
           choco install -y wixtoolset --no-progress;
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
           target: ${{ matrix.info.target }}
@@ -458,7 +458,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
@@ -562,7 +562,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
