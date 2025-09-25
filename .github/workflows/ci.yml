@@ -86,14 +86,14 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
           components: rustfmt, clippy
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # 2.7.8
+        uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
@@ -104,7 +104,7 @@ jobs:
 
       # TODO: add junit output using nextest for codecov (https://docs.codecov.com/docs/test-analytics)
       - name: Build tests
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         with:
           command: test
           args: --no-run --locked ${{ matrix.features }} --target=${{ matrix.info.target }}
@@ -114,7 +114,7 @@ jobs:
           RUST_BACKTRACE: full
 
       - name: Run tests
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         with:
           command: test
           args: --no-fail-fast ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
@@ -124,7 +124,7 @@ jobs:
           RUST_BACKTRACE: full
 
       - name: Run clippy
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         with:
           command: clippy
           args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} -- -D warnings
@@ -240,21 +240,21 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
           components: "clippy"
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # 2.7.8
+        uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
       - name: Clippy (default features)
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         if: ${{ matrix.info.no-default-features != true }}
         with:
           command: clippy
@@ -263,7 +263,7 @@ jobs:
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
       - name: Clippy (no features enabled)
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         if: ${{ matrix.info.no-default-features == true  }}
         with:
           command: clippy
@@ -308,7 +308,7 @@ jobs:
           fetch-depth: 1
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # 2.7.8
+        uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
