@@ -151,7 +151,7 @@ jobs:
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Build
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         env:
           BTM_GENERATE: true
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
@@ -465,7 +465,7 @@ jobs:
 
       # TODO: Could I use the previous jobs to skip this call?
       - name: Build
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         env:
           BTM_GENERATE: true
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
@@ -569,7 +569,7 @@ jobs:
 
       # TODO: Could I use the previous jobs to skip this call?
       - name: Build
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         env:
           BTM_GENERATE: true
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
