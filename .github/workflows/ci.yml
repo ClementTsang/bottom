@@ -285,12 +285,11 @@ jobs:
           #
           # Alas, that's why we do it with VMs.
 
-          # Disabled as there's a weird issue with installing curl on FreeBSD 15 at the moment.
-          # - {
-          #     type: "freebsd",
-          #     os_release: "15.0",
-          #     target: "x86_64-unknown-freebsd",
-          #   }
+          - {
+              type: "freebsd",
+              os_release: "15.0",
+              target: "x86_64-unknown-freebsd",
+            }
           - {
               type: "freebsd",
               os_release: "14.3",
@@ -316,7 +315,7 @@ jobs:
 
       - name: Clippy (FreeBSD)
         if: ${{ matrix.info.type == 'freebsd' }}
-        uses: vmactions/freebsd-vm@966989c456d41351f095a421f60e71342d3bce41 # v1.2.1
+        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
