@@ -17,7 +17,7 @@ use tui::{
     style::{Color, Style, Styled},
     symbols::{self, Marker},
     text::{Line, Span},
-    widgets::{Block, Borders, GraphType, Widget, block::BlockExt},
+    widgets::{Block, BlockExt, Borders, GraphType, Widget},
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -772,7 +772,7 @@ impl Widget for TimeChart<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         buf.set_style(area, self.style);
 
-        self.block.render(area, buf);
+        self.block.as_ref().render(area, buf);
         let chart_area = self.block.inner_if_some(area);
         if chart_area.is_empty() {
             return;
