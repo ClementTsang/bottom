@@ -175,7 +175,7 @@ impl Painter {
 
     pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut App,
-    ) -> Result<(), std::io::Error> {
+    ) -> Result<(), B::Error> {
         use BottomWidgetType::*;
 
         terminal.draw(|f| {
