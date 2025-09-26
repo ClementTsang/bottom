@@ -376,6 +376,12 @@
             "null"
           ]
         },
+        "free_arc": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "group_processes": {
           "type": [
             "boolean",
