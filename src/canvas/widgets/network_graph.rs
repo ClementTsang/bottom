@@ -19,7 +19,7 @@ use crate::{
         data_units::*,
         general::{saturating_log2, saturating_log10},
     },
-    widgets::NetWidgetHeightCache,
+    widgets::{NetWidgetHeightCache, NetWidgetState},
 };
 
 impl Painter {
@@ -79,34 +79,13 @@ impl Painter {
 
             let y_max = {
                 if let Some(last_time) = time.last() {
-                    // For now, just do it each time. Might want to cache this later though.
-
-                    let (mut biggest, mut biggest_time, first_time) = {
-                        let initial_first_time = *last_time
-                            - Duration::from_millis(network_widget_state.current_display_time);
-
-                        match &network_widget_state.height_cache {
-                            Some(NetWidgetHeightCache {
-                                best_point,
-                                right_edge,
-                                period,
-                            }) => {
-                                if *period != network_widget_state.current_display_time
-                                    || best_point.0 < initial_first_time
-                                {
-                                    (0.0, initial_first_time, initial_first_time)
-                                } else {
-                                    (best_point.1, best_point.0, *right_edge)
-                                }
-                            }
-                            None => (0.0, initial_first_time, initial_first_time),
-                        }
-                    };
+                    let (mut biggest, mut biggest_time, oldest_to_check) =
+                        check_network_height_cache(network_widget_state, last_time, time);
 
                     for (&time, &v) in rx_points
                         .iter_along_base(time)
                         .rev()
-                        .take_while(|&(&time, _)| time >= first_time)
+                        .take_while(|&(&time, _)| time >= oldest_to_check)
                     {
                         if v > biggest {
                             biggest = v;
@@ -117,7 +96,7 @@ impl Painter {
                     for (&time, &v) in tx_points
                         .iter_along_base(time)
                         .rev()
-                        .take_while(|&(&time, _)| time >= first_time)
+                        .take_while(|&(&time, _)| time >= oldest_to_check)
                     {
                         if v > biggest {
                             biggest = v;
@@ -297,6 +276,45 @@ impl Painter {
             draw_loc,
         );
     }
+}
+
+#[inline]
+fn check_network_height_cache(
+    network_widget_state: &NetWidgetState, last_time: &std::time::Instant,
+    time: &[std::time::Instant],
+) -> (f64, std::time::Instant, std::time::Instant) {
+    let visible_duration = Duration::from_millis(network_widget_state.current_display_time);
+
+    if let Some(NetWidgetHeightCache {
+        best_point,
+        right_edge,
+        period,
+    }) = &network_widget_state.height_cache
+    {
+        if *period == network_widget_state.current_display_time
+            && last_time.duration_since(*right_edge) < visible_duration
+        {
+            return (best_point.1, best_point.0, *right_edge);
+        }
+    }
+
+    let visible_left_bound = match last_time.checked_sub(visible_duration) {
+        Some(v) => v,
+        None => {
+            // On some systems (like Windows) it can be possible that the current display time
+            // causes subtraction to fail if, for example, the uptime of the system is too low
+            // and current_display_time is too high. See https://github.com/ClementTsang/bottom/issues/1825.
+            //
+            // As such, instead take the oldest visible time.
+            time.iter()
+                .take_while(|t| last_time.duration_since(**t) < visible_duration)
+                .last()
+                .cloned()
+                .unwrap_or(*last_time)
+        }
+    };
+
+    (0.0, visible_left_bound, visible_left_bound)
 }
 
 /// Returns the required labels.
