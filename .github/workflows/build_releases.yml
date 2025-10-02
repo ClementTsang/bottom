@@ -79,8 +79,8 @@ jobs:
             }
 
           # macOS (x86-64 and aarch64)
-          - { os: "macos-13", target: "x86_64-apple-darwin", cross: false }
-          - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
+          - { os: "macos-15-intel", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
 
           # Windows (x86-64, x86)
           - {
