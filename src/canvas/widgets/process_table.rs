@@ -317,7 +317,7 @@ impl Painter {
                 selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
             };
 
-            pws.sort_table.draw(
+            pws.sort_table.0.draw(
                 f,
                 &draw_info,
                 app_state.widget_map.get_mut(&widget_id),

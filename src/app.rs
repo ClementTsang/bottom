@@ -325,7 +325,7 @@ impl App {
             // If the sort is now open, move left. Otherwise, if the proc sort was selected,
             // force move right.
             if pws.is_sort_open {
-                pws.sort_table.set_position(pws.table.sort_index());
+                pws.sort_table.0.set_position(pws.table.sort_index());
                 self.move_widget_selection(&WidgetDirection::Left);
             } else if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
                 self.move_widget_selection(&WidgetDirection::Right);
@@ -1760,7 +1760,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table.scroll_to_first();
+                        proc_widget_state.sort_table.0.scroll_to_first();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -1819,7 +1819,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table.scroll_to_last();
+                        proc_widget_state.sort_table.0.scroll_to_last();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -1893,6 +1893,7 @@ impl App {
         {
             proc_widget_state
                 .sort_table
+                .0
                 .increment_position(num_to_change_by);
         }
     }
@@ -2414,7 +2415,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id - 2)
                                     {
                                         if let Some(visual_index) =
-                                            proc_widget_state.sort_table.ratatui_selected()
+                                            proc_widget_state.sort_table.0.ratatui_selected()
                                         {
                                             self.change_process_sort_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,

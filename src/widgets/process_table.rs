@@ -19,11 +19,13 @@ use crate::{
         data::{ProcessData, StoredData},
     },
     canvas::components::data_table::{
-        Column, ColumnHeader, ColumnWidthBounds, DataTableComponent, DataTableColumn, DataTableProps,
-        DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
+        Column, ColumnHeader, ColumnWidthBounds, DataTableColumn, DataTableComponent,
+        DataTableProps, DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder,
+        SortsRow,
     },
     collection::processes::{Pid, ProcessHarvest},
     options::config::style::Styles,
+    widgets::process_table::sort_table::SortTable,
 };
 
 /// ProcessSearchState only deals with process' search's current settings and
@@ -142,7 +144,6 @@ pub(crate) enum ProcWidgetMode {
 }
 
 type ProcessTable = SortDataTable<ProcWidgetData, ProcColumn>;
-type SortTable = DataTableComponent<Cow<'static, str>, SortTableColumn>;
 type StringPidMap = HashMap<String, Vec<Pid>>;
 
 fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
@@ -251,7 +252,7 @@ impl ProcWidgetState {
         };
         let styling = DataTableStyling::from_palette(palette);
 
-        DataTableComponent::new(COLUMNS, props, styling)
+        SortTable(DataTableComponent::new(COLUMNS, props, styling))
     }
 
     fn new_process_table(
@@ -439,7 +440,7 @@ impl ProcWidgetState {
             #[cfg(target_os = "linux")]
             hide_k_threads: config.hide_k_threads,
         };
-        table.sort_table.set_data(table.column_text());
+        table.sort_table.0.set_data(table.column_text());
 
         table
     }
@@ -870,7 +871,7 @@ impl ProcWidgetState {
                     _ => unreachable!(),
                 }
 
-                self.sort_table.set_data(self.column_text());
+                self.sort_table.0.set_data(self.column_text());
                 self.force_data_update();
             }
         }
@@ -887,7 +888,7 @@ impl ProcWidgetState {
                     _ => unreachable!(),
                 }
 
-                self.sort_table.set_data(self.column_text());
+                self.sort_table.0.set_data(self.column_text());
                 self.force_data_update();
             }
         }
@@ -997,7 +998,7 @@ impl ProcWidgetState {
                     }
                     _ => unreachable!(),
                 }
-                self.sort_table.set_data(self.column_text());
+                self.sort_table.0.set_data(self.column_text());
                 self.force_rerender_and_update();
             }
         }
@@ -1042,7 +1043,7 @@ impl ProcWidgetState {
                         _ => unreachable!(),
                     }
 
-                    self.sort_table.set_data(self.column_text());
+                    self.sort_table.0.set_data(self.column_text());
                     self.force_rerender_and_update();
                 }
             }
@@ -1125,7 +1126,7 @@ impl ProcWidgetState {
     /// Sets the [`ProcWidgetState`]'s current sort index to whatever was in the
     /// sort table if possible, then closes the sort table.
     pub(crate) fn use_sort_table_value(&mut self) {
-        self.table.set_sort_index(self.sort_table.current_index());
+        self.table.set_sort_index(self.sort_table.0.current_index());
 
         self.is_sort_open = false;
         self.force_rerender_and_update();

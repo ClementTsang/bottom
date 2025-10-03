@@ -4,7 +4,7 @@ use crate::canvas::components::data_table::{
     ColumnHeader, DataTable, DataTableColumn, DataTableComponent, DataToCell,
 };
 
-pub struct SortTable(DataTableComponent<Cow<'static, str>, SortTableColumn>);
+pub struct SortTable(pub DataTableComponent<Cow<'static, str>, SortTableColumn>);
 
 impl DataTable<&'static str> for SortTable {
     type HeaderType = SortTableColumn;
