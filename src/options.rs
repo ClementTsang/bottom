@@ -230,6 +230,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let use_basic_mode = is_flag_enabled!(basic, args.general, config);
     let expanded = is_flag_enabled!(expanded, args.general, config);
+    #[cfg(feature = "zfs")]
+    let free_arc = is_flag_enabled!(free_arc, args.memory, config);
 
     // For processes
     let is_grouped = is_flag_enabled!(group_processes, args.process, config);
@@ -329,6 +331,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         retention_ms,
         dedicated_average_row: get_dedicated_avg_row(config),
         default_tree_collapse: is_default_tree_collapsed,
+        #[cfg(feature = "zfs")]
+        free_arc,
     };
 
     let table_config = ProcTableConfig {
