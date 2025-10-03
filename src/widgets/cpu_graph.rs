@@ -8,8 +8,8 @@ use crate::{
     canvas::{
         Painter,
         components::data_table::{
-            Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
-            DataToCell,
+            Column, ColumnHeader, DataTable, DataTableColumn, DataTableComponent, DataTableProps,
+            DataTableStyling, DataToCell,
         },
     },
     collection::cpu::{CpuData, CpuDataType},
@@ -125,8 +125,9 @@ pub struct CpuWidgetState {
     pub current_display_time: u64,
     pub is_legend_hidden: bool,
     pub autohide_timer: Option<Instant>,
-    pub table: DataTable<CpuWidgetTableData, CpuWidgetColumn>,
+    pub table: DataTableComponent<CpuWidgetTableData, CpuWidgetColumn>,
     pub force_update_data: bool,
+    pub show_decimals: bool,
 }
 
 impl CpuWidgetState {
@@ -149,7 +150,7 @@ impl CpuWidgetState {
         };
 
         let styling = DataTableStyling::from_palette(colours);
-        let mut table = DataTable::new(COLUMNS, props, styling);
+        let mut table = DataTableComponent::new(COLUMNS, props, styling);
         match default_selection {
             CpuDefault::All => {}
             CpuDefault::Average if !config.show_average_cpu => {}
@@ -164,6 +165,7 @@ impl CpuWidgetState {
             autohide_timer,
             table,
             force_update_data: false,
+            show_decimals: todo!(),
         }
     }
 
@@ -180,5 +182,114 @@ impl CpuWidgetState {
                 .collect(),
         );
         self.force_update_data = false;
+    }
+}
+
+impl DataTable<CpuWidgetTableData> for CpuWidgetState {
+    type HeaderType = CpuWidgetColumn;
+
+    fn to_cell_text(
+        &self, data: &CpuWidgetTableData, column: &Self::HeaderType, calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
+        const CPU_TRUNCATE_BREAKPOINT: u16 = 5;
+
+        let calculated_width = calculated_width.get();
+
+        // This is a bit of a hack, but apparently we can avoid having to do any fancy
+        // checks of showing the "All" on a specific column if the other is
+        // hidden by just always showing it on the CPU (first) column - if there
+        // isn't room for it, it will just collapse down.
+        //
+        // This is the same for the use percentages - we just *always* show them, and
+        // *always* hide the CPU column if it is too small.
+        match &data {
+            CpuWidgetTableData::All => match column {
+                CpuWidgetColumn::Cpu => Some("All".into()),
+                CpuWidgetColumn::Use => None,
+            },
+            CpuWidgetTableData::Entry {
+                data_type,
+                usage: last_entry,
+            } => {
+                if calculated_width == 0 {
+                    None
+                } else {
+                    match column {
+                        CpuWidgetColumn::Cpu => match data_type {
+                            CpuDataType::Avg => Some("AVG".into()),
+                            CpuDataType::Cpu(index) => {
+                                let index_str = index.to_string();
+                                let text = if calculated_width < CPU_TRUNCATE_BREAKPOINT {
+                                    index_str.into()
+                                } else {
+                                    concat_string!("CPU", index_str).into()
+                                };
+
+                                Some(text)
+                            }
+                        },
+                        CpuWidgetColumn::Use => {
+                            if self.show_decimals {
+                                Some(format!("{:.1}%", last_entry).into())
+                            } else {
+                                Some(format!("{:.0}%", last_entry.round()).into())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn style_cell(
+        &self, data: &CpuWidgetTableData, column: &Self::HeaderType, painter: &Painter,
+    ) -> Option<tui::style::Style> {
+        match column {
+            CpuWidgetColumn::Cpu => None,
+            CpuWidgetColumn::Use => match data {
+                CpuWidgetTableData::All => Some(painter.styles.all_cpu_colour),
+                CpuWidgetTableData::Entry {
+                    data_type,
+                    usage: _,
+                } => match data_type {
+                    CpuDataType::Avg => Some(painter.styles.avg_cpu_colour),
+                    CpuDataType::Cpu(index) => {
+                        let index = *index as usize;
+                        Some(
+                            painter.styles.cpu_colour_styles
+                                [index % painter.styles.cpu_colour_styles.len()],
+                        )
+                    }
+                },
+            },
+        }
+    }
+
+    #[inline(always)]
+    fn style_row<'a>(&self, data: &CpuWidgetTableData, row: Row<'a>, painter: &Painter) -> Row<'a> {
+        let style = match data {
+            CpuWidgetTableData::All => painter.styles.all_cpu_colour,
+            CpuWidgetTableData::Entry {
+                data_type,
+                usage: _,
+            } => match data_type {
+                CpuDataType::Avg => painter.styles.avg_cpu_colour,
+                CpuDataType::Cpu(index) => {
+                    let index = *index as usize;
+                    painter.styles.cpu_colour_styles[index % painter.styles.cpu_colour_styles.len()]
+                }
+            },
+        };
+
+        row.style(style)
+    }
+
+    fn column_widths<C: DataTableColumn<Self::HeaderType>>(
+        &self, _data: &[CpuWidgetTableData], _columns: &[C],
+    ) -> Vec<u16>
+    where
+        Self: Sized,
+    {
+        vec![1, 3]
     }
 }

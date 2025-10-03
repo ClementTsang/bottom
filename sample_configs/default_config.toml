@@ -136,13 +136,16 @@
 #[cpu]
 # One of "all" (default), "average"/"avg"
 #default = "average"
-
+# Whether to show decimal places in CPU usage.
+#show_decimals = false
 
 # Disk widget configuration
 #[disk]
 # The columns shown by the process widget. The following columns are supported:
 # Disk, Mount, Used, Free, Total, Used%, Free%, R/s, W/s
 #columns = ["Disk", "Mount", "Used", "Free", "Total", "Used%", "R/s", "W/s"]
+# Whether to show decimal places in disk usage and read/write rates.
+#show_decimals = false
 
 # By default, there are no disk name filters enabled. These can be turned on to filter out specific data entries if you
 # don't want to see them. An example use case is provided below.

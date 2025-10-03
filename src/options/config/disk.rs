@@ -17,6 +17,10 @@ pub(crate) struct DiskConfig {
     /// A list of disk widget columns.
     #[serde(default)]
     pub(crate) columns: Option<Vec<DiskColumn>>, // TODO: make this more composable(?) in the future, we might need to rethink how it's done for custom widgets
+
+    /// Whether to show decimal places in disk usage and read/write rates.
+    #[serde(default)]
+    pub(crate) show_decimals: bool,
 }
 
 #[cfg(test)]

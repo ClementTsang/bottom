@@ -255,7 +255,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::new();
     let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::new();
     let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
-    let mut disk_state_map: HashMap<u64, DiskTableWidget> = HashMap::new();
+    let mut disk_state_map: HashMap<u64, DiskTableWidgetState> = HashMap::new();
     let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::new();
 
     let autohide_timer = if autohide_time {
@@ -425,7 +425,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                         Disk => {
                             disk_state_map.insert(
                                 widget.widget_id,
-                                DiskTableWidget::new(
+                                DiskTableWidgetState::new(
                                     &app_config_fields,
                                     &styling,
                                     config.disk.as_ref().and_then(|cfg| cfg.columns.as_deref()),

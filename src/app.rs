@@ -33,6 +33,8 @@ pub enum AxisScaling {
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
+///
+/// TODO: Just store the config structs instead...?
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct AppConfigFields {
     pub update_rate: u64,

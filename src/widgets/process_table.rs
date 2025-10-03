@@ -19,7 +19,7 @@ use crate::{
         data::{ProcessData, StoredData},
     },
     canvas::components::data_table::{
-        Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
+        Column, ColumnHeader, ColumnWidthBounds, DataTableComponent, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
     collection::processes::{Pid, ProcessHarvest},
@@ -142,7 +142,7 @@ pub(crate) enum ProcWidgetMode {
 }
 
 type ProcessTable = SortDataTable<ProcWidgetData, ProcColumn>;
-type SortTable = DataTable<Cow<'static, str>, SortTableColumn>;
+type SortTable = DataTableComponent<Cow<'static, str>, SortTableColumn>;
 type StringPidMap = HashMap<String, Vec<Pid>>;
 
 fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
@@ -251,7 +251,7 @@ impl ProcWidgetState {
         };
         let styling = DataTableStyling::from_palette(palette);
 
-        DataTable::new(COLUMNS, props, styling)
+        DataTableComponent::new(COLUMNS, props, styling)
     }
 
     fn new_process_table(
@@ -273,7 +273,7 @@ impl ProcWidgetState {
         };
         let styling = DataTableStyling::from_palette(colours);
 
-        DataTable::new_sortable(columns, props, styling)
+        DataTableComponent::new_sortable(columns, props, styling)
     }
 
     pub(crate) fn new(

@@ -14,11 +14,12 @@ use super::process_columns::ProcColumn;
 use crate::{
     canvas::{
         Painter,
-        components::data_table::{DataTableColumn, DataToCell},
+        components::data_table::{DataTable, DataTableColumn, DataToCell},
     },
     collection::processes::{Pid, ProcessHarvest},
     dec_bytes_per_second_string,
     utils::data_units::{GIBI_LIMIT, GIGA_LIMIT, get_binary_bytes, get_decimal_bytes},
+    widgets::ProcWidgetState,
 };
 
 #[derive(Clone, Debug)]
@@ -396,6 +397,90 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
     }
 
     fn column_widths<C: DataTableColumn<ProcColumn>>(data: &[Self], columns: &[C]) -> Vec<u16>
+    where
+        Self: Sized,
+    {
+        let mut widths = vec![0; columns.len()];
+
+        for d in data {
+            for (w, c) in widths.iter_mut().zip(columns) {
+                *w = max(*w, d.to_string(c.inner()).len() as u16);
+            }
+        }
+
+        widths
+    }
+}
+
+impl DataTable<ProcWidgetData> for ProcWidgetState {
+    type HeaderType = ProcColumn;
+
+    fn to_cell_text(
+        &self, data: &ProcWidgetData, column: &ProcColumn, calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
+        let calculated_width = calculated_width.get();
+
+        // TODO: Optimize the string allocations here...
+        // TODO: Also maybe just pull in the to_string call but add a variable for the
+        // differences.
+        Some(match column {
+            ProcColumn::CpuPercent => format!("{:.1}%", data.cpu_usage_percent).into(),
+            ProcColumn::MemValue | ProcColumn::MemPercent => data.mem_usage.to_string().into(),
+            ProcColumn::VirtualMem => binary_byte_string(data.virtual_mem).into(),
+            ProcColumn::Pid => data.pid.to_string().into(),
+            ProcColumn::Count => data.num_similar.to_string().into(),
+            ProcColumn::Name | ProcColumn::Command => data.id.to_prefixed_string().into(),
+            ProcColumn::ReadPerSecond => dec_bytes_per_second_string(data.rps).into(),
+            ProcColumn::WritePerSecond => dec_bytes_per_second_string(data.wps).into(),
+            ProcColumn::TotalRead => dec_bytes_string(data.total_read).into(),
+            ProcColumn::TotalWrite => dec_bytes_string(data.total_write).into(),
+            ProcColumn::State => {
+                if calculated_width < 8 {
+                    data.process_char.to_string().into()
+                } else {
+                    data.process_state.into()
+                }
+            }
+            ProcColumn::User => data
+                .user
+                .as_ref()
+                .map(|user| user.to_string().into())
+                .unwrap_or_else(|| "N/A".into()),
+            ProcColumn::Time => format_time(data.time).into(),
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => {
+                data.gpu_mem_usage.to_string().into()
+            }
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuUtilPercent => format!("{:.1}%", data.gpu_usage).into(),
+        })
+    }
+
+    #[cfg(target_os = "linux")]
+    #[inline(always)]
+    fn style_cell(
+        &self, data: &ProcWidgetData, column: &ProcColumn, painter: &Painter,
+    ) -> Option<tui::style::Style> {
+        match column {
+            ProcColumn::Name | ProcColumn::Command if data.process_type.is_thread() => {
+                Some(painter.styles.thread_text_style)
+            }
+            _ => None,
+        }
+    }
+
+    #[inline(always)]
+    fn style_row<'a>(&self, data: &ProcWidgetData, row: Row<'a>, painter: &Painter) -> Row<'a> {
+        if data.disabled {
+            row.style(painter.styles.disabled_text_style)
+        } else {
+            row
+        }
+    }
+
+    fn column_widths<C: DataTableColumn<Self::HeaderType>>(
+        &self, data: &[ProcWidgetData], columns: &[C],
+    ) -> Vec<u16>
     where
         Self: Sized,
     {

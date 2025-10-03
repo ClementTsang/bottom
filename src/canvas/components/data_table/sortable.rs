@@ -5,8 +5,8 @@ use itertools::Itertools;
 use tui::widgets::Row;
 
 use super::{
-    ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,
-    DataTableStyling, DataToCell,
+    ColumnHeader, ColumnWidthBounds, DataTableColumn, DataTableComponent, DataTableProps,
+    DataTableState, DataTableStyling, DataToCell,
 };
 use crate::utils::strings::truncate_to_text;
 
@@ -239,7 +239,7 @@ pub struct SortDataTableProps {
 }
 
 /// A type alias for a sortable [`DataTable`].
-pub type SortDataTable<DataType, H> = DataTable<DataType, H, Sortable, SortColumn<H>>;
+pub type SortDataTable<DataType, H> = DataTableComponent<DataType, H, Sortable, SortColumn<H>>;
 
 impl<D, H> SortDataTable<D, H>
 where
@@ -346,6 +346,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use crate::canvas::components::data_table::DataTable;
+
     use super::*;
 
     #[derive(Clone, PartialEq, Eq, Debug)]
@@ -357,6 +359,27 @@ mod test {
     enum ColumnType {
         Index,
         Data,
+    }
+
+    struct TestTable {}
+
+    impl DataTable<ColumnType> for TestTable {
+        type HeaderType = &'static str;
+
+        fn to_cell_text(
+            &self, _data: &ColumnType, _column: &Self::HeaderType, _calculated_width: NonZeroU16,
+        ) -> Option<Cow<'static, str>> {
+            None
+        }
+
+        fn column_widths<C: DataTableColumn<Self::HeaderType>>(
+            &self, _data: &[ColumnType], _columns: &[C],
+        ) -> Vec<u16>
+        where
+            Self: Sized,
+        {
+            vec![]
+        }
     }
 
     impl DataToCell<ColumnType> for TestType {
@@ -423,7 +446,7 @@ mod test {
 
         let styling = DataTableStyling::default();
 
-        let mut table = DataTable::new_sortable(columns, props, styling);
+        let mut table = DataTableComponent::new_sortable(columns, props, styling);
         let mut data = vec![
             TestType {
                 index: 4,

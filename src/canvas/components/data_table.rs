@@ -31,7 +31,7 @@ use crate::utils::general::ClampExt;
 ///   shortcut column selection support, mouse column selection support, etc.
 ///
 /// FIXME: We already do all the text width checks - can we skip the underlying ones?
-pub struct DataTable<DataType, Header, S = Unsortable, C = Column<Header>> {
+pub struct DataTableComponent<DataType, Header, S = Unsortable, C = Column<Header>> {
     pub columns: Vec<C>,
     pub state: DataTableState,
     pub props: DataTableProps,
@@ -43,7 +43,9 @@ pub struct DataTable<DataType, Header, S = Unsortable, C = Column<Header>> {
     _pd: PhantomData<(DataType, S, Header)>,
 }
 
-impl<DataType: DataToCell<H>, H: ColumnHeader> DataTable<DataType, H, Unsortable, Column<H>> {
+impl<DataType: DataToCell<H>, H: ColumnHeader>
+    DataTableComponent<DataType, H, Unsortable, Column<H>>
+{
     pub fn new<C: Into<Vec<Column<H>>>>(
         columns: C, props: DataTableProps, styling: DataTableStyling,
     ) -> Self {
@@ -62,7 +64,7 @@ impl<DataType: DataToCell<H>, H: ColumnHeader> DataTable<DataType, H, Unsortable
 }
 
 impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H>>
-    DataTable<DataType, H, S, C>
+    DataTableComponent<DataType, H, S, C>
 {
     /// Sets the default value selected on first initialization, if possible.
     pub fn first_draw_index(mut self, first_index: usize) -> Self {
@@ -165,6 +167,27 @@ mod test {
         index: usize,
     }
 
+    struct TestTable {}
+
+    impl DataTable<TestType> for TestTable {
+        type HeaderType = &'static str;
+
+        fn to_cell_text(
+            &self, _data: &TestType, _column: &Self::HeaderType, _calculated_width: NonZeroU16,
+        ) -> Option<Cow<'static, str>> {
+            None
+        }
+
+        fn column_widths<C: DataTableColumn<Self::HeaderType>>(
+            &self, _data: &[TestType], _columns: &[C],
+        ) -> Vec<u16>
+        where
+            Self: Sized,
+        {
+            vec![]
+        }
+    }
+
     impl DataToCell<&'static str> for TestType {
         fn to_cell_text(
             &self, _column: &&'static str, _calculated_width: NonZeroU16,
@@ -182,7 +205,7 @@ mod test {
         }
     }
 
-    fn create_test_table() -> DataTable<TestType, &'static str> {
+    fn create_test_table() -> DataTableComponent<TestType, &'static str> {
         let columns = [Column::hard("a", 10), Column::hard("b", 10)];
         let props = DataTableProps {
             title: Some("test".into()),
@@ -194,7 +217,7 @@ mod test {
         };
         let styling = DataTableStyling::default();
 
-        DataTable::new(columns, props, styling)
+        DataTableComponent::new(columns, props, styling)
     }
 
     #[test]

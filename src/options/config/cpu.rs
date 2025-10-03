@@ -18,8 +18,15 @@ pub(crate) enum CpuDefault {
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct CpuConfig {
+    /// Whether to default to highlighting the "all" entry or the "average" entry on boot.
+    ///
+    /// Only matters on non-basic mode and if the average entry is shown.
     #[serde(default)]
     pub(crate) default: CpuDefault,
+
+    /// Whether to show decimal places in CPU usage.
+    #[serde(default)]
+    pub(crate) show_decimals: bool,
 }
 
 #[cfg(test)]

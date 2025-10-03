@@ -1,12 +1,13 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use serde::Deserialize;
+use sysinfo::Disk;
 
 use crate::{
     app::{AppConfigFields, data::StoredData},
     canvas::components::data_table::{
-        ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
-        SortDataTable, SortDataTableProps, SortOrder, SortsRow,
+        ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling, DataToCell,
+        SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
     options::config::style::Styles,
     utils::{data_units::get_decimal_bytes, general::sort_partial_fn},
@@ -25,28 +26,43 @@ pub struct DiskWidgetData {
 }
 
 impl DiskWidgetData {
-    fn total_space(&self) -> Cow<'static, str> {
+    fn total_space(&self, show_decimal: bool) -> Cow<'static, str> {
         if let Some(total_bytes) = self.total_bytes {
-            let converted_total_space = get_decimal_bytes(total_bytes);
-            format!("{:.0}{}", converted_total_space.0, converted_total_space.1).into()
+            let converted = get_decimal_bytes(total_bytes);
+
+            if show_decimal {
+                format!("{:.1}{}", converted.0, converted.1).into()
+            } else {
+                format!("{:.0}{}", converted.0.round(), converted.1).into()
+            }
         } else {
             "N/A".into()
         }
     }
 
-    fn free_space(&self) -> Cow<'static, str> {
+    fn free_space(&self, show_decimal: bool) -> Cow<'static, str> {
         if let Some(free_bytes) = self.free_bytes {
-            let converted_free_space = get_decimal_bytes(free_bytes);
-            format!("{:.0}{}", converted_free_space.0, converted_free_space.1).into()
+            let converted = get_decimal_bytes(free_bytes);
+
+            if show_decimal {
+                format!("{:.1}{}", converted.0, converted.1).into()
+            } else {
+                format!("{:.0}{}", converted.0.round(), converted.1).into()
+            }
         } else {
             "N/A".into()
         }
     }
 
-    fn used_space(&self) -> Cow<'static, str> {
+    fn used_space(&self, show_decimal: bool) -> Cow<'static, str> {
         if let Some(used_bytes) = self.used_bytes {
-            let converted_free_space = get_decimal_bytes(used_bytes);
-            format!("{:.0}{}", converted_free_space.0, converted_free_space.1).into()
+            let converted = get_decimal_bytes(used_bytes);
+
+            if show_decimal {
+                format!("{:.1}{}", converted.0, converted.1).into()
+            } else {
+                format!("{:.0}{}", converted.0.round(), converted.1).into()
+            }
         } else {
             "N/A".into()
         }
@@ -172,11 +188,11 @@ impl DataToCell<DiskColumn> for DiskWidgetData {
         let text = match column {
             DiskColumn::Disk => self.name.clone().into(),
             DiskColumn::Mount => self.mount_point.clone().into(),
-            DiskColumn::Used => self.used_space(),
-            DiskColumn::Free => self.free_space(),
+            DiskColumn::Used => self.used_space(false),
+            DiskColumn::Free => self.free_space(false),
             DiskColumn::UsedPercent => percent_string(self.used_percent()),
             DiskColumn::FreePercent => percent_string(self.free_percent()),
-            DiskColumn::Total => self.total_space(),
+            DiskColumn::Total => self.total_space(false),
             DiskColumn::IoRead => self.io_read.clone(),
             DiskColumn::IoWrite => self.io_write.clone(),
         };
@@ -199,9 +215,10 @@ impl DataToCell<DiskColumn> for DiskWidgetData {
     }
 }
 
-pub struct DiskTableWidget {
+pub struct DiskTableWidgetState {
     pub table: SortDataTable<DiskWidgetData, DiskColumn>,
     pub force_update_data: bool,
+    pub show_decimals: bool,
 }
 
 impl SortsRow for DiskColumn {
@@ -275,7 +292,7 @@ const fn default_disk_columns() -> [SortColumn<DiskColumn>; 8] {
     ]
 }
 
-impl DiskTableWidget {
+impl DiskTableWidgetState {
     pub fn new(config: &AppConfigFields, palette: &Styles, columns: Option<&[DiskColumn]>) -> Self {
         let props = SortDataTableProps {
             inner: DataTableProps {
@@ -298,11 +315,13 @@ impl DiskTableWidget {
                 Self {
                     table: SortDataTable::new_sortable(columns, props, styling),
                     force_update_data: false,
+                    show_decimals: todo!(),
                 }
             }
             None => Self {
                 table: SortDataTable::new_sortable(default_disk_columns(), props, styling),
                 force_update_data: false,
+                show_decimals: todo!(),
             },
         }
     }
@@ -327,5 +346,50 @@ impl DiskTableWidget {
     pub fn set_index(&mut self, index: usize) {
         self.table.set_sort_index(index);
         self.force_data_update();
+    }
+}
+
+impl DataTable<DiskWidgetData> for DiskTableWidgetState {
+    type HeaderType = DiskColumn;
+
+    fn to_cell_text(
+        &self, data: &DiskWidgetData, column: &Self::HeaderType, _calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
+        fn percent_string(value: Option<f64>) -> Cow<'static, str> {
+            match value {
+                Some(val) => format!("{val:.1}%").into(),
+                None => "N/A".into(),
+            }
+        }
+
+        let text = match column {
+            DiskColumn::Disk => data.name.clone().into(),
+            DiskColumn::Mount => data.mount_point.clone().into(),
+            DiskColumn::Used => data.used_space(self.show_decimals),
+            DiskColumn::Free => data.free_space(self.show_decimals),
+            DiskColumn::UsedPercent => percent_string(data.used_percent()),
+            DiskColumn::FreePercent => percent_string(data.free_percent()),
+            DiskColumn::Total => data.total_space(self.show_decimals),
+            DiskColumn::IoRead => data.io_read.clone(),
+            DiskColumn::IoWrite => data.io_write.clone(),
+        };
+
+        Some(text)
+    }
+
+    fn column_widths<C: DataTableColumn<Self::HeaderType>>(
+        &self, data: &[DiskWidgetData], _columns: &[C],
+    ) -> Vec<u16>
+    where
+        Self: Sized,
+    {
+        let mut widths = vec![0; 7];
+
+        data.iter().for_each(|row| {
+            widths[0] = max(widths[0], row.name.len() as u16);
+            widths[1] = max(widths[1], row.mount_point.len() as u16);
+        });
+
+        widths
     }
 }

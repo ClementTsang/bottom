@@ -3,8 +3,8 @@ use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 use crate::{
     app::{AppConfigFields, data::TypedTemperature},
     canvas::components::data_table::{
-        ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
-        SortDataTable, SortDataTableProps, SortOrder, SortsRow,
+        ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling, DataToCell,
+        SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
     options::config::style::Styles,
     utils::general::sort_partial_fn,
@@ -128,5 +128,34 @@ impl TempWidgetState {
         }
         self.table.set_data(data);
         self.force_update_data = false;
+    }
+}
+
+impl DataTable<TempWidgetData> for TempWidgetState {
+    type HeaderType = TempWidgetColumn;
+
+    fn to_cell_text(
+        &self, data: &TempWidgetData, column: &Self::HeaderType, _calculated_width: NonZeroU16,
+    ) -> Option<Cow<'static, str>> {
+        Some(match column {
+            TempWidgetColumn::Sensor => data.sensor.clone().into(),
+            TempWidgetColumn::Temp => data.temperature(),
+        })
+    }
+
+    fn column_widths<C: DataTableColumn<Self::HeaderType>>(
+        &self, data: &[TempWidgetData], _columns: &[C],
+    ) -> Vec<u16>
+    where
+        Self: Sized,
+    {
+        let mut widths = vec![0; 2];
+
+        data.iter().for_each(|row| {
+            widths[0] = max(widths[0], row.sensor.len() as u16);
+            widths[1] = max(widths[1], row.temperature().len() as u16);
+        });
+
+        widths
     }
 }

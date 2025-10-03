@@ -12,8 +12,8 @@ use tui::{
 };
 
 use super::{
-    CalculateColumnWidths, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataToCell,
-    SortType,
+    CalculateColumnWidths, ColumnHeader, ColumnWidthBounds, DataTableColumn, DataTableComponent,
+    DataToCell, SortType,
 };
 use crate::{
     app::layout_manager::BottomWidget,
@@ -59,7 +59,7 @@ impl DrawInfo {
     }
 }
 
-impl<DataType, H, S, C> DataTable<DataType, H, S, C>
+impl<DataType, H, S, C> DataTableComponent<DataType, H, S, C>
 where
     DataType: DataToCell<H>,
     H: ColumnHeader,

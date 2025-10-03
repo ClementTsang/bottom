@@ -9,7 +9,7 @@ use crate::{
     app::layout_manager::BottomWidgetType,
     constants,
     widgets::{
-        BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
+        BatteryWidgetState, CpuWidgetState, DiskTableWidgetState, MemWidgetState, NetWidgetState,
         ProcWidgetState, TempWidgetState, query::ProcessQuery,
     },
 };
@@ -313,19 +313,19 @@ impl TempState {
 }
 
 pub struct DiskState {
-    pub widget_states: HashMap<u64, DiskTableWidget>,
+    pub widget_states: HashMap<u64, DiskTableWidgetState>,
 }
 
 impl DiskState {
-    pub fn init(widget_states: HashMap<u64, DiskTableWidget>) -> Self {
+    pub fn init(widget_states: HashMap<u64, DiskTableWidgetState>) -> Self {
         DiskState { widget_states }
     }
 
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut DiskTableWidget> {
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut DiskTableWidgetState> {
         self.widget_states.get_mut(&widget_id)
     }
 
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&DiskTableWidget> {
+    pub fn get_widget_state(&self, widget_id: u64) -> Option<&DiskTableWidgetState> {
         self.widget_states.get(&widget_id)
     }
 }

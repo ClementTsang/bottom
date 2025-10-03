@@ -65,3 +65,12 @@ whole_word = true
 This gives us:
 
 ![Disk widget with disk name and mount filter](../../assets/screenshots/config/disk-filtering/disk_name_mount_filter.webp)
+
+## Show Decimal Places
+
+You can enable showing a decimal place in disk usage and read/write rates by setting `disk.show_decimals`:
+
+```toml
+[disk]
+show_decimals = true
+```
