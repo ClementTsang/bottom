@@ -93,7 +93,7 @@ Linux, macOS, and FreeBSD), then a simpler termination screen with just yes or n
 
 ### Tree mode
 
-Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, displaying processes in regard to their parent-child process relationships.
+Pressing ++t++, ++f5++ or ++Space++ in the table toggles tree mode in the process widget, displaying processes in regard to their parent-child process relationships.
 
 <figure>
     <img src="../../../assets/screenshots/process/process_tree.webp" alt="A picture of tree mode in a process widget."/>
@@ -230,7 +230,7 @@ Note that key bindings are generally case-sensitive.
 | ++s++ , ++f6++, ++delete++ (++fn+delete++ on macOS) | Toggle showing the sort sub-widget                               |
 | ++I++                                               | Invert the current sort                                          |
 | ++"%"++                                             | Toggle between values and percentages for memory usage           |
-| ++t++ , ++f5++                                      | Toggle tree mode                                                 |
+| ++t++ , ++f5++, ++Space++                           | Toggle tree mode                                                 |
 | ++M++                                               | Sort by gpu memory usage, press again to reverse sorting order   |
 | ++C++                                               | Sort by gpu usage, press again to reverse sorting order          |
 | ++z++                                               | Toggle the hiding of kernel threads                              |

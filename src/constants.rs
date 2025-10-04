@@ -78,7 +78,7 @@ const PROCESS_HELP_TEXT: [&str; 20] = [
     "s, F6            Open process sort widget",
     "I                Invert current sort",
     "%                Toggle between values and percentages for memory usage",
-    "t, F5            Toggle tree mode",
+    "t, F5, Space     Toggle tree mode",
     "Right            Collapse a branch while in tree mode",
     "Left             Expand a branch while in tree mode",
     "+, -, click      Toggle whether a branch is expanded or collapsed in tree mode",
