@@ -67,6 +67,7 @@ pub fn handle_key_event_or_break(
             KeyCode::Down => app.on_down_key(),
             KeyCode::Left => app.on_left_key(),
             KeyCode::Right => app.on_right_key(),
+            KeyCode::Char(' ') => app.toggle_tree_mode(),
             KeyCode::Char(caught_char) => app.on_char_key(caught_char),
             KeyCode::Esc => app.on_esc(),
             KeyCode::Enter => app.on_enter(),
