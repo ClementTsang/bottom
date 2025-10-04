@@ -65,6 +65,13 @@ gpu = ["nvidia"]
 zfs = []
 deploy = ["battery", "gpu", "zfs"]
 default = ["deploy"]
+opentelemetry = [
+    "dep:opentelemetry",
+    "dep:opentelemetry-otlp", 
+    "dep:opentelemetry_sdk",
+    "dep:opentelemetry-semantic-conventions",
+    "dep:tonic"
+]
 
 # Should not be included in builds.
 logging = ["fern", "log", "time"]
@@ -86,9 +93,9 @@ indoc = "2.0.6"
 itertools = "0.14.0"
 nvml-wrapper = { version = "0.11.0", optional = true, features = ["legacy-functions"] }
 regex = "1.11.2"
-serde = { version = "1.0.226", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 starship-battery = { version = "0.10.2", optional = true }
-sysinfo = "=0.37.0"
+sysinfo = "=0.37.1"
 timeless = "0.0.14-alpha"
 toml_edit = { version = "0.23.6", features = ["serde"] }
 tui = { version = "0.30.0-alpha.5", package = "ratatui", features = ["unstable-rendered-line-info"] }
@@ -105,6 +112,23 @@ time = { version = "0.3.44", features = ["local-offset", "formatting", "macros"]
 schemars = { version = "1.0.4", optional = true }
 serde_json = { version = "1.0.145", optional = true }
 strum = { version = "0.27.2", features = ["derive"], optional = true }
+
+# Dipendenze OpenTelemetry - VERSIONI AGGIORNATE
+opentelemetry = { version = "0.23", features = ["metrics"], optional = true }
+opentelemetry-otlp = { version = "0.16", features = ["metrics", "grpc-tonic"], optional = true }
+opentelemetry-semantic-conventions = { version = "0.15", optional = true }
+opentelemetry_sdk = { version = "0.23", features = ["metrics", "rt-tokio"], optional = true }
+
+# Dipendenze per async runtime e gRPC
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "sync"] }
+tonic = { version = "0.11", optional = true }
+
+# Per serializzazione configurazione (se non già presente)
+serde_yaml = "0.9"
+tracing = "0.1"
+thiserror = "1.0"
+
+lazy_static = "1.4"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.176"

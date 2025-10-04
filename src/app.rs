@@ -5,13 +5,29 @@ pub mod states;
 
 use std::time::Instant;
 
+use lazy_static::lazy_static;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+lazy_static! {
+    static ref TOKIO_RUNTIME: tokio::runtime::Runtime = {
+        tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime")
+    };
+}
+
 use concat_string::concat_string;
 use data::*;
 use filter::*;
 use hashbrown::HashMap;
 use layout_manager::*;
 pub use states::*;
+
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
+//#[cfg(feature = "opentelemetry")]
+//use crate::opentelemetry::{
+//    OpenTelemetryIntegration,
+//};
+
 
 use crate::{
     canvas::{
@@ -98,15 +114,26 @@ pub struct App {
     pub current_widget: BottomWidget,
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
+    #[cfg(feature = "opentelemetry")]
+    otel_integration: Arc<Mutex<Option<crate::opentelemetry::OpenTelemetryIntegration>>>,
+    
+    #[cfg(feature = "opentelemetry")]
+    otel_config: Option<crate::opentelemetry::OpenTelemetryConfig>,
 }
 
 impl App {
     /// Create a new [`App`].
     pub fn new(
-        app_config_fields: AppConfigFields, states: AppWidgetStates,
-        widget_map: HashMap<u64, BottomWidget>, current_widget: BottomWidget,
-        used_widgets: UsedWidgets, filters: DataFilters, is_expanded: bool,
-    ) -> Self {
+        app_config_fields: AppConfigFields,
+        states: AppWidgetStates,
+        widget_map: HashMap<u64, BottomWidget>,
+        current_widget: BottomWidget,
+        used_widgets: UsedWidgets,
+        filters: DataFilters,
+        is_expanded: bool,
+        #[cfg(feature = "opentelemetry")]
+        otel_config: Option<crate::opentelemetry::OpenTelemetryConfig>,
+    ) -> Self {        
         Self {
             awaiting_second_char: false,
             second_char: None,
@@ -124,6 +151,11 @@ impl App {
             current_widget,
             used_widgets,
             filters,
+            #[cfg(feature = "opentelemetry")]
+            otel_integration: Arc::new(Mutex::new(None)),
+            
+            #[cfg(feature = "opentelemetry")]
+            otel_config,
         }
     }
 
@@ -156,6 +188,43 @@ impl App {
             if disk.force_update_data {
                 disk.set_table_data(data_source);
             }
+        }
+        
+        #[cfg(feature = "opentelemetry")]
+        {
+            let otel_integration = self.otel_integration.clone();
+            let otel_config = self.otel_config.clone();
+            
+            // Usa dati reali invece di sample
+            let stored_data = self.data_store.get_data();
+            let adapter = crate::opentelemetry::adapter::BottomDataAdapter::from_stored_data(stored_data);
+
+            // Usa il runtime globale persistente
+            TOKIO_RUNTIME.spawn(async move {
+                let mut integration_guard = otel_integration.lock().await;
+                
+                if integration_guard.is_none() {
+                    if let Some(config) = otel_config {
+                        if config.enabled {
+                            match crate::opentelemetry::OpenTelemetryIntegration::new(Some(config)).await {
+                                Ok(integration) => {
+                                    eprintln!("OpenTelemetry initialized successfully");
+                                    *integration_guard = Some(integration);
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to initialize OpenTelemetry: {}", e);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if let Some(otel) = integration_guard.as_mut() {                  
+                    if let Err(e) = otel.export_system_data(&adapter).await {
+                        eprintln!("OpenTelemetry export failed: {}", e);
+                    }
+                }
+            });
         }
     }
 

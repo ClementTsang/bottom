@@ -31,6 +31,10 @@ pub struct Config {
     pub(crate) temperature: Option<TempConfig>,
     pub(crate) network: Option<NetworkConfig>,
     pub(crate) cpu: Option<CpuConfig>,
+
+    #[cfg(feature = "opentelemetry")]
+    #[serde(default)]
+    pub(crate) opentelemetry: Option<crate::opentelemetry::OpenTelemetryConfig>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

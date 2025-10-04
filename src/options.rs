@@ -542,6 +542,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             used_widgets,
             filters,
             is_expanded,
+            #[cfg(feature = "opentelemetry")]
+            config.opentelemetry.clone(),
         ),
         widget_layout,
         styling,

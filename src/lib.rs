@@ -23,6 +23,8 @@ pub(crate) mod constants;
 pub(crate) mod event;
 pub mod options;
 pub mod widgets;
+#[cfg(feature = "opentelemetry")]
+pub mod opentelemetry;
 
 use std::{
     boxed::Box,
