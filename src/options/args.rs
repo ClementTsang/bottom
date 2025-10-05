@@ -287,6 +287,11 @@ pub struct GeneralArgs {
         alias = "time-delta"
     )]
     pub time_delta: Option<String>,
+
+    /// Run in headless mode (only OpenTelemetry export, no UI)
+    #[cfg(feature = "opentelemetry")]
+    #[arg(long)]
+    pub headless: bool,
 }
 
 /// Process arguments/config options.

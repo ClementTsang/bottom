@@ -48,8 +48,8 @@ impl BottomDataAdapter {
         // Network
         let network_data = vec![NetworkMetric {
             interface_name: "total".to_string(),
-            rx_bytes: stored_data.network_harvest.total_rx,
-            tx_bytes: stored_data.network_harvest.total_tx,
+            rx_bytes: stored_data.network_harvest.rx,
+            tx_bytes: stored_data.network_harvest.tx,
             rx_packets: None,
             tx_packets: None,
         }];
@@ -85,10 +85,25 @@ impl BottomDataAdapter {
             })
             .collect();
 
+        // GPU data - memoria per GPU
+        #[cfg(feature = "gpu")]
+        let gpu_data: Vec<GpuMetric> = stored_data.gpu_harvest.iter()
+            .enumerate()
+            .map(|(idx, (name, mem_data))| GpuMetric {
+                gpu_id: idx as u32,
+                name: name.clone(),
+                usage_percent: None, // Non disponibile in gpu_harvest
+                memory_used_bytes: Some(mem_data.used_bytes),
+                temperature_celsius: None, // Già nelle temperature
+            })
+            .collect();
+
+        #[cfg(not(feature = "gpu"))]
+        let gpu_data: Vec<GpuMetric> = vec![];
+
         // Process data - limitato ai top N processi per evitare alta cardinalità
-        let process_data: Vec<ProcessMetric> = stored_data.process_data.process_harvest
+        let mut process_data: Vec<ProcessMetric> = stored_data.process_data.process_harvest
             .values()
-            .take(10) // Limita ai primi 10 processi
             .map(|proc| ProcessMetric {
                 pid: proc.pid as u32,
                 name: proc.name.clone(),
@@ -96,6 +111,8 @@ impl BottomDataAdapter {
                 memory_bytes: proc.mem_usage,
             })
             .collect();
+        process_data.sort_by(|a, b| b.cpu_usage_percent.partial_cmp(&a.cpu_usage_percent).unwrap_or(std::cmp::Ordering::Equal));
+        process_data.truncate(10);
 
         Self {
             cpu_data,
@@ -104,7 +121,7 @@ impl BottomDataAdapter {
             disk_data,
             process_data,
             temperature_data,
-            gpu_data: vec![],
+            gpu_data,
         }
     }
 }

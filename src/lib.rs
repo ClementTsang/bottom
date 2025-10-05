@@ -25,6 +25,8 @@ pub mod options;
 pub mod widgets;
 #[cfg(feature = "opentelemetry")]
 pub mod opentelemetry;
+#[allow(unused_imports)]
+use crate::args::BottomArgs;
 
 use std::{
     boxed::Box,
@@ -298,6 +300,11 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
 
     let args = args::get_args();
 
+    #[cfg(feature = "opentelemetry")]
+    if args.general.headless {
+        return run_headless(args, enable_error_hook);
+    }
+
     #[cfg(feature = "logging")]
     {
         if let Err(err) = init_logger(
@@ -483,4 +490,27 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     cleanup_terminal(&mut terminal)?;
 
     Ok(())
+}
+
+
+#[cfg(feature = "opentelemetry")]
+fn run_headless(args: BottomArgs, _enable_error_hook: &mut bool) -> anyhow::Result<()> {
+    use std::time::Duration;
+    
+    println!("Starting bottom in headless mode (OpenTelemetry only)...");
+    
+    // Read config
+    let config = get_or_create_config(args.general.config_location.as_deref())?;
+    
+    // Initialize app
+    let (mut app, _, _) = init_app(args, config)?;
+    
+    println!("Headless mode started. Exporting metrics to OpenTelemetry.");
+    println!("Press Ctrl+C to stop.");
+    
+    // Loop forever, just updating data
+    loop {
+        app.update_data();
+        std::thread::sleep(Duration::from_millis(1000));
+    }
 }

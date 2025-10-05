@@ -2,7 +2,7 @@
 #[cfg(feature = "opentelemetry")]
 use opentelemetry::{
     global,
-    metrics::{Counter, Gauge, Histogram, Meter},
+    metrics::{Counter, Gauge, Meter},
     KeyValue,
 };
 #[cfg(feature = "opentelemetry")]
@@ -21,9 +21,9 @@ use opentelemetry_sdk::{
 
 
 use lazy_static::lazy_static;
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
+//use std::collections::HashMap;
+//use std::sync::Arc;
+//use tokio::sync::RwLock;
 
 lazy_static! {
     static ref TOKIO_RUNTIME: tokio::runtime::Runtime = {
@@ -124,10 +124,10 @@ pub struct OpenTelemetryMetrics {
     swap_total: Gauge<u64>,
     
     // Network metrics
-    network_rx_bytes: Counter<u64>,
-    network_tx_bytes: Counter<u64>,
-    network_rx_packets: Counter<u64>,
-    network_tx_packets: Counter<u64>,
+    network_rx_bytes: Gauge<u64>,
+    network_tx_bytes: Gauge<u64>,
+    network_rx_packets: Gauge<u64>,
+    network_tx_packets: Gauge<u64>,
     
     // Disk metrics
     disk_usage: Gauge<u64>,
@@ -249,12 +249,12 @@ impl OpenTelemetryExporter {
         for net in network_data {
             let labels = [KeyValue::new("interface", net.interface_name.clone())];
             
-            self.metrics.network_rx_bytes.add(net.rx_bytes, &labels);
-            self.metrics.network_tx_bytes.add(net.tx_bytes, &labels);
+            self.metrics.network_rx_bytes.record(net.rx_bytes, &labels);
+            self.metrics.network_tx_bytes.record(net.tx_bytes, &labels);
             
             if let (Some(rx_packets), Some(tx_packets)) = (net.rx_packets, net.tx_packets) {
-                self.metrics.network_rx_packets.add(rx_packets, &labels);
-                self.metrics.network_tx_packets.add(tx_packets, &labels);
+                self.metrics.network_rx_packets.record(rx_packets, &labels);
+                self.metrics.network_tx_packets.record(tx_packets, &labels);
             }
         }
         
@@ -427,23 +427,23 @@ impl OpenTelemetryMetrics {
             
             // Network metrics
             network_rx_bytes: meter
-                .u64_counter("system_network_rx_bytes_total")
-                .with_description("Total received bytes")
+                .u64_gauge("system_network_rx_bytes_rate")  // ← Cambia nome e tipo
+                .with_description("Network receive rate in bytes per second")
                 .init(),
                 
             network_tx_bytes: meter
-                .u64_counter("system_network_tx_bytes_total")
-                .with_description("Total transmitted bytes")
+                .u64_gauge("system_network_tx_bytes_rate")  // ← Cambia nome e tipo
+                .with_description("Network transmit rate in bytes per second")
                 .init(),
                 
             network_rx_packets: meter
-                .u64_counter("system_network_rx_packets_total")
-                .with_description("Total received packets")
+                .u64_gauge("system_network_rx_packets_rate")  // ← Cambia nome e tipo
+                .with_description("Network receive rate in packets per second")
                 .init(),
                 
             network_tx_packets: meter
-                .u64_counter("system_network_tx_packets_total")
-                .with_description("Total transmitted packets")
+                .u64_gauge("system_network_tx_packets_rate")  // ← Cambia nome e tipo
+                .with_description("Network transmit rate in packets per second")
                 .init(),
             
             // Disk metrics

@@ -6,7 +6,9 @@ pub mod states;
 use std::time::Instant;
 
 use lazy_static::lazy_static;
+#[allow(unused_imports)]
 use std::sync::Arc;
+#[allow(unused_imports)]
 use tokio::sync::Mutex;
 
 lazy_static! {
