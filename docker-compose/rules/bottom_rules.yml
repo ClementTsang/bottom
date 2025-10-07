@@ -1,0 +1,15 @@
+groups:
+  - name: bottom_process_metrics
+    interval: 30s
+    rules:
+      - record: system_process_cpu_usage_percent:recent
+        expr: |
+          system_process_cpu_usage_percent
+            and on(pid, name)
+            (time() - timestamp(system_process_cpu_usage_percent) < 120)
+      
+      - record: system_process_memory_usage_bytes:recent
+        expr: |
+          system_process_memory_usage_bytes
+            and on(pid, name)
+            (time() - timestamp(system_process_memory_usage_bytes) < 120)

@@ -495,7 +495,9 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
 
 #[cfg(feature = "opentelemetry")]
 fn run_headless(args: BottomArgs, _enable_error_hook: &mut bool) -> anyhow::Result<()> {
-    use std::time::Duration;
+    use std::sync::Arc;
+    use std::sync::mpsc;
+    use crate::utils::cancellation_token::CancellationToken;
     
     println!("Starting bottom in headless mode (OpenTelemetry only)...");
     
@@ -505,12 +507,80 @@ fn run_headless(args: BottomArgs, _enable_error_hook: &mut bool) -> anyhow::Resu
     // Initialize app
     let (mut app, _, _) = init_app(args, config)?;
     
+    // Crea il cancellation token per gestire shutdown pulito
+    let cancellation_token = Arc::new(CancellationToken::default());
+    let (sender, receiver) = mpsc::channel();
+    
+    // Crea il thread di raccolta dati (come in start_bottom)
+    let (_collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
+    let _collection_thread = create_collection_thread(
+        sender.clone(),
+        collection_thread_ctrl_receiver,
+        cancellation_token.clone(),
+        &app.app_config_fields,
+        app.filters.clone(),
+        app.used_widgets,
+    );
+    
+    // Setup ctrl-c handler
+    let shutdown_sender = sender.clone();
+    ctrlc::set_handler(move || {
+        let _ = shutdown_sender.send(BottomEvent::Terminate);
+    })?;
+    
     println!("Headless mode started. Exporting metrics to OpenTelemetry.");
     println!("Press Ctrl+C to stop.");
     
-    // Loop forever, just updating data
+    // Main loop - simile a start_bottom ma senza rendering
     loop {
-        app.update_data();
-        std::thread::sleep(Duration::from_millis(1000));
+        if let Ok(recv) = receiver.recv() {
+            match recv {
+                BottomEvent::Terminate => {
+                    println!("Shutting down...");
+                    break;
+                }
+                BottomEvent::Update(data) => {
+                    // Popola il data_store con i dati reali!
+                    app.data_store.eat_data(data, &app.app_config_fields);
+                                        
+                    // Aggiorna i widget states (necessario per l'export)
+                    if !app.data_store.is_frozen() {
+                        if app.used_widgets.use_disk {
+                            for disk in app.states.disk_state.widget_states.values_mut() {
+                                disk.force_data_update();
+                            }
+                        }
+                        if app.used_widgets.use_temp {
+                            for temp in app.states.temp_state.widget_states.values_mut() {
+                                temp.force_data_update();
+                            }
+                        }
+                        if app.used_widgets.use_proc {
+                            for proc in app.states.proc_state.widget_states.values_mut() {
+                                proc.force_data_update();
+                            }
+                        }
+                        if app.used_widgets.use_cpu {
+                            for cpu in app.states.cpu_state.widget_states.values_mut() {
+                                cpu.force_data_update();
+                            }
+                        }
+                        
+                        // Ora chiama update_data che esporterà le metriche
+                        app.update_data();
+                    }
+                }
+                BottomEvent::Clean => {
+                    app.data_store.clean_data(Duration::from_millis(
+                        app.app_config_fields.retention_ms
+                    ));
+                }
+                // Ignora gli altri eventi (non rilevanti in headless)
+                _ => {}
+            }
+        }
     }
+    
+    cancellation_token.cancel();
+    Ok(())
 }

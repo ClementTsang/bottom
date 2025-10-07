@@ -2,4 +2,16 @@ scrape_configs:
   - job_name: 'otel-collector'
     metrics_path: '/metrics'
     static_configs:
-      - targets: ['otel-collector:9090']
+      - targets: ['otel-collector:9090']     
+
+rule_files:
+  - '/etc/prometheus/rules/*.yml'
+
+remote_write:
+  - url: http://promscale:9201/write
+
+remote_read:
+  - url: http://promscale:9201/read
+
+global:
+  scrape_interval: 10s

@@ -305,7 +305,9 @@ impl OpenTelemetryExporter {
         
         Ok(())
     }
-    
+
+
+
     pub async fn export_temperature_data(&self, temp_data: &[TemperatureMetric]) -> Result<(), OpenTelemetryError> {
         if !self.config.metrics.temperature {
             return Ok(());

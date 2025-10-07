@@ -1,4 +1,26 @@
 services:
+  timescaledb:
+    image: timescale/timescaledb-ha:pg15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: promscale
+      POSTGRES_USER: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+
+  promscale:
+    image: timescale/promscale:latest
+    ports:
+      - "9201:9201"
+    depends_on:
+      - timescaledb
+    environment:
+      PROMSCALE_DB_URI: postgres://postgres:password@timescaledb:5432/promscale?sslmode=disable
+      PROMSCALE_STARTUP_INSTALL_EXTENSIONS: "true"
+    restart: on-failure
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
@@ -14,6 +36,7 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./rules:/etc/prometheus/rules
     ports:
       - "9090:9090" # Interfaccia Web di Prometheus
     command:
@@ -35,3 +58,4 @@ services:
 
 volumes:
   grafana-storage:
+  timescale_data:
