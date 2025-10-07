@@ -28,7 +28,7 @@
     "flags": {
       "anyOf": [
         {
-          "$ref": "#/$defs/FlagConfig"
+          "$ref": "#/$defs/GeneralConfig"
         },
         {
           "type": "null"
@@ -138,7 +138,7 @@
       }
     },
     "CpuDefault": {
-      "description": "The default selection of the CPU widget. If the given selection is invalid,\n we will fall back to all.",
+      "description": "The default selection of the CPU widget. If the given selection is invalid,\nwe will fall back to all.",
       "type": "string",
       "enum": [
         "all",
@@ -207,7 +207,10 @@
       "properties": {
         "columns": {
           "description": "A list of disk widget columns.",
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "$ref": "#/$defs/DiskColumn"
           }
@@ -240,9 +243,6 @@
       "description": "Represents a widget.",
       "type": "object",
       "properties": {
-        "type": {
-          "type": "string"
-        },
         "default": {
           "type": [
             "boolean",
@@ -256,13 +256,16 @@
           ],
           "format": "uint32",
           "minimum": 0
+        },
+        "type": {
+          "type": "string"
         }
       },
       "required": [
         "type"
       ]
     },
-    "FlagConfig": {
+    "GeneralConfig": {
       "type": "object",
       "properties": {
         "autohide_time": {
@@ -349,6 +352,12 @@
             "null"
           ]
         },
+        "disable_keys": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "dot_marker": {
           "type": [
             "boolean",
@@ -374,6 +383,12 @@
           ]
         },
         "hide_avg_cpu": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "hide_k_threads": {
           "type": [
             "boolean",
             "null"
@@ -751,11 +766,18 @@
           "items": {
             "$ref": "#/$defs/ProcColumn"
           }
+        },
+        "get_threads": {
+          "description": "Whether to get process child threads.",
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       }
     },
     "RowChildren": {
-      "description": "Represents a child of a Row - either a Col (column) or a FinalWidget.\n\n A Col can also have an optional length and children.  We only allow columns\n to have FinalWidgets as children, lest we get some amount of mutual\n recursion between Row and Col.",
+      "description": "Represents a child of a Row - either a Col (column) or a FinalWidget.\n\nA Col can also have an optional length and children.  We only allow columns\nto have FinalWidgets as children, lest we get some amount of mutual\nrecursion between Row and Col.",
       "anyOf": [
         {
           "$ref": "#/$defs/FinalWidget"
@@ -867,7 +889,7 @@
           ]
         },
         "theme": {
-          "description": "A built-in theme.\n\n If this is and a custom colour are both set, in the config file,\n the custom colour scheme will be prioritized first. If a theme\n is set in the command-line args, however, it will always be\n prioritized first.",
+          "description": "A built-in theme.\n\nIf this is and a custom colour are both set, in the config file,\nthe custom colour scheme will be prioritized first. If a theme\nis set in the command-line args, however, it will always be\nprioritized first.",
           "type": [
             "string",
             "null"
@@ -941,7 +963,7 @@
               ]
             },
             "bold": {
-              "description": "Whether to make this text bolded or not. If not set,\n will default to built-in defaults.",
+              "description": "Whether to make this text bolded or not. If not set,\nwill default to built-in defaults.",
               "type": [
                 "boolean",
                 "null"
@@ -959,7 +981,7 @@
               ]
             },
             "italics": {
-              "description": "Whether to make this text italicized or not. If not set,\n will default to built-in defaults.",
+              "description": "Whether to make this text italicized or not. If not set,\nwill default to built-in defaults.",
               "type": [
                 "boolean",
                 "null"
@@ -1037,6 +1059,17 @@
             }
           ]
         },
+        "thread_text": {
+          "description": "Text styling for text when representing process threads. Only usable\non Linux at the moment.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextStyleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "widget_border_type": {
           "description": "Widget borders type.",
           "anyOf": [
@@ -1062,7 +1095,7 @@
       }
     },
     "row": {
-      "description": "Represents a row. This has a length of some sort (optional) and a vector\n of children.",
+      "description": "Represents a row. This has a length of some sort (optional) and a vector\nof children.",
       "type": "object",
       "properties": {
         "child": {
