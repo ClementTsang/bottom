@@ -138,7 +138,7 @@
       }
     },
     "CpuDefault": {
-      "description": "The default selection of the CPU widget. If the given selection is invalid,\n we will fall back to all.",
+      "description": "The default selection of the CPU widget. If the given selection is invalid,\nwe will fall back to all.",
       "type": "string",
       "enum": [
         "all",
@@ -243,9 +243,6 @@
       "description": "Represents a widget.",
       "type": "object",
       "properties": {
-        "type": {
-          "type": "string"
-        },
         "default": {
           "type": [
             "boolean",
@@ -259,6 +256,9 @@
           ],
           "format": "uint32",
           "minimum": 0
+        },
+        "type": {
+          "type": "string"
         }
       },
       "required": [
@@ -777,7 +777,7 @@
       }
     },
     "RowChildren": {
-      "description": "Represents a child of a Row - either a Col (column) or a FinalWidget.\n\n A Col can also have an optional length and children.  We only allow columns\n to have FinalWidgets as children, lest we get some amount of mutual\n recursion between Row and Col.",
+      "description": "Represents a child of a Row - either a Col (column) or a FinalWidget.\n\nA Col can also have an optional length and children.  We only allow columns\nto have FinalWidgets as children, lest we get some amount of mutual\nrecursion between Row and Col.",
       "anyOf": [
         {
           "$ref": "#/$defs/FinalWidget"
@@ -889,7 +889,7 @@
           ]
         },
         "theme": {
-          "description": "A built-in theme.\n\n If this is and a custom colour are both set, in the config file,\n the custom colour scheme will be prioritized first. If a theme\n is set in the command-line args, however, it will always be\n prioritized first.",
+          "description": "A built-in theme.\n\nIf this is and a custom colour are both set, in the config file,\nthe custom colour scheme will be prioritized first. If a theme\nis set in the command-line args, however, it will always be\nprioritized first.",
           "type": [
             "string",
             "null"
@@ -963,7 +963,7 @@
               ]
             },
             "bold": {
-              "description": "Whether to make this text bolded or not. If not set,\n will default to built-in defaults.",
+              "description": "Whether to make this text bolded or not. If not set,\nwill default to built-in defaults.",
               "type": [
                 "boolean",
                 "null"
@@ -981,7 +981,7 @@
               ]
             },
             "italics": {
-              "description": "Whether to make this text italicized or not. If not set,\n will default to built-in defaults.",
+              "description": "Whether to make this text italicized or not. If not set,\nwill default to built-in defaults.",
               "type": [
                 "boolean",
                 "null"
@@ -1060,7 +1060,7 @@
           ]
         },
         "thread_text": {
-          "description": "Text styling for text when representing process threads. Only usable\n on Linux at the moment.",
+          "description": "Text styling for text when representing process threads. Only usable\non Linux at the moment.",
           "anyOf": [
             {
               "$ref": "#/$defs/TextStyleConfig"
@@ -1095,7 +1095,7 @@
       }
     },
     "row": {
-      "description": "Represents a row. This has a length of some sort (optional) and a vector\n of children.",
+      "description": "Represents a row. This has a length of some sort (optional) and a vector\nof children.",
       "type": "object",
       "properties": {
         "child": {
