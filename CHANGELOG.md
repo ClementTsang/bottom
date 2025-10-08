@@ -26,6 +26,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 - [#1793](https://github.com/ClementTsang/bottom/pull/1793): Add support for threads in Linux.
 - [#1719](https://github.com/ClementTsang/bottom/pull/1719): Support ignoring all keypresses.
+- [#1772](https://github.com/ClementTsang/bottom/pull/1772): Support hiding kernel threads.
 
 ### Bug Fixes
 
