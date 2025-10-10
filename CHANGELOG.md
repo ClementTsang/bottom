@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
+## \[0.11.3\]/\[0.12.0\] - Unreleased
+
+### Bug Fixes
+
+- [#1833](https://github.com/ClementTsang/bottom/pull/1833): Sort disk I/O using actual value rather than string representation.
+
 ## [0.11.2] - 2025-10-07
 
 ### Features
