@@ -25,7 +25,6 @@ That said, these are more guidelines rather than hardset rules, though the proje
 ### Features
 
 - [#1812](https://github.com/ClementTsang/bottom/pull/1812): Add `free_arc` option to subtract ARC from total memory usage.
-- [#1830](https://github.com/ClementTsang/bottom/pull/1830): Support using space bar to toggle minimizing/maximizing tree mode entries.
 
 ### Bug Fixes
 
