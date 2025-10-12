@@ -19,7 +19,7 @@ If you want to directly contribute documentation changes or code, follow this! T
 
 1. Fork the project.
 2. Make your changes.
-3. Make any documentation changes if necessary - if you add a new feature, it'll probably need documentation changes. See [here](https://clementtsang.github.io/bottom/nightly/contribution/documentation/) for tips on documentation.
+3. Make any documentation changes if necessary - if you add a new feature, it'll probably need documentation changes. See [here](https://bottom.pages.dev/nightly/contribution/documentation/) for tips on documentation.
 4. Commit and create a pull request to merge into the `main` branch. **Please fill out the pull request template**.
 5. Ask a maintainer to review your pull request.
    - Check if the CI workflow passes. These consist of clippy lints, rustfmt checks, and basic tests. If you are a
@@ -28,13 +28,13 @@ If you want to directly contribute documentation changes or code, follow this! T
 6. Once it looks good, it'll be merged! Note that _generally_, PRs are squashed to maintain repo cleanliness, though
    feel free to ask otherwise if that isn't preferable.
 
-For more details, see [here](https://clementtsang.github.io/bottom/nightly/contribution/issues-and-pull-requests/).
+For more details, see [here](https://bottom.pages.dev/nightly/contribution/issues-and-pull-requests/).
 
 ### Documentation
 
-For contributing to documentation, see [here](https://clementtsang.github.io/bottom/nightly/contribution/documentation/).
+For contributing to documentation, see [here](https://bottom.pages.dev/nightly/contribution/documentation/).
 
 ### Packaging
 
-If you want to become a package maintainer, see [here](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
+If you want to become a package maintainer, see [here](https://bottom.pages.dev/nightly/contribution/packaging-and-distribution/)
 for details on how to build bottom, how to generate/obtain completion files and manpages, and how to add installation instructions for the package to the README.

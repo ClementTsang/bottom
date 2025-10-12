@@ -9,7 +9,6 @@ use crate::collection::batteries;
 use crate::{
     app::AppConfigFields,
     collection::{Data, cpu, disks, memory::MemData, network},
-    dec_bytes_per_second_string,
     utils::data_units::DataUnit,
     widgets::{DiskWidgetData, TempWidgetData},
 };
@@ -246,21 +245,22 @@ impl StoredData {
                 }
             };
 
-            let (mut io_read, mut io_write) = ("N/A".into(), "N/A".into());
+            let (mut io_read_rate_bytes, mut io_write_rate_bytes) = (None, None);
             if let Some(Some(io_device)) = io_device {
                 if let Some(prev_io) = self.prev_io.get_mut(itx) {
-                    let r_rate = ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
-                        / time_since_last_harvest)
-                        .round() as u64;
+                    io_read_rate_bytes = Some(
+                        ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
+                            / time_since_last_harvest)
+                            .round() as u64,
+                    );
 
-                    let w_rate = ((io_device.write_bytes.saturating_sub(prev_io.1)) as f64
-                        / time_since_last_harvest)
-                        .round() as u64;
+                    io_write_rate_bytes = Some(
+                        ((io_device.write_bytes.saturating_sub(prev_io.1)) as f64
+                            / time_since_last_harvest)
+                            .round() as u64,
+                    );
 
                     *prev_io = (io_device.read_bytes, io_device.write_bytes);
-
-                    io_read = dec_bytes_per_second_string(r_rate).into();
-                    io_write = dec_bytes_per_second_string(w_rate).into();
                 }
             }
 
@@ -276,8 +276,8 @@ impl StoredData {
                 used_bytes: device.used_space,
                 total_bytes: device.total_space,
                 summed_total_bytes,
-                io_read,
-                io_write,
+                io_read_rate_bytes,
+                io_write_rate_bytes,
             });
         }
     }

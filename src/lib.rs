@@ -5,7 +5,7 @@
 //! **Note:** The following documentation is primarily intended for people to
 //! refer to for development purposes rather than the actual usage of the
 //! application. If you are instead looking for documentation regarding the
-//! *usage* of bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
+//! *usage* of bottom, refer to [here](https://bottom.pages.dev/stable/).
 
 pub(crate) mod app;
 mod utils {

@@ -7,8 +7,8 @@
 
 [<img src="https://img.shields.io/github/checks-status/ClementTsang/bottom/main?style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%3Amain)
 [<img src="https://img.shields.io/crates/v/bottom.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/bottom)
-[<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://clementtsang.github.io/bottom/stable)
-[<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://clementtsang.github.io/bottom/nightly)
+[<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://bottom.pages.dev/stable)
+[<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://bottom.pages.dev/nightly)
 
 </div>
 
@@ -63,26 +63,26 @@ As (yet another) process/system visualization and management application, bottom
 
 - Graphical visualization widgets for:
 
-  - [CPU usage](https://clementtsang.github.io/bottom/nightly/usage/widgets/cpu/) over time, at an average and per-core level
-  - [RAM and swap usage](https://clementtsang.github.io/bottom/nightly/usage/widgets/memory/) over time
-  - [Network I/O usage](https://clementtsang.github.io/bottom/nightly/usage/widgets/network/) over time
+  - [CPU usage](https://bottom.pages.dev/nightly/usage/widgets/cpu/) over time, at an average and per-core level
+  - [RAM and swap usage](https://bottom.pages.dev/nightly/usage/widgets/memory/) over time
+  - [Network I/O usage](https://bottom.pages.dev/nightly/usage/widgets/network/) over time
 
   with support for zooming in/out the current time interval displayed.
 
 - Widgets for displaying info about:
 
-  - [Disk capacity/usage](https://clementtsang.github.io/bottom/nightly/usage/widgets/disk/)
-  - [Temperature sensors](https://clementtsang.github.io/bottom/nightly/usage/widgets/temperature/)
-  - [Battery usage](https://clementtsang.github.io/bottom/nightly/usage/widgets/battery/)
+  - [Disk capacity/usage](https://bottom.pages.dev/nightly/usage/widgets/disk/)
+  - [Temperature sensors](https://bottom.pages.dev/nightly/usage/widgets/temperature/)
+  - [Battery usage](https://bottom.pages.dev/nightly/usage/widgets/battery/)
 
-- [A process widget](https://clementtsang.github.io/bottom/nightly/usage/widgets/process/) for displaying, sorting, and searching info about processes, as well as support for:
+- [A process widget](https://bottom.pages.dev/nightly/usage/widgets/process/) for displaying, sorting, and searching info about processes, as well as support for:
 
-  - [Kill signals](https://clementtsang.github.io/bottom/nightly/usage/widgets/process/#process-termination)
-  - [Tree mode](https://clementtsang.github.io/bottom/nightly/usage/widgets/process/#tree-mode)
+  - [Kill signals](https://bottom.pages.dev/nightly/usage/widgets/process/#process-termination)
+  - [Tree mode](https://bottom.pages.dev/nightly/usage/widgets/process/#tree-mode)
 
 - [Cross-platform support](https://github.com/ClementTsang/bottom#support) for Linux, macOS, and Windows, with more planned in the future.
 
-- [Customizable behaviour](https://clementtsang.github.io/bottom/nightly/configuration/command-line-options/) that can be controlled with command-line options or a config file, such as:
+- [Customizable behaviour](https://bottom.pages.dev/nightly/configuration/command-line-options/) that can be controlled with command-line options or a config file, such as:
 
   - Custom and built-in colour themes
   - Customizing widget behaviour
@@ -91,12 +91,12 @@ As (yet another) process/system visualization and management application, bottom
 
 - And more:
 
-  - [An htop-inspired basic mode](https://clementtsang.github.io/bottom/nightly/usage/basic-mode/)
-  - [Expansion, which focuses on just one widget](https://clementtsang.github.io/bottom/nightly/usage/general-usage/#expansion)
+  - [An htop-inspired basic mode](https://bottom.pages.dev/nightly/usage/basic-mode/)
+  - [Expansion, which focuses on just one widget](https://bottom.pages.dev/nightly/usage/general-usage/#expansion)
 
 - And more!
 
-You can find more details in [the documentation](https://clementtsang.github.io/bottom/nightly/usage/general-usage/).
+You can find more details in [the documentation](https://bottom.pages.dev/nightly/usage/general-usage/).
 
 ## Support
 
@@ -111,7 +111,7 @@ bottom _officially_ supports the following operating systems and corresponding a
 These platforms are tested to work for the most part and issues on these platforms will be fixed if possible.
 Furthermore, binaries are built and tested using the most recent version of stable Rust at the time.
 
-For more details on supported platforms and known problems, check out [the documentation](https://clementtsang.github.io/bottom/nightly/support/official/).
+For more details on supported platforms and known problems, check out [the documentation](https://bottom.pages.dev/nightly/support/official/).
 
 ### Unofficial
 
@@ -129,7 +129,7 @@ A non-comprehensive list of some currently unofficially-supported platforms that
 - Linux (`armv6`, `armv7`, `powerpc64le`, `riscv64gc`)
 - Android (`arm64`)
 
-For more details on unsupported platforms and known problems, check out [the documentation](https://clementtsang.github.io/bottom/nightly/support/unofficial/).
+For more details on unsupported platforms and known problems, check out [the documentation](https://bottom.pages.dev/nightly/support/unofficial/).
 
 ## Installation
 
@@ -163,8 +163,8 @@ Alternatively, you can use `cargo install` using the repo as the source.
 rustup update stable
 
 # Option 1 - Download an archive from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.11.1.tar.gz
-tar -xzvf 0.11.1.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.11.2.tar.gz
+tar -xzvf 0.11.2.tar.gz
 cargo install --path . --locked
 
 # Option 2 - Manually clone the repo and install
@@ -216,20 +216,20 @@ Some examples of installing it this way:
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.1/bottom_0.11.1-1_amd64.deb
-sudo dpkg -i bottom_0.11.1-1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.2/bottom_0.11.2-1_amd64.deb
+sudo dpkg -i bottom_0.11.2-1_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.1/bottom_0.11.1-1_arm64.deb
-sudo dpkg -i bottom_0.11.1-1_arm64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.2/bottom_0.11.2-1_arm64.deb
+sudo dpkg -i bottom_0.11.2-1_arm64.deb
 
 # ARM
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.1/bottom_0.11.1-1_armhf.deb
-sudo dpkg -i bottom_0.11.1-1_armhf.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.2/bottom_0.11.2-1_armhf.deb
+sudo dpkg -i bottom_0.11.2-1_armhf.deb
 
 # musl-based
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.1/bottom-musl_0.11.1-1_amd64.deb
-sudo dpkg -i bottom-musl_0.11.1-1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.2/bottom-musl_0.11.2-1_amd64.deb
+sudo dpkg -i bottom-musl_0.11.2-1_amd64.deb
 ```
 
 ### Exherbo Linux
@@ -261,8 +261,8 @@ sudo dnf install bottom
 For example:
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.1/bottom-0.11.1-1.x86_64.rpm
-sudo rpm -i bottom-0.11.1-1.x86_64.rpm
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.2/bottom-0.11.2-1.x86_64.rpm
+sudo rpm -i bottom-0.11.2-1.x86_64.rpm
 ```
 
 ### Gentoo
@@ -434,20 +434,20 @@ The individual auto-completion files are also included in the stable/nightly rel
 You can run bottom using `btm`.
 
 - For help on flags, use `btm -h` for a quick overview or `btm --help` for more details.
-- For info on key and mouse bindings, press `?` inside bottom or refer to the [documentation page](https://clementtsang.github.io/bottom/nightly/).
+- For info on key and mouse bindings, press `?` inside bottom or refer to the [documentation page](https://bottom.pages.dev/nightly/).
 
-You can find more information on usage in the [documentation](https://clementtsang.github.io/bottom/nightly/).
+You can find more information on usage in the [documentation](https://bottom.pages.dev/nightly/).
 
 ## Configuration
 
 bottom accepts a number of command-line arguments to change the behaviour of the application as desired.
 Additionally, bottom will automatically generate a configuration file on the first launch, which can be changed.
 
-More details on configuration can be found [in the documentation](https://clementtsang.github.io/bottom/nightly/configuration/config-file/).
+More details on configuration can be found [in the documentation](https://bottom.pages.dev/nightly/configuration/config-file/).
 
 ## Troubleshooting
 
-If some things aren't working, give the [troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting)
+If some things aren't working, give the [troubleshooting page](https://bottom.pages.dev/nightly/troubleshooting)
 a look. If things still aren't working, then consider asking [a question](https://github.com/ClementTsang/bottom/discussions)
 or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose) if you think it's a bug.
 
