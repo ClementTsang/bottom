@@ -26,10 +26,26 @@ use crate::{
     options::config::style::Styles,
 };
 
+/// The constraints of a widget relative to its parent.
+///
+/// This is used over ratatui's internal representation due to
+/// <https://github.com/ClementTsang/bottom/issues/896>.
+///
+/// Note this is now fixed, see <https://github.com/ClementTsang/bottom/pull/1406#issuecomment-1925467931>.
+pub enum LayoutConstraint {
+    CanvasHandled,
+    Grow,
+    Ratio(u32, u32),
+}
+
 /// Handles the canvas' state.
 pub struct Painter {
     pub styles: Styles,
+
+    /// Used to know whether to invalidate previously-calculated sizes.
     previous_height: u16,
+
+    /// Used to know whether to invalidate previously-calculated sizes.
     previous_width: u16,
 
     // TODO: Redo this entire thing.
@@ -39,16 +55,6 @@ pub struct Painter {
     layout_constraints: Vec<Vec<Vec<Vec<LayoutConstraint>>>>,
     derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
     widget_layout: BottomLayout,
-}
-
-/// The constraints of a widget relative to its parent.
-///
-/// This is used over ratatui's internal representation due to
-/// <https://github.com/ClementTsang/bottom/issues/896>.
-pub enum LayoutConstraint {
-    CanvasHandled,
-    Grow,
-    Ratio(u32, u32),
 }
 
 impl Painter {
