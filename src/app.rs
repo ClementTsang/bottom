@@ -59,6 +59,8 @@ pub struct AppConfigFields {
     pub is_advanced_kill: bool,
     #[cfg(target_os = "linux")]
     pub hide_k_threads: bool,
+    #[cfg(feature = "zfs")]
+    pub free_arc: bool,
     pub memory_legend_position: Option<LegendPosition>,
     // TODO: Remove these, move network details state-side.
     pub network_unit_type: DataUnit,

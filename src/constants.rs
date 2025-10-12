@@ -365,6 +365,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Shows cache and buffer memory
 #enable_cache_memory = false
 
+# Subtract freeable ARC from memory usage
+#free_arc = false
+
 # How much data is stored at once in terms of time.
 #retention = "10m"
 
@@ -380,6 +383,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # The columns shown by the process widget. The following columns are supported (the GPU columns are only available if the GPU feature is enabled when built):
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%
 #columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%"]
+
+# Gather process child thread information
+#get_threads = false
 
 
 # CPU widget configuration
