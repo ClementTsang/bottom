@@ -2,6 +2,36 @@ use serde::{Deserialize, Serialize};
 
 use crate::{app::layout_manager::*, options::OptionResult};
 
+/// A layout node.
+#[derive(Clone, Deserialize, Debug, Serialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
+pub(crate) enum LayoutNode {
+    /// A row container.
+    #[serde(alias = "row")]
+    Row {
+        #[serde(alias = "child")]
+        children: Vec<LayoutNode>,
+        ratio: Option<u32>,
+    },
+
+    /// A column container.
+    #[serde(alias = "column", alias = "col")]
+    Column {
+        #[serde(alias = "child")]
+        children: Vec<LayoutNode>,
+        ratio: Option<u32>,
+    },
+
+    /// A widget.
+    Widget {
+        #[serde(rename = "type")]
+        widget_type: String,
+        default: Option<bool>,
+        ratio: Option<u32>,
+    },
+}
+
 /// Represents a row. This has a length of some sort (optional) and a vector
 /// of children.
 #[derive(Clone, Deserialize, Debug, Serialize)]
