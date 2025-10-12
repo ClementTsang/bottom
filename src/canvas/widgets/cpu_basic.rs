@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use itertools::{Either, Itertools};
+use itertools::Itertools;
 use tui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -42,8 +42,11 @@ impl Painter {
         }
 
         // TODO: This is pretty ugly. Is there a better way of doing it?
-        let mut cpu_iter = Either::Right(cpu_data.iter());
-        if app_state.app_config_fields.dedicated_average_row {
+        let mut avg_index = cpu_data.len() + 1;
+        let mut avg_row_count = 0;
+        if app_state.app_config_fields.dedicated_average_row
+            && app_state.app_config_fields.show_average_cpu
+        {
             if let Some((index, avg)) = cpu_data
                 .iter()
                 .find_position(|&datum| matches!(datum.data_type, CpuDataType::Avg))
@@ -66,9 +69,9 @@ impl Painter {
                         .ratio(ratio.into()),
                     avg_loc,
                 );
-
+                avg_row_count += 1;
+                avg_index = index;
                 draw_loc = cores_loc;
-                cpu_iter = Either::Left(cpu_data.iter().skip(index));
             }
         }
 
@@ -83,7 +86,13 @@ impl Painter {
                 .direction(Direction::Horizontal)
                 .split(draw_loc);
 
-            let mut gauge_info = cpu_iter.map(|cpu| self.cpu_info(cpu));
+            let mut gauge_info = cpu_data.iter().enumerate().filter_map(|(index, cpu)| {
+                if index == avg_index {
+                    None
+                } else {
+                    Some(self.cpu_info(cpu))
+                }
+            });
 
             // Very ugly way to sync the gauge limit across all gauges.
             let hide_parts = columns
@@ -99,7 +108,7 @@ impl Painter {
                 })
                 .unwrap_or_default();
 
-            let num_entries = cpu_data.len();
+            let num_entries = cpu_data.len() - avg_row_count;
             let mut row_counter = num_entries;
             for (itx, column) in columns.iter().enumerate() {
                 if REQUIRED_COLUMNS > itx {

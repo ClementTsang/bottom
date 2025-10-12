@@ -175,7 +175,7 @@ impl Painter {
 
     pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut App,
-    ) -> Result<(), std::io::Error> {
+    ) -> Result<(), B::Error> {
         use BottomWidgetType::*;
 
         terminal.draw(|f| {
@@ -351,7 +351,8 @@ impl Painter {
                     let c = (actual_cpu_data_len / 4) as u16
                         + u16::from(actual_cpu_data_len % 4 != 0)
                         + u16::from(
-                            app_state.app_config_fields.dedicated_average_row
+                            app_state.app_config_fields.show_average_cpu
+                                && app_state.app_config_fields.dedicated_average_row
                                 && actual_cpu_data_len.saturating_sub(1) % 4 != 0,
                         );
 

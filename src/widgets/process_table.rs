@@ -1168,10 +1168,9 @@ mod test {
     use std::time::Duration;
 
     use super::*;
-    use crate::widgets::MemUsage;
-
     #[cfg(target_os = "linux")]
     use crate::collection::processes::ProcessType;
+    use crate::widgets::MemUsage;
 
     #[test]
     fn test_proc_sort() {
@@ -1189,9 +1188,9 @@ mod test {
             process_state: "N/A",
             process_char: '?',
             #[cfg(target_family = "unix")]
-            user: "root".to_string(),
+            user: Some("root".into()),
             #[cfg(not(target_family = "unix"))]
-            user: "N/A".to_string(),
+            user: Some("N/A".into()),
             num_similar: 0,
             disabled: false,
             time: Duration::from_secs(0),
@@ -1258,8 +1257,8 @@ mod test {
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
-            [&c, &d, &a, &b].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
-            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+            [&c, &d, &a, &b].iter().map(|d| d.pid).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
     }
 

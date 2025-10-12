@@ -88,14 +88,7 @@ pub(crate) trait UnixProcessExt {
                 total_write: disk_usage.total_written_bytes,
                 process_state,
                 uid,
-                user: uid
-                    .and_then(|uid| {
-                        user_table
-                            .get_uid_to_username_mapping(uid)
-                            .map(Into::into)
-                            .ok()
-                    })
-                    .unwrap_or_else(|| "N/A".into()),
+                user: uid.and_then(|uid| user_table.uid_to_username(uid).ok()),
                 time: if process_val.start_time() == 0 {
                     // Workaround for sysinfo occasionally returning a start time equal to UNIX
                     // epoch, giving a run time in the range of 50+ years. We just
@@ -179,7 +172,7 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
                 _ => '?'
             }
         } else if #[cfg(target_os = "freebsd")] {
-            const fn assert_u8(val: i8) -> u8 {
+            const fn assert_u8(val: libc::c_char) -> u8 {
                 if val < 0 { panic!("there was an invalid i8 constant that is supposed to be a char") } else { val as u8 }
             }
 

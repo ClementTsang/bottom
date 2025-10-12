@@ -9,7 +9,10 @@ use crate::{
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
     options::config::style::Styles,
-    utils::{data_units::get_decimal_bytes, general::sort_partial_fn},
+    utils::{
+        conversion::dec_bytes_per_second_string, data_units::get_decimal_bytes,
+        general::sort_partial_fn,
+    },
 };
 
 #[derive(Clone, Debug)]
@@ -20,8 +23,8 @@ pub struct DiskWidgetData {
     pub used_bytes: Option<u64>,
     pub total_bytes: Option<u64>,
     pub summed_total_bytes: Option<u64>,
-    pub io_read: Cow<'static, str>,
-    pub io_write: Cow<'static, str>,
+    pub io_read_rate_bytes: Option<u64>,
+    pub io_write_rate_bytes: Option<u64>,
 }
 
 impl DiskWidgetData {
@@ -78,6 +81,18 @@ impl DiskWidgetData {
         } else {
             None
         }
+    }
+
+    fn io_read(&self) -> Cow<'static, str> {
+        self.io_read_rate_bytes.map_or("N/A".into(), |r_rate| {
+            dec_bytes_per_second_string(r_rate).into()
+        })
+    }
+
+    fn io_write(&self) -> Cow<'static, str> {
+        self.io_write_rate_bytes.map_or("N/A".into(), |w_rate| {
+            dec_bytes_per_second_string(w_rate).into()
+        })
     }
 }
 
@@ -177,8 +192,8 @@ impl DataToCell<DiskColumn> for DiskWidgetData {
             DiskColumn::UsedPercent => percent_string(self.used_percent()),
             DiskColumn::FreePercent => percent_string(self.free_percent()),
             DiskColumn::Total => self.total_space(),
-            DiskColumn::IoRead => self.io_read.clone(),
-            DiskColumn::IoWrite => self.io_write.clone(),
+            DiskColumn::IoRead => self.io_read(),
+            DiskColumn::IoWrite => self.io_write(),
         };
 
         Some(text)
@@ -235,10 +250,14 @@ impl SortsRow for DiskColumn {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.total_bytes, &b.total_bytes));
             }
             DiskColumn::IoRead => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(&a.io_read, &b.io_read));
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(&a.io_read_rate_bytes, &b.io_read_rate_bytes)
+                });
             }
             DiskColumn::IoWrite => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(&a.io_write, &b.io_write));
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(&a.io_write_rate_bytes, &b.io_write_rate_bytes)
+                });
             }
         }
     }

@@ -259,6 +259,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to hide the average cpu entry.
 #hide_avg_cpu = false
 
+# Whether to use a dedicated row for the average cpu entry
+#average_cpu_row = false
+
 # Whether to use dot markers rather than braille.
 #dot_marker = false
 

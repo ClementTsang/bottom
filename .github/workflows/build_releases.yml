@@ -79,8 +79,8 @@ jobs:
             }
 
           # macOS (x86-64 and aarch64)
-          - { os: "macos-13", target: "x86_64-apple-darwin", cross: false }
-          - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
+          - { os: "macos-15-intel", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
 
           # Windows (x86-64, x86)
           - {
@@ -137,7 +137,7 @@ jobs:
 
       - name: Set up Rust toolchain
         if: matrix.info.container == ''
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
@@ -151,7 +151,7 @@ jobs:
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Build
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         env:
           BTM_GENERATE: true
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
@@ -236,12 +236,11 @@ jobs:
 
           # Alas, that's why we do it with VMs.
 
-          # Disabled as there's a weird issue with installing curl on FreeBSD 15 at the moment.
-          # - {
-          #     type: "freebsd",
-          #     os_release: "15.0",
-          #     target: "x86_64-unknown-freebsd",
-          #   }
+          - {
+              type: "freebsd",
+              os_release: "15.0",
+              target: "x86_64-unknown-freebsd",
+            }
           - {
               type: "freebsd",
               os_release: "14.3",
@@ -261,7 +260,7 @@ jobs:
 
       - name: Build (FreeBSD)
         if: ${{ matrix.info.type == 'freebsd' }}
-        uses: vmactions/freebsd-vm@966989c456d41351f095a421f60e71342d3bce41 # v1.2.1
+        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
@@ -340,7 +339,7 @@ jobs:
           choco install -y wixtoolset --no-progress;
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
           target: ${{ matrix.info.target }}
@@ -458,14 +457,14 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
 
       # TODO: Could I use the previous jobs to skip this call?
       - name: Build
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         env:
           BTM_GENERATE: true
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
@@ -562,14 +561,14 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: ${{ matrix.info.rust || 'stable' }}
           target: ${{ matrix.info.target }}
 
       # TODO: Could I use the previous jobs to skip this call?
       - name: Build
-        uses: ClementTsang/cargo-action@v0.0.5
+        uses: ClementTsang/cargo-action@v0.0.7
         env:
           BTM_GENERATE: true
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}

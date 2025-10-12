@@ -20,17 +20,33 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
-## [0.12.0] - Unreleased
+## \[0.11.3\]/\[0.12.0\] - Unreleased
+
+### Bug Fixes
+
+- [#1833](https://github.com/ClementTsang/bottom/pull/1833): Sort disk I/O using actual value rather than string representation.
+
+## [0.11.2] - 2025-10-07
 
 ### Features
 
 - [#1793](https://github.com/ClementTsang/bottom/pull/1793): Add support for threads in Linux.
 - [#1719](https://github.com/ClementTsang/bottom/pull/1719): Support ignoring all keypresses.
+- [#1772](https://github.com/ClementTsang/bottom/pull/1772): Support hiding kernel threads.
 
 ### Bug Fixes
 
 - [#1800](https://github.com/ClementTsang/bottom/pull/1800): Fix colon at end of process name in Linux.
 - [#1804](https://github.com/ClementTsang/bottom/pull/1804): Draw average CPU last again.
+- [#1811](https://github.com/ClementTsang/bottom/pull/1811): Fix drawing average CPU in basic mode when dedicated row is enabled.
+- [#1817](https://github.com/ClementTsang/bottom/pull/1817): Fix builds for FreeBSD on ARM/PowerPC due to `libc::c_char` data type being different.
+- [#1821](https://github.com/ClementTsang/bottom/pull/1821): Use alpha version of ratatui version which fixes drawing at high resolutions.
+- [#1827](https://github.com/ClementTsang/bottom/pull/1827): Fix crash for Windows where the network widget could cause a crash if the program started too quickly after boot under certain settings.
+
+### Other
+
+- [#1801](https://github.com/ClementTsang/bottom/pull/1801): Build and check Windows ARM.
+- [#1816](https://github.com/ClementTsang/bottom/pull/1816): Optimize username cloning on Unix.
 
 ## [0.11.1] - 2025-08-15
 

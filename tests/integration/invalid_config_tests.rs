@@ -121,7 +121,7 @@ fn test_invalid_default_widget_count() {
     ])
     .assert()
     .failure()
-    .stderr(predicate::str::contains("number too large"));
+    .stderr(predicate::str::contains("integer number overflowed"));
 }
 
 #[test]

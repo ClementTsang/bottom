@@ -3,6 +3,7 @@ use std::{
     cmp::{Ordering, max},
     fmt::Display,
     num::NonZeroU16,
+    sync::Arc,
     time::Duration,
 };
 
@@ -10,7 +11,6 @@ use concat_string::concat_string;
 use tui::widgets::Row;
 
 use super::process_columns::ProcColumn;
-
 use crate::{
     canvas::{
         Painter,
@@ -207,7 +207,7 @@ pub struct ProcWidgetData {
     pub total_write: u64,
     pub process_state: &'static str,
     pub process_char: char,
-    pub user: String,
+    pub user: Option<Arc<str>>,
     pub num_similar: u64,
     pub disabled: bool,
     pub time: Duration,
@@ -250,7 +250,7 @@ impl ProcWidgetData {
             total_write: process.total_write,
             process_state: process.process_state.0,
             process_char: process.process_state.1,
-            user: process.user.to_string(),
+            user: process.user.clone(),
             num_similar: 1,
             disabled: false,
             time: process.time,
@@ -319,7 +319,11 @@ impl ProcWidgetData {
             ProcColumn::TotalRead => dec_bytes_string(self.total_read),
             ProcColumn::TotalWrite => dec_bytes_string(self.total_write),
             ProcColumn::State => self.process_char.to_string(),
-            ProcColumn::User => self.user.clone(),
+            ProcColumn::User => self
+                .user
+                .as_ref()
+                .map(|user| user.to_string())
+                .unwrap_or_else(|| "N/A".to_string()),
             ProcColumn::Time => format_time(self.time),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
@@ -356,7 +360,11 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                     self.process_state.into()
                 }
             }
-            ProcColumn::User => self.user.clone().into(),
+            ProcColumn::User => self
+                .user
+                .as_ref()
+                .map(|user| user.to_string().into())
+                .unwrap_or_else(|| "N/A".into()),
             ProcColumn::Time => format_time(self.time).into(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => {
