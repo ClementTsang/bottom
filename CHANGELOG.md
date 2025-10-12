@@ -22,9 +22,14 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ## \[0.11.3\]/\[0.12.0\] - Unreleased
 
+### Features
+
+- [#1812](https://github.com/ClementTsang/bottom/pull/1812): Add `free_arc` option to subtract ARC from total memory usage.
+
 ### Bug Fixes
 
 - [#1833](https://github.com/ClementTsang/bottom/pull/1833): Sort disk I/O using actual value rather than string representation.
+- [#1812](https://github.com/ClementTsang/bottom/pull/1812): Fix ARC collection on FreeBSD.
 
 ## [0.11.2] - 2025-10-07
 
