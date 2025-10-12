@@ -7,7 +7,7 @@ body:
       value: >
         If this is an issue about supporting a new package/installation method for a platform you use, please
         consider maintaining it yourself/with others and submitting a PR or issue with a link to it - they'll be
-        very much appreciated and likely added to the README quickly. [The documentation on packaging/distribution](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
+        very much appreciated and likely added to the README quickly. [The documentation on packaging/distribution](https://bottom.pages.dev/nightly/contribution/packaging-and-distribution/)
         may be helpful in setting things up. If there are some issues with bottom itself causing problems with
         packaging, feel free to open an appropriate issue.
 

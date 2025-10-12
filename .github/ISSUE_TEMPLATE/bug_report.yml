@@ -8,8 +8,8 @@ body:
       label: Checklist
       options:
         - label: >
-            I've looked through the [troubleshooting docs](https://clementtsang.github.io/bottom/nightly/troubleshooting),
-            [the known problems list](https://clementtsang.github.io/bottom/nightly/support/official/#known-problems), and 
+            I've looked through the [troubleshooting docs](https://bottom.pages.dev/nightly/troubleshooting),
+            [the known problems list](https://bottom.pages.dev/nightly/support/official/#known-problems), and 
             [existing open issues](https://github.com/ClementTsang/bottom/issues?q=is%3Aopen+is%3Aissue) for similar
             issues.
           required: true
