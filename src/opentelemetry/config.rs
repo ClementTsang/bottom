@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub struct OpenTelemetryConfig {
     /// Enable OpenTelemetry metrics export
     #[serde(default)]
@@ -42,6 +43,7 @@ pub struct OpenTelemetryConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub struct MetricsConfig {
     /// Export CPU metrics
     #[serde(default = "default_true")]

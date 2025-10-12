@@ -3,28 +3,38 @@ receivers:
     protocols:
       grpc:
         endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
 
 processors:
-  batch: {}
+  batch: 
+    send_batch_size: 10000
+    timeout: 10s
+  metricsgeneration: {} 
 
 exporters:
   prometheus:
     endpoint: "0.0.0.0:9090"
   debug:
     verbosity: detailed
-  #otlp:
-  #  endpoint: jaeger:4317
-  #  tls:
-  #    insecure: true
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
 
 service:
   pipelines:
-    #traces:
-    #  receivers: [otlp]
-    #  processors: [batch]
-    #  exporters: [otlp, debug]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp, debug]
       
     metrics:
       receivers: [otlp] 
       processors: [batch]
       exporters: [prometheus, debug] 
+    
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug] 

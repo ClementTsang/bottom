@@ -1,17 +1,18 @@
+global:
+  scrape_interval: 10s # Quanto spesso fare lo scraping
+  evaluation_interval: 10s
+
 scrape_configs:
+  # Job 1: Monitora se Prometheus stesso è attivo
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Job 2: Scrape dell'OpenTelemetry Collector
   - job_name: 'otel-collector'
+    # Il Collector espone le metriche per lo scraping sulla sua porta 9090
     metrics_path: '/metrics'
     static_configs:
-      - targets: ['otel-collector:9090']     
+      # Raggiunge il Collector usando il suo nome di servizio Docker
+      - targets: ['otel-collector:9090'] 
 
-rule_files:
-  - '/etc/prometheus/rules/*.yml'
-
-remote_write:
-  - url: http://promscale:9201/write
-
-remote_read:
-  - url: http://promscale:9201/read
-
-global:
-  scrape_interval: 10s

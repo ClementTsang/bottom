@@ -19,18 +19,6 @@ use opentelemetry_sdk::{
     Resource,
 };
 
-
-use lazy_static::lazy_static;
-//use std::collections::HashMap;
-//use std::sync::Arc;
-//use tokio::sync::RwLock;
-
-lazy_static! {
-    static ref TOKIO_RUNTIME: tokio::runtime::Runtime = {
-        tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime")
-    };
-}
-
 use super::config::OpenTelemetryConfig;
 use super::integration::OpenTelemetryError;
 

@@ -57,7 +57,7 @@ pub async fn check_opentelemetry_availability(
     config: &OpenTelemetryConfig
 ) -> Result<bool, OpenTelemetryError> {
     // Validate configuration first
-    config.validate().map_err(|e| OpenTelemetryError::ConfigError(e))?;
+    config.validate().map_err(OpenTelemetryError::ConfigError)?;
     
     if !config.enabled {
         return Ok(false);

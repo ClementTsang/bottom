@@ -1,5 +1,26 @@
 services:
-     
+  timescaledb:
+    image: timescale/timescaledb-ha:pg15
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: promscale
+      POSTGRES_USER: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+
+  promscale:
+    image: timescale/promscale:latest
+    ports:
+      - "9201:9201"
+    depends_on:
+      - timescaledb
+    environment:
+      PROMSCALE_DB_URI: postgres://postgres:password@timescaledb:5432/promscale?sslmode=disable
+      PROMSCALE_STARTUP_INSTALL_EXTENSIONS: "true"
+    restart: on-failure
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
@@ -9,11 +30,6 @@ services:
 
     ports:
       - "4317:4317"
-    depends_on:
-      - jaeger
-    networks:
-      - observ-net
-    
 
   prometheus:
     image: prom/prometheus:latest
@@ -27,8 +43,6 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
     depends_on:
       - otel-collector
-    networks:
-      - observ-net
 
   grafana:
     image: grafana/grafana:latest
@@ -41,13 +55,7 @@ services:
       - grafana-storage:/var/lib/grafana
     depends_on:
       - prometheus
-    networks:
-      - observ-net
 
 volumes:
   grafana-storage:
   timescale_data:
-
-networks:
-  observ-net:
-    driver: bridge
