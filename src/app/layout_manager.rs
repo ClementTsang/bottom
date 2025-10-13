@@ -857,7 +857,8 @@ pub struct BottomWidget {
     /// Bottom right corner when drawn, for mouse click detection. (x, y)
     pub bottom_right_corner: Option<(u16, u16)>,
 
-    /// TODO: REMOVE THIS
+    /// TODO: REMOVE THIS LATER. This is temporary code to bridge the
+    /// old layout system with a newer system later.
     ratio_override: Option<u16>,
 }
 
@@ -913,7 +914,8 @@ impl BottomWidget {
         self
     }
 
-    /// Temporary bridge code for now.
+    /// TODO: REMOVE THIS LATER. This is temporary code to bridge the
+    /// old layout system with a newer system later.
     pub fn with_ratio_override(mut self, ratio_override: u16) -> Self {
         self.ratio_override = Some(ratio_override);
         self
