@@ -9,7 +9,7 @@ use crate::{app::layout_manager::*, options::OptionResult};
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 #[serde(rename = "row")]
 pub struct Row {
-    pub ratio: Option<u32>,
+    pub ratio: Option<u16>,
     pub child: Option<Vec<RowChildren>>,
 }
 
@@ -21,7 +21,8 @@ fn new_cpu(cpu_left_legend: bool, iter_id: &mut u64) -> BottomColRow {
     if cpu_left_legend {
         BottomColRow::new(vec![
             BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
-                .canvas_with_ratio(3)
+                .canvas_handled()
+                .with_ratio_override(3)
                 .parent_reflector(Some((WidgetDirection::Right, 1))),
             BottomWidget::new(BottomWidgetType::Cpu, cpu_id).grow(Some(17)),
         ])
@@ -29,7 +30,8 @@ fn new_cpu(cpu_left_legend: bool, iter_id: &mut u64) -> BottomColRow {
         BottomColRow::new(vec![
             BottomWidget::new(BottomWidgetType::Cpu, cpu_id).grow(Some(17)),
             BottomWidget::new(BottomWidgetType::CpuLegend, legend_id)
-                .canvas_with_ratio(3)
+                .canvas_handled()
+                .with_ratio_override(3)
                 .parent_reflector(Some((WidgetDirection::Left, 1))),
         ])
     }
@@ -53,7 +55,7 @@ fn new_proc_search(search_id: u64) -> BottomWidget {
 
 impl Row {
     pub fn convert_row_to_bottom_row(
-        &self, iter_id: &mut u64, total_height_ratio: &mut u32, default_widget_id: &mut u64,
+        &self, iter_id: &mut u64, total_height_ratio: &mut u16, default_widget_id: &mut u64,
         default_widget_type: &Option<BottomWidgetType>, default_widget_count: &mut u64,
         cpu_left_legend: bool,
     ) -> OptionResult<BottomRow> {
@@ -222,7 +224,7 @@ impl Row {
 pub enum RowChildren {
     Widget(FinalWidget),
     Col {
-        ratio: Option<u32>,
+        ratio: Option<u16>,
         child: Vec<FinalWidget>,
     },
 }
@@ -232,7 +234,7 @@ pub enum RowChildren {
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub struct FinalWidget {
-    pub ratio: Option<u32>,
+    pub ratio: Option<u16>,
     #[serde(rename = "type")]
     pub widget_type: String,
     pub default: Option<bool>,
