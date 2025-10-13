@@ -1,9 +1,28 @@
 use std::collections::BTreeMap;
 
+use tui::layout::Constraint;
+
 use crate::{constants::DEFAULT_WIDGET_ID, options::OptionError};
+
+/// Constraint nodes in a tree-like format.
+enum ConstraintNode {
+    Row {
+        children: Vec<ConstraintNode>,
+        constraint: Constraint,
+    },
+    Column {
+        children: Vec<ConstraintNode>,
+        constraint: Constraint,
+    },
+    Widget {
+        constraint: Constraint,
+    },
+}
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.
+///
+/// FIXME: This is kinda gross.
 #[derive(Clone, Debug)]
 pub struct BottomLayout {
     pub rows: Vec<BottomRow>,
