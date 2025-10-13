@@ -152,10 +152,6 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
         &self.data
     }
 
-    pub fn all_items_mut(&mut self) -> &mut Vec<DataType> {
-        &mut self.data
-    }
-
     /// Returns ratatui's internal selection.
     pub fn ratatui_selected(&self) -> Option<usize> {
         self.state.table_state.selected()

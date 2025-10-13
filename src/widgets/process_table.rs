@@ -959,21 +959,7 @@ impl ProcWidgetState {
 
         if let ProcWidgetMode::Tree(ref mut collapsed) = self.mode {
             for pid in pids {
-                collapsed.collapse(pid as i32);
-            }
-        }
-
-        // Call force_data_update once after collapsing everything
-        self.force_data_update();
-    }
-
-
-    pub fn expand_all_tree_branch_entries(&mut self) {
-        let pids: Vec<i32> = self.table.all_items().iter().map(|item| item.pid).collect();
-
-        if let ProcWidgetMode::Tree(ref mut collapsed) = self.mode {
-            for pid in pids {
-                collapsed.expand(pid as i32);
+                collapsed.collapse(pid);
             }
         }
 
