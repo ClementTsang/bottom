@@ -223,10 +223,10 @@ pub(crate) const DEFAULT_BATTERY_LAYOUT: &str = r#"
   ratio=30
   [[row.child]]
     ratio=2
-  type="cpu"
+    type="cpu"
   [[row.child]]
     ratio=1
-  type="battery"
+    type="battery"
 [[row]]
     ratio=40
     [[row.child]]
