@@ -8,7 +8,6 @@ pub mod dialogs;
 mod drawing_utils;
 mod widgets;
 
-use itertools::izip;
 use tui::{
     Frame, Terminal,
     backend::Backend,
@@ -361,65 +360,31 @@ impl Painter {
                 // then pass each layout to the corresponding widget (second pass).
                 // Note that layouts are already cached in ratatui, so we don't need
                 // to do it manually!
+                let base = Layout::vertical(self.layout.rows.iter().map(|r| r.constraint))
+                    .split(terminal_size);
 
-                let base = terminal_size;
+                for (br, base) in self.layout.rows.iter().zip(base.iter()) {
+                    let base =
+                        Layout::horizontal(br.children.iter().map(|bc| bc.constraint)).split(*base);
 
-                // self.derived_widget_draw_locs = izip!(
-                //     draw_locs,
-                //     &self.col_constraints,
-                //     &self.col_row_constraints,
-                //     &self.layout_constraints,
-                //     &self.widget_layout.rows
-                // )
-                // .map(
-                //     |(
-                //         draw_loc,
-                //         col_constraint,
-                //         col_row_constraint,
-                //         row_constraint_vec,
-                //         cols,
-                //     )| {
-                //         izip!(
-                //             get_constraints(Direction::Horizontal, col_constraint, draw_loc),
-                //             col_row_constraint,
-                //             row_constraint_vec,
-                //             &cols.children
-                //         )
-                //         .map(|(split_loc, constraint, col_constraint_vec, col_rows)| {
-                //             izip!(
-                //                 get_constraints(
-                //                     Direction::Vertical,
-                //                     constraint.as_slice(),
-                //                     split_loc
-                //                 ),
-                //                 col_constraint_vec,
-                //                 &col_rows.children
-                //             )
-                //             .map(|(draw_loc, col_row_constraint_vec, widgets)| {
-                //                 // Note that col_row_constraint_vec CONTAINS the widget
-                //                 // constraints
-                //                 let widget_draw_locs = get_constraints(
-                //                     Direction::Horizontal,
-                //                     col_row_constraint_vec.as_slice(),
-                //                     draw_loc,
-                //                 );
+                    for (bc, base) in br.children.iter().zip(base.iter()) {
+                        let base = Layout::vertical(bc.children.iter().map(|bcr| bcr.constraint))
+                            .split(*base);
 
-                //                 // Side effect, draw here.
-                //                 self.draw_widgets_with_constraints(
-                //                     f,
-                //                     app_state,
-                //                     widgets,
-                //                     &widget_draw_locs,
-                //                 );
+                        for (widgets, base) in bc.children.iter().zip(base.iter()) {
+                            let widget_draw_locs =
+                                Layout::horizontal(widgets.children.iter().map(|bw| bw.constraint))
+                                    .split(*base);
 
-                //                 widget_draw_locs
-                //             })
-                //             .collect()
-                //         })
-                //         .collect()
-                //     },
-                // )
-                // .collect();
+                            self.draw_widgets_with_constraints(
+                                f,
+                                app_state,
+                                widgets,
+                                &widget_draw_locs,
+                            );
+                        }
+                    }
+                }
             }
         })?;
 

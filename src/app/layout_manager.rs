@@ -4,37 +4,37 @@ use tui::layout::Constraint;
 
 use crate::{constants::DEFAULT_WIDGET_ID, options::OptionError};
 
-/// Constraint nodes in a tree-like format.
-enum ConstraintNode {
-    Row {
-        children: Vec<ConstraintNode>,
-        constraint: Constraint,
-    },
-    Column {
-        children: Vec<ConstraintNode>,
-        constraint: Constraint,
-    },
-    Widget {
-        constraint: Constraint,
-    },
-}
+// Represents a start and end coordinate in some dimension.
+type LineSegment = (u16, u16);
+
+type WidgetMappings = (u16, BTreeMap<LineSegment, u64>);
+type ColumnRowMappings = (u16, BTreeMap<LineSegment, WidgetMappings>);
+type ColumnMappings = (u16, BTreeMap<LineSegment, ColumnRowMappings>);
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.
 ///
-/// FIXME: This is kinda gross.
+/// FIXME: This is kinda gross. Ideally optimize out the hard-coded stuff.
 #[derive(Clone, Debug)]
 pub struct BottomLayout {
     pub rows: Vec<BottomRow>,
-    pub total_row_height_ratio: u32,
+    pub total_row_height_ratio: u16,
 }
 
-// Represents a start and end coordinate in some dimension.
-type LineSegment = (u32, u32);
+trait Ratio {
+    fn ratio(&self) -> u16;
+}
 
-type WidgetMappings = (u32, BTreeMap<LineSegment, u64>);
-type ColumnRowMappings = (u32, BTreeMap<LineSegment, WidgetMappings>);
-type ColumnMappings = (u32, BTreeMap<LineSegment, ColumnRowMappings>);
+impl Ratio for Constraint {
+    fn ratio(&self) -> u16 {
+        match self {
+            Constraint::Min(min) => std::cmp::max(*min, 1),
+            Constraint::Length(_) => 1,
+            Constraint::Fill(scaling) => *scaling,
+            _ => unreachable!("if this gets hit then you're refactoring layouts"),
+        }
+    }
+}
 
 impl BottomLayout {
     pub fn get_movement_mappings(&mut self) {
@@ -46,7 +46,7 @@ impl BottomLayout {
                 || a.0 >= b.0 && a.0 < b.1 && a.1 >= b.1
         }
 
-        fn get_distance(target: LineSegment, candidate: LineSegment) -> u32 {
+        fn get_distance(target: LineSegment, candidate: LineSegment) -> u16 {
             if candidate.0 < target.0 {
                 candidate.1 - target.0
             } else if candidate.1 < target.1 {
@@ -58,7 +58,6 @@ impl BottomLayout {
 
         // Now we need to create the correct mapping for moving from a specific
         // widget to another
-
         let mut layout_mapping: BTreeMap<LineSegment, ColumnMappings> = BTreeMap::new();
         let mut total_height = 0;
         for row in &self.rows {
@@ -75,6 +74,10 @@ impl BottomLayout {
                     let mut col_row_mapping: BTreeMap<LineSegment, u64> = BTreeMap::new();
                     let mut is_valid_col_row = false;
                     for widget in &col_row.children {
+                        let widget_ratio = widget
+                            .ratio_override
+                            .unwrap_or_else(|| widget.constraint.ratio());
+
                         match widget.widget_type {
                             BottomWidgetType::Empty => {}
                             _ => {
@@ -82,14 +85,14 @@ impl BottomLayout {
                                 col_row_mapping.insert(
                                     (
                                         widget_width * 100 / col_row.total_widget_ratio,
-                                        (widget_width + widget.constraint.ratio()) * 100
+                                        (widget_width + widget_ratio) * 100
                                             / col_row.total_widget_ratio,
                                     ),
                                     widget.widget_id,
                                 );
                             }
                         }
-                        widget_width += widget.constraint.ratio();
+                        widget_width += widget_ratio;
                     }
                     if is_valid_col_row {
                         col_mapping.insert(
@@ -160,11 +163,14 @@ impl BottomLayout {
                             continue;
                         }
 
+                        let widget_ratio = widget
+                            .ratio_override
+                            .unwrap_or_else(|| widget.constraint.ratio());
+
                         let widget_width_percentage_start =
                             widget_cursor * 100 / col_row.total_widget_ratio;
                         let widget_width_percentage_end =
-                            (widget_cursor + widget.constraint.ratio()) * 100
-                                / col_row.total_widget_ratio;
+                            (widget_cursor + widget_ratio) * 100 / col_row.total_widget_ratio;
 
                         if let Some(current_row) = layout_mapping
                             .get(&(row_height_percentage_start, row_height_percentage_end))
@@ -540,7 +546,7 @@ impl BottomLayout {
                                 }
                             }
                         }
-                        widget_cursor += widget.constraint.ratio();
+                        widget_cursor += widget_ratio;
                     }
                     col_row_cursor += col_row.constraint.ratio();
                 }
@@ -703,41 +709,12 @@ impl BottomLayout {
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum IntermediaryConstraint {
-    PartialRatio(u32),
-    CanvasHandled { ratio: Option<u32> },
-    Grow { minimum: Option<u32> },
-}
-
-impl Default for IntermediaryConstraint {
-    fn default() -> Self {
-        IntermediaryConstraint::PartialRatio(1)
-    }
-}
-
-impl IntermediaryConstraint {
-    pub fn ratio(&self) -> u32 {
-        match self {
-            IntermediaryConstraint::PartialRatio(val) => *val,
-            IntermediaryConstraint::Grow { minimum } => match minimum {
-                Some(val) => *val,
-                None => 1,
-            },
-            IntermediaryConstraint::CanvasHandled { ratio } => match ratio {
-                Some(val) => *val,
-                None => 1,
-            },
-        }
-    }
-}
-
 /// Represents a single row in the layout.
 #[derive(Clone, Debug)]
 pub struct BottomRow {
     pub children: Vec<BottomCol>,
-    pub total_col_ratio: u32,
-    pub constraint: IntermediaryConstraint,
+    pub total_col_ratio: u16,
+    pub constraint: Constraint,
 }
 
 impl BottomRow {
@@ -745,22 +722,22 @@ impl BottomRow {
         Self {
             children,
             total_col_ratio: 1,
-            constraint: IntermediaryConstraint::default(),
+            constraint: Constraint::Fill(1),
         }
     }
 
-    pub fn total_col_ratio(mut self, total_col_ratio: u32) -> Self {
+    pub fn total_col_ratio(mut self, total_col_ratio: u16) -> Self {
         self.total_col_ratio = total_col_ratio;
         self
     }
 
-    pub fn ratio(mut self, row_height_ratio: u32) -> Self {
-        self.constraint = IntermediaryConstraint::PartialRatio(row_height_ratio);
+    pub fn ratio(mut self, value: u16) -> Self {
+        self.constraint = Constraint::Fill(value);
         self
     }
 
     pub fn canvas_handled(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
+        self.constraint = Constraint::Length(0);
         self
     }
 }
@@ -771,8 +748,8 @@ impl BottomRow {
 #[derive(Clone, Debug)]
 pub struct BottomCol {
     pub children: Vec<BottomColRow>,
-    pub total_col_row_ratio: u32,
-    pub constraint: IntermediaryConstraint,
+    pub total_col_row_ratio: u16,
+    pub constraint: Constraint,
 }
 
 impl BottomCol {
@@ -780,22 +757,22 @@ impl BottomCol {
         Self {
             children,
             total_col_row_ratio: 1,
-            constraint: IntermediaryConstraint::default(),
+            constraint: Constraint::Fill(1),
         }
     }
 
-    pub fn total_col_row_ratio(mut self, total_col_row_ratio: u32) -> Self {
+    pub fn total_col_row_ratio(mut self, total_col_row_ratio: u16) -> Self {
         self.total_col_row_ratio = total_col_row_ratio;
         self
     }
 
-    pub fn ratio(mut self, col_width_ratio: u32) -> Self {
-        self.constraint = IntermediaryConstraint::PartialRatio(col_width_ratio);
+    pub fn ratio(mut self, value: u16) -> Self {
+        self.constraint = Constraint::Fill(value);
         self
     }
 
     pub fn canvas_handled(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
+        self.constraint = Constraint::Length(0);
         self
     }
 }
@@ -803,8 +780,8 @@ impl BottomCol {
 #[derive(Clone, Default, Debug)]
 pub struct BottomColRow {
     pub children: Vec<BottomWidget>,
-    pub total_widget_ratio: u32,
-    pub constraint: IntermediaryConstraint,
+    pub total_widget_ratio: u16,
+    pub constraint: Constraint,
 }
 
 impl BottomColRow {
@@ -812,27 +789,27 @@ impl BottomColRow {
         Self {
             children,
             total_widget_ratio: 1,
-            constraint: IntermediaryConstraint::default(),
+            constraint: Constraint::Fill(1),
         }
     }
 
-    pub(crate) fn total_widget_ratio(mut self, total_widget_ratio: u32) -> Self {
+    pub(crate) fn total_widget_ratio(mut self, total_widget_ratio: u16) -> Self {
         self.total_widget_ratio = total_widget_ratio;
         self
     }
 
-    pub fn ratio(mut self, col_row_height_ratio: u32) -> Self {
-        self.constraint = IntermediaryConstraint::PartialRatio(col_row_height_ratio);
+    pub fn ratio(mut self, value: u16) -> Self {
+        self.constraint = Constraint::Fill(value);
         self
     }
 
     pub fn canvas_handled(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
+        self.constraint = Constraint::Length(0);
         self
     }
 
-    pub fn grow(mut self, minimum: Option<u32>) -> Self {
-        self.constraint = IntermediaryConstraint::Grow { minimum };
+    pub fn grow(mut self, minimum: Option<u16>) -> Self {
+        self.constraint = Constraint::Min(minimum.unwrap_or(0));
         self
     }
 }
@@ -863,7 +840,7 @@ impl WidgetDirection {
 pub struct BottomWidget {
     pub widget_type: BottomWidgetType,
     pub widget_id: u64,
-    pub constraint: IntermediaryConstraint,
+    pub constraint: Constraint,
     pub left_neighbour: Option<u64>,
     pub right_neighbour: Option<u64>,
     pub up_neighbour: Option<u64>,
@@ -873,10 +850,15 @@ pub struct BottomWidget {
     pub parent_reflector: Option<(WidgetDirection, u64)>,
 
     /// Top left corner when drawn, for mouse click detection. (x, y)
+    ///
+    /// TODO: Replace this with just an Option<Rect> for top + bottom.
     pub top_left_corner: Option<(u16, u16)>,
 
     /// Bottom right corner when drawn, for mouse click detection. (x, y)
     pub bottom_right_corner: Option<(u16, u16)>,
+
+    /// TODO: REMOVE THIS
+    ratio_override: Option<u16>,
 }
 
 impl BottomWidget {
@@ -884,7 +866,7 @@ impl BottomWidget {
         Self {
             widget_type,
             widget_id,
-            constraint: IntermediaryConstraint::default(),
+            constraint: Constraint::Fill(1),
             left_neighbour: None,
             right_neighbour: None,
             up_neighbour: None,
@@ -892,6 +874,7 @@ impl BottomWidget {
             parent_reflector: None,
             top_left_corner: None,
             bottom_right_corner: None,
+            ratio_override: None,
         }
     }
 
@@ -915,23 +898,24 @@ impl BottomWidget {
         self
     }
 
-    pub(crate) fn ratio(mut self, width_ratio: u32) -> Self {
-        self.constraint = IntermediaryConstraint::PartialRatio(width_ratio);
+    pub(crate) fn ratio(mut self, value: u16) -> Self {
+        self.constraint = Constraint::Fill(value);
         self
     }
 
     pub fn canvas_handled(mut self) -> Self {
-        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: None };
+        self.constraint = Constraint::Length(0);
         self
     }
 
-    pub fn canvas_with_ratio(mut self, ratio: u32) -> Self {
-        self.constraint = IntermediaryConstraint::CanvasHandled { ratio: Some(ratio) };
+    pub fn grow(mut self, minimum: Option<u16>) -> Self {
+        self.constraint = Constraint::Min(minimum.unwrap_or(0));
         self
     }
 
-    pub fn grow(mut self, minimum: Option<u32>) -> Self {
-        self.constraint = IntermediaryConstraint::Grow { minimum };
+    /// Temporary bridge code for now.
+    pub fn with_ratio_override(mut self, ratio_override: u16) -> Self {
+        self.ratio_override = Some(ratio_override);
         self
     }
 
