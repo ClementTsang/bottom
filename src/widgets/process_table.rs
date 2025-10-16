@@ -101,6 +101,20 @@ impl TreeCollapsed {
         }
     }
 
+    pub(crate) fn collapsed_pids(&self) -> Option<&HashSet<i32>> {
+        match self {
+            TreeCollapsed::DefaultExpand { collapsed_pids } => Some(collapsed_pids),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn expanded_pids(&self) -> Option<&HashSet<i32>> {
+        match self {
+            TreeCollapsed::DefaultCollapse { expanded_pids } => Some(expanded_pids),
+            _ => None,
+        }
+    }
+
     /// Expand the given PID.
     pub(crate) fn expand(&mut self, pid: Pid) {
         match self {
@@ -955,15 +969,46 @@ impl ProcWidgetState {
     }
 
     pub fn collapse_all_tree_branch_entries(&mut self) {
-        let pids: Vec<i32> = self.table.all_items().iter().map(|item| item.pid).collect();
-
         if let ProcWidgetMode::Tree(ref mut collapsed) = self.mode {
-            for pid in pids {
-                collapsed.collapse(pid);
+            if let Some(pids) = collapsed.expanded_pids() {
+                let pids: Vec<i32> = pids.iter().cloned().collect();
+
+                for pid in pids {
+                    collapsed.collapse(pid);
+                }
+            } else {
+                let pids: Vec<i32> = self.table.all_items().iter().map(|item| item.pid).collect();
+
+                if let ProcWidgetMode::Tree(ref mut collapsed) = self.mode {
+                    for pid in pids {
+                        collapsed.collapse(pid as i32);
+                    }
+                }
             }
         }
 
-        // Call force_data_update once after collapsing everything
+        self.force_data_update();
+    }
+
+    pub fn expand_all_tree_branch_entries(&mut self) {
+        if let ProcWidgetMode::Tree(ref mut collapsed) = self.mode {
+            if let Some(pids) = collapsed.collapsed_pids() {
+                let pids: Vec<i32> = pids.iter().cloned().collect();
+
+                for pid in pids {
+                    collapsed.expand(pid);
+                }
+            } else {
+                let pids: Vec<i32> = self.table.all_items().iter().map(|item| item.pid).collect();
+
+                if let ProcWidgetMode::Tree(ref mut collapsed) = self.mode {
+                    for pid in pids {
+                        collapsed.expand(pid as i32);
+                    }
+                }
+            }
+        }
+
         self.force_data_update();
     }
 

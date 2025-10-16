@@ -2009,8 +2009,10 @@ impl App {
 
     fn on_plus(&mut self) {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
-            // Toggle collapsing if tree
-            self.toggle_collapsing_process_branch();
+            let proc_state = &mut self.states.proc_state;
+            for pws in proc_state.widget_states.values_mut() {
+                pws.expand_all_tree_branch_entries();
+            }
         } else {
             self.zoom_in();
         }
