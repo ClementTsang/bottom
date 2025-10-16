@@ -981,7 +981,7 @@ impl ProcWidgetState {
 
                 if let ProcWidgetMode::Tree(ref mut collapsed) = self.mode {
                     for pid in pids {
-                        collapsed.collapse(pid as i32);
+                        collapsed.collapse(pid);
                     }
                 }
             }
@@ -1003,7 +1003,7 @@ impl ProcWidgetState {
 
                 if let ProcWidgetMode::Tree(ref mut collapsed) = self.mode {
                     for pid in pids {
-                        collapsed.expand(pid as i32);
+                        collapsed.expand(pid);
                     }
                 }
             }
