@@ -21,7 +21,7 @@ impl Painter {
     pub fn draw_basic_cpu(
         &self, f: &mut Frame<'_>, app_state: &mut App, mut draw_loc: Rect, widget_id: u64,
     ) {
-        let cpu_data = &app_state.data_store.get_data().cpu_harvest;
+        let cpu_data = &app_state.data_store.get_data().cpu_data;
 
         // This is a bit complicated, but basically, we want to draw SOME number
         // of columns to draw all CPUs. Ideally, as well, we want to not have

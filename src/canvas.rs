@@ -244,7 +244,7 @@ impl Painter {
                 }
 
                 let data = app_state.data_store.get_data();
-                let actual_cpu_data_len = data.cpu_harvest.len();
+                let actual_cpu_data_len = data.cpu_data.len();
 
                 // This fixes #397, apparently if the height is 1, it can't render the CPU
                 // bars...

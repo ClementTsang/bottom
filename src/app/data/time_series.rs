@@ -103,6 +103,8 @@ impl TimeSeriesData {
             // If there isn't avg then we never had any to begin with.
             if let Some(avg) = cpu_harvest.avg {
                 self.avg_cpu.push(avg.into());
+            } else {
+                self.avg_cpu.insert_break();
             }
         } else {
             for c in &mut self.cpu {
