@@ -20,7 +20,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
-## \[0.11.3\]/\[0.12.0\] - Unreleased
+## [0.11.3]/[0.12.0] - Unreleased
 
 ### Features
 
@@ -30,6 +30,10 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 - [#1833](https://github.com/ClementTsang/bottom/pull/1833): Sort disk I/O using actual value rather than string representation.
 - [#1812](https://github.com/ClementTsang/bottom/pull/1812): Fix ARC collection on FreeBSD.
+
+### Other
+
+- [#1838](https://github.com/ClementTsang/bottom/pull/1838): Add icon for application.
 
 ## [0.11.2] - 2025-10-07
 
