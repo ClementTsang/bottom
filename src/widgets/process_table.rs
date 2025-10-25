@@ -101,14 +101,14 @@ impl TreeCollapsed {
         }
     }
 
-    pub(crate) fn collapsed_pids(&self) -> Option<&HashSet<i32>> {
+    pub(crate) fn collapsed_pids(&self) -> Option<&HashSet<Pid>> {
         match self {
             TreeCollapsed::DefaultExpand { collapsed_pids } => Some(collapsed_pids),
             _ => None,
         }
     }
 
-    pub(crate) fn expanded_pids(&self) -> Option<&HashSet<i32>> {
+    pub(crate) fn expanded_pids(&self) -> Option<&HashSet<Pid>> {
         match self {
             TreeCollapsed::DefaultCollapse { expanded_pids } => Some(expanded_pids),
             _ => None,
@@ -969,7 +969,7 @@ impl ProcWidgetState {
     }
 
     pub fn collapse_all_tree_branch_entries(&mut self) {
-        let pids: Vec<i32> = match &self.mode {
+        let pids: Vec<Pid> = match &self.mode {
             ProcWidgetMode::Tree(collapsed) => {
                 if let Some(expanded) = collapsed.expanded_pids() {
                     expanded.iter().cloned().collect()
@@ -990,7 +990,7 @@ impl ProcWidgetState {
     }
 
     pub fn expand_all_tree_branch_entries(&mut self) {
-        let pids: Vec<i32> = match &self.mode {
+        let pids: Vec<Pid> = match &self.mode {
             ProcWidgetMode::Tree(collapsed) => {
                 if let Some(collapsed_set) = collapsed.collapsed_pids() {
                     collapsed_set.iter().cloned().collect()
