@@ -11,7 +11,7 @@
 # Flamegraph stuff
 flamegraphs/
 rust-unmangle
-*.svg
+./*.svg
 *.data
 *.data.old
 
