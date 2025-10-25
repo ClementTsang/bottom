@@ -206,7 +206,7 @@ assets = [
         "644",
     ],
     [
-        "assets/assets/icons/bottom.svg",
+        "assets/icons/bottom.svg",
         "/usr/share/pixmaps/bottom.svg",
         "644",
     ],
@@ -237,7 +237,7 @@ assets = [
     { source = "completion/btm.fish", dest = "/usr/share/fish/vendor_completions.d/btm.fish", mode = "644" },
     { source = "completion/_btm", dest = "/usr/share/zsh/vendor-completions/", mode = "644" },
     { source = "desktop/bottom.desktop", dest = "/usr/share/applications/bottom.desktop", mode = "644" },
-    { source = "assets/assets/icons/bottom.svg", dest = "/usr/share/pixmaps/bottom.svg", mode = "644" },
+    { source = "assets/icons/bottom.svg", dest = "/usr/share/pixmaps/bottom.svg", mode = "644" },
 ]
 
 [lints.rust]
