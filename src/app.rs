@@ -684,6 +684,23 @@ impl App {
         }
     }
 
+    pub fn on_space_key(&mut self) {
+        if !self.is_in_dialog() {
+            if self.current_widget.widget_type == BottomWidgetType::Proc {
+                if let Some(proc_widget_state) = self
+                    .states
+                    .proc_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    proc_widget_state.toggle_current_tree_branch_entry();
+                }
+            }
+        } else if self.process_kill_dialog.is_open() {
+            // Either select the current option,
+            // or scroll to the next one
+        }
+    }
+
     pub fn on_page_up(&mut self) {
         if self.process_kill_dialog.is_open() {
             self.process_kill_dialog.on_page_up();
@@ -1992,8 +2009,10 @@ impl App {
 
     fn on_plus(&mut self) {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
-            // Toggle collapsing if tree
-            self.toggle_collapsing_process_branch();
+            let proc_state = &mut self.states.proc_state;
+            for pws in proc_state.widget_states.values_mut() {
+                pws.expand_all_tree_branch_entries();
+            }
         } else {
             self.zoom_in();
         }
@@ -2001,8 +2020,10 @@ impl App {
 
     fn on_minus(&mut self) {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
-            // Toggle collapsing if tree
-            self.toggle_collapsing_process_branch();
+            let proc_state = &mut self.states.proc_state;
+            for pws in proc_state.widget_states.values_mut() {
+                pws.collapse_all_tree_branch_entries();
+            }
         } else {
             self.zoom_out();
         }
