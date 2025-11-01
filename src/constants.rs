@@ -481,11 +481,8 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #[styles] # Uncomment if you want to use custom styling
 # Built-in themes. Valid values are:
 # - "default"
-# - "default-light"
 # - "gruvbox"
-# - "gruvbox-light"
 # - "nord"
-# - "nord-light".
 #
 # This will have the lowest precedence if a custom colour palette is set,
 # or overridden if the command-line flag for a built-in theme is set.

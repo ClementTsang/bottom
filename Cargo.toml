@@ -106,6 +106,7 @@ time = { version = "0.3.44", features = ["local-offset", "formatting", "macros"]
 schemars = { version = "1.0.4", optional = true }
 serde_json = { version = "1.0.145", optional = true }
 strum = { version = "0.27.2", features = ["derive"], optional = true }
+terminal-colorsaurus = "1.0.1"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.176"
