@@ -24,8 +24,8 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ### Features
 
+- [#1843](https://github.com/ClementTsang/bottom/pull/1843): Use light variant of theme automatically when terminal background is light.
 - [#1812](https://github.com/ClementTsang/bottom/pull/1812): Add `free_arc` option to subtract ARC from total memory usage.
-- [#xxxx](https://github.com/ClementTsang/bottom/pull/xxxx): Use light variant of theme automatically when terminal background is light.
 
 ### Bug Fixes
 
