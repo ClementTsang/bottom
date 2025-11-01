@@ -20,6 +20,7 @@ use memory::MemoryStyle;
 use network::NetworkStyle;
 use serde::{Deserialize, Serialize};
 use tables::TableStyle;
+use terminal_colorsaurus::{QueryOptions, ThemeMode, theme_mode};
 use tui::{style::Style, widgets::BorderType};
 use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
@@ -141,7 +142,7 @@ impl Styles {
             Some(theme) => Self::from_theme(theme)?,
             None => match config.styles.as_ref().and_then(|s| s.theme.as_ref()) {
                 Some(theme) => Self::from_theme(theme)?,
-                None => Self::default(),
+                None => Self::from_theme("default")?,
             },
         };
 
@@ -155,13 +156,29 @@ impl Styles {
 
     fn from_theme(theme: &str) -> anyhow::Result<Self> {
         let lower_case = theme.to_lowercase();
+
+        // Detect terminal theme mode.
+        // Prefer dark palette if detection fails.
+        let is_dark = theme_mode(QueryOptions::default())
+            .map(|mode| mode == ThemeMode::Dark)
+            .unwrap_or(true);
+
         match lower_case.as_str() {
-            "default" => Ok(Self::default_style()),
-            "default-light" => Ok(Self::default_light_mode()),
-            "gruvbox" => Ok(Self::gruvbox_palette()),
-            "gruvbox-light" => Ok(Self::gruvbox_light_palette()),
-            "nord" => Ok(Self::nord_palette()),
-            "nord-light" => Ok(Self::nord_light_palette()),
+            "default" => Ok(if is_dark {
+                Self::default_style()
+            } else {
+                Self::default_light_mode()
+            }),
+            "gruvbox" => Ok(if is_dark {
+                Self::gruvbox_palette()
+            } else {
+                Self::gruvbox_light_palette()
+            }),
+            "nord" => Ok(if is_dark {
+                Self::nord_palette()
+            } else {
+                Self::nord_light_palette()
+            }),
             _ => Err(
                 OptionError::other(format!("'{theme}' is an invalid built-in color scheme."))
                     .into(),
@@ -270,10 +287,7 @@ mod test {
     #[test]
     fn built_in_colour_schemes_work() {
         Styles::from_theme("default").unwrap();
-        Styles::from_theme("default-light").unwrap();
         Styles::from_theme("gruvbox").unwrap();
-        Styles::from_theme("gruvbox-light").unwrap();
         Styles::from_theme("nord").unwrap();
-        Styles::from_theme("nord-light").unwrap();
     }
 }

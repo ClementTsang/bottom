@@ -4,11 +4,8 @@
 
 # Built-in themes. Valid values are:
 # - "default"
-# - "default-light"
 # - "gruvbox"
-# - "gruvbox-light"
 # - "nord"
-# - "nord-light".
 
 # This will have the lowest precedence if a custom colour palette is set,
 # or overriden if the command-line flag for a built-in theme is set.

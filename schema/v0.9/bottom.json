@@ -175,11 +175,8 @@
           "default": "default",
           "enum": [
             "default",
-            "default-light",
             "gruvbox",
-            "gruvbox-light",
-            "nord",
-            "nord-light"
+            "nord"
           ],
           "description": "Built-in themes",
           "type": "string"
