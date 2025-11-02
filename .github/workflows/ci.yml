@@ -87,7 +87,7 @@ jobs:
 
       - name: Read Rust version
         run: |
-          VER=$(cat ".github/ci/rust_version")
+          VER=$(cat ".github/ci/rust_version.txt")
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
 
       - name: Set up Rust toolchain
@@ -246,7 +246,7 @@ jobs:
 
       - name: Read Rust version
         run: |
-          VER=$(cat ".github/ci/rust_version")
+          VER=$(cat ".github/ci/rust_version.txt")
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
 
       - name: Set up Rust toolchain
