@@ -135,6 +135,7 @@ jobs:
         with:
           fetch-depth: 1
 
+      # TODO: Make this and the toolchain step a separate wrapper action?
       - name: Read Rust version
         run: |
           VER=$(cat .github/ci/rust_version.txt)
