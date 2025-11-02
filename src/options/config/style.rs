@@ -290,4 +290,38 @@ mod test {
         Styles::from_theme("gruvbox").unwrap();
         Styles::from_theme("nord").unwrap();
     }
+
+    #[test]
+    fn invalid_theme_returns_error() {
+        let result = Styles::from_theme("nonexistent-theme");
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("invalid built-in color scheme")
+        );
+    }
+
+    #[test]
+    fn theme_case_insensitive() {
+        // Theme names should work regardless of case
+        Styles::from_theme("DEFAULT").unwrap();
+        Styles::from_theme("GruvBox").unwrap();
+        Styles::from_theme("NORD").unwrap();
+    }
+
+    #[test]
+    fn theme_detection_does_not_panic() {
+        // Ensure theme detection doesn't panic in non-interactive environments (CI)
+        // This verifies the .unwrap_or(true) fallback works correctly
+        let default_style = Styles::from_theme("default").unwrap();
+        let gruvbox_style = Styles::from_theme("gruvbox").unwrap();
+        let nord_style = Styles::from_theme("nord").unwrap();
+
+        // Verify styles have expected color properties set (not all default)
+        assert_ne!(default_style.ram_style, Style::default());
+        assert_ne!(gruvbox_style.ram_style, Style::default());
+        assert_ne!(nord_style.ram_style, Style::default());
+    }
 }
