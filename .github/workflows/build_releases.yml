@@ -135,11 +135,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      # TODO: Make this and the toolchain step a separate wrapper action?
+      - name: Read Rust version
+        shell: bash
+        run: |
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+
       - name: Set up Rust toolchain
         if: matrix.info.container == ''
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
       - name: Set up Rust toolchain (non-GitHub container)
@@ -338,10 +345,16 @@ jobs:
         run: |
           choco install -y wixtoolset --no-progress;
 
+      - name: Read Rust version
+        shell: bash
+        run: |
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
       - name: Install cargo-wix
@@ -456,10 +469,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Read Rust version
+        shell: bash
+        run: |
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
       # TODO: Could I use the previous jobs to skip this call?
@@ -560,10 +579,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Read Rust version
+        shell: bash
+        run: |
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
       # TODO: Could I use the previous jobs to skip this call?

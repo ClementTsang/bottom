@@ -85,10 +85,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
+      - name: Read Rust version
+        shell: bash
+        run: |
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_VERSION }}
           components: rustfmt, clippy
           target: ${{ matrix.info.target }}
 
@@ -239,10 +245,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
+      - name: Read Rust version
+        shell: bash
+        run: |
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
           components: "clippy"
 
