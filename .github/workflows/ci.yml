@@ -31,6 +31,7 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
   COMPLETION_DIR: "target/tmp/bottom/completion/"
   MANPAGE_DIR: "target/tmp/bottom/manpage/"
+  RUST_VERSION: "1.91.0"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -88,7 +89,7 @@ jobs:
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_VERSION }}
           components: rustfmt, clippy
           target: ${{ matrix.info.target }}
 
@@ -242,7 +243,7 @@ jobs:
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
           components: "clippy"
 

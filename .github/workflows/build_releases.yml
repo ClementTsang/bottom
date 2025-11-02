@@ -25,6 +25,7 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
   COMPLETION_DIR: "target/tmp/bottom/completion/"
   MANPAGE_DIR: "target/tmp/bottom/manpage/"
+  RUST_VERSION: "1.91.0"
 
 permissions:
   id-token: write
@@ -139,7 +140,7 @@ jobs:
         if: matrix.info.container == ''
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
       - name: Set up Rust toolchain (non-GitHub container)
@@ -341,7 +342,7 @@ jobs:
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
       - name: Install cargo-wix
@@ -459,7 +460,7 @@ jobs:
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
       # TODO: Could I use the previous jobs to skip this call?
@@ -563,7 +564,7 @@ jobs:
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
       # TODO: Could I use the previous jobs to skip this call?

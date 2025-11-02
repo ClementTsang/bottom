@@ -15,6 +15,7 @@ on:
 env:
   CARGO_INCREMENTAL: 0
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
+  RUST_VERSION: "1.91.0"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -52,7 +53,7 @@ jobs:
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_VERSION }}
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1

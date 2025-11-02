@@ -33,7 +33,6 @@ exclude = [
     "codecov.yml",
     "CONTRIBUTING.md",
     "Cross.toml",
-    "rust-toolchain.toml",
     "rustfmt.toml",
 ]
 edition = "2021"
