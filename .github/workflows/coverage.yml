@@ -15,7 +15,6 @@ on:
 env:
   CARGO_INCREMENTAL: 0
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
-  RUST_VERSION: "1.91.0"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -49,6 +48,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Read Rust version
+        run: |
+          VER=$(cat ".github/ci/rust_version")
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
