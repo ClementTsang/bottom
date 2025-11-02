@@ -137,6 +137,7 @@ jobs:
 
       # TODO: Make this and the toolchain step a separate wrapper action?
       - name: Read Rust version
+        shell: bash
         run: |
           VER=$(cat .github/ci/rust_version.txt)
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
@@ -345,6 +346,7 @@ jobs:
           choco install -y wixtoolset --no-progress;
 
       - name: Read Rust version
+        shell: bash
         run: |
           VER=$(cat .github/ci/rust_version.txt)
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
@@ -468,6 +470,7 @@ jobs:
           fetch-depth: 1
 
       - name: Read Rust version
+        shell: bash
         run: |
           VER=$(cat .github/ci/rust_version.txt)
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
@@ -577,6 +580,7 @@ jobs:
           fetch-depth: 1
 
       - name: Read Rust version
+        shell: bash
         run: |
           VER=$(cat .github/ci/rust_version.txt)
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
