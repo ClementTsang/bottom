@@ -1,5 +1,6 @@
 // src/opentelemetry/config.rs
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 use std::time::Duration;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,6 +73,39 @@ pub struct MetricsConfig {
     /// Export GPU metrics
     #[serde(default = "default_true")]
     pub gpu: bool,
+
+    /// Process filter configuration (inline or via include)
+    #[serde(default)]
+    pub process_filter: ProcessFilterConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+pub struct ProcessFilterConfig {
+    /// Path to external file containing process filter (optional)
+    /// If specified, will load filter configuration from this file
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub include: Option<PathBuf>,
+
+    /// Filter mode: "whitelist" (only listed processes) or "blacklist" (exclude listed)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub filter_mode: Option<ProcessFilterMode>,
+
+    /// List of process names to filter
+    #[serde(default)]
+    pub names: Vec<String>,
+
+    /// List of process PIDs to filter
+    #[serde(default)]
+    pub pids: Vec<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[serde(rename_all = "lowercase")]
+pub enum ProcessFilterMode {
+    Whitelist,
+    Blacklist,
 }
 
 // Default functions
@@ -129,6 +163,74 @@ impl Default for MetricsConfig {
             processes: false,
             temperature: true,
             gpu: true,
+            process_filter: ProcessFilterConfig::default(),
+        }
+    }
+}
+
+impl ProcessFilterConfig {
+    /// Load and merge process filter from include file if specified
+    pub fn load_with_includes(&self, config_dir: Option<&std::path::Path>) -> Result<Self, String> {
+        if let Some(include_path) = &self.include {
+            // Resolve path relative to config directory if provided
+            let full_path = if include_path.is_absolute() {
+                include_path.clone()
+            } else if let Some(dir) = config_dir {
+                dir.join(include_path)
+            } else {
+                include_path.clone()
+            };
+
+            // Read and parse the included file
+            let content = std::fs::read_to_string(&full_path).map_err(|e| {
+                format!("Failed to read process filter file {:?}: {}", full_path, e)
+            })?;
+
+            let included: ProcessFilterConfig = toml_edit::de::from_str(&content).map_err(|e| {
+                format!("Failed to parse process filter file {:?}: {}", full_path, e)
+            })?;
+
+            // Merge: included file takes precedence, but combine lists
+            Ok(Self {
+                include: None, // Don't recurse
+                filter_mode: included.filter_mode.or(self.filter_mode.clone()),
+                names: if included.names.is_empty() {
+                    self.names.clone()
+                } else {
+                    included.names
+                },
+                pids: if included.pids.is_empty() {
+                    self.pids.clone()
+                } else {
+                    included.pids
+                },
+            })
+        } else {
+            // No include, return self as-is
+            Ok(self.clone())
+        }
+    }
+
+    /// Check if a process should be included based on filter configuration
+    pub fn should_include_process(&self, process_name: &str, process_pid: u32) -> bool {
+        // If no filter mode is set, include all processes
+        let filter_mode = match &self.filter_mode {
+            Some(mode) => mode,
+            None => return true,
+        };
+
+        // Check if process matches the filter lists
+        let matches_name = self
+            .names
+            .iter()
+            .any(|name| process_name.to_lowercase().contains(&name.to_lowercase()));
+        let matches_pid = self.pids.contains(&process_pid);
+        let matches = matches_name || matches_pid;
+
+        // Apply filter mode logic
+        match filter_mode {
+            ProcessFilterMode::Whitelist => matches, // Include only if matches
+            ProcessFilterMode::Blacklist => !matches, // Include only if NOT matches
         }
     }
 }

@@ -1,0 +1,47 @@
+# Example process filter configuration file
+# This file can be included from the main bottom config to keep
+# server-specific process lists separate.
+#
+# Usage in bottom-config.toml:
+# [opentelemetry.metrics.process_filter]
+# include = "processes.toml"
+
+# Filter mode: "whitelist" or "blacklist"
+# - whitelist: Only export metrics for processes in the lists below
+# - blacklist: Export metrics for all processes EXCEPT those in the lists
+filter_mode = "whitelist"
+
+# Process names to monitor (case-insensitive substring match)
+# Examples for common server processes:
+names = [
+    # Web servers
+    "nginx",
+    "apache",
+    "httpd",
+
+    # Databases
+    "postgres",
+    "mysql",
+    "redis",
+    "mongodb",
+
+    # Application servers
+    "java",
+    "node",
+    "python",
+
+    # Your custom applications
+    # "myapp",
+]
+
+# Specific process PIDs to monitor (optional)
+# Useful for monitoring specific long-running processes
+pids = []
+
+# Example blacklist configuration:
+# filter_mode = "blacklist"
+# names = [
+#     "systemd",      # Exclude system processes
+#     "kworker",
+#     "migration",
+# ]

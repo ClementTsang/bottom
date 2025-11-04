@@ -194,8 +194,15 @@ impl App {
 
             // Usa dati reali invece di sample
             let stored_data = self.data_store.get_data();
+
+            // Get process filter from config if available
+            let process_filter = otel_config.as_ref().map(|cfg| &cfg.metrics.process_filter);
+
             let adapter =
-                crate::opentelemetry::adapter::BottomDataAdapter::from_stored_data(stored_data);
+                crate::opentelemetry::adapter::BottomDataAdapter::from_stored_data_with_filter(
+                    stored_data,
+                    process_filter,
+                );
 
             // Usa il runtime globale persistente
             TOKIO_RUNTIME.spawn(async move {

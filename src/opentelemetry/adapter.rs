@@ -1,4 +1,5 @@
 // src/opentelemetry/adapter.rs
+use super::config::ProcessFilterConfig;
 use super::exporter::{
     CpuMetric, DiskMetric, GpuMetric, MemoryMetric, NetworkMetric, ProcessMetric, SystemMetrics,
     TemperatureMetric,
@@ -19,6 +20,13 @@ pub struct BottomDataAdapter {
 impl BottomDataAdapter {
     /// Converti dai dati reali di bottom (clonando)
     pub fn from_stored_data(stored_data: &StoredData) -> Self {
+        Self::from_stored_data_with_filter(stored_data, None)
+    }
+
+    /// Converti dai dati reali di bottom con filtro processi opzionale
+    pub fn from_stored_data_with_filter(
+        stored_data: &StoredData, process_filter: Option<&ProcessFilterConfig>,
+    ) -> Self {
         // CPU
         let cpu_data: Vec<CpuMetric> = stored_data
             .cpu_harvest
@@ -113,6 +121,14 @@ impl BottomDataAdapter {
             .process_data
             .process_harvest
             .values()
+            .filter(|proc| {
+                // Apply process filter if provided
+                if let Some(filter) = process_filter {
+                    filter.should_include_process(&proc.name, proc.pid as u32)
+                } else {
+                    true // No filter, include all
+                }
+            })
             .map(|proc| ProcessMetric {
                 pid: proc.pid as u32,
                 name: proc.name.clone(),

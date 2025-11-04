@@ -164,7 +164,34 @@ pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result
     match &adjusted_config_path {
         Some(path) => {
             if let Ok(config_string) = fs::read_to_string(path) {
-                Ok(toml_edit::de::from_str(&config_string)?)
+                #[cfg(feature = "opentelemetry")]
+                {
+                    let mut config: Config = toml_edit::de::from_str(&config_string)?;
+
+                    // Load process filter includes if configured
+                    if let Some(otel_config) = config.opentelemetry.as_mut() {
+                        let config_dir = path.parent();
+                        match otel_config
+                            .metrics
+                            .process_filter
+                            .load_with_includes(config_dir)
+                        {
+                            Ok(loaded_filter) => {
+                                otel_config.metrics.process_filter = loaded_filter;
+                            }
+                            Err(e) => {
+                                eprintln!("Warning: Failed to load process filter include: {}", e);
+                            }
+                        }
+                    }
+
+                    Ok(config)
+                }
+
+                #[cfg(not(feature = "opentelemetry"))]
+                {
+                    Ok(toml_edit::de::from_str(&config_string)?)
+                }
             } else {
                 match create_config_at_path(path) {
                     Ok(cfg) => Ok(cfg),

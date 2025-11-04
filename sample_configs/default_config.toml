@@ -312,3 +312,64 @@
 #  [[row.child]]
 #    type="proc"
 #    default=true
+
+# OpenTelemetry configuration for metrics export.
+# Requires the 'opentelemetry' feature to be enabled.
+#[opentelemetry]
+## Enable OpenTelemetry metrics export
+#enabled = false
+
+## OTLP endpoint (gRPC or HTTP)
+#endpoint = "http://localhost:4317"
+
+## Export interval in seconds
+#export_interval_secs = 10
+
+## Service name for metrics identification
+#service_name = "bottom-system-monitor"
+
+## Service version
+#service_version = "0.1.0"
+
+## Maximum consecutive export failures before marking as unhealthy
+#max_consecutive_failures = 5
+
+## Timeout for export operations in seconds
+#export_timeout_secs = 30
+
+## Additional resource attributes (key-value pairs)
+#[opentelemetry.resource_attributes]
+#environment = "production"
+#host = "server-01"
+
+## Metrics to export
+#[opentelemetry.metrics]
+#cpu = true
+#memory = true
+#network = true
+#disk = true
+#processes = true
+#temperature = true
+#gpu = true
+
+## Process filtering configuration
+#[opentelemetry.metrics.process_filter]
+## Path to external file containing process filter configuration (relative or absolute)
+## This allows different servers to have different process lists
+#include = "processes.toml"
+
+## Or configure inline:
+## Filter mode: "whitelist" (only listed processes) or "blacklist" (exclude listed)
+#filter_mode = "whitelist"
+
+## List of process names to filter (case-insensitive substring match)
+#names = ["nginx", "postgres", "redis", "myapp"]
+
+## List of specific process PIDs to filter
+#pids = [1234, 5678]
+
+## Example external processes.toml file:
+## ---
+## filter_mode = "whitelist"
+## names = ["nginx", "postgres", "redis"]
+## ---

@@ -33,6 +33,24 @@ gpu = true           # GPU usage and memory (if available)
 # reducing the export interval.
 processes = true
 
+# Process filtering configuration
+[opentelemetry.metrics.process_filter]
+# Option 1: Use an external file for server-specific process lists
+# This allows different servers to monitor different processes
+# Path can be relative to this config file or absolute
+#include = "processes.toml"
+
+# Option 2: Configure inline
+# Filter mode: "whitelist" (only listed processes) or "blacklist" (exclude listed)
+#filter_mode = "whitelist"
+
+# List of process names to filter (case-insensitive substring match)
+# Examples: ["nginx", "postgres", "redis", "myapp"]
+#names = []
+
+# List of specific process PIDs to filter
+#pids = []
+
 # Additional Bottom configuration (optional)
 # These are standard Bottom settings that work with or without OpenTelemetry
 
