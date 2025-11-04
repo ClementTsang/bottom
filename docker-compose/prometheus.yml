@@ -13,9 +13,9 @@ scrape_configs:
 
   # Job 2: Scrape dell'OpenTelemetry Collector
   - job_name: 'otel-collector'
-    # Il Collector espone le metriche per lo scraping sulla sua porta 9090
+    # Il Collector espone le metriche per lo scraping sulla sua porta 8889
     metrics_path: '/metrics'
     static_configs:
       # Raggiunge il Collector usando il suo nome di servizio Docker
-      - targets: ['otel-collector:9090'] 
+      - targets: ['otel-collector:8889'] 
 

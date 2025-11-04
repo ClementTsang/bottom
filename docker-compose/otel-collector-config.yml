@@ -14,7 +14,7 @@ processors:
 
 exporters:
   prometheus:
-    endpoint: "0.0.0.0:9090"
+    endpoint: "0.0.0.0:8889"
   debug:
     verbosity: detailed
 

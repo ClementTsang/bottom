@@ -14,7 +14,7 @@ The stack includes:
 Bottom (with --headless flag)
     ↓ (OTLP/gRPC on port 4317)
 OpenTelemetry Collector
-    ↓ (Prometheus scrape on port 9090)
+    ↓ (Prometheus scrape on port 8889)
 Prometheus
     ↓ (Query on port 9090)
 Grafana (accessible on port 3000)
@@ -30,7 +30,7 @@ docker-compose up -d
 ```
 
 This will start:
-- OpenTelemetry Collector on ports 4317 (gRPC), 4318 (HTTP), 9090 (metrics)
+- OpenTelemetry Collector on ports 4317 (gRPC), 4318 (HTTP), 8889 (metrics)
 - Prometheus on port 9090
 - Grafana on port 3000
 

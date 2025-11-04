@@ -9,7 +9,7 @@ services:
     ports:
       - "4317:4317"   # gRPC
       - "4318:4318"   # HTTP
-      - "9090:9090"   # Prometheus metrics endpoint
+      - "8889:8889"   # Prometheus metrics endpoint
     networks:
       - observ-net
     
