@@ -4,7 +4,7 @@ mod sysctl_bindings;
 
 use std::{io, process::Command};
 
-use hashbrown::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use itertools::Itertools;
 
 use super::UnixProcessExt;
@@ -28,7 +28,7 @@ impl UnixProcessExt for MacOSProcessExt {
                     .collect::<String>(),
             )
             .output()?;
-        let mut result = HashMap::new();
+        let mut result = HashMap::default();
         String::from_utf8_lossy(&output.stdout)
             .split_whitespace()
             .chunks(2)

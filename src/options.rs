@@ -20,7 +20,7 @@ pub use config::Config;
 use config::style::Styles;
 use data::TemperatureType;
 pub(crate) use error::{OptionError, OptionResult};
-use hashbrown::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use indexmap::IndexSet;
 use regex::Regex;
 #[cfg(feature = "battery")]
@@ -249,14 +249,14 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     // For CPU
     let default_cpu_selection = get_default_cpu_selection(args, config);
 
-    let mut widget_map = HashMap::new();
-    let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
-    let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::new();
-    let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::new();
-    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::new();
-    let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
-    let mut disk_state_map: HashMap<u64, DiskTableWidget> = HashMap::new();
-    let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::new();
+    let mut widget_map = HashMap::default();
+    let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::default();
+    let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::default();
+    let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::default();
+    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::default();
+    let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::default();
+    let mut disk_state_map: HashMap<u64, DiskTableWidget> = HashMap::default();
+    let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::default();
 
     let autohide_timer = if autohide_time {
         Some(Instant::now())
@@ -267,7 +267,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let mut initial_widget_id: u64 = default_widget_id;
     let mut initial_widget_type = Proc;
     let is_custom_layout = config.row.is_some();
-    let mut used_widget_set = HashSet::new();
+    let mut used_widget_set = HashSet::default();
 
     let network_unit_type = get_network_unit_type(args, config);
     let network_scale_type = get_network_scale_type(args, config);

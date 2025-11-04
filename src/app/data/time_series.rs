@@ -7,7 +7,7 @@ use std::{
 };
 
 #[cfg(feature = "gpu")]
-use hashbrown::{HashMap, HashSet}; // TODO: Try fxhash again.
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use timeless::data::ChunkedData;
 
 use crate::collection::Data;

@@ -9,7 +9,7 @@ use std::{
 };
 
 use concat_string::concat_string;
-use hashbrown::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use process::*;
 use sysinfo::ProcessStatus;
 
@@ -387,7 +387,7 @@ pub(crate) fn linux_process_data(
 
     // TODO: Could maybe use a double buffer hashmap to avoid allocating this each time?
     // e.g. we swap which is prev and which is new.
-    let mut seen_pids: HashSet<Pid> = HashSet::new();
+    let mut seen_pids: HashSet<Pid> = HashSet::default();
 
     // Note this will only return PIDs of _processes_, not threads. You can get those from /proc/<PID>/task though.
     let pids = fs::read_dir("/proc")?.flatten().filter_map(|dir| {
@@ -411,7 +411,7 @@ pub(crate) fn linux_process_data(
 
     // TODO: Maybe pre-allocate these buffers in the future w/ routine cleanup.
     let mut buffer = String::new();
-    let mut process_threads_to_check = HashMap::new();
+    let mut process_threads_to_check = HashMap::default();
 
     let mut process_vector: Vec<ProcessHarvest> = pids
         .filter_map(|pid_path| {

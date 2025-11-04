@@ -2,7 +2,7 @@
 
 use std::{io, time::Duration};
 
-use hashbrown::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use itertools::Itertools;
 use sysinfo::{ProcessStatus, System};
 

@@ -8,7 +8,7 @@ use std::time::Instant;
 use concat_string::concat_string;
 use data::*;
 use filter::*;
-use hashbrown::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use layout_manager::*;
 pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
