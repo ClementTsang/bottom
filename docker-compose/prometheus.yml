@@ -2,6 +2,9 @@ global:
   scrape_interval: 10s # Quanto spesso fare lo scraping
   evaluation_interval: 10s
 
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
 scrape_configs:
   # Job 1: Monitora se Prometheus stesso è attivo
   - job_name: 'prometheus'

@@ -1,16 +1,15 @@
 services:
-     
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
     command: ["--config=/etc/otel-collector-config.yml"]
     volumes:
       - ./otel-collector-config.yml:/etc/otel-collector-config.yml
-
     ports:
-      - "4317:4317"
-    depends_on:
-      - jaeger
+      - "4317:4317"   # gRPC
+      - "4318:4318"   # HTTP
+      - "9090:9090"   # Prometheus metrics endpoint
     networks:
       - observ-net
     
@@ -46,7 +45,6 @@ services:
 
 volumes:
   grafana-storage:
-  timescale_data:
 
 networks:
   observ-net:
