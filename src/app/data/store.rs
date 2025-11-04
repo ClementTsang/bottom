@@ -29,7 +29,7 @@ pub struct StoredData {
     pub arc_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
     pub gpu_harvest: Vec<(String, MemData)>,
-    pub cpu_data: Vec<cpu::CpuData>,
+    pub cpu_harvest: Vec<cpu::CpuData>,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_data: ProcessData,
     /// TODO: (points_rework_v1) Might be a better way to do this without having to store here?
@@ -50,7 +50,7 @@ impl Default for StoredData {
             #[cfg(not(target_os = "windows"))]
             cache_harvest: None,
             swap_harvest: None,
-            cpu_data: Default::default(),
+            cpu_harvest: Default::default(),
             load_avg_harvest: cpu::LoadAvgHarvest::default(),
             process_data: Default::default(),
             prev_io: Vec::default(),
@@ -113,16 +113,16 @@ impl StoredData {
         }
 
         if let Some(cpu) = data.cpu {
-            self.cpu_data.clear();
+            self.cpu_harvest.clear();
 
             if let Some(avg) = cpu.avg {
-                self.cpu_data.push(cpu::CpuData {
+                self.cpu_harvest.push(cpu::CpuData {
                     data_type: cpu::CpuDataType::Avg,
                     usage: avg,
                 });
             }
 
-            self.cpu_data
+            self.cpu_harvest
                 .extend(
                     cpu.cpus
                         .into_iter()

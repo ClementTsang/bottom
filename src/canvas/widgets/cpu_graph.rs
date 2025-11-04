@@ -120,7 +120,7 @@ impl Painter {
         &self, cpu_widget_state: &'a CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
     ) -> Vec<GraphData<'a>> {
         let current_scroll_position = cpu_widget_state.table.state.current_index;
-        let cpu_entries = &data.cpu_data;
+        let cpu_entries = &data.cpu_harvest;
         let cpu_points = &data.timeseries_data.cpu;
         let time = &data.timeseries_data.time;
 
@@ -152,33 +152,36 @@ impl Painter {
             }
 
             points
-        } else if show_avg_cpu && current_scroll_position == AVG_POSITION {
-            let style = self.styles.avg_cpu_colour;
+        } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position - 1) {
+            // We generally subtract one from current scroll position because of the all entry.
 
-            vec![
-                GraphData::default()
-                    .style(style)
-                    .time(time)
-                    .values(&data.timeseries_data.avg_cpu),
-            ]
-        } else {
-            // Note, we generally subtract one from current scroll position because of the all entry.
             let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
-            let corrected_offset = current_scroll_position - 1 - show_avg_offset;
+            let is_avg = show_avg_cpu && current_scroll_position == AVG_POSITION;
 
-            if let Some(CpuData { .. }) = cpu_entries.get(corrected_offset) {
-                let style = self.styles.cpu_colour_styles
-                    [(corrected_offset) % self.styles.cpu_colour_styles.len()];
+            let style = if is_avg {
+                self.styles.avg_cpu_colour
+            } else {
+                self.styles.cpu_colour_styles[(current_scroll_position - 1 - show_avg_offset)
+                    % self.styles.cpu_colour_styles.len()]
+            };
 
+            if is_avg {
                 vec![
                     GraphData::default()
                         .style(style)
                         .time(time)
-                        .values(&cpu_points[corrected_offset]),
+                        .values(&data.timeseries_data.avg_cpu),
                 ]
             } else {
-                vec![]
+                vec![
+                    GraphData::default()
+                        .style(style)
+                        .time(time)
+                        .values(&cpu_points[current_scroll_position - 1 - show_avg_offset]),
+                ]
             }
+        } else {
+            vec![]
         }
     }
 
