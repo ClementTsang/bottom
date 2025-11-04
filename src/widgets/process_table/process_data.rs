@@ -168,6 +168,37 @@ fn format_time(dur: Duration) -> String {
     }
 }
 
+/// Fast formatting for percentages with 1 decimal place.
+/// Uses ryu for faster float formatting than format!().
+#[inline]
+fn format_percent_fast(value: f32) -> String {
+    let mut buffer = ryu::Buffer::new();
+    let formatted = buffer.format(value);
+
+    // Find first decimal place
+    if let Some(dot_pos) = formatted.find('.') {
+        let end = (dot_pos + 2).min(formatted.len());
+        let mut result = String::with_capacity(end + 1);
+        result.push_str(&formatted[..end]);
+        result.push('%');
+        result
+    } else {
+        // No decimal point, add .0%
+        let mut result = String::with_capacity(formatted.len() + 3);
+        result.push_str(formatted);
+        result.push_str(".0%");
+        result
+    }
+}
+
+/// Fast formatting for integers using itoa.
+/// Significantly faster than to_string() or format!().
+#[inline]
+fn format_integer_fast<T: itoa::Integer>(value: T) -> String {
+    let mut buffer = itoa::Buffer::new();
+    buffer.format(value).to_string()
+}
+
 /// Returns a string given a value that is converted to the closest binary
 /// variant. If the value is greater than a gibibyte, then it will return a
 /// decimal place.
@@ -308,11 +339,11 @@ impl ProcWidgetData {
 
     fn to_string(&self, column: &ProcColumn) -> String {
         match column {
-            ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
+            ProcColumn::CpuPercent => format_percent_fast(self.cpu_usage_percent),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem),
-            ProcColumn::Pid => self.pid.to_string(),
-            ProcColumn::Count => self.num_similar.to_string(),
+            ProcColumn::Pid => format_integer_fast(self.pid),
+            ProcColumn::Count => format_integer_fast(self.num_similar),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string(),
             ProcColumn::ReadPerSecond => dec_bytes_per_second_string(self.rps),
             ProcColumn::WritePerSecond => dec_bytes_per_second_string(self.wps),
@@ -328,7 +359,7 @@ impl ProcWidgetData {
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage),
+            ProcColumn::GpuUtilPercent => format_percent_fast(self.gpu_usage as f32),
         }
     }
 }
@@ -339,15 +370,13 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
     ) -> Option<Cow<'static, str>> {
         let calculated_width = calculated_width.get();
 
-        // TODO: Optimize the string allocations here...
-        // TODO: Also maybe just pull in the to_string call but add a variable for the
-        // differences.
+        // Optimized: Using itoa/ryu for faster number formatting
         Some(match column {
-            ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
+            ProcColumn::CpuPercent => format_percent_fast(self.cpu_usage_percent).into(),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem).into(),
-            ProcColumn::Pid => self.pid.to_string().into(),
-            ProcColumn::Count => self.num_similar.to_string().into(),
+            ProcColumn::Pid => format_integer_fast(self.pid).into(),
+            ProcColumn::Count => format_integer_fast(self.num_similar).into(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string().into(),
             ProcColumn::ReadPerSecond => dec_bytes_per_second_string(self.rps).into(),
             ProcColumn::WritePerSecond => dec_bytes_per_second_string(self.wps).into(),
@@ -363,7 +392,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             ProcColumn::User => self
                 .user
                 .as_ref()
-                .map(|user| user.to_string().into())
+                .map(|user| Cow::Owned(user.to_string()))
                 .unwrap_or_else(|| "N/A".into()),
             ProcColumn::Time => format_time(self.time).into(),
             #[cfg(feature = "gpu")]
@@ -371,7 +400,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                 self.gpu_mem_usage.to_string().into()
             }
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage).into(),
+            ProcColumn::GpuUtilPercent => format_percent_fast(self.gpu_usage as f32).into(),
         })
     }
 
