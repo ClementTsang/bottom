@@ -365,6 +365,10 @@
 ## List of process names to filter (case-insensitive substring match)
 #names = ["nginx", "postgres", "redis", "myapp"]
 
+## List of regex patterns to match process names (case-sensitive)
+## More powerful than substring matching for complex matching
+#patterns = ["^nginx-[0-9.]+$", "java.*MyApplication", "^gunicorn: worker"]
+
 ## List of specific process PIDs to filter
 #pids = [1234, 5678]
 
@@ -372,4 +376,5 @@
 ## ---
 ## filter_mode = "whitelist"
 ## names = ["nginx", "postgres", "redis"]
+## patterns = ["^java.*MyApp$", "^node-v[0-9]+"]
 ## ---

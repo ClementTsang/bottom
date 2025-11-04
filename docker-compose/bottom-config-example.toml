@@ -48,6 +48,11 @@ processes = true
 # Examples: ["nginx", "postgres", "redis", "myapp"]
 #names = []
 
+# List of regex patterns to match process names (case-sensitive)
+# More powerful than substring matching
+# Examples: ["^nginx-[0-9.]+$", "java.*MyApp", "^gunicorn: worker"]
+#patterns = []
+
 # List of specific process PIDs to filter
 #pids = []
 

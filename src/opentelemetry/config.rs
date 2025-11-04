@@ -1,4 +1,5 @@
 // src/opentelemetry/config.rs
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::Duration;
@@ -91,13 +92,22 @@ pub struct ProcessFilterConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub filter_mode: Option<ProcessFilterMode>,
 
-    /// List of process names to filter
+    /// List of process names to filter (case-insensitive substring match)
     #[serde(default)]
     pub names: Vec<String>,
+
+    /// List of regex patterns to match process names
+    #[serde(default)]
+    pub patterns: Vec<String>,
 
     /// List of process PIDs to filter
     #[serde(default)]
     pub pids: Vec<u32>,
+
+    /// Compiled regex patterns (not serialized, built at runtime)
+    #[serde(skip)]
+    #[cfg_attr(feature = "generate_schema", schemars(skip))]
+    compiled_patterns: Option<Vec<Regex>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -191,7 +201,7 @@ impl ProcessFilterConfig {
             })?;
 
             // Merge: included file takes precedence, but combine lists
-            Ok(Self {
+            let mut merged = Self {
                 include: None, // Don't recurse
                 filter_mode: included.filter_mode.or(self.filter_mode.clone()),
                 names: if included.names.is_empty() {
@@ -199,16 +209,49 @@ impl ProcessFilterConfig {
                 } else {
                     included.names
                 },
+                patterns: if included.patterns.is_empty() {
+                    self.patterns.clone()
+                } else {
+                    included.patterns
+                },
                 pids: if included.pids.is_empty() {
                     self.pids.clone()
                 } else {
                     included.pids
                 },
-            })
+                compiled_patterns: None,
+            };
+
+            // Compile regex patterns
+            merged.compile_patterns()?;
+            Ok(merged)
         } else {
-            // No include, return self as-is
-            Ok(self.clone())
+            // No include, compile patterns for self
+            let mut result = self.clone();
+            result.compile_patterns()?;
+            Ok(result)
         }
+    }
+
+    /// Compile regex patterns from strings
+    fn compile_patterns(&mut self) -> Result<(), String> {
+        if self.patterns.is_empty() {
+            self.compiled_patterns = None;
+            return Ok(());
+        }
+
+        let mut compiled = Vec::new();
+        for pattern in &self.patterns {
+            match Regex::new(pattern) {
+                Ok(regex) => compiled.push(regex),
+                Err(e) => {
+                    return Err(format!("Invalid regex pattern '{}': {}", pattern, e));
+                }
+            }
+        }
+
+        self.compiled_patterns = Some(compiled);
+        Ok(())
     }
 
     /// Check if a process should be included based on filter configuration
@@ -224,8 +267,16 @@ impl ProcessFilterConfig {
             .names
             .iter()
             .any(|name| process_name.to_lowercase().contains(&name.to_lowercase()));
+
+        // Check if process matches regex patterns
+        let matches_pattern = if let Some(patterns) = &self.compiled_patterns {
+            patterns.iter().any(|regex| regex.is_match(process_name))
+        } else {
+            false
+        };
+
         let matches_pid = self.pids.contains(&process_pid);
-        let matches = matches_name || matches_pid;
+        let matches = matches_name || matches_pattern || matches_pid;
 
         // Apply filter mode logic
         match filter_mode {

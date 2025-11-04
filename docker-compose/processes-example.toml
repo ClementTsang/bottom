@@ -34,6 +34,23 @@ names = [
     # "myapp",
 ]
 
+# Regex patterns to match process names (case-sensitive)
+# More powerful than simple substring matching
+patterns = [
+    # Match specific versions
+    # "^nginx-[0-9.]+$",
+    # "^node-v[0-9]+",
+
+    # Match Java applications with specific main class
+    # "java.*MyApplication",
+
+    # Match processes with specific format
+    # "^gunicorn: worker",
+
+    # Match kernel threads (for blacklist)
+    # "^\\[.*\\]$",
+]
+
 # Specific process PIDs to monitor (optional)
 # Useful for monitoring specific long-running processes
 pids = []
@@ -44,4 +61,7 @@ pids = []
 #     "systemd",      # Exclude system processes
 #     "kworker",
 #     "migration",
+# ]
+# patterns = [
+#     "^\\[.*\\]$",   # Exclude all kernel threads
 # ]
