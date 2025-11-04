@@ -100,10 +100,10 @@ impl TimeSeriesData {
                 curr.push((*new_data).into());
             }
 
+            // If there isn't avg then we never had any to begin with.
             if let Some(avg) = cpu_harvest.avg {
                 self.avg_cpu.push(avg.into());
             } else {
-                crate::info!("INSERTING AVERAGE BREAK");
                 self.avg_cpu.insert_break();
             }
         } else {

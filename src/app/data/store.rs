@@ -115,10 +115,10 @@ impl StoredData {
         if let Some(cpu) = data.cpu {
             self.cpu_data.clear();
 
-            if let Some(avg_usage) = cpu.avg {
+            if let Some(avg) = cpu.avg {
                 self.cpu_data.push(cpu::CpuData {
                     data_type: cpu::CpuDataType::Avg,
-                    usage: avg_usage,
+                    usage: avg,
                 });
             }
 
