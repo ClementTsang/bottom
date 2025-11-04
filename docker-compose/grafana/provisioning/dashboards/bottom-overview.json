@@ -119,16 +119,66 @@
             "options": {
               "excludeByName": {
                 "Time": true,
-                "__name__": true
+                "__name__": true,
+                "job": true,
+                "instance": true
+              },
+              "indexByName": {
+                "name": 0,
+                "pid": 1,
+                "Value": 2
               },
               "renameByName": {
-                "name": "Process",
+                "name": "Process Name",
                 "pid": "PID",
                 "Value": "CPU %"
               }
             }
           }
-        ]
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [
+            {
+              "displayName": "CPU %",
+              "desc": true
+            }
+          ]
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "CPU %"},
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "percent"
+                },
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-background"
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {"value": 0, "color": "green"},
+                      {"value": 50, "color": "yellow"},
+                      {"value": 80, "color": "red"}
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
       },
       {
         "id": 6,
@@ -149,22 +199,62 @@
             "options": {
               "excludeByName": {
                 "Time": true,
-                "__name__": true
+                "__name__": true,
+                "job": true,
+                "instance": true
+              },
+              "indexByName": {
+                "name": 0,
+                "pid": 1,
+                "Value": 2
               },
               "renameByName": {
-                "name": "Process",
+                "name": "Process Name",
                 "pid": "PID",
                 "Value": "Memory"
               }
             }
           }
         ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [
+            {
+              "displayName": "Memory",
+              "desc": true
+            }
+          ]
+        },
         "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          },
           "overrides": [
             {
               "matcher": {"id": "byName", "options": "Memory"},
               "properties": [
-                {"id": "unit", "value": "bytes"}
+                {
+                  "id": "unit",
+                  "value": "bytes"
+                },
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-background"
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {"value": 0, "color": "green"},
+                      {"value": 1073741824, "color": "yellow"},
+                      {"value": 2147483648, "color": "red"}
+                    ]
+                  }
+                }
               ]
             }
           ]
