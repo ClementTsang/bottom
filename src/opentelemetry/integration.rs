@@ -2,8 +2,8 @@
 use std::sync::Arc;
 use tracing::{debug, error, warn};
 
-use super::{OpenTelemetryConfig, OpenTelemetryExporter};
 use super::exporter::SystemMetrics;
+use super::{OpenTelemetryConfig, OpenTelemetryExporter};
 
 /// Gestisce l'integrazione OpenTelemetry nel loop principale di bottom
 #[derive(Clone)]
@@ -20,7 +20,10 @@ impl OpenTelemetryIntegration {
     pub async fn new(config: Option<OpenTelemetryConfig>) -> Result<Self, OpenTelemetryError> {
         let exporter = if let Some(ref otel_config) = config {
             if otel_config.enabled {
-                debug!("Initializing OpenTelemetry exporter with endpoint: {}", otel_config.endpoint);
+                debug!(
+                    "Initializing OpenTelemetry exporter with endpoint: {}",
+                    otel_config.endpoint
+                );
                 match OpenTelemetryExporter::new(otel_config.clone()).await {
                     Ok(exp) => {
                         debug!("OpenTelemetry exporter initialized successfully");
@@ -39,7 +42,7 @@ impl OpenTelemetryIntegration {
             debug!("No OpenTelemetry configuration provided");
             None
         };
-        
+
         Ok(Self {
             exporter,
             config,
@@ -48,17 +51,19 @@ impl OpenTelemetryIntegration {
             consecutive_failures: 0,
         })
     }
-    
+
     /// Esporta i dati di sistema verso OpenTelemetry usando il trait SystemMetrics
-    pub async fn export_system_data<T: SystemMetrics>(&mut self, data: &T) -> Result<(), OpenTelemetryError> {
+    pub async fn export_system_data<T: SystemMetrics>(
+        &mut self, data: &T,
+    ) -> Result<(), OpenTelemetryError> {
         if let Some(exporter) = &self.exporter {
             let config = self.config.as_ref().unwrap();
-            
+
             // Controlla se è il momento di esportare
             if !self.should_export() {
                 return Ok(());
             }
-            
+
             // Circuit breaker - se troppi errori consecutivi, salta questo export
             if self.consecutive_failures > config.max_consecutive_failures {
                 if self.is_healthy {
@@ -70,9 +75,9 @@ impl OpenTelemetryIntegration {
                 }
                 return Ok(());
             }
-            
+
             debug!("Exporting system data to OpenTelemetry");
-            
+
             // Usa il metodo generico dell'exporter
             match exporter.export_system_data(data).await {
                 Ok(_) => {
@@ -87,17 +92,20 @@ impl OpenTelemetryIntegration {
                     error!("OpenTelemetry export failed: {}", e);
                     self.consecutive_failures += 1;
                     if self.is_healthy && self.consecutive_failures >= 3 {
-                        warn!("OpenTelemetry export experiencing issues ({} failures)", self.consecutive_failures);
+                        warn!(
+                            "OpenTelemetry export experiencing issues ({} failures)",
+                            self.consecutive_failures
+                        );
                     }
                 }
             }
-            
+
             self.last_export_time = std::time::Instant::now();
         }
-        
+
         Ok(())
     }
-    
+
     /// Controlla se è il momento di esportare basandosi sull'intervallo configurato
     fn should_export(&self) -> bool {
         if let Some(config) = &self.config {
@@ -106,17 +114,17 @@ impl OpenTelemetryIntegration {
             false
         }
     }
-    
+
     /// Restituisce se l'integrazione è abilitata
     pub fn is_enabled(&self) -> bool {
         self.exporter.is_some()
     }
-    
+
     /// Restituisce se l'exporter è in salute
     pub fn is_healthy(&self) -> bool {
         self.is_healthy
     }
-    
+
     /// Restituisce statistiche dell'exporter
     pub fn get_stats(&self) -> OpenTelemetryStats {
         OpenTelemetryStats {
@@ -127,11 +135,14 @@ impl OpenTelemetryIntegration {
             endpoint: self.config.as_ref().map(|c| c.endpoint.clone()),
         }
     }
-    
+
     /// Forza un export immediato (utile per testing)
-    pub async fn force_export<T: SystemMetrics>(&mut self, data: &T) -> Result<(), OpenTelemetryError> {
+    pub async fn force_export<T: SystemMetrics>(
+        &mut self, data: &T,
+    ) -> Result<(), OpenTelemetryError> {
         if let Some(_exporter) = &self.exporter {
-            self.last_export_time = std::time::Instant::now() - std::time::Duration::from_secs(3600); // Force next export
+            self.last_export_time =
+                std::time::Instant::now() - std::time::Duration::from_secs(3600); // Force next export
             self.export_system_data(data).await
         } else {
             Err(OpenTelemetryError::NotInitialized)
@@ -154,16 +165,16 @@ pub struct OpenTelemetryStats {
 pub enum OpenTelemetryError {
     #[error("OpenTelemetry initialization failed: {0}")]
     InitializationFailed(String),
-    
+
     #[error("OpenTelemetry exporter not initialized")]
     NotInitialized,
-    
+
     #[error("Export failed: {0}")]
     ExportFailed(String),
-    
+
     #[error("Configuration error: {0}")]
     ConfigError(String),
-    
+
     #[error("Network error: {0}")]
     NetworkError(String),
 }
@@ -178,13 +189,13 @@ impl From<Box<dyn std::error::Error + Send + Sync>> for OpenTelemetryError {
 mod tests {
     use super::*;
     use crate::opentelemetry::{OpenTelemetryConfig, adapter::BottomDataAdapter};
-    
+
     #[tokio::test]
     async fn test_integration_disabled() {
         let integration = OpenTelemetryIntegration::new(None).await.unwrap();
         assert!(!integration.is_enabled());
     }
-    
+
     #[tokio::test]
     async fn test_integration_enabled() {
         let config = OpenTelemetryConfig {
@@ -192,19 +203,19 @@ mod tests {
             endpoint: "http://localhost:4317".to_string(),
             ..Default::default()
         };
-        
+
         // Questo test fallirà se non c'è un collector in ascolto, ma va bene per test unitari
         let _result = OpenTelemetryIntegration::new(Some(config)).await;
         // Non assertiamo il successo perché dipende dall'ambiente
     }
-    
+
     #[test]
     fn test_should_export_timing() {
         let config = OpenTelemetryConfig {
             export_interval_secs: 1,
             ..Default::default()
         };
-        
+
         let mut integration = OpenTelemetryIntegration {
             exporter: None,
             config: Some(config),
@@ -212,13 +223,13 @@ mod tests {
             is_healthy: true,
             consecutive_failures: 0,
         };
-        
+
         assert!(integration.should_export());
-        
+
         integration.last_export_time = std::time::Instant::now();
         assert!(!integration.should_export());
     }
-    
+
     #[test]
     fn test_health_tracking() {
         let mut integration = OpenTelemetryIntegration {
@@ -228,17 +239,24 @@ mod tests {
             is_healthy: true,
             consecutive_failures: 0,
         };
-        
+
         // Simula errori
         integration.consecutive_failures = 5;
-        assert!(integration.consecutive_failures > integration.config.as_ref().unwrap().max_consecutive_failures);
-        
+        assert!(
+            integration.consecutive_failures
+                > integration
+                    .config
+                    .as_ref()
+                    .unwrap()
+                    .max_consecutive_failures
+        );
+
         // Reset dopo successo
         integration.consecutive_failures = 0;
         integration.is_healthy = true;
         assert!(integration.is_healthy());
     }
-    
+
     // TODO: Fix this test - with_sample_data() doesn't exist
     // #[tokio::test]
     // async fn test_export_with_sample_data() {

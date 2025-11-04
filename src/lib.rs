@@ -21,10 +21,10 @@ pub(crate) mod canvas;
 pub(crate) mod collection;
 pub(crate) mod constants;
 pub(crate) mod event;
-pub mod options;
-pub mod widgets;
 #[cfg(feature = "opentelemetry")]
 pub mod opentelemetry;
+pub mod options;
+pub mod widgets;
 #[allow(unused_imports)]
 use crate::args::BottomArgs;
 
@@ -492,25 +492,24 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     Ok(())
 }
 
-
 #[cfg(feature = "opentelemetry")]
 fn run_headless(args: BottomArgs, _enable_error_hook: &mut bool) -> anyhow::Result<()> {
+    use crate::utils::cancellation_token::CancellationToken;
     use std::sync::Arc;
     use std::sync::mpsc;
-    use crate::utils::cancellation_token::CancellationToken;
-    
+
     println!("Starting bottom in headless mode (OpenTelemetry only)...");
-    
+
     // Read config
     let config = get_or_create_config(args.general.config_location.as_deref())?;
-    
+
     // Initialize app
     let (mut app, _, _) = init_app(args, config)?;
-    
+
     // Crea il cancellation token per gestire shutdown pulito
     let cancellation_token = Arc::new(CancellationToken::default());
     let (sender, receiver) = mpsc::channel();
-    
+
     // Crea il thread di raccolta dati (come in start_bottom)
     let (_collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
     let _collection_thread = create_collection_thread(
@@ -521,16 +520,16 @@ fn run_headless(args: BottomArgs, _enable_error_hook: &mut bool) -> anyhow::Resu
         app.filters.clone(),
         app.used_widgets,
     );
-    
+
     // Setup ctrl-c handler
     let shutdown_sender = sender.clone();
     ctrlc::set_handler(move || {
         let _ = shutdown_sender.send(BottomEvent::Terminate);
     })?;
-    
+
     println!("Headless mode started. Exporting metrics to OpenTelemetry.");
     println!("Press Ctrl+C to stop.");
-    
+
     // Main loop - simile a start_bottom ma senza rendering
     loop {
         if let Ok(recv) = receiver.recv() {
@@ -542,7 +541,7 @@ fn run_headless(args: BottomArgs, _enable_error_hook: &mut bool) -> anyhow::Resu
                 BottomEvent::Update(data) => {
                     // Popola il data_store con i dati reali!
                     app.data_store.eat_data(data, &app.app_config_fields);
-                                        
+
                     // Aggiorna i widget states (necessario per l'export)
                     if !app.data_store.is_frozen() {
                         if app.used_widgets.use_disk {
@@ -565,22 +564,21 @@ fn run_headless(args: BottomArgs, _enable_error_hook: &mut bool) -> anyhow::Resu
                                 cpu.force_data_update();
                             }
                         }
-                        
+
                         // Ora chiama update_data che esporterà le metriche
                         app.update_data();
                     }
                 }
                 BottomEvent::Clean => {
-                    app.data_store.clean_data(Duration::from_millis(
-                        app.app_config_fields.retention_ms
-                    ));
+                    app.data_store
+                        .clean_data(Duration::from_millis(app.app_config_fields.retention_ms));
                 }
                 // Ignora gli altri eventi (non rilevanti in headless)
                 _ => {}
             }
         }
     }
-    
+
     cancellation_token.cancel();
     Ok(())
 }
