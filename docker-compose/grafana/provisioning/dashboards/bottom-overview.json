@@ -15,7 +15,7 @@
           {
             "expr": "system_cpu_usage_percent",
             "legendFormat": "Core {{cpu_id}}",
-            "refId": "A"
+            "refId": "CPU"
           }
         ],
         "fieldConfig": {
@@ -33,14 +33,24 @@
         "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
         "targets": [
           {
-            "expr": "system_memory_usage_bytes{memory_type=\"ram\"}",
-            "legendFormat": "RAM",
-            "refId": "A"
+            "expr": "system_memory_usage_bytes",
+            "legendFormat": "RAM Used",
+            "refId": "RAM"
           },
           {
-            "expr": "system_memory_usage_bytes{memory_type=\"swap\"}",
-            "legendFormat": "Swap",
-            "refId": "B"
+            "expr": "system_memory_total_bytes",
+            "legendFormat": "RAM Total",
+            "refId": "RAM_Total"
+          },
+          {
+            "expr": "system_swap_usage_bytes",
+            "legendFormat": "Swap Used",
+            "refId": "Swap"
+          },
+          {
+            "expr": "system_swap_total_bytes",
+            "legendFormat": "Swap Total",
+            "refId": "Swap_Total"
           }
         ],
         "fieldConfig": {
@@ -56,14 +66,14 @@
         "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
         "targets": [
           {
-            "expr": "rate(system_network_rx_bytes[1m])",
+            "expr": "system_network_rx_bytes_rate",
             "legendFormat": "RX - {{interface}}",
-            "refId": "A"
+            "refId": "RX"
           },
           {
-            "expr": "rate(system_network_tx_bytes[1m])",
+            "expr": "system_network_tx_bytes_rate",
             "legendFormat": "TX - {{interface}}",
-            "refId": "B"
+            "refId": "TX"
           }
         ],
         "fieldConfig": {
@@ -81,7 +91,7 @@
           {
             "expr": "(system_disk_usage_bytes / system_disk_total_bytes) * 100",
             "legendFormat": "{{mount}} ({{device}})",
-            "refId": "A"
+            "refId": "Disk"
           }
         ],
         "fieldConfig": {
@@ -110,7 +120,7 @@
             "expr": "topk(10, system_process_cpu_usage_percent)",
             "format": "table",
             "instant": true,
-            "refId": "A"
+            "refId": "Process"
           }
         ],
         "transformations": [
@@ -190,7 +200,7 @@
             "expr": "topk(10, system_process_memory_usage_bytes)",
             "format": "table",
             "instant": true,
-            "refId": "A"
+            "refId": "Process"
           }
         ],
         "transformations": [
