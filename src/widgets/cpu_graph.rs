@@ -102,7 +102,6 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
             } => match data_type {
                 CpuDataType::Avg => painter.styles.avg_cpu_colour,
                 CpuDataType::Cpu(index) => {
-                    let index = *index as usize;
                     painter.styles.cpu_colour_styles[index % painter.styles.cpu_colour_styles.len()]
                 }
             },
