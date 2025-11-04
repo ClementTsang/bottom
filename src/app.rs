@@ -13,7 +13,7 @@ use tokio::sync::Mutex;
 
 lazy_static! {
     static ref TOKIO_RUNTIME: tokio::runtime::Runtime =
-        { tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime") };
+        tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
 }
 
 use concat_string::concat_string;
