@@ -38,6 +38,7 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
     volumes:
       - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
     networks:

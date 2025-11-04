@@ -128,16 +128,23 @@ topk(10, system_process_cpu_usage_percent)
 topk(10, system_process_memory_usage_bytes)
 ```
 
-## Setting up Grafana
+## Grafana Configuration
 
+Grafana is automatically configured with:
+- **Prometheus data source** (http://prometheus:9090) - pre-configured
+- **Bottom System Overview dashboard** - pre-loaded
+
+To access:
 1. Go to http://localhost:3000 (username: `admin`, password: `admin`)
-2. Add Prometheus as a data source:
-   - Go to Configuration → Data Sources
-   - Click "Add data source"
-   - Select "Prometheus"
-   - URL: `http://prometheus:9090`
-   - Click "Save & Test"
-3. Import a dashboard or create your own
+2. Navigate to Dashboards → Browse → "Bottom System Overview"
+
+The dashboard includes:
+- CPU usage by core
+- Memory usage (RAM/Swap)
+- Network traffic
+- Disk usage
+- Top 10 processes by CPU
+- Top 10 processes by Memory
 
 ## Stopping the Stack
 

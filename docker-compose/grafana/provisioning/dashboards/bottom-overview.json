@@ -1,0 +1,175 @@
+{
+  "dashboard": {
+    "title": "Bottom System Overview",
+    "uid": "bottom-overview",
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "refresh": "5s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "CPU Usage by Core",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "system_cpu_usage_percent",
+            "legendFormat": "Core {{cpu_id}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Memory Usage",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "system_memory_usage_bytes{memory_type=\"ram\"}",
+            "legendFormat": "RAM",
+            "refId": "A"
+          },
+          {
+            "expr": "system_memory_usage_bytes{memory_type=\"swap\"}",
+            "legendFormat": "Swap",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Network Traffic",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(system_network_rx_bytes[1m])",
+            "legendFormat": "RX - {{interface}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(system_network_tx_bytes[1m])",
+            "legendFormat": "TX - {{interface}}",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "Bps"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Disk Usage",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "(system_disk_usage_bytes / system_disk_total_bytes) * 100",
+            "legendFormat": "{{mount}} ({{device}})",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 70, "color": "yellow"},
+                {"value": 90, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Top 10 Processes by CPU",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "topk(10, system_process_cpu_usage_percent)",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true
+              },
+              "renameByName": {
+                "name": "Process",
+                "pid": "PID",
+                "Value": "CPU %"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Top 10 Processes by Memory",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "topk(10, system_process_memory_usage_bytes)",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true
+              },
+              "renameByName": {
+                "name": "Process",
+                "pid": "PID",
+                "Value": "Memory"
+              }
+            }
+          }
+        ],
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "Memory"},
+              "properties": [
+                {"id": "unit", "value": "bytes"}
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
