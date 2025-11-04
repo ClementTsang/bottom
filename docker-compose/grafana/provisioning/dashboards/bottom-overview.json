@@ -117,7 +117,7 @@
         "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
         "targets": [
           {
-            "expr": "topk(10, system_process_cpu_usage_percent)",
+            "expr": "topk(10, system_process_cpu_usage_percent and (time() - timestamp(system_process_cpu_usage_percent) < 30))",
             "format": "table",
             "instant": true,
             "refId": "Process"
@@ -199,7 +199,7 @@
         "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
         "targets": [
           {
-            "expr": "topk(10, system_process_memory_usage_bytes)",
+            "expr": "topk(10, system_process_memory_usage_bytes and (time() - timestamp(system_process_memory_usage_bytes) < 30))",
             "format": "table",
             "instant": true,
             "refId": "Process"
