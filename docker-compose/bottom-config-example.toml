@@ -1,0 +1,68 @@
+# Example Bottom configuration file for OpenTelemetry export
+# Copy this file and customize it for your needs
+
+# OpenTelemetry configuration
+[opentelemetry]
+# Enable OpenTelemetry export
+enabled = true
+
+# OTLP endpoint (gRPC)
+# For local docker-compose setup: http://localhost:4317
+# For remote collector: http://your-collector-host:4317
+endpoint = "http://localhost:4317"
+
+# Service name that will appear in metrics
+service_name = "bottom-system-monitor"
+
+# Export interval in milliseconds (default: 5000ms = 5 seconds)
+export_interval_ms = 5000
+
+# Metrics configuration - enable/disable specific metric types
+[opentelemetry.metrics]
+# System-level metrics
+cpu = true           # CPU usage per core and average
+memory = true        # RAM, swap, cache usage
+network = true       # Network RX/TX rates
+disk = true          # Disk usage and I/O
+temperature = true   # CPU/GPU temperatures
+gpu = true           # GPU usage and memory (if available)
+
+# Process-level metrics
+# Warning: Enabling process metrics can generate a large number of time series
+# if you have many processes running. Consider filtering processes or
+# reducing the export interval.
+processes = true
+
+# Additional Bottom configuration (optional)
+# These are standard Bottom settings that work with or without OpenTelemetry
+
+[flags]
+# Update rate for data collection
+rate = "1s"
+
+# Default time range for graphs
+default_time_value = "60s"
+
+# Hide average CPU entry
+hide_avg_cpu = false
+
+# Use dedicated row for average CPU
+average_cpu_row = false
+
+# Temperature unit: "c", "f", or "k"
+temperature_type = "c"
+
+# Show GPU information (requires GPU feature)
+#disable_gpu = false
+
+# Enable cache memory display
+#enable_cache_memory = false
+
+# Process widget configuration
+#[processes]
+#columns = ["PID", "Name", "CPU%", "Mem%", "R/s", "W/s", "User", "State"]
+
+# CPU widget configuration
+#[cpu]
+# One of "all" (default) or "average"/"avg"
+#default = "average"
