@@ -13,7 +13,6 @@ use crate::{
         },
         drawing_utils::should_hide_x_label,
     },
-    collection::cpu::CpuData,
     widgets::CpuWidgetState,
 };
 
@@ -120,7 +119,6 @@ impl Painter {
         &self, cpu_widget_state: &'a CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
     ) -> Vec<GraphData<'a>> {
         let current_scroll_position = cpu_widget_state.table.state.current_index;
-        let cpu_entries = &data.cpu_data;
         let cpu_points = &data.timeseries_data.cpu;
         let time = &data.timeseries_data.time;
 
@@ -166,16 +164,11 @@ impl Painter {
             let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
             let corrected_offset = current_scroll_position - 1 - show_avg_offset;
 
-            if let Some(CpuData { .. }) = cpu_entries.get(corrected_offset) {
+            if let Some(points) = cpu_points.get(corrected_offset) {
                 let style = self.styles.cpu_colour_styles
                     [(corrected_offset) % self.styles.cpu_colour_styles.len()];
 
-                vec![
-                    GraphData::default()
-                        .style(style)
-                        .time(time)
-                        .values(&cpu_points[corrected_offset]),
-                ]
+                vec![GraphData::default().style(style).time(time).values(&points)]
             } else {
                 vec![]
             }
