@@ -143,6 +143,7 @@ impl Painter {
 
                     GraphData::default().style(style).time(time).values(values)
                 })
+                .rev()
                 .collect()
         } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position - 1) {
             // We generally subtract one from current scroll position because of the all entry.
