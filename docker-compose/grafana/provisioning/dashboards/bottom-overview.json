@@ -1,11 +1,11 @@
 {
-  "dashboard": {
-    "title": "Bottom System Overview",
-    "uid": "bottom-overview",
-    "timezone": "browser",
-    "schemaVersion": 16,
-    "refresh": "5s",
-    "panels": [
+  "title": "Bottom System Overview",
+  "uid": "bottom-overview",
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "refresh": "5s",
+  "editable": true,
+  "panels": [
       {
         "id": 1,
         "title": "CPU Usage by Core",
@@ -171,5 +171,4 @@
         }
       }
     ]
-  }
 }
