@@ -131,7 +131,9 @@
                 "Time": true,
                 "__name__": true,
                 "job": true,
-                "instance": true
+                "instance": true,
+                "exported_job": true,
+                "otel_scope_name": true
               },
               "indexByName": {
                 "name": 0,
@@ -211,7 +213,9 @@
                 "Time": true,
                 "__name__": true,
                 "job": true,
-                "instance": true
+                "instance": true,
+                "exported_job": true,
+                "otel_scope_name": true
               },
               "indexByName": {
                 "name": 0,
