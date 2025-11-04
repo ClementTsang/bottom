@@ -387,7 +387,8 @@ pub(crate) fn linux_process_data(
 
     // TODO: Could maybe use a double buffer hashmap to avoid allocating this each time?
     // e.g. we swap which is prev and which is new.
-    let mut seen_pids: HashSet<Pid> = HashSet::default();
+    // Pre-allocate with expected capacity to reduce reallocations
+    let mut seen_pids: HashSet<Pid> = HashSet::with_capacity_and_hasher(128, Default::default());
 
     // Note this will only return PIDs of _processes_, not threads. You can get those from /proc/<PID>/task though.
     let pids = fs::read_dir("/proc")?.flatten().filter_map(|dir| {
@@ -410,7 +411,8 @@ pub(crate) fn linux_process_data(
     };
 
     // TODO: Maybe pre-allocate these buffers in the future w/ routine cleanup.
-    let mut buffer = String::new();
+    // Pre-allocate with reasonable capacity to reduce reallocations
+    let mut buffer = String::with_capacity(4096);
     let mut process_threads_to_check = HashMap::default();
 
     let mut process_vector: Vec<ProcessHarvest> = pids

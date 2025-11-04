@@ -36,7 +36,7 @@ pub const LOG_PEBI_LIMIT: f64 = 50.0;
 /// Returns a tuple containing the value and the unit in bytes. In units of
 /// 1024. This only supports up to a tebi.  Note the "single" unit will have a
 /// space appended to match the others if `spacing` is true.
-#[inline]
+#[inline(always)]
 pub fn get_binary_bytes(bytes: u64) -> (f64, &'static str) {
     match bytes {
         b if b < KIBI_LIMIT => (bytes as f64, "B"),
@@ -50,7 +50,7 @@ pub fn get_binary_bytes(bytes: u64) -> (f64, &'static str) {
 /// Returns a tuple containing the value and the unit in bytes. In units of
 /// 1000. This only supports up to a tera.  Note the "single" unit will have a
 /// space appended to match the others if `spacing` is true.
-#[inline]
+#[inline(always)]
 pub fn get_decimal_bytes(bytes: u64) -> (f64, &'static str) {
     match bytes {
         b if b < KILO_LIMIT => (bytes as f64, "B"),
@@ -62,9 +62,9 @@ pub fn get_decimal_bytes(bytes: u64) -> (f64, &'static str) {
 }
 
 /// Given a value in _bits_, turn a tuple containing the value and a unit.
-#[inline]
+#[inline(always)]
 pub fn convert_bits(bits: u64, base_two: bool) -> (f64, &'static str) {
-    let bytes = bits / 8;
+    let bytes = bits >> 3; // Faster than / 8
 
     if base_two {
         get_binary_bytes(bytes)

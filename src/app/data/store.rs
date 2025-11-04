@@ -81,8 +81,8 @@ impl StoredData {
         // We must adjust all the network values to their selected type (defaults to bits).
         if matches!(settings.network_unit_type, DataUnit::Byte) {
             if let Some(network) = &mut data.network {
-                network.rx /= 8;
-                network.tx /= 8;
+                network.rx >>= 3; // Faster than / 8
+                network.tx >>= 3; // Faster than / 8
             }
         }
 
