@@ -30,7 +30,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 - [#1833](https://github.com/ClementTsang/bottom/pull/1833): Sort disk I/O using actual value rather than string representation.
 - [#1812](https://github.com/ClementTsang/bottom/pull/1812): Fix ARC collection on FreeBSD.
-- [](): Fix displayed average CPU value being wrong in graphs.
+- [#1846](https://github.com/ClementTsang/bottom/pull/1846): Fix displayed average CPU value being wrong in graphs.
 
 ### Other
 
