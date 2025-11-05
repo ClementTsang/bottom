@@ -54,6 +54,7 @@ jobs:
         run: |
           VER=$(cat .github/ci/rust_version.txt)
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+          echo "$VER"
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
