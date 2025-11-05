@@ -632,21 +632,21 @@ jobs:
           TMP_NAME=$(find bottom-*.rpm)
           mv $TMP_NAME $(echo $TMP_NAME | sed "s/bottom/bottom-musl/")
 
-      - name: Verify rpm release
+      - name: Verify rpm file
         id: verify
         run: |
           RPM_FILE=$(find bottom-*.rpm)
-          # Display info
           rpm -qip $RPM_FILE
-
-          # Check signatures
-          rpm --checksig --verbose $RPM_FILE
-
-          # Try installing it
-          yum localinstall $RPM_FILE
-
           # Save for future jobs
           echo "RPM_FILE=$RPM_FILE" >> $GITHUB_OUTPUT
+
+      - name: Check rpm file signatures
+        run: |
+          rpm --checksig --verbose ${{ steps.verify.outputs.RPM_FILE }}
+
+      - name: Check rpm file signatures
+        run: |
+          yum localinstall ${{ steps.verify.outputs.RPM_FILE }}
 
       - name: Delete generated rpm folder
         run: |
