@@ -638,6 +638,9 @@ jobs:
           # Check signatures
           rpm --checksig --verbose $RPM_FILE
 
+          # Try installing it
+          yum localinstall $RPM_FILE
+
           # Save for future jobs
           echo "RPM_FILE=$RPM_FILE" >> $GITHUB_OUTPUT
 
