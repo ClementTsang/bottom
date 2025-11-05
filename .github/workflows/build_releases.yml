@@ -541,7 +541,7 @@ jobs:
 
       - name: Test installing generated Debian release
         run: |
-          apt install ${{ steps.verify.outputs.DEB_FILE }} -y
+          sudo apt install ${{ steps.verify.outputs.DEB_FILE }} -y
           btm -V
 
       - name: Delete generated Debian folder
