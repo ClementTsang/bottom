@@ -642,6 +642,7 @@ jobs:
 
       - name: Check rpm file signatures
         run: |
+          # Required because apparently this can get a bit weird, see https://github.com/ClementTsang/bottom/issues/1848
           rpm --checksig --verbose ${{ steps.verify.outputs.RPM_FILE }}
 
       - name: Check rpm file signatures
