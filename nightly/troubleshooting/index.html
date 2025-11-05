@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#troubleshooting" class="md-skip">
+        <a href="#troubleshootingknown-issues" class="md-skip">
           Skip to content
         </a>
       
@@ -1663,15 +1663,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#still-having-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      Still having issues?
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1764,6 +1755,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#i-dont-see-any-nvidia-gpu-information-while-using-a-musl-based-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      I don't see any NVIDIA GPU information while using a musl-based binary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#still-having-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Still having issues?
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1796,7 +1805,7 @@
   
 
 
-<h1 id="troubleshooting"><a class="toclink" href="#troubleshooting">Troubleshooting</a></h1>
+<h1 id="troubleshootingknown-issues"><a class="toclink" href="#troubleshootingknown-issues">Troubleshooting/Known Issues</a></h1>
 <h2 id="the-graph-points-look-brokenstrange"><a class="toclink" href="#the-graph-points-look-brokenstrange">The graph points look broken/strange</a></h2>
 <p>It's possible that your graphs don't look great out of the box due to the reliance on
 <a href="https://en.wikipedia.org/wiki/Braille_Patterns">braille characters</a> to draw them. This could cause problems if
@@ -1870,9 +1879,6 @@ Here are some possible solutions:</p>
     <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
 </figure>
 
-<h3 id="still-having-issues"><a class="toclink" href="#still-having-issues">Still having issues?</a></h3>
-<p>If you're still having issues, feel free to open a <a href="https://github.com/ClementTsang/bottom/discussions/new/">discussion</a>
-question about it, and I (or others) can try to help.</p>
 <h2 id="why-cant-i-see-all-my-temperature-sensors-on-windows"><a class="toclink" href="#why-cant-i-see-all-my-temperature-sensors-on-windows">Why can't I see all my temperature sensors on Windows?</a></h2>
 <p>This is a <a href="../support/official/#windows">known limitation</a>, some sensors may require admin privileges to get sensor data.</p>
 <h2 id="why-dont-i-see-dual-batteries-on-windows-reported-separately-eg-thinkpads"><a class="toclink" href="#why-dont-i-see-dual-batteries-on-windows-reported-separately-eg-thinkpads">Why don't I see dual batteries on Windows reported separately? (e.g. Thinkpads)</a></h2>
@@ -1944,6 +1950,12 @@ sudo<span class="w"> </span>snap<span class="w"> </span>connect<span class="w"> 
 sudo<span class="w"> </span>snap<span class="w"> </span>connect<span class="w"> </span>bottom:system-observe
 sudo<span class="w"> </span>snap<span class="w"> </span>connect<span class="w"> </span>bottom:process-control
 </code></pre></div>
+<h2 id="i-dont-see-any-nvidia-gpu-information-while-using-a-musl-based-binary"><a class="toclink" href="#i-dont-see-any-nvidia-gpu-information-while-using-a-musl-based-binary">I don't see any NVIDIA GPU information while using a musl-based binary</a></h2>
+<p>The underlying interface we use for NVIDIA GPU information, nvml, only works with <code>glibc</code> and does not work with <code>musl</code> at the moment (see <a href="https://forums.developer.nvidia.com/t/provide-driver-for-muslc-to-install-it-in-musl-distros/219586/7">this forum post</a> for some more details). As such, bottom may fail to get NVIDIA GPU information when using a musl-based binary until this is resolved. This applies to Linux and Windows from my understanding.</p>
+<p>To resolve this, use <code>glibc</code>-based binary builds if possible (e.g. the <code>gnu</code> binaries/non-<code>musl</code> packages in <a href="https://github.com/ClementTsang/bottom/releases">releases</a>).</p>
+<h2 id="still-having-issues"><a class="toclink" href="#still-having-issues">Still having issues?</a></h2>
+<p>If you're still having issues, feel free to open a <a href="https://github.com/ClementTsang/bottom/discussions/new/">discussion</a>
+question about it, and I (or others) can try to help.</p>
 
 
 
@@ -1964,7 +1976,7 @@ sudo<span class="w"> </span>snap<span class="w"> </span>connect<span class="w"> 
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="April 14, 2025 06:13:20">April 14, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 5, 2025 15:01:39">November 5, 2025</span>
   </span>
 
     
