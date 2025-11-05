@@ -171,7 +171,7 @@ sudo snap connect bottom:process-control
 
 The underlying interface we use for NVIDIA GPU information, nvml, only works with `glibc` and does not work with `musl` at the moment (see [this forum post](https://forums.developer.nvidia.com/t/provide-driver-for-muslc-to-install-it-in-musl-distros/219586/7) for some more details). As such, bottom may fail to get NVIDIA GPU information when using a musl-based binary until this is resolved. This applies to Linux and Windows from my understanding.
 
-To resolve this, use `glibc`-based binary builds if possible (e.g. the `gnu`-prefixed binaries in [releases](https://github.com/ClementTsang/bottom/releases)).
+To resolve this, use `glibc`-based binary builds if possible (e.g. the `gnu` binaries/non-`musl` packages in [releases](https://github.com/ClementTsang/bottom/releases)).
 
 ## Still having issues?
 
