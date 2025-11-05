@@ -646,7 +646,7 @@ jobs:
 
       - name: Check rpm file signatures
         run: |
-          yum localinstall ${{ steps.verify.outputs.RPM_FILE }}
+          yum localinstall -y ${{ steps.verify.outputs.RPM_FILE }}
 
       - name: Delete generated rpm folder
         run: |
