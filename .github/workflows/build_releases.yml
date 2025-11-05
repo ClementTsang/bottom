@@ -141,6 +141,7 @@ jobs:
         run: |
           VER=$(cat .github/ci/rust_version.txt)
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+          echo "$VER"
 
       - name: Set up Rust toolchain
         if: matrix.info.container == ''
@@ -164,7 +165,7 @@ jobs:
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
         with:
           command: build
-          args: --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
+          args: --release --locked --target=${{ matrix.info.target }} --features deploy
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.5
 
@@ -278,7 +279,7 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
-            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
+            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
 
       - name: Move automatically generated completion/manpage
         shell: bash
@@ -350,6 +351,7 @@ jobs:
         run: |
           VER=$(cat .github/ci/rust_version.txt)
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+          echo "$VER"
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
@@ -474,6 +476,7 @@ jobs:
         run: |
           VER=$(cat .github/ci/rust_version.txt)
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+          echo "$VER"
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
@@ -489,7 +492,7 @@ jobs:
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
         with:
           command: build
-          args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
+          args: --release --locked --features deploy --target ${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross || false }}
           cross-version: 0.2.5
 
@@ -589,6 +592,7 @@ jobs:
         run: |
           VER=$(cat .github/ci/rust_version.txt)
           echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+          echo "$VER"
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
@@ -606,7 +610,7 @@ jobs:
         with:
           command: build
           use-cross: ${{ matrix.info.cross || false }}
-          args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
+          args: --release --locked --features deploy --target ${{ matrix.info.target }}
           cross-version: 0.2.5
 
       - name: Move automatically generated completion/manpage
@@ -633,12 +637,24 @@ jobs:
           TMP_NAME=$(find bottom-*.rpm)
           mv $TMP_NAME $(echo $TMP_NAME | sed "s/bottom/bottom-musl/")
 
-      - name: Verify rpm release
+      - name: Verify generated rpm file
         id: verify
         run: |
           RPM_FILE=$(find bottom-*.rpm)
           rpm -qip $RPM_FILE
+          # Save for future jobs
           echo "RPM_FILE=$RPM_FILE" >> $GITHUB_OUTPUT
+
+      - name: Check generated rpm file signatures
+        run: |
+          rpm --checksig --verbose ${{ steps.verify.outputs.RPM_FILE }}
+          # Validate modern signature digest exist, see https://github.com/ClementTsang/bottom/issues/1848
+          rpm --checksig --verbose ${{ steps.verify.outputs.RPM_FILE }} | grep -q "SHA256"
+
+      - name: Test installing generated rpm file
+        run: |
+          yum localinstall -y ${{ steps.verify.outputs.RPM_FILE }}
+          btm -V
 
       - name: Delete generated rpm folder
         run: |
