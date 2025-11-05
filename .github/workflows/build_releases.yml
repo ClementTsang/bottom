@@ -165,7 +165,7 @@ jobs:
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
         with:
           command: build
-          args: --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
+          args: --release --locked --target=${{ matrix.info.target }} --features deploy
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.5
 
@@ -279,7 +279,7 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
-            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
+            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
 
       - name: Move automatically generated completion/manpage
         shell: bash
@@ -492,7 +492,7 @@ jobs:
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
         with:
           command: build
-          args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
+          args: --release --locked --features deploy --target ${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross || false }}
           cross-version: 0.2.5
 
@@ -605,7 +605,7 @@ jobs:
         with:
           command: build
           use-cross: ${{ matrix.info.cross || false }}
-          args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
+          args: --release --locked --features deploy --target ${{ matrix.info.target }}
           cross-version: 0.2.5
 
       - name: Move automatically generated completion/manpage
