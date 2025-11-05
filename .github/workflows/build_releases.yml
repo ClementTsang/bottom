@@ -531,13 +531,18 @@ jobs:
           mv $TMP_NAME $(echo $TMP_NAME | sed "s/bottom/bottom-musl/")
 
       # TODO: Maybe rename version if nightly?
-      - name: Verify Debian release
+      - name: Verify generated Debian release
         id: verify
         run: |
           DEB_FILE=$(find bottom*_*.deb)
           dpkg -I $DEB_FILE
           dpkg -I $DEB_FILE | grep ${{ matrix.info.dpkg }} && echo "Found correct architecture"
           echo "DEB_FILE=$DEB_FILE" >> $GITHUB_OUTPUT
+
+      - name: Test installing generated Debian release
+        run: |
+          apt install ${{ steps.verify.outputs.DEB_FILE }} -y
+          btm -V
 
       - name: Delete generated Debian folder
         run: |
