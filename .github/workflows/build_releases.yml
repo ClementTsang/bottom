@@ -632,7 +632,7 @@ jobs:
           TMP_NAME=$(find bottom-*.rpm)
           mv $TMP_NAME $(echo $TMP_NAME | sed "s/bottom/bottom-musl/")
 
-      - name: Verify rpm file
+      - name: Verify generated rpm file
         id: verify
         run: |
           RPM_FILE=$(find bottom-*.rpm)
@@ -640,16 +640,16 @@ jobs:
           # Save for future jobs
           echo "RPM_FILE=$RPM_FILE" >> $GITHUB_OUTPUT
 
-      - name: Check rpm file signatures
+      - name: Check generated rpm file signatures
         run: |
           rpm --checksig --verbose ${{ steps.verify.outputs.RPM_FILE }}
           # Validate modern signature digest exist, see https://github.com/ClementTsang/bottom/issues/1848
           rpm --checksig --verbose ${{ steps.verify.outputs.RPM_FILE }} | grep -q "SHA256"
 
-
-      - name: Check rpm file signatures
+      - name: Test installing generated rpm file
         run: |
           yum localinstall -y ${{ steps.verify.outputs.RPM_FILE }}
+          btm -V
 
       - name: Delete generated rpm folder
         run: |
