@@ -632,7 +632,10 @@ jobs:
         id: verify
         run: |
           RPM_FILE=$(find bottom-*.rpm)
+          # Display info
           rpm -qip $RPM_FILE
+          # Ensure that signatures other than MD5/SHA exist (https://github.com/ClementTsang/bottom/issues/1848)
+          # Check signatures
           rpm --checksig $RPM_FILE
           echo "RPM_FILE=$RPM_FILE" >> $GITHUB_OUTPUT
 
