@@ -633,6 +633,7 @@ jobs:
         run: |
           RPM_FILE=$(find bottom-*.rpm)
           rpm -qip $RPM_FILE
+          rpm --checksig $RPM_FILE
           echo "RPM_FILE=$RPM_FILE" >> $GITHUB_OUTPUT
 
       - name: Delete generated rpm folder
