@@ -636,6 +636,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "Tommimon",
+      "name": "Tommaso Montanari",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37435103?v=4",
+      "profile": "https://github.com/Tommimon",
+      "contributions": [
+        "design",
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
