@@ -5,6 +5,7 @@ pub mod states;
 
 use std::time::Instant;
 
+use crate::options::config::keybindings::KeyBindings;
 use concat_string::concat_string;
 use data::*;
 use filter::*;
@@ -12,8 +13,6 @@ use hashbrown::HashMap;
 use layout_manager::*;
 pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
-use crate::options::config::KeyBindings;
-
 
 use crate::{
     canvas::{
@@ -73,8 +72,6 @@ pub struct AppConfigFields {
     pub dedicated_average_row: bool,
     pub default_tree_collapse: bool,
     pub keybindings: Option<KeyBindings>,
-    keybindings: config.keybindings.clone(),
-
 }
 
 /// For filtering out information
