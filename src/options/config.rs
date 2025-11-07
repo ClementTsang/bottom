@@ -2,6 +2,7 @@ pub mod cpu;
 pub mod disk;
 pub mod flags;
 mod ignore_list;
+pub mod keybindings;
 pub mod layout;
 pub mod network;
 pub mod process;
@@ -16,7 +17,7 @@ use style::StyleConfig;
 use temperature::TempConfig;
 
 pub use self::ignore_list::IgnoreList;
-use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
+use self::{cpu::CpuConfig, keybindings::KeyBindings, layout::Row, process::ProcessesConfig};
 
 /// Overall config for `bottom`.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -31,6 +32,7 @@ pub struct Config {
     pub(crate) temperature: Option<TempConfig>,
     pub(crate) network: Option<NetworkConfig>,
     pub(crate) cpu: Option<CpuConfig>,
+    pub(crate) keybindings: Option<KeyBindings>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

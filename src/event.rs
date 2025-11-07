@@ -60,6 +60,7 @@ pub fn handle_key_event_or_break(
         if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
             return true;
         }
+
         match event.code {
             KeyCode::End => app.skip_to_last(),
             KeyCode::Home => app.skip_to_first(),
@@ -67,7 +68,39 @@ pub fn handle_key_event_or_break(
             KeyCode::Down => app.on_down_key(),
             KeyCode::Left => app.on_left_key(),
             KeyCode::Right => app.on_right_key(),
-            KeyCode::Char(caught_char) => app.on_char_key(caught_char),
+
+            // 🔹 Customizable keybinding for toggling tree branches
+            KeyCode::Char(caught_char) => {
+                // Check if config defines a custom keybinding
+                if let Some(ref bindings) = app.app_config_fields.config.keybindings {
+                    if let Some(ref key) = bindings.toggle_tree_branch {
+                        if key == &caught_char.to_string() {
+                            if let Some(pws) = app
+                                .states
+                                .proc_state
+                                .get_mut_widget_state(app.current_widget.widget_id)
+                            {
+                                pws.toggle_current_tree_branch_entry();
+                            }
+                            return false; // handled
+                        }
+                    }
+                }
+
+                // Fallback: spacebar toggles by default
+                if caught_char == ' ' {
+                    if let Some(pws) = app
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(app.current_widget.widget_id)
+                    {
+                        pws.toggle_current_tree_branch_entry();
+                    }
+                } else {
+                    app.on_char_key(caught_char);
+                }
+            }
+
             KeyCode::Esc => app.on_esc(),
             KeyCode::Enter => app.on_enter(),
             KeyCode::Tab => app.on_tab(),
@@ -117,13 +150,6 @@ pub fn handle_key_event_or_break(
                 KeyCode::Char('h') => app.on_backspace(),
                 KeyCode::Char('d') => app.scroll_half_page_down(),
                 KeyCode::Char('u') => app.scroll_half_page_up(),
-                // KeyCode::Char('j') => {}, // Move down
-                // KeyCode::Char('k') => {}, // Move up
-                // KeyCode::Char('h') => {}, // Move right
-                // KeyCode::Char('l') => {}, // Move left
-                // Can't do now, CTRL+BACKSPACE doesn't work and graphemes
-                // are hard to iter while truncating last (eloquently).
-                // KeyCode::Backspace => app.skip_word_backspace(),
                 _ => {}
             }
         } else if let KeyModifiers::SHIFT = event.modifiers {

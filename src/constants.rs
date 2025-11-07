@@ -65,7 +65,7 @@ const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-const PROCESS_HELP_TEXT: [&str; 20] = [
+const PROCESS_HELP_TEXT: [&str; 21] = [
     "3 - Process widget",
     "dd, F9, Delete   Kill the selected process",
     "c                Sort by CPU usage, press again to reverse",
@@ -81,6 +81,7 @@ const PROCESS_HELP_TEXT: [&str; 20] = [
     "t, F5            Toggle tree mode",
     "Right            Collapse a branch while in tree mode",
     "Left             Expand a branch while in tree mode",
+    "Space            Toggle current branch in tree mode",
     "+, -, click      Toggle whether a branch is expanded or collapsed in tree mode",
     "click on header  Sorts the entries by that column, click again to invert the sort",
     "C                Sort by GPU usage, press again to reverse",
