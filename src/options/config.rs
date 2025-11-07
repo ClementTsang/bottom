@@ -19,8 +19,11 @@ use temperature::TempConfig;
 pub use self::ignore_list::IgnoreList;
 use self::{cpu::CpuConfig, keybindings::KeyBindings, layout::Row, process::ProcessesConfig};
 
+mod keybindings;
+use keybindings::KeyBindings;
+
 /// Overall config for `bottom`.
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub struct Config {

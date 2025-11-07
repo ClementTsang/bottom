@@ -12,6 +12,8 @@ use hashbrown::HashMap;
 use layout_manager::*;
 pub use states::*;
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
+use crate::options::config::KeyBindings;
+
 
 use crate::{
     canvas::{
@@ -70,6 +72,9 @@ pub struct AppConfigFields {
     pub retention_ms: u64,
     pub dedicated_average_row: bool,
     pub default_tree_collapse: bool,
+    pub keybindings: Option<KeyBindings>,
+    keybindings: config.keybindings.clone(),
+
 }
 
 /// For filtering out information
