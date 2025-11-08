@@ -1,3 +1,4 @@
+use serde::Serialize;
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
 use serde::Deserialize;
@@ -15,7 +16,7 @@ use crate::{
     },
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DiskWidgetData {
     pub name: String,
     pub mount_point: String,

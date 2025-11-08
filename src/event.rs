@@ -72,7 +72,7 @@ pub fn handle_key_event_or_break(
             // 🔹 Customizable keybinding for toggling tree branches
             KeyCode::Char(caught_char) => {
                 // Check if config defines a custom keybinding
-                if let Some(ref bindings) = app.app_config_fields.config.keybindings {
+                if let Some(ref bindings) = app.app_config_fields.keybindings {
                     if let Some(ref key) = bindings.toggle_tree_branch {
                         if key == &caught_char.to_string() {
                             if let Some(pws) = app

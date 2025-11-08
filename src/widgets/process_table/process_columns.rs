@@ -1,3 +1,4 @@
+use serde::Serialize;
 use std::{borrow::Cow, cmp::Reverse};
 
 use serde::Deserialize;
@@ -9,7 +10,7 @@ use crate::{
 };
 
 /// A column in the process widget.
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash, Serialize)]
 #[cfg_attr(
     feature = "generate_schema",
     derive(schemars::JsonSchema, strum::VariantArray)

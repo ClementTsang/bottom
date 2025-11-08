@@ -333,6 +333,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         default_tree_collapse: is_default_tree_collapsed,
         #[cfg(feature = "zfs")]
         free_arc,
+        keybindings: config.keybindings.clone(),
     };
 
     let table_config = ProcTableConfig {
