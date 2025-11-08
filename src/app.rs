@@ -71,7 +71,7 @@ pub struct AppConfigFields {
     pub retention_ms: u64,
     pub dedicated_average_row: bool,
     pub default_tree_collapse: bool,
-    pub keybindings: Option<KeyBindings>,
+    pub(crate) keybindings: Option<KeyBindings>,
 }
 
 /// For filtering out information

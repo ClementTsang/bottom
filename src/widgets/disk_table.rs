@@ -1,7 +1,5 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
-
-use serde::Deserialize;
 
 use crate::{
     app::{AppConfigFields, data::StoredData},
@@ -97,11 +95,7 @@ impl DiskWidgetData {
     }
 }
 
-#[derive(Debug, Clone)]
-#[cfg_attr(
-    feature = "generate_schema",
-    derive(schemars::JsonSchema, strum::VariantArray)
-)]
+#[derive(Clone, Copy, Debug, Serialize)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
 pub enum DiskColumn {
     Disk,
