@@ -20,7 +20,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
-## [0.11.3] - 2025-11-06
+## [0.11.4] - Unreleased
 
 ### Features
 
