@@ -24,6 +24,16 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ### Features
 
+### Bug Fixes
+
+- [#1859](https://github.com/ClementTsang/bottom/pull/1859): Ensure average CPU is drawn on top in "All" mode.
+
+### Other
+
+## [0.11.3] - 2025-11-06
+
+### Features
+
 - [#1812](https://github.com/ClementTsang/bottom/pull/1812): Add `free_arc` option to subtract ARC from total memory usage.
 
 ### Bug Fixes
