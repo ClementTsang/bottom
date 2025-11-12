@@ -20,6 +20,16 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
+## [0.11.4] - Unreleased
+
+### Features
+
+### Bug Fixes
+
+- [#1859](https://github.com/ClementTsang/bottom/pull/1859): Ensure average CPU is drawn on top in "All" mode.
+
+### Other
+
 ## [0.11.3] - 2025-11-06
 
 ### Features

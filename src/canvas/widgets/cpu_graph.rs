@@ -132,10 +132,8 @@ impl Painter {
                 .iter()
                 .enumerate()
                 .map(|(itx, values)| {
-                    let style = if show_avg_cpu && itx == AVG_POSITION {
+                    let style = if show_avg_cpu && itx == 0 {
                         self.styles.avg_cpu_colour
-                    } else if itx == ALL_POSITION {
-                        self.styles.all_cpu_colour
                     } else {
                         self.styles.cpu_colour_styles
                             [(itx - show_avg_offset) % self.styles.cpu_colour_styles.len()]
@@ -147,6 +145,7 @@ impl Painter {
                 .collect()
         } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position - 1) {
             // We generally subtract one from current scroll position because of the all entry.
+            // TODO: Do this a bit better (e.g. we can just do if let Some(_) = cpu_points.get())
 
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.styles.avg_cpu_colour

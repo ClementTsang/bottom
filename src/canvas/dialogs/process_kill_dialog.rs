@@ -709,7 +709,7 @@ impl ProcessKillDialog {
                     Constraint::Max(num_lines),
                     Constraint::Max(SIGNAL_TEXT_LEN),
                 ])
-                .flex(Flex::SpaceAround)
+                .flex(Flex::SpaceEvenly)
                 .areas(block.inner(draw_area));
 
                 // Render the block.
@@ -769,7 +769,7 @@ impl ProcessKillDialog {
                 // and one for the buttons.
                 let [text_area, button_area] =
                     Layout::vertical([Constraint::Max(num_lines), Constraint::Length(1)])
-                        .flex(Flex::SpaceAround)
+                        .flex(Flex::SpaceEvenly)
                         .areas(block.inner(draw_area));
 
                 // Render things, starting from the block.
@@ -790,7 +790,7 @@ impl ProcessKillDialog {
                 };
 
                 let [yes_area, no_area] = Layout::horizontal([Constraint::Length(3); 2])
-                    .flex(Flex::SpaceAround)
+                    .flex(Flex::SpaceEvenly)
                     .areas(button_area);
 
                 *last_yes_button_area = yes_area;
