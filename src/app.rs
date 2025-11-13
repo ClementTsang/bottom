@@ -57,6 +57,7 @@ pub struct AppConfigFields {
     pub show_table_scroll_position: bool,
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub is_advanced_kill: bool,
+    pub is_read_only: bool,
     #[cfg(target_os = "linux")]
     pub hide_k_threads: bool,
     #[cfg(feature = "zfs")]
@@ -974,6 +975,10 @@ impl App {
     ///
     /// TODO: This ideally gets abstracted out into a separate widget.
     pub(crate) fn kill_current_process(&mut self) {
+        if self.app_config_fields.is_read_only {
+            return
+        }
+
         if let Some(pws) = self
             .states
             .proc_state
