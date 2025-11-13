@@ -976,7 +976,7 @@ impl App {
     /// TODO: This ideally gets abstracted out into a separate widget.
     pub(crate) fn kill_current_process(&mut self) {
         if self.app_config_fields.is_read_only {
-            return
+            return;
         }
 
         if let Some(pws) = self
