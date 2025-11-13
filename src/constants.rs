@@ -65,7 +65,7 @@ const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-const PROCESS_HELP_TEXT: [&str; 20] = [
+const PROCESS_HELP_TEXT: [&str; 22] = [
     "3 - Process widget",
     "dd, F9, Delete   Kill the selected process",
     "c                Sort by CPU usage, press again to reverse",
