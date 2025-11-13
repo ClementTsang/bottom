@@ -158,8 +158,7 @@ impl Painter {
             CpuDataType::Avg => ("AVG".to_string(), self.styles.avg_cpu_colour),
             CpuDataType::Cpu(index) => (
                 format!("{index:<3}",),
-                self.styles.cpu_colour_styles
-                    [(index as usize) % self.styles.cpu_colour_styles.len()],
+                self.styles.cpu_colour_styles[index % self.styles.cpu_colour_styles.len()],
             ),
         };
 
