@@ -254,7 +254,8 @@
             "integer",
             "null"
           ],
-          "format": "uint32",
+          "format": "uint16",
+          "maximum": 65535,
           "minimum": 0
         },
         "type": {
@@ -802,7 +803,8 @@
                 "integer",
                 "null"
               ],
-              "format": "uint32",
+              "format": "uint16",
+              "maximum": 65535,
               "minimum": 0
             }
           },
@@ -1118,7 +1120,8 @@
             "integer",
             "null"
           ],
-          "format": "uint32",
+          "format": "uint16",
+          "maximum": 65535,
           "minimum": 0
         }
       }

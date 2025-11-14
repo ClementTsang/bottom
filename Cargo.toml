@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.11.2"
+version = "0.11.3"
 repository = "https://github.com/ClementTsang/bottom"
 license = "MIT"
 description = "A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows."
@@ -33,7 +33,6 @@ exclude = [
     "codecov.yml",
     "CONTRIBUTING.md",
     "Cross.toml",
-    "rust-toolchain.toml",
     "rustfmt.toml",
 ]
 edition = "2021"
@@ -92,7 +91,7 @@ starship-battery = { version = "0.10.2", optional = true }
 sysinfo = "=0.37.0"
 timeless = "0.0.14-alpha"
 toml_edit = { version = "0.23.6", features = ["serde"] }
-tui = { version = "0.30.0-alpha.5", package = "ratatui", features = ["unstable-rendered-line-info"] }
+tui = { version = "0.30.0-beta.0", package = "ratatui", features = ["unstable-rendered-line-info", "layout-cache"] }
 unicode-ellipsis = "0.3.0"
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2.0"
@@ -208,7 +207,7 @@ assets = [
     ],
     [
         "assets/icons/bottom.svg",
-        "/usr/share/pixmaps/bottom.svg",
+        "/usr/share/icons/hicolor/scalable/apps/bottom.svg",
         "644",
     ],
 ]
@@ -238,7 +237,7 @@ assets = [
     { source = "completion/btm.fish", dest = "/usr/share/fish/vendor_completions.d/btm.fish", mode = "644" },
     { source = "completion/_btm", dest = "/usr/share/zsh/vendor-completions/", mode = "644" },
     { source = "desktop/bottom.desktop", dest = "/usr/share/applications/bottom.desktop", mode = "644" },
-    { source = "assets/icons/bottom.svg", dest = "/usr/share/pixmaps/bottom.svg", mode = "644" },
+    { source = "assets/icons/bottom.svg", dest = "/usr/share/icons/hicolor/scalable/apps/bottom.svg", mode = "644" },
 ]
 
 [lints.rust]

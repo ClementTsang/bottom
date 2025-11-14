@@ -20,7 +20,17 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
-## [0.11.3]/[0.12.0] - Unreleased
+## [0.11.4] - Unreleased
+
+### Features
+
+### Bug Fixes
+
+- [#1859](https://github.com/ClementTsang/bottom/pull/1859): Ensure average CPU is drawn on top in "All" mode.
+
+### Other
+
+## [0.11.3] - 2025-11-06
 
 ### Features
 
@@ -31,6 +41,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 - [#1833](https://github.com/ClementTsang/bottom/pull/1833): Sort disk I/O using actual value rather than string representation.
 - [#1812](https://github.com/ClementTsang/bottom/pull/1812): Fix ARC collection on FreeBSD.
+- [#1846](https://github.com/ClementTsang/bottom/pull/1846): Fix displayed average CPU value being wrong in graphs.
 
 ### Other
 
