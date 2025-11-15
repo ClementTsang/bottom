@@ -40,6 +40,7 @@ pub(crate) struct GeneralConfig {
     pub(crate) process_command: Option<bool>,
     // #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub(crate) disable_advanced_kill: Option<bool>, // This does nothing on Windows, but we leave it enabled to make the config file consistent across platforms.
+    pub(crate) read_only: Option<bool>,
     // #[cfg(target_os = "linux")]
     pub(crate) hide_k_threads: Option<bool>,
     // #[cfg(feature = "zfs")]
