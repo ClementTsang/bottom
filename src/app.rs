@@ -5,6 +5,7 @@ pub mod states;
 
 use std::time::Instant;
 
+use crate::options::config::keybindings::KeyBindings;
 use concat_string::concat_string;
 use data::*;
 use filter::*;
@@ -70,6 +71,7 @@ pub struct AppConfigFields {
     pub retention_ms: u64,
     pub dedicated_average_row: bool,
     pub default_tree_collapse: bool,
+    pub(crate) keybindings: Option<KeyBindings>,
 }
 
 /// For filtering out information
