@@ -162,7 +162,7 @@ impl Painter {
                         .areas(vertical_dialog_chunk)
                 } else {
                     // We calculate this so that the margins never have to split an odd number.
-                    let len = if (dialog_width - MAX_TEXT_LENGTH) % 2 == 0 {
+                    let len = if (dialog_width.saturating_sub(MAX_TEXT_LENGTH)) % 2 == 0 {
                         MAX_TEXT_LENGTH
                     } else {
                         // It can only be 1 if the difference is greater than 1, so this is fine.
