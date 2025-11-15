@@ -30,7 +30,7 @@ jobs:
         uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
         with:
           skip_after_successful_duplicate: "false"
-          paths: '["tests/**", "src/**", ".github/workflows/coverage.yml", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
+          paths: '["tests/**", "src/**", ".github/workflows/coverage.yml", ".github/ci", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
           do_not_skip: '["workflow_dispatch", "push"]'
 
   coverage:
