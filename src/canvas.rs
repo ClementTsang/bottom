@@ -11,7 +11,7 @@ mod widgets;
 use tui::{
     Frame, Terminal,
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Flex, Layout, Rect},
     text::Span,
     widgets::Paragraph,
 };
@@ -122,35 +122,61 @@ impl Painter {
             if app_state.help_dialog_state.is_showing_help {
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
                 let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
-                let vertical_dialog_chunk = Layout::default()
+                let [_, vertical_dialog_chunk, _] = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([
                         Constraint::Length(border_len),
                         Constraint::Length(gen_help_len),
                         Constraint::Length(border_len),
                     ])
-                    .split(terminal_size);
+                    .areas(terminal_size);
 
-                let middle_dialog_chunk = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints(if terminal_width < 100 {
-                        // TODO: [REFACTOR] The point we start changing size at currently hard-coded
-                        // in.
-                        [
-                            Constraint::Percentage(0),
-                            Constraint::Percentage(100),
-                            Constraint::Percentage(0),
-                        ]
+                // An approximate proxy for the max line length to use.
+                const MAX_TEXT_LENGTH: u16 = const {
+                    let mut max = 0;
+
+                    let mut i = 0;
+                    while i < HELP_TEXT.len() {
+                        let section = HELP_TEXT[i];
+                        let mut j = 0;
+                        while j < section.len() {
+                            let line = section[j];
+                            if line.len() > max {
+                                max = line.len();
+                            }
+
+                            j += 1
+                        }
+
+                        i += 1;
+                    }
+
+                    max as u16
+                };
+
+                let dialog_width = vertical_dialog_chunk.width;
+                let [middle_dialog_chunk] = if dialog_width < MAX_TEXT_LENGTH {
+                    Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints([Constraint::Percentage(100)])
+                        .areas(vertical_dialog_chunk)
+                } else {
+                    // We calculate this so that the margins never have to split an odd number.
+                    let len = if (dialog_width - MAX_TEXT_LENGTH) % 2 == 0 {
+                        MAX_TEXT_LENGTH
                     } else {
-                        [
-                            Constraint::Percentage(15),
-                            Constraint::Percentage(70),
-                            Constraint::Percentage(15),
-                        ]
-                    })
-                    .split(vertical_dialog_chunk[1]);
+                        // It can only be 1 if the difference is greater than 1, so this is fine.
+                        MAX_TEXT_LENGTH + 1
+                    };
 
-                self.draw_help_dialog(f, app_state, middle_dialog_chunk[1]);
+                    Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints([Constraint::Length(len)])
+                        .flex(Flex::SpaceAround)
+                        .areas(vertical_dialog_chunk)
+                };
+
+                self.draw_help_dialog(f, app_state, middle_dialog_chunk);
             } else if app_state.process_kill_dialog.is_open() {
                 // FIXME: For width, just limit to a max size or full width. For height, not sure. Maybe pass max and let child handle?
                 let horizontal_padding = if terminal_width < 100 { 0 } else { 5 };
