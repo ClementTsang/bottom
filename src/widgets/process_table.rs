@@ -101,20 +101,6 @@ impl TreeCollapsed {
         }
     }
 
-    pub(crate) fn collapsed_pids(&self) -> Option<&HashSet<Pid>> {
-        match self {
-            TreeCollapsed::DefaultExpand { collapsed_pids } => Some(collapsed_pids),
-            _ => None,
-        }
-    }
-
-    pub(crate) fn expanded_pids(&self) -> Option<&HashSet<Pid>> {
-        match self {
-            TreeCollapsed::DefaultCollapse { expanded_pids } => Some(expanded_pids),
-            _ => None,
-        }
-    }
-
     /// Expand the given PID.
     pub(crate) fn expand(&mut self, pid: Pid) {
         match self {
@@ -966,48 +952,6 @@ impl ProcWidgetState {
                 self.force_data_update();
             }
         }
-    }
-
-    pub fn collapse_all_tree_branch_entries(&mut self) {
-        let pids: Vec<Pid> = match &self.mode {
-            ProcWidgetMode::Tree(collapsed) => {
-                if let Some(expanded) = collapsed.expanded_pids() {
-                    expanded.iter().cloned().collect()
-                } else {
-                    self.table.all_items().iter().map(|item| item.pid).collect()
-                }
-            }
-            _ => Vec::new(),
-        };
-
-        if let ProcWidgetMode::Tree(ref mut collapsed) = self.mode {
-            for pid in pids {
-                collapsed.collapse(pid);
-            }
-        }
-
-        self.force_data_update();
-    }
-
-    pub fn expand_all_tree_branch_entries(&mut self) {
-        let pids: Vec<Pid> = match &self.mode {
-            ProcWidgetMode::Tree(collapsed) => {
-                if let Some(collapsed_set) = collapsed.collapsed_pids() {
-                    collapsed_set.iter().cloned().collect()
-                } else {
-                    self.table.all_items().iter().map(|item| item.pid).collect()
-                }
-            }
-            _ => Vec::new(),
-        };
-
-        if let ProcWidgetMode::Tree(ref mut collapsed) = self.mode {
-            for pid in pids {
-                collapsed.expand(pid);
-            }
-        }
-
-        self.force_data_update();
     }
 
     pub fn expand_current_tree_branch_entry(&mut self) {

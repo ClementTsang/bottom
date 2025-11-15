@@ -2009,10 +2009,8 @@ impl App {
 
     fn on_plus(&mut self) {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
-            let proc_state = &mut self.states.proc_state;
-            for pws in proc_state.widget_states.values_mut() {
-                pws.expand_all_tree_branch_entries();
-            }
+            // Toggle collapsing if tree
+            self.toggle_collapsing_process_branch();
         } else {
             self.zoom_in();
         }
@@ -2020,10 +2018,8 @@ impl App {
 
     fn on_minus(&mut self) {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
-            let proc_state = &mut self.states.proc_state;
-            for pws in proc_state.widget_states.values_mut() {
-                pws.collapse_all_tree_branch_entries();
-            }
+            // Toggle collapsing if tree
+            self.toggle_collapsing_process_branch();
         } else {
             self.zoom_out();
         }
