@@ -58,7 +58,7 @@ pub(crate) const GENERAL_HELP_TEXT: [&str; 28] = [
 
 const CPU_HELP_TEXT: [&str; 2] = [
     "2 - CPU widget",
-    "Mouse scroll         Scrolling over an CPU core/average shows only that entry on the chart",
+    "Mouse scroll         Scrolling over a CPU core/average shows only that entry on the chart",
 ];
 
 const PROCESS_HELP_TEXT: [&str; 20] = [

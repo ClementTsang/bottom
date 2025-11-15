@@ -145,7 +145,7 @@ impl Painter {
                                 max = line.len();
                             }
 
-                            j += 1
+                            j += 1;
                         }
 
                         i += 1;
