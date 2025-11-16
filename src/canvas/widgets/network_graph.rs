@@ -354,10 +354,10 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
     //
     // Dynamic chart idea based off of FreeNAS's chart design.
     //
-    // ===
+    // ---
     //
-    // For log data, we just use the old method of log intervals
-    // (kilo/mega/giga/etc.).  Keep it nice and simple.
+    // For log data, we just use the old method of log intervals (kilo/mega/giga/etc.).
+    // Keep it nice and simple.
 
     // Now just check the largest unit we correspond to... then proceed to build
     // some entries from there!
@@ -389,9 +389,14 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
                 )
             };
 
-            // TODO: If the value is 0, set a higher value than 0 as the upper bound!
-            let max_entry_upper = max_entry * 1.5; // We use the bumped up version to calculate our unit type.
-            let (max_value_scaled, unit_prefix, unit_type): (f64, &str, &str) =
+            let max_entry_upper = if max_entry == 0.0 {
+                // If it's 0, then just use a very low value so the labels aren't just "0.0" 4 times.
+                1.0
+            } else {
+                max_entry * 1.5 // We use the bumped up version to calculate our unit type.
+            };
+
+            let (max_value_scaled, unit_prefix, unit_type): (f64, &str, &str) = {
                 if max_entry_upper < k_limit {
                     (max_entry, "", unit_char)
                 } else if max_entry_upper < m_limit {
@@ -418,7 +423,8 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
                         if use_binary_prefix { "Ti" } else { "T" },
                         unit_char,
                     )
-                };
+                }
+            };
 
             // Finally, build an acceptable range starting from there, using the given
             // height! Note we try to put more of a weight on the bottom section
