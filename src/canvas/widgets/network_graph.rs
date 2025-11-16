@@ -66,7 +66,7 @@ impl Painter {
             let network_latest_data = &(shared_data.network_harvest);
             let rx_points = &(shared_data.timeseries_data.rx);
             let tx_points = &(shared_data.timeseries_data.tx);
-            let time = &(shared_data.timeseries_data.time);
+            let times = &(shared_data.timeseries_data.time);
             let time_start = -(network_widget_state.current_display_time as f64);
 
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
@@ -78,12 +78,40 @@ impl Painter {
             );
 
             let y_max = {
-                if let Some(last_time) = time.last() {
-                    let (mut biggest, mut biggest_time, oldest_to_check) =
-                        check_network_height_cache(network_widget_state, last_time, time);
+                if let Some(last_time) = times.last() {
+                    let cached_network_height =
+                        check_network_height_cache(network_widget_state, last_time);
+
+                    let (mut biggest, mut biggest_time, oldest_to_check) = cached_network_height
+                        .unwrap_or_else(|| {
+                            let visible_duration =
+                                Duration::from_millis(network_widget_state.current_display_time);
+
+                            let visible_left_bound = match last_time.checked_sub(visible_duration) {
+                                Some(v) => v,
+                                None => {
+                                    // On some systems (like Windows) it can be possible that the current display time
+                                    // causes subtraction to fail if, for example, the uptime of the system is too low
+                                    // and current_display_time is too high. See https://github.com/ClementTsang/bottom/issues/1825.
+                                    //
+                                    // As such, we instead take the oldest visible time. This is a bit inefficient, but
+                                    // since it should only happen rarely, it should be fine.
+                                    times
+                                        .iter()
+                                        .take_while(|t| {
+                                            last_time.duration_since(**t) < visible_duration
+                                        })
+                                        .last()
+                                        .cloned()
+                                        .unwrap_or(*last_time)
+                                }
+                            };
+
+                            (0.0, visible_left_bound, visible_left_bound)
+                        });
 
                     for (&time, &v) in rx_points
-                        .iter_along_base(time)
+                        .iter_along_base(times)
                         .rev()
                         .take_while(|&(&time, _)| time >= oldest_to_check)
                     {
@@ -94,7 +122,7 @@ impl Painter {
                     }
 
                     for (&time, &v) in tx_points
-                        .iter_along_base(time)
+                        .iter_along_base(times)
                         .rev()
                         .take_while(|&(&time, _)| time >= oldest_to_check)
                     {
@@ -115,8 +143,9 @@ impl Painter {
                     0.0
                 }
             };
-            let (y_max, y_labels) = adjust_network_data_point(y_max, &app_state.app_config_fields);
-            let y_bounds = AxisBound::Max(y_max);
+            let (adjusted_y_max, y_labels) =
+                adjust_network_data_point(y_max, &app_state.app_config_fields);
+            let y_bounds = AxisBound::Max(adjusted_y_max);
 
             let legend_constraints = if full_screen {
                 (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
@@ -149,12 +178,12 @@ impl Painter {
                 vec![
                     GraphData::default()
                         .name(rx_label.into())
-                        .time(time)
+                        .time(times)
                         .values(rx_points)
                         .style(self.styles.rx_style),
                     GraphData::default()
                         .name(tx_label.into())
-                        .time(time)
+                        .time(times)
                         .values(tx_points)
                         .style(self.styles.tx_style),
                     GraphData::default()
@@ -173,12 +202,12 @@ impl Painter {
                 vec![
                     GraphData::default()
                         .name(format!("RX: {rx_label:<10}  All: {total_rx_label}").into())
-                        .time(time)
+                        .time(times)
                         .values(rx_points)
                         .style(self.styles.rx_style),
                     GraphData::default()
                         .name(format!("TX: {tx_label:<10}  All: {total_tx_label}").into())
-                        .time(time)
+                        .time(times)
                         .values(tx_points)
                         .style(self.styles.tx_style),
                 ]
@@ -278,11 +307,11 @@ impl Painter {
     }
 }
 
+/// Returns a cached max value, it's time, and what period it covers if it is cached.
 #[inline]
 fn check_network_height_cache(
     network_widget_state: &NetWidgetState, last_time: &std::time::Instant,
-    time: &[std::time::Instant],
-) -> (f64, std::time::Instant, std::time::Instant) {
+) -> Option<(f64, std::time::Instant, std::time::Instant)> {
     let visible_duration = Duration::from_millis(network_widget_state.current_display_time);
 
     if let Some(NetWidgetHeightCache {
@@ -292,29 +321,13 @@ fn check_network_height_cache(
     }) = &network_widget_state.height_cache
     {
         if *period == network_widget_state.current_display_time
-            && last_time.duration_since(*right_edge) < visible_duration
+            && last_time.duration_since(best_point.0) < visible_duration
         {
-            return (best_point.1, best_point.0, *right_edge);
+            return Some((best_point.1, best_point.0, *right_edge));
         }
     }
 
-    let visible_left_bound = match last_time.checked_sub(visible_duration) {
-        Some(v) => v,
-        None => {
-            // On some systems (like Windows) it can be possible that the current display time
-            // causes subtraction to fail if, for example, the uptime of the system is too low
-            // and current_display_time is too high. See https://github.com/ClementTsang/bottom/issues/1825.
-            //
-            // As such, instead take the oldest visible time.
-            time.iter()
-                .take_while(|t| last_time.duration_since(**t) < visible_duration)
-                .last()
-                .cloned()
-                .unwrap_or(*last_time)
-        }
-    };
-
-    (0.0, visible_left_bound, visible_left_bound)
+    None
 }
 
 /// Returns the required labels.
@@ -376,6 +389,7 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
                 )
             };
 
+            // TODO: If the value is 0, set a higher value than 0 as the upper bound!
             let max_entry_upper = max_entry * 1.5; // We use the bumped up version to calculate our unit type.
             let (max_value_scaled, unit_prefix, unit_type): (f64, &str, &str) =
                 if max_entry_upper < k_limit {
