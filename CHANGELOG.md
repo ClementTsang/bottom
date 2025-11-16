@@ -30,6 +30,9 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ### Other
 
+- [#1863](https://github.com/ClementTsang/bottom/pull/1863): Replace bottom icon with a square version.
+- [#1865](https://github.com/ClementTsang/bottom/pull/1865): Improve help dialog width calculation.
+
 ## [0.11.3] - 2025-11-06
 
 ### Features
