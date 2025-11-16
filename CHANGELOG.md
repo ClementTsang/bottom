@@ -27,6 +27,8 @@ That said, these are more guidelines rather than hardset rules, though the proje
 ### Bug Fixes
 
 - [#1859](https://github.com/ClementTsang/bottom/pull/1859): Ensure average CPU is drawn on top in "All" mode.
+- [#1867](https://github.com/ClementTsang/bottom/pull/1867): Fix network graph y-axis height cache not updating correctly.
+- [#1867](https://github.com/ClementTsang/bottom/pull/1867): Fix network graph y-axis occasionally starting with a range of zero.
 
 ### Other
 
