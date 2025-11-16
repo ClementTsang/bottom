@@ -36,6 +36,7 @@
   - [Fedora / CentOS / AlmaLinux / Rocky Linux](#fedora--centos--almalinux--rocky-linux)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
+  - [mise](#mise)
   - [openSUSE](#opensuse)
   - [Snap](#snap)
   - [Solus](#solus)
@@ -287,6 +288,14 @@ nix profile install nixpkgs#bottom
 {
   programs.bottom.enable = true;
 }
+```
+
+### mise
+
+Available in [mise](https://github.com/jdx/mise), you can install it with something like:
+
+```
+mise use -g bottom@latest
 ```
 
 ### openSUSE
