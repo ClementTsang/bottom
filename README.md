@@ -402,7 +402,7 @@ conda install bottom
 
 ### mise
 
-Available in [mise](https://github.com/jdx/mise), you can install it with something like:
+bottom is available in [mise](https://github.com/jdx/mise). You can install it with something like:
 
 ```
 mise use -g bottom@latest
