@@ -567,6 +567,7 @@ Thanks to all contributors:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="http://blog.lenhof.eu.org"><img src="https://avatars.githubusercontent.com/u/36410287?v=4?s=100" width="100px;" alt="Jean-Yves LENHOF"/><br /><sub><b>Jean-Yves LENHOF</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=jylenhof" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://saphereye.github.io"><img src="https://avatars.githubusercontent.com/u/59739923?v=4?s=100" width="100px;" alt="Adarsh Das"/><br /><sub><b>Adarsh Das</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Saphereye" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
