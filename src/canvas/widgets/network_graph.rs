@@ -391,6 +391,7 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
 
             let max_entry_upper = if max_entry == 0.0 {
                 // If it's 0, then just use a very low value so the labels aren't just "0.0" 4 times.
+                // This _also_ prevents the y-axis height range ever being 0.
                 1.0
             } else {
                 max_entry * 1.5 // We use the bumped up version to calculate our unit type.
