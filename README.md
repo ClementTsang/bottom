@@ -36,7 +36,6 @@
   - [Fedora / CentOS / AlmaLinux / Rocky Linux](#fedora--centos--almalinux--rocky-linux)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
-  - [mise](#mise)
   - [openSUSE](#opensuse)
   - [Snap](#snap)
   - [Solus](#solus)
@@ -49,6 +48,7 @@
   - [winget](#winget)
   - [Windows installer](#windows-installer)
   - [Conda](#conda)
+  - [mise](#mise)
   - [Pre-built binaries](#pre-built-binaries)
     - [Auto-completion](#auto-completion)
 - [Usage](#usage)
@@ -290,14 +290,6 @@ nix profile install nixpkgs#bottom
 }
 ```
 
-### mise
-
-Available in [mise](https://github.com/jdx/mise), you can install it with something like:
-
-```
-mise use -g bottom@latest
-```
-
 ### openSUSE
 
 Available in openSUSE Tumbleweed:
@@ -406,6 +398,14 @@ conda config --set channel_priority strict
 
 # Install
 conda install bottom
+```
+
+### mise
+
+Available in [mise](https://github.com/jdx/mise), you can install it with something like:
+
+```
+mise use -g bottom@latest
 ```
 
 ### Pre-built binaries
