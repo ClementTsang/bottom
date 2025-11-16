@@ -20,6 +20,16 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
+## [0.11.5]/[0.12.0] - Unreleased
+
+### Features
+
+- [#1830](https://github.com/ClementTsang/bottom/pull/1830): Add spacebar shortcut to toggle process tree expansion.
+
+### Bug Fixes
+
+### Other
+
 ## [0.11.4] - 2025-11-16
 
 ### Bug Fixes
