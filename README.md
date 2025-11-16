@@ -565,6 +565,9 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="http://marek.sierocinscy.pl"><img src="https://avatars.githubusercontent.com/u/2142811?v=4?s=100" width="100px;" alt="Marek Sierociński"/><br /><sub><b>Marek Sierociński</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=marverix" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Tommimon"><img src="https://avatars.githubusercontent.com/u/37435103?v=4?s=100" width="100px;" alt="Tommaso Montanari"/><br /><sub><b>Tommaso Montanari</b></sub></a><br /><a href="#design-Tommimon" title="Design">🎨</a> <a href="#ideas-Tommimon" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/for"><img src="https://avatars.githubusercontent.com/u/7262123?v=4?s=100" width="100px;" alt="J"/><br /><sub><b>J</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=for" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 
