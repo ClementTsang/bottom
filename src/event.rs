@@ -118,50 +118,48 @@ pub fn handle_key_event_or_break(
 
             _ => {}
         }
-    } else {
-        if let KeyModifiers::ALT = event.modifiers {
-            match event.code {
-                KeyCode::Char('c') | KeyCode::Char('C') => app.toggle_ignore_case(),
-                KeyCode::Char('w') | KeyCode::Char('W') => app.toggle_search_whole_word(),
-                KeyCode::Char('r') | KeyCode::Char('R') => app.toggle_search_regex(),
-                KeyCode::Char('h') => app.on_left_key(),
-                KeyCode::Char('l') => app.on_right_key(),
-                _ => {}
-            }
-        } else if let KeyModifiers::CONTROL = event.modifiers {
-            if event.code == KeyCode::Char('c') {
-                return true;
-            }
+    } else if let KeyModifiers::ALT = event.modifiers {
+        match event.code {
+            KeyCode::Char('c') | KeyCode::Char('C') => app.toggle_ignore_case(),
+            KeyCode::Char('w') | KeyCode::Char('W') => app.toggle_search_whole_word(),
+            KeyCode::Char('r') | KeyCode::Char('R') => app.toggle_search_regex(),
+            KeyCode::Char('h') => app.on_left_key(),
+            KeyCode::Char('l') => app.on_right_key(),
+            _ => {}
+        }
+    } else if let KeyModifiers::CONTROL = event.modifiers {
+        if event.code == KeyCode::Char('c') {
+            return true;
+        }
 
-            match event.code {
-                KeyCode::Char('f') => app.on_slash(),
-                KeyCode::Left => app.move_widget_selection(&WidgetDirection::Left),
-                KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
-                KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
-                KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
-                KeyCode::Char('r') => {
-                    if reset_sender.send(CollectionThreadEvent::Reset).is_ok() {
-                        app.reset();
-                    }
+        match event.code {
+            KeyCode::Char('f') => app.on_slash(),
+            KeyCode::Left => app.move_widget_selection(&WidgetDirection::Left),
+            KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
+            KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
+            KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
+            KeyCode::Char('r') => {
+                if reset_sender.send(CollectionThreadEvent::Reset).is_ok() {
+                    app.reset();
                 }
-                KeyCode::Char('a') => app.skip_cursor_beginning(),
-                KeyCode::Char('e') => app.skip_cursor_end(),
-                KeyCode::Char('u') if app.is_in_search_widget() => app.clear_search(),
-                KeyCode::Char('w') => app.clear_previous_word(),
-                KeyCode::Char('h') => app.on_backspace(),
-                KeyCode::Char('d') => app.scroll_half_page_down(),
-                KeyCode::Char('u') => app.scroll_half_page_up(),
-                _ => {}
             }
-        } else if let KeyModifiers::SHIFT = event.modifiers {
-            match event.code {
-                KeyCode::Left => app.move_widget_selection(&WidgetDirection::Left),
-                KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
-                KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
-                KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
-                KeyCode::Char(caught_char) => app.on_char_key(caught_char),
-                _ => {}
-            }
+            KeyCode::Char('a') => app.skip_cursor_beginning(),
+            KeyCode::Char('e') => app.skip_cursor_end(),
+            KeyCode::Char('u') if app.is_in_search_widget() => app.clear_search(),
+            KeyCode::Char('w') => app.clear_previous_word(),
+            KeyCode::Char('h') => app.on_backspace(),
+            KeyCode::Char('d') => app.scroll_half_page_down(),
+            KeyCode::Char('u') => app.scroll_half_page_up(),
+            _ => {}
+        }
+    } else if let KeyModifiers::SHIFT = event.modifiers {
+        match event.code {
+            KeyCode::Left => app.move_widget_selection(&WidgetDirection::Left),
+            KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
+            KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
+            KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
+            KeyCode::Char(caught_char) => app.on_char_key(caught_char),
+            _ => {}
         }
     }
 
