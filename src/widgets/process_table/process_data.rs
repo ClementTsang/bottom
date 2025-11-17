@@ -218,6 +218,9 @@ pub struct ProcWidgetData {
     /// The process "type". Used to color things.
     #[cfg(target_os = "linux")]
     pub process_type: crate::collection::processes::ProcessType,
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub nice: i32,
+    pub priority: i32,
 }
 
 impl ProcWidgetData {
@@ -264,6 +267,9 @@ impl ProcWidgetData {
             gpu_usage: process.gpu_util,
             #[cfg(target_os = "linux")]
             process_type: process.process_type,
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            nice: process.nice,
+            priority: process.priority,
         }
     }
 
@@ -325,6 +331,9 @@ impl ProcWidgetData {
                 .map(|user| user.to_string())
                 .unwrap_or_else(|| "N/A".to_string()),
             ProcColumn::Time => format_time(self.time),
+            ProcColumn::Priority => self.priority.to_string(),
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Nice => self.nice.to_string(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
             #[cfg(feature = "gpu")]
@@ -366,6 +375,9 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                 .map(|user| user.to_string().into())
                 .unwrap_or_else(|| "N/A".into()),
             ProcColumn::Time => format_time(self.time).into(),
+            ProcColumn::Priority => self.priority.to_string().into(),
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Nice => self.nice.to_string().into(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => {
                 self.gpu_mem_usage.to_string().into()

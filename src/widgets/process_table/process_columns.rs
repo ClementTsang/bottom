@@ -30,6 +30,11 @@ pub enum ProcColumn {
     State,
     User,
     Time,
+    Priority,
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    Nice,
+    #[cfg(target_os = "windows")]
+    Priority,
     #[cfg(feature = "gpu")]
     GpuMemValue,
     #[cfg(feature = "gpu")]
@@ -85,6 +90,9 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::State => "State",
             ProcColumn::User => "User",
             ProcColumn::Time => "Time",
+            ProcColumn::Priority => "Priority",
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Nice => "Nice",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue => "GMem",
             #[cfg(feature = "gpu")]
@@ -167,6 +175,13 @@ impl SortsRow for ProcColumn {
             ProcColumn::Time => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.time, b.time));
             }
+            ProcColumn::Priority => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.priority, b.priority));
+            }
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Nice => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.nice, b.nice));
+            }
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => {
                 data.sort_by(|a, b| {
@@ -230,6 +245,12 @@ impl From<&ProcColumn> for ProcWidgetColumn {
             ProcColumn::State => ProcWidgetColumn::State,
             ProcColumn::User => ProcWidgetColumn::User,
             ProcColumn::Time => ProcWidgetColumn::Time,
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Priority => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Nice => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
+            #[cfg(target_os = "windows")]
+            ProcColumn::Priority => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemPercent | ProcColumn::GpuMemValue => ProcWidgetColumn::GpuMem,
             #[cfg(feature = "gpu")]

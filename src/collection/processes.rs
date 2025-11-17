@@ -147,6 +147,13 @@ pub struct ProcessHarvest {
     /// The process entry "type".
     #[cfg(target_os = "linux")]
     pub process_type: ProcessType,
+
+    /// The nice value (user-settable scheduling hint).
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub nice: i32,
+
+    /// The kernel scheduling priority.
+    pub priority: i32,
     // TODO: Additional fields
     // pub rss_kb: u64,
     // pub virt_kb: u64,
