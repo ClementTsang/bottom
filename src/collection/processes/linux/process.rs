@@ -67,6 +67,7 @@ pub(crate) struct Stat {
     pub priority: i32,
 
     /// The nice value (user-settable scheduling hint).
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     pub nice: i32,
 }
 

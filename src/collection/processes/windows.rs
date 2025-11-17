@@ -134,7 +134,10 @@ pub fn sysinfo_process_data(
             gpu_util,
             #[cfg(feature = "gpu")]
             gpu_mem_percent,
-            nice: pid_to_priority.get(&(process_val.pid().as_u32() as usize)).copied().unwrap_or(0),
+            nice: pid_to_priority
+                .get(&(process_val.pid().as_u32() as usize))
+                .copied()
+                .unwrap_or(0),
         });
     }
 

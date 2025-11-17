@@ -1209,6 +1209,9 @@ mod test {
             gpu_usage: 0,
             #[cfg(target_os = "linux")]
             process_type: crate::collection::processes::ProcessType::Regular,
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            nice: 0,
+            priority: -20,
         };
 
         let b = ProcWidgetData {
