@@ -100,14 +100,14 @@ pub fn handle_key_event_or_break(
             }
 
             KeyCode::Char(' ') if !app.is_in_search_widget() => {
-    if let Some(pws) = app
-        .states
-        .proc_state
-        .get_mut_widget_state(app.current_widget.widget_id)
-    {
-        pws.toggle_current_tree_branch_entry();
-    }
-}
+                if let Some(pws) = app
+                    .states
+                    .proc_state
+                    .get_mut_widget_state(app.current_widget.widget_id)
+                {
+                    pws.toggle_current_tree_branch_entry();
+                }
+            }
 
             KeyCode::Esc => app.on_esc(),
             KeyCode::Enter => app.on_enter(),
