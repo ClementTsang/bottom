@@ -101,7 +101,7 @@ Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, d
 
 A process in tree mode can also be "collapsed", hiding its children and any descendants, using the either the ++minus++,
 ++plus++, or ++left++ keys, or clicking on an entry. It can be expanded by using the ++minus++, ++plus++, or ++right++
-keys, or by clicking on the entry again.
+keys, or by clicking on the entry again. The ++space++ key can also be used to toggle between the collapsed and expanded states.
 
 !!! info
 

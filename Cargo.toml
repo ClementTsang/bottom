@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.11.3"
+version = "0.11.4"
 repository = "https://github.com/ClementTsang/bottom"
 license = "MIT"
 description = "A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows."
@@ -33,6 +33,9 @@ exclude = [
     "codecov.yml",
     "CONTRIBUTING.md",
     "Cross.toml",
+    "debug.log",
+    "flamegraph.svg",
+    "profile.json.gz",
     "rustfmt.toml",
 ]
 edition = "2021"
