@@ -53,8 +53,6 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 pub fn handle_key_event_or_break(
     event: KeyEvent, app: &mut App, reset_sender: &Sender<CollectionThreadEvent>,
 ) -> bool {
-    // c_debug!("KeyEvent: {event:?}");
-
     if event.modifiers.is_empty() {
         // Required catch for searching - otherwise you couldn't search with q.
         if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
@@ -62,6 +60,7 @@ pub fn handle_key_event_or_break(
         }
 
         match event.code {
+            KeyCode::Char('q') if !app.is_in_search_widget() => return true,
             KeyCode::End => app.skip_to_last(),
             KeyCode::Home => app.skip_to_first(),
             KeyCode::Up => app.on_up_key(),
@@ -71,7 +70,6 @@ pub fn handle_key_event_or_break(
 
             // 🔹 Customizable keybinding for toggling tree branches
             KeyCode::Char(caught_char) => {
-                // Check if config defines a custom keybinding
                 if let Some(ref bindings) = app.app_config_fields.keybindings {
                     if let Some(ref key) = bindings.toggle_tree_branch {
                         if key == &caught_char.to_string() {
@@ -82,7 +80,7 @@ pub fn handle_key_event_or_break(
                             {
                                 pws.toggle_current_tree_branch_entry();
                             }
-                            return false; // handled
+                            return false;
                         }
                     }
                 }
@@ -101,6 +99,7 @@ pub fn handle_key_event_or_break(
                 }
             }
 
+            KeyCode::Char(' ') if !app.is_in_search_widget() => app.on_space_key(),
             KeyCode::Esc => app.on_esc(),
             KeyCode::Enter => app.on_enter(),
             KeyCode::Tab => app.on_tab(),
@@ -114,10 +113,10 @@ pub fn handle_key_event_or_break(
             KeyCode::F(9) => app.kill_current_process(),
             KeyCode::PageDown => app.on_page_down(),
             KeyCode::PageUp => app.on_page_up(),
+
             _ => {}
         }
     } else {
-        // Otherwise, track the modifier as well...
         if let KeyModifiers::ALT = event.modifiers {
             match event.code {
                 KeyCode::Char('c') | KeyCode::Char('C') => app.toggle_ignore_case(),

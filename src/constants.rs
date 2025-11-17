@@ -89,7 +89,6 @@ const PROCESS_HELP_TEXT: [&str; 21] = [
     "z                       Toggle the display of kernel threads",
 ];
 
-
 const SEARCH_HELP_TEXT: [&str; 51] = [
     "4 - Process search widget",
     "Esc              Close the search widget (retains the filter)",
