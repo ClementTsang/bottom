@@ -70,6 +70,7 @@ pub fn handle_key_event_or_break(
 
             // 🔹 Customizable keybinding for toggling tree branches
             KeyCode::Char(caught_char) => {
+                // Check custom keybinding
                 if let Some(ref bindings) = app.app_config_fields.keybindings {
                     if let Some(ref key) = bindings.toggle_tree_branch {
                         if key == &caught_char.to_string() {
@@ -80,13 +81,13 @@ pub fn handle_key_event_or_break(
                             {
                                 pws.toggle_current_tree_branch_entry();
                             }
-                            return false;
+                            return false; // handled
                         }
                     }
                 }
 
-                // Fallback: spacebar toggles by default
-                if caught_char == ' ' {
+                // Built-in default: spacebar toggles tree
+                if caught_char == ' ' && !app.is_in_search_widget() {
                     if let Some(pws) = app
                         .states
                         .proc_state
@@ -94,19 +95,11 @@ pub fn handle_key_event_or_break(
                     {
                         pws.toggle_current_tree_branch_entry();
                     }
-                } else {
-                    app.on_char_key(caught_char);
+                    return false;
                 }
-            }
 
-            KeyCode::Char(' ') if !app.is_in_search_widget() => {
-                if let Some(pws) = app
-                    .states
-                    .proc_state
-                    .get_mut_widget_state(app.current_widget.widget_id)
-                {
-                    pws.toggle_current_tree_branch_entry();
-                }
+                // Otherwise normal character handling
+                app.on_char_key(caught_char);
             }
 
             KeyCode::Esc => app.on_esc(),
