@@ -324,6 +324,16 @@ pub struct ProcessArgs {
     )]
     pub disable_advanced_kill: bool,
 
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Prevents performing any actions that affect the system.",
+        long_help = "Prevents performing any actions that affect the system. Disables operations such as stopping or sending signals \
+                 to processes.",
+        alias = "read-only"
+    )]
+    pub read_only: bool,
+
     #[cfg(target_os = "linux")]
     #[arg(
         long,

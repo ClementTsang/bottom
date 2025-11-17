@@ -33,6 +33,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `-S, --case_sensitive`      | Enables case sensitivity by default when searching.                                    |
 | `-u, --current_usage`       | Calculates process CPU usage as a percentage of current usage rather than total usage. |
 | `--disable_advanced_kill`   | Hides additional stopping options on Unix-like systems.                                |
+| `--read_only`               | Prevents performing any actions that affect the system (e.g. stopping processes).      |
 | `--get_threads`             | Also gather process thread information.                                                |
 | `-g, --group_processes`     | Groups processes with the same name by default. No effect if `--tree` is set.          |
 | `--hide_k_threads`          | Hide kernel threads by default.                                                        |
