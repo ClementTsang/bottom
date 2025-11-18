@@ -20,15 +20,29 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
-## [0.11.4] - Unreleased
+## [0.11.5]/[0.12.0] - Unreleased
 
 ### Features
+
+- [#1830](https://github.com/ClementTsang/bottom/pull/1830): Add spacebar shortcut to toggle process tree expansion.
+- [#1861](https://github.com/ClementTsang/bottom/pull/1861): Add read-only mode, where things like killing processes is disabled.
+
+### Bug Fixes
+
+### Other
+
+## [0.11.4] - 2025-11-16
 
 ### Bug Fixes
 
 - [#1859](https://github.com/ClementTsang/bottom/pull/1859): Ensure average CPU is drawn on top in "All" mode.
+- [#1867](https://github.com/ClementTsang/bottom/pull/1867): Fix network graph y-axis height cache not updating correctly.
+- [#1867](https://github.com/ClementTsang/bottom/pull/1867): Fix network graph y-axis occasionally starting with a range of zero.
 
 ### Other
+
+- [#1863](https://github.com/ClementTsang/bottom/pull/1863): Replace bottom icon with a square version.
+- [#1865](https://github.com/ClementTsang/bottom/pull/1865): Improve help dialog width calculation.
 
 ## [0.11.3] - 2025-11-06
 

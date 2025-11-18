@@ -646,6 +646,25 @@
         "design",
         "ideas"
       ]
+    },
+    {
+      "login": "jylenhof",
+      "name": "Jean-Yves LENHOF",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36410287?v=4",
+      "profile": "http://blog.lenhof.eu.org",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Saphereye",
+      "name": "Adarsh Das",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59739923?v=4",
+      "profile": "http://saphereye.github.io",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

@@ -57,6 +57,7 @@ pub struct AppConfigFields {
     pub show_table_scroll_position: bool,
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub is_advanced_kill: bool,
+    pub is_read_only: bool,
     #[cfg(target_os = "linux")]
     pub hide_k_threads: bool,
     #[cfg(feature = "zfs")]
@@ -684,6 +685,23 @@ impl App {
         }
     }
 
+    pub fn on_space_key(&mut self) {
+        if !self.is_in_dialog() {
+            if self.current_widget.widget_type == BottomWidgetType::Proc {
+                if let Some(proc_widget_state) = self
+                    .states
+                    .proc_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    proc_widget_state.toggle_current_tree_branch_entry();
+                }
+            }
+        } else if self.process_kill_dialog.is_open() {
+            // Either select the current option,
+            // or scroll to the next one
+        }
+    }
+
     pub fn on_page_up(&mut self) {
         if self.process_kill_dialog.is_open() {
             self.process_kill_dialog.on_page_up();
@@ -974,6 +992,10 @@ impl App {
     ///
     /// TODO: This ideally gets abstracted out into a separate widget.
     pub(crate) fn kill_current_process(&mut self) {
+        if self.app_config_fields.is_read_only {
+            return;
+        }
+
         if let Some(pws) = self
             .states
             .proc_state
