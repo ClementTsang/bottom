@@ -626,24 +626,18 @@ pub struct StyleArgs {
         value_name = "SCHEME",
         value_parser = [
             "default",
-            "default-light",
             "gruvbox",
-            "gruvbox-light",
             "nord",
-            "nord-light",
         ],
         hide_possible_values = true,
         help = indoc! {
-            "Use a built-in color theme, use '--help' for info on the colors. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
+            "Use a built-in color theme, use '--help' for info on the colors. [possible values: default, gruvbox, nord]",
         },
         long_help = indoc! {
             "Use a pre-defined color theme. Currently supported themes are:
             - default
-            - default-light (default but adjusted for lighter backgrounds)
             - gruvbox       (a bright theme with 'retro groove' colors)
-            - gruvbox-light (gruvbox but adjusted for lighter backgrounds)
-            - nord          (an arctic, north-bluish color palette)
-            - nord-light    (nord but adjusted for lighter backgrounds)"
+            - nord          (an arctic, north-bluish color palette)"
         }
     )]
     pub theme: Option<String>,
