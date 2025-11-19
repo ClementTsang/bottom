@@ -68,6 +68,9 @@ impl ProcColumn {
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => &["GMem", "GMem%"],
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => &["GPU%"],
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Nice => &["Nice"],
+            ProcColumn::Priority => &["Priority"],
         }
     }
 }

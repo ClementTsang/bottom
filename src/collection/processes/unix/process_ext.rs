@@ -69,6 +69,16 @@ pub(crate) trait UnixProcessExt {
             };
             let uid = process_val.user_id().map(|u| **u);
             let pid = process_val.pid().as_u32() as Pid;
+
+            if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
+                let nice = kinfo.kp_proc.p_nice as i32;
+                let priority = kinfo.kp_proc.p_priority as i32;
+                Some((nice, priority))
+            } else {
+                let nice = 0;
+                let priority = 0;
+            }
+
             process_vector.push(ProcessHarvest {
                 pid,
                 parent_pid: Self::parent_pid(process_val),
@@ -105,6 +115,8 @@ pub(crate) trait UnixProcessExt {
                 gpu_mem_percent: 0.0,
                 #[cfg(feature = "gpu")]
                 gpu_util: 0,
+                nice,
+                priority,
             });
         }
 

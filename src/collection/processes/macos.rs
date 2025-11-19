@@ -10,20 +10,10 @@ use itertools::Itertools;
 use super::UnixProcessExt;
 use crate::collection::DataCollector;
 use crate::collection::Pid;
-use crate::collection::ProcessHarvest;
+use crate::collection::processes::ProcessHarvest;
 use crate::collection::error::CollectionResult;
 
 pub(crate) struct MacOSProcessExt;
-
-fn get_nice_and_priority(pid: Pid) -> Option<(i32, i32)> {
-    if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
-        let nice = kinfo.kp_proc.p_nice as i32;
-        let priority = kinfo.kp_proc.p_priority as i32;
-        Some((nice, priority))
-    } else {
-        None
-    }
-}
 
 impl UnixProcessExt for MacOSProcessExt {
     #[inline]
