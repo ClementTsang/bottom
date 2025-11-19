@@ -167,6 +167,7 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         #[cfg(any(unix, windows))]
         Priority => SortColumn::new(Priority).default_descending(),
         #[cfg(unix)]
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
         Nice => SortColumn::new(Nice),
         #[cfg(feature = "gpu")]
         GpuMemValue => SortColumn::new(GpuMemValue).default_descending(),
@@ -201,6 +202,9 @@ pub enum ProcWidgetColumn {
     User,
     State,
     Time,
+    Priority,
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    Nice,
     #[cfg(feature = "gpu")]
     GpuMem,
     #[cfg(feature = "gpu")]
@@ -343,6 +347,9 @@ impl ProcWidgetState {
                             ProcWidgetColumn::User => User,
                             ProcWidgetColumn::State => State,
                             ProcWidgetColumn::Time => Time,
+                            ProcWidgetColumn::Priority => Priority,
+                            #[cfg(any(target_os = "linux", target_os = "macos"))]
+                            ProcWidgetColumn::Nice => Nice,
                             #[cfg(feature = "gpu")]
                             ProcWidgetColumn::GpuMem => {
                                 if mem_as_values {
@@ -399,10 +406,9 @@ impl ProcWidgetState {
                     State => ProcWidgetColumn::State,
                     User => ProcWidgetColumn::User,
                     Time => ProcWidgetColumn::Time,
-                    #[cfg(any(unix, windows))]
-                    Priority => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
-                    #[cfg(unix)]
-                    Nice => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
+                    Priority => ProcWidgetColumn::Priority,
+                    #[cfg(any(target_os = "linux", target_os = "macos"))]
+                    Nice => ProcWidgetColumn::Nice,
                     #[cfg(feature = "gpu")]
                     GpuMemValue | GpuMemPercent => ProcWidgetColumn::GpuMem,
                     #[cfg(feature = "gpu")]

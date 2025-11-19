@@ -75,20 +75,12 @@ pub(crate) trait UnixProcessExt {
 
             #[cfg(target_os = "macos")]
             let (nice, priority) = if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
-                (
-                    kinfo.kp_proc.p_nice as i32,
-                    kinfo.kp_proc.p_priority as i32,
-                )
+                (kinfo.kp_proc.p_nice as i32, kinfo.kp_proc.p_priority as i32)
             } else {
                 (0, 0)
             };
 
-
-
-            #[cfg(all(
-                not(target_os = "macos"),
-                not(target_os = "freebsd")
-            ))]
+            #[cfg(all(not(target_os = "macos"), not(target_os = "freebsd")))]
             let (nice, priority) = (0, 0);
 
             #[cfg(target_os = "freebsd")]

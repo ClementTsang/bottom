@@ -9,10 +9,7 @@ use hashbrown::HashMap;
 use itertools::Itertools;
 
 use super::UnixProcessExt;
-use crate::collection::DataCollector;
 use crate::collection::Pid;
-use crate::collection::error::CollectionResult;
-use crate::collection::processes::ProcessHarvest;
 
 pub(crate) struct MacOSProcessExt;
 

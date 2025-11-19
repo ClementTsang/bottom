@@ -370,7 +370,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             ProcColumn::TotalRead => dec_bytes_string(self.total_read).into(),
             ProcColumn::TotalWrite => dec_bytes_string(self.total_write).into(),
             ProcColumn::State => {
-                if calculated_width < 8 {
+                if calculated_width.get() < 8 {
                     self.process_char.to_string().into()
                 } else {
                     self.process_state.into()

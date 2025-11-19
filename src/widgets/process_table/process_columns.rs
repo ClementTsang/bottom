@@ -29,7 +29,6 @@ pub enum ProcColumn {
     TotalWrite,
     State,
     User,
-    State,
     Time,
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     Nice,
@@ -91,7 +90,6 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::TotalWrite => "T.Write",
             ProcColumn::State => "State",
             ProcColumn::User => "User",
-            ProcColumn::State => "State",
             ProcColumn::Time => "Time",
             #[cfg(unix)]
             #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -103,9 +101,6 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::GpuMemPercent => "GMem%",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => "GPU%",
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
-            ProcColumn::Nice => "Nice",
-            ProcColumn::Priority => "Priority",
         }
         .into()
     }
@@ -257,12 +252,11 @@ impl From<&ProcColumn> for ProcWidgetColumn {
             ProcColumn::State => ProcWidgetColumn::State,
             ProcColumn::User => ProcWidgetColumn::User,
             ProcColumn::Time => ProcWidgetColumn::Time,
-            ProcColumn::Priority => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
+            ProcColumn::Priority => ProcWidgetColumn::Priority,
             #[cfg(any(target_os = "linux", target_os = "macos"))]
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
-            ProcColumn::Nice => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
+            ProcColumn::Nice => ProcWidgetColumn::Nice,
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMemPercent | ProcColumn::GpuMemValue => ProcWidgetColumn::GpuMem,
+            ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => ProcWidgetColumn::GpuMem,
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => ProcWidgetColumn::GpuUtil,
         }
