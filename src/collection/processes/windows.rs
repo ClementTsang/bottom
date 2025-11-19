@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use itertools::Itertools;
-use winprocinfo::all_process_info;
+use winprocinfo;
 
 use super::{ProcessHarvest, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult};
@@ -22,14 +22,6 @@ pub fn sysinfo_process_data(
     let process_hashmap = sys.processes();
     let cpu_usage = sys.global_cpu_usage() / 100.0;
     let num_processors = sys.cpus().len();
-
-    // Build a map of pid -> base_priority using winprocinfo
-    let mut pid_to_priority = std::collections::HashMap::new();
-    if let Ok(proc_infos) = all_process_info() {
-        for proc in proc_infos {
-            pid_to_priority.insert(proc.unique_process_id as usize, proc.base_priority);
-        }
-    }
 
     for process_val in process_hashmap.values() {
         let name = if process_val.name().is_empty() {
@@ -97,6 +89,13 @@ pub fn sysinfo_process_data(
             }
             (gpu_mem, gpu_util, gpu_mem_percent)
         };
+
+        let base_priority = winprocinfo::get_proc_info_by_pid(process_val.pid().as_u32())
+            .ok()
+            .flatten()
+            .map(|proc| proc.base_priority)
+            .unwrap_or(0);
+
         process_vector.push(ProcessHarvest {
             pid: process_val.pid().as_u32() as _,
             parent_pid: process_val.parent().map(|p| p.as_u32() as _),
@@ -134,10 +133,7 @@ pub fn sysinfo_process_data(
             gpu_util,
             #[cfg(feature = "gpu")]
             gpu_mem_percent,
-            nice: pid_to_priority
-                .get(&(process_val.pid().as_u32() as usize))
-                .copied()
-                .unwrap_or(0),
+            priority: base_priority,
         });
     }
 

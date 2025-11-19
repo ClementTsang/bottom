@@ -220,6 +220,7 @@ pub struct ProcWidgetData {
     pub process_type: crate::collection::processes::ProcessType,
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     pub nice: i32,
+    #[cfg(any(unix, windows))]
     pub priority: i32,
 }
 
@@ -269,6 +270,7 @@ impl ProcWidgetData {
             process_type: process.process_type,
             #[cfg(any(target_os = "linux", target_os = "macos"))]
             nice: process.nice,
+            #[cfg(any(unix, windows))]
             priority: process.priority,
         }
     }
@@ -314,6 +316,11 @@ impl ProcWidgetData {
 
     fn to_string(&self, column: &ProcColumn) -> String {
         match column {
+            #[cfg(any(unix, windows))]
+            &ProcColumn::Priority => self.priority.to_string(),
+            #[cfg(unix)]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Nice => self.nice.to_string(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem),
@@ -331,9 +338,6 @@ impl ProcWidgetData {
                 .map(|user| user.to_string())
                 .unwrap_or_else(|| "N/A".to_string()),
             ProcColumn::Time => format_time(self.time),
-            ProcColumn::Priority => self.priority.to_string(),
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
-            ProcColumn::Nice => self.nice.to_string(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
             #[cfg(feature = "gpu")]
@@ -346,12 +350,15 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
     fn to_cell_text(
         &self, column: &ProcColumn, calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
-        let calculated_width = calculated_width.get();
-
         // TODO: Optimize the string allocations here...
         // TODO: Also maybe just pull in the to_string call but add a variable for the
         // differences.
         Some(match column {
+            #[cfg(any(unix, windows))]
+            &ProcColumn::Priority => self.priority.to_string().into(),
+            #[cfg(unix)]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Nice => self.nice.to_string().into(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem).into(),
@@ -375,9 +382,6 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                 .map(|user| user.to_string().into())
                 .unwrap_or_else(|| "N/A".into()),
             ProcColumn::Time => format_time(self.time).into(),
-            ProcColumn::Priority => self.priority.to_string().into(),
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
-            ProcColumn::Nice => self.nice.to_string().into(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => {
                 self.gpu_mem_usage.to_string().into()

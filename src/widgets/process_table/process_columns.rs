@@ -29,11 +29,10 @@ pub enum ProcColumn {
     TotalWrite,
     State,
     User,
+    State,
     Time,
-    Priority,
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     Nice,
-    #[cfg(target_os = "windows")]
     Priority,
     #[cfg(feature = "gpu")]
     GpuMemValue,
@@ -92,16 +91,21 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::TotalWrite => "T.Write",
             ProcColumn::State => "State",
             ProcColumn::User => "User",
+            ProcColumn::State => "State",
             ProcColumn::Time => "Time",
-            ProcColumn::Priority => "Priority",
+            #[cfg(unix)]
             #[cfg(any(target_os = "linux", target_os = "macos"))]
             ProcColumn::Nice => "Nice",
+            ProcColumn::Priority => "Priority",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue => "GMem",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemPercent => "GMem%",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => "GPU%",
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Nice => "Nice",
+            ProcColumn::Priority => "Priority",
         }
         .into()
     }
@@ -114,6 +118,10 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::Pid => "PID(p)".into(),
             ProcColumn::Name => "Name(n)".into(),
             ProcColumn::Command => "Command(n)".into(),
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Nice => "Nice".into(),
+            ProcColumn::Priority => "Priority".into(),
             _ => self.text(),
         }
     }
@@ -182,6 +190,7 @@ impl SortsRow for ProcColumn {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.priority, b.priority));
             }
             #[cfg(any(target_os = "linux", target_os = "macos"))]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             ProcColumn::Nice => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.nice, b.nice));
             }
@@ -248,12 +257,10 @@ impl From<&ProcColumn> for ProcWidgetColumn {
             ProcColumn::State => ProcWidgetColumn::State,
             ProcColumn::User => ProcWidgetColumn::User,
             ProcColumn::Time => ProcWidgetColumn::Time,
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
             ProcColumn::Priority => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             #[cfg(any(target_os = "linux", target_os = "macos"))]
             ProcColumn::Nice => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
-            #[cfg(target_os = "windows")]
-            ProcColumn::Priority => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemPercent | ProcColumn::GpuMemValue => ProcWidgetColumn::GpuMem,
             #[cfg(feature = "gpu")]

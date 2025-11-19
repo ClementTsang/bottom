@@ -164,8 +164,9 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         User => SortColumn::soft(User, Some(0.05)),
         State => SortColumn::hard(State, 9),
         Time => SortColumn::new(Time),
-        Priority => SortColumn::new(Priority),
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        #[cfg(any(unix, windows))]
+        Priority => SortColumn::new(Priority).default_descending(),
+        #[cfg(unix)]
         Nice => SortColumn::new(Nice),
         #[cfg(feature = "gpu")]
         GpuMemValue => SortColumn::new(GpuMemValue).default_descending(),
@@ -398,8 +399,9 @@ impl ProcWidgetState {
                     State => ProcWidgetColumn::State,
                     User => ProcWidgetColumn::User,
                     Time => ProcWidgetColumn::Time,
+                    #[cfg(any(unix, windows))]
                     Priority => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
-                    #[cfg(any(target_os = "linux", target_os = "macos"))]
+                    #[cfg(unix)]
                     Nice => ProcWidgetColumn::Time, // No dedicated variant, fallback to Time for mapping
                     #[cfg(feature = "gpu")]
                     GpuMemValue | GpuMemPercent => ProcWidgetColumn::GpuMem,
