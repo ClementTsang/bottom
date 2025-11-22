@@ -218,9 +218,8 @@ pub struct ProcWidgetData {
     /// The process "type". Used to color things.
     #[cfg(target_os = "linux")]
     pub process_type: crate::collection::processes::ProcessType,
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[cfg(unix)]
     pub nice: i32,
-    #[cfg(any(unix, windows))]
     pub priority: i32,
 }
 
@@ -268,9 +267,8 @@ impl ProcWidgetData {
             gpu_usage: process.gpu_util,
             #[cfg(target_os = "linux")]
             process_type: process.process_type,
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            #[cfg(unix)]
             nice: process.nice,
-            #[cfg(any(unix, windows))]
             priority: process.priority,
         }
     }
@@ -316,10 +314,9 @@ impl ProcWidgetData {
 
     fn to_string(&self, column: &ProcColumn) -> String {
         match column {
-            #[cfg(any(unix, windows))]
             &ProcColumn::Priority => self.priority.to_string(),
             #[cfg(unix)]
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            #[cfg(unix)]
             ProcColumn::Nice => self.nice.to_string(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),
@@ -354,10 +351,9 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
         // TODO: Also maybe just pull in the to_string call but add a variable for the
         // differences.
         Some(match column {
-            #[cfg(any(unix, windows))]
             &ProcColumn::Priority => self.priority.to_string().into(),
             #[cfg(unix)]
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            #[cfg(unix)]
             ProcColumn::Nice => self.nice.to_string().into(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),

@@ -73,20 +73,22 @@ pub(crate) trait UnixProcessExt {
             let uid = process_val.user_id().map(|u| **u);
             let pid = process_val.pid().as_u32() as Pid;
 
+            #[cfg(not(target_os = "macos"))]
+            let nice = unsafe { libc::getpriority(libc::PRIO_PROCESS, pid) };
+
             #[cfg(target_os = "macos")]
-            let (nice, priority) = if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
-                (kinfo.kp_proc.p_nice as i32, kinfo.kp_proc.p_priority as i32)
+            let nice = unsafe { libc::getpriority(libc::PRIO_PROCESS, pid as u32) };
+
+            #[cfg(target_os = "macos")]
+            let priority = if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
+                kinfo.kp_proc.p_priority as i32
             } else {
-                (0, 0)
+                0
             };
 
-            #[cfg(all(not(target_os = "macos"), not(target_os = "freebsd")))]
-            let (nice, priority) = (0, 0);
-
-            #[cfg(target_os = "freebsd")]
+            #[cfg(not(target_os = "macos"))]
             let priority = 0;
 
-            #[cfg(not(target_os = "freebsd"))]
             process_vector.push(ProcessHarvest {
                 pid,
                 parent_pid: Self::parent_pid(process_val),
@@ -108,11 +110,6 @@ pub(crate) trait UnixProcessExt {
                 uid,
                 user: uid.and_then(|uid| user_table.uid_to_username(uid).ok()),
                 time: if process_val.start_time() == 0 {
-                    // Workaround for sysinfo occasionally returning a start time equal to UNIX
-                    // epoch, giving a run time in the range of 50+ years. We just
-                    // return a time of zero in this case for simplicity.
-                    //
-                    // TODO: Maybe return an option instead?
                     Duration::ZERO
                 } else {
                     Duration::from_secs(process_val.run_time())
@@ -123,43 +120,8 @@ pub(crate) trait UnixProcessExt {
                 gpu_mem_percent: 0.0,
                 #[cfg(feature = "gpu")]
                 gpu_util: 0,
-                #[cfg(any(target_os = "linux", target_os = "macos"))]
+                #[cfg(unix)]
                 nice,
-                priority,
-            });
-
-            #[cfg(target_os = "freebsd")]
-            process_vector.push(ProcessHarvest {
-                pid,
-                parent_pid: Self::parent_pid(process_val),
-                name,
-                command,
-                mem_usage_percent: if total_memory > 0 {
-                    (process_val.memory() as f64 * 100.0 / total_memory as f64) as f32
-                } else {
-                    0.0
-                },
-                mem_usage: process_val.memory(),
-                virtual_mem: process_val.virtual_memory(),
-                cpu_usage_percent: process_cpu_usage,
-                read_per_sec: disk_usage.read_bytes,
-                write_per_sec: disk_usage.written_bytes,
-                total_read: disk_usage.total_read_bytes,
-                total_write: disk_usage.total_written_bytes,
-                process_state,
-                uid,
-                user: uid.and_then(|uid| user_table.uid_to_username(uid).ok()),
-                time: if process_val.start_time() == 0 {
-                    Duration::ZERO
-                } else {
-                    Duration::from_secs(process_val.run_time())
-                },
-                #[cfg(feature = "gpu")]
-                gpu_mem: 0,
-                #[cfg(feature = "gpu")]
-                gpu_mem_percent: 0.0,
-                #[cfg(feature = "gpu")]
-                gpu_util: 0,
                 priority,
             });
         }

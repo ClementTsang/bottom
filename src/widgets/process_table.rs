@@ -164,10 +164,8 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         User => SortColumn::soft(User, Some(0.05)),
         State => SortColumn::hard(State, 9),
         Time => SortColumn::new(Time),
-        #[cfg(any(unix, windows))]
         Priority => SortColumn::new(Priority).default_descending(),
         #[cfg(unix)]
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
         Nice => SortColumn::new(Nice),
         #[cfg(feature = "gpu")]
         GpuMemValue => SortColumn::new(GpuMemValue).default_descending(),
@@ -203,7 +201,7 @@ pub enum ProcWidgetColumn {
     State,
     Time,
     Priority,
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[cfg(unix)]
     Nice,
     #[cfg(feature = "gpu")]
     GpuMem,
@@ -348,7 +346,7 @@ impl ProcWidgetState {
                             ProcWidgetColumn::State => State,
                             ProcWidgetColumn::Time => Time,
                             ProcWidgetColumn::Priority => Priority,
-                            #[cfg(any(target_os = "linux", target_os = "macos"))]
+                            #[cfg(unix)]
                             ProcWidgetColumn::Nice => Nice,
                             #[cfg(feature = "gpu")]
                             ProcWidgetColumn::GpuMem => {
@@ -407,7 +405,7 @@ impl ProcWidgetState {
                     User => ProcWidgetColumn::User,
                     Time => ProcWidgetColumn::Time,
                     Priority => ProcWidgetColumn::Priority,
-                    #[cfg(any(target_os = "linux", target_os = "macos"))]
+                    #[cfg(unix)]
                     Nice => ProcWidgetColumn::Nice,
                     #[cfg(feature = "gpu")]
                     GpuMemValue | GpuMemPercent => ProcWidgetColumn::GpuMem,
