@@ -65,10 +65,10 @@ impl ProcColumn {
             // TODO: Change this
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => &["GMem", "GMem%"],
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuUtilPercent => "GPU%",
+            ProcColumn::GpuUtilPercent => &["GPU%"],
             #[cfg(unix)]
-            ProcColumn::Nice => "Nice",
-            ProcColumn::Priority => "Priority",
+            ProcColumn::Nice => &["Nice"],
+            ProcColumn::Priority => &["Priority"],
         }
         .into()
     }
