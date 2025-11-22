@@ -316,7 +316,6 @@ impl ProcWidgetData {
         match column {
             &ProcColumn::Priority => self.priority.to_string(),
             #[cfg(unix)]
-            #[cfg(unix)]
             ProcColumn::Nice => self.nice.to_string(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),

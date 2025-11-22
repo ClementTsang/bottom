@@ -670,7 +670,7 @@ enum PrefixType {
     State,
     User,
     Time,
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[cfg(unix)]
     Nice,
     Priority,
     #[cfg(feature = "gpu")]
@@ -715,7 +715,7 @@ impl std::str::FromStr for PrefixType {
         } else if multi_eq_ignore_ascii_case!(s, "time") {
             result = Time;
         } else if multi_eq_ignore_ascii_case!(s, "nice") {
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            #[cfg(unix)]
             {
                 result = Nice;
             }
@@ -890,7 +890,7 @@ impl Prefix {
                         process.gpu_mem_percent,
                         numerical_query.value,
                     ),
-                    #[cfg(any(target_os = "linux", target_os = "macos"))]
+                    #[cfg(unix)]
                     PrefixType::Nice => matches_condition(
                         &numerical_query.condition,
                         process.nice,

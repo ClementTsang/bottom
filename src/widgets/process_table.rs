@@ -377,7 +377,7 @@ impl ProcWidgetState {
                         State,
                         Time,
                         Priority,
-                        #[cfg(any(target_os = "linux", target_os = "macos"))]
+                        #[cfg(unix)]
                         Nice,
                     ];
 
