@@ -72,7 +72,6 @@ impl ProcColumn {
             ProcColumn::Nice => &["Nice"][..],
             ProcColumn::Priority => &["Priority"][..],
         }
-        .into()
     }
 }
 
