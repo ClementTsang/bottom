@@ -1,6 +1,7 @@
 //! Process data collection for macOS.  Uses sysinfo and custom bindings.
 
-mod sysctl_bindings;
+#[cfg(target_os = "macos")]
+pub mod sysctl_bindings;
 
 use std::{io, process::Command};
 

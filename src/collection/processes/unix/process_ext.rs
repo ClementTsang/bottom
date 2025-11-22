@@ -1,5 +1,8 @@
 //! Shared process data harvesting code from macOS and FreeBSD via sysinfo.
 
+#[cfg(target_os = "macos")]
+use crate::collection::processes::macos::sysctl_bindings;
+
 use std::{io, time::Duration};
 
 use hashbrown::HashMap;
@@ -69,6 +72,21 @@ pub(crate) trait UnixProcessExt {
             };
             let uid = process_val.user_id().map(|u| **u);
             let pid = process_val.pid().as_u32() as Pid;
+
+            #[cfg(unix)]
+            let nice =
+                unsafe { libc::getpriority(libc::PRIO_PROCESS, (pid as Pid).try_into().unwrap()) };
+
+            #[cfg(target_os = "macos")]
+            let priority = if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
+                kinfo.kp_proc.p_priority as i32
+            } else {
+                0
+            };
+
+            #[cfg(not(target_os = "macos"))]
+            let priority = 0;
+
             process_vector.push(ProcessHarvest {
                 pid,
                 parent_pid: Self::parent_pid(process_val),
@@ -90,11 +108,6 @@ pub(crate) trait UnixProcessExt {
                 uid,
                 user: uid.and_then(|uid| user_table.uid_to_username(uid).ok()),
                 time: if process_val.start_time() == 0 {
-                    // Workaround for sysinfo occasionally returning a start time equal to UNIX
-                    // epoch, giving a run time in the range of 50+ years. We just
-                    // return a time of zero in this case for simplicity.
-                    //
-                    // TODO: Maybe return an option instead?
                     Duration::ZERO
                 } else {
                     Duration::from_secs(process_val.run_time())
@@ -105,6 +118,9 @@ pub(crate) trait UnixProcessExt {
                 gpu_mem_percent: 0.0,
                 #[cfg(feature = "gpu")]
                 gpu_util: 0,
+                #[cfg(unix)]
+                nice,
+                priority,
             });
         }
 
