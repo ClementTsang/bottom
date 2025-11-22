@@ -74,7 +74,8 @@ pub(crate) trait UnixProcessExt {
             let pid = process_val.pid().as_u32() as Pid;
 
             #[cfg(unix)]
-            let nice = unsafe { libc::getpriority(libc::PRIO_PROCESS, (pid as Pid).try_into().unwrap()) };
+            let nice =
+                unsafe { libc::getpriority(libc::PRIO_PROCESS, (pid as Pid).try_into().unwrap()) };
 
             #[cfg(target_os = "macos")]
             let priority = if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
