@@ -52,7 +52,9 @@ impl ProcColumn {
             ProcColumn::Command => &["Command"][..],
             ProcColumn::CpuPercent => &["CPU%"][..],
             // TODO: Change this
-            ProcColumn::MemValue | ProcColumn::MemPercent => &["Mem", "Mem%", "Memory", "Memory%"][..],
+            ProcColumn::MemValue | ProcColumn::MemPercent => {
+                &["Mem", "Mem%", "Memory", "Memory%"][..]
+            }
             ProcColumn::VirtualMem => &["Virt", "Virtual", "VirtMem", "Virtual Memory"][..],
             ProcColumn::ReadPerSecond => &["R/s", "Read", "Rps"][..],
             ProcColumn::WritePerSecond => &["W/s", "Write", "Wps"][..],
