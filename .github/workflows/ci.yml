@@ -331,7 +331,7 @@ jobs:
           run: |
             . "$HOME/.cargo/env"
             # Note this only tests the default features, but I think that's fine.
-            cargo --no-fail-fast --locked -- --nocapture --quiet
+            cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
 
   completion:
