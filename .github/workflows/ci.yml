@@ -223,7 +223,7 @@ jobs:
               no-clippy: true,
             }
 
-            # Windows ARM
+          # Windows ARM
           - {
               os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
