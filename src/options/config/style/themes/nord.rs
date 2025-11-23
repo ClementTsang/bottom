@@ -4,7 +4,7 @@ use tui::{
 };
 
 use super::{color, hex};
-use crate::options::config::style::{Styles, utils::convert_hex_to_color};
+use crate::options::config::style::{Styles, themes::hex_colour};
 
 impl Styles {
     pub(crate) fn nord_palette() -> Self {
@@ -44,7 +44,7 @@ impl Styles {
             border_style: hex!("#88c0d0"),
             highlighted_border_style: hex!("#5e81ac"),
             text_style: hex!("#e5e9f0"),
-            selected_text_style: hex!("#2e3440").bg(convert_hex_to_color("#88c0d0").unwrap()),
+            selected_text_style: hex!("#2e3440").bg(hex_colour!("#88c0d0")),
             table_header_style: hex!("#81a1c1").add_modifier(Modifier::BOLD),
             widget_title_style: hex!("#e5e9f0"),
             graph_style: hex!("#e5e9f0"),
@@ -97,7 +97,7 @@ impl Styles {
             border_style: hex!("#2e3440"),
             highlighted_border_style: hex!("#5e81ac"),
             text_style: hex!("#2e3440"),
-            selected_text_style: hex!("#f5f5f5").bg(convert_hex_to_color("#5e81ac").unwrap()),
+            selected_text_style: hex!("#f5f5f5").bg(hex_colour!("#5e81ac")),
             table_header_style: hex!("#5e81ac").add_modifier(Modifier::BOLD),
             widget_title_style: hex!("#2e3440"),
             graph_style: hex!("#2e3440"),
@@ -111,5 +111,14 @@ impl Styles {
             #[cfg(target_os = "linux")]
             thread_text_style: hex!("#a3be8c"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn nord_palettes_valid() {
+        let _ = super::Styles::nord_palette();
+        let _ = super::Styles::nord_light_palette();
     }
 }

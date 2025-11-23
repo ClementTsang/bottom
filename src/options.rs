@@ -526,7 +526,10 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         basic_table_widget_state,
     };
 
-    let current_widget = widget_map.get(&initial_widget_id).unwrap().clone();
+    let current_widget = widget_map
+        .get(&initial_widget_id)
+        .expect("widget map should have the initial widget ID")
+        .clone();
     let filters = DataFilters {
         disk_filter: disk_name_filter,
         mount_filter: disk_mount_filter,
@@ -568,14 +571,13 @@ fn get_widget_layout(
         let rows = match &config.row {
             Some(r) => r,
             None => {
-                // This cannot (like it really shouldn't) fail!
                 ref_row = toml_edit::de::from_str::<Config>(if get_use_battery(args, config) {
                     DEFAULT_BATTERY_LAYOUT
                 } else {
                     DEFAULT_LAYOUT
                 })?
                 .row
-                .unwrap();
+                .expect("This cannot (like it really shouldn't) fail!");
                 &ref_row
             }
         };

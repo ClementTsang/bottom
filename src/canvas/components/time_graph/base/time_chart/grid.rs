@@ -75,7 +75,7 @@ impl Grid for BrailleGrid {
     }
 
     fn save(&self) -> Layer {
-        let string = String::from_utf16(&self.utf16_code_points).unwrap();
+        let string = String::from_utf16(&self.utf16_code_points).expect("valid UTF-16 data");
         // the background color is always reset for braille patterns
         let colors = self.colors.iter().map(|c| (*c, Color::Reset)).collect();
         Layer { string, colors }

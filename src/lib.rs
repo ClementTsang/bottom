@@ -99,7 +99,7 @@ fn check_if_terminal() {
             "Warning: bottom is not being output to a terminal. Things might not work properly."
         );
         eprintln!("If you're stuck, press 'q' or 'Ctrl-c' to quit the program.");
-        stderr().flush().unwrap();
+        stderr().flush().expect("should succeed in flushing stderr");
         thread::sleep(Duration::from_secs(1));
     }
 }

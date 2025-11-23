@@ -674,17 +674,22 @@ impl<'a> TimeChart<'a> {
         &self, buf: &mut Buffer, layout: &ChartLayout, chart_area: Rect, graph_area: Rect,
     ) {
         let Some(y) = layout.label_x else { return };
-        let labels = self.x_axis.labels.as_ref().unwrap();
+        let Some(labels) = self.x_axis.labels.as_ref() else {
+            return;
+        };
         let labels_len = labels.len() as u16;
         if labels_len < 2 {
             return;
         }
 
+        let first_label = labels.first().expect("must have at least 2 labels");
+        let last_label = labels.last().expect("must have at least 2 labels");
+
         let width_between_ticks = graph_area.width / labels_len;
 
         let label_area = self.first_x_label_area(
             y,
-            labels.first().unwrap().width() as u16,
+            first_label.width() as u16,
             width_between_ticks,
             chart_area,
             graph_area,
@@ -696,7 +701,7 @@ impl<'a> TimeChart<'a> {
             Alignment::Right => Alignment::Left,
         };
 
-        Self::render_label(buf, labels.first().unwrap(), label_area, label_alignment);
+        Self::render_label(buf, first_label, label_area, label_alignment);
 
         for (i, label) in labels[1..labels.len() - 1].iter().enumerate() {
             // We add 1 to x (and width-1 below) to leave at least one space before each
@@ -710,7 +715,7 @@ impl<'a> TimeChart<'a> {
         let x = graph_area.right() - width_between_ticks;
         let label_area = Rect::new(x, y, width_between_ticks, 1);
         // The last label should be aligned Right to be at the edge of the graph area
-        Self::render_label(buf, labels.last().unwrap(), label_area, Alignment::Right);
+        Self::render_label(buf, last_label, label_area, Alignment::Right);
     }
 
     fn first_x_label_area(
@@ -751,8 +756,11 @@ impl<'a> TimeChart<'a> {
         // FIXME: Control how many y-axis labels are rendered based on height.
 
         let Some(x) = layout.label_y else { return };
-        let labels = self.y_axis.labels.as_ref().unwrap();
+        let Some(labels) = self.y_axis.labels.as_ref() else {
+            return;
+        };
         let labels_len = labels.len() as u16;
+
         for (i, label) in labels.iter().enumerate() {
             let dy = i as u16 * (graph_area.height - 1) / (labels_len - 1);
             if dy < graph_area.bottom() {
@@ -836,39 +844,41 @@ impl Widget for TimeChart<'_> {
             .render(graph_area, buf);
 
         if let Some((x, y)) = layout.title_x {
-            let title = self.x_axis.title.as_ref().unwrap();
-            let width = graph_area
-                .right()
-                .saturating_sub(x)
-                .min(title.width() as u16);
-            buf.set_style(
-                Rect {
-                    x,
-                    y,
-                    width,
-                    height: 1,
-                },
-                original_style,
-            );
-            buf.set_line(x, y, title, width);
+            if let Some(title) = self.x_axis.title.as_ref() {
+                let width = graph_area
+                    .right()
+                    .saturating_sub(x)
+                    .min(title.width() as u16);
+                buf.set_style(
+                    Rect {
+                        x,
+                        y,
+                        width,
+                        height: 1,
+                    },
+                    original_style,
+                );
+                buf.set_line(x, y, title, width);
+            }
         }
 
         if let Some((x, y)) = layout.title_y {
-            let title = self.y_axis.title.as_ref().unwrap();
-            let width = graph_area
-                .right()
-                .saturating_sub(x)
-                .min(title.width() as u16);
-            buf.set_style(
-                Rect {
-                    x,
-                    y,
-                    width,
-                    height: 1,
-                },
-                original_style,
-            );
-            buf.set_line(x, y, title, width);
+            if let Some(title) = self.y_axis.title.as_ref() {
+                let width = graph_area
+                    .right()
+                    .saturating_sub(x)
+                    .min(title.width() as u16);
+                buf.set_style(
+                    Rect {
+                        x,
+                        y,
+                        width,
+                        height: 1,
+                    },
+                    original_style,
+                );
+                buf.set_line(x, y, title, width);
+            }
         }
 
         if let Some(legend_area) = layout.legend_area {

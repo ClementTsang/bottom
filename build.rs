@@ -1,5 +1,7 @@
 //! General build script used by bottom to generate completion files and set binary version.
 
+#![expect(clippy::unwrap_used)]
+
 #[expect(dead_code)]
 #[path = "src/options/args.rs"]
 mod args;
