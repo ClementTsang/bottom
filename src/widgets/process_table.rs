@@ -641,7 +641,11 @@ impl ProcWidgetState {
 
         stack.sort_unstable_by_key(|p| p.pid);
 
-        let column = self.table.columns.get(self.table.sort_index()).unwrap();
+        let column = self
+            .table
+            .columns
+            .get(self.table.sort_index())
+            .expect("columns should contain the current sort index");
         sort_skip_pid_asc(column.inner(), &mut stack, self.table.order());
 
         let mut length_stack = vec![stack.len()];

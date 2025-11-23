@@ -7,7 +7,7 @@ use super::color;
 use crate::options::config::style::Styles;
 
 impl Styles {
-    pub(crate) fn default_style() -> Self {
+    pub(crate) fn default_palette() -> Self {
         const FIRST_COLOUR: Color = Color::LightMagenta;
         const SECOND_COLOUR: Color = Color::LightYellow;
         const THIRD_COLOUR: Color = Color::LightCyan;
@@ -72,7 +72,7 @@ impl Styles {
         }
     }
 
-    pub fn default_light_mode() -> Self {
+    pub fn default_light_palette() -> Self {
         Self {
             ram_style: color!(Color::Blue),
             #[cfg(not(target_os = "windows"))]
@@ -111,7 +111,15 @@ impl Styles {
             graph_style: color!(Color::Black),
             graph_legend_style: color!(Color::Black),
             disabled_text_style: color!(Color::Gray),
-            ..Self::default_style()
+            ..Self::default_palette()
         }
+    }
+}
+
+mod tests {
+    #[test]
+    fn default_palettes_valid() {
+        let _ = super::Styles::default_palette();
+        let _ = super::Styles::default_light_palette();
     }
 }

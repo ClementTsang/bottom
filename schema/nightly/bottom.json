@@ -471,6 +471,12 @@
             }
           ]
         },
+        "read_only": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "regex": {
           "type": [
             "boolean",

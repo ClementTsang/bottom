@@ -3,7 +3,7 @@ use tui::style::Color;
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Convert a hex string to a colour.
-pub(super) fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
+pub(super) fn try_hex_to_colour(hex: &str) -> Result<Color, String> {
     fn hex_component_to_int(hex: &str, first: &str, second: &str) -> Result<u8, String> {
         u8::from_str_radix(&concat_string!(first, second), 16)
             .map_err(|_| format!("'{hex}' is an invalid hex color, could not decode."))
@@ -42,7 +42,7 @@ pub(super) fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
 pub fn str_to_colour(input_val: &str) -> Result<Color, String> {
     if input_val.len() > 1 {
         if input_val.starts_with('#') {
-            convert_hex_to_color(input_val)
+            try_hex_to_colour(input_val)
         } else if input_val.contains(',') {
             convert_rgb_to_color(input_val)
         } else {
@@ -336,72 +336,66 @@ mod test {
     fn valid_hex_colours() {
         // Check hex with 6 characters.
         assert_eq!(
-            convert_hex_to_color("#ffffff").unwrap(),
+            try_hex_to_colour("#ffffff").unwrap(),
             Color::Rgb(255, 255, 255)
         );
+        assert_eq!(try_hex_to_colour("#000000").unwrap(), Color::Rgb(0, 0, 0));
+        try_hex_to_colour("#111111").unwrap();
+        try_hex_to_colour("#11ff11").unwrap();
+        try_hex_to_colour("#1f1f1f").unwrap();
         assert_eq!(
-            convert_hex_to_color("#000000").unwrap(),
-            Color::Rgb(0, 0, 0)
-        );
-        convert_hex_to_color("#111111").unwrap();
-        convert_hex_to_color("#11ff11").unwrap();
-        convert_hex_to_color("#1f1f1f").unwrap();
-        assert_eq!(
-            convert_hex_to_color("#123abc").unwrap(),
+            try_hex_to_colour("#123abc").unwrap(),
             Color::Rgb(18, 58, 188)
         );
 
         // Check hex with 3 characters.
         assert_eq!(
-            convert_hex_to_color("#fff").unwrap(),
+            try_hex_to_colour("#fff").unwrap(),
             Color::Rgb(255, 255, 255)
         );
-        assert_eq!(convert_hex_to_color("#000").unwrap(), Color::Rgb(0, 0, 0));
-        convert_hex_to_color("#111").unwrap();
-        convert_hex_to_color("#1f1").unwrap();
-        convert_hex_to_color("#f1f").unwrap();
-        convert_hex_to_color("#ff1").unwrap();
-        convert_hex_to_color("#1ab").unwrap();
-        assert_eq!(
-            convert_hex_to_color("#1ab").unwrap(),
-            Color::Rgb(17, 170, 187)
-        );
+        assert_eq!(try_hex_to_colour("#000").unwrap(), Color::Rgb(0, 0, 0));
+        try_hex_to_colour("#111").unwrap();
+        try_hex_to_colour("#1f1").unwrap();
+        try_hex_to_colour("#f1f").unwrap();
+        try_hex_to_colour("#ff1").unwrap();
+        try_hex_to_colour("#1ab").unwrap();
+        assert_eq!(try_hex_to_colour("#1ab").unwrap(), Color::Rgb(17, 170, 187));
     }
 
     #[test]
     fn invalid_hex_colours() {
-        assert!(convert_hex_to_color("ffffff").is_err());
-        assert!(convert_hex_to_color("111111").is_err());
+        assert!(try_hex_to_colour("ffffff").is_err());
+        assert!(try_hex_to_colour("111111").is_err());
 
-        assert!(convert_hex_to_color("fff").is_err());
-        assert!(convert_hex_to_color("111").is_err());
-        assert!(convert_hex_to_color("fffffff").is_err());
-        assert!(convert_hex_to_color("1234567").is_err());
+        assert!(try_hex_to_colour("fff").is_err());
+        assert!(try_hex_to_colour("111").is_err());
+        assert!(try_hex_to_colour("fffffff").is_err());
+        assert!(try_hex_to_colour("1234567").is_err());
 
-        assert!(convert_hex_to_color("#fffffff").is_err());
-        assert!(convert_hex_to_color("#1234567").is_err());
-        assert!(convert_hex_to_color("#ff").is_err());
-        assert!(convert_hex_to_color("#12").is_err());
-        assert!(convert_hex_to_color("").is_err());
+        assert!(try_hex_to_colour("#fffffff").is_err());
+        assert!(try_hex_to_colour("#1234567").is_err());
+        assert!(try_hex_to_colour("#ff").is_err());
+        assert!(try_hex_to_colour("#12").is_err());
+        assert!(try_hex_to_colour("").is_err());
 
-        assert!(convert_hex_to_color("#pppppp").is_err());
-        assert!(convert_hex_to_color("#00000p").is_err());
-        assert!(convert_hex_to_color("#ppp").is_err());
+        assert!(try_hex_to_colour("#pppppp").is_err());
+        assert!(try_hex_to_colour("#00000p").is_err());
+        assert!(try_hex_to_colour("#ppp").is_err());
 
-        assert!(convert_hex_to_color("#一").is_err());
-        assert!(convert_hex_to_color("#一二").is_err());
-        assert!(convert_hex_to_color("#一二三").is_err());
-        assert!(convert_hex_to_color("#一二三四").is_err());
+        assert!(try_hex_to_colour("#一").is_err());
+        assert!(try_hex_to_colour("#一二").is_err());
+        assert!(try_hex_to_colour("#一二三").is_err());
+        assert!(try_hex_to_colour("#一二三四").is_err());
 
-        assert!(convert_hex_to_color("#f一f").is_err());
-        assert!(convert_hex_to_color("#ff一11").is_err());
+        assert!(try_hex_to_colour("#f一f").is_err());
+        assert!(try_hex_to_colour("#ff一11").is_err());
 
-        assert!(convert_hex_to_color("#🇨🇦").is_err());
-        assert!(convert_hex_to_color("#🇨🇦🇨🇦").is_err());
-        assert!(convert_hex_to_color("#🇨🇦🇨🇦🇨🇦").is_err());
-        assert!(convert_hex_to_color("#🇨🇦🇨🇦🇨🇦🇨🇦").is_err());
+        assert!(try_hex_to_colour("#🇨🇦").is_err());
+        assert!(try_hex_to_colour("#🇨🇦🇨🇦").is_err());
+        assert!(try_hex_to_colour("#🇨🇦🇨🇦🇨🇦").is_err());
+        assert!(try_hex_to_colour("#🇨🇦🇨🇦🇨🇦🇨🇦").is_err());
 
-        assert!(convert_hex_to_color("#हिन्दी").is_err());
+        assert!(try_hex_to_colour("#हिन्दी").is_err());
     }
 
     #[test]
