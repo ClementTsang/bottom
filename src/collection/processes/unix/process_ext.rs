@@ -4,6 +4,7 @@
 use crate::collection::processes::macos::sysctl_bindings;
 
 use std::{io, time::Duration};
+use cfg_if::cfg_if;
 
 use hashbrown::HashMap;
 use itertools::Itertools;
@@ -11,6 +12,52 @@ use sysinfo::{ProcessStatus, System};
 
 use super::{ProcessHarvest, process_status_str};
 use crate::collection::{Pid, error::CollectionResult, processes::UserTable};
+
+fn get_nice(pid: i32) -> i32 {
+    cfg_if! {
+        if #[cfg(target_os = "freebsd")] {
+            unsafe { libc::getpriority(libc::PRIO_PROCESS, pid) }
+        } else if #[cfg(target_os = "macos")] {
+            unsafe { libc::getpriority(libc::PRIO_PROCESS, pid as u32) }
+        } else {
+            0
+        }
+    }
+}
+
+fn get_priority(pid: i32) -> i32 {
+    cfg_if! {
+        if #[cfg(target_os = "macos")] {
+            if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
+                kinfo.kp_proc.p_priority as i32
+            } else {
+                0
+            }
+        } else if #[cfg(target_os = "freebsd")] {
+            use libc::{c_int, c_void};
+            use std::{mem, ptr};
+
+            let mib = [libc::CTL_KERN, libc::KERN_PROC, libc::KERN_PROC_PID, pid as c_int];
+            let mut kp: libc::kinfo_proc = unsafe { mem::zeroed() };
+            let mut size = mem::size_of::<libc::kinfo_proc>();
+
+            let ret = unsafe {
+                libc::sysctl(
+                    mib.as_ptr(),
+                    mib.len() as u32,
+                    &mut kp as *mut _ as *mut c_void,
+                    &mut size,
+                    ptr::null_mut(),
+                    0,
+                )
+            };
+
+            if ret == 0 { kp.ki_pri.pri_level as i32 } else { 0 }
+        } else {
+            0
+        }
+    }
+}
 
 pub(crate) trait UnixProcessExt {
     fn sysinfo_process_data(
@@ -72,25 +119,8 @@ pub(crate) trait UnixProcessExt {
             };
             let uid = process_val.user_id().map(|u| **u);
             let pid = process_val.pid().as_u32() as Pid;
-
-            #[cfg(target_os = "linux")]
-            let nice = unsafe { libc::getpriority(libc::PRIO_PROCESS, process_val.pid().as_u32()) };
-
-            #[cfg(target_os = "freebsd")]
-            let nice = unsafe { libc::getpriority(libc::PRIO_PROCESS, pid) };
-
-            #[cfg(target_os = "macos")]
-            let nice = unsafe { libc::getpriority(libc::PRIO_PROCESS, process_val.pid().as_u32()) };
-
-            #[cfg(target_os = "macos")]
-            let priority = if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
-                kinfo.kp_proc.p_priority as i32
-            } else {
-                0
-            };
-
-            #[cfg(not(target_os = "macos"))]
-            let priority = 0;
+            let nice = get_nice(pid);
+            let priority = get_priority(pid);
 
             process_vector.push(ProcessHarvest {
                 pid,
