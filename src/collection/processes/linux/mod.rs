@@ -285,7 +285,7 @@ fn read_proc(
             #[cfg(feature = "gpu")]
             gpu_util: 0,
             process_type,
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            #[cfg(unix)]
             nice: stat.nice,
             priority: stat.priority,
         },

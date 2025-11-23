@@ -350,10 +350,9 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
         // TODO: Also maybe just pull in the to_string call but add a variable for the
         // differences.
         Some(match column {
-            &ProcColumn::Priority => self.priority.to_string().into(),
-            #[cfg(unix)]
             #[cfg(unix)]
             ProcColumn::Nice => self.nice.to_string().into(),
+            &ProcColumn::Priority => self.priority.to_string().into(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem).into(),

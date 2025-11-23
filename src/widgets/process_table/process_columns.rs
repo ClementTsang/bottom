@@ -81,17 +81,17 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::CpuPercent => "CPU%",
             ProcColumn::MemValue => "Mem",
             ProcColumn::MemPercent => "Mem%",
-            ProcColumn::VirtualMem => "VMem",
+            ProcColumn::VirtualMem => "Virt",
             ProcColumn::Pid => "PID",
             ProcColumn::Count => "Count",
             ProcColumn::Name => "Name",
             ProcColumn::Command => "Command",
             ProcColumn::ReadPerSecond => "R/s",
             ProcColumn::WritePerSecond => "W/s",
-            ProcColumn::TotalRead => "TRd",
-            ProcColumn::TotalWrite => "TWt",
-            ProcColumn::User => "User",
+            ProcColumn::TotalRead => "T.Read",
+            ProcColumn::TotalWrite => "T.Write",
             ProcColumn::State => "State",
+            ProcColumn::User => "User",
             ProcColumn::Time => "Time",
             #[cfg(unix)]
             ProcColumn::Nice => "Nice",
@@ -255,7 +255,7 @@ impl From<&ProcColumn> for ProcWidgetColumn {
             #[cfg(unix)]
             ProcColumn::Nice => ProcWidgetColumn::Nice,
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => ProcWidgetColumn::GpuMem,
+            ProcColumn::GpuMemPercent | ProcColumn::GpuMemValue => ProcWidgetColumn::GpuMem,
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => ProcWidgetColumn::GpuUtil,
         }
