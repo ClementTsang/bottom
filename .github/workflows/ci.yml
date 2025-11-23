@@ -110,21 +110,11 @@ jobs:
         run: cargo fmt --all -- --check
 
       # TODO: add junit output using nextest for codecov (https://docs.codecov.com/docs/test-analytics)
-      - name: Build tests
-        uses: ClementTsang/cargo-action@v0.0.7
-        with:
-          command: test
-          args: --no-run --locked ${{ matrix.features }} --target=${{ matrix.info.target }}
-          use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.5
-        env:
-          RUST_BACKTRACE: full
-
       - name: Run tests
         uses: ClementTsang/cargo-action@v0.0.7
         with:
           command: test
-          args: --no-fail-fast ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
+          args: --no-fail-fast --locked ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.5
         env:
@@ -232,8 +222,8 @@ jobs:
               no-default-features: true,
               no-clippy: true,
             }
-          
-            # Windows ARM
+
+          # Windows ARM
           - {
               os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
@@ -327,7 +317,7 @@ jobs:
           key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
           cache-all-crates: true
 
-      - name: Clippy (FreeBSD)
+      - name: Tests + Clippy (FreeBSD)
         if: ${{ matrix.info.type == 'freebsd' }}
         uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
         with:
@@ -340,6 +330,8 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
 
   completion:
