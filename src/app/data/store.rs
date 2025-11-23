@@ -213,7 +213,7 @@ impl StoredData {
                         reason = "this is fine since it's done via a static OnceLock. In the future though, separate it out."
                     )]
                     if let Some(new_name) = DISK_REGEX
-                        .get_or_init(|| Regex::new(r"disk\d+").unwrap())
+                        .get_or_init(|| Regex::new(r"disk\d+").expect("valid regex"))
                         .find(checked_name)
                     {
                         io.get(new_name.as_str())
