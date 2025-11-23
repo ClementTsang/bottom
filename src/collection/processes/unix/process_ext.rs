@@ -3,8 +3,8 @@
 #[cfg(target_os = "macos")]
 use crate::collection::processes::macos::sysctl_bindings;
 
-use std::{io, time::Duration};
 use cfg_if::cfg_if;
+use std::{io, time::Duration};
 
 use hashbrown::HashMap;
 use itertools::Itertools;
