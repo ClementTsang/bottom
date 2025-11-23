@@ -131,7 +131,7 @@ pub struct Styles {
 
 impl Default for Styles {
     fn default() -> Self {
-        Self::default_style()
+        Self::default_palette()
     }
 }
 
@@ -156,8 +156,8 @@ impl Styles {
     fn from_theme(theme: &str) -> anyhow::Result<Self> {
         let lower_case = theme.to_lowercase();
         match lower_case.as_str() {
-            "default" => Ok(Self::default_style()),
-            "default-light" => Ok(Self::default_light_mode()),
+            "default" => Ok(Self::default_palette()),
+            "default-light" => Ok(Self::default_light_palette()),
             "gruvbox" => Ok(Self::gruvbox_palette()),
             "gruvbox-light" => Ok(Self::gruvbox_light_palette()),
             "nord" => Ok(Self::nord_palette()),
@@ -246,8 +246,9 @@ mod test {
     #[test]
     fn default_selected_colour_works() {
         let mut colours = Styles::default();
-        let original_selected_text_colour = Styles::default_style().selected_text_style.fg.unwrap();
-        let original_selected_bg_colour = Styles::default_style().selected_text_style.bg.unwrap();
+        let original_selected_text_colour =
+            Styles::default_palette().selected_text_style.fg.unwrap();
+        let original_selected_bg_colour = Styles::default_palette().selected_text_style.bg.unwrap();
 
         assert_eq!(
             colours.selected_text_style,

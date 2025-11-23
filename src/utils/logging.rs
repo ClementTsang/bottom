@@ -27,7 +27,7 @@ pub fn init_logger(
                         // one "[". See https://time-rs.github.io/book/api/format-description.html
                         "[[[year]-[month]-[day]][[[hour]:[minute]:[second][subsecond digits:9]]"
                     ))
-                    .unwrap(),
+                    .expect("log formatting shouldn't fail"),
                 record.target(),
                 record.level(),
                 message

@@ -94,12 +94,12 @@ pub fn get_amd_name(device_path: &Path) -> Option<String> {
     rev_data = rev_data.trim_end().to_string();
     dev_data = dev_data.trim_end().to_string();
 
-    if rev_data.starts_with("0x") {
-        rev_data = rev_data.strip_prefix("0x").unwrap().to_string();
+    if let Some(stripped) = rev_data.strip_prefix("0x") {
+        rev_data = stripped.to_string();
     }
 
-    if dev_data.starts_with("0x") {
-        dev_data = dev_data.strip_prefix("0x").unwrap().to_string();
+    if let Some(stripped) = dev_data.strip_prefix("0x") {
+        dev_data = stripped.to_string();
     }
 
     let revision_id = u32::from_str_radix(&rev_data, 16).unwrap_or(0);
@@ -353,9 +353,8 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
 
         if widgets_to_harvest.use_proc {
             if let Some(procs) = get_amd_fdinfo(&device_path) {
-                let mut proc_info = PROC_DATA.lock().unwrap();
-                let _ = proc_info.try_insert(device_path.clone(), HashMap::new());
-                let prev_fdinfo = proc_info.get_mut(&device_path).unwrap();
+                let mut proc_info = PROC_DATA.lock().expect("mutex is poisoned");
+                let prev_fdinfo = proc_info.entry(device_path).or_insert_with(HashMap::new);
 
                 let mut procs_map = HashMap::new();
                 for (proc_pid, proc_usage) in procs {
