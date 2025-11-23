@@ -117,7 +117,7 @@ pub(crate) trait UnixProcessExt {
                 .collect();
             let cpu_usages = Self::backup_proc_cpu(&cpu_usage_unknown_pids)?;
             for process in &mut process_vector {
-                if let Some(cpu_usage) = cpu_usages.get(&process.pid) {
+                if let Some(&cpu_usage) = cpu_usages.get(&process.pid) {
                     process.cpu_usage_percent = if unnormalized_cpu || num_processors == 0 {
                         cpu_usage
                     } else {
