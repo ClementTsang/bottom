@@ -213,6 +213,7 @@ assets = [
         "644",
     ],
 ]
+conflicts = "bottom"
 extended-description = """
 
 By default, bottom will look for a config file in ~/.config/bottom/bottom.toml. A config file can be specified \
