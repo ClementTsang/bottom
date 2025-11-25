@@ -62,6 +62,13 @@ pub(crate) struct Stat {
 
     /// Kernel thread
     pub is_kernel_thread: bool,
+
+    /// The kernel scheduling priority.
+    pub priority: i32,
+
+    /// The nice value (user-settable scheduling hint).
+    #[cfg(unix)]
+    pub nice: i32,
 }
 
 impl Stat {
@@ -107,11 +114,20 @@ impl Stat {
         let utime: u64 = next_part(&mut rest)?.parse()?;
         let stime: u64 = next_part(&mut rest)?.parse()?;
 
-        // Skip 6 fields until starttime (cutime, cstime, priority, nice, num_threads,
-        // itrealvalue).
-        let mut rest = rest.skip(6);
-        let start_time: u64 = next_part(&mut rest)?.parse()?;
+        // cutime
+        let _ = next_part(&mut rest)?;
+        // cstime
+        let _ = next_part(&mut rest)?;
+        // priority
+        let priority: i32 = next_part(&mut rest)?.parse()?;
+        // nice
+        let nice: i32 = next_part(&mut rest)?.parse()?;
+        // num_threads
+        let _ = next_part(&mut rest)?;
+        // itrealvalue
+        let _ = next_part(&mut rest)?;
 
+        let start_time: u64 = next_part(&mut rest)?.parse()?;
         let vsize: u64 = next_part(&mut rest)?.parse()?;
         let rss: u64 = next_part(&mut rest)?.parse()?;
 
@@ -125,6 +141,8 @@ impl Stat {
             vsize,
             start_time,
             is_kernel_thread,
+            priority,
+            nice,
         })
     }
 

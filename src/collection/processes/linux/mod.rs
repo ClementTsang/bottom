@@ -285,6 +285,9 @@ fn read_proc(
             #[cfg(feature = "gpu")]
             gpu_util: 0,
             process_type,
+            #[cfg(unix)]
+            nice: stat.nice,
+            priority: stat.priority,
         },
         new_process_times,
     ))
