@@ -288,8 +288,7 @@ impl Painter {
         f.render_widget(
             Table::new(
                 total_network,
-                &((std::iter::repeat(draw_loc.width.saturating_sub(2) / 4))
-                    .take(4)
+                &((std::iter::repeat_n(draw_loc.width.saturating_sub(2) / 4, 4))
                     .map(Constraint::Length)
                     .collect::<Vec<_>>()),
             )
