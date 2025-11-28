@@ -11,7 +11,7 @@
 # - "nord-light".
 
 # This will have the lowest precedence if a custom colour palette is set,
-# or overriden if the command-line flag for a built-in theme is set.
+# or overridden if the command-line flag for a built-in theme is set.
 theme = "default"
 
 [styles.cpu]

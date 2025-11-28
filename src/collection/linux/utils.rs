@@ -18,7 +18,7 @@ pub fn is_device_awake(device: &Path) -> bool {
             // check to fail and temperatures to appear as zero instead of
             // having the file not exist.
             //
-            // Their self-hosted git instance has disabled sign up, so this bug cant be
+            // Their self-hosted git instance has disabled sign up, so this bug can't be
             // reported either.
             state == "D0" || state == "unknown"
         } else {
