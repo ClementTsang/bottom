@@ -138,7 +138,7 @@ pub(crate) fn all_volume_io() -> anyhow::Result<Vec<anyhow::Result<(DISK_PERFORM
             // Iteration completed successfully, continue on.
         }
         _ => {
-            // Some error occured.
+            // Some error occurred.
             close_find_handle(handle)?;
             bail!("Error while iterating over volumes: {err:?}");
         }
@@ -151,7 +151,7 @@ pub(crate) fn all_volume_io() -> anyhow::Result<Vec<anyhow::Result<(DISK_PERFORM
 
 /// Returns the volume name from a mount name if possible.
 pub(crate) fn volume_name_from_mount(mount: &str) -> anyhow::Result<String> {
-    // According to winapi docs 50 is a reasonable length to accomodate the volume
+    // According to winapi docs 50 is a reasonable length to accommodate the volume
     // path https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumenameforvolumemountpointw
     const VOLUME_MAX_LEN: usize = 50;
 
