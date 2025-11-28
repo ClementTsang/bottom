@@ -17,16 +17,7 @@ theme = "default"
 [styles.cpu]
 all_entry_color = "green"
 avg_entry_color = "red"
-cpu_core_colors = [
-  "light magenta",
-  "light yellow",
-  "light cyan",
-  "light green",
-  "light blue",
-  "cyan",
-  "green",
-  "blue",
-]
+cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
 
 [styles.memory]
 ram_color = "light magenta"
