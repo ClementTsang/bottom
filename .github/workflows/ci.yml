@@ -111,7 +111,7 @@ jobs:
 
       # TODO: add junit output using nextest for codecov (https://docs.codecov.com/docs/test-analytics)
       - name: Run tests
-        uses: ClementTsang/cargo-action@v0.0.7
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         with:
           command: test
           args: --no-fail-fast --locked ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
@@ -121,7 +121,7 @@ jobs:
           RUST_BACKTRACE: full
 
       - name: Run clippy
-        uses: ClementTsang/cargo-action@v0.0.7
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         with:
           command: clippy
           args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} -- -D warnings
@@ -258,7 +258,7 @@ jobs:
           cache-all-crates: true
 
       - name: Clippy (default features)
-        uses: ClementTsang/cargo-action@v0.0.7
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         if: ${{ matrix.info.no-default-features != true }}
         with:
           command: clippy
@@ -267,7 +267,7 @@ jobs:
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
       - name: Clippy (no features enabled)
-        uses: ClementTsang/cargo-action@v0.0.7
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         if: ${{ matrix.info.no-default-features == true  }}
         with:
           command: clippy
