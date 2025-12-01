@@ -26,7 +26,7 @@ impl FromStr for TemperatureType {
 }
 
 impl TemperatureType {
-    /// Given a temperature in Celsius, covert it if necessary for a different
+    /// Given a temperature in Celsius, convert it if necessary for a different
     /// unit.
     pub fn convert_temp_unit(&self, celsius: f32) -> TypedTemperature {
         match self {

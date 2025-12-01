@@ -35,7 +35,7 @@ use starship_battery::{Battery, Manager};
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
-// TODO: We can possibly re-use an internal buffer for this to reduce allocs.
+// TODO: We can possibly reuse an internal buffer for this to reduce allocs.
 #[derive(Clone, Debug)]
 pub struct Data {
     pub collection_time: Instant,
