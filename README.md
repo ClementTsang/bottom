@@ -569,6 +569,7 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="http://blog.lenhof.eu.org"><img src="https://avatars.githubusercontent.com/u/36410287?v=4?s=100" width="100px;" alt="Jean-Yves LENHOF"/><br /><sub><b>Jean-Yves LENHOF</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=jylenhof" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://saphereye.github.io"><img src="https://avatars.githubusercontent.com/u/59739923?v=4?s=100" width="100px;" alt="Adarsh Das"/><br /><sub><b>Adarsh Das</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Saphereye" title="Code">💻</a> <a href="https://github.com/ClementTsang/bottom/commits?author=Saphereye" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/oxyzenQ"><img src="https://avatars.githubusercontent.com/u/130107241?v=4?s=100" width="100px;" alt="rezky_nightky"/><br /><sub><b>rezky_nightky</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=oxyzenQ" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/gitgoggles"><img src="https://avatars.githubusercontent.com/u/101480183?v=4?s=100" width="100px;" alt="gitgoggles"/><br /><sub><b>gitgoggles</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=gitgoggles" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
