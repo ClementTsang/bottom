@@ -164,6 +164,9 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         User => SortColumn::soft(User, Some(0.05)),
         State => SortColumn::hard(State, 9),
         Time => SortColumn::new(Time),
+        Priority => SortColumn::new(Priority).default_descending(),
+        #[cfg(unix)]
+        Nice => SortColumn::new(Nice),
         #[cfg(feature = "gpu")]
         GpuMemValue => SortColumn::new(GpuMemValue).default_descending(),
         #[cfg(feature = "gpu")]
@@ -197,6 +200,9 @@ pub enum ProcWidgetColumn {
     User,
     State,
     Time,
+    Priority,
+    #[cfg(unix)]
+    Nice,
     #[cfg(feature = "gpu")]
     GpuMem,
     #[cfg(feature = "gpu")]
@@ -339,6 +345,9 @@ impl ProcWidgetState {
                             ProcWidgetColumn::User => User,
                             ProcWidgetColumn::State => State,
                             ProcWidgetColumn::Time => Time,
+                            ProcWidgetColumn::Priority => Priority,
+                            #[cfg(unix)]
+                            ProcWidgetColumn::Nice => Nice,
                             #[cfg(feature = "gpu")]
                             ProcWidgetColumn::GpuMem => {
                                 if mem_as_values {
@@ -367,6 +376,9 @@ impl ProcWidgetState {
                         User,
                         State,
                         Time,
+                        Priority,
+                        #[cfg(unix)]
+                        Nice,
                     ];
 
                     default_columns.into_iter().map(make_column).collect()
@@ -392,6 +404,9 @@ impl ProcWidgetState {
                     State => ProcWidgetColumn::State,
                     User => ProcWidgetColumn::User,
                     Time => ProcWidgetColumn::Time,
+                    Priority => ProcWidgetColumn::Priority,
+                    #[cfg(unix)]
+                    Nice => ProcWidgetColumn::Nice,
                     #[cfg(feature = "gpu")]
                     GpuMemValue | GpuMemPercent => ProcWidgetColumn::GpuMem,
                     #[cfg(feature = "gpu")]
@@ -1204,6 +1219,9 @@ mod test {
             gpu_usage: 0,
             #[cfg(target_os = "linux")]
             process_type: crate::collection::processes::ProcessType::Regular,
+            #[cfg(unix)]
+            nice: 0,
+            priority: -20,
         };
 
         let b = ProcWidgetData {

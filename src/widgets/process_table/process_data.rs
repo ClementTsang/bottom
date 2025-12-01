@@ -218,6 +218,9 @@ pub struct ProcWidgetData {
     /// The process "type". Used to color things.
     #[cfg(target_os = "linux")]
     pub process_type: crate::collection::processes::ProcessType,
+    #[cfg(unix)]
+    pub nice: i32,
+    pub priority: i32,
 }
 
 impl ProcWidgetData {
@@ -264,6 +267,9 @@ impl ProcWidgetData {
             gpu_usage: process.gpu_util,
             #[cfg(target_os = "linux")]
             process_type: process.process_type,
+            #[cfg(unix)]
+            nice: process.nice,
+            priority: process.priority,
         }
     }
 
@@ -308,6 +314,9 @@ impl ProcWidgetData {
 
     fn to_string(&self, column: &ProcColumn) -> String {
         match column {
+            &ProcColumn::Priority => self.priority.to_string(),
+            #[cfg(unix)]
+            ProcColumn::Nice => self.nice.to_string(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem),
@@ -337,12 +346,13 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
     fn to_cell_text(
         &self, column: &ProcColumn, calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
-        let calculated_width = calculated_width.get();
-
         // TODO: Optimize the string allocations here...
         // TODO: Also maybe just pull in the to_string call but add a variable for the
         // differences.
         Some(match column {
+            #[cfg(unix)]
+            ProcColumn::Nice => self.nice.to_string().into(),
+            &ProcColumn::Priority => self.priority.to_string().into(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem).into(),
@@ -354,7 +364,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             ProcColumn::TotalRead => dec_bytes_string(self.total_read).into(),
             ProcColumn::TotalWrite => dec_bytes_string(self.total_write).into(),
             ProcColumn::State => {
-                if calculated_width < 8 {
+                if calculated_width.get() < 8 {
                     self.process_char.to_string().into()
                 } else {
                     self.process_state.into()
