@@ -26,10 +26,14 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 - [#1830](https://github.com/ClementTsang/bottom/pull/1830): Add spacebar shortcut to toggle process tree expansion.
 - [#1861](https://github.com/ClementTsang/bottom/pull/1861): Add read-only mode, where things like killing processes is disabled.
+- [#1890](https://github.com/ClementTsang/bottom/pull/1890): Add enter key shortcut to close process search widget.
 
 ### Bug Fixes
 
 ### Other
+
+- [#1888](https://github.com/ClementTsang/bottom/pull/1888): Make automatically generated `.deb` package conflict with the official one.
+- [#1891](https://github.com/ClementTsang/bottom/pull/1891): Fix typos in codebase.
 
 ## [0.11.4] - 2025-11-16
 
