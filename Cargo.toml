@@ -208,8 +208,8 @@ assets = [
         "644",
     ],
     [
-        "assets/icons/bottom.svg",
-        "/usr/share/icons/hicolor/scalable/apps/bottom.svg",
+        "assets/icons/bottom-system-monitor.svg",
+        "/usr/share/icons/hicolor/scalable/apps/bottom-system-monitor.svg",
         "644",
     ],
 ]
@@ -240,7 +240,7 @@ assets = [
     { source = "completion/btm.fish", dest = "/usr/share/fish/vendor_completions.d/btm.fish", mode = "644" },
     { source = "completion/_btm", dest = "/usr/share/zsh/vendor-completions/", mode = "644" },
     { source = "desktop/bottom.desktop", dest = "/usr/share/applications/bottom.desktop", mode = "644" },
-    { source = "assets/icons/bottom.svg", dest = "/usr/share/icons/hicolor/scalable/apps/bottom.svg", mode = "644" },
+    { source = "assets/icons/bottom-system-monitor.svg", dest = "/usr/share/icons/hicolor/scalable/apps/bottom-system-monitor.svg", mode = "644" },
 ]
 
 [lints.rust]
