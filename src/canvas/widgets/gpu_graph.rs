@@ -33,12 +33,8 @@ impl Painter {
                 let mem_used_mb = gpu_data.memory_used / 1024 / 1024;
                 let mem_total_mb = gpu_data.memory_total / 1024 / 1024;
                 format!(
-                    " GPU: {} [{:.0}%] {}MB/{}MB {}°C ",
-                    gpu_data.name,
-                    gpu_data.load_percent,
-                    mem_used_mb,
-                    mem_total_mb,
-                    gpu_data.temperature
+                    " GPU: {} [{:.0}%] {}MB/{}MB ",
+                    gpu_data.name, gpu_data.load_percent, mem_used_mb, mem_total_mb
                 )
                 .into()
             } else {
