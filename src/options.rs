@@ -450,7 +450,11 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                         Gpu => {
                             gpu_state_map.insert(
                                 widget.widget_id,
-                                GpuWidgetState::new(&app_config_fields, default_time_value),
+                                GpuWidgetState::new(
+                                    &app_config_fields,
+                                    default_time_value,
+                                    &styling,
+                                ),
                             );
                         }
                         _ => {}

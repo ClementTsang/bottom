@@ -157,6 +157,11 @@ impl App {
                 disk.set_table_data(data_source);
             }
         }
+
+        #[cfg(feature = "gpu")]
+        for gpu in self.states.gpu_state.widget_states.values_mut() {
+            gpu.set_legend_data(&data_source.agnostic_gpu_harvest);
+        }
     }
 
     pub fn reset(&mut self) {
@@ -1790,6 +1795,16 @@ impl App {
                         cpu_widget_state.table.scroll_to_first();
                     }
                 }
+                #[cfg(feature = "gpu")]
+                BottomWidgetType::Gpu => {
+                    if let Some(gpu_widget_state) = self
+                        .states
+                        .gpu_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        gpu_widget_state.table.scroll_to_first();
+                    }
+                }
 
                 _ => {}
             }
@@ -1851,6 +1866,16 @@ impl App {
                         cpu_widget_state.table.scroll_to_last();
                     }
                 }
+                #[cfg(feature = "gpu")]
+                BottomWidgetType::Gpu => {
+                    if let Some(gpu_widget_state) = self
+                        .states
+                        .gpu_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        gpu_widget_state.table.scroll_to_last();
+                    }
+                }
                 _ => {}
             }
             self.reset_multi_tap_keys();
@@ -1880,6 +1905,8 @@ impl App {
                 BottomWidgetType::Temp => self.change_temp_position(amount),
                 BottomWidgetType::Disk => self.change_disk_position(amount),
                 BottomWidgetType::CpuLegend => self.change_cpu_legend_position(amount),
+                #[cfg(feature = "gpu")]
+                BottomWidgetType::Gpu => self.change_gpu_legend_position(amount),
                 _ => {}
             }
         }
@@ -1894,6 +1921,18 @@ impl App {
             proc_widget_state
                 .sort_table
                 .increment_position(num_to_change_by);
+        }
+    }
+
+    #[cfg(feature = "gpu")]
+    fn change_gpu_legend_position(&mut self, num_to_change_by: i64) {
+        if let Some(gpu_widget_state) = self
+            .states
+            .gpu_state
+            .widget_states
+            .get_mut(&(self.current_widget.widget_id))
+        {
+            gpu_widget_state.table.increment_position(num_to_change_by);
         }
     }
 
@@ -2099,6 +2138,33 @@ impl App {
                     }
                 }
             }
+            #[cfg(feature = "gpu")]
+            BottomWidgetType::Gpu => {
+                if let Some(gpu_widget_state) = self
+                    .states
+                    .gpu_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    let new_time = gpu_widget_state
+                        .current_display_time
+                        .saturating_add(self.app_config_fields.time_interval);
+
+                    if new_time <= self.app_config_fields.retention_ms {
+                        gpu_widget_state.current_display_time = new_time;
+                        if self.app_config_fields.autohide_time {
+                            gpu_widget_state.autohide_timer = Some(Instant::now());
+                        }
+                    } else if gpu_widget_state.current_display_time
+                        != self.app_config_fields.retention_ms
+                    {
+                        gpu_widget_state.current_display_time = self.app_config_fields.retention_ms;
+                        if self.app_config_fields.autohide_time {
+                            gpu_widget_state.autohide_timer = Some(Instant::now());
+                        }
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -2177,6 +2243,31 @@ impl App {
                     }
                 }
             }
+            #[cfg(feature = "gpu")]
+            BottomWidgetType::Gpu => {
+                if let Some(gpu_widget_state) = self
+                    .states
+                    .gpu_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    let new_time = gpu_widget_state
+                        .current_display_time
+                        .saturating_sub(self.app_config_fields.time_interval);
+
+                    if new_time >= STALE_MIN_MILLISECONDS {
+                        gpu_widget_state.current_display_time = new_time;
+                        if self.app_config_fields.autohide_time {
+                            gpu_widget_state.autohide_timer = Some(Instant::now());
+                        }
+                    } else if gpu_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
+                        gpu_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
+                        if self.app_config_fields.autohide_time {
+                            gpu_widget_state.autohide_timer = Some(Instant::now());
+                        }
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -2223,11 +2314,28 @@ impl App {
         }
     }
 
+    #[cfg(feature = "gpu")]
+    fn reset_gpu_zoom(&mut self) {
+        if let Some(gpu_widget_state) = self
+            .states
+            .gpu_state
+            .widget_states
+            .get_mut(&self.current_widget.widget_id)
+        {
+            gpu_widget_state.current_display_time = self.app_config_fields.default_time_value;
+            if self.app_config_fields.autohide_time {
+                gpu_widget_state.autohide_timer = Some(Instant::now());
+            }
+        }
+    }
+
     fn reset_zoom(&mut self) {
         match self.current_widget.widget_type {
             BottomWidgetType::Cpu => self.reset_cpu_zoom(),
             BottomWidgetType::Mem => self.reset_mem_zoom(),
             BottomWidgetType::Net => self.reset_net_zoom(),
+            #[cfg(feature = "gpu")]
+            BottomWidgetType::Gpu => self.reset_gpu_zoom(),
             _ => {}
         }
     }

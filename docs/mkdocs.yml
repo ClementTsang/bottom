@@ -155,6 +155,7 @@ nav:
       - "Basic Mode": usage/basic-mode.md
       - "Widgets":
           - "CPU Widget": usage/widgets/cpu.md
+          - "GPU Widget": usage/widgets/gpu.md
           - "Memory Widget": usage/widgets/memory.md
           - "Network Widget": usage/widgets/network.md
           - "Process Widget": usage/widgets/process.md
