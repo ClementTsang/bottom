@@ -31,6 +31,7 @@ pub struct StoredData {
     pub gpu_harvest: Vec<(String, MemData)>,
     pub agnostic_gpu_harvest: Vec<agnostic_gpu::AgnosticGpuData>,
     pub cpu_harvest: Vec<cpu::CpuData>,
+    pub cpu_model_name: String,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_data: ProcessData,
     /// TODO: (points_rework_v1) Might be a better way to do this without having to store here?
@@ -52,6 +53,7 @@ impl Default for StoredData {
             cache_harvest: None,
             swap_harvest: None,
             cpu_harvest: Default::default(),
+            cpu_model_name: String::default(),
             load_avg_harvest: cpu::LoadAvgHarvest::default(),
             process_data: Default::default(),
             prev_io: Vec::default(),
@@ -138,6 +140,7 @@ impl StoredData {
                             usage,
                         }),
                 );
+            self.cpu_model_name = cpu.brand;
         }
 
         if let Some(load_avg) = data.load_avg {
@@ -344,5 +347,27 @@ impl DataStore {
     pub fn reset(&mut self) {
         self.frozen_state = FrozenState::NotFrozen;
         self.main = StoredData::default();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_eat_cpu_data_updates_model_name() {
+        let mut store = StoredData::default();
+        let mut data = Data::default();
+
+        // Mock CPU data
+        let mut cpu_harvest = crate::collection::cpu::CpuHarvest::default();
+        cpu_harvest.brand = "Test CPU Model".to_string();
+        cpu_harvest.avg = Some(10.0);
+
+        data.cpu = Some(cpu_harvest);
+
+        store.eat_data(Box::new(data), &AppConfigFields::default());
+
+        assert_eq!(store.cpu_model_name, "Test CPU Model");
     }
 }

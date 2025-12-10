@@ -15,7 +15,13 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResu
         .map(|cpu| cpu.cpu_usage())
         .collect::<Vec<_>>();
 
-    Ok(CpuHarvest { avg, cpus })
+    let brand = sys
+        .cpus()
+        .first()
+        .map(|cpu| cpu.brand().to_string())
+        .unwrap_or_default();
+
+    Ok(CpuHarvest { avg, cpus, brand })
 }
 
 #[cfg(target_family = "unix")]

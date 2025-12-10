@@ -1,6 +1,6 @@
 # CPU Widget
 
-The CPU widget displays a visual representation of CPU usage over a time range.
+The CPU widget displays a visual representation of CPU usage over a time range. The title of the widget also includes the CPU model name if available.
 
 <figure>
     <img src="../../../assets/screenshots/cpu.webp" alt="A picture of an expanded CPU widget showing average CPU usage."/>

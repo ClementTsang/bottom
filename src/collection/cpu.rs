@@ -21,4 +21,5 @@ pub struct CpuData {
 pub struct CpuHarvest {
     pub avg: Option<f32>,
     pub cpus: Vec<f32>,
+    pub brand: String,
 }

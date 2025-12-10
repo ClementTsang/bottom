@@ -215,11 +215,25 @@ impl Painter {
                         load_avg[0], load_avg[1], load_avg[2]
                     );
 
-                    concat_string::concat_string!(" CPU ", load_avg_str).into()
+                    if data.cpu_model_name.is_empty() {
+                        concat_string::concat_string!(" CPU ", load_avg_str).into()
+                    } else {
+                        concat_string::concat_string!(
+                            " CPU: ",
+                            data.cpu_model_name,
+                            " ",
+                            load_avg_str
+                        )
+                        .into()
+                    }
                 }
                 #[cfg(not(target_family = "unix"))]
                 {
-                    " CPU ".into()
+                    if data.cpu_model_name.is_empty() {
+                        " CPU ".into()
+                    } else {
+                        concat_string::concat_string!(" CPU: ", data.cpu_model_name, " ").into()
+                    }
                 }
             };
 
