@@ -13,6 +13,7 @@ mod linux {
     pub mod utils;
 }
 
+pub mod agnostic_gpu;
 #[cfg(feature = "battery")]
 pub mod batteries;
 pub mod cpu;
@@ -56,6 +57,7 @@ pub struct Data {
     pub arc: Option<memory::MemData>,
     #[cfg(feature = "gpu")]
     pub gpu: Option<Vec<(String, memory::MemData)>>,
+    pub gpu_harvest: Option<Vec<agnostic_gpu::AgnosticGpuData>>,
 }
 
 impl Default for Data {
@@ -79,6 +81,7 @@ impl Default for Data {
             arc: None,
             #[cfg(feature = "gpu")]
             gpu: None,
+            gpu_harvest: None,
         }
     }
 }
@@ -105,6 +108,7 @@ impl Data {
         {
             self.gpu = None;
         }
+        self.gpu_harvest = None;
     }
 }
 
@@ -417,6 +421,13 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
+            }
+
+            // Agnostic GPU collection
+            if let Some(agnostic_data) = agnostic_gpu::get_agnostic_gpu_data() {
+                let mut current_harvest = self.data.gpu_harvest.take().unwrap_or_default();
+                current_harvest.push(agnostic_data);
+                self.data.gpu_harvest = Some(current_harvest);
             }
 
             self.data.gpu = (!local_gpu.is_empty()).then_some(local_gpu);

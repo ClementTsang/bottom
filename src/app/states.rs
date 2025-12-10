@@ -9,8 +9,8 @@ use crate::{
     app::layout_manager::BottomWidgetType,
     constants,
     widgets::{
-        BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
-        ProcWidgetState, TempWidgetState, query::ProcessQuery,
+        BatteryWidgetState, CpuWidgetState, DiskTableWidget, GpuWidgetState, MemWidgetState,
+        NetWidgetState, ProcWidgetState, TempWidgetState, query::ProcessQuery,
     },
 };
 
@@ -22,6 +22,7 @@ pub struct AppWidgetStates {
     pub temp_state: TempState,
     pub disk_state: DiskState,
     pub battery_state: AppBatteryState,
+    pub gpu_state: GpuState,
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
 }
 
@@ -308,6 +309,24 @@ impl TempState {
     }
 
     pub fn get_widget_state(&self, widget_id: u64) -> Option<&TempWidgetState> {
+        self.widget_states.get(&widget_id)
+    }
+}
+
+pub struct GpuState {
+    pub widget_states: HashMap<u64, GpuWidgetState>,
+}
+
+impl GpuState {
+    pub fn init(widget_states: HashMap<u64, GpuWidgetState>) -> Self {
+        GpuState { widget_states }
+    }
+
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut GpuWidgetState> {
+        self.widget_states.get_mut(&widget_id)
+    }
+
+    pub fn get_widget_state(&self, widget_id: u64) -> Option<&GpuWidgetState> {
         self.widget_states.get(&widget_id)
     }
 }

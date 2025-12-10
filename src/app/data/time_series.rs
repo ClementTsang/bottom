@@ -58,6 +58,9 @@ pub struct TimeSeriesData {
     #[cfg(feature = "gpu")]
     /// GPU memory data.
     pub gpu_mem: HashMap<String, Values>,
+
+    /// Agnostic GPU data (Load %)
+    pub agnostic_gpu: HashMap<String, Values>,
 }
 
 impl TimeSeriesData {
@@ -176,6 +179,35 @@ impl TimeSeriesData {
                     g.insert_break();
                 }
             }
+
+            if let Some(gpu_harvest) = &data.gpu_harvest {
+                let mut not_visited = self
+                    .agnostic_gpu
+                    .keys()
+                    .map(String::to_owned)
+                    .collect::<HashSet<_>>();
+
+                for gpu in gpu_harvest {
+                    not_visited.remove(&gpu.name);
+
+                    if !self.agnostic_gpu.contains_key(&gpu.name) {
+                        self.agnostic_gpu
+                            .insert(gpu.name.to_string(), ChunkedData::default());
+                    }
+
+                    let curr = self
+                        .agnostic_gpu
+                        .get_mut(&gpu.name)
+                        .expect("entry must exist as it was created above");
+                    curr.push(gpu.load_percent);
+                }
+
+                for nv in not_visited {
+                    if let Some(entry) = self.agnostic_gpu.get_mut(&nv) {
+                        entry.insert_break();
+                    }
+                }
+            }
         }
     }
 
@@ -237,5 +269,16 @@ impl TimeSeriesData {
                 }
             });
         }
+
+        self.agnostic_gpu.retain(|_, gpu| {
+            let _ = gpu.prune(end);
+
+            if gpu.no_elements() {
+                false
+            } else {
+                gpu.shrink_to_fit();
+                true
+            }
+        });
     }
 }

@@ -947,6 +947,7 @@ pub enum BottomWidgetType {
     BasicNet,
     BasicTables,
     Battery,
+    Gpu,
 }
 
 impl BottomWidgetType {
@@ -957,7 +958,7 @@ impl BottomWidgetType {
 
     pub fn is_widget_graph(&self) -> bool {
         use BottomWidgetType::*;
-        matches!(self, Cpu | Net | Mem)
+        matches!(self, Cpu | Net | Mem | Gpu)
     }
 
     pub fn get_pretty_name(&self) -> &str {
@@ -970,6 +971,7 @@ impl BottomWidgetType {
             Temp => "Temperature",
             Disk => "Disks",
             Battery => "Battery",
+            Gpu => "GPU",
             _ => "",
         }
     }
@@ -990,6 +992,7 @@ impl std::str::FromStr for BottomWidgetType {
             "empty" => Ok(BottomWidgetType::Empty),
             #[cfg(feature = "battery")]
             "battery" | "batt" => Ok(BottomWidgetType::Battery),
+            "gpu" => Ok(BottomWidgetType::Gpu),
             _ => {
                 #[cfg(feature = "battery")]
                 {
@@ -1011,6 +1014,8 @@ Supported widget names:
 |           disk           |
 +--------------------------+
 |       batt, battery      |
++--------------------------+
+|            gpu           |
 +--------------------------+
 |           empty          |
 +--------------------------+
@@ -1035,6 +1040,8 @@ Supported widget names:
 |     temp, temperature    |
 +--------------------------+
 |           disk           |
++--------------------------+
+|            gpu           |
 +--------------------------+
 |           empty          |
 +--------------------------+

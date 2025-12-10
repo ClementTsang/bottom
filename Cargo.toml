@@ -96,6 +96,7 @@ tui = { version = "0.30.0-alpha.5", package = "ratatui", features = ["unstable-r
 unicode-ellipsis = "0.3.0"
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2.0"
+gfxinfo = { version = "0.1.2", features = ["gpu_info", "nvidia", "amd", "intel"] }
 
 # Used for logging. Mostly a debugging tool.
 fern = { version = "0.7.1", optional = true }

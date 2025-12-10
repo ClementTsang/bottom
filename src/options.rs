@@ -259,6 +259,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
     let mut disk_state_map: HashMap<u64, DiskTableWidget> = HashMap::new();
     let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::new();
+    let mut gpu_state_map: HashMap<u64, GpuWidgetState> = HashMap::new();
 
     let autohide_timer = if autohide_time {
         Some(Instant::now())
@@ -446,6 +447,12 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                             battery_state_map
                                 .insert(widget.widget_id, BatteryWidgetState::default());
                         }
+                        Gpu => {
+                            gpu_state_map.insert(
+                                widget.widget_id,
+                                GpuWidgetState::new(&app_config_fields, default_time_value),
+                            );
+                        }
                         _ => {}
                     }
                 }
@@ -521,6 +528,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temp_state: TempState::init(temp_state_map),
         disk_state: DiskState::init(disk_state_map),
         battery_state: AppBatteryState::init(battery_state_map),
+        gpu_state: GpuState::init(gpu_state_map),
         basic_table_widget_state,
     };
 

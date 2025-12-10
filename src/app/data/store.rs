@@ -8,7 +8,7 @@ use super::{ProcessData, TimeSeriesData};
 use crate::collection::batteries;
 use crate::{
     app::AppConfigFields,
-    collection::{Data, cpu, disks, memory::MemData, network},
+    collection::{Data, agnostic_gpu, cpu, disks, memory::MemData, network},
     utils::data_units::DataUnit,
     widgets::{DiskWidgetData, TempWidgetData},
 };
@@ -29,6 +29,7 @@ pub struct StoredData {
     pub arc_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
     pub gpu_harvest: Vec<(String, MemData)>,
+    pub agnostic_gpu_harvest: Vec<agnostic_gpu::AgnosticGpuData>,
     pub cpu_harvest: Vec<cpu::CpuData>,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_data: ProcessData,
@@ -62,6 +63,7 @@ impl Default for StoredData {
             arc_harvest: None,
             #[cfg(feature = "gpu")]
             gpu_harvest: Vec::default(),
+            agnostic_gpu_harvest: Vec::default(),
         }
     }
 }
@@ -110,6 +112,10 @@ impl StoredData {
         #[cfg(feature = "gpu")]
         if let Some(gpu) = data.gpu {
             self.gpu_harvest = gpu;
+        }
+
+        if let Some(agnostic_gpu) = data.gpu_harvest {
+            self.agnostic_gpu_harvest = agnostic_gpu;
         }
 
         if let Some(cpu) = data.cpu {

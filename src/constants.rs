@@ -197,6 +197,8 @@ pub(crate) const DEFAULT_LAYOUT: &str = r#"
 [[row]]
   ratio=30
   [[row.child]]
+  type="gpu"
+  [[row.child]]
   type="cpu"
 [[row]]
     ratio=40
@@ -221,6 +223,9 @@ pub(crate) const DEFAULT_LAYOUT: &str = r#"
 pub(crate) const DEFAULT_BATTERY_LAYOUT: &str = r#"
 [[row]]
   ratio=30
+  [[row.child]]
+    ratio=1
+    type="gpu"
   [[row.child]]
     ratio=2
     type="cpu"
@@ -542,6 +547,8 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # The default widget layout:
 #[[row]]
 #  ratio=30
+#  [[row.child]]
+#  type="gpu"
 #  [[row.child]]
 #  type="cpu"
 #[[row]]
