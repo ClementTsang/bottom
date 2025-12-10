@@ -4,7 +4,7 @@ use tui::{
 };
 
 use super::{color, hex};
-use crate::options::config::style::{Styles, utils::convert_hex_to_color};
+use crate::options::config::style::{Styles, themes::hex_colour};
 
 impl Styles {
     pub(crate) fn gruvbox_palette() -> Self {
@@ -56,7 +56,7 @@ impl Styles {
             border_style: hex!("#ebdbb2"),
             highlighted_border_style: hex!("#fe8019"),
             text_style: hex!("#ebdbb2"),
-            selected_text_style: hex!("#1d2021").bg(convert_hex_to_color("#ebdbb2").unwrap()),
+            selected_text_style: hex!("#1d2021").bg(hex_colour!("#ebdbb2")),
             table_header_style: hex!("#83a598").add_modifier(Modifier::BOLD),
             widget_title_style: hex!("#ebdbb2"),
             graph_style: hex!("#ebdbb2"),
@@ -121,7 +121,7 @@ impl Styles {
             border_style: hex!("#3c3836"),
             highlighted_border_style: hex!("#af3a03"),
             text_style: hex!("#3c3836"),
-            selected_text_style: hex!("#ebdbb2").bg(convert_hex_to_color("#3c3836").unwrap()),
+            selected_text_style: hex!("#ebdbb2").bg(hex_colour!("#3c3836")),
             table_header_style: hex!("#076678").add_modifier(Modifier::BOLD),
             widget_title_style: hex!("#3c3836"),
             graph_style: hex!("#3c3836"),
@@ -135,5 +135,14 @@ impl Styles {
             #[cfg(target_os = "linux")]
             thread_text_style: hex!("#458588"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn gruvbox_palettes_valid() {
+        let _ = super::Styles::gruvbox_palette();
+        let _ = super::Styles::gruvbox_light_palette();
     }
 }

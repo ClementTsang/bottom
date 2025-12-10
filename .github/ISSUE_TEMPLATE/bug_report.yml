@@ -81,7 +81,7 @@ body:
 
         It would also be helpful if you are not running [the latest version](https://github.com/ClementTsang/bottom/releases/latest)
         to try that as well to see if the issue has already been resolved.
-      placeholder: 0.11.2
+      placeholder: 0.11.4
 
   - type: textarea
     id: install

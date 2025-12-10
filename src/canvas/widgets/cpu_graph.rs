@@ -119,6 +119,7 @@ impl Painter {
     fn generate_points<'a>(
         &self, cpu_widget_state: &'a CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
     ) -> Vec<GraphData<'a>> {
+        let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
         let current_scroll_position = cpu_widget_state.table.state.current_index;
         let cpu_entries = &data.cpu_harvest;
         let cpu_points = &data.timeseries_data.cpu;
@@ -127,59 +128,39 @@ impl Painter {
         if current_scroll_position == ALL_POSITION {
             // This case ensures the other cases cannot have the position be equal to 0.
 
-            let capacity = if show_avg_cpu {
-                cpu_points.len() + 1
-            } else {
-                cpu_points.len()
-            };
-            let mut points = Vec::with_capacity(capacity);
+            cpu_points
+                .iter()
+                .enumerate()
+                .map(|(itx, values)| {
+                    let style = if show_avg_cpu && itx == 0 {
+                        self.styles.avg_cpu_colour
+                    } else {
+                        self.styles.cpu_colour_styles
+                            [(itx - show_avg_offset) % self.styles.cpu_colour_styles.len()]
+                    };
 
-            points.extend(cpu_points.iter().enumerate().map(|(itx, values)| {
-                let style_index = itx % self.styles.cpu_colour_styles.len();
-                let style = self.styles.cpu_colour_styles[style_index];
-
-                GraphData::default().style(style).time(time).values(values)
-            }));
-
-            // We draw avg last so it is drawn on top.
-            if show_avg_cpu {
-                points.push(
-                    GraphData::default()
-                        .style(self.styles.avg_cpu_colour)
-                        .time(time)
-                        .values(&data.timeseries_data.avg_cpu),
-                );
-            }
-
-            points
+                    GraphData::default().style(style).time(time).values(values)
+                })
+                .rev()
+                .collect()
         } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position - 1) {
             // We generally subtract one from current scroll position because of the all entry.
+            // TODO: Do this a bit better (e.g. we can just do if let Some(_) = cpu_points.get())
 
-            let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
-            let is_avg = show_avg_cpu && current_scroll_position == AVG_POSITION;
-
-            let style = if is_avg {
+            let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.styles.avg_cpu_colour
             } else {
-                self.styles.cpu_colour_styles[(current_scroll_position - 1 - show_avg_offset)
-                    % self.styles.cpu_colour_styles.len()]
+                let offset_position = current_scroll_position - 1;
+                self.styles.cpu_colour_styles
+                    [(offset_position - show_avg_offset) % self.styles.cpu_colour_styles.len()]
             };
 
-            if is_avg {
-                vec![
-                    GraphData::default()
-                        .style(style)
-                        .time(time)
-                        .values(&data.timeseries_data.avg_cpu),
-                ]
-            } else {
-                vec![
-                    GraphData::default()
-                        .style(style)
-                        .time(time)
-                        .values(&cpu_points[current_scroll_position - 1 - show_avg_offset]),
-                ]
-            }
+            vec![
+                GraphData::default()
+                    .style(style)
+                    .time(time)
+                    .values(&cpu_points[current_scroll_position - 1]),
+            ]
         } else {
             vec![]
         }
@@ -215,12 +196,12 @@ impl Painter {
                         load_avg[0], load_avg[1], load_avg[2]
                     );
 
-                    if data.cpu_model_name.is_empty() {
+                    if data.cpu_harvest.brand.is_empty() {
                         concat_string::concat_string!(" CPU ", load_avg_str).into()
                     } else {
                         concat_string::concat_string!(
                             " CPU: ",
-                            data.cpu_model_name,
+                            data.cpu_harvest.brand,
                             " ",
                             load_avg_str
                         )
@@ -229,10 +210,10 @@ impl Painter {
                 }
                 #[cfg(not(target_family = "unix"))]
                 {
-                    if data.cpu_model_name.is_empty() {
+                    if data.cpu_harvest.brand.is_empty() {
                         " CPU ".into()
                     } else {
-                        concat_string::concat_string!(" CPU: ", data.cpu_model_name, " ").into()
+                        concat_string::concat_string!(" CPU: ", data.cpu_harvest.brand, " ").into()
                     }
                 }
             };

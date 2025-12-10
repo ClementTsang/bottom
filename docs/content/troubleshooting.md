@@ -1,4 +1,4 @@
-# Troubleshooting
+# Troubleshooting/Known Issues
 
 ## The graph points look broken/strange
 
@@ -77,11 +77,6 @@ Let's say you're installing [Iosevka](https://github.com/be5invis/Iosevka). The 
 <figure>
     <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
 </figure>
-
-### Still having issues?
-
-If you're still having issues, feel free to open a [discussion](https://github.com/ClementTsang/bottom/discussions/new/)
-question about it, and I (or others) can try to help.
 
 ## Why can't I see all my temperature sensors on Windows?
 
@@ -171,3 +166,14 @@ sudo snap connect bottom:hardware-observe
 sudo snap connect bottom:system-observe
 sudo snap connect bottom:process-control
 ```
+
+## I don't see any NVIDIA GPU information while using a musl-based binary
+
+The underlying interface we use for NVIDIA GPU information, nvml, only works with `glibc` and does not work with `musl` at the moment (see [this forum post](https://forums.developer.nvidia.com/t/provide-driver-for-muslc-to-install-it-in-musl-distros/219586/7) for some more details). As such, bottom may fail to get NVIDIA GPU information when using a musl-based binary until this is resolved. This applies to Linux and Windows from my understanding.
+
+To resolve this, use `glibc`-based binary builds if possible (e.g. the `gnu` binaries/non-`musl` packages in [releases](https://github.com/ClementTsang/bottom/releases)).
+
+## Still having issues?
+
+If you're still having issues, feel free to open a [discussion](https://github.com/ClementTsang/bottom/discussions/new/)
+question about it, and I (or others) can try to help.

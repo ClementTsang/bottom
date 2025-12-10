@@ -11,6 +11,4 @@ Unofficially supported platforms known to compile/work:
 - Linux on PowerPC 64 LE (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml))
 - Linux on an RISC-V (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml), tested to run on an [Allwinner D1 Nezha](https://github.com/ClementTsang/bottom/issues/564))
 
-## Known problems
-
-None at the moment.
+If you encounter any issues, see the [troubleshooting page](../troubleshooting.md) or open an issue/discussion on GitHub - though as mentioned, unsupported platforms may go unfixed.

@@ -254,7 +254,8 @@
             "integer",
             "null"
           ],
-          "format": "uint32",
+          "format": "uint16",
+          "maximum": 65535,
           "minimum": 0
         },
         "type": {
@@ -468,6 +469,12 @@
             {
               "type": "null"
             }
+          ]
+        },
+        "read_only": {
+          "type": [
+            "boolean",
+            "null"
           ]
         },
         "regex": {
@@ -802,7 +809,8 @@
                 "integer",
                 "null"
               ],
-              "format": "uint32",
+              "format": "uint16",
+              "maximum": 65535,
               "minimum": 0
             }
           },
@@ -1118,7 +1126,8 @@
             "integer",
             "null"
           ],
-          "format": "uint32",
+          "format": "uint16",
+          "maximum": 65535,
           "minimum": 0
         }
       }

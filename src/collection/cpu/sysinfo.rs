@@ -3,17 +3,18 @@
 
 use sysinfo::System;
 
-use super::CpuHarvest;
+use super::{CpuData, CpuDataType, CpuHarvest};
 use crate::collection::error::CollectionResult;
 
 pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResult<CpuHarvest> {
-    let avg = show_average_cpu.then(|| sys.global_cpu_usage());
+    let mut cpus = vec![];
 
-    let cpus = sys
-        .cpus()
-        .iter()
-        .map(|cpu| cpu.cpu_usage())
-        .collect::<Vec<_>>();
+    if show_average_cpu {
+        cpus.push(CpuData {
+            data_type: CpuDataType::Avg,
+            usage: sys.global_cpu_usage(),
+        })
+    }
 
     let brand = sys
         .cpus()
@@ -21,7 +22,18 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResu
         .map(|cpu| cpu.brand().to_string())
         .unwrap_or_default();
 
-    Ok(CpuHarvest { avg, cpus, brand })
+    cpus.extend(
+        sys.cpus()
+            .iter()
+            .enumerate()
+            .map(|(i, cpu)| CpuData {
+                data_type: CpuDataType::Cpu(i),
+                usage: cpu.cpu_usage(),
+            })
+            .collect::<Vec<_>>(),
+    );
+
+    Ok(CpuHarvest { inner: cpus, brand })
 }
 
 #[cfg(target_family = "unix")]

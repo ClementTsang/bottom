@@ -18,8 +18,8 @@ impl Painter {
             let current_table = if let BottomWidgetType::ProcSort = current_table.widget_type {
                 current_table
                     .right_neighbour
-                    .map(|id| app_state.widget_map.get(&id).unwrap())
-                    .unwrap()
+                    .and_then(|id| app_state.widget_map.get(&id))
+                    .expect("id must exist in widget mapping")
             } else {
                 current_table
             };

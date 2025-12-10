@@ -36,7 +36,7 @@ use starship_battery::{Battery, Manager};
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 
-// TODO: We can possibly re-use an internal buffer for this to reduce allocs.
+// TODO: We can possibly reuse an internal buffer for this to reduce allocs.
 #[derive(Clone, Debug)]
 pub struct Data {
     pub collection_time: Instant,
@@ -629,4 +629,52 @@ where
         .and_then(|map| map.remove(key))
         .ok_or_else(|| std::io::Error::other("key not found"))
         .and_then(|val| serde_json::from_value(val).map_err(|err| err.into()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_data_collection() {
+        let mut collector = DataCollector::new(DataFilters {
+            disk_filter: None,
+            mount_filter: None,
+            temp_filter: None,
+            net_filter: None,
+        });
+
+        // #[cfg(feature = "battery")]
+        // {
+        //     collector.widgets_to_harvest.use_battery = true;
+        // }
+
+        // #[cfg(feature = "zfs")]
+        // {
+        //     collector.widgets_to_harvest.use_cache = true;
+        // }
+
+        // #[cfg(feature = "gpu")]
+        // {
+        //     collector.widgets_to_harvest.use_gpu = true;
+        // }
+
+        collector.widgets_to_harvest.use_cpu = true;
+        collector.widgets_to_harvest.use_disk = true;
+        collector.widgets_to_harvest.use_mem = true;
+        collector.widgets_to_harvest.use_net = true;
+        collector.widgets_to_harvest.use_proc = true;
+        collector.widgets_to_harvest.use_temp = true;
+
+        collector.update_data();
+
+        let data = collector.data;
+
+        assert!(!data.cpu.unwrap().is_empty());
+        assert!(!data.disks.unwrap().is_empty());
+        assert!(data.memory.is_some());
+        assert!(data.network.is_some());
+        assert!(!data.list_of_processes.unwrap().is_empty());
+        assert!(data.temperature_sensors.is_some());
+    }
 }

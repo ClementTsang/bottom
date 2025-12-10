@@ -57,6 +57,7 @@ pub struct AppConfigFields {
     pub show_table_scroll_position: bool,
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub is_advanced_kill: bool,
+    pub is_read_only: bool,
     #[cfg(target_os = "linux")]
     pub hide_k_threads: bool,
     #[cfg(feature = "zfs")]
@@ -452,17 +453,35 @@ impl App {
             // Not the best way of doing things for now but works as glue.
             self.process_kill_dialog.on_enter();
         } else if !self.is_in_dialog() {
-            if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
-                if let Some(proc_widget_state) = self
-                    .states
-                    .proc_state
-                    .widget_states
-                    .get_mut(&(self.current_widget.widget_id - 2))
-                {
-                    proc_widget_state.use_sort_table_value();
-                    self.move_widget_selection(&WidgetDirection::Right);
-                    self.is_force_redraw = true;
+            match self.current_widget.widget_type {
+                BottomWidgetType::ProcSearch => {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id - 1)
+                    {
+                        if proc_widget_state.is_search_enabled() {
+                            proc_widget_state.proc_search.search_state.is_enabled = false;
+                            self.move_widget_selection(&WidgetDirection::Up);
+                            self.is_force_redraw = true;
+                        }
+                    }
                 }
+                BottomWidgetType::ProcSort => {
+                    if let Some(proc_widget_state) = self
+                        .states
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id - 2)
+                    {
+                        proc_widget_state.use_sort_table_value();
+                        if proc_widget_state.is_sort_open {
+                            proc_widget_state.is_sort_open = false;
+                            self.move_widget_selection(&WidgetDirection::Right);
+                            self.is_force_redraw = true;
+                        }
+                    }
+                }
+                _ => {}
             }
         }
     }
@@ -686,6 +705,23 @@ impl App {
             }
         } else if self.process_kill_dialog.is_open() {
             self.process_kill_dialog.on_right_key();
+        }
+    }
+
+    pub fn on_space_key(&mut self) {
+        if !self.is_in_dialog() {
+            if self.current_widget.widget_type == BottomWidgetType::Proc {
+                if let Some(proc_widget_state) = self
+                    .states
+                    .proc_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    proc_widget_state.toggle_current_tree_branch_entry();
+                }
+            }
+        } else if self.process_kill_dialog.is_open() {
+            // Either select the current option,
+            // or scroll to the next one
         }
     }
 
@@ -979,6 +1015,10 @@ impl App {
     ///
     /// TODO: This ideally gets abstracted out into a separate widget.
     pub(crate) fn kill_current_process(&mut self) {
+        if self.app_config_fields.is_read_only {
+            return;
+        }
+
         if let Some(pws) = self
             .states
             .proc_state

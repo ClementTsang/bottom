@@ -60,7 +60,7 @@ release_task:
   <<: *CACHE_TEMPLATE
   build_script:
     - . $HOME/.cargo/env
-    - cargo build --release --verbose --locked --features deploy
+    - cargo build --release --locked --features deploy
     - mv ./target/release/btm ./
     - ./btm -V
     - mv "$COMPLETION_DIR" completion

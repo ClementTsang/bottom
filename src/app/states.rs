@@ -193,7 +193,7 @@ impl AppSearchState {
 
                     self.grapheme_cursor
                         .next_boundary(chunk, start_position)
-                        .unwrap();
+                        .expect("another grapheme boundary should exist after the cursor with the provided context");
                 }
                 _ => panic!("{err:?}"),
             },
@@ -214,7 +214,9 @@ impl AppSearchState {
                     self.grapheme_cursor
                         .provide_context(&self.current_search_query[0..ctx], 0);
 
-                    self.grapheme_cursor.prev_boundary(chunk, 0).unwrap();
+                    self.grapheme_cursor
+                        .prev_boundary(chunk, 0)
+                        .expect("another grapheme boundary should exist before the cursor with the provided context");
                 }
                 _ => panic!("{err:?}"),
             },

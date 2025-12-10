@@ -30,7 +30,7 @@ jobs:
         uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
         with:
           skip_after_successful_duplicate: "false"
-          paths: '["tests/**", "src/**", ".github/workflows/coverage.yml", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
+          paths: '["tests/**", "src/**", ".github/workflows/coverage.yml", ".github/ci", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
           do_not_skip: '["workflow_dispatch", "push"]'
 
   coverage:
@@ -49,10 +49,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
+      - name: Read Rust version
+        shell: bash
+        run: |
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+          echo "$VER"
+
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_VERSION }}
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1

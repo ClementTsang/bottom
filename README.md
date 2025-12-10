@@ -48,6 +48,7 @@
   - [winget](#winget)
   - [Windows installer](#windows-installer)
   - [Conda](#conda)
+  - [mise](#mise)
   - [Pre-built binaries](#pre-built-binaries)
     - [Auto-completion](#auto-completion)
 - [Usage](#usage)
@@ -163,8 +164,8 @@ Alternatively, you can use `cargo install` using the repo as the source.
 rustup update stable
 
 # Option 1 - Download an archive from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.11.2.tar.gz
-tar -xzvf 0.11.2.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.11.4.tar.gz
+tar -xzvf 0.11.4.tar.gz
 cargo install --path . --locked
 
 # Option 2 - Manually clone the repo and install
@@ -216,20 +217,20 @@ Some examples of installing it this way:
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.2/bottom_0.11.2-1_amd64.deb
-sudo dpkg -i bottom_0.11.2-1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.4/bottom_0.11.4-1_amd64.deb
+sudo dpkg -i bottom_0.11.4-1_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.2/bottom_0.11.2-1_arm64.deb
-sudo dpkg -i bottom_0.11.2-1_arm64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.4/bottom_0.11.4-1_arm64.deb
+sudo dpkg -i bottom_0.11.4-1_arm64.deb
 
 # ARM
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.2/bottom_0.11.2-1_armhf.deb
-sudo dpkg -i bottom_0.11.2-1_armhf.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.4/bottom_0.11.4-1_armhf.deb
+sudo dpkg -i bottom_0.11.4-1_armhf.deb
 
 # musl-based
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.2/bottom-musl_0.11.2-1_amd64.deb
-sudo dpkg -i bottom-musl_0.11.2-1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.4/bottom-musl_0.11.4-1_amd64.deb
+sudo dpkg -i bottom-musl_0.11.4-1_amd64.deb
 ```
 
 ### Exherbo Linux
@@ -261,8 +262,8 @@ sudo dnf install bottom
 For example:
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.2/bottom-0.11.2-1.x86_64.rpm
-sudo rpm -i bottom-0.11.2-1.x86_64.rpm
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.11.4/bottom-0.11.4-1.x86_64.rpm
+sudo rpm -i bottom-0.11.4-1.x86_64.rpm
 ```
 
 ### Gentoo
@@ -397,6 +398,14 @@ conda config --set channel_priority strict
 
 # Install
 conda install bottom
+```
+
+### mise
+
+bottom is available in [mise](https://github.com/jdx/mise). You can install it with something like:
+
+```
+mise use -g bottom@latest
 ```
 
 ### Pre-built binaries
@@ -554,6 +563,13 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/yahlia"><img src="https://avatars.githubusercontent.com/u/40295453?v=4?s=100" width="100px;" alt="yahlia"/><br /><sub><b>yahlia</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=yahlia" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Bucket-Bucket-Bucket"><img src="https://avatars.githubusercontent.com/u/107044719?v=4?s=100" width="100px;" alt="Bucket-Bucket-Bucket"/><br /><sub><b>Bucket-Bucket-Bucket</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Bucket-Bucket-Bucket" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://marek.sierocinscy.pl"><img src="https://avatars.githubusercontent.com/u/2142811?v=4?s=100" width="100px;" alt="Marek Sierociński"/><br /><sub><b>Marek Sierociński</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=marverix" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Tommimon"><img src="https://avatars.githubusercontent.com/u/37435103?v=4?s=100" width="100px;" alt="Tommaso Montanari"/><br /><sub><b>Tommaso Montanari</b></sub></a><br /><a href="#design-Tommimon" title="Design">🎨</a> <a href="#ideas-Tommimon" title="Ideas, Planning, & Feedback">🤔</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://blog.lenhof.eu.org"><img src="https://avatars.githubusercontent.com/u/36410287?v=4?s=100" width="100px;" alt="Jean-Yves LENHOF"/><br /><sub><b>Jean-Yves LENHOF</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=jylenhof" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://saphereye.github.io"><img src="https://avatars.githubusercontent.com/u/59739923?v=4?s=100" width="100px;" alt="Adarsh Das"/><br /><sub><b>Adarsh Das</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Saphereye" title="Code">💻</a> <a href="https://github.com/ClementTsang/bottom/commits?author=Saphereye" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/oxyzenQ"><img src="https://avatars.githubusercontent.com/u/130107241?v=4?s=100" width="100px;" alt="rezky_nightky"/><br /><sub><b>rezky_nightky</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=oxyzenQ" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/gitgoggles"><img src="https://avatars.githubusercontent.com/u/101480183?v=4?s=100" width="100px;" alt="gitgoggles"/><br /><sub><b>gitgoggles</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=gitgoggles" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

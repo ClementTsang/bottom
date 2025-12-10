@@ -323,7 +323,8 @@ where
             .zip(layer.colors.into_iter())
             .enumerate()
         {
-            if ch != ' ' && ch != '\u{2800}' {
+            const BRAILLE_BASE: char = '\u{2800}';
+            if ch != ' ' && ch != BRAILLE_BASE {
                 let (x, y) = (i % width, i / width);
                 if let Some(cell) =
                     buf.cell_mut((x as u16 + canvas_area.left(), y as u16 + canvas_area.top()))

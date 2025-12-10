@@ -254,7 +254,8 @@
             "integer",
             "null"
           ],
-          "format": "uint32",
+          "format": "uint16",
+          "maximum": 65535,
           "minimum": 0
         },
         "type": {
@@ -371,6 +372,12 @@
           ]
         },
         "expanded": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "free_arc": {
           "type": [
             "boolean",
             "null"
@@ -796,7 +803,8 @@
                 "integer",
                 "null"
               ],
-              "format": "uint32",
+              "format": "uint16",
+              "maximum": 65535,
               "minimum": 0
             }
           },
@@ -1112,7 +1120,8 @@
             "integer",
             "null"
           ],
-          "format": "uint32",
+          "format": "uint16",
+          "maximum": 65535,
           "minimum": 0
         }
       }

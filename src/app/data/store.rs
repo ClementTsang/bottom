@@ -30,8 +30,7 @@ pub struct StoredData {
     #[cfg(feature = "gpu")]
     pub gpu_harvest: Vec<(String, MemData)>,
     pub agnostic_gpu_harvest: Vec<agnostic_gpu::AgnosticGpuData>,
-    pub cpu_harvest: Vec<cpu::CpuData>,
-    pub cpu_model_name: String,
+    pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_data: ProcessData,
     /// TODO: (points_rework_v1) Might be a better way to do this without having to store here?
@@ -52,8 +51,7 @@ impl Default for StoredData {
             #[cfg(not(target_os = "windows"))]
             cache_harvest: None,
             swap_harvest: None,
-            cpu_harvest: Default::default(),
-            cpu_model_name: String::default(),
+            cpu_harvest: cpu::CpuHarvest::default(),
             load_avg_harvest: cpu::LoadAvgHarvest::default(),
             process_data: Default::default(),
             prev_io: Vec::default(),
@@ -121,26 +119,7 @@ impl StoredData {
         }
 
         if let Some(cpu) = data.cpu {
-            self.cpu_harvest.clear();
-
-            if let Some(avg) = cpu.avg {
-                self.cpu_harvest.push(cpu::CpuData {
-                    data_type: cpu::CpuDataType::Avg,
-                    usage: avg,
-                });
-            }
-
-            self.cpu_harvest
-                .extend(
-                    cpu.cpus
-                        .into_iter()
-                        .enumerate()
-                        .map(|(core, usage)| cpu::CpuData {
-                            data_type: cpu::CpuDataType::Cpu(core as u32),
-                            usage,
-                        }),
-                );
-            self.cpu_model_name = cpu.brand;
+            self.cpu_harvest = cpu;
         }
 
         if let Some(load_avg) = data.load_avg {
@@ -240,7 +219,7 @@ impl StoredData {
                         reason = "this is fine since it's done via a static OnceLock. In the future though, separate it out."
                     )]
                     if let Some(new_name) = DISK_REGEX
-                        .get_or_init(|| Regex::new(r"disk\d+").unwrap())
+                        .get_or_init(|| Regex::new(r"disk\d+").expect("valid regex"))
                         .find(checked_name)
                     {
                         io.get(new_name.as_str())
@@ -362,14 +341,16 @@ mod tests {
         // Mock CPU data
         let cpu_harvest = crate::collection::cpu::CpuHarvest {
             brand: "Test CPU Model".to_string(),
-            avg: Some(10.0),
-            ..Default::default()
+            inner: vec![crate::collection::cpu::CpuData {
+                data_type: crate::collection::cpu::CpuDataType::Avg,
+                usage: 10.0,
+            }],
         };
 
         data.cpu = Some(cpu_harvest);
 
         store.eat_data(Box::new(data), &AppConfigFields::default());
 
-        assert_eq!(store.cpu_model_name, "Test CPU Model");
+        assert_eq!(store.cpu_harvest.brand, "Test CPU Model");
     }
 }

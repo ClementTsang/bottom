@@ -48,7 +48,7 @@ jobs:
         uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
         with:
           skip_after_successful_duplicate: "true"
-          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml", "Cross.toml"]'
+          paths: '[".cargo/**", ".github/workflows/ci.yml", ".github/ci", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml", "Cross.toml"]'
           do_not_skip: '["workflow_dispatch", "push"]'
 
   # Runs rustfmt + tests + clippy on the main supported platforms.
@@ -85,10 +85,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
+      - name: Read Rust version
+        shell: bash
+        run: |
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+          echo "$VER"
+
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_VERSION }}
           components: rustfmt, clippy
           target: ${{ matrix.info.target }}
 
@@ -103,28 +110,18 @@ jobs:
         run: cargo fmt --all -- --check
 
       # TODO: add junit output using nextest for codecov (https://docs.codecov.com/docs/test-analytics)
-      - name: Build tests
-        uses: ClementTsang/cargo-action@v0.0.7
-        with:
-          command: test
-          args: --no-run --locked ${{ matrix.features }} --target=${{ matrix.info.target }}
-          use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.5
-        env:
-          RUST_BACKTRACE: full
-
       - name: Run tests
-        uses: ClementTsang/cargo-action@v0.0.7
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         with:
           command: test
-          args: --no-fail-fast ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
+          args: --no-fail-fast --locked ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.5
         env:
           RUST_BACKTRACE: full
 
       - name: Run clippy
-        uses: ClementTsang/cargo-action@v0.0.7
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         with:
           command: clippy
           args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} -- -D warnings
@@ -225,8 +222,8 @@ jobs:
               no-default-features: true,
               no-clippy: true,
             }
-          
-            # Windows ARM
+
+          # Windows ARM
           - {
               os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
@@ -239,10 +236,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
+      - name: Read Rust version
+        shell: bash
+        run: |
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+          echo "$VER"
+
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          toolchain: ${{ matrix.info.rust || 'stable' }}
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
           components: "clippy"
 
@@ -254,7 +258,7 @@ jobs:
           cache-all-crates: true
 
       - name: Clippy (default features)
-        uses: ClementTsang/cargo-action@v0.0.7
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         if: ${{ matrix.info.no-default-features != true }}
         with:
           command: clippy
@@ -263,7 +267,7 @@ jobs:
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
       - name: Clippy (no features enabled)
-        uses: ClementTsang/cargo-action@v0.0.7
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         if: ${{ matrix.info.no-default-features == true  }}
         with:
           command: clippy
@@ -313,7 +317,7 @@ jobs:
           key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
           cache-all-crates: true
 
-      - name: Clippy (FreeBSD)
+      - name: Tests + Clippy (FreeBSD)
         if: ${{ matrix.info.type == 'freebsd' }}
         uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
         with:
@@ -326,6 +330,8 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
 
   completion:

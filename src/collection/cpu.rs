@@ -8,7 +8,7 @@ pub type LoadAvgHarvest = [f32; 3];
 #[derive(Debug, Clone, Copy)]
 pub enum CpuDataType {
     Avg,
-    Cpu(u32),
+    Cpu(usize),
 }
 
 #[derive(Debug, Clone)]
@@ -19,7 +19,20 @@ pub struct CpuData {
 
 #[derive(Debug, Clone, Default)]
 pub struct CpuHarvest {
-    pub avg: Option<f32>,
-    pub cpus: Vec<f32>,
+    pub inner: Vec<CpuData>,
     pub brand: String,
+}
+
+impl std::ops::Deref for CpuHarvest {
+    type Target = Vec<CpuData>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl std::ops::DerefMut for CpuHarvest {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
+    }
 }
