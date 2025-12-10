@@ -18,7 +18,6 @@ pub enum GpuWidgetColumn {
     Gpu,
     Use,
     Vram,
-    Temp,
 }
 
 impl ColumnHeader for GpuWidgetColumn {
@@ -27,7 +26,6 @@ impl ColumnHeader for GpuWidgetColumn {
             GpuWidgetColumn::Gpu => "GPU".into(),
             GpuWidgetColumn::Use => "Use".into(),
             GpuWidgetColumn::Vram => "VRAM".into(),
-            GpuWidgetColumn::Temp => "Temp".into(),
         }
     }
 }
@@ -38,7 +36,6 @@ pub enum GpuWidgetTableData {
         usage: f64,
         vram_used: u64,
         vram_total: u64,
-        temperature: f32,
     },
 }
 
@@ -49,7 +46,6 @@ impl GpuWidgetTableData {
             usage: data.load_percent,
             vram_used: data.memory_used,
             vram_total: data.memory_total,
-            temperature: data.temperature,
         }
     }
 }
@@ -64,7 +60,6 @@ impl DataToCell<GpuWidgetColumn> for GpuWidgetTableData {
                 usage,
                 vram_used,
                 vram_total,
-                temperature,
             } => match column {
                 GpuWidgetColumn::Gpu => Some(name.clone().into()),
                 GpuWidgetColumn::Use => Some(format!("{:.0}%", usage).into()),
@@ -76,7 +71,6 @@ impl DataToCell<GpuWidgetColumn> for GpuWidgetTableData {
                     )
                     .into(),
                 ),
-                GpuWidgetColumn::Temp => Some(format!("{:.0}°C", temperature).into()),
             },
         }
     }
@@ -92,7 +86,7 @@ impl DataToCell<GpuWidgetColumn> for GpuWidgetTableData {
     where
         Self: Sized,
     {
-        vec![1, 1, 1, 1]
+        vec![1, 1, 1]
     }
 }
 
@@ -106,11 +100,10 @@ pub struct GpuWidgetState {
 impl GpuWidgetState {
     /// Create a new [`GpuWidgetState`].
     pub fn new(config: &AppConfigFields, current_display_time: u64, colours: &Styles) -> Self {
-        const COLUMNS: [Column<GpuWidgetColumn>; 4] = [
+        const COLUMNS: [Column<GpuWidgetColumn>; 3] = [
             Column::soft(GpuWidgetColumn::Gpu, Some(0.4)),
             Column::soft(GpuWidgetColumn::Use, Some(0.2)),
             Column::soft(GpuWidgetColumn::Vram, Some(0.2)),
-            Column::soft(GpuWidgetColumn::Temp, Some(0.2)),
         ];
 
         let props = DataTableProps {
