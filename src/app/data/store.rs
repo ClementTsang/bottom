@@ -360,9 +360,11 @@ mod tests {
         let mut data = Data::default();
 
         // Mock CPU data
-        let mut cpu_harvest = crate::collection::cpu::CpuHarvest::default();
-        cpu_harvest.brand = "Test CPU Model".to_string();
-        cpu_harvest.avg = Some(10.0);
+        let cpu_harvest = crate::collection::cpu::CpuHarvest {
+            brand: "Test CPU Model".to_string(),
+            avg: Some(10.0),
+            ..Default::default()
+        };
 
         data.cpu = Some(cpu_harvest);
 
