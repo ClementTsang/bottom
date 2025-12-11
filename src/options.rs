@@ -300,7 +300,26 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temperature_type: get_temperature(args, config)
             .context("Update 'temperature_type' in your config file.")?,
         show_average_cpu: get_show_average_cpu(args, config),
-        use_dot: is_flag_enabled!(dot_marker, args.general, config),
+        graph_style: {
+            let graph_style_string = args
+                .general
+                .graph_style
+                .as_deref()
+                .or(config.flags.as_ref().and_then(|f| f.graph_style.as_deref()));
+
+            if let Some(m) = graph_style_string {
+                match m {
+                    "dot" => GraphStyle::Dot,
+                    "block" => GraphStyle::Block,
+                    "filled" => GraphStyle::Filled,
+                    _ => GraphStyle::Braille,
+                }
+            } else if is_flag_enabled!(dot_marker, args.general, config) {
+                GraphStyle::Dot
+            } else {
+                GraphStyle::Braille
+            }
+        },
         cpu_left_legend: is_flag_enabled!(cpu_left_legend, args.cpu, config),
         use_current_cpu_total: is_flag_enabled!(current_usage, args.process, config),
         unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, args.process, config),
@@ -1301,7 +1320,23 @@ mod test {
 
         // Skip this test if the file already exists.
         if !case_1.exists() {
-            assert_eq!(get_config_path(None), Some(case_1));
+            // Also check if the legacy config file exists (standard ~/.config/bottom/bottom.toml)
+            // If it does, then we should expect that instead.
+            let legacy_path = dirs::home_dir().map(|mut path| {
+                path.push(".config/");
+                path.push(DEFAULT_CONFIG_FILE_LOCATION);
+                path
+            });
+
+            if let Some(legacy_path) = legacy_path {
+                if legacy_path.exists() {
+                    assert_eq!(get_config_path(None), Some(legacy_path));
+                } else {
+                    assert_eq!(get_config_path(None), Some(case_1));
+                }
+            } else {
+                assert_eq!(get_config_path(None), Some(case_1));
+            }
         }
 
         // Case two: no previous config, XDG var exists.
@@ -1315,7 +1350,23 @@ mod test {
 
         // Skip this test if the file already exists.
         if !case_2.exists() {
-            assert_eq!(get_config_path(None), Some(case_2));
+            // Also check if the legacy config file exists (standard ~/.config/bottom/bottom.toml)
+            // If it does, then we should expect that instead (because the legacy check happens before XDG check on macOS).
+            let legacy_path = dirs::home_dir().map(|mut path| {
+                path.push(".config/");
+                path.push(DEFAULT_CONFIG_FILE_LOCATION);
+                path
+            });
+
+            if let Some(legacy_path) = legacy_path {
+                if legacy_path.exists() {
+                    assert_eq!(get_config_path(None), Some(legacy_path));
+                } else {
+                    assert_eq!(get_config_path(None), Some(case_2));
+                }
+            } else {
+                assert_eq!(get_config_path(None), Some(case_2));
+            }
         }
 
         // Case one: old non-XDG exists already, XDG var exists.

@@ -7,7 +7,7 @@ use tui::{
     },
 };
 
-use super::{Context, Data, Point, TimeChart};
+use super::{Context, Data, Point, TimeChart, canvas::FilledLine};
 
 impl TimeChart<'_> {
     pub(crate) fn draw_points(&self, ctx: &mut Context<'_>) {
@@ -29,43 +29,68 @@ impl TimeChart<'_> {
         // issue but it can happen in some cases).
 
         for dataset in &self.datasets {
-            let Data::Some { times, values } = dataset.data else {
-                continue;
-            };
+            match &dataset.data {
+                Data::Some { times, values } => {
+                    self.draw_dataset_iter(ctx, dataset, times, values.iter_along_base(times));
+                }
+                Data::Custom { times, values } => {
+                    // Zip time and values
+                    self.draw_dataset_iter(ctx, dataset, times, times.iter().zip(values.iter()));
+                }
+                Data::None => continue,
+            }
+        }
+    }
 
-            let Some(current_time) = times.last() else {
-                continue;
-            };
+    fn draw_dataset_iter<'a, I>(
+        &self, ctx: &mut Context<'_>, dataset: &super::Dataset<'_>, times: &[std::time::Instant],
+        iterator: I,
+    ) where
+        I: Iterator<Item = (&'a std::time::Instant, &'a f64)> + DoubleEndedIterator,
+    {
+        let Some(current_time) = times.last() else {
+            return;
+        };
 
-            let color = dataset.style.fg.unwrap_or(Color::Reset);
-            let left_edge = self.x_axis.bounds.get_bounds()[0];
+        let color = dataset.style.fg.unwrap_or(Color::Reset);
+        let left_edge = self.x_axis.bounds.get_bounds()[0];
 
-            // TODO: (points_rework_v1) Can we instead modify the range so it's based on the epoch rather than having to convert?
-            // TODO: (points_rework_v1) Is this efficient? Or should I prune using take_while first?
-            for (curr, next) in values
-                .iter_along_base(times)
-                .rev()
-                .map(|(&time, &val)| {
-                    let from_start = -(current_time.duration_since(time).as_millis() as f64);
+        // TODO: (points_rework_v1) Can we instead modify the range so it's based on the epoch rather than having to convert?
+        // TODO: (points_rework_v1) Is this efficient? Or should I prune using take_while first?
+        for (curr, next) in iterator
+            .rev()
+            .map(|(&time, &val)| {
+                let from_start = -(current_time.duration_since(time).as_millis() as f64);
+                let val = if dataset.inverted { -val } else { val };
 
-                    // XXX: Should this be generic over dataset.graph_type instead? That would allow us to move
-                    // transformations behind a type - however, that also means that there's some complexity added.
-                    (from_start, self.scaling.scale(val))
-                })
-                .tuple_windows()
-            {
-                if curr.0 == left_edge {
-                    // The current point hits the left edge. Draw just the current point and halt.
-                    ctx.draw(&Points {
-                        coords: &[curr],
+                // XXX: Should this be generic over dataset.graph_type instead? That would allow us to move
+                // transformations behind a type - however, that also means that there's some complexity added.
+                (from_start, self.scaling.scale(val))
+            })
+            .tuple_windows()
+        {
+            if curr.0 == left_edge {
+                // The current point hits the left edge. Draw just the current point and halt.
+                ctx.draw(&Points {
+                    coords: &[curr],
+                    color,
+                });
+
+                break;
+            } else if next.0 < left_edge {
+                // The next point goes past the left edge. Interpolate a point + the line and halt.
+                let interpolated = interpolate_point(&next, &curr, left_edge);
+
+                if dataset.filled {
+                    ctx.draw(&FilledLine {
+                        x1: curr.0,
+                        y1: curr.1,
+                        x2: left_edge,
+                        y2: interpolated,
                         color,
+                        baseline: Some(0.0),
                     });
-
-                    break;
-                } else if next.0 < left_edge {
-                    // The next point goes past the left edge. Interpolate a point + the line and halt.
-                    let interpolated = interpolate_point(&next, &curr, left_edge);
-
+                } else {
                     ctx.draw(&CanvasLine {
                         x1: curr.0,
                         y1: curr.1,
@@ -73,11 +98,22 @@ impl TimeChart<'_> {
                         y2: interpolated,
                         color,
                     });
+                }
 
-                    break;
-                } else {
-                    // Draw the current point and the line to the next point.
-                    if let GraphType::Line = dataset.graph_type {
+                break;
+            } else {
+                // Draw the current point and the line to the next point.
+                if let GraphType::Line = dataset.graph_type {
+                    if dataset.filled {
+                        ctx.draw(&FilledLine {
+                            x1: curr.0,
+                            y1: curr.1,
+                            x2: next.0,
+                            y2: next.1,
+                            color,
+                            baseline: Some(0.0),
+                        });
+                    } else {
                         ctx.draw(&CanvasLine {
                             x1: curr.0,
                             y1: curr.1,
@@ -85,12 +121,12 @@ impl TimeChart<'_> {
                             y2: next.1,
                             color,
                         });
-                    } else {
-                        ctx.draw(&Points {
-                            coords: &[curr],
-                            color,
-                        });
                     }
+                } else {
+                    ctx.draw(&Points {
+                        coords: &[curr],
+                        color,
+                    });
                 }
             }
         }

@@ -9,6 +9,8 @@ use super::StringOrNum;
 pub(crate) struct GeneralConfig {
     pub(crate) hide_avg_cpu: Option<bool>,
     pub(crate) dot_marker: Option<bool>,
+    #[serde(alias = "marker")]
+    pub(crate) graph_style: Option<String>,
     pub(crate) temperature_type: Option<String>,
     pub(crate) rate: Option<StringOrNum>,
     pub(crate) cpu_left_legend: Option<bool>,

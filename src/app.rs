@@ -33,11 +33,20 @@ pub enum AxisScaling {
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
-#[derive(Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Default)]
+pub enum GraphStyle {
+    #[default]
+    Braille,
+    Dot,
+    Block,
+    Filled,
+}
+
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct AppConfigFields {
     pub update_rate: u64,
     pub temperature_type: TemperatureType,
-    pub use_dot: bool,
+    pub graph_style: GraphStyle,
     pub cpu_left_legend: bool,
     pub show_average_cpu: bool, // TODO: Unify this in CPU options
     pub use_current_cpu_total: bool,

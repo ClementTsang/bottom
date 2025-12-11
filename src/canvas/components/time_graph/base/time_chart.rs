@@ -43,6 +43,8 @@ pub enum AxisBound {
     Min(f64),
     /// Bound by 0 and a max value.
     Max(f64),
+    /// Bound by a min and max value.
+    MinMax(f64, f64),
 }
 
 impl AxisBound {
@@ -51,6 +53,7 @@ impl AxisBound {
             AxisBound::Zero => [0.0, 0.0],
             AxisBound::Min(min) => [*min, 0.0],
             AxisBound::Max(max) => [0.0, *max],
+            AxisBound::MinMax(min, max) => [*min, *max],
         }
     }
 }
@@ -266,6 +269,10 @@ enum Data<'a> {
         times: &'a [Instant],
         values: &'a Values,
     },
+    Custom {
+        times: &'a [Instant],
+        values: &'a [f64],
+    },
     #[default]
     None,
 }
@@ -288,6 +295,10 @@ pub struct Dataset<'a> {
     graph_type: GraphType,
     /// Style used to plot this dataset
     style: Style,
+    /// Whether to fill the dataset.
+    filled: bool,
+    /// Whether to invert the dataset (negate values).
+    inverted: bool,
 }
 
 impl<'a> Dataset<'a> {
@@ -298,6 +309,20 @@ impl<'a> Dataset<'a> {
         S: Into<Line<'a>>,
     {
         self.name = Some(name.into());
+        self
+    }
+
+    /// Sets whether the dataset is filled.
+    #[must_use = "method moves the value of self and returns the modified value"]
+    pub fn filled(mut self, filled: bool) -> Dataset<'a> {
+        self.filled = filled;
+        self
+    }
+
+    /// Sets whether the dataset is inverted.
+    #[must_use = "method moves the value of self and returns the modified value"]
+    pub fn inverted(mut self, inverted: bool) -> Dataset<'a> {
+        self.inverted = inverted;
         self
     }
 
@@ -312,6 +337,12 @@ impl<'a> Dataset<'a> {
     #[must_use = "method moves the value of self and returns the modified value"]
     pub fn data(mut self, times: &'a [Instant], values: &'a Values) -> Dataset<'a> {
         self.data = Data::Some { times, values };
+        self
+    }
+
+    /// Sets data using a custom slice.
+    pub fn data_custom(mut self, times: &'a [Instant], values: &'a [f64]) -> Dataset<'a> {
+        self.data = Data::Custom { times, values };
         self
     }
 
@@ -432,7 +463,7 @@ pub struct TimeChart<'a> {
     /// of `hidden_legend_constraints`
     legend_position: Option<LegendPosition>,
     /// The marker type.
-    marker: Marker,
+    pub marker: Marker,
     /// Whether to scale the values differently.
     scaling: ChartScaling,
 }

@@ -4,7 +4,7 @@ use tui::{
 };
 
 use crate::{
-    app::{App, data::StoredData, layout_manager::WidgetDirection},
+    app::{App, GraphStyle, data::StoredData, layout_manager::WidgetDirection},
     canvas::{
         Painter,
         components::{
@@ -118,6 +118,7 @@ impl Painter {
 
     fn generate_points<'a>(
         &self, cpu_widget_state: &'a CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
+        filled: bool,
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
         let current_scroll_position = cpu_widget_state.table.state.current_index;
@@ -132,14 +133,19 @@ impl Painter {
                 .iter()
                 .enumerate()
                 .map(|(itx, values)| {
-                    let style = if show_avg_cpu && itx == 0 {
+                    let is_avg = show_avg_cpu && itx == 0;
+                    let style = if is_avg {
                         self.styles.avg_cpu_colour
                     } else {
                         self.styles.cpu_colour_styles
                             [(itx - show_avg_offset) % self.styles.cpu_colour_styles.len()]
                     };
 
-                    GraphData::default().style(style).time(time).values(values)
+                    GraphData::default()
+                        .style(style)
+                        .time(time)
+                        .values(values)
+                        .filled(filled && is_avg)
                 })
                 .rev()
                 .collect()
@@ -159,7 +165,8 @@ impl Painter {
                 GraphData::default()
                     .style(style)
                     .time(time)
-                    .values(&cpu_points[current_scroll_position - 1]),
+                    .values(&cpu_points[current_scroll_position - 1])
+                    .filled(filled),
             ]
         } else {
             vec![]
@@ -180,10 +187,13 @@ impl Painter {
                 draw_loc,
             );
 
+            let filled = matches!(app_state.app_config_fields.graph_style, GraphStyle::Filled);
+
             let graph_data = self.generate_points(
                 cpu_widget_state,
                 data,
                 app_state.app_config_fields.show_average_cpu,
+                filled,
             );
 
             // TODO: Maybe hide load avg if too long? Or maybe the CPU part.
@@ -229,6 +239,7 @@ impl Painter {
                 widget_id,
                 legend_position: None,
                 legend_constraints: None,
+                borders: tui::widgets::Borders::ALL,
             }
             .build()
             .draw(f, draw_loc, graph_data);

@@ -5,7 +5,7 @@ use std::borrow::Cow;
 use tui::{layout::Constraint, symbols::Marker};
 
 use crate::{
-    app::AppConfigFields,
+    app::{AppConfigFields, GraphStyle},
     canvas::components::time_graph::{
         AxisBound, ChartScaling, LegendPosition, TimeGraph, variants::get_border_style,
     },
@@ -54,6 +54,9 @@ pub(crate) struct PercentTimeGraph<'a> {
 
     /// The constraints for the legend.
     pub(crate) legend_constraints: Option<(Constraint, Constraint)>,
+
+    /// The borders to draw.
+    pub(crate) borders: tui::widgets::Borders,
 }
 
 impl<'a> PercentTimeGraph<'a> {
@@ -64,10 +67,11 @@ impl<'a> PercentTimeGraph<'a> {
 
         let x_min = -(self.display_range as f64);
 
-        let marker = if self.app_config_fields.use_dot {
-            Marker::Dot
-        } else {
-            Marker::Braille
+        let marker = match self.app_config_fields.graph_style {
+            GraphStyle::Dot => Marker::Dot,
+            GraphStyle::Block => Marker::Block,
+            GraphStyle::Filled => Marker::Braille,
+            GraphStyle::Braille => Marker::Braille,
         };
 
         let graph_style = self.styles.graph_style;
@@ -91,6 +95,7 @@ impl<'a> PercentTimeGraph<'a> {
             legend_constraints: self.legend_constraints,
             marker,
             scaling: ChartScaling::Linear,
+            borders: self.borders,
         }
     }
 }

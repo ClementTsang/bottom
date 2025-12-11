@@ -21,8 +21,11 @@ use crate::{app::data::Values, canvas::drawing_utils::widget_block};
 pub(crate) struct GraphData<'a> {
     time: &'a [Instant],
     values: Option<&'a Values>,
+    custom_values: Option<&'a [f64]>,
     style: Style,
     name: Option<Cow<'a, str>>,
+    filled: bool,
+    inverted: bool,
 }
 
 impl<'a> GraphData<'a> {
@@ -36,6 +39,11 @@ impl<'a> GraphData<'a> {
         self
     }
 
+    pub fn custom_values(mut self, values: &'a [f64]) -> Self {
+        self.custom_values = Some(values);
+        self
+    }
+
     pub fn style(mut self, style: Style) -> Self {
         self.style = style;
         self
@@ -43,6 +51,16 @@ impl<'a> GraphData<'a> {
 
     pub fn name(mut self, name: Cow<'a, str>) -> Self {
         self.name = Some(name);
+        self
+    }
+
+    pub fn filled(mut self, filled: bool) -> Self {
+        self.filled = filled;
+        self
+    }
+
+    pub fn inverted(mut self, inverted: bool) -> Self {
+        self.inverted = inverted;
         self
     }
 }
@@ -93,6 +111,9 @@ pub struct TimeGraph<'a> {
 
     /// The chart scaling.
     pub scaling: ChartScaling,
+
+    /// The borders to draw.
+    pub borders: tui::widgets::Borders,
 }
 
 impl TimeGraph<'_> {
@@ -151,6 +172,7 @@ impl TimeGraph<'_> {
         let block = {
             let mut b = widget_block(false, self.is_selected, self.border_type)
                 .border_style(self.border_style)
+                .borders(self.borders)
                 .title_top(Line::styled(self.title.as_ref(), self.title_style));
 
             if self.is_expanded {
@@ -183,18 +205,38 @@ fn create_dataset(data: GraphData<'_>) -> Dataset<'_> {
     let GraphData {
         time,
         values,
+        custom_values,
         style,
         name,
+        filled,
+        inverted,
     } = data;
 
     let Some(values) = values else {
+        if let Some(custom) = custom_values {
+            let dataset = Dataset::default()
+                .style(style)
+                .data_custom(time, custom)
+                .graph_type(GraphType::Line)
+                .filled(filled)
+                .inverted(inverted);
+
+            return if let Some(name) = name {
+                dataset.name(name)
+            } else {
+                dataset
+            };
+        }
         return Dataset::default();
     };
 
     let dataset = Dataset::default()
         .style(style)
         .data(time, values)
-        .graph_type(GraphType::Line);
+        .graph_type(GraphType::Line)
+        .graph_type(GraphType::Line)
+        .filled(filled)
+        .inverted(inverted);
 
     let dataset = if let Some(name) = name {
         dataset.name(name)
@@ -242,6 +284,7 @@ mod test {
             legend_constraints: None,
             marker: Marker::Braille,
             scaling: ChartScaling::Linear,
+            borders: tui::widgets::Borders::ALL,
         }
     }
 

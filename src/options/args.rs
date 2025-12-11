@@ -216,11 +216,36 @@ pub struct GeneralArgs {
     )]
     pub disable_keys: bool,
 
-    // TODO: Change this to accept a string with the type of marker.
+    #[arg(
+        long,
+        value_name = "STYLE",
+        help = "Sets the graph style. Use --help for more info.",
+        long_help = indoc!{
+            "Sets the graph style. This option allows you to choose between different \
+            styles for the graphs.
+
+            Supported values are:
+            - braille (default): Uses braille characters.
+            - dot: Uses dot characters.
+            - block: Uses block characters.
+            - filled: Uses filled braille characters."
+        },
+        ignore_case = true,
+        value_parser = [
+            "braille",
+            "dot",
+            "block",
+            "filled",
+        ],
+        alias = "graph-style"
+    )]
+    pub graph_style: Option<String>,
+
     #[arg(
         short = 'm',
         long,
         action = ArgAction::SetTrue,
+        hide = true,
         help = "Uses a dot marker for graphs.",
         long_help = "Uses a dot marker for graphs as opposed to the default braille marker.",
         alias = "dot-marker"

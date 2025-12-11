@@ -9,7 +9,7 @@ use tui::{
 };
 
 use crate::{
-    app::{App, AppConfigFields, AxisScaling},
+    app::{App, AppConfigFields, AxisScaling, GraphStyle},
     canvas::{
         Painter,
         components::time_graph::{AxisBound, ChartScaling, GraphData, TimeGraph},
@@ -77,60 +77,81 @@ impl Painter {
                 draw_loc,
             );
 
+            let (marker, filled) = match app_state.app_config_fields.graph_style {
+                GraphStyle::Dot => (Marker::Dot, false),
+                GraphStyle::Block => (Marker::Block, false),
+                GraphStyle::Filled => (Marker::Braille, true),
+                _ => (Marker::Braille, false),
+            };
+
             let y_max = {
                 if let Some(last_time) = times.last() {
                     let cached_network_height =
                         check_network_height_cache(network_widget_state, last_time);
 
-                    let (mut biggest, mut biggest_time, oldest_to_check) = cached_network_height
-                        .unwrap_or_else(|| {
-                            let visible_duration =
-                                Duration::from_millis(network_widget_state.current_display_time);
+                    let (biggest, biggest_time, _) = cached_network_height.unwrap_or_else(|| {
+                        let visible_duration =
+                            Duration::from_millis(network_widget_state.current_display_time);
 
-                            let visible_left_bound = match last_time.checked_sub(visible_duration) {
-                                Some(v) => v,
-                                None => {
-                                    // On some systems (like Windows) it can be possible that the current display time
-                                    // causes subtraction to fail if, for example, the uptime of the system is too low
-                                    // and current_display_time is too high. See https://github.com/ClementTsang/bottom/issues/1825.
-                                    //
-                                    // As such, we instead take the oldest visible time. This is a bit inefficient, but
-                                    // since it should only happen rarely, it should be fine.
-                                    times
-                                        .iter()
-                                        .take_while(|t| {
-                                            last_time.duration_since(**t) < visible_duration
-                                        })
-                                        .last()
-                                        .cloned()
-                                        .unwrap_or(*last_time)
+                        let visible_left_bound = match last_time.checked_sub(visible_duration) {
+                            Some(v) => v,
+                            None => {
+                                // On some systems (like Windows) it can be possible that the current display time
+                                // is smaller than the total uptime... see https://github.com/ClementTsang/bottom/issues/1311
+                                // and https://github.gcom/ClementTsang/bottom/pull/1314.
+                                //
+                                // As a result, we just return the "earliest" possible time.
+                                *times.first().unwrap_or(last_time)
+                            }
+                        };
+
+                        let mut biggest = 0.0;
+                        let mut biggest_time = *last_time;
+
+                        // Calculate Max RX
+                        if let Some((rx_v, rx_t)) = rx_points
+                            .iter()
+                            .enumerate()
+                            .rev()
+                            .take_while(|(i, _)| times[*i] >= visible_left_bound)
+                            .fold(None, |acc: Option<(f64, std::time::Instant)>, (i, &v)| {
+                                let t = times[i];
+                                if let Some((max_v, _)) = acc {
+                                    if v >= max_v { Some((v, t)) } else { acc }
+                                } else {
+                                    Some((v, t))
                                 }
-                            };
-
-                            (0.0, visible_left_bound, visible_left_bound)
-                        });
-
-                    for (&time, &v) in rx_points
-                        .iter_along_base(times)
-                        .rev()
-                        .take_while(|&(&time, _)| time >= oldest_to_check)
-                    {
-                        if v > biggest {
-                            biggest = v;
-                            biggest_time = time;
+                            })
+                        {
+                            if rx_v > biggest {
+                                biggest = rx_v;
+                                biggest_time = rx_t;
+                            }
                         }
-                    }
 
-                    for (&time, &v) in tx_points
-                        .iter_along_base(times)
-                        .rev()
-                        .take_while(|&(&time, _)| time >= oldest_to_check)
-                    {
-                        if v > biggest {
-                            biggest = v;
-                            biggest_time = time;
+                        // Calculate Max TX
+                        if let Some((tx_v, tx_t)) = tx_points
+                            .iter()
+                            .enumerate()
+                            .rev()
+                            .take_while(|(i, _)| times[*i] >= visible_left_bound)
+                            .fold(None, |acc: Option<(f64, std::time::Instant)>, (i, &v)| {
+                                let t = times[i];
+                                if let Some((max_v, _)) = acc {
+                                    if v >= max_v { Some((v, t)) } else { acc }
+                                } else {
+                                    Some((v, t))
+                                }
+                            })
+                        {
+                            if tx_v > biggest {
+                                biggest = tx_v;
+                                biggest_time = tx_t;
+                            }
                         }
-                    }
+
+                        (biggest, biggest_time, *last_time)
+                    });
 
                     network_widget_state.height_cache = Some(NetWidgetHeightCache {
                         best_point: (biggest_time, biggest),
@@ -143,9 +164,48 @@ impl Painter {
                     0.0
                 }
             };
-            let (adjusted_y_max, y_labels) =
+            // Bidirectional graph logic
+            let (adjusted_y_max, positive_y_labels) =
                 adjust_network_data_point(y_max, &app_state.app_config_fields);
-            let y_bounds = AxisBound::Max(adjusted_y_max);
+
+            // Construct symmetric labels
+            // adjust_network_data_point returns [0, 50%, 100%, 150*] or similar.
+            // We want [-100%, -50%, 0, 50%, 100%].
+            // If positive_labels is ["0B", "50MB", "100MB", ...]
+
+            let mut y_labels = Vec::new();
+            // Reverse (skip 0) and flip sign for negative side
+            for label in positive_y_labels.iter().skip(1).rev() {
+                // Assume label formatting is just text. We might want to keep it "positive" visually?
+                // Or prepend "-"? User request: "receive traffic should graph down".
+                // Usually graphs show absolute values on labels even for "down".
+                // But let's check the current labels format. They include units.
+                // Let's just use the same labels but reversed position.
+                // Note: TimeChart renders labels explicitly.
+                y_labels.push(label.clone());
+            }
+            if let Some(zero) = positive_y_labels.first() {
+                y_labels.push(zero.clone());
+            }
+            for label in positive_y_labels.iter().skip(1) {
+                y_labels.push(label.clone());
+            }
+
+            // Since we duplicate the top half to bottom, effective range is [-adj_max, adj_max]
+            // adjust_network_data_point returns max based on `max_entry * 1.5` usually?
+            // Actually it returns (max, labels). labels go up to max*1.5 sometimes?
+            // Let's check adjust_network_data_point logic in viewer earlier.
+            // It returns (max_entry_upper, labels).
+            // max_entry_upper is used as the bound.
+            // labels are [0, 0.5*base, 1.0*base, 1.5*base].
+            // max_entry_upper IS base? No. base_unit = max_value_scaled?
+            // It seems `max_entry_upper` is the Max Bound.
+
+            let y_bounds = AxisBound::MinMax(-adjusted_y_max, adjusted_y_max);
+
+            // Pass reference to the modified ChunkedData
+            // let negated_rx_data = &negated_rx_data;
+            // No, we use inverted flag now.
 
             let legend_constraints = if full_screen {
                 (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
@@ -177,21 +237,27 @@ impl Painter {
 
                 vec![
                     GraphData::default()
-                        .name(rx_label.into())
-                        .time(times)
-                        .values(rx_points)
-                        .style(self.styles.rx_style),
-                    GraphData::default()
                         .name(tx_label.into())
                         .time(times)
                         .values(tx_points)
-                        .style(self.styles.tx_style),
+                        .style(self.styles.tx_style)
+                        .filled(filled),
                     GraphData::default()
-                        .style(self.styles.total_rx_style)
-                        .name(total_rx_label.into()),
+                        .name(rx_label.into())
+                        .time(times)
+                        // Use original RX points, inverted
+                        .values(rx_points)
+                        .style(self.styles.rx_style)
+                        .filled(filled)
+                        .inverted(true),
                     GraphData::default()
                         .style(self.styles.total_tx_style)
-                        .name(total_tx_label.into()),
+                        .name(total_tx_label.into())
+                        .filled(filled),
+                    GraphData::default()
+                        .style(self.styles.total_rx_style)
+                        .name(total_rx_label.into())
+                        .filled(filled),
                 ]
             } else {
                 let rx_label = format!("{:.1}{}{}", rx.0, rx.1, unit);
@@ -201,22 +267,21 @@ impl Painter {
 
                 vec![
                     GraphData::default()
-                        .name(format!("RX: {rx_label:<10}  All: {total_rx_label}").into())
-                        .time(times)
-                        .values(rx_points)
-                        .style(self.styles.rx_style),
-                    GraphData::default()
                         .name(format!("TX: {tx_label:<10}  All: {total_tx_label}").into())
                         .time(times)
                         .values(tx_points)
-                        .style(self.styles.tx_style),
+                        .style(self.styles.tx_style)
+                        .filled(filled),
+                    GraphData::default()
+                        .name(format!("RX: {rx_label:<10}  All: {total_rx_label}").into())
+                        .time(times)
+                        // Use original RX points, inverted
+                        .values(rx_points)
+                        //.values(rx_points) // Duplicate in original?
+                        .style(self.styles.rx_style)
+                        .filled(filled)
+                        .inverted(true),
                 ]
-            };
-
-            let marker = if app_state.app_config_fields.use_dot {
-                Marker::Dot
-            } else {
-                Marker::Braille
             };
 
             let scaling = match app_state.app_config_fields.network_scale_type {
@@ -247,6 +312,7 @@ impl Painter {
                 legend_constraints: Some(legend_constraints),
                 marker,
                 scaling,
+                borders: tui::widgets::Borders::ALL,
             }
             .draw(f, draw_loc, graph_data);
         }

@@ -74,6 +74,84 @@ impl Shape for CanvasLine {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct FilledLine {
+    pub x1: f64,
+    pub y1: f64,
+    pub x2: f64,
+    pub y2: f64,
+    pub color: Color,
+    pub baseline: Option<f64>,
+}
+
+impl Shape for FilledLine {
+    fn draw(&self, painter: &mut Painter<'_, '_>) {
+        let (x1, y1) = match painter.get_point(self.x1, self.y1) {
+            Some(c) => c,
+            None => return,
+        };
+        let (x2, y2) = match painter.get_point(self.x2, self.y2) {
+            Some(c) => c,
+            None => return,
+        };
+        let (x1, y1, x2, y2) = if x1 > x2 {
+            (x2, y2, x1, y1)
+        } else {
+            (x1, y1, x2, y2)
+        };
+
+        let dx = (x2 as isize - x1 as isize).abs();
+        let dy = (y2 as isize - y1 as isize).abs();
+
+        if dx >= dy {
+            let mut d = 2 * dy - dx;
+            let mut y = y1;
+            for x in x1..=x2 {
+                if let Some(baseline) = self.baseline {
+                    painter.paint_range_floats(x, y as f64, baseline, self.color);
+                } else {
+                    painter.paint_column(x, y, self.color);
+                }
+
+                if d > 0 {
+                    y = if y1 > y2 {
+                        y.saturating_sub(1)
+                    } else {
+                        y.saturating_add(1)
+                    };
+                    d -= 2 * dx;
+                }
+                d += 2 * dy;
+            }
+        } else {
+            let (x1, y1, x2, y2) = if y1 > y2 {
+                (x2, y2, x1, y1)
+            } else {
+                (x1, y1, x2, y2)
+            };
+            let mut d = 2 * dx - dy;
+            let mut x = x1;
+            for y in y1..=y2 {
+                if let Some(baseline) = self.baseline {
+                    painter.paint_range_floats(x, y as f64, baseline, self.color);
+                } else {
+                    painter.paint_column(x, y, self.color);
+                }
+
+                if d > 0 {
+                    x = if x1 > x2 {
+                        x.saturating_sub(1)
+                    } else {
+                        x.saturating_add(1)
+                    };
+                    d -= 2 * dy;
+                }
+                d += 2 * dx;
+            }
+        }
+    }
+}
+
 fn draw_line_low(
     painter: &mut Painter<'_, '_>, x1: usize, y1: usize, x2: usize, y2: usize, color: Color,
 ) {
@@ -161,6 +239,66 @@ impl Painter<'_, '_> {
     /// Paint a point of the grid.
     pub fn paint(&mut self, x: usize, y: usize, color: Color) {
         self.context.grid.paint(x, y, color);
+    }
+
+    /// Paint a column of the grid from y to the bottom.
+    pub fn paint_column(&mut self, x: usize, y: usize, color: Color) {
+        let max_y = self.resolution.1 as usize;
+        for iy in y..max_y {
+            self.context.grid.paint(x, iy, color);
+        }
+    }
+
+    /// Paints a range of cells, mapping the float `baseline` to the grid.
+    /// Handles out-of-bounds baselines by clamping to top/bottom edges.
+    pub fn paint_range_floats(&mut self, x: usize, start_y_idx: f64, baseline: f64, color: Color) {
+        let [bottom_val, top_val] = self.context.y_bounds;
+        let height = top_val - bottom_val;
+        let max_y_idx = self.resolution.1 as usize;
+
+        // Calculate baseline Y index
+        let baseline_y_idx = if height <= 0.0 {
+            max_y_idx // Fallback
+        } else {
+            // Logic mirrors get_point but handles out-of-bounds slightly differently for filling
+            // y index 0 is TOP. y index MAX is BOTTOM.
+            // Formula: y_idx = ((top - y_val) * (res - 1) / height)
+
+            let calc_idx = |val: f64| -> isize {
+                ((top_val - val) * (self.resolution.1 - 1.0) / height).round() as isize
+            };
+
+            let idx = calc_idx(baseline);
+
+            if idx < 0 {
+                0 // Top
+            } else if idx >= max_y_idx as isize {
+                max_y_idx - 1 // Bottom
+            } else {
+                idx as usize
+            }
+        };
+
+        let start = start_y_idx as usize;
+        let end = baseline_y_idx;
+
+        let (low, mut high) = if start < end {
+            (start, end)
+        } else {
+            (end, start)
+        };
+
+        // Ensure within bounds (should exist but just in case)
+        if low >= max_y_idx {
+            return;
+        }
+        if high >= max_y_idx {
+            high = max_y_idx - 1;
+        }
+
+        for iy in low..=high {
+            self.context.grid.paint(x, iy, color);
+        }
     }
 }
 

@@ -549,7 +549,7 @@ mod test {
             inner: Some(InnerDummyConfig::default()),
         };
 
-        (move || -> anyhow::Result<()> {
+        (|| -> anyhow::Result<()> {
             set_colour_list!(_s, &dummy.inner, bad_list);
 
             Ok(())
