@@ -27,18 +27,21 @@ pub struct GpusData {
 /// Then, we can go back to calling `Nvml::init` directly on all platforms.
 fn init_nvml() -> Result<Nvml, NvmlError> {
     #[cfg(not(target_os = "linux"))]
-    {
-        Nvml::init()
-    }
+    let res = Nvml::init();
+
     #[cfg(target_os = "linux")]
-    {
-        match Nvml::init() {
-            Ok(nvml) => Ok(nvml),
-            Err(_) => Nvml::builder()
-                .lib_path(std::ffi::OsStr::new("libnvidia-ml.so.1"))
-                .init(),
-        }
+    let res = match Nvml::init() {
+        Ok(nvml) => Ok(nvml),
+        Err(_) => Nvml::builder()
+            .lib_path(std::ffi::OsStr::new("libnvidia-ml.so.1"))
+            .init(),
+    };
+
+    if let Err(_e) = &res {
+        crate::error!("Failed to initialize NVML: {_e}");
     }
+
+    res
 }
 
 /// Returns the GPU data from NVIDIA cards.

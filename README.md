@@ -67,6 +67,7 @@ As (yet another) process/system visualization and management application, bottom
   - [CPU usage](https://bottom.pages.dev/nightly/usage/widgets/cpu/) over time, at an average and per-core level
   - [RAM and swap usage](https://bottom.pages.dev/nightly/usage/widgets/memory/) over time
   - [Network I/O usage](https://bottom.pages.dev/nightly/usage/widgets/network/) over time
+  - GPU usage over time (NVIDIA, AMD, Intel)
 
   with support for zooming in/out the current time interval displayed.
 

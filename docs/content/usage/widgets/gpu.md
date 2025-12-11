@@ -2,6 +2,12 @@
 
 The GPU widget displays a visual representation of GPU usage over a time range.
 
+## Supported GPUs
+
+- **NVIDIA**
+- **AMD**
+- **Intel** (Linux only)
+
 ## Features
 
 The GPU widget is composed of two parts: the graph and the legend:
