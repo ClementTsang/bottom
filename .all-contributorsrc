@@ -683,6 +683,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "thunze",
+      "name": "Tom",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22795263?v=4",
+      "profile": "https://github.com/thunze",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ],
   "contributorsPerLine": 7,
