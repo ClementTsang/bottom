@@ -92,7 +92,7 @@ regex = "1.11.2"
 rustc-hash = "2.1.1"
 serde = { version = "1.0.226", features = ["derive"] }
 starship-battery = { version = "0.10.2", optional = true }
-sysinfo = "=0.37.0"
+sysinfo = "=0.37.2"
 timeless = "0.0.14-alpha"
 toml_edit = { version = "0.23.6", features = ["serde"] }
 tui = { version = "0.30.0-beta.0", package = "ratatui", features = ["unstable-rendered-line-info", "layout-cache"] }
