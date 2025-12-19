@@ -2,10 +2,10 @@
 
 use std::time::Duration;
 
-use itertools::Itertools;
-
 use super::{ProcessHarvest, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult};
+
+use itertools::Itertools;
 
 // TODO: There's a lot of shared code with this and the unix impl.
 pub fn sysinfo_process_data(
@@ -75,9 +75,11 @@ pub fn sysinfo_process_data(
             let mut gpu_util = 0;
             let mut gpu_mem_percent = 0.0;
             if let Some(gpus) = &collector.gpu_pids {
+                use crate::collection::processes::Pid;
+
                 gpus.iter().for_each(|gpu| {
                     // add mem/util for all gpus to pid
-                    if let Some((mem, util)) = gpu.get(&process_val.pid().as_u32()) {
+                    if let Some((mem, util)) = gpu.get(&(process_val.pid().as_u32() as Pid)) {
                         gpu_mem += mem;
                         gpu_util += util;
                     }
