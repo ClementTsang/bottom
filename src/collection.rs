@@ -27,7 +27,7 @@ use std::time::{Duration, Instant};
 
 #[cfg(any(target_os = "linux", feature = "gpu"))]
 use nohash::IntMap;
-#[cfg(not(target_os = "windows"))]
+#[cfg(any(not(target_os = "windows"), feature = "gpu"))]
 use processes::Pid;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
