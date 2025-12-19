@@ -429,7 +429,7 @@ pub(crate) fn linux_process_data(
                     if let Some(gpus) = &collector.gpu_pids {
                         gpus.iter().for_each(|gpu| {
                             // add mem/util for all gpus to pid
-                            if let Some((mem, util)) = gpu.get(&(pid as u32)) {
+                            if let Some((mem, util)) = gpu.get(&pid) {
                                 process_harvest.gpu_mem += mem;
                                 process_harvest.gpu_util += util;
                             }

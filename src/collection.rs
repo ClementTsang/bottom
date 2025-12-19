@@ -25,10 +25,10 @@ pub mod temperature;
 
 use std::time::{Duration, Instant};
 
+#[cfg(target_os = "linux")]
+use nohash::IntMap;
 #[cfg(not(target_os = "windows"))]
 use processes::Pid;
-#[cfg(any(target_os = "linux", feature = "gpu"))]
-use rustc_hash::FxHashMap as HashMap;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
 
@@ -166,7 +166,7 @@ pub struct DataCollector {
     should_run_less_routine_tasks: bool,
 
     #[cfg(target_os = "linux")]
-    prev_process_details: HashMap<Pid, processes::PrevProcDetails>,
+    prev_process_details: IntMap<Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
     prev_idle: f64,
     #[cfg(target_os = "linux")]
@@ -181,7 +181,7 @@ pub struct DataCollector {
     user_table: processes::UserTable,
 
     #[cfg(feature = "gpu")]
-    gpu_pids: Option<Vec<HashMap<u32, (u64, u32)>>>,
+    gpu_pids: Option<Vec<IntMap<Pid, (u64, u32)>>>,
     #[cfg(feature = "gpu")]
     gpus_total_mem: Option<u64>,
     #[cfg(feature = "zfs")]
@@ -200,7 +200,7 @@ impl DataCollector {
             data: Data::default(),
             sys: SysinfoSource::default(),
             #[cfg(target_os = "linux")]
-            prev_process_details: HashMap::default(),
+            prev_process_details: IntMap::default(),
             #[cfg(target_os = "linux")]
             prev_idle: 0_f64,
             #[cfg(target_os = "linux")]
@@ -383,7 +383,7 @@ impl DataCollector {
     fn update_gpus(&mut self) {
         if self.widgets_to_harvest.use_gpu {
             let mut local_gpu: Vec<(String, memory::MemData)> = Vec::new();
-            let mut local_gpu_pids: Vec<HashMap<u32, (u64, u32)>> = Vec::new();
+            let mut local_gpu_pids: Vec<IntMap<Pid, (u64, u32)>> = Vec::new();
             let mut local_gpu_total_mem: u64 = 0;
 
             #[cfg(feature = "nvidia")]
