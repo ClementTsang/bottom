@@ -2,8 +2,8 @@
 
 use std::{io, time::Duration};
 
-use rustc_hash::FxHashMap as HashMap;
 use itertools::Itertools;
+use rustc_hash::FxHashMap as HashMap;
 use sysinfo::{ProcessStatus, System};
 
 use super::{ProcessHarvest, process_status_str};
