@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, vec::Vec};
 
-use rustc_hash::FxHashMap as HashMap;
+use rustc_hash::FxHashMap as HashMap; // TODO: Explore nohash for PID hashing.
 
 use crate::collection::processes::{Pid, ProcessHarvest};
 
