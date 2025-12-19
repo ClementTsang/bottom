@@ -25,7 +25,7 @@ pub mod temperature;
 
 use std::time::{Duration, Instant};
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", feature = "gpu"))]
 use nohash::IntMap;
 #[cfg(not(target_os = "windows"))]
 use processes::Pid;
