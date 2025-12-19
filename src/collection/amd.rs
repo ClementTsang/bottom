@@ -354,9 +354,7 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
         if widgets_to_harvest.use_proc {
             if let Some(procs) = get_amd_fdinfo(&device_path) {
                 let mut proc_info = PROC_DATA.lock().expect("mutex is poisoned");
-                let prev_fdinfo = proc_info
-                    .entry(device_path)
-                    .or_insert_with(HashMap::default);
+                let prev_fdinfo = proc_info.entry(device_path).or_default();
 
                 let mut procs_map = HashMap::default();
                 for (proc_pid, proc_usage) in procs {
