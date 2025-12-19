@@ -2,8 +2,8 @@
 
 use std::{io, time::Duration};
 
-use hashbrown::HashMap;
 use itertools::Itertools;
+use nohash::IntMap;
 use sysinfo::{ProcessStatus, System};
 
 use super::{ProcessHarvest, process_status_str};
@@ -135,8 +135,8 @@ pub(crate) trait UnixProcessExt {
         false
     }
 
-    fn backup_proc_cpu(_pids: &[Pid]) -> io::Result<HashMap<Pid, f32>> {
-        Ok(HashMap::default())
+    fn backup_proc_cpu(_pids: &[Pid]) -> io::Result<IntMap<Pid, f32>> {
+        Ok(IntMap::default())
     }
 
     fn parent_pid(process_val: &sysinfo::Process) -> Option<Pid> {

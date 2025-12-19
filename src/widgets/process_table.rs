@@ -5,12 +5,13 @@ mod sort_table;
 
 use std::{borrow::Cow, collections::BTreeMap};
 
-use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use itertools::Itertools;
+use nohash::IntMap;
 pub use process_columns::*;
 pub use process_data::*;
 use query::{ProcessQuery, parse_query};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use sort_table::SortTableColumn;
 
 use crate::{
@@ -72,11 +73,11 @@ impl TreeCollapsed {
     pub(crate) fn new(default_collapsed: bool) -> Self {
         if default_collapsed {
             TreeCollapsed::DefaultCollapse {
-                expanded_pids: HashSet::new(),
+                expanded_pids: HashSet::default(),
             }
         } else {
             TreeCollapsed::DefaultExpand {
-                collapsed_pids: HashSet::new(),
+                collapsed_pids: HashSet::default(),
             }
         }
     }
@@ -554,10 +555,10 @@ impl ProcWidgetState {
         // - The process contains some descendant that matches.
         // - The process's parent (and only parent, not any ancestor) matches.
         let filtered_tree = {
-            let mut filtered_tree: HashMap<Pid, Vec<Pid>> = HashMap::default();
+            let mut filtered_tree: IntMap<Pid, Vec<Pid>> = IntMap::default();
 
             // We do a simple DFS traversal to build our filtered parent-to-tree mappings.
-            let mut visited_pids: HashMap<Pid, bool> = HashMap::default();
+            let mut visited_pids: IntMap<Pid, bool> = IntMap::default();
             let mut stack = orphan_pids
                 .iter()
                 .filter_map(|process| process_harvest.get(process))

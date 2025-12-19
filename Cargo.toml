@@ -82,13 +82,14 @@ concat-string = "1.0.1"
 crossterm = "0.29.0"
 ctrlc = { version = "3.5.0", features = ["termination"] }
 dirs = "6.0.0"
-hashbrown = "0.16.0"
 humantime = "2.3.0"
 indexmap = "2.11.4"
 indoc = "2.0.6"
 itertools = "0.14.0"
+nohash = "0.2.0"
 nvml-wrapper = { version = "0.11.0", optional = true, features = ["legacy-functions"] }
 regex = "1.11.2"
+rustc-hash = "2.1.1"
 serde = { version = "1.0.226", features = ["derive"] }
 starship-battery = { version = "0.10.2", optional = true }
 sysinfo = "=0.37.0"
