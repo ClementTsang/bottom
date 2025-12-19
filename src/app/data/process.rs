@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, vec::Vec};
 
-use hashbrown::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 
 use crate::collection::processes::{Pid, ProcessHarvest};
 

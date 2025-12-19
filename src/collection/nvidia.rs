@@ -1,9 +1,9 @@
 use std::{num::NonZeroU64, sync::OnceLock};
 
-use hashbrown::HashMap;
 use nvml_wrapper::{
     Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError,
 };
+use rustc_hash::FxHashMap as HashMap;
 
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
@@ -88,7 +88,7 @@ pub fn get_nvidia_vecs(
                     }
 
                     if widgets_to_harvest.use_proc {
-                        let mut procs = HashMap::new();
+                        let mut procs = HashMap::default();
 
                         if let Ok(gpu_procs) = device.process_utilization_stats(None) {
                             for proc in gpu_procs {

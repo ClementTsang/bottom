@@ -20,9 +20,9 @@ pub use config::Config;
 use config::style::Styles;
 use data::TemperatureType;
 pub(crate) use error::{OptionError, OptionResult};
-use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use regex::Regex;
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
 
@@ -252,14 +252,14 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     // For CPU
     let default_cpu_selection = get_default_cpu_selection(args, config);
 
-    let mut widget_map = HashMap::new();
-    let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
-    let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::new();
-    let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::new();
-    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::new();
-    let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
-    let mut disk_state_map: HashMap<u64, DiskTableWidget> = HashMap::new();
-    let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::new();
+    let mut widget_map = HashMap::default();
+    let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::default();
+    let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::default();
+    let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::default();
+    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::default();
+    let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::default();
+    let mut disk_state_map: HashMap<u64, DiskTableWidget> = HashMap::default();
+    let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::default();
 
     let autohide_timer = if autohide_time {
         Some(Instant::now())
@@ -270,7 +270,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let mut initial_widget_id: u64 = default_widget_id;
     let mut initial_widget_type = Proc;
     let is_custom_layout = config.row.is_some();
-    let mut used_widget_set = HashSet::new();
+    let mut used_widget_set = HashSet::default();
 
     let network_unit_type = get_network_unit_type(args, config);
     let network_scale_type = get_network_scale_type(args, config);
@@ -478,17 +478,17 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         None
     };
 
-    let use_mem = used_widget_set.get(&Mem).is_some() || used_widget_set.get(&BasicMem).is_some();
+    let use_mem = used_widget_set.contains(&Mem) || used_widget_set.contains(&BasicMem);
     let used_widgets = UsedWidgets {
-        use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
+        use_cpu: used_widget_set.contains(&Cpu) || used_widget_set.contains(&BasicCpu),
         use_mem,
         use_cache: use_mem && get_enable_cache_memory(args, config),
         use_gpu: get_enable_gpu(args, config),
-        use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
-        use_proc: used_widget_set.get(&Proc).is_some(),
-        use_disk: used_widget_set.get(&Disk).is_some(),
-        use_temp: used_widget_set.get(&Temp).is_some(),
-        use_battery: used_widget_set.get(&Battery).is_some(),
+        use_net: used_widget_set.contains(&Net) || used_widget_set.contains(&BasicNet),
+        use_proc: used_widget_set.contains(&Proc),
+        use_disk: used_widget_set.contains(&Disk),
+        use_temp: used_widget_set.contains(&Temp),
+        use_battery: used_widget_set.contains(&Battery),
     };
 
     let (disk_name_filter, disk_mount_filter) = {

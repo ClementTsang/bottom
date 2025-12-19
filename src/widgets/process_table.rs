@@ -5,12 +5,12 @@ mod sort_table;
 
 use std::{borrow::Cow, collections::BTreeMap};
 
-use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use itertools::Itertools;
 pub use process_columns::*;
 pub use process_data::*;
 use query::{ProcessQuery, parse_query};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use sort_table::SortTableColumn;
 
 use crate::{
@@ -72,11 +72,11 @@ impl TreeCollapsed {
     pub(crate) fn new(default_collapsed: bool) -> Self {
         if default_collapsed {
             TreeCollapsed::DefaultCollapse {
-                expanded_pids: HashSet::new(),
+                expanded_pids: HashSet::default(),
             }
         } else {
             TreeCollapsed::DefaultExpand {
-                collapsed_pids: HashSet::new(),
+                collapsed_pids: HashSet::default(),
             }
         }
     }

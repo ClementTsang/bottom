@@ -2,7 +2,7 @@
 
 use std::{io, process::Command};
 
-use hashbrown::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use serde::{Deserialize, Deserializer};
 
 use crate::collection::{Pid, deserialize_xo, processes::UnixProcessExt};
@@ -32,7 +32,7 @@ impl UnixProcessExt for FreeBSDProcessExt {
 
     fn backup_proc_cpu(pids: &[Pid]) -> io::Result<HashMap<Pid, f32>> {
         if pids.is_empty() {
-            return Ok(HashMap::new());
+            return Ok(HashMap::default());
         }
 
         let output = Command::new("ps")

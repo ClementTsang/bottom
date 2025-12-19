@@ -1,6 +1,6 @@
 use std::{env, ffi::OsString, path::Path, process::Command};
 
-use hashbrown::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
 

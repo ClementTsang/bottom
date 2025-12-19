@@ -197,7 +197,6 @@ dependencies = [
  "dirs",
  "fern",
  "filedescriptor",
- "hashbrown",
  "humantime",
  "indexmap",
  "indoc",

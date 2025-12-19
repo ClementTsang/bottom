@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use hashbrown::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 
 use crate::collection::error::{CollectionError, CollectionResult};
 

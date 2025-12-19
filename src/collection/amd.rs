@@ -8,7 +8,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use hashbrown::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 use super::linux::utils::is_device_awake;
 use crate::{app::layout_manager::UsedWidgets, collection::memory::MemData};
@@ -39,7 +39,7 @@ pub struct AmdGpuProc {
 
 // needs previous state for usage calculation
 static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, HashMap<u32, AmdGpuProc>>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
+    LazyLock::new(|| Mutex::new(HashMap::default()));
 
 fn get_amd_devs() -> Option<Vec<PathBuf>> {
     let mut devices = Vec::new();
@@ -223,7 +223,7 @@ fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
 }
 
 fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
-    let mut fdinfo = HashMap::new();
+    let mut fdinfo = HashMap::default();
 
     let drm_paths = get_amdgpu_drm(device_path)?;
 
@@ -260,7 +260,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
 
         let mut usage: AmdGpuProc = Default::default();
 
-        let mut observed_ids: HashSet<usize> = HashSet::new();
+        let mut observed_ids: HashSet<usize> = HashSet::default();
 
         for fd in fds {
             let fdinfo_path = format!("/proc/{pid}/fdinfo/{fd}");
@@ -354,9 +354,11 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
         if widgets_to_harvest.use_proc {
             if let Some(procs) = get_amd_fdinfo(&device_path) {
                 let mut proc_info = PROC_DATA.lock().expect("mutex is poisoned");
-                let prev_fdinfo = proc_info.entry(device_path).or_insert_with(HashMap::new);
+                let prev_fdinfo = proc_info
+                    .entry(device_path)
+                    .or_insert_with(HashMap::default);
 
-                let mut procs_map = HashMap::new();
+                let mut procs_map = HashMap::default();
                 for (proc_pid, proc_usage) in procs {
                     if let Some(prev_usage) = prev_fdinfo.get_mut(&proc_pid) {
                         // calculate deltas

@@ -25,10 +25,10 @@ pub mod temperature;
 
 use std::time::{Duration, Instant};
 
-#[cfg(any(target_os = "linux", feature = "gpu"))]
-use hashbrown::HashMap;
 #[cfg(not(target_os = "windows"))]
 use processes::Pid;
+#[cfg(any(target_os = "linux", feature = "gpu"))]
+use rustc_hash::FxHashMap as HashMap;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
 

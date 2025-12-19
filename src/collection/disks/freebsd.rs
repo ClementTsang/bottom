@@ -2,7 +2,7 @@
 
 use std::io;
 
-use hashbrown::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use serde::Deserialize;
 
 use super::{DiskHarvest, IoHarvest, keep_disk_entry};

@@ -233,6 +233,7 @@ macro_rules! set_colour {
     };
 }
 
+/// Set `palette_field` to the value in `config_location` for `field`.
 macro_rules! set_colour_list {
     ($palette_field:expr, $config_location:expr, $field:tt) => {
         if let Some(colour_list) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
@@ -544,12 +545,12 @@ mod test {
 
     #[test]
     fn test_bad_set_list() {
-        let mut _s: Vec<Style> = vec![];
         let dummy = DummyConfig {
             inner: Some(InnerDummyConfig::default()),
         };
 
         (move || -> anyhow::Result<()> {
+            let mut _s: Vec<Style>;
             set_colour_list!(_s, &dummy.inner, bad_list);
 
             Ok(())

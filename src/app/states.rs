@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use hashbrown::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use indexmap::IndexMap;
 use unicode_ellipsis::grapheme_width;
 use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete, UnicodeSegmentation};

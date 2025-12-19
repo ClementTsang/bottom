@@ -28,7 +28,7 @@ cfg_if! {
 }
 
 use cfg_if::cfg_if;
-use hashbrown::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 
 use crate::app::filter::Filter;
 
@@ -62,7 +62,7 @@ cfg_if! {
 
         /// Returns the I/O usage of certain mount points.
         pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
-            let mut io_hash: HashMap<String, Option<IoData>> = HashMap::new();
+            let mut io_hash: HashMap<String, Option<IoData>> = HashMap::default();
 
             // TODO: Maybe rewrite this to not do a result of vec of result...
             for io in io_stats()?.into_iter() {

@@ -6,7 +6,7 @@ use std::{
 };
 
 use anyhow::Result;
-use hashbrown::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 use super::TempSensorData;
 #[cfg(feature = "gpu")]
@@ -202,7 +202,7 @@ fn finalize_name(
 /// reading, and not be able to re-enter ACPI D3cold.
 fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
     let mut temperatures: Vec<TempSensorData> = vec![];
-    let mut seen_names: HashMap<String, u32> = HashMap::new();
+    let mut seen_names: HashMap<String, u32> = HashMap::default();
 
     let (dirs, num_hwmon) = get_hwmon_candidates();
 
@@ -356,7 +356,7 @@ fn add_thermal_zone_temperatures(temperatures: &mut Vec<TempSensorData>, filter:
         return;
     };
 
-    let mut seen_names: HashMap<String, u32> = HashMap::new();
+    let mut seen_names: HashMap<String, u32> = HashMap::default();
 
     for entry in read_dir.flatten() {
         if entry
@@ -403,13 +403,13 @@ pub fn get_temperature_data(filter: &Option<Filter>) -> Result<Option<Vec<TempSe
 
 #[cfg(test)]
 mod tests {
-    use hashbrown::HashMap;
+    use rustc_hash::FxHashMap as HashMap;
 
     use super::finalize_name;
 
     #[test]
     fn test_finalize_name() {
-        let mut seen_names = HashMap::new();
+        let mut seen_names = HashMap::default();
 
         assert_eq!(
             finalize_name(
