@@ -79,7 +79,11 @@ jobs:
             }
 
           # macOS (x86-64 and aarch64)
-          - { os: "macos-15-intel", target: "x86_64-apple-darwin", cross: false }
+          - {
+              os: "macos-15-intel",
+              target: "x86_64-apple-darwin",
+              cross: false,
+            }
           - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
 
           # Windows (x86-64, x86)
@@ -322,12 +326,12 @@ jobs:
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
-              output: "bottom_x86_64_installer.msi"
+              output: "bottom_x86_64_installer.msi",
             }
           - {
               os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
-              output: "bottom_aarch64_installer.msi"
+              output: "bottom_aarch64_installer.msi",
             }
     runs-on: ${{ matrix.info.os }}
     steps:
@@ -416,7 +420,7 @@ jobs:
             raw=$(git branch -r --contains '${{ github.ref_name }}');
             BRANCH=${raw##*/};
           fi
-          python ./scripts/cirrus/release.py "$BRANCH" "release/" "${{ inputs.caller }}"
+          python ./scripts/ci/cirrus_release.py "$BRANCH" "release/" "${{ inputs.caller }}"
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2

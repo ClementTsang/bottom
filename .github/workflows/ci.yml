@@ -6,14 +6,6 @@
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
 # - https://www.reillywood.com/blog/rust-faster-ci/
 # - https://matklad.github.io/2021/09/04/fast-rust-builds.html
-#
-# Supported platforms run the following tasks:
-# - Format
-# - Test (built/test in separate steps)
-# - Clippy (apparently faster to do it after the build/test)
-#
-# Unsupported platforms run the following tasks:
-# - Clippy
 
 name: ci
 
