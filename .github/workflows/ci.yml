@@ -352,7 +352,6 @@ jobs:
             cargo clippy --all-targets --workspace -- -D warnings
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
-        continue-on-error: true
 
   completion:
     name: "CI Pass Check"

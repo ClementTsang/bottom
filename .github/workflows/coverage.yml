@@ -109,4 +109,3 @@ jobs:
           flags: ${{ matrix.info.os }}
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
-        continue-on-error: true
