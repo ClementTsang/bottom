@@ -5,6 +5,8 @@
 # - MSI installer for Windows (.msi)
 # - .deb releases
 # - .rpm releases
+#
+# TODO: Break this up into scripts instead.
 
 name: "build releases"
 

@@ -75,14 +75,11 @@ jobs:
           merge-multiple: true
 
       - name: Execute choco packaging script
-        run: |
-          python "./scripts/windows/choco/choco_packager.py" "./release/bottom_x86_64-pc-windows-msvc.zip" ${{ env.RELEASE_VERSION }} "./scripts/windows/choco/bottom.nuspec.template" "./scripts/windows/choco/chocolateyinstall.ps1.template" "bottom.nuspec" "tools/chocolateyinstall.ps1" "tools/"
-          zip -r choco.zip "bottom.nuspec" "tools"
+        run: ./scripts/ci/generate_choco.sh
 
       - name: Move release file into release directory
         shell: bash
-        run: |
-          mv choco.zip release/
+        run: mv choco.zip release/
 
       - name: Save release as artifact
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
