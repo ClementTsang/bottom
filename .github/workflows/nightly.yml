@@ -84,6 +84,14 @@ jobs:
         run: sleep 10
         if: github.event.inputs.isMock != 'true'
 
+      - name: Create and set tag name
+        run: |
+          $COMMIT_HASH=$(git rev-parse HEAD)
+          $TIME=$(date +%s)
+          TAG_NAME=$(echo "nightly-$COMMIT_HASH-$TIME")
+          echo "TAG_NAME=$VER" >> $GITHUB_ENV
+          echo "$TAG_NAME"
+
       # As a workaround to immutable releases, we create it as a draft first, then manually publish it after.
       - name: Add all release files and create nightly release if not mock
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # 2.0.8
@@ -91,7 +99,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
-          tag_name: "nightly"
+          tag_name: ${{ env.TAG_NAME }}
           draft: true
           fail_on_unmatched_files: true
           files: |
