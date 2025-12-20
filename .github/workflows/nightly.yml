@@ -76,7 +76,7 @@ jobs:
 
       - name: Delete tag and release if not mock
         if: github.event.inputs.isMock != 'true'
-        run: gh release delete nightly --cleanup-tag
+        run: gh release delete nightly --cleanup-tag || echo "no previous nightly release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
