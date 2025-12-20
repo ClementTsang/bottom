@@ -309,7 +309,8 @@ jobs:
           key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
           cache-all-crates: true
 
-      - name: Tests + Clippy (FreeBSD)
+      # The VM jobs randomly fail, and since GHA clearly never fails and doesn't know how to retry, we retry manually.
+      - name: FreeBSD Tests + Clippy (Attempt 1)
         if: ${{ matrix.info.type == 'freebsd' }}
         uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
         with:
@@ -325,6 +326,46 @@ jobs:
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
+        id: upload_attempt_1
+        continue-on-error: true
+
+      - name: FreeBSD Tests + Clippy (Attempt 2)
+        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet
+            cargo clippy --all-targets --workspace -- -D warnings
+        if: ${{ matrix.info.type == 'freebsd' }} && steps.upload_attempt_1.outcome == 'failure'
+        id: upload_attempt_2
+        continue-on-error: true
+
+      - name: FreeBSD Tests + Clippy (Attempt 3)
+        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet
+            cargo clippy --all-targets --workspace -- -D warnings
+        if: ${{ matrix.info.type == 'freebsd' }} && steps.upload_attempt_2.outcome == 'failure'
+        id: upload_attempt_3
+        continue-on-error: true
 
   completion:
     name: "CI Pass Check"

@@ -33,7 +33,6 @@ permissions:
   contents: read
   attestations: write
 
-# TODO: Maybe add retry job in case of timeouts?
 jobs:
   build-binaries:
     name: "Build binaries"
