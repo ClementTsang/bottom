@@ -281,21 +281,9 @@ jobs:
           #
           # Alas, that's why we do it with VMs.
 
-          - {
-              type: "freebsd",
-              os_release: "15.0",
-              target: "x86_64-unknown-freebsd",
-            }
-          - {
-              type: "freebsd",
-              os_release: "14.3",
-              target: "x86_64-unknown-freebsd",
-            }
-          - {
-              type: "freebsd",
-              os_release: "13.5",
-              target: "x86_64-unknown-freebsd",
-            }
+          - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
+          - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
+          - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -311,7 +299,6 @@ jobs:
 
       # The VM jobs randomly fail, and since GHA clearly never fails and doesn't know how to retry, we retry manually.
       - name: FreeBSD Tests + Clippy (Attempt 1)
-        if: ${{ matrix.info.type == 'freebsd' }}
         uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
         with:
           release: "${{ matrix.info.os_release }}"
@@ -344,7 +331,7 @@ jobs:
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
-        if: ${{ matrix.info.type == 'freebsd' }} && steps.upload_attempt_1.outcome == 'failure'
+        if: steps.upload_attempt_1.outcome == 'failure'
         id: upload_attempt_2
         continue-on-error: true
 
@@ -363,7 +350,7 @@ jobs:
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
-        if: ${{ matrix.info.type == 'freebsd' }} && steps.upload_attempt_2.outcome == 'failure'
+        if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
         continue-on-error: true
 
