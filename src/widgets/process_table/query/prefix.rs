@@ -251,7 +251,8 @@ impl Prefix {
             } else {
                 let mut intern_string = vec![queue_top];
 
-                // TODO: I think this should consume the quote...?
+                // TODO: I think this should consume the quote...? Might need to check the other spot
+                // we process quotes.
                 while let Some(next_str) = query.front() {
                     if next_str == "\"" {
                         break;
