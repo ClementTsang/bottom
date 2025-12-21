@@ -289,6 +289,8 @@ mod tests {
         assert!(query.check(&a_and_b, false));
     }
 
+    /// Ensure that quoted keywords are treated as strings. In this case, rather than `"a" OR "b"`, it should be treated
+    /// as the string `"a or b"`.
     #[test]
     fn quoted_query() {
         let query = parse_query("a \"or\" b", false, false, false).unwrap();
@@ -342,6 +344,7 @@ mod tests {
         assert!(!query.check(&exact, false));
     }
 
+    /// This test sees if parentheses work.
     #[test]
     fn nested_query_1() {
         let query = parse_query("(a or b) and (c or a)", false, false, false).unwrap();
@@ -357,6 +360,7 @@ mod tests {
         assert!(!query.check(&d, false));
     }
 
+    /// This test sees if parentheses and mixed query types work.
     #[test]
     fn nested_query_2() {
         let query = parse_query("(cpu > 10 or cpu < 5) and (c or a)", false, false, false).unwrap();
@@ -386,5 +390,43 @@ mod tests {
         assert!(!query.check(&a_invalid, false));
         assert!(!query.check(&b, false));
         assert!(!query.check(&d, false));
+    }
+
+    /// This test adds a further layer of nesting to consider.
+    #[test]
+    fn nested_query_3() {
+        let query = parse_query(
+            "((cpu > 10 or cpu < 5) or d) and ((c or a) or d)",
+            false,
+            false,
+            false,
+        )
+        .unwrap();
+
+        let mut a_valid_1 = simple_process("a");
+        a_valid_1.cpu_usage_percent = 100.0;
+
+        let mut a_valid_2 = simple_process("a");
+        a_valid_2.cpu_usage_percent = 1.0;
+
+        let mut a_invalid = simple_process("a");
+        a_invalid.cpu_usage_percent = 6.0;
+
+        let mut c = simple_process("c");
+        c.cpu_usage_percent = 50.0;
+
+        let mut b = simple_process("b");
+        b.cpu_usage_percent = 50.0;
+
+        let mut d = simple_process("d");
+        d.cpu_usage_percent = 6.0;
+
+        assert!(query.check(&a_valid_1, false));
+        assert!(query.check(&a_valid_2, false));
+        assert!(query.check(&c, false));
+        assert!(query.check(&d, false));
+
+        assert!(!query.check(&a_invalid, false));
+        assert!(!query.check(&b, false));
     }
 }
