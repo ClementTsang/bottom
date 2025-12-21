@@ -46,31 +46,29 @@ impl ProcColumn {
     #[cfg(feature = "generate_schema")]
     pub fn get_schema_names(&self) -> &[&'static str] {
         match self {
-            ProcColumn::Pid => &["PID"][..],
-            ProcColumn::Count => &["Count"][..],
-            ProcColumn::Name => &["Name"][..],
-            ProcColumn::Command => &["Command"][..],
-            ProcColumn::CpuPercent => &["CPU%"][..],
+            ProcColumn::Pid => &["PID"],
+            ProcColumn::Count => &["Count"],
+            ProcColumn::Name => &["Name"],
+            ProcColumn::Command => &["Command"],
+            ProcColumn::CpuPercent => &["CPU%"],
             // TODO: Change this
-            ProcColumn::MemValue | ProcColumn::MemPercent => {
-                &["Mem", "Mem%", "Memory", "Memory%"][..]
-            }
-            ProcColumn::VirtualMem => &["Virt", "Virtual", "VirtMem", "Virtual Memory"][..],
-            ProcColumn::ReadPerSecond => &["R/s", "Read", "Rps"][..],
-            ProcColumn::WritePerSecond => &["W/s", "Write", "Wps"][..],
-            ProcColumn::TotalRead => &["T.Read", "TRead", "Total Read"][..],
-            ProcColumn::TotalWrite => &["T.Write", "TWrite", "Total Write"][..],
-            ProcColumn::State => &["State"][..],
-            ProcColumn::User => &["User"][..],
-            ProcColumn::Time => &["Time"][..],
+            ProcColumn::MemValue | ProcColumn::MemPercent => &["Mem", "Mem%", "Memory", "Memory%"],
+            ProcColumn::VirtualMem => &["Virt", "Virtual", "VirtMem", "Virtual Memory"],
+            ProcColumn::ReadPerSecond => &["R/s", "Read", "Rps"],
+            ProcColumn::WritePerSecond => &["W/s", "Write", "Wps"],
+            ProcColumn::TotalRead => &["T.Read", "TRead", "Total Read"],
+            ProcColumn::TotalWrite => &["T.Write", "TWrite", "Total Write"],
+            ProcColumn::State => &["State"],
+            ProcColumn::User => &["User"],
+            ProcColumn::Time => &["Time"],
             #[cfg(feature = "gpu")]
             // TODO: Change this
-            ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => &["GMem", "GMem%"][..],
+            ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => &["GMem", "GMem%"],
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuUtilPercent => &["GPU%"][..],
+            ProcColumn::GpuUtilPercent => &["GPU%"],
             #[cfg(unix)]
-            ProcColumn::Nice => &["Nice"][..],
-            ProcColumn::Priority => &["Priority"][..],
+            ProcColumn::Nice => &["Nice"],
+            ProcColumn::Priority => &["Priority"],
         }
     }
 }

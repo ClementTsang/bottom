@@ -13,7 +13,9 @@ use sysinfo::{ProcessStatus, System};
 use super::{ProcessHarvest, process_status_str};
 use crate::collection::{Pid, error::CollectionResult, processes::UserTable};
 
-fn get_nice(pid: i32) -> i32 {
+fn get_nice(pid: Pid) -> i32 {
+    // SAFETY: getpriority takes no user pointers; pid is passed as a value
+    // and errors are reported via the return value.
     cfg_if! {
         if #[cfg(target_os = "freebsd")] {
             unsafe { libc::getpriority(libc::PRIO_PROCESS, pid) }
@@ -25,7 +27,7 @@ fn get_nice(pid: i32) -> i32 {
     }
 }
 
-fn get_priority(pid: i32) -> i32 {
+fn get_priority(pid: Pid) -> i32 {
     cfg_if! {
         if #[cfg(target_os = "macos")] {
             if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
@@ -41,6 +43,10 @@ fn get_priority(pid: i32) -> i32 {
             let mut kp: libc::kinfo_proc = unsafe { mem::zeroed() };
             let mut size = mem::size_of::<libc::kinfo_proc>();
 
+            // SAFETY: sysctl takes the following pointer arguments
+            // - mib is valid for KERN_PROC_PID.
+            // - kp is a properly sized output buffer.
+            // - newp is null for a read-only sysctl.
             let ret = unsafe {
                 libc::sysctl(
                     mib.as_ptr(),
