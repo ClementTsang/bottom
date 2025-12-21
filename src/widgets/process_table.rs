@@ -378,8 +378,7 @@ impl ProcWidgetState {
                         State,
                         Time,
                         Priority,
-                        #[cfg(unix)]
-                        Nice,
+                        // Maybe add nice back as a default when I can figure out how to do the default configs better for Windows? As currently otherwise there's a mismatch.
                     ];
 
                     default_columns.into_iter().map(make_column).collect()
@@ -1207,7 +1206,7 @@ mod test {
             total_write: 0,
             process_state: "N/A",
             process_char: '?',
-            #[cfg(target_family = "unix")]
+            #[cfg(unix)]
             user: Some("root".into()),
             #[cfg(not(target_family = "unix"))]
             user: Some("N/A".into()),

@@ -57,7 +57,7 @@ pub fn kill_process_given_pid(pid: Pid) -> anyhow::Result<()> {
 }
 
 /// Kills a process, given a PID, for UNIX.
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 pub fn kill_process_given_pid(pid: Pid, signal: usize) -> anyhow::Result<()> {
     // SAFETY: the signal should be valid, and we act properly on an error (exit code not 0).
     let output = unsafe { libc::kill(pid, signal as i32) };

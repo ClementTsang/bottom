@@ -30,7 +30,7 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResu
     Ok(cpus)
 }
 
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 pub(crate) fn get_load_avg() -> crate::collection::cpu::LoadAvgHarvest {
     // The API for sysinfo apparently wants you to call it like this, rather than
     // using a &System.
