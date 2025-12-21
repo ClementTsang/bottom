@@ -37,7 +37,7 @@ mod test {
     #[test]
     fn valid_process_column_config() {
         let config = r#"
-            columns = ["CPU%", "PiD", "user", "MEM", "virt", "Tread", "T.Write", "Rps", "W/s", "tiMe", "USER", "state"]
+            columns = ["CPU%", "PiD", "user", "MEM", "virt", "Tread", "T.Write", "Rps", "W/s", "tiMe", "USER", "state", "prioRity", "Nice"]
         "#;
 
         let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
@@ -56,6 +56,8 @@ mod test {
                 ProcWidgetColumn::Time,
                 ProcWidgetColumn::User,
                 ProcWidgetColumn::State,
+                ProcWidgetColumn::Priority,
+                ProcWidgetColumn::Nice,
             ],
         );
     }
