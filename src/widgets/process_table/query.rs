@@ -242,10 +242,10 @@ mod tests {
     use super::*;
 
     fn simple_process(name: &str) -> ProcessHarvest {
-        let mut a = ProcessHarvest::default();
-        a.name = name.into();
-
-        a
+        ProcessHarvest {
+            name: name.into(),
+            ..Default::default()
+        }
     }
 
     #[test]

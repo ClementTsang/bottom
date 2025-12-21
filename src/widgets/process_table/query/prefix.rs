@@ -241,11 +241,12 @@ impl Prefix {
                 // with the close quote checker, add one to the top of the
                 // stack.  Ugly fix but whatever.
                 query.push_front("\"".to_string());
-                return Ok(Prefix {
+
+                Ok(Prefix {
                     or: None,
                     regex_prefix: Some((PrefixType::Name, StringQuery::Value(String::default()))),
                     compare_prefix: None,
-                });
+                })
             } else {
                 let mut quoted_string = queue_top;
                 while let Some(next_str) = query.front() {
@@ -257,15 +258,16 @@ impl Prefix {
                         query.pop_front();
                     }
                 }
-                return Ok(Prefix {
+
+                Ok(Prefix {
                     or: None,
                     regex_prefix: Some((PrefixType::Name, StringQuery::Value(quoted_string))),
                     compare_prefix: None,
-                });
+                })
             }
         } else {
             // Uh oh, it's empty with quotes!
-            return Err(QueryError::new("Missing closing quotation"));
+            Err(QueryError::new("Missing closing quotation"))
         }
     }
 }
