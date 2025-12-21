@@ -544,7 +544,6 @@ mod test {
     }
 
     #[test]
-    #[allow(unused_assignments)]
     fn test_bad_set_list() {
         let dummy = DummyConfig {
             inner: Some(InnerDummyConfig::default()),
