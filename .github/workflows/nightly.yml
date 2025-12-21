@@ -86,8 +86,8 @@ jobs:
 
       - name: Create and set tag name
         run: |
-          $COMMIT_HASH=$(git rev-parse HEAD)
-          $TIME=$(date +%s)
+          COMMIT_HASH=$(git rev-parse HEAD)
+          TIME=$(date +%s)
           TAG_NAME=$(echo "nightly-$COMMIT_HASH-$TIME")
           echo "TAG_NAME=$VER" >> $GITHUB_ENV
           echo "$TAG_NAME"
