@@ -34,6 +34,9 @@
   - [Debian / Ubuntu](#debian--ubuntu)
   - [Exherbo Linux](#exherbo-linux)
   - [Fedora / CentOS / AlmaLinux / Rocky Linux](#fedora--centos--almalinux--rocky-linux)
+    - [COPR](#copr)
+    - [Terra](#terra)
+    - [RPM](#rpm)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
   - [openSUSE](#opensuse)
@@ -244,15 +247,18 @@ cave resolve -x bottom
 
 ### Fedora / CentOS / AlmaLinux / Rocky Linux
 
+#### COPR
+
 bottom is available on [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
 
-> [!WARNING]
-> `atim/bottom` seems to be unmaintained and may be outdated ([relevant issue](https://github.com/ClementTsang/bottom/issues/1904))
+> [!WARNING] > `atim/bottom` seems to be unmaintained and may be outdated ([relevant issue](https://github.com/ClementTsang/bottom/issues/1904))
 
 ```bash
 sudo dnf copr enable atim/bottom -y
 sudo dnf install bottom
 ```
+
+#### Terra
 
 bottom is also available via [Terra](https://terra.fyralabs.com/):
 
@@ -260,6 +266,8 @@ bottom is also available via [Terra](https://terra.fyralabs.com/):
 sudo dnf install --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' --setopt='terra.gpgkey=https://repos.fyralabs.com/terra$releasever/key.asc' terra-release
 sudo dnf install bottom
 ```
+
+#### RPM
 
 `.rpm` files are also generated for x86 in the [releases](https://github.com/ClementTsang/bottom/releases) page.
 For example:
@@ -341,7 +349,7 @@ gah install bottom
 
 ### Homebrew
 
-Formula available [here](https://formulae.brew.sh/formula/bottom):
+The formula is available [here](https://formulae.brew.sh/formula/bottom):
 
 ```bash
 brew install bottom
@@ -387,8 +395,7 @@ You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 
 ### Windows installer
 
-You can also manually install bottom as a Windows program by going to the [latest release](https://github.com/ClementTsang/bottom/releases/latest)
-and installing via the `.msi` file.
+You can manually install bottom as a Windows program by downloading and using the `.msi` file from the [latest release](https://github.com/ClementTsang/bottom/releases/latest).
 
 ### Conda
 
@@ -405,7 +412,7 @@ conda install bottom
 
 ### mise
 
-bottom is available in [mise](https://github.com/jdx/mise). You can install it with something like:
+bottom is available in [mise](https://github.com/jdx/mise). You can install it like so:
 
 ```
 mise use -g bottom@latest
