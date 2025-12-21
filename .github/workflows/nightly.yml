@@ -77,7 +77,7 @@ jobs:
       - name: Delete tag and release if not mock
         if: github.event.inputs.isMock != 'true'
         run: |
-          PREV_NIGHTLY=$(gh release list --json name,tagName | jq -c '[.[] | select (.tagName | contains("nightly"))][0] | .tagName')
+          PREV_NIGHTLY=$(gh release list --json name,tagName | jq -c '[.[] | select (.tagName | contains("nightly-"))][0] | .tagName')
           echo "Will delete nightly release with tag $PREV_NIGHTLY"
           if [[ "$PREV_NIGHTLY" != "null" ]]; then
             gh release delete nightly --cleanup-tag || echo "no previous nightly release"
@@ -89,14 +89,18 @@ jobs:
         if: github.event.inputs.isMock != 'true'
         run: sleep 10
 
-      - name: Create and set tag name
+      - name: Create and set tag name and release name
         if: github.event.inputs.isMock != 'true'
         run: |
-          COMMIT_HASH=$(git rev-parse HEAD)
+          COMMIT_HASH=$(git rev-parse --short=8 HEAD)
           TIME=$(date +%s)
           TAG_NAME=$(echo "nightly-$COMMIT_HASH-$TIME")
-          echo "TAG_NAME=$VER" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           echo "$TAG_NAME"
+
+          RELEASE_DATE=$(date '+%Y-%m-%d')
+          echo "RELEASE_DATE=$RELEASE_DATE" >> $GITHUB_ENV
+          echo "$RELEASE_DATE"
 
       # As a workaround to immutable releases, we create it as a draft first, then manually publish it after.
       - name: Add all release files and create nightly release if not mock
@@ -108,7 +112,7 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           draft: true
           fail_on_unmatched_files: true
-          name: "Nightly"
+          name: ${{ env.RELEASE_NAME }}
           files: |
             ./release/*
 
