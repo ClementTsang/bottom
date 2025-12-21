@@ -543,13 +543,15 @@ mod test {
     }
 
     #[test]
+    #[allow(unused_assignments)]
     fn test_bad_set_list() {
+        let mut _s: Vec<Style> = vec![];
         let dummy = DummyConfig {
             inner: Some(InnerDummyConfig::default()),
         };
 
         (move || -> anyhow::Result<()> {
-            set_colour_list!(vec![], &dummy.inner, bad_list);
+            set_colour_list!(_s, &dummy.inner, bad_list);
 
             Ok(())
         })()
