@@ -1207,7 +1207,7 @@ mod test {
             total_write: 0,
             process_state: "N/A",
             process_char: '?',
-            #[cfg(target_family = "unix")]
+            #[cfg(unix)]
             user: Some("root".into()),
             #[cfg(not(target_family = "unix"))]
             user: Some("N/A".into()),

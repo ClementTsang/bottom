@@ -177,7 +177,7 @@ pub struct DataCollector {
     #[cfg(feature = "battery")]
     battery_list: Option<Vec<Battery>>,
 
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     user_table: processes::UserTable,
 
     #[cfg(feature = "gpu")]
@@ -218,7 +218,7 @@ impl DataCollector {
             #[cfg(feature = "battery")]
             battery_list: None,
             filters,
-            #[cfg(target_family = "unix")]
+            #[cfg(unix)]
             user_table: Default::default(),
             #[cfg(feature = "gpu")]
             gpu_pids: None,
@@ -430,7 +430,7 @@ impl DataCollector {
         if self.widgets_to_harvest.use_cpu {
             self.data.cpu = cpu::get_cpu_data_list(&self.sys.system, self.show_average_cpu).ok();
 
-            #[cfg(target_family = "unix")]
+            #[cfg(unix)]
             {
                 self.data.load_avg = Some(cpu::get_load_avg());
             }

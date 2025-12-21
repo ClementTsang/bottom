@@ -222,6 +222,7 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "state" => Ok(ProcColumn::State),
             "user" => Ok(ProcColumn::User),
             "time" => Ok(ProcColumn::Time),
+            #[cfg(unix)]
             "nice" => Ok(ProcColumn::Nice),
             "priority" => Ok(ProcColumn::Priority),
             #[cfg(feature = "gpu")]

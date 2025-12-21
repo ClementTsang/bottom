@@ -19,14 +19,14 @@ cfg_if! {
     } else if #[cfg(target_os = "freebsd")] {
         pub mod freebsd;
         pub(crate) use self::freebsd::*;
-    } else if #[cfg(target_family = "unix")] {
+    } else if #[cfg(unix)] {
         pub(crate) struct GenericProcessExt;
         impl UnixProcessExt for GenericProcessExt {}
     }
 }
 
 cfg_if! {
-    if #[cfg(target_family = "unix")] {
+    if #[cfg(unix)] {
         pub mod unix;
         pub use self::unix::*;
     }
@@ -40,7 +40,7 @@ cfg_if! {
     if #[cfg(target_family = "windows")] {
         /// A Windows process ID.
         pub type Pid = usize;
-    } else if #[cfg(target_family = "unix")] {
+    } else if #[cfg(unix)] {
         /// A UNIX process ID.
         pub type Pid = libc::pid_t;
     }
@@ -124,7 +124,7 @@ pub struct ProcessHarvest {
 
     /// This is the *effective* user ID of the process. This is only used on
     /// Unix platforms.
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub uid: Option<libc::uid_t>,
 
     /// This is the process' user.
