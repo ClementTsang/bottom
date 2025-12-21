@@ -146,17 +146,14 @@ mod test {
     /// This doesn't do anything if you use something like nextest, which runs
     /// a test-per-process, but that's fine.
     fn init_test_logger() {
-        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::sync::Once;
 
-        static LOG_INIT: AtomicBool = AtomicBool::new(false);
+        static INIT: Once = Once::new();
 
-        if LOG_INIT.load(Ordering::SeqCst) {
-            return;
-        }
-
-        LOG_INIT.store(true, Ordering::SeqCst);
-        super::init_logger(log::LevelFilter::Trace, None)
-            .expect("initializing the logger should succeed");
+        INIT.call_once(|| {
+            super::init_logger(log::LevelFilter::Trace, None)
+                .expect("initializing the logger should succeed");
+        });
     }
 
     #[cfg(feature = "logging")]

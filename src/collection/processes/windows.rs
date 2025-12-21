@@ -1,9 +1,9 @@
-//! Process data collection for Windows. Uses sysinfo.
-
-use std::time::Duration;
+//! Process data collection for Windows. Uses sysinfo and winprocinfo.
 
 use super::{ProcessHarvest, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult};
+use std::time::Duration;
+use winprocinfo;
 
 use itertools::Itertools;
 
@@ -90,6 +90,13 @@ pub fn sysinfo_process_data(
             }
             (gpu_mem, gpu_util, gpu_mem_percent)
         };
+
+        let base_priority = winprocinfo::get_proc_info_by_pid(process_val.pid().as_u32())
+            .ok()
+            .flatten()
+            .map(|proc| proc.base_priority)
+            .unwrap_or(0);
+
         process_vector.push(ProcessHarvest {
             pid: process_val.pid().as_u32() as _,
             parent_pid: process_val.parent().map(|p| p.as_u32() as _),
@@ -127,6 +134,7 @@ pub fn sysinfo_process_data(
             gpu_util,
             #[cfg(feature = "gpu")]
             gpu_mem_percent,
+            priority: base_priority,
         });
     }
 
