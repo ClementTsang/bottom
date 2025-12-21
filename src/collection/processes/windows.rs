@@ -1,11 +1,9 @@
 //! Process data collection for Windows. Uses sysinfo and winprocinfo.
 
-use std::time::Duration;
-
-use itertools::Itertools;
-use winprocinfo;
 use super::{ProcessHarvest, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult};
+use std::time::Duration;
+use winprocinfo;
 
 use itertools::Itertools;
 
