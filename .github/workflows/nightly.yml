@@ -85,10 +85,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release
-        if: github.event.inputs.isMock != 'true'
-        run: sleep 10
-
       - name: Create and set tag name and release name
         if: github.event.inputs.isMock != 'true'
         run: |
