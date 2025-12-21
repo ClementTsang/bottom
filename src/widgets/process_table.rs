@@ -378,8 +378,7 @@ impl ProcWidgetState {
                         State,
                         Time,
                         Priority,
-                        #[cfg(unix)]
-                        Nice,
+                        // Maybe add nice back as a default when I can figure out how to do the default configs better for Windows? As currently otherwise there's a mismatch.
                     ];
 
                     default_columns.into_iter().map(make_column).collect()

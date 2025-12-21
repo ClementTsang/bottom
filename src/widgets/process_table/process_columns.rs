@@ -208,7 +208,6 @@ impl<'de> Deserialize<'de> for ProcColumn {
         let value = String::deserialize(deserializer)?.to_lowercase();
         match value.as_str() {
             "cpu%" => Ok(ProcColumn::CpuPercent),
-            // TODO: Maybe change this in the future.
             "mem" | "mem%" => Ok(ProcColumn::MemPercent),
             "virt" | "virtual" | "virtmem" | "virtual memory" => Ok(ProcColumn::VirtualMem),
             "pid" => Ok(ProcColumn::Pid),
@@ -226,7 +225,6 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "nice" => Ok(ProcColumn::Nice),
             "priority" => Ok(ProcColumn::Priority),
             #[cfg(feature = "gpu")]
-            // TODO: Maybe change this in the future.
             "gmem" | "gmem%" => Ok(ProcColumn::GpuMemPercent),
             #[cfg(feature = "gpu")]
             "gpu%" => Ok(ProcColumn::GpuUtilPercent),
