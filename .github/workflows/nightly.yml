@@ -80,7 +80,7 @@ jobs:
           PREV_NIGHTLY=$(gh release list --json name,tagName | jq -c '[.[] | select (.tagName | contains("nightly-"))][0] | .tagName' | tr -d '"')
           echo "Will delete nightly release with tag '$PREV_NIGHTLY'"
           if [[ "$PREV_NIGHTLY" != "null" ]]; then
-            gh release delete nightly --cleanup-tag || echo "couldn't delete previous nightly release"
+            gh release delete $PREV_NIGHTLY --cleanup-tag || echo "couldn't delete previous nightly release"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
