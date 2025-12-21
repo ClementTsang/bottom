@@ -76,6 +76,7 @@ jobs:
 
       - name: Delete tag and release if not mock
         if: github.event.inputs.isMock != 'true'
+        # TODO: FIX
         run: gh release delete nightly --cleanup-tag || echo "no previous nightly release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -103,11 +104,12 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           draft: true
           fail_on_unmatched_files: true
+          name: "Nightly"
           files: |
             ./release/*
 
       - name: Publish the draft release
         if: github.event.inputs.isMock != 'true'
-        run: gh release edit nightly --draft=false
+        run: gh release edit "$TAG_NAME" --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
