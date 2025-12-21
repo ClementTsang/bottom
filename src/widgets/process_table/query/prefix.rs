@@ -518,6 +518,8 @@ impl QueryProcessor for Prefix {
                                     // differently based on the
                                     // prefix type!
 
+                                    // TODO: Support this without spaces?
+
                                     let mut value = read_value;
 
                                     match prefix_type {
@@ -556,6 +558,7 @@ impl QueryProcessor for Prefix {
             }
         }
 
+        // TODO: Give more information here (e.g. closest query?)
         Err(QueryError::new("Invalid query"))
     }
 }

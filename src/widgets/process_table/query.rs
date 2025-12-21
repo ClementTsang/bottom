@@ -323,4 +323,68 @@ mod tests {
         assert!(!query.check(&under, false));
         assert!(!query.check(&exact, false));
     }
+
+    #[test]
+    fn basic_mem_query() {
+        let query = parse_query("memb > 1 GiB", false, false, false).unwrap();
+
+        let mut over = simple_process("a");
+        over.mem_usage = 2 * 1024 * 1024 * 1024;
+
+        let mut under = simple_process("a");
+        under.mem_usage = 0;
+
+        let mut exact = simple_process("a");
+        exact.mem_usage = 1024 * 1024 * 1024;
+
+        assert!(query.check(&over, false));
+        assert!(!query.check(&under, false));
+        assert!(!query.check(&exact, false));
+    }
+
+    #[test]
+    fn nested_query_1() {
+        let query = parse_query("(a or b) and (c or a)", false, false, false).unwrap();
+
+        let a = simple_process("a");
+        let b = simple_process("b");
+        let c = simple_process("c");
+        let d = simple_process("d");
+
+        assert!(query.check(&a, false));
+        assert!(!query.check(&b, false));
+        assert!(!query.check(&c, false));
+        assert!(!query.check(&d, false));
+    }
+
+    #[test]
+    fn nested_query_2() {
+        let query = parse_query("(cpu > 10 or cpu < 5) and (c or a)", false, false, false).unwrap();
+
+        let mut a_valid_1 = simple_process("a");
+        a_valid_1.cpu_usage_percent = 100.0;
+
+        let mut a_valid_2 = simple_process("a");
+        a_valid_2.cpu_usage_percent = 1.0;
+
+        let mut a_invalid = simple_process("a");
+        a_invalid.cpu_usage_percent = 6.0;
+
+        let mut c = simple_process("c");
+        c.cpu_usage_percent = 50.0;
+
+        let mut b = simple_process("b");
+        b.cpu_usage_percent = 50.0;
+
+        let mut d = simple_process("d");
+        d.cpu_usage_percent = 6.0;
+
+        assert!(query.check(&a_valid_1, false));
+        assert!(query.check(&a_valid_2, false));
+        assert!(query.check(&c, false));
+
+        assert!(!query.check(&a_invalid, false));
+        assert!(!query.check(&b, false));
+        assert!(!query.check(&d, false));
+    }
 }
