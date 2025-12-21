@@ -80,12 +80,12 @@ jobs:
           while true; do
             PREV_NIGHTLY=$(gh release list --json name,tagName | jq -c '[.[] | select (.tagName | contains("nightly-"))][0] | .tagName' | tr -d '"')
 
-            if [[ "$PREV_NIGHTLY" != "null" && "$PREV_NIGHTLY" == *"nightly-"* ]]; then # Check just in case as I do not want to delete something else!
-              echo "Will delete nightly release with tag '$PREV_NIGHTLY'"
-              gh release delete $PREV_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting" && break }
+            if [[ "$PREV_NIGHTLY" != "null" && "$PREV_NIGHTLY" == *"nightly-"* ]]; then
+              echo "Will delete nightly release with tag '$PREV_NIGHTLY'";
+              gh release delete $PREV_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
             else
-              echo "no nightly releases left, done"
-              break
+              echo "no nightly releases left, done";
+              break;
             fi
           done
         env:
