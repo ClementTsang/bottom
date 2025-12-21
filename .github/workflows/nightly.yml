@@ -98,9 +98,10 @@ jobs:
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           echo "$TAG_NAME"
 
-          RELEASE_DATE=$(date '+%Y-%m-%d')
-          echo "RELEASE_DATE=$RELEASE_DATE" >> $GITHUB_ENV
-          echo "$RELEASE_DATE"
+          DATE=$(date '+%Y-%m-%d')
+          RELEASE_NAME=$(echo "Nightly ($DATE)")
+          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
+          echo "$RELEASE_NAME"
 
       # As a workaround to immutable releases, we create it as a draft first, then manually publish it after.
       - name: Add all release files and create nightly release if not mock
