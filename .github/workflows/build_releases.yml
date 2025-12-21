@@ -33,7 +33,6 @@ permissions:
   contents: read
   attestations: write
 
-# TODO: Maybe add retry job in case of timeouts?
 jobs:
   build-binaries:
     name: "Build binaries"
@@ -237,8 +236,8 @@ jobs:
           name: "release-${{ matrix.info.target }}"
           path: release
 
-  build-with-vm:
-    name: "Build binaries via VMs"
+  build-freebsd:
+    name: "Build FreeBSD binaries"
     runs-on: "ubuntu-latest"
     timeout-minutes: 12
     strategy:
@@ -250,21 +249,9 @@ jobs:
 
           # Alas, that's why we do it with VMs.
 
-          - {
-              type: "freebsd",
-              os_release: "15.0",
-              target: "x86_64-unknown-freebsd",
-            }
-          - {
-              type: "freebsd",
-              os_release: "14.3",
-              target: "x86_64-unknown-freebsd",
-            }
-          - {
-              type: "freebsd",
-              os_release: "13.5",
-              target: "x86_64-unknown-freebsd",
-            }
+          - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
+          - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
+          - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
     steps:
       - name: Checkout repository
         if: matrix.info.container == ''
@@ -272,8 +259,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Build (FreeBSD)
-        if: ${{ matrix.info.type == 'freebsd' }}
+      # The VM jobs randomly fail, and since GHA can't retry, we retry manually.
+      - name: Build (Attempt 1)
         uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
         with:
           release: "${{ matrix.info.os_release }}"
@@ -286,6 +273,41 @@ jobs:
           run: |
             . "$HOME/.cargo/env"
             BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
+        id: upload_attempt_1
+        continue-on-error: true
+
+      - name: Build (Attempt 2)
+        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
+        if: steps.upload_attempt_1.outcome == 'failure'
+        id: upload_attempt_2
+        continue-on-error: true
+
+      - name: Build (Attempt 3)
+        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
+        if: steps.upload_attempt_2.outcome == 'failure'
+        id: upload_attempt_3
 
       - name: Move automatically generated completion/manpage
         shell: bash
