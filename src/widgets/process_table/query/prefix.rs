@@ -54,8 +54,9 @@ fn process_prefix_units(query: &mut VecDeque<String>, value: &mut f64) {
     }
 }
 
-// TODO: This is also jank and could be better represented. Add tests, then
-// clean up!
+/// Either contains a further `Or` recursively, or a "prefix" which is a leaf that can be searched.
+///
+// TODO: Represent this using an enum instead or something...
 #[derive(Default)]
 pub(super) struct Prefix {
     pub(super) or: Option<Box<Or>>,
@@ -229,7 +230,7 @@ impl Prefix {
                 },
             }
         } else {
-            // Somehow we have an empty condition... oh well.  Return true.
+            // Somehow we have an empty condition... oh well. Return true.
             true
         }
     }
@@ -237,9 +238,9 @@ impl Prefix {
     fn process_in_quotes(query: &mut VecDeque<String>) -> QueryResult<Self> {
         if let Some(queue_top) = query.pop_front() {
             if queue_top == "\"" {
-                // This means we hit something like "".  Return an empty prefix, and to deal
+                // This means we hit something like "". Return an empty prefix, and to deal
                 // with the close quote checker, add one to the top of the
-                // stack.  Ugly fix but whatever.
+                // stack. Ugly fix but whatever.
                 query.push_front("\"".to_string());
 
                 Ok(Prefix {
@@ -248,16 +249,18 @@ impl Prefix {
                     compare_prefix: None,
                 })
             } else {
-                let mut quoted_string = queue_top;
+                let mut intern_string = vec![queue_top];
+
+                // TODO: I think this should consume the quote...?
                 while let Some(next_str) = query.front() {
                     if next_str == "\"" {
-                        // Stop!
                         break;
                     } else {
-                        quoted_string.push_str(next_str);
-                        query.pop_front();
+                        intern_string.push(query.pop_front().expect("we just peeked at the front"));
                     }
                 }
+
+                let quoted_string = intern_string.join(" ");
 
                 Ok(Prefix {
                     or: None,
@@ -266,7 +269,7 @@ impl Prefix {
                 })
             }
         } else {
-            // Uh oh, it's empty with quotes!
+            // Uh oh, there's nothing left in the stack, but we're inside quotes!
             Err(QueryError::new("Missing closing quotation"))
         }
     }
@@ -291,8 +294,8 @@ impl QueryProcessor for Prefix {
     where
         Self: Sized,
     {
-        if let Some(queue_top) = query.pop_front() {
-            if queue_top == "(" {
+        if let Some(curr) = query.pop_front() {
+            if curr == "(" {
                 if query.is_empty() {
                     return Err(QueryError::new("Missing closing parentheses"));
                 }
@@ -313,6 +316,7 @@ impl QueryProcessor for Prefix {
                 }
 
                 // Now convert this back to a OR...
+                // TODO: This seems like a bad way to do it.
                 let initial_or = Or {
                     lhs: And {
                         lhs: Prefix {
@@ -353,16 +357,16 @@ impl QueryProcessor for Prefix {
                 } else {
                     return Err(QueryError::new("Missing closing parentheses"));
                 }
-            } else if queue_top == ")" {
+            } else if curr == ")" {
                 return Err(QueryError::new("Missing opening parentheses"));
-            } else if queue_top == "\"" {
+            } else if curr == "\"" {
                 // Similar to parentheses, trap and check for missing closing quotes.  Note,
                 // however, that we will DIRECTLY call another process_prefix
                 // call...
 
                 let prefix = Prefix::process_in_quotes(query)?;
-                if let Some(close_paren) = query.pop_front() {
-                    if close_paren == "\"" {
+                if let Some(close_quote) = query.pop_front() {
+                    if close_quote == "\"" {
                         return Ok(prefix);
                     } else {
                         return Err(QueryError::new("Missing closing quotation"));
@@ -372,9 +376,11 @@ impl QueryProcessor for Prefix {
                 }
             } else {
                 // Get prefix type.
-                let prefix_type = queue_top.parse::<PrefixType>()?;
+                let prefix_type = curr.parse::<PrefixType>()?;
+
+                // TODO: Separate these cases here and below.
                 let content = if let PrefixType::Name = prefix_type {
-                    Some(queue_top)
+                    Some(curr)
                 } else {
                     query.pop_front()
                 };
@@ -392,7 +398,7 @@ impl QueryProcessor for Prefix {
                             // We have to check if someone put an "="...
                             if content == "=" {
                                 // Check next string if possible
-                                if let Some(queue_next) = query.pop_front() {
+                                if let Some(string_value) = query.pop_front() {
                                     // TODO: [Query] Need to consider the following cases:
                                     // - (test)
                                     // - (test
@@ -404,11 +410,29 @@ impl QueryProcessor for Prefix {
                                     // Do we want these to be valid?  They should, as a string,
                                     // right?
 
+                                    // We also must check if this value is wrapped in quotes!
+                                    let final_value = if string_value == "\"" {
+                                        let mut intern_string = vec![];
+
+                                        // Keep parsing until we either hit another quotation or we error.
+                                        while let Some(next_string) = query.pop_front() {
+                                            if next_string == "\"" {
+                                                break;
+                                            }
+
+                                            intern_string.push(next_string);
+                                        }
+
+                                        intern_string.join(" ")
+                                    } else {
+                                        string_value
+                                    };
+
                                     return Ok(Prefix {
                                         or: None,
                                         regex_prefix: Some((
                                             prefix_type,
-                                            StringQuery::Value(queue_next),
+                                            StringQuery::Value(final_value),
                                         )),
                                         compare_prefix: None,
                                     });

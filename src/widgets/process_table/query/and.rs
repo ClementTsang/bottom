@@ -5,6 +5,8 @@ use crate::{
     widgets::query::{COMPARISON_LIST, Or, Prefix, QueryProcessor, QueryResult, error::QueryError},
 };
 
+/// A node where both the left hand side or the right hand side are considered.
+/// Note that the right hand side is optional, as that's how I implemented it a long time ago.
 #[derive(Default)]
 pub(super) struct And {
     pub(super) lhs: Prefix,

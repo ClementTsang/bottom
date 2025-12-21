@@ -304,14 +304,37 @@ mod tests {
         let a = simple_process("a");
         let b = simple_process("b");
         let or = simple_process("or");
-        let valid = simple_process("a \"or\" b");
-        let also_valid = simple_process("a \"or\" b \"or\" c");
+        let valid = simple_process("a \"or\" b"); // This is valid as the query is "match a word with a, or, and b".
+        let valid_2 = simple_process("a or b");
+        let valid_3 = simple_process("a \"or\" b \"or\" c");
 
         assert!(!query.check(&a, false));
         assert!(!query.check(&b, false));
         assert!(!query.check(&or, false));
         assert!(query.check(&valid, false));
-        assert!(query.check(&also_valid, false));
+        assert!(query.check(&valid_2, false));
+        assert!(query.check(&valid_3, false));
+    }
+
+    /// Ensure that multi-word quoted keywords are treated as strings. In this case, rather than `"a" OR "b"`, it should be treated
+    /// as the string `"a or b"`.
+    #[test]
+    fn quoted_multi_word_query() {
+        let query = parse_query("\"a or b\"", false, false, false).unwrap();
+
+        let a = simple_process("a");
+        let b = simple_process("b");
+        let or = simple_process("or");
+        let valid = simple_process("a or b");
+        let valid_2 = simple_process("a or b \"or\" c");
+        let invalid_no_regex = simple_process("a \"or\" b"); // Invalid now as the query is one big string!
+
+        assert!(!query.check(&a, false));
+        assert!(!query.check(&b, false));
+        assert!(!query.check(&or, false));
+        assert!(query.check(&valid, false));
+        assert!(query.check(&valid_2, false));
+        assert!(!query.check(&invalid_no_regex, false));
     }
 
     #[test]
@@ -435,4 +458,47 @@ mod tests {
         assert!(!query.check(&a_invalid, false));
         assert!(!query.check(&b, false));
     }
+
+    /// Test an ambiguous or.
+    #[test]
+    fn ambiguous_or() {}
+
+    /// Test if a complicated query even parses.
+    #[test]
+    fn parse_complicated_query() {
+        parse_query(
+            "cpu > 10.5 AND (memb = 1 MiB || state = sleeping) and (a or b) and (read >= 0 or write >= 0)",
+            false,
+            false,
+            false,
+        )
+        .unwrap();
+    }
+
+    /// Test empty quotes works.
+    #[test]
+    fn parse_empty_quotes() {
+        parse_query("\"\"", false, false, false).unwrap();
+    }
+
+    /// Test unfinished quotes error.
+    #[test]
+    fn parse_unfinished_quotes() {
+        parse_query("\"", false, false, false).unwrap_err();
+    }
+
+    /// Test a fix for a bug with closing quotations. The problem seems to arise from quotes being used as an argument
+    /// to a prefix... but this should probably be valid.
+    #[test]
+    fn parse_nested_closing_quotes() {
+        parse_query("state = \"test\"", false, false, false).unwrap();
+        parse_query("state = \"2 words\"", false, false, false).unwrap();
+        parse_query("(memb = 1 MiB || state = \"test\")", false, false, false).unwrap();
+        parse_query("(memb = 1 MiB || state = \"2 words\")", false, false, false).unwrap();
+    }
+
+    // TODO: Add this after fixed.
+    // /// Test if units can ignore spaces from their preceding value.
+    // #[test]
+    // fn units_with_and_without_spaces() {}
 }

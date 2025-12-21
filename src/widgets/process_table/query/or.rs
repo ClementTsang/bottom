@@ -10,6 +10,8 @@ use crate::{
     },
 };
 
+/// A node where either the left hand side or the right hand side are considered.
+/// Note that the right hand side is optional, as that's how I implemented it a long time ago.
 #[derive(Default)]
 pub(super) struct Or {
     pub(super) lhs: And,
