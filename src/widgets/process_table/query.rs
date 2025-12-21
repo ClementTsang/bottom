@@ -1,3 +1,9 @@
+//! How we query processes.
+//!
+//! Yes, this is a hand-rolled parser. I originally wrote this back in uni where writing
+//! a parser was basically a thing I did every year, and parsing crate options were not
+//! as good as they are now.
+
 mod and;
 mod error;
 mod or;

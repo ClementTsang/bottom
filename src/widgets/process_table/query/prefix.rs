@@ -558,7 +558,7 @@ impl QueryProcessor for Prefix {
             }
         }
 
-        // TODO: Give more information here (e.g. closest query?)
+        // TODO: Give more information here (e.g. closest query?), though this is moreso meant as a fallback.
         Err(QueryError::new("Invalid query"))
     }
 }
