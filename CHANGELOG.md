@@ -34,6 +34,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 - [#1888](https://github.com/ClementTsang/bottom/pull/1888): Make automatically generated `.deb` package conflict with the official one.
 - [#1891](https://github.com/ClementTsang/bottom/pull/1891): Fix typos in codebase.
+- [#1910](https://github.com/ClementTsang/bottom/pull/1910): Fix a bug around quote parsing in the process widget's search.
 
 ## [0.11.4] - 2025-11-16
 
