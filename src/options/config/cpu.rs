@@ -1,7 +1,6 @@
 use serde::Deserialize;
 
-/// The default selection of the CPU widget. If the given selection is invalid,
-/// we will fall back to all.
+/// The default selected entry of the CPU widget.
 #[derive(Clone, Copy, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -18,6 +17,7 @@ pub(crate) enum CpuDefault {
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct CpuConfig {
+    /// The default selected entry of the CPU widget.
     #[serde(default)]
     pub(crate) default: CpuDefault,
 }

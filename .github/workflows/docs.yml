@@ -34,11 +34,7 @@ jobs:
         run: pip install -r docs/requirements.txt
 
       - name: Configure git user and email
-        run: |
-          git config --global user.name ${GIT_USER}
-          git config --global user.email ${GIT_EMAIL}
-          echo Name: $(git config --get user.name)
-          echo Email: $(git config --get user.email)
+        run: ./scripts/ci/configure_git.sh
 
       - name: Build and deploy docs with mike
         run: |

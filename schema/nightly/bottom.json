@@ -133,12 +133,13 @@
       "type": "object",
       "properties": {
         "default": {
+          "description": "The default selected entry of the CPU widget.",
           "$ref": "#/$defs/CpuDefault"
         }
       }
     },
     "CpuDefault": {
-      "description": "The default selection of the CPU widget. If the given selection is invalid,\nwe will fall back to all.",
+      "description": "The default selected entry of the CPU widget.",
       "type": "string",
       "enum": [
         "all",

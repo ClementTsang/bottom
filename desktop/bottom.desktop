@@ -8,4 +8,4 @@ Terminal=true
 Type=Application
 Categories=System;ConsoleOnly;Monitor;
 StartupNotify=false
-Icon=bottom
+Icon=bottom-system-monitor

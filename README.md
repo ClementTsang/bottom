@@ -34,6 +34,9 @@
   - [Debian / Ubuntu](#debian--ubuntu)
   - [Exherbo Linux](#exherbo-linux)
   - [Fedora / CentOS / AlmaLinux / Rocky Linux](#fedora--centos--almalinux--rocky-linux)
+    - [COPR](#copr)
+    - [Terra](#terra)
+    - [RPM](#rpm)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
   - [openSUSE](#opensuse)
@@ -212,7 +215,7 @@ yay -S bottom-git
 ### Debian / Ubuntu
 
 A `.deb` file is provided on each [stable release](https://github.com/ClementTsang/bottom/releases/latest) and
-[nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly) for x86, aarch64, and armv7.
+[nightly builds](https://github.com/ClementTsang/bottom/releases) for x86, aarch64, and armv7.
 Some examples of installing it this way:
 
 ```bash
@@ -244,6 +247,12 @@ cave resolve -x bottom
 
 ### Fedora / CentOS / AlmaLinux / Rocky Linux
 
+#### COPR
+
+> [!WARNING]
+>
+> `atim/bottom` seems to be unmaintained and may be outdated ([relevant issue](https://github.com/ClementTsang/bottom/issues/1904))
+
 bottom is available on [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
 
 ```bash
@@ -251,12 +260,16 @@ sudo dnf copr enable atim/bottom -y
 sudo dnf install bottom
 ```
 
+#### Terra
+
 bottom is also available via [Terra](https://terra.fyralabs.com/):
 
 ```bash
 sudo dnf install --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' --setopt='terra.gpgkey=https://repos.fyralabs.com/terra$releasever/key.asc' terra-release
 sudo dnf install bottom
 ```
+
+#### RPM
 
 `.rpm` files are also generated for x86 in the [releases](https://github.com/ClementTsang/bottom/releases) page.
 For example:
@@ -338,7 +351,7 @@ gah install bottom
 
 ### Homebrew
 
-Formula available [here](https://formulae.brew.sh/formula/bottom):
+The formula is available [here](https://formulae.brew.sh/formula/bottom):
 
 ```bash
 brew install bottom
@@ -384,8 +397,7 @@ You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 
 ### Windows installer
 
-You can also manually install bottom as a Windows program by going to the [latest release](https://github.com/ClementTsang/bottom/releases/latest)
-and installing via the `.msi` file.
+You can manually install bottom as a Windows program by downloading and using the `.msi` file from the [latest release](https://github.com/ClementTsang/bottom/releases/latest).
 
 ### Conda
 
@@ -402,7 +414,7 @@ conda install bottom
 
 ### mise
 
-bottom is available in [mise](https://github.com/jdx/mise). You can install it with something like:
+bottom is available in [mise](https://github.com/jdx/mise). You can install it like so:
 
 ```
 mise use -g bottom@latest
@@ -413,7 +425,7 @@ mise use -g bottom@latest
 You can also use the pre-built release binaries:
 
 - [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), built using the release branch
-- [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), built using the `main` branch at 00:00 UTC daily
+- [Latest nightly release](https://github.com/ClementTsang/bottom/releases), built using the `main` branch at 00:00 UTC daily
 
 To use, download and extract the binary that matches your system. You can then run by doing:
 
@@ -570,6 +582,7 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="http://saphereye.github.io"><img src="https://avatars.githubusercontent.com/u/59739923?v=4?s=100" width="100px;" alt="Adarsh Das"/><br /><sub><b>Adarsh Das</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Saphereye" title="Code">💻</a> <a href="https://github.com/ClementTsang/bottom/commits?author=Saphereye" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/oxyzenQ"><img src="https://avatars.githubusercontent.com/u/130107241?v=4?s=100" width="100px;" alt="rezky_nightky"/><br /><sub><b>rezky_nightky</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=oxyzenQ" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gitgoggles"><img src="https://avatars.githubusercontent.com/u/101480183?v=4?s=100" width="100px;" alt="gitgoggles"/><br /><sub><b>gitgoggles</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=gitgoggles" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/thunze"><img src="https://avatars.githubusercontent.com/u/22795263?v=4?s=100" width="100px;" alt="Tom"/><br /><sub><b>Tom</b></sub></a><br /><a href="#maintenance-thunze" title="Maintenance">🚧</a></td>
     </tr>
   </tbody>
 </table>

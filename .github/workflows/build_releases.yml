@@ -5,6 +5,8 @@
 # - MSI installer for Windows (.msi)
 # - .deb releases
 # - .rpm releases
+#
+# TODO: Break this up into scripts instead.
 
 name: "build releases"
 
@@ -31,7 +33,6 @@ permissions:
   contents: read
   attestations: write
 
-# TODO: Maybe add retry job in case of timeouts?
 jobs:
   build-binaries:
     name: "Build binaries"
@@ -79,7 +80,11 @@ jobs:
             }
 
           # macOS (x86-64 and aarch64)
-          - { os: "macos-15-intel", target: "x86_64-apple-darwin", cross: false }
+          - {
+              os: "macos-15-intel",
+              target: "x86_64-apple-darwin",
+              cross: false,
+            }
           - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
 
           # Windows (x86-64, x86)
@@ -231,8 +236,8 @@ jobs:
           name: "release-${{ matrix.info.target }}"
           path: release
 
-  build-with-vm:
-    name: "Build binaries via VMs"
+  build-freebsd:
+    name: "Build FreeBSD binaries"
     runs-on: "ubuntu-latest"
     timeout-minutes: 12
     strategy:
@@ -244,21 +249,9 @@ jobs:
 
           # Alas, that's why we do it with VMs.
 
-          - {
-              type: "freebsd",
-              os_release: "15.0",
-              target: "x86_64-unknown-freebsd",
-            }
-          - {
-              type: "freebsd",
-              os_release: "14.3",
-              target: "x86_64-unknown-freebsd",
-            }
-          - {
-              type: "freebsd",
-              os_release: "13.5",
-              target: "x86_64-unknown-freebsd",
-            }
+          - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
+          - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
+          - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
     steps:
       - name: Checkout repository
         if: matrix.info.container == ''
@@ -266,8 +259,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Build (FreeBSD)
-        if: ${{ matrix.info.type == 'freebsd' }}
+      # The VM jobs randomly fail, and since GHA can't retry, we retry manually.
+      - name: Build (Attempt 1)
         uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
         with:
           release: "${{ matrix.info.os_release }}"
@@ -280,6 +273,41 @@ jobs:
           run: |
             . "$HOME/.cargo/env"
             BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
+        id: upload_attempt_1
+        continue-on-error: true
+
+      - name: Build (Attempt 2)
+        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
+        if: steps.upload_attempt_1.outcome == 'failure'
+        id: upload_attempt_2
+        continue-on-error: true
+
+      - name: Build (Attempt 3)
+        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
+        if: steps.upload_attempt_2.outcome == 'failure'
+        id: upload_attempt_3
 
       - name: Move automatically generated completion/manpage
         shell: bash
@@ -322,12 +350,12 @@ jobs:
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
-              output: "bottom_x86_64_installer.msi"
+              output: "bottom_x86_64_installer.msi",
             }
           - {
               os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
-              output: "bottom_aarch64_installer.msi"
+              output: "bottom_aarch64_installer.msi",
             }
     runs-on: ${{ matrix.info.os }}
     steps:
@@ -416,7 +444,7 @@ jobs:
             raw=$(git branch -r --contains '${{ github.ref_name }}');
             BRANCH=${raw##*/};
           fi
-          python ./scripts/cirrus/release.py "$BRANCH" "release/" "${{ inputs.caller }}"
+          python ./scripts/ci/cirrus_release.py "$BRANCH" "release/" "${{ inputs.caller }}"
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2

@@ -82,16 +82,17 @@ concat-string = "1.0.1"
 crossterm = "0.29.0"
 ctrlc = { version = "3.5.0", features = ["termination"] }
 dirs = "6.0.0"
-hashbrown = "0.16.0"
 humantime = "2.3.0"
 indexmap = "2.11.4"
 indoc = "2.0.6"
 itertools = "0.14.0"
+nohash = "0.2.0"
 nvml-wrapper = { version = "0.11.0", optional = true, features = ["legacy-functions"] }
 regex = "1.11.2"
+rustc-hash = "2.1.1"
 serde = { version = "1.0.226", features = ["derive"] }
 starship-battery = { version = "0.10.2", optional = true }
-sysinfo = "=0.37.0"
+sysinfo = "=0.37.2"
 timeless = "0.0.14-alpha"
 toml_edit = { version = "0.23.6", features = ["serde"] }
 tui = { version = "0.30.0-beta.0", package = "ratatui", features = ["unstable-rendered-line-info", "layout-cache"] }
@@ -209,8 +210,8 @@ assets = [
         "644",
     ],
     [
-        "assets/icons/bottom.svg",
-        "/usr/share/icons/hicolor/scalable/apps/bottom.svg",
+        "assets/icons/bottom-system-monitor.svg",
+        "/usr/share/icons/hicolor/scalable/apps/bottom-system-monitor.svg",
         "644",
     ],
 ]
@@ -241,7 +242,7 @@ assets = [
     { source = "completion/btm.fish", dest = "/usr/share/fish/vendor_completions.d/btm.fish", mode = "644" },
     { source = "completion/_btm", dest = "/usr/share/zsh/vendor-completions/", mode = "644" },
     { source = "desktop/bottom.desktop", dest = "/usr/share/applications/bottom.desktop", mode = "644" },
-    { source = "assets/icons/bottom.svg", dest = "/usr/share/icons/hicolor/scalable/apps/bottom.svg", mode = "644" },
+    { source = "assets/icons/bottom-system-monitor.svg", dest = "/usr/share/icons/hicolor/scalable/apps/bottom-system-monitor.svg", mode = "644" },
 ]
 
 [lints.rust]

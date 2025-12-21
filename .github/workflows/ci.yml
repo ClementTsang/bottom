@@ -6,14 +6,6 @@
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
 # - https://www.reillywood.com/blog/rust-faster-ci/
 # - https://matklad.github.io/2021/09/04/fast-rust-builds.html
-#
-# Supported platforms run the following tasks:
-# - Format
-# - Test (built/test in separate steps)
-# - Clippy (apparently faster to do it after the build/test)
-#
-# Unsupported platforms run the following tasks:
-# - Clippy
 
 name: ci
 
@@ -289,21 +281,9 @@ jobs:
           #
           # Alas, that's why we do it with VMs.
 
-          - {
-              type: "freebsd",
-              os_release: "15.0",
-              target: "x86_64-unknown-freebsd",
-            }
-          - {
-              type: "freebsd",
-              os_release: "14.3",
-              target: "x86_64-unknown-freebsd",
-            }
-          - {
-              type: "freebsd",
-              os_release: "13.5",
-              target: "x86_64-unknown-freebsd",
-            }
+          - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
+          - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
+          - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -317,8 +297,8 @@ jobs:
           key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
           cache-all-crates: true
 
-      - name: Tests + Clippy (FreeBSD)
-        if: ${{ matrix.info.type == 'freebsd' }}
+      # The VM jobs randomly fail, and since GHA clearly never fails and doesn't know how to retry, we retry manually.
+      - name: FreeBSD Tests + Clippy (Attempt 1)
         uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
         with:
           release: "${{ matrix.info.os_release }}"
@@ -333,6 +313,45 @@ jobs:
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
+        id: upload_attempt_1
+        continue-on-error: true
+
+      - name: FreeBSD Tests + Clippy (Attempt 2)
+        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet
+            cargo clippy --all-targets --workspace -- -D warnings
+        if: steps.upload_attempt_1.outcome == 'failure'
+        id: upload_attempt_2
+        continue-on-error: true
+
+      - name: FreeBSD Tests + Clippy (Attempt 3)
+        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            pkg install -y curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet
+            cargo clippy --all-targets --workspace -- -D warnings
+        if: steps.upload_attempt_2.outcome == 'failure'
+        id: upload_attempt_3
 
   completion:
     name: "CI Pass Check"

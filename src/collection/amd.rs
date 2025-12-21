@@ -8,15 +8,19 @@ use std::{
     time::{Duration, Instant},
 };
 
-use hashbrown::{HashMap, HashSet};
+use nohash::IntMap;
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 use super::linux::utils::is_device_awake;
-use crate::{app::layout_manager::UsedWidgets, collection::memory::MemData};
+use crate::{
+    app::layout_manager::UsedWidgets,
+    collection::{memory::MemData, processes::Pid},
+};
 
 // TODO: May be able to clean up some of these, Option<Vec> for example is a bit redundant.
 pub struct AmdGpuData {
     pub memory: Option<Vec<(String, MemData)>>,
-    pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
+    pub procs: Option<(u64, Vec<IntMap<Pid, (u64, u32)>>)>,
 }
 
 pub struct AmdGpuMemory {
@@ -38,8 +42,8 @@ pub struct AmdGpuProc {
 }
 
 // needs previous state for usage calculation
-static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, HashMap<u32, AmdGpuProc>>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
+static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, IntMap<Pid, AmdGpuProc>>>> =
+    LazyLock::new(|| Mutex::new(HashMap::default()));
 
 fn get_amd_devs() -> Option<Vec<PathBuf>> {
     let mut devices = Vec::new();
@@ -162,7 +166,7 @@ fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
 }
 
 // from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L13-L27
-fn get_amdgpu_pid_fds(pid: u32, device_path: Vec<PathBuf>) -> Option<Vec<u32>> {
+fn get_amdgpu_pid_fds(pid: Pid, device_path: Vec<PathBuf>) -> Option<Vec<u32>> {
     let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else {
         return None;
     };
@@ -222,8 +226,8 @@ fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
     }
 }
 
-fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
-    let mut fdinfo = HashMap::new();
+fn get_amd_fdinfo(device_path: &Path) -> Option<IntMap<Pid, AmdGpuProc>> {
+    let mut fdinfo = IntMap::default();
 
     let drm_paths = get_amdgpu_drm(device_path)?;
 
@@ -231,7 +235,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
         return None;
     };
 
-    let pids: Vec<u32> = proc_dir
+    let pids: Vec<Pid> = proc_dir
         .filter_map(|dir_entry| {
             // check if pid is valid
             let dir_entry = dir_entry.ok()?;
@@ -241,7 +245,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
                 return None;
             }
 
-            let pid = dir_entry.file_name().to_str()?.parse::<u32>().ok()?;
+            let pid = dir_entry.file_name().to_str()?.parse::<Pid>().ok()?;
 
             // skip init process
             if pid == 1 {
@@ -260,7 +264,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<HashMap<u32, AmdGpuProc>> {
 
         let mut usage: AmdGpuProc = Default::default();
 
-        let mut observed_ids: HashSet<usize> = HashSet::new();
+        let mut observed_ids: HashSet<usize> = HashSet::default();
 
         for fd in fds {
             let fdinfo_path = format!("/proc/{pid}/fdinfo/{fd}");
@@ -354,9 +358,9 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
         if widgets_to_harvest.use_proc {
             if let Some(procs) = get_amd_fdinfo(&device_path) {
                 let mut proc_info = PROC_DATA.lock().expect("mutex is poisoned");
-                let prev_fdinfo = proc_info.entry(device_path).or_insert_with(HashMap::new);
+                let prev_fdinfo = proc_info.entry(device_path).or_default();
 
-                let mut procs_map = HashMap::new();
+                let mut procs_map = IntMap::default();
                 for (proc_pid, proc_usage) in procs {
                     if let Some(prev_usage) = prev_fdinfo.get_mut(&proc_pid) {
                         // calculate deltas

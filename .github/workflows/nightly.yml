@@ -76,22 +76,51 @@ jobs:
 
       - name: Delete tag and release if not mock
         if: github.event.inputs.isMock != 'true'
-        run: gh release delete nightly --cleanup-tag
+        run: |
+          while true; do
+            PREV_NIGHTLY=$(gh release list --json name,tagName | jq -c '[.[] | select (.tagName | contains("nightly-"))][0] | .tagName' | tr -d '"')
+
+            if [[ "$PREV_NIGHTLY" != "null" && "$PREV_NIGHTLY" == *"nightly-"* ]]; then
+              echo "Will delete nightly release with tag '$PREV_NIGHTLY'";
+              gh release delete $PREV_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
+            else
+              echo "no nightly releases left, done";
+              break;
+            fi
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release
-        run: sleep 10
+      - name: Create and set tag name and release name
         if: github.event.inputs.isMock != 'true'
+        run: |
+          COMMIT_HASH=$(git rev-parse --short=8 HEAD)
+          TIME=$(date +%s)
+          TAG_NAME=$(echo "nightly-$COMMIT_HASH-$TIME")
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "$TAG_NAME"
 
+          DATE=$(date '+%Y-%m-%d')
+          RELEASE_NAME=$(echo "Nightly ($DATE)")
+          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
+          echo "$RELEASE_NAME"
+
+      # As a workaround to immutable releases, we create it as a draft first, then manually publish it after.
       - name: Add all release files and create nightly release if not mock
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # 2.0.8
         if: github.event.inputs.isMock != 'true'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
-          tag_name: "nightly"
-          draft: false
+          tag_name: ${{ env.TAG_NAME }}
+          draft: true
           fail_on_unmatched_files: true
+          name: ${{ env.RELEASE_NAME }}
           files: |
             ./release/*
+
+      - name: Publish the draft release
+        if: github.event.inputs.isMock != 'true'
+        run: gh release edit "$TAG_NAME" --draft=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
