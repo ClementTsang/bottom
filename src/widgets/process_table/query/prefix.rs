@@ -260,6 +260,7 @@ impl Prefix {
                     }
                 }
 
+                // I think joining as a space is fine? As that's the delimiter anyway.
                 let quoted_string = intern_string.join(" ");
 
                 Ok(Prefix {
@@ -423,6 +424,7 @@ impl QueryProcessor for Prefix {
                                             intern_string.push(next_string);
                                         }
 
+                                        // I think joining as a space is fine? As that's the delimiter anyway.
                                         intern_string.join(" ")
                                     } else {
                                         string_value
