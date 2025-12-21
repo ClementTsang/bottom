@@ -148,7 +148,7 @@ impl Prefix {
                         Some(user) => r.is_match(user),
                         None => r.is_match("N/A"),
                     },
-                    _ => true,
+                    _ => true, // TODO: Change prefix types to be tied to the query type so we don't have the wildcard.
                 }
             } else {
                 true
@@ -260,7 +260,6 @@ impl Prefix {
                     }
                 }
 
-                // I think joining as a space is fine? As that's the delimiter anyway.
                 let quoted_string = intern_string.join(" ");
 
                 Ok(Prefix {
@@ -424,7 +423,6 @@ impl QueryProcessor for Prefix {
                                             intern_string.push(next_string);
                                         }
 
-                                        // I think joining as a space is fine? As that's the delimiter anyway.
                                         intern_string.join(" ")
                                     } else {
                                         string_value
