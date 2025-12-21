@@ -27,8 +27,11 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1830](https://github.com/ClementTsang/bottom/pull/1830): Add spacebar shortcut to toggle process tree expansion.
 - [#1861](https://github.com/ClementTsang/bottom/pull/1861): Add read-only mode, where things like killing processes is disabled.
 - [#1890](https://github.com/ClementTsang/bottom/pull/1890): Add enter key shortcut to close process search widget.
+- [#1881](https://github.com/ClementTsang/bottom/pull/1881): Add nice (UNIX-only) and priority columns to the process widget.
 
 ### Bug Fixes
+
+- [#1910](https://github.com/ClementTsang/bottom/pull/1910): Fix a bug around quote parsing in the process widget's search.
 
 ### Other
 
