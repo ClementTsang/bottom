@@ -249,9 +249,11 @@ cave resolve -x bottom
 
 #### COPR
 
-bottom is available on [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
+> [!WARNING]
+>
+> `atim/bottom` seems to be unmaintained and may be outdated ([relevant issue](https://github.com/ClementTsang/bottom/issues/1904))
 
-> [!WARNING] > `atim/bottom` seems to be unmaintained and may be outdated ([relevant issue](https://github.com/ClementTsang/bottom/issues/1904))
+bottom is available on [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
 
 ```bash
 sudo dnf copr enable atim/bottom -y
