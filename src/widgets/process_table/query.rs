@@ -2,7 +2,7 @@
 //!
 //! Yes, this is a hand-rolled parser. I originally wrote this back in uni where writing
 //! a parser was basically a thing I did every year, and parsing crate options were not
-//! as good as they are now.
+//! as good as they are now. This has been rewritten since though.
 
 mod and;
 mod error;
@@ -32,6 +32,173 @@ trait QueryProcessor {
     fn process(query: &mut VecDeque<String>) -> QueryResult<Self>
     where
         Self: Sized;
+}
+
+/// An attribute that can be queried, possibly as part of a larger query.
+///
+/// In theory, this can be made generic to work on all table types, though for now, it's
+/// hardcoded for processes.
+enum ProcessAttribute {
+    Pid(NumericalQuery),
+    CpuPercentage(NumericalQuery),
+    MemBytes(NumericalQuery),
+    MemPercentage(NumericalQuery),
+    ReadPerSecond(NumericalQuery),
+    WritePerSecond(NumericalQuery),
+    TotalRead(NumericalQuery),
+    TotalWrite(NumericalQuery),
+    /// Note this is an "untagged" attribute.
+    Name(Regex),
+    State(Regex),
+    User(Regex),
+    Time(TimeQuery),
+    #[cfg(unix)]
+    Nice(NumericalQuery),
+    Priority(NumericalQuery),
+    #[cfg(feature = "gpu")]
+    GpuPercentage(NumericalQuery),
+    #[cfg(feature = "gpu")]
+    GpuMemoryPercentage(NumericalQuery),
+    #[cfg(feature = "gpu")]
+    GpuMemoryBytes(NumericalQuery),
+}
+
+impl ProcessAttribute {
+    fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+        match self {
+            ProcessAttribute::Pid(cmp) => cmp.check(process.pid),
+            ProcessAttribute::CpuPercentage(cmp) => cmp.check(process.cpu_usage_percent),
+            ProcessAttribute::MemBytes(cmp) => cmp.check(process.mem_usage as f64),
+            ProcessAttribute::MemPercentage(cmp) => cmp.check(process.mem_usage_percent),
+            ProcessAttribute::ReadPerSecond(cmp) => cmp.check(process.read_per_sec as f64),
+            ProcessAttribute::WritePerSecond(cmp) => cmp.check(process.write_per_sec as f64),
+            ProcessAttribute::TotalRead(cmp) => cmp.check(process.total_read as f64),
+            ProcessAttribute::TotalWrite(cmp) => cmp.check(process.total_write as f64),
+            ProcessAttribute::Name(re) => re.is_match(if is_using_command {
+                process.command.as_str()
+            } else {
+                process.name.as_str()
+            }),
+            ProcessAttribute::State(re) => re.is_match(process.process_state.0),
+            ProcessAttribute::User(re) => match process.user.as_ref() {
+                Some(user) => re.is_match(user),
+                None => re.is_match("N/A"),
+            },
+            ProcessAttribute::Time(time) => time.check(process.time),
+            // TODO: It's a bit silly for some of these, like nice/priority, where it's casted to an f64.
+            #[cfg(unix)]
+            ProcessAttribute::Nice(cmp) => cmp.check(process.nice as f64),
+            ProcessAttribute::Priority(cmp) => cmp.check(process.priority as f64),
+            #[cfg(feature = "gpu")]
+            ProcessAttribute::GpuPercentage(cmp) => cmp.check(process.gpu_util as f64),
+            #[cfg(feature = "gpu")]
+            ProcessAttribute::GpuMemoryPercentage(cmp) => cmp.check(process.gpu_mem_percent as f64),
+            #[cfg(feature = "gpu")]
+            ProcessAttribute::GpuMemoryBytes(cmp) => cmp.check(process.gpu_mem as f64),
+        }
+    }
+}
+
+/// Process a new regex given a `base` string and some settings.
+fn new_regex(
+    base: &str, whole_word: bool, ignore_case: bool, with_regex: bool,
+) -> QueryResult<Regex> {
+    let escaped_regex: String; // Needed for ownership reasons.
+
+    let final_regex_string = &format!(
+        "{}{}{}{}",
+        if whole_word { "^" } else { "" },
+        if ignore_case { "(?i)" } else { "" },
+        if !with_regex {
+            escaped_regex = regex::escape(base);
+            &escaped_regex
+        } else {
+            base
+        },
+        if whole_word { "$" } else { "" },
+    );
+
+    Ok(Regex::new(final_regex_string)?)
+}
+
+/// A search query tree.
+///
+/// In theory, this can be made generic to work on all table types, though for now, it's
+/// hardcoded for processes.
+enum Query {
+    /// At least one child must match for this part of the query to be valid.
+    Or {
+        lhs: Box<Query>,
+        rhs: Option<Box<Query>>,
+    },
+
+    /// All children must match for this part of the query to be valid.
+    And {
+        lhs: Box<Query>,
+        rhs: Option<Box<Query>>,
+    },
+
+    /// Negates the result of the child query.
+    Not { child: Box<Query> },
+
+    /// A part of the query with no further children to check. Should either be a string literal
+    /// (representing a process/command name) or the attribute name and a value to match to.
+    ///
+    /// If we make this generic, this is the part we want to make generic.
+    Attribute(ProcessAttribute),
+}
+
+impl Query {
+    /// Check whether something matches the query.
+    fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+        match self {
+            Query::Or { lhs, rhs } => {
+                lhs.check(process, is_using_command)
+                    || rhs
+                        .as_ref()
+                        .map(|rhs| rhs.check(process, is_using_command))
+                        .unwrap_or(true)
+            }
+            Query::And { lhs, rhs } => {
+                lhs.check(process, is_using_command)
+                    && rhs
+                        .as_ref()
+                        .map(|rhs| rhs.check(process, is_using_command))
+                        .unwrap_or(true)
+            }
+            Query::Not { child } => !(child.check(process, is_using_command)),
+            Query::Attribute(attribute) => attribute.check(process, is_using_command),
+        }
+    }
+
+    /// Parse a queue of tokens and return a new [`Query`].
+    fn parse(
+        tokens: &mut VecDeque<String>, whole_word: bool, ignore_case: bool, with_regex: bool,
+    ) -> QueryResult<Self> {
+        while let Some(curr) = tokens.front() {}
+
+        todo!()
+    }
+}
+
+/// Wrapper around the query to keep it private.
+pub struct NewProcessQuery {
+    inner: Query,
+}
+
+impl NewProcessQuery {
+    pub fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+        self.inner.check(process, is_using_command)
+    }
+
+    /// Parse a queue of string tokens to return a query tree.
+    pub(crate) fn parse(
+        mut tokens: VecDeque<String>, whole_word: bool, ignore_case: bool, with_regex: bool,
+    ) -> QueryResult<Self> {
+        let inner = Query::parse(&mut tokens, whole_word, ignore_case, with_regex)?;
+
+        Ok(Self { inner })
+    }
 }
 
 /// In charge of parsing the given query, case-insensitive, possibly marked
@@ -153,7 +320,6 @@ enum PrefixType {
     GMem,
     #[cfg(feature = "gpu")]
     PGMem,
-    __Nonexhaustive,
 }
 
 impl std::str::FromStr for PrefixType {
@@ -237,10 +403,41 @@ struct NumericalQuery {
     value: f64,
 }
 
+impl NumericalQuery {
+    /// Compare `lhs` to the value in the query as `rhs`.
+    fn check<I: Into<f64>>(&self, lhs: I) -> bool {
+        let lhs: f64 = lhs.into();
+        let rhs: f64 = self.value;
+
+        match self.condition {
+            QueryComparison::Equal => (lhs - rhs).abs() < f64::EPSILON,
+            QueryComparison::Less => lhs < rhs,
+            QueryComparison::Greater => lhs > rhs,
+            QueryComparison::LessOrEqual => lhs <= rhs,
+            QueryComparison::GreaterOrEqual => lhs >= rhs,
+        }
+    }
+}
+
 #[derive(Debug)]
 struct TimeQuery {
     condition: QueryComparison,
     duration: Duration,
+}
+
+impl TimeQuery {
+    /// Compare `lhs` to the value in the query as `rhs`.
+    fn check(&self, lhs: Duration) -> bool {
+        let rhs = self.duration;
+
+        match self.condition {
+            QueryComparison::Equal => lhs == rhs,
+            QueryComparison::Less => lhs < rhs,
+            QueryComparison::Greater => lhs > rhs,
+            QueryComparison::LessOrEqual => lhs <= rhs,
+            QueryComparison::GreaterOrEqual => lhs >= rhs,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -293,6 +490,21 @@ mod tests {
         assert!(!query.check(&b, false));
         assert!(!query.check(&c, false));
         assert!(query.check(&a_and_b, false));
+    }
+
+    #[test]
+    fn implied_and_query() {
+        let query = parse_query("a b c", false, false, false).unwrap();
+
+        let a = simple_process("a");
+        let b = simple_process("b");
+        let c = simple_process("c");
+        let all = simple_process("a b c");
+
+        assert!(!query.check(&a, false));
+        assert!(!query.check(&b, false));
+        assert!(!query.check(&c, false));
+        assert!(query.check(&all, false));
     }
 
     /// Ensure that quoted keywords are treated as strings. In this case, rather than `"a" OR "b"`, it should be treated
@@ -459,9 +671,31 @@ mod tests {
         assert!(!query.check(&b, false));
     }
 
-    /// Test an ambiguous or.
     #[test]
-    fn ambiguous_or() {}
+    fn ambiguous_precedence_1() {
+        let query = parse_query("a and b or c", false, false, false).unwrap();
+
+        let a = simple_process("a");
+        let b = simple_process("b");
+        let c = simple_process("c");
+
+        assert!(!query.check(&a, false));
+        assert!(!query.check(&b, false));
+        assert!(query.check(&c, false));
+    }
+
+    #[test]
+    fn ambiguous_precedence_2() {
+        let query = parse_query("a or b and c", false, false, false).unwrap();
+
+        let a = simple_process("a");
+        let b = simple_process("b");
+        let c = simple_process("c");
+
+        assert!(query.check(&a, false));
+        assert!(!query.check(&b, false));
+        assert!(!query.check(&c, false));
+    }
 
     /// Test if a complicated query even parses.
     #[test]
@@ -501,4 +735,22 @@ mod tests {
     // /// Test if units can ignore spaces from their preceding value.
     // #[test]
     // fn units_with_and_without_spaces() {}
+
+    #[test]
+    fn invalid_query_1() {
+        parse_query("state =", false, false, false).unwrap_err();
+        parse_query("a or", false, false, false).unwrap_err();
+        parse_query("a >", false, false, false).unwrap_err();
+    }
+
+    // /// Test keywords.
+    // ///
+    // /// TODO: Should these be invalid...?
+    // #[test]
+    // fn invalid_query_2() {
+    //     parse_query("or", false, false, false).unwrap_err();
+    //     parse_query("and", false, false, false).unwrap_err();
+    //     parse_query("a or >", false, false, false).unwrap_err();
+    //     parse_query("a and >", false, false, false).unwrap_err();
+    // }
 }

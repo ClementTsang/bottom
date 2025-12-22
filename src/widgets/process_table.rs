@@ -1089,6 +1089,9 @@ impl ProcWidgetState {
         &self.proc_search.search_state.current_search_query
     }
 
+    /// Update the current search query.
+    ///
+    /// TODO: Maybe debounce this.
     pub fn update_query(&mut self) {
         if self
             .proc_search
