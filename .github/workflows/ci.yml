@@ -198,7 +198,6 @@ jobs:
             }
 
           # Risc-V 64gc
-          # Note: seems like this breaks with tests?
           - {
               os: "ubuntu-latest",
               target: "riscv64gc-unknown-linux-gnu",
@@ -260,7 +259,7 @@ jobs:
 
       - name: Clippy (no features enabled)
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ matrix.info.no-default-features == true  }}
+        if: ${{ matrix.info.no-default-features == true }}
         with:
           command: clippy
           args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
