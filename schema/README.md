@@ -6,14 +6,15 @@ These are automatically generated from code using [`schemars`](https://github.co
 behind a feature flag to avoid building unnecessary code for release builds, and you can generate them like so:
 
 ```bash
+# Will print out to stdout
+cargo run --features="generate_schema" -- --generate_schema
+
+# e.g. for nightly
 cargo run --features="generate_schema" -- --generate_schema > schema/nightly/bottom.json
 ```
 
-Alternatively, run the script in `scripts/schema/generate.sh`, which does this for you:
-
-```bash
-./scripts/schema/generate.sh
-```
+Alternatively, run the script in `scripts/schema/generate.sh` (for stable releases) or `scripts/schema/nightly.sh`
+(for nightly).
 
 ## Publication
 
