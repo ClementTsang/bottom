@@ -183,7 +183,7 @@ jobs:
       - name: Set features
         shell: bash
         run: |
-          if [[ "${{ matrix.info.no-default-features }} == "true" ]]; then
+          if [[ "${{ matrix.info.no-default-features }}" == "true" ]]; then
             BUILD_FEATURES="--no-default-features"
           else
             BUILD_FEATURES="--features deploy"
