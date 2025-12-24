@@ -127,6 +127,13 @@ jobs:
               cross: true,
             }
 
+          # Loongarch
+          - {
+              os: "ubuntu-22.04",
+              target: "loongarch64-unknown-linux-gnu",
+              cross: true,
+            }
+
           # Windows ARM
           - {
               os: "windows-11-arm",
