@@ -11,15 +11,26 @@ cargo run --features="generate_schema" -- --generate_schema
 
 # e.g. for nightly
 cargo run --features="generate_schema" -- --generate_schema > schema/nightly/bottom.json
+
+# e.g. for a specific version
+cargo run --features="generate_schema" -- --generate_schema 0.12.0 > schema/v0.12.0/bottom.json
 ```
 
 Alternatively, run the `scripts/schema/generate.sh` script (for stable releases) or `scripts/schema/nightly.sh`
-(for nightly).
+(for nightly), which does all of this for you.
 
 ## Publication
 
-To publish these schemas, cut a new version by copying `nightly` to a new folder with a version number matching bottom's
-(e.g. v0.10 if bottom is on v0.10.x bottom). Then, make a PR to [schemastore](https://github.com/SchemaStore/schemastore)
-updating the catalog.
+To publish these schemas:
 
-For more info, see the schemastore repo. [Here's an example of a PR](https://github.com/SchemaStore/schemastore/pull/3571).
+### Stable
+
+1. Run `scripts/schema/generate.sh <YOUR_VERSION>`.
+2. Make a PR and merge it.
+3. Then, make a PR to [schemastore](https://github.com/SchemaStore/schemastore) to update the catalog.
+   [Here's an example of a PR](https://github.com/SchemaStore/schemastore/pull/3571).
+
+### Nightly
+
+1. Run `scripts/schema/nightly.sh`.
+2. Make a PR and merge it.
