@@ -38,7 +38,7 @@ That said, these are more guidelines rather than hardset rules, though the proje
 - [#1888](https://github.com/ClementTsang/bottom/pull/1888): Make automatically generated `.deb` package conflict with the official one.
 - [#1891](https://github.com/ClementTsang/bottom/pull/1891): Fix typos in codebase.
 - [#1913](https://github.com/ClementTsang/bottom/pull/1913): Add `loongarch64-unknown-linux-gnu` binary build target in CI.
-- [#1914](https://github.com/ClementTsang/bottom/pull/1914): Add `aarch64-linux-android` binary build target in CI.
+- [#1914](https://github.com/ClementTsang/bottom/pull/1914): Add `aarch64-linux-android` binary build target in CI (with no default features).
 
 ## [0.11.4] - 2025-11-16
 
