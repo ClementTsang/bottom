@@ -204,12 +204,20 @@ jobs:
               cross: true,
             }
 
+          # Loongarch
+          - {
+              os: "ubuntu-latest",
+              target: "loongarch64-unknown-linux-gnu",
+              cross: true,
+              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
+            }
+
           # Android ARM64
           - {
               os: "ubuntu-latest",
               target: "aarch64-linux-android",
               cross: true,
-              cross-version: "git:df3309709a4a26b3dc3b1567239c3f38b9da0425", # latest version that I've found works so far
+              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
               no-default-features: true,
               no-clippy: true,
             }
