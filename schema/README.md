@@ -13,7 +13,7 @@ cargo run --features="generate_schema" -- --generate_schema
 cargo run --features="generate_schema" -- --generate_schema > schema/nightly/bottom.json
 ```
 
-Alternatively, run the script in `scripts/schema/generate.sh` (for stable releases) or `scripts/schema/nightly.sh`
+Alternatively, run the `scripts/schema/generate.sh` script (for stable releases) or `scripts/schema/nightly.sh`
 (for nightly).
 
 ## Publication
