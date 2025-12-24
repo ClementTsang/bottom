@@ -127,14 +127,14 @@ jobs:
               cross: true,
             }
 
-          # Android
-          - {
-              os: "ubuntu-latest",
-              target: "aarch64-linux-android",
-              cross: true,
-              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
-              no-default-features: true,
-            }
+          # # Android
+          # - {
+          #     os: "ubuntu-latest",
+          #     target: "aarch64-linux-android",
+          #     cross: true,
+          #     cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
+          #     no-default-features: true,
+          #   }
 
           # Loongarch
           - {

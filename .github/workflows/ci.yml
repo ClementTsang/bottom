@@ -198,7 +198,6 @@ jobs:
             }
 
           # Risc-V 64gc
-          # Note: seems like this breaks with tests?
           - {
               os: "ubuntu-latest",
               target: "riscv64gc-unknown-linux-gnu",
