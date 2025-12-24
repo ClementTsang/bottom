@@ -130,8 +130,9 @@ Note that some unsupported platforms may eventually be officially supported (e.g
 A non-comprehensive list of some currently unofficially-supported platforms that may compile/work include:
 
 - FreeBSD (`x86_64`)
-- Linux (`armv6`, `armv7`, `powerpc64le`, `riscv64gc`)
+- Linux (`armv6`, `armv7`, `powerpc64le`, `riscv64gc`, `loongarch64`)
 - Android (`arm64`)
+- Windows (`arm64`)
 
 For more details on unsupported platforms and known problems, check out [the documentation](https://bottom.pages.dev/nightly/support/unofficial/).
 
