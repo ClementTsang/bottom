@@ -9,7 +9,7 @@ docs_dir: "content/"
 repo_name: ClementTsang/bottom
 repo_url: https://github.com/ClementTsang/bottom
 edit_uri: "edit/main/docs/content/"
-copyright: Copyright &copy; 2019 - 2024 Clement Tsang
+copyright: Copyright &copy; 2019 - 2026 Clement Tsang
 
 # Theming
 theme:
