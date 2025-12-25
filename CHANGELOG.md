@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
+## [0.12.1] - 2025-12-25
+
+### Other
+
+- [#1920](https://github.com/ClementTsang/bottom/pull/1920), [#1921](https://github.com/ClementTsang/bottom/pull/1921): Fix issues with installing via Cargo when locked dependencies aren't used.
+
 ## [0.12.0] - 2025-12-25
 
 ### Features
