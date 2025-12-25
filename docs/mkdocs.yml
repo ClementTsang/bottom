@@ -146,6 +146,7 @@ extra:
   version:
     provider: mike
     default: stable
+    alias: true
 
 # Navigation
 nav:
