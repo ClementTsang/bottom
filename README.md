@@ -168,8 +168,8 @@ Alternatively, you can use `cargo install` using the repo as the source.
 rustup update stable
 
 # Option 1 - Download an archive from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.12.0.tar.gz
-tar -xzvf 0.12.0.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.12.1.tar.gz
+tar -xzvf 0.12.1.tar.gz
 cargo install --path . --locked
 
 # Option 2 - Manually clone the repo and install
@@ -221,20 +221,20 @@ Some examples of installing it this way:
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.0/bottom_0.12.0-1_amd64.deb
-sudo dpkg -i bottom_0.12.0-1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.1/bottom_0.12.1-1_amd64.deb
+sudo dpkg -i bottom_0.12.1-1_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.0/bottom_0.12.0-1_arm64.deb
-sudo dpkg -i bottom_0.12.0-1_arm64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.1/bottom_0.12.1-1_arm64.deb
+sudo dpkg -i bottom_0.12.1-1_arm64.deb
 
 # ARM
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.0/bottom_0.12.0-1_armhf.deb
-sudo dpkg -i bottom_0.12.0-1_armhf.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.1/bottom_0.12.1-1_armhf.deb
+sudo dpkg -i bottom_0.12.1-1_armhf.deb
 
 # musl-based
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.0/bottom-musl_0.12.0-1_amd64.deb
-sudo dpkg -i bottom-musl_0.12.0-1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.1/bottom-musl_0.12.1-1_amd64.deb
+sudo dpkg -i bottom-musl_0.12.1-1_amd64.deb
 ```
 
 ### Exherbo Linux
@@ -276,8 +276,8 @@ sudo dnf install bottom
 For example:
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.0/bottom-0.12.0-1.x86_64.rpm
-sudo rpm -i bottom-0.12.0-1.x86_64.rpm
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.1/bottom-0.12.1-1.x86_64.rpm
+sudo rpm -i bottom-0.12.1-1.x86_64.rpm
 ```
 
 ### Gentoo
