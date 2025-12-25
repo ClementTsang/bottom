@@ -116,7 +116,7 @@ jobs:
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         with:
           command: clippy
-          args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} -- -D warnings
+          args: ${{ matrix.features }} --all-targets --workspace --locked --target=${{ matrix.info.target }} -- -D warnings
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.5
         env:
