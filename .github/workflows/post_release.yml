@@ -66,10 +66,15 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r docs/requirements.txt
 
+      # TODO: Test this with the script instead
       - name: Configure git user and email
-        run: ./scripts/ci/configure_git.sh
+        run: |
+          git config --global user.name ${GIT_USER}
+          git config --global user.email ${GIT_EMAIL}
+          echo Name: $(git config --get user.name)
+          echo Email: $(git config --get user.email)
 
-      # TODO: Test with scripts/ci/release_stable_docs.sh
+      # TODO: Test this with the script instead
       - name: Build and deploy docs with mike as the latest stable branch
         run: |
           cd docs
