@@ -80,36 +80,37 @@ Let's say you're installing [Iosevka](https://github.com/be5invis/Iosevka). The 
 
 ## Why can't I see all my temperature sensors on Windows?
 
-This is a [known limitation](./support/official.md#windows), some sensors may require admin privileges to get sensor data.
+This is a known issue, some sensors may require admin privileges to get sensor data.
 
 ## Why don't I see dual batteries on Windows reported separately? (e.g. Thinkpads)
 
-This is a [known limitation](./support/official.md#windows) which seems to be with how batteries are being detected on Windows.
+This is a known issue which seems to be with how batteries are being detected on Windows.
 
 ## Why can't I see all my temperature sensors on WSL?
 
-This is a [known limitation](./support/official.md#windows) with WSL. Due to how it works, hosts may not expose their
+This is a known limitation with WSL. Due to how it works, hosts may not expose their
 temperature sensors and therefore, temperature sensors might be missing.
 
 ## Why does WSL2 not match Task Manager?
 
-This is a [known limitation](./support/official.md#windows) with WSL2. Due to how WSL2 works, the two might not match
+This is a known limitation with WSL2. Due to how WSL2 works, the two might not match
 up in terms of reported data.
 
 ## Why can't I see all my processes/process data on macOS?
 
-This is a [known limitation](./support/official.md#macos), and you may have to run the program with elevated
-privileges to work around it - for example:
+You may have to run the program with elevated privileges to work around it - for example:
 
 ```bash
 sudo btm
 ```
 
-**Please note that you should be certain that you trust any software you grant root privileges.**
+!!! Warning
 
-There are measures taken to try to maximize the amount of information obtained without elevated privileges. For example,
-one can modify the instructions found on the [htop wiki](https://github.com/hishamhm/htop/wiki/macOS:-run-without-sudo)
-on how to run htop without sudo for bottom. However, **please** understand the potential security risks before doing so!
+    Please note that you should be certain that you trust any software you grant root privileges.
+
+    There are measures taken to try to maximize the amount of information obtained without elevated privileges. For example,
+    one can modify the instructions found on the [htop wiki](https://github.com/hishamhm/htop/wiki/macOS:-run-without-sudo)
+    on how to run htop without sudo for bottom. However, **please** understand the potential security risks before doing so!
 
 ## My configuration file isn't working
 

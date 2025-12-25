@@ -137,6 +137,9 @@ plugins:
   - git-revision-date-localized:
       type: date
   - privacy
+  - redirects:
+      redirect_maps:
+        nightly-release.md: "https://github.com/ClementTsang/bottom/releases"
 
 extra:
   # Versioning
@@ -185,3 +188,6 @@ nav:
           - "Build Process": contribution/development/build_process.md
           - "Deploy Process": contribution/development/deploy_process.md
   - "Troubleshooting": troubleshooting.md
+
+hooks:
+  - ./hooks/nightly_redirect.py
