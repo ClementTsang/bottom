@@ -3,6 +3,15 @@ use std::{fmt::Debug, iter::zip};
 use itertools::Itertools;
 use tui::{style::Color, symbols};
 
+// FIXME: These are temporary while people are having issues with ratatui.
+const BLANK: u16 = 0x2800;
+const DOTS: [[u16; 2]; 4] = [
+    [0x0001, 0x0008],
+    [0x0002, 0x0010],
+    [0x0004, 0x0020],
+    [0x0040, 0x0080],
+];
+
 #[derive(Debug, Clone)]
 pub(super) struct Layer {
     pub(super) string: String,
@@ -63,7 +72,7 @@ impl BrailleGrid {
         Self {
             width,
             height,
-            utf16_code_points: vec![symbols::braille::BLANK; length],
+            utf16_code_points: vec![BLANK; length],
             colors: vec![Color::Reset; length],
         }
     }
@@ -82,7 +91,7 @@ impl Grid for BrailleGrid {
     }
 
     fn reset(&mut self) {
-        self.utf16_code_points.fill(symbols::braille::BLANK);
+        self.utf16_code_points.fill(BLANK);
         self.colors.fill(Color::Reset);
     }
 
@@ -99,7 +108,7 @@ impl Grid for BrailleGrid {
         // look but it also makes it a bit harder to read in some cases.
 
         // if let Some(c) = self.utf16_code_points.get_mut(index) {
-        //     *c |= symbols::braille::DOTS[y % 4][x % 2];
+        //     *c |= DOTS[y % 4][x % 2];
         // }
         // if let Some(c) = self.colors.get_mut(index) {
         //     *c = color;
@@ -110,10 +119,10 @@ impl Grid for BrailleGrid {
             if *curr_color != color {
                 *curr_color = color;
                 if let Some(cell) = self.utf16_code_points.get_mut(index) {
-                    *cell = symbols::braille::BLANK | symbols::braille::DOTS[y % 4][x % 2];
+                    *cell = BLANK | DOTS[y % 4][x % 2];
                 }
             } else if let Some(cell) = self.utf16_code_points.get_mut(index) {
-                *cell |= symbols::braille::DOTS[y % 4][x % 2];
+                *cell |= DOTS[y % 4][x % 2];
             }
         }
     }

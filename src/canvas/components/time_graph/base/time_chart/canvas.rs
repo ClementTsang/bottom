@@ -188,12 +188,16 @@ impl<'a> Context<'a> {
     pub fn new(
         width: u16, height: u16, x_bounds: [f64; 2], y_bounds: [f64; 2], marker: symbols::Marker,
     ) -> Context<'a> {
+        // FIXME: Temporarily added due to ratatui things
+        #[allow(unreachable_patterns)]
         let grid: Box<dyn Grid> = match marker {
             symbols::Marker::Dot => Box::new(CharGrid::new(width, height, '•')),
             symbols::Marker::Block => Box::new(CharGrid::new(width, height, '█')),
             symbols::Marker::Bar => Box::new(CharGrid::new(width, height, '▄')),
             symbols::Marker::Braille => Box::new(BrailleGrid::new(width, height)),
             symbols::Marker::HalfBlock => Box::new(HalfBlockGrid::new(width, height)),
+            // FIXME: Fall back to braille for now.
+            _ => Box::new(BrailleGrid::new(width, height)),
         };
         Context {
             x_bounds,
