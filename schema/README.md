@@ -28,7 +28,7 @@ To publish these schemas:
 1. Run `scripts/schema/generate.sh <YOUR_VERSION>`.
 2. Make a PR and merge it.
 3. Then, make a PR to [schemastore](https://github.com/SchemaStore/schemastore) to update the catalog.
-   [Here's an example of a PR](https://github.com/SchemaStore/schemastore/pull/3571).
+   [Here's an example of a PR](https://github.com/SchemaStore/schemastore/pull/5242).
 
 ### Nightly
 
