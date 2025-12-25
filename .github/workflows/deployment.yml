@@ -139,5 +139,11 @@ jobs:
             ## Other
 
             ## Internal Changes
+
+            ## New Contributores
+
+            ---
+
+            **Full Changelog:**
           files: |
             ./release/*
