@@ -74,11 +74,12 @@ jobs:
           echo "Generated $(ls ./release | wc -l) files:"
           du -h -d 0 ./release/*
 
-      - name: Delete tag and release if not mock
+      - name: Delete old tags and release if not mock
         if: github.event.inputs.isMock != 'true'
         run: |
+          THREE_DAYS_AGO=$(date +%s --date='3 days ago')
           while true; do
-            PREV_NIGHTLY=$(gh release list --json name,tagName | jq -c '[.[] | select (.tagName | contains("nightly-"))][0] | .tagName' | tr -d '"')
+            PREV_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg THREE_DAYS_AGO "$THREE_DAYS_AGO" -c '[.[] | select (.tagName | contains("nightly-")) | select (.publishedAt | fromdateiso8601 > $THREE_DAYS_AGO)][0] | .tagName' | tr -d '"')
 
             if [[ "$PREV_NIGHTLY" != "null" && "$PREV_NIGHTLY" == *"nightly-"* ]]; then
               echo "Will delete nightly release with tag '$PREV_NIGHTLY'";
