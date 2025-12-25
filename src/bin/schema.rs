@@ -78,15 +78,20 @@ fn generate_schema(schema_options: SchemaOptions) -> anyhow::Result<()> {
             if version == "nightly" {
                 "nightly"
             } else {
-                "stable"
+                version.as_str()
             }
         )
         .into(),
     );
 
+    let description_version = if version == "nightly" {
+        "nightly".to_string()
+    } else {
+        format!("v{version}")
+    };
     schema.insert(
         "title".into(),
-        format!("Schema for bottom's config file ({version})").into(),
+        format!("Schema for bottom's config file ({description_version})").into(),
     );
 
     println!("{}", serde_json::to_string_pretty(&schema).unwrap());

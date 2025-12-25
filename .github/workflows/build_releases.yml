@@ -144,7 +144,7 @@ jobs:
               cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
             }
 
-          # Windows ARM
+          # Windows ARM, may promote to official.
           - {
               os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
