@@ -756,11 +756,13 @@ fn get_default_cpu_selection(args: &BottomArgs, config: &Config) -> config::cpu:
 }
 
 fn get_dedicated_avg_row(config: &Config) -> bool {
-    config
+    let conf = config
         .flags
         .as_ref()
         .and_then(|flags| flags.average_cpu_row)
-        .unwrap_or(false)
+        .unwrap_or(false);
+
+    conf
 }
 
 #[inline]
