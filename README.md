@@ -216,7 +216,7 @@ yay -S bottom-git
 ### Debian / Ubuntu
 
 A `.deb` file is provided on each [stable release](https://github.com/ClementTsang/bottom/releases/latest) and
-[nightly builds](https://github.com/ClementTsang/bottom/releases) for x86, aarch64, and armv7.
+[nightly builds](https://bottom.pages.dev/nightly/nightly-release) for x86, aarch64, and armv7.
 Some examples of installing it this way:
 
 ```bash
@@ -425,8 +425,8 @@ mise use -g bottom@latest
 
 You can also use the pre-built release binaries:
 
-- [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), built using the release branch
-- [Latest nightly release](https://github.com/ClementTsang/bottom/releases), built using the `main` branch at 00:00 UTC daily
+- [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), which is built with what is in the [release branch](https://github.com/ClementTsang/bottom/tree/release).
+- [Latest nightly release](https://bottom.pages.dev/nightly/nightly-release), built using the `main` branch at 00:00 UTC daily or manually triggered
 
 To use, download and extract the binary that matches your system. You can then run by doing:
 

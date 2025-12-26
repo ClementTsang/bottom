@@ -1,3 +1,4 @@
 site/
 venv/
 .cache/
+hooks/__pycache__/

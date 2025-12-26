@@ -56,6 +56,8 @@ jobs:
     name: upload-release
     needs: build-release
     runs-on: ubuntu-latest
+    outputs:
+      TAG_NAME: ${{ steps.tag_release_name.outputs.TAG_NAME }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -74,12 +76,29 @@ jobs:
           echo "Generated $(ls ./release | wc -l) files:"
           du -h -d 0 ./release/*
 
+      - name: Create and set tag name and release name
+        if: github.event.inputs.isMock != 'true'
+        id: tag_release_name
+        run: |
+          COMMIT_HASH=$(git rev-parse --short=8 HEAD)
+          TIME=$(date +%s)
+          TAG_NAME=$(echo "nightly-$COMMIT_HASH-$TIME")
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "TAG_NAME=$$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "$TAG_NAME"
+
+          DATE=$(date '+%Y-%m-%d')
+          RELEASE_NAME=$(echo "Nightly ($DATE)")
+          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
+          echo "$RELEASE_NAME"
+
+      # Delete tags older than 3 days, as well as nightly runs that are a duplicate of today.
       - name: Delete old tags and release if not mock
         if: github.event.inputs.isMock != 'true'
         run: |
           THREE_DAYS_AGO=$(date +%s --date='3 days ago')
           while true; do
-            PREV_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg THREE_DAYS_AGO "$THREE_DAYS_AGO" -c '[.[] | select (.tagName | contains("nightly-")) | select (.publishedAt | fromdateiso8601 > $THREE_DAYS_AGO)][0] | .tagName' | tr -d '"')
+            PREV_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg THREE_DAYS_AGO "$THREE_DAYS_AGO" --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-")) | select ((.publishedAt | fromdateiso8601 > $THREE_DAYS_AGO) or (.name == $RELEASE_NAME))][0] | .tagName' | tr -d '"')
 
             if [[ "$PREV_NIGHTLY" != "null" && "$PREV_NIGHTLY" == *"nightly-"* ]]; then
               echo "Will delete nightly release with tag '$PREV_NIGHTLY'";
@@ -91,20 +110,6 @@ jobs:
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create and set tag name and release name
-        if: github.event.inputs.isMock != 'true'
-        run: |
-          COMMIT_HASH=$(git rev-parse --short=8 HEAD)
-          TIME=$(date +%s)
-          TAG_NAME=$(echo "nightly-$COMMIT_HASH-$TIME")
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          echo "$TAG_NAME"
-
-          DATE=$(date '+%Y-%m-%d')
-          RELEASE_NAME=$(echo "Nightly ($DATE)")
-          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
-          echo "$RELEASE_NAME"
 
       # As a workaround to immutable releases, we create it as a draft first, then manually publish it after.
       - name: Add all release files and create nightly release if not mock
@@ -125,3 +130,11 @@ jobs:
         run: gh release edit "$TAG_NAME" --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docs:
+    needs: [initialize-job, upload-release]
+    if: ${{ needs.initialize-job.outputs.should_skip != 'true' && github.event.inputs.isMock != 'true' }}
+    uses: ./.github/workflows/docs.yml
+    secrets: inherit
+    with:
+      nightly: ${{needs.job1.outputs.output1}}
