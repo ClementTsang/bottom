@@ -194,6 +194,7 @@ nav:
 
 hooks:
   - ./hooks/nightly_redirect.py
+  - ./hooks/nightly_banner.py
 
 exclude_docs: |
   nightly-release.md
