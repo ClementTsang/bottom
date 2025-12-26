@@ -15,4 +15,3 @@ def on_config(config):
     if version == "nightly":
         extra = config.get("extra", {})
         extra["nightly"] = True
-
