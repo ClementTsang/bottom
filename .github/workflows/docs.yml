@@ -5,6 +5,12 @@ name: docs
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      nightly:
+        description: "Optional nightly redirect override"
+        default: ""
+        required: false
+        type: string
   push:
     branches:
       - main
@@ -38,6 +44,8 @@ jobs:
         run: ./scripts/ci/configure_git.sh
 
       - name: Build and deploy docs with mike
+        env:
+          MKDOCS_NIGHTLY_RELEASE_OVERRIDE: ${{ inputs.nightly || '' }}
         run: |
           cd docs
           mike deploy nightly --push

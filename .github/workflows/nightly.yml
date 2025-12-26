@@ -56,6 +56,8 @@ jobs:
     name: upload-release
     needs: build-release
     runs-on: ubuntu-latest
+    outputs:
+      TAG_NAME: ${{ steps.tag_release_name.outputs.TAG_NAME }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -94,11 +96,13 @@ jobs:
 
       - name: Create and set tag name and release name
         if: github.event.inputs.isMock != 'true'
+        id: tag_release_name
         run: |
           COMMIT_HASH=$(git rev-parse --short=8 HEAD)
           TIME=$(date +%s)
           TAG_NAME=$(echo "nightly-$COMMIT_HASH-$TIME")
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "TAG_NAME=$$TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "$TAG_NAME"
 
           DATE=$(date '+%Y-%m-%d')
@@ -131,3 +135,5 @@ jobs:
     if: ${{ needs.initialize-job.outputs.should_skip != 'true' && github.event.inputs.isMock != 'true' }}
     uses: ./.github/workflows/docs.yml
     secrets: inherit
+    with:
+      nightly: ${{needs.job1.outputs.output1}}
