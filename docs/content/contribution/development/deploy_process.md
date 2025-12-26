@@ -12,7 +12,7 @@
 
 bottom currently has two main deploy processes to worry about:
 
-- [Nightly](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/nightly.yml): a daily (00:00 UTC) GitHub action to build binary/installer files, and upload them to the [nightly release](https://github.com/ClementTsang/bottom/releases). It can also be triggered manually as either a proper nightly release or a mock release.
+- [Nightly](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/nightly.yml): a daily (00:00 UTC) GitHub action to build binary/installer files, and upload them to the nightly release ([example](https://bottom.pages.dev/nightly/nightly-release)). It can also be triggered manually as either a proper nightly release or a mock release.
 - [Stable](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/deployment.yml): a stable deployment, triggered manually or upon creation of a valid tag. This is a GitHub action that builds binary/installer files and uploads them to a new GitHub release.
 
   Furthermore, this workflow does not handle the following deployments, which must be manually handled:
