@@ -1,7 +1,8 @@
 import os
+import sys
+import json
 import mkdocs.plugins
 import urllib.request
-import json
 
 
 # Based on https://github.com/squidfunk/mkdocs-material/discussions/3758#discussioncomment-4397373
@@ -9,7 +10,7 @@ import json
 
 @mkdocs.plugins.event_priority(-50)
 def on_config(config):
-    print("Running nightly release redirect hook...")
+    print("Running nightly release redirect hook...", file=sys.stderr)
     try:
         nightly_tag_name = None
         override = os.environ.get("MKDOCS_NIGHTLY_RELEASE_OVERRIDE")
@@ -35,8 +36,14 @@ def on_config(config):
             redirects = redirect_plugin.config.get("redirect_maps", {})
             redirects["nightly-release.md"] = nightly_release_url
 
-            print(f"Updated nightly release redirect to point to {nightly_release_url}")
+            print(
+                f"Updated nightly release redirect to point to {nightly_release_url}",
+                file=sys.stderr,
+            )
         else:
             print("nightly tag name was not set by any means.")
     except Exception as e:
-        print(f"error adjusting redirect, falling back to general releases page: {e}")
+        print(
+            f"error adjusting redirect, falling back to general releases page: {e}",
+            file=sys.stderr,
+        )
