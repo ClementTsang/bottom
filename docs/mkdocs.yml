@@ -54,7 +54,7 @@ theme:
       toggle:
         icon: material/weather-night
         name: Switch to system preference
-  custom_dir: "content/overrides"
+  custom_dir: "overrides"
 extra_css:
   - stylesheets/extra.css
 
@@ -192,3 +192,6 @@ nav:
 
 hooks:
   - ./hooks/nightly_redirect.py
+
+exclude_docs: |
+  nightly-release.md

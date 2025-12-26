@@ -70,14 +70,13 @@ jobs:
         run: ./scripts/ci/configure_git.sh
 
       # TODO: Test this with the script instead
+      # TODO: We no longer need the renaming logic after the next release!
       - name: Build and deploy docs with mike as the latest stable branch
         run: |
           cd docs
-          OLD_STABLE_VERSION=$(mike list stable | grep -Po '([0-9]+.[0-9]+.[0-9]+)' | head -n1)
+          OLD_STABLE_VERSION=$(mike list stable | grep -Po '(\d{1,3}\.\d{1,3}\.\d{1,3})' | head -n1)
           echo ${OLD_STABLE_VERSION}
           mike retitle --push stable ${OLD_STABLE_VERSION}
-          mike deploy --push --update-aliases ${RELEASE_VERSION} stable
-          mike retitle --push ${RELEASE_VERSION} "${RELEASE_VERSION} (stable)"
 
   chocolatey:
     needs: [initialize]
