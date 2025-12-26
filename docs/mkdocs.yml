@@ -147,6 +147,8 @@ extra:
     provider: mike
     default: stable
     alias: true
+  # Used for the nightly banner
+  nightly: false
 
 # Navigation
 nav:
