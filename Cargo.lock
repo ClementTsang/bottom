@@ -1481,9 +1481,9 @@ checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 
 [[package]]
 name = "ratatui"
-version = "0.30.0-beta.0"
+version = "0.30.0-beta.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c9f96d98eaa3ce9d7ed031916670ea79a3ce487f8365385b11bc69da69038ba"
+checksum = "b0be4f05bef1694bc30cce0f3a13265d10224f0399d350233cfad5b1be4f8545"
 dependencies = [
  "instability",
  "ratatui-core",
@@ -1495,9 +1495,9 @@ dependencies = [
 
 [[package]]
 name = "ratatui-core"
-version = "0.1.0-beta.0"
+version = "0.1.0-beta.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc3634611dccc2110ab05a64fec77d26c5f0e0cb0c0bfecb291d9a15841aae91"
+checksum = "9b9832b952afc8f37675331e7718e6a57624a26a5d0fdc20340ddefde66a8dcf"
 dependencies = [
  "bitflags 2.10.0",
  "compact_str",
@@ -1515,9 +1515,9 @@ dependencies = [
 
 [[package]]
 name = "ratatui-crossterm"
-version = "0.1.0-beta.0"
+version = "0.1.0-beta.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd7e4e028ac1cb4718f25ff039a476c8e2270a3021a614221f9fa2551abfa51c"
+checksum = "ad8198db8c584bcfce66fbbecd4aecf8742b355c4dc8382cd9e660f461c7501c"
 dependencies = [
  "cfg-if",
  "crossterm",
@@ -1527,9 +1527,9 @@ dependencies = [
 
 [[package]]
 name = "ratatui-macros"
-version = "0.7.0-beta.0"
+version = "0.7.0-beta.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b59d6fd5d3796a0305d4bfb1e5f7b86db2f4968a8c69b439f379f73efa4495c3"
+checksum = "d7ff8c7fe4f9022ca4ae4472a9c24bab4d2e8f52b6c6730caf53475e4a98bbf1"
 dependencies = [
  "ratatui-core",
  "ratatui-widgets",
@@ -1537,9 +1537,9 @@ dependencies = [
 
 [[package]]
 name = "ratatui-termwiz"
-version = "0.1.0-beta.0"
+version = "0.1.0-beta.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ec648e651a590a4e45c1e8d90a0ebbe324253ad410f34c8e1866a3e76c27240"
+checksum = "bdc30ae38b39929a8c1d471f673aec243b129b307c64235fe0257e980bfeaaf5"
 dependencies = [
  "ratatui-core",
  "termwiz",
@@ -1547,9 +1547,9 @@ dependencies = [
 
 [[package]]
 name = "ratatui-widgets"
-version = "0.3.0-beta.0"
+version = "0.3.0-beta.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bf145c4da1f8e5c58957350985ace8facbbf394ddecc526cd33e7dcf5831c41"
+checksum = "cb15c5f3d1b0b384c1891167461fa7584a31acae01df8b6e249c772cd284a622"
 dependencies = [
  "bitflags 2.10.0",
  "hashbrown",
