@@ -76,24 +76,6 @@ jobs:
           echo "Generated $(ls ./release | wc -l) files:"
           du -h -d 0 ./release/*
 
-      - name: Delete old tags and release if not mock
-        if: github.event.inputs.isMock != 'true'
-        run: |
-          THREE_DAYS_AGO=$(date +%s --date='3 days ago')
-          while true; do
-            PREV_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg THREE_DAYS_AGO "$THREE_DAYS_AGO" -c '[.[] | select (.tagName | contains("nightly-")) | select (.publishedAt | fromdateiso8601 > $THREE_DAYS_AGO)][0] | .tagName' | tr -d '"')
-
-            if [[ "$PREV_NIGHTLY" != "null" && "$PREV_NIGHTLY" == *"nightly-"* ]]; then
-              echo "Will delete nightly release with tag '$PREV_NIGHTLY'";
-              gh release delete $PREV_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
-            else
-              echo "no nightly releases left, done";
-              break;
-            fi
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create and set tag name and release name
         if: github.event.inputs.isMock != 'true'
         id: tag_release_name
@@ -109,6 +91,25 @@ jobs:
           RELEASE_NAME=$(echo "Nightly ($DATE)")
           echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
           echo "$RELEASE_NAME"
+
+      # Delete tags older than 3 days, as well as nightly runs that are a duplicate of today.
+      - name: Delete old tags and release if not mock
+        if: github.event.inputs.isMock != 'true'
+        run: |
+          THREE_DAYS_AGO=$(date +%s --date='3 days ago')
+          while true; do
+            PREV_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg THREE_DAYS_AGO "$THREE_DAYS_AGO" --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-")) | select ((.publishedAt | fromdateiso8601 > $THREE_DAYS_AGO) or (.name == $RELEASE_NAME))][0] | .tagName' | tr -d '"')
+
+            if [[ "$PREV_NIGHTLY" != "null" && "$PREV_NIGHTLY" == *"nightly-"* ]]; then
+              echo "Will delete nightly release with tag '$PREV_NIGHTLY'";
+              gh release delete $PREV_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
+            else
+              echo "no nightly releases left, done";
+              break;
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # As a workaround to immutable releases, we create it as a draft first, then manually publish it after.
       - name: Add all release files and create nightly release if not mock
