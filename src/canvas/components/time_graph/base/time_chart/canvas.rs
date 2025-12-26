@@ -23,7 +23,7 @@ use tui::{
         canvas::{Line as CanvasLine, Points},
     },
 };
-
+use tui::symbols::Marker;
 use super::grid::{BrailleGrid, CharGrid, Grid, HalfBlockGrid};
 
 /// Interface for all shapes that may be drawn on a Canvas widget.
@@ -186,18 +186,19 @@ pub struct Context<'a> {
 
 impl<'a> Context<'a> {
     pub fn new(
-        width: u16, height: u16, x_bounds: [f64; 2], y_bounds: [f64; 2], marker: symbols::Marker,
+        width: u16, height: u16, x_bounds: [f64; 2], y_bounds: [f64; 2], marker: Marker,
     ) -> Context<'a> {
         // FIXME: Temporarily added due to ratatui things
         #[allow(unreachable_patterns)]
         let grid: Box<dyn Grid> = match marker {
-            symbols::Marker::Dot => Box::new(CharGrid::new(width, height, '•')),
-            symbols::Marker::Block => Box::new(CharGrid::new(width, height, '█')),
-            symbols::Marker::Bar => Box::new(CharGrid::new(width, height, '▄')),
-            symbols::Marker::Braille => Box::new(BrailleGrid::new(width, height)),
-            symbols::Marker::HalfBlock => Box::new(HalfBlockGrid::new(width, height)),
-            // FIXME: Fall back to braille for now.
-            _ => Box::new(BrailleGrid::new(width, height)),
+            Marker::Dot => Box::new(CharGrid::new(width, height, '•')),
+            Marker::Block => Box::new(CharGrid::new(width, height, '█')),
+            Marker::Bar => Box::new(CharGrid::new(width, height, '▄')),
+            Marker::Braille => Box::new(BrailleGrid::new(width, height)),
+            Marker::HalfBlock => Box::new(HalfBlockGrid::new(width, height)),
+            Marker::Quadrant => Box::new(QuadrantGrid::new(width, height)),
+            Marker::Sextant => Box::new(SextantGrid::new(width, height)),
+            Marker::Octant => Box::new(OctantGrid::new(width, height)),
         };
         Context {
             x_bounds,
@@ -230,7 +231,7 @@ where
     y_bounds: [f64; 2],
     painter: Option<F>,
     background_color: Color,
-    marker: symbols::Marker,
+    marker: Marker,
 }
 
 impl<'a, F> Default for Canvas<'a, F>
@@ -244,7 +245,7 @@ where
             y_bounds: [0.0, 0.0],
             painter: None,
             background_color: Color::Reset,
-            marker: symbols::Marker::Braille,
+            marker: Marker::Braille,
         }
     }
 }
@@ -278,7 +279,7 @@ where
     /// braille patterns are used as they provide a more fine grained result
     /// but you might want to use the simple dot or block instead if the
     /// targeted terminal does not support those symbols.
-    pub fn marker(mut self, marker: symbols::Marker) -> Canvas<'a, F> {
+    pub fn marker(mut self, marker: Marker) -> Canvas<'a, F> {
         self.marker = marker;
         self
     }
