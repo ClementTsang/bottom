@@ -425,8 +425,8 @@ mise use -g bottom@latest
 
 You can also use the pre-built release binaries:
 
-- [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), which is built with what is in the [release branch](https://github.com/ClementTsang/bottom/tree/release).
-- [Latest nightly release](https://bottom.pages.dev/nightly/nightly-release), built using the `main` branch at 00:00 UTC daily or manually triggered
+- [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest)
+- [Latest nightly release](https://bottom.pages.dev/nightly/nightly-release)
 
 To use, download and extract the binary that matches your system. You can then run by doing:
 
