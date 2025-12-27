@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.12.1"
+version = "0.12.2"
 repository = "https://github.com/ClementTsang/bottom"
 license = "MIT"
 description = "A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows."
