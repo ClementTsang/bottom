@@ -276,8 +276,8 @@ sudo dnf install bottom
 For example:
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.1/bottom-0.12.1-1.x86_64.rpm
-sudo dnf install ./bottom-0.12.1-1.x86_64.rpm
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.2/bottom-0.12.2-1.x86_64.rpm
+sudo dnf install ./bottom-0.12.2-1.x86_64.rpm
 ```
 
 ### Gentoo
