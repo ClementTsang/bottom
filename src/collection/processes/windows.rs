@@ -1,10 +1,7 @@
 //! Process data collection for Windows. Uses sysinfo.
 
 use super::{ProcessHarvest, process_status_str};
-use crate::collection::{
-    DataCollector,
-    error::{CollectionError, CollectionResult},
-};
+use crate::collection::{DataCollector, error::CollectionResult};
 use std::time::Duration;
 
 use anyhow::bail;
