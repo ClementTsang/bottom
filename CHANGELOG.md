@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hardset rules, though the proje
 
 ---
 
+## [0.12.2] - 2025-12-25
+
+### Bug Fixes
+
+- [#1933](https://github.com/ClementTsang/bottom/pull/1933): Fix a memory leak in Windows while getting process priority information.
+
 ## [0.12.1] - 2025-12-25
 
 ### Other

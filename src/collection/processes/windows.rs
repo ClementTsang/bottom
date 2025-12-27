@@ -1,11 +1,41 @@
-//! Process data collection for Windows. Uses sysinfo and winprocinfo.
+//! Process data collection for Windows. Uses sysinfo.
 
 use super::{ProcessHarvest, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult};
 use std::time::Duration;
-use winprocinfo;
 
+use anyhow::bail;
 use itertools::Itertools;
+use windows::Win32::{
+    Foundation::{CloseHandle, HANDLE},
+    System::Threading::{GetPriorityClass, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION},
+};
+
+/// See [here](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getpriorityclass)
+/// for more information on the core Windows API being called and the meaning of the priorities, as well as the access
+/// rights needed.
+fn get_priority(pid: u32) -> anyhow::Result<i32> {
+    // SAFETY: We check validity of each step and bail on errors. We also close the handle.
+    unsafe {
+        let process_handle: HANDLE = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)?;
+        if process_handle.is_invalid() {
+            bail!("Failed to open process with PID {pid} to get priority class");
+        }
+
+        // From docs: "If the function fails, the return value is zero."
+        let priority = GetPriorityClass(process_handle);
+        if priority == 0 {
+            bail!("Failed to get priority class for process with PID {pid}");
+        }
+
+        let handle_result = CloseHandle(process_handle);
+        if let Err(err) = handle_result {
+            bail!(err);
+        }
+
+        Ok(priority as i32)
+    }
+}
 
 // TODO: There's a lot of shared code with this and the unix impl.
 pub fn sysinfo_process_data(
@@ -22,13 +52,13 @@ pub fn sysinfo_process_data(
     let cpu_usage = sys.global_cpu_usage() / 100.0;
     let num_processors = sys.cpus().len();
 
-    for process_val in process_hashmap.values() {
-        let name = if process_val.name().is_empty() {
-            let process_cmd = process_val.cmd();
+    for process in process_hashmap.values() {
+        let name = if process.name().is_empty() {
+            let process_cmd = process.cmd();
             if process_cmd.len() > 1 {
                 process_cmd[0].to_string_lossy().to_string()
             } else {
-                process_val
+                process
                     .exe()
                     .and_then(|exe| exe.file_stem())
                     .and_then(|stem| stem.to_str())
@@ -36,14 +66,10 @@ pub fn sysinfo_process_data(
                     .unwrap_or(String::new())
             }
         } else {
-            process_val.name().to_string_lossy().to_string()
+            process.name().to_string_lossy().to_string()
         };
         let command = {
-            let command = process_val
-                .cmd()
-                .iter()
-                .map(|s| s.to_string_lossy())
-                .join(" ");
+            let command = process.cmd().iter().map(|s| s.to_string_lossy()).join(" ");
             if command.is_empty() {
                 name.clone()
             } else {
@@ -51,23 +77,25 @@ pub fn sysinfo_process_data(
             }
         };
 
-        let pcu = {
-            let usage = process_val.cpu_usage();
-            if unnormalized_cpu || num_processors == 0 {
-                usage
+        let process_cpu_usage = {
+            let pcu = {
+                let usage = process.cpu_usage();
+                if unnormalized_cpu || num_processors == 0 {
+                    usage
+                } else {
+                    usage / num_processors as f32
+                }
+            };
+
+            if use_current_cpu_total && cpu_usage > 0.0 {
+                pcu / cpu_usage
             } else {
-                usage / num_processors as f32
+                pcu
             }
         };
 
-        let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0.0 {
-            pcu / cpu_usage
-        } else {
-            pcu
-        };
-
-        let disk_usage = process_val.disk_usage();
-        let process_state = (process_status_str(process_val.status()), 'R');
+        let disk_usage = process.disk_usage();
+        let process_state = (process_status_str(process.status()), 'R');
 
         #[cfg(feature = "gpu")]
         let (gpu_mem, gpu_util, gpu_mem_percent) = {
@@ -79,7 +107,7 @@ pub fn sysinfo_process_data(
 
                 gpus.iter().for_each(|gpu| {
                     // add mem/util for all gpus to pid
-                    if let Some((mem, util)) = gpu.get(&(process_val.pid().as_u32() as Pid)) {
+                    if let Some((mem, util)) = gpu.get(&(process.pid().as_u32() as Pid)) {
                         gpu_mem += mem;
                         gpu_util += util;
                     }
@@ -91,34 +119,31 @@ pub fn sysinfo_process_data(
             (gpu_mem, gpu_util, gpu_mem_percent)
         };
 
-        let base_priority = winprocinfo::get_proc_info_by_pid(process_val.pid().as_u32())
-            .ok()
-            .flatten()
-            .map(|proc| proc.base_priority)
-            .unwrap_or(0);
+        let pid = process.pid().as_u32();
+        let priority = get_priority(pid).unwrap_or(0);
 
         process_vector.push(ProcessHarvest {
-            pid: process_val.pid().as_u32() as _,
-            parent_pid: process_val.parent().map(|p| p.as_u32() as _),
+            pid: pid as _,
+            parent_pid: process.parent().map(|p| p.as_u32() as _),
             name,
             command,
             mem_usage_percent: if total_memory > 0 {
-                process_val.memory() as f64 * 100.0 / total_memory as f64
+                process.memory() as f64 * 100.0 / total_memory as f64
             } else {
                 0.0
             } as f32,
-            mem_usage: process_val.memory(),
-            virtual_mem: process_val.virtual_memory(),
+            mem_usage: process.memory(),
+            virtual_mem: process.virtual_memory(),
             cpu_usage_percent: process_cpu_usage,
             read_per_sec: disk_usage.read_bytes,
             write_per_sec: disk_usage.written_bytes,
             total_read: disk_usage.total_read_bytes,
             total_write: disk_usage.total_written_bytes,
             process_state,
-            user: process_val
+            user: process
                 .user_id()
                 .and_then(|uid| users.get_user_by_id(uid).map(|user| user.name().into())),
-            time: if process_val.start_time() == 0 {
+            time: if process.start_time() == 0 {
                 // Workaround for sysinfo occasionally returning a start time equal to UNIX
                 // epoch, giving a run time in the range of 50+ years. We just
                 // return a time of zero in this case for simplicity.
@@ -126,7 +151,7 @@ pub fn sysinfo_process_data(
                 // TODO: Maybe return an option instead?
                 Duration::ZERO
             } else {
-                Duration::from_secs(process_val.run_time())
+                Duration::from_secs(process.run_time())
             },
             #[cfg(feature = "gpu")]
             gpu_mem,
@@ -134,7 +159,7 @@ pub fn sysinfo_process_data(
             gpu_util,
             #[cfg(feature = "gpu")]
             gpu_mem_percent,
-            priority: base_priority,
+            priority, // TODO: Translate this to Windows priority names?
         });
     }
 

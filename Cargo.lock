@@ -227,7 +227,6 @@ dependencies = [
  "unicode-segmentation",
  "unicode-width",
  "windows 0.62.0",
- "winprocinfo",
 ]
 
 [[package]]
@@ -2839,17 +2838,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "21a0236b59786fed61e2a80582dd500fe61f18b5dca67a4a067d0bc9039339cf"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "winprocinfo"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d010942d0ed74baf25362e267b54d4f57b859d0cb9b2dc7040e26333a87e1d8"
-dependencies = [
- "ntapi",
- "regex",
- "winapi",
 ]
 
 [[package]]

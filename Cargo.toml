@@ -131,7 +131,6 @@ windows = { version = "0.62.0", features = [
     "Win32_System_ProcessStatus",
     "Win32_System_Threading",
 ] }
-winprocinfo = "0.1.2"
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
 serde_json = { version = "1.0.145" }
