@@ -183,7 +183,6 @@ dependencies = [
  "anyhow",
  "assert_cmd",
  "backtrace",
- "cargo-husky",
  "cfg-if",
  "clap",
  "clap_complete",
@@ -257,12 +256,6 @@ name = "byteorder"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
-
-[[package]]
-name = "cargo-husky"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
 
 [[package]]
 name = "castaway"
