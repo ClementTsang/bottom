@@ -83,18 +83,6 @@ impl Grid for BrailleGrid {
         (f64::from(self.width) * 2.0, f64::from(self.height) * 4.0)
     }
 
-    fn save(&self) -> Layer {
-        let string = String::from_utf16(&self.utf16_code_points).expect("valid UTF-16 data");
-        // the background color is always reset for braille patterns
-        let colors = self.colors.iter().map(|c| (*c, Color::Reset)).collect();
-        Layer { string, colors }
-    }
-
-    fn reset(&mut self) {
-        self.utf16_code_points.fill(BLANK);
-        self.colors.fill(Color::Reset);
-    }
-
     fn paint(&mut self, x: usize, y: usize, color: Color) {
         // Note the braille array corresponds to:
         // ⠁⠈
@@ -125,6 +113,18 @@ impl Grid for BrailleGrid {
                 *cell |= DOTS[y % 4][x % 2];
             }
         }
+    }
+
+    fn save(&self) -> Layer {
+        let string = String::from_utf16(&self.utf16_code_points).expect("valid UTF-16 data");
+        // the background color is always reset for braille patterns
+        let colors = self.colors.iter().map(|c| (*c, Color::Reset)).collect();
+        Layer { string, colors }
+    }
+
+    fn reset(&mut self) {
+        self.utf16_code_points.fill(BLANK);
+        self.colors.fill(Color::Reset);
     }
 }
 
@@ -166,18 +166,6 @@ impl Grid for CharGrid {
         (f64::from(self.width), f64::from(self.height))
     }
 
-    fn save(&self) -> Layer {
-        Layer {
-            string: self.cells.iter().collect(),
-            colors: self.colors.iter().map(|c| (*c, Color::Reset)).collect(),
-        }
-    }
-
-    fn reset(&mut self) {
-        self.cells.fill(' ');
-        self.colors.fill(Color::Reset);
-    }
-
     fn paint(&mut self, x: usize, y: usize, color: Color) {
         let index = y * self.width as usize + x;
         // using get_mut here because we are indexing the vector with usize values
@@ -188,6 +176,18 @@ impl Grid for CharGrid {
         if let Some(c) = self.colors.get_mut(index) {
             *c = color;
         }
+    }
+
+    fn save(&self) -> Layer {
+        Layer {
+            string: self.cells.iter().collect(),
+            colors: self.colors.iter().map(|c| (*c, Color::Reset)).collect(),
+        }
+    }
+
+    fn reset(&mut self) {
+        self.cells.fill(' ');
+        self.colors.fill(Color::Reset);
     }
 }
 
@@ -229,6 +229,10 @@ impl HalfBlockGrid {
 impl Grid for HalfBlockGrid {
     fn resolution(&self) -> (f64, f64) {
         (f64::from(self.width), f64::from(self.height) * 2.0)
+    }
+
+    fn paint(&mut self, x: usize, y: usize, color: Color) {
+        self.pixels[y][x] = color;
     }
 
     fn save(&self) -> Layer {
@@ -297,9 +301,5 @@ impl Grid for HalfBlockGrid {
 
     fn reset(&mut self) {
         self.pixels.fill(vec![Color::Reset; self.width as usize]);
-    }
-
-    fn paint(&mut self, x: usize, y: usize, color: Color) {
-        self.pixels[y][x] = color;
     }
 }
