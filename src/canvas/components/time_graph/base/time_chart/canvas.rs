@@ -1,5 +1,5 @@
 //! Vendored from <https://github.com/fdehau/tui-rs/blob/fafad6c96109610825aad89c4bba5253e01101ed/src/widgets/canvas/mod.rs>
-//! and <https://github.com/ratatui-org/ratatui/blob/c8dd87918d44fff6d4c3c78e1fc821a3275db1ae/src/widgets/canvas.rs>.
+//! and <https://github.com/ratatui/ratatui/blob/65c520245aa20e99e64d9ffcb2062a4502a699ea/ratatui-widgets/src/canvas.rs>.
 //!
 //! The main thing this is pulled in for is overriding how `BrailleGrid`'s draw
 //! logic works, as changing it is needed in order to draw all datasets in only
@@ -12,19 +12,21 @@
 //! See <https://github.com/ClementTsang/bottom/pull/918> and <https://github.com/ClementTsang/bottom/pull/937> for the
 //! original motivation.
 
+use super::grid::{CharGrid, Grid, HalfBlockGrid, PatternGrid};
+use ratatui_core::symbols::braille::BRAILLE;
+use ratatui_core::symbols::pixel::{OCTANTS, QUADRANTS, SEXTANTS};
+use tui::prelude::BlockExt;
 use tui::{
     buffer::Buffer,
     layout::Rect,
     style::{Color, Style},
-    symbols,
+    symbols::Marker,
     text::Line,
     widgets::{
         Block, Widget,
         canvas::{Line as CanvasLine, Points},
     },
 };
-
-use super::grid::{BrailleGrid, CharGrid, Grid, HalfBlockGrid};
 
 /// Interface for all shapes that may be drawn on a Canvas widget.
 pub trait Shape {
@@ -186,25 +188,30 @@ pub struct Context<'a> {
 
 impl<'a> Context<'a> {
     pub fn new(
-        width: u16, height: u16, x_bounds: [f64; 2], y_bounds: [f64; 2], marker: symbols::Marker,
+        width: u16, height: u16, x_bounds: [f64; 2], y_bounds: [f64; 2], marker: Marker,
     ) -> Context<'a> {
-        // FIXME: Temporarily added due to ratatui things
-        #[allow(unreachable_patterns)]
-        let grid: Box<dyn Grid> = match marker {
-            symbols::Marker::Dot => Box::new(CharGrid::new(width, height, '•')),
-            symbols::Marker::Block => Box::new(CharGrid::new(width, height, '█')),
-            symbols::Marker::Bar => Box::new(CharGrid::new(width, height, '▄')),
-            symbols::Marker::Braille => Box::new(BrailleGrid::new(width, height)),
-            symbols::Marker::HalfBlock => Box::new(HalfBlockGrid::new(width, height)),
-            // FIXME: Fall back to braille for now.
-            _ => Box::new(BrailleGrid::new(width, height)),
-        };
+        let grid = Self::marker_to_grid(width, height, marker);
+
         Context {
             x_bounds,
             y_bounds,
             grid,
             dirty: false,
             labels: Vec::new(),
+        }
+    }
+
+    fn marker_to_grid(width: u16, height: u16, marker: Marker) -> Box<dyn Grid> {
+        match marker {
+            Marker::Dot => Box::new(CharGrid::new(width, height, '•')),
+            Marker::Block => Box::new(CharGrid::new(width, height, '█').apply_color_to_bg()),
+            Marker::Bar => Box::new(CharGrid::new(width, height, '▄')),
+            Marker::Braille => Box::new(PatternGrid::<2, 4>::new(width, height, &BRAILLE)),
+            Marker::HalfBlock => Box::new(HalfBlockGrid::new(width, height)),
+            Marker::Quadrant => Box::new(PatternGrid::<2, 2>::new(width, height, &QUADRANTS)),
+            Marker::Sextant => Box::new(PatternGrid::<2, 3>::new(width, height, &SEXTANTS)),
+            Marker::Octant => Box::new(PatternGrid::<2, 4>::new(width, height, &OCTANTS)),
+            _ => Box::new(PatternGrid::<2, 4>::new(width, height, &BRAILLE)), // Fall back to braille if not supported.
         }
     }
 
@@ -228,9 +235,9 @@ where
     block: Option<Block<'a>>,
     x_bounds: [f64; 2],
     y_bounds: [f64; 2],
-    painter: Option<F>,
+    paint_func: Option<F>,
     background_color: Color,
-    marker: symbols::Marker,
+    marker: Marker,
 }
 
 impl<'a, F> Default for Canvas<'a, F>
@@ -242,9 +249,9 @@ where
             block: None,
             x_bounds: [0.0, 0.0],
             y_bounds: [0.0, 0.0],
-            painter: None,
+            paint_func: None,
             background_color: Color::Reset,
-            marker: symbols::Marker::Braille,
+            marker: Marker::Braille,
         }
     }
 }
@@ -265,7 +272,7 @@ where
 
     /// Store the closure that will be used to draw to the Canvas
     pub fn paint(mut self, f: F) -> Canvas<'a, F> {
-        self.painter = Some(f);
+        self.paint_func = Some(f);
         self
     }
 
@@ -274,11 +281,11 @@ where
         self
     }
 
-    /// Change the type of points used to draw the shapes. By default the
-    /// braille patterns are used as they provide a more fine grained result
+    /// Change the type of points used to draw the shapes. By default, the
+    /// braille patterns are used as they provide a more fine-grained result,
     /// but you might want to use the simple dot or block instead if the
     /// targeted terminal does not support those symbols.
-    pub fn marker(mut self, marker: symbols::Marker) -> Canvas<'a, F> {
+    pub fn marker(mut self, marker: Marker) -> Canvas<'a, F> {
         self.marker = marker;
         self
     }
@@ -288,23 +295,28 @@ impl<F> Widget for Canvas<'_, F>
 where
     F: Fn(&mut Context<'_>),
 {
-    fn render(mut self, area: Rect, buf: &mut Buffer) {
-        let canvas_area = match self.block.take() {
-            Some(b) => {
-                let inner_area = b.inner(area);
-                b.render(area, buf);
-                inner_area
-            }
-            None => area,
-        };
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        Widget::render(&self, area, buf);
+    }
+}
+
+impl<F> Widget for &Canvas<'_, F>
+where
+    F: Fn(&mut Context<'_>),
+{
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        self.block.as_ref().render(area, buf);
+        let canvas_area = self.block.inner_if_some(area);
+        if canvas_area.is_empty() {
+            return;
+        }
 
         buf.set_style(canvas_area, Style::default().bg(self.background_color));
 
         let width = canvas_area.width as usize;
 
-        let painter = match self.painter {
-            Some(ref p) => p,
-            None => return,
+        let Some(ref painter) = self.paint_func else {
+            return;
         };
 
         // Create a blank context that match the size of the canvas
@@ -317,23 +329,26 @@ where
         );
         // Paint to this context
         painter(&mut ctx);
+        // ctx.finish(); // Not needed, we have no layers.
 
-        // Paint whatever is in the ctx.
+        // Instead, paint whatever is in the ctx.
         let layer = ctx.grid.save();
 
-        for (i, (ch, (fg, bg))) in layer
-            .string
-            .chars()
-            .zip(layer.colors.into_iter())
-            .enumerate()
-        {
-            const BRAILLE_BASE: char = '\u{2800}';
-            if ch != ' ' && ch != BRAILLE_BASE {
-                let (x, y) = (i % width, i / width);
-                if let Some(cell) =
-                    buf.cell_mut((x as u16 + canvas_area.left(), y as u16 + canvas_area.top()))
-                {
-                    cell.set_char(ch).set_fg(fg).set_bg(bg);
+        for (index, layer_cell) in layer.contents.iter().enumerate() {
+            let (x, y) = (
+                (index % width) as u16 + canvas_area.left(),
+                (index / width) as u16 + canvas_area.top(),
+            );
+
+            if let Some(cell) = buf.cell_mut((x, y)) {
+                if let Some(symbol) = layer_cell.symbol {
+                    cell.set_char(symbol);
+                }
+                if let Some(fg) = layer_cell.fg {
+                    cell.set_fg(fg);
+                }
+                if let Some(bg) = layer_cell.bg {
+                    cell.set_bg(bg);
                 }
             }
         }
