@@ -52,10 +52,41 @@ impl Painter {
         let total_rx_label = format!("Total RX: {:.1}{}", total_rx.0, total_rx.1);
         let total_tx_label = format!("Total TX: {:.1}{}", total_tx.0, total_tx.1);
 
-        let net_text = vec![
+        let mut net_text = vec![
             Line::from(Span::styled(rx_label, self.styles.rx_style)),
             Line::from(Span::styled(tx_label, self.styles.tx_style)),
         ];
+
+        // Add packets information if enabled
+        if app_state.app_config_fields.network_show_packets {
+            // Calculate packet rate (packets per second)
+            let rx_packet_rate = network_data.rx_packets;
+            let tx_packet_rate = network_data.tx_packets;
+
+            // Calculate average packet size (bytes per packet)
+            let avg_rx_packet_size = if network_data.rx_packets > 0 {
+                (network_data.rx as f64 / 8.0) / network_data.rx_packets as f64 // Convert bits to bytes
+            } else {
+                0.0
+            };
+            let avg_tx_packet_size = if network_data.tx_packets > 0 {
+                (network_data.tx as f64 / 8.0) / network_data.tx_packets as f64 // Convert bits to bytes
+            } else {
+                0.0
+            };
+
+            let rx_packet_rate_label = format!("RX Packets: {} pkt/s", rx_packet_rate);
+            let tx_packet_rate_label = format!("TX Packets: {} pkt/s", tx_packet_rate);
+            let avg_rx_packet_size_label = format!("Avg RX Packet: {:.1} B", avg_rx_packet_size);
+            let avg_tx_packet_size_label = format!("Avg TX Packet: {:.1} B", avg_tx_packet_size);
+
+            net_text.extend(vec![
+                Line::from(Span::styled(rx_packet_rate_label, self.styles.rx_style)),
+                Line::from(Span::styled(tx_packet_rate_label, self.styles.tx_style)),
+                Line::from(Span::styled(avg_rx_packet_size_label, self.styles.rx_style)),
+                Line::from(Span::styled(avg_tx_packet_size_label, self.styles.tx_style)),
+            ]);
+        }
 
         let total_net_text = vec![
             Line::from(Span::styled(total_rx_label, self.styles.total_rx_style)),
