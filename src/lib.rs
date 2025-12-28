@@ -26,29 +26,29 @@ pub mod widgets;
 
 use std::{
     boxed::Box,
-    io::{stderr, stdout, Write},
+    io::{Write, stderr, stdout},
     panic::{self, PanicHookInfo},
     sync::{
-        mpsc::{self, Receiver, Sender},
         Arc,
+        mpsc::{self, Receiver, Sender},
     },
     thread::{self, JoinHandle},
     time::{Duration, Instant},
 };
 
-use app::{layout_manager::UsedWidgets, App, AppConfigFields, DataFilters};
+use app::{App, AppConfigFields, DataFilters, layout_manager::UsedWidgets};
 use crossterm::{
     cursor::{Hide, Show},
     event::{
-        poll, read, DisableBracketedPaste, DisableMouseCapture,
-        EnableBracketedPaste, EnableMouseCapture, Event, KeyEventKind, MouseEventKind,
+        DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
+        Event, KeyEventKind, MouseEventKind, poll, read,
     },
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, CollectionThreadEvent};
+use event::{BottomEvent, CollectionThreadEvent, handle_key_event_or_break, handle_mouse_event};
 use options::{args, get_or_create_config, init_app};
-use tui::{backend::CrosstermBackend, Terminal};
+use tui::{Terminal, backend::CrosstermBackend};
 #[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;
 use utils::{cancellation_token::CancellationToken, conversion::*};
