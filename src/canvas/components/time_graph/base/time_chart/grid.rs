@@ -1,25 +1,40 @@
+//! Vendored [starting from here](https://github.com/ratatui/ratatui/blob/65c520245aa20e99e64d9ffcb2062a4502a699ea/ratatui-widgets/src/canvas.rs#L322).
+
 use std::{fmt::Debug, iter::zip};
 
 use itertools::Itertools;
 use tui::{style::Color, symbols};
 
-// FIXME: These are temporary while people are having issues with ratatui.
-const BLANK: u16 = 0x2800;
-const DOTS: [[u16; 2]; 4] = [
-    [0x0001, 0x0008],
-    [0x0002, 0x0010],
-    [0x0004, 0x0020],
-    [0x0040, 0x0080],
-];
-
-#[derive(Debug, Clone)]
+/// A single layer of the canvas.
+///
+/// This allows the canvas to be drawn in multiple layers. This is useful if you want to draw
+/// multiple shapes on the canvas in specific order.
+///
+/// **NOTE**: In the vendored version, we don't ever actually want to do this.
+#[derive(Debug)]
 pub(super) struct Layer {
-    pub(super) string: String,
-    pub(super) colors: Vec<(Color, Color)>,
+    pub(super) contents: Vec<LayerCell>,
 }
 
-/// A [`Grid`] is a trait that represents a grid of cells, drawn in a
-/// specific way.
+/// A cell within a layer.
+///
+/// If a [`Context`] contains multiple layers, then the symbol, foreground, and background colors
+/// for a character will be determined by the top-most layer that provides a value for that
+/// character. For example, a chart drawn with [`Marker::Block`] may provide the background color,
+/// and a later chart drawn with [`Marker::Braille`] may provide the symbol and foreground color.
+#[derive(Debug)]
+pub(super) struct LayerCell {
+    pub(super) symbol: Option<char>,
+    pub(super) fg: Option<Color>,
+    pub(super) bg: Option<Color>,
+}
+
+/// A grid of cells that can be painted on.
+///
+/// The grid represents a particular screen region measured in rows and columns. The underlying
+/// resolution of the grid might exceed the number of rows and columns. For example, a grid of
+/// Braille patterns will have a resolution of 2x4 dots per cell. This means that a grid of 10x10
+/// cells will have a resolution of 20x40 dots.
 pub(super) trait Grid: Debug {
     /// Get the resolution of the grid in number of dots.
     ///
@@ -38,95 +53,191 @@ pub(super) trait Grid: Debug {
     fn reset(&mut self);
 }
 
-/// The `BrailleGrid` is a grid made up of cells each containing a Braille pattern.
+/// The pattern and colour of a `PatternGrid` cell.
+#[derive(Copy, Clone, Debug, Default)]
+struct PatternCell {
+    /// The pattern of a grid character.
+    ///
+    /// The pattern is stored in the lower bits in a row-major order. For instance, for a 2x4
+    /// pattern marker, bits 0 to 7 of this field should represent the following pseudo-pixels:
+    ///
+    /// | 0 1 |
+    /// | 2 3 |
+    /// | 4 5 |
+    /// | 6 7 |
+    pattern: u8,
+    /// The color of a cell only supports foreground colors for now as there's no way to
+    /// individually set the background color of each pseudo-pixel in a pattern character.
+    color: Option<Color>,
+}
+
+/// The `PatternGrid` is a grid made up of cells each containing a `W`x`H` pattern character.
 ///
-/// This makes it possible to draw shapes with a resolution of 2x4 dots per cell. This is useful
-/// when you want to draw shapes with a high resolution. Font support for Braille patterns is
-/// required to see the dots. If your terminal or font does not support this unicode block, you
-/// will see unicode replacement characters (�) instead of braille dots.
+/// This makes it possible to draw shapes with a resolution of e.g. 2x4 (Braille or Unicode octant)
+/// per cell.
+/// Font support for the relevant pattern character is required. If your terminal or font does not
+/// support the relevant Unicode block, you will see Unicode replacement characters (�) instead.
 ///
-/// This grid type only supports a single foreground color for each 2x4 dots cell. There is no way
-/// to set the individual color of each dot in the braille pattern.
+/// This grid type only supports a single foreground colour for each `W`x`H` pattern character.
+/// There is no way to set the individual colour of each pseudo-pixel.
 #[derive(Debug)]
-pub(super) struct BrailleGrid {
+pub(super) struct PatternGrid<const W: usize, const H: usize> {
     /// Width of the grid in number of terminal columns
     width: u16,
     /// Height of the grid in number of terminal rows
     height: u16,
-    /// Represents the unicode braille patterns. Will take a value between `0x2800` and `0x28FF`;
-    /// this is converted to an utf16 string when converting to a layer. See
-    /// <https://en.wikipedia.org/wiki/Braille_Patterns> for more info.
-    ///
-    /// FIXME: (points_rework_v1) isn't this really inefficient to go u16 -> String from utf16?
-    utf16_code_points: Vec<u16>,
-    /// The color of each cell only supports foreground colors for now as there's no way to
-    /// individually set the background color of each dot in the braille pattern.
-    colors: Vec<Color>,
+    /// Pattern and color of the cells.
+    cells: Vec<PatternCell>,
+    /// Lookup table mapping patterns to characters.
+    char_table: &'static [char],
 }
 
-impl BrailleGrid {
-    /// Create a new `BrailleGrid` with the given width and height measured in terminal columns and
-    /// rows respectively.
-    pub(super) fn new(width: u16, height: u16) -> Self {
-        let length = usize::from(width * height);
+impl<const W: usize, const H: usize> PatternGrid<W, H> {
+    /// Statically check that the dimension of the pattern is supported.
+    const _PATTERN_DIMENSION_CHECK: usize = u8::BITS as usize - W * H;
+
+    /// Create a new `PatternGrid` with the given width and height measured in terminal columns
+    /// and rows respectively.
+    pub(super) fn new(width: u16, height: u16, char_table: &'static [char]) -> Self {
+        // Cause a static error if the pattern doesn't fit within 8 bits.
+        let _ = Self::_PATTERN_DIMENSION_CHECK;
+
+        let length = usize::from(width) * usize::from(height);
         Self {
             width,
             height,
-            utf16_code_points: vec![BLANK; length],
-            colors: vec![Color::Reset; length],
+            cells: vec![PatternCell::default(); length],
+            char_table,
         }
     }
 }
 
-impl Grid for BrailleGrid {
+impl<const W: usize, const H: usize> Grid for PatternGrid<W, H> {
     fn resolution(&self) -> (f64, f64) {
-        (f64::from(self.width) * 2.0, f64::from(self.height) * 4.0)
+        (
+            f64::from(self.width) * W as f64,
+            f64::from(self.height) * H as f64,
+        )
     }
 
     fn paint(&mut self, x: usize, y: usize, color: Color) {
-        // Note the braille array corresponds to:
-        // ⠁⠈
-        // ⠂⠐
-        // ⠄⠠
-        // ⡀⢀
-
-        let index = y / 4 * self.width as usize + x / 2;
+        let index = y
+            .saturating_div(H)
+            .saturating_mul(self.width as usize)
+            .saturating_add(x.saturating_div(W));
 
         // The ratatui/tui-rs implementation; this gives a more merged
-        // look but it also makes it a bit harder to read in some cases.
-
-        // if let Some(c) = self.utf16_code_points.get_mut(index) {
-        //     *c |= DOTS[y % 4][x % 2];
+        // look, but it also makes it a bit harder to read in some cases.
+        //
+        // using get_mut here because we are indexing the vector with usize values
+        // and we want to make sure we don't panic if the index is out of bounds
+        // if let Some(cell) = self.cells.get_mut(index) {
+        //     cell.pattern |= 1u8 << ((x % W) + W * (y % H));
+        //     cell.color = Some(color);
         // }
-        // if let Some(c) = self.colors.get_mut(index) {
-        //     *c = color;
-        // }
 
-        // Custom implementation to distinguish between lines better.
-        if let Some(curr_color) = self.colors.get_mut(index) {
-            if *curr_color != color {
-                *curr_color = color;
-                if let Some(cell) = self.utf16_code_points.get_mut(index) {
-                    *cell = BLANK | DOTS[y % 4][x % 2];
+        // Custom implementation do distinguish between lines better.
+        if let Some(cell) = self.cells.get_mut(index) {
+            if let Some(curr_color) = &mut cell.color {
+                if *curr_color != color {
+                    *curr_color = color;
+                    cell.pattern = 1u8 << ((x % W) + W * (y % H));
+                } else {
+                    cell.pattern |= 1u8 << ((x % W) + W * (y % H));
                 }
-            } else if let Some(cell) = self.utf16_code_points.get_mut(index) {
-                *cell |= DOTS[y % 4][x % 2];
+            } else {
+                cell.pattern |= 1u8 << ((x % W) + W * (y % H));
             }
         }
     }
 
     fn save(&self) -> Layer {
-        let string = String::from_utf16(&self.utf16_code_points).expect("valid UTF-16 data");
-        // the background color is always reset for braille patterns
-        let colors = self.colors.iter().map(|c| (*c, Color::Reset)).collect();
-        Layer { string, colors }
+        let contents = self
+            .cells
+            .iter()
+            .map(|&cell| {
+                let symbol = match cell.pattern {
+                    // Skip rendering blank patterns to allow layers underneath
+                    // to show through.
+                    0 => None,
+                    idx => Some(self.char_table[idx as usize]),
+                };
+
+                LayerCell {
+                    symbol,
+                    fg: cell.color,
+                    // Patterns only affect foreground.
+                    bg: None,
+                }
+            })
+            .collect();
+
+        Layer { contents }
     }
 
     fn reset(&mut self) {
-        self.utf16_code_points.fill(BLANK);
-        self.colors.fill(Color::Reset);
+        self.cells.fill_with(Default::default);
     }
 }
+
+// impl Grid for BrailleGrid {
+//     fn resolution(&self) -> (f64, f64) {
+//         (f64::from(self.width) * 2.0, f64::from(self.height) * 4.0)
+//     }
+//
+//     fn paint(&mut self, x: usize, y: usize, color: Color) {
+//         // Note the braille array corresponds to:
+//         // ```
+//         // ⠁⠈
+//         // ⠂⠐
+//         // ⠄⠠
+//         // ⡀⢀
+//         // ```
+//         const BLANK: u16 = 0x2800;
+//         const DOTS: [[u16; 2]; 4] = [
+//             [0x0001, 0x0008],
+//             [0x0002, 0x0010],
+//             [0x0004, 0x0020],
+//             [0x0040, 0x0080],
+//         ];
+//
+//         let index = y / 4 * self.width as usize + x / 2;
+//
+//         // The ratatui/tui-rs implementation; this gives a more merged
+//         // look, but it also makes it a bit harder to read in some cases.
+//
+//         // if let Some(c) = self.utf16_code_points.get_mut(index) {
+//         //     *c |= DOTS[y % 4][x % 2];
+//         // }
+//         // if let Some(c) = self.colors.get_mut(index) {
+//         //     *c = color;
+//         // }
+//
+//         // Custom implementation to distinguish between lines better.
+//         if let Some(curr_color) = self.colors.get_mut(index) {
+//             if *curr_color != color {
+//                 *curr_color = color;
+//                 if let Some(cell) = self.utf16_code_points.get_mut(index) {
+//                     *cell = BLANK | DOTS[y % 4][x % 2];
+//                 }
+//             } else if let Some(cell) = self.utf16_code_points.get_mut(index) {
+//                 *cell |= DOTS[y % 4][x % 2];
+//             }
+//         }
+//     }
+//
+//     fn save(&self) -> Layer {
+//         let string = String::from_utf16(&self.utf16_code_points).expect("valid UTF-16 data");
+//         // the background color is always reset for braille patterns
+//         let colors = self.colors.iter().map(|c| (*c, Color::Reset)).collect();
+//         Layer { string, colors }
+//     }
+//
+//     fn reset(&mut self) {
+//         self.utf16_code_points.fill(BLANK);
+//         self.colors.fill(Color::Reset);
+//     }
+// }
 
 /// The `CharGrid` is a grid made up of cells each containing a single character.
 ///
@@ -138,25 +249,36 @@ pub(super) struct CharGrid {
     width: u16,
     /// Height of the grid in number of terminal rows
     height: u16,
-    /// Represents a single character for each cell
-    cells: Vec<char>,
     /// The color of each cell
-    colors: Vec<Color>,
+    cells: Vec<Option<Color>>,
+
     /// The character to use for every cell - e.g. a block, dot, etc.
     cell_char: char,
+
+    /// If true, apply the color to the background as well as the foreground. This is used for
+    /// [`Marker::Block`], so that it will overwrite any previous foreground character, but also
+    /// leave a background that can be overlaid with an additional foreground character.
+    apply_color_to_bg: bool,
 }
 
 impl CharGrid {
     /// Create a new `CharGrid` with the given width and height measured in terminal columns and
     /// rows respectively.
     pub(super) fn new(width: u16, height: u16, cell_char: char) -> Self {
-        let length = usize::from(width * height);
+        let length = usize::from(width) * usize::from(height);
         Self {
             width,
             height,
-            cells: vec![' '; length],
-            colors: vec![Color::Reset; length],
+            cells: vec![None; length],
             cell_char,
+            apply_color_to_bg: false,
+        }
+    }
+
+    pub(super) fn apply_color_to_bg(self) -> Self {
+        Self {
+            apply_color_to_bg: true,
+            ..self
         }
     }
 }
@@ -167,27 +289,30 @@ impl Grid for CharGrid {
     }
 
     fn paint(&mut self, x: usize, y: usize, color: Color) {
-        let index = y * self.width as usize + x;
+        let index = y.saturating_mul(self.width as usize).saturating_add(x);
         // using get_mut here because we are indexing the vector with usize values
         // and we want to make sure we don't panic if the index is out of bounds
         if let Some(c) = self.cells.get_mut(index) {
-            *c = self.cell_char;
-        }
-        if let Some(c) = self.colors.get_mut(index) {
-            *c = color;
+            *c = Some(color);
         }
     }
 
     fn save(&self) -> Layer {
         Layer {
-            string: self.cells.iter().collect(),
-            colors: self.colors.iter().map(|c| (*c, Color::Reset)).collect(),
+            contents: self
+                .cells
+                .iter()
+                .map(|&color| LayerCell {
+                    symbol: color.map(|_| self.cell_char),
+                    fg: color,
+                    bg: color.filter(|_| self.apply_color_to_bg),
+                })
+                .collect(),
         }
     }
 
     fn reset(&mut self) {
-        self.cells.fill(' ');
-        self.colors.fill(Color::Reset);
+        self.cells.fill(None);
     }
 }
 
@@ -201,17 +326,18 @@ impl Grid for CharGrid {
 /// and lower half of each cell. This allows us to draw shapes with a resolution of 1x2 "pixels" per
 /// cell.
 ///
-/// This allows for more flexibility than the `BrailleGrid` which only supports a single
+/// This allows for more flexibility than the `PatternGrid` which only supports a single
 /// foreground color for each 2x4 dots cell, and the `CharGrid` which only supports a single
 /// character for each cell.
 #[derive(Debug)]
+
 pub(super) struct HalfBlockGrid {
     /// Width of the grid in number of terminal columns
     width: u16,
     /// Height of the grid in number of terminal rows
     height: u16,
     /// Represents a single color for each "pixel" arranged in column, row order
-    pixels: Vec<Vec<Color>>,
+    pixels: Vec<Vec<Option<Color>>>,
 }
 
 impl HalfBlockGrid {
@@ -221,7 +347,7 @@ impl HalfBlockGrid {
         Self {
             width,
             height,
-            pixels: vec![vec![Color::Reset; width as usize]; height as usize * 2],
+            pixels: vec![vec![None; width as usize]; (height as usize) * 2],
         }
     }
 }
@@ -232,7 +358,7 @@ impl Grid for HalfBlockGrid {
     }
 
     fn paint(&mut self, x: usize, y: usize, color: Color) {
-        self.pixels[y][x] = color;
+        self.pixels[y][x] = Some(color);
     }
 
     fn save(&self) -> Layer {
@@ -257,49 +383,35 @@ impl Grid for HalfBlockGrid {
 
         // first we join each adjacent row together to get an iterator that contains vertical pairs
         // of pixels, with the lower row being the first element in the pair
-        //
-        // TODO: Whenever I add this as a valid marker, make sure this works fine with
-        // the overridden time_chart drawing-layer-thing.
         let vertical_color_pairs = self
             .pixels
             .iter()
             .tuples()
             .flat_map(|(upper_row, lower_row)| zip(upper_row, lower_row));
 
-        // then we work out what character to print for each pair of pixels
-        let string = vertical_color_pairs
-            .clone()
-            .map(|(upper, lower)| match (upper, lower) {
-                (Color::Reset, Color::Reset) => ' ',
-                (Color::Reset, _) => symbols::half_block::LOWER,
-                (_, Color::Reset) => symbols::half_block::UPPER,
-                (&lower, &upper) => {
-                    if lower == upper {
-                        symbols::half_block::FULL
-                    } else {
-                        symbols::half_block::UPPER
-                    }
-                }
-            })
-            .collect();
-
-        // then we convert these each vertical pair of pixels into a foreground and background color
-        let colors = vertical_color_pairs
+        // Then we determine the character to print for each pair, along with the color of the
+        // foreground and background.
+        let contents = vertical_color_pairs
             .map(|(upper, lower)| {
-                let (fg, bg) = match (upper, lower) {
-                    (Color::Reset, Color::Reset) => (Color::Reset, Color::Reset),
-                    (Color::Reset, &lower) => (lower, Color::Reset),
-                    (&upper, Color::Reset) => (upper, Color::Reset),
-                    (&upper, &lower) => (upper, lower),
+                let (symbol, fg, bg) = match (upper, lower) {
+                    (None, None) => (None, None, None),
+                    (None, Some(lower)) => (Some(symbols::half_block::LOWER), Some(*lower), None),
+                    (Some(upper), None) => (Some(symbols::half_block::UPPER), Some(*upper), None),
+                    (Some(upper), Some(lower)) if lower == upper => {
+                        (Some(symbols::half_block::FULL), Some(*upper), Some(*lower))
+                    }
+                    (Some(upper), Some(lower)) => {
+                        (Some(symbols::half_block::UPPER), Some(*upper), Some(*lower))
+                    }
                 };
-                (fg, bg)
+                LayerCell { symbol, fg, bg }
             })
             .collect();
 
-        Layer { string, colors }
+        Layer { contents }
     }
 
     fn reset(&mut self) {
-        self.pixels.fill(vec![Color::Reset; self.width as usize]);
+        self.pixels.fill(vec![None; self.width as usize]);
     }
 }
