@@ -140,14 +140,17 @@ impl<const W: usize, const H: usize> Grid for PatternGrid<W, H> {
         if let Some(cell) = self.cells.get_mut(index) {
             if let Some(curr_color) = &mut cell.color {
                 if *curr_color != color {
+                    // If the colour doesn't match, then reset the colour and cell.
                     *curr_color = color;
                     cell.pattern = 1u8 << ((x % W) + W * (y % H));
                 } else {
+                    // If it does match, then combine it with the previous underlying cell.
                     cell.pattern |= 1u8 << ((x % W) + W * (y % H));
                 }
             } else {
+                // If there's no color then just assume it's a brand new cell.
                 cell.color = Some(color);
-                cell.pattern |= 1u8 << ((x % W) + W * (y % H));
+                cell.pattern = 1u8 << ((x % W) + W * (y % H));
             }
         }
     }
