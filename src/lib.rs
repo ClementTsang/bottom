@@ -26,29 +26,29 @@ pub mod widgets;
 
 use std::{
     boxed::Box,
-    io::{Write, stderr, stdout},
+    io::{stderr, stdout, Write},
     panic::{self, PanicHookInfo},
     sync::{
-        Arc,
         mpsc::{self, Receiver, Sender},
+        Arc,
     },
     thread::{self, JoinHandle},
     time::{Duration, Instant},
 };
 
-use app::{App, AppConfigFields, DataFilters, layout_manager::UsedWidgets};
+use app::{layout_manager::UsedWidgets, App, AppConfigFields, DataFilters};
 use crossterm::{
     cursor::{Hide, Show},
     event::{
-        DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
-        Event, KeyEventKind, MouseEventKind, poll, read,
+        poll, read, DisableBracketedPaste, DisableMouseCapture,
+        EnableBracketedPaste, EnableMouseCapture, Event, KeyEventKind, MouseEventKind,
     },
     execute,
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use event::{BottomEvent, CollectionThreadEvent, handle_key_event_or_break, handle_mouse_event};
+use event::{handle_key_event_or_break, handle_mouse_event, BottomEvent, CollectionThreadEvent};
 use options::{args, get_or_create_config, init_app};
-use tui::{Terminal, backend::CrosstermBackend};
+use tui::{backend::CrosstermBackend, Terminal};
 #[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;
 use utils::{cancellation_token::CancellationToken, conversion::*};
@@ -128,7 +128,7 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
         },
     };
 
-    let backtrace = format!("{:?}", backtrace::Backtrace::new());
+    let backtrace = format!("{:?}", std::backtrace::Backtrace::capture());
 
     reset_stdout();
 
