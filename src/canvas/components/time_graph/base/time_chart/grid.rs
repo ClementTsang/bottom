@@ -146,6 +146,7 @@ impl<const W: usize, const H: usize> Grid for PatternGrid<W, H> {
                     cell.pattern |= 1u8 << ((x % W) + W * (y % H));
                 }
             } else {
+                cell.color = Some(color);
                 cell.pattern |= 1u8 << ((x % W) + W * (y % H));
             }
         }
