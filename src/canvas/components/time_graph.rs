@@ -1,6 +1,5 @@
 mod base;
 mod variants;
-
 mod vendored;
 
 pub(crate) use base::*;
