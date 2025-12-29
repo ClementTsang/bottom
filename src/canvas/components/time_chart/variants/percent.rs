@@ -6,7 +6,7 @@ use tui::{layout::Constraint, symbols::Marker};
 
 use crate::{
     app::AppConfigFields,
-    canvas::components::time_graph::{
+    canvas::components::time_chart::{
         AxisBound, ChartScaling, LegendPosition, TimeGraph, variants::get_border_style,
     },
     options::config::style::Styles,

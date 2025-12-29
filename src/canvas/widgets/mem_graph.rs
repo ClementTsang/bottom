@@ -10,7 +10,7 @@ use crate::{
     app::{App, data::Values},
     canvas::{
         Painter,
-        components::time_graph::{GraphData, PercentTimeGraph},
+        components::time_chart::{GraphData, PercentTimeGraph},
         drawing_utils::should_hide_x_label,
     },
     collection::memory::MemData,

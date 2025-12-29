@@ -15,7 +15,7 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
     canvas::{
-        components::time_graph::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
+        components::time_chart::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
     },
     constants,
     utils::data_units::DataUnit,

@@ -32,7 +32,7 @@ use self::{
 };
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::components::time_graph::LegendPosition,
+    canvas::components::time_chart::LegendPosition,
     constants::*,
     utils::data_units::DataUnit,
     widgets::*,
