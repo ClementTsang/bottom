@@ -1,4 +1,4 @@
-//! A chart displaying data in the y-axis over time in the x-axis.
+//! A graph displaying data in the y-axis over time in the x-axis.
 //!
 //! A "base" version is available, based on a vendored version of
 //! ratatui's [charts](https://docs.rs/ratatui/latest/ratatui/widgets/struct.Chart.html),
