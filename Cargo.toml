@@ -95,7 +95,7 @@ starship-battery = { version = "0.10.3", optional = true }
 sysinfo = "=0.37.2"
 timeless = "0.0.14-alpha"
 toml_edit = { version = "0.24.0", features = ["serde"] }
-tui = { version = "0.30.0", package = "ratatui", features = ["unstable-rendered-line-info", "layout-cache"] }
+tui = { version = "0.30.0", package = "ratatui", features = ["unstable-rendered-line-info", "layout-cache", "crossterm"] }
 unicode-ellipsis = "0.3.0"
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2.2"
@@ -121,7 +121,7 @@ core-foundation = "0.10.1"
 mach2 = "0.6.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.62.0", features = [
+windows = { version = "0.62.2", features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_Storage_FileSystem",
