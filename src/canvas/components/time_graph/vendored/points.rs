@@ -112,7 +112,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn time_chart_test_interpolation() {
+    fn time_graph_test_interpolation() {
         let data = [(-3.0, 8.0), (-1.0, 6.0), (0.0, 5.0)];
 
         assert_eq!(interpolate_point(&data[1], &data[2], 0.0), 5.0);

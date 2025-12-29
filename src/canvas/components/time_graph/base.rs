@@ -10,7 +10,7 @@ use tui::{
     widgets::{BorderType, GraphType},
 };
 
-use crate::canvas::components::time_chart::*;
+use crate::canvas::components::time_graph::*;
 use crate::{app::data::Values, canvas::drawing_utils::widget_block};
 
 /// Represents the data required by the [`TimeGraph`].
@@ -214,7 +214,7 @@ mod test {
     };
 
     use super::{AxisBound, ChartScaling, TimeGraph};
-    use crate::canvas::components::time_chart::Axis;
+    use crate::canvas::components::time_graph::Axis;
 
     const Y_LABELS: [Cow<'static, str>; 3] = [
         Cow::Borrowed("0%"),
@@ -222,7 +222,7 @@ mod test {
         Cow::Borrowed("100%"),
     ];
 
-    fn create_time_chart() -> TimeGraph<'static> {
+    fn create_time_graph() -> TimeGraph<'static> {
         TimeGraph {
             title: " Network ".into(),
             x_min: -15000.0,
@@ -243,8 +243,8 @@ mod test {
     }
 
     #[test]
-    fn time_chart_gen_x_axis() {
-        let tg = create_time_chart();
+    fn time_graph_gen_x_axis() {
+        let tg = create_time_graph();
         let style = Style::default().fg(Color::Red);
         let x_axis = tg.generate_x_axis();
 
@@ -258,8 +258,8 @@ mod test {
     }
 
     #[test]
-    fn time_chart_gen_y_axis() {
-        let tg = create_time_chart();
+    fn time_graph_gen_y_axis() {
+        let tg = create_time_graph();
         let style = Style::default().fg(Color::Red);
         let y_axis = tg.generate_y_axis();
 

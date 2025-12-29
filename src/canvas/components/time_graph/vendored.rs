@@ -2,7 +2,7 @@
 //! right-aligned timeseries data.
 //!
 //! Generally should be updated to be in sync with [`chart.rs`](https://github.com/ratatui-org/ratatui/blob/main/src/widgets/chart.rs);
-//! the specializations are factored out to `time_chart/points.rs`.
+//! the specializations are factored out to `time_graph/points.rs`.
 
 mod canvas;
 mod grid;

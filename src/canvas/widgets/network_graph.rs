@@ -12,7 +12,7 @@ use crate::{
     app::{App, AppConfigFields, AxisScaling},
     canvas::{
         Painter,
-        components::time_chart::{AxisBound, ChartScaling, GraphData, TimeGraph},
+        components::time_graph::{AxisBound, ChartScaling, GraphData, TimeGraph},
         drawing_utils::should_hide_x_label,
     },
     utils::{
