@@ -1,17 +1,17 @@
 use std::time::Instant;
 
 use tui::{
-    Frame,
     layout::{Constraint, Rect},
     style::Style,
+    Frame,
 };
 
 use crate::{
-    app::{App, data::Values},
+    app::{data::Values, App},
     canvas::{
-        Painter,
-        components::time_graph::{GraphData, variants::percent::PercentTimeGraph},
+        components::time_graph::{GraphData, PercentTimeGraph},
         drawing_utils::should_hide_x_label,
+        Painter,
     },
     collection::memory::MemData,
     get_binary_unit_and_denominator,

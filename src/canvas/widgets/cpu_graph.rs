@@ -1,17 +1,17 @@
 use tui::{
-    Frame,
     layout::{Constraint, Direction, Layout, Rect},
+    Frame,
 };
 
 use crate::{
-    app::{App, data::StoredData, layout_manager::WidgetDirection},
+    app::{data::StoredData, layout_manager::WidgetDirection, App},
     canvas::{
-        Painter,
         components::{
             data_table::{DrawInfo, SelectionState},
-            time_graph::{GraphData, variants::percent::PercentTimeGraph},
+            time_graph::{GraphData, PercentTimeGraph},
         },
         drawing_utils::should_hide_x_label,
+        Painter,
     },
     collection::cpu::CpuData,
     widgets::CpuWidgetState,

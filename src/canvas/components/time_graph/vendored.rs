@@ -23,7 +23,7 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::data::Values,
-    utils::general::{saturating_log2, saturating_log10},
+    utils::general::{saturating_log10, saturating_log2},
 };
 
 pub const DEFAULT_LEGEND_CONSTRAINTS: (Constraint, Constraint) =
