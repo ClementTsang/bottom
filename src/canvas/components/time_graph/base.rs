@@ -2,12 +2,12 @@ use std::{borrow::Cow, time::Instant};
 
 use concat_string::concat_string;
 use tui::{
+    Frame,
     layout::{Constraint, Rect},
     style::Style,
     symbols::Marker,
     text::{Line, Span},
     widgets::{BorderType, GraphType},
-    Frame,
 };
 
 use crate::canvas::components::time_graph::*;
