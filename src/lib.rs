@@ -128,7 +128,7 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
         },
     };
 
-    let backtrace = format!("{:?}", backtrace::Backtrace::new());
+    let backtrace = format!("{:?}", std::backtrace::Backtrace::capture());
 
     reset_stdout();
 
