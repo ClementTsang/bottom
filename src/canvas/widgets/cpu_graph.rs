@@ -9,7 +9,7 @@ use crate::{
         Painter,
         components::{
             data_table::{DrawInfo, SelectionState},
-            time_graph::{GraphData, variants::percent::PercentTimeGraph},
+            time_graph::{GraphData, PercentTimeGraph},
         },
         drawing_utils::should_hide_x_label,
     },

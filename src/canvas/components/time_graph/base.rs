@@ -1,8 +1,6 @@
-mod time_chart;
 use std::{borrow::Cow, time::Instant};
 
 use concat_string::concat_string;
-pub use time_chart::*;
 use tui::{
     Frame,
     layout::{Constraint, Rect},
@@ -12,6 +10,7 @@ use tui::{
     widgets::{BorderType, GraphType},
 };
 
+use crate::canvas::components::time_graph::*;
 use crate::{app::data::Values, canvas::drawing_utils::widget_block};
 
 /// Represents the data required by the [`TimeGraph`].

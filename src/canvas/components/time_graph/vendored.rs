@@ -2,7 +2,7 @@
 //! right-aligned timeseries data.
 //!
 //! Generally should be updated to be in sync with [`chart.rs`](https://github.com/ratatui-org/ratatui/blob/main/src/widgets/chart.rs);
-//! the specializations are factored out to `time_chart/points.rs`.
+//! the specializations are factored out to `time_graph/points.rs`.
 
 mod canvas;
 mod grid;
@@ -410,10 +410,8 @@ impl ChartScaling {
 /// - Styling option for the legend box
 /// - Automatically trimming out redundant draws in the x-bounds.
 /// - Automatic interpolation to points that fall *just* outside of the screen.
-///
-/// TODO: Support for putting the legend on the left side.
 #[derive(Debug, Default, Clone)]
-pub struct TimeChart<'a> {
+pub(super) struct TimeChart<'a> {
     /// A block to display around the widget eventually
     block: Option<Block<'a>>,
     /// The horizontal axis
