@@ -22,6 +22,10 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ## [0.12.3]/[0.13.0] - Unreleased
 
+### Bug Fixes
+
+- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multi-byte UTF8 chars in process names.
+
 ## [0.12.2] - 2025-12-25
 
 ### Bug Fixes
