@@ -9,6 +9,7 @@ use std::{
 };
 
 use concat_string::concat_string;
+use itertools::Itertools;
 use process::*;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use sysinfo::ProcessStatus;
@@ -312,7 +313,7 @@ fn binary_name_from_cmdline(cmdline: &str) -> String {
     }
 
     // Bit of a hack to handle cases like "firefox -blah"
-    let partial = &cmdline[start..end];
+    let partial = cmdline.chars().skip(start).take(end - start).join("");
     partial
         .split_once(" -")
         .map(|(name, _)| name.to_string())
@@ -557,6 +558,15 @@ mod tests {
         assert_eq!(
             binary_name_from_cmdline("firefox -contentproc -isForBrowser -prefsHandle 0"),
             "firefox"
+        );
+        assert_eq!(binary_name_from_cmdline("こんにちは\0"), "こんにちは");
+        assert_eq!(
+            binary_name_from_cmdline("こんにちは -こんばんは"),
+            "こんにちは"
+        );
+        assert_eq!(
+            binary_name_from_cmdline("/usr/bin/こんにちは -こんばんは\0"),
+            "こんにちは"
         );
     }
 }
