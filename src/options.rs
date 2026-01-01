@@ -276,6 +276,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let network_scale_type = get_network_scale_type(args, config);
     let network_use_binary_prefix =
         is_flag_enabled!(network_use_binary_prefix, args.network, config);
+    let network_show_packets = get_network_show_packets(args, config);
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
         config.processes.as_ref().and_then(|cfg| {
@@ -330,6 +331,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         network_scale_type,
         network_unit_type,
         network_use_binary_prefix,
+        network_show_packets,
         retention_ms,
         dedicated_average_row: get_dedicated_avg_row(config),
         default_tree_collapse: is_default_tree_collapsed,
@@ -975,6 +977,18 @@ fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
     }
 
     AxisScaling::Linear
+}
+
+fn get_network_show_packets(args: &BottomArgs, config: &Config) -> bool {
+    if args.network.show_packets {
+        return true;
+    } else if let Some(network_config) = &config.network {
+        if let Some(show_packets) = network_config.show_packets {
+            return show_packets;
+        }
+    }
+
+    false
 }
 
 fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {

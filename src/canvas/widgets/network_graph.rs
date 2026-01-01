@@ -15,12 +15,54 @@ use crate::{
         components::time_graph::{AxisBound, ChartScaling, GraphData, TimeGraph},
         drawing_utils::should_hide_x_label,
     },
+    collection::network::NetworkHarvest,
     utils::{
         data_units::*,
         general::{saturating_log2, saturating_log10},
     },
     widgets::{NetWidgetHeightCache, NetWidgetState},
 };
+
+/// Helper struct to hold packet-related data and labels
+struct PacketInfo {
+    rx_packet_rate: u64,
+    tx_packet_rate: u64,
+    avg_rx_packet_size: f64,
+    avg_tx_packet_size: f64,
+    rx_packet_rate_label: String,
+    tx_packet_rate_label: String,
+    avg_rx_packet_size_label: String,
+    avg_tx_packet_size_label: String,
+}
+
+/// Calculate packet information from network data
+fn calculate_packet_info(network_latest_data: &NetworkHarvest) -> PacketInfo {
+    let rx_packet_rate = network_latest_data.rx_packets;
+    let tx_packet_rate = network_latest_data.tx_packets;
+
+    // Calculate average packet size (bytes per packet)
+    let avg_rx_packet_size = if network_latest_data.rx_packets > 0 {
+        (network_latest_data.rx as f64 / 8.0) / network_latest_data.rx_packets as f64 // Convert bits to bytes
+    } else {
+        0.0
+    };
+    let avg_tx_packet_size = if network_latest_data.tx_packets > 0 {
+        (network_latest_data.tx as f64 / 8.0) / network_latest_data.tx_packets as f64 // Convert bits to bytes
+    } else {
+        0.0
+    };
+
+    PacketInfo {
+        rx_packet_rate,
+        tx_packet_rate,
+        avg_rx_packet_size,
+        avg_tx_packet_size,
+        rx_packet_rate_label: format!("{} pkt/s", rx_packet_rate),
+        tx_packet_rate_label: format!("{} pkt/s", tx_packet_rate),
+        avg_rx_packet_size_label: format!("{:.1} B", avg_rx_packet_size),
+        avg_tx_packet_size_label: format!("{:.1} B", avg_tx_packet_size),
+    }
+}
 
 impl Painter {
     pub fn draw_network(
@@ -175,7 +217,7 @@ impl Painter {
                 let total_rx_label = format!("Total RX: {:.1}{}", total_rx.0, total_rx.1);
                 let total_tx_label = format!("Total TX: {:.1}{}", total_tx.0, total_tx.1);
 
-                vec![
+                let mut graph_data = vec![
                     GraphData::default()
                         .name(rx_label.into())
                         .time(times)
@@ -186,31 +228,79 @@ impl Painter {
                         .time(times)
                         .values(tx_points)
                         .style(self.styles.tx_style),
+                ];
+
+                // Add packets information if enabled
+                if app_state.app_config_fields.network_show_packets {
+                    let packet_info = calculate_packet_info(network_latest_data);
+
+                    graph_data.extend(vec![
+                        GraphData::default().style(self.styles.rx_style).name(
+                            format!("RX Packets: {} pkt/s", packet_info.rx_packet_rate).into(),
+                        ),
+                        GraphData::default().style(self.styles.tx_style).name(
+                            format!("TX Packets: {} pkt/s", packet_info.tx_packet_rate).into(),
+                        ),
+                        GraphData::default().style(self.styles.rx_style).name(
+                            format!("Avg RX Packet: {:.1} B", packet_info.avg_rx_packet_size)
+                                .into(),
+                        ),
+                        GraphData::default().style(self.styles.tx_style).name(
+                            format!("Avg TX Packet: {:.1} B", packet_info.avg_tx_packet_size)
+                                .into(),
+                        ),
+                    ]);
+                }
+
+                graph_data.extend(vec![
                     GraphData::default()
                         .style(self.styles.total_rx_style)
                         .name(total_rx_label.into()),
                     GraphData::default()
                         .style(self.styles.total_tx_style)
                         .name(total_tx_label.into()),
-                ]
+                ]);
+
+                graph_data
             } else {
                 let rx_label = format!("{:.1}{}{}", rx.0, rx.1, unit);
                 let tx_label = format!("{:.1}{}{}", tx.0, tx.1, unit);
                 let total_rx_label = format!("{:.1}{}", total_rx.0, total_rx.1);
                 let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
 
-                vec![
-                    GraphData::default()
-                        .name(format!("RX: {rx_label:<10}  All: {total_rx_label}").into())
-                        .time(times)
-                        .values(rx_points)
-                        .style(self.styles.rx_style),
-                    GraphData::default()
-                        .name(format!("TX: {tx_label:<10}  All: {total_tx_label}").into())
-                        .time(times)
-                        .values(tx_points)
-                        .style(self.styles.tx_style),
-                ]
+                if app_state.app_config_fields.network_show_packets {
+                    let packet_info = calculate_packet_info(network_latest_data);
+
+                    vec![
+                        GraphData::default()
+                            .name(format!("RX: {rx_label:<10} Packets: {rx_packet_rate_label:<8} Avg: {avg_rx_packet_size_label:<6} All: {total_rx_label}",
+                                rx_packet_rate_label = packet_info.rx_packet_rate_label,
+                                avg_rx_packet_size_label = packet_info.avg_rx_packet_size_label).into())
+                            .time(times)
+                            .values(rx_points)
+                            .style(self.styles.rx_style),
+                        GraphData::default()
+                            .name(format!("TX: {tx_label:<10} Packets: {tx_packet_rate_label:<8} Avg: {avg_tx_packet_size_label:<6} All: {total_tx_label}",
+                                tx_packet_rate_label = packet_info.tx_packet_rate_label,
+                                avg_tx_packet_size_label = packet_info.avg_tx_packet_size_label).into())
+                            .time(times)
+                            .values(tx_points)
+                            .style(self.styles.tx_style),
+                    ]
+                } else {
+                    vec![
+                        GraphData::default()
+                            .name(format!("RX: {rx_label:<10} All: {total_rx_label}").into())
+                            .time(times)
+                            .values(rx_points)
+                            .style(self.styles.rx_style),
+                        GraphData::default()
+                            .name(format!("TX: {tx_label:<10} All: {total_tx_label}").into())
+                            .time(times)
+                            .values(tx_points)
+                            .style(self.styles.tx_style),
+                    ]
+                }
             };
 
             let marker = if app_state.app_config_fields.use_dot {
@@ -255,8 +345,6 @@ impl Painter {
     fn draw_network_labels(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
-
         let network_latest_data = &(app_state.data_store.get_data().network_harvest);
         let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
         let unit_type = app_state.app_config_fields.network_unit_type;
@@ -276,23 +364,62 @@ impl Painter {
         let total_rx_label = format!("{:.1}{}", total_rx.0, total_rx.1);
         let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
 
-        // Gross but I need it to work...
-        let total_network = vec![Row::new([
-            Text::styled(rx_label, self.styles.rx_style),
-            Text::styled(tx_label, self.styles.tx_style),
-            Text::styled(total_rx_label, self.styles.total_rx_style),
-            Text::styled(total_tx_label, self.styles.total_tx_style),
-        ])];
+        let total_network = if app_state.app_config_fields.network_show_packets {
+            let packet_info = calculate_packet_info(network_latest_data);
+
+            vec![Row::new([
+                Text::styled(rx_label, self.styles.rx_style),
+                Text::styled(tx_label, self.styles.tx_style),
+                Text::styled(total_rx_label, self.styles.total_rx_style),
+                Text::styled(total_tx_label, self.styles.total_tx_style),
+                Text::styled(
+                    format!("{} pkt/s", packet_info.rx_packet_rate),
+                    self.styles.rx_style,
+                ),
+                Text::styled(
+                    format!("{} pkt/s", packet_info.tx_packet_rate),
+                    self.styles.tx_style,
+                ),
+                Text::styled(
+                    format!("{:.1} B", packet_info.avg_rx_packet_size),
+                    self.styles.rx_style,
+                ),
+                Text::styled(
+                    format!("{:.1} B", packet_info.avg_tx_packet_size),
+                    self.styles.tx_style,
+                ),
+            ])]
+        } else {
+            vec![Row::new([
+                Text::styled(rx_label, self.styles.rx_style),
+                Text::styled(tx_label, self.styles.tx_style),
+                Text::styled(total_rx_label, self.styles.total_rx_style),
+                Text::styled(total_tx_label, self.styles.total_tx_style),
+            ])]
+        };
+
+        let (headers, num_columns) = if app_state.app_config_fields.network_show_packets {
+            (
+                vec![
+                    "RX", "TX", "Total RX", "Total TX", "RX Pkts", "TX Pkts", "Avg RX", "Avg TX",
+                ],
+                8,
+            )
+        } else {
+            (vec!["RX", "TX", "Total RX", "Total TX"], 4)
+        };
+
+        let column_width = draw_loc.width.saturating_sub(2) / num_columns as u16;
 
         // Draw
         f.render_widget(
             Table::new(
                 total_network,
-                &((std::iter::repeat_n(draw_loc.width.saturating_sub(2) / 4, 4))
+                &((std::iter::repeat_n(column_width, num_columns))
                     .map(Constraint::Length)
                     .collect::<Vec<_>>()),
             )
-            .header(Row::new(NETWORK_HEADERS).style(self.styles.table_header_style))
+            .header(Row::new(headers).style(self.styles.table_header_style))
             .block(Block::default().borders(Borders::ALL).border_style(
                 if app_state.current_widget.widget_id == widget_id {
                     self.styles.highlighted_border_style
