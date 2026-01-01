@@ -24,7 +24,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ### Bug Fixes
 
-- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multi-byte UTF8 chars in process names.
+- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multibyte UTF8 chars in process
+  names.
+
+### Other
+
+- [#1939](https://github.com/ClementTsang/bottom/pull/1935): Update Fedora install instructions.
 
 ## [0.12.2] - 2025-12-25
 
