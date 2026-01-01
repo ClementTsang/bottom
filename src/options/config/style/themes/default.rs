@@ -4,7 +4,7 @@ use tui::{
 };
 
 use super::color;
-use crate::options::config::style::Styles;
+use crate::options::config::style::{Styles, widgets::ProgressBarChars};
 
 impl Styles {
     pub(crate) fn default_palette() -> Self {
@@ -69,6 +69,7 @@ impl Styles {
             border_type: BorderType::Plain,
             #[cfg(target_os = "linux")]
             thread_text_style: color!(Color::Green),
+            progress_bar_chars: ProgressBarChars::default(),
         }
     }
 
