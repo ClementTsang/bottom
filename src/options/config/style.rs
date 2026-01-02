@@ -25,7 +25,9 @@ use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
 
 use super::Config;
-use crate::options::{OptionError, OptionResult, args::BottomArgs};
+use crate::options::{
+    OptionError, OptionResult, args::BottomArgs, config::style::widgets::ProgressBarChars,
+};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
@@ -127,6 +129,7 @@ pub struct Styles {
     #[cfg(target_os = "linux")]
     pub(crate) thread_text_style: Style,
     pub(crate) border_type: BorderType,
+    pub(crate) progress_bar_chars: ProgressBarChars,
 }
 
 impl Default for Styles {
