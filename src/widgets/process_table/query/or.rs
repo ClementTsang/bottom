@@ -81,6 +81,7 @@ impl QueryProcessor for Or {
                                 or: Some(Box::new(Or { lhs, rhs })),
                                 regex_prefix: None,
                                 compare_prefix: None,
+                                negate: false,
                             },
                             rhs: None,
                         };

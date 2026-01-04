@@ -79,6 +79,7 @@ impl QueryProcessor for And {
                             })),
                             regex_prefix: None,
                             compare_prefix: None,
+                            negate: false,
                         };
                         rhs = None;
                     } else {

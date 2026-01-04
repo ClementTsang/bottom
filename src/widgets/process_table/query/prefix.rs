@@ -62,6 +62,8 @@ pub(super) struct Prefix {
     pub(super) or: Option<Box<Or>>,
     pub(super) regex_prefix: Option<(PrefixType, StringQuery)>,
     pub(super) compare_prefix: Option<(PrefixType, ComparableQuery)>,
+    // If true, invert the result of a comparable (numerical/time) check. Used to support "!=".
+    pub(super) negate: bool,
 }
 
 impl Prefix {
@@ -135,7 +137,7 @@ impl Prefix {
         if let Some(and) = &self.or {
             and.check(process, is_using_command)
         } else if let Some((prefix_type, query_content)) = &self.regex_prefix {
-            if let StringQuery::Regex(r) = query_content {
+            let result = if let StringQuery::Regex(r) = query_content {
                 match prefix_type {
                     PrefixType::Name => r.is_match(if is_using_command {
                         process.command.as_str()
@@ -152,9 +154,10 @@ impl Prefix {
                 }
             } else {
                 true
-            }
+            };
+            if self.negate { !result } else { result }
         } else if let Some((prefix_type, comparable_query)) = &self.compare_prefix {
-            match comparable_query {
+            let result = match comparable_query {
                 ComparableQuery::Numerical(numerical_query) => match prefix_type {
                     PrefixType::PCpu => matches_condition(
                         &numerical_query.condition,
@@ -228,7 +231,8 @@ impl Prefix {
                     }
                     _ => true,
                 },
-            }
+            };
+            if self.negate { !result } else { result }
         } else {
             // Somehow we have an empty condition... oh well. Return true.
             true
@@ -247,6 +251,7 @@ impl Prefix {
                     or: None,
                     regex_prefix: Some((PrefixType::Name, StringQuery::Value(String::default()))),
                     compare_prefix: None,
+                    negate: false,
                 })
             } else {
                 let mut intern_string = vec![queue_top];
@@ -267,6 +272,7 @@ impl Prefix {
                     or: None,
                     regex_prefix: Some((PrefixType::Name, StringQuery::Value(quoted_string))),
                     compare_prefix: None,
+                    negate: false,
                 })
             }
         } else {
@@ -324,6 +330,7 @@ impl QueryProcessor for Prefix {
                             or: list_of_ors.pop_front().map(Box::new),
                             compare_prefix: None,
                             regex_prefix: None,
+                            negate: false,
                         },
                         rhs: None,
                     },
@@ -335,11 +342,13 @@ impl QueryProcessor for Prefix {
                             or: Some(Box::new(lhs)),
                             compare_prefix: None,
                             regex_prefix: None,
+                            negate: false,
                         },
                         rhs: Some(Box::new(Prefix {
                             or: Some(Box::new(rhs)),
                             compare_prefix: None,
                             regex_prefix: None,
+                            negate: false,
                         })),
                     },
                     rhs: None,
@@ -351,6 +360,7 @@ impl QueryProcessor for Prefix {
                             or: Some(Box::new(returned_or)),
                             regex_prefix: None,
                             compare_prefix: None,
+                            negate: false,
                         });
                     } else {
                         return Err(QueryError::new("Missing closing parentheses"));
@@ -393,11 +403,12 @@ impl QueryProcessor for Prefix {
                                 or: None,
                                 regex_prefix: Some((prefix_type, StringQuery::Value(content))),
                                 compare_prefix: None,
+                                negate: false,
                             });
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
-                            // We have to check if someone put an "="...
-                            if content == "=" {
+                            // We have to check if someone put an "=" or "!="...
+                            if content == "=" || content == "!=" {
                                 // Check next string if possible
                                 if let Some(string_value) = query.pop_front() {
                                     // TODO: [Query] Need to consider the following cases:
@@ -436,6 +447,7 @@ impl QueryProcessor for Prefix {
                                             StringQuery::Value(final_value),
                                         )),
                                         compare_prefix: None,
+                                        negate: content == "!=",
                                     });
                                 }
                             } else {
@@ -443,16 +455,23 @@ impl QueryProcessor for Prefix {
                                     or: None,
                                     regex_prefix: Some((prefix_type, StringQuery::Value(content))),
                                     compare_prefix: None,
+                                    negate: false,
                                 });
                             }
                         }
                         PrefixType::Time => {
                             let mut condition: Option<QueryComparison> = None;
                             let mut duration_string: Option<String> = None;
+                            let mut negate = false;
 
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
                                 duration_string = query.pop_front();
+                            } else if content == "!=" {
+                                // Not-equal for time: treat as equal and negate the result.
+                                condition = Some(QueryComparison::Equal);
+                                duration_string = query.pop_front();
+                                negate = true;
                             } else if content == ">" || content == "<" {
                                 if let Some(queue_next) = query.pop_front() {
                                     if queue_next == "=" {
@@ -491,6 +510,7 @@ impl QueryProcessor for Prefix {
                                             duration,
                                         }),
                                     )),
+                                    negate,
                                 });
                             }
                         }
@@ -500,11 +520,124 @@ impl QueryProcessor for Prefix {
 
                             let mut condition: Option<QueryComparison> = None;
                             let mut value: Option<f64> = None;
+                            let mut negate = false;
 
                             // TODO: Jeez, what the heck did I write here... add some tests and
                             // clean this up in the future.
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
+                                if let Some(queue_next) = query.pop_front() {
+                                    // Support unit-prefixed numbers like MB100, GB1.5, KiB200, etc.
+                                    // Try plain f64 first; if that fails, attempt to split leading unit.
+                                    value = queue_next.parse::<f64>().ok().or_else(|| {
+                                        // Try leading unit (e.g., MB100)
+                                        let mut chars = queue_next.chars().peekable();
+                                        let mut unit = String::new();
+                                        while let Some(&c) = chars.peek() {
+                                            if c.is_alphabetic() {
+                                                unit.push(c);
+                                                chars.next();
+                                            } else {
+                                                break;
+                                            }
+                                        }
+                                        let rest: String = chars.collect();
+                                        if !unit.is_empty() && !rest.is_empty() {
+                                            let base = rest.parse::<f64>().ok()?;
+                                            let mut scaled = base;
+                                            let unit_lower = unit.to_ascii_lowercase();
+                                            match unit_lower.as_str() {
+                                                "tb" => {
+                                                    scaled *= TERA_LIMIT_F64;
+                                                }
+                                                "tib" => {
+                                                    scaled *= TEBI_LIMIT_F64;
+                                                }
+                                                "gb" => {
+                                                    scaled *= GIGA_LIMIT_F64;
+                                                }
+                                                "gib" => {
+                                                    scaled *= GIBI_LIMIT_F64;
+                                                }
+                                                "mb" => {
+                                                    scaled *= MEGA_LIMIT_F64;
+                                                }
+                                                "mib" => {
+                                                    scaled *= MEBI_LIMIT_F64;
+                                                }
+                                                "kb" => {
+                                                    scaled *= KILO_LIMIT_F64;
+                                                }
+                                                "kib" => {
+                                                    scaled *= KIBI_LIMIT_F64;
+                                                }
+                                                "b" => { /* bytes, no scaling */ }
+                                                _ => {
+                                                    return None;
+                                                }
+                                            }
+                                            return Some(scaled);
+                                        }
+                                        // Try trailing unit (e.g., 100MB)
+                                        let mut num = String::new();
+                                        let mut unit = String::new();
+                                        let mut iter = queue_next.chars().peekable();
+                                        while let Some(&c) = iter.peek() {
+                                            if c.is_ascii_digit() || c == '.' {
+                                                num.push(c);
+                                                iter.next();
+                                            } else {
+                                                break;
+                                            }
+                                        }
+                                        for c in iter {
+                                            unit.push(c);
+                                        }
+                                        if !num.is_empty() && !unit.is_empty() {
+                                            let base = num.parse::<f64>().ok()?;
+                                            let mut scaled = base;
+                                            let unit_lower = unit.to_ascii_lowercase();
+                                            match unit_lower.as_str() {
+                                                "tb" => {
+                                                    scaled *= TERA_LIMIT_F64;
+                                                }
+                                                "tib" => {
+                                                    scaled *= TEBI_LIMIT_F64;
+                                                }
+                                                "gb" => {
+                                                    scaled *= GIGA_LIMIT_F64;
+                                                }
+                                                "gib" => {
+                                                    scaled *= GIBI_LIMIT_F64;
+                                                }
+                                                "mb" => {
+                                                    scaled *= MEGA_LIMIT_F64;
+                                                }
+                                                "mib" => {
+                                                    scaled *= MEBI_LIMIT_F64;
+                                                }
+                                                "kb" => {
+                                                    scaled *= KILO_LIMIT_F64;
+                                                }
+                                                "kib" => {
+                                                    scaled *= KIBI_LIMIT_F64;
+                                                }
+                                                "b" => { /* bytes, no scaling */ }
+                                                _ => {
+                                                    return None;
+                                                }
+                                            }
+                                            return Some(scaled);
+                                        }
+                                        None
+                                    });
+                                } else {
+                                    return Err(QueryError::missing_value());
+                                }
+                            } else if content == "!=" {
+                                // Not-equal for numerical: treat as equal and negate the result.
+                                condition = Some(QueryComparison::Equal);
+                                negate = true;
                                 if let Some(queue_next) = query.pop_front() {
                                     value = queue_next.parse::<f64>().ok();
                                 } else {
@@ -520,7 +653,112 @@ impl QueryProcessor for Prefix {
                                             QueryComparison::LessOrEqual
                                         });
                                         if let Some(queue_next_next) = query.pop_front() {
-                                            value = queue_next_next.parse::<f64>().ok();
+                                            // Support unit-prefixed numbers like MB100, GB1.5, KiB200, etc.
+                                            value =
+                                                queue_next_next.parse::<f64>().ok().or_else(|| {
+                                                    // Try leading unit (e.g., MB100)
+                                                    let mut chars =
+                                                        queue_next_next.chars().peekable();
+                                                    let mut unit = String::new();
+                                                    while let Some(&c) = chars.peek() {
+                                                        if c.is_alphabetic() {
+                                                            unit.push(c);
+                                                            chars.next();
+                                                        } else {
+                                                            break;
+                                                        }
+                                                    }
+                                                    let rest: String = chars.collect();
+                                                    if !unit.is_empty() && !rest.is_empty() {
+                                                        let base = rest.parse::<f64>().ok()?;
+                                                        let mut scaled = base;
+                                                        let unit_lower = unit.to_ascii_lowercase();
+                                                        match unit_lower.as_str() {
+                                                            "tb" => {
+                                                                scaled *= TERA_LIMIT_F64;
+                                                            }
+                                                            "tib" => {
+                                                                scaled *= TEBI_LIMIT_F64;
+                                                            }
+                                                            "gb" => {
+                                                                scaled *= GIGA_LIMIT_F64;
+                                                            }
+                                                            "gib" => {
+                                                                scaled *= GIBI_LIMIT_F64;
+                                                            }
+                                                            "mb" => {
+                                                                scaled *= MEGA_LIMIT_F64;
+                                                            }
+                                                            "mib" => {
+                                                                scaled *= MEBI_LIMIT_F64;
+                                                            }
+                                                            "kb" => {
+                                                                scaled *= KILO_LIMIT_F64;
+                                                            }
+                                                            "kib" => {
+                                                                scaled *= KIBI_LIMIT_F64;
+                                                            }
+                                                            "b" => { /* bytes, no scaling */ }
+                                                            _ => {
+                                                                return None;
+                                                            }
+                                                        }
+                                                        return Some(scaled);
+                                                    }
+                                                    // Try trailing unit (e.g., 100MB)
+                                                    let mut num = String::new();
+                                                    let mut unit = String::new();
+                                                    let mut iter =
+                                                        queue_next_next.chars().peekable();
+                                                    while let Some(&c) = iter.peek() {
+                                                        if c.is_ascii_digit() || c == '.' {
+                                                            num.push(c);
+                                                            iter.next();
+                                                        } else {
+                                                            break;
+                                                        }
+                                                    }
+                                                    for c in iter {
+                                                        unit.push(c);
+                                                    }
+                                                    if !num.is_empty() && !unit.is_empty() {
+                                                        let base = num.parse::<f64>().ok()?;
+                                                        let mut scaled = base;
+                                                        let unit_lower = unit.to_ascii_lowercase();
+                                                        match unit_lower.as_str() {
+                                                            "tb" => {
+                                                                scaled *= TERA_LIMIT_F64;
+                                                            }
+                                                            "tib" => {
+                                                                scaled *= TEBI_LIMIT_F64;
+                                                            }
+                                                            "gb" => {
+                                                                scaled *= GIGA_LIMIT_F64;
+                                                            }
+                                                            "gib" => {
+                                                                scaled *= GIBI_LIMIT_F64;
+                                                            }
+                                                            "mb" => {
+                                                                scaled *= MEGA_LIMIT_F64;
+                                                            }
+                                                            "mib" => {
+                                                                scaled *= MEBI_LIMIT_F64;
+                                                            }
+                                                            "kb" => {
+                                                                scaled *= KILO_LIMIT_F64;
+                                                            }
+                                                            "kib" => {
+                                                                scaled *= KIBI_LIMIT_F64;
+                                                            }
+                                                            "b" => { /* bytes, no scaling */ }
+                                                            _ => {
+                                                                return None;
+                                                            }
+                                                        }
+                                                        return Some(scaled);
+                                                    }
+                                                    None
+                                                });
                                         } else {
                                             return Err(QueryError::missing_value());
                                         }
@@ -530,7 +768,109 @@ impl QueryProcessor for Prefix {
                                         } else {
                                             QueryComparison::Less
                                         });
-                                        value = queue_next.parse::<f64>().ok();
+                                        // Support unit-prefixed numbers like MB100, GB1.5, KiB200, etc.
+                                        value = queue_next.parse::<f64>().ok().or_else(|| {
+                                            // Try leading unit (e.g., MB100)
+                                            let mut chars = queue_next.chars().peekable();
+                                            let mut unit = String::new();
+                                            while let Some(&c) = chars.peek() {
+                                                if c.is_alphabetic() {
+                                                    unit.push(c);
+                                                    chars.next();
+                                                } else {
+                                                    break;
+                                                }
+                                            }
+                                            let rest: String = chars.collect();
+                                            if !unit.is_empty() && !rest.is_empty() {
+                                                let base = rest.parse::<f64>().ok()?;
+                                                let mut scaled = base;
+                                                let unit_lower = unit.to_ascii_lowercase();
+                                                match unit_lower.as_str() {
+                                                    "tb" => {
+                                                        scaled *= TERA_LIMIT_F64;
+                                                    }
+                                                    "tib" => {
+                                                        scaled *= TEBI_LIMIT_F64;
+                                                    }
+                                                    "gb" => {
+                                                        scaled *= GIGA_LIMIT_F64;
+                                                    }
+                                                    "gib" => {
+                                                        scaled *= GIBI_LIMIT_F64;
+                                                    }
+                                                    "mb" => {
+                                                        scaled *= MEGA_LIMIT_F64;
+                                                    }
+                                                    "mib" => {
+                                                        scaled *= MEBI_LIMIT_F64;
+                                                    }
+                                                    "kb" => {
+                                                        scaled *= KILO_LIMIT_F64;
+                                                    }
+                                                    "kib" => {
+                                                        scaled *= KIBI_LIMIT_F64;
+                                                    }
+                                                    "b" => { /* bytes, no scaling */ }
+                                                    _ => {
+                                                        return None;
+                                                    }
+                                                }
+                                                return Some(scaled);
+                                            }
+                                            // Try trailing unit (e.g., 100MB)
+                                            let mut num = String::new();
+                                            let mut unit = String::new();
+                                            let mut iter = queue_next.chars().peekable();
+                                            while let Some(&c) = iter.peek() {
+                                                if c.is_ascii_digit() || c == '.' {
+                                                    num.push(c);
+                                                    iter.next();
+                                                } else {
+                                                    break;
+                                                }
+                                            }
+                                            for c in iter {
+                                                unit.push(c);
+                                            }
+                                            if !num.is_empty() && !unit.is_empty() {
+                                                let base = num.parse::<f64>().ok()?;
+                                                let mut scaled = base;
+                                                let unit_lower = unit.to_ascii_lowercase();
+                                                match unit_lower.as_str() {
+                                                    "tb" => {
+                                                        scaled *= TERA_LIMIT_F64;
+                                                    }
+                                                    "tib" => {
+                                                        scaled *= TEBI_LIMIT_F64;
+                                                    }
+                                                    "gb" => {
+                                                        scaled *= GIGA_LIMIT_F64;
+                                                    }
+                                                    "gib" => {
+                                                        scaled *= GIBI_LIMIT_F64;
+                                                    }
+                                                    "mb" => {
+                                                        scaled *= MEGA_LIMIT_F64;
+                                                    }
+                                                    "mib" => {
+                                                        scaled *= MEBI_LIMIT_F64;
+                                                    }
+                                                    "kb" => {
+                                                        scaled *= KILO_LIMIT_F64;
+                                                    }
+                                                    "kib" => {
+                                                        scaled *= KIBI_LIMIT_F64;
+                                                    }
+                                                    "b" => { /* bytes, no scaling */ }
+                                                    _ => {
+                                                        return None;
+                                                    }
+                                                }
+                                                return Some(scaled);
+                                            }
+                                            None
+                                        });
                                     }
                                 } else {
                                     return Err(QueryError::missing_value());
@@ -572,6 +912,7 @@ impl QueryProcessor for Prefix {
                                                 value,
                                             }),
                                         )),
+                                        negate,
                                     });
                                 }
                             }
