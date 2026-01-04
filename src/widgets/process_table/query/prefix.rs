@@ -54,6 +54,71 @@ fn process_prefix_units(query: &mut VecDeque<String>, value: &mut f64) {
     }
 }
 
+/// Parse numeric value with an optional trailing unit suffix (e.g., 100MB, 1.5gb, 256KiB).
+fn parse_number_with_unit(input: &str) -> Option<f64> {
+    // Split into numeric and unit parts
+    let mut num = String::new();
+    let mut unit = String::new();
+    let mut iter = input.chars().peekable();
+
+    while let Some(&c) = iter.peek() {
+        if c.is_ascii_digit() || c == '.' {
+            num.push(c);
+            iter.next();
+        } else {
+            break;
+        }
+    }
+
+    for c in iter {
+        unit.push(c);
+    }
+
+    if num.is_empty() {
+        return None;
+    }
+
+    let base = num.parse::<f64>().ok()?;
+    if unit.is_empty() {
+        return Some(base);
+    }
+
+    let unit_lower = unit.to_ascii_lowercase();
+    let mut scaled = base;
+    match unit_lower.as_str() {
+        "tb" => {
+            scaled *= TERA_LIMIT_F64;
+        }
+        "tib" => {
+            scaled *= TEBI_LIMIT_F64;
+        }
+        "gb" => {
+            scaled *= GIGA_LIMIT_F64;
+        }
+        "gib" => {
+            scaled *= GIBI_LIMIT_F64;
+        }
+        "mb" => {
+            scaled *= MEGA_LIMIT_F64;
+        }
+        "mib" => {
+            scaled *= MEBI_LIMIT_F64;
+        }
+        "kb" => {
+            scaled *= KILO_LIMIT_F64;
+        }
+        "kib" => {
+            scaled *= KIBI_LIMIT_F64;
+        }
+        "b" => { /* bytes, no scaling */ }
+        _ => {
+            return None;
+        }
+    }
+
+    Some(scaled)
+}
+
 /// Either contains a further `Or` recursively, or a "prefix" which is a leaf that can be searched.
 ///
 // TODO: Represent this using an enum instead or something...
@@ -160,7 +225,6 @@ impl Prefix {
             match self.string_condition {
                 Some(QueryComparison::Equal) | None => matched,
                 Some(QueryComparison::NotEqual) => !matched,
-                // For other comparisons on strings, default to matched (unsupported)
                 Some(QueryComparison::Less)
                 | Some(QueryComparison::Greater)
                 | Some(QueryComparison::LessOrEqual)
@@ -416,7 +480,6 @@ impl QueryProcessor for Prefix {
                             });
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
-                            // We have to check if someone put an "=" or "!="...
                             if content == "=" || content == "!=" {
                                 // Check next string if possible
                                 if let Some(string_value) = query.pop_front() {
@@ -536,107 +599,7 @@ impl QueryProcessor for Prefix {
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
                                 if let Some(queue_next) = query.pop_front() {
-                                    value = queue_next.parse::<f64>().ok().or_else(|| {
-                                        let mut chars = queue_next.chars().peekable();
-                                        let mut unit = String::new();
-                                        while let Some(&c) = chars.peek() {
-                                            if c.is_alphabetic() {
-                                                unit.push(c);
-                                                chars.next();
-                                            } else {
-                                                break;
-                                            }
-                                        }
-                                        let rest: String = chars.collect();
-                                        if !unit.is_empty() && !rest.is_empty() {
-                                            let base = rest.parse::<f64>().ok()?;
-                                            let mut scaled = base;
-                                            let unit_lower = unit.to_ascii_lowercase();
-                                            match unit_lower.as_str() {
-                                                "tb" => {
-                                                    scaled *= TERA_LIMIT_F64;
-                                                }
-                                                "tib" => {
-                                                    scaled *= TEBI_LIMIT_F64;
-                                                }
-                                                "gb" => {
-                                                    scaled *= GIGA_LIMIT_F64;
-                                                }
-                                                "gib" => {
-                                                    scaled *= GIBI_LIMIT_F64;
-                                                }
-                                                "mb" => {
-                                                    scaled *= MEGA_LIMIT_F64;
-                                                }
-                                                "mib" => {
-                                                    scaled *= MEBI_LIMIT_F64;
-                                                }
-                                                "kb" => {
-                                                    scaled *= KILO_LIMIT_F64;
-                                                }
-                                                "kib" => {
-                                                    scaled *= KIBI_LIMIT_F64;
-                                                }
-                                                "b" => { /* bytes, no scaling */ }
-                                                _ => {
-                                                    return None;
-                                                }
-                                            }
-                                            return Some(scaled);
-                                        }
-                                        // Try trailing unit (e.g., 100MB)
-                                        let mut num = String::new();
-                                        let mut unit = String::new();
-                                        let mut iter = queue_next.chars().peekable();
-                                        while let Some(&c) = iter.peek() {
-                                            if c.is_ascii_digit() || c == '.' {
-                                                num.push(c);
-                                                iter.next();
-                                            } else {
-                                                break;
-                                            }
-                                        }
-                                        for c in iter {
-                                            unit.push(c);
-                                        }
-                                        if !num.is_empty() && !unit.is_empty() {
-                                            let base = num.parse::<f64>().ok()?;
-                                            let mut scaled = base;
-                                            let unit_lower = unit.to_ascii_lowercase();
-                                            match unit_lower.as_str() {
-                                                "tb" => {
-                                                    scaled *= TERA_LIMIT_F64;
-                                                }
-                                                "tib" => {
-                                                    scaled *= TEBI_LIMIT_F64;
-                                                }
-                                                "gb" => {
-                                                    scaled *= GIGA_LIMIT_F64;
-                                                }
-                                                "gib" => {
-                                                    scaled *= GIBI_LIMIT_F64;
-                                                }
-                                                "mb" => {
-                                                    scaled *= MEGA_LIMIT_F64;
-                                                }
-                                                "mib" => {
-                                                    scaled *= MEBI_LIMIT_F64;
-                                                }
-                                                "kb" => {
-                                                    scaled *= KILO_LIMIT_F64;
-                                                }
-                                                "kib" => {
-                                                    scaled *= KIBI_LIMIT_F64;
-                                                }
-                                                "b" => { /* bytes, no scaling */ }
-                                                _ => {
-                                                    return None;
-                                                }
-                                            }
-                                            return Some(scaled);
-                                        }
-                                        None
-                                    });
+                                    value = parse_number_with_unit(&queue_next);
                                 } else {
                                     return Err(QueryError::missing_value());
                                 }
@@ -657,112 +620,7 @@ impl QueryProcessor for Prefix {
                                             QueryComparison::LessOrEqual
                                         });
                                         if let Some(queue_next_next) = query.pop_front() {
-                                            // Support unit-prefixed numbers like MB100, GB1.5, KiB200, etc.
-                                            value =
-                                                queue_next_next.parse::<f64>().ok().or_else(|| {
-                                                    // Try leading unit (e.g., MB100)
-                                                    let mut chars =
-                                                        queue_next_next.chars().peekable();
-                                                    let mut unit = String::new();
-                                                    while let Some(&c) = chars.peek() {
-                                                        if c.is_alphabetic() {
-                                                            unit.push(c);
-                                                            chars.next();
-                                                        } else {
-                                                            break;
-                                                        }
-                                                    }
-                                                    let rest: String = chars.collect();
-                                                    if !unit.is_empty() && !rest.is_empty() {
-                                                        let base = rest.parse::<f64>().ok()?;
-                                                        let mut scaled = base;
-                                                        let unit_lower = unit.to_ascii_lowercase();
-                                                        match unit_lower.as_str() {
-                                                            "tb" => {
-                                                                scaled *= TERA_LIMIT_F64;
-                                                            }
-                                                            "tib" => {
-                                                                scaled *= TEBI_LIMIT_F64;
-                                                            }
-                                                            "gb" => {
-                                                                scaled *= GIGA_LIMIT_F64;
-                                                            }
-                                                            "gib" => {
-                                                                scaled *= GIBI_LIMIT_F64;
-                                                            }
-                                                            "mb" => {
-                                                                scaled *= MEGA_LIMIT_F64;
-                                                            }
-                                                            "mib" => {
-                                                                scaled *= MEBI_LIMIT_F64;
-                                                            }
-                                                            "kb" => {
-                                                                scaled *= KILO_LIMIT_F64;
-                                                            }
-                                                            "kib" => {
-                                                                scaled *= KIBI_LIMIT_F64;
-                                                            }
-                                                            "b" => { /* bytes, no scaling */ }
-                                                            _ => {
-                                                                return None;
-                                                            }
-                                                        }
-                                                        return Some(scaled);
-                                                    }
-                                                    // Try trailing unit (e.g., 100MB)
-                                                    let mut num = String::new();
-                                                    let mut unit = String::new();
-                                                    let mut iter =
-                                                        queue_next_next.chars().peekable();
-                                                    while let Some(&c) = iter.peek() {
-                                                        if c.is_ascii_digit() || c == '.' {
-                                                            num.push(c);
-                                                            iter.next();
-                                                        } else {
-                                                            break;
-                                                        }
-                                                    }
-                                                    for c in iter {
-                                                        unit.push(c);
-                                                    }
-                                                    if !num.is_empty() && !unit.is_empty() {
-                                                        let base = num.parse::<f64>().ok()?;
-                                                        let mut scaled = base;
-                                                        let unit_lower = unit.to_ascii_lowercase();
-                                                        match unit_lower.as_str() {
-                                                            "tb" => {
-                                                                scaled *= TERA_LIMIT_F64;
-                                                            }
-                                                            "tib" => {
-                                                                scaled *= TEBI_LIMIT_F64;
-                                                            }
-                                                            "gb" => {
-                                                                scaled *= GIGA_LIMIT_F64;
-                                                            }
-                                                            "gib" => {
-                                                                scaled *= GIBI_LIMIT_F64;
-                                                            }
-                                                            "mb" => {
-                                                                scaled *= MEGA_LIMIT_F64;
-                                                            }
-                                                            "mib" => {
-                                                                scaled *= MEBI_LIMIT_F64;
-                                                            }
-                                                            "kb" => {
-                                                                scaled *= KILO_LIMIT_F64;
-                                                            }
-                                                            "kib" => {
-                                                                scaled *= KIBI_LIMIT_F64;
-                                                            }
-                                                            "b" => { /* bytes, no scaling */ }
-                                                            _ => {
-                                                                return None;
-                                                            }
-                                                        }
-                                                        return Some(scaled);
-                                                    }
-                                                    None
-                                                });
+                                            value = parse_number_with_unit(&queue_next_next);
                                         } else {
                                             return Err(QueryError::missing_value());
                                         }
@@ -772,109 +630,7 @@ impl QueryProcessor for Prefix {
                                         } else {
                                             QueryComparison::Less
                                         });
-                                        // Support unit-prefixed numbers like MB100, GB1.5, KiB200, etc.
-                                        value = queue_next.parse::<f64>().ok().or_else(|| {
-                                            // Try leading unit (e.g., MB100)
-                                            let mut chars = queue_next.chars().peekable();
-                                            let mut unit = String::new();
-                                            while let Some(&c) = chars.peek() {
-                                                if c.is_alphabetic() {
-                                                    unit.push(c);
-                                                    chars.next();
-                                                } else {
-                                                    break;
-                                                }
-                                            }
-                                            let rest: String = chars.collect();
-                                            if !unit.is_empty() && !rest.is_empty() {
-                                                let base = rest.parse::<f64>().ok()?;
-                                                let mut scaled = base;
-                                                let unit_lower = unit.to_ascii_lowercase();
-                                                match unit_lower.as_str() {
-                                                    "tb" => {
-                                                        scaled *= TERA_LIMIT_F64;
-                                                    }
-                                                    "tib" => {
-                                                        scaled *= TEBI_LIMIT_F64;
-                                                    }
-                                                    "gb" => {
-                                                        scaled *= GIGA_LIMIT_F64;
-                                                    }
-                                                    "gib" => {
-                                                        scaled *= GIBI_LIMIT_F64;
-                                                    }
-                                                    "mb" => {
-                                                        scaled *= MEGA_LIMIT_F64;
-                                                    }
-                                                    "mib" => {
-                                                        scaled *= MEBI_LIMIT_F64;
-                                                    }
-                                                    "kb" => {
-                                                        scaled *= KILO_LIMIT_F64;
-                                                    }
-                                                    "kib" => {
-                                                        scaled *= KIBI_LIMIT_F64;
-                                                    }
-                                                    "b" => { /* bytes, no scaling */ }
-                                                    _ => {
-                                                        return None;
-                                                    }
-                                                }
-                                                return Some(scaled);
-                                            }
-                                            // Try trailing unit (e.g., 100MB)
-                                            let mut num = String::new();
-                                            let mut unit = String::new();
-                                            let mut iter = queue_next.chars().peekable();
-                                            while let Some(&c) = iter.peek() {
-                                                if c.is_ascii_digit() || c == '.' {
-                                                    num.push(c);
-                                                    iter.next();
-                                                } else {
-                                                    break;
-                                                }
-                                            }
-                                            for c in iter {
-                                                unit.push(c);
-                                            }
-                                            if !num.is_empty() && !unit.is_empty() {
-                                                let base = num.parse::<f64>().ok()?;
-                                                let mut scaled = base;
-                                                let unit_lower = unit.to_ascii_lowercase();
-                                                match unit_lower.as_str() {
-                                                    "tb" => {
-                                                        scaled *= TERA_LIMIT_F64;
-                                                    }
-                                                    "tib" => {
-                                                        scaled *= TEBI_LIMIT_F64;
-                                                    }
-                                                    "gb" => {
-                                                        scaled *= GIGA_LIMIT_F64;
-                                                    }
-                                                    "gib" => {
-                                                        scaled *= GIBI_LIMIT_F64;
-                                                    }
-                                                    "mb" => {
-                                                        scaled *= MEGA_LIMIT_F64;
-                                                    }
-                                                    "mib" => {
-                                                        scaled *= MEBI_LIMIT_F64;
-                                                    }
-                                                    "kb" => {
-                                                        scaled *= KILO_LIMIT_F64;
-                                                    }
-                                                    "kib" => {
-                                                        scaled *= KIBI_LIMIT_F64;
-                                                    }
-                                                    "b" => { /* bytes, no scaling */ }
-                                                    _ => {
-                                                        return None;
-                                                    }
-                                                }
-                                                return Some(scaled);
-                                            }
-                                            None
-                                        });
+                                        value = parse_number_with_unit(&queue_next);
                                     }
                                 } else {
                                     return Err(QueryError::missing_value());
