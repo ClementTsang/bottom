@@ -62,8 +62,7 @@ pub(super) struct Prefix {
     pub(super) or: Option<Box<Or>>,
     pub(super) regex_prefix: Option<(PrefixType, StringQuery)>,
     pub(super) compare_prefix: Option<(PrefixType, ComparableQuery)>,
-    // If true, invert the result of a comparable (numerical/time) check. Used to support "!=".
-    pub(super) negate: bool,
+    pub(super) string_condition: Option<QueryComparison>,
 }
 
 impl Prefix {
@@ -117,6 +116,7 @@ impl Prefix {
 
             match condition {
                 QueryComparison::Equal => (lhs - rhs).abs() < f64::EPSILON,
+                QueryComparison::NotEqual => (lhs - rhs).abs() >= f64::EPSILON,
                 QueryComparison::Less => lhs < rhs,
                 QueryComparison::Greater => lhs > rhs,
                 QueryComparison::LessOrEqual => lhs <= rhs,
@@ -127,6 +127,7 @@ impl Prefix {
         fn matches_duration(condition: &QueryComparison, lhs: Duration, rhs: Duration) -> bool {
             match condition {
                 QueryComparison::Equal => lhs == rhs,
+                QueryComparison::NotEqual => lhs != rhs,
                 QueryComparison::Less => lhs < rhs,
                 QueryComparison::Greater => lhs > rhs,
                 QueryComparison::LessOrEqual => lhs <= rhs,
@@ -137,7 +138,7 @@ impl Prefix {
         if let Some(and) = &self.or {
             and.check(process, is_using_command)
         } else if let Some((prefix_type, query_content)) = &self.regex_prefix {
-            let result = if let StringQuery::Regex(r) = query_content {
+            let matched = if let StringQuery::Regex(r) = query_content {
                 match prefix_type {
                     PrefixType::Name => r.is_match(if is_using_command {
                         process.command.as_str()
@@ -155,9 +156,18 @@ impl Prefix {
             } else {
                 true
             };
-            if self.negate { !result } else { result }
+
+            match self.string_condition {
+                Some(QueryComparison::Equal) | None => matched,
+                Some(QueryComparison::NotEqual) => !matched,
+                // For other comparisons on strings, default to matched (unsupported)
+                Some(QueryComparison::Less)
+                | Some(QueryComparison::Greater)
+                | Some(QueryComparison::LessOrEqual)
+                | Some(QueryComparison::GreaterOrEqual) => matched,
+            }
         } else if let Some((prefix_type, comparable_query)) = &self.compare_prefix {
-            let result = match comparable_query {
+            match comparable_query {
                 ComparableQuery::Numerical(numerical_query) => match prefix_type {
                     PrefixType::PCpu => matches_condition(
                         &numerical_query.condition,
@@ -231,8 +241,7 @@ impl Prefix {
                     }
                     _ => true,
                 },
-            };
-            if self.negate { !result } else { result }
+            }
         } else {
             // Somehow we have an empty condition... oh well. Return true.
             true
@@ -251,7 +260,7 @@ impl Prefix {
                     or: None,
                     regex_prefix: Some((PrefixType::Name, StringQuery::Value(String::default()))),
                     compare_prefix: None,
-                    negate: false,
+                    string_condition: None,
                 })
             } else {
                 let mut intern_string = vec![queue_top];
@@ -272,7 +281,7 @@ impl Prefix {
                     or: None,
                     regex_prefix: Some((PrefixType::Name, StringQuery::Value(quoted_string))),
                     compare_prefix: None,
-                    negate: false,
+                    string_condition: None,
                 })
             }
         } else {
@@ -330,7 +339,7 @@ impl QueryProcessor for Prefix {
                             or: list_of_ors.pop_front().map(Box::new),
                             compare_prefix: None,
                             regex_prefix: None,
-                            negate: false,
+                            string_condition: None,
                         },
                         rhs: None,
                     },
@@ -342,13 +351,13 @@ impl QueryProcessor for Prefix {
                             or: Some(Box::new(lhs)),
                             compare_prefix: None,
                             regex_prefix: None,
-                            negate: false,
+                            string_condition: None,
                         },
                         rhs: Some(Box::new(Prefix {
                             or: Some(Box::new(rhs)),
                             compare_prefix: None,
                             regex_prefix: None,
-                            negate: false,
+                            string_condition: None,
                         })),
                     },
                     rhs: None,
@@ -360,7 +369,7 @@ impl QueryProcessor for Prefix {
                             or: Some(Box::new(returned_or)),
                             regex_prefix: None,
                             compare_prefix: None,
-                            negate: false,
+                            string_condition: None,
                         });
                     } else {
                         return Err(QueryError::new("Missing closing parentheses"));
@@ -403,7 +412,7 @@ impl QueryProcessor for Prefix {
                                 or: None,
                                 regex_prefix: Some((prefix_type, StringQuery::Value(content))),
                                 compare_prefix: None,
-                                negate: false,
+                                string_condition: None,
                             });
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
@@ -447,7 +456,11 @@ impl QueryProcessor for Prefix {
                                             StringQuery::Value(final_value),
                                         )),
                                         compare_prefix: None,
-                                        negate: content == "!=",
+                                        string_condition: Some(if content == "!=" {
+                                            QueryComparison::NotEqual
+                                        } else {
+                                            QueryComparison::Equal
+                                        }),
                                     });
                                 }
                             } else {
@@ -455,23 +468,20 @@ impl QueryProcessor for Prefix {
                                     or: None,
                                     regex_prefix: Some((prefix_type, StringQuery::Value(content))),
                                     compare_prefix: None,
-                                    negate: false,
+                                    string_condition: None,
                                 });
                             }
                         }
                         PrefixType::Time => {
                             let mut condition: Option<QueryComparison> = None;
                             let mut duration_string: Option<String> = None;
-                            let mut negate = false;
 
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
                                 duration_string = query.pop_front();
                             } else if content == "!=" {
-                                // Not-equal for time: treat as equal and negate the result.
-                                condition = Some(QueryComparison::Equal);
+                                condition = Some(QueryComparison::NotEqual);
                                 duration_string = query.pop_front();
-                                negate = true;
                             } else if content == ">" || content == "<" {
                                 if let Some(queue_next) = query.pop_front() {
                                     if queue_next == "=" {
@@ -510,7 +520,7 @@ impl QueryProcessor for Prefix {
                                             duration,
                                         }),
                                     )),
-                                    negate,
+                                    string_condition: None,
                                 });
                             }
                         }
@@ -520,17 +530,13 @@ impl QueryProcessor for Prefix {
 
                             let mut condition: Option<QueryComparison> = None;
                             let mut value: Option<f64> = None;
-                            let mut negate = false;
 
                             // TODO: Jeez, what the heck did I write here... add some tests and
                             // clean this up in the future.
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
                                 if let Some(queue_next) = query.pop_front() {
-                                    // Support unit-prefixed numbers like MB100, GB1.5, KiB200, etc.
-                                    // Try plain f64 first; if that fails, attempt to split leading unit.
                                     value = queue_next.parse::<f64>().ok().or_else(|| {
-                                        // Try leading unit (e.g., MB100)
                                         let mut chars = queue_next.chars().peekable();
                                         let mut unit = String::new();
                                         while let Some(&c) = chars.peek() {
@@ -635,9 +641,7 @@ impl QueryProcessor for Prefix {
                                     return Err(QueryError::missing_value());
                                 }
                             } else if content == "!=" {
-                                // Not-equal for numerical: treat as equal and negate the result.
-                                condition = Some(QueryComparison::Equal);
-                                negate = true;
+                                condition = Some(QueryComparison::NotEqual);
                                 if let Some(queue_next) = query.pop_front() {
                                     value = queue_next.parse::<f64>().ok();
                                 } else {
@@ -912,7 +916,7 @@ impl QueryProcessor for Prefix {
                                                 value,
                                             }),
                                         )),
-                                        negate,
+                                        string_condition: None,
                                     });
                                 }
                             }

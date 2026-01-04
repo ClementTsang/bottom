@@ -72,7 +72,6 @@ pub(crate) fn parse_query(
     let mut split_query = VecDeque::new();
 
     search_query.split_whitespace().for_each(|s| {
-        // Custom tokenizer: split on delimiters, but treat "!=" as a single token.
         let mut i = 0;
         while i < s.len() {
             let ch = s[i..]
@@ -82,19 +81,16 @@ pub(crate) fn parse_query(
             let ch_len = ch.len_utf8();
 
             if DELIMITER_LIST.contains(&ch) {
-                // Special-case "!="
-                if ch == '!' {
+                if ch == '!' && i + ch_len < s.len() {
                     // Peek next ASCII char safely
-                    if i + ch_len < s.len() {
-                        let next_ch = s[i + ch_len..]
-                            .chars()
-                            .next()
-                            .expect("tokenizer: unexpected empty slice while peeking next char");
-                        if next_ch == '=' {
-                            split_query.push_back("!=".to_owned());
-                            i += ch_len + next_ch.len_utf8();
-                            continue;
-                        }
+                    let next_ch = s[i + ch_len..]
+                        .chars()
+                        .next()
+                        .expect("tokenizer: unexpected empty slice while peeking next char");
+                    if next_ch == '=' {
+                        split_query.push_back("!=".to_owned());
+                        i += ch_len + next_ch.len_utf8();
+                        continue;
                     }
                 }
 
@@ -102,7 +98,6 @@ pub(crate) fn parse_query(
                 split_query.push_back(ch.to_string());
                 i += ch_len;
             } else {
-                // Accumulate non-delimiter substring
                 let start = i;
                 while i < s.len() {
                     let c = s[i..]
@@ -246,6 +241,7 @@ impl std::str::FromStr for PrefixType {
 #[derive(Debug)]
 enum QueryComparison {
     Equal,
+    NotEqual,
     Less,
     Greater,
     LessOrEqual,
