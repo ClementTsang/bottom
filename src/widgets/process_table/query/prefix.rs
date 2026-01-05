@@ -1,18 +1,15 @@
-use std::{
-    collections::VecDeque,
-    fmt::{Debug, Formatter},
-    time::Duration,
-};
+use std::{collections::VecDeque, fmt::Debug};
 
 use humantime::parse_duration;
-use regex::Regex;
 
 use crate::{
     collection::processes::ProcessHarvest,
     utils::data_units::*,
     widgets::query::{
-        And, ComparableQuery, NumericalQuery, Or, PrefixType, QueryComparison, QueryProcessor,
-        QueryResult, StringQuery, TimeQuery, error::QueryError,
+        And, NumericalQuery, Or, PrefixType, ProcessAttribute, QueryComparison, QueryOptions,
+        QueryProcessor, QueryResult, TimeQuery,
+        attribute::{new_numerical_attribute, new_string_attribute, new_time_attribute},
+        error::QueryError,
     },
 };
 
@@ -131,47 +128,6 @@ pub(super) struct Prefix {
 }
 
 impl Prefix {
-    pub(super) fn process_regexes(
-        &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
-        is_searching_with_regex: bool,
-    ) -> QueryResult<()> {
-        if let Some(or) = &mut self.or {
-            return or.process_regexes(
-                is_searching_whole_word,
-                is_ignoring_case,
-                is_searching_with_regex,
-            );
-        } else if let Some((
-            PrefixType::Pid | PrefixType::Name | PrefixType::State | PrefixType::User,
-            StringQuery::Value(regex_string),
-        )) = &mut self.regex_prefix
-        {
-            let escaped_regex: String;
-            let final_regex_string = &format!(
-                "{}{}{}{}",
-                if is_searching_whole_word { "^" } else { "" },
-                if is_ignoring_case { "(?i)" } else { "" },
-                if !is_searching_with_regex {
-                    escaped_regex = regex::escape(regex_string);
-                    &escaped_regex
-                } else {
-                    regex_string
-                },
-                if is_searching_whole_word { "$" } else { "" },
-            );
-
-            let taken_pwc = self.regex_prefix.take();
-            if let Some((taken_pt, _)) = taken_pwc {
-                self.regex_prefix = Some((
-                    taken_pt,
-                    StringQuery::Regex(Regex::new(final_regex_string)?),
-                ));
-            }
-        }
-
-        Ok(())
-    }
-
     pub(super) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         fn matches_condition<I: Into<f64>, J: Into<f64>>(
             condition: &QueryComparison, lhs: I, rhs: J,
@@ -312,7 +268,9 @@ impl Prefix {
         }
     }
 
-    fn process_in_quotes(query: &mut VecDeque<String>) -> QueryResult<Self> {
+    fn process_in_quotes(
+        query: &mut VecDeque<String>, options: &QueryOptions,
+    ) -> QueryResult<Self> {
         if let Some(queue_top) = query.pop_front() {
             if queue_top == "\"" {
                 // This means we hit something like "". Return an empty prefix, and to deal
@@ -355,22 +313,8 @@ impl Prefix {
     }
 }
 
-impl Debug for Prefix {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if let Some(or) = &self.or {
-            f.write_fmt(format_args!("{or:?}"))
-        } else if let Some(regex_prefix) = &self.regex_prefix {
-            f.write_fmt(format_args!("{regex_prefix:?}"))
-        } else if let Some(compare_prefix) = &self.compare_prefix {
-            f.write_fmt(format_args!("{compare_prefix:?}"))
-        } else {
-            f.write_str("")
-        }
-    }
-}
-
 impl QueryProcessor for Prefix {
-    fn process(query: &mut VecDeque<String>) -> QueryResult<Self>
+    fn process(query: &mut VecDeque<String>, options: &QueryOptions) -> QueryResult<Self>
     where
         Self: Sized,
     {
@@ -384,19 +328,18 @@ impl QueryProcessor for Prefix {
 
                 while let Some(in_paren_query_top) = query.front() {
                     if in_paren_query_top != ")" {
-                        list_of_ors.push_back(Or::process(query)?);
+                        list_of_ors.push_back(Or::process(query, options)?);
                     } else {
                         break;
                     }
                 }
 
-                // Ensure not empty
-                if list_of_ors.is_empty() {
+                let Some(front) = list_of_ors.pop_front() else {
                     return Err(QueryError::new("No values within parentheses group"));
-                }
+                };
 
                 // Now convert this back to a OR...
-                // TODO: This seems like a bad way to do it.
+                // TODO: is there a better way to do this than converting it?
                 let initial_or = Or {
                     lhs: And {
                         lhs: Prefix {
@@ -427,7 +370,7 @@ impl QueryProcessor for Prefix {
                     rhs: None,
                 });
 
-                if let Some(close_paren) = query.pop_front() {
+                return if let Some(close_paren) = query.pop_front() {
                     if close_paren == ")" {
                         return Ok(Prefix {
                             or: Some(Box::new(returned_or)),
@@ -436,11 +379,11 @@ impl QueryProcessor for Prefix {
                             string_condition: None,
                         });
                     } else {
-                        return Err(QueryError::new("Missing closing parentheses"));
+                        Err(QueryError::new("Missing closing parentheses"))
                     }
                 } else {
-                    return Err(QueryError::new("Missing closing parentheses"));
-                }
+                    Err(QueryError::new("Missing closing parentheses"))
+                };
             } else if curr == ")" {
                 return Err(QueryError::new("Missing opening parentheses"));
             } else if curr == "\"" {
@@ -448,16 +391,16 @@ impl QueryProcessor for Prefix {
                 // however, that we will DIRECTLY call another process_prefix
                 // call...
 
-                let prefix = Prefix::process_in_quotes(query)?;
-                if let Some(close_quote) = query.pop_front() {
+                let prefix = Prefix::process_in_quotes(query, options)?;
+                return if let Some(close_quote) = query.pop_front() {
                     if close_quote == "\"" {
-                        return Ok(prefix);
+                        Ok(prefix)
                     } else {
-                        return Err(QueryError::new("Missing closing quotation"));
+                        Err(QueryError::new("Missing closing quotation"))
                     }
                 } else {
-                    return Err(QueryError::new("Missing closing quotation"));
-                }
+                    Err(QueryError::new("Missing closing quotation"))
+                };
             } else {
                 // Get prefix type.
                 let prefix_type = curr.parse::<PrefixType>()?;
@@ -649,14 +592,14 @@ impl QueryProcessor for Prefix {
 
                                     match prefix_type {
                                         PrefixType::MemBytes
-                                        | PrefixType::Rps
-                                        | PrefixType::Wps
-                                        | PrefixType::TRead
-                                        | PrefixType::TWrite => {
+                                        | PrefixType::ReadPerSecond
+                                        | PrefixType::WritePerSecond
+                                        | PrefixType::TotalRead
+                                        | PrefixType::TotalWrite => {
                                             process_prefix_units(query, &mut value);
                                         }
                                         #[cfg(feature = "gpu")]
-                                        PrefixType::GMem => {
+                                        PrefixType::GpuMemoryBytes => {
                                             process_prefix_units(query, &mut value);
                                         }
                                         _ => {}

@@ -2,23 +2,21 @@
 //!
 //! Yes, this is a hand-rolled parser. I originally wrote this back in uni where writing
 //! a parser was basically a thing I did every year, and parsing crate options were not
-//! as good as they are now.
+//! as good as they are now. This will be rewritten as time goes on, though.
 
 mod and;
+mod attribute;
 mod error;
 mod or;
 mod prefix;
 
+use std::{collections::VecDeque, time::Duration};
+
 use and::And;
+use attribute::ProcessAttribute;
 use error::{QueryError, QueryResult};
 use or::Or;
 use prefix::Prefix;
-use std::{
-    collections::VecDeque,
-    fmt::{Debug, Formatter},
-    time::Duration,
-};
-
 use regex::Regex;
 
 use crate::{collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case};
@@ -29,9 +27,60 @@ const COMPARISON_LIST: [&str; 4] = [">", "=", "<", "!="];
 /// A node type that can take a query and read it, advancing the current read state
 /// and returning an instance of the node.
 trait QueryProcessor {
-    fn process(query: &mut VecDeque<String>) -> QueryResult<Self>
+    fn process(query: &mut VecDeque<String>, regex_options: &QueryOptions) -> QueryResult<Self>
     where
         Self: Sized;
+}
+
+/// Process a new regex given a `base` string and some settings.
+///
+/// TODO: Push this into a struct so I don't have to throw the options around so much.
+fn new_regex(base: &str, regex_options: &QueryOptions) -> QueryResult<Regex> {
+    let QueryOptions {
+        whole_word: is_searching_whole_word,
+        ignore_case: is_ignoring_case,
+        use_regex: is_searching_with_regex,
+    } = regex_options;
+    let escaped_regex: String; // Needed for ownership reasons.
+
+    let final_regex_string = &format!(
+        "{}{}{}{}",
+        if *is_searching_whole_word { "^" } else { "" },
+        if *is_ignoring_case { "(?i)" } else { "" },
+        if !(*is_searching_with_regex) {
+            escaped_regex = regex::escape(base);
+            &escaped_regex
+        } else {
+            base
+        },
+        if *is_searching_whole_word { "$" } else { "" },
+    );
+
+    Ok(Regex::new(final_regex_string)?)
+}
+
+/// Options when creating a new query.
+#[derive(PartialEq, Eq)]
+pub struct QueryOptions {
+    /// Whether we only allow matches on the entire word.
+    pub whole_word: bool,
+
+    /// Whether to ignore case-sensitivity when searching. On by default.
+    pub ignore_case: bool,
+
+    /// Whether we should use regex syntax when searching. If not set, then it
+    /// should treat everything as a literal string.
+    pub use_regex: bool,
+}
+
+impl Default for QueryOptions {
+    fn default() -> Self {
+        Self {
+            ignore_case: true,
+            whole_word: false,
+            use_regex: false,
+        }
+    }
 }
 
 /// In charge of parsing the given query, case-insensitive, possibly marked
@@ -54,16 +103,15 @@ trait QueryProcessor {
 /// adjacent non-prefixed or quoted elements after splitting to treat as process
 /// names. Furthermore, we want to support boolean joiners like AND and OR, and
 /// brackets.
-pub(crate) fn parse_query(
-    search_query: &str, is_searching_whole_word: bool, is_ignoring_case: bool,
-    is_searching_with_regex: bool,
-) -> QueryResult<ProcessQuery> {
-    fn process_string_to_filter(query: &mut VecDeque<String>) -> QueryResult<ProcessQuery> {
-        let lhs = Or::process(query)?;
+pub(crate) fn parse_query(search_query: &str, options: &QueryOptions) -> QueryResult<ProcessQuery> {
+    fn process_string_to_filter(
+        query: &mut VecDeque<String>, options: &QueryOptions,
+    ) -> QueryResult<ProcessQuery> {
+        let lhs = Or::process(query, options)?;
         let mut list_of_ors = vec![lhs];
 
         while query.front().is_some() {
-            list_of_ors.push(Or::process(query)?);
+            list_of_ors.push(Or::process(query, options)?);
         }
 
         Ok(ProcessQuery { query: list_of_ors })
@@ -114,37 +162,16 @@ pub(crate) fn parse_query(
         }
     });
 
-    let mut process_filter = process_string_to_filter(&mut split_query)?;
-    process_filter.process_regexes(
-        is_searching_whole_word,
-        is_ignoring_case,
-        is_searching_with_regex,
-    )?;
-
-    Ok(process_filter)
+    process_string_to_filter(&mut split_query, options)
 }
 
+#[derive(Debug)]
 pub struct ProcessQuery {
     /// Remember, AND > OR, but AND must come after OR when we parse.
     query: Vec<Or>,
 }
 
 impl ProcessQuery {
-    fn process_regexes(
-        &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
-        is_searching_with_regex: bool,
-    ) -> QueryResult<()> {
-        for or in &mut self.query {
-            or.process_regexes(
-                is_searching_whole_word,
-                is_ignoring_case,
-                is_searching_with_regex,
-            )?;
-        }
-
-        Ok(())
-    }
-
     pub(crate) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         self.query
             .iter()
@@ -152,22 +179,16 @@ impl ProcessQuery {
     }
 }
 
-impl Debug for ProcessQuery {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{:?}", self.query))
-    }
-}
-
 #[derive(Debug)]
 enum PrefixType {
     Pid,
-    PCpu,
+    CpuPercentage,
     MemBytes,
-    PMem,
-    Rps,
-    Wps,
-    TRead,
-    TWrite,
+    MemPercentage,
+    ReadPerSecond,
+    WritePerSecond,
+    TotalRead,
+    TotalWrite,
     Name,
     State,
     User,
@@ -176,12 +197,11 @@ enum PrefixType {
     Nice,
     Priority,
     #[cfg(feature = "gpu")]
-    PGpu,
+    GpuPercentage,
     #[cfg(feature = "gpu")]
-    GMem,
+    GpuMemoryBytes,
     #[cfg(feature = "gpu")]
-    PGMem,
-    __Nonexhaustive,
+    GpuMemoryPercentage,
 }
 
 impl std::str::FromStr for PrefixType {
@@ -195,19 +215,19 @@ impl std::str::FromStr for PrefixType {
 
         let mut result = Name;
         if multi_eq_ignore_ascii_case!(s, "cpu" | "cpu%") {
-            result = PCpu;
+            result = CpuPercentage;
         } else if multi_eq_ignore_ascii_case!(s, "mem" | "mem%") {
-            result = PMem;
+            result = MemPercentage;
         } else if multi_eq_ignore_ascii_case!(s, "memb") {
             result = MemBytes;
         } else if multi_eq_ignore_ascii_case!(s, "read" | "r/s" | "rps") {
-            result = Rps;
+            result = ReadPerSecond;
         } else if multi_eq_ignore_ascii_case!(s, "write" | "w/s" | "wps") {
-            result = Wps;
+            result = WritePerSecond;
         } else if multi_eq_ignore_ascii_case!(s, "tread" | "t.read") {
-            result = TRead;
+            result = TotalRead;
         } else if multi_eq_ignore_ascii_case!(s, "twrite" | "t.write") {
-            result = TWrite;
+            result = TotalWrite;
         } else if multi_eq_ignore_ascii_case!(s, "pid") {
             result = Pid;
         } else if multi_eq_ignore_ascii_case!(s, "state") {
@@ -227,11 +247,11 @@ impl std::str::FromStr for PrefixType {
         #[cfg(feature = "gpu")]
         {
             if multi_eq_ignore_ascii_case!(s, "gmem") {
-                result = GMem;
+                result = GpuMemoryBytes;
             } else if multi_eq_ignore_ascii_case!(s, "gmem%") {
-                result = PGMem;
+                result = GpuMemoryPercentage;
             } else if multi_eq_ignore_ascii_case!(s, "gpu%") {
-                result = PGpu;
+                result = GpuPercentage;
             }
         }
         Ok(result)
@@ -249,27 +269,46 @@ enum QueryComparison {
 }
 
 #[derive(Debug)]
-enum StringQuery {
-    Value(String),
-    Regex(Regex),
-}
-
-#[derive(Debug)]
-enum ComparableQuery {
-    Numerical(NumericalQuery),
-    Time(TimeQuery),
-}
-
-#[derive(Debug)]
 struct NumericalQuery {
     condition: QueryComparison,
     value: f64,
+}
+
+impl NumericalQuery {
+    /// Compare `lhs` to the value in the query as `rhs`.
+    fn check<I: Into<f64>>(&self, lhs: I) -> bool {
+        let lhs: f64 = lhs.into();
+        let rhs: f64 = self.value;
+
+        match self.condition {
+            QueryComparison::Equal => (lhs - rhs).abs() < f64::EPSILON,
+            QueryComparison::Less => lhs < rhs,
+            QueryComparison::Greater => lhs > rhs,
+            QueryComparison::LessOrEqual => lhs <= rhs,
+            QueryComparison::GreaterOrEqual => lhs >= rhs,
+        }
+    }
 }
 
 #[derive(Debug)]
 struct TimeQuery {
     condition: QueryComparison,
     duration: Duration,
+}
+
+impl TimeQuery {
+    /// Compare `lhs` to the value in the query as `rhs`.
+    fn check(&self, lhs: Duration) -> bool {
+        let rhs = self.duration;
+
+        match self.condition {
+            QueryComparison::Equal => lhs == rhs,
+            QueryComparison::Less => lhs < rhs,
+            QueryComparison::Greater => lhs > rhs,
+            QueryComparison::LessOrEqual => lhs <= rhs,
+            QueryComparison::GreaterOrEqual => lhs >= rhs,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -283,9 +322,20 @@ mod tests {
         }
     }
 
+    fn parse_query_no_options(query: &str) -> QueryResult<ProcessQuery> {
+        parse_query(
+            query,
+            &QueryOptions {
+                whole_word: false,
+                ignore_case: false,
+                use_regex: false,
+            },
+        )
+    }
+
     #[test]
     fn basic_query() {
-        let query = parse_query("test", false, false, false).unwrap();
+        let query = parse_query_no_options("test").unwrap();
 
         let exact_match = simple_process("test");
         let contains = simple_process("test string");
@@ -298,7 +348,7 @@ mod tests {
 
     #[test]
     fn basic_or_query() {
-        let query = parse_query("a or b", false, false, false).unwrap();
+        let query = parse_query_no_options("a or b").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -311,7 +361,7 @@ mod tests {
 
     #[test]
     fn basic_and_query() {
-        let query = parse_query("a and b", false, false, false).unwrap();
+        let query = parse_query_no_options("a and b").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -324,11 +374,26 @@ mod tests {
         assert!(query.check(&a_and_b, false));
     }
 
+    #[test]
+    fn implied_and_query() {
+        let query = parse_query_no_options("a b c").unwrap();
+
+        let a = simple_process("a");
+        let b = simple_process("b");
+        let c = simple_process("c");
+        let all = simple_process("a b c");
+
+        assert!(!query.check(&a, false));
+        assert!(!query.check(&b, false));
+        assert!(!query.check(&c, false));
+        assert!(query.check(&all, false));
+    }
+
     /// Ensure that quoted keywords are treated as strings. In this case, rather than `"a" OR "b"`, it should be treated
     /// as the string `"a or b"`.
     #[test]
     fn quoted_query() {
-        let query = parse_query("a \"or\" b", false, false, false).unwrap();
+        let query = parse_query_no_options("a \"or\" b").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -349,7 +414,7 @@ mod tests {
     /// as the string `"a or b"`.
     #[test]
     fn quoted_multi_word_query() {
-        let query = parse_query("\"a or b\"", false, false, false).unwrap();
+        let query = parse_query_no_options("\"a or b\"").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -368,7 +433,7 @@ mod tests {
 
     #[test]
     fn basic_cpu_query() {
-        let query = parse_query("cpu > 50", false, false, false).unwrap();
+        let query = parse_query_no_options("cpu > 50").unwrap();
 
         let mut over = simple_process("a");
         over.cpu_usage_percent = 60.0;
@@ -386,7 +451,7 @@ mod tests {
 
     #[test]
     fn basic_mem_query() {
-        let query = parse_query("memb > 1 GiB", false, false, false).unwrap();
+        let query = parse_query_no_options("memb > 1 GiB").unwrap();
 
         let mut over = simple_process("a");
         over.mem_usage = 2 * 1024 * 1024 * 1024;
@@ -405,7 +470,7 @@ mod tests {
     /// This test sees if parentheses work.
     #[test]
     fn nested_query_1() {
-        let query = parse_query("(a or b) and (c or a)", false, false, false).unwrap();
+        let query = parse_query_no_options("(a or b) and (c or a)").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -421,7 +486,7 @@ mod tests {
     /// This test sees if parentheses and mixed query types work.
     #[test]
     fn nested_query_2() {
-        let query = parse_query("(cpu > 10 or cpu < 5) and (c or a)", false, false, false).unwrap();
+        let query = parse_query_no_options("(cpu > 10 or cpu < 5) and (c or a)").unwrap();
 
         let mut a_valid_1 = simple_process("a");
         a_valid_1.cpu_usage_percent = 100.0;
@@ -453,13 +518,8 @@ mod tests {
     /// This test adds a further layer of nesting to consider.
     #[test]
     fn nested_query_3() {
-        let query = parse_query(
-            "((cpu > 10 or cpu < 5) or d) and ((c or a) or d)",
-            false,
-            false,
-            false,
-        )
-        .unwrap();
+        let query =
+            parse_query_no_options("((cpu > 10 or cpu < 5) or d) and ((c or a) or d)").unwrap();
 
         let mut a_valid_1 = simple_process("a");
         a_valid_1.cpu_usage_percent = 100.0;
@@ -488,18 +548,38 @@ mod tests {
         assert!(!query.check(&b, false));
     }
 
-    /// Test an ambiguous or.
     #[test]
-    fn ambiguous_or() {}
+    fn ambiguous_precedence_1() {
+        let query = parse_query_no_options("a and b or c").unwrap();
+
+        let a = simple_process("a");
+        let b = simple_process("b");
+        let c = simple_process("c");
+
+        assert!(!query.check(&a, false));
+        assert!(!query.check(&b, false));
+        assert!(query.check(&c, false));
+    }
+
+    #[test]
+    fn ambiguous_precedence_2() {
+        let query = parse_query_no_options("a or b and c").unwrap();
+
+        let a = simple_process("a");
+        let b = simple_process("b");
+        let c = simple_process("c");
+
+        assert!(query.check(&a, false));
+        assert!(!query.check(&b, false));
+        assert!(!query.check(&c, false));
+    }
 
     /// Test if a complicated query even parses.
     #[test]
     fn parse_complicated_query() {
-        parse_query(
+        parse_query_no_options(
             "cpu > 10.5 AND (memb = 1 MiB || state = sleeping) and (a or b) and (read >= 0 or write >= 0)",
-            false,
-            false,
-            false,
+
         )
         .unwrap();
     }
@@ -507,27 +587,308 @@ mod tests {
     /// Test empty quotes works.
     #[test]
     fn parse_empty_quotes() {
-        parse_query("\"\"", false, false, false).unwrap();
+        parse_query_no_options("\"\"").unwrap();
+        parse_query_no_options("\"\"\"\"").unwrap();
+        parse_query_no_options("\"\" OR \"\"").unwrap();
+    }
+
+    #[test]
+    fn search_empty_quotes() {
+        let a = parse_query_no_options("\"\"").unwrap();
+        let b = parse_query_no_options("\"\" OR test").unwrap();
+
+        let process = simple_process("test");
+
+        assert!(a.check(&process, false));
+        assert!(b.check(&process, false));
     }
 
     /// Test unfinished quotes error.
     #[test]
     fn parse_unfinished_quotes() {
-        parse_query("\"", false, false, false).unwrap_err();
+        parse_query_no_options("\"").unwrap_err();
+        parse_query_no_options("\"asdf").unwrap_err();
+        parse_query_no_options("asdf\"").unwrap_err();
     }
 
     /// Test a fix for a bug with closing quotations. The problem seems to arise from quotes being used as an argument
     /// to a prefix... but this should probably be valid.
     #[test]
     fn parse_nested_closing_quotes() {
-        parse_query("state = \"test\"", false, false, false).unwrap();
-        parse_query("state = \"2 words\"", false, false, false).unwrap();
-        parse_query("(memb = 1 MiB || state = \"test\")", false, false, false).unwrap();
-        parse_query("(memb = 1 MiB || state = \"2 words\")", false, false, false).unwrap();
+        parse_query_no_options("state = \"test\"").unwrap();
+        parse_query_no_options("state = \"2 words\"").unwrap();
+        parse_query_no_options("(memb = 1 MiB || state = \"test\")").unwrap();
+        parse_query_no_options("(memb = 1 MiB || state = \"2 words\")").unwrap();
     }
 
     // TODO: Add this after fixed.
     // /// Test if units can ignore spaces from their preceding value.
     // #[test]
     // fn units_with_and_without_spaces() {}
+
+    #[test]
+    fn invalid_uncompleted_queries_1() {
+        parse_query_no_options("state =").unwrap_err();
+        parse_query_no_options("a or").unwrap_err();
+        parse_query_no_options("a >").unwrap_err();
+    }
+
+    #[track_caller]
+    fn invalid_lhs_rhs(op: &str) {
+        parse_query_no_options(&format!("a {op} asdf = 100")).unwrap_err();
+        parse_query_no_options(&format!("asdf = 100 {op} b")).unwrap_err();
+        parse_query_no_options(&format!("a {op} asdf = 100 {op} b")).unwrap_err();
+
+        parse_query_no_options(&format!("asdf = 100 {op} bsdf = \"")).unwrap_err();
+        parse_query_no_options(&format!("a {op} bsdf = \"")).unwrap_err();
+    }
+
+    #[test]
+    fn invalid_or() {
+        invalid_lhs_rhs("OR");
+        invalid_lhs_rhs("||");
+    }
+
+    #[test]
+    fn invalid_and() {
+        invalid_lhs_rhs("AND");
+        invalid_lhs_rhs("&&");
+        invalid_lhs_rhs("");
+    }
+
+    // /// Test keywords.
+    // ///
+    // /// TODO: Should these be invalid...?
+    // #[test]
+    // fn invalid_query_x() {
+    //     parse_query_no_options("or").unwrap_err();
+    //     parse_query_no_options("and").unwrap_err();
+    //     parse_query_no_options("a or >").unwrap_err();
+    //     parse_query_no_options("a and >").unwrap_err();
+    // }
+
+    #[test]
+    fn test_command_check() {
+        let query = parse_query_no_options("command").unwrap();
+
+        let mut process_a = simple_process("test");
+        process_a.command = "command".into();
+
+        let mut process_b = simple_process("test");
+        process_b.command = "no".into();
+
+        assert!(query.check(&process_a, true));
+        assert!(!query.check(&process_b, true));
+    }
+
+    #[test]
+    fn test_non_ascii_only_1() {
+        let query = parse_query_no_options("食").unwrap();
+
+        let process_a = simple_process("施氏食獅史");
+        let process_b = simple_process("沒有");
+
+        assert!(query.check(&process_a, false));
+        assert!(!query.check(&process_b, false));
+    }
+
+    #[test]
+    fn test_non_ascii_only_2() {
+        let query = parse_query_no_options("परीक्षा").unwrap();
+
+        let process_a = simple_process("परीक्षा");
+        let process_b = simple_process("उपलब्ध नहीं है");
+
+        assert!(query.check(&process_a, false));
+        assert!(!query.check(&process_b, false));
+    }
+
+    #[test]
+    fn test_non_ascii_only_3() {
+        let query = parse_query_no_options("🇨🇦").unwrap();
+
+        let process_a = simple_process("🇨🇦");
+        let process_b = simple_process("❤️🇨🇦❤️");
+        let process_c = simple_process("❤️");
+
+        assert!(query.check(&process_a, false));
+        assert!(query.check(&process_b, false));
+        assert!(!query.check(&process_c, false));
+    }
+
+    #[test]
+    fn test_non_ascii_only_4() {
+        let query = parse_query_no_options("獅 or 狮").unwrap();
+
+        let process_a = simple_process("施氏食獅史");
+        let process_b = simple_process("施氏食狮史");
+        let process_c = simple_process("沒有");
+
+        assert!(query.check(&process_a, false));
+        assert!(query.check(&process_b, false));
+        assert!(!query.check(&process_c, false));
+    }
+
+    #[test]
+    fn test_invalid_non_ascii() {
+        parse_query_no_options("cpu = 食").unwrap_err();
+    }
+
+    #[test]
+    fn test_mixed_unicode() {
+        let query = parse_query_no_options("食 or test").unwrap();
+
+        let process_a = simple_process("施氏食獅史");
+        let process_b = simple_process("test");
+        let process_c = simple_process("施氏食獅史test");
+        let process_d = simple_process("沒有");
+        let process_e = simple_process("nope");
+
+        assert!(query.check(&process_a, false));
+        assert!(query.check(&process_b, false));
+        assert!(query.check(&process_c, false));
+        assert!(!query.check(&process_d, false));
+        assert!(!query.check(&process_e, false));
+    }
+
+    #[test]
+    fn test_regex_1() {
+        let query = parse_query(
+            "(a|b)",
+            &QueryOptions {
+                whole_word: false,
+                ignore_case: true,
+                use_regex: true,
+            },
+        )
+        .unwrap();
+
+        let process_a = simple_process("abc");
+        let process_b = simple_process("test");
+
+        assert!(query.check(&process_a, false));
+        assert!(!query.check(&process_b, false));
+    }
+
+    #[test]
+    fn test_regex_2() {
+        let query = parse_query(
+            "^a.*z$",
+            &QueryOptions {
+                whole_word: false,
+                ignore_case: true,
+                use_regex: true,
+            },
+        )
+        .unwrap();
+
+        let process_a = simple_process("atoz");
+        let process_b = simple_process("atob");
+        let process_c = simple_process("ytoz");
+        let process_d = simple_process("atozoops");
+
+        assert!(query.check(&process_a, false));
+        assert!(!query.check(&process_b, false));
+        assert!(!query.check(&process_c, false));
+        assert!(!query.check(&process_d, false));
+    }
+
+    #[test]
+    fn test_whole_word_1() {
+        let query = parse_query(
+            "test",
+            &QueryOptions {
+                whole_word: true,
+                ignore_case: true,
+                use_regex: false,
+            },
+        )
+        .unwrap();
+
+        let process_a = simple_process("test");
+        let process_b = simple_process("testa");
+        let process_c = simple_process("atest");
+
+        assert!(query.check(&process_a, false));
+        assert!(!query.check(&process_b, false));
+        assert!(!query.check(&process_c, false));
+    }
+
+    #[test]
+    fn test_case_sensitive_1() {
+        let query = parse_query(
+            "tEsT",
+            &QueryOptions {
+                whole_word: false,
+                ignore_case: false,
+                use_regex: false,
+            },
+        )
+        .unwrap();
+
+        let process_a = simple_process("tEsT");
+        let process_b = simple_process("tEsT a");
+        let process_c = simple_process("a tEsT");
+
+        assert!(query.check(&process_a, false));
+        assert!(query.check(&process_b, false));
+        assert!(query.check(&process_c, false));
+
+        let process_d = simple_process("test");
+        let process_e = simple_process("test a");
+        let process_f = simple_process("a test");
+
+        assert!(!query.check(&process_d, false));
+        assert!(!query.check(&process_e, false));
+        assert!(!query.check(&process_f, false));
+    }
+
+    #[cfg(feature = "gpu")]
+    #[test]
+    fn test_gpu_queries() {
+        let mem = parse_query_no_options("gmem > 50 b").unwrap();
+        let mem_percent = parse_query_no_options("gmem% = 50").unwrap();
+        let use_percent = parse_query_no_options("gpu% = 50").unwrap();
+
+        let mut process_a = simple_process("test");
+        process_a.gpu_mem = 100;
+        process_a.gpu_mem_percent = 50.0;
+        process_a.gpu_util = 50;
+
+        assert!(mem.check(&process_a, false));
+        assert!(mem_percent.check(&process_a, false));
+        assert!(use_percent.check(&process_a, false));
+
+        let mut process_b = simple_process("test");
+        process_b.gpu_mem = 0;
+        process_b.gpu_mem_percent = 10.0;
+        process_b.gpu_util = 10;
+
+        assert!(!mem.check(&process_b, false));
+        assert!(!mem_percent.check(&process_b, false));
+        assert!(!use_percent.check(&process_b, false));
+    }
+
+    /// Test GPU queries that involve invalid string comparisons.
+    #[cfg(feature = "gpu")]
+    #[test]
+    fn test_invalid_gpu_queries() {
+        parse_query_no_options("gmem = \"what\"").unwrap_err();
+        parse_query_no_options("gmem% = \"the\"").unwrap_err();
+        parse_query_no_options("gpu% = \"heck\"").unwrap_err();
+    }
+
+    // TODO: Test all attribute keywords (e.g. cpu, mem, etc.)
+    // #[test]
+    // fn test_all_attribute_keywords() {}
+
+    // TODO: Support 'bytes' or similar
+    // #[test]
+    // fn test_bytes_keyword() {
+    //     let mem = parse_query_no_options("mem > 50 bytes").unwrap();
+    //     let mut process_a = simple_process("test");
+    //     process_a.mem_usage = 100;
+
+    //     assert!(mem.check(&process_a, false));
+    // }
 }

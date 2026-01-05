@@ -12,13 +12,14 @@
 //! See <https://github.com/ClementTsang/bottom/pull/918> and <https://github.com/ClementTsang/bottom/pull/937> for the
 //! original motivation.
 
-use super::grid::{CharGrid, Grid, HalfBlockGrid, PatternGrid};
-use ratatui_core::symbols::braille::BRAILLE;
-use ratatui_core::symbols::pixel::{OCTANTS, QUADRANTS, SEXTANTS};
-use tui::prelude::BlockExt;
+use ratatui_core::symbols::{
+    braille::BRAILLE,
+    pixel::{OCTANTS, QUADRANTS, SEXTANTS},
+};
 use tui::{
     buffer::Buffer,
     layout::Rect,
+    prelude::BlockExt,
     style::{Color, Style},
     symbols::Marker,
     text::Line,
@@ -27,6 +28,8 @@ use tui::{
         canvas::{Line as CanvasLine, Points},
     },
 };
+
+use super::grid::{CharGrid, Grid, HalfBlockGrid, PatternGrid};
 
 /// Interface for all shapes that may be drawn on a Canvas widget.
 pub trait Shape {
