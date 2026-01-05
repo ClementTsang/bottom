@@ -559,12 +559,15 @@ mod tests {
     #[test]
     fn parse_empty_quotes() {
         parse_query_no_options("\"\"").unwrap();
+        parse_query_no_options("\"\" OR \"\"").unwrap();
     }
 
     /// Test unfinished quotes error.
     #[test]
     fn parse_unfinished_quotes() {
         parse_query_no_options("\"").unwrap_err();
+        parse_query_no_options("\"asdf").unwrap_err();
+        parse_query_no_options("asdf\"").unwrap_err();
     }
 
     /// Test a fix for a bug with closing quotations. The problem seems to arise from quotes being used as an argument
@@ -598,5 +601,221 @@ mod tests {
     //     parse_query_no_options("and").unwrap_err();
     //     parse_query_no_options("a or >").unwrap_err();
     //     parse_query_no_options("a and >").unwrap_err();
+    // }
+
+    #[test]
+    fn test_command_check() {
+        let query = parse_query_no_options("command").unwrap();
+
+        let mut process_a = simple_process("test");
+        process_a.command = "command".into();
+
+        let mut process_b = simple_process("test");
+        process_b.command = "no".into();
+
+        assert!(query.check(&process_a, true));
+        assert!(!query.check(&process_b, true));
+    }
+
+    #[test]
+    fn test_non_ascii_only_1() {
+        let query = parse_query_no_options("食").unwrap();
+
+        let process_a = simple_process("施氏食獅史");
+        let process_b = simple_process("沒有");
+
+        assert!(query.check(&process_a, false));
+        assert!(!query.check(&process_b, false));
+    }
+
+    #[test]
+    fn test_non_ascii_only_2() {
+        let query = parse_query_no_options("परीक्षा").unwrap();
+
+        let process_a = simple_process("परीक्षा");
+        let process_b = simple_process("उपलब्ध नहीं है");
+
+        assert!(query.check(&process_a, false));
+        assert!(!query.check(&process_b, false));
+    }
+
+    #[test]
+    fn test_non_ascii_only_3() {
+        let query = parse_query_no_options("🇨🇦").unwrap();
+
+        let process_a = simple_process("🇨🇦");
+        let process_b = simple_process("❤️🇨🇦❤️");
+        let process_c = simple_process("❤️");
+
+        assert!(query.check(&process_a, false));
+        assert!(query.check(&process_b, false));
+        assert!(!query.check(&process_c, false));
+    }
+
+    #[test]
+    fn test_non_ascii_only_4() {
+        let query = parse_query_no_options("獅 or 狮").unwrap();
+
+        let process_a = simple_process("施氏食獅史");
+        let process_b = simple_process("施氏食狮史");
+        let process_c = simple_process("沒有");
+
+        assert!(query.check(&process_a, false));
+        assert!(query.check(&process_b, false));
+        assert!(!query.check(&process_c, false));
+    }
+
+    #[test]
+    fn test_mixed_unicode() {
+        let query = parse_query_no_options("食 or test").unwrap();
+
+        let process_a = simple_process("施氏食獅史");
+        let process_b = simple_process("test");
+        let process_c = simple_process("施氏食獅史test");
+        let process_d = simple_process("沒有");
+        let process_e = simple_process("nope");
+
+        assert!(query.check(&process_a, false));
+        assert!(query.check(&process_b, false));
+        assert!(query.check(&process_c, false));
+        assert!(!query.check(&process_d, false));
+        assert!(!query.check(&process_e, false));
+    }
+
+    #[test]
+    fn test_regex_1() {
+        let query = parse_query(
+            "(a|b)",
+            &QueryOptions {
+                whole_word: false,
+                ignore_case: true,
+                use_regex: true,
+            },
+        )
+        .unwrap();
+
+        let process_a = simple_process("abc");
+        let process_b = simple_process("test");
+
+        assert!(query.check(&process_a, false));
+        assert!(!query.check(&process_b, false));
+    }
+
+    #[test]
+    fn test_regex_2() {
+        let query = parse_query(
+            "^a.*z$",
+            &QueryOptions {
+                whole_word: false,
+                ignore_case: true,
+                use_regex: true,
+            },
+        )
+        .unwrap();
+
+        let process_a = simple_process("atoz");
+        let process_b = simple_process("atob");
+        let process_c = simple_process("ytoz");
+        let process_d = simple_process("atozoops");
+
+        assert!(query.check(&process_a, false));
+        assert!(!query.check(&process_b, false));
+        assert!(!query.check(&process_c, false));
+        assert!(!query.check(&process_d, false));
+    }
+
+    #[test]
+    fn test_whole_word_1() {
+        let query = parse_query(
+            "test",
+            &QueryOptions {
+                whole_word: true,
+                ignore_case: true,
+                use_regex: false,
+            },
+        )
+        .unwrap();
+
+        let process_a = simple_process("test");
+        let process_b = simple_process("testa");
+        let process_c = simple_process("atest");
+
+        assert!(query.check(&process_a, false));
+        assert!(!query.check(&process_b, false));
+        assert!(!query.check(&process_c, false));
+    }
+
+    #[test]
+    fn test_case_sensitive_1() {
+        let query = parse_query(
+            "tEsT",
+            &QueryOptions {
+                whole_word: false,
+                ignore_case: false,
+                use_regex: false,
+            },
+        )
+        .unwrap();
+
+        let process_a = simple_process("tEsT");
+        let process_b = simple_process("tEsT a");
+        let process_c = simple_process("a tEsT");
+
+        assert!(query.check(&process_a, false));
+        assert!(query.check(&process_b, false));
+        assert!(query.check(&process_c, false));
+
+        let process_d = simple_process("test");
+        let process_e = simple_process("test a");
+        let process_f = simple_process("a test");
+
+        assert!(!query.check(&process_d, false));
+        assert!(!query.check(&process_e, false));
+        assert!(!query.check(&process_f, false));
+    }
+
+    #[cfg(feature = "gpu")]
+    #[test]
+    fn test_gpu_queries() {
+        let mem = parse_query_no_options("gmem > 50 b").unwrap();
+        let mem_percent = parse_query_no_options("gmem% = 50").unwrap();
+        let use_percent = parse_query_no_options("gpu% = 50").unwrap();
+
+        let mut process_a = simple_process("test");
+        process_a.gpu_mem = 100;
+        process_a.gpu_mem_percent = 50.0;
+        process_a.gpu_util = 50;
+
+        assert!(mem.check(&process_a, false));
+        assert!(mem_percent.check(&process_a, false));
+        assert!(use_percent.check(&process_a, false));
+
+        let mut process_b = simple_process("test");
+        process_b.gpu_mem = 0;
+        process_b.gpu_mem_percent = 10.0;
+        process_b.gpu_util = 10;
+
+        assert!(!mem.check(&process_b, false));
+        assert!(!mem_percent.check(&process_b, false));
+        assert!(!use_percent.check(&process_b, false));
+    }
+
+    /// Test GPU queries that involve invalid string comparisons.
+    #[cfg(feature = "gpu")]
+    #[test]
+    fn test_invalid_gpu_queries() {
+        parse_query_no_options("gmem = \"what\"").unwrap_err();
+        parse_query_no_options("gmem% = \"the\"").unwrap_err();
+        parse_query_no_options("gpu% = \"heck\"").unwrap_err();
+    }
+
+    // /// TODO: Support 'bytes' or similar
+    // #[test]
+    // fn test_bytes_keyword() {
+    //     let mem = parse_query_no_options("mem > 50 bytes").unwrap();
+    //     let mut process_a = simple_process("test");
+    //     process_a.mem_usage = 100;
+
+    //     assert!(mem.check(&process_a, false));
     // }
 }
