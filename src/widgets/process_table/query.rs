@@ -2,7 +2,7 @@
 //!
 //! Yes, this is a hand-rolled parser. I originally wrote this back in uni where writing
 //! a parser was basically a thing I did every year, and parsing crate options were not
-//! as good as they are now. This has been rewritten since though.
+//! as good as they are now. This will be rewritten as time goes on, though.
 
 mod and;
 mod error;
@@ -247,7 +247,7 @@ pub(crate) fn parse_query(search_query: &str, options: &QueryOptions) -> QueryRe
     let mut split_query = VecDeque::new();
 
     search_query.split_whitespace().for_each(|s| {
-        // From https://stackoverflow.com/a/56923739 in order to get a split, but include the parentheses
+        // From https://stackoverflow.com/a/56923739 get a split but include the parentheses
         let mut last = 0;
         for (index, matched) in s.match_indices(|x| DELIMITER_LIST.contains(&x)) {
             if last != index {
