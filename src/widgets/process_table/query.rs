@@ -29,7 +29,7 @@ const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];
 /// A node type that can take a query and read it, advancing the current read state
 /// and returning an instance of the node.
 trait QueryProcessor {
-    fn process(query: &mut VecDeque<String>) -> QueryResult<Self>
+    fn process(query: &mut VecDeque<String>, regex_options: &RegexOptions) -> QueryResult<Self>
     where
         Self: Sized;
 }
@@ -37,6 +37,8 @@ trait QueryProcessor {
 /// An attribute (leaf node) for a process.
 #[derive(Debug)]
 enum ProcessAttribute {
+    /// Temp hack to allow for "empty" attributes.
+    Empty,
     Pid(Regex),
     CpuPercentage(NumericalQuery),
     MemBytes(NumericalQuery),
@@ -45,7 +47,7 @@ enum ProcessAttribute {
     WritePerSecond(NumericalQuery),
     TotalRead(NumericalQuery),
     TotalWrite(NumericalQuery),
-    /// Note this is an "untagged" attribute.
+    /// Note this is an "untagged" attribute (e.g. "btm", "firefox").
     Name(Regex),
     State(Regex),
     User(Regex),
@@ -64,6 +66,7 @@ enum ProcessAttribute {
 impl ProcessAttribute {
     fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         match self {
+            ProcessAttribute::Empty => true,
             ProcessAttribute::Pid(re) => re.is_match(process.pid.to_string().as_str()),
             ProcessAttribute::CpuPercentage(cmp) => cmp.check(process.cpu_usage_percent),
             ProcessAttribute::MemBytes(cmp) => cmp.check(process.mem_usage as f64),
@@ -98,25 +101,95 @@ impl ProcessAttribute {
 }
 
 /// Process a new regex given a `base` string and some settings.
-fn new_regex(
-    base: &str, whole_word: bool, ignore_case: bool, with_regex: bool,
-) -> QueryResult<Regex> {
+///
+/// TODO: Push this into a struct so I don't have to throw the options around so much.
+fn new_regex(base: &str, regex_options: &RegexOptions) -> QueryResult<Regex> {
+    let RegexOptions {
+        is_searching_whole_word,
+        is_ignoring_case,
+        is_searching_with_regex,
+    } = regex_options;
     let escaped_regex: String; // Needed for ownership reasons.
 
     let final_regex_string = &format!(
         "{}{}{}{}",
-        if whole_word { "^" } else { "" },
-        if ignore_case { "(?i)" } else { "" },
-        if !with_regex {
+        if *is_searching_whole_word { "^" } else { "" },
+        if *is_ignoring_case { "(?i)" } else { "" },
+        if !(*is_searching_with_regex) {
             escaped_regex = regex::escape(base);
             &escaped_regex
         } else {
             base
         },
-        if whole_word { "$" } else { "" },
+        if *is_searching_whole_word { "$" } else { "" },
     );
 
     Ok(Regex::new(final_regex_string)?)
+}
+
+/// Given a string prefix type, obtain the appropriate [`ProcessAttribute`].
+fn new_string_attribute(
+    prefix_type: PrefixType, base: &str, regex_options: &RegexOptions,
+) -> QueryResult<ProcessAttribute> {
+    match prefix_type {
+        PrefixType::Pid | PrefixType::Name | PrefixType::State | PrefixType::User => {
+            let re = new_regex(base, regex_options)?;
+
+            match prefix_type {
+                PrefixType::Pid => Ok(ProcessAttribute::Pid(re)),
+                PrefixType::Name => Ok(ProcessAttribute::Name(re)),
+                PrefixType::State => Ok(ProcessAttribute::State(re)),
+                PrefixType::User => Ok(ProcessAttribute::User(re)),
+                _ => unreachable!(),
+            }
+        }
+        _ => Err(QueryError::new(format!(
+            "process attribute type {prefix_type:?} is not a supported string attribute"
+        ))),
+    }
+}
+
+/// Given a time prefix type, obtain the appropriate [`ProcessAttribute`].
+fn new_time_attribute(prefix_type: PrefixType, query: TimeQuery) -> QueryResult<ProcessAttribute> {
+    match prefix_type {
+        PrefixType::Time => Ok(ProcessAttribute::Time(query)),
+        _ => Err(QueryError::new(format!(
+            "process attribute type {prefix_type:?} is not a supported time attribute"
+        ))),
+    }
+}
+
+/// Given a numerical prefix type, obtain the appropriate [`ProcessAttribute`].
+fn new_numerical_attribute(
+    prefix_type: PrefixType, query: NumericalQuery,
+) -> QueryResult<ProcessAttribute> {
+    match prefix_type {
+        PrefixType::CpuPercentage => Ok(ProcessAttribute::CpuPercentage(query)),
+        PrefixType::MemBytes => Ok(ProcessAttribute::MemBytes(query)),
+        PrefixType::MemPercentage => Ok(ProcessAttribute::MemPercentage(query)),
+        PrefixType::ReadPerSecond => Ok(ProcessAttribute::ReadPerSecond(query)),
+        PrefixType::WritePerSecond => Ok(ProcessAttribute::WritePerSecond(query)),
+        PrefixType::TotalRead => Ok(ProcessAttribute::TotalRead(query)),
+        PrefixType::TotalWrite => Ok(ProcessAttribute::TotalWrite(query)),
+        #[cfg(unix)]
+        PrefixType::Nice => Ok(ProcessAttribute::Nice(query)),
+        PrefixType::Priority => Ok(ProcessAttribute::Priority(query)),
+        #[cfg(feature = "gpu")]
+        PrefixType::GpuPercentage => Ok(ProcessAttribute::GpuPercentage(query)),
+        #[cfg(feature = "gpu")]
+        PrefixType::GpuMemoryBytes => Ok(ProcessAttribute::GpuMemoryBytes(query)),
+        #[cfg(feature = "gpu")]
+        PrefixType::GpuMemoryPercentage => Ok(ProcessAttribute::GpuMemoryPercentage(query)),
+        _ => Err(QueryError::new(format!(
+            "process attribute type {prefix_type:?} is not a supported numerical attribute"
+        ))),
+    }
+}
+
+struct RegexOptions {
+    is_searching_whole_word: bool,
+    is_ignoring_case: bool,
+    is_searching_with_regex: bool,
 }
 
 /// In charge of parsing the given query, case-insensitive, possibly marked
@@ -143,12 +216,14 @@ pub(crate) fn parse_query(
     search_query: &str, is_searching_whole_word: bool, is_ignoring_case: bool,
     is_searching_with_regex: bool,
 ) -> QueryResult<ProcessQuery> {
-    fn process_string_to_filter(query: &mut VecDeque<String>) -> QueryResult<ProcessQuery> {
-        let lhs = Or::process(query)?;
+    fn process_string_to_filter(
+        query: &mut VecDeque<String>, regex_options: RegexOptions,
+    ) -> QueryResult<ProcessQuery> {
+        let lhs = Or::process(query, &regex_options)?;
         let mut list_of_ors = vec![lhs];
 
         while query.front().is_some() {
-            list_of_ors.push(Or::process(query)?);
+            list_of_ors.push(Or::process(query, &regex_options)?);
         }
 
         Ok(ProcessQuery { query: list_of_ors })
@@ -171,7 +246,14 @@ pub(crate) fn parse_query(
         }
     });
 
-    process_string_to_filter(&mut split_query)
+    process_string_to_filter(
+        &mut split_query,
+        RegexOptions {
+            is_ignoring_case,
+            is_searching_whole_word,
+            is_searching_with_regex,
+        },
+    )
 }
 
 pub struct ProcessQuery {
@@ -196,13 +278,13 @@ impl Debug for ProcessQuery {
 #[derive(Debug)]
 enum PrefixType {
     Pid,
-    PCpu,
+    CpuPercentage,
     MemBytes,
-    PMem,
-    Rps,
-    Wps,
-    TRead,
-    TWrite,
+    MemPercentage,
+    ReadPerSecond,
+    WritePerSecond,
+    TotalRead,
+    TotalWrite,
     Name,
     State,
     User,
@@ -211,11 +293,11 @@ enum PrefixType {
     Nice,
     Priority,
     #[cfg(feature = "gpu")]
-    PGpu,
+    GpuPercentage,
     #[cfg(feature = "gpu")]
-    GMem,
+    GpuMemoryBytes,
     #[cfg(feature = "gpu")]
-    PGMem,
+    GpuMemoryPercentage,
 }
 
 impl std::str::FromStr for PrefixType {
@@ -229,19 +311,19 @@ impl std::str::FromStr for PrefixType {
 
         let mut result = Name;
         if multi_eq_ignore_ascii_case!(s, "cpu" | "cpu%") {
-            result = PCpu;
+            result = CpuPercentage;
         } else if multi_eq_ignore_ascii_case!(s, "mem" | "mem%") {
-            result = PMem;
+            result = MemPercentage;
         } else if multi_eq_ignore_ascii_case!(s, "memb") {
             result = MemBytes;
         } else if multi_eq_ignore_ascii_case!(s, "read" | "r/s" | "rps") {
-            result = Rps;
+            result = ReadPerSecond;
         } else if multi_eq_ignore_ascii_case!(s, "write" | "w/s" | "wps") {
-            result = Wps;
+            result = WritePerSecond;
         } else if multi_eq_ignore_ascii_case!(s, "tread" | "t.read") {
-            result = TRead;
+            result = TotalRead;
         } else if multi_eq_ignore_ascii_case!(s, "twrite" | "t.write") {
-            result = TWrite;
+            result = TotalWrite;
         } else if multi_eq_ignore_ascii_case!(s, "pid") {
             result = Pid;
         } else if multi_eq_ignore_ascii_case!(s, "state") {
@@ -261,11 +343,11 @@ impl std::str::FromStr for PrefixType {
         #[cfg(feature = "gpu")]
         {
             if multi_eq_ignore_ascii_case!(s, "gmem") {
-                result = GMem;
+                result = GpuMemoryBytes;
             } else if multi_eq_ignore_ascii_case!(s, "gmem%") {
-                result = PGMem;
+                result = GpuMemoryPercentage;
             } else if multi_eq_ignore_ascii_case!(s, "gpu%") {
-                result = PGpu;
+                result = GpuPercentage;
             }
         }
         Ok(result)
@@ -279,18 +361,6 @@ enum QueryComparison {
     Greater,
     LessOrEqual,
     GreaterOrEqual,
-}
-
-#[derive(Debug)]
-enum StringQuery {
-    Value(String),
-    Regex(Regex),
-}
-
-#[derive(Debug)]
-enum ComparableQuery {
-    Numerical(NumericalQuery),
-    Time(TimeQuery),
 }
 
 #[derive(Debug)]

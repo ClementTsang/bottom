@@ -1,15 +1,17 @@
 use std::{collections::VecDeque, fmt::Debug};
 
 use humantime::parse_duration;
-use regex::Regex;
 
-use crate::widgets::query::ProcessAttribute;
+use crate::widgets::query::{
+    ProcessAttribute, RegexOptions, new_numerical_attribute, new_string_attribute,
+    new_time_attribute,
+};
 use crate::{
     collection::processes::ProcessHarvest,
     utils::data_units::*,
     widgets::query::{
-        And, ComparableQuery, NumericalQuery, Or, PrefixType, QueryComparison, QueryProcessor,
-        QueryResult, StringQuery, TimeQuery, error::QueryError,
+        And, NumericalQuery, Or, PrefixType, QueryComparison, QueryProcessor, QueryResult,
+        TimeQuery, error::QueryError,
     },
 };
 
@@ -70,7 +72,9 @@ impl Prefix {
         }
     }
 
-    fn process_in_quotes(query: &mut VecDeque<String>) -> QueryResult<Self> {
+    fn process_in_quotes(
+        query: &mut VecDeque<String>, regex_options: &RegexOptions,
+    ) -> QueryResult<Self> {
         if let Some(queue_top) = query.pop_front() {
             if queue_top == "\"" {
                 // This means we hit something like "". Return an empty prefix, and to deal
@@ -78,13 +82,7 @@ impl Prefix {
                 // stack. Ugly fix but whatever.
                 query.push_front("\"".to_string());
 
-                Ok(Prefix::Attribute(ProcessAttribute::Name(todo!())))
-
-                // Ok(Prefix {
-                //     or: None,
-                //     regex_prefix: Some((PrefixType::Name, StringQuery::Value(String::default()))),
-                //     compare_prefix: None,
-                // })
+                Ok(Prefix::Attribute(ProcessAttribute::Empty))
             } else {
                 let mut intern_string = vec![queue_top];
 
@@ -100,12 +98,11 @@ impl Prefix {
 
                 let quoted_string = intern_string.join(" ");
 
-                Ok(Prefix::Attribute(ProcessAttribute::Name(todo!())))
-                // Ok(Prefix {
-                //     or: None,
-                //     regex_prefix: Some((PrefixType::Name, StringQuery::Value(quoted_string))),
-                //     compare_prefix: None,
-                // })
+                Ok(Prefix::Attribute(new_string_attribute(
+                    PrefixType::Name,
+                    &quoted_string,
+                    regex_options,
+                )?))
             }
         } else {
             // Uh oh, there's nothing left in the stack, but we're inside quotes!
@@ -115,7 +112,7 @@ impl Prefix {
 }
 
 impl QueryProcessor for Prefix {
-    fn process(query: &mut VecDeque<String>) -> QueryResult<Self>
+    fn process(query: &mut VecDeque<String>, regex_options: &RegexOptions) -> QueryResult<Self>
     where
         Self: Sized,
     {
@@ -129,7 +126,7 @@ impl QueryProcessor for Prefix {
 
                 while let Some(in_paren_query_top) = query.front() {
                     if in_paren_query_top != ")" {
-                        list_of_ors.push_back(Or::process(query)?);
+                        list_of_ors.push_back(Or::process(query, regex_options)?);
                     } else {
                         break;
                     }
@@ -172,16 +169,16 @@ impl QueryProcessor for Prefix {
                 // however, that we will DIRECTLY call another process_prefix
                 // call...
 
-                let prefix = Prefix::process_in_quotes(query)?;
-                if let Some(close_quote) = query.pop_front() {
+                let prefix = Prefix::process_in_quotes(query, regex_options)?;
+                return if let Some(close_quote) = query.pop_front() {
                     if close_quote == "\"" {
-                        return Ok(prefix);
+                        Ok(prefix)
                     } else {
-                        return Err(QueryError::new("Missing closing quotation"));
+                        Err(QueryError::new("Missing closing quotation"))
                     }
                 } else {
-                    return Err(QueryError::new("Missing closing quotation"));
-                }
+                    Err(QueryError::new("Missing closing quotation"))
+                };
             } else {
                 // Get prefix type.
                 let prefix_type = curr.parse::<PrefixType>()?;
@@ -196,12 +193,11 @@ impl QueryProcessor for Prefix {
                 if let Some(content) = content {
                     match &prefix_type {
                         PrefixType::Name => {
-                            return Ok(Prefix::Attribute(todo!()));
-                            // return Ok(Prefix {
-                            //     or: None,
-                            //     regex_prefix: Some((prefix_type, StringQuery::Value(content))),
-                            //     compare_prefix: None,
-                            // });
+                            return Ok(Prefix::Attribute(new_string_attribute(
+                                prefix_type,
+                                &content,
+                                regex_options,
+                            )?));
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
                             // We have to check if someone put an "="...
@@ -237,23 +233,18 @@ impl QueryProcessor for Prefix {
                                         string_value
                                     };
 
-                                    return Ok(Prefix::Attribute(todo!()));
-                                    // return Ok(Prefix {
-                                    //     or: None,
-                                    //     regex_prefix: Some((
-                                    //         prefix_type,
-                                    //         StringQuery::Value(final_value),
-                                    //     )),
-                                    //     compare_prefix: None,
-                                    // });
+                                    return Ok(Prefix::Attribute(new_string_attribute(
+                                        prefix_type,
+                                        &final_value,
+                                        regex_options,
+                                    )?));
                                 }
                             } else {
-                                return Ok(Prefix::Attribute(todo!()));
-                                // return Ok(Prefix {
-                                //     or: None,
-                                //     regex_prefix: Some((prefix_type, StringQuery::Value(content))),
-                                //     compare_prefix: None,
-                                // });
+                                return Ok(Prefix::Attribute(new_string_attribute(
+                                    prefix_type,
+                                    &content,
+                                    regex_options,
+                                )?));
                             }
                         }
                         PrefixType::Time => {
@@ -291,19 +282,13 @@ impl QueryProcessor for Prefix {
                                 )
                                 .map_err(|err| QueryError::new(err.to_string()))?;
 
-                                return Ok(Prefix::Attribute(todo!()));
-
-                                // return Ok(Prefix {
-                                //     or: None,
-                                //     regex_prefix: None,
-                                //     compare_prefix: Some((
-                                //         prefix_type,
-                                //         ComparableQuery::Time(TimeQuery {
-                                //             condition,
-                                //             duration,
-                                //         }),
-                                //     )),
-                                // });
+                                return Ok(Prefix::Attribute(new_time_attribute(
+                                    prefix_type,
+                                    TimeQuery {
+                                        condition,
+                                        duration,
+                                    },
+                                )?));
                             }
                         }
                         _ => {
@@ -361,31 +346,23 @@ impl QueryProcessor for Prefix {
 
                                     match prefix_type {
                                         PrefixType::MemBytes
-                                        | PrefixType::Rps
-                                        | PrefixType::Wps
-                                        | PrefixType::TRead
-                                        | PrefixType::TWrite => {
+                                        | PrefixType::ReadPerSecond
+                                        | PrefixType::WritePerSecond
+                                        | PrefixType::TotalRead
+                                        | PrefixType::TotalWrite => {
                                             process_prefix_units(query, &mut value);
                                         }
                                         #[cfg(feature = "gpu")]
-                                        PrefixType::GMem => {
+                                        PrefixType::GpuMemoryBytes => {
                                             process_prefix_units(query, &mut value);
                                         }
                                         _ => {}
                                     }
 
-                                    return Ok(Prefix::Attribute(todo!()));
-                                    // return Ok(Prefix {
-                                    //     or: None,
-                                    //     regex_prefix: None,
-                                    //     compare_prefix: Some((
-                                    //         prefix_type,
-                                    //         ComparableQuery::Numerical(NumericalQuery {
-                                    //             condition,
-                                    //             value,
-                                    //         }),
-                                    //     )),
-                                    // });
+                                    return Ok(Prefix::Attribute(new_numerical_attribute(
+                                        prefix_type,
+                                        NumericalQuery { condition, value },
+                                    )?));
                                 }
                             }
                         }
