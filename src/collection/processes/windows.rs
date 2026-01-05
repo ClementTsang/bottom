@@ -1,7 +1,5 @@
 //! Process data collection for Windows. Uses sysinfo.
 
-use super::{ProcessHarvest, process_status_str};
-use crate::collection::{DataCollector, error::CollectionResult};
 use std::time::Duration;
 
 use anyhow::bail;
@@ -10,6 +8,9 @@ use windows::Win32::{
     Foundation::{CloseHandle, HANDLE},
     System::Threading::{GetPriorityClass, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION},
 };
+
+use super::{ProcessHarvest, process_status_str};
+use crate::collection::{DataCollector, error::CollectionResult};
 
 /// See [here](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getpriorityclass)
 /// for more information on the core Windows API being called and the meaning of the priorities, as well as the access
