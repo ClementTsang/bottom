@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-use std::fmt::{Debug, Formatter};
 
 use crate::widgets::query::QueryOptions;
 use crate::{
@@ -9,6 +8,7 @@ use crate::{
 
 /// A node where both the left hand side or the right hand side are considered.
 /// Note that the right hand side is optional, as that's how I implemented it a long time ago.
+#[derive(Debug)]
 pub(super) struct And {
     pub(super) lhs: Prefix,
     // TODO: Maybe don't need to box rhs?
@@ -21,15 +21,6 @@ impl And {
             self.lhs.check(process, is_using_command) && rhs.check(process, is_using_command)
         } else {
             self.lhs.check(process, is_using_command)
-        }
-    }
-}
-
-impl Debug for And {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match &self.rhs {
-            Some(rhs) => f.write_fmt(format_args!("({:?} AND {:?})", self.lhs, rhs)),
-            None => f.write_fmt(format_args!("{:?}", self.lhs)),
         }
     }
 }

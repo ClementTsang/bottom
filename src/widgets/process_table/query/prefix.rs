@@ -3,8 +3,8 @@ use std::{collections::VecDeque, fmt::Debug};
 use humantime::parse_duration;
 
 use crate::widgets::query::{
-    ProcessAttribute, QueryOptions, new_numerical_attribute, new_string_attribute,
-    new_time_attribute,
+    ProcessAttribute, QueryOptions,
+    attribute::{new_numerical_attribute, new_string_attribute, new_time_attribute},
 };
 use crate::{
     collection::processes::ProcessHarvest,

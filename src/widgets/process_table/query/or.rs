@@ -1,7 +1,4 @@
-use std::{
-    collections::VecDeque,
-    fmt::{Debug, Formatter},
-};
+use std::collections::VecDeque;
 
 use crate::widgets::query::QueryOptions;
 use crate::{
@@ -13,6 +10,7 @@ use crate::{
 
 /// A node where either the left hand side or the right hand side are considered.
 /// Note that the right hand side is optional, as that's how I implemented it a long time ago.
+#[derive(Debug)]
 pub(super) struct Or {
     pub(super) lhs: And,
     // TODO: Maybe don't need to box rhs?
@@ -25,15 +23,6 @@ impl Or {
             self.lhs.check(process, is_using_command) || rhs.check(process, is_using_command)
         } else {
             self.lhs.check(process, is_using_command)
-        }
-    }
-}
-
-impl Debug for Or {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match &self.rhs {
-            Some(rhs) => f.write_fmt(format_args!("({:?} OR {:?})", self.lhs, rhs)),
-            None => f.write_fmt(format_args!("{:?}", self.lhs)),
         }
     }
 }
