@@ -598,17 +598,37 @@ mod tests {
     // fn units_with_and_without_spaces() {}
 
     #[test]
-    fn invalid_query_1() {
+    fn invalid_uncompleted_queries_1() {
         parse_query_no_options("state =").unwrap_err();
         parse_query_no_options("a or").unwrap_err();
         parse_query_no_options("a >").unwrap_err();
+    }
+
+    #[test]
+    fn invalid_or() {
+        parse_query_no_options("a OR asdf = 100").unwrap_err();
+        parse_query_no_options("asdf = 100 OR b").unwrap_err();
+        parse_query_no_options("a OR asdf = 100 OR b").unwrap_err();
+
+        parse_query_no_options("asdf = 100 OR bsdf = \"").unwrap_err();
+        parse_query_no_options("a OR bsdf = \"").unwrap_err();
+    }
+
+    #[test]
+    fn invalid_and() {
+        parse_query_no_options("a AND asdf = 100").unwrap_err();
+        parse_query_no_options("asdf = 100 AND b").unwrap_err();
+        parse_query_no_options("a AND asdf = 100 AND b").unwrap_err();
+
+        parse_query_no_options("asdf = 100 AND bsdf = \"").unwrap_err();
+        parse_query_no_options("a AND bsdf = \"").unwrap_err();
     }
 
     // /// Test keywords.
     // ///
     // /// TODO: Should these be invalid...?
     // #[test]
-    // fn invalid_query_2() {
+    // fn invalid_query_x() {
     //     parse_query_no_options("or").unwrap_err();
     //     parse_query_no_options("and").unwrap_err();
     //     parse_query_no_options("a or >").unwrap_err();
