@@ -197,19 +197,19 @@ impl Painter {
             })];
 
             // Text options shamelessly stolen from VS Code.
-            let case_style = if !proc_widget_state.proc_search.is_ignoring_case {
+            let case_style = if !proc_widget_state.proc_search.query_options.ignore_case {
                 self.styles.selected_text_style
             } else {
                 self.styles.text_style
             };
 
-            let whole_word_style = if proc_widget_state.proc_search.is_searching_whole_word {
+            let whole_word_style = if proc_widget_state.proc_search.query_options.whole_word {
                 self.styles.selected_text_style
             } else {
                 self.styles.text_style
             };
 
-            let regex_style = if proc_widget_state.proc_search.is_searching_with_regex {
+            let regex_style = if proc_widget_state.proc_search.query_options.use_regex {
                 self.styles.selected_text_style
             } else {
                 self.styles.text_style

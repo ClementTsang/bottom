@@ -3,7 +3,7 @@ use std::{collections::VecDeque, fmt::Debug};
 use humantime::parse_duration;
 
 use crate::widgets::query::{
-    ProcessAttribute, RegexOptions, new_numerical_attribute, new_string_attribute,
+    ProcessAttribute, QueryOptions, new_numerical_attribute, new_string_attribute,
     new_time_attribute,
 };
 use crate::{
@@ -73,7 +73,7 @@ impl Prefix {
     }
 
     fn process_in_quotes(
-        query: &mut VecDeque<String>, regex_options: &RegexOptions,
+        query: &mut VecDeque<String>, options: &QueryOptions,
     ) -> QueryResult<Self> {
         if let Some(queue_top) = query.pop_front() {
             if queue_top == "\"" {
@@ -101,7 +101,7 @@ impl Prefix {
                 Ok(Prefix::Attribute(new_string_attribute(
                     PrefixType::Name,
                     &quoted_string,
-                    regex_options,
+                    options,
                 )?))
             }
         } else {
@@ -112,7 +112,7 @@ impl Prefix {
 }
 
 impl QueryProcessor for Prefix {
-    fn process(query: &mut VecDeque<String>, regex_options: &RegexOptions) -> QueryResult<Self>
+    fn process(query: &mut VecDeque<String>, options: &QueryOptions) -> QueryResult<Self>
     where
         Self: Sized,
     {
@@ -126,7 +126,7 @@ impl QueryProcessor for Prefix {
 
                 while let Some(in_paren_query_top) = query.front() {
                     if in_paren_query_top != ")" {
-                        list_of_ors.push_back(Or::process(query, regex_options)?);
+                        list_of_ors.push_back(Or::process(query, options)?);
                     } else {
                         break;
                     }
@@ -169,7 +169,7 @@ impl QueryProcessor for Prefix {
                 // however, that we will DIRECTLY call another process_prefix
                 // call...
 
-                let prefix = Prefix::process_in_quotes(query, regex_options)?;
+                let prefix = Prefix::process_in_quotes(query, options)?;
                 return if let Some(close_quote) = query.pop_front() {
                     if close_quote == "\"" {
                         Ok(prefix)
@@ -196,7 +196,7 @@ impl QueryProcessor for Prefix {
                             return Ok(Prefix::Attribute(new_string_attribute(
                                 prefix_type,
                                 &content,
-                                regex_options,
+                                options,
                             )?));
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
@@ -236,14 +236,14 @@ impl QueryProcessor for Prefix {
                                     return Ok(Prefix::Attribute(new_string_attribute(
                                         prefix_type,
                                         &final_value,
-                                        regex_options,
+                                        options,
                                     )?));
                                 }
                             } else {
                                 return Ok(Prefix::Attribute(new_string_attribute(
                                     prefix_type,
                                     &content,
-                                    regex_options,
+                                    options,
                                 )?));
                             }
                         }

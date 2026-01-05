@@ -1,6 +1,7 @@
+use std::collections::VecDeque;
 use std::fmt::{Debug, Formatter};
 
-use crate::widgets::query::RegexOptions;
+use crate::widgets::query::QueryOptions;
 use crate::{
     collection::processes::ProcessHarvest,
     widgets::query::{COMPARISON_LIST, Or, Prefix, QueryProcessor, QueryResult, error::QueryError},
@@ -34,15 +35,13 @@ impl Debug for And {
 }
 
 impl QueryProcessor for And {
-    fn process(
-        query: &mut std::collections::VecDeque<String>, regex_options: &RegexOptions,
-    ) -> QueryResult<Self>
+    fn process(query: &mut VecDeque<String>, options: &QueryOptions) -> QueryResult<Self>
     where
         Self: Sized,
     {
         const AND_LIST: [&str; 2] = ["and", "&&"];
 
-        let mut lhs = Prefix::process(query, regex_options)?;
+        let mut lhs = Prefix::process(query, options)?;
         let mut rhs: Option<Box<Prefix>> = None;
 
         while let Some(queue_top) = query.front() {
@@ -50,7 +49,7 @@ impl QueryProcessor for And {
             if AND_LIST.contains(&current_lowercase.as_str()) {
                 query.pop_front();
 
-                rhs = Some(Box::new(Prefix::process(query, regex_options)?));
+                rhs = Some(Box::new(Prefix::process(query, options)?));
 
                 if let Some(next_queue_top) = query.front() {
                     if AND_LIST.contains(&next_queue_top.to_lowercase().as_str()) {

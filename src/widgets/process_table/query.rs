@@ -29,7 +29,7 @@ const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];
 /// A node type that can take a query and read it, advancing the current read state
 /// and returning an instance of the node.
 trait QueryProcessor {
-    fn process(query: &mut VecDeque<String>, regex_options: &RegexOptions) -> QueryResult<Self>
+    fn process(query: &mut VecDeque<String>, regex_options: &QueryOptions) -> QueryResult<Self>
     where
         Self: Sized;
 }
@@ -103,11 +103,11 @@ impl ProcessAttribute {
 /// Process a new regex given a `base` string and some settings.
 ///
 /// TODO: Push this into a struct so I don't have to throw the options around so much.
-fn new_regex(base: &str, regex_options: &RegexOptions) -> QueryResult<Regex> {
-    let RegexOptions {
-        is_searching_whole_word,
-        is_ignoring_case,
-        is_searching_with_regex,
+fn new_regex(base: &str, regex_options: &QueryOptions) -> QueryResult<Regex> {
+    let QueryOptions {
+        whole_word: is_searching_whole_word,
+        ignore_case: is_ignoring_case,
+        use_regex: is_searching_with_regex,
     } = regex_options;
     let escaped_regex: String; // Needed for ownership reasons.
 
@@ -129,7 +129,7 @@ fn new_regex(base: &str, regex_options: &RegexOptions) -> QueryResult<Regex> {
 
 /// Given a string prefix type, obtain the appropriate [`ProcessAttribute`].
 fn new_string_attribute(
-    prefix_type: PrefixType, base: &str, regex_options: &RegexOptions,
+    prefix_type: PrefixType, base: &str, regex_options: &QueryOptions,
 ) -> QueryResult<ProcessAttribute> {
     match prefix_type {
         PrefixType::Pid | PrefixType::Name | PrefixType::State | PrefixType::User => {
@@ -186,10 +186,28 @@ fn new_numerical_attribute(
     }
 }
 
-struct RegexOptions {
-    is_searching_whole_word: bool,
-    is_ignoring_case: bool,
-    is_searching_with_regex: bool,
+/// Options when creating a new query.
+#[derive(PartialEq, Eq)]
+pub struct QueryOptions {
+    /// Whether we only allow matches on the entire word.
+    pub whole_word: bool,
+
+    /// Whether to ignore case-sensitivity when searching. On by default.
+    pub ignore_case: bool,
+
+    /// Whether we should use regex syntax when searching. If not set, then it
+    /// should treat everything as a literal string.
+    pub use_regex: bool,
+}
+
+impl Default for QueryOptions {
+    fn default() -> Self {
+        Self {
+            ignore_case: true,
+            whole_word: false,
+            use_regex: false,
+        }
+    }
 }
 
 /// In charge of parsing the given query, case-insensitive, possibly marked
@@ -212,18 +230,15 @@ struct RegexOptions {
 /// adjacent non-prefixed or quoted elements after splitting to treat as process
 /// names. Furthermore, we want to support boolean joiners like AND and OR, and
 /// brackets.
-pub(crate) fn parse_query(
-    search_query: &str, is_searching_whole_word: bool, is_ignoring_case: bool,
-    is_searching_with_regex: bool,
-) -> QueryResult<ProcessQuery> {
+pub(crate) fn parse_query(search_query: &str, options: &QueryOptions) -> QueryResult<ProcessQuery> {
     fn process_string_to_filter(
-        query: &mut VecDeque<String>, regex_options: RegexOptions,
+        query: &mut VecDeque<String>, options: &QueryOptions,
     ) -> QueryResult<ProcessQuery> {
-        let lhs = Or::process(query, &regex_options)?;
+        let lhs = Or::process(query, options)?;
         let mut list_of_ors = vec![lhs];
 
         while query.front().is_some() {
-            list_of_ors.push(Or::process(query, &regex_options)?);
+            list_of_ors.push(Or::process(query, options)?);
         }
 
         Ok(ProcessQuery { query: list_of_ors })
@@ -246,14 +261,7 @@ pub(crate) fn parse_query(
         }
     });
 
-    process_string_to_filter(
-        &mut split_query,
-        RegexOptions {
-            is_ignoring_case,
-            is_searching_whole_word,
-            is_searching_with_regex,
-        },
-    )
+    process_string_to_filter(&mut split_query, options)
 }
 
 pub struct ProcessQuery {
@@ -417,9 +425,20 @@ mod tests {
         }
     }
 
+    fn parse_query_no_options(query: &str) -> QueryResult<ProcessQuery> {
+        parse_query(
+            query,
+            &QueryOptions {
+                whole_word: false,
+                ignore_case: false,
+                use_regex: false,
+            },
+        )
+    }
+
     #[test]
     fn basic_query() {
-        let query = parse_query("test", false, false, false).unwrap();
+        let query = parse_query_no_options("test").unwrap();
 
         let exact_match = simple_process("test");
         let contains = simple_process("test string");
@@ -432,7 +451,7 @@ mod tests {
 
     #[test]
     fn basic_or_query() {
-        let query = parse_query("a or b", false, false, false).unwrap();
+        let query = parse_query_no_options("a or b").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -445,7 +464,7 @@ mod tests {
 
     #[test]
     fn basic_and_query() {
-        let query = parse_query("a and b", false, false, false).unwrap();
+        let query = parse_query_no_options("a and b").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -460,7 +479,7 @@ mod tests {
 
     #[test]
     fn implied_and_query() {
-        let query = parse_query("a b c", false, false, false).unwrap();
+        let query = parse_query_no_options("a b c").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -477,7 +496,7 @@ mod tests {
     /// as the string `"a or b"`.
     #[test]
     fn quoted_query() {
-        let query = parse_query("a \"or\" b", false, false, false).unwrap();
+        let query = parse_query_no_options("a \"or\" b").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -498,7 +517,7 @@ mod tests {
     /// as the string `"a or b"`.
     #[test]
     fn quoted_multi_word_query() {
-        let query = parse_query("\"a or b\"", false, false, false).unwrap();
+        let query = parse_query_no_options("\"a or b\"").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -517,7 +536,7 @@ mod tests {
 
     #[test]
     fn basic_cpu_query() {
-        let query = parse_query("cpu > 50", false, false, false).unwrap();
+        let query = parse_query_no_options("cpu > 50").unwrap();
 
         let mut over = simple_process("a");
         over.cpu_usage_percent = 60.0;
@@ -535,7 +554,7 @@ mod tests {
 
     #[test]
     fn basic_mem_query() {
-        let query = parse_query("memb > 1 GiB", false, false, false).unwrap();
+        let query = parse_query_no_options("memb > 1 GiB").unwrap();
 
         let mut over = simple_process("a");
         over.mem_usage = 2 * 1024 * 1024 * 1024;
@@ -554,7 +573,7 @@ mod tests {
     /// This test sees if parentheses work.
     #[test]
     fn nested_query_1() {
-        let query = parse_query("(a or b) and (c or a)", false, false, false).unwrap();
+        let query = parse_query_no_options("(a or b) and (c or a)").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -570,7 +589,7 @@ mod tests {
     /// This test sees if parentheses and mixed query types work.
     #[test]
     fn nested_query_2() {
-        let query = parse_query("(cpu > 10 or cpu < 5) and (c or a)", false, false, false).unwrap();
+        let query = parse_query_no_options("(cpu > 10 or cpu < 5) and (c or a)").unwrap();
 
         let mut a_valid_1 = simple_process("a");
         a_valid_1.cpu_usage_percent = 100.0;
@@ -602,13 +621,8 @@ mod tests {
     /// This test adds a further layer of nesting to consider.
     #[test]
     fn nested_query_3() {
-        let query = parse_query(
-            "((cpu > 10 or cpu < 5) or d) and ((c or a) or d)",
-            false,
-            false,
-            false,
-        )
-        .unwrap();
+        let query =
+            parse_query_no_options("((cpu > 10 or cpu < 5) or d) and ((c or a) or d)").unwrap();
 
         let mut a_valid_1 = simple_process("a");
         a_valid_1.cpu_usage_percent = 100.0;
@@ -639,7 +653,7 @@ mod tests {
 
     #[test]
     fn ambiguous_precedence_1() {
-        let query = parse_query("a and b or c", false, false, false).unwrap();
+        let query = parse_query_no_options("a and b or c").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -652,7 +666,7 @@ mod tests {
 
     #[test]
     fn ambiguous_precedence_2() {
-        let query = parse_query("a or b and c", false, false, false).unwrap();
+        let query = parse_query_no_options("a or b and c").unwrap();
 
         let a = simple_process("a");
         let b = simple_process("b");
@@ -666,11 +680,9 @@ mod tests {
     /// Test if a complicated query even parses.
     #[test]
     fn parse_complicated_query() {
-        parse_query(
+        parse_query_no_options(
             "cpu > 10.5 AND (memb = 1 MiB || state = sleeping) and (a or b) and (read >= 0 or write >= 0)",
-            false,
-            false,
-            false,
+
         )
         .unwrap();
     }
@@ -678,23 +690,23 @@ mod tests {
     /// Test empty quotes works.
     #[test]
     fn parse_empty_quotes() {
-        parse_query("\"\"", false, false, false).unwrap();
+        parse_query_no_options("\"\"").unwrap();
     }
 
     /// Test unfinished quotes error.
     #[test]
     fn parse_unfinished_quotes() {
-        parse_query("\"", false, false, false).unwrap_err();
+        parse_query_no_options("\"").unwrap_err();
     }
 
     /// Test a fix for a bug with closing quotations. The problem seems to arise from quotes being used as an argument
     /// to a prefix... but this should probably be valid.
     #[test]
     fn parse_nested_closing_quotes() {
-        parse_query("state = \"test\"", false, false, false).unwrap();
-        parse_query("state = \"2 words\"", false, false, false).unwrap();
-        parse_query("(memb = 1 MiB || state = \"test\")", false, false, false).unwrap();
-        parse_query("(memb = 1 MiB || state = \"2 words\")", false, false, false).unwrap();
+        parse_query_no_options("state = \"test\"").unwrap();
+        parse_query_no_options("state = \"2 words\"").unwrap();
+        parse_query_no_options("(memb = 1 MiB || state = \"test\")").unwrap();
+        parse_query_no_options("(memb = 1 MiB || state = \"2 words\")").unwrap();
     }
 
     // TODO: Add this after fixed.
@@ -704,9 +716,9 @@ mod tests {
 
     #[test]
     fn invalid_query_1() {
-        parse_query("state =", false, false, false).unwrap_err();
-        parse_query("a or", false, false, false).unwrap_err();
-        parse_query("a >", false, false, false).unwrap_err();
+        parse_query_no_options("state =").unwrap_err();
+        parse_query_no_options("a or").unwrap_err();
+        parse_query_no_options("a >").unwrap_err();
     }
 
     // /// Test keywords.
@@ -714,9 +726,9 @@ mod tests {
     // /// TODO: Should these be invalid...?
     // #[test]
     // fn invalid_query_2() {
-    //     parse_query("or", false, false, false).unwrap_err();
-    //     parse_query("and", false, false, false).unwrap_err();
-    //     parse_query("a or >", false, false, false).unwrap_err();
-    //     parse_query("a and >", false, false, false).unwrap_err();
+    //     parse_query_no_options("or").unwrap_err();
+    //     parse_query_no_options("and").unwrap_err();
+    //     parse_query_no_options("a or >").unwrap_err();
+    //     parse_query_no_options("a and >").unwrap_err();
     // }
 }

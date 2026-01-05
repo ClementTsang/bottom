@@ -3,7 +3,7 @@ use std::{
     fmt::{Debug, Formatter},
 };
 
-use crate::widgets::query::RegexOptions;
+use crate::widgets::query::QueryOptions;
 use crate::{
     collection::processes::ProcessHarvest,
     widgets::query::{
@@ -39,20 +39,20 @@ impl Debug for Or {
 }
 
 impl QueryProcessor for Or {
-    fn process(query: &mut VecDeque<String>, regex_options: &RegexOptions) -> QueryResult<Self>
+    fn process(query: &mut VecDeque<String>, options: &QueryOptions) -> QueryResult<Self>
     where
         Self: Sized,
     {
         const OR_LIST: [&str; 2] = ["or", "||"];
 
-        let mut lhs = And::process(query, regex_options)?;
+        let mut lhs = And::process(query, options)?;
         let mut rhs: Option<Box<And>> = None;
 
         while let Some(queue_top) = query.front() {
             let current_lowercase = queue_top.to_lowercase();
             if OR_LIST.contains(&current_lowercase.as_str()) {
                 query.pop_front();
-                rhs = Some(Box::new(And::process(query, regex_options)?));
+                rhs = Some(Box::new(And::process(query, options)?));
 
                 if let Some(queue_next) = query.front() {
                     if OR_LIST.contains(&queue_next.to_lowercase().as_str()) {

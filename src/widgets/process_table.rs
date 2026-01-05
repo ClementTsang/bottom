@@ -14,6 +14,7 @@ use query::{ProcessQuery, parse_query};
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use sort_table::SortTableColumn;
 
+use crate::widgets::query::QueryOptions;
 use crate::{
     app::{
         AppConfigFields, AppSearchState,
@@ -29,35 +30,23 @@ use crate::{
 
 /// ProcessSearchState only deals with process' search's current settings and
 /// state.
+#[derive(Default)]
 pub struct ProcessSearchState {
     pub search_state: AppSearchState,
-    pub is_ignoring_case: bool,
-    pub is_searching_whole_word: bool,
-    pub is_searching_with_regex: bool,
-}
-
-impl Default for ProcessSearchState {
-    fn default() -> Self {
-        ProcessSearchState {
-            search_state: AppSearchState::default(),
-            is_ignoring_case: true,
-            is_searching_whole_word: false,
-            is_searching_with_regex: false,
-        }
-    }
+    pub query_options: QueryOptions,
 }
 
 impl ProcessSearchState {
     pub fn search_toggle_ignore_case(&mut self) {
-        self.is_ignoring_case = !self.is_ignoring_case;
+        self.query_options.ignore_case = !self.query_options.ignore_case;
     }
 
     pub fn search_toggle_whole_word(&mut self) {
-        self.is_searching_whole_word = !self.is_searching_whole_word;
+        self.query_options.whole_word = !self.query_options.whole_word;
     }
 
     pub fn search_toggle_regex(&mut self) {
-        self.is_searching_with_regex = !self.is_searching_with_regex;
+        self.query_options.use_regex = !self.query_options.use_regex;
     }
 }
 
@@ -1105,9 +1094,7 @@ impl ProcWidgetState {
         } else {
             match parse_query(
                 &self.proc_search.search_state.current_search_query,
-                self.proc_search.is_searching_whole_word,
-                self.proc_search.is_ignoring_case,
-                self.proc_search.is_searching_with_regex,
+                &self.proc_search.query_options,
             ) {
                 Ok(parsed_query) => {
                     self.proc_search.search_state.query = Some(parsed_query);
@@ -1156,9 +1143,7 @@ impl ProcWidgetState {
     #[cfg(test)]
     pub(crate) fn test_equality(&self, other: &Self) -> bool {
         self.mode == other.mode
-            && self.proc_search.is_ignoring_case == other.proc_search.is_ignoring_case
-            && self.proc_search.is_searching_whole_word == other.proc_search.is_searching_whole_word
-            && self.proc_search.is_searching_with_regex == other.proc_search.is_searching_with_regex
+            && self.proc_search.query_options == other.proc_search.query_options
             && self
                 .table
                 .columns
