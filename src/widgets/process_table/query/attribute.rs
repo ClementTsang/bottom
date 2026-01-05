@@ -14,7 +14,9 @@ use crate::{
 /// An attribute (leaf node) for a process.
 #[derive(Debug)]
 pub(super) enum ProcessAttribute {
-    /// Temp hack to allow for "empty" attributes.
+    /// This is a bit of a hack to allow for "empty" attributes. We can fix it properly,
+    /// but it would potentially require handling "empty" queries better. Currently, we just
+    /// treat it as a leaf node that always succeeds on matches.
     Empty,
     Pid(Regex),
     CpuPercentage(NumericalQuery),
