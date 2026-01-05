@@ -604,24 +604,27 @@ mod tests {
         parse_query_no_options("a >").unwrap_err();
     }
 
+    #[track_caller]
+    fn invalid_lhs_rhs(op: &str) {
+        parse_query_no_options(&format!("a {op} asdf = 100")).unwrap_err();
+        parse_query_no_options(&format!("asdf = 100 {op} b")).unwrap_err();
+        parse_query_no_options(&format!("a {op} asdf = 100 {op} b")).unwrap_err();
+
+        parse_query_no_options(&format!("asdf = 100 {op} bsdf = \"")).unwrap_err();
+        parse_query_no_options(&format!("a {op} bsdf = \"")).unwrap_err();
+    }
+
     #[test]
     fn invalid_or() {
-        parse_query_no_options("a OR asdf = 100").unwrap_err();
-        parse_query_no_options("asdf = 100 OR b").unwrap_err();
-        parse_query_no_options("a OR asdf = 100 OR b").unwrap_err();
-
-        parse_query_no_options("asdf = 100 OR bsdf = \"").unwrap_err();
-        parse_query_no_options("a OR bsdf = \"").unwrap_err();
+        invalid_lhs_rhs("OR");
+        invalid_lhs_rhs("||");
     }
 
     #[test]
     fn invalid_and() {
-        parse_query_no_options("a AND asdf = 100").unwrap_err();
-        parse_query_no_options("asdf = 100 AND b").unwrap_err();
-        parse_query_no_options("a AND asdf = 100 AND b").unwrap_err();
-
-        parse_query_no_options("asdf = 100 AND bsdf = \"").unwrap_err();
-        parse_query_no_options("a AND bsdf = \"").unwrap_err();
+        invalid_lhs_rhs("AND");
+        invalid_lhs_rhs("&&");
+        invalid_lhs_rhs("");
     }
 
     // /// Test keywords.
@@ -695,6 +698,11 @@ mod tests {
         assert!(query.check(&process_a, false));
         assert!(query.check(&process_b, false));
         assert!(!query.check(&process_c, false));
+    }
+
+    #[test]
+    fn test_invalid_non_ascii() {
+        parse_query_no_options("cpu = 食").unwrap_err();
     }
 
     #[test]
