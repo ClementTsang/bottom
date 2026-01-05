@@ -1,16 +1,15 @@
 //! Shared process data harvesting code from macOS and FreeBSD via sysinfo.
 
-#[cfg(target_os = "macos")]
-use crate::collection::processes::macos::sysctl_bindings;
-
-use cfg_if::cfg_if;
 use std::{io, time::Duration};
 
+use cfg_if::cfg_if;
 use itertools::Itertools;
 use nohash::IntMap;
 use sysinfo::{ProcessStatus, System};
 
 use super::{ProcessHarvest, process_status_str};
+#[cfg(target_os = "macos")]
+use crate::collection::processes::macos::sysctl_bindings;
 use crate::collection::{Pid, error::CollectionResult, processes::UserTable};
 
 fn get_nice(pid: Pid) -> i32 {

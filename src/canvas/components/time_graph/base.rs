@@ -10,8 +10,10 @@ use tui::{
     widgets::{BorderType, GraphType},
 };
 
-use crate::canvas::components::time_graph::*;
-use crate::{app::data::Values, canvas::drawing_utils::widget_block};
+use crate::{
+    app::data::Values,
+    canvas::{components::time_graph::*, drawing_utils::widget_block},
+};
 
 /// Represents the data required by the [`TimeGraph`].
 ///

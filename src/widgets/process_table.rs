@@ -14,7 +14,6 @@ use query::{ProcessQuery, parse_query};
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use sort_table::SortTableColumn;
 
-use crate::widgets::query::QueryOptions;
 use crate::{
     app::{
         AppConfigFields, AppSearchState,
@@ -26,6 +25,7 @@ use crate::{
     },
     collection::processes::{Pid, ProcessHarvest},
     options::config::style::Styles,
+    widgets::query::QueryOptions,
 };
 
 /// ProcessSearchState only deals with process' search's current settings and
