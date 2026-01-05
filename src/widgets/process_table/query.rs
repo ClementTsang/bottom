@@ -809,7 +809,11 @@ mod tests {
         parse_query_no_options("gpu% = \"heck\"").unwrap_err();
     }
 
-    // /// TODO: Support 'bytes' or similar
+    // TODO: Test all attribute keywords (e.g. cpu, mem, etc.)
+    // #[test]
+    // fn test_all_attribute_keywords() {}
+
+    // TODO: Support 'bytes' or similar
     // #[test]
     // fn test_bytes_keyword() {
     //     let mem = parse_query_no_options("mem > 50 bytes").unwrap();
