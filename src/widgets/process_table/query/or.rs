@@ -1,10 +1,9 @@
 use std::collections::VecDeque;
 
-use crate::widgets::query::QueryOptions;
 use crate::{
     collection::processes::ProcessHarvest,
     widgets::query::{
-        And, COMPARISON_LIST, Prefix, QueryProcessor, QueryResult, error::QueryError,
+        And, COMPARISON_LIST, Prefix, QueryOptions, QueryProcessor, QueryResult, error::QueryError,
     },
 };
 

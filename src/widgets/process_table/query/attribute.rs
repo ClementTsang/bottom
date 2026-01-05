@@ -1,9 +1,15 @@
 //! Code related to attributes, which should be "searchable" leaf nodes.
 
-use crate::collection::processes::ProcessHarvest;
-use crate::widgets::query::error::{QueryError, QueryResult};
-use crate::widgets::query::{NumericalQuery, PrefixType, QueryOptions, TimeQuery, new_regex};
 use regex::Regex;
+
+use crate::{
+    collection::processes::ProcessHarvest,
+    widgets::query::{
+        NumericalQuery, PrefixType, QueryOptions, TimeQuery,
+        error::{QueryError, QueryResult},
+        new_regex,
+    },
+};
 
 /// An attribute (leaf node) for a process.
 #[derive(Debug)]

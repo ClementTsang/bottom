@@ -10,14 +10,16 @@ mod error;
 mod or;
 mod prefix;
 
-use crate::{collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case};
+use std::{collections::VecDeque, time::Duration};
+
 use and::And;
 use attribute::ProcessAttribute;
 use error::{QueryError, QueryResult};
 use or::Or;
 use prefix::Prefix;
 use regex::Regex;
-use std::{collections::VecDeque, time::Duration};
+
+use crate::{collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case};
 
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
 const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];

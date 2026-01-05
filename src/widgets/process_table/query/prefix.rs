@@ -2,16 +2,14 @@ use std::{collections::VecDeque, fmt::Debug};
 
 use humantime::parse_duration;
 
-use crate::widgets::query::{
-    ProcessAttribute, QueryOptions,
-    attribute::{new_numerical_attribute, new_string_attribute, new_time_attribute},
-};
 use crate::{
     collection::processes::ProcessHarvest,
     utils::data_units::*,
     widgets::query::{
-        And, NumericalQuery, Or, PrefixType, QueryComparison, QueryProcessor, QueryResult,
-        TimeQuery, error::QueryError,
+        And, NumericalQuery, Or, PrefixType, ProcessAttribute, QueryComparison, QueryOptions,
+        QueryProcessor, QueryResult, TimeQuery,
+        attribute::{new_numerical_attribute, new_string_attribute, new_time_attribute},
+        error::QueryError,
     },
 };
 

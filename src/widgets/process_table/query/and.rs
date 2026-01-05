@@ -1,9 +1,10 @@
 use std::collections::VecDeque;
 
-use crate::widgets::query::QueryOptions;
 use crate::{
     collection::processes::ProcessHarvest,
-    widgets::query::{COMPARISON_LIST, Or, Prefix, QueryProcessor, QueryResult, error::QueryError},
+    widgets::query::{
+        COMPARISON_LIST, Or, Prefix, QueryOptions, QueryProcessor, QueryResult, error::QueryError,
+    },
 };
 
 /// A node where both the left hand side or the right hand side are considered.
