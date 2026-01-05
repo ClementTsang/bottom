@@ -142,6 +142,16 @@ fn test_missing_default_widget_type() {
 }
 
 #[test]
+fn test_invalid_default_cpu_entry() {
+    no_cfg_btm_command()
+        .arg("--default_cpu_entry")
+        .arg("invalid")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("possible values"));
+}
+
+#[test]
 #[cfg_attr(feature = "battery", ignore)]
 fn test_battery_flag() {
     no_cfg_btm_command()
