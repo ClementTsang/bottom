@@ -559,6 +559,7 @@ mod tests {
     #[test]
     fn parse_empty_quotes() {
         parse_query_no_options("\"\"").unwrap();
+        parse_query_no_options("\"\"\"\"").unwrap();
         parse_query_no_options("\"\" OR \"\"").unwrap();
     }
 
