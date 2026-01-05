@@ -7,33 +7,13 @@ use crate::{
 
 /// A node where both the left hand side or the right hand side are considered.
 /// Note that the right hand side is optional, as that's how I implemented it a long time ago.
-#[derive(Default)]
 pub(super) struct And {
     pub(super) lhs: Prefix,
+    // TODO: Maybe don't need to box rhs?
     pub(super) rhs: Option<Box<Prefix>>,
 }
 
 impl And {
-    pub(super) fn process_regexes(
-        &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
-        is_searching_with_regex: bool,
-    ) -> QueryResult<()> {
-        self.lhs.process_regexes(
-            is_searching_whole_word,
-            is_ignoring_case,
-            is_searching_with_regex,
-        )?;
-        if let Some(rhs) = &mut self.rhs {
-            rhs.process_regexes(
-                is_searching_whole_word,
-                is_ignoring_case,
-                is_searching_with_regex,
-            )?;
-        }
-
-        Ok(())
-    }
-
     pub(super) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         if let Some(rhs) = &self.rhs {
             self.lhs.check(process, is_using_command) && rhs.check(process, is_using_command)
@@ -72,14 +52,10 @@ impl QueryProcessor for And {
                 if let Some(next_queue_top) = query.front() {
                     if AND_LIST.contains(&next_queue_top.to_lowercase().as_str()) {
                         // Must merge LHS and RHS
-                        lhs = Prefix {
-                            or: Some(Box::new(Or {
-                                lhs: And { lhs, rhs },
-                                rhs: None,
-                            })),
-                            regex_prefix: None,
-                            compare_prefix: None,
-                        };
+                        lhs = Prefix::Or(Box::new(Or {
+                            lhs: And { lhs, rhs },
+                            rhs: None,
+                        }));
                         rhs = None;
                     } else {
                         break;

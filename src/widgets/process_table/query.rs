@@ -34,12 +34,10 @@ trait QueryProcessor {
         Self: Sized;
 }
 
-/// An attribute that can be queried, possibly as part of a larger query.
-///
-/// In theory, this can be made generic to work on all table types, though for now, it's
-/// hardcoded for processes.
+/// An attribute (leaf node) for a process.
+#[derive(Debug)]
 enum ProcessAttribute {
-    Pid(NumericalQuery),
+    Pid(Regex),
     CpuPercentage(NumericalQuery),
     MemBytes(NumericalQuery),
     MemPercentage(NumericalQuery),
@@ -66,7 +64,7 @@ enum ProcessAttribute {
 impl ProcessAttribute {
     fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         match self {
-            ProcessAttribute::Pid(cmp) => cmp.check(process.pid),
+            ProcessAttribute::Pid(re) => re.is_match(process.pid.to_string().as_str()),
             ProcessAttribute::CpuPercentage(cmp) => cmp.check(process.cpu_usage_percent),
             ProcessAttribute::MemBytes(cmp) => cmp.check(process.mem_usage as f64),
             ProcessAttribute::MemPercentage(cmp) => cmp.check(process.mem_usage_percent),
@@ -253,14 +251,7 @@ pub(crate) fn parse_query(
         }
     });
 
-    let mut process_filter = process_string_to_filter(&mut split_query)?;
-    process_filter.process_regexes(
-        is_searching_whole_word,
-        is_ignoring_case,
-        is_searching_with_regex,
-    )?;
-
-    Ok(process_filter)
+    process_string_to_filter(&mut split_query)
 }
 
 pub struct ProcessQuery {
@@ -269,21 +260,6 @@ pub struct ProcessQuery {
 }
 
 impl ProcessQuery {
-    fn process_regexes(
-        &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
-        is_searching_with_regex: bool,
-    ) -> QueryResult<()> {
-        for or in &mut self.query {
-            or.process_regexes(
-                is_searching_whole_word,
-                is_ignoring_case,
-                is_searching_with_regex,
-            )?;
-        }
-
-        Ok(())
-    }
-
     pub(crate) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         self.query
             .iter()
