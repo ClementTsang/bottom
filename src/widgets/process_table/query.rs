@@ -563,6 +563,17 @@ mod tests {
         parse_query_no_options("\"\" OR \"\"").unwrap();
     }
 
+    #[test]
+    fn search_empty_quotes() {
+        let a = parse_query_no_options("\"\"").unwrap();
+        let b = parse_query_no_options("\"\" OR test").unwrap();
+
+        let process = simple_process("test");
+
+        assert!(a.check(&process, false));
+        assert!(b.check(&process, false));
+    }
+
     /// Test unfinished quotes error.
     #[test]
     fn parse_unfinished_quotes() {
