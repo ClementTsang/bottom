@@ -10,6 +10,10 @@ pub struct NetworkHarvest {
     pub tx: u64,
     pub total_rx: u64,
     pub total_tx: u64,
+    pub rx_packets: u64,
+    pub tx_packets: u64,
+    pub total_rx_packets: u64,
+    pub total_tx_packets: u64,
 }
 
 impl NetworkHarvest {
