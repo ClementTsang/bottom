@@ -5,7 +5,6 @@
 //! as good as they are now. This will be rewritten as time goes on, though.
 
 mod and;
-
 mod error;
 mod or;
 mod prefix;
@@ -13,7 +12,6 @@ mod prefix;
 use std::{collections::VecDeque, time::Duration};
 
 use and::And;
-
 use error::{QueryError, QueryResult};
 use or::Or;
 use prefix::Prefix;
