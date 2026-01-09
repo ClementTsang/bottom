@@ -36,6 +36,9 @@ pub struct AppHelpDialogState {
     pub height: u16,
     pub scroll_state: ParagraphScrollState,
     pub index_shortcuts: Vec<u16>,
+    pub is_searching: bool,
+    pub search_query: String,
+    pub search_cursor_index: usize,
 }
 
 impl Default for AppHelpDialogState {
@@ -45,6 +48,9 @@ impl Default for AppHelpDialogState {
             height: 0,
             scroll_state: ParagraphScrollState::default(),
             index_shortcuts: vec![0; constants::HELP_TEXT.len()],
+            is_searching: false,
+            search_query: String::new(),
+            search_cursor_index: 0,
         }
     }
 }
