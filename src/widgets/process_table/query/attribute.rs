@@ -1,5 +1,4 @@
 //! Code related to attributes, which should be "searchable" leaf nodes.
-#![allow(dead_code)]
 
 use regex::Regex;
 
