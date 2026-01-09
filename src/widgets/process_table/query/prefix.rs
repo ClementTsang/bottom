@@ -1,4 +1,5 @@
-use std::{collections::VecDeque, fmt::Debug};
+use std::collections::VecDeque;
+use std::time::Duration;
 
 use humantime::parse_duration;
 
@@ -6,10 +7,8 @@ use crate::{
     collection::processes::ProcessHarvest,
     utils::data_units::*,
     widgets::query::{
-        And, NumericalQuery, Or, PrefixType, ProcessAttribute, QueryComparison, QueryOptions,
-        QueryProcessor, QueryResult, TimeQuery,
-        attribute::{new_numerical_attribute, new_string_attribute, new_time_attribute},
-        error::QueryError,
+        And, NumericalQuery, Or, PrefixType, QueryComparison, QueryOptions, QueryProcessor,
+        QueryResult, TimeQuery, error::QueryError,
     },
 };
 
@@ -116,10 +115,22 @@ fn parse_number_with_unit(input: &str) -> Option<f64> {
     Some(scaled)
 }
 
+#[derive(Debug)]
+pub(super) enum StringQuery {
+    Regex(regex::Regex),
+}
+
+#[derive(Debug)]
+pub(super) enum ComparableQuery {
+    Numerical(NumericalQuery),
+    Time(TimeQuery),
+}
+
 /// Either contains a further `Or` recursively, or a "prefix" which is a leaf that can be searched.
 ///
+///
 // TODO: Represent this using an enum instead or something...
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub(super) struct Prefix {
     pub(super) or: Option<Box<Or>>,
     pub(super) regex_prefix: Option<(PrefixType, StringQuery)>,
@@ -159,23 +170,20 @@ impl Prefix {
         if let Some(and) = &self.or {
             and.check(process, is_using_command)
         } else if let Some((prefix_type, query_content)) = &self.regex_prefix {
-            let matched = if let StringQuery::Regex(r) = query_content {
-                match prefix_type {
-                    PrefixType::Name => r.is_match(if is_using_command {
-                        process.command.as_str()
-                    } else {
-                        process.name.as_str()
-                    }),
-                    PrefixType::Pid => r.is_match(process.pid.to_string().as_str()),
-                    PrefixType::State => r.is_match(process.process_state.0),
-                    PrefixType::User => match process.user.as_ref() {
-                        Some(user) => r.is_match(user),
-                        None => r.is_match("N/A"),
-                    },
-                    _ => true, // TODO: Change prefix types to be tied to the query type so we don't have the wildcard.
-                }
-            } else {
-                true
+            let StringQuery::Regex(r) = query_content;
+            let matched = match prefix_type {
+                PrefixType::Name => r.is_match(if is_using_command {
+                    process.command.as_str()
+                } else {
+                    process.name.as_str()
+                }),
+                PrefixType::Pid => r.is_match(process.pid.to_string().as_str()),
+                PrefixType::State => r.is_match(process.process_state.0),
+                PrefixType::User => match process.user.as_ref() {
+                    Some(user) => r.is_match(user),
+                    None => r.is_match("N/A"),
+                },
+                _ => true, // TODO: Change prefix types to be tied to the query type so we don't have the wildcard.
             };
 
             match self.string_condition {
@@ -189,12 +197,12 @@ impl Prefix {
         } else if let Some((prefix_type, comparable_query)) = &self.compare_prefix {
             match comparable_query {
                 ComparableQuery::Numerical(numerical_query) => match prefix_type {
-                    PrefixType::PCpu => matches_condition(
+                    PrefixType::CpuPercentage => matches_condition(
                         &numerical_query.condition,
                         process.cpu_usage_percent,
                         numerical_query.value,
                     ),
-                    PrefixType::PMem => matches_condition(
+                    PrefixType::MemPercentage => matches_condition(
                         &numerical_query.condition,
                         process.mem_usage_percent,
                         numerical_query.value,
@@ -204,40 +212,40 @@ impl Prefix {
                         process.mem_usage as f64,
                         numerical_query.value,
                     ),
-                    PrefixType::Rps => matches_condition(
+                    PrefixType::ReadPerSecond => matches_condition(
                         &numerical_query.condition,
                         process.read_per_sec as f64,
                         numerical_query.value,
                     ),
-                    PrefixType::Wps => matches_condition(
+                    PrefixType::WritePerSecond => matches_condition(
                         &numerical_query.condition,
                         process.write_per_sec as f64,
                         numerical_query.value,
                     ),
-                    PrefixType::TRead => matches_condition(
+                    PrefixType::TotalRead => matches_condition(
                         &numerical_query.condition,
                         process.total_read as f64,
                         numerical_query.value,
                     ),
-                    PrefixType::TWrite => matches_condition(
+                    PrefixType::TotalWrite => matches_condition(
                         &numerical_query.condition,
                         process.total_write as f64,
                         numerical_query.value,
                     ),
                     #[cfg(feature = "gpu")]
-                    PrefixType::PGpu => matches_condition(
+                    PrefixType::GpuPercentage => matches_condition(
                         &numerical_query.condition,
                         process.gpu_util,
                         numerical_query.value,
                     ),
                     #[cfg(feature = "gpu")]
-                    PrefixType::GMem => matches_condition(
+                    PrefixType::GpuMemoryBytes => matches_condition(
                         &numerical_query.condition,
                         process.gpu_mem as f64,
                         numerical_query.value,
                     ),
                     #[cfg(feature = "gpu")]
-                    PrefixType::PGMem => matches_condition(
+                    PrefixType::GpuMemoryPercentage => matches_condition(
                         &numerical_query.condition,
                         process.gpu_mem_percent,
                         numerical_query.value,
@@ -280,7 +288,10 @@ impl Prefix {
 
                 Ok(Prefix {
                     or: None,
-                    regex_prefix: Some((PrefixType::Name, StringQuery::Value(String::default()))),
+                    regex_prefix: Some((
+                        PrefixType::Name,
+                        StringQuery::Regex(super::new_regex(String::default().as_str(), options)?),
+                    )),
                     compare_prefix: None,
                     string_condition: None,
                 })
@@ -301,7 +312,10 @@ impl Prefix {
 
                 Ok(Prefix {
                     or: None,
-                    regex_prefix: Some((PrefixType::Name, StringQuery::Value(quoted_string))),
+                    regex_prefix: Some((
+                        PrefixType::Name,
+                        StringQuery::Regex(super::new_regex(quoted_string.as_str(), options)?),
+                    )),
                     compare_prefix: None,
                     string_condition: None,
                 })
@@ -338,42 +352,32 @@ impl QueryProcessor for Prefix {
                     return Err(QueryError::new("No values within parentheses group"));
                 };
 
-                // Now convert this back to a OR...
-                // TODO: is there a better way to do this than converting it?
-                let initial_or = Or {
-                    lhs: And {
-                        lhs: Prefix {
-                            or: list_of_ors.pop_front().map(Box::new),
-                            compare_prefix: None,
-                            regex_prefix: None,
-                            string_condition: None,
+                // Build an OR chain starting from the first element inside the parentheses.
+                let mut built_or = front;
+                for next in list_of_ors {
+                    built_or = Or {
+                        lhs: And {
+                            lhs: Prefix {
+                                or: Some(Box::new(built_or)),
+                                compare_prefix: None,
+                                regex_prefix: None,
+                                string_condition: None,
+                            },
+                            rhs: Some(Box::new(Prefix {
+                                or: Some(Box::new(next)),
+                                compare_prefix: None,
+                                regex_prefix: None,
+                                string_condition: None,
+                            })),
                         },
                         rhs: None,
-                    },
-                    rhs: None,
-                };
-                let returned_or = list_of_ors.into_iter().fold(initial_or, |lhs, rhs| Or {
-                    lhs: And {
-                        lhs: Prefix {
-                            or: Some(Box::new(lhs)),
-                            compare_prefix: None,
-                            regex_prefix: None,
-                            string_condition: None,
-                        },
-                        rhs: Some(Box::new(Prefix {
-                            or: Some(Box::new(rhs)),
-                            compare_prefix: None,
-                            regex_prefix: None,
-                            string_condition: None,
-                        })),
-                    },
-                    rhs: None,
-                });
+                    };
+                }
 
                 return if let Some(close_paren) = query.pop_front() {
                     if close_paren == ")" {
                         return Ok(Prefix {
-                            or: Some(Box::new(returned_or)),
+                            or: Some(Box::new(built_or)),
                             regex_prefix: None,
                             compare_prefix: None,
                             string_condition: None,
@@ -417,7 +421,13 @@ impl QueryProcessor for Prefix {
                         PrefixType::Name => {
                             return Ok(Prefix {
                                 or: None,
-                                regex_prefix: Some((prefix_type, StringQuery::Value(content))),
+                                regex_prefix: Some((
+                                    prefix_type,
+                                    StringQuery::Regex(super::new_regex(
+                                        content.as_str(),
+                                        options,
+                                    )?),
+                                )),
                                 compare_prefix: None,
                                 string_condition: None,
                             });
@@ -459,7 +469,10 @@ impl QueryProcessor for Prefix {
                                         or: None,
                                         regex_prefix: Some((
                                             prefix_type,
-                                            StringQuery::Value(final_value),
+                                            StringQuery::Regex(super::new_regex(
+                                                final_value.as_str(),
+                                                options,
+                                            )?),
                                         )),
                                         compare_prefix: None,
                                         string_condition: Some(if content == "!=" {
@@ -472,7 +485,13 @@ impl QueryProcessor for Prefix {
                             } else {
                                 return Ok(Prefix {
                                     or: None,
-                                    regex_prefix: Some((prefix_type, StringQuery::Value(content))),
+                                    regex_prefix: Some((
+                                        prefix_type,
+                                        StringQuery::Regex(super::new_regex(
+                                            content.as_str(),
+                                            options,
+                                        )?),
+                                    )),
                                     compare_prefix: None,
                                     string_condition: None,
                                 });

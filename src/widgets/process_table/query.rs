@@ -13,7 +13,7 @@ mod prefix;
 use std::{collections::VecDeque, time::Duration};
 
 use and::And;
-use attribute::ProcessAttribute;
+
 use error::{QueryError, QueryResult};
 use or::Or;
 use prefix::Prefix;
@@ -276,12 +276,14 @@ struct NumericalQuery {
 
 impl NumericalQuery {
     /// Compare `lhs` to the value in the query as `rhs`.
+    #[allow(dead_code)]
     fn check<I: Into<f64>>(&self, lhs: I) -> bool {
         let lhs: f64 = lhs.into();
         let rhs: f64 = self.value;
 
         match self.condition {
             QueryComparison::Equal => (lhs - rhs).abs() < f64::EPSILON,
+            QueryComparison::NotEqual => (lhs - rhs).abs() >= f64::EPSILON,
             QueryComparison::Less => lhs < rhs,
             QueryComparison::Greater => lhs > rhs,
             QueryComparison::LessOrEqual => lhs <= rhs,
@@ -298,11 +300,13 @@ struct TimeQuery {
 
 impl TimeQuery {
     /// Compare `lhs` to the value in the query as `rhs`.
+    #[allow(dead_code)]
     fn check(&self, lhs: Duration) -> bool {
         let rhs = self.duration;
 
         match self.condition {
             QueryComparison::Equal => lhs == rhs,
+            QueryComparison::NotEqual => lhs != rhs,
             QueryComparison::Less => lhs < rhs,
             QueryComparison::Greater => lhs > rhs,
             QueryComparison::LessOrEqual => lhs <= rhs,
