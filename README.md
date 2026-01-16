@@ -9,6 +9,7 @@
 [<img src="https://img.shields.io/crates/v/bottom.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/bottom)
 [<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://bottom.pages.dev/stable)
 [<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://bottom.pages.dev/nightly)
+[<img src="https://img.shields.io/badge/docs-mirror-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Mirror for documentation">](https://clementtsang.github.io/bottom)
 
 </div>
 
@@ -57,6 +58,7 @@
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
 - [Contribution](#contribution)
   - [Contributors](#contributors)
 - [Thanks](#thanks)
@@ -472,6 +474,10 @@ More details on configuration can be found [in the documentation](https://bottom
 If some things aren't working, give the [troubleshooting page](https://bottom.pages.dev/nightly/troubleshooting)
 a look. If things still aren't working, then consider asking [a question](https://github.com/ClementTsang/bottom/discussions)
 or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose) if you think it's a bug.
+
+## Documentation
+
+The main documentation page can be found at <https://bottom.pages.dev>. If needed, a mirror can be found at <https://clementtsang.github.io/bottom>.
 
 ## Contribution
 
