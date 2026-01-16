@@ -9,6 +9,7 @@
 [<img src="https://img.shields.io/crates/v/bottom.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/bottom)
 [<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://bottom.pages.dev/stable)
 [<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://bottom.pages.dev/nightly)
+[<img src="https://img.shields.io/badge/docs-mirror-8A2BE2?style=flat-square&labelColor=555555&logoColor=white" alt="Doc mirror on GitHub Pages">](https://clementtsang.github.io/bottom/stable)
 
 </div>
 
@@ -57,6 +58,7 @@
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
 - [Contribution](#contribution)
   - [Contributors](#contributors)
 - [Thanks](#thanks)
@@ -473,11 +475,15 @@ If some things aren't working, give the [troubleshooting page](https://bottom.pa
 a look. If things still aren't working, then consider asking [a question](https://github.com/ClementTsang/bottom/discussions)
 or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose) if you think it's a bug.
 
+## Documentation
+
+The main documentation page can be found at <https://bottom.pages.dev>, using Cloudflare Pages. If needed, a mirror hosted using
+Github Pages is also available at <https://clementtsang.github.io/bottom>.
+
 ## Contribution
 
-Whether it's reporting bugs, suggesting features, maintaining packages, or submitting a PR,
-contribution is always welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to
-contribute to bottom.
+Whether it's reporting bugs, suggesting features, maintaining packages, or submitting a PR, contribution is always welcome! Please read
+[CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to contribute to bottom.
 
 ### Contributors
 

@@ -49,3 +49,8 @@ jobs:
         run: |
           cd docs
           mike deploy nightly --push
+
+  publish-gh-pages:
+    needs: [build-documentation]
+    uses: ./.github/workflows/publish_github_pages.yml
+    secrets: inherit
