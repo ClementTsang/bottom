@@ -1,6 +1,8 @@
 # Workflow to publish to GitHub Pages. Based on the normal
 # job (e.g. https://github.com/ClementTsang/bottom/actions/runs/19805277892),
 # but re-implemented so I can pin hashes.
+#
+# This action uses actions/upload-pages-artifact, which uses actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 (v4.6.2).
 
 name: Publish GitHub Pages
 
@@ -9,7 +11,6 @@ on:
   push:
     branches:
       - gh-pages
-  pull_request:
 
 jobs:
   build:
