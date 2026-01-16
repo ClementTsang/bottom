@@ -46,10 +46,15 @@ impl QueryProcessor for And {
                 if let Some(next_queue_top) = query.front() {
                     if AND_LIST.contains(&next_queue_top.to_lowercase().as_str()) {
                         // Must merge LHS and RHS
-                        lhs = Prefix::Or(Box::new(Or {
-                            lhs: And { lhs, rhs },
-                            rhs: None,
-                        }));
+                        lhs = Prefix {
+                            or: Some(Box::new(Or {
+                                lhs: And { lhs, rhs },
+                                rhs: None,
+                            })),
+                            regex_prefix: None,
+                            compare_prefix: None,
+                            string_condition: None,
+                        };
                         rhs = None;
                     } else {
                         break;
