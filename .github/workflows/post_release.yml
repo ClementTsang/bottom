@@ -74,6 +74,11 @@ jobs:
           cd docs
           mike deploy --push --update-aliases ${RELEASE_VERSION} stable
 
+  publish-gh-pages:
+    needs: [docs]
+    uses: ./.github/workflows/publish_github_pages.yml
+    secrets: inherit
+
   chocolatey:
     needs: [initialize]
     runs-on: ubuntu-latest
