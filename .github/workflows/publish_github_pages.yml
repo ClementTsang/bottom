@@ -8,9 +8,7 @@ name: Publish GitHub Pages
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - gh-pages
+  workflow_call:
 
 jobs:
   build:
