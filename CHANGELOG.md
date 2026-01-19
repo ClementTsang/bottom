@@ -20,12 +20,19 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## [0.12.4]/[0.13.0] - Unreleased
+
+### Other
+
+- [#1955](https://github.com/ClementTsang/bottom/pull/1955): Fix mirrored documentation deploy to GitHub Pages.
+- [#1957](https://github.com/ClementTsang/bottom/pull/1957): Fix CI bug around deploying docs on release.
+- [#1958](https://github.com/ClementTsang/bottom/pull/1958): Fix cosmetic banner issue on docs page.
+
 ## [0.12.3] - 2026-01-01
 
 ### Bug Fixes
 
-- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multibyte UTF8 chars in process
-  names.
+- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multibyte UTF8 chars in process names.
 
 ### Other
 
@@ -35,8 +42,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ### Bug Fixes
 
-- [#1933](https://github.com/ClementTsang/bottom/pull/1933): Fix a memory leak in Windows while getting process priority
-  information.
+- [#1933](https://github.com/ClementTsang/bottom/pull/1933): Fix a memory leak in Windows while getting process priority information.
 
 ## [0.12.1] - 2025-12-25
 

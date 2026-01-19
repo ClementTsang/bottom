@@ -28,8 +28,10 @@ sample_configs/testing*.toml
 # Cargo-deny
 deny.toml
 
-# vscode
+# Editors
 .vscode
+.zed
+.idea
 
 # mkdocs
 site/
