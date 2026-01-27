@@ -163,7 +163,7 @@ Note all keywords are case-insensitive. To search for a process/command that col
 | `mem` <br/> `mem%`              | `mem < 0.5`                           | Matches the memory column in terms of percent; supports comparison operators     |
 | `read` <br/> `r/s` <br/> `rps`  | `read = 1 mb`                         | Matches the read/s column in terms of bytes; supports comparison operators       |
 | `write` <br/> `w/s` <br/> `wps` | `write >= 1 kb`                       | Matches the write/s column in terms of bytes; supports comparison operators      |
-| `tread` <br/> `t.read`          | `tread <= 1024 gb`                    | Matches he total read column in terms of bytes; supports comparison operators    |
+| `tread` <br/> `t.read`          | `tread <= 1024 gb`                    | Matches the total read column in terms of bytes; supports comparison operators    |
 | `twrite` <br/> `t.write`        | `twrite > 1024 tb`                    | Matches the total write column in terms of bytes; supports comparison operators  |
 | `user`                          | `user=root`                           | Matches by user; supports regex                                                  |
 | `state`                         | `state=running`                       | Matches by state; supports regex                                                 |
