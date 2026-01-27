@@ -701,6 +701,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "lpnh",
+      "name": "Filipe Paniguel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90577992?v=4",
+      "profile": "https://github.com/lpnh",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
