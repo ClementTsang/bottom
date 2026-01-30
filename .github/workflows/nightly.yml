@@ -108,10 +108,10 @@ jobs:
             fi
           done
 
-          echo "Now pruning all but the last three nightly runs..."
+          echo "Now pruning all but the last two nightly runs (so we end up with 3 releases after)..."
           while true; do
-            # Very gross trick - keep deleting the 4th nightly element ([3]) until null.
-            TO_DELETE_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-"))][4] | .tagName' | tr -d '"')
+            # Very gross trick - keep deleting the 3rd nightly element ([2]) until null.
+            TO_DELETE_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-"))][2] | .tagName' | tr -d '"')
             if [[ "$TO_DELETE_NIGHTLY" != "null" && "$TO_DELETE_NIGHTLY" == *"nightly-"* ]]; then
               echo "Will delete nightly release with tag '$TO_DELETE_NIGHTLY'";
               gh release delete $TO_DELETE_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
