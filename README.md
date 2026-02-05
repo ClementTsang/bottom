@@ -618,9 +618,12 @@ Thanks to all contributors:
 
 - To those who support my work financially via donations, thank you so much.
 
-- Also thanks to JetBrains for providing access to tools that I use to develop bottom
+- Thanks to JetBrains for providing access to tools that I use to develop bottom
   as part of their [open source support program](https://jb.gg/OpenSourceSupport).
 
   <a href="https://jb.gg/OpenSourceSupport">
     <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
   </a>
+
+- Also thanks to [SignPath.io](https://about.signpath.io/) for providing a free code signing service, and to the
+  [SignPath Foundation](https://signpath.org/) for the certificate.

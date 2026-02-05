@@ -208,18 +208,13 @@ jobs:
           mv "$COMPLETION_DIR" completion
           mv "$MANPAGE_DIR" manpage
 
-      # FIXME: Change this to release-signing in general later, for now this is fine.
       - name: Determine signing slug for Windows signing
         id: get-signing-slug
         if: startsWith(matrix.info.os, 'windows')
         shell: bash
         run: |
           mkdir -p signed
-          if [[ ${{ inputs.caller }} == "nightly" ]]; then
-            echo "slug=test-signing" >> $GITHUB_OUTPUT
-          else
-            echo "slug=release-signing" >> $GITHUB_OUTPUT
-          fi
+          echo "slug=release-signing" >> $GITHUB_OUTPUT
 
       - name: Upload unsigned Windows artifact
         id: upload-unsigned-artifact
