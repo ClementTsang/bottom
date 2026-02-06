@@ -214,7 +214,11 @@ jobs:
         shell: bash
         run: |
           mkdir -p signed
-          echo "slug=release-signing" >> $GITHUB_OUTPUT
+          if [[ ${{ inputs.caller }} == "nightly" ]]; then
+            echo "slug=test-signing" >> $GITHUB_OUTPUT
+          else
+            echo "slug=release-signing" >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload unsigned Windows artifact
         id: upload-unsigned-artifact
