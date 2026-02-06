@@ -68,6 +68,7 @@ pub struct AppConfigFields {
     pub network_legend_position: Option<LegendPosition>,
     pub network_scale_type: AxisScaling,
     pub network_use_binary_prefix: bool,
+    pub network_show_packets: bool,
     pub retention_ms: u64,
     pub dedicated_average_row: bool,
     pub default_tree_collapse: bool,
