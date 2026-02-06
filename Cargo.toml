@@ -74,21 +74,21 @@ logging = ["fern", "log", "time"]
 generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
-anyhow = "1.0.100"
+anyhow = "1.0.101"
 cfg-if = "1.0.4"
-clap = { version = "4.5.53", features = ["default", "cargo", "wrap_help", "derive"] }
+clap = { version = "4.5.57", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
 crossterm = "0.29.0"
 ctrlc = { version = "3.5.0", features = ["termination"] }
 dirs = "6.0.0"
 humantime = "2.3.0"
-indexmap = "2.11.4"
+indexmap = "2.13.0"
 indoc = "2.0.7"
 itertools = "0.14.0"
 nohash = "0.2.0"
 nvml-wrapper = { version = "0.11.0", optional = true, features = ["legacy-functions"] }
 ratatui-core = "0.1.0"
-regex = "1.11.2"
+regex = "1.12.3"
 rustc-hash = "2.1.1"
 serde = { version = "1.0.228", features = ["derive"] }
 starship-battery = { version = "0.10.3", optional = true }
@@ -107,15 +107,15 @@ unicode-width = "0.2.2"
 # Used for logging. Mostly a debugging tool.
 fern = { version = "0.7.1", optional = true }
 log = { version = "0.4.29", optional = true }
-time = { version = "0.3.44", features = ["local-offset", "formatting", "macros"], optional = true }
+time = { version = "0.3.47", features = ["local-offset", "formatting", "macros"], optional = true }
 
 # These are just used for JSON schema generation.
-schemars = { version = "1.0.4", optional = true }
-serde_json = { version = "1.0.148", optional = true }
+schemars = { version = "1.2.1", optional = true }
+serde_json = { version = "1.0.149", optional = true }
 strum = { version = "0.27.2", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.176"
+libc = "0.2.180"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 rustix = { version = "1.1.2", features = ["fs", "param"] }
@@ -142,7 +142,7 @@ sysctl = { version = "0.7.1" }
 filedescriptor = "0.8.3"
 
 [dev-dependencies]
-assert_cmd = "2.0.17"
+assert_cmd = "2.1.2"
 predicates = "3.1.3"
 tempfile = { version = "3.23.0", default-features = false }
 
@@ -150,7 +150,7 @@ tempfile = { version = "3.23.0", default-features = false }
 portable-pty = "0.9.0"
 
 [build-dependencies]
-clap = { version = "4.5.53", features = ["default", "cargo", "wrap_help", "derive"] }
+clap = { version = "4.5.57", features = ["default", "cargo", "wrap_help", "derive"] }
 clap_complete = "4.5.62"
 clap_complete_nushell = "4.5.10"
 clap_complete_fig = "4.5.2"
