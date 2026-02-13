@@ -1,5 +1,5 @@
 use tui::{
-    style::{Color, Modifier},
+    style::{Color, Modifier, Style},
     widgets::BorderType,
 };
 
@@ -58,6 +58,7 @@ impl Styles {
             text_style: hex!("#ebdbb2"),
             selected_text_style: hex!("#1d2021").bg(hex_colour!("#ebdbb2")),
             table_header_style: hex!("#83a598").add_modifier(Modifier::BOLD),
+            bg_color_style: Style::default(),
             widget_title_style: hex!("#ebdbb2"),
             graph_style: hex!("#ebdbb2"),
             graph_legend_style: hex!("#ebdbb2"),
@@ -123,6 +124,7 @@ impl Styles {
             text_style: hex!("#3c3836"),
             selected_text_style: hex!("#ebdbb2").bg(hex_colour!("#3c3836")),
             table_header_style: hex!("#076678").add_modifier(Modifier::BOLD),
+            bg_color_style: Style::default(),
             widget_title_style: hex!("#3c3836"),
             graph_style: hex!("#3c3836"),
             graph_legend_style: hex!("#3c3836"),

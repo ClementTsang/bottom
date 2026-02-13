@@ -35,7 +35,7 @@ pub(crate) struct PercentTimeGraph<'a> {
     pub(crate) current_widget: u64,
 
     /// Whether the current widget is expanded.
-    ///  
+    ///
     /// This is mostly used as a shared mutability workaround due to [`App`]
     /// being a giant state struct.
     pub(crate) is_expanded: bool,
@@ -71,6 +71,7 @@ impl<'a> PercentTimeGraph<'a> {
         };
 
         let graph_style = self.styles.graph_style;
+        let bg_color_style = self.styles.bg_color_style;
         let border_style = get_border_style(self.styles, self.widget_id, self.current_widget);
         let title_style = self.styles.widget_title_style;
         let border_type = self.styles.border_type;
@@ -81,6 +82,7 @@ impl<'a> PercentTimeGraph<'a> {
             y_bounds: Y_BOUNDS,
             y_labels: &Y_LABELS,
             graph_style,
+            bg_color_style,
             border_style,
             border_type,
             title: self.title,
