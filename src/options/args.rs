@@ -595,7 +595,7 @@ pub struct NetworkArgs {
         long,
         action = ArgAction::SetTrue,
         help = "Displays packets information (packet rate and average packet size) in the network widget.",
-        long_help = "Displays packets information including packet rate (packets per second) and average packet size in the network widget. This provides additional insights into network traffic patterns.",
+        long_help = "Displays packets information including packet rate (packets per second) and average packet size in the network widget.",
         alias = "show-packets"
     )]
     pub show_packets: bool,
