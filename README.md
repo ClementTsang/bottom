@@ -9,6 +9,7 @@
 [<img src="https://img.shields.io/crates/v/bottom.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/bottom)
 [<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://bottom.pages.dev/stable)
 [<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://bottom.pages.dev/nightly)
+[<img src="https://img.shields.io/badge/docs-mirror-8A2BE2?style=flat-square&labelColor=555555&logoColor=white" alt="Doc mirror on GitHub Pages">](https://clementtsang.github.io/bottom/stable)
 
 </div>
 
@@ -57,6 +58,7 @@
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
 - [Contribution](#contribution)
   - [Contributors](#contributors)
 - [Thanks](#thanks)
@@ -473,11 +475,15 @@ If some things aren't working, give the [troubleshooting page](https://bottom.pa
 a look. If things still aren't working, then consider asking [a question](https://github.com/ClementTsang/bottom/discussions)
 or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose) if you think it's a bug.
 
+## Documentation
+
+The main documentation page can be found at <https://bottom.pages.dev>, using Cloudflare Pages. If needed, a mirror hosted using
+Github Pages is also available at <https://clementtsang.github.io/bottom>.
+
 ## Contribution
 
-Whether it's reporting bugs, suggesting features, maintaining packages, or submitting a PR,
-contribution is always welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to
-contribute to bottom.
+Whether it's reporting bugs, suggesting features, maintaining packages, or submitting a PR, contribution is always welcome! Please read
+[CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to contribute to bottom.
 
 ### Contributors
 
@@ -585,6 +591,7 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gitgoggles"><img src="https://avatars.githubusercontent.com/u/101480183?v=4?s=100" width="100px;" alt="gitgoggles"/><br /><sub><b>gitgoggles</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=gitgoggles" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/thunze"><img src="https://avatars.githubusercontent.com/u/22795263?v=4?s=100" width="100px;" alt="Tom"/><br /><sub><b>Tom</b></sub></a><br /><a href="#maintenance-thunze" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ggaddy"><img src="https://avatars.githubusercontent.com/u/13815367?v=4?s=100" width="100px;" alt="G"/><br /><sub><b>G</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=ggaddy" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lpnh"><img src="https://avatars.githubusercontent.com/u/90577992?v=4?s=100" width="100px;" alt="Filipe Paniguel"/><br /><sub><b>Filipe Paniguel</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=lpnh" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
@@ -611,9 +618,12 @@ Thanks to all contributors:
 
 - To those who support my work financially via donations, thank you so much.
 
-- Also thanks to JetBrains for providing access to tools that I use to develop bottom
+- Thanks to JetBrains for providing access to tools that I use to develop bottom
   as part of their [open source support program](https://jb.gg/OpenSourceSupport).
 
   <a href="https://jb.gg/OpenSourceSupport">
     <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
   </a>
+
+- Also thanks to [SignPath.io](https://about.signpath.io/) for providing a free code signing service, and to the
+  [SignPath Foundation](https://signpath.org/) for the certificate.

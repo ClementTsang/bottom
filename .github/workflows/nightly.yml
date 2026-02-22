@@ -92,17 +92,29 @@ jobs:
           echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
           echo "$RELEASE_NAME"
 
-      # Delete tags older than 3 days, as well as nightly runs that are a duplicate of today.
+      # Delete all but last three nightly runs, as well as nightly runs that are a duplicate of today.
       - name: Delete old tags and release if not mock
         if: github.event.inputs.isMock != 'true'
         run: |
-          THREE_DAYS_AGO=$(date +%s --date='3 days ago')
+          echo "Deleting any nightly runs with the same name as today's nightly run..."
           while true; do
-            PREV_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg THREE_DAYS_AGO "$THREE_DAYS_AGO" --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-")) | select ((.publishedAt | fromdateiso8601 > $THREE_DAYS_AGO) or (.name == $RELEASE_NAME))][0] | .tagName' | tr -d '"')
+            TO_DELETE_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-")) | select (.name == $RELEASE_NAME)][0] | .tagName' | tr -d '"')
+            if [[ "$TO_DELETE_NIGHTLY" != "null" && "$TO_DELETE_NIGHTLY" == *"nightly-"* ]]; then
+              echo "Will delete nightly release with tag '$TO_DELETE_NIGHTLY'";
+              gh release delete $TO_DELETE_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
+            else
+              echo "no nightly releases left, done";
+              break;
+            fi
+          done
 
-            if [[ "$PREV_NIGHTLY" != "null" && "$PREV_NIGHTLY" == *"nightly-"* ]]; then
-              echo "Will delete nightly release with tag '$PREV_NIGHTLY'";
-              gh release delete $PREV_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
+          echo "Now pruning all but the last two nightly runs (so we end up with 3 releases after)..."
+          while true; do
+            # Very gross trick - keep deleting the 3rd nightly element ([2]) until null.
+            TO_DELETE_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-"))][2] | .tagName' | tr -d '"')
+            if [[ "$TO_DELETE_NIGHTLY" != "null" && "$TO_DELETE_NIGHTLY" == *"nightly-"* ]]; then
+              echo "Will delete nightly release with tag '$TO_DELETE_NIGHTLY'";
+              gh release delete $TO_DELETE_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
             else
               echo "no nightly releases left, done";
               break;

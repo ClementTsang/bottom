@@ -208,17 +208,50 @@ jobs:
           mv "$COMPLETION_DIR" completion
           mv "$MANPAGE_DIR" manpage
 
-      - name: Bundle release and completion (Windows)
-        if: matrix.info.os == 'windows-2022'
+      - name: Determine signing slug for Windows signing
+        id: get-signing-slug
+        if: startsWith(matrix.info.os, 'windows')
         shell: bash
         run: |
-          cp target/${{ matrix.info.target }}/release/btm.exe btm.exe
+          mkdir -p signed
+          if [[ ${{ inputs.caller }} == "nightly" ]]; then
+            echo "slug=test-signing" >> $GITHUB_OUTPUT
+          else
+            echo "slug=release-signing" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload unsigned Windows artifact
+        id: upload-unsigned-artifact
+        if: startsWith(matrix.info.os, 'windows')
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        with:
+          retention-days: 1
+          name: "unsigned-${{ matrix.info.target }}"
+          path: target/${{ matrix.info.target }}/release/btm.exe
+
+      - name: Sign Windows artifacts
+        if: startsWith(matrix.info.os, 'windows')
+        uses: signpath/github-action-submit-signing-request@3f9250c56651ff692d6729a2fbb0603a42d7d322 # v2.0
+        with:
+          api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
+          organization-id: "06b1a1ff-74e1-4d9d-93b1-fa8180c67727"
+          project-slug: "bottom"
+          signing-policy-slug: "${{ steps.get-signing-slug.outputs.slug }}"
+          github-artifact-id: "${{ steps.upload-unsigned-artifact.outputs.artifact-id }}"
+          wait-for-completion: true
+          output-artifact-directory: "signed"
+
+      - name: Bundle release and completion (Windows)
+        if: startsWith(matrix.info.os, 'windows')
+        shell: bash
+        run: |
+          mv signed/btm.exe btm.exe
           7z a bottom_${{ matrix.info.target }}.zip "btm.exe"
           7z a bottom_${{ matrix.info.target }}.zip "completion"
           echo "ASSET=bottom_${{ matrix.info.target }}.zip" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
-        if: matrix.info.os != 'windows-2022'
+        if: ${{ !(startsWith(matrix.info.os, 'windows')) }}
         shell: bash
         run: |
           cp target/${{ matrix.info.target }}/release/btm ./btm
