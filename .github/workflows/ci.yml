@@ -224,11 +224,19 @@ jobs:
               no-clippy: true,
             }
 
-          # Windows ARM, may promote to official.
+          # Windows ARM.
+          # TODO: Promote to official?
           - {
               os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
               cross: false,
+            }
+
+          # NetBSD
+          - {
+              os: "ubuntu-latest",
+              target: "x86_64-unknown-netbsd",
+              cross: true,
             }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
