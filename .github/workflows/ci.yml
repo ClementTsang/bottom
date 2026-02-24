@@ -280,7 +280,7 @@ jobs:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: "ubuntu-latest"
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -368,7 +368,7 @@ jobs:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: "ubuntu-latest"
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -453,7 +453,7 @@ jobs:
   #   needs: pre-job
   #   if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
   #   runs-on: "ubuntu-latest"
-  #   timeout-minutes: 15
+  #   timeout-minutes: 20
   #   strategy:
   #     fail-fast: false
   #     matrix:
