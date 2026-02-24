@@ -364,6 +364,89 @@ jobs:
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
 
+  unsupported-check-netbsd:
+    needs: pre-job
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          - { os_release: "9.4", target: "x86_64-unknown-netbsd" }
+          - { os_release: "10.1", target: "x86_64-unknown-netbsd" }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 1
+
+      - name: Enable Rust cache
+        uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
+        if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
+        with:
+          key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
+          cache-all-crates: true
+
+      # The VM jobs randomly fail, and since GHA clearly never fails and doesn't know how to retry, we retry manually.
+      - name: NetBSD Tests + Clippy (Attempt 1)
+        uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            /usr/sbin/pkg_add curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            cargo fmt --all -- --check
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet
+            cargo clippy --all-targets --workspace -- -D warnings
+        id: upload_attempt_1
+        continue-on-error: true
+
+      - name: NetBSD Tests + Clippy (Attempt 2)
+        uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            /usr/sbin/pkg_add curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            cargo fmt --all -- --check
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet
+            cargo clippy --all-targets --workspace -- -D warnings
+        if: steps.upload_attempt_1.outcome == 'failure'
+        id: upload_attempt_2
+        continue-on-error: true
+
+      - name: NetBSD Tests + Clippy (Attempt 3)
+        uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            /usr/sbin/pkg_add curl bash
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            cargo fmt --all -- --check
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet
+            cargo clippy --all-targets --workspace -- -D warnings
+        if: steps.upload_attempt_2.outcome == 'failure'
+        id: upload_attempt_3
+
   # # OpenBSD is not very well-supported, given that it's tier 3. We skip clippy and only run basic tests + fmt.
   # # We also use `--no-default-features` when building as starship-battery does not support OpenBSD.
   # unsupported-check-openbsd:
