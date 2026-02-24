@@ -122,7 +122,7 @@ jobs:
         env:
           RUST_BACKTRACE: full
 
-  # Try running cargo build on all other platforms.
+  # Try running cargo fmt + clippy on all other platforms.
   #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
@@ -256,6 +256,15 @@ jobs:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
+      - name: Format
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
+        if: ${{ matrix.info.no-default-features != true }}
+        with:
+          command: fmt
+          args: --all -- --check
+          use-cross: ${{ matrix.info.cross }}
+          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+
       - name: Clippy (default features)
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         if: ${{ matrix.info.no-default-features != true }}
@@ -316,7 +325,7 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
-            cargo fmt --check
+            cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
@@ -335,7 +344,7 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
-            cargo fmt --check
+            cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
@@ -355,7 +364,7 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
-            cargo fmt --check
+            cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
@@ -401,7 +410,7 @@ jobs:
             # We also do not run clippy because OpenBSD tends to lag behind due to
             # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
             cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo fmt --check
+            cargo fmt --all -- --check
         id: upload_attempt_1
         continue-on-error: true
 
@@ -418,7 +427,7 @@ jobs:
             # We also do not run clippy because OpenBSD tends to lag behind due to
             # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
             cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo fmt --check
+            cargo fmt --all -- --check
         if: steps.upload_attempt_1.outcome == 'failure'
         id: upload_attempt_2
         continue-on-error: true
@@ -436,7 +445,7 @@ jobs:
             # We also do not run clippy because OpenBSD tends to lag behind due to
             # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
             cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo fmt --check
+            cargo fmt --all -- --check
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
 
