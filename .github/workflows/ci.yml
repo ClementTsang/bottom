@@ -425,7 +425,7 @@ jobs:
   completion:
     name: "CI Pass Check"
     # TODO: Probably unify the VM jobs so I don't have this giant mess... can probably just move all the conditional commands to a script or something.
-    needs: [supported, unsupported-check, check-bsd-vm, check-netbsd]
+    needs: [supported, unsupported-check, check-bsd-vm]
     if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' || needs.check-bsd-vm.result != 'skipped'}}
     runs-on: "ubuntu-latest"
     steps:
