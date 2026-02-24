@@ -406,7 +406,7 @@ jobs:
             # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
             # cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
             # For now, we only run build since one test doesn't play nice.
-            cargo build --locked --no-default-features -- --nocapture --quiet
+            cargo build --locked --no-default-features
         id: upload_attempt_1
         continue-on-error: true
 
@@ -425,7 +425,7 @@ jobs:
             # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
             # cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
             # For now, we only run build since one test doesn't play nice.
-            cargo build --locked --no-default-features -- --nocapture --quiet
+            cargo build --locked --no-default-features
         if: steps.upload_attempt_1.outcome == 'failure'
         id: upload_attempt_2
         continue-on-error: true
@@ -445,7 +445,7 @@ jobs:
             # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
             # cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
             # For now, we only run build since one test doesn't play nice.
-            cargo build --locked --no-default-features -- --nocapture --quiet
+            cargo build --locked --no-default-features
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
 
