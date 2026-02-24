@@ -302,13 +302,6 @@ jobs:
           # We also use `--no-default-features` when building as starship-battery does not support OpenBSD.
           # Cross also doesn't support OpenBSD, so we will do it with VMs here too.
           # - { os_release: "7.8", target: "x86_64-unknown-openbsd" } # Supports Rust 1.90
-        include:
-          - target: "x86_64-unknown-freebsd"
-            action: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
-          - target: "x86_64-unknown-netbsd"
-            action: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
-          - target: "x86_64-unknown-openbsd"
-            action: vmactions/openbsd-vm@9a8e4351a4a0dc6238e7c69276dcbf6c03bea576 # v1.3.6
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -322,40 +315,112 @@ jobs:
           key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
           cache-all-crates: true
 
-      # The VM jobs randomly fail, and since GHA clearly never fails and doesn't know how to retry, we retry manually.
-      - name: BSD VM Check (Attempt 1)
-        uses: ${{ matrix.action }}
+      # The VM jobs randomly fail, and since GHA doesn't know how to retry, we retry manually.
+      # Yes, it means it looks awful.
+      - name: BSD VM Check (Attempt 1) - FreeBSD
+        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
+        if: ${{ matrix.info.target == 'x86_64-unknown-freebsd' }}
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           run: |
             sh ./scripts/ci/ci_bsd.sh ${{ matrix.info.target }}
-        id: upload_attempt_1
+        id: upload_attempt_1_freebsd
         continue-on-error: true
 
-      - name: BSD VM Check (Attempt 2)
-        uses: ${{ matrix.action }}
+      - name: BSD VM Check (Attempt 1) - NetBSD
+        uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+        if: ${{ matrix.info.target == 'x86_64-unknown-netbsd' }}
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           run: |
             sh ./scripts/ci/ci_bsd.sh ${{ matrix.info.target }}
-        id: upload_attempt_2
-        if: steps.upload_attempt_1.outcome == 'failure'
+        id: upload_attempt_1_netbsd
         continue-on-error: true
 
-      - name: BSD VM Check (Attempt 3)
-        uses: ${{ matrix.action }}
+      - name: BSD VM Check (Attempt 1) - OpenBSD
+        uses: vmactions/openbsd-vm@9a8e4351a4a0dc6238e7c69276dcbf6c03bea576 # v1.3.6
+        if: ${{ matrix.info.target == 'x86_64-unknown-openbsd' }}
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           run: |
             sh ./scripts/ci/ci_bsd.sh ${{ matrix.info.target }}
-        if: steps.upload_attempt_2.outcome == 'failure'
-        id: upload_attempt_3
+        id: upload_attempt_1_openbsd
+        continue-on-error: true
+
+      - name: BSD VM Check (Attempt 2) - FreeBSD
+        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
+        if: ${{ matrix.info.target == 'x86_64-unknown-freebsd' && steps.upload_attempt_1_freebsd.outcome == 'failure' }}
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          run: |
+            sh ./scripts/ci/ci_bsd.sh ${{ matrix.info.target }}
+        id: upload_attempt_2_freebsd
+        continue-on-error: true
+
+      - name: BSD VM Check (Attempt 2) - NetBSD
+        uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+        if: ${{ matrix.info.target == 'x86_64-unknown-netbsd' && steps.upload_attempt_1_netbsd.outcome == 'failure' }}
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          run: |
+            sh ./scripts/ci/ci_bsd.sh ${{ matrix.info.target }}
+        id: upload_attempt_2_netbsd
+        continue-on-error: true
+
+      - name: BSD VM Check (Attempt 2) - OpenBSD
+        uses: vmactions/openbsd-vm@9a8e4351a4a0dc6238e7c69276dcbf6c03bea576 # v1.3.6
+        if: ${{ matrix.info.target == 'x86_64-unknown-openbsd' && steps.upload_attempt_1_openbsd.outcome == 'failure' }}
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          run: |
+            sh ./scripts/ci/ci_bsd.sh ${{ matrix.info.target }}
+        id: upload_attempt_2_openbsd
+        continue-on-error: true
+
+      - name: BSD VM Check (Attempt 3) - FreeBSD
+        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
+        if: ${{ matrix.info.target == 'x86_64-unknown-freebsd' && steps.upload_attempt_2_freebsd.outcome == 'failure' }}
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          run: |
+            sh ./scripts/ci/ci_bsd.sh ${{ matrix.info.target }}
+        id: upload_attempt_3_freebsd
+
+      - name: BSD VM Check (Attempt 3) - NetBSD
+        uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+        if: ${{ matrix.info.target == 'x86_64-unknown-netbsd' && steps.upload_attempt_2_netbsd.outcome == 'failure' }}
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          run: |
+            sh ./scripts/ci/ci_bsd.sh ${{ matrix.info.target }}
+        id: upload_attempt_3_netbsd
+
+      - name: BSD VM Check (Attempt 3) - OpenBSD
+        uses: vmactions/openbsd-vm@9a8e4351a4a0dc6238e7c69276dcbf6c03bea576 # v1.3.6
+        if: ${{ matrix.info.target == 'x86_64-unknown-openbsd' && steps.upload_attempt_2_openbsd.outcome == 'failure' }}
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          run: |
+            sh ./scripts/ci/ci_bsd.sh ${{ matrix.info.target }}
+        id: upload_attempt_3_openbsd
 
   completion:
     name: "CI Pass Check"
