@@ -22,7 +22,7 @@ if [ "$BSD_TARGET" = "x86_64-unknown-freebsd" ]; then
     cargo test --no-fail-fast --locked -- --nocapture --quiet
     cargo clippy --all-targets --workspace -- -D warnings
 elif [ "$BSD_TARGET" = "x86_64-unknown-netbsd" ]; then
-    /usr/sbin/pkg_add curl bash mozilla-rootcerts-openssl
+    /usr/sbin/pkg_add -u curl bash mozilla-rootcerts-openssl
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
     sh rustup.sh --default-toolchain stable -y
 
