@@ -383,7 +383,7 @@ jobs:
       matrix:
         info:
           # Cross doesn't support OpenBSD, so we do it with VMs here too.
-          - { os_release: "7.8", target: "x86_64-unknown-freebsd" } # Supports Rust 1.90
+          - { os_release: "7.8", target: "x86_64-unknown-openbsd" } # Supports Rust 1.90
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
