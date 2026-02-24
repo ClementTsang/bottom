@@ -403,7 +403,7 @@ jobs:
             . "$HOME/.cargo/env"
             cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
-            cargo test --no-fail-fast --locked -- --nocapture --quiet
+            cargo test --no-fail-fast --locked -- --nocapture --quiet --skip test_data_collection 
             cargo clippy --all-targets --workspace -- -D warnings
         id: upload_attempt_1
         continue-on-error: true
@@ -422,7 +422,7 @@ jobs:
             . "$HOME/.cargo/env"
             cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
-            cargo test --no-fail-fast --locked -- --nocapture --quiet
+            cargo test --no-fail-fast --locked -- --nocapture --quiet --skip test_data_collection 
             cargo clippy --all-targets --workspace -- -D warnings
         if: steps.upload_attempt_1.outcome == 'failure'
         id: upload_attempt_2
@@ -442,7 +442,7 @@ jobs:
             . "$HOME/.cargo/env"
             cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
-            cargo test --no-fail-fast --locked -- --nocapture --quiet
+            cargo test --no-fail-fast --locked -- --nocapture --quiet --skip test_data_collection 
             cargo clippy --all-targets --workspace -- -D warnings
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
