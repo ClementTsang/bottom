@@ -528,23 +528,24 @@ jobs:
 
   completion:
     name: "CI Pass Check"
-    needs: [supported, unsupported-check, unsupported-check-freebsd]
-    if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' || needs.unsupported-check-freebsd.result != 'skipped' }}
+    # TODO: Probably unify the VM jobs so I don't have this giant mess... can probably just move all the conditional commands to a script or something.
+    needs: [supported, unsupported-check, check-freebsd, check-netbsd]
+    if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' || needs.check-freebsd.result != 'skipped' || needs.check-netbsd.result != 'skipped' }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
-        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.unsupported-check.result == 'success' || needs.unsupported-check.result == 'skipped') && (needs.unsupported-check-freebsd.result == 'success' || needs.unsupported-check-freebsd.result == 'skipped') }}
+        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.unsupported-check.result == 'success' || needs.unsupported-check.result == 'skipped') && (needs.check-freebsd.result == 'success' || needs.check-freebsd.result == 'skipped') && (needs.check-netbsd.result == 'success' || needs.check-netbsd.result == 'skipped') }}
         run: |
           echo "CI workflow completed successfully.";
 
       - name: CI Failed
-        if: ${{ needs.supported.result == 'failure' || needs.unsupported-check.result == 'failure' || needs.unsupported-check-freebsd.result == 'failure' }}
+        if: ${{ needs.supported.result == 'failure' || needs.unsupported-check.result == 'failure' || needs.check-freebsd.result == 'failure' || needs.check-netbsd.result == 'failure' }}
         run: |
           echo "CI workflow failed.";
           exit 1;
 
       - name: CI Cancelled
-        if: ${{ needs.supported.result == 'cancelled' || needs.unsupported-check.result == 'cancelled' || needs.unsupported-check-freebsd.result == 'cancelled' }}
+        if: ${{ needs.supported.result == 'cancelled' || needs.unsupported-check.result == 'cancelled' || needs.check-freebsd.result == 'cancelled' || needs.check-netbsd.result == 'cancelled' }}
         run: |
           echo "CI workflow was cancelled.";
           exit 1;
