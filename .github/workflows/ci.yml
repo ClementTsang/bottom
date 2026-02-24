@@ -399,7 +399,8 @@ jobs:
             pkg_add rust rust-rustfmt
           run: |
             # Note this only tests the default features, but I think that's fine.
-            # We also do not run clippy because OpenBSD tends to lag behind due to it being tier 3.
+            # We also do not run clippy because OpenBSD tends to lag behind due to
+            # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo fmt --check
         id: upload_attempt_1
@@ -415,7 +416,8 @@ jobs:
             pkg_add rust rust-rustfmt
           run: |
             # Note this only tests the default features, but I think that's fine.
-            # We also do not run clippy because OpenBSD tends to lag behind due to it being tier 3.
+            # We also do not run clippy because OpenBSD tends to lag behind due to
+            # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo fmt --check
         if: steps.upload_attempt_1.outcome == 'failure'
@@ -432,7 +434,8 @@ jobs:
             pkg_add rust rust-rustfmt
           run: |
             # Note this only tests the default features, but I think that's fine.
-            # We also do not run clippy because OpenBSD tends to lag behind due to it being tier 3.
+            # We also do not run clippy because OpenBSD tends to lag behind due to
+            # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo fmt --check
         if: steps.upload_attempt_2.outcome == 'failure'
