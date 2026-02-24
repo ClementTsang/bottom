@@ -276,11 +276,11 @@ jobs:
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
-  unsupported-check-freebsd:
+  check-freebsd:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: "ubuntu-latest"
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -364,13 +364,99 @@ jobs:
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
 
+  check-netbsd:
+    needs: pre-job
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          - { os_release: "9.4", target: "x86_64-unknown-netbsd" }
+          - { os_release: "10.1", target: "x86_64-unknown-netbsd" }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 1
+
+      - name: Enable Rust cache
+        uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
+        if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
+        with:
+          key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
+          cache-all-crates: true
+
+      # The VM jobs randomly fail, and since GHA clearly never fails and doesn't know how to retry, we retry manually.
+      - name: NetBSD Tests + Clippy (Attempt 1)
+        uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            /usr/sbin/pkg_add -u curl bash mozilla-rootcerts-openssl
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            cargo fmt --all -- --check
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet --skip test_data_collection
+            # Temporarily skip clippy on NetBSD as the build is broken.
+            # cargo clippy --all-targets --workspace -- -D warnings
+        id: upload_attempt_1
+        continue-on-error: true
+
+      - name: NetBSD Tests + Clippy (Attempt 2)
+        uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            /usr/sbin/pkg_add -u curl bash mozilla-rootcerts-openssl
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            cargo fmt --all -- --check
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet --skip test_data_collection
+            # Temporarily skip clippy on NetBSD as the build is broken.
+            # cargo clippy --all-targets --workspace -- -D warnings
+        if: steps.upload_attempt_1.outcome == 'failure'
+        id: upload_attempt_2
+        continue-on-error: true
+
+      - name: NetBSD Tests + Clippy (Attempt 3)
+        uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+        with:
+          release: "${{ matrix.info.os_release }}"
+          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+          usesh: true
+          prepare: |
+            /usr/sbin/pkg_add -u curl bash mozilla-rootcerts-openssl
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+            sh rustup.sh --default-toolchain stable -y
+          run: |
+            . "$HOME/.cargo/env"
+            cargo fmt --all -- --check
+            # Note this only tests the default features, but I think that's fine.
+            cargo test --no-fail-fast --locked -- --nocapture --quiet --skip test_data_collection
+            # Temporarily skip clippy on NetBSD as the build is broken.
+            # cargo clippy --all-targets --workspace -- -D warnings
+        if: steps.upload_attempt_2.outcome == 'failure'
+        id: upload_attempt_3
+
   # # OpenBSD is not very well-supported, given that it's tier 3. We skip clippy and only run basic tests + fmt.
   # # We also use `--no-default-features` when building as starship-battery does not support OpenBSD.
   # unsupported-check-openbsd:
   #   needs: pre-job
   #   if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
   #   runs-on: "ubuntu-latest"
-  #   timeout-minutes: 15
+  #   timeout-minutes: 20
   #   strategy:
   #     fail-fast: false
   #     matrix:
@@ -445,23 +531,24 @@ jobs:
 
   completion:
     name: "CI Pass Check"
-    needs: [supported, unsupported-check, unsupported-check-freebsd]
-    if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' || needs.unsupported-check-freebsd.result != 'skipped' }}
+    # TODO: Probably unify the VM jobs so I don't have this giant mess... can probably just move all the conditional commands to a script or something.
+    needs: [supported, unsupported-check, check-freebsd, check-netbsd]
+    if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' || needs.check-freebsd.result != 'skipped' || needs.check-netbsd.result != 'skipped' }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
-        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.unsupported-check.result == 'success' || needs.unsupported-check.result == 'skipped') && (needs.unsupported-check-freebsd.result == 'success' || needs.unsupported-check-freebsd.result == 'skipped') }}
+        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.unsupported-check.result == 'success' || needs.unsupported-check.result == 'skipped') && (needs.check-freebsd.result == 'success' || needs.check-freebsd.result == 'skipped') && (needs.check-netbsd.result == 'success' || needs.check-netbsd.result == 'skipped') }}
         run: |
           echo "CI workflow completed successfully.";
 
       - name: CI Failed
-        if: ${{ needs.supported.result == 'failure' || needs.unsupported-check.result == 'failure' || needs.unsupported-check-freebsd.result == 'failure' }}
+        if: ${{ needs.supported.result == 'failure' || needs.unsupported-check.result == 'failure' || needs.check-freebsd.result == 'failure' || needs.check-netbsd.result == 'failure' }}
         run: |
           echo "CI workflow failed.";
           exit 1;
 
       - name: CI Cancelled
-        if: ${{ needs.supported.result == 'cancelled' || needs.unsupported-check.result == 'cancelled' || needs.unsupported-check-freebsd.result == 'cancelled' }}
+        if: ${{ needs.supported.result == 'cancelled' || needs.unsupported-check.result == 'cancelled' || needs.check-freebsd.result == 'cancelled' || needs.check-netbsd.result == 'cancelled' }}
         run: |
           echo "CI workflow was cancelled.";
           exit 1;
