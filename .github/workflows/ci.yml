@@ -300,7 +300,7 @@ jobs:
           # We also use `--no-default-features` when building as starship-battery does not support OpenBSD.
           # Cross also doesn't support OpenBSD, so we will do it with VMs here too.
           # - { os_release: "7.8", target: "x86_64-unknown-openbsd" } # Supports Rust 1.90
-    uses: ./.github/workflows/bsd_check.yml
+    uses: ./.github/workflows/bsd_vm_check.yml
     with:
       os-target: ${{ matrix.info.target }}
       os-release: ${{ matrix.info.os_release }}
