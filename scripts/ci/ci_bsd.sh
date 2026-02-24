@@ -21,17 +21,6 @@ if [ "$BSD_TARGET" = "x86_64-unknown-freebsd" ]; then
     # Note this only tests the default features, but I think that's fine.
     cargo test --no-fail-fast --locked -- --nocapture --quiet
     cargo clippy --all-targets --workspace -- -D warnings
-elif [ "$BSD_TARGET" = "x86_64-unknown-netbsd" ]; then
-    /usr/sbin/pkg_add -u curl bash mozilla-rootcerts-openssl
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-    sh rustup.sh --default-toolchain stable -y
-
-    . "$HOME/.cargo/env"
-    cargo fmt --all -- --check
-    # Note this only tests the default features, but I think that's fine.
-    cargo test --no-fail-fast --locked -- --nocapture --quiet --skip test_data_collection
-    # Temporarily skip clippy on NetBSD as the build is broken.
-    # cargo clippy --all-targets --workspace -- -D warnings
 elif [ "$BSD_TARGET" = "x86_64-unknown-openbsd" ]; then
     pkg_add rust rust-rustfmt
 
