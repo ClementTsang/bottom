@@ -276,7 +276,7 @@ jobs:
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
-  unsupported-check-freebsd:
+  check-freebsd:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: "ubuntu-latest"
@@ -364,7 +364,7 @@ jobs:
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
 
-  unsupported-check-netbsd:
+  check-netbsd:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: "ubuntu-latest"
