@@ -373,7 +373,6 @@ jobs:
       matrix:
         info:
           # Cross doesn't support OpenBSD (it's tier 3), so we do it with VMs here too.
-          - { os_release: "7.7", target: "x86_64-unknown-openbsd" }
           - { os_release: "7.8", target: "x86_64-unknown-freebsd" }
     steps:
       - name: Checkout repository
