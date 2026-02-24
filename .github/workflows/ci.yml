@@ -247,7 +247,7 @@ jobs:
         with:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
-          components: "clippy"
+          components: rustfmt, clippy
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
@@ -372,6 +372,7 @@ jobs:
         id: upload_attempt_3
 
   # OpenBSD is not very well-supported, given that it's tier 3. We skip clippy and only run basic tests + fmt.
+  # We also use `--no-default-features` when building as starship-battery does not support OpenBSD.
   unsupported-check-openbsd:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
@@ -406,11 +407,11 @@ jobs:
           prepare: |
             pkg_add rust rust-rustfmt
           run: |
+            cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
             # We also do not run clippy because OpenBSD tends to lag behind due to
             # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
-            cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo fmt --all -- --check
+            cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
         id: upload_attempt_1
         continue-on-error: true
 
@@ -423,11 +424,11 @@ jobs:
           prepare: |
             pkg_add rust rust-rustfmt
           run: |
+            cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
             # We also do not run clippy because OpenBSD tends to lag behind due to
             # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
-            cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo fmt --all -- --check
+            cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
         if: steps.upload_attempt_1.outcome == 'failure'
         id: upload_attempt_2
         continue-on-error: true
@@ -441,11 +442,11 @@ jobs:
           prepare: |
             pkg_add rust rust-rustfmt
           run: |
+            cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
             # We also do not run clippy because OpenBSD tends to lag behind due to
             # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
-            cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo fmt --all -- --check
+            cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
 
