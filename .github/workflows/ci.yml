@@ -317,6 +317,7 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
+            cargo fmt --check
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
@@ -335,6 +336,7 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
+            cargo fmt --check
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
@@ -354,6 +356,7 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
+            cargo fmt --check
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
@@ -369,7 +372,7 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          # Cross doesn't support OpenBSD, so we do it with VMs here too.
+          # Cross doesn't support OpenBSD (it's tier 3), so we do it with VMs here too.
           - { os_release: "7.7", target: "x86_64-unknown-openbsd" }
           - { os_release: "7.8", target: "x86_64-unknown-freebsd" }
     steps:
@@ -393,14 +396,12 @@ jobs:
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           prepare: |
-            pkg_add curl
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
+            pkg_add rust rust-rustfmt
           run: |
-            . "$HOME/.cargo/env"
             # Note this only tests the default features, but I think that's fine.
+            # We also do not run clippy because OpenBSD tends to lag behind due to it being tier 3.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo clippy --all-targets --workspace -- -D warnings
+            cargo fmt --check
         id: upload_attempt_1
         continue-on-error: true
 
@@ -411,14 +412,12 @@ jobs:
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           prepare: |
-            pkg_add curl
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
+            pkg_add rust rust-rustfmt
           run: |
-            . "$HOME/.cargo/env"
             # Note this only tests the default features, but I think that's fine.
+            # We also do not run clippy because OpenBSD tends to lag behind due to it being tier 3.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo clippy --all-targets --workspace -- -D warnings
+            cargo fmt --check
         if: steps.upload_attempt_1.outcome == 'failure'
         id: upload_attempt_2
         continue-on-error: true
@@ -430,14 +429,12 @@ jobs:
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           prepare: |
-            pkg_add curl
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
+            pkg_add rust rust-rustfmt
           run: |
-            . "$HOME/.cargo/env"
             # Note this only tests the default features, but I think that's fine.
+            # We also do not run clippy because OpenBSD tends to lag behind due to it being tier 3.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo clippy --all-targets --workspace -- -D warnings
+            cargo fmt --check
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
 
