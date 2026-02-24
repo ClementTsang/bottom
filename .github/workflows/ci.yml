@@ -287,7 +287,6 @@ jobs:
           # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
           #
           # Alas, that's why we do it with VMs.
-
           - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
           - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
           - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
@@ -363,6 +362,7 @@ jobs:
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
 
+  # OpenBSD is not very well-supported, given that it's tier 3. We skip clippy and only run basic tests + fmt.
   unsupported-check-openbsd:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
@@ -372,8 +372,8 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          # Cross doesn't support OpenBSD (it's tier 3), so we do it with VMs here too.
-          - { os_release: "7.8", target: "x86_64-unknown-freebsd" }
+          # Cross doesn't support OpenBSD, so we do it with VMs here too.
+          - { os_release: "7.8", target: "x86_64-unknown-freebsd" } # Supports Rust 1.90
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
