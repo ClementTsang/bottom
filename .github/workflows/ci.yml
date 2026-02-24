@@ -122,10 +122,12 @@ jobs:
         env:
           RUST_BACKTRACE: full
 
-  # Try running cargo build on all other platforms.
+  # Try running cargo clippy on all other platforms.
   #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
+  #
+  # TODO: Run fmt for some of these as well, perhaps?
   unsupported-check:
     needs: pre-job
     strategy:
@@ -247,7 +249,7 @@ jobs:
         with:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
-          components: "clippy"
+          components: clippy
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
@@ -287,10 +289,9 @@ jobs:
           # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
           #
           # Alas, that's why we do it with VMs.
-
-          - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
-          - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
           - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
+          - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
+          - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -306,7 +307,7 @@ jobs:
 
       # The VM jobs randomly fail, and since GHA clearly never fails and doesn't know how to retry, we retry manually.
       - name: FreeBSD Tests + Clippy (Attempt 1)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
@@ -317,6 +318,7 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
+            cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
@@ -324,7 +326,7 @@ jobs:
         continue-on-error: true
 
       - name: FreeBSD Tests + Clippy (Attempt 2)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
@@ -335,6 +337,7 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
+            cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
@@ -343,7 +346,7 @@ jobs:
         continue-on-error: true
 
       - name: FreeBSD Tests + Clippy (Attempt 3)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
@@ -354,11 +357,91 @@ jobs:
             sh rustup.sh --default-toolchain stable -y
           run: |
             . "$HOME/.cargo/env"
+            cargo fmt --all -- --check
             # Note this only tests the default features, but I think that's fine.
             cargo test --no-fail-fast --locked -- --nocapture --quiet
             cargo clippy --all-targets --workspace -- -D warnings
         if: steps.upload_attempt_2.outcome == 'failure'
         id: upload_attempt_3
+
+  # # OpenBSD is not very well-supported, given that it's tier 3. We skip clippy and only run basic tests + fmt.
+  # # We also use `--no-default-features` when building as starship-battery does not support OpenBSD.
+  # unsupported-check-openbsd:
+  #   needs: pre-job
+  #   if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+  #   runs-on: "ubuntu-latest"
+  #   timeout-minutes: 15
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       info:
+  #         # Cross doesn't support OpenBSD, so we do it with VMs here too.
+  #         - { os_release: "7.8", target: "x86_64-unknown-openbsd" } # Supports Rust 1.90
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+  #       with:
+  #         fetch-depth: 1
+
+  #     - name: Enable Rust cache
+  #       uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
+  #       if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
+  #       with:
+  #         key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
+  #         cache-all-crates: true
+
+  #     # The VM jobs randomly fail, and since GHA clearly never fails and doesn't know how to retry, we retry manually.
+  #     - name: OpenBSD Tests + Clippy (Attempt 1)
+  #       uses: vmactions/openbsd-vm@9a8e4351a4a0dc6238e7c69276dcbf6c03bea576 # v1.3.6
+  #       with:
+  #         release: "${{ matrix.info.os_release }}"
+  #         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+  #         usesh: true
+  #         prepare: |
+  #           pkg_add rust rust-rustfmt
+  #         run: |
+  #           cargo fmt --all -- --check
+  #           # Note this only tests the default features, but I think that's fine.
+  #           # We also do not run clippy because OpenBSD tends to lag behind due to
+  #           # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
+  #           cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
+  #       id: upload_attempt_1
+  #       continue-on-error: true
+
+  #     - name: OpenBSD Tests + Clippy (Attempt 2)
+  #       uses: vmactions/openbsd-vm@9a8e4351a4a0dc6238e7c69276dcbf6c03bea576 # v1.3.6
+  #       with:
+  #         release: "${{ matrix.info.os_release }}"
+  #         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+  #         usesh: true
+  #         prepare: |
+  #           pkg_add rust rust-rustfmt
+  #         run: |
+  #           cargo fmt --all -- --check
+  #           # Note this only tests the default features, but I think that's fine.
+  #           # We also do not run clippy because OpenBSD tends to lag behind due to
+  #           # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
+  #           cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
+  #       if: steps.upload_attempt_1.outcome == 'failure'
+  #       id: upload_attempt_2
+  #       continue-on-error: true
+
+  #     - name: OpenBSD Tests + Clippy (Attempt 3)
+  #       uses: vmactions/openbsd-vm@9a8e4351a4a0dc6238e7c69276dcbf6c03bea576 # v1.3.6
+  #       with:
+  #         release: "${{ matrix.info.os_release }}"
+  #         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+  #         usesh: true
+  #         prepare: |
+  #           pkg_add rust rust-rustfmt
+  #         run: |
+  #           cargo fmt --all -- --check
+  #           # Note this only tests the default features, but I think that's fine.
+  #           # We also do not run clippy because OpenBSD tends to lag behind due to
+  #           # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
+  #           cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
+  #       if: steps.upload_attempt_2.outcome == 'failure'
+  #       id: upload_attempt_3
 
   completion:
     name: "CI Pass Check"

@@ -322,7 +322,7 @@ jobs:
 
       # The VM jobs randomly fail, and since GHA can't retry, we retry manually.
       - name: Build (Attempt 1)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
@@ -338,7 +338,7 @@ jobs:
         continue-on-error: true
 
       - name: Build (Attempt 2)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
@@ -355,7 +355,7 @@ jobs:
         continue-on-error: true
 
       - name: Build (Attempt 3)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
+        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
         with:
           release: "${{ matrix.info.os_release }}"
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
