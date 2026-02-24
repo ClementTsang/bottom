@@ -396,7 +396,7 @@ jobs:
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           prepare: |
-            /usr/sbin/pkg_add curl bash mozilla-rootcerts-openssl
+            /usr/sbin/pkg_add -u curl bash mozilla-rootcerts-openssl
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
             sh rustup.sh --default-toolchain stable -y
           run: |
@@ -415,7 +415,7 @@ jobs:
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           prepare: |
-            /usr/sbin/pkg_add curl bash mozilla-rootcerts-openssl
+            /usr/sbin/pkg_add -u curl bash mozilla-rootcerts-openssl
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
             sh rustup.sh --default-toolchain stable -y
           run: |
@@ -435,7 +435,7 @@ jobs:
           envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
           usesh: true
           prepare: |
-            /usr/sbin/pkg_add curl bash mozilla-rootcerts-openssl
+            /usr/sbin/pkg_add -u curl bash mozilla-rootcerts-openssl
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
             sh rustup.sh --default-toolchain stable -y
           run: |
