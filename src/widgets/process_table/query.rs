@@ -5,7 +5,6 @@
 //! as good as they are now. This will be rewritten as time goes on, though.
 
 mod and;
-mod attribute;
 mod error;
 mod or;
 mod prefix;
@@ -13,7 +12,6 @@ mod prefix;
 use std::{collections::VecDeque, time::Duration};
 
 use and::And;
-use attribute::ProcessAttribute;
 use error::{QueryError, QueryResult};
 use or::Or;
 use prefix::Prefix;
@@ -21,8 +19,8 @@ use regex::Regex;
 
 use crate::{collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case};
 
-const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
-const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];
+const DELIMITER_LIST: [char; 7] = ['=', '>', '<', '!', '(', ')', '\"'];
+const COMPARISON_LIST: [&str; 4] = [">", "=", "<", "!="];
 
 /// A node type that can take a query and read it, advancing the current read state
 /// and returning an instance of the node.
@@ -120,17 +118,45 @@ pub(crate) fn parse_query(search_query: &str, options: &QueryOptions) -> QueryRe
     let mut split_query = VecDeque::new();
 
     search_query.split_whitespace().for_each(|s| {
-        // From https://stackoverflow.com/a/56923739 get a split but include the parentheses
-        let mut last = 0;
-        for (index, matched) in s.match_indices(|x| DELIMITER_LIST.contains(&x)) {
-            if last != index {
-                split_query.push_back(s[last..index].to_owned());
+        let mut i = 0;
+        while i < s.len() {
+            let ch = s[i..]
+                .chars()
+                .next()
+                .expect("tokenizer: unexpected empty slice while reading char");
+            let ch_len = ch.len_utf8();
+
+            if DELIMITER_LIST.contains(&ch) {
+                if ch == '!' && i + ch_len < s.len() {
+                    // Peek next ASCII char safely
+                    let next_ch = s[i + ch_len..]
+                        .chars()
+                        .next()
+                        .expect("tokenizer: unexpected empty slice while peeking next char");
+                    if next_ch == '=' {
+                        split_query.push_back("!=".to_owned());
+                        i += ch_len + next_ch.len_utf8();
+                        continue;
+                    }
+                }
+
+                // Push single delimiter token
+                split_query.push_back(ch.to_string());
+                i += ch_len;
+            } else {
+                let start = i;
+                while i < s.len() {
+                    let c = s[i..]
+                        .chars()
+                        .next()
+                        .expect("tokenizer: unexpected empty slice while accumulating token");
+                    if DELIMITER_LIST.contains(&c) {
+                        break;
+                    }
+                    i += c.len_utf8();
+                }
+                split_query.push_back(s[start..i].to_owned());
             }
-            split_query.push_back(matched.to_owned());
-            last = index + matched.len();
-        }
-        if last < s.len() {
-            split_query.push_back(s[last..].to_owned());
         }
     });
 
@@ -233,6 +259,7 @@ impl std::str::FromStr for PrefixType {
 #[derive(Debug)]
 enum QueryComparison {
     Equal,
+    NotEqual,
     Less,
     Greater,
     LessOrEqual,
@@ -245,41 +272,10 @@ struct NumericalQuery {
     value: f64,
 }
 
-impl NumericalQuery {
-    /// Compare `lhs` to the value in the query as `rhs`.
-    fn check<I: Into<f64>>(&self, lhs: I) -> bool {
-        let lhs: f64 = lhs.into();
-        let rhs: f64 = self.value;
-
-        match self.condition {
-            QueryComparison::Equal => (lhs - rhs).abs() < f64::EPSILON,
-            QueryComparison::Less => lhs < rhs,
-            QueryComparison::Greater => lhs > rhs,
-            QueryComparison::LessOrEqual => lhs <= rhs,
-            QueryComparison::GreaterOrEqual => lhs >= rhs,
-        }
-    }
-}
-
 #[derive(Debug)]
 struct TimeQuery {
     condition: QueryComparison,
     duration: Duration,
-}
-
-impl TimeQuery {
-    /// Compare `lhs` to the value in the query as `rhs`.
-    fn check(&self, lhs: Duration) -> bool {
-        let rhs = self.duration;
-
-        match self.condition {
-            QueryComparison::Equal => lhs == rhs,
-            QueryComparison::Less => lhs < rhs,
-            QueryComparison::Greater => lhs > rhs,
-            QueryComparison::LessOrEqual => lhs <= rhs,
-            QueryComparison::GreaterOrEqual => lhs >= rhs,
-        }
-    }
 }
 
 #[cfg(test)]
