@@ -73,7 +73,7 @@ impl Painter {
         };
 
         draw_widgets.push(
-            PipeGauge::default()
+            PipeGauge::new(&self.styles.progress_bar_chars.0)
                 .ratio(ram_percentage / 100.0)
                 .start_label("RAM")
                 .inner_label(ram_label)
@@ -86,7 +86,7 @@ impl Painter {
             let swap_label = memory_label(swap_harvest, app_state.basic_mode_use_percent);
 
             draw_widgets.push(
-                PipeGauge::default()
+                PipeGauge::new(&self.styles.progress_bar_chars.0)
                     .ratio(swap_percentage / 100.0)
                     .start_label("SWP")
                     .inner_label(swap_label)
@@ -103,7 +103,7 @@ impl Painter {
                     memory_label(cache_harvest, app_state.basic_mode_use_percent);
 
                 draw_widgets.push(
-                    PipeGauge::default()
+                    PipeGauge::new(&self.styles.progress_bar_chars.0)
                         .ratio(cache_percentage / 100.0)
                         .start_label("CHE")
                         .inner_label(cache_fraction_label)
@@ -121,7 +121,7 @@ impl Painter {
                     memory_label(arc_harvest, app_state.basic_mode_use_percent);
 
                 draw_widgets.push(
-                    PipeGauge::default()
+                    PipeGauge::new(&self.styles.progress_bar_chars.0)
                         .ratio(arc_percentage / 100.0)
                         .start_label("ARC")
                         .inner_label(arc_fraction_label)
@@ -152,7 +152,7 @@ impl Painter {
                 };
 
                 draw_widgets.push(
-                    PipeGauge::default()
+                    PipeGauge::new(&self.styles.progress_bar_chars.0)
                         .ratio(percentage / 100.0)
                         .start_label("GPU")
                         .inner_label(label)
