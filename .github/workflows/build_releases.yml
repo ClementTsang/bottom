@@ -48,89 +48,89 @@ jobs:
           #
           # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
           - {
-              os: "ubuntu-22.04",
               target: "x86_64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: false,
               generate-other-artifacts: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "i686-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "x86_64-unknown-linux-musl",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "i686-unknown-linux-musl",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "aarch64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "aarch64-unknown-linux-musl",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # macOS (x86-64 and aarch64)
           - {
-              os: "macos-15-intel",
               target: "x86_64-apple-darwin",
+              os: "macos-15-intel",
               cross: false,
             }
-          - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
+          - { target: "aarch64-apple-darwin", os: "macos-15", cross: false }
 
           # Windows (x86-64, x86)
           - {
-              os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
+              os: "windows-2022",
               cross: false,
             }
-          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false }
+          - { target: "i686-pc-windows-msvc", os: "windows-2022", cross: false }
           - {
-              os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
+              os: "windows-2022",
               cross: false,
             }
 
           # ======= Unsupported targets =======
           # armv7
           - {
-              os: "ubuntu-22.04",
               target: "armv7-unknown-linux-gnueabihf",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "armv7-unknown-linux-musleabihf",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-22.04",
               target: "powerpc64le-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # Risc-V 64gc
           - {
-              os: "ubuntu-22.04",
               target: "riscv64gc-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # Android
           - {
-              os: "ubuntu-latest",
               target: "aarch64-linux-android",
+              os: "ubuntu-latest",
               cross: true,
               cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
               no-default-features: true,
@@ -138,31 +138,31 @@ jobs:
 
           # Loongarch
           - {
-              os: "ubuntu-22.04",
               target: "loongarch64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
               cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
             }
 
           # Windows ARM, may promote to official.
           - {
-              os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
+              os: "windows-11-arm",
               cross: false,
             }
 
           # FreeBSD
           - {
-              os: "ubuntu-22.04",
               target: "x86_64-unknown-freebsd",
+              os: "ubuntu-22.04",
               cross: true,
               cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
             }
 
           # NetBSD
           - {
-              os: "ubuntu-22.04",
               target: "x86_64-unknown-netbsd",
+              os: "ubuntu-22.04",
               cross: true,
               cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
             }
