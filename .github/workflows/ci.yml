@@ -237,6 +237,7 @@ jobs:
               os: "ubuntu-latest",
               target: "x86_64-unknown-freebsd",
               cross: true,
+              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
             }
 
           # NetBSD
@@ -244,6 +245,7 @@ jobs:
               os: "ubuntu-latest",
               target: "x86_64-unknown-netbsd",
               cross: true,
+              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
             }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
@@ -291,6 +293,8 @@ jobs:
           args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+
+        # TODO: Run tests? Maybe skip some tests though.
 
   # # Check BSD platforms using a VM layer.
   # check-bsd-vm:

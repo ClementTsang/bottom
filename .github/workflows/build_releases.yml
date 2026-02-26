@@ -156,10 +156,16 @@ jobs:
               os: "ubuntu-22.04",
               target: "x86_64-unknown-freebsd",
               cross: true,
+              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
             }
 
           # NetBSD
-          - { os: "ubuntu-22.04", target: "x86_64-unknown-netbsd", cross: true }
+          - {
+              os: "ubuntu-22.04",
+              target: "x86_64-unknown-netbsd",
+              cross: true,
+              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
+            }
     steps:
       - name: Checkout repository
         if: matrix.info.container == ''
