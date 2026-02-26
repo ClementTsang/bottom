@@ -232,6 +232,13 @@ jobs:
               cross: false,
             }
 
+          # FreeBSD
+          - {
+              os: "ubuntu-latest",
+              target: "x86_64-unknown-freebsd",
+              cross: true,
+            }
+
           # NetBSD
           - {
               os: "ubuntu-latest",
@@ -296,7 +303,6 @@ jobs:
           # Seems like cross's FreeBSD image is a bit broken? I get build errors,
           # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
           # Alas, that's why we do it with VMs.
-          # TODO: Check if this is still the case!
           - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
           - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
           - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
