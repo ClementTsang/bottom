@@ -11,17 +11,7 @@ if [ -z "$BSD_TARGET" ]; then
     exit 1
 fi
 
-if [ "$BSD_TARGET" = "x86_64-unknown-freebsd" ]; then
-    pkg install -y curl bash
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-    sh rustup.sh --default-toolchain stable -y
-
-    . "$HOME/.cargo/env"
-    cargo fmt --all -- --check
-    # Note this only tests the default features, but I think that's fine.
-    cargo test --no-fail-fast --locked -- --nocapture --quiet
-    cargo clippy --all-targets --workspace -- -D warnings
-elif [ "$BSD_TARGET" = "x86_64-unknown-openbsd" ]; then
+if [ "$BSD_TARGET" = "x86_64-unknown-openbsd" ]; then
     pkg_add rust rust-rustfmt
 
     . "$HOME/.cargo/env"
@@ -31,6 +21,6 @@ elif [ "$BSD_TARGET" = "x86_64-unknown-openbsd" ]; then
     # it being tier 3 (see https://github.com/eza-community/eza/pull/1669).
     cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
 else
-    echo "Unsupported BSD target type."
+    echo "Unsupported BSD VM target type."
     exit 1
 fi
