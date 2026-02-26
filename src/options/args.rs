@@ -590,6 +590,15 @@ pub struct NetworkArgs {
         alias = "use-old-network-legend"
     )]
     pub use_old_network_legend: bool,
+
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Displays packets information (packet rate and average packet size) in the network widget.",
+        long_help = "Displays packets information including packet rate (packets per second) and average packet size in the network widget. This provides additional insights into network traffic patterns.",
+        alias = "show-packets"
+    )]
+    pub show_packets: bool,
 }
 
 /// Battery arguments/config options.
