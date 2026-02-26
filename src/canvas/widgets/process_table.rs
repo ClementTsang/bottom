@@ -254,8 +254,13 @@ impl Painter {
                 };
 
             let process_search_block = {
-                let mut block = widget_block(is_basic, is_selected, self.styles.border_type)
-                    .border_style(current_border_style);
+                let mut block = widget_block(
+                    is_basic,
+                    is_selected,
+                    self.styles.border_type,
+                    self.styles.bg_color_style,
+                )
+                .border_style(current_border_style);
 
                 if !is_basic {
                     block = block.title_top(
