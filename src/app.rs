@@ -196,9 +196,17 @@ impl App {
             self.process_kill_dialog.on_esc();
             self.is_force_redraw = true;
         } else if self.help_dialog_state.is_showing_help {
-            self.help_dialog_state.is_showing_help = false;
-            self.help_dialog_state.scroll_state.current_scroll_index = 0;
-            self.is_force_redraw = true;
+            if self.help_dialog_state.is_searching {
+                // Exit help search mode first; keep help dialog open
+                self.help_dialog_state.is_searching = false;
+                self.help_dialog_state.search_query.clear();
+                self.help_dialog_state.search_cursor_index = 0;
+                self.is_force_redraw = true;
+            } else {
+                self.help_dialog_state.is_showing_help = false;
+                self.help_dialog_state.scroll_state.current_scroll_index = 0;
+                self.is_force_redraw = true;
+            }
         } else {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
@@ -447,6 +455,9 @@ impl App {
         if self.process_kill_dialog.is_open() {
             // Not the best way of doing things for now but works as glue.
             self.process_kill_dialog.on_enter();
+        } else if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
+            // Do not close help when searching; just trigger a redraw
+            self.is_force_redraw = true;
         } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::ProcSearch => {
@@ -482,6 +493,15 @@ impl App {
     }
 
     pub fn on_delete(&mut self) {
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
+            let len = self.help_dialog_state.search_query.len();
+            let idx = self.help_dialog_state.search_cursor_index.min(len);
+            if idx < len {
+                self.help_dialog_state.search_query.remove(idx);
+            }
+            self.is_force_redraw = true;
+            return;
+        }
         match self.current_widget.widget_type {
             BottomWidgetType::ProcSearch => {
                 let is_in_search_widget = self.is_in_search_widget();
@@ -532,7 +552,14 @@ impl App {
     }
 
     pub fn on_backspace(&mut self) {
-        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
+            if self.help_dialog_state.search_cursor_index > 0 {
+                let idx = self.help_dialog_state.search_cursor_index - 1;
+                self.help_dialog_state.search_query.remove(idx);
+                self.help_dialog_state.search_cursor_index = idx;
+            }
+            self.is_force_redraw = true;
+        } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             let is_in_search_widget = self.is_in_search_widget();
             if let Some(proc_widget_state) = self
                 .states
@@ -599,6 +626,15 @@ impl App {
     }
 
     pub fn on_left_key(&mut self) {
+        // Move help search cursor left if searching in help dialog
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
+            if self.help_dialog_state.search_cursor_index > 0 {
+                self.help_dialog_state.search_cursor_index -= 1;
+                self.is_force_redraw = true;
+            }
+            return;
+        }
+
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
@@ -649,6 +685,16 @@ impl App {
     }
 
     pub fn on_right_key(&mut self) {
+        // Move help search cursor right if searching in help dialog
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
+            let len = self.help_dialog_state.search_query.len();
+            if self.help_dialog_state.search_cursor_index < len {
+                self.help_dialog_state.search_cursor_index += 1;
+                self.is_force_redraw = true;
+            }
+            return;
+        }
+
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
@@ -999,7 +1045,25 @@ impl App {
                     }
                 }
                 'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
-                _ => {}
+                '/' => {
+                    // Start help dialog search; place cursor at end of current query
+                    self.help_dialog_state.is_searching = true;
+                    self.help_dialog_state.search_cursor_index =
+                        self.help_dialog_state.search_query.len();
+                    self.is_force_redraw = true;
+                }
+                _ => {
+                    // While searching in help, insert at cursor and advance
+                    if self.help_dialog_state.is_searching {
+                        let idx = self
+                            .help_dialog_state
+                            .search_cursor_index
+                            .min(self.help_dialog_state.search_query.len());
+                        self.help_dialog_state.search_query.insert(idx, caught_char);
+                        self.help_dialog_state.search_cursor_index = idx + 1;
+                        self.is_force_redraw = true;
+                    }
+                }
             }
         } else if self.process_kill_dialog.is_open() {
             self.process_kill_dialog.on_char(caught_char);
