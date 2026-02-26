@@ -232,6 +232,13 @@ jobs:
               cross: false,
             }
 
+          # FreeBSD
+          - {
+              os: "ubuntu-latest",
+              target: "x86_64-unknown-freebsd",
+              cross: true,
+            }
+
           # NetBSD
           - {
               os: "ubuntu-latest",
@@ -285,50 +292,42 @@ jobs:
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
 
-  # Check BSD platforms using a VM layer.
-  check-bsd-vm:
-    needs: pre-job
-    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        info:
-          # Seems like cross's FreeBSD image is a bit broken? I get build errors,
-          # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
-          # Alas, that's why we do it with VMs.
-          # TODO: Check if this is still the case!
-          - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
-          - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
-          - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
-
-          # OpenBSD is not very well-supported, given that it's tier 3. We skip clippy and only run basic tests + fmt.
-          # We also use `--no-default-features` when building as starship-battery does not support OpenBSD.
-          # Cross also doesn't support OpenBSD, so we will do it with VMs here too.
-          # - { os_release: "7.8", target: "x86_64-unknown-openbsd" } # Supports Rust 1.90
-    uses: ./.github/workflows/bsd_vm_check.yml
-    with:
-      os-target: ${{ matrix.info.target }}
-      os-release: ${{ matrix.info.os_release }}
+  # # Check BSD platforms using a VM layer.
+  # check-bsd-vm:
+  #   needs: pre-job
+  #   if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       info:
+  #         # OpenBSD is not very well-supported, given that it's tier 3. We skip clippy and only run basic tests + fmt.
+  #         # We also use `--no-default-features` when building as starship-battery does not support OpenBSD.
+  #         # Cross also doesn't support OpenBSD, so we will do it with VMs here too.
+  #         - { os_release: "7.8", target: "x86_64-unknown-openbsd" } # Supports Rust 1.90
+  #   uses: ./.github/workflows/bsd_vm_check.yml
+  #   with:
+  #     os-target: ${{ matrix.info.target }}
+  #     os-release: ${{ matrix.info.os_release }}
 
   completion:
     name: "CI Pass Check"
-    needs: [supported, unsupported-check, check-bsd-vm]
-    if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' || needs.check-bsd-vm.result != 'skipped'}}
+    needs: [supported, unsupported-check]
+    if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' }}
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed
-        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.unsupported-check.result == 'success' || needs.unsupported-check.result == 'skipped') && (needs.check-bsd-vm.result == 'success' || needs.check-bsd-vm.result == 'skipped') }}
+        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.unsupported-check.result == 'success' || needs.unsupported-check.result == 'skipped') }}
         run: |
           echo "CI workflow completed successfully.";
 
       - name: CI Failed
-        if: ${{ needs.supported.result == 'failure' || needs.unsupported-check.result == 'failure' || needs.check-bsd-vm.result == 'failure' }}
+        if: ${{ needs.supported.result == 'failure' || needs.unsupported-check.result == 'failure' }}
         run: |
           echo "CI workflow failed.";
           exit 1;
 
       - name: CI Cancelled
-        if: ${{ needs.supported.result == 'cancelled' || needs.unsupported-check.result == 'cancelled' || needs.check-bsd-vm.result == 'cancelled' }}
+        if: ${{ needs.supported.result == 'cancelled' || needs.unsupported-check.result == 'cancelled' }}
         run: |
           echo "CI workflow was cancelled.";
           exit 1;
