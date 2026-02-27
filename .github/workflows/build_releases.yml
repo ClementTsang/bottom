@@ -435,31 +435,24 @@ jobs:
       matrix:
         info:
           - { target: "x86_64-unknown-linux-gnu", dpkg: amd64 }
-          - { target: "x86_64-unknown-linux-musl", cross: true, dpkg: amd64 }
+          - { target: "x86_64-unknown-linux-musl", dpkg: amd64 }
           - {
               target: "aarch64-unknown-linux-gnu",
-              cross: false,
               dpkg: arm64,
               os: "ubuntu-22.04-arm",
             }
-          # The cross images don't work with ARM runners, unfortunately. We could build it on x86 with cross
-          # and then copy it over to an ARM runner but that's kind of annoying, so I'll skip this for now.
-          # TODO: Maybe improve how we do the .deb software building step?
           - {
               target: "aarch64-unknown-linux-musl",
-              cross: true,
               dpkg: arm64,
-              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
+              os: "ubuntu-22.04-arm",
             }
           - {
               target: "armv7-unknown-linux-gnueabihf",
-              cross: true,
               dpkg: armhf,
               container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
             }
           - {
               target: "armv7-unknown-linux-musleabihf",
-              cross: true,
               dpkg: armhf,
               container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
             }
@@ -579,7 +572,7 @@ jobs:
       matrix:
         info:
           - { target: "x86_64-unknown-linux-gnu" }
-          - { target: "x86_64-unknown-linux-musl", cross: true }
+          - { target: "x86_64-unknown-linux-musl" }
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
