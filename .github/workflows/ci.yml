@@ -127,7 +127,8 @@ jobs:
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
   #
-  # TODO: Run fmt for some of these as well, perhaps?
+  # TODO: Run fmt for some of these as well, perhaps? I guess what I'm thinking is that each job will have a "support"
+  # level (or array of checks?), which determines what checks are run. We can document this as well.
   unsupported-check:
     needs: pre-job
     strategy:
