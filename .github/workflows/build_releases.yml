@@ -425,7 +425,7 @@ jobs:
 
   build-deb:
     name: "Build .deb software packages"
-    runs-on: "ubuntu-22.04"
+    runs-on: ${{ matrix.info.os || 'ubuntu-24.04' }}
     timeout-minutes: 12
     strategy:
       fail-fast: false
@@ -435,9 +435,9 @@ jobs:
           - { target: "x86_64-unknown-linux-musl", cross: true, dpkg: amd64 }
           - {
               target: "aarch64-unknown-linux-gnu",
-              cross: true,
+              cross: false,
               dpkg: arm64,
-              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
+              os: "ubuntu-22.04-arm",
             }
           - {
               target: "armv7-unknown-linux-gnueabihf",
@@ -498,8 +498,8 @@ jobs:
         run: |
           gzip ./manpage/btm.1
 
-      - name: Build Debian release (x86-64)
-        if: startsWith(matrix.info.target, 'x86_64')
+      - name: Build Debian release (non-container)
+        if: ${{ matrix.info.container == '' }}
         env:
           BTM_GENERATE: true
         run: |
@@ -507,8 +507,8 @@ jobs:
           cargo deb --no-build --target ${{ matrix.info.target }}
           cp ./target/debian/bottom_*.deb .
 
-      - name: Build Debian release (ARM)
-        if: startsWith(matrix.info.target, 'x86_64') != true
+      - name: Build Debian release (container)
+        if: ${{ matrix.info.container != '' }}
         env:
           BTM_GENERATE: true
         run: |
