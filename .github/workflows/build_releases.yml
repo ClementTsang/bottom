@@ -442,16 +442,16 @@ jobs:
               os: "ubuntu-22.04-arm",
             }
           - {
+              target: "aarch64-unknown-linux-musl",
+              cross: true,
+              dpkg: arm64,
+              os: "ubuntu-22.04-arm",
+            }
+          - {
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
               dpkg: armhf,
               os: "ubuntu-22.04-arm",
-            }
-          - {
-              target: "aarch64-unknown-linux-musl",
-              cross: true,
-              dpkg: arm64,
-              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
             }
           - {
               target: "armv7-unknown-linux-musleabihf",
