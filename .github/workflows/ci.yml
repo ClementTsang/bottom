@@ -23,6 +23,7 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
   COMPLETION_DIR: "target/tmp/bottom/completion/"
   MANPAGE_DIR: "target/tmp/bottom/manpage/"
+  CROSS_VERSION: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -108,7 +109,7 @@ jobs:
           command: test
           args: --no-fail-fast --locked ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.5
+          cross-version: ${{ env.CROSS_VERSION }}
         env:
           RUST_BACKTRACE: full
 
@@ -118,7 +119,7 @@ jobs:
           command: clippy
           args: ${{ matrix.features }} --all-targets --workspace --locked --target=${{ matrix.info.target }} -- -D warnings
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.5
+          cross-version: ${{ env.CROSS_VERSION }}
         env:
           RUST_BACKTRACE: full
 
@@ -212,7 +213,6 @@ jobs:
               os: "ubuntu-latest",
               target: "loongarch64-unknown-linux-gnu",
               cross: true,
-              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
             }
 
           # Android ARM64
@@ -220,7 +220,6 @@ jobs:
               os: "ubuntu-latest",
               target: "aarch64-linux-android",
               cross: true,
-              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
               no-default-features: true,
               no-clippy: true,
             }
@@ -238,7 +237,6 @@ jobs:
               os: "ubuntu-latest",
               target: "x86_64-unknown-freebsd",
               cross: true,
-              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
             }
 
           # NetBSD
@@ -246,7 +244,6 @@ jobs:
               os: "ubuntu-latest",
               target: "x86_64-unknown-netbsd",
               cross: true,
-              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
             }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
@@ -284,7 +281,7 @@ jobs:
           command: clippy
           args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
           use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+          cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
 
       - name: Clippy (no features enabled)
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
@@ -293,7 +290,7 @@ jobs:
           command: clippy
           args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
           use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+          cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
 
         # TODO: Run tests? Maybe skip some tests though.
 
