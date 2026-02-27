@@ -427,7 +427,6 @@ jobs:
 
   build-deb:
     name: "Build .deb software packages"
-    needs: build-binaries
     runs-on: ${{ matrix.info.os || 'ubuntu-24.04' }}
     timeout-minutes: 12
     strategy:
@@ -462,32 +461,35 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Download prebuilt binary artifact
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      - name: Read Rust version
+        shell: bash
+        run: |
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+          echo "$VER"
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
-          name: "release-${{ matrix.info.target }}"
-          path: prebuilt-artifact
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
+          target: ${{ matrix.info.target }}
 
-      - name: Extract prebuilt binary to target directory
+      - name: Build
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
+        env:
+          BTM_GENERATE: true
+          BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
+        with:
+          command: build
+          args: --release --locked --features deploy --target ${{ matrix.info.target }}
+          use-cross: ${{ matrix.info.cross || false }}
+          cross-version: ${{ env.CROSS_VERSION }}
+
+      - name: Move automatically generated completion/manpage
         shell: bash
         run: |
-          mkdir -p target/${{ matrix.info.target }}/release
-          cd prebuilt-artifact
-          tar -xzf bottom_${{ matrix.info.target }}.tar.gz btm
-          mv btm ../target/${{ matrix.info.target }}/release/
-          chmod +x ../target/${{ matrix.info.target }}/release/btm
-
-      - name: Extract completion files from artifact
-        shell: bash
-        run: |
-          mkdir -p completion
-          tar -xzf prebuilt-artifact/completion.tar.gz -C completion
-
-      - name: Extract manpage files from artifact
-        shell: bash
-        run: |
-          mkdir -p manpage
-          tar -xzf prebuilt-artifact/manpage.tar.gz -C manpage
+          mv "$COMPLETION_DIR" completion
+          mv "$MANPAGE_DIR" manpage
 
       - name: Zip manpage
         run: |
@@ -565,7 +567,6 @@ jobs:
 
   build-rpm:
     name: "Build .rpm software packages"
-    needs: build-binaries
     runs-on: ubuntu-24.04
     container: ghcr.io/clementtsang/almalinux-8
     timeout-minutes: 12
@@ -594,32 +595,22 @@ jobs:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
-      - name: Download prebuilt binary artifact
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      - name: Build
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
+        env:
+          BTM_GENERATE: true
+          BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
         with:
-          name: "release-${{ matrix.info.target }}"
-          path: prebuilt-artifact
+          command: build
+          args: --release --locked --features deploy --target ${{ matrix.info.target }}
+          use-cross: ${{ matrix.info.cross || false }}
+          cross-version: ${{ env.CROSS_VERSION }}
 
-      - name: Extract prebuilt binary to target directory
+      - name: Move automatically generated completion/manpage
         shell: bash
         run: |
-          mkdir -p target/${{ matrix.info.target }}/release
-          cd prebuilt-artifact
-          tar -xzf bottom_${{ matrix.info.target }}.tar.gz btm
-          mv btm ../target/${{ matrix.info.target }}/release/
-          chmod +x ../target/${{ matrix.info.target }}/release/btm
-
-      - name: Extract completion files from artifact
-        shell: bash
-        run: |
-          mkdir -p completion
-          tar -xzf prebuilt-artifact/completion.tar.gz -C completion
-
-      - name: Extract manpage files from artifact
-        shell: bash
-        run: |
-          mkdir -p manpage
-          tar -xzf prebuilt-artifact/manpage.tar.gz -C manpage
+          mv "$COMPLETION_DIR" completion
+          mv "$MANPAGE_DIR" manpage
 
       - name: Zip manpage
         run: |
