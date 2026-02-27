@@ -77,7 +77,7 @@ jobs:
             }
           - {
               target: "aarch64-unknown-linux-musl",
-              os: "ubuntu-22.04-arm",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
@@ -441,17 +441,20 @@ jobs:
               dpkg: arm64,
               os: "ubuntu-22.04-arm",
             }
+          # The cross images don't work with ARM runners, unfortunately. We could build it on x86 with cross
+          # and then copy it over to an ARM runner but that's kind of annoying, so I'll skip this for now.
+          # TODO: Maybe improve how we do the .deb software building step?
           - {
               target: "aarch64-unknown-linux-musl",
               cross: true,
               dpkg: arm64,
-              os: "ubuntu-22.04-arm",
+              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
             }
           - {
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
               dpkg: armhf,
-              os: "ubuntu-22.04-arm",
+              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
             }
           - {
               target: "armv7-unknown-linux-musleabihf",
