@@ -462,19 +462,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Read Rust version
-        shell: bash
-        run: |
-          VER=$(cat .github/ci/rust_version.txt)
-          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
-          echo "$VER"
-
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
-        with:
-          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
-          target: ${{ matrix.info.target }}
-
       - name: Download prebuilt binary artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
@@ -506,12 +493,20 @@ jobs:
         run: |
           gzip ./manpage/btm.1
 
-      - name: Build Debian release (non-container)
-        if: ${{ matrix.info.container == '' }}
+      - name: Read Rust version
+        shell: bash
+        if: ${{ matrix.info.container != '' }}
         run: |
-          cargo install cargo-deb --version 3.5.0 --locked
-          cargo deb --no-build --target ${{ matrix.info.target }}
-          cp ./target/debian/bottom_*.deb .
+          VER=$(cat .github/ci/rust_version.txt)
+          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
+          echo "$VER"
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
+        if: ${{ matrix.info.container != '' }}
+        with:
+          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
+          target: ${{ matrix.info.target }}
 
       - name: Build Debian release (container)
         if: ${{ matrix.info.container != '' }}
@@ -522,6 +517,13 @@ jobs:
           TMP_NAME=$(find bottom-*.deb)
           VERSION=${{ matrix.info.dpkg }}
           mv $TMP_NAME $(echo $TMP_NAME | sed "s/-$VERSION//")
+
+      - name: Build Debian release (non-container)
+        if: ${{ matrix.info.container == '' }}
+        run: |
+          cargo install cargo-deb --version 3.5.0 --locked
+          cargo deb --no-build --target ${{ matrix.info.target }}
+          cp ./target/debian/bottom_*.deb .
 
       - name: Rename if it is a musl target
         if: contains(matrix.info.target, 'musl')
