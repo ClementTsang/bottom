@@ -427,6 +427,7 @@ jobs:
 
   build-deb:
     name: "Build .deb software packages"
+    needs: build-binaries
     runs-on: ${{ matrix.info.os || 'ubuntu-24.04' }}
     timeout-minutes: 12
     strategy:
@@ -481,23 +482,32 @@ jobs:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
-      # TODO: Could I use the previous jobs to skip this call?
-      - name: Build
-        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        env:
-          BTM_GENERATE: true
-          BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
+      - name: Download prebuilt binary artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
-          command: build
-          args: --release --locked --features deploy --target ${{ matrix.info.target }}
-          use-cross: ${{ matrix.info.cross || false }}
-          cross-version: ${{ env.CROSS_VERSION }}
+          name: "release-${{ matrix.info.target }}"
+          path: prebuilt-artifact
 
-      - name: Move automatically generated completion/manpage
+      - name: Extract prebuilt binary to target directory
         shell: bash
         run: |
-          mv "$COMPLETION_DIR" completion
-          mv "$MANPAGE_DIR" manpage
+          mkdir -p target/${{ matrix.info.target }}/release
+          cd prebuilt-artifact
+          tar -xzf bottom_${{ matrix.info.target }}.tar.gz btm
+          mv btm ../target/${{ matrix.info.target }}/release/
+          chmod +x ../target/${{ matrix.info.target }}/release/btm
+
+      - name: Extract completion files from artifact
+        shell: bash
+        run: |
+          mkdir -p completion
+          tar -xzf prebuilt-artifact/completion.tar.gz -C completion
+
+      - name: Extract manpage files from artifact
+        shell: bash
+        run: |
+          mkdir -p manpage
+          tar -xzf prebuilt-artifact/manpage.tar.gz -C manpage
 
       - name: Zip manpage
         run: |
@@ -505,8 +515,6 @@ jobs:
 
       - name: Build Debian release (non-container)
         if: ${{ matrix.info.container == '' }}
-        env:
-          BTM_GENERATE: true
         run: |
           cargo install cargo-deb --version 3.5.0 --locked
           cargo deb --no-build --target ${{ matrix.info.target }}
@@ -514,8 +522,6 @@ jobs:
 
       - name: Build Debian release (container)
         if: ${{ matrix.info.container != '' }}
-        env:
-          BTM_GENERATE: true
         run: |
           docker pull ${{ matrix.info.container }}
           docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.info.container }} "--no-build --variant ${{ matrix.info.dpkg }} --target ${{ matrix.info.target }}" "/volume"
@@ -564,6 +570,7 @@ jobs:
 
   build-rpm:
     name: "Build .rpm software packages"
+    needs: build-binaries
     runs-on: ubuntu-24.04
     container: ghcr.io/clementtsang/almalinux-8
     timeout-minutes: 12
@@ -592,32 +599,38 @@ jobs:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
-      # TODO: Could I use the previous jobs to skip this call?
-      - name: Build
-        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        env:
-          BTM_GENERATE: true
-          BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
-          CROSS_CONTAINER_IN_CONTAINER: true
+      - name: Download prebuilt binary artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
-          command: build
-          use-cross: ${{ matrix.info.cross || false }}
-          args: --release --locked --features deploy --target ${{ matrix.info.target }}
-          cross-version: ${{ env.CROSS_VERSION }}
+          name: "release-${{ matrix.info.target }}"
+          path: prebuilt-artifact
 
-      - name: Move automatically generated completion/manpage
+      - name: Extract prebuilt binary to target directory
         shell: bash
         run: |
-          mv "$COMPLETION_DIR" completion
-          mv "$MANPAGE_DIR" manpage
+          mkdir -p target/${{ matrix.info.target }}/release
+          cd prebuilt-artifact
+          tar -xzf bottom_${{ matrix.info.target }}.tar.gz btm
+          mv btm ../target/${{ matrix.info.target }}/release/
+          chmod +x ../target/${{ matrix.info.target }}/release/btm
+
+      - name: Extract completion files from artifact
+        shell: bash
+        run: |
+          mkdir -p completion
+          tar -xzf prebuilt-artifact/completion.tar.gz -C completion
+
+      - name: Extract manpage files from artifact
+        shell: bash
+        run: |
+          mkdir -p manpage
+          tar -xzf prebuilt-artifact/manpage.tar.gz -C manpage
 
       - name: Zip manpage
         run: |
           gzip ./manpage/btm.1
 
       - name: Build rpm release
-        env:
-          BTM_GENERATE: true
         run: |
           cargo install cargo-generate-rpm --version 0.20.0 --locked
           cargo generate-rpm --target ${{ matrix.info.target }}
