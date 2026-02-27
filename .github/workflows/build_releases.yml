@@ -7,6 +7,7 @@
 # - .rpm releases
 #
 # TODO: Break this up into scripts instead.
+# TODO: Trigger this in CI as well if this file changes, so I don't have to spam nightly builds.
 
 name: "build releases"
 
@@ -48,107 +49,123 @@ jobs:
           #
           # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
           - {
-              os: "ubuntu-22.04",
               target: "x86_64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: false,
               generate-other-artifacts: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "i686-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "x86_64-unknown-linux-musl",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "i686-unknown-linux-musl",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "aarch64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "aarch64-unknown-linux-musl",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # macOS (x86-64 and aarch64)
           - {
-              os: "macos-15-intel",
               target: "x86_64-apple-darwin",
+              os: "macos-15-intel",
               cross: false,
             }
-          - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
+          - { target: "aarch64-apple-darwin", os: "macos-15", cross: false }
 
           # Windows (x86-64, x86)
           - {
-              os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
+              os: "windows-2022",
               cross: false,
             }
-          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false }
+          - { target: "i686-pc-windows-msvc", os: "windows-2022", cross: false }
           - {
-              os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
+              os: "windows-2022",
               cross: false,
             }
 
           # ======= Unsupported targets =======
           # armv7
           - {
-              os: "ubuntu-22.04",
               target: "armv7-unknown-linux-gnueabihf",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "armv7-unknown-linux-musleabihf",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-22.04",
               target: "powerpc64le-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # Risc-V 64gc
           - {
-              os: "ubuntu-22.04",
               target: "riscv64gc-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # Android
           - {
-              os: "ubuntu-latest",
               target: "aarch64-linux-android",
+              os: "ubuntu-latest",
               cross: true,
-              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
+              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
               no-default-features: true,
             }
 
           # Loongarch
           - {
-              os: "ubuntu-22.04",
               target: "loongarch64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
-              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
+              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
             }
 
           # Windows ARM, may promote to official.
           - {
-              os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
+              os: "windows-11-arm",
               cross: false,
+            }
+
+          # FreeBSD
+          - {
+              target: "x86_64-unknown-freebsd",
+              os: "ubuntu-22.04",
+              cross: true,
+              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
+            }
+
+          # NetBSD
+          - {
+              target: "x86_64-unknown-netbsd",
+              os: "ubuntu-22.04",
+              cross: true,
+              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
             }
     steps:
       - name: Checkout repository
@@ -295,110 +312,6 @@ jobs:
         with:
           retention-days: 3
           name: "release-${{ matrix.info.target }}"
-          path: release
-
-  build-freebsd:
-    name: "Build FreeBSD binaries"
-    runs-on: "ubuntu-latest"
-    timeout-minutes: 12
-    strategy:
-      fail-fast: false
-      matrix:
-        info:
-          # Seems like cross's FreeBSD image is a bit broken? I get build errors,
-          # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
-
-          # Alas, that's why we do it with VMs.
-
-          - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
-          - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
-          - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
-    steps:
-      - name: Checkout repository
-        if: matrix.info.container == ''
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 1
-
-      # The VM jobs randomly fail, and since GHA can't retry, we retry manually.
-      - name: Build (Attempt 1)
-        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
-        with:
-          release: "${{ matrix.info.os_release }}"
-          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
-          usesh: true
-          prepare: |
-            pkg install -y curl bash
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
-          run: |
-            . "$HOME/.cargo/env"
-            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
-        id: upload_attempt_1
-        continue-on-error: true
-
-      - name: Build (Attempt 2)
-        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
-        with:
-          release: "${{ matrix.info.os_release }}"
-          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
-          usesh: true
-          prepare: |
-            pkg install -y curl bash
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
-          run: |
-            . "$HOME/.cargo/env"
-            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
-        if: steps.upload_attempt_1.outcome == 'failure'
-        id: upload_attempt_2
-        continue-on-error: true
-
-      - name: Build (Attempt 3)
-        uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
-        with:
-          release: "${{ matrix.info.os_release }}"
-          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
-          usesh: true
-          prepare: |
-            pkg install -y curl bash
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
-          run: |
-            . "$HOME/.cargo/env"
-            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
-        if: steps.upload_attempt_2.outcome == 'failure'
-        id: upload_attempt_3
-
-      - name: Move automatically generated completion/manpage
-        shell: bash
-        run: |
-          mv "$COMPLETION_DIR" completion
-          mv "$MANPAGE_DIR" manpage
-
-      - name: Bundle release and completion
-        shell: bash
-        run: |
-          cp target/${{ matrix.info.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.info.target }}-${{ matrix.info.os_release }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.info.target }}-${{ matrix.info.os_release }}.tar.gz" >> $GITHUB_ENV
-
-      - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
-        with:
-          subject-path: ${{ env.ASSET }}
-
-      - name: Create release directory for artifact, move file
-        shell: bash
-        run: |
-          mkdir release
-          mv ${{ env.ASSET }} release/
-
-      - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
-        with:
-          retention-days: 3
-          name: "release-${{ matrix.info.target }}-${{ matrix.info.os_release }}"
           path: release
 
   build-msi:
