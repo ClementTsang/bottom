@@ -434,24 +434,31 @@ jobs:
       matrix:
         info:
           - { target: "x86_64-unknown-linux-gnu", dpkg: amd64 }
-          - { target: "x86_64-unknown-linux-musl", dpkg: amd64 }
+          - { target: "x86_64-unknown-linux-musl", cross: true, dpkg: amd64 }
           - {
               target: "aarch64-unknown-linux-gnu",
+              cross: false,
               dpkg: arm64,
               os: "ubuntu-22.04-arm",
             }
+          # The cross images don't work with ARM runners, unfortunately. We could build it on x86 with cross
+          # and then copy it over to an ARM runner but that's kind of annoying, so I'll skip this for now.
+          # TODO: Maybe improve how we do the .deb software building step?
           - {
               target: "aarch64-unknown-linux-musl",
+              cross: true,
               dpkg: arm64,
-              os: "ubuntu-22.04-arm",
+              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
             }
           - {
               target: "armv7-unknown-linux-gnueabihf",
+              cross: true,
               dpkg: armhf,
               container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
             }
           - {
               target: "armv7-unknown-linux-musleabihf",
+              cross: true,
               dpkg: armhf,
               container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
             }
@@ -495,23 +502,19 @@ jobs:
         run: |
           gzip ./manpage/btm.1
 
-      - name: Read Rust version
-        shell: bash
-        if: ${{ matrix.info.container != '' }}
+      - name: Build Debian release (non-container)
+        if: ${{ matrix.info.container == '' }}
+        env:
+          BTM_GENERATE: true
         run: |
-          VER=$(cat .github/ci/rust_version.txt)
-          echo "RUST_VERSION=$VER" >> $GITHUB_ENV
-          echo "$VER"
-
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
-        if: ${{ matrix.info.container != '' }}
-        with:
-          toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
-          target: ${{ matrix.info.target }}
+          cargo install cargo-deb --version 3.5.0 --locked
+          cargo deb --no-build --target ${{ matrix.info.target }}
+          cp ./target/debian/bottom_*.deb .
 
       - name: Build Debian release (container)
         if: ${{ matrix.info.container != '' }}
+        env:
+          BTM_GENERATE: true
         run: |
           docker pull ${{ matrix.info.container }}
           docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.info.container }} "--no-build --variant ${{ matrix.info.dpkg }} --target ${{ matrix.info.target }}" "/volume"
@@ -519,13 +522,6 @@ jobs:
           TMP_NAME=$(find bottom-*.deb)
           VERSION=${{ matrix.info.dpkg }}
           mv $TMP_NAME $(echo $TMP_NAME | sed "s/-$VERSION//")
-
-      - name: Build Debian release (non-container)
-        if: ${{ matrix.info.container == '' }}
-        run: |
-          cargo install cargo-deb --version 3.5.0 --locked
-          cargo deb --no-build --target ${{ matrix.info.target }}
-          cp ./target/debian/bottom_*.deb .
 
       - name: Rename if it is a musl target
         if: contains(matrix.info.target, 'musl')
@@ -575,7 +571,7 @@ jobs:
       matrix:
         info:
           - { target: "x86_64-unknown-linux-gnu" }
-          - { target: "x86_64-unknown-linux-musl" }
+          - { target: "x86_64-unknown-linux-musl", cross: true }
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -600,10 +596,11 @@ jobs:
         env:
           BTM_GENERATE: true
           BTM_BUILD_RELEASE_CALLER: ${{ inputs.caller }}
+          CROSS_CONTAINER_IN_CONTAINER: true
         with:
           command: build
-          args: --release --locked --features deploy --target ${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross || false }}
+          args: --release --locked --features deploy --target ${{ matrix.info.target }}
           cross-version: ${{ env.CROSS_VERSION }}
 
       - name: Move automatically generated completion/manpage
@@ -617,6 +614,8 @@ jobs:
           gzip ./manpage/btm.1
 
       - name: Build rpm release
+        env:
+          BTM_GENERATE: true
         run: |
           cargo install cargo-generate-rpm --version 0.20.0 --locked
           cargo generate-rpm --target ${{ matrix.info.target }}
