@@ -70,12 +70,12 @@ jobs:
             }
           - {
               target: "aarch64-unknown-linux-gnu",
-              os: "ubuntu-22.04",
+              os: "ubuntu-22.04-arm",
               cross: false,
             }
           - {
               target: "aarch64-unknown-linux-musl",
-              os: "ubuntu-22.04",
+              os: "ubuntu-22.04-arm",
               cross: true,
             }
 
@@ -130,7 +130,7 @@ jobs:
           # Android
           - {
               target: "aarch64-linux-android",
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               cross: true,
               no-default-features: true,
             }
@@ -387,7 +387,7 @@ jobs:
 
   build-cirrus:
     name: "Build using Cirrus CI"
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-24.04"
     timeout-minutes: 12
     steps:
       - name: Checkout repository
@@ -430,7 +430,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
         info:
           - { target: "x86_64-unknown-linux-gnu", dpkg: amd64 }
           - { target: "x86_64-unknown-linux-musl", cross: true, dpkg: amd64 }
@@ -560,7 +559,7 @@ jobs:
 
   build-rpm:
     name: "Build .rpm software packages"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: ghcr.io/clementtsang/almalinux-8
     timeout-minutes: 12
     strategy:

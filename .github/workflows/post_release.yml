@@ -21,7 +21,7 @@ env:
 jobs:
   initialize:
     name: initialize
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ env.VERSION }}
     steps:
@@ -43,7 +43,7 @@ jobs:
 
   docs:
     needs: [initialize]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Set release version
         shell: bash
@@ -81,7 +81,7 @@ jobs:
 
   chocolatey:
     needs: [initialize]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Set release version
         shell: bash
