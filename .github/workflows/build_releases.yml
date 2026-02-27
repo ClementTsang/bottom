@@ -28,6 +28,7 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
   COMPLETION_DIR: "target/tmp/bottom/completion/"
   MANPAGE_DIR: "target/tmp/bottom/manpage/"
+  CROSS_VERSION: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863"
 
 permissions:
   id-token: write
@@ -133,7 +134,6 @@ jobs:
               target: "aarch64-linux-android",
               os: "ubuntu-latest",
               cross: true,
-              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
               no-default-features: true,
             }
 
@@ -142,7 +142,6 @@ jobs:
               target: "loongarch64-unknown-linux-gnu",
               os: "ubuntu-22.04",
               cross: true,
-              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
             }
 
           # Windows ARM, may promote to official.
@@ -157,16 +156,10 @@ jobs:
               target: "x86_64-unknown-freebsd",
               os: "ubuntu-22.04",
               cross: true,
-              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
             }
 
           # NetBSD
-          - {
-              target: "x86_64-unknown-netbsd",
-              os: "ubuntu-22.04",
-              cross: true,
-              cross-version: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863",
-            }
+          - { target: "x86_64-unknown-netbsd", os: "ubuntu-22.04", cross: true }
     steps:
       - name: Checkout repository
         if: matrix.info.container == ''
@@ -217,7 +210,7 @@ jobs:
           command: build
           args: --release --locked --target=${{ matrix.info.target }} ${{ env.BUILD_FEATURES }}
           use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+          cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
 
       - name: Move automatically generated completion/manpage
         shell: bash
@@ -496,7 +489,7 @@ jobs:
           command: build
           args: --release --locked --features deploy --target ${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross || false }}
-          cross-version: 0.2.5
+          cross-version: ${{ env.CROSS_VERSION }}
 
       - name: Move automatically generated completion/manpage
         shell: bash
@@ -608,7 +601,7 @@ jobs:
           command: build
           use-cross: ${{ matrix.info.cross || false }}
           args: --release --locked --features deploy --target ${{ matrix.info.target }}
-          cross-version: 0.2.5
+          cross-version: ${{ env.CROSS_VERSION }}
 
       - name: Move automatically generated completion/manpage
         shell: bash
