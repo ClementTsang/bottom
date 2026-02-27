@@ -47,8 +47,6 @@ jobs:
         info:
           # ======= Supported targets =======
           # Linux (x86-64, x86, aarch64)
-          #
-          # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
           - {
               target: "x86_64-unknown-linux-gnu",
               os: "ubuntu-22.04",
@@ -73,7 +71,7 @@ jobs:
           - {
               target: "aarch64-unknown-linux-gnu",
               os: "ubuntu-22.04",
-              cross: true,
+              cross: false,
             }
           - {
               target: "aarch64-unknown-linux-musl",
