@@ -32,7 +32,7 @@ concurrency:
 jobs:
   # Check if things should be skipped.
   pre-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
@@ -45,8 +45,6 @@ jobs:
           do_not_skip: '["workflow_dispatch", "push"]'
 
   # Runs rustfmt + tests + clippy on the main supported platforms.
-  #
-  # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
   supported:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
@@ -57,14 +55,14 @@ jobs:
       matrix:
         info:
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04-arm",
               target: "aarch64-unknown-linux-gnu",
-              cross: true,
+              cross: false,
             }
           - { os: "macos-15", target: "x86_64-apple-darwin", cross: false }
           - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
@@ -138,17 +136,17 @@ jobs:
         info:
           # x86 or x86-64
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "i686-unknown-linux-musl",
               cross: true,
             }
@@ -162,7 +160,7 @@ jobs:
 
           # Beta
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: "beta",
@@ -182,42 +180,42 @@ jobs:
 
           # armv7
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
             }
 
           # armv6
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "arm-unknown-linux-gnueabihf",
               cross: true,
             }
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
             }
 
           # Risc-V 64gc
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
             }
 
           # Loongarch
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "loongarch64-unknown-linux-gnu",
               cross: true,
             }
 
           # Android ARM64
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "aarch64-linux-android",
               cross: true,
               no-default-features: true,
@@ -234,17 +232,13 @@ jobs:
 
           # FreeBSD
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "x86_64-unknown-freebsd",
               cross: true,
             }
 
           # NetBSD
-          - {
-              os: "ubuntu-latest",
-              target: "x86_64-unknown-netbsd",
-              cross: true,
-            }
+          - { os: "ubuntu-24.04", target: "x86_64-unknown-netbsd", cross: true }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     timeout-minutes: 12
@@ -315,7 +309,7 @@ jobs:
     name: "CI Pass Check"
     needs: [supported, unsupported-check]
     if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' }}
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-24.04"
     steps:
       - name: CI Passed
         if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.unsupported-check.result == 'success' || needs.unsupported-check.result == 'skipped') }}

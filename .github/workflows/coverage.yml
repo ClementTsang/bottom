@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   pre-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
@@ -42,7 +42,7 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          - { os: "ubuntu-latest", target: "x86_64-unknown-linux-gnu" }
+          - { os: "ubuntu-24.04", target: "x86_64-unknown-linux-gnu" }
           - { os: "macos-14", target: "aarch64-apple-darwin", cross: false }
           - { os: "windows-2022", target: "x86_64-pc-windows-msvc" }
     steps:
