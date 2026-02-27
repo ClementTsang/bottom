@@ -6,6 +6,8 @@
 # - .deb releases
 # - .rpm releases
 #
+# Note that for musl targets, we use cross to avoid having to set up the dependencies for musl.
+#
 # TODO: Break this up into scripts instead.
 # TODO: Trigger this in CI as well if this file changes, so I don't have to spam nightly builds.
 
@@ -443,7 +445,7 @@ jobs:
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
               dpkg: armhf,
-              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
+              os: "ubuntu-22.04-arm",
             }
           - {
               target: "aarch64-unknown-linux-musl",
