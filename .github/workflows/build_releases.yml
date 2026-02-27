@@ -481,7 +481,6 @@ jobs:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
-      # TODO: Could I use the previous jobs to skip this call?
       - name: Build
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         env:
@@ -592,7 +591,6 @@ jobs:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
-      # TODO: Could I use the previous jobs to skip this call?
       - name: Build
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         env:
