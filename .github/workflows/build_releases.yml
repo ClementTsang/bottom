@@ -7,6 +7,7 @@
 # - .rpm releases
 #
 # TODO: Break this up into scripts instead.
+# TODO: Trigger this in CI as well if this file changes, so I don't have to spam nightly builds.
 
 name: "build releases"
 
