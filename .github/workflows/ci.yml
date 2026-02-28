@@ -121,13 +121,18 @@ jobs:
         env:
           RUST_BACKTRACE: full
 
-  # Try running cargo clippy on all other platforms.
+  # Run checks for unsupported platforms.
+  #
+  # Each target specifies a list of checks to run via the 'checks' array property.
+  # Available checks:
+  #   - format: Run cargo fmt --check
+  #   - clippy: Clippy with all features (warnings allowed)
+  #   - clippy-deny: Clippy with all features (deny on warnings, like supported job)
+  #   - clippy-no-features: Clippy with no features (warnings allowed)
+  #   - test: Run cargo test
   #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
-  #
-  # TODO: Run fmt for some of these as well, perhaps? I guess what I'm thinking is that each job will have a "support"
-  # level (or array of checks?), which determines what checks are run. We can document this as well.
   unsupported-check:
     needs: pre-job
     strategy:
@@ -139,23 +144,41 @@ jobs:
               os: "ubuntu-24.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
           - {
               os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
           - {
               os: "ubuntu-24.04",
               target: "i686-unknown-linux-musl",
               cross: true,
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
 
-          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false }
+          - {
+              os: "windows-2022",
+              target: "i686-pc-windows-msvc",
+              cross: false,
+              checks: ["format", "clippy", "clippy-deny", "test"],
+            }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
               cross: false,
+              checks: ["format", "clippy", "clippy-deny", "test"],
+            }
+
+          # Windows ARM
+          # TODO: Promote to official?
+          - {
+              os: "windows-11-arm",
+              target: "aarch64-pc-windows-msvc",
+              cross: false,
+              checks: ["format", "clippy", "test"],
             }
 
           # Beta
@@ -164,18 +187,21 @@ jobs:
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: "beta",
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
           - {
               os: "macos-15",
               target: "aarch64-apple-darwin",
               cross: false,
               rust: "beta",
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
               rust: "beta",
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
 
           # armv7
@@ -183,6 +209,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
+              checks: ["clippy-no-features"],
             }
 
           # armv6
@@ -190,6 +217,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "arm-unknown-linux-gnueabihf",
               cross: true,
+              checks: ["clippy-no-features"],
             }
 
           # PowerPC 64 LE
@@ -197,6 +225,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
+              checks: ["clippy-no-features"],
             }
 
           # Risc-V 64gc
@@ -204,6 +233,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
+              checks: ["clippy-no-features"],
             }
 
           # Loongarch
@@ -211,6 +241,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "loongarch64-unknown-linux-gnu",
               cross: true,
+              checks: ["clippy-no-features"],
             }
 
           # Android ARM64
@@ -218,27 +249,26 @@ jobs:
               os: "ubuntu-24.04",
               target: "aarch64-linux-android",
               cross: true,
-              no-default-features: true,
-              no-clippy: true,
-            }
-
-          # Windows ARM.
-          # TODO: Promote to official?
-          - {
-              os: "windows-11-arm",
-              target: "aarch64-pc-windows-msvc",
-              cross: false,
+              checks: ["clippy-no-features"],
             }
 
           # FreeBSD
+          # TODO: Fix tests, see https://github.com/cross-rs/cross/wiki/FAQ#running-bsd-tests - tests don't work! May need
+          # to do the VM thing again.
           - {
               os: "ubuntu-24.04",
               target: "x86_64-unknown-freebsd",
               cross: true,
+              checks: ["format", "clippy"],
             }
 
           # NetBSD
-          - { os: "ubuntu-24.04", target: "x86_64-unknown-netbsd", cross: true }
+          - {
+              os: "ubuntu-24.04",
+              target: "x86_64-unknown-netbsd",
+              cross: true,
+              checks: ["clippy"],
+            }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     timeout-minutes: 12
@@ -258,7 +288,7 @@ jobs:
         with:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
-          components: clippy
+          components: ${{ contains(matrix.info.checks, 'format') && 'rustfmt, clippy' || 'clippy' }}
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
@@ -267,26 +297,51 @@ jobs:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      # TODO: Make this deny warnings
-      - name: Clippy (default features)
+      - name: Check cargo fmt
+        if: ${{ contains(matrix.info.checks, 'format') }}
+        run: cargo fmt --all -- --check
+
+      - name: Run tests
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ matrix.info.no-default-features != true }}
+        if: ${{ contains(matrix.info.checks, 'test') }}
         with:
-          command: clippy
-          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
+          command: test
+          args: --no-fail-fast --locked --target=${{ matrix.info.target }} -- --nocapture --quiet
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
+        env:
+          RUST_BACKTRACE: full
 
-      - name: Clippy (no features enabled)
+      - name: Set up clippy configuration
+        shell: bash
+        run: |
+          if [[ "${{ contains(matrix.info.checks, 'clippy') && contains(matrix.info.checks, 'clippy-no-features') }}" == "true" ]]; then
+            echo "Error: Cannot have both 'clippy' (all-features) and 'clippy-no-features' in the same checks array. They are mutually exclusive."
+            exit 1
+          fi
+
+          # Determine deny vs warn flags
+          if [[ "${{ contains(matrix.info.checks, 'clippy-deny') }}" == "true" ]]; then
+            echo "CLIPPY_FLAGS_EXTRA=-D warnings" >> $GITHUB_ENV
+          else
+            echo "CLIPPY_FLAGS_EXTRA=" >> $GITHUB_ENV
+          fi
+
+          # Determine all-features (default) vs no-features
+          if [[ "${{ contains(matrix.info.checks, 'clippy-no-features') }}" == "true" ]]; then
+            echo "FEATURE_FLAGS=--no-default-features" >> $GITHUB_ENV
+          else
+            echo "FEATURE_FLAGS=" >> $GITHUB_ENV
+          fi
+
+      - name: Run clippy
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ matrix.info.no-default-features == true }}
+        if: ${{ contains(matrix.info.checks, 'clippy') || contains(matrix.info.checks, 'clippy-no-features') }}
         with:
           command: clippy
-          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
+          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked ${{ env.FEATURE_FLAGS }} -- ${{ env.CLIPPY_FLAGS_EXTRA }}
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
-
-        # TODO: Run tests? Maybe skip some tests though.
 
   # # Check BSD platforms using a VM layer.
   # check-bsd-vm:
