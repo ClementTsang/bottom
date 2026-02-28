@@ -256,7 +256,6 @@ jobs:
             }
 
           # FreeBSD
-          # Tests use a retry mechanism since cross has known issues with BSD test execution
           - {
               os: "ubuntu-24.04",
               target: "x86_64-unknown-freebsd",
@@ -316,6 +315,7 @@ jobs:
         env:
           RUST_BACKTRACE: full
 
+      # *BSD targets run tests in a VM due to cross limitations.
       - name: Run tests (BSD)
         if: ${{ contains(matrix.info.checks, 'test') && contains(matrix.info.target, 'bsd') }}
         uses: ./.github/actions/test-bsd-target

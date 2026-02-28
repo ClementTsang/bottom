@@ -1,5 +1,5 @@
 name: Test BSD Target
-description: Run tests for a BSD target using VMs, with retries on failure.
+description: Run tests for a BSD target using VMs, with retries on failure. Needed as cross doesn't support them (https://github.com/cross-rs/cross/wiki/FAQ#running-bsd-tests).
 
 inputs:
   target:
