@@ -126,12 +126,12 @@ jobs:
   # Each target specifies a list of checks to run via the 'checks' array property.
   # Available checks:
   #   - format: Run cargo fmt --check
-  #   - clippy-all-features-warn: Clippy with all features (warnings allowed)
-  #   - clippy-all-features-deny: Clippy with all features (deny on warnings, like supported job)
-  #   - clippy-no-features-warn: Clippy with no features (warnings allowed)
+  #   - clippy: Clippy with all features (warnings allowed)
+  #   - clippy-deny: Clippy with all features (deny on warnings, like supported job)
+  #   - clippy-no-features: Clippy with no features (warnings allowed)
   #   - test: Run cargo test
   #
-  # Note: If 'clippy-all-features-warn' is present, 'clippy-no-features-warn' is automatically skipped.
+  # Note: If 'clippy' is present, 'clippy-no-features' is automatically skipped.
   # This avoids redundant checks when all-features provides sufficient coverage.
   #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
@@ -147,27 +147,41 @@ jobs:
               os: "ubuntu-24.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
-              checks: ["format", "clippy-all-features-warn", "test"],
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
           - {
               os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
-              checks: ["format", "clippy-all-features-warn", "test"],
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
           - {
               os: "ubuntu-24.04",
               target: "i686-unknown-linux-musl",
               cross: true,
-              checks: ["format", "clippy-all-features-warn", "test"],
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
 
-          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false, checks: ["format", "clippy-all-features-warn", "test"] }
+          - {
+              os: "windows-2022",
+              target: "i686-pc-windows-msvc",
+              cross: false,
+              checks: ["format", "clippy", "clippy-deny", "test"],
+            }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
               cross: false,
-              checks: ["format", "clippy-all-features-warn", "test"],
+              checks: ["format", "clippy", "clippy-deny", "test"],
+            }
+
+          # Windows ARM
+          # TODO: Promote to official?
+          - {
+              os: "windows-11-arm",
+              target: "aarch64-pc-windows-msvc",
+              cross: false,
+              checks: ["format", "clippy", "test"],
             }
 
           # Beta
@@ -176,21 +190,21 @@ jobs:
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: "beta",
-              checks: ["format", "clippy-all-features-deny", "clippy-no-features-warn", "test"],
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
           - {
               os: "macos-15",
               target: "aarch64-apple-darwin",
               cross: false,
               rust: "beta",
-              checks: ["format", "clippy-all-features-deny", "clippy-no-features-warn", "test"],
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
               rust: "beta",
-              checks: ["format", "clippy-all-features-deny", "clippy-no-features-warn", "test"],
+              checks: ["format", "clippy", "clippy-deny", "test"],
             }
 
           # armv7
@@ -198,7 +212,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
-              checks: ["clippy-no-features-warn"],
+              checks: ["clippy-no-features"],
             }
 
           # armv6
@@ -206,7 +220,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "arm-unknown-linux-gnueabihf",
               cross: true,
-              checks: ["clippy-no-features-warn"],
+              checks: ["clippy-no-features"],
             }
 
           # PowerPC 64 LE
@@ -214,7 +228,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
-              checks: ["clippy-no-features-warn"],
+              checks: ["clippy-no-features"],
             }
 
           # Risc-V 64gc
@@ -222,7 +236,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
-              checks: ["clippy-no-features-warn"],
+              checks: ["clippy-no-features"],
             }
 
           # Loongarch
@@ -230,7 +244,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "loongarch64-unknown-linux-gnu",
               cross: true,
-              checks: ["clippy-no-features-warn"],
+              checks: ["clippy-no-features"],
             }
 
           # Android ARM64
@@ -238,16 +252,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "aarch64-linux-android",
               cross: true,
-              checks: ["clippy-all-features-warn"],
-            }
-
-          # Windows ARM.
-          # TODO: Promote to official?
-          - {
-              os: "windows-11-arm",
-              target: "aarch64-pc-windows-msvc",
-              cross: false,
-              checks: ["format", "clippy-all-features-warn", "test"],
+              checks: ["clippy"],
             }
 
           # FreeBSD
@@ -255,11 +260,16 @@ jobs:
               os: "ubuntu-24.04",
               target: "x86_64-unknown-freebsd",
               cross: true,
-              checks: ["format", "clippy-all-features-warn", "test"],
+              checks: ["format", "clippy", "test"],
             }
 
           # NetBSD
-          - { os: "ubuntu-24.04", target: "x86_64-unknown-netbsd", cross: true, checks: ["clippy-all-features-warn"] }
+          - {
+              os: "ubuntu-24.04",
+              target: "x86_64-unknown-netbsd",
+              cross: true,
+              checks: ["clippy"],
+            }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     timeout-minutes: 12
@@ -289,33 +299,37 @@ jobs:
           cache-all-crates: true
 
       - name: Check cargo fmt
-        run: cargo fmt --all -- --check
         if: ${{ contains(matrix.info.checks, 'format') }}
+        run: cargo fmt --all -- --check
 
-      - name: Clippy (all features, warn)
+      - name: Set up clippy configuration
+        shell: bash
+        run: |
+          if [[ "${{ contains(matrix.info.checks, 'clippy') && contains(matrix.info.checks, 'clippy-no-features') }}" == "true" ]]; then
+            echo "Error: Cannot have both 'clippy' (all-features) and 'clippy-no-features' in the same checks array. They are mutually exclusive."
+            exit 1
+          fi
+
+          # Determine deny vs warn flags
+          if [[ "${{ contains(matrix.info.checks, 'clippy-deny') }}" == "true" ]]; then
+            echo "CLIPPY_FLAGS_EXTRA=-D warnings" >> $GITHUB_ENV
+          else
+            echo "CLIPPY_FLAGS_EXTRA=" >> $GITHUB_ENV
+          fi
+
+          # Determine all-features (default) vs no-features
+          if [[ "${{ contains(matrix.info.checks, 'clippy-no-features') }}" == "true" ]]; then
+            echo "FEATURE_FLAGS=--no-default-features" >> $GITHUB_ENV
+          else
+            echo "FEATURE_FLAGS=" >> $GITHUB_ENV
+          fi
+
+      - name: Run clippy
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ contains(matrix.info.checks, 'clippy-all-features-warn') }}
+        if: ${{ contains(matrix.info.checks, 'clippy') || contains(matrix.info.checks, 'clippy-no-features') }}
         with:
           command: clippy
-          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
-          use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
-
-      - name: Clippy (all features, deny)
-        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ contains(matrix.info.checks, 'clippy-all-features-deny') }}
-        with:
-          command: clippy
-          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked -- -D warnings
-          use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
-
-      - name: Clippy (no features, warn)
-        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ contains(matrix.info.checks, 'clippy-no-features-warn') && !contains(matrix.info.checks, 'clippy-all-features-warn') }}
-        with:
-          command: clippy
-          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
+          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked ${{ env.FEATURE_FLAGS }} -- ${{ env.CLIPPY_FLAGS_EXTRA }}
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
 
