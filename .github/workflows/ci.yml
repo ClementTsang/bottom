@@ -123,11 +123,19 @@ jobs:
 
   # Try running cargo clippy on all other platforms.
   #
+  # Each target specifies a list of checks to run via the 'checks' array property.
+  # Available checks:
+  #   - format: Run cargo fmt --check
+  #   - clippy-all-features-warn: Clippy with all features (warnings allowed)
+  #   - clippy-all-features-deny: Clippy with all features (deny on warnings, like supported job)
+  #   - clippy-no-features-warn: Clippy with no features (warnings allowed)
+  #   - test: Run cargo test
+  #
+  # Note: If 'clippy-all-features-warn' is present, 'clippy-no-features-warn' is automatically skipped.
+  # This avoids redundant checks when all-features provides sufficient coverage.
+  #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
-  #
-  # TODO: Run fmt for some of these as well, perhaps? I guess what I'm thinking is that each job will have a "support"
-  # level (or array of checks?), which determines what checks are run. We can document this as well.
   unsupported-check:
     needs: pre-job
     strategy:
@@ -139,23 +147,27 @@ jobs:
               os: "ubuntu-24.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
+              checks: ["format", "clippy-all-features-warn", "test"],
             }
           - {
               os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
+              checks: ["format", "clippy-all-features-warn", "test"],
             }
           - {
               os: "ubuntu-24.04",
               target: "i686-unknown-linux-musl",
               cross: true,
+              checks: ["format", "clippy-all-features-warn", "test"],
             }
 
-          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false }
+          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false, checks: ["format", "clippy-all-features-warn", "test"] }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
               cross: false,
+              checks: ["format", "clippy-all-features-warn", "test"],
             }
 
           # Beta
@@ -164,18 +176,21 @@ jobs:
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: "beta",
+              checks: ["format", "clippy-all-features-deny", "clippy-no-features-warn", "test"],
             }
           - {
               os: "macos-15",
               target: "aarch64-apple-darwin",
               cross: false,
               rust: "beta",
+              checks: ["format", "clippy-all-features-deny", "clippy-no-features-warn", "test"],
             }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
               rust: "beta",
+              checks: ["format", "clippy-all-features-deny", "clippy-no-features-warn", "test"],
             }
 
           # armv7
@@ -183,6 +198,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
+              checks: ["clippy-no-features-warn"],
             }
 
           # armv6
@@ -190,6 +206,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "arm-unknown-linux-gnueabihf",
               cross: true,
+              checks: ["clippy-no-features-warn"],
             }
 
           # PowerPC 64 LE
@@ -197,6 +214,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
+              checks: ["clippy-no-features-warn"],
             }
 
           # Risc-V 64gc
@@ -204,6 +222,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
+              checks: ["clippy-no-features-warn"],
             }
 
           # Loongarch
@@ -211,6 +230,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "loongarch64-unknown-linux-gnu",
               cross: true,
+              checks: ["clippy-no-features-warn"],
             }
 
           # Android ARM64
@@ -218,8 +238,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "aarch64-linux-android",
               cross: true,
-              no-default-features: true,
-              no-clippy: true,
+              checks: ["clippy-all-features-warn"],
             }
 
           # Windows ARM.
@@ -228,6 +247,7 @@ jobs:
               os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
               cross: false,
+              checks: ["format", "clippy-all-features-warn", "test"],
             }
 
           # FreeBSD
@@ -235,10 +255,11 @@ jobs:
               os: "ubuntu-24.04",
               target: "x86_64-unknown-freebsd",
               cross: true,
+              checks: ["format", "clippy-all-features-warn", "test"],
             }
 
           # NetBSD
-          - { os: "ubuntu-24.04", target: "x86_64-unknown-netbsd", cross: true }
+          - { os: "ubuntu-24.04", target: "x86_64-unknown-netbsd", cross: true, checks: ["clippy-all-features-warn"] }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     timeout-minutes: 12
@@ -258,7 +279,7 @@ jobs:
         with:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
-          components: clippy
+          components: ${{ contains(matrix.info.checks, 'format') && 'rustfmt, clippy' || 'clippy' }}
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
@@ -267,26 +288,47 @@ jobs:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      # TODO: Make this deny warnings
-      - name: Clippy (default features)
+      - name: Check cargo fmt
+        run: cargo fmt --all -- --check
+        if: ${{ contains(matrix.info.checks, 'format') }}
+
+      - name: Clippy (all features, warn)
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ matrix.info.no-default-features != true }}
+        if: ${{ contains(matrix.info.checks, 'clippy-all-features-warn') }}
         with:
           command: clippy
           args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
 
-      - name: Clippy (no features enabled)
+      - name: Clippy (all features, deny)
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ matrix.info.no-default-features == true }}
+        if: ${{ contains(matrix.info.checks, 'clippy-all-features-deny') }}
+        with:
+          command: clippy
+          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked -- -D warnings
+          use-cross: ${{ matrix.info.cross }}
+          cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
+
+      - name: Clippy (no features, warn)
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
+        if: ${{ contains(matrix.info.checks, 'clippy-no-features-warn') && !contains(matrix.info.checks, 'clippy-all-features-warn') }}
         with:
           command: clippy
           args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
 
-        # TODO: Run tests? Maybe skip some tests though.
+      - name: Run tests
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
+        if: ${{ contains(matrix.info.checks, 'test') }}
+        with:
+          command: test
+          args: --no-fail-fast --locked --target=${{ matrix.info.target }} -- --nocapture --quiet
+          use-cross: ${{ matrix.info.cross }}
+          cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
+        env:
+          RUST_BACKTRACE: full
 
   # # Check BSD platforms using a VM layer.
   # check-bsd-vm:
