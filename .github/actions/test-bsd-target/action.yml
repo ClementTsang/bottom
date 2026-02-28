@@ -1,0 +1,42 @@
+name: Test BSD Target
+description: Run tests for a BSD target using VMs, with retries on failure.
+
+inputs:
+  target:
+    description: "Rust target triple (e.g., x86_64-unknown-freebsd)"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: FreeBSD Test (Attempt 1)
+      uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
+      if: ${{ inputs.target == 'x86_64-unknown-freebsd' }}
+      with:
+        release: "${{ inputs.os-release }}"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        usesh: true
+        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+      id: freebsd_attempt_1
+      continue-on-error: true
+
+    - name: FreeBSD Test (Attempt 2)
+      uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
+      if: ${{ inputs.target == 'x86_64-unknown-freebsd' && steps.freebsd_attempt_1.outcome == 'failure' }}
+      with:
+        release: "${{ inputs.os-release }}"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        usesh: true
+        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+      id: freebsd_attempt_2
+      continue-on-error: true
+
+    - name: FreeBSD Test (Attempt 3)
+      uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
+      if: ${{ inputs.target == 'x86_64-unknown-freebsd' && steps.freebsd_attempt_2.outcome == 'failure' }}
+      with:
+        release: "${{ inputs.os-release }}"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        usesh: true
+        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+      id: freebsd_attempt_3

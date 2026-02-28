@@ -256,13 +256,12 @@ jobs:
             }
 
           # FreeBSD
-          # TODO: Fix tests, see https://github.com/cross-rs/cross/wiki/FAQ#running-bsd-tests - tests don't work! May need
-          # to do the VM thing again.
+          # Tests use a retry mechanism since cross has known issues with BSD test execution
           - {
               os: "ubuntu-24.04",
               target: "x86_64-unknown-freebsd",
               cross: true,
-              checks: ["format", "clippy"],
+              checks: ["format", "clippy", "test"],
             }
 
           # NetBSD
@@ -306,7 +305,7 @@ jobs:
 
       - name: Run tests
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ contains(matrix.info.checks, 'test') }}
+        if: ${{ contains(matrix.info.checks, 'test') && !contains(matrix.info.target, 'bsd') }}
         with:
           command: test
           args: --no-fail-fast --locked --target=${{ matrix.info.target }} -- --nocapture --quiet
@@ -314,6 +313,12 @@ jobs:
           cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
         env:
           RUST_BACKTRACE: full
+
+      - name: Run tests (BSD)
+        if: ${{ contains(matrix.info.checks, 'test') && contains(matrix.info.target, 'bsd') }}
+        uses: ./.github/actions/test-bsd-target
+        with:
+          target: ${{ matrix.info.target }}
 
       - name: Set up clippy configuration
         shell: bash
