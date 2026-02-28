@@ -256,13 +256,12 @@ jobs:
             }
 
           # FreeBSD
-          # TODO: Fix tests, see https://github.com/cross-rs/cross/wiki/FAQ#running-bsd-tests - tests don't work! May need
-          # to do the VM thing again.
           - {
               os: "ubuntu-24.04",
               target: "x86_64-unknown-freebsd",
               cross: true,
-              checks: ["format", "clippy"],
+              os-release: "13.2",
+              checks: ["format", "clippy", "test"],
             }
 
           # NetBSD
@@ -270,7 +269,8 @@ jobs:
               os: "ubuntu-24.04",
               target: "x86_64-unknown-netbsd",
               cross: true,
-              checks: ["clippy"],
+              os-release: "9.3",
+              checks: ["clippy", "test"],
             }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
@@ -306,7 +306,7 @@ jobs:
 
       - name: Run tests
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ contains(matrix.info.checks, 'test') }}
+        if: ${{ contains(matrix.info.checks, 'test') && !contains(matrix.info.target, 'bsd') }}
         with:
           command: test
           args: --no-fail-fast --locked --target=${{ matrix.info.target }} -- --nocapture --quiet
@@ -314,6 +314,14 @@ jobs:
           cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
         env:
           RUST_BACKTRACE: full
+
+      # *BSD targets run tests in a VM due to cross limitations.
+      - name: Run tests (BSD)
+        if: ${{ contains(matrix.info.checks, 'test') && contains(matrix.info.target, 'bsd') }}
+        uses: ./.github/actions/test-bsd-target
+        with:
+          target: ${{ matrix.info.target }}
+          os-release: ${{ matrix.info.os-release }}
 
       - name: Set up clippy configuration
         shell: bash
