@@ -261,6 +261,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "x86_64-unknown-freebsd",
               cross: true,
+              os-release: "13.2",
               checks: ["format", "clippy", "test"],
             }
 
@@ -269,7 +270,8 @@ jobs:
               os: "ubuntu-24.04",
               target: "x86_64-unknown-netbsd",
               cross: true,
-              checks: ["clippy"],
+              os-release: "9.3",
+              checks: ["clippy", "test"],
             }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
@@ -319,6 +321,7 @@ jobs:
         uses: ./.github/actions/test-bsd-target
         with:
           target: ${{ matrix.info.target }}
+          os-release: ${{ matrix.info.os-release }}
 
       - name: Set up clippy configuration
         shell: bash

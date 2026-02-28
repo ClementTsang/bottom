@@ -5,6 +5,9 @@ inputs:
   target:
     description: "Rust target triple (e.g., x86_64-unknown-freebsd)"
     required: true
+  os-release:
+    description: "OS release version (e.g., 13.2 for FreeBSD)"
+    required: false
 
 runs:
   using: composite
@@ -40,3 +43,35 @@ runs:
         usesh: true
         run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
       id: freebsd_attempt_3
+
+    - name: NetBSD Test (Attempt 1)
+      uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+      if: ${{ inputs.target == 'x86_64-unknown-netbsd' }}
+      with:
+        release: "${{ inputs.os-release }}"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        usesh: true
+        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+      id: netbsd_attempt_1
+      continue-on-error: true
+
+    - name: NetBSD Test (Attempt 2)
+      uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+      if: ${{ inputs.target == 'x86_64-unknown-netbsd' && steps.netbsd_attempt_1.outcome == 'failure' }}
+      with:
+        release: "${{ inputs.os-release }}"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        usesh: true
+        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+      id: netbsd_attempt_2
+      continue-on-error: true
+
+    - name: NetBSD Test (Attempt 3)
+      uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+      if: ${{ inputs.target == 'x86_64-unknown-netbsd' && steps.netbsd_attempt_2.outcome == 'failure' }}
+      with:
+        release: "${{ inputs.os-release }}"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        usesh: true
+        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+      id: netbsd_attempt_3
