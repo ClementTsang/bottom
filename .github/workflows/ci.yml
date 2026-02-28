@@ -127,9 +127,12 @@ jobs:
   # Available checks:
   #   - format: Run cargo fmt --check
   #   - clippy: Clippy with all features (warnings allowed)
-  #   - clippy-deny: Clippy with all features (deny on warnings, like supported job)
+  #   - clippy-deny: Clippy with all features (deny on warnings, implies clippy)
   #   - clippy-no-features: Clippy with no features (warnings allowed)
   #   - test: Run cargo test
+  #
+  # Note: 'clippy-deny' implies 'clippy' and is mutually exclusive with it.
+  # Also, 'clippy' and 'clippy-deny' cannot be combined with 'clippy-no-features'.
   #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
@@ -144,32 +147,32 @@ jobs:
               os: "ubuntu-24.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
-              checks: ["format", "clippy", "clippy-deny", "test"],
+              checks: ["format", "clippy-deny", "test"],
             }
           - {
               os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
-              checks: ["format", "clippy", "clippy-deny", "test"],
+              checks: ["format", "clippy-deny", "test"],
             }
           - {
               os: "ubuntu-24.04",
               target: "i686-unknown-linux-musl",
               cross: true,
-              checks: ["format", "clippy", "clippy-deny", "test"],
+              checks: ["format", "clippy-deny", "test"],
             }
 
           - {
               os: "windows-2022",
               target: "i686-pc-windows-msvc",
               cross: false,
-              checks: ["format", "clippy", "clippy-deny", "test"],
+              checks: ["format", "clippy-deny", "test"],
             }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
               cross: false,
-              checks: ["format", "clippy", "clippy-deny", "test"],
+              checks: ["format", "clippy-deny", "test"],
             }
 
           # Windows ARM
@@ -178,7 +181,7 @@ jobs:
               os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
               cross: false,
-              checks: ["format", "clippy", "test"],
+              checks: ["format", "clippy-deny", "test"],
             }
 
           # Beta
@@ -187,21 +190,21 @@ jobs:
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: "beta",
-              checks: ["format", "clippy", "clippy-deny", "test"],
+              checks: ["format", "clippy-deny", "test"],
             }
           - {
               os: "macos-15",
               target: "aarch64-apple-darwin",
               cross: false,
               rust: "beta",
-              checks: ["format", "clippy", "clippy-deny", "test"],
+              checks: ["format", "clippy-deny", "test"],
             }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
               rust: "beta",
-              checks: ["format", "clippy", "clippy-deny", "test"],
+              checks: ["format", "clippy-deny", "test"],
             }
 
           # armv7
@@ -315,6 +318,16 @@ jobs:
       - name: Set up clippy configuration
         shell: bash
         run: |
+          if [[ "${{ contains(matrix.info.checks, 'clippy') && contains(matrix.info.checks, 'clippy-deny') }}" == "true" ]]; then
+            echo "Error: Cannot have both 'clippy' and 'clippy-deny'. 'clippy-deny' implies 'clippy' with stricter warnings."
+            exit 1
+          fi
+
+          if [[ "${{ contains(matrix.info.checks, 'clippy-deny') && contains(matrix.info.checks, 'clippy-no-features') }}" == "true" ]]; then
+            echo "Error: Cannot have both 'clippy-deny' (all-features) and 'clippy-no-features'. They are mutually exclusive."
+            exit 1
+          fi
+
           if [[ "${{ contains(matrix.info.checks, 'clippy') && contains(matrix.info.checks, 'clippy-no-features') }}" == "true" ]]; then
             echo "Error: Cannot have both 'clippy' (all-features) and 'clippy-no-features' in the same checks array. They are mutually exclusive."
             exit 1
@@ -336,7 +349,7 @@ jobs:
 
       - name: Run clippy
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ contains(matrix.info.checks, 'clippy') || contains(matrix.info.checks, 'clippy-no-features') }}
+        if: ${{ contains(matrix.info.checks, 'clippy') || contains(matrix.info.checks, 'clippy-deny') || contains(matrix.info.checks, 'clippy-no-features') }}
         with:
           command: clippy
           args: --all-targets --workspace --target=${{ matrix.info.target }} --locked ${{ env.FEATURE_FLAGS }} -- ${{ env.CLIPPY_FLAGS_EXTRA }}
