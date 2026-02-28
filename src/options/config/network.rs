@@ -9,4 +9,6 @@ use super::IgnoreList;
 pub(crate) struct NetworkConfig {
     /// A filter over the network interface names.
     pub(crate) interface_filter: Option<IgnoreList>,
+    /// Whether to show packets information (packet rate and average packet size).
+    pub(crate) show_packets: Option<bool>,
 }
