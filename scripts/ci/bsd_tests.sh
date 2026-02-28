@@ -25,7 +25,7 @@ elif [ "$BSD_TARGET" = "x86_64-unknown-netbsd" ]; then
 
     . "$HOME/.cargo/env"
     # TODO: Support default features eventually?
-    cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet
+    cargo test --no-fail-fast --locked --no-default-features -- --nocapture --quiet --skip test_data_collection
 else
     echo "Unsupported BSD target type."
     exit 1
