@@ -253,7 +253,8 @@ jobs:
             }
 
           # FreeBSD
-          # TODO: Fix tests on this? For some reason it's failing.
+          # TODO: Fix tests, see https://github.com/cross-rs/cross/wiki/FAQ#running-bsd-tests - tests don't work! May need
+          # to do the VM thing again.
           - {
               os: "ubuntu-24.04",
               target: "x86_64-unknown-freebsd",
