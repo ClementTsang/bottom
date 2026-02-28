@@ -19,7 +19,7 @@ runs:
         release: "${{ inputs.os-release }}"
         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
-        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+        run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: freebsd_attempt_1
       continue-on-error: true
 
@@ -30,7 +30,7 @@ runs:
         release: "${{ inputs.os-release }}"
         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
-        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+        run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: freebsd_attempt_2
       continue-on-error: true
 
@@ -41,7 +41,7 @@ runs:
         release: "${{ inputs.os-release }}"
         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
-        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+        run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: freebsd_attempt_3
 
     - name: NetBSD Test (Attempt 1)
@@ -51,7 +51,7 @@ runs:
         release: "${{ inputs.os-release }}"
         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
-        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+        run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: netbsd_attempt_1
       continue-on-error: true
 
@@ -62,7 +62,7 @@ runs:
         release: "${{ inputs.os-release }}"
         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
-        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+        run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: netbsd_attempt_2
       continue-on-error: true
 
@@ -73,5 +73,5 @@ runs:
         release: "${{ inputs.os-release }}"
         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
-        run: sh ./scripts/ci/ci_bsd.sh ${{ inputs.target }}
+        run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: netbsd_attempt_3
