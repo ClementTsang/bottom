@@ -121,7 +121,7 @@ jobs:
         env:
           RUST_BACKTRACE: full
 
-  # Try running cargo clippy on all other platforms.
+  # Run checks for unsupported platforms.
   #
   # Each target specifies a list of checks to run via the 'checks' array property.
   # Available checks:
@@ -130,9 +130,6 @@ jobs:
   #   - clippy-deny: Clippy with all features (deny on warnings, like supported job)
   #   - clippy-no-features: Clippy with no features (warnings allowed)
   #   - test: Run cargo test
-  #
-  # Note: If 'clippy' is present, 'clippy-no-features' is automatically skipped.
-  # This avoids redundant checks when all-features provides sufficient coverage.
   #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
