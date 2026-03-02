@@ -237,6 +237,7 @@ impl Painter {
                 y_bounds,
                 y_labels: &(y_labels.into_iter().map(Into::into).collect::<Vec<_>>()),
                 graph_style: self.styles.graph_style,
+                bg_color_style: self.styles.bg_color_style,
                 border_style,
                 border_type: self.styles.border_type,
                 title: " Network ".into(),

@@ -64,6 +64,9 @@ pub struct TimeGraph<'a> {
     /// The graph style.
     pub graph_style: Style,
 
+    /// The background color
+    pub bg_color_style: Style,
+
     /// The border style.
     pub border_style: Style,
 
@@ -150,9 +153,14 @@ impl TimeGraph<'_> {
         let data = graph_data.into_iter().map(create_dataset).collect();
 
         let block = {
-            let mut b = widget_block(false, self.is_selected, self.border_type)
-                .border_style(self.border_style)
-                .title_top(Line::styled(self.title.as_ref(), self.title_style));
+            let mut b = widget_block(
+                false,
+                self.is_selected,
+                self.border_type,
+                self.bg_color_style,
+            )
+            .border_style(self.border_style)
+            .title_top(Line::styled(self.title.as_ref(), self.title_style));
 
             if self.is_expanded {
                 b = b.title_top(Line::styled(" Esc to go back ", self.title_style).right_aligned())
@@ -167,6 +175,7 @@ impl TimeGraph<'_> {
                 .x_axis(x_axis)
                 .y_axis(y_axis)
                 .marker(self.marker)
+                .style(self.bg_color_style)
                 .legend_style(self.graph_style)
                 .legend_position(self.legend_position)
                 .hidden_legend_constraints(
@@ -232,6 +241,7 @@ mod test {
             y_bounds: AxisBound::Max(100.5),
             y_labels: &Y_LABELS,
             graph_style: Style::default().fg(Color::Red),
+            bg_color_style: Style::default().bg(Color::Black),
             border_style: Style::default().fg(Color::Blue),
             border_type: BorderType::Plain,
             is_selected: false,

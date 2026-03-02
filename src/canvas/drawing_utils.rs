@@ -2,6 +2,7 @@ use std::time::Instant;
 
 use tui::{
     layout::Rect,
+    style::Style,
     widgets::{Block, BorderType, Borders},
 };
 
@@ -29,8 +30,10 @@ pub fn should_hide_x_label(
 }
 
 /// Return a widget block.
-pub fn widget_block(is_basic: bool, is_selected: bool, border_type: BorderType) -> Block<'static> {
-    let mut block = Block::default().border_type(border_type);
+pub fn widget_block(
+    is_basic: bool, is_selected: bool, border_type: BorderType, bg_color: Style,
+) -> Block<'static> {
+    let mut block = Block::default().border_type(border_type).style(bg_color);
 
     if is_basic {
         if is_selected {

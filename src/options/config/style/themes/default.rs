@@ -59,6 +59,7 @@ impl Styles {
             selected_text_style: DEFAULT_SELECTED_TEXT_STYLE,
             table_header_style: color!(HIGHLIGHT_COLOUR).add_modifier(Modifier::BOLD),
             widget_title_style: color!(TEXT_COLOUR),
+            bg_color_style: Style::default(),
             graph_style: color!(TEXT_COLOUR),
             graph_legend_style: color!(TEXT_COLOUR),
             high_battery: color!(Color::Green),

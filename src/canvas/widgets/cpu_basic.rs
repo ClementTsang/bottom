@@ -35,8 +35,13 @@ impl Painter {
 
         if app_state.current_widget.widget_id == widget_id {
             f.render_widget(
-                widget_block(true, true, self.styles.border_type)
-                    .border_style(self.styles.highlighted_border_style),
+                widget_block(
+                    true,
+                    true,
+                    self.styles.border_type,
+                    self.styles.bg_color_style,
+                )
+                .border_style(self.styles.highlighted_border_style),
                 draw_loc,
             );
         }
