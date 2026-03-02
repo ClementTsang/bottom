@@ -20,6 +20,8 @@ pub enum LabelLimit {
 #[derive(Debug, Clone)]
 pub struct PipeGauge<'a> {
     block: Option<Block<'a>>,
+    /// Characters to use for the progress bar
+    progress_chars: &'a [char],
     ratio: f64,
     start_label: Option<Line<'a>>,
     inner_label: Option<Line<'a>>,
@@ -28,8 +30,8 @@ pub struct PipeGauge<'a> {
     hide_parts: LabelLimit,
 }
 
-impl Default for PipeGauge<'_> {
-    fn default() -> Self {
+impl<'a> PipeGauge<'a> {
+    pub fn new(progress_chars: &'a [char]) -> Self {
         Self {
             block: None,
             ratio: 0.0,
@@ -38,11 +40,10 @@ impl Default for PipeGauge<'_> {
             label_style: Style::default(),
             gauge_style: Style::default(),
             hide_parts: LabelLimit::default(),
+            progress_chars,
         }
     }
-}
 
-impl<'a> PipeGauge<'a> {
     /// The ratio, a value from 0.0 to 1.0 (any other greater or less will be
     /// clamped) represents the portion of the pipe gauge to fill.
     ///
@@ -196,11 +197,9 @@ impl Widget for PipeGauge<'_> {
                     gauge_area.width,
                 );
 
-                let pipe_end =
-                    start + (f64::from(end.saturating_sub(start)) * self.ratio).floor() as u16;
-                for col in start..pipe_end {
+                for (char, col) in progress_bar(self.progress_chars, start, end, self.ratio) {
                     if let Some(cell) = buf.cell_mut((col, row)) {
-                        cell.set_symbol("|").set_style(Style {
+                        cell.set_char(char).set_style(Style {
                             fg: self.gauge_style.fg,
                             bg: None,
                             add_modifier: self.gauge_style.add_modifier,
@@ -219,5 +218,89 @@ impl Widget for PipeGauge<'_> {
             }
             LabelLimit::StartLabel => unreachable!(),
         }
+    }
+}
+
+/// Returns an iterator over characters of the progress bar, and their positions
+///
+/// # Arguments
+///
+/// - `chars`: The characters to use for the progress bar
+/// - `bar_start`: Start position
+/// - `bar_end`: End position
+/// - `ratio`: How full the progress bar is
+///
+/// # Panics
+///
+/// `chars` must be non-empty
+fn progress_bar(
+    chars: &[char], bar_start: u16, bar_end: u16, ratio: f64,
+) -> impl Iterator<Item = (char, u16)> {
+    let bar_len = f64::from(bar_end.saturating_sub(bar_start)) * ratio;
+
+    // Length of the bar, without accounting for the partial final character
+    let bar_len_truncated = bar_len.floor();
+
+    // The final progress character to display.
+    // This might be `None` if we can't display even the minimum segment, in
+    // which case we won't display anything at all.
+    //
+    // This might happen when, for example, we have 5 progress characters: [1, 2, 3, 4, .],
+    // 10 cells, and our progress is 50.1%. We will display 5 full cells:
+    //
+    // 50.1%: .....
+    //
+    // If it was 50.2% progress, we would display 5 full cells, and 1 cell with the first character:
+    //
+    // 50.2%: .....1
+    //             ^ extra
+    let final_progress_char = {
+        // The ratio of a single progress bar character that we lost due to truncation
+        //
+        // This ratio will be displayed as a "partial" character
+        let final_char_ratio = (bar_len - bar_len_truncated).clamp(0.0, 1.0);
+
+        let char_index = (final_char_ratio * chars.len() as f64).floor() as usize;
+
+        // -1 because 0-based indexing
+        char_index.checked_sub(1).and_then(|it| chars.get(it))
+    };
+
+    let bar_end = bar_start + bar_len_truncated as u16;
+
+    (bar_start..bar_end)
+        .map(move |pos| (*chars.last().expect("chars is non-empty"), pos))
+        .chain(final_progress_char.map(|ch| (*ch, bar_end)))
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn progress_bar() {
+        let bars = (0..11)
+            .map(|i| {
+                let fill = i as f64 * 0.1;
+                super::progress_bar(&['1', '2', '3', '4', '.'], 0, 2, fill)
+                    .map(|(ch, _)| ch)
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            bars,
+            vec![
+                vec![],
+                vec!['1'],
+                vec!['2'],
+                vec!['3'],
+                vec!['4'],
+                vec!['.'],
+                vec!['.', '1'],
+                vec!['.', '2'],
+                vec!['.', '3'],
+                vec!['.', '4'],
+                vec!['.', '.']
+            ]
+        );
     }
 }
