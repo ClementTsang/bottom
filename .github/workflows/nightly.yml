@@ -23,7 +23,7 @@ jobs:
   # Check if things should be skipped, or if this is a mock job.
   initialize-job:
     name: initialize-job
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
@@ -55,7 +55,7 @@ jobs:
   upload-release:
     name: upload-release
     needs: build-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       TAG_NAME: ${{ steps.tag_release_name.outputs.TAG_NAME }}
     steps:
