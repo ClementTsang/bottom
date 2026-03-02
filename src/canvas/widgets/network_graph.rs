@@ -23,16 +23,12 @@ use crate::{
     widgets::{NetWidgetHeightCache, NetWidgetState},
 };
 
-/// Helper struct to hold packet-related data and labels
+/// Helper struct to hold packet-related data
 struct PacketInfo {
     rx_packet_rate: u64,
     tx_packet_rate: u64,
     avg_rx_packet_size: f64,
     avg_tx_packet_size: f64,
-    rx_packet_rate_label: String,
-    tx_packet_rate_label: String,
-    avg_rx_packet_size_label: String,
-    avg_tx_packet_size_label: String,
 }
 
 /// Calculate packet information from network data
@@ -57,10 +53,6 @@ fn calculate_packet_info(network_latest_data: &NetworkHarvest) -> PacketInfo {
         tx_packet_rate,
         avg_rx_packet_size,
         avg_tx_packet_size,
-        rx_packet_rate_label: format!("{} pkt/s", rx_packet_rate),
-        tx_packet_rate_label: format!("{} pkt/s", tx_packet_rate),
-        avg_rx_packet_size_label: format!("{:.1} B", avg_rx_packet_size),
-        avg_tx_packet_size_label: format!("{:.1} B", avg_tx_packet_size),
     }
 }
 
@@ -269,20 +261,21 @@ impl Painter {
                 let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
 
                 if app_state.app_config_fields.network_show_packets {
-                    let packet_info = calculate_packet_info(network_latest_data);
+                    let PacketInfo {
+                        rx_packet_rate,
+                        tx_packet_rate,
+                        avg_rx_packet_size,
+                        avg_tx_packet_size,
+                    } = calculate_packet_info(network_latest_data);
 
                     vec![
                         GraphData::default()
-                            .name(format!("RX: {rx_label:<10} Packets: {rx_packet_rate_label:<8} Avg: {avg_rx_packet_size_label:<6} All: {total_rx_label}",
-                                rx_packet_rate_label = packet_info.rx_packet_rate_label,
-                                avg_rx_packet_size_label = packet_info.avg_rx_packet_size_label).into())
+                            .name(format!("RX: {rx_label:<10} Packets: {rx_packet_rate:>8} pkt/s Avg: {avg_rx_packet_size:>7.1} B All: {total_rx_label}").into())
                             .time(times)
                             .values(rx_points)
                             .style(self.styles.rx_style),
                         GraphData::default()
-                            .name(format!("TX: {tx_label:<10} Packets: {tx_packet_rate_label:<8} Avg: {avg_tx_packet_size_label:<6} All: {total_tx_label}",
-                                tx_packet_rate_label = packet_info.tx_packet_rate_label,
-                                avg_tx_packet_size_label = packet_info.avg_tx_packet_size_label).into())
+                            .name(format!("TX: {tx_label:<10} Packets: {tx_packet_rate:>8} pkt/s Avg: {avg_tx_packet_size:>7.1} B All: {total_tx_label}").into())
                             .time(times)
                             .values(tx_points)
                             .style(self.styles.tx_style),
@@ -365,29 +358,29 @@ impl Painter {
         let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
 
         let total_network = if app_state.app_config_fields.network_show_packets {
-            let packet_info = calculate_packet_info(network_latest_data);
+            let PacketInfo {
+                rx_packet_rate,
+                tx_packet_rate,
+                avg_rx_packet_size,
+                avg_tx_packet_size,
+            } = calculate_packet_info(network_latest_data);
+
+            let avg_rx_packet_size = convert_bits();
+            let avg_tx_packet_size = convert_bits();
+            let avg_rx_packet_size_label =
+                format!("{:.1}{}", avg_rx_packet_size.0, avg_rx_packet_size.1);
+            let avg_tx_packet_size_label =
+                format!("{:.1}{}", avg_tx_packet_size.0, avg_tx_packet_size.1);
 
             vec![Row::new([
                 Text::styled(rx_label, self.styles.rx_style),
                 Text::styled(tx_label, self.styles.tx_style),
                 Text::styled(total_rx_label, self.styles.total_rx_style),
                 Text::styled(total_tx_label, self.styles.total_tx_style),
-                Text::styled(
-                    format!("{} pkt/s", packet_info.rx_packet_rate),
-                    self.styles.rx_style,
-                ),
-                Text::styled(
-                    format!("{} pkt/s", packet_info.tx_packet_rate),
-                    self.styles.tx_style,
-                ),
-                Text::styled(
-                    format!("{:.1} B", packet_info.avg_rx_packet_size),
-                    self.styles.rx_style,
-                ),
-                Text::styled(
-                    format!("{:.1} B", packet_info.avg_tx_packet_size),
-                    self.styles.tx_style,
-                ),
+                Text::styled(format!("{rx_packet_rate} pkt/s"), self.styles.rx_style),
+                Text::styled(format!("{tx_packet_rate} pkt/s"), self.styles.tx_style),
+                Text::styled(avg_rx_packet_size_label, self.styles.rx_style),
+                Text::styled(avg_tx_packet_size_label, self.styles.tx_style),
             ])]
         } else {
             vec![Row::new([
