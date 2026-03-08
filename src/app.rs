@@ -629,16 +629,14 @@ impl App {
                 }
                 BottomWidgetType::Battery => {
                     #[cfg(feature = "battery")]
-                    if self.data_store.get_data().battery_harvest.len() > 1 {
-                        if let Some(battery_widget_state) = self
+                    if self.data_store.get_data().battery_harvest.len() > 1
+                        && let Some(battery_widget_state) = self
                             .states
                             .battery_state
                             .get_mut_widget_state(self.current_widget.widget_id)
-                        {
-                            if battery_widget_state.currently_selected_battery_index > 0 {
-                                battery_widget_state.currently_selected_battery_index -= 1;
-                            }
-                        }
+                        && battery_widget_state.currently_selected_battery_index > 0
+                    {
+                        battery_widget_state.currently_selected_battery_index -= 1;
                     }
                 }
                 _ => {}
@@ -1481,38 +1479,36 @@ impl App {
                                                 .get(&(new_widget_id - *offset))
                                             {
                                                 match &new_widget.widget_type {
-                                                    BottomWidgetType::ProcSearch => {
+                                                    BottomWidgetType::ProcSearch =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_search_enabled() {
                                                             if let Some(next_neighbour_id) =
                                                                 option_next_neighbour_id
-                                                            {
-                                                                if let Some(next_neighbour_widget) =
+                                                                && let Some(next_neighbour_widget) =
                                                                     self.widget_map
                                                                         .get(&next_neighbour_id)
-                                                                {
-                                                                    self.current_widget =
-                                                                        next_neighbour_widget
-                                                                            .clone();
-                                                                }
+                                                            {
+                                                                self.current_widget =
+                                                                    next_neighbour_widget.clone();
                                                             }
                                                         } else {
                                                             self.current_widget =
                                                                 new_widget.clone();
                                                         }
                                                     }
-                                                    BottomWidgetType::ProcSort => {
+                                                    BottomWidgetType::ProcSort =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_sort_open {
                                                             if let Some(next_neighbour_id) =
                                                                 option_next_neighbour_id
-                                                            {
-                                                                if let Some(next_neighbour_widget) =
+                                                                && let Some(next_neighbour_widget) =
                                                                     self.widget_map
                                                                         .get(&next_neighbour_id)
-                                                                {
-                                                                    self.current_widget =
-                                                                        next_neighbour_widget
-                                                                            .clone();
-                                                                }
+                                                            {
+                                                                self.current_widget =
+                                                                    next_neighbour_widget.clone();
                                                             }
                                                         } else {
                                                             self.current_widget =
@@ -1561,7 +1557,9 @@ impl App {
                                                 .get(&(new_widget_id - *offset))
                                             {
                                                 match &new_widget.widget_type {
-                                                    BottomWidgetType::ProcSearch => {
+                                                    BottomWidgetType::ProcSearch =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_search_enabled() {
                                                             if let Some(parent_proc_widget) = self
                                                                 .widget_map
@@ -1575,7 +1573,9 @@ impl App {
                                                                 new_widget.clone();
                                                         }
                                                     }
-                                                    BottomWidgetType::ProcSort => {
+                                                    BottomWidgetType::ProcSort =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_sort_open {
                                                             if let Some(parent_proc_widget) = self
                                                                 .widget_map
@@ -1632,15 +1632,15 @@ impl App {
                                     .get(&(self.current_widget.widget_id - *offset))
                                 {
                                     match &self.current_widget.widget_type {
-                                        BottomWidgetType::ProcSearch => {
-                                            if !proc_widget_state.is_search_enabled() {
-                                                reflection_dir = Some(parent_direction.clone());
-                                            }
+                                        BottomWidgetType::ProcSearch
+                                            if !proc_widget_state.is_search_enabled() =>
+                                        {
+                                            reflection_dir = Some(parent_direction.clone());
                                         }
-                                        BottomWidgetType::ProcSort => {
-                                            if !proc_widget_state.is_sort_open {
-                                                reflection_dir = Some(parent_direction.clone());
-                                            }
+                                        BottomWidgetType::ProcSort
+                                            if !proc_widget_state.is_sort_open =>
+                                        {
+                                            reflection_dir = Some(parent_direction.clone());
                                         }
                                         _ => {}
                                     }

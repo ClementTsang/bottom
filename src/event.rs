@@ -103,10 +103,8 @@ pub fn handle_key_event_or_break(
                 KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
                 KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
                 KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
-                KeyCode::Char('r') => {
-                    if reset_sender.send(CollectionThreadEvent::Reset).is_ok() {
-                        app.reset();
-                    }
+                KeyCode::Char('r') if reset_sender.send(CollectionThreadEvent::Reset).is_ok() => {
+                    app.reset();
                 }
                 KeyCode::Char('a') => app.skip_cursor_beginning(),
                 KeyCode::Char('e') => app.skip_cursor_end(),
