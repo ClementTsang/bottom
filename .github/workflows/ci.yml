@@ -260,7 +260,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "x86_64-unknown-freebsd",
               cross: true,
-              os-release: "13.2",
+              os-version: "15.0",
               checks: ["format", "clippy", "test"],
             }
 
@@ -269,7 +269,7 @@ jobs:
               os: "ubuntu-24.04",
               target: "x86_64-unknown-netbsd",
               cross: true,
-              os-release: "9.3",
+              os-version: "10.1",
               checks: ["clippy", "test"],
             }
     runs-on: ${{ matrix.info.os }}
@@ -321,7 +321,7 @@ jobs:
         uses: ./.github/actions/test-bsd-target
         with:
           target: ${{ matrix.info.target }}
-          os-release: ${{ matrix.info.os-release }}
+          os-version: ${{ matrix.info.os-version }}
 
       - name: Set up clippy configuration
         shell: bash
@@ -379,7 +379,7 @@ jobs:
   #   uses: ./.github/workflows/bsd_vm_check.yml
   #   with:
   #     os-target: ${{ matrix.info.target }}
-  #     os-release: ${{ matrix.info.os_release }}
+  #     os-version: ${{ matrix.info.os_release }}
 
   completion:
     name: "CI Pass Check"
