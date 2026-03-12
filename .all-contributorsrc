@@ -710,6 +710,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "WqyJh",
+      "name": "Qiying Wang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15232241?v=4",
+      "profile": "https://www.jianshu.com/u/f5754cd2e83d",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
