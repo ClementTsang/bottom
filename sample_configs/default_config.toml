@@ -278,6 +278,7 @@
 #border_color = "gray"
 #selected_border_color = "light blue"
 #widget_title = {color = "gray"}
+#bg_color = "white"
 #text = {color = "gray"}
 #selected_text = {color = "black", bg_color = "light blue"}
 #disabled_text = {color = "dark gray"}

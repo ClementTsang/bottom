@@ -78,8 +78,13 @@ where
             self.styling.border_style
         };
 
-        let mut block = widget_block(self.props.is_basic, is_selected, self.styling.border_type)
-            .border_style(border_style);
+        let mut block = widget_block(
+            self.props.is_basic,
+            is_selected,
+            self.styling.border_type,
+            self.styling.bg_color_style,
+        )
+        .border_style(border_style);
 
         if let Some((left_title, right_title)) = self.generate_title(draw_info, data_len) {
             if !self.props.is_basic {
