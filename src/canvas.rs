@@ -238,13 +238,9 @@ impl Painter {
                         rect[0],
                         app_state.current_widget.widget_id,
                     ),
-                    Net => self.draw_network_graph(
-                        f,
-                        app_state,
-                        rect[0],
-                        app_state.current_widget.widget_id,
-                        false,
-                    ),
+                    Net => {
+                        self.draw_network(f, app_state, rect[0], app_state.current_widget.widget_id)
+                    }
                     Proc | ProcSearch | ProcSort => {
                         let widget_id = app_state.current_widget.widget_id
                             - match &app_state.current_widget.widget_type {

@@ -14,47 +14,14 @@ use crate::{
         Painter,
         components::time_graph::{AxisBound, ChartScaling, GraphData, TimeGraph},
         drawing_utils::should_hide_x_label,
+        widgets::{PacketInfo, calculate_packet_info},
     },
-    collection::network::NetworkHarvest,
     utils::{
         data_units::*,
         general::{saturating_log2, saturating_log10},
     },
     widgets::{NetWidgetHeightCache, NetWidgetState},
 };
-
-/// Helper struct to hold packet-related data
-struct PacketInfo {
-    rx_packet_rate: u64,
-    tx_packet_rate: u64,
-    avg_rx_packet_size: f64,
-    avg_tx_packet_size: f64,
-}
-
-/// Calculate packet information from network data
-fn calculate_packet_info(network_latest_data: &NetworkHarvest) -> PacketInfo {
-    let rx_packet_rate = network_latest_data.rx_packets;
-    let tx_packet_rate = network_latest_data.tx_packets;
-
-    // Calculate average packet size (bytes per packet)
-    let avg_rx_packet_size = if network_latest_data.rx_packets > 0 {
-        (network_latest_data.rx as f64 / 8.0) / network_latest_data.rx_packets as f64 // Convert bits to bytes
-    } else {
-        0.0
-    };
-    let avg_tx_packet_size = if network_latest_data.tx_packets > 0 {
-        (network_latest_data.tx as f64 / 8.0) / network_latest_data.tx_packets as f64 // Convert bits to bytes
-    } else {
-        0.0
-    };
-
-    PacketInfo {
-        rx_packet_rate,
-        tx_packet_rate,
-        avg_rx_packet_size,
-        avg_tx_packet_size,
-    }
-}
 
 impl Painter {
     pub fn draw_network(
@@ -71,10 +38,10 @@ impl Painter {
                 ])
                 .split(draw_loc);
 
-            self.draw_network_graph(f, app_state, network_chunk[0], widget_id, true);
-            self.draw_network_labels(f, app_state, network_chunk[1], widget_id);
+            self.draw_network_graph(f, app_state, network_chunk[0], widget_id);
+            self.draw_old_network_labels(f, app_state, network_chunk[1], widget_id);
         } else {
-            self.draw_network_graph(f, app_state, draw_loc, widget_id, false);
+            self.draw_network_graph(f, app_state, draw_loc, widget_id);
         }
 
         if app_state.should_get_widget_bounds() {
@@ -91,7 +58,6 @@ impl Painter {
 
     pub fn draw_network_graph(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-        full_screen: bool,
     ) {
         if let Some(network_widget_state) =
             app_state.states.net_state.widget_states.get_mut(&widget_id)
@@ -181,14 +147,17 @@ impl Painter {
                 adjust_network_data_point(y_max, &app_state.app_config_fields);
             let y_bounds = AxisBound::Max(adjusted_y_max);
 
-            let legend_constraints = if full_screen {
-                (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
+            let use_old_network_legend = app_state.app_config_fields.use_old_network_legend;
+            let legend_constraints = if use_old_network_legend {
+                // Always hide it. Note that I could pass in `None` to the position as well but eh this works.
+                (Constraint::Length(0), Constraint::Length(0))
             } else {
-                (Constraint::Ratio(1, 1), Constraint::Ratio(3, 4))
+                // Hide the legend if the width is 75% of the total widget width
+                // or the height is greater than 75% of the total widget hight.
+                (Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))
             };
 
             // TODO: Add support for clicking on legend to only show that value on chart.
-
             let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
             let unit_type = app_state.app_config_fields.network_unit_type;
             let unit = match unit_type {
@@ -201,56 +170,21 @@ impl Painter {
             let total_rx = convert_bits(network_latest_data.total_rx, use_binary_prefix);
             let total_tx = convert_bits(network_latest_data.total_tx, use_binary_prefix);
 
-            // TODO: This behaviour is pretty weird, we should probably just make it so if you use old network legend
-            // you don't do whatever this is...
-            let graph_data = if app_state.app_config_fields.use_old_network_legend && !full_screen {
-                let rx_label = format!("RX: {:.1}{}{}", rx.0, rx.1, unit);
-                let tx_label = format!("TX: {:.1}{}{}", tx.0, tx.1, unit);
-                let total_rx_label = format!("Total RX: {:.1}{}", total_rx.0, total_rx.1);
-                let total_tx_label = format!("Total TX: {:.1}{}", total_tx.0, total_tx.1);
-
+            let graph_data = if use_old_network_legend {
                 let mut graph_data = vec![
                     GraphData::default()
-                        .name(rx_label.into())
                         .time(times)
                         .values(rx_points)
                         .style(self.styles.rx_style),
                     GraphData::default()
-                        .name(tx_label.into())
                         .time(times)
                         .values(tx_points)
                         .style(self.styles.tx_style),
                 ];
 
-                // Add packets information if enabled
-                if app_state.app_config_fields.network_show_packets {
-                    let packet_info = calculate_packet_info(network_latest_data);
-
-                    graph_data.extend(vec![
-                        GraphData::default().style(self.styles.rx_style).name(
-                            format!("RX Packets: {} pkt/s", packet_info.rx_packet_rate).into(),
-                        ),
-                        GraphData::default().style(self.styles.tx_style).name(
-                            format!("TX Packets: {} pkt/s", packet_info.tx_packet_rate).into(),
-                        ),
-                        GraphData::default().style(self.styles.rx_style).name(
-                            format!("Avg RX Packet: {:.1} B", packet_info.avg_rx_packet_size)
-                                .into(),
-                        ),
-                        GraphData::default().style(self.styles.tx_style).name(
-                            format!("Avg TX Packet: {:.1} B", packet_info.avg_tx_packet_size)
-                                .into(),
-                        ),
-                    ]);
-                }
-
                 graph_data.extend(vec![
-                    GraphData::default()
-                        .style(self.styles.total_rx_style)
-                        .name(total_rx_label.into()),
-                    GraphData::default()
-                        .style(self.styles.total_tx_style)
-                        .name(total_tx_label.into()),
+                    GraphData::default().style(self.styles.total_rx_style),
+                    GraphData::default().style(self.styles.total_tx_style),
                 ]);
 
                 graph_data
@@ -260,26 +194,39 @@ impl Painter {
                 let total_rx_label = format!("{:.1}{}", total_rx.0, total_rx.1);
                 let total_tx_label = format!("{:.1}{}", total_tx.0, total_tx.1);
 
-                if app_state.app_config_fields.network_show_packets {
+                // Add packets information if enabled and there's enough room.
+                const MAX_LEGEND_WIDTH: u16 = 70;
+                let approx_legend_width = draw_loc.width * 3 / 4;
+
+                // FIXME: I'm not really a huge fan of this - I think it may be better to just not support this and
+                // allow for more easily spawning a separate legend table (basically old legend).
+                if app_state.app_config_fields.network_show_packets
+                    && approx_legend_width > MAX_LEGEND_WIDTH
+                {
                     let PacketInfo {
                         rx_packet_rate,
                         tx_packet_rate,
                         avg_rx_packet_size,
                         avg_tx_packet_size,
-                    } = calculate_packet_info(network_latest_data);
+                    } = calculate_packet_info(network_latest_data, use_binary_prefix);
+
+                    let avg_rx_packet_size_label =
+                        format!("{:.1}{}", avg_rx_packet_size.0, avg_rx_packet_size.1);
+                    let avg_tx_packet_size_label =
+                        format!("{:.1}{}", avg_tx_packet_size.0, avg_tx_packet_size.1);
 
                     vec![
-                        GraphData::default()
-                            .name(format!("RX: {rx_label:<10} Packets: {rx_packet_rate:>8} pkt/s Avg: {avg_rx_packet_size:>7.1} B All: {total_rx_label}").into())
-                            .time(times)
-                            .values(rx_points)
-                            .style(self.styles.rx_style),
-                        GraphData::default()
-                            .name(format!("TX: {tx_label:<10} Packets: {tx_packet_rate:>8} pkt/s Avg: {avg_tx_packet_size:>7.1} B All: {total_tx_label}").into())
-                            .time(times)
-                            .values(tx_points)
-                            .style(self.styles.tx_style),
-                    ]
+                            GraphData::default()
+                                .name(format!("RX: {rx_label:<10} All: {total_rx_label:<8} Packets: {rx_packet_rate:>8}pkt/s Avg: {avg_rx_packet_size_label}").into())
+                                .time(times)
+                                .values(rx_points)
+                                .style(self.styles.rx_style),
+                            GraphData::default()
+                                .name(format!("TX: {tx_label:<10} All: {total_tx_label:<8} Packets: {tx_packet_rate:>8}pkt/s Avg: {avg_tx_packet_size_label}").into())
+                                .time(times)
+                                .values(tx_points)
+                                .style(self.styles.tx_style),
+                        ]
                 } else {
                     vec![
                         GraphData::default()
@@ -335,7 +282,7 @@ impl Painter {
         }
     }
 
-    fn draw_network_labels(
+    fn draw_old_network_labels(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let network_latest_data = &(app_state.data_store.get_data().network_harvest);
@@ -363,10 +310,8 @@ impl Painter {
                 tx_packet_rate,
                 avg_rx_packet_size,
                 avg_tx_packet_size,
-            } = calculate_packet_info(network_latest_data);
+            } = calculate_packet_info(network_latest_data, use_binary_prefix);
 
-            let avg_rx_packet_size = convert_bits();
-            let avg_tx_packet_size = convert_bits();
             let avg_rx_packet_size_label =
                 format!("{:.1}{}", avg_rx_packet_size.0, avg_rx_packet_size.1);
             let avg_tx_packet_size_label =
@@ -377,8 +322,8 @@ impl Painter {
                 Text::styled(tx_label, self.styles.tx_style),
                 Text::styled(total_rx_label, self.styles.total_rx_style),
                 Text::styled(total_tx_label, self.styles.total_tx_style),
-                Text::styled(format!("{rx_packet_rate} pkt/s"), self.styles.rx_style),
-                Text::styled(format!("{tx_packet_rate} pkt/s"), self.styles.tx_style),
+                Text::styled(format!("{rx_packet_rate}pkt/s"), self.styles.rx_style),
+                Text::styled(format!("{tx_packet_rate}pkt/s"), self.styles.tx_style),
                 Text::styled(avg_rx_packet_size_label, self.styles.rx_style),
                 Text::styled(avg_tx_packet_size_label, self.styles.tx_style),
             ])]
@@ -391,16 +336,14 @@ impl Painter {
             ])]
         };
 
-        let (headers, num_columns) = if app_state.app_config_fields.network_show_packets {
-            (
-                vec![
-                    "RX", "TX", "Total RX", "Total TX", "RX Pkts", "TX Pkts", "Avg RX", "Avg TX",
-                ],
-                8,
-            )
+        let headers = if app_state.app_config_fields.network_show_packets {
+            vec![
+                "RX", "TX", "Total RX", "Total TX", "RX Pkts", "TX Pkts", "Avg RX", "Avg TX",
+            ]
         } else {
-            (vec!["RX", "TX", "Total RX", "Total TX"], 4)
+            vec!["RX", "TX", "Total RX", "Total TX"]
         };
+        let num_columns = headers.len();
 
         let column_width = draw_loc.width.saturating_sub(2) / num_columns as u16;
 
