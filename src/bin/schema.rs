@@ -30,15 +30,11 @@ macro_rules! generate_column_schemas {
                 let enums = original.get_mut("enum").unwrap();
                 *enums = $variants
                     .iter()
-                    .flat_map(|var| var.get_schema_names())
-                    .sorted()
-                    .flat_map(|v| {
-                        [
-                            serde_json::Value::String(v.to_string()),
-                            serde_json::Value::String(v.to_lowercase()),
-                        ]
-                    })
+                    .flat_map(|variant| variant.get_schema_names())
+                    .flat_map(|variant| [variant.to_string(), variant.to_lowercase()])
+                    .sorted() // Remember that dedup only works if it's sorted...
                     .dedup()
+                    .map(|variant| serde_json::Value::String(variant)) // Have to do it after as it doesn't implement partialeq/eq
                     .collect();
 
                 Ok(())
