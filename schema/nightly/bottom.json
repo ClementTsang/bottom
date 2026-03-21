@@ -184,24 +184,6 @@
         }
       }
     },
-    "DiskColumn": {
-      "type": "string",
-      "enum": [
-        "Disk",
-        "Free",
-        "Free%",
-        "Mount",
-        "R/s",
-        "Read",
-        "Rps",
-        "Total",
-        "Used",
-        "Used%",
-        "W/s",
-        "Wps",
-        "Write"
-      ]
-    },
     "DiskConfig": {
       "description": "Disk configuration.",
       "type": "object",
@@ -213,8 +195,19 @@
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/DiskColumn"
+            "$ref": "#/$defs/DiskWidgetColumn"
           }
+        },
+        "default_sort": {
+          "description": "The default sort column.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DiskWidgetColumn"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "mount_filter": {
           "description": "A filter over the mount names.",
@@ -239,6 +232,37 @@
           ]
         }
       }
+    },
+    "DiskWidgetColumn": {
+      "type": "string",
+      "enum": [
+        "Disk",
+        "Free",
+        "Free%",
+        "Mount",
+        "R/s",
+        "Read",
+        "Rps",
+        "Total",
+        "Used",
+        "Used%",
+        "W/s",
+        "Wps",
+        "Write",
+        "disk",
+        "free",
+        "free%",
+        "mount",
+        "r/s",
+        "read",
+        "rps",
+        "total",
+        "used",
+        "used%",
+        "w/s",
+        "wps",
+        "write"
+      ]
     },
     "FinalWidget": {
       "description": "Represents a widget.",
@@ -494,6 +518,12 @@
             }
           ]
         },
+        "show_packets": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "show_table_scroll_position": {
           "type": [
             "boolean",
@@ -680,6 +710,13 @@
               "type": "null"
             }
           ]
+        },
+        "show_packets": {
+          "description": "Whether to show packets information (packet rate and average packet size).",
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       }
     },
@@ -769,7 +806,40 @@
         "Virtual Memory",
         "W/s",
         "Wps",
-        "Write"
+        "Write",
+        "command",
+        "count",
+        "cpu%",
+        "gmem",
+        "gmem%",
+        "gpu%",
+        "mem",
+        "mem%",
+        "memory",
+        "memory%",
+        "name",
+        "nice",
+        "pid",
+        "priority",
+        "r/s",
+        "read",
+        "rps",
+        "state",
+        "t.read",
+        "t.write",
+        "time",
+        "total read",
+        "total write",
+        "tread",
+        "twrite",
+        "user",
+        "virt",
+        "virtmem",
+        "virtual",
+        "virtual memory",
+        "w/s",
+        "wps",
+        "write"
       ]
     },
     "ProcessesConfig": {
@@ -946,6 +1016,17 @@
       "description": "Temperature configuration.",
       "type": "object",
       "properties": {
+        "default_sort": {
+          "description": "The default sort column.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TempWidgetColumn"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "sensor_filter": {
           "description": "A filter over the sensor names.",
           "anyOf": [
@@ -958,6 +1039,17 @@
           ]
         }
       }
+    },
+    "TempWidgetColumn": {
+      "type": "string",
+      "enum": [
+        "Sensor",
+        "Temp",
+        "Temperature",
+        "sensor",
+        "temp",
+        "temperature"
+      ]
     },
     "TextStyleConfig": {
       "description": "A style for text.",

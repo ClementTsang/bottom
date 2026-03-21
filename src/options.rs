@@ -337,6 +337,14 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         default_tree_collapse: is_default_tree_collapsed,
         #[cfg(feature = "zfs")]
         free_arc,
+        default_temp_sort_column: config
+            .temperature
+            .as_ref()
+            .and_then(|cfg| cfg.default_sort.to_owned()),
+        default_disk_sort_column: config
+            .disk
+            .as_ref()
+            .and_then(|cfg| cfg.default_sort.to_owned()),
     };
 
     let table_config = ProcTableConfig {

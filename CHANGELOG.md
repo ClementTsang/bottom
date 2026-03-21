@@ -25,6 +25,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Features
 
 - [#1938](https://github.com/ClementTsang/bottom/pull/1938), [#1980](https://github.com/ClementTsang/bottom/pull/1980): Report average packet size and packet rate.
+- [#2003](https://github.com/ClementTsang/bottom/pull/2003): Configurable default sort column for temperature and disk table widgets.
 
 ### Other
 
@@ -565,8 +566,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ### Bug Fixes
 
-- [#575](https://github.com/ClementTsang/bottom/pull/575): Updates the procfs library to not crash on kernel version >
-    255.
+- [#575](https://github.com/ClementTsang/bottom/pull/575): Updates the procfs library to not crash on kernel version > 255.
 
 ### Internal Changes
 
@@ -777,7 +777,6 @@ That said, these are more guidelines rather than hard rules, though the project 
   config.
 
 - [#223](https://github.com/ClementTsang/bottom/pull/223): Add tree mode for processes.
-
   - [#312](https://github.com/ClementTsang/bottom/pull/312): Add a `tree` flag to default to the tree mode.
 
 - [#269](https://github.com/ClementTsang/bottom/pull/269): Add simple indicator for when data updating is frozen.
@@ -900,13 +899,12 @@ That said, these are more guidelines rather than hard rules, though the project 
   clunky to use, was not really useful, and hard to work with large core counts.
 
   Furthermore:
-
   - `show_disabled_data` option and flag is removed.
 
   - Average CPU is now on by _default_. You can disable it via `-a, --hide_avg_cpu` or `hide_avg_cpu = true`.
 
   - Make highlighted CPU persist even if widget is not selected - this should help make it easier to know what CPU you
-      are looking at even if you aren't currently on the CPU widget.
+    are looking at even if you aren't currently on the CPU widget.
 
 ### Bug Fixes
 
@@ -982,7 +980,6 @@ is equivalent to:
   Powershell colour conflicts.
 
 - Updated the widget type keyword list to accept the following keywords as existing types:
-
   - `"memory"`
   - `"network"`
   - `"process"`
@@ -990,15 +987,14 @@ is equivalent to:
   - `"temperature"`
 
 - [#117](https://github.com/ClementTsang/bottom/issues/117): Update tui to 0.9:
-
   - Removed an (undocumented) feature in allowing modifying total RX/TX colours. This is mainly due to the legend
-      change.
+    change.
 
   - Use custom legend-hiding to stop hiding legends for memory and network widgets.
 
   - In addition, changed to using only legends within the graph for network, as well as redesigned the legend.
-      The old legend style can still be used via the `--use_old_network_legend` flag or `use_old_network_legend = true`
-      config option.
+    The old legend style can still be used via the `--use_old_network_legend` flag or `use_old_network_legend = true`
+    config option.
 
   - Allow for option to hide the header gap on tables via `--hide_table_gap` or `hide_table_gap = true`.
 

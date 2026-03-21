@@ -19,7 +19,9 @@ use crate::{
     },
     constants,
     utils::data_units::DataUnit,
-    widgets::{ProcWidgetColumn, ProcWidgetMode, TreeCollapsed},
+    widgets::{
+        DiskWidgetColumn, ProcWidgetColumn, ProcWidgetMode, TempWidgetColumn, TreeCollapsed,
+    },
 };
 
 const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
@@ -33,7 +35,10 @@ pub enum AxisScaling {
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
-#[derive(Debug, Default, Eq, PartialEq)]
+///
+/// TODO: Clean this up, we probably don't need to have this duplicated.
+#[derive(Debug, Default)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct AppConfigFields {
     pub update_rate: u64,
     pub temperature_type: TemperatureType,
@@ -72,6 +77,8 @@ pub struct AppConfigFields {
     pub retention_ms: u64,
     pub dedicated_average_row: bool,
     pub default_tree_collapse: bool,
+    pub default_temp_sort_column: Option<TempWidgetColumn>,
+    pub default_disk_sort_column: Option<DiskWidgetColumn>,
 }
 
 /// For filtering out information

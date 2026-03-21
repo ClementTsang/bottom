@@ -139,3 +139,22 @@ fn test_invalid_disk_column() {
         .failure()
         .stderr(predicate::str::contains("doesn't match"));
 }
+
+#[test]
+fn test_invalid_temp_disk_default_sorts() {
+    btm_command(&[
+        "-C",
+        "./tests/invalid_configs/invalid_temp_default_sort.toml",
+    ])
+    .assert()
+    .failure()
+    .stderr(predicate::str::contains("doesn't match"));
+
+    btm_command(&[
+        "-C",
+        "./tests/invalid_configs/invalid_disk_default_sort.toml",
+    ])
+    .assert()
+    .failure()
+    .stderr(predicate::str::contains("doesn't match"));
+}
