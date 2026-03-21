@@ -1,0 +1,5 @@
+[temperature]
+default_sort = "Temperature"
+
+[disk]
+default_sort = "R/s"

@@ -96,13 +96,12 @@ impl DiskWidgetData {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "generate_schema",
     derive(schemars::JsonSchema, strum::VariantArray)
 )]
-#[cfg_attr(test, derive(PartialEq, Eq))]
-pub enum DiskColumn {
+pub enum DiskWidgetColumn {
     Disk,
     Mount,
     Used,
@@ -114,22 +113,22 @@ pub enum DiskColumn {
     IoWrite,
 }
 
-impl<'de> Deserialize<'de> for DiskColumn {
+impl<'de> Deserialize<'de> for DiskWidgetColumn {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         let value = String::deserialize(deserializer)?.to_lowercase();
         match value.as_str() {
-            "disk" => Ok(DiskColumn::Disk),
-            "mount" => Ok(DiskColumn::Mount),
-            "used" => Ok(DiskColumn::Used),
-            "free" => Ok(DiskColumn::Free),
-            "total" => Ok(DiskColumn::Total),
-            "usedpercent" | "used%" => Ok(DiskColumn::UsedPercent),
-            "freepercent" | "free%" => Ok(DiskColumn::FreePercent),
-            "r/s" => Ok(DiskColumn::IoRead),
-            "w/s" => Ok(DiskColumn::IoWrite),
+            "disk" => Ok(DiskWidgetColumn::Disk),
+            "mount" => Ok(DiskWidgetColumn::Mount),
+            "used" => Ok(DiskWidgetColumn::Used),
+            "free" => Ok(DiskWidgetColumn::Free),
+            "total" => Ok(DiskWidgetColumn::Total),
+            "usedpercent" | "used%" => Ok(DiskWidgetColumn::UsedPercent),
+            "freepercent" | "free%" => Ok(DiskWidgetColumn::FreePercent),
+            "r/s" => Ok(DiskWidgetColumn::IoRead),
+            "w/s" => Ok(DiskWidgetColumn::IoWrite),
             _ => Err(serde::de::Error::custom(
                 "doesn't match any disk column name",
             )),
@@ -137,45 +136,45 @@ impl<'de> Deserialize<'de> for DiskColumn {
     }
 }
 
-impl DiskColumn {
+impl DiskWidgetColumn {
     /// An ugly hack to generate the JSON schema.
     #[cfg(feature = "generate_schema")]
     pub fn get_schema_names(&self) -> &[&'static str] {
         match self {
-            DiskColumn::Disk => &["Disk"],
-            DiskColumn::Mount => &["Mount"],
-            DiskColumn::Used => &["Used"],
-            DiskColumn::Free => &["Free"],
-            DiskColumn::Total => &["Total"],
-            DiskColumn::UsedPercent => &["Used%"],
-            DiskColumn::FreePercent => &["Free%"],
-            DiskColumn::IoRead => &["R/s", "Read", "Rps"],
-            DiskColumn::IoWrite => &["W/s", "Write", "Wps"],
+            DiskWidgetColumn::Disk => &["Disk"],
+            DiskWidgetColumn::Mount => &["Mount"],
+            DiskWidgetColumn::Used => &["Used"],
+            DiskWidgetColumn::Free => &["Free"],
+            DiskWidgetColumn::Total => &["Total"],
+            DiskWidgetColumn::UsedPercent => &["Used%"],
+            DiskWidgetColumn::FreePercent => &["Free%"],
+            DiskWidgetColumn::IoRead => &["R/s", "Read", "Rps"],
+            DiskWidgetColumn::IoWrite => &["W/s", "Write", "Wps"],
         }
     }
 }
 
-impl ColumnHeader for DiskColumn {
+impl ColumnHeader for DiskWidgetColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
-            DiskColumn::Disk => "Disk(d)",
-            DiskColumn::Mount => "Mount(m)",
-            DiskColumn::Used => "Used(u)",
-            DiskColumn::Free => "Free(n)",
-            DiskColumn::Total => "Total(t)",
-            DiskColumn::UsedPercent => "Used%(p)",
-            DiskColumn::FreePercent => "Free%",
-            DiskColumn::IoRead => "R/s(r)",
-            DiskColumn::IoWrite => "W/s(w)",
+            DiskWidgetColumn::Disk => "Disk(d)",
+            DiskWidgetColumn::Mount => "Mount(m)",
+            DiskWidgetColumn::Used => "Used(u)",
+            DiskWidgetColumn::Free => "Free(n)",
+            DiskWidgetColumn::Total => "Total(t)",
+            DiskWidgetColumn::UsedPercent => "Used%(p)",
+            DiskWidgetColumn::FreePercent => "Free%",
+            DiskWidgetColumn::IoRead => "R/s(r)",
+            DiskWidgetColumn::IoWrite => "W/s(w)",
         }
         .into()
     }
 }
 
-impl DataToCell<DiskColumn> for DiskWidgetData {
+impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
     // FIXME: (points_rework_v1) Can we change the return type to 'a instead of 'static?
     fn to_cell_text(
-        &self, column: &DiskColumn, _calculated_width: NonZeroU16,
+        &self, column: &DiskWidgetColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         fn percent_string(value: Option<f64>) -> Cow<'static, str> {
             match value {
@@ -185,21 +184,23 @@ impl DataToCell<DiskColumn> for DiskWidgetData {
         }
 
         let text = match column {
-            DiskColumn::Disk => self.name.clone().into(),
-            DiskColumn::Mount => self.mount_point.clone().into(),
-            DiskColumn::Used => self.used_space(),
-            DiskColumn::Free => self.free_space(),
-            DiskColumn::UsedPercent => percent_string(self.used_percent()),
-            DiskColumn::FreePercent => percent_string(self.free_percent()),
-            DiskColumn::Total => self.total_space(),
-            DiskColumn::IoRead => self.io_read(),
-            DiskColumn::IoWrite => self.io_write(),
+            DiskWidgetColumn::Disk => self.name.clone().into(),
+            DiskWidgetColumn::Mount => self.mount_point.clone().into(),
+            DiskWidgetColumn::Used => self.used_space(),
+            DiskWidgetColumn::Free => self.free_space(),
+            DiskWidgetColumn::UsedPercent => percent_string(self.used_percent()),
+            DiskWidgetColumn::FreePercent => percent_string(self.free_percent()),
+            DiskWidgetColumn::Total => self.total_space(),
+            DiskWidgetColumn::IoRead => self.io_read(),
+            DiskWidgetColumn::IoWrite => self.io_write(),
         };
 
         Some(text)
     }
 
-    fn column_widths<C: DataTableColumn<DiskColumn>>(data: &[Self], _columns: &[C]) -> Vec<u16>
+    fn column_widths<C: DataTableColumn<DiskWidgetColumn>>(
+        data: &[Self], _columns: &[C],
+    ) -> Vec<u16>
     where
         Self: Sized,
     {
@@ -215,46 +216,46 @@ impl DataToCell<DiskColumn> for DiskWidgetData {
 }
 
 pub struct DiskTableWidget {
-    pub table: SortDataTable<DiskWidgetData, DiskColumn>,
+    pub table: SortDataTable<DiskWidgetData, DiskWidgetColumn>,
     pub force_update_data: bool,
 }
 
-impl SortsRow for DiskColumn {
+impl SortsRow for DiskWidgetColumn {
     type DataType = DiskWidgetData;
 
     fn sort_data(&self, data: &mut [Self::DataType], descending: bool) {
         match self {
-            DiskColumn::Disk => {
+            DiskWidgetColumn::Disk => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.name, &b.name));
             }
-            DiskColumn::Mount => {
+            DiskWidgetColumn::Mount => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.mount_point, &b.mount_point));
             }
-            DiskColumn::Used => {
+            DiskWidgetColumn::Used => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.used_bytes, &b.used_bytes));
             }
-            DiskColumn::UsedPercent => {
+            DiskWidgetColumn::UsedPercent => {
                 data.sort_by(|a, b| {
                     sort_partial_fn(descending)(&a.used_percent(), &b.used_percent())
                 });
             }
-            DiskColumn::Free => {
+            DiskWidgetColumn::Free => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.free_bytes, &b.free_bytes));
             }
-            DiskColumn::FreePercent => {
+            DiskWidgetColumn::FreePercent => {
                 data.sort_by(|a, b| {
                     sort_partial_fn(descending)(&a.free_percent(), &b.free_percent())
                 });
             }
-            DiskColumn::Total => {
+            DiskWidgetColumn::Total => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.total_bytes, &b.total_bytes));
             }
-            DiskColumn::IoRead => {
+            DiskWidgetColumn::IoRead => {
                 data.sort_by(|a, b| {
                     sort_partial_fn(descending)(&a.io_read_rate_bytes, &b.io_read_rate_bytes)
                 });
             }
-            DiskColumn::IoWrite => {
+            DiskWidgetColumn::IoWrite => {
                 data.sort_by(|a, b| {
                     sort_partial_fn(descending)(&a.io_write_rate_bytes, &b.io_write_rate_bytes)
                 });
@@ -263,39 +264,60 @@ impl SortsRow for DiskColumn {
     }
 }
 
-const fn create_column(column_type: &DiskColumn) -> SortColumn<DiskColumn> {
+const fn create_column(column_type: &DiskWidgetColumn) -> SortColumn<DiskWidgetColumn> {
     match column_type {
-        DiskColumn::Disk => SortColumn::soft(DiskColumn::Disk, Some(0.2)),
-        DiskColumn::Mount => SortColumn::soft(DiskColumn::Mount, Some(0.2)),
-        DiskColumn::Used => SortColumn::hard(DiskColumn::Used, 8).default_descending(),
-        DiskColumn::Free => SortColumn::hard(DiskColumn::Free, 8).default_descending(),
-        DiskColumn::Total => SortColumn::hard(DiskColumn::Total, 9).default_descending(),
-        DiskColumn::UsedPercent => {
-            SortColumn::hard(DiskColumn::UsedPercent, 9).default_descending()
+        DiskWidgetColumn::Disk => SortColumn::soft(DiskWidgetColumn::Disk, Some(0.2)),
+        DiskWidgetColumn::Mount => SortColumn::soft(DiskWidgetColumn::Mount, Some(0.2)),
+        DiskWidgetColumn::Used => SortColumn::hard(DiskWidgetColumn::Used, 8).default_descending(),
+        DiskWidgetColumn::Free => SortColumn::hard(DiskWidgetColumn::Free, 8).default_descending(),
+        DiskWidgetColumn::Total => {
+            SortColumn::hard(DiskWidgetColumn::Total, 9).default_descending()
         }
-        DiskColumn::FreePercent => {
-            SortColumn::hard(DiskColumn::FreePercent, 9).default_descending()
+        DiskWidgetColumn::UsedPercent => {
+            SortColumn::hard(DiskWidgetColumn::UsedPercent, 9).default_descending()
         }
-        DiskColumn::IoRead => SortColumn::hard(DiskColumn::IoRead, 10).default_descending(),
-        DiskColumn::IoWrite => SortColumn::hard(DiskColumn::IoWrite, 11).default_descending(),
+        DiskWidgetColumn::FreePercent => {
+            SortColumn::hard(DiskWidgetColumn::FreePercent, 9).default_descending()
+        }
+        DiskWidgetColumn::IoRead => {
+            SortColumn::hard(DiskWidgetColumn::IoRead, 10).default_descending()
+        }
+        DiskWidgetColumn::IoWrite => {
+            SortColumn::hard(DiskWidgetColumn::IoWrite, 11).default_descending()
+        }
     }
 }
 
-const fn default_disk_columns() -> [SortColumn<DiskColumn>; 8] {
+const fn default_disk_column_list() -> [DiskWidgetColumn; 8] {
     [
-        create_column(&DiskColumn::Disk),
-        create_column(&DiskColumn::Mount),
-        create_column(&DiskColumn::Used),
-        create_column(&DiskColumn::Free),
-        create_column(&DiskColumn::Total),
-        create_column(&DiskColumn::UsedPercent),
-        create_column(&DiskColumn::IoRead),
-        create_column(&DiskColumn::IoWrite),
+        DiskWidgetColumn::Disk,
+        DiskWidgetColumn::Mount,
+        DiskWidgetColumn::Used,
+        DiskWidgetColumn::Free,
+        DiskWidgetColumn::Total,
+        DiskWidgetColumn::UsedPercent,
+        DiskWidgetColumn::IoRead,
+        DiskWidgetColumn::IoWrite,
+    ]
+}
+
+const fn default_disk_columns() -> [SortColumn<DiskWidgetColumn>; 8] {
+    [
+        create_column(&DiskWidgetColumn::Disk),
+        create_column(&DiskWidgetColumn::Mount),
+        create_column(&DiskWidgetColumn::Used),
+        create_column(&DiskWidgetColumn::Free),
+        create_column(&DiskWidgetColumn::Total),
+        create_column(&DiskWidgetColumn::UsedPercent),
+        create_column(&DiskWidgetColumn::IoRead),
+        create_column(&DiskWidgetColumn::IoWrite),
     ]
 }
 
 impl DiskTableWidget {
-    pub fn new(config: &AppConfigFields, palette: &Styles, columns: Option<&[DiskColumn]>) -> Self {
+    pub fn new(
+        config: &AppConfigFields, palette: &Styles, columns: Option<&[DiskWidgetColumn]>,
+    ) -> Self {
         let props = SortDataTableProps {
             inner: DataTableProps {
                 title: Some(" Disks ".into()),
@@ -305,7 +327,23 @@ impl DiskTableWidget {
                 show_table_scroll_position: config.show_table_scroll_position,
                 show_current_entry_when_unfocused: false,
             },
-            sort_index: 0,
+            sort_index: match &config.default_disk_sort_column {
+                Some(column) => {
+                    // Must check that the column used exists. If not, fall back to 0.
+
+                    let existing_columns = match columns {
+                        Some(c) => c,
+                        None => &default_disk_column_list(),
+                    };
+
+                    if let Some(index) = existing_columns.iter().position(|c| c == column) {
+                        index
+                    } else {
+                        0
+                    }
+                }
+                None => 0,
+            },
             order: SortOrder::Ascending,
         };
 

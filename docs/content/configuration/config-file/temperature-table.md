@@ -1,5 +1,14 @@
 # Temperature Table
 
+## Default Sort Order
+
+You can customize the default sort order (by default, it sorts by temperature sensor name). For example, to sort by temperature:
+
+```toml
+[temperature]
+default_sort = "Temp"
+```
+
 ## Filtering Entries
 
 You can filter out what entries to show by configuring `[temperature.sensor_filter]`. In particular you can set a list of things to filter with by setting `list`, and configure how that list is processed with the other options.

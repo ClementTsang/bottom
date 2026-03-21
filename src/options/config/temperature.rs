@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use crate::widgets::TempWidgetColumn;
+
 use super::IgnoreList;
 
 /// Temperature configuration.
@@ -9,4 +11,8 @@ use super::IgnoreList;
 pub(crate) struct TempConfig {
     /// A filter over the sensor names.
     pub(crate) sensor_filter: Option<IgnoreList>,
+
+    /// The default sort column.
+    #[serde(default)]
+    pub(crate) default_sort: Option<TempWidgetColumn>,
 }
