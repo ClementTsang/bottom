@@ -336,11 +336,10 @@ impl DiskTableWidget {
                         None => &default_disk_column_list(),
                     };
 
-                    if let Some(index) = existing_columns.iter().position(|c| c == column) {
-                        index
-                    } else {
-                        0
-                    }
+                    existing_columns
+                        .iter()
+                        .position(|c| c == column)
+                        .unwrap_or_default()
                 }
                 None => 0,
             },
