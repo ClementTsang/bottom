@@ -241,7 +241,7 @@ impl Painter {
                 loc: draw_loc,
                 force_redraw: app_state.is_force_redraw,
                 recalculate_column_widths,
-                selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
+                selection_state: SelectionState::new(app_state.is_expanded, is_on_widget), // TODO: Bug with this, shouldn't be selected on expand!
             };
 
             cpu_widget_state.table.draw(

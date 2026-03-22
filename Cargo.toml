@@ -17,6 +17,7 @@ exclude = [
     ".idea/",
     ".vscode/",
     "assets/",
+    "demos/",
     "desktop/",
     "docs/",
     "flamegraphs/",

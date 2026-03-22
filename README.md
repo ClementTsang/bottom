@@ -14,7 +14,7 @@
 </div>
 
 <div align="center">
-  <img src="assets/demo.gif" alt="Quick demo recording showing off bottom's searching, expanding, and process killing."/>
+  <img src="demos/demo.gif" alt="Quick demo recording showing off bottom's searching, expanding, and process killing."/>
   <p>
     <sub>
       Demo using the <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> theme (<code>--theme gruvbox</code>), along with <a href="https://www.ibm.com/plex/">IBM Plex Mono</a> and <a href="https://sw.kovidgoyal.net/kitty/">Kitty</a>
@@ -68,7 +68,6 @@
 As (yet another) process/system visualization and management application, bottom supports the typical features:
 
 - Graphical visualization widgets for:
-
   - [CPU usage](https://bottom.pages.dev/nightly/usage/widgets/cpu/) over time, at an average and per-core level
   - [RAM and swap usage](https://bottom.pages.dev/nightly/usage/widgets/memory/) over time
   - [Network I/O usage](https://bottom.pages.dev/nightly/usage/widgets/network/) over time
@@ -76,27 +75,23 @@ As (yet another) process/system visualization and management application, bottom
   with support for zooming in/out the current time interval displayed.
 
 - Widgets for displaying info about:
-
   - [Disk capacity/usage](https://bottom.pages.dev/nightly/usage/widgets/disk/)
   - [Temperature sensors](https://bottom.pages.dev/nightly/usage/widgets/temperature/)
   - [Battery usage](https://bottom.pages.dev/nightly/usage/widgets/battery/)
 
 - [A process widget](https://bottom.pages.dev/nightly/usage/widgets/process/) for displaying, sorting, and searching info about processes, as well as support for:
-
   - [Kill signals](https://bottom.pages.dev/nightly/usage/widgets/process/#process-termination)
   - [Tree mode](https://bottom.pages.dev/nightly/usage/widgets/process/#tree-mode)
 
 - [Cross-platform support](https://github.com/ClementTsang/bottom#support) for Linux, macOS, and Windows, with more planned in the future.
 
 - [Customizable behaviour](https://bottom.pages.dev/nightly/configuration/command-line-options/) that can be controlled with command-line options or a config file, such as:
-
   - Custom and built-in colour themes
   - Customizing widget behaviour
   - Changing the layout of widgets
   - Filtering out entries in some widgets
 
 - And more:
-
   - [An htop-inspired basic mode](https://bottom.pages.dev/nightly/usage/basic-mode/)
   - [Expansion, which focuses on just one widget](https://bottom.pages.dev/nightly/usage/general-usage/#expansion)
 
