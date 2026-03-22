@@ -96,8 +96,8 @@ fn convert_name_to_colour(color_name: &str) -> Result<Color, String> {
         "white" => Ok(Color::White),
         _ => Err(format!(
             "'{color_name}' is an invalid named color.
-            
-The following are supported named colors: 
+
+The following are supported named colors:
 +--------+-------------+---------------------+
 |  Reset | Magenta     | Light Yellow        |
 +--------+-------------+---------------------+
@@ -233,6 +233,27 @@ macro_rules! set_colour {
     };
 }
 
+macro_rules! set_bg_colour {
+    ($palette_field:expr, $config_location:expr, $field:tt) => {
+        if let Some(colour) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
+            $palette_field = $palette_field.bg(
+                crate::options::config::style::utils::str_to_colour(&colour.0).map_err(|err| {
+                    match stringify!($config_location).split_once(".") {
+                        Some((_, loc)) => crate::options::OptionError::config(format!(
+                            "Please update 'styles.{loc}.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
+                        None => crate::options::OptionError::config(format!(
+                            "Please update 'styles.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
+                    }
+                })?,
+            );
+        }
+    };
+}
+
 /// Set `palette_field` to the value in `config_location` for `field`.
 macro_rules! set_colour_list {
     ($palette_field:expr, $config_location:expr, $field:tt) => {
@@ -259,6 +280,7 @@ macro_rules! set_colour_list {
 }
 
 pub(super) use opt;
+pub(super) use set_bg_colour;
 pub(super) use set_colour;
 pub(super) use set_colour_list;
 pub(super) use set_style;
