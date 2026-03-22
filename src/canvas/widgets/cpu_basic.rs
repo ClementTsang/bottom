@@ -61,7 +61,7 @@ impl Painter {
                 avg_loc.width -= 2;
 
                 f.render_widget(
-                    PipeGauge::default()
+                    PipeGauge::new(&self.styles.progress_bar_chars.0)
                         .gauge_style(style)
                         .label_style(style)
                         .inner_label(inner)
@@ -128,7 +128,7 @@ impl Painter {
 
                     for ((start_label, inner_label, ratio, style), row) in chunk.zip(rows.iter()) {
                         f.render_widget(
-                            PipeGauge::default()
+                            PipeGauge::new(&self.styles.progress_bar_chars.0)
                                 .gauge_style(style)
                                 .label_style(style)
                                 .inner_label(inner_label)

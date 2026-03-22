@@ -166,3 +166,4 @@ These can be set under `[styles.widgets]`:
 | `selected_text`         | Text styling for text when representing something that is selected                           | `selected_text = { color = "black", bg_color = "blue", bold = true }` |
 | `disabled_text`         | Text styling for text when representing something that is disabled                           | `disabled_text = { color = "black", bg_color = "blue", bold = true }` |
 | `thread_text`           | Text styling for text when representing process threads. Only usable on Linux at the moment. | `thread_text = { color = "green", bg_color = "blue", bold = true }`   |
+| `progress_bar_chars`    | Characters to use for progress bars                                                          | `progress_bar_chars = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]`       |
