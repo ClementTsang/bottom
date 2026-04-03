@@ -135,7 +135,7 @@
 #[processes]
 # The columns shown by the process widget. The following columns are supported (the GPU columns are only available if the GPU feature is enabled when built):
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%, Nice, Priority
-#columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%", "Priority", "Nice"]
+#columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%", "Priority"]
 
 # Gather process child thread information
 #get_threads = false
@@ -149,9 +149,16 @@
 
 # Disk widget configuration
 #[disk]
+
 # The columns shown by the process widget. The following columns are supported:
 # Disk, Mount, Used, Free, Total, Used%, Free%, R/s, W/s
 #columns = ["Disk", "Mount", "Used", "Free", "Total", "Used%", "R/s", "W/s"]
+
+# The default sort type. Can be one of the following:
+# Disk, Mount, Used, Free, Total, Used%, Free%, R/s, W/s
+#
+# Defaults to "Disk".
+#default_sort = "Disk"
 
 # By default, there are no disk name filters enabled. These can be turned on to filter out specific data entries if you
 # don't want to see them. An example use case is provided below.
@@ -191,6 +198,13 @@
 
 # Temperature widget configuration
 #[temperature]
+
+# The default sort type. Can be one of the following:
+# Temp, Temperature, Sensor
+#
+# Defaults to "Sensor".
+#default_sort = "Sensor"
+
 # By default, there are no temperature sensor filters enabled. An example use case is provided below.
 #[temperature.sensor_filter]
 # Whether to ignore any matches. Defaults to true.

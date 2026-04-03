@@ -23,6 +23,7 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
   COMPLETION_DIR: "target/tmp/bottom/completion/"
   MANPAGE_DIR: "target/tmp/bottom/manpage/"
+  CROSS_VERSION: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -31,7 +32,7 @@ concurrency:
 jobs:
   # Check if things should be skipped.
   pre-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
@@ -44,8 +45,6 @@ jobs:
           do_not_skip: '["workflow_dispatch", "push"]'
 
   # Runs rustfmt + tests + clippy on the main supported platforms.
-  #
-  # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
   supported:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
@@ -56,14 +55,14 @@ jobs:
       matrix:
         info:
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04-arm",
               target: "aarch64-unknown-linux-gnu",
-              cross: true,
+              cross: false,
             }
           - { os: "macos-15", target: "x86_64-apple-darwin", cross: false }
           - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
@@ -108,7 +107,7 @@ jobs:
           command: test
           args: --no-fail-fast --locked ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.5
+          cross-version: ${{ env.CROSS_VERSION }}
         env:
           RUST_BACKTRACE: full
 
@@ -118,11 +117,22 @@ jobs:
           command: clippy
           args: ${{ matrix.features }} --all-targets --workspace --locked --target=${{ matrix.info.target }} -- -D warnings
           use-cross: ${{ matrix.info.cross }}
-          cross-version: 0.2.5
+          cross-version: ${{ env.CROSS_VERSION }}
         env:
           RUST_BACKTRACE: full
 
-  # Try running cargo build on all other platforms.
+  # Run checks for unsupported platforms.
+  #
+  # Each target specifies a list of checks to run via the 'checks' array property.
+  # Available checks:
+  #   - format: Run cargo fmt --check
+  #   - clippy: Clippy with all features (warnings allowed)
+  #   - clippy-deny: Clippy with all features (deny on warnings, implies clippy)
+  #   - clippy-no-features: Clippy with no features (warnings allowed)
+  #   - test: Run cargo test
+  #
+  # Note: 'clippy-deny' implies 'clippy' and is mutually exclusive with it.
+  # Also, 'clippy' and 'clippy-deny' cannot be combined with 'clippy-no-features'.
   #
   # TODO: Maybe some of these should be allowed to fail? If so, I guess we can add back the "unofficial" MSRV,
   # I would also put android there.
@@ -134,99 +144,133 @@ jobs:
         info:
           # x86 or x86-64
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
+              checks: ["format", "clippy-deny", "test"],
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
+              checks: ["format", "clippy-deny", "test"],
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "i686-unknown-linux-musl",
               cross: true,
+              checks: ["format", "clippy-deny", "test"],
             }
 
-          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false }
+          - {
+              os: "windows-2022",
+              target: "i686-pc-windows-msvc",
+              cross: false,
+              checks: ["format", "clippy-deny", "test"],
+            }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
               cross: false,
+              checks: ["format", "clippy-deny", "test"],
+            }
+
+          # Windows ARM
+          # TODO: Promote to official?
+          - {
+              os: "windows-11-arm",
+              target: "aarch64-pc-windows-msvc",
+              cross: false,
+              checks: ["format", "clippy-deny", "test"],
             }
 
           # Beta
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: "beta",
+              checks: ["format", "clippy-deny", "test"],
             }
           - {
               os: "macos-15",
               target: "aarch64-apple-darwin",
               cross: false,
               rust: "beta",
+              checks: ["format", "clippy-deny", "test"],
             }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
               cross: false,
               rust: "beta",
+              checks: ["format", "clippy-deny", "test"],
             }
 
           # armv7
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
+              checks: ["clippy-no-features"],
             }
 
           # armv6
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "arm-unknown-linux-gnueabihf",
               cross: true,
+              checks: ["clippy-no-features"],
             }
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
+              checks: ["clippy-no-features"],
             }
 
           # Risc-V 64gc
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
+              checks: ["clippy-no-features"],
             }
 
           # Loongarch
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "loongarch64-unknown-linux-gnu",
               cross: true,
-              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
+              checks: ["clippy-no-features"],
             }
 
           # Android ARM64
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-24.04",
               target: "aarch64-linux-android",
               cross: true,
-              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
-              no-default-features: true,
-              no-clippy: true,
+              checks: ["clippy-no-features"],
             }
 
-          # Windows ARM, may promote to official.
+          # FreeBSD
           - {
-              os: "windows-11-arm",
-              target: "aarch64-pc-windows-msvc",
-              cross: false,
+              os: "ubuntu-24.04",
+              target: "x86_64-unknown-freebsd",
+              cross: true,
+              os-version: "15.0",
+              checks: ["format", "clippy", "test"],
+            }
+
+          # NetBSD
+          - {
+              os: "ubuntu-24.04",
+              target: "x86_64-unknown-netbsd",
+              cross: true,
+              os-version: "10.1",
+              checks: ["clippy", "test"],
             }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
@@ -247,7 +291,7 @@ jobs:
         with:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
-          components: "clippy"
+          components: ${{ contains(matrix.info.checks, 'format') && 'rustfmt, clippy' || 'clippy' }}
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
@@ -256,129 +300,106 @@ jobs:
           key: ${{ matrix.info.target }}
           cache-all-crates: true
 
-      - name: Clippy (default features)
+      - name: Check cargo fmt
+        if: ${{ contains(matrix.info.checks, 'format') }}
+        run: cargo fmt --all -- --check
+
+      - name: Run tests
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ matrix.info.no-default-features != true }}
+        if: ${{ contains(matrix.info.checks, 'test') && !contains(matrix.info.target, 'bsd') }}
+        with:
+          command: test
+          args: --no-fail-fast --locked --target=${{ matrix.info.target }} -- --nocapture --quiet
+          use-cross: ${{ matrix.info.cross }}
+          cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
+        env:
+          RUST_BACKTRACE: full
+
+      # *BSD targets run tests in a VM due to cross limitations.
+      - name: Run tests (BSD)
+        if: ${{ contains(matrix.info.checks, 'test') && contains(matrix.info.target, 'bsd') }}
+        uses: ./.github/actions/test-bsd-target
+        with:
+          target: ${{ matrix.info.target }}
+          os-version: ${{ matrix.info.os-version }}
+
+      - name: Set up clippy configuration
+        shell: bash
+        run: |
+          if [[ "${{ contains(matrix.info.checks, 'clippy') && contains(matrix.info.checks, 'clippy-deny') }}" == "true" ]]; then
+            echo "Error: Cannot have both 'clippy' and 'clippy-deny'. 'clippy-deny' implies 'clippy' with stricter warnings."
+            exit 1
+          fi
+
+          if [[ "${{ contains(matrix.info.checks, 'clippy-deny') && contains(matrix.info.checks, 'clippy-no-features') }}" == "true" ]]; then
+            echo "Error: Cannot have both 'clippy-deny' (all-features) and 'clippy-no-features'. They are mutually exclusive."
+            exit 1
+          fi
+
+          if [[ "${{ contains(matrix.info.checks, 'clippy') && contains(matrix.info.checks, 'clippy-no-features') }}" == "true" ]]; then
+            echo "Error: Cannot have both 'clippy' (all-features) and 'clippy-no-features' in the same checks array. They are mutually exclusive."
+            exit 1
+          fi
+
+          # Determine deny vs warn flags
+          if [[ "${{ contains(matrix.info.checks, 'clippy-deny') }}" == "true" ]]; then
+            echo "CLIPPY_FLAGS_EXTRA=-D warnings" >> $GITHUB_ENV
+          else
+            echo "CLIPPY_FLAGS_EXTRA=" >> $GITHUB_ENV
+          fi
+
+          # Determine all-features (default) vs no-features
+          if [[ "${{ contains(matrix.info.checks, 'clippy-no-features') }}" == "true" ]]; then
+            echo "FEATURE_FLAGS=--no-default-features" >> $GITHUB_ENV
+          else
+            echo "FEATURE_FLAGS=" >> $GITHUB_ENV
+          fi
+
+      - name: Run clippy
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
+        if: ${{ contains(matrix.info.checks, 'clippy') || contains(matrix.info.checks, 'clippy-deny') || contains(matrix.info.checks, 'clippy-no-features') }}
         with:
           command: clippy
-          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked
+          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked ${{ env.FEATURE_FLAGS }} -- ${{ env.CLIPPY_FLAGS_EXTRA }}
           use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+          cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
 
-      - name: Clippy (no features enabled)
-        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
-        if: ${{ matrix.info.no-default-features == true }}
-        with:
-          command: clippy
-          args: --all-targets --workspace --target=${{ matrix.info.target }} --locked --no-default-features
-          use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
-
-  unsupported-check-freebsd:
-    needs: pre-job
-    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    runs-on: "ubuntu-latest"
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        info:
-          # Seems like cross's FreeBSD image is a bit broken? I get build errors,
-          # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
-          #
-          # Alas, that's why we do it with VMs.
-
-          - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
-          - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
-          - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 1
-
-      - name: Enable Rust cache
-        uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # 2.8.1
-        if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
-        with:
-          key: ${{ matrix.info.target }}-${{ matrix.info.os_release }}
-          cache-all-crates: true
-
-      # The VM jobs randomly fail, and since GHA clearly never fails and doesn't know how to retry, we retry manually.
-      - name: FreeBSD Tests + Clippy (Attempt 1)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
-        with:
-          release: "${{ matrix.info.os_release }}"
-          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
-          usesh: true
-          prepare: |
-            pkg install -y curl bash
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
-          run: |
-            . "$HOME/.cargo/env"
-            # Note this only tests the default features, but I think that's fine.
-            cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo clippy --all-targets --workspace -- -D warnings
-        id: upload_attempt_1
-        continue-on-error: true
-
-      - name: FreeBSD Tests + Clippy (Attempt 2)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
-        with:
-          release: "${{ matrix.info.os_release }}"
-          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
-          usesh: true
-          prepare: |
-            pkg install -y curl bash
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
-          run: |
-            . "$HOME/.cargo/env"
-            # Note this only tests the default features, but I think that's fine.
-            cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo clippy --all-targets --workspace -- -D warnings
-        if: steps.upload_attempt_1.outcome == 'failure'
-        id: upload_attempt_2
-        continue-on-error: true
-
-      - name: FreeBSD Tests + Clippy (Attempt 3)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
-        with:
-          release: "${{ matrix.info.os_release }}"
-          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
-          usesh: true
-          prepare: |
-            pkg install -y curl bash
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
-          run: |
-            . "$HOME/.cargo/env"
-            # Note this only tests the default features, but I think that's fine.
-            cargo test --no-fail-fast --locked -- --nocapture --quiet
-            cargo clippy --all-targets --workspace -- -D warnings
-        if: steps.upload_attempt_2.outcome == 'failure'
-        id: upload_attempt_3
+  # # Check BSD platforms using a VM layer.
+  # check-bsd-vm:
+  #   needs: pre-job
+  #   if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       info:
+  #         # OpenBSD is not very well-supported, given that it's tier 3. We skip clippy and only run basic tests + fmt.
+  #         # We also use `--no-default-features` when building as starship-battery does not support OpenBSD.
+  #         # Cross also doesn't support OpenBSD, so we will do it with VMs here too.
+  #         - { os_release: "7.8", target: "x86_64-unknown-openbsd" } # Supports Rust 1.90
+  #   uses: ./.github/workflows/bsd_vm_check.yml
+  #   with:
+  #     os-target: ${{ matrix.info.target }}
+  #     os-version: ${{ matrix.info.os_release }}
 
   completion:
     name: "CI Pass Check"
-    needs: [supported, unsupported-check, unsupported-check-freebsd]
-    if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' || needs.unsupported-check-freebsd.result != 'skipped' }}
-    runs-on: "ubuntu-latest"
+    needs: [supported, unsupported-check]
+    if: ${{ needs.supported.result != 'skipped' || needs.unsupported-check.result != 'skipped' }}
+    runs-on: "ubuntu-24.04"
     steps:
       - name: CI Passed
-        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.unsupported-check.result == 'success' || needs.unsupported-check.result == 'skipped') && (needs.unsupported-check-freebsd.result == 'success' || needs.unsupported-check-freebsd.result == 'skipped') }}
+        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.unsupported-check.result == 'success' || needs.unsupported-check.result == 'skipped') }}
         run: |
           echo "CI workflow completed successfully.";
 
       - name: CI Failed
-        if: ${{ needs.supported.result == 'failure' || needs.unsupported-check.result == 'failure' || needs.unsupported-check-freebsd.result == 'failure' }}
+        if: ${{ needs.supported.result == 'failure' || needs.unsupported-check.result == 'failure' }}
         run: |
           echo "CI workflow failed.";
           exit 1;
 
       - name: CI Cancelled
-        if: ${{ needs.supported.result == 'cancelled' || needs.unsupported-check.result == 'cancelled' || needs.unsupported-check-freebsd.result == 'cancelled' }}
+        if: ${{ needs.supported.result == 'cancelled' || needs.unsupported-check.result == 'cancelled' }}
         run: |
           echo "CI workflow was cancelled.";
           exit 1;

@@ -17,6 +17,7 @@ exclude = [
     ".idea/",
     ".vscode/",
     "assets/",
+    "demos/",
     "desktop/",
     "docs/",
     "flamegraphs/",
@@ -92,7 +93,7 @@ regex = "1.12.3"
 rustc-hash = "2.1.1"
 serde = { version = "1.0.228", features = ["derive"] }
 starship-battery = { version = "0.10.3", optional = true }
-sysinfo = "=0.38.0"
+sysinfo = "=0.38.4"
 timeless = "0.0.14-alpha"
 toml_edit = { version = "0.24.0", features = ["serde"] }
 tui = { version = "0.30.0", package = "ratatui", features = [

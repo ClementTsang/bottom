@@ -238,13 +238,9 @@ impl Painter {
                         rect[0],
                         app_state.current_widget.widget_id,
                     ),
-                    Net => self.draw_network_graph(
-                        f,
-                        app_state,
-                        rect[0],
-                        app_state.current_widget.widget_id,
-                        false,
-                    ),
+                    Net => {
+                        self.draw_network(f, app_state, rect[0], app_state.current_widget.widget_id)
+                    }
                     Proc | ProcSearch | ProcSort => {
                         let widget_id = app_state.current_widget.widget_id
                             - match &app_state.current_widget.widget_type {
@@ -311,8 +307,14 @@ impl Painter {
                     mem_rows += data.gpu_harvest.len() as u16; // add row(s) for gpu
                 }
 
-                if mem_rows == 1 {
-                    mem_rows += 1; // need at least 2 rows for RX and TX
+                let network_rows = if app_state.app_config_fields.network_show_packets {
+                    4 // 4 rows for RX/TX and Packet Rates (Avg sizes moved to right side)
+                } else {
+                    2 // 2 rows for RX and TX
+                };
+
+                if mem_rows < network_rows {
+                    mem_rows += network_rows - mem_rows; // min rows
                 }
 
                 let vertical_chunks = Layout::default()

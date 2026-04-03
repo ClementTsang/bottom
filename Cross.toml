@@ -1,2 +1,7 @@
 [build.env]
 passthrough = ["RUST_BACKTRACE", "BTM_GENERATE"]
+
+[target.x86_64-unknown-netbsd]
+pre-build = [
+    "apt-get update && apt-get install -y --no-install-recommends curl xz-utils && td=$(mktemp -d) && mkdir -p \"$td/netbsd\" && curl -4 --retry 3 -sSfL 'http://ftp.netbsd.org/pub/NetBSD/NetBSD-9.3/amd64/binary/sets/base.tar.xz' | tar -C \"$td/netbsd\" -xJ ./usr/lib ./lib && curl -4 --retry 3 -sSfL 'http://ftp.netbsd.org/pub/NetBSD/NetBSD-9.3/amd64/binary/sets/comp.tar.xz' | tar -C \"$td/netbsd\" -xJ ./usr/lib && cp \"$td\"/netbsd/usr/lib/libkvm* /usr/local/x86_64-unknown-netbsd/lib/ && rm -rf \"$td\"",
+]
