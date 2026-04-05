@@ -99,7 +99,7 @@ jobs:
           --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
 
   publish-crate:
-    needs: [initialize]
+    needs: [initialize, chocolatey, publish-gh-pages]
     runs-on: ubuntu-24.04
     environment: production
     permissions:
