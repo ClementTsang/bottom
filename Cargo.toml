@@ -101,8 +101,8 @@ tui = { version = "0.30.0", package = "ratatui", features = [
     "layout-cache",
     "crossterm",
 ] }
-unicode-ellipsis = "0.3.0"
-unicode-segmentation = "1.12.0"
+unicode-ellipsis = "0.4.0"
+unicode-segmentation = "1.13.2"
 unicode-width = "0.2.2"
 
 # Used for logging. Mostly a debugging tool.
