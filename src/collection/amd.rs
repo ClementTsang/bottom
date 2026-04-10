@@ -3,7 +3,6 @@ mod amd_gpu_marketing;
 use std::{
     fs::{self, read_to_string},
     num::NonZeroU64,
-    os::unix::fs::{FileTypeExt, MetadataExt},
     path::{Path, PathBuf},
     sync::{LazyLock, Mutex},
     time::{Duration, Instant},
@@ -166,35 +165,20 @@ fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
         .unwrap_or(0) as u64
 }
 
-/// Stat the DRM device paths once to get their device numbers.
-#[inline]
-fn get_drm_dev_numbers(drm_paths: &[PathBuf]) -> Vec<u64> {
-    drm_paths
-        .iter()
-        .filter_map(|p| fs::metadata(p).ok().map(|m| m.rdev()))
-        .collect()
-}
-
-fn get_amdgpu_pid_fds(pid: Pid, drm_dev_numbers: &[u64]) -> Option<Vec<u32>> {
+// from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L13-L27
+fn get_amdgpu_pid_fds(pid: Pid, device_path: Vec<PathBuf>) -> Option<Vec<u32>> {
     let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else {
         return None;
     };
 
     let valid_fds: Vec<u32> = fd_list
         .filter_map(|fd_link| {
-            let fd_link = fd_link.ok()?;
-            let fd_num: u32 = fd_link.file_name().to_str()?.parse().ok()?;
+            let dir_entry = fd_link.map(|fd_link| fd_link.path()).ok()?;
+            let link = fs::read_link(&dir_entry).ok()?;
 
-            // We have to use fs::metadata to traverse symlinks.
-            let metadata = fs::metadata(fd_link.path()).ok()?;
-
-            // Only character devices can be DRM render nodes. so filter here.
-            if !metadata.file_type().is_char_device() {
-                return None;
-            }
-
-            if drm_dev_numbers.contains(&metadata.rdev()) {
-                Some(fd_num)
+            // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
+            if device_path.iter().any(|path| link.starts_with(path)) {
+                dir_entry.file_name()?.to_str()?.parse::<u32>().ok()
             } else {
                 None
             }
@@ -246,7 +230,6 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<IntMap<Pid, AmdGpuProc>> {
     let mut fdinfo = IntMap::default();
 
     let drm_paths = get_amdgpu_drm(device_path)?;
-    let drm_dev_numbers = get_drm_dev_numbers(&drm_paths);
 
     let Ok(proc_dir) = fs::read_dir("/proc") else {
         return None;
@@ -275,7 +258,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<IntMap<Pid, AmdGpuProc>> {
 
     for pid in pids {
         // collect file descriptors that point to our device renderers
-        let Some(fds) = get_amdgpu_pid_fds(pid, &drm_dev_numbers) else {
+        let Some(fds) = get_amdgpu_pid_fds(pid, drm_paths.clone()) else {
             continue;
         };
 
