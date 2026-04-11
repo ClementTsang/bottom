@@ -46,8 +46,7 @@ impl Painter {
             .title_top(Line::styled(" Help ", self.styles.widget_title_style))
             .title_top(
                 Line::styled(" Esc to close ", self.styles.widget_title_style).right_aligned(),
-            )
-            .style(self.styles.general_widget_style);
+            );
 
         if app_state.should_get_widget_bounds() {
             // We must also recalculate how many lines are wrapping to properly get

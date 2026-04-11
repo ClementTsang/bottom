@@ -680,7 +680,6 @@ impl ProcessKillDialog {
         let block = dialog_block(styles.border_type)
             .title_top(title)
             .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned())
-            .style(styles.general_widget_style.patch(styles.border_style))
             .border_style(styles.border_style);
 
         let num_lines = text.line_count(block.inner(draw_area).width) as u16;
@@ -814,7 +813,6 @@ impl ProcessKillDialog {
         let block = dialog_block(styles.border_type)
             .title_top(title)
             .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned())
-            .style(styles.general_widget_style.patch(styles.border_style))
             .border_style(styles.border_style);
 
         let num_lines = text.line_count(block.inner(draw_area).width) as u16;
