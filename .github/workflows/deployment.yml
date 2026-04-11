@@ -43,6 +43,10 @@ jobs:
   build-release:
     needs: [initialize]
     uses: ./.github/workflows/build_releases.yml
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
     with:
       caller: "deployment"
     secrets: inherit
