@@ -62,6 +62,8 @@ pub trait DataTableColumn<H: ColumnHeader> {
 
     fn is_hidden(&self) -> bool;
 
+    fn set_hidden(&mut self, hidden: bool);
+
     /// The actually displayed "header".
     fn header(&self) -> Cow<'static, str>;
 
@@ -112,12 +114,25 @@ impl<H: ColumnHeader> DataTableColumn<H> for Column<H> {
         self.is_hidden
     }
 
+    #[inline]
+    fn set_hidden(&mut self, hidden: bool) {
+        self.is_hidden = hidden;
+    }
+
     fn header(&self) -> Cow<'static, str> {
         self.inner.text()
     }
 }
 
 impl<H: ColumnHeader> Column<H> {
+    pub const fn new(inner: H) -> Self {
+        Self {
+            inner,
+            bounds: ColumnWidthBounds::FollowHeader,
+            is_hidden: false,
+        }
+    }
+
     pub const fn hard(inner: H, width: u16) -> Self {
         Self {
             inner,
@@ -177,7 +192,7 @@ where
                 continue;
             }
 
-            match &column.bounds() {
+            let new_width = match &column.bounds() {
                 ColumnWidthBounds::Soft {
                     desired,
                     max_percentage,
@@ -195,50 +210,22 @@ where
                         },
                         min_width,
                     );
-                    let space_taken = min(min(soft_limit, *desired), total_width_left);
 
-                    if stop_allocating_space(space_taken, total_width_left) {
-                        break;
-                    } else {
-                        total_width_left =
-                            total_width_left.saturating_sub(space_taken + COLUMN_SPACING);
-
-                        // SAFETY: This is safe as we call `stop_allocating_space` which checks that
-                        // the value pushed is greater than zero.
-                        unsafe {
-                            calculated_widths.push(NonZeroU16::new_unchecked(space_taken));
-                        }
-                    }
+                    min(min(soft_limit, *desired), total_width_left)
                 }
-                ColumnWidthBounds::Hard(width) => {
-                    let min_width = *width;
-                    if stop_allocating_space(min_width, total_width_left) {
-                        break;
-                    } else {
-                        total_width_left =
-                            total_width_left.saturating_sub(min_width + COLUMN_SPACING);
+                ColumnWidthBounds::Hard(width) => *width,
+                ColumnWidthBounds::FollowHeader => column.header_len() as u16,
+            };
 
-                        // SAFETY: This is safe as we call `stop_allocating_space` which checks that
-                        // the value pushed is greater than zero.
-                        unsafe {
-                            calculated_widths.push(NonZeroU16::new_unchecked(min_width));
-                        }
-                    }
-                }
-                ColumnWidthBounds::FollowHeader => {
-                    let min_width = column.header_len() as u16;
-                    if stop_allocating_space(min_width, total_width_left) {
-                        break;
-                    } else {
-                        total_width_left =
-                            total_width_left.saturating_sub(min_width + COLUMN_SPACING);
+            if stop_allocating_space(new_width, total_width_left) {
+                break;
+            } else {
+                total_width_left = total_width_left.saturating_sub(new_width + COLUMN_SPACING);
 
-                        // SAFETY: This is safe as we call `stop_allocating_space` which checks that
-                        // the value pushed is greater than zero.
-                        unsafe {
-                            calculated_widths.push(NonZeroU16::new_unchecked(min_width));
-                        }
-                    }
+                // SAFETY: This is safe as we call `stop_allocating_space` which checks that
+                // the value pushed is greater than zero.
+                unsafe {
+                    calculated_widths.push(NonZeroU16::new_unchecked(new_width));
                 }
             }
         }
