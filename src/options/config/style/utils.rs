@@ -536,6 +536,32 @@ mod test {
     }
 
     #[test]
+    fn test_set_bg_colour() -> anyhow::Result<()> {
+        let mut s = Style::default().bg(Color::Black);
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+
+        set_bg_colour!(s, &dummy.inner, color_a);
+        assert_eq!(s.fg, None);
+        assert_eq!(s.bg.unwrap(), Color::Black);
+
+        set_bg_colour!(s, &dummy.inner, color_b);
+        assert_eq!(s.fg, None);
+        assert_eq!(s.bg.unwrap(), Color::Red);
+
+        set_bg_colour!(s, &dummy.inner, color_c);
+        assert_eq!(s.fg, None);
+        assert_eq!(s.bg.unwrap(), Color::Rgb(255, 255, 255));
+
+        set_bg_colour!(s, &dummy.inner, color_d);
+        assert_eq!(s.fg, None);
+        assert_eq!(s.bg.unwrap(), Color::Rgb(0, 0, 0));
+
+        Ok(())
+    }
+
+    #[test]
     fn test_bad_set_colour() {
         let mut _s = Style::default().fg(Color::Black);
         let dummy = DummyConfig {

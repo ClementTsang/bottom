@@ -51,9 +51,10 @@ pub fn widget_block(
 }
 
 /// Return a dialog block.
-pub fn dialog_block(border_type: BorderType) -> Block<'static> {
+pub fn dialog_block(border_type: BorderType, border_style: Style) -> Block<'static> {
     Block::default()
         .border_type(border_type)
+        .border_style(border_style)
         .borders(Borders::all())
 }
 
