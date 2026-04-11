@@ -12,10 +12,7 @@ on:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
 
-permissions:
-  id-token: write
-  contents: read
-  attestations: write
+permissions: {}
 
 env:
   CARGO_INCREMENTAL: 0
@@ -45,6 +42,10 @@ jobs:
 
   build-release:
     needs: [initialize]
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
     uses: ./.github/workflows/build_releases.yml
     with:
       caller: "deployment"
@@ -97,6 +98,8 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [initialize, generate-choco, build-release]
     environment: production
+    permissions:
+      contents: write
     steps:
       - name: Set release version
         shell: bash

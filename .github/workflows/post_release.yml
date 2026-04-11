@@ -13,9 +13,7 @@ on:
         description: "Which tag to deploy as:"
         required: true
 
-permissions:
-  pages: write
-  id-token: write
+permissions: {}
 
 env:
   # Assign commit authorship to official GitHub Actions bot when pushing to the `gh-pages` branch:
@@ -48,6 +46,8 @@ jobs:
   docs:
     needs: [initialize]
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - name: Set release version
         shell: bash
@@ -80,6 +80,9 @@ jobs:
 
   publish-gh-pages:
     needs: [docs]
+    permissions:
+      pages: write
+      id-token: write
     uses: ./.github/workflows/publish_github_pages.yml
     secrets: inherit
 
