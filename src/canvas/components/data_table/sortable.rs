@@ -267,10 +267,7 @@ where
 
     /// Toggles the current sort order.
     pub fn toggle_order(&mut self) {
-        self.sort_type.order = match self.sort_type.order {
-            SortOrder::Ascending => SortOrder::Descending,
-            SortOrder::Descending => SortOrder::Ascending,
-        }
+        self.sort_type.order = self.sort_type.order.rev();
     }
 
     /// Given some `x` and `y`, if possible, select the corresponding column or
