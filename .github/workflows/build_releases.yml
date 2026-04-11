@@ -1,7 +1,6 @@
 # Builds the following releases:
 # - Binaries
 # - Binaries via VMs
-# - Cirrus binaries (currently just Linux 2.17)
 # - MSI installer for Windows (.msi)
 # - .deb releases
 # - .rpm releases
@@ -129,6 +128,14 @@ jobs:
               cross: true,
             }
 
+          # Linux 2.17 (CentOS 7)
+          - {
+              target: "x86_64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
+              cross: true,
+              cross_image: "ghcr.io/cross-rs/x86_64-unknown-linux-gnu:main-centos",
+            }
+
           # Android
           - {
               target: "aarch64-linux-android",
@@ -199,7 +206,13 @@ jobs:
             BUILD_FEATURES="--features deploy"
           fi
           echo "Will build with the following features: $BUILD_FEATURES"
-          echo "BUILD_FEATURES=$BUILD_FEATURES" >> $GITHUB_ENV
+          echo "BUILD_FEATURES=$BUILD_FEATURES" >> $
+
+      - name: Set cross docker image if set
+        if: matrix.info.cross == true && matrix.info.cross_image != ''
+        shell: bash
+        run: |
+          echo "CROSS_TARGET_x86_64_UNKNOWN_LINUX_GNU_IMAGE=${{ matrix.info.cross_image }}" >> $GITHUB_ENV
 
       - name: Build
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
@@ -385,44 +398,6 @@ jobs:
         with:
           retention-days: 3
           name: "release-${{ matrix.info.target }}-msi"
-          path: release
-
-  build-cirrus:
-    name: "Build using Cirrus CI"
-    runs-on: "ubuntu-24.04"
-    timeout-minutes: 12
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 0
-
-      - name: Create release directory
-        run: |
-          mkdir -p release
-
-      - name: Execute Cirrus CI build script
-        env:
-          CIRRUS_KEY: ${{ secrets.CIRRUS_TOKEN }}
-        run: |
-          if [[ "${{ github.ref_type }}" == "branch" ]]; then
-            BRANCH="${{ github.ref_name }}";
-          else
-            raw=$(git branch -r --contains '${{ github.ref_name }}');
-            BRANCH=${raw##*/};
-          fi
-          python ./scripts/ci/cirrus_release.py "$BRANCH" "release/" "${{ inputs.caller }}"
-
-      - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
-        with:
-          subject-path: "release/**/*.tar.gz"
-
-      - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
-        with:
-          retention-days: 3
-          name: release-build-cirrus
           path: release
 
   build-deb:

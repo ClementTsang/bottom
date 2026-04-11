@@ -26,7 +26,6 @@ exclude = [
     "scripts/",
     "wix/",
     ".all-contributorsrc",
-    ".cirrus.yml",
     ".gitignore",
     ".markdownlint.json",
     "CHANGELOG.md",
