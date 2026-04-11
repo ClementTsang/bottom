@@ -1,6 +1,6 @@
 use std::{num::NonZeroU64, sync::OnceLock};
 
-use nohash::IntMap;
+use crate::utils::int_hash::IntHashMap;
 use nvml_wrapper::{
     Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError,
 };
@@ -15,7 +15,7 @@ pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
 pub struct GpusData {
     pub memory: Option<Vec<(String, MemData)>>,
     pub temperature: Option<Vec<TempSensorData>>,
-    pub procs: Option<(u64, Vec<IntMap<Pid, (u64, u32)>>)>,
+    pub procs: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
 }
 
 /// Wrapper around Nvml::init
@@ -88,7 +88,7 @@ pub fn get_nvidia_vecs(
                     }
 
                     if widgets_to_harvest.use_proc {
-                        let mut procs = IntMap::default();
+                        let mut procs = IntHashMap::default();
 
                         if let Ok(gpu_procs) = device.process_utilization_stats(None) {
                             for proc in gpu_procs {

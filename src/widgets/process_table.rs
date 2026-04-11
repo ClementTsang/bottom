@@ -7,7 +7,6 @@ use std::{borrow::Cow, collections::BTreeMap};
 
 use indexmap::IndexSet;
 use itertools::Itertools;
-use nohash::IntMap;
 pub use process_columns::*;
 pub use process_data::*;
 use query::{ProcessQuery, parse_query};
@@ -25,6 +24,7 @@ use crate::{
     },
     collection::processes::{Pid, ProcessHarvest},
     options::config::style::Styles,
+    utils::int_hash::IntHashMap,
     widgets::query::QueryOptions,
 };
 
@@ -558,10 +558,10 @@ impl ProcWidgetState {
         // - The process contains some descendant that matches.
         // - The process's parent (and only parent, not any ancestor) matches.
         let filtered_tree = {
-            let mut filtered_tree: IntMap<Pid, Vec<Pid>> = IntMap::default();
+            let mut filtered_tree: IntHashMap<Pid, Vec<Pid>> = IntHashMap::default();
 
             // We do a simple DFS traversal to build our filtered parent-to-tree mappings.
-            let mut visited_pids: IntMap<Pid, bool> = IntMap::default();
+            let mut visited_pids: IntHashMap<Pid, bool> = IntHashMap::default();
             let mut stack = orphan_pids
                 .iter()
                 .filter_map(|process| process_harvest.get(process))
