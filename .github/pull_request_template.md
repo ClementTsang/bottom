@@ -33,7 +33,7 @@ _Ensure **all** of these are met:_
 - [ ] _The change has been tested to work (see above) and doesn't appear to break other things_
 - [ ] _Documentation has been updated if needed (`README.md`, help menu, docs, configs, etc.)_
 - [ ] _There are no merge conflicts_
-- [ ] _You have reviewed the changes first_
+- [ ] _You have reviewed your changes first_
 - [ ] _The pull request passes the provided CI pipeline_
 
 ## Other
