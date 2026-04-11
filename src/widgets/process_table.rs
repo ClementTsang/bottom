@@ -925,7 +925,7 @@ impl ProcWidgetState {
     fn hide_column(&mut self, column: ProcWidgetColumn) {
         if let Some(index) = self.column_mapping.get_index_of(&column) {
             if let Some(col) = self.table.columns.get_mut(index) {
-                col.is_hidden = true;
+                col.set_hidden(true);
 
                 if self.table.sort_index() == index {
                     self.table.set_sort_index(self.default_sort_index);
@@ -939,7 +939,7 @@ impl ProcWidgetState {
     fn show_column(&mut self, column: ProcWidgetColumn) {
         if let Some(index) = self.column_mapping.get_index_of(&column) {
             if let Some(col) = self.table.columns.get_mut(index) {
-                col.is_hidden = false;
+                col.set_hidden(false);
             }
         }
     }
@@ -1061,7 +1061,7 @@ impl ProcWidgetState {
         self.table
             .columns
             .iter()
-            .filter(|c| !c.is_hidden)
+            .filter(|c| !c.is_hidden())
             .map(|c| c.inner().text())
             .collect::<Vec<_>>()
     }

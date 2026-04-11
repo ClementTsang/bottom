@@ -8,7 +8,7 @@ use super::{
     ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,
     DataTableStyling, DataToCell,
 };
-use crate::utils::strings::truncate_to_text;
+use crate::{canvas::components::data_table::Column, utils::strings::truncate_to_text};
 
 /// Denotes the sort order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -123,53 +123,52 @@ pub trait SortsRow {
     fn sort_data(&self, data: &mut [Self::DataType], descending: bool);
 }
 
+/// A wrapper around [`Column`] that also has sorting capabilities.
 #[derive(Debug, Clone)]
-pub struct SortColumn<T> {
+pub struct SortColumn<H> {
     /// The inner column header.
-    inner: T,
+    column: Column<H>,
 
     /// The default sort order.
     pub default_order: SortOrder,
-
-    /// A restriction on this column's width.
-    pub bounds: ColumnWidthBounds,
-
-    /// Marks that this column is currently "hidden", and should *always* be
-    /// skipped.
-    pub is_hidden: bool,
 }
 
-impl<D, T> DataTableColumn<T> for SortColumn<T>
+impl<D, H> DataTableColumn<H> for SortColumn<H>
 where
-    T: ColumnHeader + SortsRow<DataType = D>,
+    H: ColumnHeader + SortsRow<DataType = D>,
 {
     #[inline]
-    fn inner(&self) -> &T {
-        &self.inner
+    fn inner(&self) -> &H {
+        self.column.inner()
     }
 
     #[inline]
-    fn inner_mut(&mut self) -> &mut T {
-        &mut self.inner
+    fn inner_mut(&mut self) -> &mut H {
+        self.column.inner_mut()
     }
 
     #[inline]
     fn bounds(&self) -> ColumnWidthBounds {
-        self.bounds
+        self.column.bounds()
     }
 
     #[inline]
     fn bounds_mut(&mut self) -> &mut ColumnWidthBounds {
-        &mut self.bounds
+        self.column.bounds_mut()
     }
 
     #[inline]
     fn is_hidden(&self) -> bool {
-        self.is_hidden
+        self.column.is_hidden()
+    }
+
+    #[inline]
+    fn set_hidden(&mut self, hidden: bool) {
+        self.column.set_hidden(hidden);
     }
 
     fn header(&self) -> Cow<'static, str> {
-        self.inner.header()
+        self.column.header()
     }
 
     fn header_len(&self) -> usize {
@@ -186,10 +185,8 @@ where
     /// ([`SortOrder::Ascending`]).
     pub fn new(inner: T) -> Self {
         Self {
-            inner,
-            bounds: ColumnWidthBounds::FollowHeader,
-            is_hidden: false,
-            default_order: SortOrder::default(),
+            column: Column::new(inner),
+            default_order: SortOrder::const_default(),
         }
     }
 
@@ -197,9 +194,7 @@ where
     /// and sorts by default in ascending order ([`SortOrder::Ascending`]).
     pub const fn hard(inner: T, width: u16) -> Self {
         Self {
-            inner,
-            bounds: ColumnWidthBounds::Hard(width),
-            is_hidden: false,
+            column: Column::hard(inner, width),
             default_order: SortOrder::const_default(),
         }
     }
@@ -208,12 +203,7 @@ where
     /// and sorts by default in ascending order ([`SortOrder::Ascending`]).
     pub const fn soft(inner: T, max_percentage: Option<f32>) -> Self {
         Self {
-            inner,
-            bounds: ColumnWidthBounds::Soft {
-                desired: 0,
-                max_percentage,
-            },
-            is_hidden: false,
+            column: Column::soft(inner, max_percentage),
             default_order: SortOrder::const_default(),
         }
     }
@@ -228,7 +218,7 @@ where
     /// associated data.
     pub fn sort_by(&self, data: &mut [D], order: SortOrder) {
         let descending = matches!(order, SortOrder::Descending);
-        self.inner.sort_data(data, descending);
+        self.column.inner().sort_data(data, descending);
     }
 }
 
@@ -277,10 +267,7 @@ where
 
     /// Toggles the current sort order.
     pub fn toggle_order(&mut self) {
-        self.sort_type.order = match self.sort_type.order {
-            SortOrder::Ascending => SortOrder::Descending,
-            SortOrder::Descending => SortOrder::Ascending,
-        }
+        self.sort_type.order = self.sort_type.order.rev();
     }
 
     /// Given some `x` and `y`, if possible, select the corresponding column or

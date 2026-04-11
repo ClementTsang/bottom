@@ -50,8 +50,7 @@ pub struct DrawInfo {
 
 impl DrawInfo {
     pub fn is_on_widget(&self) -> bool {
-        matches!(self.selection_state, SelectionState::Selected)
-            || matches!(self.selection_state, SelectionState::Expanded)
+        !matches!(self.selection_state, SelectionState::NotSelected)
     }
 
     pub fn is_expanded(&self) -> bool {
