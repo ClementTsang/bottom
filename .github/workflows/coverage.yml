@@ -27,7 +27,7 @@ jobs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
       - id: skip_check
-        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
+        uses: ClementTsang/skip-duplicate-actions@41b0a75f656d455934ffa6a46b779d8d996ac47c
         with:
           skip_after_successful_duplicate: "false"
           paths: '["tests/**", "src/**", ".github/workflows/coverage.yml", ".github/ci", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
