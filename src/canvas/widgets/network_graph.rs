@@ -5,7 +5,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
     text::Text,
-    widgets::{Block, Borders, Row, Table},
+    widgets::{Row, Table},
 };
 
 use crate::{
@@ -13,7 +13,7 @@ use crate::{
     canvas::{
         Painter,
         components::time_graph::{AxisBound, ChartScaling, GraphData, TimeGraph},
-        drawing_utils::should_hide_x_label,
+        drawing_utils::{should_hide_x_label, widget_block},
         widgets::{PacketInfo, calculate_packet_info},
     },
     utils::{
@@ -349,6 +349,19 @@ impl Painter {
         let column_width = draw_loc.width.saturating_sub(2) / num_columns as u16;
 
         // Draw
+        let current_border_style = if app_state.current_widget.widget_id == widget_id {
+            self.styles.highlighted_border_style
+        } else {
+            self.styles.border_style
+        };
+        let block = widget_block(
+            app_state.app_config_fields.use_basic_mode,
+            app_state.current_widget.widget_id == widget_id,
+            self.styles.border_type,
+            self.styles.general_widget_style,
+        )
+        .border_style(current_border_style);
+
         f.render_widget(
             Table::new(
                 total_network,
@@ -357,13 +370,7 @@ impl Painter {
                     .collect::<Vec<_>>()),
             )
             .header(Row::new(headers).style(self.styles.table_header_style))
-            .block(Block::default().borders(Borders::ALL).border_style(
-                if app_state.current_widget.widget_id == widget_id {
-                    self.styles.highlighted_border_style
-                } else {
-                    self.styles.border_style
-                },
-            ))
+            .block(block)
             .style(self.styles.text_style),
             draw_loc,
         );

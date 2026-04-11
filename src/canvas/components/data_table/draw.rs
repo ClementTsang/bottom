@@ -8,7 +8,7 @@ use tui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span, Text},
-    widgets::{Block, Cell, Row, Table},
+    widgets::{Block, Cell, Padding, Row, Table},
 };
 
 use super::{
@@ -141,11 +141,13 @@ where
         let draw_loc = draw_info.loc;
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)])
-            .horizontal_margin(u16::from(self.props.is_basic && !draw_info.is_on_widget()))
             .direction(Direction::Horizontal)
             .split(draw_loc)[0];
 
-        let block = self.block(draw_info, self.data.len());
+        let mut block = self.block(draw_info, self.data.len());
+        if self.props.is_basic && !draw_info.is_on_widget() {
+            block = block.padding(Padding::horizontal(1))
+        }
 
         let (inner_width, inner_height) = {
             let inner_rect = block.inner(margined_draw_loc);

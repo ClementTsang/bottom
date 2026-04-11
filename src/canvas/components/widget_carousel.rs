@@ -115,6 +115,9 @@ impl Painter {
                 .horizontal_margin(1)
                 .split(draw_loc);
 
+            f.buffer_mut()
+                .set_style(draw_loc, self.styles.general_widget_style);
+
             f.render_widget(
                 Paragraph::new(left_arrow_text).block(Block::default()),
                 margined_draw_loc[0],

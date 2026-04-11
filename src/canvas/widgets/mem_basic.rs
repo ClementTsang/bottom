@@ -46,18 +46,16 @@ impl Painter {
     ) {
         let mut draw_widgets: Vec<PipeGauge<'_>> = Vec::new();
 
-        if app_state.current_widget.widget_id == widget_id {
-            f.render_widget(
-                widget_block(
-                    true,
-                    true,
-                    self.styles.border_type,
-                    self.styles.general_widget_style,
-                )
-                .border_style(self.styles.highlighted_border_style),
-                draw_loc,
-            );
-        }
+        f.render_widget(
+            widget_block(
+                true,
+                app_state.current_widget.widget_id == widget_id,
+                self.styles.border_type,
+                self.styles.general_widget_style,
+            )
+            .border_style(self.styles.highlighted_border_style),
+            draw_loc,
+        );
 
         let data = app_state.data_store.get_data();
 
