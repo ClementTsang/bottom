@@ -157,6 +157,7 @@ jobs:
     permissions:
       pages: write
       id-token: write
+      contents: write
     uses: ./.github/workflows/docs.yml
     secrets: inherit
     with:
