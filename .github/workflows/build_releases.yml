@@ -133,7 +133,7 @@ jobs:
               target: "x86_64-unknown-linux-gnu",
               os: "ubuntu-22.04",
               cross: true,
-              cross_image: "ghcr.io/cross-rs/x86_64-unknown-linux-gnu:main-centos",
+              cross_image: "ghcr.io/cross-rs/x86_64-unknown-linux-gnu@sha256:ab74248a187c565196542415b501e661f67635a3bebd20f9b80d5f186cb93e82 ", # 0.2.5-centos
             }
 
           # Android
