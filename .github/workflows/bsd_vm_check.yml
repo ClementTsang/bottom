@@ -14,6 +14,8 @@ on:
         description: "Release version"
         required: true
 
+permissions: {}
+
 # Duplicated because GHA doesn't support passing env vars through without making them all inputs or something.
 env:
   RUST_BACKTRACE: 1

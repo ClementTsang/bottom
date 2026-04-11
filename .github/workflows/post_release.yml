@@ -13,6 +13,8 @@ on:
         description: "Which tag to deploy as:"
         required: true
 
+permissions: {}
+
 env:
   # Assign commit authorship to official GitHub Actions bot when pushing to the `gh-pages` branch:
   GIT_USER: "github-actions[bot]"
