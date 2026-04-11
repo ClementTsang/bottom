@@ -212,7 +212,7 @@ jobs:
         if: matrix.info.cross == true && matrix.info.cross_image != ''
         shell: bash
         run: |
-          echo "CROSS_TARGET_x86_64_UNKNOWN_LINUX_GNU_IMAGE=${{ matrix.info.cross_image }}" >> $GITHUB_ENV
+          echo "CROSS_TARGET_X86_64_UNKNOWN_LINUX_GNU_IMAGE=${{ matrix.info.cross_image }}" >> $GITHUB_ENV
 
       - name: Build
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
