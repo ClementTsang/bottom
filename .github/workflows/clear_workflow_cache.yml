@@ -15,11 +15,12 @@ on:
   schedule:
     - cron: "0 11 * * 0"
 
-permissions:
-  actions: write
+permissions: {}
 
 jobs:
   clear-cache:
+    permissions:
+      actions: write
     if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
     runs-on: ubuntu-24.04
     env:

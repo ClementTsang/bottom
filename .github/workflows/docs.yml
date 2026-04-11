@@ -18,9 +18,7 @@ on:
       - "docs/**"
       - ".github/workflows/docs.yml"
 
-permissions:
-  pages: write
-  id-token: write
+permissions: {}
 
 env:
   # Assign commit authorship to official GitHub Actions bot when pushing to the `gh-pages` branch:
@@ -31,6 +29,8 @@ jobs:
   build-documentation:
     name: Build and deploy docs
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -56,5 +56,8 @@ jobs:
 
   publish-gh-pages:
     needs: [build-documentation]
+    permissions:
+      pages: write
+      id-token: write
     uses: ./.github/workflows/publish_github_pages.yml
     secrets: inherit
