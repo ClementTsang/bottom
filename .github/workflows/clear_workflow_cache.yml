@@ -15,7 +15,8 @@ on:
   schedule:
     - cron: "0 11 * * 0"
 
-permissions: {}
+permissions:
+  actions: write
 
 jobs:
   clear-cache:
