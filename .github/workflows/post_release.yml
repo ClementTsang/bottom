@@ -80,6 +80,9 @@ jobs:
 
   publish-gh-pages:
     needs: [docs]
+    permissions:
+      pages: write
+      id-token: write
     uses: ./.github/workflows/publish_github_pages.yml
     secrets: inherit
 

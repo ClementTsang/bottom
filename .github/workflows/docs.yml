@@ -1,4 +1,4 @@
-# Workflow to deploy mkdocs documentation.
+# Workflow to deploy nightly mkdocs documentation.
 
 name: docs
 
