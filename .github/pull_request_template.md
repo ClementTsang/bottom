@@ -25,6 +25,7 @@ _If this change affects the program, please also indicate which platforms were t
 
 _Ensure **all** of these are met:_
 
+- [ ] _If this PR adds or changes a dependency, please justify this in the description_
 - [ ] _If this is a code change, areas your change affects have been linted using (`cargo fmt`)_
 - [ ] _If this is a code change, your changes pass `cargo clippy --all -- -D warnings`_
 - [ ] _If this is a code change, new tests were added if relevant_
