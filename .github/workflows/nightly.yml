@@ -14,7 +14,11 @@ on:
         required: false
         type: boolean
 
-permissions: {}
+permissions:
+  id-token: write
+  contents: read
+  attestations: write
+  pages: write
 
 env:
   CARGO_INCREMENTAL: 0
@@ -50,10 +54,6 @@ jobs:
     needs: initialize-job
     if: ${{ needs.initialize-job.outputs.should_skip != 'true' }}
     uses: ./.github/workflows/build_releases.yml
-    permissions:
-      id-token: write
-      contents: read
-      attestations: write
     with:
       caller: "nightly"
     secrets: inherit

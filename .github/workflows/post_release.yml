@@ -13,7 +13,9 @@ on:
         description: "Which tag to deploy as:"
         required: true
 
-permissions: {}
+permissions:
+  pages: write
+  id-token: write
 
 env:
   # Assign commit authorship to official GitHub Actions bot when pushing to the `gh-pages` branch:

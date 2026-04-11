@@ -8,8 +8,6 @@ on:
   workflow_dispatch:
   workflow_call:
 
-permissions: {}
-
 jobs:
   build:
     runs-on: ubuntu-24.04
