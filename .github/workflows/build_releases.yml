@@ -206,7 +206,7 @@ jobs:
             BUILD_FEATURES="--features deploy"
           fi
           echo "Will build with the following features: $BUILD_FEATURES"
-          echo "BUILD_FEATURES=$BUILD_FEATURES" >> $
+          echo "BUILD_FEATURES=$BUILD_FEATURES" >> $GITHUB_ENV
 
       - name: Set cross docker image if set
         if: matrix.info.cross == true && matrix.info.cross_image != ''
