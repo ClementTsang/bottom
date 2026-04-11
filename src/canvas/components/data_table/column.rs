@@ -62,6 +62,8 @@ pub trait DataTableColumn<H: ColumnHeader> {
 
     fn is_hidden(&self) -> bool;
 
+    fn set_hidden(&mut self, hidden: bool);
+
     /// The actually displayed "header".
     fn header(&self) -> Cow<'static, str>;
 
@@ -112,12 +114,25 @@ impl<H: ColumnHeader> DataTableColumn<H> for Column<H> {
         self.is_hidden
     }
 
+    #[inline]
+    fn set_hidden(&mut self, hidden: bool) {
+        self.is_hidden = hidden;
+    }
+
     fn header(&self) -> Cow<'static, str> {
         self.inner.text()
     }
 }
 
 impl<H: ColumnHeader> Column<H> {
+    pub const fn new(inner: H) -> Self {
+        Self {
+            inner,
+            bounds: ColumnWidthBounds::FollowHeader,
+            is_hidden: false,
+        }
+    }
+
     pub const fn hard(inner: H, width: u16) -> Self {
         Self {
             inner,
