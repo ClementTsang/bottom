@@ -34,6 +34,6 @@ pub(crate) struct WidgetStyle {
     /// Widget borders type.
     pub(crate) widget_border_type: Option<WidgetBorderType>,
 
-    /// Background color for widgets in general
+    /// Background color for widgets.
     pub(crate) bg_color: Option<ColorStr>,
 }
