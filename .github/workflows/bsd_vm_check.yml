@@ -1,7 +1,5 @@
 # Run BSD VM jobs with manually-implemented retries.
 
-name: "BSD VM Check"
-
 on:
   workflow_call:
     inputs:
