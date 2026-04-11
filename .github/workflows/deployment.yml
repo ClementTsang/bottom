@@ -12,6 +12,11 @@ on:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
 
+permissions:
+  id-token: write
+  contents: read
+  attestations: write
+
 env:
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_DEV_DEBUG: 0
@@ -91,6 +96,7 @@ jobs:
     name: upload-release
     runs-on: ubuntu-24.04
     needs: [initialize, generate-choco, build-release]
+    environment: production
     steps:
       - name: Set release version
         shell: bash

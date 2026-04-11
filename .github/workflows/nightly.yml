@@ -14,6 +14,12 @@ on:
         required: false
         type: boolean
 
+permissions:
+  id-token: write
+  contents: read
+  attestations: write
+  pages: write
+
 env:
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_DEV_DEBUG: 0
