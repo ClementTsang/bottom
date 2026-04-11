@@ -11,7 +11,7 @@ pub struct DataTableStyling {
     pub text_style: Style,
     pub highlighted_text_style: Style,
     pub title_style: Style,
-    pub bg_color_style: Style,
+    pub general_widget_style: Style,
 }
 
 impl DataTableStyling {
@@ -24,7 +24,7 @@ impl DataTableStyling {
             text_style: styles.text_style,
             highlighted_text_style: styles.selected_text_style,
             title_style: styles.widget_title_style,
-            bg_color_style: styles.bg_color_style,
+            general_widget_style: styles.general_widget_style,
         }
     }
 }

@@ -51,7 +51,7 @@ impl Painter {
                     app_state.app_config_fields.use_basic_mode,
                     is_selected,
                     self.styles.border_type,
-                    self.styles.bg_color_style,
+                    self.styles.general_widget_style,
                 )
                 .border_style(border_style)
                 .title_top(Line::styled(" Battery ", self.styles.widget_title_style));

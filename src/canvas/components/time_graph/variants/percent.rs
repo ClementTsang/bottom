@@ -71,7 +71,7 @@ impl<'a> PercentTimeGraph<'a> {
         };
 
         let graph_style = self.styles.graph_style;
-        let bg_color_style = self.styles.bg_color_style;
+        let general_widget_style = self.styles.general_widget_style;
         let border_style = get_border_style(self.styles, self.widget_id, self.current_widget);
         let title_style = self.styles.widget_title_style;
         let border_type = self.styles.border_type;
@@ -82,7 +82,7 @@ impl<'a> PercentTimeGraph<'a> {
             y_bounds: Y_BOUNDS,
             y_labels: &Y_LABELS,
             graph_style,
-            bg_color_style,
+            general_widget_style,
             border_style,
             border_type,
             title: self.title,

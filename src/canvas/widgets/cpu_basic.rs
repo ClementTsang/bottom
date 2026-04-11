@@ -39,7 +39,7 @@ impl Painter {
                     true,
                     true,
                     self.styles.border_type,
-                    self.styles.bg_color_style,
+                    self.styles.general_widget_style,
                 )
                 .border_style(self.styles.highlighted_border_style),
                 draw_loc,

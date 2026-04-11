@@ -119,7 +119,7 @@ pub struct Styles {
     pub(crate) selected_text_style: Style,
     pub(crate) table_header_style: Style,
     pub(crate) widget_title_style: Style,
-    pub(crate) bg_color_style: Style,
+    pub(crate) general_widget_style: Style,
     pub(crate) graph_style: Style,
     pub(crate) graph_legend_style: Style,
     pub(crate) high_battery: Style,
@@ -210,7 +210,7 @@ impl Styles {
         set_style!(self.graph_legend_style, config.graphs, legend_text);
 
         // General widget text.
-        set_bg_colour!(self.bg_color_style, config.widgets, bg_color);
+        set_bg_colour!(self.general_widget_style, config.widgets, bg_color);
         set_style!(self.widget_title_style, config.widgets, widget_title);
         set_style!(self.text_style, config.widgets, text);
         set_style!(self.selected_text_style, config.widgets, selected_text);

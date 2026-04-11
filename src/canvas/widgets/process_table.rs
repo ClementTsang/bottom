@@ -258,7 +258,7 @@ impl Painter {
                     is_basic,
                     is_selected,
                     self.styles.border_type,
-                    self.styles.bg_color_style,
+                    self.styles.general_widget_style,
                 )
                 .border_style(current_border_style);
 

@@ -82,7 +82,7 @@ where
             self.props.is_basic,
             is_selected,
             self.styling.border_type,
-            self.styling.bg_color_style,
+            self.styling.general_widget_style,
         )
         .border_style(border_style);
 
