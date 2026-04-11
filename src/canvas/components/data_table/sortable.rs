@@ -139,7 +139,7 @@ where
 {
     #[inline]
     fn inner(&self) -> &H {
-        &self.column.inner()
+        self.column.inner()
     }
 
     #[inline]
