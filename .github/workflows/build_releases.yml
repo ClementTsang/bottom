@@ -134,6 +134,7 @@ jobs:
               os: "ubuntu-22.04",
               cross: true,
               cross_image: "ghcr.io/cross-rs/x86_64-unknown-linux-gnu@sha256:ab2070e67704b2c85d0d1fa50a0165ec438ed87fd1dc1a4058692a2348c071cb", # edge-centos
+              artifact_name: "x86_64-unknown-linux-gnu-2-17",
             }
 
           # Android
@@ -317,7 +318,7 @@ jobs:
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: "release-${{ matrix.info.target }}"
+          name: "release-${{ matrix.info.artifact_name || matrix.info.target }}"
           path: release
 
   build-msi:
