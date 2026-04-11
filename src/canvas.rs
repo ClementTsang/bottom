@@ -120,6 +120,10 @@ impl Painter {
 
             // TODO: Make drawing dialog generic.
             if app_state.help_dialog_state.is_showing_help {
+                let area = f.area();
+                f.buffer_mut()
+                    .set_style(area, self.styles.general_widget_style);
+
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
                 let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
                 let [_, vertical_dialog_chunk, _] = Layout::default()
@@ -178,6 +182,10 @@ impl Painter {
 
                 self.draw_help_dialog(f, app_state, middle_dialog_chunk);
             } else if app_state.process_kill_dialog.is_open() {
+                let area = f.area();
+                f.buffer_mut()
+                    .set_style(area, self.styles.general_widget_style);
+
                 // FIXME: For width, just limit to a max size or full width. For height, not sure. Maybe pass max and let child handle?
                 let horizontal_padding = if terminal_width < 100 { 0 } else { 5 };
                 let vertical_padding = if terminal_height < 100 { 0 } else { 5 };

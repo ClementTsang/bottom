@@ -21,13 +21,16 @@ impl Painter {
     ) {
         let show_packets = app_state.app_config_fields.network_show_packets;
 
-        if app_state.current_widget.widget_id == widget_id {
-            f.render_widget(
-                widget_block(true, true, self.styles.border_type)
-                    .border_style(self.styles.highlighted_border_style),
-                draw_loc,
-            );
-        }
+        f.render_widget(
+            widget_block(
+                true,
+                app_state.current_widget.widget_id == widget_id,
+                self.styles.border_type,
+                self.styles.general_widget_style,
+            )
+            .border_style(self.styles.highlighted_border_style),
+            draw_loc,
+        );
 
         let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
         let network_data = &(app_state.data_store.get_data().network_harvest);

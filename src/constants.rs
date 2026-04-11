@@ -541,7 +541,8 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #text = {color = "gray"}
 #selected_text = {color = "black", bg_color = "light blue"}
 #disabled_text = {color = "dark gray"}
-
+# Disabled by default
+#bg_color = "black"
 # Only on Linux
 #thread_text = {color = "green"}
 
