@@ -93,6 +93,7 @@ jobs:
     name: upload-release
     runs-on: ubuntu-24.04
     needs: [initialize, generate-choco, build-release]
+    environment: production
     steps:
       - name: Set release version
         shell: bash
