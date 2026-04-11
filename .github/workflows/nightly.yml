@@ -14,11 +14,7 @@ on:
         required: false
         type: boolean
 
-permissions:
-  id-token: write
-  contents: read
-  attestations: write
-  pages: write
+permissions: {}
 
 env:
   CARGO_INCREMENTAL: 0
@@ -53,6 +49,10 @@ jobs:
   build-release:
     needs: initialize-job
     if: ${{ needs.initialize-job.outputs.should_skip != 'true' }}
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
     uses: ./.github/workflows/build_releases.yml
     with:
       caller: "nightly"
@@ -62,6 +62,8 @@ jobs:
     name: upload-release
     needs: build-release
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     outputs:
       TAG_NAME: ${{ steps.tag_release_name.outputs.TAG_NAME }}
     steps:
@@ -152,6 +154,9 @@ jobs:
   docs:
     needs: [initialize-job, upload-release]
     if: ${{ needs.initialize-job.outputs.should_skip != 'true' && github.event.inputs.isMock != 'true' }}
+    permissions:
+      pages: write
+      id-token: write
     uses: ./.github/workflows/docs.yml
     secrets: inherit
     with:
