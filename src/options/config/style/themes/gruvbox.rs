@@ -4,7 +4,7 @@ use tui::{
 };
 
 use super::{color, hex};
-use crate::options::config::style::{Styles, themes::hex_colour};
+use crate::options::config::style::{Styles, themes::hex_colour, widgets::ProgressBarChars};
 
 impl Styles {
     pub(crate) fn gruvbox_palette() -> Self {
@@ -69,6 +69,7 @@ impl Styles {
             border_type: BorderType::Plain,
             #[cfg(target_os = "linux")]
             thread_text_style: hex!("#458588"),
+            progress_bar_chars: ProgressBarChars::default(),
         }
     }
 
@@ -134,6 +135,7 @@ impl Styles {
             border_type: BorderType::Plain,
             #[cfg(target_os = "linux")]
             thread_text_style: hex!("#458588"),
+            progress_bar_chars: ProgressBarChars::default(),
         }
     }
 }
