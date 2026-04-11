@@ -97,3 +97,22 @@ jobs:
           -H 'Accept: application/vnd.github.everest-preview+json' \
           -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
           --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
+
+  publish-crate:
+    needs: [initialize, chocolatey, publish-gh-pages]
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
+        id: auth
+
+      - run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
