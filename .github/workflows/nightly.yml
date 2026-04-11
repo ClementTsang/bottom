@@ -160,5 +160,3 @@ jobs:
       contents: write
     uses: ./.github/workflows/docs.yml
     secrets: inherit
-    with:
-      nightly: ${{needs.job1.outputs.output1}}
