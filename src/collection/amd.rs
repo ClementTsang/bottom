@@ -45,7 +45,7 @@ pub struct AmdGpuProc {
 static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, IntMap<Pid, AmdGpuProc>>>> =
     LazyLock::new(|| Mutex::new(HashMap::default()));
 
-fn get_amd_devs() -> Option<Vec<PathBuf>> {
+fn get_devs() -> Option<Vec<PathBuf>> {
     let mut devices = Vec::new();
 
     // read all PCI devices controlled by the AMDGPU module
@@ -82,7 +82,7 @@ fn get_amd_devs() -> Option<Vec<PathBuf>> {
     }
 }
 
-pub fn get_amd_name(device_path: &Path) -> Option<String> {
+pub fn get_name(device_path: &Path) -> Option<String> {
     // get revision and device ids from sysfs
     let rev_path = device_path.join("revision");
     let dev_path = device_path.join("device");
@@ -120,7 +120,7 @@ pub fn get_amd_name(device_path: &Path) -> Option<String> {
         .map(|tuple| tuple.2.to_string())
 }
 
-fn get_amd_vram(device_path: &Path) -> Option<AmdGpuMemory> {
+fn get_vram(device_path: &Path) -> Option<AmdGpuMemory> {
     // get vram memory info from sysfs
     let vram_total_path = device_path.join("mem_info_vram_total");
     let vram_used_path = device_path.join("mem_info_vram_used");
@@ -149,24 +149,18 @@ fn get_amd_vram(device_path: &Path) -> Option<AmdGpuMemory> {
     })
 }
 
-// from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L114
-fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
-    use std::ops::Mul;
+fn diff_percentage(prev: u64, curr: u64, interval: &Duration) -> u64 {
+    let diff_ns = curr.saturating_sub(prev) as u128;
 
-    let diff_ns = if pre == 0 || cur < pre {
+    if diff_ns == 0 || interval.as_nanos() == 0 {
         return 0;
-    } else {
-        cur.saturating_sub(pre) as u128
-    };
+    }
 
-    diff_ns
-        .mul(100)
-        .checked_div(interval.as_nanos())
-        .unwrap_or(0) as u64
+    (diff_ns * 100 / interval.as_nanos()) as u64
 }
 
-// from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L13-L27
-fn get_amdgpu_pid_fds(pid: Pid, device_path: Vec<PathBuf>) -> Option<Vec<u32>> {
+/// Based on <https://github.com/Umio-Yasuno/amdgpu_top/blob/de0e906eb4cc79946065ed0a9359853d892baa50/crates/libamdgpu_top/src/stat/fdinfo/amdgpu_fdinfo.rs>.
+fn get_fds(pid: Pid, device_path: Vec<PathBuf>) -> Option<Vec<u32>> {
     let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else {
         return None;
     };
@@ -228,7 +222,6 @@ fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
 
 fn get_amd_fdinfo(device_path: &Path) -> Option<IntMap<Pid, AmdGpuProc>> {
     let mut fdinfo = IntMap::default();
-
     let drm_paths = get_amdgpu_drm(device_path)?;
 
     let Ok(proc_dir) = fs::read_dir("/proc") else {
@@ -237,7 +230,6 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<IntMap<Pid, AmdGpuProc>> {
 
     let pids: Vec<Pid> = proc_dir
         .filter_map(|dir_entry| {
-            // check if pid is valid
             let dir_entry = dir_entry.ok()?;
             let metadata = dir_entry.metadata().ok()?;
 
@@ -252,13 +244,15 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<IntMap<Pid, AmdGpuProc>> {
                 return None;
             }
 
+            // TODO: Also skip systemd cmdline?
+
             Some(pid)
         })
         .collect();
 
     for pid in pids {
         // collect file descriptors that point to our device renderers
-        let Some(fds) = get_amdgpu_pid_fds(pid, drm_paths.clone()) else {
+        let Some(fds) = get_fds(pid, drm_paths.clone()) else {
             continue;
         };
 
@@ -328,7 +322,7 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<IntMap<Pid, AmdGpuProc>> {
 }
 
 pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Option<AmdGpuData> {
-    let device_path_list = get_amd_devs()?;
+    let device_path_list = get_devs()?;
     let interval = Instant::now().duration_since(prev_time);
     let num_gpu = device_path_list.len();
     let mut mem_vec = Vec::with_capacity(num_gpu);
@@ -336,10 +330,10 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
     let mut total_mem = 0;
 
     for device_path in device_path_list {
-        let device_name = get_amd_name(&device_path)
-            .unwrap_or(amd_gpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
+        let device_name =
+            get_name(&device_path).unwrap_or(amd_gpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
 
-        if let Some(mem) = get_amd_vram(&device_path) {
+        if let Some(mem) = get_vram(&device_path) {
             if widgets_to_harvest.use_mem {
                 if let Some(total_bytes) = NonZeroU64::new(mem.total) {
                     mem_vec.push((
@@ -365,19 +359,19 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
                     if let Some(prev_usage) = prev_fdinfo.get_mut(&proc_pid) {
                         // calculate deltas
                         let gfx_usage =
-                            diff_usage(prev_usage.gfx_usage, proc_usage.gfx_usage, &interval);
+                            diff_percentage(prev_usage.gfx_usage, proc_usage.gfx_usage, &interval);
                         let dma_usage =
-                            diff_usage(prev_usage.dma_usage, proc_usage.dma_usage, &interval);
+                            diff_percentage(prev_usage.dma_usage, proc_usage.dma_usage, &interval);
                         let enc_usage =
-                            diff_usage(prev_usage.enc_usage, proc_usage.enc_usage, &interval);
+                            diff_percentage(prev_usage.enc_usage, proc_usage.enc_usage, &interval);
                         let dec_usage =
-                            diff_usage(prev_usage.dec_usage, proc_usage.dec_usage, &interval);
+                            diff_percentage(prev_usage.dec_usage, proc_usage.dec_usage, &interval);
                         let uvd_usage =
-                            diff_usage(prev_usage.uvd_usage, proc_usage.uvd_usage, &interval);
+                            diff_percentage(prev_usage.uvd_usage, proc_usage.uvd_usage, &interval);
                         let vcn_usage =
-                            diff_usage(prev_usage.vcn_usage, proc_usage.vcn_usage, &interval);
+                            diff_percentage(prev_usage.vcn_usage, proc_usage.vcn_usage, &interval);
                         let vpe_usage =
-                            diff_usage(prev_usage.vpe_usage, proc_usage.vpe_usage, &interval);
+                            diff_percentage(prev_usage.vpe_usage, proc_usage.vpe_usage, &interval);
 
                         // combined usage
                         let gpu_util_wide = gfx_usage

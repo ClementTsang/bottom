@@ -10,7 +10,7 @@ use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 use super::TempSensorData;
 #[cfg(feature = "gpu")]
-use crate::collection::amd::get_amd_name;
+use crate::collection::amd::get_name;
 use crate::{app::filter::Filter, collection::linux::utils::is_device_awake};
 
 const EMPTY_NAME: &str = "Unknown";
@@ -265,7 +265,7 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
 
                         #[cfg(feature = "gpu")]
                         {
-                            if let Some(amd_gpu_name) = get_amd_name(&device) {
+                            if let Some(amd_gpu_name) = get_name(&device) {
                                 Some(amd_gpu_name)
                             } else if let Ok(cards) = drm.read_dir() {
                                 cards.flatten().find_map(|card| {
