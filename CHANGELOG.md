@@ -28,6 +28,10 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2003](https://github.com/ClementTsang/bottom/pull/2003): Configurable default sort column for temperature and disk table widgets.
 - [#1979](https://github.com/ClementTsang/bottom/pull/1979): Add global `bg_color` option to set widget background colour.
 
+### Changes
+
+- [#2031](https://github.com/ClementTsang/bottom/pull/2031): Tweak display/hiding logic for a graph widget's legend.
+
 ### Other
 
 - [#1955](https://github.com/ClementTsang/bottom/pull/1955): Fix mirrored documentation deploy to GitHub Pages.
