@@ -5,13 +5,11 @@ pub mod states;
 
 use std::time::Instant;
 
-use concat_string::concat_string;
 use data::*;
 use filter::*;
 use layout_manager::*;
 use rustc_hash::FxHashMap as HashMap;
 pub use states::*;
-use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
     canvas::{
@@ -869,24 +867,10 @@ impl App {
                         proc_widget_state
                             .proc_search
                             .search_state
-                            .current_search_query
-                            .insert(proc_widget_state.cursor_char_index(), caught_char);
-
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(
-                                proc_widget_state.cursor_char_index(),
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                true,
-                            );
-                        proc_widget_state.search_walk_forward();
+                            .input_field_state
+                            .insert_char(caught_char);
 
                         proc_widget_state.update_query();
-                        proc_widget_state.proc_search.search_state.cursor_direction =
-                            CursorDirection::Right;
 
                         return;
                     }
@@ -2520,9 +2504,6 @@ impl App {
 
     /// A quick and dirty way to handle paste events.
     pub fn handle_paste(&mut self, paste: String) {
-        // Partially copy-pasted from the single-char variant; should probably clean up
-        // this process in the future. In particular, encapsulate this entire
-        // logic and add some tests to make it less potentially error-prone.
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .states
@@ -2530,28 +2511,14 @@ impl App {
             .widget_states
             .get_mut(&(self.current_widget.widget_id - 1))
         {
-            let num_runes = UnicodeSegmentation::graphemes(paste.as_str(), true).count();
-
             if is_in_search_widget && proc_widget_state.is_search_enabled() {
-                let left_bound = proc_widget_state.cursor_char_index();
-
-                let curr_query = &mut proc_widget_state
+                proc_widget_state
                     .proc_search
                     .search_state
-                    .current_search_query;
-                let (left, right) = curr_query.split_at(left_bound);
-                *curr_query = concat_string!(left, paste, right);
-
-                proc_widget_state.proc_search.search_state.grapheme_cursor =
-                    GraphemeCursor::new(left_bound, curr_query.len(), true);
-
-                for _ in 0..num_runes {
-                    proc_widget_state.search_walk_forward();
-                }
+                    .input_field_state
+                    .insert_string(paste);
 
                 proc_widget_state.update_query();
-                proc_widget_state.proc_search.search_state.cursor_direction =
-                    CursorDirection::Right;
             }
         }
     }

@@ -3,6 +3,7 @@
 
 use std::ops::Range;
 
+use concat_string::concat_string;
 use unicode_ellipsis::grapheme_width;
 use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete, UnicodeSegmentation};
 
@@ -308,6 +309,45 @@ impl InputFieldState {
             GraphemeCursor::new(start_index, self.current_search_query.len(), true);
 
         self.cursor_direction = CursorDirection::Left;
+    }
+
+    /// Insert a single [`char`].
+    pub fn insert_char(&mut self, ch: char) {
+        self.current_search_query
+            .insert(self.grapheme_cursor.cur_cursor(), ch);
+
+        self.grapheme_cursor = GraphemeCursor::new(
+            self.grapheme_cursor.cur_cursor(),
+            self.current_search_query.len(),
+            true,
+        );
+
+        self.walk_forward();
+        self.cursor_direction = CursorDirection::Right;
+    }
+
+    /// Insert a [`String`].
+    pub fn insert_string(&mut self, s: String) {
+        // Partially copy-pasted from the single-char variant; should probably clean up
+        // this process in the future. In particular, encapsulate this entire
+        // logic and add some tests to make it less potentially error-prone.
+
+        let left_bound = self.grapheme_cursor.cur_cursor();
+
+        let curr_query = &mut self.current_search_query;
+        let (left, right) = curr_query.split_at(left_bound);
+        let num_runes = UnicodeSegmentation::graphemes(s.as_str(), true).count();
+
+        *curr_query = concat_string!(left, s, right);
+
+        self.grapheme_cursor = GraphemeCursor::new(left_bound, curr_query.len(), true);
+
+        // TODO: We could probably do something smarter here...
+        for _ in 0..num_runes {
+            self.walk_forward();
+        }
+
+        self.cursor_direction = CursorDirection::Right;
     }
 }
 
