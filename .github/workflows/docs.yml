@@ -55,8 +55,10 @@ jobs:
           cd docs
           if [[ -n "${{ inputs.alias }}" ]]; then
             mike deploy --push ${{ inputs.version }} --update-aliases ${{ inputs.alias }}
-          else
+          else if [[ ${{ inputs.version }} == "nightly" ]]; then
             mike deploy --push ${{ inputs.version }}
+          else
+            mike deploy --push nightly
           fi
 
   publish-gh-pages:
