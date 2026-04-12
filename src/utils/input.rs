@@ -309,15 +309,10 @@ impl InputFieldState {
         let mut start_index = 0;
         let mut saw_non_whitespace = false;
 
-        for (itx, c) in query
-            .chars()
-            .rev()
-            .enumerate()
-            .skip(query.len() - current_cursor)
-        {
+        for (itx, c) in query[..current_cursor].char_indices().rev() {
             if c.is_whitespace() {
                 if saw_non_whitespace {
-                    start_index = query.len() - itx;
+                    start_index = itx + c.len_utf8();
                     break;
                 }
             } else {
@@ -696,6 +691,28 @@ mod tests {
 
         state.delete_previous_word(); // deletes "Hel"
         assert_eq!(state.current_query(), "lo World");
+        assert_eq!(state.cursor_index(), 0);
+    }
+
+    /// Tests that [`InputFieldState::delete_previous_word`] correctly handles multibyte
+    /// characters. The char/byte index mismatch bug would cause `.skip(query.len() -
+    /// current_cursor)` to skip the wrong number of chars and `query.len() - itx` to land
+    /// on a non-char-boundary, either producing the wrong result or panicking.
+    #[test]
+    fn delete_previous_word_unicode() {
+        // "你好 world" — '你'=3 bytes, '好'=3 bytes, ' '=1, "world"=5, so 12 bytes total
+        let mut state = InputFieldState::default();
+        state.insert_string("你好 world".to_string());
+
+        // Cursor is at the end (byte 12). Deleting the previous word should remove "world",
+        // leaving "你好 " (7 bytes).
+        state.delete_previous_word();
+        assert_eq!(state.current_query(), "你好 ");
+        assert_eq!(state.cursor_index(), 7);
+
+        // Deleting again skips the trailing space then removes "你好", leaving "".
+        state.delete_previous_word();
+        assert_eq!(state.current_query(), "");
         assert_eq!(state.cursor_index(), 0);
     }
 
