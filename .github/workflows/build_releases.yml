@@ -131,9 +131,9 @@ jobs:
           - {
               target: "x86_64-unknown-linux-gnu",
               os: "ubuntu-22.04",
+              artifact_name: "x86_64-unknown-linux-gnu-2-17",
               cross: true,
               cross_image: "ghcr.io/cross-rs/x86_64-unknown-linux-gnu@sha256:ab2070e67704b2c85d0d1fa50a0165ec438ed87fd1dc1a4058692a2348c071cb", # edge-centos
-              artifact_name: "x86_64-unknown-linux-gnu-2-17",
             }
 
           # Android
@@ -269,17 +269,19 @@ jobs:
         shell: bash
         run: |
           mv signed/btm.exe btm.exe
-          7z a bottom_${{ matrix.info.target }}.zip "btm.exe"
-          7z a bottom_${{ matrix.info.target }}.zip "completion"
-          echo "ASSET=bottom_${{ matrix.info.target }}.zip" >> $GITHUB_ENV
+          ASSET_NAME="bottom_${{ matrix.info.artifact_name || matrix.info.target }}.zip"
+          7z a "$ASSET_NAME" "btm.exe"
+          7z a "$ASSET_NAME" "completion"
+          echo "ASSET=$ASSET_NAME" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
         if: ${{ !(startsWith(matrix.info.os, 'windows')) }}
         shell: bash
         run: |
+          ASSET_NAME="bottom_${{ matrix.info.artifact_name || matrix.info.target }}.tar.gz"
           cp target/${{ matrix.info.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.info.target }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.info.target }}.tar.gz" >> $GITHUB_ENV
+          tar -czvf "$ASSET_NAME" btm completion
+          echo "ASSET=$ASSET_NAME" >> $GITHUB_ENV
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
