@@ -5,7 +5,6 @@ use tui::{
     text::{Line, Span},
     widgets::Paragraph,
 };
-use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{App, AppSearchState},
@@ -110,17 +109,18 @@ impl Painter {
             search_state: &AppSearchState, available_width: usize, is_on_widget: bool,
             currently_selected_text_style: Style, text_style: Style,
         ) -> Vec<Span<'_>> {
-            let start_index = search_state.display_start_char_index;
-            let cursor_index = search_state.grapheme_cursor.cur_cursor();
+            let start_index = search_state.input_field_state.display_start_index();
+            let cursor_index = search_state.input_field_state.cursor_index();
             let mut current_width = 0;
-            let query = search_state.current_search_query.as_str();
+            let query = search_state.input_field_state.current_query();
 
             if is_on_widget {
                 let mut res = Vec::with_capacity(available_width);
-                for ((index, grapheme), lengths) in
-                    UnicodeSegmentation::grapheme_indices(query, true)
-                        .zip(search_state.size_mappings.values())
-                {
+                for (&index, lengths) in search_state.input_field_state.size_mappings() {
+                    let start = lengths.start;
+                    let end = lengths.end;
+                    let grapheme = &query[start..end];
+
                     if index < start_index {
                         continue;
                     } else if current_width > available_width {
@@ -133,7 +133,7 @@ impl Painter {
                         };
 
                         res.push(styled);
-                        current_width += lengths.end - lengths.start;
+                        current_width += end - start;
                     }
                 }
 
@@ -171,6 +171,7 @@ impl Painter {
             proc_widget_state
                 .proc_search
                 .search_state
+                .input_field_state
                 .get_start_position(available_width, app_state.is_force_redraw);
 
             // TODO: [CURSOR] blinking cursor?

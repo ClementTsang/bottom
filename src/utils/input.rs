@@ -56,18 +56,36 @@ impl InputFieldState {
         &self.current_search_query
     }
 
-    /// Get a mutable reference to the current query.
+    /// Get the current cursor index.
     #[inline]
-    pub fn current_query_mut(&mut self) -> &mut String {
-        &mut self.current_search_query
+    pub fn cursor_index(&self) -> usize {
+        self.grapheme_cursor.cur_cursor()
+    }
+
+    /// Get the display start index.
+    #[inline]
+    pub fn display_start_index(&self) -> usize {
+        self.display_start_char_index
+    }
+
+    /// Get the size mappings.
+    ///
+    /// TODO: We may want to reconsider exposing this, or expose something more encapsulated?
+    #[inline]
+    pub fn size_mappings(&self) -> &IntIndexMap<usize, Range<usize>> {
+        &self.size_mappings
     }
 
     /// Reset the input field state.
+    #[inline]
     pub fn reset(&mut self) {
         *self = Self::default();
     }
 
     /// Sets the starting grapheme index to draw from.
+    ///
+    /// TODO: This is kinda weird, we might want to decouple this in some way such that this
+    /// is clear this only matters for drawing... but it also changes states...
     pub fn get_start_position(&mut self, available_width: usize, is_force_redraw: bool) {
         // Remember - the number of columns != the number of grapheme slots/sizes, you
         // cannot use index to determine this reliably!
@@ -77,7 +95,7 @@ impl InputFieldState {
         } else {
             self.display_start_char_index
         };
-        let cursor_index = self.grapheme_cursor.cur_cursor();
+        let cursor_index = self.cursor_index();
 
         if let Some(start_range) = self.size_mappings.get(&start_index) {
             let cursor_range = self
@@ -147,7 +165,7 @@ impl InputFieldState {
 
     /// Move the cursor one _grapheme_ forward.
     pub(crate) fn walk_forward(&mut self) {
-        let start_position = self.grapheme_cursor.cur_cursor();
+        let start_position = self.cursor_index();
         let chunk = &self.current_search_query[start_position..];
 
         match self.grapheme_cursor.next_boundary(chunk, start_position) {
@@ -170,7 +188,7 @@ impl InputFieldState {
 
     /// Move the cursor one _grapheme_ backward.
     pub(crate) fn walk_backward(&mut self) {
-        let start_position = self.grapheme_cursor.cur_cursor();
+        let start_position = self.cursor_index();
         let chunk = &self.current_search_query[..start_position];
 
         match self.grapheme_cursor.prev_boundary(chunk, 0) {
@@ -210,10 +228,10 @@ impl InputFieldState {
 
     /// Delete whatever the cursor is currently highlighting, if anything. This is analogous to pressing `Delete`.
     pub fn delete_at_cursor(&mut self) {
-        let current_cursor = self.grapheme_cursor.cur_cursor();
+        let current_cursor = self.cursor_index();
         if current_cursor < self.current_search_query.len() {
             self.walk_forward();
-            let new_cursor = self.grapheme_cursor.cur_cursor();
+            let new_cursor = self.cursor_index();
 
             let _ = self.current_search_query.drain(current_cursor..new_cursor);
 
@@ -224,11 +242,11 @@ impl InputFieldState {
 
     /// Delete what is _behind_ the cursor. This is analogous to pressing `Backspace`.
     pub fn delete_behind_cursor(&mut self) {
-        let current_cursor = self.grapheme_cursor.cur_cursor();
+        let current_cursor = self.cursor_index();
 
         if current_cursor > 0 {
             self.walk_backward();
-            let new_cursor = self.grapheme_cursor.cur_cursor();
+            let new_cursor = self.cursor_index();
 
             // Remove the indices in between.
             let _ = self.current_search_query.drain(new_cursor..current_cursor);
@@ -242,18 +260,18 @@ impl InputFieldState {
 
     /// Move the cursor left one unit if possible.
     pub fn move_left(&mut self) {
-        let current_cursor = self.grapheme_cursor.cur_cursor();
+        let current_cursor = self.cursor_index();
         self.walk_backward();
-        if self.grapheme_cursor.cur_cursor() < current_cursor {
+        if self.cursor_index() < current_cursor {
             self.cursor_direction = CursorDirection::Left;
         }
     }
 
     /// Move the cursor right one unit if possible.
     pub fn move_right(&mut self) {
-        let current_cursor = self.grapheme_cursor.cur_cursor();
+        let current_cursor = self.cursor_index();
         self.walk_forward();
-        if self.grapheme_cursor.cur_cursor() > current_cursor {
+        if self.cursor_index() > current_cursor {
             self.cursor_direction = CursorDirection::Right;
         }
     }
@@ -279,7 +297,7 @@ impl InputFieldState {
 
         // So... first, let's get our current cursor position in terms of char
         // indices. This is the "end" index we care about.
-        let current_cursor = self.grapheme_cursor.cur_cursor();
+        let current_cursor = self.cursor_index();
 
         // Then, let's crawl backwards until we hit our location, and store the
         // "head"...
@@ -313,14 +331,10 @@ impl InputFieldState {
 
     /// Insert a single [`char`].
     pub fn insert_char(&mut self, ch: char) {
-        self.current_search_query
-            .insert(self.grapheme_cursor.cur_cursor(), ch);
+        self.current_search_query.insert(self.cursor_index(), ch);
 
-        self.grapheme_cursor = GraphemeCursor::new(
-            self.grapheme_cursor.cur_cursor(),
-            self.current_search_query.len(),
-            true,
-        );
+        self.grapheme_cursor =
+            GraphemeCursor::new(self.cursor_index(), self.current_search_query.len(), true);
 
         self.walk_forward();
         self.cursor_direction = CursorDirection::Right;
@@ -332,7 +346,7 @@ impl InputFieldState {
         // this process in the future. In particular, encapsulate this entire
         // logic and add some tests to make it less potentially error-prone.
 
-        let left_bound = self.grapheme_cursor.cur_cursor();
+        let left_bound = self.cursor_index();
 
         let curr_query = &mut self.current_search_query;
         let (left, right) = curr_query.split_at(left_bound);

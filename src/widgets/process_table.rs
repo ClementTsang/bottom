@@ -1067,16 +1067,8 @@ impl ProcWidgetState {
             .collect::<Vec<_>>()
     }
 
-    pub fn cursor_char_index(&self) -> usize {
-        self.proc_search.search_state.grapheme_cursor.cur_cursor()
-    }
-
     pub fn is_search_enabled(&self) -> bool {
         self.proc_search.search_state.is_enabled
-    }
-
-    pub fn current_search_query(&self) -> &str {
-        &self.proc_search.search_state.current_search_query
     }
 
     /// Update the current search query.
