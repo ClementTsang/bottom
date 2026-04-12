@@ -5,6 +5,15 @@ name: docs
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      version:
+        description: "The version to deploy."
+        required: true
+        type: string
+      alias:
+        description: "An optional alias to update."
+        required: false
+        type: string
   push:
     branches:
       - main
@@ -44,7 +53,11 @@ jobs:
       - name: Build and deploy docs with mike
         run: |
           cd docs
-          mike deploy nightly --push
+          if [[ -n "${{ inputs.alias }}" ]]; then
+            mike deploy --push ${{ inputs.version }} --update-aliases ${{ inputs.alias }}
+          else
+            mike deploy --push ${{ inputs.version }}
+          fi
 
   publish-gh-pages:
     needs: [build-documentation]

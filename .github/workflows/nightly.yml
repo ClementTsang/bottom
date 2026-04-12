@@ -160,3 +160,5 @@ jobs:
       contents: write
     uses: ./.github/workflows/docs.yml
     secrets: inherit
+    with:
+      version: nightly
