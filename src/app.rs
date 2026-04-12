@@ -766,9 +766,8 @@ impl App {
                     proc_widget_state.toggle_current_tree_branch_entry();
                 }
             }
-        } else if self.process_kill_dialog.is_open() {
-            // Either select the current option,
-            // or scroll to the next one
+        } else if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
+            self.on_char_key(' ');
         }
     }
 
@@ -1038,37 +1037,36 @@ impl App {
             }
             self.handle_char(caught_char);
         } else if self.help_dialog_state.is_showing_help {
-            match caught_char {
-                '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
-                    let potential_index = caught_char.to_digit(10);
-                    if let Some(potential_index) = potential_index {
-                        let potential_index = potential_index as usize;
-                        if (potential_index) < self.help_dialog_state.index_shortcuts.len() {
-                            self.help_scroll_to_or_max(
-                                self.help_dialog_state.index_shortcuts[potential_index],
-                            );
+            if self.help_dialog_state.is_searching {
+                let idx = self
+                    .help_dialog_state
+                    .search_cursor_index
+                    .min(self.help_dialog_state.search_query.len());
+                self.help_dialog_state.search_query.insert(idx, caught_char);
+                self.help_dialog_state.search_cursor_index = idx + 1;
+                self.is_force_redraw = true;
+            } else {
+                match caught_char {
+                    '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                        let potential_index = caught_char.to_digit(10);
+                        if let Some(potential_index) = potential_index {
+                            let potential_index = potential_index as usize;
+                            if (potential_index) < self.help_dialog_state.index_shortcuts.len() {
+                                self.help_scroll_to_or_max(
+                                    self.help_dialog_state.index_shortcuts[potential_index],
+                                );
+                            }
                         }
                     }
-                }
-                'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
-                '/' => {
-                    // Start help dialog search; place cursor at end of current query
-                    self.help_dialog_state.is_searching = true;
-                    self.help_dialog_state.search_cursor_index =
-                        self.help_dialog_state.search_query.len();
-                    self.is_force_redraw = true;
-                }
-                _ => {
-                    // While searching in help, insert at cursor and advance
-                    if self.help_dialog_state.is_searching {
-                        let idx = self
-                            .help_dialog_state
-                            .search_cursor_index
-                            .min(self.help_dialog_state.search_query.len());
-                        self.help_dialog_state.search_query.insert(idx, caught_char);
-                        self.help_dialog_state.search_cursor_index = idx + 1;
+                    'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
+                    '/' => {
+                        // Start help dialog search; place cursor at end of current query
+                        self.help_dialog_state.is_searching = true;
+                        self.help_dialog_state.search_cursor_index =
+                            self.help_dialog_state.search_query.len();
                         self.is_force_redraw = true;
                     }
+                    _ => {}
                 }
             }
         } else if self.process_kill_dialog.is_open() {
