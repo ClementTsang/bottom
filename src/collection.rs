@@ -25,8 +25,6 @@ pub mod temperature;
 
 use std::time::{Duration, Instant};
 
-#[cfg(any(target_os = "linux", feature = "gpu"))]
-use crate::utils::int_hash::IntHashMap;
 #[cfg(any(not(target_os = "windows"), feature = "gpu"))]
 use processes::Pid;
 #[cfg(feature = "battery")]
@@ -34,6 +32,8 @@ use starship_battery::{Battery, Manager};
 
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
+#[cfg(any(target_os = "linux", feature = "gpu"))]
+use crate::utils::int_hash::IntHashMap;
 
 // TODO: We can possibly reuse an internal buffer for this to reduce allocs.
 #[derive(Clone, Debug)]

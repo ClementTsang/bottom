@@ -1,6 +1,5 @@
 use std::{num::NonZeroU64, sync::OnceLock};
 
-use crate::utils::int_hash::IntHashMap;
 use nvml_wrapper::{
     Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError,
 };
@@ -8,6 +7,7 @@ use nvml_wrapper::{
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
     collection::{memory::MemData, processes::Pid, temperature::TempSensorData},
+    utils::int_hash::IntHashMap,
 };
 
 pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
