@@ -499,34 +499,13 @@ impl App {
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if is_in_search_widget
-                        && proc_widget_state.proc_search.search_state.is_enabled
-                        && proc_widget_state.cursor_char_index()
-                            < proc_widget_state
-                                .proc_search
-                                .search_state
-                                .current_search_query
-                                .len()
+                    if is_in_search_widget && proc_widget_state.proc_search.search_state.is_enabled
                     {
-                        let current_cursor = proc_widget_state.cursor_char_index();
-                        proc_widget_state.search_walk_forward();
-
-                        let _ = proc_widget_state
+                        proc_widget_state
                             .proc_search
                             .search_state
-                            .current_search_query
-                            .drain(current_cursor..proc_widget_state.cursor_char_index());
-
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(
-                                current_cursor,
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                true,
-                            );
+                            .input_field_state
+                            .delete_at_cursor();
 
                         proc_widget_state.update_query();
                     }
@@ -548,33 +527,12 @@ impl App {
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
-                if is_in_search_widget
-                    && proc_widget_state.proc_search.search_state.is_enabled
-                    && proc_widget_state.cursor_char_index() > 0
-                {
-                    let current_cursor = proc_widget_state.cursor_char_index();
-                    proc_widget_state.search_walk_back();
-
-                    // Remove the indices in between.
-                    let _ = proc_widget_state
+                if is_in_search_widget && proc_widget_state.proc_search.search_state.is_enabled {
+                    proc_widget_state
                         .proc_search
                         .search_state
-                        .current_search_query
-                        .drain(proc_widget_state.cursor_char_index()..current_cursor);
-
-                    proc_widget_state.proc_search.search_state.grapheme_cursor =
-                        GraphemeCursor::new(
-                            proc_widget_state.cursor_char_index(),
-                            proc_widget_state
-                                .proc_search
-                                .search_state
-                                .current_search_query
-                                .len(),
-                            true,
-                        );
-
-                    proc_widget_state.proc_search.search_state.cursor_direction =
-                        CursorDirection::Left;
+                        .input_field_state
+                        .delete_behind_cursor();
 
                     proc_widget_state.update_query();
                 }
@@ -626,12 +584,11 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.cursor_char_index();
-                            proc_widget_state.search_walk_back();
-                            if proc_widget_state.cursor_char_index() < prev_cursor {
-                                proc_widget_state.proc_search.search_state.cursor_direction =
-                                    CursorDirection::Left;
-                            }
+                            proc_widget_state
+                                .proc_search
+                                .search_state
+                                .input_field_state
+                                .move_left();
                         }
                     }
                 }
@@ -674,12 +631,11 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.cursor_char_index();
-                            proc_widget_state.search_walk_forward();
-                            if proc_widget_state.cursor_char_index() > prev_cursor {
-                                proc_widget_state.proc_search.search_state.cursor_direction =
-                                    CursorDirection::Right;
-                            }
+                            proc_widget_state
+                                .proc_search
+                                .search_state
+                                .input_field_state
+                                .move_right();
                         }
                     }
                 }
