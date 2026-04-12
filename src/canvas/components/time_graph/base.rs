@@ -48,6 +48,15 @@ impl<'a> GraphData<'a> {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct LegendConstraints {
+    /// The width legend constraints.
+    pub width: Constraint,
+
+    /// The height legend constraints.
+    pub height: Constraint,
+}
+
 pub struct TimeGraph<'a> {
     /// The min x value.
     pub x_min: f64,
@@ -89,7 +98,7 @@ pub struct TimeGraph<'a> {
     pub legend_position: Option<LegendPosition>,
 
     /// Any legend constraints.
-    pub legend_constraints: Option<(Constraint, Constraint)>,
+    pub legend_constraints: Option<LegendConstraints>,
 
     /// The marker type. Unlike ratatui's native charts, we assume
     /// only a single type of marker.
@@ -178,10 +187,13 @@ impl TimeGraph<'_> {
                 .style(self.general_widget_style)
                 .legend_style(self.graph_style)
                 .legend_position(self.legend_position)
-                .hidden_legend_constraints(
-                    self.legend_constraints
-                        .unwrap_or(DEFAULT_LEGEND_CONSTRAINTS),
-                )
+                .hidden_legend_constraints({
+                    let constraints = self
+                        .legend_constraints
+                        .unwrap_or(DEFAULT_LEGEND_CONSTRAINTS);
+
+                    (constraints.width, constraints.height)
+                })
                 .scaling(self.scaling),
             draw_loc,
         )

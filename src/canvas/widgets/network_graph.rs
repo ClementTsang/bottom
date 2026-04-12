@@ -12,7 +12,9 @@ use crate::{
     app::{App, AppConfigFields, AxisScaling},
     canvas::{
         Painter,
-        components::time_graph::{AxisBound, ChartScaling, GraphData, TimeGraph},
+        components::time_graph::{
+            AxisBound, ChartScaling, GraphData, LegendConstraints, TimeGraph,
+        },
         drawing_utils::{should_hide_x_label, widget_block},
         widgets::{PacketInfo, calculate_packet_info},
     },
@@ -150,11 +152,17 @@ impl Painter {
             let use_old_network_legend = app_state.app_config_fields.use_old_network_legend;
             let legend_constraints = if use_old_network_legend {
                 // Always hide it. Note that I could pass in `None` to the position as well but eh this works.
-                (Constraint::Length(0), Constraint::Length(0))
+                LegendConstraints {
+                    width: Constraint::Length(0),
+                    height: Constraint::Length(0),
+                }
             } else {
                 // Hide the legend if the width is 90% of the total widget width
-                // or the height is greater than 75% of the total widget hight.
-                (Constraint::Ratio(9, 10), Constraint::Ratio(3, 4))
+                // or the height is greater than 75% of the total widget height.
+                LegendConstraints {
+                    width: Constraint::Ratio(9, 10),
+                    height: Constraint::Ratio(3, 4),
+                }
             };
 
             // TODO: Add support for clicking on legend to only show that value on chart.
