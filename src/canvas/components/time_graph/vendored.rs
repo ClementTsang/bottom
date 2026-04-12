@@ -598,21 +598,19 @@ impl<'a> TimeChart<'a> {
         }
 
         if let Some(legend_position) = self.legend_position {
-            let legends = self
+            let (entry_count, min_width, max_width) = self
                 .datasets
                 .iter()
-                .filter_map(|d| Some(d.name.as_ref()?.width() as u16));
+                .filter_map(|d| Some(d.name.as_ref()?.width() as u16))
+                .fold((0u16, u16::MAX, 0u16), |(c, mn, mx), w| {
+                    (c + 1, mn.min(w), mx.max(w))
+                });
 
-            let min_width = legends.clone().min();
-            let max_width = legends.clone().max();
-
-            if let Some(max_width) = max_width
-                && let Some(min_width) = min_width
-            {
+            if entry_count > 0 {
                 let min_possible_width = max(2, min_width);
 
                 let legend_width = max_width + 2;
-                let legend_height = legends.count() as u16 + 2;
+                let legend_height = entry_count + 2;
 
                 let [max_legend_width] = Layout::horizontal([self.hidden_legend_constraints.0])
                     .flex(Flex::Start)
@@ -905,6 +903,8 @@ impl Widget for TimeChart<'_> {
 
             block.render(legend_area, buf);
 
+            let max_width = legend_area.width - 2;
+
             for (i, (dataset_name, dataset_style)) in self
                 .datasets
                 .iter()
@@ -912,15 +912,15 @@ impl Widget for TimeChart<'_> {
                 .enumerate()
                 .take((legend_area.height - 2) as usize)
             {
-                let max_width = legend_area.width - 2;
                 let line = if dataset_name.width() as u16 <= max_width {
                     dataset_name.clone()
                 } else {
                     let inner = dataset_name.to_string();
                     let truncated = unicode_ellipsis::truncate_str(&inner, max_width as usize);
 
-                    Line::from(truncated.to_string()).patch_style(dataset_style)
+                    Line::from(truncated.to_string())
                 };
+
                 let name = line.patch_style(dataset_style);
                 name.render(
                     Rect {
