@@ -269,18 +269,18 @@ jobs:
         shell: bash
         run: |
           mv signed/btm.exe btm.exe
-          ASSET_NAME=bottom_${{ matrix.info.artifact_name || matrix.info.target }}.zip
-          7z a $ASSET_NAME "btm.exe"
-          7z a $ASSET_NAME "completion"
+          ASSET_NAME="bottom_${{ matrix.info.artifact_name || matrix.info.target }}.zip"
+          7z a "$ASSET_NAME" "btm.exe"
+          7z a "$ASSET_NAME" "completion"
           echo "ASSET=$ASSET_NAME" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
         if: ${{ !(startsWith(matrix.info.os, 'windows')) }}
         shell: bash
         run: |
-          ASSET_NAME= bottom_${{ matrix.info.artifact_name || matrix.info.target }}.tar.gz
+          ASSET_NAME="bottom_${{ matrix.info.artifact_name || matrix.info.target }}.tar.gz"
           cp target/${{ matrix.info.target }}/release/btm ./btm
-          tar -czvf $ASSET_NAME btm completion
+          tar -czvf "$ASSET_NAME" btm completion
           echo "ASSET=$ASSET_NAME" >> $GITHUB_ENV
 
       - name: Generate artifact attestation for file
