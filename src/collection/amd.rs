@@ -8,13 +8,13 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::utils::int_hash::IntHashMap;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 use super::linux::utils::is_device_awake;
 use crate::{
     app::layout_manager::UsedWidgets,
     collection::{memory::MemData, processes::Pid},
+    utils::int_hash::IntHashMap,
 };
 
 // TODO: May be able to clean up some of these, Option<Vec> for example is a bit redundant.
