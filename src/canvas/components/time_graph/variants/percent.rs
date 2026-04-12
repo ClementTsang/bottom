@@ -2,12 +2,13 @@
 
 use std::borrow::Cow;
 
-use tui::{layout::Constraint, symbols::Marker};
+use tui::symbols::Marker;
 
 use crate::{
     app::AppConfigFields,
     canvas::components::time_graph::{
-        AxisBound, ChartScaling, LegendPosition, TimeGraph, variants::get_border_style,
+        AxisBound, ChartScaling, LegendConstraints, LegendPosition, TimeGraph,
+        variants::get_border_style,
     },
     options::config::style::Styles,
 };
@@ -53,7 +54,7 @@ pub(crate) struct PercentTimeGraph<'a> {
     pub(crate) legend_position: Option<LegendPosition>,
 
     /// The constraints for the legend.
-    pub(crate) legend_constraints: Option<(Constraint, Constraint)>,
+    pub(crate) legend_constraints: Option<LegendConstraints>,
 }
 
 impl<'a> PercentTimeGraph<'a> {

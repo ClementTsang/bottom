@@ -8,7 +8,11 @@ mod canvas;
 mod grid;
 mod points;
 
-use std::{cmp::max, str::FromStr, time::Instant};
+use std::{
+    cmp::{max, min},
+    str::FromStr,
+    time::Instant,
+};
 
 use canvas::*;
 use tui::{
@@ -23,11 +27,14 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::data::Values,
+    canvas::components::time_graph::LegendConstraints,
     utils::general::{saturating_log2, saturating_log10},
 };
 
-pub const DEFAULT_LEGEND_CONSTRAINTS: (Constraint, Constraint) =
-    (Constraint::Ratio(1, 4), Constraint::Length(4));
+pub const DEFAULT_LEGEND_CONSTRAINTS: LegendConstraints = LegendConstraints {
+    width: Constraint::Ratio(1, 4),
+    height: Constraint::Length(4),
+};
 
 /// A single graph point.
 pub type Point = (f64, f64);
@@ -594,15 +601,15 @@ impl<'a> TimeChart<'a> {
         }
 
         if let Some(legend_position) = self.legend_position {
-            let legends = self
+            let entry_widths: Vec<u16> = self
                 .datasets
                 .iter()
-                .filter_map(|d| Some(d.name.as_ref()?.width() as u16));
+                .filter_map(|d| Some(d.name.as_ref()?.width() as u16))
+                .collect();
 
-            if let Some(inner_width) = legends.clone().max() {
-                let legend_width = inner_width + 2;
-                let legend_height = legends.count() as u16 + 2;
+            let entry_count = entry_widths.len() as u16;
 
+            if entry_count > 0 {
                 let [max_legend_width] = Layout::horizontal([self.hidden_legend_constraints.0])
                     .flex(Flex::Start)
                     .areas(layout.graph_area);
@@ -611,25 +618,36 @@ impl<'a> TimeChart<'a> {
                     .flex(Flex::Start)
                     .areas(layout.graph_area);
 
-                if inner_width > 0
-                    && legend_width <= max_legend_width.width
-                    && legend_height <= max_legend_height.height
-                {
-                    layout.legend_area = legend_position.layout(
-                        layout.graph_area,
-                        legend_width,
-                        legend_height,
-                        layout
-                            .title_x
-                            .and(self.x_axis.title.as_ref())
-                            .map(|t| t.width() as u16)
-                            .unwrap_or_default(),
-                        layout
-                            .title_y
-                            .and(self.y_axis.title.as_ref())
-                            .map(|t| t.width() as u16)
-                            .unwrap_or_default(),
-                    );
+                let max_entries = min(entry_count, max_legend_height.height.saturating_sub(2));
+                let visible = &entry_widths[..max_entries as usize];
+
+                if let Some(&max_width) = visible.iter().max() {
+                    let min_width = visible.iter().copied().min().unwrap_or(0);
+                    let min_required_width = min_width + 2;
+
+                    let legend_width = max_width + 2;
+                    let legend_height = max_entries + 2;
+
+                    if max_width > 0
+                        && max_legend_width.width >= min_required_width
+                        && max_entries > 0
+                    {
+                        layout.legend_area = legend_position.layout(
+                            layout.graph_area,
+                            min(legend_width, max_legend_width.width),
+                            legend_height,
+                            layout
+                                .title_x
+                                .and(self.x_axis.title.as_ref())
+                                .map(|t| t.width() as u16)
+                                .unwrap_or_default(),
+                            layout
+                                .title_y
+                                .and(self.y_axis.title.as_ref())
+                                .map(|t| t.width() as u16)
+                                .unwrap_or_default(),
+                        );
+                    }
                 }
             }
         }
@@ -881,28 +899,43 @@ impl Widget for TimeChart<'_> {
 
         if let Some(legend_area) = layout.legend_area {
             buf.set_style(legend_area, original_style);
+
             let block = Block::default()
                 .borders(Borders::ALL)
                 .border_style(self.legend_style);
+
             for pos in block.inner(legend_area).positions() {
                 if let Some(cell) = buf.cell_mut(pos) {
                     cell.set_symbol(" ");
                 }
             }
+
             block.render(legend_area, buf);
+
+            let max_width = legend_area.width - 2;
 
             for (i, (dataset_name, dataset_style)) in self
                 .datasets
                 .iter()
                 .filter_map(|ds| Some((ds.name.as_ref()?, ds.style())))
                 .enumerate()
+                .take((legend_area.height - 2) as usize)
             {
-                let name = dataset_name.clone().patch_style(dataset_style);
+                let line = if dataset_name.width() as u16 <= max_width {
+                    dataset_name.clone()
+                } else {
+                    let inner = dataset_name.to_string();
+                    let truncated = unicode_ellipsis::truncate_str(&inner, max_width as usize);
+
+                    Line::from(truncated.to_string())
+                };
+
+                let name = line.patch_style(dataset_style);
                 name.render(
                     Rect {
                         x: legend_area.x + 1,
                         y: legend_area.y + 1 + i as u16,
-                        width: legend_area.width - 2,
+                        width: max_width,
                         height: 1,
                     },
                     buf,
@@ -1453,5 +1486,111 @@ mod tests {
                 "         ",
             ])
         );
+    }
+
+    #[test]
+    fn legend_truncates_entries_by_height() {
+        // 5 datasets but only room for 3 entries in the legend (height=5, so 5-2=3 entries).
+        let datasets: Vec<_> = (0..5)
+            .map(|i| Dataset::default().name(format!("D{i}")))
+            .collect();
+        let chart = TimeChart::new(datasets)
+            .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
+
+        // Height 5 means room for 3 entries (5 - 2 borders).
+        let area = Rect::new(0, 0, 20, 5);
+        let layout = chart.layout(area);
+
+        assert!(layout.legend_area.is_some());
+        let legend = layout.legend_area.unwrap();
+        assert_eq!(legend.height, 5); // 3 entries + 2 borders
+    }
+
+    #[test]
+    fn legend_truncates_entries_renders_only_visible() {
+        // 5 datasets but height only fits 2 entries.
+        let datasets: Vec<_> = (0..5)
+            .map(|i| Dataset::default().name(format!("D{i}")))
+            .collect();
+        let chart = TimeChart::new(datasets)
+            .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
+
+        let area = Rect::new(0, 0, 20, 4); // 4 - 2 = 2 entries
+        let mut buffer = Buffer::empty(area);
+        chart.render(buffer.area, &mut buffer);
+
+        let expected = Buffer::with_lines(vec![
+            "                ┌──┐",
+            "                │D0│",
+            "                │D1│",
+            "                └──┘",
+        ]);
+        assert_buffer_eq!(buffer, expected);
+    }
+
+    #[test]
+    fn legend_width_capped_to_constraint() {
+        let datasets = vec![
+            Dataset::default().name("Short"),
+            Dataset::default().name("A very long dataset name"),
+        ];
+        let chart = TimeChart::new(datasets)
+            .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
+
+        // Width 12 means legend_width capped to 12, inner width = 10.
+        let area = Rect::new(0, 0, 12, 10);
+        let layout = chart.layout(area);
+
+        assert!(layout.legend_area.is_some());
+        let legend = layout.legend_area.unwrap();
+        assert_eq!(legend.width, 12); // capped to area width
+    }
+
+    #[test]
+    fn legend_width_truncates_long_names_with_ellipsis() {
+        // Short entry fits untruncated (satisfies min_required_width), but the
+        // long entry exceeds the capped legend width and gets an ellipsis.
+        let datasets = vec![
+            Dataset::default().name("AB"),
+            Dataset::default().name("Very long name here"),
+        ];
+        let chart = TimeChart::new(datasets)
+            .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
+
+        // Width 8, legend box capped to 8, inner is 6, long name truncated.
+        let area = Rect::new(0, 0, 8, 4);
+        let mut buffer = Buffer::empty(area);
+        chart.render(buffer.area, &mut buffer);
+
+        #[rustfmt::skip]
+        let expected = Buffer::with_lines(vec![
+            "┌──────┐",
+            "│AB    │",
+            "│Very …│",
+            "└──────┘",
+        ]);
+        assert_buffer_eq!(buffer, expected);
+    }
+
+    #[test]
+    fn legend_width_uses_only_visible_entries() {
+        // First 2 entries have short names, last entry has a very long name.
+        // With height=4 (2 visible entries), the legend width should be based
+        // on the short names only, not the long hidden one.
+        let datasets = vec![
+            Dataset::default().name("AB"),
+            Dataset::default().name("CD"),
+            Dataset::default().name("A very long dataset name"),
+        ];
+        let chart = TimeChart::new(datasets)
+            .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
+
+        let area = Rect::new(0, 0, 30, 4); // height 4 → 2 visible entries
+        let layout = chart.layout(area);
+
+        assert!(layout.legend_area.is_some());
+        let legend = layout.legend_area.unwrap();
+        // Width should be based on "AB"/"CD" (2 chars) + 2 borders = 4, not the long name.
+        assert_eq!(legend.width, 4);
     }
 }
