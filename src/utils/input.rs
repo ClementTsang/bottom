@@ -52,19 +52,19 @@ impl Default for InputFieldState {
 impl InputFieldState {
     /// Get a reference to the current query.
     #[inline]
-    pub fn current_query(&self) -> &str {
+    pub(crate) fn current_query(&self) -> &str {
         &self.current_search_query
     }
 
     /// Get the current cursor index.
     #[inline]
-    pub fn cursor_index(&self) -> usize {
+    pub(crate) fn cursor_index(&self) -> usize {
         self.grapheme_cursor.cur_cursor()
     }
 
     /// Get the display start index.
     #[inline]
-    pub fn display_start_index(&self) -> usize {
+    pub(crate) fn display_start_index(&self) -> usize {
         self.display_start_char_index
     }
 
@@ -72,21 +72,15 @@ impl InputFieldState {
     ///
     /// TODO: We may want to reconsider exposing this, or expose something more encapsulated?
     #[inline]
-    pub fn size_mappings(&self) -> &IntIndexMap<usize, Range<usize>> {
+    pub(crate) fn size_mappings(&self) -> &IntIndexMap<usize, Range<usize>> {
         &self.size_mappings
-    }
-
-    /// Reset the input field state.
-    #[inline]
-    pub fn reset(&mut self) {
-        *self = Self::default();
     }
 
     /// Sets the starting grapheme index to draw from.
     ///
     /// TODO: This is kinda weird, we might want to decouple this in some way such that this
     /// is clear this only matters for drawing... but it also changes states...
-    pub fn get_start_position(&mut self, available_width: usize, is_force_redraw: bool) {
+    pub(crate) fn get_start_position(&mut self, available_width: usize, is_force_redraw: bool) {
         // Remember - the number of columns != the number of grapheme slots/sizes, you
         // cannot use index to determine this reliably!
 
@@ -227,7 +221,7 @@ impl InputFieldState {
     }
 
     /// Delete whatever the cursor is currently highlighting, if anything. This is analogous to pressing `Delete`.
-    pub fn delete_at_cursor(&mut self) {
+    pub(crate) fn delete_at_cursor(&mut self) {
         let current_cursor = self.cursor_index();
         if current_cursor < self.current_search_query.len() {
             self.walk_forward();
@@ -243,7 +237,7 @@ impl InputFieldState {
     }
 
     /// Delete what is _behind_ the cursor. This is analogous to pressing `Backspace`.
-    pub fn delete_behind_cursor(&mut self) {
+    pub(crate) fn delete_behind_cursor(&mut self) {
         let current_cursor = self.cursor_index();
 
         if current_cursor > 0 {
@@ -263,7 +257,7 @@ impl InputFieldState {
     }
 
     /// Move the cursor left one unit if possible.
-    pub fn move_left(&mut self) {
+    pub(crate) fn move_left(&mut self) {
         let current_cursor = self.cursor_index();
         self.walk_backward();
         if self.cursor_index() < current_cursor {
@@ -272,7 +266,7 @@ impl InputFieldState {
     }
 
     /// Move the cursor right one unit if possible.
-    pub fn move_right(&mut self) {
+    pub(crate) fn move_right(&mut self) {
         let current_cursor = self.cursor_index();
         self.walk_forward();
         if self.cursor_index() > current_cursor {
@@ -281,20 +275,20 @@ impl InputFieldState {
     }
 
     /// Move the cursor to the start.
-    pub fn skip_to_beginning(&mut self) {
+    pub(crate) fn skip_to_beginning(&mut self) {
         self.grapheme_cursor = GraphemeCursor::new(0, self.current_search_query.len(), true);
         self.cursor_direction = CursorDirection::Left;
     }
 
     /// Move the cursor to the end.
-    pub fn skip_to_end(&mut self) {
+    pub(crate) fn skip_to_end(&mut self) {
         let query_len = self.current_search_query.len();
         self.grapheme_cursor = GraphemeCursor::new(query_len, query_len, true);
         self.cursor_direction = CursorDirection::Right;
     }
 
     /// Delete the previous "word".
-    pub fn delete_previous_word(&mut self) {
+    pub(crate) fn delete_previous_word(&mut self) {
         // Traverse backwards from the current cursor location until you hit
         // non-whitespace characters, then continue to traverse (and
         // delete) backwards until you hit a whitespace character.  Halt.
@@ -331,7 +325,7 @@ impl InputFieldState {
     }
 
     /// Insert a single [`char`].
-    pub fn insert_char(&mut self, ch: char) {
+    pub(crate) fn insert_char(&mut self, ch: char) {
         self.current_search_query.insert(self.cursor_index(), ch);
 
         self.grapheme_cursor =
@@ -344,7 +338,7 @@ impl InputFieldState {
     }
 
     /// Insert a [`String`].
-    pub fn insert_string(&mut self, s: String) {
+    pub(crate) fn insert_string(&mut self, s: String) {
         // Partially copy-pasted from the single-char variant; should probably clean up
         // this process in the future. In particular, encapsulate this entire
         // logic and add some tests to make it less potentially error-prone.
@@ -714,21 +708,6 @@ mod tests {
         state.delete_previous_word();
         assert_eq!(state.current_query(), "");
         assert_eq!(state.cursor_index(), 0);
-    }
-
-    /// Tests that [`InputFieldState::reset`] returns all fields — query, cursor position,
-    /// display start index, and size mappings — to their default values.
-    #[test]
-    fn reset_clears_state() {
-        let mut state = InputFieldState::default();
-        state.insert_string("Something".to_string());
-        assert_eq!(state.current_query(), "Something");
-
-        state.reset();
-        assert_eq!(state.current_query(), "");
-        assert_eq!(state.cursor_index(), 0);
-        assert_eq!(state.display_start_index(), 0);
-        assert!(state.size_mappings().is_empty());
     }
 
     /// Tests that the cursor moves correctly when moving left and right.
