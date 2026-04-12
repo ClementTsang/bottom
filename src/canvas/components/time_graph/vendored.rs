@@ -8,7 +8,11 @@ mod canvas;
 mod grid;
 mod points;
 
-use std::{cmp::max, str::FromStr, time::Instant};
+use std::{
+    cmp::{max, min},
+    str::FromStr,
+    time::Instant,
+};
 
 use canvas::*;
 use tui::{
@@ -599,8 +603,15 @@ impl<'a> TimeChart<'a> {
                 .iter()
                 .filter_map(|d| Some(d.name.as_ref()?.width() as u16));
 
-            if let Some(inner_width) = legends.clone().max() {
-                let legend_width = inner_width + 2;
+            let min_width = legends.clone().min();
+            let max_width = legends.clone().max();
+
+            if let Some(max_width) = max_width
+                && let Some(min_width) = min_width
+            {
+                let min_possible_width = max(2, min_width);
+
+                let legend_width = max_width + 2;
                 let legend_height = legends.count() as u16 + 2;
 
                 let [max_legend_width] = Layout::horizontal([self.hidden_legend_constraints.0])
@@ -611,14 +622,14 @@ impl<'a> TimeChart<'a> {
                     .flex(Flex::Start)
                     .areas(layout.graph_area);
 
-                if inner_width > 0
-                    && legend_width <= max_legend_width.width
-                    && legend_height <= max_legend_height.height
+                if max_width > 0
+                    && max_legend_width.width > min_possible_width
+                    && max_legend_height.height > 2
                 {
                     layout.legend_area = legend_position.layout(
                         layout.graph_area,
-                        legend_width,
-                        legend_height,
+                        min(legend_width, max_legend_width.width),
+                        min(legend_height, max_legend_height.height),
                         layout
                             .title_x
                             .and(self.x_axis.title.as_ref())
@@ -881,14 +892,17 @@ impl Widget for TimeChart<'_> {
 
         if let Some(legend_area) = layout.legend_area {
             buf.set_style(legend_area, original_style);
+
             let block = Block::default()
                 .borders(Borders::ALL)
                 .border_style(self.legend_style);
+
             for pos in block.inner(legend_area).positions() {
                 if let Some(cell) = buf.cell_mut(pos) {
                     cell.set_symbol(" ");
                 }
             }
+
             block.render(legend_area, buf);
 
             for (i, (dataset_name, dataset_style)) in self
@@ -896,13 +910,23 @@ impl Widget for TimeChart<'_> {
                 .iter()
                 .filter_map(|ds| Some((ds.name.as_ref()?, ds.style())))
                 .enumerate()
+                .take((legend_area.height - 2) as usize)
             {
-                let name = dataset_name.clone().patch_style(dataset_style);
+                let max_width = legend_area.width - 2;
+                let line = if dataset_name.width() as u16 <= max_width {
+                    dataset_name.clone()
+                } else {
+                    let inner = dataset_name.to_string();
+                    let truncated = unicode_ellipsis::truncate_str(&inner, max_width as usize);
+
+                    Line::from(truncated.to_string()).patch_style(dataset_style)
+                };
+                let name = line.patch_style(dataset_style);
                 name.render(
                     Rect {
                         x: legend_area.x + 1,
                         y: legend_area.y + 1 + i as u16,
-                        width: legend_area.width - 2,
+                        width: max_width,
                         height: 1,
                     },
                     buf,

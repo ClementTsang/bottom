@@ -152,9 +152,9 @@ impl Painter {
                 // Always hide it. Note that I could pass in `None` to the position as well but eh this works.
                 (Constraint::Length(0), Constraint::Length(0))
             } else {
-                // Hide the legend if the width is 75% of the total widget width
+                // Hide the legend if the width is 90% of the total widget width
                 // or the height is greater than 75% of the total widget hight.
-                (Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))
+                (Constraint::Ratio(9, 10), Constraint::Ratio(3, 4))
             };
 
             // TODO: Add support for clicking on legend to only show that value on chart.
