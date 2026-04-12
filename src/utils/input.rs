@@ -379,6 +379,7 @@ impl InputFieldState {
 mod tests {
     use super::*;
 
+    /// Tests that inserting ASCII chars appends them to the query and advances the cursor by 1 byte each.
     #[test]
     fn insert_char_ascii() {
         let mut state = InputFieldState::default();
@@ -392,8 +393,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 2);
     }
 
+    /// Tests that inserting multi-byte Unicode chars (e.g. CJK) advances the cursor by the correct byte width.
     #[test]
-    fn insert_char_multibyte_unicode() {
+    fn insert_char_unicode() {
         let mut state = InputFieldState::default();
 
         state.insert_char('你'); // 3-byte UTF-8
@@ -405,6 +407,7 @@ mod tests {
         assert_eq!(state.cursor_index(), 6);
     }
 
+    /// Tests that inserting a 4-byte emoji advances the cursor to byte offset 4.
     #[test]
     fn insert_char_emoji() {
         let mut state = InputFieldState::default();
@@ -414,6 +417,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 4);
     }
 
+    /// Tests that inserting a char at a mid-string cursor position shifts the rest of the string
+    /// right and places the cursor immediately after the newly inserted char.
     #[test]
     fn insert_char_at_middle() {
         let mut state = InputFieldState::default();
@@ -430,6 +435,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 3);
     }
 
+    /// Tests that inserting an ASCII string at once places the entire string in the query
+    /// and lands the cursor at the end.
     #[test]
     fn insert_string_ascii() {
         let mut state = InputFieldState::default();
@@ -438,6 +445,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 5);
     }
 
+    /// Tests that inserting a mixed multi-byte + emoji string reflects the correct total byte length
+    /// in the cursor position.
     #[test]
     fn insert_string_unicode() {
         let mut state = InputFieldState::default();
@@ -447,6 +456,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 18);
     }
 
+    /// Tests that inserting a string at position 0 prepends it, leaving the cursor after the
+    /// inserted portion and the rest of the original string intact.
     #[test]
     fn insert_string_at_middle() {
         let mut state = InputFieldState::default();
@@ -457,6 +468,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 4);
     }
 
+    /// Tests that [`InputFieldState::delete_at_cursor`] removes the grapheme under the cursor
+    /// without moving the cursor position.
     #[test]
     fn delete_at_cursor_basic() {
         let mut state = InputFieldState::default();
@@ -472,6 +485,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
+    /// Tests that [`InputFieldState::delete_at_cursor`] is a no-op when the cursor is already
+    /// at the end of the string.
     #[test]
     fn delete_at_cursor_at_end_is_noop() {
         let mut state = InputFieldState::default();
@@ -483,6 +498,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 2);
     }
 
+    /// Tests that [`InputFieldState::delete_at_cursor`] correctly removes a full multi-byte
+    /// grapheme cluster in one operation.
     #[test]
     fn delete_at_cursor_unicode() {
         let mut state = InputFieldState::default();
@@ -494,6 +511,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
+    /// Tests that [`InputFieldState::delete_behind_cursor`] removes the grapheme immediately
+    /// before the cursor and moves the cursor back accordingly.
     #[test]
     fn delete_behind_cursor_basic() {
         let mut state = InputFieldState::default();
@@ -508,6 +527,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 3);
     }
 
+    /// Tests that [`InputFieldState::delete_behind_cursor`] is a no-op when the cursor is at
+    /// position 0.
     #[test]
     fn delete_behind_cursor_at_start_is_noop() {
         let mut state = InputFieldState::default();
@@ -519,6 +540,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
+    /// Tests that [`InputFieldState::delete_behind_cursor`] correctly removes multi-byte grapheme
+    /// clusters one at a time, adjusting the byte cursor each time.
     #[test]
     fn delete_behind_cursor_unicode() {
         let mut state = InputFieldState::default();
@@ -533,6 +556,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
+    /// Tests that [`InputFieldState::move_left`] and [`InputFieldState::move_right`] step one
+    /// byte per ASCII grapheme and are clamped at both ends of the string.
     #[test]
     fn move_left_right_ascii() {
         let mut state = InputFieldState::default();
@@ -562,6 +587,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 3);
     }
 
+    /// Tests that [`InputFieldState::move_left`] and [`InputFieldState::move_right`] jump the
+    /// full byte width of each grapheme, including multi-byte CJK characters.
     #[test]
     fn move_left_right_unicode() {
         let mut state = InputFieldState::default();
@@ -578,6 +605,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
+    /// Tests that [`InputFieldState::skip_to_beginning`] moves the cursor to byte 0 and
+    /// [`InputFieldState::skip_to_end`] moves it past the last byte.
     #[test]
     fn skip_to_beginning_and_end() {
         let mut state = InputFieldState::default();
@@ -590,6 +619,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 5);
     }
 
+    /// Tests that [`InputFieldState::skip_to_beginning`] sets the cursor direction to
+    /// [`CursorDirection::Left`] so that scrolling logic behaves correctly.
     #[test]
     fn skip_to_beginning_sets_direction_left() {
         let mut state = InputFieldState::default();
@@ -598,6 +629,8 @@ mod tests {
         assert!(matches!(state.cursor_direction, CursorDirection::Left));
     }
 
+    /// Tests that [`InputFieldState::skip_to_end`] sets the cursor direction to
+    /// [`CursorDirection::Right`] so that scrolling logic behaves correctly.
     #[test]
     fn skip_to_end_sets_direction_right() {
         let mut state = InputFieldState::default();
@@ -607,6 +640,8 @@ mod tests {
         assert!(matches!(state.cursor_direction, CursorDirection::Right));
     }
 
+    /// Tests that [`InputFieldState::delete_previous_word`] removes a single word with no
+    /// preceding whitespace, leaving an empty query.
     #[test]
     fn delete_previous_word_single_word() {
         let mut state = InputFieldState::default();
@@ -617,6 +652,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
+    /// Tests that [`InputFieldState::delete_previous_word`] removes exactly one word per call
+    /// when the query contains multiple words separated by a space.
     #[test]
     fn delete_previous_word_two_words() {
         let mut state = InputFieldState::default();
@@ -631,6 +668,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
+    /// Tests that [`InputFieldState::delete_previous_word`] skips trailing whitespace before
+    /// deleting the preceding non-whitespace word.
     #[test]
     fn delete_previous_word_trailing_spaces() {
         let mut state = InputFieldState::default();
@@ -642,6 +681,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
+    /// Tests that [`InputFieldState::delete_previous_word`] only removes the portion of a word
+    /// that lies behind the cursor when the cursor is mid-word.
     #[test]
     fn delete_previous_word_from_middle() {
         let mut state = InputFieldState::default();
@@ -658,6 +699,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
+    /// Tests that [`InputFieldState::reset`] returns all fields — query, cursor position,
+    /// display start index, and size mappings — to their default values.
     #[test]
     fn reset_clears_state() {
         let mut state = InputFieldState::default();
