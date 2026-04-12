@@ -116,10 +116,18 @@ impl Painter {
 
             if is_on_widget {
                 let mut res = Vec::with_capacity(available_width);
-                for (&index, lengths) in search_state.input_field_state.size_mappings() {
-                    let start = lengths.start;
-                    let end = lengths.end;
-                    let grapheme = &query[start..end];
+                let mut iter = search_state
+                    .input_field_state
+                    .size_mappings()
+                    .iter()
+                    .peekable();
+                while let Some((&index, lengths)) = iter.next() {
+                    let grapheme = {
+                        let start = index;
+                        let end = iter.peek().map(|&(&next, _)| next).unwrap_or(query.len());
+
+                        &query[start..end]
+                    };
 
                     if index < start_index {
                         continue;
@@ -133,7 +141,7 @@ impl Painter {
                         };
 
                         res.push(styled);
-                        current_width += end - start;
+                        current_width += lengths.end - lengths.start;
                     }
                 }
 
@@ -145,7 +153,6 @@ impl Painter {
             } else {
                 // This is easier - we just need to get a range of graphemes, rather than
                 // dealing with possibly inserting a cursor (as none is shown!)
-
                 vec![Span::styled(query.to_string(), text_style)]
             }
         }
