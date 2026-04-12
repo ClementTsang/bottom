@@ -22,6 +22,16 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ## [0.12.4]/[0.13.0] - Unreleased
 
+### Features
+
+- [#1938](https://github.com/ClementTsang/bottom/pull/1938), [#1980](https://github.com/ClementTsang/bottom/pull/1980): Report average packet size and packet rate.
+- [#2003](https://github.com/ClementTsang/bottom/pull/2003): Configurable default sort column for temperature and disk table widgets.
+- [#1979](https://github.com/ClementTsang/bottom/pull/1979): Add global `bg_color` option to set widget background colour.
+
+### Changes
+
+- [#2031](https://github.com/ClementTsang/bottom/pull/2031): Tweak display/hiding logic for a graph widget's legend.
+
 ### Other
 
 - [#1955](https://github.com/ClementTsang/bottom/pull/1955): Fix mirrored documentation deploy to GitHub Pages.
@@ -258,23 +268,23 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#1411](https://github.com/ClementTsang/bottom/pull/1411): Add `time` as a default column.
 - [#1436](https://github.com/ClementTsang/bottom/pull/1436): Use actual "swap" value for Windows.
 - [#1441](https://github.com/ClementTsang/bottom/pull/1441): The following arguments have changed names:
-    - `--left_legend/-l` is now `--cpu_left_legend`.
+  - `--left_legend/-l` is now `--cpu_left_legend`.
 - [#1441](https://github.com/ClementTsang/bottom/pull/1441): The following config fields have changed names:
-    - `expanded_on_startup` is now `expanded`.
-    - `left_legend` is now `cpu_left_legend`.
+  - `expanded_on_startup` is now `expanded`.
+  - `left_legend` is now `cpu_left_legend`.
 - [#1458](https://github.com/ClementTsang/bottom/pull/1458): Fix a bug with `--hide_table_gap` with the battery widget.
 - [#1472](https://github.com/ClementTsang/bottom/pull/1472): The following arguments have changed names:
-    - `--mem_as_value` is now `process_memory_as_value`.
+  - `--mem_as_value` is now `process_memory_as_value`.
 - [#1472](https://github.com/ClementTsang/bottom/pull/1472): The following config fields have changed names:
-    - `mem_as_value` is now `process_memory_as_value`.
+  - `mem_as_value` is now `process_memory_as_value`.
 - [#1481](https://github.com/ClementTsang/bottom/pull/1481): The following config fields have changed names:
-    - `disk_filter` is now `disk.name_filter`.
-    - `mount_filter` is now `disk.mount_filter`.
-    - `temp_filter` is now `temperature.sensor_filter`
-    - `net_filter` is now `network.interface_filter`
+  - `disk_filter` is now `disk.name_filter`.
+  - `mount_filter` is now `disk.mount_filter`.
+  - `temp_filter` is now `temperature.sensor_filter`
+  - `net_filter` is now `network.interface_filter`
 - [#1499](https://github.com/ClementTsang/bottom/pull/1499): Redesign how styling is configured.
 - [#1499](https://github.com/ClementTsang/bottom/pull/1499): The following arguments have changed names:
-    - `--colors` is now `--theme`
+  - `--colors` is now `--theme`
 - [#1513](https://github.com/ClementTsang/bottom/pull/1513): Table headers are now bold by default.
 - [#1515](https://github.com/ClementTsang/bottom/pull/1515): Show the config path in the error message if unable to
   read/create a config.
@@ -561,8 +571,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ### Bug Fixes
 
-- [#575](https://github.com/ClementTsang/bottom/pull/575): Updates the procfs library to not crash on kernel version >
-    255.
+- [#575](https://github.com/ClementTsang/bottom/pull/575): Updates the procfs library to not crash on kernel version > 255.
 
 ### Internal Changes
 
@@ -773,8 +782,7 @@ That said, these are more guidelines rather than hard rules, though the project 
   config.
 
 - [#223](https://github.com/ClementTsang/bottom/pull/223): Add tree mode for processes.
-
-    - [#312](https://github.com/ClementTsang/bottom/pull/312): Add a `tree` flag to default to the tree mode.
+  - [#312](https://github.com/ClementTsang/bottom/pull/312): Add a `tree` flag to default to the tree mode.
 
 - [#269](https://github.com/ClementTsang/bottom/pull/269): Add simple indicator for when data updating is frozen.
 
@@ -896,13 +904,12 @@ That said, these are more guidelines rather than hard rules, though the project 
   clunky to use, was not really useful, and hard to work with large core counts.
 
   Furthermore:
+  - `show_disabled_data` option and flag is removed.
 
-    - `show_disabled_data` option and flag is removed.
+  - Average CPU is now on by _default_. You can disable it via `-a, --hide_avg_cpu` or `hide_avg_cpu = true`.
 
-    - Average CPU is now on by _default_. You can disable it via `-a, --hide_avg_cpu` or `hide_avg_cpu = true`.
-
-    - Make highlighted CPU persist even if widget is not selected - this should help make it easier to know what CPU you
-      are looking at even if you aren't currently on the CPU widget.
+  - Make highlighted CPU persist even if widget is not selected - this should help make it easier to know what CPU you
+    are looking at even if you aren't currently on the CPU widget.
 
 ### Bug Fixes
 
@@ -978,25 +985,23 @@ is equivalent to:
   Powershell colour conflicts.
 
 - Updated the widget type keyword list to accept the following keywords as existing types:
-
-    - `"memory"`
-    - `"network"`
-    - `"process"`
-    - `"processes"`
-    - `"temperature"`
+  - `"memory"`
+  - `"network"`
+  - `"process"`
+  - `"processes"`
+  - `"temperature"`
 
 - [#117](https://github.com/ClementTsang/bottom/issues/117): Update tui to 0.9:
+  - Removed an (undocumented) feature in allowing modifying total RX/TX colours. This is mainly due to the legend
+    change.
 
-    - Removed an (undocumented) feature in allowing modifying total RX/TX colours. This is mainly due to the legend
-      change.
+  - Use custom legend-hiding to stop hiding legends for memory and network widgets.
 
-    - Use custom legend-hiding to stop hiding legends for memory and network widgets.
+  - In addition, changed to using only legends within the graph for network, as well as redesigned the legend.
+    The old legend style can still be used via the `--use_old_network_legend` flag or `use_old_network_legend = true`
+    config option.
 
-    - In addition, changed to using only legends within the graph for network, as well as redesigned the legend.
-      The old legend style can still be used via the `--use_old_network_legend` flag or `use_old_network_legend = true`
-      config option.
-
-    - Allow for option to hide the header gap on tables via `--hide_table_gap` or `hide_table_gap = true`.
+  - Allow for option to hide the header gap on tables via `--hide_table_gap` or `hide_table_gap = true`.
 
 - [#126](https://github.com/ClementTsang/bottom/pull/126): Updated error messages to be a bit more consistent/helpful.
 

@@ -26,7 +26,7 @@ pub mod temperature;
 use std::time::{Duration, Instant};
 
 #[cfg(any(target_os = "linux", feature = "gpu"))]
-use nohash::IntMap;
+use crate::utils::int_hash::IntHashMap;
 #[cfg(any(not(target_os = "windows"), feature = "gpu"))]
 use processes::Pid;
 #[cfg(feature = "battery")]
@@ -156,6 +156,8 @@ pub struct DataCollector {
 
     total_rx: u64,
     total_tx: u64,
+    total_rx_packets: u64,
+    total_tx_packets: u64,
 
     unnormalized_cpu: bool,
     use_current_cpu_total: bool,
@@ -166,7 +168,7 @@ pub struct DataCollector {
     should_run_less_routine_tasks: bool,
 
     #[cfg(target_os = "linux")]
-    prev_process_details: IntMap<Pid, processes::PrevProcDetails>,
+    prev_process_details: IntHashMap<Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
     prev_idle: f64,
     #[cfg(target_os = "linux")]
@@ -181,7 +183,7 @@ pub struct DataCollector {
     user_table: processes::UserTable,
 
     #[cfg(feature = "gpu")]
-    gpu_pids: Option<Vec<IntMap<Pid, (u64, u32)>>>,
+    gpu_pids: Option<Vec<IntHashMap<Pid, (u64, u32)>>>,
     #[cfg(feature = "gpu")]
     gpus_total_mem: Option<u64>,
     #[cfg(feature = "zfs")]
@@ -200,7 +202,7 @@ impl DataCollector {
             data: Data::default(),
             sys: SysinfoSource::default(),
             #[cfg(target_os = "linux")]
-            prev_process_details: IntMap::default(),
+            prev_process_details: IntHashMap::default(),
             #[cfg(target_os = "linux")]
             prev_idle: 0_f64,
             #[cfg(target_os = "linux")]
@@ -211,6 +213,8 @@ impl DataCollector {
             last_collection_time,
             total_rx: 0,
             total_tx: 0,
+            total_rx_packets: 0,
+            total_tx_packets: 0,
             show_average_cpu: false,
             widgets_to_harvest: UsedWidgets::default(),
             #[cfg(feature = "battery")]
@@ -383,7 +387,7 @@ impl DataCollector {
     fn update_gpus(&mut self) {
         if self.widgets_to_harvest.use_gpu {
             let mut local_gpu: Vec<(String, memory::MemData)> = Vec::new();
-            let mut local_gpu_pids: Vec<IntMap<Pid, (u64, u32)>> = Vec::new();
+            let mut local_gpu_pids: Vec<IntHashMap<Pid, (u64, u32)>> = Vec::new();
             let mut local_gpu_total_mem: u64 = 0;
 
             #[cfg(feature = "nvidia")]
@@ -522,12 +526,16 @@ impl DataCollector {
                 self.last_collection_time,
                 &mut self.total_rx,
                 &mut self.total_tx,
+                &mut self.total_rx_packets,
+                &mut self.total_tx_packets,
                 self.data.collection_time,
                 &self.filters.net_filter,
             );
 
             self.total_rx = net_data.total_rx;
             self.total_tx = net_data.total_tx;
+            self.total_rx_packets = net_data.total_rx_packets;
+            self.total_tx_packets = net_data.total_tx_packets;
             self.data.network = Some(net_data);
         }
     }

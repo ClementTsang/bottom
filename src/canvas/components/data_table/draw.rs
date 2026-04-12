@@ -8,7 +8,7 @@ use tui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span, Text},
-    widgets::{Block, Cell, Row, Table},
+    widgets::{Block, Cell, Padding, Row, Table},
 };
 
 use super::{
@@ -50,8 +50,7 @@ pub struct DrawInfo {
 
 impl DrawInfo {
     pub fn is_on_widget(&self) -> bool {
-        matches!(self.selection_state, SelectionState::Selected)
-            || matches!(self.selection_state, SelectionState::Expanded)
+        !matches!(self.selection_state, SelectionState::NotSelected)
     }
 
     pub fn is_expanded(&self) -> bool {
@@ -78,8 +77,13 @@ where
             self.styling.border_style
         };
 
-        let mut block = widget_block(self.props.is_basic, is_selected, self.styling.border_type)
-            .border_style(border_style);
+        let mut block = widget_block(
+            self.props.is_basic,
+            is_selected,
+            self.styling.border_type,
+            self.styling.general_widget_style,
+        )
+        .border_style(border_style);
 
         if let Some((left_title, right_title)) = self.generate_title(draw_info, data_len) {
             if !self.props.is_basic {
@@ -136,11 +140,13 @@ where
         let draw_loc = draw_info.loc;
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)])
-            .horizontal_margin(u16::from(self.props.is_basic && !draw_info.is_on_widget()))
             .direction(Direction::Horizontal)
             .split(draw_loc)[0];
 
-        let block = self.block(draw_info, self.data.len());
+        let mut block = self.block(draw_info, self.data.len());
+        if self.props.is_basic && !draw_info.is_on_widget() {
+            block = block.padding(Padding::horizontal(1))
+        }
 
         let (inner_width, inner_height) = {
             let inner_rect = block.inner(margined_draw_loc);

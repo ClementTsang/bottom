@@ -94,8 +94,7 @@ impl Painter {
     pub fn draw_help_dialog(&self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect) {
         let styled_help_text = self.help_text_lines(app_state);
 
-        let block = dialog_block(self.styles.border_type)
-            .border_style(self.styles.border_style)
+        let block = dialog_block(self.styles.border_type, self.styles.border_style)
             .title_top(Line::styled(" Help ", self.styles.widget_title_style))
             .title_top(
                 Line::styled(" Esc to close ", self.styles.widget_title_style).right_aligned(),

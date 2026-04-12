@@ -19,7 +19,9 @@ use crate::{
     },
     constants,
     utils::data_units::DataUnit,
-    widgets::{ProcWidgetColumn, ProcWidgetMode, TreeCollapsed},
+    widgets::{
+        DiskWidgetColumn, ProcWidgetColumn, ProcWidgetMode, TempWidgetColumn, TreeCollapsed,
+    },
 };
 
 const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
@@ -33,7 +35,10 @@ pub enum AxisScaling {
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
-#[derive(Debug, Default, Eq, PartialEq)]
+///
+/// TODO: Clean this up, we probably don't need to have this duplicated.
+#[derive(Debug, Default)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct AppConfigFields {
     pub update_rate: u64,
     pub temperature_type: TemperatureType,
@@ -68,9 +73,12 @@ pub struct AppConfigFields {
     pub network_legend_position: Option<LegendPosition>,
     pub network_scale_type: AxisScaling,
     pub network_use_binary_prefix: bool,
+    pub network_show_packets: bool,
     pub retention_ms: u64,
     pub dedicated_average_row: bool,
     pub default_tree_collapse: bool,
+    pub default_temp_sort_column: Option<TempWidgetColumn>,
+    pub default_disk_sort_column: Option<DiskWidgetColumn>,
 }
 
 /// For filtering out information
@@ -665,16 +673,14 @@ impl App {
                 }
                 BottomWidgetType::Battery => {
                     #[cfg(feature = "battery")]
-                    if self.data_store.get_data().battery_harvest.len() > 1 {
-                        if let Some(battery_widget_state) = self
+                    if self.data_store.get_data().battery_harvest.len() > 1
+                        && let Some(battery_widget_state) = self
                             .states
                             .battery_state
                             .get_mut_widget_state(self.current_widget.widget_id)
-                        {
-                            if battery_widget_state.currently_selected_battery_index > 0 {
-                                battery_widget_state.currently_selected_battery_index -= 1;
-                            }
-                        }
+                        && battery_widget_state.currently_selected_battery_index > 0
+                    {
+                        battery_widget_state.currently_selected_battery_index -= 1;
                     }
                 }
                 _ => {}
@@ -1545,38 +1551,36 @@ impl App {
                                                 .get(&(new_widget_id - *offset))
                                             {
                                                 match &new_widget.widget_type {
-                                                    BottomWidgetType::ProcSearch => {
+                                                    BottomWidgetType::ProcSearch =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_search_enabled() {
                                                             if let Some(next_neighbour_id) =
                                                                 option_next_neighbour_id
-                                                            {
-                                                                if let Some(next_neighbour_widget) =
+                                                                && let Some(next_neighbour_widget) =
                                                                     self.widget_map
                                                                         .get(&next_neighbour_id)
-                                                                {
-                                                                    self.current_widget =
-                                                                        next_neighbour_widget
-                                                                            .clone();
-                                                                }
+                                                            {
+                                                                self.current_widget =
+                                                                    next_neighbour_widget.clone();
                                                             }
                                                         } else {
                                                             self.current_widget =
                                                                 new_widget.clone();
                                                         }
                                                     }
-                                                    BottomWidgetType::ProcSort => {
+                                                    BottomWidgetType::ProcSort =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_sort_open {
                                                             if let Some(next_neighbour_id) =
                                                                 option_next_neighbour_id
-                                                            {
-                                                                if let Some(next_neighbour_widget) =
+                                                                && let Some(next_neighbour_widget) =
                                                                     self.widget_map
                                                                         .get(&next_neighbour_id)
-                                                                {
-                                                                    self.current_widget =
-                                                                        next_neighbour_widget
-                                                                            .clone();
-                                                                }
+                                                            {
+                                                                self.current_widget =
+                                                                    next_neighbour_widget.clone();
                                                             }
                                                         } else {
                                                             self.current_widget =
@@ -1625,7 +1629,9 @@ impl App {
                                                 .get(&(new_widget_id - *offset))
                                             {
                                                 match &new_widget.widget_type {
-                                                    BottomWidgetType::ProcSearch => {
+                                                    BottomWidgetType::ProcSearch =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_search_enabled() {
                                                             if let Some(parent_proc_widget) = self
                                                                 .widget_map
@@ -1639,7 +1645,9 @@ impl App {
                                                                 new_widget.clone();
                                                         }
                                                     }
-                                                    BottomWidgetType::ProcSort => {
+                                                    BottomWidgetType::ProcSort =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_sort_open {
                                                             if let Some(parent_proc_widget) = self
                                                                 .widget_map
@@ -1696,15 +1704,15 @@ impl App {
                                     .get(&(self.current_widget.widget_id - *offset))
                                 {
                                     match &self.current_widget.widget_type {
-                                        BottomWidgetType::ProcSearch => {
-                                            if !proc_widget_state.is_search_enabled() {
-                                                reflection_dir = Some(parent_direction.clone());
-                                            }
+                                        BottomWidgetType::ProcSearch
+                                            if !proc_widget_state.is_search_enabled() =>
+                                        {
+                                            reflection_dir = Some(parent_direction.clone());
                                         }
-                                        BottomWidgetType::ProcSort => {
-                                            if !proc_widget_state.is_sort_open {
-                                                reflection_dir = Some(parent_direction.clone());
-                                            }
+                                        BottomWidgetType::ProcSort
+                                            if !proc_widget_state.is_sort_open =>
+                                        {
+                                            reflection_dir = Some(parent_direction.clone());
                                         }
                                         _ => {}
                                     }
