@@ -164,7 +164,7 @@ impl InputFieldState {
     }
 
     /// Move the cursor one _grapheme_ forward.
-    pub(crate) fn walk_forward(&mut self) {
+    fn walk_forward(&mut self) {
         let start_position = self.cursor_index();
         let chunk = &self.current_search_query[start_position..];
 
@@ -187,7 +187,7 @@ impl InputFieldState {
     }
 
     /// Move the cursor one _grapheme_ backward.
-    pub(crate) fn walk_backward(&mut self) {
+    fn walk_backward(&mut self) {
         let start_position = self.cursor_index();
         let chunk = &self.current_search_query[..start_position];
 
@@ -379,85 +379,368 @@ impl InputFieldState {
 mod tests {
     use super::*;
 
-    fn move_right(state: &mut InputFieldState) {
-        state.walk_forward();
-        state.cursor_direction = CursorDirection::Right;
-    }
+    #[test]
+    fn insert_char_ascii() {
+        let mut state = InputFieldState::default();
 
-    fn move_left(state: &mut InputFieldState) {
-        state.walk_backward();
-        state.cursor_direction = CursorDirection::Left;
+        state.insert_char('H');
+        assert_eq!(state.current_query(), "H");
+        assert_eq!(state.cursor_index(), 1);
+
+        state.insert_char('i');
+        assert_eq!(state.current_query(), "Hi");
+        assert_eq!(state.cursor_index(), 2);
     }
 
     #[test]
+    fn insert_char_multibyte_unicode() {
+        let mut state = InputFieldState::default();
+
+        state.insert_char('你'); // 3-byte UTF-8
+        assert_eq!(state.current_query(), "你");
+        assert_eq!(state.cursor_index(), 3);
+
+        state.insert_char('好');
+        assert_eq!(state.current_query(), "你好");
+        assert_eq!(state.cursor_index(), 6);
+    }
+
+    #[test]
+    fn insert_char_emoji() {
+        let mut state = InputFieldState::default();
+
+        state.insert_char('🦀'); // 4-byte UTF-8
+        assert_eq!(state.current_query(), "🦀");
+        assert_eq!(state.cursor_index(), 4);
+    }
+
+    #[test]
+    fn insert_char_at_middle() {
+        let mut state = InputFieldState::default();
+        state.insert_char('H');
+        state.insert_char('i');
+        state.insert_char('!');
+
+        // Move back to before '!'
+        state.move_left();
+        assert_eq!(state.cursor_index(), 2);
+
+        state.insert_char(' ');
+        assert_eq!(state.current_query(), "Hi !");
+        assert_eq!(state.cursor_index(), 3);
+    }
+
+    #[test]
+    fn insert_string_ascii() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello".to_string());
+        assert_eq!(state.current_query(), "Hello");
+        assert_eq!(state.cursor_index(), 5);
+    }
+
+    #[test]
+    fn insert_string_unicode() {
+        let mut state = InputFieldState::default();
+        state.insert_string("你好🇨🇦🦀".to_string());
+        assert_eq!(state.current_query(), "你好🇨🇦🦀");
+        // '你'=3, '好'=3, '🦀'=4, '🇨🇦'=8, so 14 bytes
+        assert_eq!(state.cursor_index(), 18);
+    }
+
+    #[test]
+    fn insert_string_at_middle() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello".to_string());
+        state.skip_to_beginning();
+        state.insert_string("Say ".to_string());
+        assert_eq!(state.current_query(), "Say Hello");
+        assert_eq!(state.cursor_index(), 4);
+    }
+
+    #[test]
+    fn delete_at_cursor_basic() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello".to_string());
+        state.skip_to_beginning();
+
+        state.delete_at_cursor(); // removes 'H'
+        assert_eq!(state.current_query(), "ello");
+        assert_eq!(state.cursor_index(), 0);
+
+        state.delete_at_cursor(); // removes 'e'
+        assert_eq!(state.current_query(), "llo");
+        assert_eq!(state.cursor_index(), 0);
+    }
+
+    #[test]
+    fn delete_at_cursor_at_end_is_noop() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hi".to_string());
+        // cursor is already at end after inserting
+
+        state.delete_at_cursor();
+        assert_eq!(state.current_query(), "Hi");
+        assert_eq!(state.cursor_index(), 2);
+    }
+
+    #[test]
+    fn delete_at_cursor_unicode() {
+        let mut state = InputFieldState::default();
+        state.insert_string("你好".to_string());
+        state.skip_to_beginning();
+
+        state.delete_at_cursor(); // removes '你' (3 bytes)
+        assert_eq!(state.current_query(), "好");
+        assert_eq!(state.cursor_index(), 0);
+    }
+
+    #[test]
+    fn delete_behind_cursor_basic() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello".to_string());
+
+        state.delete_behind_cursor(); // removes 'o'
+        assert_eq!(state.current_query(), "Hell");
+        assert_eq!(state.cursor_index(), 4);
+
+        state.delete_behind_cursor(); // removes 'l'
+        assert_eq!(state.current_query(), "Hel");
+        assert_eq!(state.cursor_index(), 3);
+    }
+
+    #[test]
+    fn delete_behind_cursor_at_start_is_noop() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hi".to_string());
+        state.skip_to_beginning();
+
+        state.delete_behind_cursor();
+        assert_eq!(state.current_query(), "Hi");
+        assert_eq!(state.cursor_index(), 0);
+    }
+
+    #[test]
+    fn delete_behind_cursor_unicode() {
+        let mut state = InputFieldState::default();
+        state.insert_string("你好".to_string());
+
+        state.delete_behind_cursor(); // removes '好' (3 bytes)
+        assert_eq!(state.current_query(), "你");
+        assert_eq!(state.cursor_index(), 3);
+
+        state.delete_behind_cursor(); // removes '你' (3 bytes)
+        assert_eq!(state.current_query(), "");
+        assert_eq!(state.cursor_index(), 0);
+    }
+
+    #[test]
+    fn move_left_right_ascii() {
+        let mut state = InputFieldState::default();
+        state.insert_string("abc".to_string());
+        assert_eq!(state.cursor_index(), 3);
+
+        state.move_left();
+        assert_eq!(state.cursor_index(), 2);
+        state.move_left();
+        assert_eq!(state.cursor_index(), 1);
+        state.move_left();
+        assert_eq!(state.cursor_index(), 0);
+
+        // At the start — no further movement
+        state.move_left();
+        assert_eq!(state.cursor_index(), 0);
+
+        state.move_right();
+        assert_eq!(state.cursor_index(), 1);
+        state.move_right();
+        assert_eq!(state.cursor_index(), 2);
+        state.move_right();
+        assert_eq!(state.cursor_index(), 3);
+
+        // At the end — no further movement
+        state.move_right();
+        assert_eq!(state.cursor_index(), 3);
+    }
+
+    #[test]
+    fn move_left_right_unicode() {
+        let mut state = InputFieldState::default();
+        state.insert_string("a你b".to_string()); // 1 + 3 + 1 = 5 bytes
+        assert_eq!(state.cursor_index(), 5);
+
+        state.move_left(); // over 'b' (1 byte)
+        assert_eq!(state.cursor_index(), 4);
+
+        state.move_left(); // over '你' (3 bytes)
+        assert_eq!(state.cursor_index(), 1);
+
+        state.move_left(); // over 'a' (1 byte)
+        assert_eq!(state.cursor_index(), 0);
+    }
+
+    #[test]
+    fn skip_to_beginning_and_end() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello".to_string());
+
+        state.skip_to_beginning();
+        assert_eq!(state.cursor_index(), 0);
+
+        state.skip_to_end();
+        assert_eq!(state.cursor_index(), 5);
+    }
+
+    #[test]
+    fn skip_to_beginning_sets_direction_left() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello".to_string());
+        state.skip_to_beginning();
+        assert!(matches!(state.cursor_direction, CursorDirection::Left));
+    }
+
+    #[test]
+    fn skip_to_end_sets_direction_right() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello".to_string());
+        state.skip_to_beginning();
+        state.skip_to_end();
+        assert!(matches!(state.cursor_direction, CursorDirection::Right));
+    }
+
+    #[test]
+    fn delete_previous_word_single_word() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello".to_string());
+
+        state.delete_previous_word();
+        assert_eq!(state.current_query(), "");
+        assert_eq!(state.cursor_index(), 0);
+    }
+
+    #[test]
+    fn delete_previous_word_two_words() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello World".to_string());
+
+        state.delete_previous_word(); // deletes "World"
+        assert_eq!(state.current_query(), "Hello ");
+        assert_eq!(state.cursor_index(), 6);
+
+        state.delete_previous_word(); // deletes "Hello "
+        assert_eq!(state.current_query(), "");
+        assert_eq!(state.cursor_index(), 0);
+    }
+
+    #[test]
+    fn delete_previous_word_trailing_spaces() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello   ".to_string()); // trailing spaces
+
+        // Should skip spaces first, then delete "Hello"
+        state.delete_previous_word();
+        assert_eq!(state.current_query(), "");
+        assert_eq!(state.cursor_index(), 0);
+    }
+
+    #[test]
+    fn delete_previous_word_from_middle() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Hello World".to_string());
+        state.skip_to_beginning();
+        // Advance 3 chars ('H','e','l')
+        state.move_right();
+        state.move_right();
+        state.move_right();
+        assert_eq!(state.cursor_index(), 3);
+
+        state.delete_previous_word(); // deletes "Hel"
+        assert_eq!(state.current_query(), "lo World");
+        assert_eq!(state.cursor_index(), 0);
+    }
+
+    #[test]
+    fn reset_clears_state() {
+        let mut state = InputFieldState::default();
+        state.insert_string("Something".to_string());
+        assert_eq!(state.current_query(), "Something");
+
+        state.reset();
+        assert_eq!(state.current_query(), "");
+        assert_eq!(state.cursor_index(), 0);
+        assert_eq!(state.display_start_index(), 0);
+        assert!(state.size_mappings().is_empty());
+    }
+
+    /// Tests that the cursor moves correctly when moving left and right.
+    /// In particular, tests [`InputFieldState::move_left`] and [`InputFieldState::move_right`].
+    #[test]
     fn search_cursor_moves() {
         let mut state = InputFieldState::default();
-        state.current_search_query = "Hi, 你好! 🇦🇶".to_string();
-        state.grapheme_cursor = GraphemeCursor::new(0, state.current_search_query.len(), true);
-        state.update_sizes();
+        state.insert_string("Hi, 你好! 🇨🇦".to_string());
+        state.skip_to_beginning();
 
         // Moving right.
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 0);
         assert_eq!(state.display_start_char_index, 0);
 
-        move_right(&mut state);
+        state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 1);
         assert_eq!(state.display_start_char_index, 0);
 
-        move_right(&mut state);
+        state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 2);
         assert_eq!(state.display_start_char_index, 0);
 
-        move_right(&mut state);
+        state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 3);
         assert_eq!(state.display_start_char_index, 0);
 
-        move_right(&mut state);
+        state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 4);
         assert_eq!(state.display_start_char_index, 2);
 
-        move_right(&mut state);
+        state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 7);
         assert_eq!(state.display_start_char_index, 4);
 
-        move_right(&mut state);
+        state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 10);
         assert_eq!(state.display_start_char_index, 7);
 
-        move_right(&mut state);
-        move_right(&mut state);
+        state.move_right();
+        state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 12);
         assert_eq!(state.display_start_char_index, 10);
 
         // Moving left.
-        move_left(&mut state);
+        state.move_left();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 11);
         assert_eq!(state.display_start_char_index, 10);
 
-        move_left(&mut state);
-        move_left(&mut state);
+        state.move_left();
+        state.move_left();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 7);
         assert_eq!(state.display_start_char_index, 7);
 
-        move_left(&mut state);
-        move_left(&mut state);
-        move_left(&mut state);
-        move_left(&mut state);
+        state.move_left();
+        state.move_left();
+        state.move_left();
+        state.move_left();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 1);
         assert_eq!(state.display_start_char_index, 1);
 
-        move_left(&mut state);
+        state.move_left();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 0);
         assert_eq!(state.display_start_char_index, 0);
