@@ -237,6 +237,8 @@ impl InputFieldState {
 
             self.grapheme_cursor =
                 GraphemeCursor::new(current_cursor, self.current_search_query.len(), true);
+
+            self.update_sizes();
         }
     }
 
@@ -255,6 +257,8 @@ impl InputFieldState {
                 GraphemeCursor::new(new_cursor, self.current_search_query.len(), true);
 
             self.cursor_direction = CursorDirection::Left;
+
+            self.update_sizes();
         }
     }
 
@@ -327,6 +331,8 @@ impl InputFieldState {
             GraphemeCursor::new(start_index, self.current_search_query.len(), true);
 
         self.cursor_direction = CursorDirection::Left;
+
+        self.update_sizes();
     }
 
     /// Insert a single [`char`].
@@ -338,6 +344,8 @@ impl InputFieldState {
 
         self.walk_forward();
         self.cursor_direction = CursorDirection::Right;
+
+        self.update_sizes();
     }
 
     /// Insert a [`String`].
@@ -362,6 +370,8 @@ impl InputFieldState {
         }
 
         self.cursor_direction = CursorDirection::Right;
+
+        self.update_sizes();
     }
 }
 

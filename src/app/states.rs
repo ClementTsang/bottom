@@ -48,6 +48,8 @@ impl Default for AppHelpDialogState {
 /// AppSearchState deals with generic searching (I might do this in the future).
 pub struct AppSearchState {
     pub is_enabled: bool,
+
+    // TODO: Remove is blank search... not needed.
     pub is_blank_search: bool,
     pub is_invalid_search: bool,
 
