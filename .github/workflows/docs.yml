@@ -6,9 +6,12 @@ on:
   workflow_dispatch:
   workflow_call:
     inputs:
-      nightly:
-        description: "Optional nightly redirect override"
-        default: ""
+      version:
+        description: "The version to deploy."
+        required: true
+        type: string
+      alias:
+        description: "An optional alias to update."
         required: false
         type: string
   push:
@@ -48,11 +51,13 @@ jobs:
         run: ./scripts/ci/configure_git.sh
 
       - name: Build and deploy docs with mike
-        env:
-          MKDOCS_NIGHTLY_RELEASE_OVERRIDE: ${{ inputs.nightly || '' }}
         run: |
           cd docs
-          mike deploy nightly --push
+          if [[ -n "${{ inputs.alias }}" ]]; then
+            mike deploy --push ${{ inputs.version }} --update-aliases ${{ inputs.alias }}
+          else
+            mike deploy --push ${{ inputs.version }}
+          fi
 
   publish-gh-pages:
     needs: [build-documentation]
