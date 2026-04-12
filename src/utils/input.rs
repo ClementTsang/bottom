@@ -239,7 +239,7 @@ impl InputFieldState {
         }
     }
 
-    /// Move the cursor left.
+    /// Move the cursor left one unit if possible.
     pub fn move_left(&mut self) {
         let current_cursor = self.grapheme_cursor.cur_cursor();
         self.walk_backward();
@@ -248,13 +248,66 @@ impl InputFieldState {
         }
     }
 
-    /// Move the cursor right.
+    /// Move the cursor right one unit if possible.
     pub fn move_right(&mut self) {
         let current_cursor = self.grapheme_cursor.cur_cursor();
         self.walk_forward();
         if self.grapheme_cursor.cur_cursor() > current_cursor {
             self.cursor_direction = CursorDirection::Right;
         }
+    }
+
+    /// Move the cursor to the start.
+    pub fn skip_to_beginning(&mut self) {
+        self.grapheme_cursor = GraphemeCursor::new(0, self.current_search_query.len(), true);
+        self.cursor_direction = CursorDirection::Left;
+    }
+
+    /// Move the cursor to the end.
+    pub fn skip_to_end(&mut self) {
+        let query_len = self.current_search_query.len();
+        self.grapheme_cursor = GraphemeCursor::new(query_len, query_len, true);
+        self.cursor_direction = CursorDirection::Right;
+    }
+
+    /// Delete the previous "word".
+    pub fn delete_previous_word(&mut self) {
+        // Traverse backwards from the current cursor location until you hit
+        // non-whitespace characters, then continue to traverse (and
+        // delete) backwards until you hit a whitespace character.  Halt.
+
+        // So... first, let's get our current cursor position in terms of char
+        // indices. This is the "end" index we care about.
+        let current_cursor = self.grapheme_cursor.cur_cursor();
+
+        // Then, let's crawl backwards until we hit our location, and store the
+        // "head"...
+        let query = self.current_query();
+        let mut start_index = 0;
+        let mut saw_non_whitespace = false;
+
+        for (itx, c) in query
+            .chars()
+            .rev()
+            .enumerate()
+            .skip(query.len() - current_cursor)
+        {
+            if c.is_whitespace() {
+                if saw_non_whitespace {
+                    start_index = query.len() - itx;
+                    break;
+                }
+            } else {
+                saw_non_whitespace = true;
+            }
+        }
+
+        let _ = self.current_search_query.drain(start_index..current_cursor);
+
+        self.grapheme_cursor =
+            GraphemeCursor::new(start_index, self.current_search_query.len(), true);
+
+        self.cursor_direction = CursorDirection::Left;
     }
 }
 

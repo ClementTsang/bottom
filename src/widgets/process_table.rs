@@ -32,6 +32,7 @@ use crate::{
 /// state.
 #[derive(Default)]
 pub struct ProcessSearchState {
+    // TODO: Flatten AppSearchState as it's been generalized further.
     pub search_state: AppSearchState,
     pub query_options: QueryOptions,
 }

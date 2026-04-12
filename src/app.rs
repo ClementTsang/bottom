@@ -772,19 +772,11 @@ impl App {
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
                     if is_in_search_widget {
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(
-                                0,
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                true,
-                            );
-
-                        proc_widget_state.proc_search.search_state.cursor_direction =
-                            CursorDirection::Left;
+                        proc_widget_state
+                            .proc_search
+                            .search_state
+                            .input_field_state
+                            .skip_to_beginning();
                     }
                 }
             }
@@ -802,16 +794,11 @@ impl App {
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
                     if is_in_search_widget {
-                        let query_len = proc_widget_state
+                        proc_widget_state
                             .proc_search
                             .search_state
-                            .current_search_query
-                            .len();
-
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(query_len, query_len, true);
-                        proc_widget_state.proc_search.search_state.cursor_direction =
-                            CursorDirection::Right;
+                            .input_field_state
+                            .skip_to_end();
                     }
                 }
             }
@@ -839,52 +826,11 @@ impl App {
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
-                // Traverse backwards from the current cursor location until you hit
-                // non-whitespace characters, then continue to traverse (and
-                // delete) backwards until you hit a whitespace character.  Halt.
-
-                // So... first, let's get our current cursor position in terms of char indices.
-                let end_index = proc_widget_state.cursor_char_index();
-
-                // Then, let's crawl backwards until we hit our location, and store the
-                // "head"...
-                let query = proc_widget_state.current_search_query();
-                let mut start_index = 0;
-                let mut saw_non_whitespace = false;
-
-                for (itx, c) in query
-                    .chars()
-                    .rev()
-                    .enumerate()
-                    .skip(query.len() - end_index)
-                {
-                    if c.is_whitespace() {
-                        if saw_non_whitespace {
-                            start_index = query.len() - itx;
-                            break;
-                        }
-                    } else {
-                        saw_non_whitespace = true;
-                    }
-                }
-
-                let _ = proc_widget_state
+                proc_widget_state
                     .proc_search
                     .search_state
-                    .current_search_query
-                    .drain(start_index..end_index);
-
-                proc_widget_state.proc_search.search_state.grapheme_cursor = GraphemeCursor::new(
-                    start_index,
-                    proc_widget_state
-                        .proc_search
-                        .search_state
-                        .current_search_query
-                        .len(),
-                    true,
-                );
-
-                proc_widget_state.proc_search.search_state.cursor_direction = CursorDirection::Left;
+                    .input_field_state
+                    .delete_previous_word();
 
                 proc_widget_state.update_query();
             }
