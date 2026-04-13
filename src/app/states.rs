@@ -48,9 +48,6 @@ impl Default for AppHelpDialogState {
 /// AppSearchState deals with generic searching (I might do this in the future).
 pub struct AppSearchState {
     pub is_enabled: bool,
-
-    // TODO: Remove is blank search... not needed.
-    pub is_blank_search: bool,
     pub is_invalid_search: bool,
 
     pub input_field_state: InputFieldState,
@@ -65,7 +62,6 @@ impl Default for AppSearchState {
         AppSearchState {
             is_enabled: false,
             is_invalid_search: false,
-            is_blank_search: true,
             input_field_state: InputFieldState::default(),
             query: None,
             error_message: None,
@@ -85,7 +81,7 @@ impl AppSearchState {
 
     /// Returns whether the [`AppSearchState`] has an invalid or blank search.
     pub fn is_invalid_or_blank_search(&self) -> bool {
-        self.is_blank_search || self.is_invalid_search
+        self.input_field_state.current_query().is_empty() || self.is_invalid_search
     }
 }
 

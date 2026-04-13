@@ -12,7 +12,7 @@ use crate::{app::CursorDirection, utils::int_hash::IntIndexMap};
 /// An input field's state.
 pub struct InputFieldState {
     /// The search query itself, what is shown.
-    current_search_query: String,
+    current_query: String,
 
     /// The internal grapheme cursor to track the current location.
     grapheme_cursor: GraphemeCursor,
@@ -26,7 +26,7 @@ pub struct InputFieldState {
     /// Determines where we start _displaying_ the search based on
     /// the user's scroll. For example, if they move the cursor 5
     /// units to the right from 0, the index should be 5.
-    display_start_char_index: usize,
+    display_start_index: usize,
 
     /// Used for internal tracking of _byte_ indices to the widths
     /// of the graphemes they represent. This is mostly used to cache
@@ -40,10 +40,10 @@ pub struct InputFieldState {
 impl Default for InputFieldState {
     fn default() -> Self {
         Self {
-            current_search_query: String::default(),
+            current_query: String::default(),
             grapheme_cursor: GraphemeCursor::new(0, 0, true),
             cursor_direction: CursorDirection::Right,
-            display_start_char_index: 0,
+            display_start_index: 0,
             size_mappings: IntIndexMap::default(),
         }
     }
@@ -53,7 +53,7 @@ impl InputFieldState {
     /// Get a reference to the current query.
     #[inline]
     pub(crate) fn current_query(&self) -> &str {
-        &self.current_search_query
+        &self.current_query
     }
 
     /// Get the current cursor index.
@@ -65,15 +65,7 @@ impl InputFieldState {
     /// Get the display start index.
     #[inline]
     pub(crate) fn display_start_index(&self) -> usize {
-        self.display_start_char_index
-    }
-
-    /// Get the size mappings.
-    ///
-    /// TODO: We may want to reconsider exposing this, or expose something more encapsulated?
-    #[inline]
-    pub(crate) fn size_mappings(&self) -> &IntIndexMap<usize, Range<usize>> {
-        &self.size_mappings
+        self.display_start_index
     }
 
     /// Sets the starting grapheme index to draw from.
@@ -87,7 +79,7 @@ impl InputFieldState {
         let start_index = if is_force_redraw {
             0
         } else {
-            self.display_start_char_index
+            self.display_start_index
         };
         let cursor_index = self.cursor_index();
 
@@ -109,7 +101,7 @@ impl InputFieldState {
             //
             // What differs is how we "scroll" based on the cursor movement direction.
 
-            self.display_start_char_index = match self.cursor_direction {
+            self.display_start_index = match self.cursor_direction {
                 CursorDirection::Right => {
                     if start_range.start + available_width >= cursor_range.end {
                         // Use the current index.
@@ -136,7 +128,7 @@ impl InputFieldState {
                 CursorDirection::Left => {
                     if cursor_range.start < start_range.end {
                         let mut index = 0;
-                        for i in cursor_index..(self.current_search_query.len()) {
+                        for i in cursor_index..(self.current_query.len()) {
                             if let Some(r) = self.size_mappings.get(&i) {
                                 if r.start + available_width >= cursor_range.end {
                                     index = i;
@@ -152,7 +144,7 @@ impl InputFieldState {
             };
         } else {
             // If we fail here somehow, just reset to 0 index + scroll left.
-            self.display_start_char_index = 0;
+            self.display_start_index = 0;
             self.cursor_direction = CursorDirection::Left;
         };
     }
@@ -160,7 +152,7 @@ impl InputFieldState {
     /// Move the cursor one _grapheme_ forward.
     fn walk_forward(&mut self) {
         let start_position = self.cursor_index();
-        let chunk = &self.current_search_query[start_position..];
+        let chunk = &self.current_query[start_position..];
 
         match self.grapheme_cursor.next_boundary(chunk, start_position) {
             Ok(_) => {}
@@ -169,7 +161,7 @@ impl InputFieldState {
                     // Provide the entire string as context. Not efficient but should resolve
                     // failures.
                     self.grapheme_cursor
-                        .provide_context(&self.current_search_query[0..ctx], 0);
+                        .provide_context(&self.current_query[0..ctx], 0);
 
                     self.grapheme_cursor
                         .next_boundary(chunk, start_position)
@@ -183,7 +175,7 @@ impl InputFieldState {
     /// Move the cursor one _grapheme_ backward.
     fn walk_backward(&mut self) {
         let start_position = self.cursor_index();
-        let chunk = &self.current_search_query[..start_position];
+        let chunk = &self.current_query[..start_position];
 
         match self.grapheme_cursor.prev_boundary(chunk, 0) {
             Ok(_) => {}
@@ -192,7 +184,7 @@ impl InputFieldState {
                     // Provide the entire string as context. Not efficient but should resolve
                     // failures.
                     self.grapheme_cursor
-                        .provide_context(&self.current_search_query[0..ctx], 0);
+                        .provide_context(&self.current_query[0..ctx], 0);
 
                     self.grapheme_cursor
                         .prev_boundary(chunk, 0)
@@ -203,11 +195,15 @@ impl InputFieldState {
         }
     }
 
+    /// Update the size mappings (mapping of index to the display width range) after the query has been updated in any
+    /// way. This should be called whenever the query is updated.
+    ///
+    /// TODO: This might be a bit expensive, maybe we could update this a bit more iteratively?
     fn update_sizes(&mut self) {
         self.size_mappings.clear();
         let mut curr_offset = 0;
         for (index, grapheme) in
-            UnicodeSegmentation::grapheme_indices(self.current_search_query.as_str(), true)
+            UnicodeSegmentation::grapheme_indices(self.current_query.as_str(), true)
         {
             let width = grapheme_width(grapheme);
             let end = curr_offset + width;
@@ -223,14 +219,14 @@ impl InputFieldState {
     /// Delete whatever the cursor is currently highlighting, if anything. This is analogous to pressing `Delete`.
     pub(crate) fn delete_at_cursor(&mut self) {
         let current_cursor = self.cursor_index();
-        if current_cursor < self.current_search_query.len() {
+        if current_cursor < self.current_query.len() {
             self.walk_forward();
             let new_cursor = self.cursor_index();
 
-            let _ = self.current_search_query.drain(current_cursor..new_cursor);
+            let _ = self.current_query.drain(current_cursor..new_cursor);
 
             self.grapheme_cursor =
-                GraphemeCursor::new(current_cursor, self.current_search_query.len(), true);
+                GraphemeCursor::new(current_cursor, self.current_query.len(), true);
 
             self.update_sizes();
         }
@@ -245,10 +241,9 @@ impl InputFieldState {
             let new_cursor = self.cursor_index();
 
             // Remove the indices in between.
-            let _ = self.current_search_query.drain(new_cursor..current_cursor);
+            let _ = self.current_query.drain(new_cursor..current_cursor);
 
-            self.grapheme_cursor =
-                GraphemeCursor::new(new_cursor, self.current_search_query.len(), true);
+            self.grapheme_cursor = GraphemeCursor::new(new_cursor, self.current_query.len(), true);
 
             self.cursor_direction = CursorDirection::Left;
 
@@ -276,13 +271,13 @@ impl InputFieldState {
 
     /// Move the cursor to the start.
     pub(crate) fn skip_to_beginning(&mut self) {
-        self.grapheme_cursor = GraphemeCursor::new(0, self.current_search_query.len(), true);
+        self.grapheme_cursor = GraphemeCursor::new(0, self.current_query.len(), true);
         self.cursor_direction = CursorDirection::Left;
     }
 
     /// Move the cursor to the end.
     pub(crate) fn skip_to_end(&mut self) {
-        let query_len = self.current_search_query.len();
+        let query_len = self.current_query.len();
         self.grapheme_cursor = GraphemeCursor::new(query_len, query_len, true);
         self.cursor_direction = CursorDirection::Right;
     }
@@ -314,10 +309,9 @@ impl InputFieldState {
             }
         }
 
-        let _ = self.current_search_query.drain(start_index..current_cursor);
+        let _ = self.current_query.drain(start_index..current_cursor);
 
-        self.grapheme_cursor =
-            GraphemeCursor::new(start_index, self.current_search_query.len(), true);
+        self.grapheme_cursor = GraphemeCursor::new(start_index, self.current_query.len(), true);
 
         self.cursor_direction = CursorDirection::Left;
 
@@ -326,10 +320,10 @@ impl InputFieldState {
 
     /// Insert a single [`char`].
     pub(crate) fn insert_char(&mut self, ch: char) {
-        self.current_search_query.insert(self.cursor_index(), ch);
+        self.current_query.insert(self.cursor_index(), ch);
 
         self.grapheme_cursor =
-            GraphemeCursor::new(self.cursor_index(), self.current_search_query.len(), true);
+            GraphemeCursor::new(self.cursor_index(), self.current_query.len(), true);
 
         self.walk_forward();
         self.cursor_direction = CursorDirection::Right;
@@ -339,21 +333,16 @@ impl InputFieldState {
 
     /// Insert a [`String`].
     pub(crate) fn insert_string(&mut self, s: String) {
-        // Partially copy-pasted from the single-char variant; should probably clean up
-        // this process in the future. In particular, encapsulate this entire
-        // logic and add some tests to make it less potentially error-prone.
-
         let left_bound = self.cursor_index();
 
-        let curr_query = &mut self.current_search_query;
-        let (left, right) = curr_query.split_at(left_bound);
+        let current_query = &mut self.current_query;
+        let (left, right) = current_query.split_at(left_bound);
         let num_runes = UnicodeSegmentation::graphemes(s.as_str(), true).count();
 
-        *curr_query = concat_string!(left, s, right);
+        *current_query = concat_string!(left, s, right);
 
-        self.grapheme_cursor = GraphemeCursor::new(left_bound, curr_query.len(), true);
+        self.grapheme_cursor = GraphemeCursor::new(left_bound, current_query.len(), true);
 
-        // TODO: We could probably do something smarter here...
         for _ in 0..num_runes {
             self.walk_forward();
         }
@@ -361,6 +350,22 @@ impl InputFieldState {
         self.cursor_direction = CursorDirection::Right;
 
         self.update_sizes();
+    }
+
+    /// Returns an iterator over graphemes with the byte index + display-width range.
+    pub(crate) fn graphemes_with_ranges(
+        &self,
+    ) -> impl Iterator<Item = (usize, &str, &Range<usize>)> {
+        let query = self.current_query();
+        let mut iter = self.size_mappings.iter().peekable();
+
+        std::iter::from_fn(move || {
+            let (&start, lengths) = iter.next()?;
+            let end = iter.peek().map(|&(&next, _)| next).unwrap_or(query.len());
+            let grapheme = &query[start..end];
+
+            Some((start, grapheme, lengths))
+        })
     }
 }
 
@@ -710,8 +715,45 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Tests that the cursor moves correctly when moving left and right.
-    /// In particular, tests [`InputFieldState::move_left`] and [`InputFieldState::move_right`].
+    /// Test that [`InputFieldState::graphemes_with_ranges`] returns the correct graphemes along with their
+    /// byte indices and display width ranges.
+    #[test]
+    fn test_graphemes_with_ranges() {
+        let query = "Test你🇨🇦".to_string();
+        let query_len = query.len();
+
+        assert_eq!(query_len, 15); // 4 + 3 + 8
+
+        let mut state = InputFieldState::default();
+        state.insert_string(query);
+
+        let graphemes: Vec<(usize, &str, &Range<usize>)> = state.graphemes_with_ranges().collect();
+        assert_eq!(graphemes.len(), 6);
+
+        assert_eq!(graphemes[0], (0, "T", &(0..1)));
+        assert_eq!(graphemes[1], (1, "e", &(1..2)));
+        assert_eq!(graphemes[2], (2, "s", &(2..3)));
+        assert_eq!(graphemes[3], (3, "t", &(3..4)));
+        assert_eq!(
+            graphemes[4],
+            (4, "你", &(4..6)),
+            "你 is 3 bytes long, total grapheme is 2-wide"
+        );
+        assert_eq!(
+            graphemes[5],
+            (7, "🇨🇦", &(6..8)),
+            "🇨🇦 is 8 bytes long, total grapheme is 2-wide"
+        );
+
+        assert_eq!(
+            query_len - graphemes[5].0,
+            8,
+            "flag grapheme is 8 bytes long"
+        );
+    }
+
+    /// Tests that the cursor moves correctly when moving left and right, as well as things work correctly around
+    /// updating the display start index.
     #[test]
     fn search_cursor_moves() {
         let mut state = InputFieldState::default();
@@ -721,55 +763,72 @@ mod tests {
         // Moving right.
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 0);
-        assert_eq!(state.display_start_char_index, 0);
+        assert_eq!(state.display_start_index, 0);
 
         state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 1);
-        assert_eq!(state.display_start_char_index, 0);
+        assert_eq!(state.display_start_index, 0);
 
         state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 2);
-        assert_eq!(state.display_start_char_index, 0);
+        assert_eq!(state.display_start_index, 0);
 
         state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 3);
-        assert_eq!(state.display_start_char_index, 0);
+        assert_eq!(state.display_start_index, 0);
 
         state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 4);
-        assert_eq!(state.display_start_char_index, 2);
+        assert_eq!(state.display_start_index, 2);
 
         state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 7);
-        assert_eq!(state.display_start_char_index, 4);
+        assert_eq!(state.display_start_index, 4);
 
         state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 10);
-        assert_eq!(state.display_start_char_index, 7);
+        assert_eq!(state.display_start_index, 7);
 
         state.move_right();
         state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 12);
-        assert_eq!(state.display_start_char_index, 10);
+        assert_eq!(state.display_start_index, 10);
 
-        // Moving left.
+        // Move past the flag emoji (🇨🇦 = 8 bytes) to the end of string (byte 20).
+        state.move_right();
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 20);
+        assert_eq!(state.display_start_index, 11);
+
+        // Clamped at the end — no further movement.
+        state.move_right();
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 20);
+        assert_eq!(state.display_start_index, 11);
+
+        // Moving left — back over the flag emoji.
+        state.move_left();
+        state.get_start_position(4, false);
+        assert_eq!(state.grapheme_cursor.cur_cursor(), 12);
+        assert_eq!(state.display_start_index, 11);
+
         state.move_left();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 11);
-        assert_eq!(state.display_start_char_index, 10);
+        assert_eq!(state.display_start_index, 11);
 
         state.move_left();
         state.move_left();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 7);
-        assert_eq!(state.display_start_char_index, 7);
+        assert_eq!(state.display_start_index, 7);
 
         state.move_left();
         state.move_left();
@@ -777,11 +836,11 @@ mod tests {
         state.move_left();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 1);
-        assert_eq!(state.display_start_char_index, 1);
+        assert_eq!(state.display_start_index, 1);
 
         state.move_left();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 0);
-        assert_eq!(state.display_start_char_index, 0);
+        assert_eq!(state.display_start_index, 0);
     }
 }

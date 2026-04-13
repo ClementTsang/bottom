@@ -1082,19 +1082,16 @@ impl ProcWidgetState {
             .current_query();
 
         if current_query.is_empty() {
-            self.proc_search.search_state.is_blank_search = true;
             self.proc_search.search_state.is_invalid_search = false;
             self.proc_search.search_state.error_message = None;
         } else {
             match parse_query(current_query, &self.proc_search.query_options) {
                 Ok(parsed_query) => {
                     self.proc_search.search_state.query = Some(parsed_query);
-                    self.proc_search.search_state.is_blank_search = false;
                     self.proc_search.search_state.is_invalid_search = false;
                     self.proc_search.search_state.error_message = None;
                 }
                 Err(err) => {
-                    self.proc_search.search_state.is_blank_search = false;
                     self.proc_search.search_state.is_invalid_search = true;
                     self.proc_search.search_state.error_message = Some(err.to_string());
                 }

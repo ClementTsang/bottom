@@ -116,19 +116,10 @@ impl Painter {
 
             if is_on_widget {
                 let mut res = Vec::with_capacity(available_width);
-                let mut iter = search_state
-                    .input_field_state
-                    .size_mappings()
-                    .iter()
-                    .peekable();
-                while let Some((&index, lengths)) = iter.next() {
-                    let grapheme = {
-                        let start = index;
-                        let end = iter.peek().map(|&(&next, _)| next).unwrap_or(query.len());
 
-                        &query[start..end]
-                    };
-
+                for (index, grapheme, lengths) in
+                    search_state.input_field_state.graphemes_with_ranges()
+                {
                     if index < start_index {
                         continue;
                     } else if current_width > available_width {
