@@ -446,7 +446,7 @@ mod tests {
         let mut state = InputFieldState::default();
         state.insert_string("你好🇨🇦🦀".to_string());
         assert_eq!(state.current_query(), "你好🇨🇦🦀");
-        // '你'=3, '好'=3, '🦀'=4, '🇨🇦'=8, so 14 bytes
+        // '你'=3, '好'=3, '🦀'=4, '🇨🇦'=8, so 18 bytes
         assert_eq!(state.cursor_index(), 18);
     }
 
