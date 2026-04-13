@@ -15,10 +15,12 @@ use crate::{
 
 /// A collection of data. This is where we dump data into.
 ///
-/// TODO: Maybe reduce visibility of internal data, make it only accessible through DataStore?
+/// TODO: Maybe reduce visibility of internal data, make it only accessible
+/// through DataStore?
 #[derive(Debug, Clone)]
 pub struct StoredData {
-    pub last_update_time: Instant, // FIXME: (points_rework_v1) we could be able to remove this with some more refactoring.
+    pub last_update_time: Instant, /* FIXME: (points_rework_v1) we could be able to remove this
+                                    * with some more refactoring. */
     pub timeseries_data: TimeSeriesData,
     pub network_harvest: network::NetworkHarvest,
     pub ram_harvest: Option<MemData>,
@@ -32,7 +34,8 @@ pub struct StoredData {
     pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_data: ProcessData,
-    /// TODO: (points_rework_v1) Might be a better way to do this without having to store here?
+    /// TODO: (points_rework_v1) Might be a better way to do this without having
+    /// to store here?
     pub prev_io: Vec<(u64, u64)>,
     pub disk_harvest: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
@@ -78,7 +81,8 @@ impl StoredData {
     fn eat_data(&mut self, mut data: Box<Data>, settings: &AppConfigFields) {
         let harvested_time = data.collection_time;
 
-        // We must adjust all the network values to their selected type (defaults to bits).
+        // We must adjust all the network values to their selected type (defaults to
+        // bits).
         if matches!(settings.network_unit_type, DataUnit::Byte) {
             if let Some(network) = &mut data.network {
                 network.rx /= 8;
@@ -297,8 +301,9 @@ impl DataStore {
         matches!(self.frozen_state, FrozenState::Frozen(_))
     }
 
-    /// Return a reference to the currently available data. Note that if the data is
-    /// in a frozen state, it will return the snapshot of data from when it was frozen.
+    /// Return a reference to the currently available data. Note that if the
+    /// data is in a frozen state, it will return the snapshot of data from
+    /// when it was frozen.
     pub fn get_data(&self) -> &StoredData {
         match &self.frozen_state {
             FrozenState::NotFrozen => &self.main,

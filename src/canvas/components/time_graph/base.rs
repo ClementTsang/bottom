@@ -155,7 +155,8 @@ impl TimeGraph<'_> {
     /// - Expects `graph_data`, which represents *what* data to draw, and
     ///   various details like style and optional legends.
     pub fn draw(&self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: Vec<GraphData<'_>>) {
-        // TODO: (points_rework_v1) can we reduce allocations in the underlying graph by saving some sort of state?
+        // TODO: (points_rework_v1) can we reduce allocations in the underlying graph by
+        // saving some sort of state?
 
         let x_axis = self.generate_x_axis();
         let y_axis = self.generate_y_axis();

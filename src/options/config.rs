@@ -57,8 +57,9 @@ impl From<u64> for StringOrNum {
 #[cfg(test)]
 mod test {
 
-    // Test all valid configs in the integration test folder and ensure they are accepted.
-    // We need this separated as only test library code sets `serde(deny_unknown_fields)`.
+    // Test all valid configs in the integration test folder and ensure they are
+    // accepted. We need this separated as only test library code sets
+    // `serde(deny_unknown_fields)`.
     #[test]
     #[cfg(feature = "default")]
     fn test_integration_valid_configs() {
@@ -80,6 +81,6 @@ mod test {
         }
     }
 
-    // I didn't do an invalid config test as a lot of them _are_ valid Config when parsed,
-    // but fail other checks.
+    // I didn't do an invalid config test as a lot of them _are_ valid Config
+    // when parsed, but fail other checks.
 }

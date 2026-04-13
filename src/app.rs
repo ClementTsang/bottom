@@ -138,8 +138,9 @@ impl App {
     pub fn update_data(&mut self) {
         let data_source = self.data_store.get_data();
 
-        // FIXME: (points_rework_v1) maybe separate PR but would it make more sense to store references of data?
-        // Would it also make more sense to move the "data set" step to the draw step, and make it only set if force
+        // FIXME: (points_rework_v1) maybe separate PR but would it make more sense to
+        // store references of data? Would it also make more sense to move the
+        // "data set" step to the draw step, and make it only set if force
         // update is set here?
         for proc in self.states.proc_state.widget_states.values_mut() {
             if proc.force_update_data {
@@ -1228,7 +1229,8 @@ impl App {
         // 1. Send a movement signal in `direction`.
         // 2. Check if this new widget we've landed on is hidden.  If not, halt.
         // 3. If it hidden, loop and either send:
-        //    - A signal equal to the current direction, if it is opposite of the reflection.
+        //    - A signal equal to the current direction, if it is opposite of the
+        //      reflection.
         //    - Reflection direction.
 
         if !self.ignore_normal_keybinds() && !self.is_expanded {

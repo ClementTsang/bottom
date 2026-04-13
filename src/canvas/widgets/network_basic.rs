@@ -56,7 +56,8 @@ impl Painter {
                 avg_tx_packet_size,
             } = calculate_packet_info(network_data, use_binary_prefix);
 
-            // TODO: Stylize packet stuff later with something else? Or maybe make it so total is now (by default) just bolded RX/TX? I doubt anyone cares...
+            // TODO: Stylize packet stuff later with something else? Or maybe make it so
+            // total is now (by default) just bolded RX/TX? I doubt anyone cares...
             let rx_packet_rate_label = format!("RX Pkt: {}pkt/s", rx_packet_rate);
             let tx_packet_rate_label = format!("TX Pkt: {}pkt/s", tx_packet_rate);
             let avg_rx_packet_size_label = format!(

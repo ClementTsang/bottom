@@ -144,8 +144,9 @@ impl Painter {
                 .rev()
                 .collect()
         } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position - 1) {
-            // We generally subtract one from current scroll position because of the all entry.
-            // TODO: Do this a bit better (e.g. we can just do if let Some(_) = cpu_points.get())
+            // We generally subtract one from current scroll position because of the all
+            // entry. TODO: Do this a bit better (e.g. we can just do if let
+            // Some(_) = cpu_points.get())
 
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.styles.avg_cpu_colour
@@ -241,7 +242,7 @@ impl Painter {
                 loc: draw_loc,
                 force_redraw: app_state.is_force_redraw,
                 recalculate_column_widths,
-                selection_state: SelectionState::new(app_state.is_expanded, is_on_widget), // TODO: Bug with this, shouldn't be selected on expand!
+                selection_state: SelectionState::new(app_state.is_expanded, is_on_widget), /* TODO: Bug with this, shouldn't be selected on expand! */
             };
 
             cpu_widget_state.table.draw(

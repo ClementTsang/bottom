@@ -1,5 +1,5 @@
-//! Generalized input logic, to make it easier to reuse logic like unicode handling
-//! and cursor movement.
+//! Generalized input logic, to make it easier to reuse logic like unicode
+//! handling and cursor movement.
 
 use std::ops::Range;
 
@@ -70,8 +70,9 @@ impl InputFieldState {
 
     /// Sets the starting grapheme index to draw from.
     ///
-    /// TODO: This is kinda weird, we might want to decouple this in some way such that this
-    /// is clear this only matters for drawing... but it also changes states...
+    /// TODO: This is kinda weird, we might want to decouple this in some way
+    /// such that this is clear this only matters for drawing... but it also
+    /// changes states...
     pub(crate) fn get_start_position(&mut self, available_width: usize, is_force_redraw: bool) {
         // Remember - the number of columns != the number of grapheme slots/sizes, you
         // cannot use index to determine this reliably!
@@ -195,10 +196,12 @@ impl InputFieldState {
         }
     }
 
-    /// Update the size mappings (mapping of index to the display width range) after the query has been updated in any
-    /// way. This should be called whenever the query is updated.
+    /// Update the size mappings (mapping of index to the display width range)
+    /// after the query has been updated in any way. This should be called
+    /// whenever the query is updated.
     ///
-    /// TODO: This might be a bit expensive, maybe we could update this a bit more iteratively?
+    /// TODO: This might be a bit expensive, maybe we could update this a bit
+    /// more iteratively?
     fn update_sizes(&mut self) {
         self.size_mappings.clear();
         let mut curr_offset = 0;
@@ -214,7 +217,8 @@ impl InputFieldState {
         }
     }
 
-    /// Delete whatever the cursor is currently highlighting, if anything. This is analogous to pressing `Delete`.
+    /// Delete whatever the cursor is currently highlighting, if anything. This
+    /// is analogous to pressing `Delete`.
     pub(crate) fn delete_at_cursor(&mut self) {
         let current_cursor = self.cursor_index();
         if current_cursor < self.current_query.len() {
@@ -230,7 +234,8 @@ impl InputFieldState {
         }
     }
 
-    /// Delete what is _behind_ the cursor. This is analogous to pressing `Backspace`.
+    /// Delete what is _behind_ the cursor. This is analogous to pressing
+    /// `Backspace`.
     pub(crate) fn delete_behind_cursor(&mut self) {
         let current_cursor = self.cursor_index();
 
@@ -350,7 +355,8 @@ impl InputFieldState {
         self.update_sizes();
     }
 
-    /// Returns an iterator over graphemes with the byte index + display-width range.
+    /// Returns an iterator over graphemes with the byte index + display-width
+    /// range.
     pub(crate) fn graphemes_with_ranges(
         &self,
     ) -> impl Iterator<Item = (usize, &str, &Range<usize>)> {
@@ -371,7 +377,8 @@ impl InputFieldState {
 mod tests {
     use super::*;
 
-    /// Tests that inserting ASCII chars appends them to the query and advances the cursor by 1 byte each.
+    /// Tests that inserting ASCII chars appends them to the query and advances
+    /// the cursor by 1 byte each.
     #[test]
     fn insert_char_ascii() {
         let mut state = InputFieldState::default();
@@ -385,7 +392,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 2);
     }
 
-    /// Tests that inserting multi-byte Unicode chars (e.g. CJK) advances the cursor by the correct byte width.
+    /// Tests that inserting multi-byte Unicode chars (e.g. CJK) advances the
+    /// cursor by the correct byte width.
     #[test]
     fn insert_char_unicode() {
         let mut state = InputFieldState::default();
@@ -399,7 +407,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 6);
     }
 
-    /// Tests that inserting a 4-byte emoji advances the cursor to byte offset 4.
+    /// Tests that inserting a 4-byte emoji advances the cursor to byte offset
+    /// 4.
     #[test]
     fn insert_char_emoji() {
         let mut state = InputFieldState::default();
@@ -409,8 +418,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 4);
     }
 
-    /// Tests that inserting a char at a mid-string cursor position shifts the rest of the string
-    /// right and places the cursor immediately after the newly inserted char.
+    /// Tests that inserting a char at a mid-string cursor position shifts the
+    /// rest of the string right and places the cursor immediately after the
+    /// newly inserted char.
     #[test]
     fn insert_char_at_middle() {
         let mut state = InputFieldState::default();
@@ -427,8 +437,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 3);
     }
 
-    /// Tests that inserting an ASCII string at once places the entire string in the query
-    /// and lands the cursor at the end.
+    /// Tests that inserting an ASCII string at once places the entire string in
+    /// the query and lands the cursor at the end.
     #[test]
     fn insert_string_ascii() {
         let mut state = InputFieldState::default();
@@ -437,8 +447,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 5);
     }
 
-    /// Tests that inserting a mixed multi-byte + emoji string reflects the correct total byte length
-    /// in the cursor position.
+    /// Tests that inserting a mixed multi-byte + emoji string reflects the
+    /// correct total byte length in the cursor position.
     #[test]
     fn insert_string_unicode() {
         let mut state = InputFieldState::default();
@@ -448,8 +458,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 18);
     }
 
-    /// Tests that inserting a string at position 0 prepends it, leaving the cursor after the
-    /// inserted portion and the rest of the original string intact.
+    /// Tests that inserting a string at position 0 prepends it, leaving the
+    /// cursor after the inserted portion and the rest of the original
+    /// string intact.
     #[test]
     fn insert_string_at_middle() {
         let mut state = InputFieldState::default();
@@ -460,8 +471,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 4);
     }
 
-    /// Tests that [`InputFieldState::delete_at_cursor`] removes the grapheme under the cursor
-    /// without moving the cursor position.
+    /// Tests that [`InputFieldState::delete_at_cursor`] removes the grapheme
+    /// under the cursor without moving the cursor position.
     #[test]
     fn delete_at_cursor_basic() {
         let mut state = InputFieldState::default();
@@ -477,8 +488,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Tests that [`InputFieldState::delete_at_cursor`] is a no-op when the cursor is already
-    /// at the end of the string.
+    /// Tests that [`InputFieldState::delete_at_cursor`] is a no-op when the
+    /// cursor is already at the end of the string.
     #[test]
     fn delete_at_cursor_at_end_is_noop() {
         let mut state = InputFieldState::default();
@@ -490,8 +501,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 2);
     }
 
-    /// Tests that [`InputFieldState::delete_at_cursor`] correctly removes a full multi-byte
-    /// grapheme cluster in one operation.
+    /// Tests that [`InputFieldState::delete_at_cursor`] correctly removes a
+    /// full multi-byte grapheme cluster in one operation.
     #[test]
     fn delete_at_cursor_unicode() {
         let mut state = InputFieldState::default();
@@ -503,8 +514,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Tests that [`InputFieldState::delete_behind_cursor`] removes the grapheme immediately
-    /// before the cursor and moves the cursor back accordingly.
+    /// Tests that [`InputFieldState::delete_behind_cursor`] removes the
+    /// grapheme immediately before the cursor and moves the cursor back
+    /// accordingly.
     #[test]
     fn delete_behind_cursor_basic() {
         let mut state = InputFieldState::default();
@@ -519,8 +531,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 3);
     }
 
-    /// Tests that [`InputFieldState::delete_behind_cursor`] is a no-op when the cursor is at
-    /// position 0.
+    /// Tests that [`InputFieldState::delete_behind_cursor`] is a no-op when the
+    /// cursor is at position 0.
     #[test]
     fn delete_behind_cursor_at_start_is_noop() {
         let mut state = InputFieldState::default();
@@ -532,8 +544,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Tests that [`InputFieldState::delete_behind_cursor`] correctly removes multi-byte grapheme
-    /// clusters one at a time, adjusting the byte cursor each time.
+    /// Tests that [`InputFieldState::delete_behind_cursor`] correctly removes
+    /// multi-byte grapheme clusters one at a time, adjusting the byte
+    /// cursor each time.
     #[test]
     fn delete_behind_cursor_unicode() {
         let mut state = InputFieldState::default();
@@ -548,8 +561,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Tests that [`InputFieldState::move_left`] and [`InputFieldState::move_right`] step one
-    /// byte per ASCII grapheme and are clamped at both ends of the string.
+    /// Tests that [`InputFieldState::move_left`] and
+    /// [`InputFieldState::move_right`] step one byte per ASCII grapheme and
+    /// are clamped at both ends of the string.
     #[test]
     fn move_left_right_ascii() {
         let mut state = InputFieldState::default();
@@ -579,8 +593,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 3);
     }
 
-    /// Tests that [`InputFieldState::move_left`] and [`InputFieldState::move_right`] jump the
-    /// full byte width of each grapheme, including multi-byte CJK characters.
+    /// Tests that [`InputFieldState::move_left`] and
+    /// [`InputFieldState::move_right`] jump the full byte width of each
+    /// grapheme, including multi-byte CJK characters.
     #[test]
     fn move_left_right_unicode() {
         let mut state = InputFieldState::default();
@@ -597,8 +612,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Tests that [`InputFieldState::skip_to_beginning`] moves the cursor to byte 0 and
-    /// [`InputFieldState::skip_to_end`] moves it past the last byte.
+    /// Tests that [`InputFieldState::skip_to_beginning`] moves the cursor to
+    /// byte 0 and [`InputFieldState::skip_to_end`] moves it past the last
+    /// byte.
     #[test]
     fn skip_to_beginning_and_end() {
         let mut state = InputFieldState::default();
@@ -611,8 +627,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 5);
     }
 
-    /// Tests that [`InputFieldState::skip_to_beginning`] sets the cursor direction to
-    /// [`CursorDirection::Left`] so that scrolling logic behaves correctly.
+    /// Tests that [`InputFieldState::skip_to_beginning`] sets the cursor
+    /// direction to [`CursorDirection::Left`] so that scrolling logic
+    /// behaves correctly.
     #[test]
     fn skip_to_beginning_sets_direction_left() {
         let mut state = InputFieldState::default();
@@ -632,8 +649,8 @@ mod tests {
         assert!(matches!(state.cursor_direction, CursorDirection::Right));
     }
 
-    /// Tests that [`InputFieldState::delete_previous_word`] removes a single word with no
-    /// preceding whitespace, leaving an empty query.
+    /// Tests that [`InputFieldState::delete_previous_word`] removes a single
+    /// word with no preceding whitespace, leaving an empty query.
     #[test]
     fn delete_previous_word_single_word() {
         let mut state = InputFieldState::default();
@@ -644,8 +661,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Tests that [`InputFieldState::delete_previous_word`] removes exactly one word per call
-    /// when the query contains multiple words separated by a space.
+    /// Tests that [`InputFieldState::delete_previous_word`] removes exactly one
+    /// word per call when the query contains multiple words separated by a
+    /// space.
     #[test]
     fn delete_previous_word_two_words() {
         let mut state = InputFieldState::default();
@@ -660,8 +678,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Tests that [`InputFieldState::delete_previous_word`] skips trailing whitespace before
-    /// deleting the preceding non-whitespace word.
+    /// Tests that [`InputFieldState::delete_previous_word`] skips trailing
+    /// whitespace before deleting the preceding non-whitespace word.
     #[test]
     fn delete_previous_word_trailing_spaces() {
         let mut state = InputFieldState::default();
@@ -673,8 +691,9 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Tests that [`InputFieldState::delete_previous_word`] only removes the portion of a word
-    /// that lies behind the cursor when the cursor is mid-word.
+    /// Tests that [`InputFieldState::delete_previous_word`] only removes the
+    /// portion of a word that lies behind the cursor when the cursor is
+    /// mid-word.
     #[test]
     fn delete_previous_word_from_middle() {
         let mut state = InputFieldState::default();
@@ -691,18 +710,20 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Tests that [`InputFieldState::delete_previous_word`] correctly handles multibyte
-    /// characters. The char/byte index mismatch bug would cause `.skip(query.len() -
-    /// current_cursor)` to skip the wrong number of chars and `query.len() - itx` to land
-    /// on a non-char-boundary, either producing the wrong result or panicking.
+    /// Tests that [`InputFieldState::delete_previous_word`] correctly handles
+    /// multibyte characters. The char/byte index mismatch bug would cause
+    /// `.skip(query.len() - current_cursor)` to skip the wrong number of
+    /// chars and `query.len() - itx` to land on a non-char-boundary, either
+    /// producing the wrong result or panicking.
     #[test]
     fn delete_previous_word_unicode() {
-        // "你好 world" — '你'=3 bytes, '好'=3 bytes, ' '=1, "world"=5, so 12 bytes total
+        // "你好 world" — '你'=3 bytes, '好'=3 bytes, ' '=1, "world"=5, so 12 bytes
+        // total
         let mut state = InputFieldState::default();
         state.insert_string("你好 world".to_string());
 
-        // Cursor is at the end (byte 12). Deleting the previous word should remove "world",
-        // leaving "你好 " (7 bytes).
+        // Cursor is at the end (byte 12). Deleting the previous word should remove
+        // "world", leaving "你好 " (7 bytes).
         state.delete_previous_word();
         assert_eq!(state.current_query(), "你好 ");
         assert_eq!(state.cursor_index(), 7);
@@ -713,8 +734,8 @@ mod tests {
         assert_eq!(state.cursor_index(), 0);
     }
 
-    /// Test that [`InputFieldState::graphemes_with_ranges`] returns the correct graphemes along with their
-    /// byte indices and display width ranges.
+    /// Test that [`InputFieldState::graphemes_with_ranges`] returns the correct
+    /// graphemes along with their byte indices and display width ranges.
     #[test]
     fn test_graphemes_with_ranges() {
         let query = "Test你🇨🇦".to_string();
@@ -750,8 +771,9 @@ mod tests {
         );
     }
 
-    /// Tests that the cursor moves correctly when moving left and right, as well as things work correctly around
-    /// updating the display start index.
+    /// Tests that the cursor moves correctly when moving left and right, as
+    /// well as things work correctly around updating the display start
+    /// index.
     #[test]
     fn search_cursor_moves() {
         let mut state = InputFieldState::default();

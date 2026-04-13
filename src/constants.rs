@@ -610,12 +610,14 @@ mod test {
 
         use crate::options::Config;
 
-        // Trim off the starting comment if it's a "#" directly following an alphabetical character or '['.
+        // Trim off the starting comment if it's a "#" directly following an
+        // alphabetical character or '['.
         let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
             .unwrap()
             .replace_all(CONFIG_TEXT, "$1");
 
-        // Then, trim off anything that has more than 2 spaces + alphabetical character or '[' following a "#".
+        // Then, trim off anything that has more than 2 spaces + alphabetical character
+        // or '[' following a "#".
         let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z\[])")
             .unwrap()
             .replace_all(&default_config, "$2");

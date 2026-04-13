@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use super::ColorStr;
-// TODO: Maybe I should swap the alias and the field name since internally I use u.
+// TODO: Maybe I should swap the alias and the field name since internally I use
+// u.
 
 /// Styling specific to the memory widget.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -12,7 +13,8 @@ pub(crate) struct MemoryStyle {
     #[serde(alias = "ram_colour")]
     pub(crate) ram_color: Option<ColorStr>,
 
-    /// The colour of the cache label and graph line. Does not do anything on Windows.
+    /// The colour of the cache label and graph line. Does not do anything on
+    /// Windows.
     #[cfg_attr(target_os = "windows", allow(dead_code))]
     #[serde(alias = "cache_colour")]
     pub(crate) cache_color: Option<ColorStr>,

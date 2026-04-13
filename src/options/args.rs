@@ -670,7 +670,8 @@ pub struct OtherArgs {
     version: (),
 }
 
-/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the program.
+/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the
+/// program.
 pub fn get_args() -> BottomArgs {
     BottomArgs::parse()
 }

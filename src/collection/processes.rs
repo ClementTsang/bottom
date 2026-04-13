@@ -89,7 +89,8 @@ pub struct ProcessHarvest {
 
     /// Memory usage as a percentage.
     ///
-    /// TODO: Maybe calculate this on usage? Store the total mem along with the vector of results.
+    /// TODO: Maybe calculate this on usage? Store the total mem along with the
+    /// vector of results.
     pub mem_usage_percent: f32,
 
     /// Memory usage as bytes.
@@ -136,7 +137,8 @@ pub struct ProcessHarvest {
 
     /// Gpu memory usage as percentage.
     ///
-    /// TODO: Maybe calculate this on usage? Store the total GPU mem along with the vector of results.
+    /// TODO: Maybe calculate this on usage? Store the total GPU mem along with
+    /// the vector of results.
     #[cfg(feature = "gpu")]
     pub gpu_mem_percent: f32,
 

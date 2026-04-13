@@ -235,10 +235,12 @@ impl DataCollector {
         }
     }
 
-    /// Update the check for routine tasks like updating lists of batteries, cleanup, etc.
-    /// This is useful for things that we don't want to update all the time.
+    /// Update the check for routine tasks like updating lists of batteries,
+    /// cleanup, etc. This is useful for things that we don't want to update
+    /// all the time.
     ///
-    /// Note this should be set back to false if `self.last_list_collection_time` is updated.
+    /// Note this should be set back to false if
+    /// `self.last_list_collection_time` is updated.
     #[inline]
     fn run_less_routine_tasks(&mut self) {
         if self
@@ -542,9 +544,11 @@ impl DataCollector {
 
     /// Update battery information.
     ///
-    /// If the battery manager is not initialized, it will attempt to initialize it if at least one battery is found.
+    /// If the battery manager is not initialized, it will attempt to initialize
+    /// it if at least one battery is found.
     ///
-    /// This function also refreshes the list of batteries if `self.should_run_less_routine_tasks` is true.
+    /// This function also refreshes the list of batteries if
+    /// `self.should_run_less_routine_tasks` is true.
     #[inline]
     #[cfg(feature = "battery")]
     fn update_batteries(&mut self) {

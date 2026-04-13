@@ -139,8 +139,9 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
         println!("thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}")
     }
 
-    // TODO: Might be cleaner in the future to use a cancellation token, but that causes some fun issues with
-    // lifetimes; for now if it panics then shut down the main program entirely ASAP.
+    // TODO: Might be cleaner in the future to use a cancellation token, but that
+    // causes some fun issues with lifetimes; for now if it panics then shut
+    // down the main program entirely ASAP.
     std::process::exit(1);
 }
 
@@ -247,7 +248,8 @@ fn create_collection_thread(
         data_collector.update_data();
         data_collector.data = Data::default();
 
-        // Tiny sleep I guess? To go between the first update above and the first update in the loop.
+        // Tiny sleep I guess? To go between the first update above and the first update
+        // in the loop.
         std::thread::sleep(Duration::from_millis(5));
 
         loop {

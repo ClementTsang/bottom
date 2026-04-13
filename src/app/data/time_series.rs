@@ -18,15 +18,18 @@ pub type Values = ChunkedData<f64>;
 /// Represents time series data in a chunked, deduped manner.
 ///
 /// Properties:
-/// - Time in this manner is represented in a reverse-offset fashion from the current time.
+/// - Time in this manner is represented in a reverse-offset fashion from the
+///   current time.
 /// - All data is stored in SoA fashion.
-/// - Values are stored in a chunked format, which facilitates gaps in data collection if needed.
+/// - Values are stored in a chunked format, which facilitates gaps in data
+///   collection if needed.
 /// - Additional metadata is stored to make data pruning over time easy.
 #[derive(Clone, Debug, Default)]
 pub struct TimeSeriesData {
     /// Time values.
     ///
-    /// TODO: (points_rework_v1) Either store millisecond-level only or offsets only.
+    /// TODO: (points_rework_v1) Either store millisecond-level only or offsets
+    /// only.
     pub time: Vec<Instant>,
 
     /// Network RX data.
@@ -179,12 +182,13 @@ impl TimeSeriesData {
                 .time
                 .partition_point(|then| now.duration_since(*then) > max_age);
 
-            // Partition point returns the first index that does not match the predicate, so minus one.
+            // Partition point returns the first index that does not match the predicate, so
+            // minus one.
             if partition_point > 0 {
                 partition_point - 1
             } else {
-                // If the partition point was 0, then it means all values are too new to be pruned.
-                // crate::info!("Skipping prune.");
+                // If the partition point was 0, then it means all values are too new to be
+                // pruned. crate::info!("Skipping prune.");
                 return;
             }
         };
