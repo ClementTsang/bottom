@@ -212,8 +212,6 @@ impl InputFieldState {
 
             curr_offset = end;
         }
-
-        self.size_mappings.shrink_to_fit();
     }
 
     /// Delete whatever the cursor is currently highlighting, if anything. This is analogous to pressing `Delete`.
