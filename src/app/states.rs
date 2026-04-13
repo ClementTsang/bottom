@@ -46,6 +46,7 @@ impl Default for AppHelpDialogState {
 }
 
 /// AppSearchState deals with generic searching (I might do this in the future).
+#[derive(Default)]
 pub struct AppSearchState {
     pub is_enabled: bool,
     pub is_invalid_search: bool,
@@ -55,18 +56,6 @@ pub struct AppSearchState {
     /// The query. TODO: Merge this as one enum.
     pub query: Option<ProcessQuery>,
     pub error_message: Option<String>,
-}
-
-impl Default for AppSearchState {
-    fn default() -> Self {
-        AppSearchState {
-            is_enabled: false,
-            is_invalid_search: false,
-            input_field_state: InputFieldState::default(),
-            query: None,
-            error_message: None,
-        }
-    }
 }
 
 impl AppSearchState {
