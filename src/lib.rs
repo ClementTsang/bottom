@@ -13,6 +13,7 @@ mod utils {
     pub(crate) mod conversion;
     pub(crate) mod data_units;
     pub(crate) mod general;
+    pub(crate) mod input;
     pub(crate) mod int_hash;
     pub(crate) mod logging;
     pub(crate) mod process_killer;

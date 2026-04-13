@@ -7,12 +7,19 @@ use std::{
     marker::PhantomData,
 };
 
+use indexmap::IndexMap;
+
+type IntHasherState<K> = BuildHasherDefault<IntHasher<K>>;
+
 /// A hash map that directly maps from an integer key to a value.
-pub type IntHashMap<K, V> = std::collections::HashMap<K, V, BuildHasherDefault<IntHasher<K>>>;
+pub type IntHashMap<K, V> = std::collections::HashMap<K, V, IntHasherState<K>>;
 
 /// A hash set that directly uses integer keys.
 #[allow(dead_code)]
-pub type IntHashSet<K> = std::collections::HashSet<K, BuildHasherDefault<IntHasher<K>>>;
+pub type IntHashSet<K> = std::collections::HashSet<K, IntHasherState<K>>;
+
+/// An [`IndexMap`] wrapper such that it tracks insertion order, but uses integer keys.
+pub type IntIndexMap<K, V> = IndexMap<K, V, IntHasherState<K>>;
 
 pub trait SupportedInt {}
 
@@ -175,5 +182,23 @@ mod tests {
         assert!(set.contains(&1));
         assert!(set.contains(&2));
         assert!(!set.contains(&3));
+    }
+
+    #[test]
+    fn test_int_index_map() {
+        let mut map = IntIndexMap::<u32, &str>::default();
+        map.insert(1, "one");
+        map.insert(3, "three");
+        map.insert(2, "two");
+        assert_eq!(map.get(&1), Some(&"one"));
+        assert_eq!(map.get(&2), Some(&"two"));
+        assert_eq!(map.get(&3), Some(&"three"));
+        assert_eq!(map.get(&4), None);
+
+        assert_eq!(map.keys().cloned().collect::<Vec<_>>(), vec![1, 3, 2]);
+        assert_eq!(
+            map.values().cloned().collect::<Vec<_>>(),
+            vec!["one", "three", "two"]
+        );
     }
 }

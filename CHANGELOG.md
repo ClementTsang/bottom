@@ -22,6 +22,10 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ## [0.12.4]/[0.13.0] - Unreleased
 
+### Bug Fixes
+
+- [#2035](https://github.com/ClementTsang/bottom/pull/2035): Fix panic when deleting unicode words in search.
+
 ### Features
 
 - [#1938](https://github.com/ClementTsang/bottom/pull/1938), [#1980](https://github.com/ClementTsang/bottom/pull/1980): Report average packet size and packet rate.

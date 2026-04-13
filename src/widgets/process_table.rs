@@ -32,6 +32,7 @@ use crate::{
 /// state.
 #[derive(Default)]
 pub struct ProcessSearchState {
+    // TODO: Flatten AppSearchState as it's been generalized further.
     pub search_state: AppSearchState,
     pub query_options: QueryOptions,
 }
@@ -1066,44 +1067,31 @@ impl ProcWidgetState {
             .collect::<Vec<_>>()
     }
 
-    pub fn cursor_char_index(&self) -> usize {
-        self.proc_search.search_state.grapheme_cursor.cur_cursor()
-    }
-
     pub fn is_search_enabled(&self) -> bool {
         self.proc_search.search_state.is_enabled
-    }
-
-    pub fn current_search_query(&self) -> &str {
-        &self.proc_search.search_state.current_search_query
     }
 
     /// Update the current search query.
     ///
     /// TODO: Maybe debounce this.
     pub fn update_query(&mut self) {
-        if self
+        let current_query = self
             .proc_search
             .search_state
-            .current_search_query
-            .is_empty()
-        {
-            self.proc_search.search_state.is_blank_search = true;
+            .input_field_state
+            .current_query();
+
+        if current_query.is_empty() {
             self.proc_search.search_state.is_invalid_search = false;
             self.proc_search.search_state.error_message = None;
         } else {
-            match parse_query(
-                &self.proc_search.search_state.current_search_query,
-                &self.proc_search.query_options,
-            ) {
+            match parse_query(current_query, &self.proc_search.query_options) {
                 Ok(parsed_query) => {
                     self.proc_search.search_state.query = Some(parsed_query);
-                    self.proc_search.search_state.is_blank_search = false;
                     self.proc_search.search_state.is_invalid_search = false;
                     self.proc_search.search_state.error_message = None;
                 }
                 Err(err) => {
-                    self.proc_search.search_state.is_blank_search = false;
                     self.proc_search.search_state.is_invalid_search = true;
                     self.proc_search.search_state.error_message = Some(err.to_string());
                 }
@@ -1112,23 +1100,12 @@ impl ProcWidgetState {
         self.table.state.display_start_index = 0;
         self.table.state.current_index = 0;
 
-        // Update the internal sizes too.
-        self.proc_search.search_state.update_sizes();
-
         self.force_data_update();
     }
 
     pub fn clear_search(&mut self) {
         self.proc_search.search_state.reset();
         self.force_data_update();
-    }
-
-    pub fn search_walk_forward(&mut self) {
-        self.proc_search.search_state.walk_forward();
-    }
-
-    pub fn search_walk_back(&mut self) {
-        self.proc_search.search_state.walk_backward();
     }
 
     /// Sets the [`ProcWidgetState`]'s current sort index to whatever was in the
