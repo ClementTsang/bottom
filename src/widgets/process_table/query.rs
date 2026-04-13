@@ -1,8 +1,9 @@
 //! How we query processes.
 //!
-//! Yes, this is a hand-rolled parser. I originally wrote this back in uni where writing
-//! a parser was basically a thing I did every year, and parsing crate options were not
-//! as good as they are now. This will be rewritten as time goes on, though.
+//! Yes, this is a hand-rolled parser. I originally wrote this back in uni where
+//! writing a parser was basically a thing I did every year, and parsing crate
+//! options were not as good as they are now. This will be rewritten as time
+//! goes on, though.
 
 mod and;
 mod attribute;
@@ -24,8 +25,8 @@ use crate::{collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case};
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
 const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];
 
-/// A node type that can take a query and read it, advancing the current read state
-/// and returning an instance of the node.
+/// A node type that can take a query and read it, advancing the current read
+/// state and returning an instance of the node.
 trait QueryProcessor {
     fn process(query: &mut VecDeque<String>, regex_options: &QueryOptions) -> QueryResult<Self>
     where
@@ -34,7 +35,8 @@ trait QueryProcessor {
 
 /// Process a new regex given a `base` string and some settings.
 ///
-/// TODO: Push this into a struct so I don't have to throw the options around so much.
+/// TODO: Push this into a struct so I don't have to throw the options around so
+/// much.
 fn new_regex(base: &str, regex_options: &QueryOptions) -> QueryResult<Regex> {
     let QueryOptions {
         whole_word: is_searching_whole_word,
@@ -360,8 +362,8 @@ mod tests {
         assert!(query.check(&all, false));
     }
 
-    /// Ensure that quoted keywords are treated as strings. In this case, rather than `"a" OR "b"`, it should be treated
-    /// as the string `"a or b"`.
+    /// Ensure that quoted keywords are treated as strings. In this case, rather
+    /// than `"a" OR "b"`, it should be treated as the string `"a or b"`.
     #[test]
     fn quoted_query() {
         let query = parse_query_no_options("a \"or\" b").unwrap();
@@ -381,8 +383,9 @@ mod tests {
         assert!(query.check(&valid_3, false));
     }
 
-    /// Ensure that multi-word quoted keywords are treated as strings. In this case, rather than `"a" OR "b"`, it should be treated
-    /// as the string `"a or b"`.
+    /// Ensure that multi-word quoted keywords are treated as strings. In this
+    /// case, rather than `"a" OR "b"`, it should be treated as the string
+    /// `"a or b"`.
     #[test]
     fn quoted_multi_word_query() {
         let query = parse_query_no_options("\"a or b\"").unwrap();
@@ -582,8 +585,9 @@ mod tests {
         parse_query_no_options("asdf\"").unwrap_err();
     }
 
-    /// Test a fix for a bug with closing quotations. The problem seems to arise from quotes being used as an argument
-    /// to a prefix... but this should probably be valid.
+    /// Test a fix for a bug with closing quotations. The problem seems to arise
+    /// from quotes being used as an argument to a prefix... but this should
+    /// probably be valid.
     #[test]
     fn parse_nested_closing_quotes() {
         parse_query_no_options("state = \"test\"").unwrap();

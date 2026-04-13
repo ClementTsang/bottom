@@ -1,4 +1,5 @@
-//! General build script used by bottom to generate completion files and set binary version.
+//! General build script used by bottom to generate completion files and set
+//! binary version.
 
 #![expect(clippy::unwrap_used)]
 

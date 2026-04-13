@@ -51,11 +51,11 @@ fn process_prefix_units(query: &mut VecDeque<String>, value: &mut f64) {
     }
 }
 
-/// Either contains a further `Or` recursively, or an attribute that can be queried, possibly as
-/// part of a larger query.
+/// Either contains a further `Or` recursively, or an attribute that can be
+/// queried, possibly as part of a larger query.
 ///
-/// In theory, this can be made generic to work on all table types, though for now, it's
-/// hardcoded for processes.
+/// In theory, this can be made generic to work on all table types, though for
+/// now, it's hardcoded for processes.
 #[derive(Debug)]
 pub(super) enum Prefix {
     Or(Box<Or>),
@@ -84,8 +84,8 @@ impl Prefix {
             } else {
                 let mut intern_string = vec![queue_top];
 
-                // TODO: I think this should consume the quote...? Might need to check the other spot
-                // we process quotes.
+                // TODO: I think this should consume the quote...? Might need to check the other
+                // spot we process quotes.
                 while let Some(next_str) = query.front() {
                     if next_str == "\"" {
                         break;
@@ -217,7 +217,8 @@ impl QueryProcessor for Prefix {
                                     let final_value = if string_value == "\"" {
                                         let mut intern_string = vec![];
 
-                                        // Keep parsing until we either hit another quotation or we error.
+                                        // Keep parsing until we either hit another quotation or we
+                                        // error.
                                         while let Some(next_string) = query.pop_front() {
                                             if next_string == "\"" {
                                                 break;
@@ -371,7 +372,8 @@ impl QueryProcessor for Prefix {
             }
         }
 
-        // TODO: Give more information here (e.g. closest query?), though this is moreso meant as a fallback.
+        // TODO: Give more information here (e.g. closest query?), though this is moreso
+        // meant as a fallback.
         Err(QueryError::new("Invalid query"))
     }
 }

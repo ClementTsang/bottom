@@ -368,7 +368,9 @@ impl ProcWidgetState {
                         State,
                         Time,
                         Priority,
-                        // Maybe add nice back as a default when I can figure out how to do the default configs better for Windows? As currently otherwise there's a mismatch.
+                        // Maybe add nice back as a default when I can figure out how to do the
+                        // default configs better for Windows? As currently otherwise there's a
+                        // mismatch.
                     ];
 
                     default_columns.into_iter().map(make_column).collect()
@@ -691,7 +693,8 @@ impl ProcWidgetState {
                     has_children = !children_pids.is_empty();
                 }
 
-                // This is so that if an entry is "collapsed" but there are no children, avoid drawing the "+".
+                // This is so that if an entry is "collapsed" but there are no children, avoid
+                // drawing the "+".
                 let prefix = if has_children {
                     if prefixes.is_empty() {
                         "+ ".to_string()
@@ -1630,7 +1633,8 @@ mod test {
         assert_eq!(get_columns(&state.table), original_columns);
     }
 
-    /// Sanity test to ensure tree collapse logic works, both when enabled-by-default or disabled-by-default.
+    /// Sanity test to ensure tree collapse logic works, both when
+    /// enabled-by-default or disabled-by-default.
     #[test]
     fn test_tree_collapse() {
         {

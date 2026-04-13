@@ -21,7 +21,8 @@ pub struct GpusData {
 /// Wrapper around Nvml::init
 ///
 /// On Linux, if `Nvml::init()` fails, this function attempts to explicitly load
-/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls `Nvml::init`.
+/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls
+/// `Nvml::init`.
 ///
 /// This is a workaround until https://github.com/Cldfire/nvml-wrapper/pull/63 is accepted.
 /// Then, we can go back to calling `Nvml::init` directly on all platforms.

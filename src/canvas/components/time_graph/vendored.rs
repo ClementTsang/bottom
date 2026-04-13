@@ -387,7 +387,8 @@ struct ChartLayout {
     graph_area: Rect,
 }
 
-/// Whether to additionally scale all values before displaying them. Defaults to none.
+/// Whether to additionally scale all values before displaying them. Defaults to
+/// none.
 #[derive(Default, Debug, Clone, Copy)]
 pub(crate) enum ChartScaling {
     #[default]
@@ -399,8 +400,8 @@ pub(crate) enum ChartScaling {
 impl ChartScaling {
     /// Scale a value.
     pub(super) fn scale(&self, value: f64) -> f64 {
-        // Remember to do saturating log checks as otherwise 0.0 becomes inf, and you get
-        // gaps!
+        // Remember to do saturating log checks as otherwise 0.0 becomes inf, and you
+        // get gaps!
         match self {
             ChartScaling::Linear => value,
             ChartScaling::Log10 => saturating_log10(value),
@@ -433,8 +434,8 @@ pub(super) struct TimeChart<'a> {
     legend_style: Style,
     /// Constraints used to determine whether the legend should be shown or not
     hidden_legend_constraints: (Constraint, Constraint),
-    /// The position determining whether the length is shown or hidden, regardless
-    /// of `hidden_legend_constraints`
+    /// The position determining whether the length is shown or hidden,
+    /// regardless of `hidden_legend_constraints`
     legend_position: Option<LegendPosition>,
     /// The marker type.
     marker: Marker,
@@ -1490,7 +1491,8 @@ mod tests {
 
     #[test]
     fn legend_truncates_entries_by_height() {
-        // 5 datasets but only room for 3 entries in the legend (height=5, so 5-2=3 entries).
+        // 5 datasets but only room for 3 entries in the legend (height=5, so 5-2=3
+        // entries).
         let datasets: Vec<_> = (0..5)
             .map(|i| Dataset::default().name(format!("D{i}")))
             .collect();
@@ -1590,7 +1592,8 @@ mod tests {
 
         assert!(layout.legend_area.is_some());
         let legend = layout.legend_area.unwrap();
-        // Width should be based on "AB"/"CD" (2 chars) + 2 borders = 4, not the long name.
+        // Width should be based on "AB"/"CD" (2 chars) + 2 borders = 4, not the long
+        // name.
         assert_eq!(legend.width, 4);
     }
 }

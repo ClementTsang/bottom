@@ -15,8 +15,8 @@ use windows::{
 
 use crate::collection::memory::MemData;
 
-/// Get swap memory usage on Windows. This does it by using checking Windows' performance counters.
-/// This is based on the technique done by psutil [here](https://github.com/giampaolo/psutil/pull/2160).
+/// Get swap memory usage on Windows. This does it by using checking Windows'
+/// performance counters. This is based on the technique done by psutil [here](https://github.com/giampaolo/psutil/pull/2160).
 ///
 /// Also see:
 /// - <https://github.com/GuillaumeGomez/sysinfo/blob/master/src/windows/system.rs>
@@ -31,8 +31,8 @@ pub(crate) fn get_swap_usage(sys: &System) -> Option<MemData> {
     // See https://kennykerr.ca/rust-getting-started/string-tutorial.html
     let query = w!("\\Paging File(_Total)\\% Usage");
 
-    // SAFETY: Hits a few Windows APIs; this should be safe as we check each step, and
-    // we clean up at the end.
+    // SAFETY: Hits a few Windows APIs; this should be safe as we check each step,
+    // and we clean up at the end.
     unsafe {
         let mut query_handle: PDH_HQUERY = zeroed();
         let mut counter_handle: PDH_HCOUNTER = zeroed();
@@ -87,7 +87,8 @@ mod tests {
 
         let swap_usage = get_swap_usage(&sys);
         if sys.total_swap() > 0 {
-            // Not sure if we can guarantee this to always pass on a machine, so I'll just print out.
+            // Not sure if we can guarantee this to always pass on a machine, so I'll just
+            // print out.
             println!("swap: {swap_usage:?}");
         } else {
             println!("No swap, skipping.");

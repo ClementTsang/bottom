@@ -18,7 +18,8 @@ pub type IntHashMap<K, V> = std::collections::HashMap<K, V, IntHasherState<K>>;
 #[allow(dead_code)]
 pub type IntHashSet<K> = std::collections::HashSet<K, IntHasherState<K>>;
 
-/// An [`IndexMap`] wrapper such that it tracks insertion order, but uses integer keys.
+/// An [`IndexMap`] wrapper such that it tracks insertion order, but uses
+/// integer keys.
 pub type IntIndexMap<K, V> = IndexMap<K, V, IntHasherState<K>>;
 
 pub trait SupportedInt {}

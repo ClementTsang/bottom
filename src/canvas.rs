@@ -1,7 +1,7 @@
 //! Code related to drawing.
 //!
-//! Note that eventually this should not contain any widget-specific draw code, but rather just generic code
-//! or components.
+//! Note that eventually this should not contain any widget-specific draw code,
+//! but rather just generic code or components.
 
 pub mod components;
 pub mod dialogs;
@@ -101,7 +101,8 @@ impl Painter {
                 self.previous_width = terminal_width;
             }
 
-            // TODO: We should probably remove this or make it done elsewhere, not the responsibility of the app.
+            // TODO: We should probably remove this or make it done elsewhere, not the
+            // responsibility of the app.
             if app_state.should_get_widget_bounds() {
                 // If we're force drawing, reset ALL mouse boundaries.
                 for widget in app_state.widget_map.values_mut() {
@@ -186,7 +187,8 @@ impl Painter {
                 f.buffer_mut()
                     .set_style(area, self.styles.general_widget_style);
 
-                // FIXME: For width, just limit to a max size or full width. For height, not sure. Maybe pass max and let child handle?
+                // FIXME: For width, just limit to a max size or full width. For height, not
+                // sure. Maybe pass max and let child handle?
                 let horizontal_padding = if terminal_width < 100 { 0 } else { 5 };
                 let vertical_padding = if terminal_height < 100 { 0 } else { 5 };
 

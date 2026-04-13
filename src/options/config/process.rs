@@ -8,8 +8,11 @@ use crate::widgets::ProcColumn;
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct ProcessesConfig {
     /// A list of process widget columns.
+    ///
+    /// TODO: make this more composable(?) in the future, we might need to
+    /// rethink how it's done for custom widgets
     #[serde(default)]
-    pub columns: Vec<ProcColumn>, // TODO: make this more composable(?) in the future, we might need to rethink how it's done for custom widgets
+    pub columns: Vec<ProcColumn>,
 
     /// Whether to get process child threads.
     pub get_threads: Option<bool>,
