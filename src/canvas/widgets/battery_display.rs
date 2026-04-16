@@ -43,7 +43,7 @@ impl Painter {
             let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
             } else {
-                app_state.app_config_fields.table_gap
+                app_state.app_config_fields.table_gap.height()
             };
 
             let block = {

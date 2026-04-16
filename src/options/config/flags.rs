@@ -2,6 +2,26 @@ use serde::{Deserialize, Serialize};
 
 use super::StringOrNum;
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum TableGap {
+    None,
+    #[default]
+    Space,
+    Line,
+}
+
+impl TableGap {
+    /// Returns the height in rows that this gap occupies.
+    pub const fn height(self) -> u16 {
+        match self {
+            Self::None => 0,
+            Self::Space | Self::Line => 1,
+        }
+    }
+}
+
 // TODO: Break this up.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
@@ -27,7 +47,8 @@ pub(crate) struct GeneralConfig {
     pub(crate) default_widget_count: Option<u64>,
     pub(crate) expanded: Option<bool>,
     pub(crate) use_old_network_legend: Option<bool>,
-    pub(crate) hide_table_gap: Option<bool>,
+    #[serde(default)]
+    pub(crate) table_gap: TableGap,
     pub(crate) battery: Option<bool>,
     pub(crate) disable_click: Option<bool>,
     pub(crate) disable_keys: Option<bool>,

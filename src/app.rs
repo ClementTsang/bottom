@@ -16,6 +16,7 @@ use crate::{
         components::time_graph::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
     },
     constants,
+    options::config::flags::TableGap,
     utils::data_units::DataUnit,
     widgets::{
         DiskWidgetColumn, ProcWidgetColumn, ProcWidgetMode, TempWidgetColumn, TreeCollapsed,
@@ -52,7 +53,7 @@ pub struct AppConfigFields {
     pub hide_time: bool,
     pub autohide_time: bool,
     pub use_old_network_legend: bool,
-    pub table_gap: u16,
+    pub table_gap: TableGap,
     pub disable_click: bool,
     pub disable_keys: bool,
     pub enable_gpu: bool,
@@ -2494,13 +2495,13 @@ impl App {
         {
             let height_diff = brc_y - tlc_y;
             if height_diff >= constants::TABLE_GAP_HEIGHT_LIMIT {
-                1 + self.app_config_fields.table_gap
+                1 + self.app_config_fields.table_gap.height()
             } else {
                 let min_height_for_header = if self.is_drawing_border() { 3 } else { 1 };
                 u16::from(height_diff > min_height_for_header)
             }
         } else {
-            1 + self.app_config_fields.table_gap
+            1 + self.app_config_fields.table_gap.height()
         }
     }
 

@@ -160,6 +160,7 @@ mod test {
     use std::{borrow::Cow, num::NonZeroU16};
 
     use super::*;
+    use crate::options::config::flags::TableGap;
 
     #[derive(Clone, PartialEq, Eq, Debug)]
     struct TestType {
@@ -187,7 +188,7 @@ mod test {
         let columns = [Column::hard("a", 10), Column::hard("b", 10)];
         let props = DataTableProps {
             title: Some("test".into()),
-            table_gap: 1,
+            table_gap: TableGap::Space,
             left_to_right: false,
             is_basic: false,
             show_table_scroll_position: true,
