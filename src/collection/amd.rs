@@ -4,8 +4,7 @@ use std::{
     fs::{self, read_to_string},
     num::NonZeroU64,
     path::{Path, PathBuf},
-    sync::{LazyLock, Mutex},
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
@@ -21,7 +20,7 @@ use crate::{
 // redundant.
 pub struct AmdGpuData {
     pub memory: Option<Vec<(String, MemData)>>,
-    pub procs: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
+    pub processes: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
 }
 
 pub struct AmdGpuMemory {
@@ -31,20 +30,9 @@ pub struct AmdGpuMemory {
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct AmdGpuProc {
-    pub vram_usage: u64,
-    pub gfx_usage: u64,
-    pub dma_usage: u64,
-    pub enc_usage: u64,
-    pub dec_usage: u64,
-    pub uvd_usage: u64,
-    pub vcn_usage: u64,
-    pub vpe_usage: u64,
     pub compute_usage: u64,
+    pub vram_usage: u64,
 }
-
-// needs previous state for usage calculation
-static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, IntHashMap<Pid, AmdGpuProc>>>> =
-    LazyLock::new(|| Mutex::new(HashMap::default()));
 
 fn get_amd_devs() -> Option<Vec<PathBuf>> {
     let mut devices = Vec::new();
@@ -83,7 +71,12 @@ fn get_amd_devs() -> Option<Vec<PathBuf>> {
     }
 }
 
-pub fn get_amd_name(device_path: &Path) -> Option<String> {
+pub fn get_amd_name(device_path: &Path) -> String {
+    try_get_amd_name(device_path)
+        .unwrap_or_else(|| amd_gpu_marketing::AMDGPU_DEFAULT_NAME.to_string())
+}
+
+pub fn try_get_amd_name(device_path: &Path) -> Option<String> {
     // get revision and device ids from sysfs
     let rev_path = device_path.join("revision");
     let dev_path = device_path.join("device");
@@ -148,22 +141,6 @@ fn get_amd_vram(device_path: &Path) -> Option<AmdGpuMemory> {
         total: vram_total,
         used: vram_used,
     })
-}
-
-// from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L114
-fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
-    use std::ops::Mul;
-
-    let diff_ns = if pre == 0 || cur < pre {
-        return 0;
-    } else {
-        cur.saturating_sub(pre) as u128
-    };
-
-    diff_ns
-        .mul(100)
-        .checked_div(interval.as_nanos())
-        .unwrap_or(0) as u64
 }
 
 // from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L13-L27
@@ -306,13 +283,13 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<IntHashMap<Pid, AmdGpuProc>> {
                 };
 
                 match fdinfo_keyword {
-                    "drm-engine-gfx" => usage.gfx_usage += fdinfo_value_num,
-                    "drm-engine-dma" => usage.dma_usage += fdinfo_value_num,
-                    "drm-engine-dec" => usage.dec_usage += fdinfo_value_num,
-                    "drm-engine-enc" => usage.enc_usage += fdinfo_value_num,
-                    "drm-engine-enc_1" => usage.uvd_usage += fdinfo_value_num,
-                    "drm-engine-jpeg" => usage.vcn_usage += fdinfo_value_num,
-                    "drm-engine-vpe" => usage.vpe_usage += fdinfo_value_num,
+                    "drm-engine-gfx" => usage.compute_usage += fdinfo_value_num,
+                    "drm-engine-dma" => usage.compute_usage += fdinfo_value_num,
+                    "drm-engine-dec" => usage.compute_usage += fdinfo_value_num,
+                    "drm-engine-enc" => usage.compute_usage += fdinfo_value_num,
+                    "drm-engine-enc_1" => usage.compute_usage += fdinfo_value_num,
+                    "drm-engine-jpeg" => usage.compute_usage += fdinfo_value_num,
+                    "drm-engine-vpe" => usage.compute_usage += fdinfo_value_num,
                     "drm-engine-compute" => usage.compute_usage += fdinfo_value_num,
                     "drm-memory-vram" => usage.vram_usage += fdinfo_value_num << 10, // KiB -> B
                     _ => {}
@@ -328,17 +305,19 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<IntHashMap<Pid, AmdGpuProc>> {
     Some(fdinfo)
 }
 
-pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Option<AmdGpuData> {
+pub fn get_amd_vecs(
+    widgets_to_harvest: &UsedWidgets, prev_collection_time: Instant,
+    prev_gpu_data: &mut HashMap<PathBuf, IntHashMap<Pid, AmdGpuProc>>,
+) -> Option<AmdGpuData> {
     let device_path_list = get_amd_devs()?;
-    let interval = Instant::now().duration_since(prev_time);
+    let interval = Instant::now().duration_since(prev_collection_time);
     let num_gpu = device_path_list.len();
     let mut mem_vec = Vec::with_capacity(num_gpu);
     let mut proc_vec = Vec::with_capacity(num_gpu);
     let mut total_mem = 0;
 
     for device_path in device_path_list {
-        let device_name = get_amd_name(&device_path)
-            .unwrap_or(amd_gpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
+        let device_name = get_amd_name(&device_path);
 
         if let Some(mem) = get_amd_vram(&device_path) {
             if widgets_to_harvest.use_mem {
@@ -358,46 +337,24 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
 
         if widgets_to_harvest.use_proc {
             if let Some(procs) = get_amd_fdinfo(&device_path) {
-                let mut proc_info = PROC_DATA.lock().expect("mutex is poisoned");
-                let prev_fdinfo = proc_info.entry(device_path).or_default();
+                let prev_fdinfo = prev_gpu_data.entry(device_path.clone()).or_default();
 
                 let mut procs_map = IntHashMap::default();
-                for (proc_pid, proc_usage) in procs {
+                for (proc_pid, curr_usage) in procs {
                     if let Some(prev_usage) = prev_fdinfo.get_mut(&proc_pid) {
-                        // calculate deltas
-                        let gfx_usage =
-                            diff_usage(prev_usage.gfx_usage, proc_usage.gfx_usage, &interval);
-                        let dma_usage =
-                            diff_usage(prev_usage.dma_usage, proc_usage.dma_usage, &interval);
-                        let enc_usage =
-                            diff_usage(prev_usage.enc_usage, proc_usage.enc_usage, &interval);
-                        let dec_usage =
-                            diff_usage(prev_usage.dec_usage, proc_usage.dec_usage, &interval);
-                        let uvd_usage =
-                            diff_usage(prev_usage.uvd_usage, proc_usage.uvd_usage, &interval);
-                        let vcn_usage =
-                            diff_usage(prev_usage.vcn_usage, proc_usage.vcn_usage, &interval);
-                        let vpe_usage =
-                            diff_usage(prev_usage.vpe_usage, proc_usage.vpe_usage, &interval);
+                        let gpu_util = ((curr_usage
+                            .compute_usage
+                            .saturating_sub(prev_usage.compute_usage)
+                            * 100) as u128
+                            / interval.as_nanos()) as u32;
 
-                        // combined usage
-                        let gpu_util_wide = gfx_usage
-                            + dma_usage
-                            + enc_usage
-                            + dec_usage
-                            + uvd_usage
-                            + vcn_usage
-                            + vpe_usage;
-
-                        let gpu_util: u32 = gpu_util_wide.try_into().unwrap_or(0);
-
-                        if gpu_util > 0 || proc_usage.vram_usage > 0 {
-                            procs_map.insert(proc_pid, (proc_usage.vram_usage, gpu_util));
+                        if gpu_util > 0 || curr_usage.vram_usage > 0 {
+                            procs_map.insert(proc_pid, (curr_usage.vram_usage, gpu_util));
                         }
 
-                        *prev_usage = proc_usage;
+                        *prev_usage = curr_usage;
                     } else {
-                        prev_fdinfo.insert(proc_pid, proc_usage);
+                        prev_fdinfo.insert(proc_pid, curr_usage);
                     }
                 }
 
@@ -410,6 +367,6 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
 
     Some(AmdGpuData {
         memory: (!mem_vec.is_empty()).then_some(mem_vec),
-        procs: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),
+        processes: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),
     })
 }

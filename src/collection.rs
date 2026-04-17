@@ -413,13 +413,15 @@ impl DataCollector {
             }
 
             #[cfg(target_os = "linux")]
-            if let Some(data) =
-                amd::get_amd_vecs(&self.widgets_to_harvest, self.last_collection_time)
-            {
+            if let Some(data) = amd::get_amd_vecs(
+                &self.widgets_to_harvest,
+                self.last_collection_time,
+                self.gpu_pids,
+            ) {
                 if let Some(mut mem) = data.memory {
                     local_gpu.append(&mut mem);
                 }
-                if let Some(mut proc) = data.procs {
+                if let Some(mut proc) = data.processes {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
