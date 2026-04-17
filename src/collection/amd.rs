@@ -1,10 +1,10 @@
 mod amd_gpu_marketing;
 
 use std::{
+    cell::RefCell,
     fs::{self, read_to_string},
     num::NonZeroU64,
     path::{Path, PathBuf},
-    sync::{LazyLock, Mutex},
     time::{Duration, Instant},
 };
 
@@ -14,7 +14,7 @@ use super::linux::utils::is_device_awake;
 use crate::{
     app::layout_manager::UsedWidgets,
     collection::{memory::MemData, processes::Pid},
-    utils::int_hash::IntHashMap,
+    utils::int_hash::{IntHashMap, IntHashSet},
 };
 
 // TODO: May be able to clean up some of these, Option<Vec> for example is a bit
@@ -42,8 +42,11 @@ pub struct AmdGpuProc {
     pub compute_usage: u64,
 }
 
-static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, IntHashMap<Pid, AmdGpuProc>>>> =
-    LazyLock::new(|| Mutex::new(HashMap::default()));
+// TODO: This is kind of a hack.
+thread_local! {
+    static PREV_PROC_DATA: RefCell<HashMap<PathBuf, IntHashMap<Pid, AmdGpuProc>>> = RefCell::new(HashMap::default());
+    static LAST_CLEAN_COUNTER: RefCell<u32> = const { RefCell::new(0) };
+}
 
 fn get_amd_devs() -> Option<Vec<PathBuf>> {
     let mut devices = Vec::new();
@@ -324,6 +327,23 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<IntHashMap<Pid, AmdGpuProc>> {
         }
     }
 
+    // Bit of a hacky way to keep this trimmed. Ain't pretty but it should work.
+    LAST_CLEAN_COUNTER.with_borrow_mut(|counter| {
+        *counter += 1;
+
+        if *counter >= 300 {
+            PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
+                for prev_fdinfo in prev_proc_data.values_mut() {
+                    prev_fdinfo.shrink_to_fit();
+                }
+
+                prev_proc_data.shrink_to_fit();
+            });
+
+            *counter = 0;
+        }
+    });
+
     Some(fdinfo)
 }
 
@@ -334,6 +354,11 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
     let mut mem_vec = Vec::with_capacity(num_gpu);
     let mut proc_vec = Vec::with_capacity(num_gpu);
     let mut total_mem = 0;
+
+    PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
+        let device_path_set = device_path_list.iter().cloned().collect::<HashSet<_>>();
+        prev_proc_data.retain(|k, _| device_path_set.contains(k));
+    });
 
     for device_path in device_path_list {
         let device_name = get_amd_name(&device_path)
@@ -357,52 +382,57 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
 
         if widgets_to_harvest.use_proc {
             if let Some(procs) = get_amd_fdinfo(&device_path) {
-                let mut proc_info = PROC_DATA.lock().expect("mutex is poisoned");
-                let prev_fdinfo = proc_info.entry(device_path).or_default();
+                PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
+                    let prev_fdinfo = prev_proc_data.entry(device_path).or_default();
+                    let mut seen_pids = IntHashSet::default();
 
-                let mut procs_map = IntHashMap::default();
-                for (proc_pid, proc_usage) in procs {
-                    if let Some(prev_usage) = prev_fdinfo.get_mut(&proc_pid) {
-                        // calculate deltas
-                        let gfx_usage =
-                            diff_usage(prev_usage.gfx_usage, proc_usage.gfx_usage, &interval);
-                        let dma_usage =
-                            diff_usage(prev_usage.dma_usage, proc_usage.dma_usage, &interval);
-                        let enc_usage =
-                            diff_usage(prev_usage.enc_usage, proc_usage.enc_usage, &interval);
-                        let dec_usage =
-                            diff_usage(prev_usage.dec_usage, proc_usage.dec_usage, &interval);
-                        let uvd_usage =
-                            diff_usage(prev_usage.uvd_usage, proc_usage.uvd_usage, &interval);
-                        let vcn_usage =
-                            diff_usage(prev_usage.vcn_usage, proc_usage.vcn_usage, &interval);
-                        let vpe_usage =
-                            diff_usage(prev_usage.vpe_usage, proc_usage.vpe_usage, &interval);
+                    let mut procs_map = IntHashMap::default();
+                    for (proc_pid, proc_usage) in procs {
+                        seen_pids.insert(proc_pid);
+                        if let Some(prev_usage) = prev_fdinfo.get_mut(&proc_pid) {
+                            // calculate deltas
+                            let gfx_usage =
+                                diff_usage(prev_usage.gfx_usage, proc_usage.gfx_usage, &interval);
+                            let dma_usage =
+                                diff_usage(prev_usage.dma_usage, proc_usage.dma_usage, &interval);
+                            let enc_usage =
+                                diff_usage(prev_usage.enc_usage, proc_usage.enc_usage, &interval);
+                            let dec_usage =
+                                diff_usage(prev_usage.dec_usage, proc_usage.dec_usage, &interval);
+                            let uvd_usage =
+                                diff_usage(prev_usage.uvd_usage, proc_usage.uvd_usage, &interval);
+                            let vcn_usage =
+                                diff_usage(prev_usage.vcn_usage, proc_usage.vcn_usage, &interval);
+                            let vpe_usage =
+                                diff_usage(prev_usage.vpe_usage, proc_usage.vpe_usage, &interval);
 
-                        // combined usage
-                        let gpu_util_wide = gfx_usage
-                            + dma_usage
-                            + enc_usage
-                            + dec_usage
-                            + uvd_usage
-                            + vcn_usage
-                            + vpe_usage;
+                            // combined usage
+                            let gpu_util_wide = gfx_usage
+                                + dma_usage
+                                + enc_usage
+                                + dec_usage
+                                + uvd_usage
+                                + vcn_usage
+                                + vpe_usage;
 
-                        let gpu_util: u32 = gpu_util_wide.try_into().unwrap_or(0);
+                            let gpu_util: u32 = gpu_util_wide.try_into().unwrap_or(0);
 
-                        if gpu_util > 0 || proc_usage.vram_usage > 0 {
-                            procs_map.insert(proc_pid, (proc_usage.vram_usage, gpu_util));
+                            if gpu_util > 0 || proc_usage.vram_usage > 0 {
+                                procs_map.insert(proc_pid, (proc_usage.vram_usage, gpu_util));
+                            }
+
+                            *prev_usage = proc_usage;
+                        } else {
+                            prev_fdinfo.insert(proc_pid, proc_usage);
                         }
-
-                        *prev_usage = proc_usage;
-                    } else {
-                        prev_fdinfo.insert(proc_pid, proc_usage);
                     }
-                }
 
-                if !procs_map.is_empty() {
-                    proc_vec.push(procs_map);
-                }
+                    prev_fdinfo.retain(|k, _| seen_pids.contains(k));
+
+                    if !procs_map.is_empty() {
+                        proc_vec.push(procs_map);
+                    }
+                });
             }
         }
     }
