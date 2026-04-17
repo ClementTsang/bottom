@@ -3,6 +3,7 @@ use std::cmp::min;
 use tui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
+    symbols::line,
     text::{Line, Span},
     widgets::{Cell, Paragraph, Row, Table, Tabs},
 };
@@ -13,6 +14,7 @@ use crate::{
     canvas::{Painter, drawing_utils::widget_block},
     collection::batteries::BatteryState,
     constants::*,
+    options::config::flags::TableGap,
 };
 
 /// Calculate how many bars are to be drawn within basic mode's components.
@@ -40,10 +42,11 @@ impl Painter {
             } else {
                 self.styles.border_style
             };
+            let table_gap_setting = app_state.app_config_fields.table_gap;
             let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
             } else {
-                app_state.app_config_fields.table_gap.height()
+                table_gap_setting.height()
             };
 
             let block = {
@@ -208,6 +211,8 @@ impl Painter {
                     Row::default()
                 };
 
+                let block_inner = block.inner(margined_draw_loc);
+
                 // Draw bar
                 f.render_widget(
                     Table::new(battery_charge_rows, [Constraint::Percentage(100)])
@@ -226,6 +231,35 @@ impl Painter {
                     .header(header),
                     margined_draw_loc,
                 );
+
+                if table_gap > 0 && table_gap_setting == TableGap::Line && battery_harvest.len() > 1
+                {
+                    let y = block_inner.y + 1;
+                    let buf = f.buffer_mut();
+
+                    for x in (margined_draw_loc.x + 1)
+                        ..(margined_draw_loc.x + margined_draw_loc.width - 1)
+                    {
+                        if let Some(cell) = buf.cell_mut((x, y)) {
+                            cell.set_symbol(line::NORMAL.horizontal);
+                            cell.set_style(border_style);
+                        }
+                    }
+
+                    if !is_basic || is_selected {
+                        if let Some(cell) = buf.cell_mut((margined_draw_loc.x, y)) {
+                            cell.set_symbol(line::NORMAL.vertical_right);
+                            cell.set_style(border_style);
+                        }
+
+                        if let Some(cell) =
+                            buf.cell_mut((margined_draw_loc.x + margined_draw_loc.width - 1, y))
+                        {
+                            cell.set_symbol(line::NORMAL.vertical_left);
+                            cell.set_style(border_style);
+                        }
+                    }
+                }
             } else {
                 let mut contents = vec![Line::default(); table_gap.into()];
 

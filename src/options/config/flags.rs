@@ -72,11 +72,11 @@ pub(crate) struct GeneralConfig {
     pub(crate) network_use_bytes: Option<bool>,
     pub(crate) network_use_log: Option<bool>,
     pub(crate) network_use_binary_prefix: Option<bool>,
-    pub(crate) show_packets: Option<bool>,
     pub(crate) disable_gpu: Option<bool>,
     pub(crate) enable_cache_memory: Option<bool>,
     pub(crate) retention: Option<StringOrNum>,
     // FIXME: This makes no sense outside of basic mode, add a basic mode config section.
+    // FIXME: This also should be moved to CPU-specific... same with all the other entries.
     pub(crate) average_cpu_row: Option<bool>,
     pub(crate) tree_collapse: Option<bool>,
 }

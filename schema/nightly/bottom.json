@@ -512,12 +512,6 @@
             }
           ]
         },
-        "show_packets": {
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
         "show_table_scroll_position": {
           "type": [
             "boolean",
@@ -525,14 +519,8 @@
           ]
         },
         "table_gap": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/TableGap"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/$defs/TableGap",
+          "default": "space"
         },
         "temperature_type": {
           "type": [
@@ -716,7 +704,7 @@
           ]
         },
         "show_packets": {
-          "description": "Whether to show packets information (packet rate and average packet\nsize).",
+          "description": "Displays packet rate and average packet size info.",
           "type": [
             "boolean",
             "null"
