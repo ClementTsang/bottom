@@ -42,7 +42,6 @@ pub struct AmdGpuProc {
     pub compute_usage: u64,
 }
 
-// needs previous state for usage calculation
 static PROC_DATA: LazyLock<Mutex<HashMap<PathBuf, IntHashMap<Pid, AmdGpuProc>>>> =
     LazyLock::new(|| Mutex::new(HashMap::default()));
 
