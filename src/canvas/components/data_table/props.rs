@@ -1,11 +1,13 @@
 use std::borrow::Cow;
 
+use crate::options::config::flags::TableGap;
+
 pub struct DataTableProps {
     /// An optional title for the table.
     pub title: Option<Cow<'static, str>>,
 
-    /// The size of the gap between the header and rows.
-    pub table_gap: u16,
+    /// Controls the gap between the header and rows.
+    pub table_gap: TableGap,
 
     /// Whether this table determines column widths from left to right.
     pub left_to_right: bool,

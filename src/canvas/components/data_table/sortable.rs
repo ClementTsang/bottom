@@ -334,6 +334,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::options::config::flags::TableGap;
 
     #[derive(Clone, PartialEq, Eq, Debug)]
     struct TestType {
@@ -394,7 +395,7 @@ mod test {
         let props = {
             let inner = DataTableProps {
                 title: Some("test".into()),
-                table_gap: 1,
+                table_gap: TableGap::Space,
                 left_to_right: false,
                 is_basic: false,
                 show_table_scroll_position: true,

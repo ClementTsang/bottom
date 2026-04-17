@@ -28,7 +28,7 @@ use starship_battery::Manager;
 
 use self::{
     args::BottomArgs,
-    config::{IgnoreList, StringOrNum, layout::Row},
+    config::{IgnoreList, StringOrNum, flags::TableGap, layout::Row},
 };
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
@@ -314,7 +314,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         hide_time: is_flag_enabled!(hide_time, args.general, config),
         autohide_time,
         use_old_network_legend: is_flag_enabled!(use_old_network_legend, args.network, config),
-        table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, args.general, config))),
+        table_gap: get_table_gap(config),
         disable_click: is_flag_enabled!(disable_click, args.general, config),
         disable_keys: is_flag_enabled!(disable_keys, args.general, config),
         enable_gpu: get_enable_gpu(args, config),
@@ -766,6 +766,14 @@ fn get_default_cpu_selection(args: &BottomArgs, config: &Config) -> config::cpu:
         },
         None => config.cpu.as_ref().map(|c| c.default).unwrap_or_default(),
     }
+}
+
+fn get_table_gap(config: &Config) -> TableGap {
+    config
+        .flags
+        .as_ref()
+        .map(|flags| flags.table_gap)
+        .unwrap_or_default()
 }
 
 fn get_dedicated_avg_row(config: &Config) -> bool {

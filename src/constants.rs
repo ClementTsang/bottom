@@ -316,8 +316,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Use the old network legend style
 #use_old_network_legend = false
 
-# Remove space in tables
-#hide_table_gap = false
+# Controls the gap between table headers and data rows.
+# Options: "none", "space" (default), "line"
+#table_gap = "space"
 
 # Show the battery widgets
 #battery = false

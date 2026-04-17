@@ -236,14 +236,6 @@ pub struct GeneralArgs {
     )]
     pub expanded: bool,
 
-    #[arg(
-        long,
-        action = ArgAction::SetTrue,
-        help = "Hides spacing between table headers and entries.",
-        alias = "hide-table-gap"
-    )]
-    pub hide_table_gap: bool,
-
     #[arg(long, action = ArgAction::SetTrue, help = "Hides the time scale from being shown.", alias = "hide-time")]
     pub hide_time: bool,
 
