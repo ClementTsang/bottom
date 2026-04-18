@@ -25,6 +25,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Bug Fixes
 
 - [#2035](https://github.com/ClementTsang/bottom/pull/2035): Fix panic when deleting unicode words in search.
+- [#2042](https://github.com/ClementTsang/bottom/pull/2042): Address possible memory usage growth for AMD GPU stat gathering on Linux.
 
 ### Features
 
