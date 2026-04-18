@@ -327,23 +327,6 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<IntHashMap<Pid, AmdGpuProc>> {
         }
     }
 
-    // Bit of a hacky way to keep this trimmed. Ain't pretty but it should work.
-    LAST_CLEAN_COUNTER.with_borrow_mut(|counter| {
-        *counter += 1;
-
-        if *counter >= 300 {
-            PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
-                for prev_fdinfo in prev_proc_data.values_mut() {
-                    prev_fdinfo.shrink_to_fit();
-                }
-
-                prev_proc_data.shrink_to_fit();
-            });
-
-            *counter = 0;
-        }
-    });
-
     Some(fdinfo)
 }
 
@@ -436,6 +419,23 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
             }
         }
     }
+
+    // Bit of a hacky way to keep this trimmed. Ain't pretty but it should work.
+    LAST_CLEAN_COUNTER.with_borrow_mut(|counter| {
+        *counter += 1;
+
+        if *counter >= 300 {
+            PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
+                for prev_fdinfo in prev_proc_data.values_mut() {
+                    prev_fdinfo.shrink_to_fit();
+                }
+
+                prev_proc_data.shrink_to_fit();
+            });
+
+            *counter = 0;
+        }
+    });
 
     Some(AmdGpuData {
         memory: (!mem_vec.is_empty()).then_some(mem_vec),
