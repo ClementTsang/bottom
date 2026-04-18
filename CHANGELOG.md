@@ -25,6 +25,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Bug Fixes
 
 - [#2035](https://github.com/ClementTsang/bottom/pull/2035): Fix panic when deleting unicode words in search.
+- [#2042](https://github.com/ClementTsang/bottom/pull/2042): Address possible memory usage growth for AMD GPU stat gathering on Linux.
 
 ### Features
 
@@ -43,6 +44,9 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#1955](https://github.com/ClementTsang/bottom/pull/1955): Fix mirrored documentation deploy to GitHub Pages.
 - [#1957](https://github.com/ClementTsang/bottom/pull/1957): Fix CI bug around deploying docs on release.
 - [#1958](https://github.com/ClementTsang/bottom/pull/1958): Fix cosmetic banner issue on docs page.
+- [#1962](https://github.com/ClementTsang/bottom/pull/1962): Add code signing for Windows artifacts.
+- [#1986](https://github.com/ClementTsang/bottom/pull/1986): Test and build NetBSD target.
+- [#2009](https://github.com/ClementTsang/bottom/pull/2009): Configure CI job to publish to crates.io.
 - [#2037](https://github.com/ClementTsang/bottom/pull/2037): Update AMD GPU names list.
 
 ## [0.12.3] - 2026-01-01
@@ -91,6 +95,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#1891](https://github.com/ClementTsang/bottom/pull/1891): Fix typos in codebase.
 - [#1896](https://github.com/ClementTsang/bottom/pull/1896): Rename Linux icon to avoid collision with generic "bottom"
   icon.
+  
 - [#1913](https://github.com/ClementTsang/bottom/pull/1913): Add `loongarch64-unknown-linux-gnu` binary build target in
   CI.
 - [#1914](https://github.com/ClementTsang/bottom/pull/1914): Add `aarch64-linux-android` binary build target in CI (with
