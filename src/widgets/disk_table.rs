@@ -10,7 +10,8 @@ use crate::{
     },
     options::config::style::Styles,
     utils::{
-        conversion::dec_bytes_per_second_string, data_units::get_decimal_bytes,
+        conversion::dec_bytes_per_second_string,
+        data_units::{get_decimal_bytes, format_significant_digits},
         general::sort_partial_fn,
     },
 };
@@ -31,7 +32,7 @@ impl DiskWidgetData {
     fn total_space(&self) -> Cow<'static, str> {
         if let Some(total_bytes) = self.total_bytes {
             let converted_total_space = get_decimal_bytes(total_bytes);
-            format!("{:.0}{}", converted_total_space.0, converted_total_space.1).into()
+            format!("{}{}", format_significant_digits(converted_total_space.0, 3), converted_total_space.1).into()
         } else {
             "N/A".into()
         }
@@ -40,7 +41,7 @@ impl DiskWidgetData {
     fn free_space(&self) -> Cow<'static, str> {
         if let Some(free_bytes) = self.free_bytes {
             let converted_free_space = get_decimal_bytes(free_bytes);
-            format!("{:.0}{}", converted_free_space.0, converted_free_space.1).into()
+            format!("{}{}", format_significant_digits(converted_free_space.0, 3), converted_free_space.1).into()
         } else {
             "N/A".into()
         }
@@ -48,8 +49,8 @@ impl DiskWidgetData {
 
     fn used_space(&self) -> Cow<'static, str> {
         if let Some(used_bytes) = self.used_bytes {
-            let converted_free_space = get_decimal_bytes(used_bytes);
-            format!("{:.0}{}", converted_free_space.0, converted_free_space.1).into()
+            let converted_used_space = get_decimal_bytes(used_bytes);
+            format!("{}{}", format_significant_digits(converted_used_space.0, 3), converted_used_space.1).into()
         } else {
             "N/A".into()
         }
@@ -175,7 +176,7 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
     // FIXME: (points_rework_v1) Can we change the return type to 'a instead of
     // 'static?
     fn to_cell_text(
-        &self, column: &DiskWidgetColumn, _calculated_width: NonZeroU16,
+        &self, column: &DiskWidgetColumn, calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         fn percent_string(value: Option<f64>) -> Cow<'static, str> {
             match value {
@@ -184,14 +185,33 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
             }
         }
 
+        fn right_align(text: Cow<'static, str>, width: u16) -> Cow<'static, str> {
+            let text_len = text.len() as u16;
+            if text_len >= width {
+                text
+            } else {
+                let padding = " ".repeat((width - text_len) as usize);
+                format!("{}{}", padding, text).into()
+            }
+        }
+
         let text = match column {
             DiskWidgetColumn::Disk => self.name.clone().into(),
             DiskWidgetColumn::Mount => self.mount_point.clone().into(),
-            DiskWidgetColumn::Used => self.used_space(),
-            DiskWidgetColumn::Free => self.free_space(),
+            DiskWidgetColumn::Used => {
+                let used = self.used_space();
+                right_align(used, calculated_width.get())
+            }
+            DiskWidgetColumn::Free => {
+                let free = self.free_space();
+                right_align(free, calculated_width.get())
+            }
             DiskWidgetColumn::UsedPercent => percent_string(self.used_percent()),
             DiskWidgetColumn::FreePercent => percent_string(self.free_percent()),
-            DiskWidgetColumn::Total => self.total_space(),
+            DiskWidgetColumn::Total => {
+                let total = self.total_space();
+                right_align(total, calculated_width.get())
+            }
             DiskWidgetColumn::IoRead => self.io_read(),
             DiskWidgetColumn::IoWrite => self.io_write(),
         };
