@@ -1,17 +1,18 @@
 # Builds the following releases:
 # - Binaries
 # - Binaries via VMs
-# - Cirrus binaries (currently just Linux 2.17)
 # - MSI installer for Windows (.msi)
 # - .deb releases
 # - .rpm releases
 #
+# Note that for musl targets, we use cross to avoid having to set up the dependencies for musl.
+#
 # TODO: Break this up into scripts instead.
+# TODO: Trigger this in CI as well if this file changes, so I don't have to spam nightly builds.
 
 name: "build releases"
 
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       caller:
@@ -27,6 +28,7 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
   COMPLETION_DIR: "target/tmp/bottom/completion/"
   MANPAGE_DIR: "target/tmp/bottom/manpage/"
+  CROSS_VERSION: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863"
 
 permissions:
   id-token: write
@@ -45,115 +47,130 @@ jobs:
         info:
           # ======= Supported targets =======
           # Linux (x86-64, x86, aarch64)
-          #
-          # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
           - {
-              os: "ubuntu-22.04",
               target: "x86_64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: false,
               generate-other-artifacts: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "i686-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "x86_64-unknown-linux-musl",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "i686-unknown-linux-musl",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "aarch64-unknown-linux-gnu",
-              cross: true,
+              os: "ubuntu-22.04-arm",
+              cross: false,
             }
           - {
-              os: "ubuntu-22.04",
               target: "aarch64-unknown-linux-musl",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # macOS (x86-64 and aarch64)
           - {
-              os: "macos-15-intel",
               target: "x86_64-apple-darwin",
+              os: "macos-15-intel",
               cross: false,
             }
-          - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
+          - { target: "aarch64-apple-darwin", os: "macos-15", cross: false }
 
           # Windows (x86-64, x86)
           - {
-              os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
+              os: "windows-2022",
               cross: false,
             }
-          - { os: "windows-2022", target: "i686-pc-windows-msvc", cross: false }
+          - { target: "i686-pc-windows-msvc", os: "windows-2022", cross: false }
           - {
-              os: "windows-2022",
               target: "x86_64-pc-windows-gnu",
+              os: "windows-2022",
               cross: false,
             }
 
           # ======= Unsupported targets =======
           # armv7
           - {
-              os: "ubuntu-22.04",
               target: "armv7-unknown-linux-gnueabihf",
+              os: "ubuntu-22.04",
               cross: true,
             }
           - {
-              os: "ubuntu-22.04",
               target: "armv7-unknown-linux-musleabihf",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-22.04",
               target: "powerpc64le-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
             }
 
           # Risc-V 64gc
           - {
-              os: "ubuntu-22.04",
               target: "riscv64gc-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
+            }
+
+          # Linux 2.17 (CentOS 7)
+          - {
+              target: "x86_64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
+              artifact_name: "x86_64-unknown-linux-gnu-2-17",
+              cross: true,
+              cross_image: "ghcr.io/cross-rs/x86_64-unknown-linux-gnu@sha256:ab2070e67704b2c85d0d1fa50a0165ec438ed87fd1dc1a4058692a2348c071cb", # edge-centos
             }
 
           # Android
           - {
-              os: "ubuntu-latest",
               target: "aarch64-linux-android",
+              os: "ubuntu-24.04",
               cross: true,
-              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
               no-default-features: true,
             }
 
           # Loongarch
           - {
-              os: "ubuntu-22.04",
               target: "loongarch64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
               cross: true,
-              cross-version: "git:154b4ead7e639c7597d9e4e626b9c1c1e37608c0",
             }
 
           # Windows ARM, may promote to official.
           - {
-              os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
+              os: "windows-11-arm",
               cross: false,
             }
+
+          # FreeBSD
+          - {
+              target: "x86_64-unknown-freebsd",
+              os: "ubuntu-22.04",
+              cross: true,
+            }
+
+          # NetBSD
+          - { target: "x86_64-unknown-netbsd", os: "ubuntu-22.04", cross: true }
     steps:
       - name: Checkout repository
         if: matrix.info.container == ''
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -191,6 +208,12 @@ jobs:
           echo "Will build with the following features: $BUILD_FEATURES"
           echo "BUILD_FEATURES=$BUILD_FEATURES" >> $GITHUB_ENV
 
+      - name: Set cross docker image if set
+        if: matrix.info.cross == true && matrix.info.cross_image != ''
+        shell: bash
+        run: |
+          echo "CROSS_TARGET_X86_64_UNKNOWN_LINUX_GNU_IMAGE=${{ matrix.info.cross_image }}" >> $GITHUB_ENV
+
       - name: Build
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         env:
@@ -200,7 +223,7 @@ jobs:
           command: build
           args: --release --locked --target=${{ matrix.info.target }} ${{ env.BUILD_FEATURES }}
           use-cross: ${{ matrix.info.cross }}
-          cross-version: ${{ matrix.info.cross-version || '0.2.5' }}
+          cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
 
       - name: Move automatically generated completion/manpage
         shell: bash
@@ -208,22 +231,57 @@ jobs:
           mv "$COMPLETION_DIR" completion
           mv "$MANPAGE_DIR" manpage
 
-      - name: Bundle release and completion (Windows)
-        if: matrix.info.os == 'windows-2022'
+      - name: Determine signing slug for Windows signing
+        id: get-signing-slug
+        if: startsWith(matrix.info.os, 'windows')
         shell: bash
         run: |
-          cp target/${{ matrix.info.target }}/release/btm.exe btm.exe
-          7z a bottom_${{ matrix.info.target }}.zip "btm.exe"
-          7z a bottom_${{ matrix.info.target }}.zip "completion"
-          echo "ASSET=bottom_${{ matrix.info.target }}.zip" >> $GITHUB_ENV
+          mkdir -p signed
+          if [[ ${{ inputs.caller }} == "nightly" ]]; then
+            echo "slug=test-signing" >> $GITHUB_OUTPUT
+          else
+            echo "slug=release-signing" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload unsigned Windows artifact
+        id: upload-unsigned-artifact
+        if: startsWith(matrix.info.os, 'windows')
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        with:
+          retention-days: 1
+          name: "unsigned-${{ matrix.info.target }}"
+          path: target/${{ matrix.info.target }}/release/btm.exe
+
+      - name: Sign Windows artifacts
+        if: startsWith(matrix.info.os, 'windows')
+        uses: signpath/github-action-submit-signing-request@3f9250c56651ff692d6729a2fbb0603a42d7d322 # v2.0
+        with:
+          api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
+          organization-id: "06b1a1ff-74e1-4d9d-93b1-fa8180c67727"
+          project-slug: "bottom"
+          signing-policy-slug: "${{ steps.get-signing-slug.outputs.slug }}"
+          github-artifact-id: "${{ steps.upload-unsigned-artifact.outputs.artifact-id }}"
+          wait-for-completion: true
+          output-artifact-directory: "signed"
+
+      - name: Bundle release and completion (Windows)
+        if: startsWith(matrix.info.os, 'windows')
+        shell: bash
+        run: |
+          mv signed/btm.exe btm.exe
+          ASSET_NAME="bottom_${{ matrix.info.artifact_name || matrix.info.target }}.zip"
+          7z a "$ASSET_NAME" "btm.exe"
+          7z a "$ASSET_NAME" "completion"
+          echo "ASSET=$ASSET_NAME" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
-        if: matrix.info.os != 'windows-2022'
+        if: ${{ !(startsWith(matrix.info.os, 'windows')) }}
         shell: bash
         run: |
+          ASSET_NAME="bottom_${{ matrix.info.artifact_name || matrix.info.target }}.tar.gz"
           cp target/${{ matrix.info.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.info.target }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.info.target }}.tar.gz" >> $GITHUB_ENV
+          tar -czvf "$ASSET_NAME" btm completion
+          echo "ASSET=$ASSET_NAME" >> $GITHUB_ENV
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
@@ -261,111 +319,7 @@ jobs:
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           retention-days: 3
-          name: "release-${{ matrix.info.target }}"
-          path: release
-
-  build-freebsd:
-    name: "Build FreeBSD binaries"
-    runs-on: "ubuntu-latest"
-    timeout-minutes: 12
-    strategy:
-      fail-fast: false
-      matrix:
-        info:
-          # Seems like cross's FreeBSD image is a bit broken? I get build errors,
-          # may be related to this issue: https://github.com/cross-rs/cross/issues/1291
-
-          # Alas, that's why we do it with VMs.
-
-          - { os_release: "15.0", target: "x86_64-unknown-freebsd" }
-          - { os_release: "14.3", target: "x86_64-unknown-freebsd" }
-          - { os_release: "13.5", target: "x86_64-unknown-freebsd" }
-    steps:
-      - name: Checkout repository
-        if: matrix.info.container == ''
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 1
-
-      # The VM jobs randomly fail, and since GHA can't retry, we retry manually.
-      - name: Build (Attempt 1)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
-        with:
-          release: "${{ matrix.info.os_release }}"
-          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
-          usesh: true
-          prepare: |
-            pkg install -y curl bash
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
-          run: |
-            . "$HOME/.cargo/env"
-            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
-        id: upload_attempt_1
-        continue-on-error: true
-
-      - name: Build (Attempt 2)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
-        with:
-          release: "${{ matrix.info.os_release }}"
-          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
-          usesh: true
-          prepare: |
-            pkg install -y curl bash
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
-          run: |
-            . "$HOME/.cargo/env"
-            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
-        if: steps.upload_attempt_1.outcome == 'failure'
-        id: upload_attempt_2
-        continue-on-error: true
-
-      - name: Build (Attempt 3)
-        uses: vmactions/freebsd-vm@487ce35b96fae3e60d45b521735f5aa436ecfade # v1.2.4
-        with:
-          release: "${{ matrix.info.os_release }}"
-          envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS COMPLETION_DIR MANPAGE_DIR"
-          usesh: true
-          prepare: |
-            pkg install -y curl bash
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-            sh rustup.sh --default-toolchain stable -y
-          run: |
-            . "$HOME/.cargo/env"
-            BTM_GENERATE=true BTM_BUILD_RELEASE_CALLER=${{ inputs.caller }} cargo build --release --locked --target=${{ matrix.info.target }} --features deploy
-        if: steps.upload_attempt_2.outcome == 'failure'
-        id: upload_attempt_3
-
-      - name: Move automatically generated completion/manpage
-        shell: bash
-        run: |
-          mv "$COMPLETION_DIR" completion
-          mv "$MANPAGE_DIR" manpage
-
-      - name: Bundle release and completion
-        shell: bash
-        run: |
-          cp target/${{ matrix.info.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.info.target }}-${{ matrix.info.os_release }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.info.target }}-${{ matrix.info.os_release }}.tar.gz" >> $GITHUB_ENV
-
-      - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
-        with:
-          subject-path: ${{ env.ASSET }}
-
-      - name: Create release directory for artifact, move file
-        shell: bash
-        run: |
-          mkdir release
-          mv ${{ env.ASSET }} release/
-
-      - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
-        with:
-          retention-days: 3
-          name: "release-${{ matrix.info.target }}-${{ matrix.info.os_release }}"
+          name: "release-${{ matrix.info.artifact_name || matrix.info.target }}"
           path: release
 
   build-msi:
@@ -388,7 +342,7 @@ jobs:
     runs-on: ${{ matrix.info.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -448,57 +402,27 @@ jobs:
           name: "release-${{ matrix.info.target }}-msi"
           path: release
 
-  build-cirrus:
-    name: "Build using Cirrus CI"
-    runs-on: "ubuntu-latest"
-    timeout-minutes: 12
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 0
-
-      - name: Create release directory
-        run: |
-          mkdir -p release
-
-      - name: Execute Cirrus CI build script
-        env:
-          CIRRUS_KEY: ${{ secrets.CIRRUS_TOKEN }}
-        run: |
-          if [[ "${{ github.ref_type }}" == "branch" ]]; then
-            BRANCH="${{ github.ref_name }}";
-          else
-            raw=$(git branch -r --contains '${{ github.ref_name }}');
-            BRANCH=${raw##*/};
-          fi
-          python ./scripts/ci/cirrus_release.py "$BRANCH" "release/" "${{ inputs.caller }}"
-
-      - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
-        with:
-          subject-path: "release/**/*.tar.gz"
-
-      - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
-        with:
-          retention-days: 3
-          name: release-build-cirrus
-          path: release
-
   build-deb:
     name: "Build .deb software packages"
-    runs-on: "ubuntu-22.04"
+    runs-on: ${{ matrix.info.os || 'ubuntu-24.04' }}
     timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
-        # TODO: In the future, when ARM runners are available on github, switch ARM targets off of cross.
         info:
           - { target: "x86_64-unknown-linux-gnu", dpkg: amd64 }
           - { target: "x86_64-unknown-linux-musl", cross: true, dpkg: amd64 }
           - {
               target: "aarch64-unknown-linux-gnu",
+              cross: false,
+              dpkg: arm64,
+              os: "ubuntu-22.04-arm",
+            }
+          # The cross images don't work with ARM runners, unfortunately. We could build it on x86 with cross
+          # and then copy it over to an ARM runner but that's kind of annoying, so I'll skip this for now.
+          # TODO: Maybe improve how we do the .deb software building step?
+          - {
+              target: "aarch64-unknown-linux-musl",
               cross: true,
               dpkg: arm64,
               container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
@@ -510,12 +434,6 @@ jobs:
               container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
             }
           - {
-              target: "aarch64-unknown-linux-musl",
-              cross: true,
-              dpkg: arm64,
-              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
-            }
-          - {
               target: "armv7-unknown-linux-musleabihf",
               cross: true,
               dpkg: armhf,
@@ -523,7 +441,7 @@ jobs:
             }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -540,7 +458,6 @@ jobs:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
-      # TODO: Could I use the previous jobs to skip this call?
       - name: Build
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         env:
@@ -550,7 +467,7 @@ jobs:
           command: build
           args: --release --locked --features deploy --target ${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross || false }}
-          cross-version: 0.2.5
+          cross-version: ${{ env.CROSS_VERSION }}
 
       - name: Move automatically generated completion/manpage
         shell: bash
@@ -562,8 +479,8 @@ jobs:
         run: |
           gzip ./manpage/btm.1
 
-      - name: Build Debian release (x86-64)
-        if: startsWith(matrix.info.target, 'x86_64')
+      - name: Build Debian release (non-container)
+        if: ${{ matrix.info.container == '' }}
         env:
           BTM_GENERATE: true
         run: |
@@ -571,8 +488,8 @@ jobs:
           cargo deb --no-build --target ${{ matrix.info.target }}
           cp ./target/debian/bottom_*.deb .
 
-      - name: Build Debian release (ARM)
-        if: startsWith(matrix.info.target, 'x86_64') != true
+      - name: Build Debian release (container)
+        if: ${{ matrix.info.container != '' }}
         env:
           BTM_GENERATE: true
         run: |
@@ -623,7 +540,7 @@ jobs:
 
   build-rpm:
     name: "Build .rpm software packages"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: ghcr.io/clementtsang/almalinux-8
     timeout-minutes: 12
     strategy:
@@ -634,7 +551,7 @@ jobs:
           - { target: "x86_64-unknown-linux-musl", cross: true }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -651,7 +568,6 @@ jobs:
           toolchain: ${{ matrix.info.rust || env.RUST_VERSION }}
           target: ${{ matrix.info.target }}
 
-      # TODO: Could I use the previous jobs to skip this call?
       - name: Build
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         env:
@@ -662,7 +578,7 @@ jobs:
           command: build
           use-cross: ${{ matrix.info.cross || false }}
           args: --release --locked --features deploy --target ${{ matrix.info.target }}
-          cross-version: 0.2.5
+          cross-version: ${{ env.CROSS_VERSION }}
 
       - name: Move automatically generated completion/manpage
         shell: bash
@@ -678,7 +594,7 @@ jobs:
         env:
           BTM_GENERATE: true
         run: |
-          cargo install cargo-generate-rpm --version 0.19.0 --locked
+          cargo install cargo-generate-rpm --version 0.20.0 --locked
           cargo generate-rpm --target ${{ matrix.info.target }}
           cp ./target/${{ matrix.info.target }}/generate-rpm/bottom-*.rpm .
 
@@ -744,7 +660,7 @@ jobs:
           - { os: "windows-2022", target: "x86_64-pc-windows-msvc" }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 

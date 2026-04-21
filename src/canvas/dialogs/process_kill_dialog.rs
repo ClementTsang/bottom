@@ -338,7 +338,8 @@ impl ProcessKillDialog {
                                 };
 
                                 if new >= SIGNAL_TEXT.len() {
-                                    // If the new value is too large, then just assume we instead want the value itself.
+                                    // If the new value is too large, then just assume we instead
+                                    // want the value itself.
                                     state.select(Some(value as usize));
                                     self.last_char = Some((c, Instant::now()));
                                 } else {
@@ -607,7 +608,8 @@ impl ProcessKillDialog {
     }
 
     pub fn handle_redraw(&mut self) {
-        // FIXME: Not sure if we need this. We can probably handle this better in the draw function later.
+        // FIXME: Not sure if we need this. We can probably handle this better in the
+        // draw function later.
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         {
@@ -677,11 +679,9 @@ impl ProcessKillDialog {
             }
         };
 
-        let block = dialog_block(styles.border_type)
+        let block = dialog_block(styles.border_type, styles.border_style)
             .title_top(title)
-            .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned())
-            .style(styles.border_style)
-            .border_style(styles.border_style);
+            .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned());
 
         let num_lines = text.line_count(block.inner(draw_area).width) as u16;
 
@@ -697,7 +697,8 @@ impl ProcessKillDialog {
                 const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;
 
                 // Make the rect only as big as it needs to be, which is the height of the text,
-                // the buttons, and up to 2 spaces (margin and space between), and the size of the block.
+                // the buttons, and up to 2 spaces (margin and space between), and the size of
+                // the block.
                 let [draw_area] =
                     Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2 + 3)])
                         .flex(Flex::Center)
@@ -811,11 +812,9 @@ impl ProcessKillDialog {
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
-        let block = dialog_block(styles.border_type)
+        let block = dialog_block(styles.border_type, styles.border_style)
             .title_top(title)
-            .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned())
-            .style(styles.border_style)
-            .border_style(styles.border_style);
+            .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned());
 
         let num_lines = text.line_count(block.inner(draw_area).width) as u16;
 
@@ -839,8 +838,8 @@ impl ProcessKillDialog {
     pub fn draw(&mut self, f: &mut Frame<'_>, draw_area: Rect, styles: &Styles) {
         // The idea is:
         // - Use as big of a dialog box as needed (within the maximal draw loc)
-        //  - So the non-button ones are going to be smaller... probably
-        //    whatever the height of the text is.
+        //  - So the non-button ones are going to be smaller... probably whatever the
+        //    height of the text is.
         //  - Meanwhile for the button one, it'll likely be full height if it's
         //    "advanced" kill.
 

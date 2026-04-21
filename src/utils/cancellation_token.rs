@@ -5,7 +5,8 @@ use std::{
 
 /// A cancellation token.
 pub(crate) struct CancellationToken {
-    // The "check" for the cancellation token. Setting this to true will mark the cancellation token as "cancelled".
+    // The "check" for the cancellation token. Setting this to true will mark the cancellation
+    // token as "cancelled".
     mutex: Mutex<bool>,
     cvar: Condvar,
 }
@@ -42,7 +43,8 @@ impl CancellationToken {
         self.mutex.try_lock().ok().map(|guard| *guard)
     }
 
-    /// Allows a thread to sleep while still being interruptible with by the token.
+    /// Allows a thread to sleep while still being interruptible with by the
+    /// token.
     ///
     /// Returns the condition state after either sleeping or being woken up.
     pub fn sleep_with_cancellation(&self, duration: Duration) -> bool {

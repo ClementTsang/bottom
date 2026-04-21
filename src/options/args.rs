@@ -236,14 +236,6 @@ pub struct GeneralArgs {
     )]
     pub expanded: bool,
 
-    #[arg(
-        long,
-        action = ArgAction::SetTrue,
-        help = "Hides spacing between table headers and entries.",
-        alias = "hide-table-gap"
-    )]
-    pub hide_table_gap: bool,
-
     #[arg(long, action = ArgAction::SetTrue, help = "Hides the time scale from being shown.", alias = "hide-time")]
     pub hide_time: bool,
 
@@ -590,6 +582,15 @@ pub struct NetworkArgs {
         alias = "use-old-network-legend"
     )]
     pub use_old_network_legend: bool,
+
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Displays packets information (packet rate and average packet size) in the network widget.",
+        long_help = "Displays packets information including packet rate (packets per second) and average packet size in the network widget.",
+        alias = "show-packets"
+    )]
+    pub show_packets: bool,
 }
 
 /// Battery arguments/config options.
@@ -661,7 +662,8 @@ pub struct OtherArgs {
     version: (),
 }
 
-/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the program.
+/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the
+/// program.
 pub fn get_args() -> BottomArgs {
     BottomArgs::parse()
 }

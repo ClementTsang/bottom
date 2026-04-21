@@ -5,21 +5,22 @@ pub mod states;
 
 use std::time::Instant;
 
-use concat_string::concat_string;
 use data::*;
 use filter::*;
 use layout_manager::*;
 use rustc_hash::FxHashMap as HashMap;
 pub use states::*;
-use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
     canvas::{
         components::time_graph::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
     },
     constants,
+    options::config::flags::TableGap,
     utils::data_units::DataUnit,
-    widgets::{ProcWidgetColumn, ProcWidgetMode, TreeCollapsed},
+    widgets::{
+        DiskWidgetColumn, ProcWidgetColumn, ProcWidgetMode, TempWidgetColumn, TreeCollapsed,
+    },
 };
 
 const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
@@ -33,7 +34,10 @@ pub enum AxisScaling {
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
-#[derive(Debug, Default, Eq, PartialEq)]
+///
+/// TODO: Clean this up, we probably don't need to have this duplicated.
+#[derive(Debug, Default)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct AppConfigFields {
     pub update_rate: u64,
     pub temperature_type: TemperatureType,
@@ -49,7 +53,7 @@ pub struct AppConfigFields {
     pub hide_time: bool,
     pub autohide_time: bool,
     pub use_old_network_legend: bool,
-    pub table_gap: u16,
+    pub table_gap: TableGap,
     pub disable_click: bool,
     pub disable_keys: bool,
     pub enable_gpu: bool,
@@ -68,9 +72,12 @@ pub struct AppConfigFields {
     pub network_legend_position: Option<LegendPosition>,
     pub network_scale_type: AxisScaling,
     pub network_use_binary_prefix: bool,
+    pub network_show_packets: bool,
     pub retention_ms: u64,
     pub dedicated_average_row: bool,
     pub default_tree_collapse: bool,
+    pub default_temp_sort_column: Option<TempWidgetColumn>,
+    pub default_disk_sort_column: Option<DiskWidgetColumn>,
 }
 
 /// For filtering out information
@@ -132,8 +139,9 @@ impl App {
     pub fn update_data(&mut self) {
         let data_source = self.data_store.get_data();
 
-        // FIXME: (points_rework_v1) maybe separate PR but would it make more sense to store references of data?
-        // Would it also make more sense to move the "data set" step to the draw step, and make it only set if force
+        // FIXME: (points_rework_v1) maybe separate PR but would it make more sense to
+        // store references of data? Would it also make more sense to move the
+        // "data set" step to the draw step, and make it only set if force
         // update is set here?
         for proc in self.states.proc_state.widget_states.values_mut() {
             if proc.force_update_data {
@@ -491,34 +499,13 @@ impl App {
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if is_in_search_widget
-                        && proc_widget_state.proc_search.search_state.is_enabled
-                        && proc_widget_state.cursor_char_index()
-                            < proc_widget_state
-                                .proc_search
-                                .search_state
-                                .current_search_query
-                                .len()
+                    if is_in_search_widget && proc_widget_state.proc_search.search_state.is_enabled
                     {
-                        let current_cursor = proc_widget_state.cursor_char_index();
-                        proc_widget_state.search_walk_forward();
-
-                        let _ = proc_widget_state
+                        proc_widget_state
                             .proc_search
                             .search_state
-                            .current_search_query
-                            .drain(current_cursor..proc_widget_state.cursor_char_index());
-
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(
-                                current_cursor,
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                true,
-                            );
+                            .input_field_state
+                            .delete_at_cursor();
 
                         proc_widget_state.update_query();
                     }
@@ -540,33 +527,12 @@ impl App {
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
-                if is_in_search_widget
-                    && proc_widget_state.proc_search.search_state.is_enabled
-                    && proc_widget_state.cursor_char_index() > 0
-                {
-                    let current_cursor = proc_widget_state.cursor_char_index();
-                    proc_widget_state.search_walk_back();
-
-                    // Remove the indices in between.
-                    let _ = proc_widget_state
+                if is_in_search_widget && proc_widget_state.proc_search.search_state.is_enabled {
+                    proc_widget_state
                         .proc_search
                         .search_state
-                        .current_search_query
-                        .drain(proc_widget_state.cursor_char_index()..current_cursor);
-
-                    proc_widget_state.proc_search.search_state.grapheme_cursor =
-                        GraphemeCursor::new(
-                            proc_widget_state.cursor_char_index(),
-                            proc_widget_state
-                                .proc_search
-                                .search_state
-                                .current_search_query
-                                .len(),
-                            true,
-                        );
-
-                    proc_widget_state.proc_search.search_state.cursor_direction =
-                        CursorDirection::Left;
+                        .input_field_state
+                        .delete_behind_cursor();
 
                     proc_widget_state.update_query();
                 }
@@ -618,27 +584,24 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.cursor_char_index();
-                            proc_widget_state.search_walk_back();
-                            if proc_widget_state.cursor_char_index() < prev_cursor {
-                                proc_widget_state.proc_search.search_state.cursor_direction =
-                                    CursorDirection::Left;
-                            }
+                            proc_widget_state
+                                .proc_search
+                                .search_state
+                                .input_field_state
+                                .move_left();
                         }
                     }
                 }
                 BottomWidgetType::Battery => {
                     #[cfg(feature = "battery")]
-                    if self.data_store.get_data().battery_harvest.len() > 1 {
-                        if let Some(battery_widget_state) = self
+                    if self.data_store.get_data().battery_harvest.len() > 1
+                        && let Some(battery_widget_state) = self
                             .states
                             .battery_state
                             .get_mut_widget_state(self.current_widget.widget_id)
-                        {
-                            if battery_widget_state.currently_selected_battery_index > 0 {
-                                battery_widget_state.currently_selected_battery_index -= 1;
-                            }
-                        }
+                        && battery_widget_state.currently_selected_battery_index > 0
+                    {
+                        battery_widget_state.currently_selected_battery_index -= 1;
                     }
                 }
                 _ => {}
@@ -668,12 +631,11 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.cursor_char_index();
-                            proc_widget_state.search_walk_forward();
-                            if proc_widget_state.cursor_char_index() > prev_cursor {
-                                proc_widget_state.proc_search.search_state.cursor_direction =
-                                    CursorDirection::Right;
-                            }
+                            proc_widget_state
+                                .proc_search
+                                .search_state
+                                .input_field_state
+                                .move_right();
                         }
                     }
                 }
@@ -810,19 +772,11 @@ impl App {
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
                     if is_in_search_widget {
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(
-                                0,
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                true,
-                            );
-
-                        proc_widget_state.proc_search.search_state.cursor_direction =
-                            CursorDirection::Left;
+                        proc_widget_state
+                            .proc_search
+                            .search_state
+                            .input_field_state
+                            .skip_to_beginning();
                     }
                 }
             }
@@ -840,16 +794,11 @@ impl App {
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
                     if is_in_search_widget {
-                        let query_len = proc_widget_state
+                        proc_widget_state
                             .proc_search
                             .search_state
-                            .current_search_query
-                            .len();
-
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(query_len, query_len, true);
-                        proc_widget_state.proc_search.search_state.cursor_direction =
-                            CursorDirection::Right;
+                            .input_field_state
+                            .skip_to_end();
                     }
                 }
             }
@@ -877,52 +826,11 @@ impl App {
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
-                // Traverse backwards from the current cursor location until you hit
-                // non-whitespace characters, then continue to traverse (and
-                // delete) backwards until you hit a whitespace character.  Halt.
-
-                // So... first, let's get our current cursor position in terms of char indices.
-                let end_index = proc_widget_state.cursor_char_index();
-
-                // Then, let's crawl backwards until we hit our location, and store the
-                // "head"...
-                let query = proc_widget_state.current_search_query();
-                let mut start_index = 0;
-                let mut saw_non_whitespace = false;
-
-                for (itx, c) in query
-                    .chars()
-                    .rev()
-                    .enumerate()
-                    .skip(query.len() - end_index)
-                {
-                    if c.is_whitespace() {
-                        if saw_non_whitespace {
-                            start_index = query.len() - itx;
-                            break;
-                        }
-                    } else {
-                        saw_non_whitespace = true;
-                    }
-                }
-
-                let _ = proc_widget_state
+                proc_widget_state
                     .proc_search
                     .search_state
-                    .current_search_query
-                    .drain(start_index..end_index);
-
-                proc_widget_state.proc_search.search_state.grapheme_cursor = GraphemeCursor::new(
-                    start_index,
-                    proc_widget_state
-                        .proc_search
-                        .search_state
-                        .current_search_query
-                        .len(),
-                    true,
-                );
-
-                proc_widget_state.proc_search.search_state.cursor_direction = CursorDirection::Left;
+                    .input_field_state
+                    .delete_previous_word();
 
                 proc_widget_state.update_query();
             }
@@ -961,24 +869,10 @@ impl App {
                         proc_widget_state
                             .proc_search
                             .search_state
-                            .current_search_query
-                            .insert(proc_widget_state.cursor_char_index(), caught_char);
-
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(
-                                proc_widget_state.cursor_char_index(),
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                true,
-                            );
-                        proc_widget_state.search_walk_forward();
+                            .input_field_state
+                            .insert_char(caught_char);
 
                         proc_widget_state.update_query();
-                        proc_widget_state.proc_search.search_state.cursor_direction =
-                            CursorDirection::Right;
 
                         return;
                     }
@@ -1336,7 +1230,8 @@ impl App {
         // 1. Send a movement signal in `direction`.
         // 2. Check if this new widget we've landed on is hidden.  If not, halt.
         // 3. If it hidden, loop and either send:
-        //    - A signal equal to the current direction, if it is opposite of the reflection.
+        //    - A signal equal to the current direction, if it is opposite of the
+        //      reflection.
         //    - Reflection direction.
 
         if !self.ignore_normal_keybinds() && !self.is_expanded {
@@ -1481,38 +1376,36 @@ impl App {
                                                 .get(&(new_widget_id - *offset))
                                             {
                                                 match &new_widget.widget_type {
-                                                    BottomWidgetType::ProcSearch => {
+                                                    BottomWidgetType::ProcSearch =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_search_enabled() {
                                                             if let Some(next_neighbour_id) =
                                                                 option_next_neighbour_id
-                                                            {
-                                                                if let Some(next_neighbour_widget) =
+                                                                && let Some(next_neighbour_widget) =
                                                                     self.widget_map
                                                                         .get(&next_neighbour_id)
-                                                                {
-                                                                    self.current_widget =
-                                                                        next_neighbour_widget
-                                                                            .clone();
-                                                                }
+                                                            {
+                                                                self.current_widget =
+                                                                    next_neighbour_widget.clone();
                                                             }
                                                         } else {
                                                             self.current_widget =
                                                                 new_widget.clone();
                                                         }
                                                     }
-                                                    BottomWidgetType::ProcSort => {
+                                                    BottomWidgetType::ProcSort =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_sort_open {
                                                             if let Some(next_neighbour_id) =
                                                                 option_next_neighbour_id
-                                                            {
-                                                                if let Some(next_neighbour_widget) =
+                                                                && let Some(next_neighbour_widget) =
                                                                     self.widget_map
                                                                         .get(&next_neighbour_id)
-                                                                {
-                                                                    self.current_widget =
-                                                                        next_neighbour_widget
-                                                                            .clone();
-                                                                }
+                                                            {
+                                                                self.current_widget =
+                                                                    next_neighbour_widget.clone();
                                                             }
                                                         } else {
                                                             self.current_widget =
@@ -1561,7 +1454,9 @@ impl App {
                                                 .get(&(new_widget_id - *offset))
                                             {
                                                 match &new_widget.widget_type {
-                                                    BottomWidgetType::ProcSearch => {
+                                                    BottomWidgetType::ProcSearch =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_search_enabled() {
                                                             if let Some(parent_proc_widget) = self
                                                                 .widget_map
@@ -1575,7 +1470,9 @@ impl App {
                                                                 new_widget.clone();
                                                         }
                                                     }
-                                                    BottomWidgetType::ProcSort => {
+                                                    BottomWidgetType::ProcSort =>
+                                                    {
+                                                        #[allow(clippy::collapsible_match)]
                                                         if !proc_widget_state.is_sort_open {
                                                             if let Some(parent_proc_widget) = self
                                                                 .widget_map
@@ -1632,15 +1529,15 @@ impl App {
                                     .get(&(self.current_widget.widget_id - *offset))
                                 {
                                     match &self.current_widget.widget_type {
-                                        BottomWidgetType::ProcSearch => {
-                                            if !proc_widget_state.is_search_enabled() {
-                                                reflection_dir = Some(parent_direction.clone());
-                                            }
+                                        BottomWidgetType::ProcSearch
+                                            if !proc_widget_state.is_search_enabled() =>
+                                        {
+                                            reflection_dir = Some(parent_direction.clone());
                                         }
-                                        BottomWidgetType::ProcSort => {
-                                            if !proc_widget_state.is_sort_open {
-                                                reflection_dir = Some(parent_direction.clone());
-                                            }
+                                        BottomWidgetType::ProcSort
+                                            if !proc_widget_state.is_sort_open =>
+                                        {
+                                            reflection_dir = Some(parent_direction.clone());
                                         }
                                         _ => {}
                                     }
@@ -2598,21 +2495,18 @@ impl App {
         {
             let height_diff = brc_y - tlc_y;
             if height_diff >= constants::TABLE_GAP_HEIGHT_LIMIT {
-                1 + self.app_config_fields.table_gap
+                1 + self.app_config_fields.table_gap.height()
             } else {
                 let min_height_for_header = if self.is_drawing_border() { 3 } else { 1 };
                 u16::from(height_diff > min_height_for_header)
             }
         } else {
-            1 + self.app_config_fields.table_gap
+            1 + self.app_config_fields.table_gap.height()
         }
     }
 
     /// A quick and dirty way to handle paste events.
     pub fn handle_paste(&mut self, paste: String) {
-        // Partially copy-pasted from the single-char variant; should probably clean up
-        // this process in the future. In particular, encapsulate this entire
-        // logic and add some tests to make it less potentially error-prone.
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .states
@@ -2620,28 +2514,14 @@ impl App {
             .widget_states
             .get_mut(&(self.current_widget.widget_id - 1))
         {
-            let num_runes = UnicodeSegmentation::graphemes(paste.as_str(), true).count();
-
             if is_in_search_widget && proc_widget_state.is_search_enabled() {
-                let left_bound = proc_widget_state.cursor_char_index();
-
-                let curr_query = &mut proc_widget_state
+                proc_widget_state
                     .proc_search
                     .search_state
-                    .current_search_query;
-                let (left, right) = curr_query.split_at(left_bound);
-                *curr_query = concat_string!(left, paste, right);
-
-                proc_widget_state.proc_search.search_state.grapheme_cursor =
-                    GraphemeCursor::new(left_bound, curr_query.len(), true);
-
-                for _ in 0..num_runes {
-                    proc_widget_state.search_walk_forward();
-                }
+                    .input_field_state
+                    .insert_string(paste);
 
                 proc_widget_state.update_query();
-                proc_widget_state.proc_search.search_state.cursor_direction =
-                    CursorDirection::Right;
             }
         }
     }

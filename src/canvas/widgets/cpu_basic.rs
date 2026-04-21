@@ -30,16 +30,19 @@ impl Painter {
         // **General logic** - count number of elements in cpu_data.  Then see how
         // many rows and columns we have in draw_loc (-2 on both sides for border?).
         // I think what we can do is try to fit in as many in one column as possible.
-        // If not, then add a new column. Then, from this, split the row space across ALL columns.
-        // From there, generate the desired lengths.
+        // If not, then add a new column. Then, from this, split the row space across
+        // ALL columns. From there, generate the desired lengths.
 
-        if app_state.current_widget.widget_id == widget_id {
-            f.render_widget(
-                widget_block(true, true, self.styles.border_type)
-                    .border_style(self.styles.highlighted_border_style),
-                draw_loc,
-            );
-        }
+        f.render_widget(
+            widget_block(
+                true,
+                app_state.current_widget.widget_id == widget_id,
+                self.styles.border_type,
+                self.styles.general_widget_style,
+            )
+            .border_style(self.styles.highlighted_border_style),
+            draw_loc,
+        );
 
         // TODO: This is pretty ugly. Is there a better way of doing it?
         let mut avg_index = cpu_data.len() + 1;

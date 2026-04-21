@@ -7,7 +7,6 @@ use std::{borrow::Cow, collections::BTreeMap};
 
 use indexmap::IndexSet;
 use itertools::Itertools;
-use nohash::IntMap;
 pub use process_columns::*;
 pub use process_data::*;
 use query::{ProcessQuery, parse_query};
@@ -25,6 +24,7 @@ use crate::{
     },
     collection::processes::{Pid, ProcessHarvest},
     options::config::style::Styles,
+    utils::int_hash::IntHashMap,
     widgets::query::QueryOptions,
 };
 
@@ -32,6 +32,7 @@ use crate::{
 /// state.
 #[derive(Default)]
 pub struct ProcessSearchState {
+    // TODO: Flatten AppSearchState as it's been generalized further.
     pub search_state: AppSearchState,
     pub query_options: QueryOptions,
 }
@@ -367,7 +368,9 @@ impl ProcWidgetState {
                         State,
                         Time,
                         Priority,
-                        // Maybe add nice back as a default when I can figure out how to do the default configs better for Windows? As currently otherwise there's a mismatch.
+                        // Maybe add nice back as a default when I can figure out how to do the
+                        // default configs better for Windows? As currently otherwise there's a
+                        // mismatch.
                     ];
 
                     default_columns.into_iter().map(make_column).collect()
@@ -558,10 +561,10 @@ impl ProcWidgetState {
         // - The process contains some descendant that matches.
         // - The process's parent (and only parent, not any ancestor) matches.
         let filtered_tree = {
-            let mut filtered_tree: IntMap<Pid, Vec<Pid>> = IntMap::default();
+            let mut filtered_tree: IntHashMap<Pid, Vec<Pid>> = IntHashMap::default();
 
             // We do a simple DFS traversal to build our filtered parent-to-tree mappings.
-            let mut visited_pids: IntMap<Pid, bool> = IntMap::default();
+            let mut visited_pids: IntHashMap<Pid, bool> = IntHashMap::default();
             let mut stack = orphan_pids
                 .iter()
                 .filter_map(|process| process_harvest.get(process))
@@ -690,7 +693,8 @@ impl ProcWidgetState {
                     has_children = !children_pids.is_empty();
                 }
 
-                // This is so that if an entry is "collapsed" but there are no children, avoid drawing the "+".
+                // This is so that if an entry is "collapsed" but there are no children, avoid
+                // drawing the "+".
                 let prefix = if has_children {
                     if prefixes.is_empty() {
                         "+ ".to_string()
@@ -925,7 +929,7 @@ impl ProcWidgetState {
     fn hide_column(&mut self, column: ProcWidgetColumn) {
         if let Some(index) = self.column_mapping.get_index_of(&column) {
             if let Some(col) = self.table.columns.get_mut(index) {
-                col.is_hidden = true;
+                col.set_hidden(true);
 
                 if self.table.sort_index() == index {
                     self.table.set_sort_index(self.default_sort_index);
@@ -939,7 +943,7 @@ impl ProcWidgetState {
     fn show_column(&mut self, column: ProcWidgetColumn) {
         if let Some(index) = self.column_mapping.get_index_of(&column) {
             if let Some(col) = self.table.columns.get_mut(index) {
-                col.is_hidden = false;
+                col.set_hidden(false);
             }
         }
     }
@@ -1061,49 +1065,36 @@ impl ProcWidgetState {
         self.table
             .columns
             .iter()
-            .filter(|c| !c.is_hidden)
+            .filter(|c| !c.is_hidden())
             .map(|c| c.inner().text())
             .collect::<Vec<_>>()
-    }
-
-    pub fn cursor_char_index(&self) -> usize {
-        self.proc_search.search_state.grapheme_cursor.cur_cursor()
     }
 
     pub fn is_search_enabled(&self) -> bool {
         self.proc_search.search_state.is_enabled
     }
 
-    pub fn current_search_query(&self) -> &str {
-        &self.proc_search.search_state.current_search_query
-    }
-
     /// Update the current search query.
     ///
     /// TODO: Maybe debounce this.
     pub fn update_query(&mut self) {
-        if self
+        let current_query = self
             .proc_search
             .search_state
-            .current_search_query
-            .is_empty()
-        {
-            self.proc_search.search_state.is_blank_search = true;
+            .input_field_state
+            .current_query();
+
+        if current_query.is_empty() {
             self.proc_search.search_state.is_invalid_search = false;
             self.proc_search.search_state.error_message = None;
         } else {
-            match parse_query(
-                &self.proc_search.search_state.current_search_query,
-                &self.proc_search.query_options,
-            ) {
+            match parse_query(current_query, &self.proc_search.query_options) {
                 Ok(parsed_query) => {
                     self.proc_search.search_state.query = Some(parsed_query);
-                    self.proc_search.search_state.is_blank_search = false;
                     self.proc_search.search_state.is_invalid_search = false;
                     self.proc_search.search_state.error_message = None;
                 }
                 Err(err) => {
-                    self.proc_search.search_state.is_blank_search = false;
                     self.proc_search.search_state.is_invalid_search = true;
                     self.proc_search.search_state.error_message = Some(err.to_string());
                 }
@@ -1112,23 +1103,12 @@ impl ProcWidgetState {
         self.table.state.display_start_index = 0;
         self.table.state.current_index = 0;
 
-        // Update the internal sizes too.
-        self.proc_search.search_state.update_sizes();
-
         self.force_data_update();
     }
 
     pub fn clear_search(&mut self) {
         self.proc_search.search_state.reset();
         self.force_data_update();
-    }
-
-    pub fn search_walk_forward(&mut self) {
-        self.proc_search.search_state.walk_forward();
-    }
-
-    pub fn search_walk_back(&mut self) {
-        self.proc_search.search_state.walk_backward();
     }
 
     /// Sets the [`ProcWidgetState`]'s current sort index to whatever was in the
@@ -1653,7 +1633,8 @@ mod test {
         assert_eq!(get_columns(&state.table), original_columns);
     }
 
-    /// Sanity test to ensure tree collapse logic works, both when enabled-by-default or disabled-by-default.
+    /// Sanity test to ensure tree collapse logic works, both when
+    /// enabled-by-default or disabled-by-default.
     #[test]
     fn test_tree_collapse() {
         {

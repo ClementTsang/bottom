@@ -77,7 +77,8 @@ impl Stat {
     /// [here](https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html) as a reference.
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
         // Since this is just one line, we can read it all at once. However, since it
-        // (technically) might have non-utf8 characters, we can't just use read_to_string.
+        // (technically) might have non-utf8 characters, we can't just use
+        // read_to_string.
         f.read_to_end(unsafe { buffer.as_mut_vec() })?;
 
         // TODO: Is this needed?
@@ -258,7 +259,8 @@ impl Process {
     /// that are unlikely to change, or are short-lived and
     /// will be discarded quickly.
     ///
-    /// This takes in a buffer to avoid allocs; this function will clear the buffer.
+    /// This takes in a buffer to avoid allocs; this function will clear the
+    /// buffer.
     #[inline]
     pub(crate) fn from_path(
         pid_path: PathBuf, buffer: &mut String, get_threads: bool,
@@ -303,7 +305,8 @@ impl Process {
         reset(&mut root, buffer);
 
         let cmdline = if cmdline(&mut root, &pid_dir, buffer).is_ok() {
-            // The clone will give a string with the capacity of the length of buffer, don't worry.
+            // The clone will give a string with the capacity of the length of buffer, don't
+            // worry.
             Some(buffer.clone())
         } else {
             None

@@ -1,7 +1,7 @@
 //! Code related to drawing.
 //!
-//! Note that eventually this should not contain any widget-specific draw code, but rather just generic code
-//! or components.
+//! Note that eventually this should not contain any widget-specific draw code,
+//! but rather just generic code or components.
 
 pub mod components;
 pub mod dialogs;
@@ -101,7 +101,8 @@ impl Painter {
                 self.previous_width = terminal_width;
             }
 
-            // TODO: We should probably remove this or make it done elsewhere, not the responsibility of the app.
+            // TODO: We should probably remove this or make it done elsewhere, not the
+            // responsibility of the app.
             if app_state.should_get_widget_bounds() {
                 // If we're force drawing, reset ALL mouse boundaries.
                 for widget in app_state.widget_map.values_mut() {
@@ -120,6 +121,10 @@ impl Painter {
 
             // TODO: Make drawing dialog generic.
             if app_state.help_dialog_state.is_showing_help {
+                let area = f.area();
+                f.buffer_mut()
+                    .set_style(area, self.styles.general_widget_style);
+
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
                 let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
                 let [_, vertical_dialog_chunk, _] = Layout::default()
@@ -178,7 +183,12 @@ impl Painter {
 
                 self.draw_help_dialog(f, app_state, middle_dialog_chunk);
             } else if app_state.process_kill_dialog.is_open() {
-                // FIXME: For width, just limit to a max size or full width. For height, not sure. Maybe pass max and let child handle?
+                let area = f.area();
+                f.buffer_mut()
+                    .set_style(area, self.styles.general_widget_style);
+
+                // FIXME: For width, just limit to a max size or full width. For height, not
+                // sure. Maybe pass max and let child handle?
                 let horizontal_padding = if terminal_width < 100 { 0 } else { 5 };
                 let vertical_padding = if terminal_height < 100 { 0 } else { 5 };
 
@@ -238,13 +248,9 @@ impl Painter {
                         rect[0],
                         app_state.current_widget.widget_id,
                     ),
-                    Net => self.draw_network_graph(
-                        f,
-                        app_state,
-                        rect[0],
-                        app_state.current_widget.widget_id,
-                        false,
-                    ),
+                    Net => {
+                        self.draw_network(f, app_state, rect[0], app_state.current_widget.widget_id)
+                    }
                     Proc | ProcSearch | ProcSort => {
                         let widget_id = app_state.current_widget.widget_id
                             - match &app_state.current_widget.widget_type {
@@ -311,8 +317,14 @@ impl Painter {
                     mem_rows += data.gpu_harvest.len() as u16; // add row(s) for gpu
                 }
 
-                if mem_rows == 1 {
-                    mem_rows += 1; // need at least 2 rows for RX and TX
+                let network_rows = if app_state.app_config_fields.network_show_packets {
+                    4 // 4 rows for RX/TX and Packet Rates (Avg sizes moved to right side)
+                } else {
+                    2 // 2 rows for RX and TX
+                };
+
+                if mem_rows < network_rows {
+                    mem_rows += network_rows - mem_rows; // min rows
                 }
 
                 let vertical_chunks = Layout::default()

@@ -2,10 +2,12 @@
 
 use std::{io, process::Command};
 
-use nohash::IntMap;
 use serde::{Deserialize, Deserializer};
 
-use crate::collection::{Pid, deserialize_xo, processes::UnixProcessExt};
+use crate::{
+    collection::{Pid, deserialize_xo, processes::UnixProcessExt},
+    utils::int_hash::IntHashMap,
+};
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -30,9 +32,9 @@ impl UnixProcessExt for FreeBSDProcessExt {
         true
     }
 
-    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<IntMap<Pid, f32>> {
+    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<IntHashMap<Pid, f32>> {
         if pids.is_empty() {
-            return Ok(IntMap::default());
+            return Ok(IntHashMap::default());
         }
 
         let output = Command::new("ps")

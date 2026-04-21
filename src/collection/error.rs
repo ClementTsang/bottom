@@ -3,7 +3,8 @@ use anyhow::anyhow;
 /// An error to do with data collection.
 #[derive(Debug)]
 pub enum CollectionError {
-    /// A general error to propagate back up. A wrapper around [`anyhow::Error`].
+    /// A general error to propagate back up. A wrapper around
+    /// [`anyhow::Error`].
     General(anyhow::Error),
 
     /// The collection is unsupported.

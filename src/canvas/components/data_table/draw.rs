@@ -7,8 +7,9 @@ use concat_string::concat_string;
 use tui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
+    symbols::line,
     text::{Line, Span, Text},
-    widgets::{Block, Cell, Row, Table},
+    widgets::{Block, Cell, Padding, Row, Table},
 };
 
 use super::{
@@ -19,6 +20,7 @@ use crate::{
     app::layout_manager::BottomWidget,
     canvas::{Painter, drawing_utils::widget_block},
     constants::TABLE_GAP_HEIGHT_LIMIT,
+    options::config::flags::TableGap,
     utils::strings::truncate_to_text,
 };
 
@@ -50,8 +52,7 @@ pub struct DrawInfo {
 
 impl DrawInfo {
     pub fn is_on_widget(&self) -> bool {
-        matches!(self.selection_state, SelectionState::Selected)
-            || matches!(self.selection_state, SelectionState::Expanded)
+        !matches!(self.selection_state, SelectionState::NotSelected)
     }
 
     pub fn is_expanded(&self) -> bool {
@@ -78,8 +79,13 @@ where
             self.styling.border_style
         };
 
-        let mut block = widget_block(self.props.is_basic, is_selected, self.styling.border_type)
-            .border_style(border_style);
+        let mut block = widget_block(
+            self.props.is_basic,
+            is_selected,
+            self.styling.border_type,
+            self.styling.general_widget_style,
+        )
+        .border_style(border_style);
 
         if let Some((left_title, right_title)) = self.generate_title(draw_info, data_len) {
             if !self.props.is_basic {
@@ -136,11 +142,13 @@ where
         let draw_loc = draw_info.loc;
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)])
-            .horizontal_margin(u16::from(self.props.is_basic && !draw_info.is_on_widget()))
             .direction(Direction::Horizontal)
             .split(draw_loc)[0];
 
-        let block = self.block(draw_info, self.data.len());
+        let mut block = self.block(draw_info, self.data.len());
+        if self.props.is_basic && !draw_info.is_on_widget() {
+            block = block.padding(Padding::horizontal(1))
+        }
 
         let (inner_width, inner_height) = {
             let inner_rect = block.inner(margined_draw_loc);
@@ -183,10 +191,11 @@ where
 
             let show_header = inner_height > 1;
             let header_height = u16::from(show_header);
+            let table_gap_setting = self.props.table_gap;
             let table_gap = if !show_header || draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
             } else {
-                self.props.table_gap
+                table_gap_setting.height()
             };
 
             if !self.data.is_empty() || !self.first_draw {
@@ -266,6 +275,35 @@ where
 
                 let table_state = &mut self.state.table_state;
                 f.render_stateful_widget(widget, margined_draw_loc, table_state);
+
+                if table_gap > 0 && table_gap_setting == TableGap::Line && show_header {
+                    let y = self.state.inner_rect.y + header_height;
+                    let buf = f.buffer_mut();
+                    let border_style = if draw_info.is_on_widget() {
+                        self.styling.highlighted_border_style
+                    } else {
+                        self.styling.border_style
+                    };
+
+                    for x in (draw_loc.x + 1)..(draw_loc.x + draw_loc.width - 1) {
+                        if let Some(cell) = buf.cell_mut((x, y)) {
+                            cell.set_symbol(line::NORMAL.horizontal);
+                            cell.set_style(border_style);
+                        }
+                    }
+
+                    if !self.props.is_basic || draw_info.is_on_widget() {
+                        if let Some(cell) = buf.cell_mut((draw_loc.x, y)) {
+                            cell.set_symbol(line::NORMAL.vertical_right);
+                            cell.set_style(border_style);
+                        }
+
+                        if let Some(cell) = buf.cell_mut((draw_loc.x + draw_loc.width - 1, y)) {
+                            cell.set_symbol(line::NORMAL.vertical_left);
+                            cell.set_style(border_style);
+                        }
+                    }
+                }
             } else {
                 let table = Table::new(
                     once(Row::new(Text::raw("No data"))),

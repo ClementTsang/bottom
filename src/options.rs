@@ -28,7 +28,7 @@ use starship_battery::Manager;
 
 use self::{
     args::BottomArgs,
-    config::{IgnoreList, StringOrNum, layout::Row},
+    config::{IgnoreList, StringOrNum, flags::TableGap, layout::Row},
 };
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
@@ -60,8 +60,9 @@ macro_rules! is_flag_enabled {
     };
 }
 
-/// A new version if [`is_flag_enabled`] which instead expects the user to pass in `config_section`, which is
-/// the section the flag is located, rather than defaulting to `config.flags` where `config` is passed in.
+/// A new version if [`is_flag_enabled`] which instead expects the user to pass
+/// in `config_section`, which is the section the flag is located, rather than
+/// defaulting to `config.flags` where `config` is passed in.
 macro_rules! is_flag_enabled_new {
     ($flag_name:ident, $arg:expr, $config_section:expr) => {
         if $arg.$flag_name {
@@ -87,8 +88,8 @@ const DEFAULT_CONFIG_FILE_LOCATION: &str = "bottom/bottom.toml";
 /// For more details on this, see [dirs](https://docs.rs/dirs/latest/dirs/fn.config_dir.html)'
 /// documentation.
 ///
-/// XXX: For macOS, we additionally will manually check `$XDG_CONFIG_HOME` as well first
-/// before falling back to `dirs`.
+/// XXX: For macOS, we additionally will manually check `$XDG_CONFIG_HOME` as
+/// well first before falling back to `dirs`.
 fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
     if let Some(conf_loc) = override_config_path {
         return Some(conf_loc.to_path_buf());
@@ -114,8 +115,9 @@ fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
     if cfg!(target_os = "macos") {
         if let Ok(xdg_config_path) = std::env::var("XDG_CONFIG_HOME") {
             if !xdg_config_path.is_empty() {
-                // If XDG_CONFIG_HOME exists and is non-empty, _but_ we previously used the Library-based path
-                // for a config and it exists, then use that instead for backwards-compatibility.
+                // If XDG_CONFIG_HOME exists and is non-empty, _but_ we previously used the
+                // Library-based path for a config and it exists, then use that
+                // instead for backwards-compatibility.
                 if let Some(old_macos_path) = &config_path {
                     if let Ok(res) = old_macos_path.try_exists() {
                         if res {
@@ -152,12 +154,13 @@ fn create_config_at_path(path: &Path) -> anyhow::Result<Config> {
 /// path, it will try to create a new file with the default settings, and return
 /// the default config.
 ///
-/// We're going to use the following behaviour on when we'll return an error rather
-/// than just "silently" continuing on:
-/// - If the user passed in a path explicitly, then we will be loud and error out.
+/// We're going to use the following behaviour on when we'll return an error
+/// rather than just "silently" continuing on:
+/// - If the user passed in a path explicitly, then we will be loud and error
+///   out.
 /// - If the user does NOT pass in a path explicitly, then just show a warning,
-///   but continue. This is in case they do not want to write a default config file at
-///   the XDG locations, for example.
+///   but continue. This is in case they do not want to write a default config
+///   file at the XDG locations, for example.
 pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config> {
     let adjusted_config_path = get_config_path(config_path);
 
@@ -276,6 +279,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let network_scale_type = get_network_scale_type(args, config);
     let network_use_binary_prefix =
         is_flag_enabled!(network_use_binary_prefix, args.network, config);
+    let network_show_packets = get_network_show_packets(args, config);
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
         config.processes.as_ref().and_then(|cfg| {
@@ -310,7 +314,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         hide_time: is_flag_enabled!(hide_time, args.general, config),
         autohide_time,
         use_old_network_legend: is_flag_enabled!(use_old_network_legend, args.network, config),
-        table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, args.general, config))),
+        table_gap: get_table_gap(config),
         disable_click: is_flag_enabled!(disable_click, args.general, config),
         disable_keys: is_flag_enabled!(disable_keys, args.general, config),
         enable_gpu: get_enable_gpu(args, config),
@@ -330,11 +334,20 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         network_scale_type,
         network_unit_type,
         network_use_binary_prefix,
+        network_show_packets,
         retention_ms,
         dedicated_average_row: get_dedicated_avg_row(config),
         default_tree_collapse: is_default_tree_collapsed,
         #[cfg(feature = "zfs")]
         free_arc,
+        default_temp_sort_column: config
+            .temperature
+            .as_ref()
+            .and_then(|cfg| cfg.default_sort.to_owned()),
+        default_disk_sort_column: config
+            .disk
+            .as_ref()
+            .and_then(|cfg| cfg.default_sort.to_owned()),
     };
 
     let table_config = ProcTableConfig {
@@ -755,6 +768,14 @@ fn get_default_cpu_selection(args: &BottomArgs, config: &Config) -> config::cpu:
     }
 }
 
+fn get_table_gap(config: &Config) -> TableGap {
+    config
+        .flags
+        .as_ref()
+        .map(|flags| flags.table_gap)
+        .unwrap_or_default()
+}
+
 fn get_dedicated_avg_row(config: &Config) -> bool {
     config
         .flags
@@ -975,6 +996,18 @@ fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
     }
 
     AxisScaling::Linear
+}
+
+fn get_network_show_packets(args: &BottomArgs, config: &Config) -> bool {
+    if args.network.show_packets {
+        return true;
+    } else if let Some(network_config) = &config.network {
+        if let Some(show_packets) = network_config.show_packets {
+            return show_packets;
+        }
+    }
+
+    false
 }
 
 fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
@@ -1263,8 +1296,9 @@ mod test {
         }
     }
 
-    /// This one has slightly more complex behaviour due to `dirs` not respecting XDG on macOS, so we manually
-    /// handle it. However, to ensure backwards-compatibility, we also have to do some special cases.
+    /// This one has slightly more complex behaviour due to `dirs` not
+    /// respecting XDG on macOS, so we manually handle it. However, to
+    /// ensure backwards-compatibility, we also have to do some special cases.
     #[cfg(target_os = "macos")]
     #[test]
     fn test_get_config_path_macos() {
@@ -1273,7 +1307,8 @@ mod test {
         use super::{DEFAULT_CONFIG_FILE_LOCATION, get_config_path};
 
         // Case three: no previous config, no XDG var.
-        // SAFETY: This is fine, this is just a test, and no other test affects env vars.
+        // SAFETY: This is fine, this is just a test, and no other test affects env
+        // vars.
         unsafe {
             std::env::remove_var("XDG_CONFIG_HOME");
         }
@@ -1291,7 +1326,8 @@ mod test {
         }
 
         // Case two: no previous config, XDG var exists.
-        // SAFETY: This is fine, this is just a test, and no other test affects env vars.
+        // SAFETY: This is fine, this is just a test, and no other test affects env
+        // vars.
         unsafe {
             std::env::set_var("XDG_CONFIG_HOME", "/tmp");
         }

@@ -7,8 +7,8 @@ use tui::{style::Color, symbols};
 
 /// A single layer of the canvas.
 ///
-/// This allows the canvas to be drawn in multiple layers. This is useful if you want to draw
-/// multiple shapes on the canvas in specific order.
+/// This allows the canvas to be drawn in multiple layers. This is useful if you
+/// want to draw multiple shapes on the canvas in specific order.
 ///
 /// **NOTE**: In the vendored version, we don't ever actually want to do this.
 #[derive(Debug)]
@@ -18,10 +18,11 @@ pub(super) struct Layer {
 
 /// A cell within a layer.
 ///
-/// If a [`Context`] contains multiple layers, then the symbol, foreground, and background colors
-/// for a character will be determined by the top-most layer that provides a value for that
-/// character. For example, a chart drawn with [`Marker::Block`] may provide the background color,
-/// and a later chart drawn with [`Marker::Braille`] may provide the symbol and foreground color.
+/// If a [`Context`] contains multiple layers, then the symbol, foreground, and
+/// background colors for a character will be determined by the top-most layer
+/// that provides a value for that character. For example, a chart drawn with
+/// [`Marker::Block`] may provide the background color, and a later chart drawn
+/// with [`Marker::Braille`] may provide the symbol and foreground color.
 #[derive(Debug)]
 pub(super) struct LayerCell {
     pub(super) symbol: Option<char>,
@@ -31,21 +32,24 @@ pub(super) struct LayerCell {
 
 /// A grid of cells that can be painted on.
 ///
-/// The grid represents a particular screen region measured in rows and columns. The underlying
-/// resolution of the grid might exceed the number of rows and columns. For example, a grid of
-/// Braille patterns will have a resolution of 2x4 dots per cell. This means that a grid of 10x10
-/// cells will have a resolution of 20x40 dots.
+/// The grid represents a particular screen region measured in rows and columns.
+/// The underlying resolution of the grid might exceed the number of rows and
+/// columns. For example, a grid of Braille patterns will have a resolution of
+/// 2x4 dots per cell. This means that a grid of 10x10 cells will have a
+/// resolution of 20x40 dots.
 pub(super) trait Grid: Debug {
     /// Get the resolution of the grid in number of dots.
     ///
-    /// This doesn't have to be the same as the number of rows and columns of the grid. For example,
-    /// a grid of Braille patterns will have a resolution of 2x4 dots per cell. This means that a
-    /// grid of 10x10 cells will have a resolution of 20x40 dots.
+    /// This doesn't have to be the same as the number of rows and columns of
+    /// the grid. For example, a grid of Braille patterns will have a
+    /// resolution of 2x4 dots per cell. This means that a grid of 10x10
+    /// cells will have a resolution of 20x40 dots.
     fn resolution(&self) -> (f64, f64);
     /// Paint a point of the grid.
     ///
-    /// The point is expressed in number of dots starting at the origin of the grid in the top left
-    /// corner. Note that this is not the same as the `(x, y)` coordinates of the canvas.
+    /// The point is expressed in number of dots starting at the origin of the
+    /// grid in the top left corner. Note that this is not the same as the
+    /// `(x, y)` coordinates of the canvas.
     fn paint(&mut self, x: usize, y: usize, color: Color);
     /// Save the current state of the [`Grid`] as a layer to be rendered
     fn save(&self) -> Layer;
@@ -58,28 +62,33 @@ pub(super) trait Grid: Debug {
 struct PatternCell {
     /// The pattern of a grid character.
     ///
-    /// The pattern is stored in the lower bits in a row-major order. For instance, for a 2x4
-    /// pattern marker, bits 0 to 7 of this field should represent the following pseudo-pixels:
+    /// The pattern is stored in the lower bits in a row-major order. For
+    /// instance, for a 2x4 pattern marker, bits 0 to 7 of this field should
+    /// represent the following pseudo-pixels:
     ///
     /// | 0 1 |
     /// | 2 3 |
     /// | 4 5 |
     /// | 6 7 |
     pattern: u8,
-    /// The color of a cell only supports foreground colors for now as there's no way to
-    /// individually set the background color of each pseudo-pixel in a pattern character.
+    /// The color of a cell only supports foreground colors for now as there's
+    /// no way to individually set the background color of each pseudo-pixel
+    /// in a pattern character.
     color: Option<Color>,
 }
 
-/// The `PatternGrid` is a grid made up of cells each containing a `W`x`H` pattern character.
+/// The `PatternGrid` is a grid made up of cells each containing a `W`x`H`
+/// pattern character.
 ///
-/// This makes it possible to draw shapes with a resolution of e.g. 2x4 (Braille or Unicode octant)
-/// per cell.
-/// Font support for the relevant pattern character is required. If your terminal or font does not
-/// support the relevant Unicode block, you will see Unicode replacement characters (�) instead.
+/// This makes it possible to draw shapes with a resolution of e.g. 2x4 (Braille
+/// or Unicode octant) per cell.
+/// Font support for the relevant pattern character is required. If your
+/// terminal or font does not support the relevant Unicode block, you will see
+/// Unicode replacement characters (�) instead.
 ///
-/// This grid type only supports a single foreground colour for each `W`x`H` pattern character.
-/// There is no way to set the individual colour of each pseudo-pixel.
+/// This grid type only supports a single foreground colour for each `W`x`H`
+/// pattern character. There is no way to set the individual colour of each
+/// pseudo-pixel.
 #[derive(Debug)]
 pub(super) struct PatternGrid<const W: usize, const H: usize> {
     /// Width of the grid in number of terminal columns
@@ -96,8 +105,8 @@ impl<const W: usize, const H: usize> PatternGrid<W, H> {
     /// Statically check that the dimension of the pattern is supported.
     const _PATTERN_DIMENSION_CHECK: usize = u8::BITS as usize - W * H;
 
-    /// Create a new `PatternGrid` with the given width and height measured in terminal columns
-    /// and rows respectively.
+    /// Create a new `PatternGrid` with the given width and height measured in
+    /// terminal columns and rows respectively.
     pub(super) fn new(width: u16, height: u16, char_table: &'static [char]) -> Self {
         // Cause a static error if the pattern doesn't fit within 8 bits.
         let _ = Self::_PATTERN_DIMENSION_CHECK;
@@ -224,17 +233,18 @@ impl<const W: usize, const H: usize> Grid for PatternGrid<W, H> {
 //                 if let Some(cell) = self.utf16_code_points.get_mut(index) {
 //                     *cell = BLANK | DOTS[y % 4][x % 2];
 //                 }
-//             } else if let Some(cell) = self.utf16_code_points.get_mut(index) {
-//                 *cell |= DOTS[y % 4][x % 2];
+//             } else if let Some(cell) = self.utf16_code_points.get_mut(index)
+// {                 *cell |= DOTS[y % 4][x % 2];
 //             }
 //         }
 //     }
 //
 //     fn save(&self) -> Layer {
-//         let string = String::from_utf16(&self.utf16_code_points).expect("valid UTF-16 data");
+//         let string =
+// String::from_utf16(&self.utf16_code_points).expect("valid UTF-16 data");
 //         // the background color is always reset for braille patterns
-//         let colors = self.colors.iter().map(|c| (*c, Color::Reset)).collect();
-//         Layer { string, colors }
+//         let colors = self.colors.iter().map(|c| (*c,
+// Color::Reset)).collect();         Layer { string, colors }
 //     }
 //
 //     fn reset(&mut self) {
@@ -243,10 +253,11 @@ impl<const W: usize, const H: usize> Grid for PatternGrid<W, H> {
 //     }
 // }
 
-/// The `CharGrid` is a grid made up of cells each containing a single character.
+/// The `CharGrid` is a grid made up of cells each containing a single
+/// character.
 ///
-/// This makes it possible to draw shapes with a resolution of 1x1 dots per cell. This is useful
-/// when you want to draw shapes with a low resolution.
+/// This makes it possible to draw shapes with a resolution of 1x1 dots per
+/// cell. This is useful when you want to draw shapes with a low resolution.
 #[derive(Debug)]
 pub(super) struct CharGrid {
     /// Width of the grid in number of terminal columns
@@ -259,15 +270,16 @@ pub(super) struct CharGrid {
     /// The character to use for every cell - e.g. a block, dot, etc.
     cell_char: char,
 
-    /// If true, apply the color to the background as well as the foreground. This is used for
-    /// [`Marker::Block`], so that it will overwrite any previous foreground character, but also
-    /// leave a background that can be overlaid with an additional foreground character.
+    /// If true, apply the color to the background as well as the foreground.
+    /// This is used for [`Marker::Block`], so that it will overwrite any
+    /// previous foreground character, but also leave a background that can
+    /// be overlaid with an additional foreground character.
     apply_color_to_bg: bool,
 }
 
 impl CharGrid {
-    /// Create a new `CharGrid` with the given width and height measured in terminal columns and
-    /// rows respectively.
+    /// Create a new `CharGrid` with the given width and height measured in
+    /// terminal columns and rows respectively.
     pub(super) fn new(width: u16, height: u16, cell_char: char) -> Self {
         let length = usize::from(width) * usize::from(height);
         Self {
@@ -320,19 +332,21 @@ impl Grid for CharGrid {
     }
 }
 
-/// The `HalfBlockGrid` is a grid made up of cells each containing a half block character.
+/// The `HalfBlockGrid` is a grid made up of cells each containing a half block
+/// character.
 ///
-/// In terminals, each character is usually twice as tall as it is wide. Unicode has a couple of
-/// vertical half block characters, the upper half block '▀' and lower half block '▄' which take up
-/// half the height of a normal character but the full width. Together with an empty space ' ' and a
-/// full block '█', we can effectively double the resolution of a single cell. In addition, because
-/// each character can have a foreground and background color, we can control the color of the upper
-/// and lower half of each cell. This allows us to draw shapes with a resolution of 1x2 "pixels" per
-/// cell.
+/// In terminals, each character is usually twice as tall as it is wide. Unicode
+/// has a couple of vertical half block characters, the upper half block '▀' and
+/// lower half block '▄' which take up half the height of a normal character but
+/// the full width. Together with an empty space ' ' and a full block '█', we
+/// can effectively double the resolution of a single cell. In addition, because
+/// each character can have a foreground and background color, we can control
+/// the color of the upper and lower half of each cell. This allows us to draw
+/// shapes with a resolution of 1x2 "pixels" per cell.
 ///
-/// This allows for more flexibility than the `PatternGrid` which only supports a single
-/// foreground color for each 2x4 dots cell, and the `CharGrid` which only supports a single
-/// character for each cell.
+/// This allows for more flexibility than the `PatternGrid` which only supports
+/// a single foreground color for each 2x4 dots cell, and the `CharGrid` which
+/// only supports a single character for each cell.
 #[derive(Debug)]
 
 pub(super) struct HalfBlockGrid {
@@ -345,8 +359,8 @@ pub(super) struct HalfBlockGrid {
 }
 
 impl HalfBlockGrid {
-    /// Create a new `HalfBlockGrid` with the given width and height measured in terminal columns
-    /// and rows respectively.
+    /// Create a new `HalfBlockGrid` with the given width and height measured in
+    /// terminal columns and rows respectively.
     pub(super) fn new(width: u16, height: u16) -> Self {
         Self {
             width,
@@ -366,10 +380,11 @@ impl Grid for HalfBlockGrid {
     }
 
     fn save(&self) -> Layer {
-        // Given that we store the pixels in a grid, and that we want to use 2 pixels arranged
-        // vertically to form a single terminal cell, which can be either empty, upper half block,
-        // lower half block or full block, we need examine the pixels in vertical pairs to decide
-        // what character to print in each cell. So these are the 4 states we use to represent each
+        // Given that we store the pixels in a grid, and that we want to use 2 pixels
+        // arranged vertically to form a single terminal cell, which can be
+        // either empty, upper half block, lower half block or full block, we
+        // need examine the pixels in vertical pairs to decide what character to
+        // print in each cell. So these are the 4 states we use to represent each
         // cell:
         //
         // 1. upper: reset, lower: reset => ' ' fg: reset / bg: reset
@@ -377,24 +392,27 @@ impl Grid for HalfBlockGrid {
         // 3. upper: color, lower: reset => '▀' fg: upper color / bg: reset
         // 4. upper: color, lower: color => '▀' fg: upper color / bg: lower color
         //
-        // Note that because the foreground reset color (i.e. default foreground color) is usually
-        // not the same as the background reset color (i.e. default background color), we need to
-        // swap around the colors for that state (2 reset/color).
+        // Note that because the foreground reset color (i.e. default foreground color)
+        // is usually not the same as the background reset color (i.e. default
+        // background color), we need to swap around the colors for that state
+        // (2 reset/color).
         //
-        // When the upper and lower colors are the same, we could continue to use an upper half
-        // block, but we choose to use a full block instead. This allows us to write unit tests that
-        // treat the cell as a single character instead of two half block characters.
+        // When the upper and lower colors are the same, we could continue to use an
+        // upper half block, but we choose to use a full block instead. This
+        // allows us to write unit tests that treat the cell as a single
+        // character instead of two half block characters.
 
-        // first we join each adjacent row together to get an iterator that contains vertical pairs
-        // of pixels, with the lower row being the first element in the pair
+        // first we join each adjacent row together to get an iterator that contains
+        // vertical pairs of pixels, with the lower row being the first element
+        // in the pair
         let vertical_color_pairs = self
             .pixels
             .iter()
             .tuples()
             .flat_map(|(upper_row, lower_row)| zip(upper_row, lower_row));
 
-        // Then we determine the character to print for each pair, along with the color of the
-        // foreground and background.
+        // Then we determine the character to print for each pair, along with the color
+        // of the foreground and background.
         let contents = vertical_color_pairs
             .map(|(upper, lower)| {
                 let (symbol, fg, bg) = match (upper, lower) {

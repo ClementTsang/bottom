@@ -10,7 +10,7 @@ use crate::{
     app::{App, data::Values},
     canvas::{
         Painter,
-        components::time_graph::{GraphData, PercentTimeGraph},
+        components::time_graph::{GraphData, LegendConstraints, PercentTimeGraph},
         drawing_utils::should_hide_x_label,
     },
     collection::memory::MemData,
@@ -67,8 +67,8 @@ impl Painter {
                 let mut size = 1;
                 let data = app_state.data_store.get_data();
 
-                // TODO: is this optimization really needed...? This just pre-allocates a vec, but it'll probably never
-                // be that big...
+                // TODO: is this optimization really needed...? This just pre-allocates a vec,
+                // but it'll probably never be that big...
 
                 if data.swap_harvest.is_some() {
                     size += 1; // add capacity for SWAP
@@ -174,7 +174,10 @@ impl Painter {
                 styles: &self.styles,
                 widget_id,
                 legend_position: app_state.app_config_fields.memory_legend_position,
-                legend_constraints: Some((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
+                legend_constraints: Some(LegendConstraints {
+                    width: Constraint::Ratio(3, 4),
+                    height: Constraint::Ratio(3, 4),
+                }),
             }
             .build()
             .draw(f, draw_loc, graph_data);

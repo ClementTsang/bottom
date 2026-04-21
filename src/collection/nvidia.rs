@@ -1,6 +1,5 @@
 use std::{num::NonZeroU64, sync::OnceLock};
 
-use nohash::IntMap;
 use nvml_wrapper::{
     Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError,
 };
@@ -8,6 +7,7 @@ use nvml_wrapper::{
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
     collection::{memory::MemData, processes::Pid, temperature::TempSensorData},
+    utils::int_hash::IntHashMap,
 };
 
 pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
@@ -15,13 +15,14 @@ pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
 pub struct GpusData {
     pub memory: Option<Vec<(String, MemData)>>,
     pub temperature: Option<Vec<TempSensorData>>,
-    pub procs: Option<(u64, Vec<IntMap<Pid, (u64, u32)>>)>,
+    pub procs: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
 }
 
 /// Wrapper around Nvml::init
 ///
 /// On Linux, if `Nvml::init()` fails, this function attempts to explicitly load
-/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls `Nvml::init`.
+/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls
+/// `Nvml::init`.
 ///
 /// This is a workaround until https://github.com/Cldfire/nvml-wrapper/pull/63 is accepted.
 /// Then, we can go back to calling `Nvml::init` directly on all platforms.
@@ -88,7 +89,7 @@ pub fn get_nvidia_vecs(
                     }
 
                     if widgets_to_harvest.use_proc {
-                        let mut procs = IntMap::default();
+                        let mut procs = IntHashMap::default();
 
                         if let Ok(gpu_procs) = device.process_utilization_stats(None) {
                             for proc in gpu_procs {

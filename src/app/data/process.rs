@@ -1,8 +1,9 @@
 use std::{collections::BTreeMap, vec::Vec};
 
-use nohash::IntMap;
-
-use crate::collection::processes::{Pid, ProcessHarvest};
+use crate::{
+    collection::processes::{Pid, ProcessHarvest},
+    utils::int_hash::IntHashMap,
+};
 
 #[derive(Clone, Debug, Default)]
 pub struct ProcessData {
@@ -10,7 +11,7 @@ pub struct ProcessData {
     pub process_harvest: BTreeMap<Pid, ProcessHarvest>,
 
     /// A mapping between a process PID to any children process PIDs.
-    pub process_parent_mapping: IntMap<Pid, Vec<Pid>>,
+    pub process_parent_mapping: IntHashMap<Pid, Vec<Pid>>,
 
     /// PIDs corresponding to processes that have no parents.
     pub orphan_pids: Vec<Pid>,

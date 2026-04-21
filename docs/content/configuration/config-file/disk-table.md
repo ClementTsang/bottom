@@ -10,6 +10,18 @@ You can configure which columns are shown by the disk table widget by setting th
 columns = ["Disk", "Mount", "Used", "Free", "Total", "Used%", "R/s", "W/s"]
 ```
 
+## Default Sort Order
+
+You can customize the default sort order (by default, it sorts by disk name). For example, to sort by the read rate:
+
+```toml
+[disk]
+default_sort = "R/s"
+```
+
+You can use any valid [column](#columns) name here (e.g. "Disk", "Mount", etc.). Note that if you put a column name that
+is not actually used, the default sort will just be the first column shown.
+
 ## Filtering Entries
 
 You can filter out what entries to show by configuring `[disk.name_filter]` and `[disk.mount_filter]` to filter by name and mount point respectively. In particular,

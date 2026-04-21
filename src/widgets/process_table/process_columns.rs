@@ -169,7 +169,8 @@ impl SortsRow for ProcColumn {
                 }
             }
             ProcColumn::User => {
-                // FIXME: Is there a better way here to keep the to_lowercase? Usually it shouldn't matter but...
+                // FIXME: Is there a better way here to keep the to_lowercase? Usually it
+                // shouldn't matter but...
                 if descending {
                     data.sort_by_cached_key(|pd| Reverse(pd.user.clone()));
                 } else {

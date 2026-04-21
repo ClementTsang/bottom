@@ -5,10 +5,9 @@ pub mod sysctl_bindings;
 use std::{io, process::Command};
 
 use itertools::Itertools;
-use nohash::IntMap;
 
 use super::UnixProcessExt;
-use crate::collection::Pid;
+use crate::{collection::Pid, utils::int_hash::IntHashMap};
 
 pub(crate) struct MacOSProcessExt;
 
@@ -18,7 +17,7 @@ impl UnixProcessExt for MacOSProcessExt {
         true
     }
 
-    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<IntMap<Pid, f32>> {
+    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<IntHashMap<Pid, f32>> {
         let output = Command::new("ps")
             .args(["-o", "pid=,pcpu=", "-p"])
             .arg(
@@ -28,7 +27,7 @@ impl UnixProcessExt for MacOSProcessExt {
                     .collect::<String>(),
             )
             .output()?;
-        let mut result = IntMap::default();
+        let mut result = IntHashMap::default();
         String::from_utf8_lossy(&output.stdout)
             .split_whitespace()
             .chunks(2)

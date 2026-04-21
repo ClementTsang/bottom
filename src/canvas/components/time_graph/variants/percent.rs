@@ -1,18 +1,21 @@
-//! A variant of a [`TimeGraph`] that expects data to be in a percentage format, from 0.0 to 100.0.
+//! A variant of a [`TimeGraph`] that expects data to be in a percentage format,
+//! from 0.0 to 100.0.
 
 use std::borrow::Cow;
 
-use tui::{layout::Constraint, symbols::Marker};
+use tui::symbols::Marker;
 
 use crate::{
     app::AppConfigFields,
     canvas::components::time_graph::{
-        AxisBound, ChartScaling, LegendPosition, TimeGraph, variants::get_border_style,
+        AxisBound, ChartScaling, LegendConstraints, LegendPosition, TimeGraph,
+        variants::get_border_style,
     },
     options::config::style::Styles,
 };
 
-/// Acts as a wrapper for a [`TimeGraph`] that expects data to be in a percentage format,
+/// Acts as a wrapper for a [`TimeGraph`] that expects data to be in a
+/// percentage format,
 pub(crate) struct PercentTimeGraph<'a> {
     /// The total display range of the graph in milliseconds.
     ///
@@ -35,7 +38,7 @@ pub(crate) struct PercentTimeGraph<'a> {
     pub(crate) current_widget: u64,
 
     /// Whether the current widget is expanded.
-    ///  
+    ///
     /// This is mostly used as a shared mutability workaround due to [`App`]
     /// being a giant state struct.
     pub(crate) is_expanded: bool,
@@ -53,7 +56,7 @@ pub(crate) struct PercentTimeGraph<'a> {
     pub(crate) legend_position: Option<LegendPosition>,
 
     /// The constraints for the legend.
-    pub(crate) legend_constraints: Option<(Constraint, Constraint)>,
+    pub(crate) legend_constraints: Option<LegendConstraints>,
 }
 
 impl<'a> PercentTimeGraph<'a> {
@@ -71,6 +74,7 @@ impl<'a> PercentTimeGraph<'a> {
         };
 
         let graph_style = self.styles.graph_style;
+        let general_widget_style = self.styles.general_widget_style;
         let border_style = get_border_style(self.styles, self.widget_id, self.current_widget);
         let title_style = self.styles.widget_title_style;
         let border_type = self.styles.border_type;
@@ -81,6 +85,7 @@ impl<'a> PercentTimeGraph<'a> {
             y_bounds: Y_BOUNDS,
             y_labels: &Y_LABELS,
             graph_style,
+            general_widget_style,
             border_style,
             border_type,
             title: self.title,

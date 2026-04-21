@@ -1,5 +1,13 @@
 # Network
 
+## Settings
+
+If you want to change some of the default behaviour of the network widget, you can configure some things in the config file.
+
+| Field          | Type    | Functionality                                      |
+| -------------- | ------- | -------------------------------------------------- |
+| `show_packets` | Boolean | Displays packet rate and average packet size info. |
+
 ## Filtering Entries
 
 You can filter out what entries to show by configuring `[network.interface_filter]` .

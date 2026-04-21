@@ -30,7 +30,8 @@ use crate::utils::general::ClampExt;
 ///   functions to facilitate things like sorting based on a selected column,
 ///   shortcut column selection support, mouse column selection support, etc.
 ///
-/// FIXME: We already do all the text width checks - can we skip the underlying ones?
+/// FIXME: We already do all the text width checks - can we skip the underlying
+/// ones?
 pub struct DataTable<DataType, Header, S = Unsortable, C = Column<Header>> {
     pub columns: Vec<C>,
     pub state: DataTableState,
@@ -159,6 +160,7 @@ mod test {
     use std::{borrow::Cow, num::NonZeroU16};
 
     use super::*;
+    use crate::options::config::flags::TableGap;
 
     #[derive(Clone, PartialEq, Eq, Debug)]
     struct TestType {
@@ -186,7 +188,7 @@ mod test {
         let columns = [Column::hard("a", 10), Column::hard("b", 10)];
         let props = DataTableProps {
             title: Some("test".into()),
-            table_gap: 1,
+            table_gap: TableGap::Space,
             left_to_right: false,
             is_basic: false,
             show_table_scroll_position: true,
@@ -278,7 +280,8 @@ mod test {
         assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
     }
 
-    /// A test to ensure that scroll offsets are correctly handled when we "lose" rows.
+    /// A test to ensure that scroll offsets are correctly handled when we
+    /// "lose" rows.
     #[test]
     fn test_lose_data() {
         let mut table = create_test_table();

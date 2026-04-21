@@ -4,13 +4,15 @@ use std::{io, time::Duration};
 
 use cfg_if::cfg_if;
 use itertools::Itertools;
-use nohash::IntMap;
 use sysinfo::{ProcessStatus, System};
 
 use super::{ProcessHarvest, process_status_str};
 #[cfg(target_os = "macos")]
 use crate::collection::processes::macos::sysctl_bindings;
-use crate::collection::{Pid, error::CollectionResult, processes::UserTable};
+use crate::{
+    collection::{Pid, error::CollectionResult, processes::UserTable},
+    utils::int_hash::IntHashMap,
+};
 
 fn get_nice(pid: Pid) -> i32 {
     // SAFETY: getpriority takes no user pointers; pid is passed as a value
@@ -191,8 +193,8 @@ pub(crate) trait UnixProcessExt {
         false
     }
 
-    fn backup_proc_cpu(_pids: &[Pid]) -> io::Result<IntMap<Pid, f32>> {
-        Ok(IntMap::default())
+    fn backup_proc_cpu(_pids: &[Pid]) -> io::Result<IntHashMap<Pid, f32>> {
+        Ok(IntHashMap::default())
     }
 
     fn parent_pid(process_val: &sysinfo::Process) -> Option<Pid> {

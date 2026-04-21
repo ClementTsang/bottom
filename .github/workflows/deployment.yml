@@ -1,7 +1,4 @@
 # How we deploy a release. Covers binary builds. Also manages packaging for choco.
-#
-# Binaries are primarily built by GHA, though some Linux, M1 macOS, and FreeBSD builds are
-# handled by CirrusCI.
 
 name: deployment
 
@@ -15,6 +12,8 @@ on:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
 
+permissions: {}
+
 env:
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_DEV_DEBUG: 0
@@ -23,7 +22,7 @@ env:
 jobs:
   initialize:
     name: initialize
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ env.VERSION }}
     steps:
@@ -43,6 +42,10 @@ jobs:
 
   build-release:
     needs: [initialize]
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
     uses: ./.github/workflows/build_releases.yml
     with:
       caller: "deployment"
@@ -51,10 +54,10 @@ jobs:
   generate-choco:
     needs: [initialize, build-release]
     name: "Generate Chocolatey files"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -92,8 +95,11 @@ jobs:
 
   upload-release:
     name: upload-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [initialize, generate-choco, build-release]
+    environment: production
+    permissions:
+      contents: write
     steps:
       - name: Set release version
         shell: bash

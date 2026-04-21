@@ -195,3 +195,8 @@ fn test_proc_columns() {
 fn test_linux_only() {
     run_and_kill(&["-C", "./tests/valid_configs/os_specific/linux.toml"]);
 }
+
+#[test]
+fn test_temp_disk_sort_columns() {
+    run_and_kill(&["-C", "./tests/valid_configs/temp_disk_sort_columns.toml"]);
+}

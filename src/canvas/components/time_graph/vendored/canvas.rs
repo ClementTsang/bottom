@@ -214,7 +214,8 @@ impl<'a> Context<'a> {
             Marker::Quadrant => Box::new(PatternGrid::<2, 2>::new(width, height, &QUADRANTS)),
             Marker::Sextant => Box::new(PatternGrid::<2, 3>::new(width, height, &SEXTANTS)),
             Marker::Octant => Box::new(PatternGrid::<2, 4>::new(width, height, &OCTANTS)),
-            _ => Box::new(PatternGrid::<2, 4>::new(width, height, &BRAILLE)), // Fall back to braille if not supported.
+            // Fall back to braille if not supported.
+            _ => Box::new(PatternGrid::<2, 4>::new(width, height, &BRAILLE)),
         }
     }
 

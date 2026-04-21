@@ -14,6 +14,8 @@ on:
         required: false
         type: boolean
 
+permissions: {}
+
 env:
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_DEV_DEBUG: 0
@@ -23,13 +25,13 @@ jobs:
   # Check if things should be skipped, or if this is a mock job.
   initialize-job:
     name: initialize-job
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
       - name: Check if this action should be skipped
         id: skip_check
-        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
+        uses: ClementTsang/skip-duplicate-actions@41b0a75f656d455934ffa6a46b779d8d996ac47c
         with:
           skip_after_successful_duplicate: "true"
           do_not_skip: '["workflow_dispatch"]'
@@ -47,6 +49,10 @@ jobs:
   build-release:
     needs: initialize-job
     if: ${{ needs.initialize-job.outputs.should_skip != 'true' }}
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
     uses: ./.github/workflows/build_releases.yml
     with:
       caller: "nightly"
@@ -55,12 +61,14 @@ jobs:
   upload-release:
     name: upload-release
     needs: build-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     outputs:
       TAG_NAME: ${{ steps.tag_release_name.outputs.TAG_NAME }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -108,10 +116,10 @@ jobs:
             fi
           done
 
-          echo "Now pruning all but the last three nightly runs..."
+          echo "Now pruning all but the last two nightly runs (so we end up with 3 releases after)..."
           while true; do
-            # Very gross trick - keep deleting the 4th nightly element ([3]) until null.
-            TO_DELETE_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-"))][4] | .tagName' | tr -d '"')
+            # Very gross trick - keep deleting the 3rd nightly element ([2]) until null.
+            TO_DELETE_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-"))][2] | .tagName' | tr -d '"')
             if [[ "$TO_DELETE_NIGHTLY" != "null" && "$TO_DELETE_NIGHTLY" == *"nightly-"* ]]; then
               echo "Will delete nightly release with tag '$TO_DELETE_NIGHTLY'";
               gh release delete $TO_DELETE_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
@@ -146,7 +154,11 @@ jobs:
   docs:
     needs: [initialize-job, upload-release]
     if: ${{ needs.initialize-job.outputs.should_skip != 'true' && github.event.inputs.isMock != 'true' }}
+    permissions:
+      pages: write
+      id-token: write
+      contents: write
     uses: ./.github/workflows/docs.yml
     secrets: inherit
     with:
-      nightly: ${{needs.job1.outputs.output1}}
+      version: nightly

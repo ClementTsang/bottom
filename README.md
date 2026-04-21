@@ -14,7 +14,7 @@
 </div>
 
 <div align="center">
-  <img src="assets/demo.gif" alt="Quick demo recording showing off bottom's searching, expanding, and process killing."/>
+  <img src="demos/demo.gif" alt="Quick demo recording showing off bottom's searching, expanding, and process killing."/>
   <p>
     <sub>
       Demo using the <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> theme (<code>--theme gruvbox</code>), along with <a href="https://www.ibm.com/plex/">IBM Plex Mono</a> and <a href="https://sw.kovidgoyal.net/kitty/">Kitty</a>
@@ -68,7 +68,6 @@
 As (yet another) process/system visualization and management application, bottom supports the typical features:
 
 - Graphical visualization widgets for:
-
   - [CPU usage](https://bottom.pages.dev/nightly/usage/widgets/cpu/) over time, at an average and per-core level
   - [RAM and swap usage](https://bottom.pages.dev/nightly/usage/widgets/memory/) over time
   - [Network I/O usage](https://bottom.pages.dev/nightly/usage/widgets/network/) over time
@@ -76,27 +75,23 @@ As (yet another) process/system visualization and management application, bottom
   with support for zooming in/out the current time interval displayed.
 
 - Widgets for displaying info about:
-
   - [Disk capacity/usage](https://bottom.pages.dev/nightly/usage/widgets/disk/)
   - [Temperature sensors](https://bottom.pages.dev/nightly/usage/widgets/temperature/)
   - [Battery usage](https://bottom.pages.dev/nightly/usage/widgets/battery/)
 
 - [A process widget](https://bottom.pages.dev/nightly/usage/widgets/process/) for displaying, sorting, and searching info about processes, as well as support for:
-
   - [Kill signals](https://bottom.pages.dev/nightly/usage/widgets/process/#process-termination)
   - [Tree mode](https://bottom.pages.dev/nightly/usage/widgets/process/#tree-mode)
 
 - [Cross-platform support](https://github.com/ClementTsang/bottom#support) for Linux, macOS, and Windows, with more planned in the future.
 
 - [Customizable behaviour](https://bottom.pages.dev/nightly/configuration/command-line-options/) that can be controlled with command-line options or a config file, such as:
-
   - Custom and built-in colour themes
   - Customizing widget behaviour
   - Changing the layout of widgets
   - Filtering out entries in some widgets
 
 - And more:
-
   - [An htop-inspired basic mode](https://bottom.pages.dev/nightly/usage/basic-mode/)
   - [Expansion, which focuses on just one widget](https://bottom.pages.dev/nightly/usage/general-usage/#expansion)
 
@@ -591,6 +586,11 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gitgoggles"><img src="https://avatars.githubusercontent.com/u/101480183?v=4?s=100" width="100px;" alt="gitgoggles"/><br /><sub><b>gitgoggles</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=gitgoggles" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/thunze"><img src="https://avatars.githubusercontent.com/u/22795263?v=4?s=100" width="100px;" alt="Tom"/><br /><sub><b>Tom</b></sub></a><br /><a href="#maintenance-thunze" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ggaddy"><img src="https://avatars.githubusercontent.com/u/13815367?v=4?s=100" width="100px;" alt="G"/><br /><sub><b>G</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=ggaddy" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lpnh"><img src="https://avatars.githubusercontent.com/u/90577992?v=4?s=100" width="100px;" alt="Filipe Paniguel"/><br /><sub><b>Filipe Paniguel</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=lpnh" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.jianshu.com/u/f5754cd2e83d"><img src="https://avatars.githubusercontent.com/u/15232241?v=4?s=100" width="100px;" alt="Qiying Wang"/><br /><sub><b>Qiying Wang</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=WqyJh" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/dastarruer"><img src="https://avatars.githubusercontent.com/u/173855353?v=4?s=100" width="100px;" alt="dastarruer"/><br /><sub><b>dastarruer</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=dastarruer" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -617,9 +617,12 @@ Thanks to all contributors:
 
 - To those who support my work financially via donations, thank you so much.
 
-- Also thanks to JetBrains for providing access to tools that I use to develop bottom
+- Thanks to JetBrains for providing access to tools that I use to develop bottom
   as part of their [open source support program](https://jb.gg/OpenSourceSupport).
 
   <a href="https://jb.gg/OpenSourceSupport">
     <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" alt="JetBrains logo" width="150" />
   </a>
+
+- Also thanks to [SignPath.io](https://about.signpath.io/) for providing a free code signing service, and to the
+  [SignPath Foundation](https://signpath.org/) for the certificate.

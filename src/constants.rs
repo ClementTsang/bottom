@@ -316,8 +316,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Use the old network legend style
 #use_old_network_legend = false
 
-# Remove space in tables
-#hide_table_gap = false
+# Controls the gap between table headers and data rows.
+# Options: "none", "space" (default), "line"
+#table_gap = "space"
 
 # Show the battery widgets
 #battery = false
@@ -395,9 +396,16 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Disk widget configuration
 #[disk]
+
 # The columns shown by the process widget. The following columns are supported:
 # Disk, Mount, Used, Free, Total, Used%, Free%, R/s, W/s
 #columns = ["Disk", "Mount", "Used", "Free", "Total", "Used%", "R/s", "W/s"]
+
+# The default sort type. Can be one of the following:
+# Disk, Mount, Used, Free, Total, Used%, Free%, R/s, W/s
+#
+# Defaults to "Disk".
+#default_sort = "Disk"
 
 # By default, there are no disk name filters enabled. These can be turned on to filter out specific data entries if you
 # don't want to see them. An example use case is provided below.
@@ -437,6 +445,13 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Temperature widget configuration
 #[temperature]
+
+# The default sort type. Can be one of the following:
+# Temp, Temperature, Sensor
+#
+# Defaults to "Sensor".
+#default_sort = "Sensor"
+
 # By default, there are no temperature sensor filters enabled. An example use case is provided below.
 #[temperature.sensor_filter]
 # Whether to ignore any matches. Defaults to true.
@@ -527,7 +542,8 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #text = {color = "gray"}
 #selected_text = {color = "black", bg_color = "light blue"}
 #disabled_text = {color = "dark gray"}
-
+# Disabled by default
+#bg_color = "black"
 # Only on Linux
 #thread_text = {color = "green"}
 
@@ -595,10 +611,14 @@ mod test {
 
         use crate::options::Config;
 
+        // Trim off the starting comment if it's a "#" directly following an
+        // alphabetical character or '['.
         let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
             .unwrap()
             .replace_all(CONFIG_TEXT, "$1");
 
+        // Then, trim off anything that has more than 2 spaces + alphabetical character
+        // or '[' following a "#".
         let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z\[])")
             .unwrap()
             .replace_all(&default_config, "$2");
