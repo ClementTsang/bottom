@@ -84,7 +84,7 @@ const PROCESS_HELP_TEXT: [&str; 20] = [
     "z                       Toggle the display of kernel threads",
 ];
 
-const SEARCH_HELP_TEXT: [&str; 51] = [
+const SEARCH_HELP_TEXT: [&str; 52] = [
     "4 - Process search widget",
     "Esc                  Close the search widget (retains the filter)",
     "Ctrl-a               Skip to the start of the search query",
@@ -118,6 +118,7 @@ const SEARCH_HELP_TEXT: [&str; 51] = [
     "",
     "Comparison operators:",
     "=                    ex: cpu = 1",
+    "!=                   ex: cpu != 1",
     ">                    ex: cpu > 1",
     "<                    ex: cpu < 1",
     ">=                   ex: cpu >= 1",

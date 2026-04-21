@@ -177,6 +177,7 @@ Note all keywords are case-insensitive. To search for a process/command that col
 | Keywords | Description                                                    |
 | -------- | -------------------------------------------------------------- |
 | `=`      | Checks if the values are equal                                 |
+| `!=`     | Checks if the values are not equal                             |
 | `>`      | Checks if the left value is strictly greater than the right    |
 | `<`      | Checks if the left value is strictly less than the right       |
 | `>=`     | Checks if the left value is greater than or equal to the right |
