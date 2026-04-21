@@ -198,8 +198,10 @@ impl QueryProcessor for Prefix {
                             )?));
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
-                            // We have to check if someone put an "="...
-                            if content == "=" {
+                            // We have to check if someone put an "=" or "!="...
+                            if content == "=" || content == "!=" {
+                                let negate = content == "!=";
+
                                 // Check next string if possible
                                 if let Some(string_value) = query.pop_front() {
                                     // TODO: [Query] Need to consider the following cases:
@@ -232,11 +234,13 @@ impl QueryProcessor for Prefix {
                                         string_value
                                     };
 
-                                    return Ok(Prefix::Attribute(new_string_attribute(
-                                        prefix_type,
-                                        &final_value,
-                                        options,
-                                    )?));
+                                    let attr =
+                                        new_string_attribute(prefix_type, &final_value, options)?;
+                                    return Ok(Prefix::Attribute(if negate {
+                                        ProcessAttribute::Negate(Box::new(attr))
+                                    } else {
+                                        attr
+                                    }));
                                 }
                             } else {
                                 return Ok(Prefix::Attribute(new_string_attribute(
@@ -252,6 +256,9 @@ impl QueryProcessor for Prefix {
 
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
+                                duration_string = query.pop_front();
+                            } else if content == "!=" {
+                                condition = Some(QueryComparison::NotEqual);
                                 duration_string = query.pop_front();
                             } else if content == ">" || content == "<" {
                                 if let Some(queue_next) = query.pop_front() {
@@ -301,6 +308,13 @@ impl QueryProcessor for Prefix {
                             // clean this up in the future.
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
+                                if let Some(queue_next) = query.pop_front() {
+                                    value = queue_next.parse::<f64>().ok();
+                                } else {
+                                    return Err(QueryError::missing_value());
+                                }
+                            } else if content == "!=" {
+                                condition = Some(QueryComparison::NotEqual);
                                 if let Some(queue_next) = query.pop_front() {
                                     value = queue_next.parse::<f64>().ok();
                                 } else {

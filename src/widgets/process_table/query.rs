@@ -22,8 +22,8 @@ use regex::Regex;
 
 use crate::{collection::processes::ProcessHarvest, multi_eq_ignore_ascii_case};
 
-const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
-const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];
+const DELIMITER_LIST: [char; 7] = ['=', '>', '<', '!', '(', ')', '\"'];
+const COMPARISON_LIST: [&str; 4] = [">", "=", "<", "!="];
 
 /// A node type that can take a query and read it, advancing the current read
 /// state and returning an instance of the node.
@@ -136,6 +136,16 @@ pub(crate) fn parse_query(search_query: &str, options: &QueryOptions) -> QueryRe
         }
     });
 
+    // Merge adjacent "!" and "=" tokens into a single "!=" token.
+    let mut i = 0;
+    while i + 1 < split_query.len() {
+        if split_query[i] == "!" && split_query[i + 1] == "=" {
+            split_query[i] = "!=".to_owned();
+            split_query.remove(i + 1);
+        }
+        i += 1;
+    }
+
     process_string_to_filter(&mut split_query, options)
 }
 
@@ -235,6 +245,7 @@ impl std::str::FromStr for PrefixType {
 #[derive(Debug)]
 enum QueryComparison {
     Equal,
+    NotEqual,
     Less,
     Greater,
     LessOrEqual,
@@ -255,6 +266,7 @@ impl NumericalQuery {
 
         match self.condition {
             QueryComparison::Equal => (lhs - rhs).abs() < f64::EPSILON,
+            QueryComparison::NotEqual => (lhs - rhs).abs() >= f64::EPSILON,
             QueryComparison::Less => lhs < rhs,
             QueryComparison::Greater => lhs > rhs,
             QueryComparison::LessOrEqual => lhs <= rhs,
@@ -276,6 +288,7 @@ impl TimeQuery {
 
         match self.condition {
             QueryComparison::Equal => lhs == rhs,
+            QueryComparison::NotEqual => lhs != rhs,
             QueryComparison::Less => lhs < rhs,
             QueryComparison::Greater => lhs > rhs,
             QueryComparison::LessOrEqual => lhs <= rhs,
@@ -866,4 +879,74 @@ mod tests {
 
     //     assert!(mem.check(&process_a, false));
     // }
+
+    #[test]
+    fn numerical_not_equal_query() {
+        let query = parse_query_no_options("cpu != 50").unwrap();
+
+        let mut equal = simple_process("a");
+        equal.cpu_usage_percent = 50.0;
+
+        let mut other = simple_process("a");
+        other.cpu_usage_percent = 40.0;
+
+        assert!(!query.check(&equal, false));
+        assert!(query.check(&other, false));
+    }
+
+    /// `!=` should tokenize the same whether written as `foo!=bar` or
+    /// `foo != bar`.
+    #[test]
+    fn not_equal_tokenizes_without_spaces() {
+        let spaced = parse_query_no_options("cpu != 50").unwrap();
+        let joined = parse_query_no_options("cpu!=50").unwrap();
+
+        let mut proc = simple_process("a");
+        proc.cpu_usage_percent = 40.0;
+
+        assert!(spaced.check(&proc, false));
+        assert!(joined.check(&proc, false));
+    }
+
+    #[test]
+    fn time_not_equal_query() {
+        let query = parse_query_no_options("time != 1h").unwrap();
+
+        let mut equal = simple_process("a");
+        equal.time = Duration::from_secs(3600);
+
+        let mut other = simple_process("a");
+        other.time = Duration::from_secs(60);
+
+        assert!(!query.check(&equal, false));
+        assert!(query.check(&other, false));
+    }
+
+    #[test]
+    fn state_not_equal_query() {
+        let query = parse_query_no_options("state != sleeping").unwrap();
+
+        let mut sleeping = simple_process("a");
+        sleeping.process_state.0 = "sleeping";
+
+        let mut running = simple_process("a");
+        running.process_state.0 = "running";
+
+        assert!(!query.check(&sleeping, false));
+        assert!(query.check(&running, false));
+    }
+
+    #[test]
+    fn mem_bytes_not_equal_with_unit() {
+        let query = parse_query_no_options("memb != 1 GiB").unwrap();
+
+        let mut equal = simple_process("a");
+        equal.mem_usage = 1024 * 1024 * 1024;
+
+        let mut other = simple_process("a");
+        other.mem_usage = 0;
+
+        assert!(!query.check(&equal, false));
+        assert!(query.check(&other, false));
+    }
 }
