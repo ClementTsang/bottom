@@ -10,7 +10,7 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::App,
-    canvas::{Painter, drawing_utils::dialog_block},
+    canvas::{Painter, components::search_input, drawing_utils::dialog_block},
     constants::{self, HELP_TEXT},
 };
 
@@ -44,6 +44,11 @@ impl Painter {
             let header_str = header_opt.copied();
 
             if is_filtering {
+                // Check if header matches the query
+                let header_matches = header_str
+                    .map(|h| h.to_lowercase().contains(&query))
+                    .unwrap_or(false);
+
                 // Collect matching body lines
                 let mut matched_body: Vec<Line<'_>> = Vec::new();
                 for &text in iter {
@@ -61,14 +66,29 @@ impl Painter {
                     }
                 }
 
-                if !matched_body.is_empty() {
+                if !matched_body.is_empty() || header_matches {
                     // Spacer + header (same appearance as non-search)
                     if let Some(header) = header_str {
                         lines.push(Line::from(Span::default()));
-                        lines.push(Line::from(Span::styled(
-                            header,
-                            self.styles.table_header_style,
-                        )));
+                        if header_matches {
+                            let lower = header.to_lowercase();
+                            if let Some(pos) = lower.find(&query) {
+                                let pre = &header[..pos];
+                                let mat_end = pos + query.len();
+                                let mat_str = &header[pos..mat_end];
+                                let post = &header[mat_end..];
+                                lines.push(Line::from(vec![
+                                    Span::styled(pre, self.styles.table_header_style),
+                                    Span::styled(mat_str, self.styles.text_style),
+                                    Span::styled(post, self.styles.table_header_style),
+                                ]));
+                            }
+                        } else {
+                            lines.push(Line::from(Span::styled(
+                                header,
+                                self.styles.table_header_style,
+                            )));
+                        }
                     }
                     // Push matching body lines
                     lines.extend(matched_body);
@@ -120,7 +140,7 @@ impl Painter {
             app_state.help_dialog_state.height = block.inner(content_area).height;
 
             let mut overflow_buffer = 0;
-            let paragraph_width = max(draw_loc.width.saturating_sub(2), 1);
+            let paragraph_width = max(draw_loc.width.saturating_sub(2), 1) as usize;
             let mut prev_section_len = 0;
 
             if app_state.help_dialog_state.search_query.is_empty() {
@@ -132,7 +152,7 @@ impl Painter {
 
                         section.iter().for_each(|text_line| {
                             buffer += UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16
-                                / paragraph_width;
+                                / paragraph_width as u16;
                         });
 
                         if itx == 0 {
@@ -147,10 +167,14 @@ impl Painter {
                         overflow_buffer += buffer;
                     });
             } else {
-                // When filtering in search mode, approximate wrapping overflow
+                // When filtering in search mode, calculate wrapping more accurately
                 for line in &styled_help_text {
-                    let w = UnicodeWidthStr::width(line.to_string().as_str()) as u16;
-                    overflow_buffer += w.saturating_sub(1) / paragraph_width;
+                    // Get the width by extracting text from all spans
+                    let line_text = line.spans.iter().map(|s| s.content.as_ref()).collect::<String>();
+                    let width = UnicodeWidthStr::width(line_text.as_str());
+                    if width > paragraph_width {
+                        overflow_buffer += (width.saturating_sub(1) / paragraph_width) as u16;
+                    }
                 }
             }
 
@@ -197,17 +221,8 @@ impl Painter {
             content_area,
         );
 
-        // Render input pane only when searching; no visible cursor
+        // Render input pane only when searching with visible cursor
         if app_state.help_dialog_state.is_searching {
-            let query = app_state.help_dialog_state.search_query.as_str();
-            let hint = "Type to search, Esc to clear";
-            let input_line = Line::from(vec![
-                Span::styled("Search: ", self.styles.widget_title_style),
-                Span::styled(query, self.styles.text_style),
-                Span::styled("  ", self.styles.text_style),
-                Span::styled(hint, self.styles.table_header_style),
-            ]);
-
             let input_area = tui::layout::Layout::default()
                 .direction(tui::layout::Direction::Vertical)
                 .constraints([
@@ -216,11 +231,22 @@ impl Painter {
                 ])
                 .areas::<2>(draw_loc)[1];
 
-            f.render_widget(
-                Paragraph::new(input_line)
-                    .style(self.styles.text_style)
-                    .alignment(Alignment::Left),
+            search_input::render_search_input(
+                f,
                 input_area,
+                search_input::SearchInputConfig {
+                    query: app_state.help_dialog_state.search_query.as_str(),
+                    cursor_index: app_state.help_dialog_state.search_cursor_index,
+                    is_focused: true,
+                    prefix: "Search: ",
+                    hint: Some("Type to search, Esc to clear"),
+                },
+                search_input::SearchInputStyles {
+                    prefix_style: self.styles.widget_title_style,
+                    query_style: self.styles.text_style,
+                    cursor_style: self.styles.selected_text_style,
+                    hint_style: self.styles.table_header_style,
+                },
             );
         }
     }
