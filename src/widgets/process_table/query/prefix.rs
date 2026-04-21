@@ -171,8 +171,11 @@ impl QueryProcessor for Prefix {
                 return Err(QueryError::new("Missing opening parentheses"));
             } else if curr == "!" {
                 // Negation prefix: `!<expr>` inverts the match of the following
-                // expression. Restricted to groups (`!(a or b)`), quoted names
-                // (`!"foo"`), bare names (`!foo`), and nested `!` (`!!foo`).
+                // expression. Handles:
+                // - Groups (`!(a or b)`)
+                // - Quoted names (`!"foo"`)
+                // - Bare names (`!foo`)
+                // - Stacked `!` (`!!foo`).
                 match query.front().map(|s| s.as_str()) {
                     None | Some("=") | Some(">") | Some("<") | Some(")") => {
                         return Err(QueryError::new(
@@ -340,8 +343,8 @@ impl QueryProcessor for Prefix {
                             }
                         }
                         _ => {
-                            // Assume it's some numerical value.
-                            // Now we gotta parse the content... yay.
+                            // Assume it's some numerical value. Now we gotta parse the content... yay.
+                            // Note that for numerical parsing, we handle unit parsing later, not here.
 
                             let mut condition: Option<QueryComparison> = None;
                             let mut value: Option<f64> = None;
