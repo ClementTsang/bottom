@@ -577,7 +577,7 @@ mod tests {
         state.move_left();
         assert_eq!(state.cursor_index(), 0);
 
-        // At the start — no further movement
+        // At the start - no further movement
         state.move_left();
         assert_eq!(state.cursor_index(), 0);
 
@@ -588,7 +588,7 @@ mod tests {
         state.move_right();
         assert_eq!(state.cursor_index(), 3);
 
-        // At the end — no further movement
+        // At the end - no further movement
         state.move_right();
         assert_eq!(state.cursor_index(), 3);
     }
@@ -717,7 +717,7 @@ mod tests {
     /// producing the wrong result or panicking.
     #[test]
     fn delete_previous_word_unicode() {
-        // "你好 world" — '你'=3 bytes, '好'=3 bytes, ' '=1, "world"=5, so 12 bytes
+        // "你好 world" - '你'=3 bytes, '好'=3 bytes, ' '=1, "world"=5, so 12 bytes
         // total
         let mut state = InputFieldState::default();
         state.insert_string("你好 world".to_string());
@@ -827,13 +827,13 @@ mod tests {
         assert_eq!(state.grapheme_cursor.cur_cursor(), 20);
         assert_eq!(state.display_start_index, 11);
 
-        // Clamped at the end — no further movement.
+        // Clamped at the end - no further movement.
         state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 20);
         assert_eq!(state.display_start_index, 11);
 
-        // Moving left — back over the flag emoji.
+        // Moving left - back over the flag emoji.
         state.move_left();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 12);

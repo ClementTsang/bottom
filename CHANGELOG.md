@@ -33,7 +33,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2003](https://github.com/ClementTsang/bottom/pull/2003): Configurable default sort column for temperature and disk table widgets.
 - [#1979](https://github.com/ClementTsang/bottom/pull/1979): Add global `bg_color` option to set widget background colour.
 - [#2039](https://github.com/ClementTsang/bottom/pull/2039): Support drawing a line separator between the column headers and data.
-- [#1948](https://github.com/ClementTsang/bottom/pull/1948): Support `!=` in the process search query.
+- [#1948](https://github.com/ClementTsang/bottom/pull/1948): Support `!=` operator and a `!` negation prefixes in query searches.
 
 ### Changes
 

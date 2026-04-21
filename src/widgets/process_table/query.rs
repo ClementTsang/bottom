@@ -197,6 +197,8 @@ impl std::str::FromStr for PrefixType {
         // TODO: Didn't add mem_bytes, total_read, and total_write
         // for now as it causes help to be clogged.
 
+        // TODO: Add a `name` keyword alias so something like `name = blah` is valid.
+
         let mut result = Name;
         if multi_eq_ignore_ascii_case!(s, "cpu" | "cpu%") {
             result = CpuPercentage;
@@ -880,6 +882,7 @@ mod tests {
     //     assert!(mem.check(&process_a, false));
     // }
 
+    /// Basic numerical non-equality operator test.
     #[test]
     fn numerical_not_equal_query() {
         let query = parse_query_no_options("cpu != 50").unwrap();
@@ -908,6 +911,7 @@ mod tests {
         assert!(joined.check(&proc, false));
     }
 
+    /// Test the non-equality operator with time.
     #[test]
     fn time_not_equal_query() {
         let query = parse_query_no_options("time != 1h").unwrap();
@@ -922,6 +926,7 @@ mod tests {
         assert!(query.check(&other, false));
     }
 
+    /// Test state queries with the non-equality operator. This also tests that string comparisons.
     #[test]
     fn state_not_equal_query() {
         let query = parse_query_no_options("state != sleeping").unwrap();
@@ -936,6 +941,7 @@ mod tests {
         assert!(query.check(&running, false));
     }
 
+    /// Test byte unit searches work with the non-equality operator.
     #[test]
     fn mem_bytes_not_equal_with_unit() {
         let query = parse_query_no_options("memb != 1 GiB").unwrap();
@@ -948,5 +954,180 @@ mod tests {
 
         assert!(!query.check(&equal, false));
         assert!(query.check(&other, false));
+    }
+
+    /// `!(...)` negates a whole group.
+    #[test]
+    fn negate_group_query() {
+        let query = parse_query_no_options("!(cpu > 5 or a)").unwrap();
+
+        let mut high_cpu = simple_process("b");
+        high_cpu.cpu_usage_percent = 10.0;
+
+        let name_match = simple_process("a");
+
+        let mut low_cpu_no_match = simple_process("b");
+        low_cpu_no_match.cpu_usage_percent = 1.0;
+
+        assert!(!query.check(&high_cpu, false));
+        assert!(!query.check(&name_match, false));
+        assert!(query.check(&low_cpu_no_match, false));
+    }
+
+    /// `!name` negates a bare-name match.
+    #[test]
+    fn negate_bare_name_query() {
+        let query = parse_query_no_options("!firefox").unwrap();
+
+        let firefox = simple_process("firefox");
+        let other = simple_process("btm");
+
+        assert!(!query.check(&firefox, false));
+        assert!(query.check(&other, false));
+    }
+
+    /// `!"..."` negates a quoted-name match.
+    #[test]
+    fn negate_quoted_name_query() {
+        let query = parse_query_no_options("!\"a or b\"").unwrap();
+
+        let exact = simple_process("a or b");
+        let other = simple_process("c");
+
+        assert!(!query.check(&exact, false));
+        assert!(query.check(&other, false));
+    }
+
+    /// `!!x` is double negation, which should behave like `x`.
+    #[test]
+    fn double_negate_query_a() {
+        let query = parse_query_no_options("!!firefox").unwrap();
+
+        let firefox = simple_process("firefox");
+        let other = simple_process("btm");
+
+        assert!(query.check(&firefox, false));
+        assert!(!query.check(&other, false));
+    }
+
+    /// `!!(cpu > 5)` is double negation, which should behave like `cpu > 5`.
+    #[test]
+    fn double_negate_query_b() {
+        let query = parse_query_no_options("!!(cpu > 5) ").unwrap();
+
+        let mut big = simple_process("big");
+        big.cpu_usage_percent = 10.0;
+        let mut small = simple_process("small");
+        small.cpu_usage_percent = 1.0;
+
+        assert!(query.check(&big, false));
+        assert!(!query.check(&small, false));
+    }
+
+    /// `!` composes with `and`/`or`.
+    #[test]
+    fn negate_with_boolean_operators() {
+        let query = parse_query_no_options("!firefox and cpu > 5").unwrap();
+
+        let mut firefox = simple_process("firefox");
+        firefox.cpu_usage_percent = 10.0;
+
+        let mut other_high = simple_process("btm");
+        other_high.cpu_usage_percent = 10.0;
+
+        let mut other_low = simple_process("btm");
+        other_low.cpu_usage_percent = 1.0;
+
+        assert!(!query.check(&firefox, false));
+        assert!(query.check(&other_high, false));
+        assert!(!query.check(&other_low, false));
+    }
+
+    /// A bare `!` with nothing parseable after it must be rejected so that it
+    /// doesn't silently become `name = "!"`. The literal form `"!"` still
+    /// works.
+    #[test]
+    fn lone_bang_is_rejected() {
+        parse_query_no_options("!").unwrap_err();
+        parse_query_no_options("! ").unwrap_err();
+        parse_query_no_options("!)").unwrap_err();
+        parse_query_no_options("(!)").unwrap_err();
+    }
+
+    /// A quoted `"!"` as the RHS of a prefixed string query should match the
+    /// literal `!`, not be treated as an operator.
+    #[test]
+    fn user_equals_quoted_bang() {
+        let query = parse_query_no_options("user = \"!\"").unwrap();
+
+        let mut with_bang = simple_process("a");
+        with_bang.user = Some("!".into());
+
+        let mut other = simple_process("a");
+        other.user = Some("root".into());
+
+        assert!(query.check(&with_bang, false));
+        assert!(!query.check(&other, false));
+    }
+
+    /// A quoted `"!"` as the RHS of a prefixed string query with "!=" should not match the
+    /// literal `!`, nor should it be treated as an operator.
+    #[test]
+    fn user_negated_equals_quoted_bang() {
+        let query = parse_query_no_options("user != \"!\"").unwrap();
+
+        let mut with_bang = simple_process("a");
+        with_bang.user = Some("!".into());
+
+        let mut other = simple_process("a");
+        other.user = Some("root".into());
+
+        assert!(!query.check(&with_bang, false));
+        assert!(query.check(&other, false));
+    }
+
+    /// A quoted `"!"` should remain a valid literal-name match.
+    #[test]
+    fn quoted_bang_matches_literal() {
+        let query = parse_query_no_options("\"!\"").unwrap();
+
+        let with_bang = simple_process("foo!");
+        let without = simple_process("foo");
+
+        assert!(query.check(&with_bang, false));
+        assert!(!query.check(&without, false));
+    }
+
+    /// Trailing operators with no RHS must error.
+    #[test]
+    fn not_equal_missing_value_is_rejected() {
+        parse_query_no_options("user !=").unwrap_err();
+        parse_query_no_options("state !=").unwrap_err();
+        parse_query_no_options("time !=").unwrap_err();
+    }
+
+    /// Some miscellaneous invalid string searches involving negation (`!`) parsing.
+    #[test]
+    fn misc_invalid_bang_search() {
+        parse_query_no_options("user = !").unwrap_err();
+        parse_query_no_options("user != !").unwrap_err();
+        parse_query_no_options("pid = !").unwrap_err();
+        parse_query_no_options("state !").unwrap_err();
+        parse_query_no_options("!cpu > 5").unwrap_err();
+        parse_query_no_options("! cpu > 5").unwrap_err();
+    }
+
+    /// `=!` is not a valid operator.
+    #[test]
+    fn reversed_bang_equal_is_rejected() {
+        parse_query_no_options("cpu =!").unwrap_err();
+        parse_query_no_options("cpu = !").unwrap_err();
+        parse_query_no_options("cpu = ! 5").unwrap_err();
+    }
+
+    /// `!=` with a non-numeric RHS should fail.
+    #[test]
+    fn not_equal_non_numeric_rhs_is_rejected() {
+        parse_query_no_options("cpu != abc").unwrap_err();
     }
 }

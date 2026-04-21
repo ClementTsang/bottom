@@ -41,17 +41,12 @@ pub(super) enum ProcessAttribute {
     GpuMemoryPercentage(NumericalQuery),
     #[cfg(feature = "gpu")]
     GpuMemoryBytes(NumericalQuery),
-    /// Inverts the match of the wrapped attribute. Used for `!=` on string
-    /// attributes (e.g. `state != running`); numerical/time `!=` goes through
-    /// [`QueryComparison::NotEqual`] instead.
-    Negate(Box<ProcessAttribute>),
 }
 
 impl ProcessAttribute {
     pub(super) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
         match self {
             ProcessAttribute::Empty => true,
-            ProcessAttribute::Negate(inner) => !inner.check(process, is_using_command),
             ProcessAttribute::Pid(re) => re.is_match(process.pid.to_string().as_str()),
             ProcessAttribute::CpuPercentage(cmp) => cmp.check(process.cpu_usage_percent),
             ProcessAttribute::MemBytes(cmp) => cmp.check(process.mem_usage as f64),

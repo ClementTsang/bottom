@@ -84,7 +84,7 @@ const PROCESS_HELP_TEXT: [&str; 20] = [
     "z                       Toggle the display of kernel threads",
 ];
 
-const SEARCH_HELP_TEXT: [&str; 52] = [
+const SEARCH_HELP_TEXT: [&str; 53] = [
     "4 - Process search widget",
     "Esc                  Close the search widget (retains the filter)",
     "Ctrl-a               Skip to the start of the search query",
@@ -127,6 +127,7 @@ const SEARCH_HELP_TEXT: [&str; 52] = [
     "Logical operators:",
     "and, &&, <Space>     ex: btm and cpu > 1 and mem > 1",
     "or, ||               ex: btm or firefox",
+    "!                    ex: !firefox, !(cpu > 5 or btm)",
     "",
     "Supported units:",
     "B                    ex: read > 1 b",

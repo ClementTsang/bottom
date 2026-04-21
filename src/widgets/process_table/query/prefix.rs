@@ -58,8 +58,14 @@ fn process_prefix_units(query: &mut VecDeque<String>, value: &mut f64) {
 /// now, it's hardcoded for processes.
 #[derive(Debug)]
 pub(super) enum Prefix {
+    /// True if the inner OR is true (allowing a recursive tree).
     Or(Box<Or>),
+    /// A leaf node.
     Attribute(ProcessAttribute),
+    /// Invert the match result of the inner prefix.
+    ///
+    /// TODO: Also support reading with "not".
+    Negate(Box<Prefix>),
 }
 
 impl Prefix {
@@ -67,6 +73,7 @@ impl Prefix {
         match self {
             Prefix::Or(or) => or.check(process, is_using_command),
             Prefix::Attribute(attribute) => attribute.check(process, is_using_command),
+            Prefix::Negate(inner) => !inner.check(process, is_using_command),
         }
     }
 
@@ -162,6 +169,28 @@ impl QueryProcessor for Prefix {
                 };
             } else if curr == ")" {
                 return Err(QueryError::new("Missing opening parentheses"));
+            } else if curr == "!" {
+                // Negation prefix: `!<expr>` inverts the match of the following
+                // expression. Restricted to groups (`!(a or b)`), quoted names
+                // (`!"foo"`), bare names (`!foo`), and nested `!` (`!!foo`).
+                match query.front().map(|s| s.as_str()) {
+                    None | Some("=") | Some(">") | Some("<") | Some(")") => {
+                        return Err(QueryError::new(
+                            "`!` must be followed by an expression; use `\"!\"` to match a literal `!`",
+                        ));
+                    }
+                    Some(next) if next != "(" && next != "\"" && next != "!" => {
+                        let next: Result<PrefixType, QueryError> = next.parse();
+                        if !matches!(next, Ok(PrefixType::Name)) {
+                            return Err(QueryError::new(
+                                "`!` cannot be applied to a prefix keyword; use `!=`, `<=`, `>=` or group with `!(...)` instead",
+                            ));
+                        }
+                    }
+                    _ => {}
+                }
+                let inner = Prefix::process(query, options)?;
+                return Ok(Prefix::Negate(Box::new(inner)));
             } else if curr == "\"" {
                 // Similar to parentheses, trap and check for missing closing quotes.  Note,
                 // however, that we will DIRECTLY call another process_prefix
@@ -198,12 +227,17 @@ impl QueryProcessor for Prefix {
                             )?));
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
-                            // We have to check if someone put an "=" or "!="...
+                            // We have to check if someone put an (in)equality check...
                             if content == "=" || content == "!=" {
-                                let negate = content == "!=";
+                                let negate = content.starts_with('!');
 
                                 // Check next string if possible
                                 if let Some(string_value) = query.pop_front() {
+                                    if string_value == "!" {
+                                        return Err(QueryError::new(
+                                            "`!` is reserved; use `\"!\"` to match the literal character",
+                                        ));
+                                    }
                                     // TODO: [Query] Need to consider the following cases:
                                     // - (test)
                                     // - (test
@@ -234,14 +268,22 @@ impl QueryProcessor for Prefix {
                                         string_value
                                     };
 
-                                    let attr =
-                                        new_string_attribute(prefix_type, &final_value, options)?;
-                                    return Ok(Prefix::Attribute(if negate {
-                                        ProcessAttribute::Negate(Box::new(attr))
+                                    let inner_attribute = Prefix::Attribute(new_string_attribute(
+                                        prefix_type,
+                                        &final_value,
+                                        options,
+                                    )?);
+
+                                    return Ok(if negate {
+                                        Prefix::Negate(Box::new(inner_attribute))
                                     } else {
-                                        attr
-                                    }));
+                                        inner_attribute
+                                    });
                                 }
+                            } else if content == "!" {
+                                return Err(QueryError::new(
+                                    "`!` is reserved; use `\"!\"` to match the literal character",
+                                ));
                             } else {
                                 return Ok(Prefix::Attribute(new_string_attribute(
                                     prefix_type,
