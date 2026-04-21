@@ -1,6 +1,5 @@
 use std::{num::NonZeroU64, sync::OnceLock};
 
-use crate::utils::int_hash::IntHashMap;
 use nvml_wrapper::{
     Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError,
 };
@@ -8,6 +7,7 @@ use nvml_wrapper::{
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
     collection::{memory::MemData, processes::Pid, temperature::TempSensorData},
+    utils::int_hash::IntHashMap,
 };
 
 pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
@@ -21,7 +21,8 @@ pub struct GpusData {
 /// Wrapper around Nvml::init
 ///
 /// On Linux, if `Nvml::init()` fails, this function attempts to explicitly load
-/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls `Nvml::init`.
+/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls
+/// `Nvml::init`.
 ///
 /// This is a workaround until https://github.com/Cldfire/nvml-wrapper/pull/63 is accepted.
 /// Then, we can go back to calling `Nvml::init` directly on all platforms.

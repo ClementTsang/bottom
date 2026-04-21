@@ -40,16 +40,18 @@ impl TimeChart<'_> {
             let color = dataset.style.fg.unwrap_or(Color::Reset);
             let left_edge = self.x_axis.bounds.get_bounds()[0];
 
-            // TODO: (points_rework_v1) Can we instead modify the range so it's based on the epoch rather than having to convert?
-            // TODO: (points_rework_v1) Is this efficient? Or should I prune using take_while first?
+            // TODO: (points_rework_v1) Can we instead modify the range so it's based on the
+            // epoch rather than having to convert? TODO: (points_rework_v1) Is
+            // this efficient? Or should I prune using take_while first?
             for (curr, next) in values
                 .iter_along_base(times)
                 .rev()
                 .map(|(&time, &val)| {
                     let from_start = -(current_time.duration_since(time).as_millis() as f64);
 
-                    // XXX: Should this be generic over dataset.graph_type instead? That would allow us to move
-                    // transformations behind a type - however, that also means that there's some complexity added.
+                    // XXX: Should this be generic over dataset.graph_type instead? That would allow
+                    // us to move transformations behind a type - however, that
+                    // also means that there's some complexity added.
                     (from_start, self.scaling.scale(val))
                 })
                 .tuple_windows()
@@ -63,7 +65,8 @@ impl TimeChart<'_> {
 
                     break;
                 } else if next.0 < left_edge {
-                    // The next point goes past the left edge. Interpolate a point + the line and halt.
+                    // The next point goes past the left edge. Interpolate a point + the line and
+                    // halt.
                     let interpolated = interpolate_point(&next, &curr, left_edge);
 
                     ctx.draw(&CanvasLine {

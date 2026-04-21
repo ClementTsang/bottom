@@ -1,4 +1,5 @@
-//! A variant of a [`TimeGraph`] that expects data to be in a percentage format, from 0.0 to 100.0.
+//! A variant of a [`TimeGraph`] that expects data to be in a percentage format,
+//! from 0.0 to 100.0.
 
 use std::borrow::Cow;
 
@@ -13,7 +14,8 @@ use crate::{
     options::config::style::Styles,
 };
 
-/// Acts as a wrapper for a [`TimeGraph`] that expects data to be in a percentage format,
+/// Acts as a wrapper for a [`TimeGraph`] that expects data to be in a
+/// percentage format,
 pub(crate) struct PercentTimeGraph<'a> {
     /// The total display range of the graph in milliseconds.
     ///

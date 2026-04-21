@@ -2,10 +2,12 @@
 
 use std::{io, process::Command};
 
-use crate::utils::int_hash::IntHashMap;
 use serde::{Deserialize, Deserializer};
 
-use crate::collection::{Pid, deserialize_xo, processes::UnixProcessExt};
+use crate::{
+    collection::{Pid, deserialize_xo, processes::UnixProcessExt},
+    utils::int_hash::IntHashMap,
+};
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]

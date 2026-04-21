@@ -5,19 +5,18 @@ pub mod states;
 
 use std::time::Instant;
 
-use concat_string::concat_string;
 use data::*;
 use filter::*;
 use layout_manager::*;
 use rustc_hash::FxHashMap as HashMap;
 pub use states::*;
-use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::{
     canvas::{
         components::time_graph::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
     },
     constants,
+    options::config::flags::TableGap,
     utils::data_units::DataUnit,
     widgets::{
         DiskWidgetColumn, ProcWidgetColumn, ProcWidgetMode, TempWidgetColumn, TreeCollapsed,
@@ -54,7 +53,7 @@ pub struct AppConfigFields {
     pub hide_time: bool,
     pub autohide_time: bool,
     pub use_old_network_legend: bool,
-    pub table_gap: u16,
+    pub table_gap: TableGap,
     pub disable_click: bool,
     pub disable_keys: bool,
     pub enable_gpu: bool,
@@ -140,8 +139,9 @@ impl App {
     pub fn update_data(&mut self) {
         let data_source = self.data_store.get_data();
 
-        // FIXME: (points_rework_v1) maybe separate PR but would it make more sense to store references of data?
-        // Would it also make more sense to move the "data set" step to the draw step, and make it only set if force
+        // FIXME: (points_rework_v1) maybe separate PR but would it make more sense to
+        // store references of data? Would it also make more sense to move the
+        // "data set" step to the draw step, and make it only set if force
         // update is set here?
         for proc in self.states.proc_state.widget_states.values_mut() {
             if proc.force_update_data {
@@ -519,34 +519,13 @@ impl App {
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if is_in_search_widget
-                        && proc_widget_state.proc_search.search_state.is_enabled
-                        && proc_widget_state.cursor_char_index()
-                            < proc_widget_state
-                                .proc_search
-                                .search_state
-                                .current_search_query
-                                .len()
+                    if is_in_search_widget && proc_widget_state.proc_search.search_state.is_enabled
                     {
-                        let current_cursor = proc_widget_state.cursor_char_index();
-                        proc_widget_state.search_walk_forward();
-
-                        let _ = proc_widget_state
+                        proc_widget_state
                             .proc_search
                             .search_state
-                            .current_search_query
-                            .drain(current_cursor..proc_widget_state.cursor_char_index());
-
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(
-                                current_cursor,
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                true,
-                            );
+                            .input_field_state
+                            .delete_at_cursor();
 
                         proc_widget_state.update_query();
                     }
@@ -575,33 +554,12 @@ impl App {
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
-                if is_in_search_widget
-                    && proc_widget_state.proc_search.search_state.is_enabled
-                    && proc_widget_state.cursor_char_index() > 0
-                {
-                    let current_cursor = proc_widget_state.cursor_char_index();
-                    proc_widget_state.search_walk_back();
-
-                    // Remove the indices in between.
-                    let _ = proc_widget_state
+                if is_in_search_widget && proc_widget_state.proc_search.search_state.is_enabled {
+                    proc_widget_state
                         .proc_search
                         .search_state
-                        .current_search_query
-                        .drain(proc_widget_state.cursor_char_index()..current_cursor);
-
-                    proc_widget_state.proc_search.search_state.grapheme_cursor =
-                        GraphemeCursor::new(
-                            proc_widget_state.cursor_char_index(),
-                            proc_widget_state
-                                .proc_search
-                                .search_state
-                                .current_search_query
-                                .len(),
-                            true,
-                        );
-
-                    proc_widget_state.proc_search.search_state.cursor_direction =
-                        CursorDirection::Left;
+                        .input_field_state
+                        .delete_behind_cursor();
 
                     proc_widget_state.update_query();
                 }
@@ -662,12 +620,11 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.cursor_char_index();
-                            proc_widget_state.search_walk_back();
-                            if proc_widget_state.cursor_char_index() < prev_cursor {
-                                proc_widget_state.proc_search.search_state.cursor_direction =
-                                    CursorDirection::Left;
-                            }
+                            proc_widget_state
+                                .proc_search
+                                .search_state
+                                .input_field_state
+                                .move_left();
                         }
                     }
                 }
@@ -720,12 +677,11 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.cursor_char_index();
-                            proc_widget_state.search_walk_forward();
-                            if proc_widget_state.cursor_char_index() > prev_cursor {
-                                proc_widget_state.proc_search.search_state.cursor_direction =
-                                    CursorDirection::Right;
-                            }
+                            proc_widget_state
+                                .proc_search
+                                .search_state
+                                .input_field_state
+                                .move_right();
                         }
                     }
                 }
@@ -861,19 +817,11 @@ impl App {
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
                     if is_in_search_widget {
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(
-                                0,
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                true,
-                            );
-
-                        proc_widget_state.proc_search.search_state.cursor_direction =
-                            CursorDirection::Left;
+                        proc_widget_state
+                            .proc_search
+                            .search_state
+                            .input_field_state
+                            .skip_to_beginning();
                     }
                 }
             }
@@ -891,16 +839,11 @@ impl App {
                     .get_mut(&(self.current_widget.widget_id - 1))
                 {
                     if is_in_search_widget {
-                        let query_len = proc_widget_state
+                        proc_widget_state
                             .proc_search
                             .search_state
-                            .current_search_query
-                            .len();
-
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(query_len, query_len, true);
-                        proc_widget_state.proc_search.search_state.cursor_direction =
-                            CursorDirection::Right;
+                            .input_field_state
+                            .skip_to_end();
                     }
                 }
             }
@@ -928,52 +871,11 @@ impl App {
                 .widget_states
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
-                // Traverse backwards from the current cursor location until you hit
-                // non-whitespace characters, then continue to traverse (and
-                // delete) backwards until you hit a whitespace character.  Halt.
-
-                // So... first, let's get our current cursor position in terms of char indices.
-                let end_index = proc_widget_state.cursor_char_index();
-
-                // Then, let's crawl backwards until we hit our location, and store the
-                // "head"...
-                let query = proc_widget_state.current_search_query();
-                let mut start_index = 0;
-                let mut saw_non_whitespace = false;
-
-                for (itx, c) in query
-                    .chars()
-                    .rev()
-                    .enumerate()
-                    .skip(query.len() - end_index)
-                {
-                    if c.is_whitespace() {
-                        if saw_non_whitespace {
-                            start_index = query.len() - itx;
-                            break;
-                        }
-                    } else {
-                        saw_non_whitespace = true;
-                    }
-                }
-
-                let _ = proc_widget_state
+                proc_widget_state
                     .proc_search
                     .search_state
-                    .current_search_query
-                    .drain(start_index..end_index);
-
-                proc_widget_state.proc_search.search_state.grapheme_cursor = GraphemeCursor::new(
-                    start_index,
-                    proc_widget_state
-                        .proc_search
-                        .search_state
-                        .current_search_query
-                        .len(),
-                    true,
-                );
-
-                proc_widget_state.proc_search.search_state.cursor_direction = CursorDirection::Left;
+                    .input_field_state
+                    .delete_previous_word();
 
                 proc_widget_state.update_query();
             }
@@ -1012,24 +914,10 @@ impl App {
                         proc_widget_state
                             .proc_search
                             .search_state
-                            .current_search_query
-                            .insert(proc_widget_state.cursor_char_index(), caught_char);
-
-                        proc_widget_state.proc_search.search_state.grapheme_cursor =
-                            GraphemeCursor::new(
-                                proc_widget_state.cursor_char_index(),
-                                proc_widget_state
-                                    .proc_search
-                                    .search_state
-                                    .current_search_query
-                                    .len(),
-                                true,
-                            );
-                        proc_widget_state.search_walk_forward();
+                            .input_field_state
+                            .insert_char(caught_char);
 
                         proc_widget_state.update_query();
-                        proc_widget_state.proc_search.search_state.cursor_direction =
-                            CursorDirection::Right;
 
                         return;
                     }
@@ -1404,7 +1292,8 @@ impl App {
         // 1. Send a movement signal in `direction`.
         // 2. Check if this new widget we've landed on is hidden.  If not, halt.
         // 3. If it hidden, loop and either send:
-        //    - A signal equal to the current direction, if it is opposite of the reflection.
+        //    - A signal equal to the current direction, if it is opposite of the
+        //      reflection.
         //    - Reflection direction.
 
         if !self.ignore_normal_keybinds() && !self.is_expanded {
@@ -2668,21 +2557,18 @@ impl App {
         {
             let height_diff = brc_y - tlc_y;
             if height_diff >= constants::TABLE_GAP_HEIGHT_LIMIT {
-                1 + self.app_config_fields.table_gap
+                1 + self.app_config_fields.table_gap.height()
             } else {
                 let min_height_for_header = if self.is_drawing_border() { 3 } else { 1 };
                 u16::from(height_diff > min_height_for_header)
             }
         } else {
-            1 + self.app_config_fields.table_gap
+            1 + self.app_config_fields.table_gap.height()
         }
     }
 
     /// A quick and dirty way to handle paste events.
     pub fn handle_paste(&mut self, paste: String) {
-        // Partially copy-pasted from the single-char variant; should probably clean up
-        // this process in the future. In particular, encapsulate this entire
-        // logic and add some tests to make it less potentially error-prone.
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .states
@@ -2690,28 +2576,14 @@ impl App {
             .widget_states
             .get_mut(&(self.current_widget.widget_id - 1))
         {
-            let num_runes = UnicodeSegmentation::graphemes(paste.as_str(), true).count();
-
             if is_in_search_widget && proc_widget_state.is_search_enabled() {
-                let left_bound = proc_widget_state.cursor_char_index();
-
-                let curr_query = &mut proc_widget_state
+                proc_widget_state
                     .proc_search
                     .search_state
-                    .current_search_query;
-                let (left, right) = curr_query.split_at(left_bound);
-                *curr_query = concat_string!(left, paste, right);
-
-                proc_widget_state.proc_search.search_state.grapheme_cursor =
-                    GraphemeCursor::new(left_bound, curr_query.len(), true);
-
-                for _ in 0..num_runes {
-                    proc_widget_state.search_walk_forward();
-                }
+                    .input_field_state
+                    .insert_string(paste);
 
                 proc_widget_state.update_query();
-                proc_widget_state.proc_search.search_state.cursor_direction =
-                    CursorDirection::Right;
             }
         }
     }

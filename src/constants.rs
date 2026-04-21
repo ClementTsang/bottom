@@ -84,7 +84,7 @@ const PROCESS_HELP_TEXT: [&str; 20] = [
     "z                       Toggle the display of kernel threads",
 ];
 
-const SEARCH_HELP_TEXT: [&str; 51] = [
+const SEARCH_HELP_TEXT: [&str; 53] = [
     "4 - Process search widget",
     "Esc                  Close the search widget (retains the filter)",
     "Ctrl-a               Skip to the start of the search query",
@@ -118,6 +118,7 @@ const SEARCH_HELP_TEXT: [&str; 51] = [
     "",
     "Comparison operators:",
     "=                    ex: cpu = 1",
+    "!=                   ex: cpu != 1",
     ">                    ex: cpu > 1",
     "<                    ex: cpu < 1",
     ">=                   ex: cpu >= 1",
@@ -126,6 +127,7 @@ const SEARCH_HELP_TEXT: [&str; 51] = [
     "Logical operators:",
     "and, &&, <Space>     ex: btm and cpu > 1 and mem > 1",
     "or, ||               ex: btm or firefox",
+    "!                    ex: !firefox, !(cpu > 5 or btm)",
     "",
     "Supported units:",
     "B                    ex: read > 1 b",
@@ -316,8 +318,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Use the old network legend style
 #use_old_network_legend = false
 
-# Remove space in tables
-#hide_table_gap = false
+# Controls the gap between table headers and data rows.
+# Options: "none", "space" (default), "line"
+#table_gap = "space"
 
 # Show the battery widgets
 #battery = false
@@ -610,12 +613,14 @@ mod test {
 
         use crate::options::Config;
 
-        // Trim off the starting comment if it's a "#" directly following an alphabetical character or '['.
+        // Trim off the starting comment if it's a "#" directly following an
+        // alphabetical character or '['.
         let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
             .unwrap()
             .replace_all(CONFIG_TEXT, "$1");
 
-        // Then, trim off anything that has more than 2 spaces + alphabetical character or '[' following a "#".
+        // Then, trim off anything that has more than 2 spaces + alphabetical character
+        // or '[' following a "#".
         let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z\[])")
             .unwrap()
             .replace_all(&default_config, "$2");

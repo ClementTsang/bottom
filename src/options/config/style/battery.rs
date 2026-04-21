@@ -11,7 +11,8 @@ pub(crate) struct BatteryStyle {
     #[serde(alias = "high_battery_colour")]
     pub(crate) high_battery_color: Option<ColorStr>,
 
-    /// The colour of the battery widget bar when the battery between 10% to 50%.
+    /// The colour of the battery widget bar when the battery between 10% to
+    /// 50%.
     #[serde(alias = "medium_battery_colour")]
     pub(crate) medium_battery_color: Option<ColorStr>,
 

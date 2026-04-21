@@ -18,7 +18,6 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 |                                     | bottom.                                                    |
 | `-m`, `--dot_marker`                | Uses a dot marker for graphs.                              |
 | `-e`, `--expanded`                  | Expand the default widget upon starting the app.           |
-| `--hide_table_gap`                  | Hides spacing between table headers and entries.           |
 | `--hide_time`                       | Hides the time scale from being shown.                     |
 | `-r`, `--rate <TIME>`               | Sets how often data is refreshed.                          |
 | `--retention <TIME>`                | How far back data will be stored up to.                    |
@@ -77,6 +76,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `--network_use_bytes`         | Displays the network widget using bytes.                |
 | `--network_use_binary_prefix` | Displays the network widget with binary prefixes.       |
 | `--network_use_log`           | Displays the network widget with a log scale.           |
+| `--show_packets`              | Displays packet rate and average packet size info.      |
 | `--use_old_network_legend`    | (DEPRECATED) Uses a separate network legend.            |
 
 ## Battery Options

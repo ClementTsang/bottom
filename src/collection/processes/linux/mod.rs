@@ -17,8 +17,8 @@ use sysinfo::ProcessStatus;
 use super::{Pid, ProcessHarvest, UserTable, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult, processes::ProcessType};
 
-/// Maximum character length of a `/proc/<PID>/stat` process name (the length is 16,
-/// but this includes a null terminator).
+/// Maximum character length of a `/proc/<PID>/stat` process name (the length is
+/// 16, but this includes a null terminator).
 ///
 /// If it's equal or greater, then we instead refer to the command for the name.
 const MAX_STAT_NAME_LEN: usize = 15;
@@ -234,7 +234,8 @@ fn read_proc(
                 // - command (full thing)
                 // - comm (as a separate thing)
                 //
-                // Stuff like htop also offers the option to "highlight" basename and comm in command. Might be neat?
+                // Stuff like htop also offers the option to "highlight" basename and comm in
+                // command. Might be neat?
                 let name = if comm.len() >= MAX_STAT_NAME_LEN {
                     binary_name_from_cmdline(&cmdline)
                 } else {
@@ -249,7 +250,8 @@ fn read_proc(
     };
 
     // We have moved command processing here.
-    // SAFETY: We are only replacing a single char (NUL) with another single char (space).
+    // SAFETY: We are only replacing a single char (NUL) with another single char
+    // (space).
 
     let mut command = command;
     let buf_mut = unsafe { command.as_mut_vec() };
@@ -294,8 +296,10 @@ fn read_proc(
     ))
 }
 
-/// We follow something similar to how htop does it to identify a valid name based on the cmdline.
-/// - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268 (kinda)
+/// We follow something similar to how htop does it to identify a valid name
+/// based on the cmdline.
+/// - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268
+///   (kinda)
 /// - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L573
 ///
 /// Also note that cmdline is (for us) separated by \0.
@@ -389,11 +393,12 @@ pub(crate) fn linux_process_data(
         cpu_usage /= num_processors;
     }
 
-    // TODO: Could maybe use a double buffer hashmap to avoid allocating this each time?
-    // e.g. we swap which is prev and which is new.
+    // TODO: Could maybe use a double buffer hashmap to avoid allocating this each
+    // time? e.g. we swap which is prev and which is new.
     let mut seen_pids: HashSet<Pid> = HashSet::default();
 
-    // Note this will only return PIDs of _processes_, not threads. You can get those from /proc/<PID>/task though.
+    // Note this will only return PIDs of _processes_, not threads. You can get
+    // those from /proc/<PID>/task though.
     let pids = fs::read_dir("/proc")?.flatten().filter_map(|dir| {
         // Need to filter out non-PID entries.
         if is_str_numeric(dir.file_name().to_string_lossy().trim()) {
@@ -491,8 +496,8 @@ pub(crate) fn linux_process_data(
         prev_process_details.shrink_to_fit();
     }
 
-    // TODO: This might be more efficient to just separate threads into their own list, but for now this works so it
-    // fits with existing code.
+    // TODO: This might be more efficient to just separate threads into their own
+    // list, but for now this works so it fits with existing code.
     Ok(process_vector)
 }
 

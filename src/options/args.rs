@@ -236,14 +236,6 @@ pub struct GeneralArgs {
     )]
     pub expanded: bool,
 
-    #[arg(
-        long,
-        action = ArgAction::SetTrue,
-        help = "Hides spacing between table headers and entries.",
-        alias = "hide-table-gap"
-    )]
-    pub hide_table_gap: bool,
-
     #[arg(long, action = ArgAction::SetTrue, help = "Hides the time scale from being shown.", alias = "hide-time")]
     pub hide_time: bool,
 
@@ -670,7 +662,8 @@ pub struct OtherArgs {
     version: (),
 }
 
-/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the program.
+/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the
+/// program.
 pub fn get_args() -> BottomArgs {
     BottomArgs::parse()
 }

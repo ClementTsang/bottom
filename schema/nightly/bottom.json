@@ -113,7 +113,7 @@
           ]
         },
         "medium_battery_color": {
-          "description": "The colour of the battery widget bar when the battery between 10% to 50%.",
+          "description": "The colour of the battery widget bar when the battery between 10% to\n50%.",
           "anyOf": [
             {
               "$ref": "#/$defs/ColorStr"
@@ -426,12 +426,6 @@
             "null"
           ]
         },
-        "hide_table_gap": {
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
         "hide_time": {
           "type": [
             "boolean",
@@ -518,17 +512,15 @@
             }
           ]
         },
-        "show_packets": {
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
         "show_table_scroll_position": {
           "type": [
             "boolean",
             "null"
           ]
+        },
+        "table_gap": {
+          "$ref": "#/$defs/TableGap",
+          "default": "space"
         },
         "temperature_type": {
           "type": [
@@ -652,7 +644,7 @@
           ]
         },
         "cache_color": {
-          "description": "The colour of the cache label and graph line. Does not do anything on Windows.",
+          "description": "The colour of the cache label and graph line. Does not do anything on\nWindows.",
           "anyOf": [
             {
               "$ref": "#/$defs/ColorStr"
@@ -712,7 +704,7 @@
           ]
         },
         "show_packets": {
-          "description": "Whether to show packets information (packet rate and average packet size).",
+          "description": "Displays packet rate and average packet size info.",
           "type": [
             "boolean",
             "null"
@@ -843,7 +835,7 @@
       ]
     },
     "ProcessesConfig": {
-      "description": "Process configuration.",
+      "description": "Process configuration fields.",
       "type": "object",
       "properties": {
         "columns": {
@@ -994,6 +986,14 @@
           ]
         }
       }
+    },
+    "TableGap": {
+      "type": "string",
+      "enum": [
+        "none",
+        "space",
+        "line"
+      ]
     },
     "TableStyle": {
       "description": "General styling for table widgets.",

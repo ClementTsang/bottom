@@ -51,15 +51,21 @@ fn process_prefix_units(query: &mut VecDeque<String>, value: &mut f64) {
     }
 }
 
-/// Either contains a further `Or` recursively, or an attribute that can be queried, possibly as
-/// part of a larger query.
+/// Either contains a further `Or` recursively, or an attribute that can be
+/// queried, possibly as part of a larger query.
 ///
-/// In theory, this can be made generic to work on all table types, though for now, it's
-/// hardcoded for processes.
+/// In theory, this can be made generic to work on all table types, though for
+/// now, it's hardcoded for processes.
 #[derive(Debug)]
 pub(super) enum Prefix {
+    /// True if the inner OR is true (allowing a recursive tree).
     Or(Box<Or>),
+    /// A leaf node.
     Attribute(ProcessAttribute),
+    /// Invert the match result of the inner prefix.
+    ///
+    /// TODO: Also support reading with "not".
+    Negate(Box<Prefix>),
 }
 
 impl Prefix {
@@ -67,6 +73,7 @@ impl Prefix {
         match self {
             Prefix::Or(or) => or.check(process, is_using_command),
             Prefix::Attribute(attribute) => attribute.check(process, is_using_command),
+            Prefix::Negate(inner) => !inner.check(process, is_using_command),
         }
     }
 
@@ -84,8 +91,8 @@ impl Prefix {
             } else {
                 let mut intern_string = vec![queue_top];
 
-                // TODO: I think this should consume the quote...? Might need to check the other spot
-                // we process quotes.
+                // TODO: I think this should consume the quote...? Might need to check the other
+                // spot we process quotes.
                 while let Some(next_str) = query.front() {
                     if next_str == "\"" {
                         break;
@@ -162,6 +169,31 @@ impl QueryProcessor for Prefix {
                 };
             } else if curr == ")" {
                 return Err(QueryError::new("Missing opening parentheses"));
+            } else if curr == "!" {
+                // Negation prefix: `!<expr>` inverts the match of the following
+                // expression. Handles:
+                // - Groups (`!(a or b)`)
+                // - Quoted names (`!"foo"`)
+                // - Bare names (`!foo`)
+                // - Stacked `!` (`!!foo`).
+                match query.front().map(|s| s.as_str()) {
+                    None | Some("=") | Some(">") | Some("<") | Some(")") => {
+                        return Err(QueryError::new(
+                            "`!` must be followed by an expression; use `\"!\"` to match a literal `!`",
+                        ));
+                    }
+                    Some(next) if next != "(" && next != "\"" && next != "!" => {
+                        let next: Result<PrefixType, QueryError> = next.parse();
+                        if !matches!(next, Ok(PrefixType::Name)) {
+                            return Err(QueryError::new(
+                                "`!` cannot be applied to a prefix keyword; use `!=`, `<=`, `>=` or group with `!(...)` instead",
+                            ));
+                        }
+                    }
+                    _ => {}
+                }
+                let inner = Prefix::process(query, options)?;
+                return Ok(Prefix::Negate(Box::new(inner)));
             } else if curr == "\"" {
                 // Similar to parentheses, trap and check for missing closing quotes.  Note,
                 // however, that we will DIRECTLY call another process_prefix
@@ -198,10 +230,17 @@ impl QueryProcessor for Prefix {
                             )?));
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
-                            // We have to check if someone put an "="...
-                            if content == "=" {
+                            // We have to check if someone put an (in)equality check...
+                            if content == "=" || content == "!=" {
+                                let negate = content.starts_with('!');
+
                                 // Check next string if possible
                                 if let Some(string_value) = query.pop_front() {
+                                    if string_value == "!" {
+                                        return Err(QueryError::new(
+                                            "`!` is reserved; use `\"!\"` to match the literal character",
+                                        ));
+                                    }
                                     // TODO: [Query] Need to consider the following cases:
                                     // - (test)
                                     // - (test
@@ -217,7 +256,8 @@ impl QueryProcessor for Prefix {
                                     let final_value = if string_value == "\"" {
                                         let mut intern_string = vec![];
 
-                                        // Keep parsing until we either hit another quotation or we error.
+                                        // Keep parsing until we either hit another quotation or we
+                                        // error.
                                         while let Some(next_string) = query.pop_front() {
                                             if next_string == "\"" {
                                                 break;
@@ -231,12 +271,22 @@ impl QueryProcessor for Prefix {
                                         string_value
                                     };
 
-                                    return Ok(Prefix::Attribute(new_string_attribute(
+                                    let inner_attribute = Prefix::Attribute(new_string_attribute(
                                         prefix_type,
                                         &final_value,
                                         options,
-                                    )?));
+                                    )?);
+
+                                    return Ok(if negate {
+                                        Prefix::Negate(Box::new(inner_attribute))
+                                    } else {
+                                        inner_attribute
+                                    });
                                 }
+                            } else if content == "!" {
+                                return Err(QueryError::new(
+                                    "`!` is reserved; use `\"!\"` to match the literal character",
+                                ));
                             } else {
                                 return Ok(Prefix::Attribute(new_string_attribute(
                                     prefix_type,
@@ -251,6 +301,9 @@ impl QueryProcessor for Prefix {
 
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
+                                duration_string = query.pop_front();
+                            } else if content == "!=" {
+                                condition = Some(QueryComparison::NotEqual);
                                 duration_string = query.pop_front();
                             } else if content == ">" || content == "<" {
                                 if let Some(queue_next) = query.pop_front() {
@@ -290,8 +343,8 @@ impl QueryProcessor for Prefix {
                             }
                         }
                         _ => {
-                            // Assume it's some numerical value.
-                            // Now we gotta parse the content... yay.
+                            // Assume it's some numerical value. Now we gotta parse the content... yay.
+                            // Note that for numerical parsing, we handle unit parsing later, not here.
 
                             let mut condition: Option<QueryComparison> = None;
                             let mut value: Option<f64> = None;
@@ -300,6 +353,13 @@ impl QueryProcessor for Prefix {
                             // clean this up in the future.
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
+                                if let Some(queue_next) = query.pop_front() {
+                                    value = queue_next.parse::<f64>().ok();
+                                } else {
+                                    return Err(QueryError::missing_value());
+                                }
+                            } else if content == "!=" {
+                                condition = Some(QueryComparison::NotEqual);
                                 if let Some(queue_next) = query.pop_front() {
                                     value = queue_next.parse::<f64>().ok();
                                 } else {
@@ -371,7 +431,8 @@ impl QueryProcessor for Prefix {
             }
         }
 
-        // TODO: Give more information here (e.g. closest query?), though this is moreso meant as a fallback.
+        // TODO: Give more information here (e.g. closest query?), though this is moreso
+        // meant as a fallback.
         Err(QueryError::new("Invalid query"))
     }
 }

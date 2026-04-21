@@ -15,8 +15,10 @@ pub(crate) struct DiskConfig {
     pub(crate) mount_filter: Option<IgnoreList>,
 
     /// A list of disk widget columns.
+    // TODO: make this more composable(?) in the future, we might need to
+    // rethink how it's done for custom widgets.
     #[serde(default)]
-    pub(crate) columns: Option<Vec<DiskWidgetColumn>>, // TODO: make this more composable(?) in the future, we might need to rethink how it's done for custom widgets
+    pub(crate) columns: Option<Vec<DiskWidgetColumn>>,
 
     /// The default sort column.
     #[serde(default)]

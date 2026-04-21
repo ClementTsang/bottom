@@ -2,6 +2,26 @@ use serde::{Deserialize, Serialize};
 
 use super::StringOrNum;
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum TableGap {
+    None,
+    #[default]
+    Space,
+    Line,
+}
+
+impl TableGap {
+    /// Returns the height in rows that this gap occupies.
+    pub const fn height(self) -> u16 {
+        match self {
+            Self::None => 0,
+            Self::Space | Self::Line => 1,
+        }
+    }
+}
+
 // TODO: Break this up.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
@@ -27,7 +47,8 @@ pub(crate) struct GeneralConfig {
     pub(crate) default_widget_count: Option<u64>,
     pub(crate) expanded: Option<bool>,
     pub(crate) use_old_network_legend: Option<bool>,
-    pub(crate) hide_table_gap: Option<bool>,
+    #[serde(default)]
+    pub(crate) table_gap: TableGap,
     pub(crate) battery: Option<bool>,
     pub(crate) disable_click: Option<bool>,
     pub(crate) disable_keys: Option<bool>,
@@ -38,8 +59,11 @@ pub(crate) struct GeneralConfig {
     pub(crate) tree: Option<bool>,
     pub(crate) show_table_scroll_position: Option<bool>,
     pub(crate) process_command: Option<bool>,
+    // This does nothing on Windows, but we leave it enabled to make the config file consistent
+    // across platforms.
+    //
     // #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-    pub(crate) disable_advanced_kill: Option<bool>, // This does nothing on Windows, but we leave it enabled to make the config file consistent across platforms.
+    pub(crate) disable_advanced_kill: Option<bool>,
     pub(crate) read_only: Option<bool>,
     // #[cfg(target_os = "linux")]
     pub(crate) hide_k_threads: Option<bool>,
@@ -48,10 +72,11 @@ pub(crate) struct GeneralConfig {
     pub(crate) network_use_bytes: Option<bool>,
     pub(crate) network_use_log: Option<bool>,
     pub(crate) network_use_binary_prefix: Option<bool>,
-    pub(crate) show_packets: Option<bool>,
     pub(crate) disable_gpu: Option<bool>,
     pub(crate) enable_cache_memory: Option<bool>,
     pub(crate) retention: Option<StringOrNum>,
-    pub(crate) average_cpu_row: Option<bool>, // FIXME: This makes no sense outside of basic mode, add a basic mode config section.
+    // FIXME: This makes no sense outside of basic mode, add a basic mode config section.
+    // FIXME: This also should be moved to CPU-specific... same with all the other entries.
+    pub(crate) average_cpu_row: Option<bool>,
     pub(crate) tree_collapse: Option<bool>,
 }

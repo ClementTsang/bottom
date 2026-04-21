@@ -92,11 +92,13 @@ impl Painter {
                             let visible_left_bound = match last_time.checked_sub(visible_duration) {
                                 Some(v) => v,
                                 None => {
-                                    // On some systems (like Windows) it can be possible that the current display time
-                                    // causes subtraction to fail if, for example, the uptime of the system is too low
-                                    // and current_display_time is too high. See https://github.com/ClementTsang/bottom/issues/1825.
+                                    // On some systems (like Windows) it can be possible that the
+                                    // current display time
+                                    // causes subtraction to fail if, for example, the uptime of the
+                                    // system is too low and current_display_time is too high. See https://github.com/ClementTsang/bottom/issues/1825.
                                     //
-                                    // As such, we instead take the oldest visible time. This is a bit inefficient, but
+                                    // As such, we instead take the oldest visible time. This is a
+                                    // bit inefficient, but
                                     // since it should only happen rarely, it should be fine.
                                     times
                                         .iter()
@@ -151,7 +153,8 @@ impl Painter {
 
             let use_old_network_legend = app_state.app_config_fields.use_old_network_legend;
             let legend_constraints = if use_old_network_legend {
-                // Always hide it. Note that I could pass in `None` to the position as well but eh this works.
+                // Always hide it. Note that I could pass in `None` to the position as well but
+                // eh this works.
                 LegendConstraints {
                     width: Constraint::Length(0),
                     height: Constraint::Length(0),
@@ -206,8 +209,9 @@ impl Painter {
                 const MAX_LEGEND_WIDTH: u16 = 70;
                 let approx_legend_width = draw_loc.width * 3 / 4;
 
-                // FIXME: I'm not really a huge fan of this - I think it may be better to just not support this and
-                // allow for more easily spawning a separate legend table (basically old legend).
+                // FIXME: I'm not really a huge fan of this - I think it may be better to just
+                // not support this and allow for more easily spawning a
+                // separate legend table (basically old legend).
                 if app_state.app_config_fields.network_show_packets
                     && approx_legend_width > MAX_LEGEND_WIDTH
                 {
@@ -385,7 +389,8 @@ impl Painter {
     }
 }
 
-/// Returns a cached max value, it's time, and what period it covers if it is cached.
+/// Returns a cached max value, it's time, and what period it covers if it is
+/// cached.
 #[inline]
 fn check_network_height_cache(
     network_widget_state: &NetWidgetState, last_time: &std::time::Instant,
@@ -410,8 +415,9 @@ fn check_network_height_cache(
 
 /// Returns the required labels.
 ///
-/// TODO: This is _really_ ugly... also there might be a bug with certain heights and too many labels.
-/// We may need to take draw height into account, either here, or in the time graph itself.
+/// TODO: This is _really_ ugly... also there might be a bug with certain
+/// heights and too many labels. We may need to take draw height into account,
+/// either here, or in the time graph itself.
 fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, Vec<String>) {
     // So, we're going with an approach like this for linear data:
     // - Main goal is to maximize the amount of information displayed given a
@@ -434,8 +440,8 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
     //
     // ---
     //
-    // For log data, we just use the old method of log intervals (kilo/mega/giga/etc.).
-    // Keep it nice and simple.
+    // For log data, we just use the old method of log intervals
+    // (kilo/mega/giga/etc.). Keep it nice and simple.
 
     // Now just check the largest unit we correspond to... then proceed to build
     // some entries from there!
@@ -468,8 +474,9 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
             };
 
             let max_entry_upper = if max_entry == 0.0 {
-                // If it's 0, then just use a very low value so the labels aren't just "0.0" 4 times.
-                // This _also_ prevents the y-axis height range ever being 0.
+                // If it's 0, then just use a very low value so the labels aren't just "0.0" 4
+                // times. This _also_ prevents the y-axis height range ever
+                // being 0.
                 1.0
             } else {
                 max_entry * 1.5 // We use the bumped up version to calculate our unit type.
@@ -517,7 +524,8 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
             ]
             .into_iter()
             .map(|s| {
-                // Pull 5 as the longest legend value is generally going to be 5 digits (if they somehow hit over 5 terabits per second)
+                // Pull 5 as the longest legend value is generally going to be 5 digits (if they
+                // somehow hit over 5 terabits per second)
                 format!("{s:>5}")
             })
             .collect();
@@ -531,8 +539,8 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
                 (LOG_MEGA_LIMIT, LOG_GIGA_LIMIT, LOG_TERA_LIMIT)
             };
 
-            // Remember to do saturating log checks as otherwise 0.0 becomes inf, and you get
-            // gaps!
+            // Remember to do saturating log checks as otherwise 0.0 becomes inf, and you
+            // get gaps!
             let max_entry = if use_binary_prefix {
                 saturating_log2(max_entry)
             } else {

@@ -172,7 +172,8 @@ impl ColumnHeader for DiskWidgetColumn {
 }
 
 impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
-    // FIXME: (points_rework_v1) Can we change the return type to 'a instead of 'static?
+    // FIXME: (points_rework_v1) Can we change the return type to 'a instead of
+    // 'static?
     fn to_cell_text(
         &self, column: &DiskWidgetColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
