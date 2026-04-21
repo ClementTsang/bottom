@@ -177,6 +177,7 @@ Note all keywords are case-insensitive. To search for a process/command that col
 | Keywords | Description                                                    |
 | -------- | -------------------------------------------------------------- |
 | `=`      | Checks if the values are equal                                 |
+| `!=`     | Checks if the values are not equal                             |
 | `>`      | Checks if the left value is strictly greater than the right    |
 | `<`      | Checks if the left value is strictly less than the right       |
 | `>=`     | Checks if the left value is greater than or equal to the right |
@@ -190,6 +191,9 @@ Note all operators are case-insensitive, and the `and` operator takes precedence
 | ------------------------------------ | ------------------------------------------------------------------------------ | --------------------------------------------------- |
 | `and` <br/> `&&` <br/> `<Space>`     | `<COND 1> and <COND 2>` <br/> `<COND 1> && <COND 2>` <br/> `<COND 1> <COND 2>` | Requires both conditions to be true to match        |
 | `or` <br/> <code>&#124;&#124;</code> | `<COND 1> or <COND 2>` <br/> `<COND 1> &#124;&#124; <COND 2>`                  | Requires at least one condition to be true to match |
+| `!`                                  | `!<COND>` <br/> `!(<COND 1> or <COND 2>)`                                      | Inverts the following condition or group            |
+
+`!` is reserved as an operator, so it cannot appear bare as a value. To match a literal `!` in a name or string field, quote it — e.g. `"foo!"` or `user = "!"`. A bare `!` with nothing parseable after it (such as `user = !` or `!` on its own) is rejected.
 
 #### Units
 
