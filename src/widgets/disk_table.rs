@@ -191,7 +191,7 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
     // FIXME: (points_rework_v1) Can we change the return type to 'a instead of
     // 'static?
     fn to_cell_text(
-        &self, column: &DiskWidgetColumn, calculated_width: NonZeroU16,
+        &self, column: &DiskWidgetColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         fn percent_string(value: Option<f64>) -> Cow<'static, str> {
             match value {
@@ -200,33 +200,14 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
             }
         }
 
-        fn right_align(text: Cow<'static, str>, width: u16) -> Cow<'static, str> {
-            let text_len = text.len() as u16;
-            if text_len >= width {
-                text
-            } else {
-                let padding = " ".repeat((width - text_len) as usize);
-                format!("{}{}", padding, text).into()
-            }
-        }
-
         let text = match column {
             DiskWidgetColumn::Disk => self.name.clone().into(),
             DiskWidgetColumn::Mount => self.mount_point.clone().into(),
-            DiskWidgetColumn::Used => {
-                let used = self.used_space();
-                right_align(used, calculated_width.get())
-            }
-            DiskWidgetColumn::Free => {
-                let free = self.free_space();
-                right_align(free, calculated_width.get())
-            }
+            DiskWidgetColumn::Used => self.used_space(),
+            DiskWidgetColumn::Free => self.free_space(),
             DiskWidgetColumn::UsedPercent => percent_string(self.used_percent()),
             DiskWidgetColumn::FreePercent => percent_string(self.free_percent()),
-            DiskWidgetColumn::Total => {
-                let total = self.total_space();
-                right_align(total, calculated_width.get())
-            }
+            DiskWidgetColumn::Total => self.total_space(),
             DiskWidgetColumn::IoRead => self.io_read(),
             DiskWidgetColumn::IoWrite => self.io_write(),
         };
