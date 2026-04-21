@@ -11,7 +11,7 @@ use crate::{
     options::config::style::Styles,
     utils::{
         conversion::dec_bytes_per_second_string,
-        data_units::{get_decimal_bytes, format_significant_digits},
+        data_units::{format_significant_digits, get_decimal_bytes},
         general::sort_partial_fn,
     },
 };
@@ -32,7 +32,12 @@ impl DiskWidgetData {
     fn total_space(&self) -> Cow<'static, str> {
         if let Some(total_bytes) = self.total_bytes {
             let converted_total_space = get_decimal_bytes(total_bytes);
-            format!("{}{}", format_significant_digits(converted_total_space.0, 3), converted_total_space.1).into()
+            format!(
+                "{}{}",
+                format_significant_digits(converted_total_space.0, 3),
+                converted_total_space.1
+            )
+            .into()
         } else {
             "N/A".into()
         }
@@ -41,7 +46,12 @@ impl DiskWidgetData {
     fn free_space(&self) -> Cow<'static, str> {
         if let Some(free_bytes) = self.free_bytes {
             let converted_free_space = get_decimal_bytes(free_bytes);
-            format!("{}{}", format_significant_digits(converted_free_space.0, 3), converted_free_space.1).into()
+            format!(
+                "{}{}",
+                format_significant_digits(converted_free_space.0, 3),
+                converted_free_space.1
+            )
+            .into()
         } else {
             "N/A".into()
         }
@@ -50,7 +60,12 @@ impl DiskWidgetData {
     fn used_space(&self) -> Cow<'static, str> {
         if let Some(used_bytes) = self.used_bytes {
             let converted_used_space = get_decimal_bytes(used_bytes);
-            format!("{}{}", format_significant_digits(converted_used_space.0, 3), converted_used_space.1).into()
+            format!(
+                "{}{}",
+                format_significant_digits(converted_used_space.0, 3),
+                converted_used_space.1
+            )
+            .into()
         } else {
             "N/A".into()
         }
