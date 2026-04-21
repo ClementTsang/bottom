@@ -170,7 +170,11 @@ impl Painter {
                 // When filtering in search mode, calculate wrapping more accurately
                 for line in &styled_help_text {
                     // Get the width by extracting text from all spans
-                    let line_text = line.spans.iter().map(|s| s.content.as_ref()).collect::<String>();
+                    let line_text = line
+                        .spans
+                        .iter()
+                        .map(|s| s.content.as_ref())
+                        .collect::<String>();
                     let width = UnicodeWidthStr::width(line_text.as_str());
                     if width > paragraph_width {
                         overflow_buffer += (width.saturating_sub(1) / paragraph_width) as u16;

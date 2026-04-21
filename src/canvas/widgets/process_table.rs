@@ -9,7 +9,10 @@ use crate::{
     app::App,
     canvas::{
         Painter,
-        components::{data_table::{DrawInfo, SelectionState}, search_input},
+        components::{
+            data_table::{DrawInfo, SelectionState},
+            search_input,
+        },
         drawing_utils::widget_block,
     },
 };

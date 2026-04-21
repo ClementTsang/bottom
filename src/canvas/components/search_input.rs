@@ -4,7 +4,6 @@ use tui::{
     text::{Line, Span},
     widgets::Paragraph,
 };
-use unicode_width::UnicodeWidthStr;
 
 pub struct SearchInputConfig<'a> {
     pub query: &'a str,
