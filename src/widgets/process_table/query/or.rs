@@ -47,12 +47,7 @@ impl QueryProcessor for Or {
                     if OR_LIST.contains(&queue_next.to_lowercase().as_str()) {
                         // Must merge LHS and RHS
                         lhs = And {
-                            lhs: Prefix {
-                                or: Some(Box::new(Or { lhs, rhs })),
-                                regex_prefix: None,
-                                compare_prefix: None,
-                                string_condition: None,
-                            },
+                            lhs: Prefix::Or(Box::new(Or { lhs, rhs })),
                             rhs: None,
                         };
                         rhs = None;
