@@ -169,9 +169,9 @@ impl Painter {
         };
 
         let inner = if show_decimal {
-            format!("{:.1}%", data.usage)
+            format!("{:>5.1}%", data.usage)
         } else {
-            format!("{:.0}%", data.usage)
+            format!("{:>3.0}%", data.usage.round())
         };
         let ratio = data.usage / 100.0;
 
