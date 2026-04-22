@@ -135,6 +135,13 @@
         "default": {
           "description": "The default selected entry of the CPU widget.",
           "$ref": "#/$defs/CpuDefault"
+        },
+        "show_decimal": {
+          "description": "Whether to show a decimal place for CPU usage values.",
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       }
     },

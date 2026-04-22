@@ -395,6 +395,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # One of "all" (default), "average"/"avg"
 #default = "average"
 
+# Whether to show a decimal place for CPU usage values.
+#show_decimal = false
+
 
 # Disk widget configuration
 #[disk]

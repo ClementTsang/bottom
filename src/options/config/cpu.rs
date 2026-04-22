@@ -20,6 +20,9 @@ pub(crate) struct CpuConfig {
     /// The default selected entry of the CPU widget.
     #[serde(default)]
     pub(crate) default: CpuDefault,
+
+    /// Whether to show a decimal place for CPU usage values.
+    pub(crate) show_decimal: Option<bool>,
 }
 
 #[cfg(test)]
