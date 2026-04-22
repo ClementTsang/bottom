@@ -44,6 +44,7 @@ pub struct AppConfigFields {
     pub use_dot: bool,
     pub cpu_left_legend: bool,
     pub show_average_cpu: bool, // TODO: Unify this in CPU options
+    pub show_cpu_decimal: bool,
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
     pub get_process_threads: bool,

@@ -18,14 +18,14 @@ use crate::{
 
 pub enum CpuWidgetColumn {
     Cpu,
-    Use,
+    Use { show_decimal: bool },
 }
 
 impl ColumnHeader for CpuWidgetColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
             CpuWidgetColumn::Cpu => "CPU".into(),
-            CpuWidgetColumn::Use => "Use".into(),
+            CpuWidgetColumn::Use { .. } => "Use".into(),
         }
     }
 }
@@ -62,7 +62,7 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
         match &self {
             CpuWidgetTableData::All => match column {
                 CpuWidgetColumn::Cpu => Some("All".into()),
-                CpuWidgetColumn::Use => None,
+                CpuWidgetColumn::Use { .. } => None,
             },
             CpuWidgetTableData::Entry {
                 data_type,
@@ -85,7 +85,11 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
                                 Some(text)
                             }
                         },
-                        CpuWidgetColumn::Use => Some(format!("{:.0}%", last_entry.round()).into()),
+                        CpuWidgetColumn::Use { show_decimal } => Some(if *show_decimal {
+                            format!("{last_entry:.1}%").into()
+                        } else {
+                            format!("{last_entry:.0}%").into()
+                        }),
                     }
                 }
             }
@@ -133,9 +137,14 @@ impl CpuWidgetState {
         config: &AppConfigFields, default_selection: CpuDefault, current_display_time: u64,
         autohide_timer: Option<Instant>, colours: &Styles,
     ) -> Self {
-        const COLUMNS: [Column<CpuWidgetColumn>; 2] = [
+        let columns = [
             Column::soft(CpuWidgetColumn::Cpu, Some(0.5)),
-            Column::soft(CpuWidgetColumn::Use, Some(0.5)),
+            Column::soft(
+                CpuWidgetColumn::Use {
+                    show_decimal: config.show_cpu_decimal,
+                },
+                Some(0.5),
+            ),
         ];
 
         let props = DataTableProps {
@@ -148,7 +157,7 @@ impl CpuWidgetState {
         };
 
         let styling = DataTableStyling::from_palette(colours);
-        let mut table = DataTable::new(COLUMNS, props, styling);
+        let mut table = DataTable::new(columns, props, styling);
         match default_selection {
             CpuDefault::All => {}
             CpuDefault::Average if !config.show_average_cpu => {}

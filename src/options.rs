@@ -303,6 +303,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temperature_type: get_temperature(args, config)
             .context("Update 'temperature_type' in your config file.")?,
         show_average_cpu: get_show_average_cpu(args, config),
+        show_cpu_decimal: get_show_cpu_decimal(config),
         use_dot: is_flag_enabled!(dot_marker, args.general, config),
         cpu_left_legend: is_flag_enabled!(cpu_left_legend, args.cpu, config),
         use_current_cpu_total: is_flag_enabled!(current_usage, args.process, config),
@@ -766,6 +767,14 @@ fn get_default_cpu_selection(args: &BottomArgs, config: &Config) -> config::cpu:
         },
         None => config.cpu.as_ref().map(|c| c.default).unwrap_or_default(),
     }
+}
+
+fn get_show_cpu_decimal(config: &Config) -> bool {
+    config
+        .cpu
+        .as_ref()
+        .and_then(|c| c.show_decimal)
+        .unwrap_or(false)
 }
 
 fn get_table_gap(config: &Config) -> TableGap {
