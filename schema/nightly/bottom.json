@@ -519,6 +519,12 @@
             }
           ]
         },
+        "show_table_scroll_bar": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "show_table_scroll_position": {
           "type": [
             "boolean",

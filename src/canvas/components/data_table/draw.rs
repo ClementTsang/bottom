@@ -18,7 +18,11 @@ use super::{
 };
 use crate::{
     app::layout_manager::BottomWidget,
-    canvas::{Painter, drawing_utils::widget_block},
+    canvas::{
+        Painter,
+        components::scroll_bar::{ScrollBarArgs, draw_scroll_bar},
+        drawing_utils::widget_block,
+    },
     constants::TABLE_GAP_HEIGHT_LIMIT,
     options::config::flags::TableGap,
     utils::strings::truncate_to_text,
@@ -146,8 +150,22 @@ where
             .split(draw_loc)[0];
 
         let mut block = self.block(draw_info, self.data.len());
-        if self.props.is_basic && !draw_info.is_on_widget() {
-            block = block.padding(Padding::horizontal(1))
+
+        let horizontal_padding = if self.props.is_basic && !draw_info.is_on_widget() {
+            1
+        } else {
+            0
+        };
+
+        if self.props.show_table_scroll_bar {
+            block = block.padding(Padding::new(
+                horizontal_padding,
+                horizontal_padding + 1,
+                0,
+                0,
+            ));
+        } else {
+            block = block.padding(Padding::horizontal(horizontal_padding));
         }
 
         let (inner_width, inner_height) = {
@@ -208,10 +226,12 @@ where
                     }
                 }
 
+                let num_rows: usize = inner_height
+                    .saturating_sub(table_gap + header_height)
+                    .into();
+
                 let columns = &self.columns;
                 let rows = {
-                    let num_rows =
-                        usize::from(inner_height.saturating_sub(table_gap + header_height));
                     self.state
                         .get_start_position(num_rows, draw_info.force_redraw);
                     let start = self.state.display_start_index;
@@ -275,6 +295,26 @@ where
 
                 let table_state = &mut self.state.table_state;
                 f.render_stateful_widget(widget, margined_draw_loc, table_state);
+
+                if self.props.show_table_scroll_bar {
+                    let scrollbar_area = Rect {
+                        x: self.state.inner_rect.x + self.state.inner_rect.width,
+                        y: self.state.inner_rect.y + header_height + table_gap,
+                        width: 1,
+                        height: num_rows as u16,
+                    };
+
+                    draw_scroll_bar(
+                        f,
+                        scrollbar_area,
+                        ScrollBarArgs {
+                            content_length: self.data.len(),
+                            viewport_length: num_rows,
+                            position: self.state.current_index,
+                            style: self.styling.text_style,
+                        },
+                    );
+                }
 
                 if table_gap > 0 && table_gap_setting == TableGap::Line && show_header {
                     let y = self.state.inner_rect.y + header_height;

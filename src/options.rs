@@ -325,6 +325,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             args.general,
             config
         ),
+        show_table_scroll_bar: get_show_table_scroll_bar(config),
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         is_advanced_kill,
         is_read_only,
@@ -783,6 +784,14 @@ fn get_table_gap(config: &Config) -> TableGap {
         .as_ref()
         .map(|flags| flags.table_gap)
         .unwrap_or_default()
+}
+
+fn get_show_table_scroll_bar(config: &Config) -> bool {
+    config
+        .flags
+        .as_ref()
+        .and_then(|flags| flags.show_table_scroll_bar)
+        .unwrap_or(false)
 }
 
 fn get_dedicated_avg_row(config: &Config) -> bool {

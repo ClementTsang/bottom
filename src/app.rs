@@ -60,6 +60,7 @@ pub struct AppConfigFields {
     pub enable_gpu: bool,
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,
+    pub show_table_scroll_bar: bool,
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub is_advanced_kill: bool,
     pub is_read_only: bool,

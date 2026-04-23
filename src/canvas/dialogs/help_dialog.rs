@@ -4,13 +4,17 @@ use tui::{
     Frame,
     layout::{Alignment, Rect},
     text::{Line, Span},
-    widgets::{Paragraph, Wrap},
+    widgets::{Padding, Paragraph, Wrap},
 };
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::App,
-    canvas::{Painter, drawing_utils::dialog_block},
+    canvas::{
+        Painter,
+        components::scroll_bar::{ScrollBarArgs, draw_scroll_bar},
+        drawing_utils::dialog_block,
+    },
     constants::{self, HELP_TEXT},
 };
 
@@ -41,20 +45,23 @@ impl Painter {
     pub fn draw_help_dialog(&self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect) {
         let styled_help_text = self.help_text_lines();
 
+        // Reserve one column on the right for the scroll bar.
         let block = dialog_block(self.styles.border_type, self.styles.border_style)
             .title_top(Line::styled(" Help ", self.styles.widget_title_style))
             .title_top(
                 Line::styled(" Esc to close ", self.styles.widget_title_style).right_aligned(),
-            );
+            )
+            .padding(Padding::right(1));
 
         if app_state.should_get_widget_bounds() {
             // We must also recalculate how many lines are wrapping to properly get
             // scrolling to work on small terminal sizes... oh joy.
 
-            app_state.help_dialog_state.height = block.inner(draw_loc).height;
+            let inner = block.inner(draw_loc);
+            app_state.help_dialog_state.height = inner.height;
 
             let mut overflow_buffer = 0;
-            let paragraph_width = max(draw_loc.width.saturating_sub(2), 1);
+            let paragraph_width = max(inner.width, 1);
             let mut prev_section_len = 0;
 
             constants::HELP_TEXT
@@ -112,6 +119,35 @@ impl Painter {
                     0,
                 )),
             draw_loc,
+        );
+
+        let scrollbar_area = Rect {
+            x: draw_loc.x + draw_loc.width.saturating_sub(2),
+            y: draw_loc.y + 1,
+            width: 1,
+            height: draw_loc.height.saturating_sub(2),
+        };
+        let content_length = app_state
+            .help_dialog_state
+            .scroll_state
+            .max_scroll_index
+            .into();
+        let viewport_length = app_state.help_dialog_state.height.into();
+        let position = app_state
+            .help_dialog_state
+            .scroll_state
+            .current_scroll_index
+            .into();
+
+        draw_scroll_bar(
+            f,
+            scrollbar_area,
+            ScrollBarArgs {
+                content_length,
+                viewport_length,
+                position,
+                style: self.styles.text_style,
+            },
         );
     }
 }

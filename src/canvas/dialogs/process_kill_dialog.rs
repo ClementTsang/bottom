@@ -12,6 +12,8 @@ use tui::{
     widgets::{Paragraph, Wrap},
 };
 
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+use crate::canvas::components::scroll_bar::{ScrollBarArgs, draw_scroll_bar};
 use crate::{
     canvas::drawing_utils::dialog_block, collection::processes::Pid, options::config::style::Styles,
 };
@@ -747,13 +749,32 @@ impl ProcessKillDialog {
 
                     max as u16
                 };
-                let [button_draw_area] =
+
+                let [list_area] =
                     Layout::horizontal([Constraint::Length(LONGEST_SIGNAL_TEXT_LENGTH)])
                         .flex(Flex::Center)
                         .areas(button_draw_area);
 
-                *last_button_draw_area = button_draw_area;
-                f.render_stateful_widget(buttons, button_draw_area, state);
+                *last_button_draw_area = list_area;
+                f.render_stateful_widget(buttons, list_area, state);
+
+                let scrollbar_area = Rect {
+                    x: draw_area.x + draw_area.width.saturating_sub(2),
+                    y: draw_area.y + 1,
+                    width: 1,
+                    height: draw_area.height.saturating_sub(2),
+                };
+
+                draw_scroll_bar(
+                    f,
+                    scrollbar_area,
+                    ScrollBarArgs {
+                        content_length: SIGNAL_TEXT.len(),
+                        viewport_length: list_area.height as usize,
+                        position: state.selected().unwrap_or(0),
+                        style: styles.text_style,
+                    },
+                );
             }
             ButtonState::Simple {
                 yes,

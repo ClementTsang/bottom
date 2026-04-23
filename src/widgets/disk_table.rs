@@ -326,6 +326,7 @@ impl DiskTableWidget {
                 left_to_right: true,
                 is_basic: config.use_basic_mode,
                 show_table_scroll_position: config.show_table_scroll_position,
+                show_table_scroll_bar: config.show_table_scroll_bar,
                 show_current_entry_when_unfocused: false,
             },
             sort_index: match &config.default_disk_sort_column {
