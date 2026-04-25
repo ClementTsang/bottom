@@ -1019,24 +1019,20 @@ fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
 fn parse_legend_position(
     arg: Option<&String>, cfg: Option<&String>, setting: &'static str,
 ) -> OptionResult<Option<LegendPosition>> {
+    #[inline]
+    fn parse_position_or_err<F: FnOnce(&'static str) -> OptionError>(
+        s: &str, setting: &'static str, err_fn: F,
+    ) -> OptionResult<Option<LegendPosition>> {
+        Ok(match s.to_ascii_lowercase().trim() {
+            "none" => None,
+            position => Some(position.parse().map_err(|_| err_fn(setting))?),
+        })
+    }
+
     if let Some(s) = arg {
-        Ok(match s.to_ascii_lowercase().trim() {
-            "none" => None,
-            position => Some(
-                position
-                    .parse()
-                    .map_err(|_| OptionError::invalid_arg_value(setting))?,
-            ),
-        })
+        parse_position_or_err(s, setting, OptionError::invalid_arg_value)
     } else if let Some(s) = cfg {
-        Ok(match s.to_ascii_lowercase().trim() {
-            "none" => None,
-            position => Some(
-                position
-                    .parse()
-                    .map_err(|_| OptionError::invalid_config_value(setting))?,
-            ),
-        })
+        parse_position_or_err(s, setting, OptionError::invalid_config_value)
     } else {
         Ok(Some(LegendPosition::default()))
     }
