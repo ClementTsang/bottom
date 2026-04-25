@@ -61,10 +61,10 @@ macro_rules! is_flag_enabled {
     };
 }
 
-/// A new version if [`is_flag_enabled`] which instead expects the user to pass
+/// A version of [`is_flag_enabled`] which instead expects the user to pass
 /// in `config_section`, which is the section the flag is located, rather than
 /// defaulting to `config.flags` where `config` is passed in.
-macro_rules! is_flag_enabled_new {
+macro_rules! is_flag_enabled_in {
     ($flag_name:ident, $arg:expr, $config_section:expr) => {
         if $arg.$flag_name {
             true
@@ -303,7 +303,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let network_scale_type = get_network_scale_type(args, config);
     let network_use_binary_prefix =
         is_flag_enabled!(network_use_binary_prefix, args.network, config);
-    let network_show_packets = is_flag_enabled_new!(show_packets, args.network, config.network);
+    let network_show_packets = is_flag_enabled_in!(show_packets, args.network, config.network);
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
         config.processes.as_ref().and_then(|cfg| {
@@ -332,7 +332,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         cpu_left_legend: is_flag_enabled!(cpu_left_legend, args.cpu, config),
         use_current_cpu_total: is_flag_enabled!(current_usage, args.process, config),
         unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, args.process, config),
-        get_process_threads: is_flag_enabled_new!(get_threads, args.process, config.processes),
+        get_process_threads: is_flag_enabled_in!(get_threads, args.process, config.processes),
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(args, config, retention_ms)?,
