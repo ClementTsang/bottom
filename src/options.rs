@@ -1068,13 +1068,14 @@ fn get_memory_legend_position(
 mod test {
     use clap::Parser;
 
-    use super::{Config, get_time_interval};
+    use super::*;
     use crate::{
         app::App,
         args::BottomArgs,
+        canvas::components::time_graph::LegendPosition,
         options::{
-            config::flags::GeneralConfig, get_default_time_value, get_retention, get_update_rate,
-            try_parse_ms,
+            OptionError, config::flags::GeneralConfig, get_default_time_value, get_retention,
+            get_update_rate, parse_legend_position, try_parse_ms,
         },
     };
 
@@ -1095,6 +1096,58 @@ mod test {
 
         assert!(try_parse_ms(a_bad).is_err());
         assert!(try_parse_ms(b_bad).is_err());
+    }
+
+    #[test]
+    fn verify_parse_legend_position() {
+        let setting = "network_legend";
+
+        // No arg, no config.
+        assert_eq!(
+            parse_legend_position(None, None, setting),
+            Ok(Some(LegendPosition::default()))
+        );
+
+        // Arg takes precedence and is parsed (case-insensitive, trimmed).
+        let arg = "  ToP-lEfT  ".to_string();
+        let cfg = "bottom-right".to_string();
+        assert_eq!(
+            parse_legend_position(Some(&arg), Some(&cfg), setting),
+            Ok(Some(LegendPosition::TopLeft))
+        );
+
+        // "none" disables the legend, from either source.
+        let none_arg = "None".to_string();
+        assert_eq!(
+            parse_legend_position(Some(&none_arg), None, setting),
+            Ok(None)
+        );
+        let none_cfg = "none".to_string();
+        assert_eq!(
+            parse_legend_position(None, Some(&none_cfg), setting),
+            Ok(None)
+        );
+
+        // Config value is used when no arg is provided.
+        let cfg_only = "left".to_string();
+        assert_eq!(
+            parse_legend_position(None, Some(&cfg_only), setting),
+            Ok(Some(LegendPosition::Left))
+        );
+
+        // Invalid arg value.
+        let bad_arg = "bad".to_string();
+        assert_eq!(
+            parse_legend_position(Some(&bad_arg), None, setting),
+            Err(OptionError::invalid_arg_value(setting))
+        );
+
+        // Invalid config value.
+        let bad_cfg = "bad".to_string();
+        assert_eq!(
+            parse_legend_position(None, Some(&bad_cfg), setting),
+            Err(OptionError::invalid_config_value(setting))
+        );
     }
 
     #[test]
