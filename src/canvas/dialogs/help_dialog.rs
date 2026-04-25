@@ -12,7 +12,7 @@ use crate::{
     app::App,
     canvas::{
         Painter,
-        components::scroll_bar::{ScrollBarArgs, draw_scroll_bar},
+        components::scroll_bar::{ScrollBarArgs, dialog_scroll_bar_area, draw_scroll_bar},
         drawing_utils::dialog_block,
     },
     constants::{self, HELP_TEXT},
@@ -121,12 +121,7 @@ impl Painter {
             draw_loc,
         );
 
-        let scrollbar_area = Rect {
-            x: draw_loc.x + draw_loc.width.saturating_sub(2),
-            y: draw_loc.y + 1,
-            width: 1,
-            height: draw_loc.height.saturating_sub(2),
-        };
+        let scrollbar_area = dialog_scroll_bar_area(draw_loc);
         let content_length = app_state
             .help_dialog_state
             .scroll_state

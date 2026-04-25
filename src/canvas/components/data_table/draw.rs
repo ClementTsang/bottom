@@ -156,17 +156,8 @@ where
         } else {
             0
         };
-
-        if self.props.show_table_scroll_bar {
-            block = block.padding(Padding::new(
-                horizontal_padding,
-                horizontal_padding + 1,
-                0,
-                0,
-            ));
-        } else {
-            block = block.padding(Padding::horizontal(horizontal_padding));
-        }
+        let right_padding = horizontal_padding + u16::from(self.props.show_table_scroll_bar);
+        block = block.padding(Padding::new(horizontal_padding, right_padding, 0, 0));
 
         let (inner_width, inner_height) = {
             let inner_rect = block.inner(margined_draw_loc);

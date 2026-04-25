@@ -20,6 +20,17 @@ pub struct ScrollBarArgs {
     pub style: Style,
 }
 
+/// Returns a [`Rect`] for a vertical scroll bar drawn just inside the right
+/// border of a dialog block.
+pub fn dialog_scroll_bar_area(block_area: Rect) -> Rect {
+    Rect {
+        x: block_area.x + block_area.width.saturating_sub(2),
+        y: block_area.y + 1,
+        width: 1,
+        height: block_area.height.saturating_sub(2),
+    }
+}
+
 /// Draw a vertical scroll bar in `area`.
 pub fn draw_scroll_bar(f: &mut Frame<'_>, area: Rect, args: ScrollBarArgs) {
     if args.content_length <= args.viewport_length || area.width == 0 || area.height == 0 {
