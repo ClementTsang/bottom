@@ -244,6 +244,7 @@ impl ProcWidgetState {
             left_to_right: true,
             is_basic: false,
             show_table_scroll_position: false,
+            show_table_scroll_bar: false,
             show_current_entry_when_unfocused: false,
         };
         let styling = DataTableStyling::from_palette(palette);
@@ -261,6 +262,7 @@ impl ProcWidgetState {
             left_to_right: true,
             is_basic: config.use_basic_mode,
             show_table_scroll_position: config.show_table_scroll_position,
+            show_table_scroll_bar: config.show_table_scroll_bar,
             show_current_entry_when_unfocused: false,
         };
         let props = SortDataTableProps {

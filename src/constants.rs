@@ -340,6 +340,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Shows an indicator in table widgets tracking where in the list you are.
 #show_table_scroll_position = false
 
+# Show a scroll bar on the right edge of table widgets.
+#show_table_scroll_bar = false
+
 # Show processes as their commands by default in the process widget.
 #process_command = false
 

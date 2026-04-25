@@ -153,6 +153,7 @@ impl CpuWidgetState {
             left_to_right: false,
             is_basic: false,
             show_table_scroll_position: false, // TODO: Should this be possible?
+            show_table_scroll_bar: config.show_table_scroll_bar,
             show_current_entry_when_unfocused: true,
         };
 
