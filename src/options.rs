@@ -76,8 +76,8 @@ macro_rules! is_flag_enabled_new {
     };
 }
 
-/// Get the value of a field for a specific section in the config file if set. If not set, a default is used.
-macro_rules! config_value {
+/// Get the value of a field for a specific section in the config file if set. If not set, the default is used.
+macro_rules! config_or_default {
     ($config:expr, $section:ident . $field:ident) => {
         $config
             .$section
@@ -89,7 +89,7 @@ macro_rules! config_value {
 
 /// Get the value of a field for a specific section in the config file if set. If not set,
 /// the provided default is used.
-macro_rules! config_value_default {
+macro_rules! config_or {
     ($config:expr, $section:ident . $field:ident, $default:expr) => {
         $config
             .$section
@@ -327,7 +327,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temperature_type: get_temperature(args, config)
             .context("Update 'temperature_type' in your config file.")?,
         show_average_cpu: get_show_average_cpu(args, config),
-        show_cpu_decimal: config_value_default!(config, cpu.show_decimal, false),
+        show_cpu_decimal: config_or!(config, cpu.show_decimal, false),
         use_dot: is_flag_enabled!(dot_marker, args.general, config),
         cpu_left_legend: is_flag_enabled!(cpu_left_legend, args.cpu, config),
         use_current_cpu_total: is_flag_enabled!(current_usage, args.process, config),
@@ -339,7 +339,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         hide_time: is_flag_enabled!(hide_time, args.general, config),
         autohide_time,
         use_old_network_legend: is_flag_enabled!(use_old_network_legend, args.network, config),
-        table_gap: config_value!(config, flags.table_gap),
+        table_gap: config_or_default!(config, flags.table_gap),
         disable_click: is_flag_enabled!(disable_click, args.general, config),
         disable_keys: is_flag_enabled!(disable_keys, args.general, config),
         enable_gpu: get_enable_gpu(args, config),
@@ -349,7 +349,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             args.general,
             config
         ),
-        show_table_scroll_bar: config_value_default!(config, flags.show_table_scroll_bar, false),
+        show_table_scroll_bar: config_or!(config, flags.show_table_scroll_bar, false),
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         is_advanced_kill,
         is_read_only,
@@ -362,7 +362,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         network_use_binary_prefix,
         network_show_packets,
         retention_ms,
-        dedicated_average_row: config_value_default!(config, flags.average_cpu_row, false),
+        dedicated_average_row: config_or!(config, flags.average_cpu_row, false),
         default_tree_collapse: is_default_tree_collapsed,
         #[cfg(feature = "zfs")]
         free_arc,
