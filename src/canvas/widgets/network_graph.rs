@@ -22,7 +22,7 @@ use crate::{
         data_units::*,
         general::{saturating_log2, saturating_log10},
     },
-    widgets::{NetWidgetHeightCache, NetWidgetState},
+    widgets::{GraphHeightCache, NetWidgetState},
 };
 
 impl Painter {
@@ -136,7 +136,7 @@ impl Painter {
                         }
                     }
 
-                    network_widget_state.height_cache = Some(NetWidgetHeightCache {
+                    network_widget_state.height_cache = Some(GraphHeightCache {
                         best_point: (biggest_time, biggest),
                         right_edge: *last_time,
                         period: network_widget_state.current_display_time,
@@ -397,7 +397,7 @@ fn check_network_height_cache(
 ) -> Option<(f64, std::time::Instant, std::time::Instant)> {
     let visible_duration = Duration::from_millis(network_widget_state.current_display_time);
 
-    if let Some(NetWidgetHeightCache {
+    if let Some(GraphHeightCache {
         best_point,
         right_edge,
         period,

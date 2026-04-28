@@ -7,6 +7,8 @@ pub mod process_table;
 pub mod temperature_graph;
 pub mod temperature_table;
 
+use std::time::Instant;
+
 pub use battery_info::*;
 pub use cpu_graph::*;
 pub use disk_table::*;
@@ -15,3 +17,9 @@ pub use network_graph::*;
 pub use process_table::*;
 pub use temperature_graph::*;
 pub use temperature_table::*;
+
+pub struct GraphHeightCache {
+    pub best_point: (Instant, f64),
+    pub right_edge: Instant,
+    pub period: u64,
+}
