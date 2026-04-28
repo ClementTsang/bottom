@@ -560,6 +560,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         net_state: NetState::init(net_state_map),
         proc_state: ProcState::init(proc_state_map),
         temp_state: TempState::init(temp_state_map),
+        temp_graph_state: TempGraphState::init(todo!()),
         disk_state: DiskState::init(disk_state_map),
         battery_state: AppBatteryState::init(battery_state_map),
         basic_table_widget_state,

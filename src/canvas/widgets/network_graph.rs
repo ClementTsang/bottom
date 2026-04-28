@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use tui::{
     Frame,
@@ -393,24 +393,12 @@ impl Painter {
 /// cached.
 #[inline]
 fn check_network_height_cache(
-    network_widget_state: &NetWidgetState, last_time: &std::time::Instant,
-) -> Option<(f64, std::time::Instant, std::time::Instant)> {
-    let visible_duration = Duration::from_millis(network_widget_state.current_display_time);
-
-    if let Some(GraphHeightCache {
-        best_point,
-        right_edge,
-        period,
-    }) = &network_widget_state.height_cache
-    {
-        if *period == network_widget_state.current_display_time
-            && last_time.duration_since(best_point.0) < visible_duration
-        {
-            return Some((best_point.1, best_point.0, *right_edge));
-        }
-    }
-
-    None
+    network_widget_state: &NetWidgetState, last_time: &Instant,
+) -> Option<(f64, Instant, Instant)> {
+    network_widget_state
+        .height_cache
+        .as_ref()
+        .and_then(|cache| cache.get(last_time, network_widget_state.current_display_time))
 }
 
 /// Returns the required labels.
