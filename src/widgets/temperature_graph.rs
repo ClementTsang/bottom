@@ -6,13 +6,17 @@ use std::time::Instant;
 pub struct TemperatureGraphState {
     pub current_display_time: u64,
     pub autohide_timer: Option<Instant>,
+    pub max_temp: Option<f32>,
 }
 
 impl TemperatureGraphState {
-    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
+    pub fn init(
+        current_display_time: u64, autohide_timer: Option<Instant>, max_temp: Option<f32>,
+    ) -> Self {
         TemperatureGraphState {
             current_display_time,
             autohide_timer,
+            max_temp,
         }
     }
 }
