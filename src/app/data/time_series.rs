@@ -58,6 +58,9 @@ pub struct TimeSeriesData {
     #[cfg(feature = "gpu")]
     /// GPU memory data.
     pub gpu_mem: HashMap<String, Values>,
+
+    /// Temperature data.
+    pub temperature: HashMap<String, ChunkedData<f32>>,
 }
 
 impl TimeSeriesData {
@@ -168,6 +171,43 @@ impl TimeSeriesData {
                 }
             }
         }
+
+        // FIXME: If a temperature graph exists...
+        if let Some(temperature_sensors) = &data.temperature_sensors {
+            let mut not_visited = self
+                .temperature
+                .keys()
+                .map(String::to_owned)
+                .collect::<HashSet<_>>();
+
+            for sensor_data in temperature_sensors {
+                if let Some(temperature) = sensor_data.temperature {
+                    not_visited.remove(&sensor_data.name);
+
+                    if !self.temperature.contains_key(&sensor_data.name) {
+                        self.temperature
+                            .insert(sensor_data.name.clone(), ChunkedData::default());
+                    }
+
+                    let curr = self
+                        .temperature
+                        .get_mut(&sensor_data.name)
+                        .expect("entry must exist as it was created above");
+
+                    curr.push(temperature);
+                }
+            }
+
+            for nv in not_visited {
+                if let Some(entry) = self.gpu_mem.get_mut(&nv) {
+                    entry.insert_break();
+                }
+            }
+        } else {
+            for g in self.temperature.values_mut() {
+                g.insert_break();
+            }
+        }
     }
 
     /// Prune any data older than the given duration.
@@ -229,5 +269,17 @@ impl TimeSeriesData {
                 }
             });
         }
+
+        self.temperature.retain(|_, data| {
+            let _ = data.prune(end);
+
+            // Remove the entry if it is empty. We can always add it again later.
+            if data.no_elements() {
+                false
+            } else {
+                data.shrink_to_fit();
+                true
+            }
+        });
     }
 }

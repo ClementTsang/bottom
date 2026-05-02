@@ -6,7 +6,7 @@ use crate::{
     utils::input::InputFieldState,
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
-        ProcWidgetState, TempWidgetState, TemperatureGraphState, query::ProcessQuery,
+        ProcWidgetState, TempGraphWidgetState, TempWidgetState, query::ProcessQuery,
     },
 };
 
@@ -16,7 +16,7 @@ pub struct AppWidgetStates {
     pub net_state: NetState,
     pub proc_state: ProcState,
     pub temp_state: TempState,
-    pub temp_graph_state: TempGraphState,
+    pub temp_graph_state: TempGraphStates,
     pub disk_state: DiskState,
     pub battery_state: AppBatteryState,
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
@@ -149,20 +149,20 @@ impl TempState {
     }
 }
 
-pub struct TempGraphState {
-    pub widget_states: HashMap<u64, TemperatureGraphState>,
+pub struct TempGraphStates {
+    pub widget_states: HashMap<u64, TempGraphWidgetState>,
 }
 
-impl TempGraphState {
-    pub fn init(widget_states: HashMap<u64, TemperatureGraphState>) -> Self {
-        TempGraphState { widget_states }
+impl TempGraphStates {
+    pub fn init(widget_states: HashMap<u64, TempGraphWidgetState>) -> Self {
+        TempGraphStates { widget_states }
     }
 
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut TemperatureGraphState> {
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut TempGraphWidgetState> {
         self.widget_states.get_mut(&widget_id)
     }
 
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&TemperatureGraphState> {
+    pub fn get_widget_state(&self, widget_id: u64) -> Option<&TempGraphWidgetState> {
         self.widget_states.get(&widget_id)
     }
 }

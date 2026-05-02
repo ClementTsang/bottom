@@ -8,7 +8,13 @@ use super::{ProcessData, TimeSeriesData};
 use crate::collection::batteries;
 use crate::{
     app::AppConfigFields,
-    collection::{Data, cpu, disks, memory::MemData, network},
+    collection::{
+        Data,
+        cpu::{CpuHarvest, LoadAvgHarvest},
+        disks,
+        memory::MemData,
+        network::NetworkHarvest,
+    },
     utils::data_units::DataUnit,
     widgets::{DiskWidgetData, TempWidgetData},
 };
@@ -22,7 +28,7 @@ pub struct StoredData {
     // FIXME: (points_rework_v1) we could be able to remove this with some more refactoring.
     pub last_update_time: Instant,
     pub timeseries_data: TimeSeriesData,
-    pub network_harvest: network::NetworkHarvest,
+    pub network_harvest: NetworkHarvest,
     pub ram_harvest: Option<MemData>,
     pub swap_harvest: Option<MemData>,
     #[cfg(not(target_os = "windows"))]
@@ -31,8 +37,8 @@ pub struct StoredData {
     pub arc_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
     pub gpu_harvest: Vec<(String, MemData)>,
-    pub cpu_harvest: cpu::CpuHarvest,
-    pub load_avg_harvest: cpu::LoadAvgHarvest,
+    pub cpu_harvest: CpuHarvest,
+    pub load_avg_harvest: LoadAvgHarvest,
     pub process_data: ProcessData,
     /// TODO: (points_rework_v1) Might be a better way to do this without having
     /// to store here?
@@ -48,13 +54,13 @@ impl Default for StoredData {
         StoredData {
             last_update_time: Instant::now(),
             timeseries_data: TimeSeriesData::default(),
-            network_harvest: network::NetworkHarvest::default(),
+            network_harvest: NetworkHarvest::default(),
             ram_harvest: None,
             #[cfg(not(target_os = "windows"))]
             cache_harvest: None,
             swap_harvest: None,
-            cpu_harvest: cpu::CpuHarvest::default(),
-            load_avg_harvest: cpu::LoadAvgHarvest::default(),
+            cpu_harvest: CpuHarvest::default(),
+            load_avg_harvest: LoadAvgHarvest::default(),
             process_data: Default::default(),
             prev_io: Vec::default(),
             disk_harvest: Vec::default(),

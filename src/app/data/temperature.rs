@@ -47,6 +47,17 @@ pub enum TypedTemperature {
     Fahrenheit(u32),
 }
 
+impl TypedTemperature {
+    /// Return the inner value as a raw u32.
+    pub fn inner(&self) -> u32 {
+        match self {
+            TypedTemperature::Celsius(val)
+            | TypedTemperature::Kelvin(val)
+            | TypedTemperature::Fahrenheit(val) => *val,
+        }
+    }
+}
+
 impl Display for TypedTemperature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

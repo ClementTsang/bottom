@@ -5,7 +5,7 @@ use crate::widgets::GraphHeightCache;
 pub struct NetWidgetState {
     pub current_display_time: u64,
     pub autohide_timer: Option<Instant>,
-    pub height_cache: Option<GraphHeightCache>,
+    pub height_cache: GraphHeightCache,
 }
 
 impl NetWidgetState {
@@ -13,7 +13,7 @@ impl NetWidgetState {
         NetWidgetState {
             current_display_time,
             autohide_timer,
-            height_cache: None,
+            height_cache: GraphHeightCache::default(),
         }
     }
 }
