@@ -353,8 +353,7 @@ fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) ->
 /// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
 /// for more details.
 fn add_thermal_zone_temperatures(
-    temperatures: &mut Vec<TempSensorData>, filter: &Option<Filter>,
-    graph_filter: &Option<Filter>,
+    temperatures: &mut Vec<TempSensorData>, filter: &Option<Filter>, graph_filter: &Option<Filter>,
 ) {
     let path = Path::new("/sys/class/thermal");
     let Ok(read_dir) = path.read_dir() else {

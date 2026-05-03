@@ -186,10 +186,8 @@ impl TimeSeriesData {
                     .collect::<HashSet<_>>();
 
                 for sensor_data in temperature_sensors {
-                    if !Filter::optional_should_keep(
-                        &filters.temp_graph_filter,
-                        &sensor_data.name,
-                    ) {
+                    if !Filter::optional_should_keep(&filters.temp_graph_filter, &sensor_data.name)
+                    {
                         continue;
                     }
 

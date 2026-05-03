@@ -51,11 +51,8 @@ impl Painter {
                     0.0
                 }
             };
-            let (adjusted_y_max, y_labels) = adjust_temp_data_point(
-                y_max,
-                widget_state.max_temp,
-                &app_state.app_config_fields,
-            );
+            let (adjusted_y_max, y_labels) =
+                adjust_temp_data_point(y_max, widget_state.max_temp, &app_state.app_config_fields);
             let y_bounds = AxisBound::Max(adjusted_y_max);
 
             // Hide the legend if the width is 90% of the total widget width
@@ -72,8 +69,8 @@ impl Painter {
                     GraphData::default()
                         .name(source.into())
                         .style(
-                            self.styles.cpu_colour_styles
-                                [itx % self.styles.cpu_colour_styles.len()],
+                            self.styles.temp_graph_colour_styles
+                                [itx % self.styles.temp_graph_colour_styles.len()],
                         )
                         .time(times)
                         .values(values)

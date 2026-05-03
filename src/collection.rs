@@ -393,9 +393,11 @@ impl DataCollector {
             let mut local_gpu_total_mem: u64 = 0;
 
             #[cfg(feature = "nvidia")]
-            if let Some(data) =
-                nvidia::get_nvidia_vecs(&self.filters.temp_filter, &self.widgets_to_harvest)
-            {
+            if let Some(data) = nvidia::get_nvidia_vecs(
+                &self.filters.temp_filter,
+                &self.filters.temp_graph_filter,
+                &self.widgets_to_harvest,
+            ) {
                 if let Some(mut temp) = data.temperature {
                     if let Some(sensors) = &mut self.data.temperature_sensors {
                         sensors.append(&mut temp);

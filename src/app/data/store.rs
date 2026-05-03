@@ -100,7 +100,8 @@ impl StoredData {
         }
 
         if !settings.use_basic_mode {
-            self.timeseries_data.add(&data, used_widgets, settings, filters);
+            self.timeseries_data
+                .add(&data, used_widgets, settings, filters);
         }
 
         if let Some(network) = data.network {
@@ -342,7 +343,8 @@ impl DataStore {
 
     /// Eat data.
     pub fn eat_data(&mut self, data: Box<Data>, settings: &AppConfigFields) {
-        self.main.eat_data(data, settings, &self.used_widgets, &self.filters);
+        self.main
+            .eat_data(data, settings, &self.used_widgets, &self.filters);
     }
 
     /// Clean data.

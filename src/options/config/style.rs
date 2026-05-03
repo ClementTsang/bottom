@@ -7,6 +7,7 @@ mod graphs;
 mod memory;
 mod network;
 mod tables;
+mod temp_graph;
 mod themes;
 mod utils;
 mod widgets;
@@ -20,6 +21,7 @@ use memory::MemoryStyle;
 use network::NetworkStyle;
 use serde::{Deserialize, Serialize};
 use tables::TableStyle;
+use temp_graph::TempGraphStyle;
 use tui::{style::Style, widgets::BorderType};
 use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
@@ -82,6 +84,9 @@ pub(crate) struct StyleConfig {
     /// Styling for the network widget.
     pub(crate) network: Option<NetworkStyle>,
 
+    /// Styling for the temperature graph widget.
+    pub(crate) temp_graph: Option<TempGraphStyle>,
+
     /// Styling for the battery widget.
     pub(crate) battery: Option<BatteryStyle>,
 
@@ -113,6 +118,7 @@ pub struct Styles {
     pub(crate) all_cpu_colour: Style,
     pub(crate) avg_cpu_colour: Style,
     pub(crate) cpu_colour_styles: Vec<Style>,
+    pub(crate) temp_graph_colour_styles: Vec<Style>,
     pub(crate) border_style: Style,
     pub(crate) highlighted_border_style: Style,
     pub(crate) text_style: Style,
@@ -177,6 +183,22 @@ impl Styles {
         set_colour!(self.avg_cpu_colour, config.cpu, avg_entry_color);
         set_colour!(self.all_cpu_colour, config.cpu, all_entry_color);
         set_colour_list!(self.cpu_colour_styles, config.cpu, cpu_core_colors);
+
+        // Temperature graph — falls back to cpu_colour_styles if not configured
+        if config
+            .temp_graph
+            .as_ref()
+            .and_then(|t| t.temp_graph_color_styles.as_ref())
+            .is_some()
+        {
+            set_colour_list!(
+                self.temp_graph_colour_styles,
+                config.temp_graph,
+                temp_graph_color_styles
+            );
+        } else {
+            self.temp_graph_colour_styles = self.cpu_colour_styles.clone();
+        }
 
         // Memory
         set_colour!(self.ram_style, config.memory, ram_color);
