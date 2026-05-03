@@ -5,7 +5,7 @@ use tui::{
 };
 
 use crate::{
-    app::{App, AppConfigFields, data::TemperatureType},
+    app::{App, AppConfigFields},
     canvas::{
         Painter,
         components::time_graph::{
@@ -61,19 +61,14 @@ impl Painter {
                 height: Constraint::Ratio(1, 2),
             };
 
-            let unit = match app_state.app_config_fields.temperature_type {
-                TemperatureType::Celsius => "°C",
-                TemperatureType::Kelvin => "K",
-                TemperatureType::Fahrenheit => "°F",
-            };
-
+            let unit = app_state.app_config_fields.temperature_type.unit();
             let graph_data: Vec<GraphData<'_, f32>> = points
                 .iter()
                 .enumerate()
                 .map(|(itx, (source, values))| {
                     // TODO: Maybe align the value later.
                     let name = match values.last() {
-                        Some(latest) => format!("{source}: {:.0}{unit}", latest).into(),
+                        Some(latest) => format!("{source}: {latest:.0}{unit}").into(),
                         None => source.as_str().into(),
                     };
                     GraphData::default()
@@ -133,12 +128,7 @@ fn adjust_temp_data_point(
         .temperature_type
         .convert_temp_unit_float(100.0)
         .into();
-
-    let unit = match config.temperature_type {
-        TemperatureType::Celsius => "°C",
-        TemperatureType::Kelvin => "K",
-        TemperatureType::Fahrenheit => "°F",
-    };
+    let unit = config.temperature_type.unit();
 
     let max_entry = if let Some(limit) = upper_limit {
         limit as f64
@@ -163,6 +153,7 @@ fn adjust_temp_data_point(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::app::data::TemperatureType;
 
     fn config(temperature_type: TemperatureType) -> AppConfigFields {
         AppConfigFields {

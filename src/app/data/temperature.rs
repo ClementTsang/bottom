@@ -26,6 +26,15 @@ impl FromStr for TemperatureType {
 }
 
 impl TemperatureType {
+    /// Return the unit string.
+    pub fn unit(&self) -> &'static str {
+        match self {
+            TemperatureType::Celsius => "°C",
+            TemperatureType::Kelvin => "K",
+            TemperatureType::Fahrenheit => "°F",
+        }
+    }
+
     /// Given a temperature in Celsius, convert it if necessary for a different
     /// unit.
     pub fn convert_temp_unit(&self, celsius: f32) -> TypedTemperature {
