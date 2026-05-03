@@ -8,6 +8,17 @@ use crate::options::config::style::{Styles, themes::hex_colour};
 
 impl Styles {
     pub(crate) fn nord_palette() -> Self {
+        let list_colours = vec![
+            hex!("#5e81ac"),
+            hex!("#81a1c1"),
+            hex!("#d8dee9"),
+            hex!("#b48ead"),
+            hex!("#a3be8c"),
+            hex!("#ebcb8b"),
+            hex!("#d08770"),
+            hex!("#bf616a"),
+        ];
+
         Self {
             ram_style: hex!("#88c0d0"),
             #[cfg(not(target_os = "windows"))]
@@ -31,26 +42,8 @@ impl Styles {
             total_tx_style: hex!("#8fbcbb"),
             all_cpu_colour: hex!("#88c0d0"),
             avg_cpu_colour: hex!("#8fbcbb"),
-            cpu_colour_styles: vec![
-                hex!("#5e81ac"),
-                hex!("#81a1c1"),
-                hex!("#d8dee9"),
-                hex!("#b48ead"),
-                hex!("#a3be8c"),
-                hex!("#ebcb8b"),
-                hex!("#d08770"),
-                hex!("#bf616a"),
-            ],
-            temp_graph_colour_styles: vec![
-                hex!("#5e81ac"),
-                hex!("#81a1c1"),
-                hex!("#d8dee9"),
-                hex!("#b48ead"),
-                hex!("#a3be8c"),
-                hex!("#ebcb8b"),
-                hex!("#d08770"),
-                hex!("#bf616a"),
-            ],
+            cpu_colour_styles: list_colours.clone(),
+            temp_graph_colour_styles: list_colours,
             border_style: hex!("#88c0d0"),
             highlighted_border_style: hex!("#5e81ac"),
             text_style: hex!("#e5e9f0"),
@@ -72,6 +65,17 @@ impl Styles {
     }
 
     pub(crate) fn nord_light_palette() -> Self {
+        let list_colours = vec![
+            hex!("#5e81ac"),
+            hex!("#88c0d0"),
+            hex!("#4c566a"),
+            hex!("#b48ead"),
+            hex!("#a3be8c"),
+            hex!("#ebcb8b"),
+            hex!("#d08770"),
+            hex!("#bf616a"),
+        ];
+
         Self {
             ram_style: hex!("#81a1c1"),
             #[cfg(not(target_os = "windows"))]
@@ -95,26 +99,8 @@ impl Styles {
             total_tx_style: hex!("#8fbcbb"),
             all_cpu_colour: hex!("#81a1c1"),
             avg_cpu_colour: hex!("#8fbcbb"),
-            cpu_colour_styles: vec![
-                hex!("#5e81ac"),
-                hex!("#88c0d0"),
-                hex!("#4c566a"),
-                hex!("#b48ead"),
-                hex!("#a3be8c"),
-                hex!("#ebcb8b"),
-                hex!("#d08770"),
-                hex!("#bf616a"),
-            ],
-            temp_graph_colour_styles: vec![
-                hex!("#5e81ac"),
-                hex!("#88c0d0"),
-                hex!("#4c566a"),
-                hex!("#b48ead"),
-                hex!("#a3be8c"),
-                hex!("#ebcb8b"),
-                hex!("#d08770"),
-                hex!("#bf616a"),
-            ],
+            cpu_colour_styles: list_colours.clone(),
+            temp_graph_colour_styles: list_colours,
             border_style: hex!("#2e3440"),
             highlighted_border_style: hex!("#5e81ac"),
             text_style: hex!("#2e3440"),

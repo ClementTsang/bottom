@@ -71,6 +71,7 @@ impl Painter {
                 .iter()
                 .enumerate()
                 .map(|(itx, (source, values))| {
+                    // TODO: Maybe align the value later.
                     let name = match values.last() {
                         Some(latest) => format!("{source}: {:.0}{unit}", latest).into(),
                         None => source.as_str().into(),

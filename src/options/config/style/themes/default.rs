@@ -20,6 +20,17 @@ impl Styles {
         const DEFAULT_SELECTED_TEXT_STYLE: Style = color!(Color::Black).bg(HIGHLIGHT_COLOUR);
         const TEXT_COLOUR: Color = Color::Gray;
 
+        let list_colours = vec![
+            color!(Color::LightMagenta),
+            color!(Color::LightYellow),
+            color!(Color::LightCyan),
+            color!(Color::LightGreen),
+            color!(Color::LightBlue),
+            color!(Color::Cyan),
+            color!(Color::Green),
+            color!(Color::Blue),
+        ];
+
         Self {
             ram_style: color!(FIRST_COLOUR),
             #[cfg(not(target_os = "windows"))]
@@ -44,26 +55,8 @@ impl Styles {
             all_cpu_colour: color!(ALL_COLOUR),
             avg_cpu_colour: color!(AVG_COLOUR),
             // TODO: Maybe unify this as "long" lists of colours for the default palettes.
-            cpu_colour_styles: vec![
-                color!(Color::LightMagenta),
-                color!(Color::LightYellow),
-                color!(Color::LightCyan),
-                color!(Color::LightGreen),
-                color!(Color::LightBlue),
-                color!(Color::Cyan),
-                color!(Color::Green),
-                color!(Color::Blue),
-            ],
-            temp_graph_colour_styles: vec![
-                color!(Color::LightMagenta),
-                color!(Color::LightYellow),
-                color!(Color::LightCyan),
-                color!(Color::LightGreen),
-                color!(Color::LightBlue),
-                color!(Color::Cyan),
-                color!(Color::Green),
-                color!(Color::Blue),
-            ],
+            cpu_colour_styles: list_colours.clone(),
+            temp_graph_colour_styles: list_colours,
             border_style: color!(TEXT_COLOUR),
             highlighted_border_style: color!(HIGHLIGHT_COLOUR),
             text_style: color!(TEXT_COLOUR),
@@ -85,6 +78,16 @@ impl Styles {
     }
 
     pub fn default_light_palette() -> Self {
+        let list_colours = vec![
+            color!(Color::LightMagenta),
+            color!(Color::LightBlue),
+            color!(Color::LightRed),
+            color!(Color::Cyan),
+            color!(Color::Green),
+            color!(Color::Blue),
+            color!(Color::Red),
+        ];
+
         Self {
             ram_style: color!(Color::Blue),
             #[cfg(not(target_os = "windows"))]
@@ -106,24 +109,8 @@ impl Styles {
             tx_style: color!(Color::Red),
             total_rx_style: color!(Color::LightBlue),
             total_tx_style: color!(Color::LightRed),
-            cpu_colour_styles: vec![
-                color!(Color::LightMagenta),
-                color!(Color::LightBlue),
-                color!(Color::LightRed),
-                color!(Color::Cyan),
-                color!(Color::Green),
-                color!(Color::Blue),
-                color!(Color::Red),
-            ],
-            temp_graph_colour_styles: vec![
-                color!(Color::LightMagenta),
-                color!(Color::LightBlue),
-                color!(Color::LightRed),
-                color!(Color::Cyan),
-                color!(Color::Green),
-                color!(Color::Blue),
-                color!(Color::Red),
-            ],
+            cpu_colour_styles: list_colours.clone(),
+            temp_graph_colour_styles: list_colours,
             border_style: color!(Color::Black),
             text_style: color!(Color::Black),
             selected_text_style: color!(Color::White).bg(Color::LightBlue),
