@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 use super::IgnoreList;
 
-/// Temperature configuration.
+/// Temperature graph configuration.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq))]
@@ -14,8 +14,10 @@ pub(crate) struct TempGraphConfig {
     #[serde(default)]
     pub(crate) legend_position: Option<String>,
 
-    /// A max temperature value to clamp results to. If not set, there is no limit.
+    /// An upper temperature value for the graph; entries higher than this will be hidden. If not set,
+    /// there is no limit.
+    ///
     /// Is in the unit of `temperature_type`.
     #[serde(default)]
-    pub(crate) upper_limit: Option<f64>,
+    pub(crate) max_temp: Option<f64>,
 }

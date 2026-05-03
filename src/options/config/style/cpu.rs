@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use super::ColorStr;
 
+// TODO: Use Canadian spelling for colour with an alias for US later instead since internally I use Canadian spelling.
+
 /// Styling specific to the CPU widget.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]

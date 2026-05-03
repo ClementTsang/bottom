@@ -490,7 +490,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                             let upper_limit = config
                                 .temperature_graph
                                 .as_ref()
-                                .and_then(|cfg| cfg.upper_limit)
+                                .and_then(|cfg| cfg.max_temp)
                                 .map(|v| v as f32);
                             temp_graph_state_map.insert(
                                 widget.widget_id,

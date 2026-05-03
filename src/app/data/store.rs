@@ -333,10 +333,6 @@ impl DataStore {
         }
     }
 
-    pub fn set_used_widgets(&mut self, used_widgets: UsedWidgets) {
-        self.used_widgets = used_widgets;
-    }
-
     pub fn set_filters(&mut self, filters: DataFilters) {
         self.filters = filters;
     }
