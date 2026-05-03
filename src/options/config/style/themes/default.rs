@@ -43,6 +43,7 @@ impl Styles {
             total_tx_style: color!(FOURTH_COLOUR),
             all_cpu_colour: color!(ALL_COLOUR),
             avg_cpu_colour: color!(AVG_COLOUR),
+            // TODO: Maybe unify this as "long" lists of colours for the default palettes.
             cpu_colour_styles: vec![
                 color!(Color::LightMagenta),
                 color!(Color::LightYellow),
