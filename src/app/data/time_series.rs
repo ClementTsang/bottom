@@ -6,11 +6,13 @@ use std::{
     vec::Vec,
 };
 
-#[cfg(feature = "gpu")]
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use timeless::data::ChunkedData;
 
-use crate::collection::Data;
+use crate::{
+    app::{AppConfigFields, layout_manager::UsedWidgets},
+    collection::Data,
+};
 
 /// Values corresponding to a time slice.
 pub type Values = ChunkedData<f64>;
@@ -65,7 +67,7 @@ pub struct TimeSeriesData {
 
 impl TimeSeriesData {
     /// Add a new data point.
-    pub fn add(&mut self, data: &Data) {
+    pub fn add(&mut self, data: &Data, used_widgets: &UsedWidgets, settings: &AppConfigFields) {
         self.time.push(data.collection_time);
 
         if let Some(network) = &data.network {
@@ -172,40 +174,44 @@ impl TimeSeriesData {
             }
         }
 
-        // FIXME: If a temperature graph exists...
-        if let Some(temperature_sensors) = &data.temperature_sensors {
-            let mut not_visited = self
-                .temperature
-                .keys()
-                .map(String::to_owned)
-                .collect::<HashSet<_>>();
+        if used_widgets.use_temp_graph {
+            if let Some(temperature_sensors) = &data.temperature_sensors {
+                let mut not_visited = self
+                    .temperature
+                    .keys()
+                    .map(String::to_owned)
+                    .collect::<HashSet<_>>();
 
-            for sensor_data in temperature_sensors {
-                if let Some(temperature) = sensor_data.temperature {
-                    not_visited.remove(&sensor_data.name);
+                for sensor_data in temperature_sensors {
+                    if let Some(temperature) = sensor_data.temperature {
+                        not_visited.remove(&sensor_data.name);
 
-                    if !self.temperature.contains_key(&sensor_data.name) {
-                        self.temperature
-                            .insert(sensor_data.name.clone(), ChunkedData::default());
+                        if !self.temperature.contains_key(&sensor_data.name) {
+                            self.temperature
+                                .insert(sensor_data.name.clone(), ChunkedData::default());
+                        }
+
+                        let curr = self
+                            .temperature
+                            .get_mut(&sensor_data.name)
+                            .expect("entry must exist as it was created above");
+
+                        let converted_temperature = settings
+                            .temperature_type
+                            .convert_temp_unit_float(temperature);
+                        curr.push(converted_temperature);
                     }
-
-                    let curr = self
-                        .temperature
-                        .get_mut(&sensor_data.name)
-                        .expect("entry must exist as it was created above");
-
-                    curr.push(temperature);
                 }
-            }
 
-            for nv in not_visited {
-                if let Some(entry) = self.gpu_mem.get_mut(&nv) {
-                    entry.insert_break();
+                for nv in not_visited {
+                    if let Some(entry) = self.temperature.get_mut(&nv) {
+                        entry.insert_break();
+                    }
                 }
-            }
-        } else {
-            for g in self.temperature.values_mut() {
-                g.insert_break();
+            } else {
+                for g in self.temperature.values_mut() {
+                    g.insert_break();
+                }
             }
         }
     }

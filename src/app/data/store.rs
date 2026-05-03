@@ -7,7 +7,7 @@ use super::{ProcessData, TimeSeriesData};
 #[cfg(feature = "battery")]
 use crate::collection::batteries;
 use crate::{
-    app::AppConfigFields,
+    app::{AppConfigFields, layout_manager::UsedWidgets},
     collection::{
         Data,
         cpu::{CpuHarvest, LoadAvgHarvest},
@@ -84,7 +84,9 @@ impl StoredData {
         clippy::boxed_local,
         reason = "This avoids warnings on certain platforms (e.g. 32-bit)."
     )]
-    fn eat_data(&mut self, mut data: Box<Data>, settings: &AppConfigFields) {
+    fn eat_data(
+        &mut self, mut data: Box<Data>, settings: &AppConfigFields, used_widgets: &UsedWidgets,
+    ) {
         let harvested_time = data.collection_time;
 
         // We must adjust all the network values to their selected type (defaults to
@@ -97,7 +99,7 @@ impl StoredData {
         }
 
         if !settings.use_basic_mode {
-            self.timeseries_data.add(&data);
+            self.timeseries_data.add(&data, used_widgets, &settings);
         }
 
         if let Some(network) = data.network {
@@ -285,13 +287,22 @@ pub enum FrozenState {
 }
 
 /// What data to share to other parts of the application.
-#[derive(Default)]
 pub struct DataStore {
     frozen_state: FrozenState,
     main: StoredData,
+    used_widgets: UsedWidgets,
 }
 
 impl DataStore {
+    /// Create a new [`DataStore`]
+    pub fn new(used_widgets: UsedWidgets) -> Self {
+        Self {
+            frozen_state: FrozenState::default(),
+            main: StoredData::default(),
+            used_widgets,
+        }
+    }
+
     /// Toggle whether the [`DataState`] is frozen or not.
     pub fn toggle_frozen(&mut self) {
         match &self.frozen_state {
@@ -317,9 +328,13 @@ impl DataStore {
         }
     }
 
+    pub fn set_used_widgets(&mut self, used_widgets: UsedWidgets) {
+        self.used_widgets = used_widgets;
+    }
+
     /// Eat data.
     pub fn eat_data(&mut self, data: Box<Data>, settings: &AppConfigFields) {
-        self.main.eat_data(data, settings);
+        self.main.eat_data(data, settings, &self.used_widgets);
     }
 
     /// Clean data.

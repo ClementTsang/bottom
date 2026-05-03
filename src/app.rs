@@ -121,7 +121,7 @@ impl App {
         Self {
             awaiting_second_char: false,
             second_char: None,
-            data_store: DataStore::default(),
+            data_store: DataStore::new(used_widgets.clone()),
             last_key_press: Instant::now(),
             process_kill_dialog: ProcessKillDialog::default(),
             help_dialog_state: AppHelpDialogState::default(),

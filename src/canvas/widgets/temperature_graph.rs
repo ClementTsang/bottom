@@ -117,7 +117,10 @@ impl Painter {
 
 /// Returns the required labels.
 fn adjust_temp_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, [String; 3]) {
-    let default_upper = config.temperature_type.convert_temp_unit(100.0).inner() as f64;
+    let default_upper: f64 = config
+        .temperature_type
+        .convert_temp_unit_float(100.0)
+        .into();
 
     let unit = match config.temperature_type {
         TemperatureType::Celsius => "°C",
@@ -131,12 +134,13 @@ fn adjust_temp_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, [St
         max_entry
     };
 
-    let halfway = max_entry / 2.0;
+    let halfway_label = (max_entry / 2.0).ceil() as u32;
+    let max_entry_label = max_entry.ceil() as u32;
 
     let labels = [
         format!("0{unit}"),
-        format!("{halfway:.1}{unit}"),
-        format!("{max_entry:.1}{unit}"),
+        format!("{halfway_label}{unit}"),
+        format!("{max_entry_label}{unit}"),
     ];
 
     (max_entry, labels)

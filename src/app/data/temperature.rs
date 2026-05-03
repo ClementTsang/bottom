@@ -37,6 +37,16 @@ impl TemperatureType {
             }
         }
     }
+
+    /// Given a temperature in Celsius, convert it if necessary for a different
+    /// unit as a bare float.
+    pub fn convert_temp_unit_float(&self, celsius: f32) -> f32 {
+        match self {
+            TemperatureType::Celsius => celsius,
+            TemperatureType::Kelvin => celsius + 273.15,
+            TemperatureType::Fahrenheit => celsius * (9.0 / 5.0) + 32.0,
+        }
+    }
 }
 
 /// A temperature and its type.
@@ -45,17 +55,6 @@ pub enum TypedTemperature {
     Celsius(u32),
     Kelvin(u32),
     Fahrenheit(u32),
-}
-
-impl TypedTemperature {
-    /// Return the inner value as a raw u32.
-    pub fn inner(&self) -> u32 {
-        match self {
-            TypedTemperature::Celsius(val)
-            | TypedTemperature::Kelvin(val)
-            | TypedTemperature::Fahrenheit(val) => *val,
-        }
-    }
 }
 
 impl Display for TypedTemperature {

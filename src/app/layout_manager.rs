@@ -1063,5 +1063,6 @@ pub struct UsedWidgets {
     pub use_proc: bool,
     pub use_disk: bool,
     pub use_temp: bool,
+    pub use_temp_graph: bool,
     pub use_battery: bool,
 }

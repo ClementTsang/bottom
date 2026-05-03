@@ -538,6 +538,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         use_proc: used_widget_set.contains(&Proc),
         use_disk: used_widget_set.contains(&Disk),
         use_temp: used_widget_set.contains(&Temp),
+        use_temp_graph: used_widget_set.contains(&TempGraph),
         use_battery: used_widget_set.contains(&Battery),
     };
 
