@@ -119,7 +119,7 @@ impl App {
         widget_map: HashMap<u64, BottomWidget>, current_widget: BottomWidget,
         used_widgets: UsedWidgets, filters: DataFilters, is_expanded: bool,
     ) -> Self {
-        let mut data_store = DataStore::new(used_widgets.clone());
+        let mut data_store = DataStore::new(used_widgets);
         data_store.set_filters(filters.clone());
 
         Self {
