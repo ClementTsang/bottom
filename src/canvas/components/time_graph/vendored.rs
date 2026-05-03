@@ -1039,9 +1039,8 @@ mod tests {
 
     use tui::style::{Modifier, Stylize};
 
-    use crate::app::data::Values;
-
     use super::*;
+    use crate::app::data::Values;
 
     struct LegendTestCase {
         chart_area: Rect,
