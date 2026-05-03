@@ -166,6 +166,7 @@ nav:
           - "Process Widget": usage/widgets/process.md
           - "Disk Widget": usage/widgets/disk.md
           - "Temperature Widget": usage/widgets/temperature.md
+          - "Temperature Graph Widget": usage/widgets/temperature-graph.md
           - "Battery Widget": usage/widgets/battery.md
       - "Auto-Complete": usage/autocomplete.md
   - "Configuration":
@@ -177,6 +178,7 @@ nav:
           - "Network Widget": configuration/config-file/network.md
           - "Processes Widget": configuration/config-file/processes.md
           - "Temperature Table Widget": configuration/config-file/temperature-table.md
+          - "Temperature Graph Widget": configuration/config-file/temperature-graph.md
           - "Flags": configuration/config-file/flags.md
           - "Layout": configuration/config-file/layout.md
           - "Styling": configuration/config-file/styling.md

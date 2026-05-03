@@ -46,6 +46,7 @@ The following `type` values are supported:
 | `"net", "network"`               | Network chart and legend |
 | `"proc", "process", "processes"` | Process table and search |
 | `"temp", "temperature"`          | Temperature table        |
+| `"temp_graph", "temperature_graph"` | Temperature graph     |
 | `"disk"`                         | Disk table               |
 | `"empty"`                        | An empty space           |
 | `"batt", "battery"`              | Battery statistics       |
