@@ -61,12 +61,22 @@ impl Painter {
                 height: Constraint::Ratio(1, 2),
             };
 
+            let unit = match app_state.app_config_fields.temperature_type {
+                TemperatureType::Celsius => "°C",
+                TemperatureType::Kelvin => "K",
+                TemperatureType::Fahrenheit => "°F",
+            };
+
             let graph_data: Vec<GraphData<'_, f32>> = points
                 .iter()
                 .enumerate()
                 .map(|(itx, (source, values))| {
+                    let name = match values.last() {
+                        Some(latest) => format!("{source}: {:.0}{unit}", latest).into(),
+                        None => source.as_str().into(),
+                    };
                     GraphData::default()
-                        .name(source.into())
+                        .name(name)
                         .style(
                             self.styles.temp_graph_colour_styles
                                 [itx % self.styles.temp_graph_colour_styles.len()],
