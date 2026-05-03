@@ -2047,8 +2047,7 @@ impl App {
                 if let Some(widget_state) = self
                     .states
                     .temp_graph_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
+                    .get_mut_widget_state(self.current_widget.widget_id)
                 {
                     let new_time = widget_state
                         .current_display_time
@@ -2151,8 +2150,7 @@ impl App {
                 if let Some(widget_state) = self
                     .states
                     .temp_graph_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
+                    .get_mut_widget_state(self.current_widget.widget_id)
                 {
                     let new_time = widget_state
                         .current_display_time
@@ -2221,8 +2219,7 @@ impl App {
         if let Some(widget_state) = self
             .states
             .temp_graph_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
+            .get_mut_widget_state(self.current_widget.widget_id)
         {
             widget_state.current_display_time = self.app_config_fields.default_time_value;
             if self.app_config_fields.autohide_time {

@@ -22,8 +22,7 @@ impl Painter {
         if let Some(widget_state) = app_state
             .states
             .temp_graph_state
-            .widget_states
-            .get_mut(&widget_id)
+            .get_mut_widget_state(widget_id)
         {
             let shared_data = app_state.data_store.get_data();
             let points = &(shared_data.timeseries_data.temperature);
@@ -148,4 +147,56 @@ fn adjust_temp_data_point(
     ];
 
     (max_entry, labels)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn config(temperature_type: TemperatureType) -> AppConfigFields {
+        AppConfigFields {
+            temperature_type,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn floors_to_default_upper_when_below() {
+        let cfg = config(TemperatureType::Celsius);
+        let (max, labels) = adjust_temp_data_point(40.0, None, &cfg);
+        assert_eq!(max, 100.0);
+        assert_eq!(labels, ["0°C", "50°C", "100°C"]);
+    }
+
+    #[test]
+    fn keeps_actual_max_when_above_default() {
+        let cfg = config(TemperatureType::Celsius);
+        let (max, labels) = adjust_temp_data_point(120.0, None, &cfg);
+        assert_eq!(max, 120.0);
+        assert_eq!(labels, ["0°C", "60°C", "120°C"]);
+    }
+
+    #[test]
+    fn upper_limit_overrides_actual_max() {
+        let cfg = config(TemperatureType::Celsius);
+        let (max, labels) = adjust_temp_data_point(150.0, Some(80.0), &cfg);
+        assert_eq!(max, 80.0);
+        assert_eq!(labels, ["0°C", "40°C", "80°C"]);
+    }
+
+    #[test]
+    fn fahrenheit_default_is_212() {
+        let cfg = config(TemperatureType::Fahrenheit);
+        let (max, labels) = adjust_temp_data_point(100.0, None, &cfg);
+        assert_eq!(max, 212.0);
+        assert_eq!(labels, ["0°F", "106°F", "212°F"]);
+    }
+
+    #[test]
+    fn kelvin_default_is_373() {
+        let cfg = config(TemperatureType::Kelvin);
+        let (max, labels) = adjust_temp_data_point(100.0, None, &cfg);
+        assert!((max - 373.15).abs() < 1e-3);
+        assert_eq!(labels, ["0K", "187K", "374K"]);
+    }
 }

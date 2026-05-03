@@ -478,6 +478,34 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #whole_word = false
 
 
+# Temperature graph widget configuration
+#[temperature_graph]
+
+# Where to place the legend for the temperature graph widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
+#legend_position = "top-right"
+
+# An upper temperature value for the graph; entries higher than this will be hidden. If not set,
+# there is no limit. Is in the unit of `temperature_type`.
+#max_temp = 100.0
+
+# By default, there are no temperature sensor filters enabled. An example use case is provided below.
+#[temperature_graph.sensor_filter]
+# Whether to ignore any matches. Defaults to true.
+#is_list_ignored = true
+
+# A list of filters to try and match.
+#list = ["cpu", "wifi"]
+
+# Whether to use regex. Defaults to false.
+#regex = false
+
+# Whether to be case-sensitive. Defaults to false.
+#case_sensitive = false
+
+# Whether to be require matching the whole word. Defaults to false.
+#whole_word = false
+
+
 # Network widget configuration
 #[network]
 # By default, there are no network interface filters enabled. An example use case is provided below.
@@ -517,6 +545,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #all_entry_color = "green"
 #avg_entry_color = "red"
 #cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+
+#[styles.temp_graph]
+#temp_graph_color_styles = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
 
 #[styles.memory]
 #ram_color = "light magenta"
@@ -560,7 +591,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # [[row.child]] represents either a widget or a column.
 # [[row.child.child]] represents a widget.
 #
-# All widgets must have the type value set to one of ["cpu", "mem", "proc", "net", "temp", "disk", "empty"].
+# All widgets must have the type value set to one of ["cpu", "mem", "proc", "net", "temp", "temp_graph", "disk", "empty"].
 # All layout components have a ratio value - if this is not set, then it defaults to 1.
 # The default widget layout:
 #[[row]]

@@ -184,21 +184,12 @@ impl Styles {
         set_colour!(self.all_cpu_colour, config.cpu, all_entry_color);
         set_colour_list!(self.cpu_colour_styles, config.cpu, cpu_core_colors);
 
-        // Temperature graph — falls back to cpu_colour_styles if not configured
-        if config
-            .temp_graph
-            .as_ref()
-            .and_then(|t| t.temp_graph_color_styles.as_ref())
-            .is_some()
-        {
-            set_colour_list!(
-                self.temp_graph_colour_styles,
-                config.temp_graph,
-                temp_graph_color_styles
-            );
-        } else {
-            self.temp_graph_colour_styles = self.cpu_colour_styles.clone();
-        }
+        // Temperature graph
+        set_colour_list!(
+            self.temp_graph_colour_styles,
+            config.temp_graph,
+            temp_graph_color_styles
+        );
 
         // Memory
         set_colour!(self.ram_style, config.memory, ram_color);
