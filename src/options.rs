@@ -205,7 +205,7 @@ pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result
                             indoc::eprintdoc!(
                                 "Note: bottom couldn't create a default config file at '{}', and the \
                                 application has fallen back to the default configuration.
-                                    
+
                                 Caused by:
                                     {err}
                                 ",
@@ -321,7 +321,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let network_legend_position = get_network_legend_position(args, config)?;
     let memory_legend_position = get_memory_legend_position(args, config)?;
-    let temperature_legend_position = get_temperature_legend_position(args, config)?;
+    let temperature_legend_position = get_temperature_legend_position(config)?;
 
     // TODO: Can probably just reuse the options struct.
     let app_config_fields = AppConfigFields {
@@ -1029,6 +1029,7 @@ fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
     )
 }
 
+#[inline]
 fn parse_legend_position(
     arg: Option<&String>, cfg: Option<&String>, setting: &'static str,
 ) -> OptionResult<Option<LegendPosition>> {
@@ -1077,11 +1078,15 @@ fn get_memory_legend_position(
     )
 }
 
-fn get_temperature_legend_position(
-    args: &BottomArgs, config: &Config,
-) -> OptionResult<Option<LegendPosition>> {
-    // FIXME: Support this
-    Ok(Some(LegendPosition::default()))
+fn get_temperature_legend_position(config: &Config) -> OptionResult<Option<LegendPosition>> {
+    parse_legend_position(
+        None,
+        config
+            .temperature_graph
+            .as_ref()
+            .and_then(|settings| settings.legend_position.as_ref()),
+        "legend_position",
+    )
 }
 
 #[cfg(test)]
