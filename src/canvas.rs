@@ -390,7 +390,7 @@ impl Painter {
                                 f,
                                 app_state,
                                 vertical_chunks[3],
-                                app_state.current_widget.widget_id,
+                                widget_id,
                             ),
                             _ => {}
                         }
