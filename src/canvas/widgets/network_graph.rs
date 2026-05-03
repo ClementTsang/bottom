@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use tui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -22,7 +20,6 @@ use crate::{
         data_units::*,
         general::{saturating_log2, saturating_log10},
     },
-    widgets::{NetWidgetHeightCache, NetWidgetState},
 };
 
 impl Painter {
@@ -81,68 +78,13 @@ impl Painter {
 
             let y_max = {
                 if let Some(last_time) = times.last() {
-                    let cached_network_height =
-                        check_network_height_cache(network_widget_state, last_time);
-
-                    let (mut biggest, mut biggest_time, oldest_to_check) = cached_network_height
-                        .unwrap_or_else(|| {
-                            let visible_duration =
-                                Duration::from_millis(network_widget_state.current_display_time);
-
-                            let visible_left_bound = match last_time.checked_sub(visible_duration) {
-                                Some(v) => v,
-                                None => {
-                                    // On some systems (like Windows) it can be possible that the
-                                    // current display time
-                                    // causes subtraction to fail if, for example, the uptime of the
-                                    // system is too low and current_display_time is too high. See https://github.com/ClementTsang/bottom/issues/1825.
-                                    //
-                                    // As such, we instead take the oldest visible time. This is a
-                                    // bit inefficient, but
-                                    // since it should only happen rarely, it should be fine.
-                                    times
-                                        .iter()
-                                        .take_while(|t| {
-                                            last_time.duration_since(**t) < visible_duration
-                                        })
-                                        .last()
-                                        .cloned()
-                                        .unwrap_or(*last_time)
-                                }
-                            };
-
-                            (0.0, visible_left_bound, visible_left_bound)
-                        });
-
-                    for (&time, &v) in rx_points
-                        .iter_along_base(times)
-                        .rev()
-                        .take_while(|&(&time, _)| time >= oldest_to_check)
-                    {
-                        if v > biggest {
-                            biggest = v;
-                            biggest_time = time;
-                        }
-                    }
-
-                    for (&time, &v) in tx_points
-                        .iter_along_base(times)
-                        .rev()
-                        .take_while(|&(&time, _)| time >= oldest_to_check)
-                    {
-                        if v > biggest {
-                            biggest = v;
-                            biggest_time = time;
-                        }
-                    }
-
-                    network_widget_state.height_cache = Some(NetWidgetHeightCache {
-                        best_point: (biggest_time, biggest),
-                        right_edge: *last_time,
-                        period: network_widget_state.current_display_time,
-                    });
-
-                    biggest
+                    let cache = &mut network_widget_state.height_cache;
+                    cache.get_or_update(
+                        last_time,
+                        network_widget_state.current_display_time,
+                        [rx_points, tx_points].into_iter(),
+                        times,
+                    )
                 } else {
                     0.0
                 }
@@ -387,30 +329,6 @@ impl Painter {
             draw_loc,
         );
     }
-}
-
-/// Returns a cached max value, it's time, and what period it covers if it is
-/// cached.
-#[inline]
-fn check_network_height_cache(
-    network_widget_state: &NetWidgetState, last_time: &std::time::Instant,
-) -> Option<(f64, std::time::Instant, std::time::Instant)> {
-    let visible_duration = Duration::from_millis(network_widget_state.current_display_time);
-
-    if let Some(NetWidgetHeightCache {
-        best_point,
-        right_edge,
-        period,
-    }) = &network_widget_state.height_cache
-    {
-        if *period == network_widget_state.current_display_time
-            && last_time.duration_since(best_point.0) < visible_duration
-        {
-            return Some((best_point.1, best_point.0, *right_edge));
-        }
-    }
-
-    None
 }
 
 /// Returns the required labels.

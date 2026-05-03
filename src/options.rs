@@ -22,7 +22,7 @@ use data::TemperatureType;
 pub(crate) use error::{OptionError, OptionResult};
 use indexmap::IndexSet;
 use regex::Regex;
-use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
 
@@ -205,7 +205,7 @@ pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result
                             indoc::eprintdoc!(
                                 "Note: bottom couldn't create a default config file at '{}', and the \
                                 application has fallen back to the default configuration.
-                                    
+
                                 Caused by:
                                     {err}
                                 ",
@@ -279,14 +279,15 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     // For CPU
     let default_cpu_selection = get_default_cpu_selection(args, config);
 
-    let mut widget_map = HashMap::default();
-    let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::default();
-    let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::default();
-    let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::default();
-    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::default();
-    let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::default();
-    let mut disk_state_map: HashMap<u64, DiskTableWidget> = HashMap::default();
-    let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::default();
+    let mut widget_map = FxHashMap::default();
+    let mut cpu_state_map: FxHashMap<u64, CpuWidgetState> = FxHashMap::default();
+    let mut mem_state_map: FxHashMap<u64, MemWidgetState> = FxHashMap::default();
+    let mut net_state_map: FxHashMap<u64, NetWidgetState> = FxHashMap::default();
+    let mut proc_state_map: FxHashMap<u64, ProcWidgetState> = FxHashMap::default();
+    let mut temp_state_map: FxHashMap<u64, TempWidgetState> = FxHashMap::default();
+    let mut temp_graph_state_map: FxHashMap<u64, TempGraphWidgetState> = FxHashMap::default();
+    let mut disk_state_map: FxHashMap<u64, DiskTableWidget> = FxHashMap::default();
+    let mut battery_state_map: FxHashMap<u64, BatteryWidgetState> = FxHashMap::default();
 
     let autohide_timer = if autohide_time {
         Some(Instant::now())
@@ -297,7 +298,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let mut initial_widget_id: u64 = default_widget_id;
     let mut initial_widget_type = Proc;
     let is_custom_layout = config.row.is_some();
-    let mut used_widget_set = HashSet::default();
+    let mut used_widget_set = FxHashSet::default();
 
     let network_unit_type = get_network_unit_type(args, config);
     let network_scale_type = get_network_scale_type(args, config);
@@ -320,6 +321,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let network_legend_position = get_network_legend_position(args, config)?;
     let memory_legend_position = get_memory_legend_position(args, config)?;
+    let temperature_legend_position = get_temperature_legend_position(config)?;
 
     // TODO: Can probably just reuse the options struct.
     let app_config_fields = AppConfigFields {
@@ -374,6 +376,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .disk
             .as_ref()
             .and_then(|cfg| cfg.default_sort.to_owned()),
+        temperature_legend_position,
     };
 
     let table_config = ProcTableConfig {
@@ -483,11 +486,28 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                 TempWidgetState::new(&app_config_fields, &styling),
                             );
                         }
+                        TempGraph => {
+                            let upper_limit = config
+                                .temperature_graph
+                                .as_ref()
+                                .and_then(|cfg| cfg.max_temp)
+                                .map(|v| v as f32);
+                            temp_graph_state_map.insert(
+                                widget.widget_id,
+                                TempGraphWidgetState::new(
+                                    default_time_value,
+                                    autohide_timer,
+                                    upper_limit,
+                                ),
+                            );
+                        }
                         Battery => {
                             battery_state_map
                                 .insert(widget.widget_id, BatteryWidgetState::default());
                         }
-                        _ => {}
+                        // FIXME: This is kind of a hack that we have these cases at all.
+                        Empty | BasicCpu | BasicMem | BasicNet | BasicTables | CpuLegend
+                        | ProcSort | ProcSearch => {}
                     }
                 }
             }
@@ -527,6 +547,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         use_proc: used_widget_set.contains(&Proc),
         use_disk: used_widget_set.contains(&Disk),
         use_temp: used_widget_set.contains(&Temp),
+        use_temp_graph: used_widget_set.contains(&TempGraph),
         use_battery: used_widget_set.contains(&Battery),
     };
 
@@ -548,6 +569,11 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .context("Update 'temperature.sensor_filter' in your config file")?,
         None => None,
     };
+    let temp_graph_sensor_filter = match &config.temperature_graph {
+        Some(cfg) => get_ignore_list(&cfg.sensor_filter)
+            .context("Update 'temperature_graph.sensor_filter' in your config file")?,
+        None => None,
+    };
     let net_interface_filter = match &config.network {
         Some(cfg) => get_ignore_list(&cfg.interface_filter)
             .context("Update 'network.interface_filter' in your config file")?,
@@ -560,6 +586,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         net_state: NetState::init(net_state_map),
         proc_state: ProcState::init(proc_state_map),
         temp_state: TempState::init(temp_state_map),
+        temp_graph_state: TempGraphStates::init(temp_graph_state_map),
         disk_state: DiskState::init(disk_state_map),
         battery_state: AppBatteryState::init(battery_state_map),
         basic_table_widget_state,
@@ -573,6 +600,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         disk_filter: disk_name_filter,
         mount_filter: disk_mount_filter,
         temp_filter: temp_sensor_filter,
+        temp_graph_filter: temp_graph_sensor_filter,
         net_filter: net_interface_filter,
     };
     let is_expanded = expanded && !use_basic_mode;
@@ -1016,6 +1044,7 @@ fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
     )
 }
 
+#[inline]
 fn parse_legend_position(
     arg: Option<&String>, cfg: Option<&String>, setting: &'static str,
 ) -> OptionResult<Option<LegendPosition>> {
@@ -1061,6 +1090,17 @@ fn get_memory_legend_position(
             .as_ref()
             .and_then(|flags| flags.memory_legend.as_ref()),
         "memory_legend",
+    )
+}
+
+fn get_temperature_legend_position(config: &Config) -> OptionResult<Option<LegendPosition>> {
+    parse_legend_position(
+        None,
+        config
+            .temperature_graph
+            .as_ref()
+            .and_then(|settings| settings.legend_position.as_ref()),
+        "legend_position",
     )
 }
 

@@ -1,6 +1,7 @@
 use std::{borrow::Cow, time::Instant};
 
 use concat_string::concat_string;
+use timeless::data::ChunkedData;
 use tui::{
     Frame,
     layout::{Constraint, Rect},
@@ -10,29 +11,26 @@ use tui::{
     widgets::{BorderType, GraphType},
 };
 
-use crate::{
-    app::data::Values,
-    canvas::{components::time_graph::*, drawing_utils::widget_block},
-};
+use crate::canvas::{components::time_graph::*, drawing_utils::widget_block};
 
 /// Represents the data required by the [`TimeGraph`].
 ///
 /// TODO: We may be able to get rid of this intermediary data structure.
 #[derive(Default)]
-pub(crate) struct GraphData<'a> {
+pub(crate) struct GraphData<'a, F = f64> {
     time: &'a [Instant],
-    values: Option<&'a Values>,
+    values: Option<&'a ChunkedData<F>>,
     style: Style,
     name: Option<Cow<'a, str>>,
 }
 
-impl<'a> GraphData<'a> {
+impl<'a, F> GraphData<'a, F> {
     pub fn time(mut self, time: &'a [Instant]) -> Self {
         self.time = time;
         self
     }
 
-    pub fn values(mut self, values: &'a Values) -> Self {
+    pub fn values(mut self, values: &'a ChunkedData<F>) -> Self {
         self.values = Some(values);
         self
     }
@@ -154,7 +152,9 @@ impl TimeGraph<'_> {
     ///   graph.
     /// - Expects `graph_data`, which represents *what* data to draw, and
     ///   various details like style and optional legends.
-    pub fn draw(&self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: Vec<GraphData<'_>>) {
+    pub fn draw<F: Copy + Default + Into<f64>>(
+        &self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: Vec<GraphData<'_, F>>,
+    ) {
         // TODO: (points_rework_v1) can we reduce allocations in the underlying graph by
         // saving some sort of state?
 
@@ -202,7 +202,7 @@ impl TimeGraph<'_> {
 }
 
 /// Creates a new [`Dataset`].
-fn create_dataset(data: GraphData<'_>) -> Dataset<'_> {
+fn create_dataset<F: Copy + Default + Into<f64>>(data: GraphData<'_, F>) -> Dataset<'_, F> {
     let GraphData {
         time,
         values,

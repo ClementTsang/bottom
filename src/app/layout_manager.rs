@@ -941,6 +941,7 @@ pub enum BottomWidgetType {
     ProcSearch,
     ProcSort,
     Temp,
+    TempGraph,
     Disk,
     BasicCpu,
     BasicMem,
@@ -957,7 +958,7 @@ impl BottomWidgetType {
 
     pub fn is_widget_graph(&self) -> bool {
         use BottomWidgetType::*;
-        matches!(self, Cpu | Net | Mem)
+        matches!(self, Cpu | Net | Mem | TempGraph)
     }
 
     pub fn get_pretty_name(&self) -> &str {
@@ -970,6 +971,7 @@ impl BottomWidgetType {
             Temp => "Temperature",
             Disk => "Disks",
             Battery => "Battery",
+            TempGraph => "Temperature",
             _ => "",
         }
     }
@@ -986,6 +988,7 @@ impl std::str::FromStr for BottomWidgetType {
             "net" | "network" => Ok(BottomWidgetType::Net),
             "proc" | "process" | "processes" => Ok(BottomWidgetType::Proc),
             "temp" | "temperature" => Ok(BottomWidgetType::Temp),
+            "temp_graph" | "temperature_graph" => Ok(BottomWidgetType::TempGraph),
             "disk" => Ok(BottomWidgetType::Disk),
             "empty" => Ok(BottomWidgetType::Empty),
             #[cfg(feature = "battery")]
@@ -997,23 +1000,25 @@ impl std::str::FromStr for BottomWidgetType {
                         "'{s}' is an invalid widget name.
         
 Supported widget names:
-+--------------------------+
-|            cpu           |
-+--------------------------+
-|        mem, memory       |
-+--------------------------+
-|       net, network       |
-+--------------------------+
-| proc, process, processes |
-+--------------------------+
-|     temp, temperature    |
-+--------------------------+
-|           disk           |
-+--------------------------+
-|       batt, battery      |
-+--------------------------+
-|           empty          |
-+--------------------------+
++--------------------------------+
+|               cpu              |
++--------------------------------+
+|           mem, memory          |
++--------------------------------+
+|          net, network          |
++--------------------------------+
+|    proc, process, processes    |
++--------------------------------+
+|        temp, temperature       |
++--------------------------------+
+|  temp_graph, temperature_graph |
++--------------------------------+
+|              disk              |
++--------------------------------+
+|          batt, battery         |
++--------------------------------+
+|              empty             |
++--------------------------------+
                 ",
                     )))
                 }
@@ -1023,21 +1028,23 @@ Supported widget names:
                         "'{s}' is an invalid widget name.
 
 Supported widget names:
-+--------------------------+
-|            cpu           |
-+--------------------------+
-|        mem, memory       |
-+--------------------------+
-|       net, network       |
-+--------------------------+
-| proc, process, processes |
-+--------------------------+
-|     temp, temperature    |
-+--------------------------+
-|           disk           |
-+--------------------------+
-|           empty          |
-+--------------------------+
++--------------------------------+
+|               cpu              |
++--------------------------------+
+|           mem, memory          |
++--------------------------------+
+|          net, network          |
++--------------------------------+
+|    proc, process, processes    |
++--------------------------------+
+|        temp, temperature       |
++--------------------------------+
+|  temp_graph, temperature_graph |
++--------------------------------+
+|              disk              |
++--------------------------------+
+|              empty             |
++--------------------------------+
                 ",
                     )))
                 }
@@ -1056,5 +1063,6 @@ pub struct UsedWidgets {
     pub use_proc: bool,
     pub use_disk: bool,
     pub use_temp: bool,
+    pub use_temp_graph: bool,
     pub use_battery: bool,
 }

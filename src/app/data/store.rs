@@ -7,8 +7,14 @@ use super::{ProcessData, TimeSeriesData};
 #[cfg(feature = "battery")]
 use crate::collection::batteries;
 use crate::{
-    app::AppConfigFields,
-    collection::{Data, cpu, disks, memory::MemData, network},
+    app::{AppConfigFields, DataFilters, filter::Filter, layout_manager::UsedWidgets},
+    collection::{
+        Data,
+        cpu::{CpuHarvest, LoadAvgHarvest},
+        disks,
+        memory::MemData,
+        network::NetworkHarvest,
+    },
     utils::data_units::DataUnit,
     widgets::{DiskWidgetData, TempWidgetData},
 };
@@ -22,7 +28,7 @@ pub struct StoredData {
     // FIXME: (points_rework_v1) we could be able to remove this with some more refactoring.
     pub last_update_time: Instant,
     pub timeseries_data: TimeSeriesData,
-    pub network_harvest: network::NetworkHarvest,
+    pub network_harvest: NetworkHarvest,
     pub ram_harvest: Option<MemData>,
     pub swap_harvest: Option<MemData>,
     #[cfg(not(target_os = "windows"))]
@@ -31,8 +37,8 @@ pub struct StoredData {
     pub arc_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
     pub gpu_harvest: Vec<(String, MemData)>,
-    pub cpu_harvest: cpu::CpuHarvest,
-    pub load_avg_harvest: cpu::LoadAvgHarvest,
+    pub cpu_harvest: CpuHarvest,
+    pub load_avg_harvest: LoadAvgHarvest,
     pub process_data: ProcessData,
     /// TODO: (points_rework_v1) Might be a better way to do this without having
     /// to store here?
@@ -48,13 +54,13 @@ impl Default for StoredData {
         StoredData {
             last_update_time: Instant::now(),
             timeseries_data: TimeSeriesData::default(),
-            network_harvest: network::NetworkHarvest::default(),
+            network_harvest: NetworkHarvest::default(),
             ram_harvest: None,
             #[cfg(not(target_os = "windows"))]
             cache_harvest: None,
             swap_harvest: None,
-            cpu_harvest: cpu::CpuHarvest::default(),
-            load_avg_harvest: cpu::LoadAvgHarvest::default(),
+            cpu_harvest: CpuHarvest::default(),
+            load_avg_harvest: LoadAvgHarvest::default(),
             process_data: Default::default(),
             prev_io: Vec::default(),
             disk_harvest: Vec::default(),
@@ -78,7 +84,10 @@ impl StoredData {
         clippy::boxed_local,
         reason = "This avoids warnings on certain platforms (e.g. 32-bit)."
     )]
-    fn eat_data(&mut self, mut data: Box<Data>, settings: &AppConfigFields) {
+    fn eat_data(
+        &mut self, mut data: Box<Data>, settings: &AppConfigFields, used_widgets: &UsedWidgets,
+        filters: &DataFilters,
+    ) {
         let harvested_time = data.collection_time;
 
         // We must adjust all the network values to their selected type (defaults to
@@ -91,7 +100,8 @@ impl StoredData {
         }
 
         if !settings.use_basic_mode {
-            self.timeseries_data.add(&data);
+            self.timeseries_data
+                .add(&data, used_widgets, settings, filters);
         }
 
         if let Some(network) = data.network {
@@ -129,6 +139,7 @@ impl StoredData {
             .map(|sensors| {
                 sensors
                     .into_iter()
+                    .filter(|temp| Filter::optional_should_keep(&filters.temp_filter, &temp.name))
                     .map(|temp| TempWidgetData {
                         sensor: temp.name,
                         temperature: temp
@@ -279,13 +290,24 @@ pub enum FrozenState {
 }
 
 /// What data to share to other parts of the application.
-#[derive(Default)]
 pub struct DataStore {
     frozen_state: FrozenState,
     main: StoredData,
+    used_widgets: UsedWidgets,
+    filters: DataFilters,
 }
 
 impl DataStore {
+    /// Create a new [`DataStore`]
+    pub fn new(used_widgets: UsedWidgets) -> Self {
+        Self {
+            frozen_state: FrozenState::default(),
+            main: StoredData::default(),
+            used_widgets,
+            filters: DataFilters::default(),
+        }
+    }
+
     /// Toggle whether the [`DataState`] is frozen or not.
     pub fn toggle_frozen(&mut self) {
         match &self.frozen_state {
@@ -311,9 +333,14 @@ impl DataStore {
         }
     }
 
+    pub fn set_filters(&mut self, filters: DataFilters) {
+        self.filters = filters;
+    }
+
     /// Eat data.
     pub fn eat_data(&mut self, data: Box<Data>, settings: &AppConfigFields) {
-        self.main.eat_data(data, settings);
+        self.main
+            .eat_data(data, settings, &self.used_widgets, &self.filters);
     }
 
     /// Clean data.

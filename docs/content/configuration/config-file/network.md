@@ -29,6 +29,6 @@ regex = true
 # Whether to be case-sensitive. Defaults to false.
 case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 whole_word = false
 ```

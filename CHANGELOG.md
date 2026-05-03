@@ -36,6 +36,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#1948](https://github.com/ClementTsang/bottom/pull/1948): Add support for both an `!=` operator and `!` negation prefixes in query searches.
 - [#2045](https://github.com/ClementTsang/bottom/pull/2045): Add support for showing a decimal place for CPU usage
 - [#2046](https://github.com/ClementTsang/bottom/pull/2046): Add a `show_table_scroll_bar` config option to show a scroll bar on table widgets.
+- [#2048](https://github.com/ClementTsang/bottom/pull/2048): Add support for a temperature graph to show sensor temperature change over time.
 
 ### Changes
 

@@ -83,6 +83,16 @@
           "type": "null"
         }
       ]
+    },
+    "temperature_graph": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TempGraphConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "$defs": {
@@ -980,6 +990,17 @@
             }
           ]
         },
+        "temp_graph": {
+          "description": "Styling for the temperature graph widget.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TempGraphStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "theme": {
           "description": "A built-in theme.\n\nIf this is and a custom colour are both set, in the config file,\nthe custom colour scheme will be prioritized first. If a theme\nis set in the command-line args, however, it will always be\nprioritized first.",
           "type": [
@@ -1050,6 +1071,56 @@
               "type": "null"
             }
           ]
+        }
+      }
+    },
+    "TempGraphConfig": {
+      "description": "Temperature graph configuration.",
+      "type": "object",
+      "properties": {
+        "legend_position": {
+          "description": "The location of the graph's legend.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "max_temp": {
+          "description": "An upper temperature value for the graph; entries higher than this will be hidden. If not set,\nthere is no limit.\n\nIs in the unit of `temperature_type`.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double",
+          "default": null
+        },
+        "sensor_filter": {
+          "description": "A filter over the sensor names.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IgnoreList"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "TempGraphStyle": {
+      "description": "Styling specific to the temperature graph widget.",
+      "type": "object",
+      "properties": {
+        "temp_graph_color_styles": {
+          "description": "Colour of each temperature sensor's graph line. Read in order.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/ColorStr"
+          }
         }
       }
     },

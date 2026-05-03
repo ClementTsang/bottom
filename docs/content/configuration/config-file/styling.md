@@ -103,6 +103,14 @@ These can be set under `[styles.cpu]`:
 | `avg_entry_color` | The colour of the average CPU label and graph line               | `avg_entry_color = "255, 0, 255"`            |
 | `cpu_core_colors` | Colour of each CPU threads' label and graph line. Read in order. | `cpu_core_colors = ["Red", "Blue", "Green"]` |
 
+#### Temperature Graph
+
+These can be set under `[styles.temp_graph]`:
+
+| Config field              | Details                                                        | Examples                                             |
+| ------------------------- | -------------------------------------------------------------- | ---------------------------------------------------- |
+| `temp_graph_color_styles` | Colour of each temperature sensor's graph line. Read in order. | `temp_graph_color_styles = ["Red", "Blue", "Green"]` |
+
 #### Memory
 
 These can be set under `[styles.memory]`:
