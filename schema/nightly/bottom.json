@@ -1075,7 +1075,7 @@
       }
     },
     "TempGraphConfig": {
-      "description": "Temperature configuration.",
+      "description": "Temperature graph configuration.",
       "type": "object",
       "properties": {
         "legend_position": {
@@ -1084,6 +1084,15 @@
             "string",
             "null"
           ],
+          "default": null
+        },
+        "max_temp": {
+          "description": "An upper temperature value for the graph; entries higher than this will be hidden. If not set,\nthere is no limit.\n\nIs in the unit of `temperature_type`.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double",
           "default": null
         },
         "sensor_filter": {
@@ -1096,15 +1105,6 @@
               "type": "null"
             }
           ]
-        },
-        "upper_limit": {
-          "description": "A max temperature value to clamp results to. If not set, there is no limit.\nIs in the unit of `temperature_type`.",
-          "type": [
-            "number",
-            "null"
-          ],
-          "format": "double",
-          "default": null
         }
       }
     },
