@@ -39,17 +39,17 @@ represents a _widget_. A widget is represented by having a `type` field set to a
 
 The following `type` values are supported:
 
-|                                  |                          |
-| -------------------------------- | ------------------------ |
-| `"cpu"`                          | CPU chart and legend     |
-| `"mem", "memory"`                | Memory chart             |
-| `"net", "network"`               | Network chart and legend |
-| `"proc", "process", "processes"` | Process table and search |
-| `"temp", "temperature"`          | Temperature table        |
-| `"temp_graph", "temperature_graph"` | Temperature graph     |
-| `"disk"`                         | Disk table               |
-| `"empty"`                        | An empty space           |
-| `"batt", "battery"`              | Battery statistics       |
+|                                     |                          |
+| ----------------------------------- | ------------------------ |
+| `"cpu"`                             | CPU chart and legend     |
+| `"mem", "memory"`                   | Memory chart             |
+| `"net", "network"`                  | Network chart and legend |
+| `"proc", "process", "processes"`    | Process table and search |
+| `"temp", "temperature"`             | Temperature table        |
+| `"temp_graph", "temperature_graph"` | Temperature graph        |
+| `"disk"`                            | Disk table               |
+| `"empty"`                           | An empty space           |
+| `"batt", "battery"`                 | Battery statistics       |
 
 Each component of the layout accepts a `ratio` value. If this is not set, it defaults to 1.
 

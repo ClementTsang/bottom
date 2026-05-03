@@ -107,9 +107,9 @@ These can be set under `[styles.cpu]`:
 
 These can be set under `[styles.temp_graph]`:
 
-| Config field              | Details                                                            | Examples                                             |
-| ------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------- |
-| `temp_graph_color_styles` | Colour of each temperature sensor's graph line. Read in order.     | `temp_graph_color_styles = ["Red", "Blue", "Green"]` |
+| Config field              | Details                                                        | Examples                                             |
+| ------------------------- | -------------------------------------------------------------- | ---------------------------------------------------- |
+| `temp_graph_color_styles` | Colour of each temperature sensor's graph line. Read in order. | `temp_graph_color_styles = ["Red", "Blue", "Green"]` |
 
 #### Memory
 

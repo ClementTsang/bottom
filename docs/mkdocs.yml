@@ -3,7 +3,8 @@ site_name: bottom
 site_author: Clement Tsang
 site_url: https://bottom.pages.dev
 site_description: >-
-  A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows.
+  A customizable cross-platform graphical process/system monitor for the
+  terminal. Supports Linux, macOS, and Windows.
 docs_dir: "content/"
 # Project information
 repo_name: ClementTsang/bottom
@@ -165,7 +166,7 @@ nav:
           - "Network Widget": usage/widgets/network.md
           - "Process Widget": usage/widgets/process.md
           - "Disk Widget": usage/widgets/disk.md
-          - "Temperature Widget": usage/widgets/temperature.md
+          - "Temperature Widget": usage/widgets/temperature-table.md
           - "Temperature Graph Widget": usage/widgets/temperature-graph.md
           - "Battery Widget": usage/widgets/battery.md
       - "Auto-Complete": usage/autocomplete.md

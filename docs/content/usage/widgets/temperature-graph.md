@@ -1,14 +1,13 @@
 # Temperature Graph Widget
 
-The temperature graph widget provides a time-series graph of sensor temperatures, plotting each sensor as its own line.
+The temperature graph widget provides temperature readings over time.
 
 ## Features
 
 Each detected sensor is drawn as its own line. The y-axis is in the configured temperature unit (Celsius by default;
 see the `temperature_type` flag).
 
-By default the y-axis is bounded at 100°C (or the equivalent in the configured unit) and grows automatically if a
-reading exceeds that. An upper bound can also be set explicitly via the [config file](../../configuration/config-file/temperature-graph.md).
+By default the y-axis is bounded at 100°C (or the equivalent in the configured unit) and grows automatically. An upper bound can also be set explicitly via the [config file](../../configuration/config-file/temperature-graph.md).
 
 The displayed time range can be adjusted through either the keyboard or mouse.
 

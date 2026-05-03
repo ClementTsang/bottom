@@ -430,7 +430,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 # By default, there are no mount name filters enabled. An example use case is provided below.
@@ -447,7 +447,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 
@@ -474,7 +474,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 
@@ -502,7 +502,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 
@@ -522,7 +522,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 
