@@ -487,9 +487,18 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                             );
                         }
                         TempGraph => {
+                            let upper_limit = config
+                                .temperature_graph
+                                .as_ref()
+                                .and_then(|cfg| cfg.upper_limit)
+                                .map(|v| v as f32);
                             temp_graph_state_map.insert(
                                 widget.widget_id,
-                                TempGraphWidgetState::new(default_time_value, autohide_timer, None), // FIXME: For now this is just none
+                                TempGraphWidgetState::new(
+                                    default_time_value,
+                                    autohide_timer,
+                                    upper_limit,
+                                ),
                             );
                         }
                         Battery => {
@@ -560,6 +569,11 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .context("Update 'temperature.sensor_filter' in your config file")?,
         None => None,
     };
+    let temp_graph_sensor_filter = match &config.temperature_graph {
+        Some(cfg) => get_ignore_list(&cfg.sensor_filter)
+            .context("Update 'temperature_graph.sensor_filter' in your config file")?,
+        None => None,
+    };
     let net_interface_filter = match &config.network {
         Some(cfg) => get_ignore_list(&cfg.interface_filter)
             .context("Update 'network.interface_filter' in your config file")?,
@@ -586,6 +600,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         disk_filter: disk_name_filter,
         mount_filter: disk_mount_filter,
         temp_filter: temp_sensor_filter,
+        temp_graph_filter: temp_graph_sensor_filter,
         net_filter: net_interface_filter,
     };
     let is_expanded = expanded && !use_basic_mode;

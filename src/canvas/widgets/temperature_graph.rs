@@ -51,8 +51,11 @@ impl Painter {
                     0.0
                 }
             };
-            let (adjusted_y_max, y_labels) =
-                adjust_temp_data_point(y_max, &app_state.app_config_fields);
+            let (adjusted_y_max, y_labels) = adjust_temp_data_point(
+                y_max,
+                widget_state.max_temp,
+                &app_state.app_config_fields,
+            );
             let y_bounds = AxisBound::Max(adjusted_y_max);
 
             // Hide the legend if the width is 90% of the total widget width
@@ -116,7 +119,9 @@ impl Painter {
 }
 
 /// Returns the required labels.
-fn adjust_temp_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, [String; 3]) {
+fn adjust_temp_data_point(
+    max_entry: f64, upper_limit: Option<f32>, config: &AppConfigFields,
+) -> (f64, [String; 3]) {
     let default_upper: f64 = config
         .temperature_type
         .convert_temp_unit_float(100.0)
@@ -128,7 +133,9 @@ fn adjust_temp_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, [St
         TemperatureType::Fahrenheit => "°F",
     };
 
-    let max_entry = if max_entry < default_upper {
+    let max_entry = if let Some(limit) = upper_limit {
+        limit as f64
+    } else if max_entry < default_upper {
         default_upper
     } else {
         max_entry

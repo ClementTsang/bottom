@@ -328,7 +328,7 @@ impl DataCollector {
                 }
             }
 
-            if self.widgets_to_harvest.use_temp {
+            if self.widgets_to_harvest.use_temp || self.widgets_to_harvest.use_temp_graph {
                 if self.should_run_less_routine_tasks {
                     self.sys.temps.refresh(true);
                 }
@@ -458,16 +458,21 @@ impl DataCollector {
 
     #[inline]
     fn update_temps(&mut self) {
-        if self.widgets_to_harvest.use_temp {
+        if self.widgets_to_harvest.use_temp || self.widgets_to_harvest.use_temp_graph {
             #[cfg(not(target_os = "linux"))]
-            if let Ok(data) =
-                temperature::get_temperature_data(&self.sys.temps, &self.filters.temp_filter)
-            {
+            if let Ok(data) = temperature::get_temperature_data(
+                &self.sys.temps,
+                &self.filters.temp_filter,
+                &self.filters.temp_graph_filter,
+            ) {
                 self.data.temperature_sensors = data;
             }
 
             #[cfg(target_os = "linux")]
-            if let Ok(data) = temperature::get_temperature_data(&self.filters.temp_filter) {
+            if let Ok(data) = temperature::get_temperature_data(
+                &self.filters.temp_filter,
+                &self.filters.temp_graph_filter,
+            ) {
                 self.data.temperature_sensors = data;
             }
         }
@@ -642,6 +647,7 @@ mod tests {
             disk_filter: None,
             mount_filter: None,
             temp_filter: None,
+            temp_graph_filter: None,
             net_filter: None,
         });
 

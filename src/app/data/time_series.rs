@@ -10,7 +10,7 @@ use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use timeless::data::ChunkedData;
 
 use crate::{
-    app::{AppConfigFields, layout_manager::UsedWidgets},
+    app::{AppConfigFields, DataFilters, filter::Filter, layout_manager::UsedWidgets},
     collection::Data,
 };
 
@@ -67,7 +67,10 @@ pub struct TimeSeriesData {
 
 impl TimeSeriesData {
     /// Add a new data point.
-    pub fn add(&mut self, data: &Data, used_widgets: &UsedWidgets, settings: &AppConfigFields) {
+    pub fn add(
+        &mut self, data: &Data, used_widgets: &UsedWidgets, settings: &AppConfigFields,
+        filters: &DataFilters,
+    ) {
         self.time.push(data.collection_time);
 
         if let Some(network) = &data.network {
@@ -183,6 +186,13 @@ impl TimeSeriesData {
                     .collect::<HashSet<_>>();
 
                 for sensor_data in temperature_sensors {
+                    if !Filter::optional_should_keep(
+                        &filters.temp_graph_filter,
+                        &sensor_data.name,
+                    ) {
+                        continue;
+                    }
+
                     if let Some(temperature) = sensor_data.temperature {
                         not_visited.remove(&sensor_data.name);
 

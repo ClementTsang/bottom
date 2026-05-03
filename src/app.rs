@@ -84,11 +84,12 @@ pub struct AppConfigFields {
 }
 
 /// For filtering out information
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DataFilters {
     pub disk_filter: Option<Filter>,
     pub mount_filter: Option<Filter>,
     pub temp_filter: Option<Filter>,
+    pub temp_graph_filter: Option<Filter>,
     pub net_filter: Option<Filter>,
 }
 
@@ -118,10 +119,13 @@ impl App {
         widget_map: HashMap<u64, BottomWidget>, current_widget: BottomWidget,
         used_widgets: UsedWidgets, filters: DataFilters, is_expanded: bool,
     ) -> Self {
+        let mut data_store = DataStore::new(used_widgets.clone());
+        data_store.set_filters(filters.clone());
+
         Self {
             awaiting_second_char: false,
             second_char: None,
-            data_store: DataStore::new(used_widgets.clone()),
+            data_store,
             last_key_press: Instant::now(),
             process_kill_dialog: ProcessKillDialog::default(),
             help_dialog_state: AppHelpDialogState::default(),

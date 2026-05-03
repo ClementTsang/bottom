@@ -7,7 +7,7 @@ use super::{ProcessData, TimeSeriesData};
 #[cfg(feature = "battery")]
 use crate::collection::batteries;
 use crate::{
-    app::{AppConfigFields, layout_manager::UsedWidgets},
+    app::{AppConfigFields, DataFilters, filter::Filter, layout_manager::UsedWidgets},
     collection::{
         Data,
         cpu::{CpuHarvest, LoadAvgHarvest},
@@ -86,6 +86,7 @@ impl StoredData {
     )]
     fn eat_data(
         &mut self, mut data: Box<Data>, settings: &AppConfigFields, used_widgets: &UsedWidgets,
+        filters: &DataFilters,
     ) {
         let harvested_time = data.collection_time;
 
@@ -99,7 +100,7 @@ impl StoredData {
         }
 
         if !settings.use_basic_mode {
-            self.timeseries_data.add(&data, used_widgets, &settings);
+            self.timeseries_data.add(&data, used_widgets, settings, filters);
         }
 
         if let Some(network) = data.network {
@@ -137,6 +138,7 @@ impl StoredData {
             .map(|sensors| {
                 sensors
                     .into_iter()
+                    .filter(|temp| Filter::optional_should_keep(&filters.temp_filter, &temp.name))
                     .map(|temp| TempWidgetData {
                         sensor: temp.name,
                         temperature: temp
@@ -291,6 +293,7 @@ pub struct DataStore {
     frozen_state: FrozenState,
     main: StoredData,
     used_widgets: UsedWidgets,
+    filters: DataFilters,
 }
 
 impl DataStore {
@@ -300,6 +303,7 @@ impl DataStore {
             frozen_state: FrozenState::default(),
             main: StoredData::default(),
             used_widgets,
+            filters: DataFilters::default(),
         }
     }
 
@@ -332,9 +336,13 @@ impl DataStore {
         self.used_widgets = used_widgets;
     }
 
+    pub fn set_filters(&mut self, filters: DataFilters) {
+        self.filters = filters;
+    }
+
     /// Eat data.
     pub fn eat_data(&mut self, data: Box<Data>, settings: &AppConfigFields) {
-        self.main.eat_data(data, settings, &self.used_widgets);
+        self.main.eat_data(data, settings, &self.used_widgets, &self.filters);
     }
 
     /// Clean data.
