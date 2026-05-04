@@ -5,6 +5,8 @@ use std::{
 
 use timeless::data::ChunkedData;
 
+const STALE_MIN_MILLISECONDS: u64 = Duration::from_secs(30).as_millis() as u64;
+
 /// A timeseries graph widget displays data over a period of time.
 pub struct TimeseriesState {
     pub current_display_time: u64,
@@ -12,11 +14,17 @@ pub struct TimeseriesState {
 }
 
 impl TimeseriesState {
+    /// Create a new [`TimeseriesState`] that displays starting from `starting_time`.
+    pub fn new(starting_time: u64) -> Self {
+        Self {
+            current_display_time: starting_time,
+            autohide_timer: None,
+        }
+    }
+
     /// Zoom in on the x-axis (reducing the time range shown).
     pub fn zoom_in(&mut self, time_interval: u64, autohide_time: bool) {
-        const STALE_MIN_MILLISECONDS: u64 = Duration::from_secs(30).as_millis() as u64;
-
-        let new_time = self.current_display_time.saturating_add(time_interval);
+        let new_time = self.current_display_time.saturating_sub(time_interval);
 
         self.current_display_time = max(new_time, STALE_MIN_MILLISECONDS);
         self.maybe_start_autohide(autohide_time);
@@ -126,7 +134,78 @@ impl GraphHeightCache {
 }
 
 #[cfg(test)]
-mod tests {
+mod timeseries_tests {
+    use super::*;
+
+    #[test]
+    fn zoom_in_decreases_display_time() {
+        let mut state = TimeseriesState {
+            current_display_time: 60_000,
+            autohide_timer: None,
+        };
+
+        state.zoom_in(15_000, false);
+        assert_eq!(state.current_display_time, 45_000);
+    }
+
+    #[test]
+    fn zoom_in_clamps_at_minimum() {
+        let mut state = TimeseriesState {
+            current_display_time: 35_000,
+            autohide_timer: None,
+        };
+
+        state.zoom_in(15_000, false);
+        assert_eq!(state.current_display_time, STALE_MIN_MILLISECONDS); // 30_000
+    }
+
+    #[test]
+    fn zoom_out_increases_display_time() {
+        let mut state = TimeseriesState {
+            current_display_time: 60_000,
+            autohide_timer: None,
+        };
+
+        state.zoom_out(15_000, 300_000, false);
+        assert_eq!(state.current_display_time, 75_000);
+    }
+
+    #[test]
+    fn zoom_out_clamps_at_retention() {
+        let mut state = TimeseriesState {
+            current_display_time: 290_000,
+            autohide_timer: None,
+        };
+
+        state.zoom_out(15_000, 300_000, false);
+        assert_eq!(state.current_display_time, 300_000);
+    }
+
+    #[test]
+    fn reset_zoom_restores_default() {
+        let mut state = TimeseriesState {
+            current_display_time: 120_000,
+            autohide_timer: None,
+        };
+
+        state.reset_zoom(60_000, false);
+        assert_eq!(state.current_display_time, 60_000);
+    }
+
+    #[test]
+    fn autohide_armed_on_change() {
+        let mut state = TimeseriesState {
+            current_display_time: 60_000,
+            autohide_timer: None,
+        };
+
+        state.zoom_in(15_000, true);
+        assert!(state.autohide_timer.is_some());
+    }
+}
+
+#[cfg(test)]
+mod graph_height_tests {
     use super::*;
 
     fn build(times: &[Instant], values: &[f64]) -> ChunkedData<f64> {

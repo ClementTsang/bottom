@@ -9,7 +9,7 @@ pub mod temperature_graph;
 pub mod temperature_table;
 
 pub use battery_info::*;
-pub use common::*;
+pub(crate) use common::*;
 pub use cpu_graph::*;
 pub use disk_table::*;
 pub use mem_graph::*;
