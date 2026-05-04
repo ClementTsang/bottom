@@ -9,8 +9,8 @@ const STALE_MIN_MILLISECONDS: u64 = Duration::from_secs(30).as_millis() as u64;
 
 /// A timeseries graph widget displays data over a period of time.
 pub struct TimeseriesState {
-    pub current_display_time: u64,
-    pub autohide_timer: Option<Instant>,
+    current_display_time: u64,
+    autohide_timer: Option<Instant>,
 }
 
 impl TimeseriesState {
