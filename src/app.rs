@@ -192,8 +192,35 @@ impl App {
 
         self.data_store.reset();
 
-        // Reset zoom
-        self.reset_zoom();
+        // Reset zoom.
+        // TODO: Make this suck less... should just make it so that calling reset fixes this all (including above too).
+        for widget_state in self.states.cpu_state.widget_states.values_mut() {
+            widget_state.timeseries_state.reset_zoom(
+                self.app_config_fields.default_time_value,
+                self.app_config_fields.autohide_time,
+            );
+        }
+
+        for widget_state in self.states.mem_state.widget_states.values_mut() {
+            widget_state.timeseries_state.reset_zoom(
+                self.app_config_fields.default_time_value,
+                self.app_config_fields.autohide_time,
+            );
+        }
+
+        for widget_state in self.states.net_state.widget_states.values_mut() {
+            widget_state.timeseries_state.reset_zoom(
+                self.app_config_fields.default_time_value,
+                self.app_config_fields.autohide_time,
+            );
+        }
+
+        for widget_state in self.states.temp_graph_state.widget_states.values_mut() {
+            widget_state.timeseries_state.reset_zoom(
+                self.app_config_fields.default_time_value,
+                self.app_config_fields.autohide_time,
+            );
+        }
     }
 
     pub fn should_get_widget_bounds(&self) -> bool {
