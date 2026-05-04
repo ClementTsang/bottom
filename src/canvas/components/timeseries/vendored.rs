@@ -2,7 +2,7 @@
 //! right-aligned timeseries data.
 //!
 //! Generally should be updated to be in sync with [`chart.rs`](https://github.com/ratatui-org/ratatui/blob/main/src/widgets/chart.rs);
-//! the specializations are factored out to `time_graph/points.rs`.
+//! the specializations are factored out to `timeseries/points.rs`.
 
 mod canvas;
 mod grid;
@@ -27,7 +27,7 @@ use tui::{
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
-    canvas::components::time_graph::LegendConstraints,
+    canvas::components::timeseries::LegendConstraints,
     utils::general::{saturating_log2, saturating_log10},
 };
 

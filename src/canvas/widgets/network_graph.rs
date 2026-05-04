@@ -10,7 +10,7 @@ use crate::{
     app::{App, AppConfigFields, AxisScaling},
     canvas::{
         Painter,
-        components::time_graph::{
+        components::timeseries::{
             AxisBound, ChartScaling, GraphData, LegendConstraints, TimeGraph,
         },
         drawing_utils::{should_hide_x_label, widget_block},

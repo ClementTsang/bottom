@@ -32,7 +32,7 @@ use self::{
 };
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::components::time_graph::LegendPosition,
+    canvas::components::timeseries::LegendPosition,
     constants::*,
     utils::data_units::DataUnit,
     widgets::*,
@@ -1112,7 +1112,7 @@ mod test {
     use crate::{
         app::App,
         args::BottomArgs,
-        canvas::components::time_graph::LegendPosition,
+        canvas::components::timeseries::LegendPosition,
         options::{
             OptionError, config::flags::GeneralConfig, get_default_time_value, get_retention,
             get_update_rate, parse_legend_position, try_parse_ms,

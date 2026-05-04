@@ -13,7 +13,7 @@ pub use states::*;
 
 use crate::{
     canvas::{
-        components::time_graph::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
+        components::timeseries::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
     },
     constants,
     options::config::flags::TableGap,
