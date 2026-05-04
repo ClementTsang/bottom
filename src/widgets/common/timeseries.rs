@@ -22,6 +22,22 @@ impl TimeseriesState {
         }
     }
 
+    /// Set the autohide timer.
+    pub fn autohide_timer(mut self, autohide_timer: Option<Instant>) -> Self {
+        self.autohide_timer = autohide_timer;
+        self
+    }
+
+    /// Get a mutable reference to the autohide timer.
+    pub fn get_autohide_timer_mut(&mut self) -> &mut Option<Instant> {
+        &mut self.autohide_timer
+    }
+
+    /// Get the current display time.
+    pub fn current_display_time(&self) -> u64 {
+        self.current_display_time
+    }
+
     /// Zoom in on the x-axis (reducing the time range shown).
     pub fn zoom_in(&mut self, time_interval: u64, autohide_time: bool) {
         let new_time = self.current_display_time.saturating_sub(time_interval);

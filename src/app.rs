@@ -23,8 +23,6 @@ use crate::{
     },
 };
 
-const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
-
 #[derive(Debug, Clone, Eq, PartialEq, Default, Copy)]
 pub enum AxisScaling {
     #[default]
@@ -195,9 +193,7 @@ impl App {
         self.data_store.reset();
 
         // Reset zoom
-        self.reset_cpu_zoom();
-        self.reset_mem_zoom();
-        self.reset_net_zoom();
+        self.reset_zoom();
     }
 
     pub fn should_get_widget_bounds(&self) -> bool {
@@ -1966,81 +1962,45 @@ impl App {
     fn zoom_out(&mut self) {
         match self.current_widget.widget_type {
             BottomWidgetType::Cpu => {
-                if let Some(cpu_widget_state) = self
+                if let Some(widget_state) = self
                     .states
                     .cpu_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = cpu_widget_state
-                        .current_display_time
-                        .saturating_add(self.app_config_fields.time_interval);
-
-                    if new_time <= self.app_config_fields.retention_ms {
-                        cpu_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            cpu_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if cpu_widget_state.current_display_time
-                        != self.app_config_fields.retention_ms
-                    {
-                        cpu_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        if self.app_config_fields.autohide_time {
-                            cpu_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
+                    widget_state.timeseries_state.zoom_out(
+                        self.app_config_fields.time_interval,
+                        self.app_config_fields.retention_ms,
+                        self.app_config_fields.autohide_time,
+                    );
                 }
             }
             BottomWidgetType::Mem => {
-                if let Some(mem_widget_state) = self
+                if let Some(widget_state) = self
                     .states
                     .mem_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = mem_widget_state
-                        .current_display_time
-                        .saturating_add(self.app_config_fields.time_interval);
-
-                    if new_time <= self.app_config_fields.retention_ms {
-                        mem_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            mem_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if mem_widget_state.current_display_time
-                        != self.app_config_fields.retention_ms
-                    {
-                        mem_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        if self.app_config_fields.autohide_time {
-                            mem_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
+                    widget_state.timeseries_state.zoom_out(
+                        self.app_config_fields.time_interval,
+                        self.app_config_fields.retention_ms,
+                        self.app_config_fields.autohide_time,
+                    );
                 }
             }
             BottomWidgetType::Net => {
-                if let Some(net_widget_state) = self
+                if let Some(widget_state) = self
                     .states
                     .net_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = net_widget_state
-                        .current_display_time
-                        .saturating_add(self.app_config_fields.time_interval);
-
-                    if new_time <= self.app_config_fields.retention_ms {
-                        net_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            net_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if net_widget_state.current_display_time
-                        != self.app_config_fields.retention_ms
-                    {
-                        net_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        if self.app_config_fields.autohide_time {
-                            net_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
+                    widget_state.timeseries_state.zoom_out(
+                        self.app_config_fields.time_interval,
+                        self.app_config_fields.retention_ms,
+                        self.app_config_fields.autohide_time,
+                    );
                 }
             }
             BottomWidgetType::TempGraph => {
@@ -2049,23 +2009,11 @@ impl App {
                     .temp_graph_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    let new_time = widget_state
-                        .current_display_time
-                        .saturating_add(self.app_config_fields.time_interval);
-
-                    if new_time <= self.app_config_fields.retention_ms {
-                        widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if widget_state.current_display_time
-                        != self.app_config_fields.retention_ms
-                    {
-                        widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        if self.app_config_fields.autohide_time {
-                            widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
+                    widget_state.timeseries_state.zoom_out(
+                        self.app_config_fields.time_interval,
+                        self.app_config_fields.retention_ms,
+                        self.app_config_fields.autohide_time,
+                    );
                 }
             }
             _ => {}
@@ -2075,75 +2023,42 @@ impl App {
     fn zoom_in(&mut self) {
         match self.current_widget.widget_type {
             BottomWidgetType::Cpu => {
-                if let Some(cpu_widget_state) = self
+                if let Some(widget_state) = self
                     .states
                     .cpu_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = cpu_widget_state
-                        .current_display_time
-                        .saturating_sub(self.app_config_fields.time_interval);
-
-                    if new_time >= STALE_MIN_MILLISECONDS {
-                        cpu_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            cpu_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if cpu_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
-                        cpu_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
-                        if self.app_config_fields.autohide_time {
-                            cpu_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
+                    widget_state.timeseries_state.zoom_in(
+                        self.app_config_fields.time_interval,
+                        self.app_config_fields.autohide_time,
+                    );
                 }
             }
             BottomWidgetType::Mem => {
-                if let Some(mem_widget_state) = self
+                if let Some(widget_state) = self
                     .states
                     .mem_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = mem_widget_state
-                        .current_display_time
-                        .saturating_sub(self.app_config_fields.time_interval);
-
-                    if new_time >= STALE_MIN_MILLISECONDS {
-                        mem_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            mem_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if mem_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
-                        mem_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
-                        if self.app_config_fields.autohide_time {
-                            mem_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
+                    widget_state.timeseries_state.zoom_in(
+                        self.app_config_fields.time_interval,
+                        self.app_config_fields.autohide_time,
+                    );
                 }
             }
             BottomWidgetType::Net => {
-                if let Some(net_widget_state) = self
+                if let Some(widget_state) = self
                     .states
                     .net_state
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    let new_time = net_widget_state
-                        .current_display_time
-                        .saturating_sub(self.app_config_fields.time_interval);
-
-                    if new_time >= STALE_MIN_MILLISECONDS {
-                        net_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            net_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if net_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
-                        net_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
-                        if self.app_config_fields.autohide_time {
-                            net_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
+                    widget_state.timeseries_state.zoom_in(
+                        self.app_config_fields.time_interval,
+                        self.app_config_fields.autohide_time,
+                    );
                 }
             }
             BottomWidgetType::TempGraph => {
@@ -2152,88 +2067,69 @@ impl App {
                     .temp_graph_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    let new_time = widget_state
-                        .current_display_time
-                        .saturating_sub(self.app_config_fields.time_interval);
-
-                    if new_time >= STALE_MIN_MILLISECONDS {
-                        widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if widget_state.current_display_time != STALE_MIN_MILLISECONDS {
-                        widget_state.current_display_time = STALE_MIN_MILLISECONDS;
-                        if self.app_config_fields.autohide_time {
-                            widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
+                    widget_state.timeseries_state.zoom_in(
+                        self.app_config_fields.time_interval,
+                        self.app_config_fields.autohide_time,
+                    );
                 }
             }
             _ => {}
         }
     }
 
-    fn reset_cpu_zoom(&mut self) {
-        if let Some(cpu_widget_state) = self
-            .states
-            .cpu_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
-        {
-            cpu_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            if self.app_config_fields.autohide_time {
-                cpu_widget_state.autohide_timer = Some(Instant::now());
-            }
-        }
-    }
-
-    fn reset_mem_zoom(&mut self) {
-        if let Some(mem_widget_state) = self
-            .states
-            .mem_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
-        {
-            mem_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            if self.app_config_fields.autohide_time {
-                mem_widget_state.autohide_timer = Some(Instant::now());
-            }
-        }
-    }
-
-    fn reset_net_zoom(&mut self) {
-        if let Some(net_widget_state) = self
-            .states
-            .net_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
-        {
-            net_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            if self.app_config_fields.autohide_time {
-                net_widget_state.autohide_timer = Some(Instant::now());
-            }
-        }
-    }
-
-    fn reset_temp_graph_zoom(&mut self) {
-        if let Some(widget_state) = self
-            .states
-            .temp_graph_state
-            .get_mut_widget_state(self.current_widget.widget_id)
-        {
-            widget_state.current_display_time = self.app_config_fields.default_time_value;
-            if self.app_config_fields.autohide_time {
-                widget_state.autohide_timer = Some(Instant::now());
-            }
-        }
-    }
-
     fn reset_zoom(&mut self) {
         match self.current_widget.widget_type {
-            BottomWidgetType::Cpu => self.reset_cpu_zoom(),
-            BottomWidgetType::Mem => self.reset_mem_zoom(),
-            BottomWidgetType::Net => self.reset_net_zoom(),
-            BottomWidgetType::TempGraph => self.reset_temp_graph_zoom(),
+            BottomWidgetType::Cpu => {
+                if let Some(widget_state) = self
+                    .states
+                    .cpu_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    widget_state.timeseries_state.reset_zoom(
+                        self.app_config_fields.default_time_value,
+                        self.app_config_fields.autohide_time,
+                    );
+                }
+            }
+            BottomWidgetType::Mem => {
+                if let Some(widget_state) = self
+                    .states
+                    .mem_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    widget_state.timeseries_state.reset_zoom(
+                        self.app_config_fields.default_time_value,
+                        self.app_config_fields.autohide_time,
+                    );
+                }
+            }
+            BottomWidgetType::Net => {
+                if let Some(widget_state) = self
+                    .states
+                    .net_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    widget_state.timeseries_state.reset_zoom(
+                        self.app_config_fields.default_time_value,
+                        self.app_config_fields.autohide_time,
+                    );
+                }
+            }
+            BottomWidgetType::TempGraph => {
+                if let Some(widget_state) = self
+                    .states
+                    .temp_graph_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    widget_state.timeseries_state.reset_zoom(
+                        self.app_config_fields.default_time_value,
+                        self.app_config_fields.autohide_time,
+                    );
+                }
+            }
             _ => {}
         }
     }

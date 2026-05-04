@@ -14,6 +14,7 @@ use crate::{
     },
     collection::cpu::{CpuData, CpuDataType},
     options::config::{cpu::CpuDefault, style::Styles},
+    widgets::TimeseriesState,
 };
 
 pub enum CpuWidgetColumn {
@@ -125,16 +126,15 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
 }
 
 pub struct CpuWidgetState {
-    pub current_display_time: u64,
+    pub timeseries_state: TimeseriesState,
     pub is_legend_hidden: bool,
-    pub autohide_timer: Option<Instant>,
     pub table: DataTable<CpuWidgetTableData, CpuWidgetColumn>,
     pub force_update_data: bool,
 }
 
 impl CpuWidgetState {
     pub(crate) fn new(
-        config: &AppConfigFields, default_selection: CpuDefault, current_display_time: u64,
+        config: &AppConfigFields, default_selection: CpuDefault, starting_time: u64,
         autohide_timer: Option<Instant>, colours: &Styles,
     ) -> Self {
         let columns = [
@@ -168,9 +168,8 @@ impl CpuWidgetState {
         }
 
         CpuWidgetState {
-            current_display_time,
+            timeseries_state: TimeseriesState::new(starting_time).autohide_timer(autohide_timer),
             is_legend_hidden: false,
-            autohide_timer,
             table,
             force_update_data: false,
         }

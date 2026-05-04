@@ -1,18 +1,16 @@
 use std::time::Instant;
 
-use crate::widgets::GraphHeightCache;
+use crate::widgets::{GraphHeightCache, TimeseriesState};
 
 pub struct NetWidgetState {
-    pub current_display_time: u64,
-    pub autohide_timer: Option<Instant>,
+    pub timeseries_state: TimeseriesState,
     pub height_cache: GraphHeightCache,
 }
 
 impl NetWidgetState {
-    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
+    pub fn init(starting_time: u64, autohide_timer: Option<Instant>) -> Self {
         NetWidgetState {
-            current_display_time,
-            autohide_timer,
+            timeseries_state: TimeseriesState::new(starting_time).autohide_timer(autohide_timer),
             height_cache: GraphHeightCache::default(),
         }
     }

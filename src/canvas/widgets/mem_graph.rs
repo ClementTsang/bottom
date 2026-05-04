@@ -60,7 +60,7 @@ impl Painter {
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                &mut mem_state.autohide_timer,
+                mem_state.timeseries_state.get_autohide_timer_mut(),
                 draw_loc,
             );
             let graph_data = {
@@ -165,7 +165,7 @@ impl Painter {
             };
 
             PercentTimeGraph {
-                display_range: mem_state.current_display_time,
+                display_range: mem_state.timeseries_state.current_display_time(),
                 hide_x_labels,
                 app_config_fields: &app_state.app_config_fields,
                 current_widget: app_state.current_widget.widget_id,
