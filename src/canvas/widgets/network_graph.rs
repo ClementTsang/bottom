@@ -66,7 +66,9 @@ impl Painter {
             let rx_points = &(shared_data.time_series_data.rx);
             let tx_points = &(shared_data.time_series_data.tx);
             let times = &(shared_data.time_series_data.time);
-            let time_start = -(network_widget_state.time_series_state.current_display_time() as f64);
+            let time_start = -(network_widget_state
+                .time_series_state
+                .current_display_time() as f64);
 
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let hide_x_labels = should_hide_x_label(
@@ -81,7 +83,9 @@ impl Painter {
                     let cache = &mut network_widget_state.height_cache;
                     cache.get_or_update(
                         last_time,
-                        network_widget_state.time_series_state.current_display_time(),
+                        network_widget_state
+                            .time_series_state
+                            .current_display_time(),
                         [rx_points, tx_points].into_iter(),
                         times,
                     )
