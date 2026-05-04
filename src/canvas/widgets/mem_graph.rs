@@ -10,7 +10,7 @@ use crate::{
     app::{App, data::Values},
     canvas::{
         Painter,
-        components::time_graph::{GraphData, LegendConstraints, PercentTimeGraph},
+        components::time_series::{GraphData, LegendConstraints, PercentTimeGraph},
         drawing_utils::should_hide_x_label,
     },
     collection::memory::MemData,
@@ -60,7 +60,7 @@ impl Painter {
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                &mut mem_state.autohide_timer,
+                mem_state.time_series_state.autohide_timer_mut(),
                 draw_loc,
             );
             let graph_data = {
@@ -85,8 +85,8 @@ impl Painter {
                 }
 
                 let mut points = Vec::with_capacity(size);
-                let timeseries = &data.timeseries_data;
-                let time = &timeseries.time;
+                let time_series = &data.time_series_data;
+                let time = &time_series.time;
 
                 // TODO: Add a "no data" option here/to time graph if there is no entries
                 graph_data(
@@ -94,7 +94,7 @@ impl Painter {
                     "RAM",
                     data.ram_harvest.as_ref(),
                     time,
-                    &timeseries.ram,
+                    &time_series.ram,
                     self.styles.ram_style,
                 );
 
@@ -103,7 +103,7 @@ impl Painter {
                     "SWP",
                     data.swap_harvest.as_ref(),
                     time,
-                    &timeseries.swap,
+                    &time_series.swap,
                     self.styles.swap_style,
                 );
 
@@ -114,7 +114,7 @@ impl Painter {
                         "CACHE", // TODO: Figure out how to line this up better
                         data.cache_harvest.as_ref(),
                         time,
-                        &timeseries.cache_mem,
+                        &time_series.cache_mem,
                         self.styles.cache_style,
                     );
                 }
@@ -126,7 +126,7 @@ impl Painter {
                         "ARC",
                         data.arc_harvest.as_ref(),
                         time,
-                        &timeseries.arc_mem,
+                        &time_series.arc_mem,
                         self.styles.arc_style,
                     );
                 }
@@ -137,7 +137,7 @@ impl Painter {
                     let gpu_styles = &self.styles.gpu_colours;
 
                     for (name, harvest) in &data.gpu_harvest {
-                        if let Some(gpu_data) = data.timeseries_data.gpu_mem.get(name) {
+                        if let Some(gpu_data) = data.time_series_data.gpu_mem.get(name) {
                             let style = {
                                 if gpu_styles.is_empty() {
                                     Style::default()
@@ -165,7 +165,7 @@ impl Painter {
             };
 
             PercentTimeGraph {
-                display_range: mem_state.current_display_time,
+                display_range: mem_state.time_series_state.current_display_time(),
                 hide_x_labels,
                 app_config_fields: &app_state.app_config_fields,
                 current_widget: app_state.current_widget.widget_id,

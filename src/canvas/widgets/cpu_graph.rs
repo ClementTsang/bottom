@@ -9,7 +9,7 @@ use crate::{
         Painter,
         components::{
             data_table::{DrawInfo, SelectionState},
-            time_graph::{GraphData, PercentTimeGraph},
+            time_series::{GraphData, PercentTimeGraph},
         },
         drawing_utils::should_hide_x_label,
     },
@@ -122,8 +122,8 @@ impl Painter {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
         let current_scroll_position = cpu_widget_state.table.state.current_index;
         let cpu_entries = &data.cpu_harvest;
-        let cpu_points = &data.timeseries_data.cpu;
-        let time = &data.timeseries_data.time;
+        let cpu_points = &data.time_series_data.cpu;
+        let time = &data.time_series_data.time;
 
         if current_scroll_position == ALL_POSITION {
             // This case ensures the other cases cannot have the position be equal to 0.
@@ -177,7 +177,7 @@ impl Painter {
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                &mut cpu_widget_state.autohide_timer,
+                cpu_widget_state.time_series_state.autohide_timer_mut(),
                 draw_loc,
             );
 
@@ -206,7 +206,7 @@ impl Painter {
             };
 
             PercentTimeGraph {
-                display_range: cpu_widget_state.current_display_time,
+                display_range: cpu_widget_state.time_series_state.current_display_time(),
                 hide_x_labels,
                 app_config_fields: &app_state.app_config_fields,
                 current_widget: app_state.current_widget.widget_id,

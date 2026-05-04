@@ -1,15 +1,16 @@
 use std::time::Instant;
 
+use crate::widgets::TimeseriesState;
+
 pub struct MemWidgetState {
-    pub current_display_time: u64,
-    pub autohide_timer: Option<Instant>,
+    pub time_series_state: TimeseriesState,
 }
 
 impl MemWidgetState {
-    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
+    pub fn init(starting_time: u64, autohide_timer: Option<Instant>) -> Self {
         MemWidgetState {
-            current_display_time,
-            autohide_timer,
+            time_series_state: TimeseriesState::new(starting_time)
+                .with_autohide_timer(autohide_timer),
         }
     }
 }
