@@ -72,9 +72,7 @@ impl Painter {
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                network_widget_state
-                    .timeseries_state
-                    .get_autohide_timer_mut(),
+                network_widget_state.timeseries_state.autohide_timer_mut(),
                 draw_loc,
             );
 

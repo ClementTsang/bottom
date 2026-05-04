@@ -9,7 +9,8 @@ pub struct MemWidgetState {
 impl MemWidgetState {
     pub fn init(starting_time: u64, autohide_timer: Option<Instant>) -> Self {
         MemWidgetState {
-            timeseries_state: TimeseriesState::new(starting_time).autohide_timer(autohide_timer),
+            timeseries_state: TimeseriesState::new(starting_time)
+                .with_autohide_timer(autohide_timer),
         }
     }
 }

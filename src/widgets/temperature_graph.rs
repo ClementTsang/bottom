@@ -14,7 +14,8 @@ pub struct TempGraphWidgetState {
 impl TempGraphWidgetState {
     pub fn new(starting_time: u64, autohide_timer: Option<Instant>, max_temp: Option<f32>) -> Self {
         TempGraphWidgetState {
-            timeseries_state: TimeseriesState::new(starting_time).autohide_timer(autohide_timer),
+            timeseries_state: TimeseriesState::new(starting_time)
+                .with_autohide_timer(autohide_timer),
             height_cache: GraphHeightCache::default(),
             max_temp,
         }

@@ -10,7 +10,8 @@ pub struct NetWidgetState {
 impl NetWidgetState {
     pub fn init(starting_time: u64, autohide_timer: Option<Instant>) -> Self {
         NetWidgetState {
-            timeseries_state: TimeseriesState::new(starting_time).autohide_timer(autohide_timer),
+            timeseries_state: TimeseriesState::new(starting_time)
+                .with_autohide_timer(autohide_timer),
             height_cache: GraphHeightCache::default(),
         }
     }

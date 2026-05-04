@@ -168,7 +168,8 @@ impl CpuWidgetState {
         }
 
         CpuWidgetState {
-            timeseries_state: TimeseriesState::new(starting_time).autohide_timer(autohide_timer),
+            timeseries_state: TimeseriesState::new(starting_time)
+                .with_autohide_timer(autohide_timer),
             is_legend_hidden: false,
             table,
             force_update_data: false,

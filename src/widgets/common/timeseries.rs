@@ -23,13 +23,13 @@ impl TimeseriesState {
     }
 
     /// Set the autohide timer.
-    pub fn autohide_timer(mut self, autohide_timer: Option<Instant>) -> Self {
+    pub fn with_autohide_timer(mut self, autohide_timer: Option<Instant>) -> Self {
         self.autohide_timer = autohide_timer;
         self
     }
 
     /// Get a mutable reference to the autohide timer.
-    pub fn get_autohide_timer_mut(&mut self) -> &mut Option<Instant> {
+    pub fn autohide_timer_mut(&mut self) -> &mut Option<Instant> {
         &mut self.autohide_timer
     }
 
