@@ -8,7 +8,7 @@ use crate::{
     app::{App, AppConfigFields},
     canvas::{
         Painter,
-        components::timeseries::{
+        components::time_series::{
             AxisBound, ChartScaling, GraphData, LegendConstraints, TimeGraph,
         },
         drawing_utils::should_hide_x_label,
@@ -25,15 +25,15 @@ impl Painter {
             .get_mut_widget_state(widget_id)
         {
             let shared_data = app_state.data_store.get_data();
-            let points = &(shared_data.timeseries_data.temperature);
-            let times = &(shared_data.timeseries_data.time);
-            let time_start = -(widget_state.timeseries_state.current_display_time() as f64);
+            let points = &(shared_data.time_series_data.temperature);
+            let times = &(shared_data.time_series_data.time);
+            let time_start = -(widget_state.time_series_state.current_display_time() as f64);
 
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                widget_state.timeseries_state.autohide_timer_mut(),
+                widget_state.time_series_state.autohide_timer_mut(),
                 draw_loc,
             );
 
@@ -42,7 +42,7 @@ impl Painter {
                     let cache = &mut widget_state.height_cache;
                     cache.get_or_update(
                         last_time,
-                        widget_state.timeseries_state.current_display_time(),
+                        widget_state.time_series_state.current_display_time(),
                         points.values(),
                         times,
                     )

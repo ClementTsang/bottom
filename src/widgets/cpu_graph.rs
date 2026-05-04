@@ -126,7 +126,7 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
 }
 
 pub struct CpuWidgetState {
-    pub timeseries_state: TimeseriesState,
+    pub time_series_state: TimeseriesState,
     pub is_legend_hidden: bool,
     pub table: DataTable<CpuWidgetTableData, CpuWidgetColumn>,
     pub force_update_data: bool,
@@ -168,7 +168,7 @@ impl CpuWidgetState {
         }
 
         CpuWidgetState {
-            timeseries_state: TimeseriesState::new(starting_time)
+            time_series_state: TimeseriesState::new(starting_time)
                 .with_autohide_timer(autohide_timer),
             is_legend_hidden: false,
             table,

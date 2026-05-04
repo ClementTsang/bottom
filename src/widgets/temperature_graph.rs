@@ -4,9 +4,9 @@ use std::time::Instant;
 
 use crate::widgets::{GraphHeightCache, TimeseriesState};
 
-/// A timeseries graph widget displaying temperature usage over time.
+/// A time_series graph widget displaying temperature usage over time.
 pub struct TempGraphWidgetState {
-    pub timeseries_state: TimeseriesState,
+    pub time_series_state: TimeseriesState,
     pub height_cache: GraphHeightCache,
     pub max_temp: Option<f32>,
 }
@@ -14,7 +14,7 @@ pub struct TempGraphWidgetState {
 impl TempGraphWidgetState {
     pub fn new(starting_time: u64, autohide_timer: Option<Instant>, max_temp: Option<f32>) -> Self {
         TempGraphWidgetState {
-            timeseries_state: TimeseriesState::new(starting_time)
+            time_series_state: TimeseriesState::new(starting_time)
                 .with_autohide_timer(autohide_timer),
             height_cache: GraphHeightCache::default(),
             max_temp,

@@ -27,7 +27,7 @@ use crate::{
 pub struct StoredData {
     // FIXME: (points_rework_v1) we could be able to remove this with some more refactoring.
     pub last_update_time: Instant,
-    pub timeseries_data: TimeSeriesData,
+    pub time_series_data: TimeSeriesData,
     pub network_harvest: NetworkHarvest,
     pub ram_harvest: Option<MemData>,
     pub swap_harvest: Option<MemData>,
@@ -53,7 +53,7 @@ impl Default for StoredData {
     fn default() -> Self {
         StoredData {
             last_update_time: Instant::now(),
-            timeseries_data: TimeSeriesData::default(),
+            time_series_data: TimeSeriesData::default(),
             network_harvest: NetworkHarvest::default(),
             ram_harvest: None,
             #[cfg(not(target_os = "windows"))]
@@ -100,7 +100,7 @@ impl StoredData {
         }
 
         if !settings.use_basic_mode {
-            self.timeseries_data
+            self.time_series_data
                 .add(&data, used_widgets, settings, filters);
         }
 
@@ -345,7 +345,7 @@ impl DataStore {
 
     /// Clean data.
     pub fn clean_data(&mut self, max_duration: Duration) {
-        self.main.timeseries_data.prune(max_duration);
+        self.main.time_series_data.prune(max_duration);
     }
 
     /// Reset data state.

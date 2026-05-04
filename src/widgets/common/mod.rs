@@ -1,5 +1,5 @@
 //! Common widget code.
 
-mod timeseries;
+mod time_series;
 
-pub use timeseries::*;
+pub use time_series::*;

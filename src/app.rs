@@ -13,7 +13,7 @@ pub use states::*;
 
 use crate::{
     canvas::{
-        components::timeseries::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
+        components::time_series::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
     },
     constants,
     options::config::flags::TableGap,
@@ -195,28 +195,28 @@ impl App {
         // Reset zoom.
         // TODO: Make this suck less... should just make it so that calling reset fixes this all (including above too).
         for widget_state in self.states.cpu_state.widget_states.values_mut() {
-            widget_state.timeseries_state.reset_zoom(
+            widget_state.time_series_state.reset_zoom(
                 self.app_config_fields.default_time_value,
                 self.app_config_fields.autohide_time,
             );
         }
 
         for widget_state in self.states.mem_state.widget_states.values_mut() {
-            widget_state.timeseries_state.reset_zoom(
+            widget_state.time_series_state.reset_zoom(
                 self.app_config_fields.default_time_value,
                 self.app_config_fields.autohide_time,
             );
         }
 
         for widget_state in self.states.net_state.widget_states.values_mut() {
-            widget_state.timeseries_state.reset_zoom(
+            widget_state.time_series_state.reset_zoom(
                 self.app_config_fields.default_time_value,
                 self.app_config_fields.autohide_time,
             );
         }
 
         for widget_state in self.states.temp_graph_state.widget_states.values_mut() {
-            widget_state.timeseries_state.reset_zoom(
+            widget_state.time_series_state.reset_zoom(
                 self.app_config_fields.default_time_value,
                 self.app_config_fields.autohide_time,
             );
@@ -1995,7 +1995,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.zoom_out(
+                    widget_state.time_series_state.zoom_out(
                         self.app_config_fields.time_interval,
                         self.app_config_fields.retention_ms,
                         self.app_config_fields.autohide_time,
@@ -2009,7 +2009,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.zoom_out(
+                    widget_state.time_series_state.zoom_out(
                         self.app_config_fields.time_interval,
                         self.app_config_fields.retention_ms,
                         self.app_config_fields.autohide_time,
@@ -2023,7 +2023,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.zoom_out(
+                    widget_state.time_series_state.zoom_out(
                         self.app_config_fields.time_interval,
                         self.app_config_fields.retention_ms,
                         self.app_config_fields.autohide_time,
@@ -2036,7 +2036,7 @@ impl App {
                     .temp_graph_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.zoom_out(
+                    widget_state.time_series_state.zoom_out(
                         self.app_config_fields.time_interval,
                         self.app_config_fields.retention_ms,
                         self.app_config_fields.autohide_time,
@@ -2056,7 +2056,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.zoom_in(
+                    widget_state.time_series_state.zoom_in(
                         self.app_config_fields.time_interval,
                         self.app_config_fields.autohide_time,
                     );
@@ -2069,7 +2069,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.zoom_in(
+                    widget_state.time_series_state.zoom_in(
                         self.app_config_fields.time_interval,
                         self.app_config_fields.autohide_time,
                     );
@@ -2082,7 +2082,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.zoom_in(
+                    widget_state.time_series_state.zoom_in(
                         self.app_config_fields.time_interval,
                         self.app_config_fields.autohide_time,
                     );
@@ -2094,7 +2094,7 @@ impl App {
                     .temp_graph_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.zoom_in(
+                    widget_state.time_series_state.zoom_in(
                         self.app_config_fields.time_interval,
                         self.app_config_fields.autohide_time,
                     );
@@ -2113,7 +2113,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.reset_zoom(
+                    widget_state.time_series_state.reset_zoom(
                         self.app_config_fields.default_time_value,
                         self.app_config_fields.autohide_time,
                     );
@@ -2126,7 +2126,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.reset_zoom(
+                    widget_state.time_series_state.reset_zoom(
                         self.app_config_fields.default_time_value,
                         self.app_config_fields.autohide_time,
                     );
@@ -2139,7 +2139,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.reset_zoom(
+                    widget_state.time_series_state.reset_zoom(
                         self.app_config_fields.default_time_value,
                         self.app_config_fields.autohide_time,
                     );
@@ -2151,7 +2151,7 @@ impl App {
                     .temp_graph_state
                     .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    widget_state.timeseries_state.reset_zoom(
+                    widget_state.time_series_state.reset_zoom(
                         self.app_config_fields.default_time_value,
                         self.app_config_fields.autohide_time,
                     );

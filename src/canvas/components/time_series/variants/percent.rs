@@ -7,7 +7,7 @@ use tui::symbols::Marker;
 
 use crate::{
     app::AppConfigFields,
-    canvas::components::timeseries::{
+    canvas::components::time_series::{
         AxisBound, ChartScaling, LegendConstraints, LegendPosition, TimeGraph,
         variants::get_border_style,
     },

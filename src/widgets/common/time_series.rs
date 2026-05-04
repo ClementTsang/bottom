@@ -7,7 +7,7 @@ use timeless::data::ChunkedData;
 
 const STALE_MIN_MILLISECONDS: u64 = Duration::from_secs(30).as_millis() as u64;
 
-/// A timeseries graph widget displays data over a period of time.
+/// A time_series graph widget displays data over a period of time.
 pub struct TimeseriesState {
     current_display_time: u64,
     autohide_timer: Option<Instant>,
@@ -150,7 +150,7 @@ impl GraphHeightCache {
 }
 
 #[cfg(test)]
-mod timeseries_tests {
+mod time_series_tests {
     use super::*;
 
     #[test]
