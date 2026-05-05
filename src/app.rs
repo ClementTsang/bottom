@@ -1994,8 +1994,7 @@ impl App {
                 if let Some(widget_state) = self
                     .states
                     .cpu_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id) =>
+                    .get_mut_widget_state(self.current_widget.widget_id) =>
             {
                 Some(&mut widget_state.time_series_state)
             }
@@ -2003,8 +2002,7 @@ impl App {
                 if let Some(widget_state) = self
                     .states
                     .mem_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id) =>
+                    .get_mut_widget_state(self.current_widget.widget_id) =>
             {
                 Some(&mut widget_state.time_series_state)
             }
@@ -2012,8 +2010,7 @@ impl App {
                 if let Some(widget_state) = self
                     .states
                     .net_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id) =>
+                    .get_mut_widget_state(self.current_widget.widget_id) =>
             {
                 Some(&mut widget_state.time_series_state)
             }
