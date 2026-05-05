@@ -101,6 +101,10 @@ impl NetState {
     pub fn init(widget_states: HashMap<u64, NetWidgetState>) -> Self {
         NetState { widget_states }
     }
+
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut NetWidgetState> {
+        self.widget_states.get_mut(&widget_id)
+    }
 }
 
 pub struct CpuState {
@@ -128,6 +132,10 @@ pub struct MemState {
 impl MemState {
     pub fn init(widget_states: HashMap<u64, MemWidgetState>) -> Self {
         MemState { widget_states }
+    }
+
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut MemWidgetState> {
+        self.widget_states.get_mut(&widget_id)
     }
 }
 
@@ -160,10 +168,6 @@ impl TempGraphStates {
 
     pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut TempGraphWidgetState> {
         self.widget_states.get_mut(&widget_id)
-    }
-
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&TempGraphWidgetState> {
-        self.widget_states.get(&widget_id)
     }
 }
 
