@@ -379,12 +379,20 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temperature_legend_position,
     };
 
+    let process_default_sort = match &args.process.process_default_sort {
+        Some(name) => Some(ProcColumn::parse_column_name(name).ok_or_else(|| {
+            anyhow::anyhow!("'{name}' is not a valid process column for --process_default_sort")
+        })?),
+        None => config.processes.as_ref().and_then(|cfg| cfg.default_sort),
+    };
+
     let table_config = ProcTableConfig {
         is_case_sensitive,
         is_match_whole_word,
         is_use_regex,
         show_memory_as_values: process_memory_as_value,
         is_command: is_default_command,
+        default_sort: process_default_sort,
     };
 
     for row in &widget_layout.rows {

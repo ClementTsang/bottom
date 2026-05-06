@@ -389,6 +389,10 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%, Nice, Priority
 #columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%", "Priority"]
 
+# The default sort column when bottom starts. Accepts any of the column names above.
+# If unset, defaults to CPU%.
+#default_sort = "Mem%"
+
 # Gather process child thread information
 #get_threads = false
 

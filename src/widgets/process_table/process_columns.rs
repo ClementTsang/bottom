@@ -201,38 +201,45 @@ impl SortsRow for ProcColumn {
     }
 }
 
+impl ProcColumn {
+    /// Parse a column name, case-insensitively, accepting any of the aliases
+    /// recognized in the config file.
+    pub fn parse_column_name(name: &str) -> Option<Self> {
+        match name.to_lowercase().as_str() {
+            "cpu%" => Some(ProcColumn::CpuPercent),
+            "mem" | "mem%" => Some(ProcColumn::MemPercent),
+            "virt" | "virtual" | "virtmem" | "virtual memory" => Some(ProcColumn::VirtualMem),
+            "pid" => Some(ProcColumn::Pid),
+            "count" => Some(ProcColumn::Count),
+            "name" => Some(ProcColumn::Name),
+            "command" => Some(ProcColumn::Command),
+            "read" | "r/s" | "rps" => Some(ProcColumn::ReadPerSecond),
+            "write" | "w/s" | "wps" => Some(ProcColumn::WritePerSecond),
+            "tread" | "t.read" => Some(ProcColumn::TotalRead),
+            "twrite" | "t.write" => Some(ProcColumn::TotalWrite),
+            "state" => Some(ProcColumn::State),
+            "user" => Some(ProcColumn::User),
+            "time" => Some(ProcColumn::Time),
+            #[cfg(unix)]
+            "nice" => Some(ProcColumn::Nice),
+            "priority" => Some(ProcColumn::Priority),
+            #[cfg(feature = "gpu")]
+            "gmem" | "gmem%" => Some(ProcColumn::GpuMemPercent),
+            #[cfg(feature = "gpu")]
+            "gpu%" => Some(ProcColumn::GpuUtilPercent),
+            _ => None,
+        }
+    }
+}
+
 impl<'de> Deserialize<'de> for ProcColumn {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        let value = String::deserialize(deserializer)?.to_lowercase();
-        match value.as_str() {
-            "cpu%" => Ok(ProcColumn::CpuPercent),
-            "mem" | "mem%" => Ok(ProcColumn::MemPercent),
-            "virt" | "virtual" | "virtmem" | "virtual memory" => Ok(ProcColumn::VirtualMem),
-            "pid" => Ok(ProcColumn::Pid),
-            "count" => Ok(ProcColumn::Count),
-            "name" => Ok(ProcColumn::Name),
-            "command" => Ok(ProcColumn::Command),
-            "read" | "r/s" | "rps" => Ok(ProcColumn::ReadPerSecond),
-            "write" | "w/s" | "wps" => Ok(ProcColumn::WritePerSecond),
-            "tread" | "t.read" => Ok(ProcColumn::TotalRead),
-            "twrite" | "t.write" => Ok(ProcColumn::TotalWrite),
-            "state" => Ok(ProcColumn::State),
-            "user" => Ok(ProcColumn::User),
-            "time" => Ok(ProcColumn::Time),
-            #[cfg(unix)]
-            "nice" => Ok(ProcColumn::Nice),
-            "priority" => Ok(ProcColumn::Priority),
-            #[cfg(feature = "gpu")]
-            "gmem" | "gmem%" => Ok(ProcColumn::GpuMemPercent),
-            #[cfg(feature = "gpu")]
-            "gpu%" => Ok(ProcColumn::GpuUtilPercent),
-            _ => Err(serde::de::Error::custom(
-                "doesn't match any process column name",
-            )),
-        }
+        let value = String::deserialize(deserializer)?;
+        ProcColumn::parse_column_name(&value)
+            .ok_or_else(|| serde::de::Error::custom("doesn't match any process column name"))
     }
 }
 

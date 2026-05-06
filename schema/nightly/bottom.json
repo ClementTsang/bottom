@@ -868,6 +868,17 @@
             "$ref": "#/$defs/ProcColumn"
           }
         },
+        "default_sort": {
+          "description": "The default sort column.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProcColumn"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "get_threads": {
           "description": "Whether to get process child threads.",
           "type": [
