@@ -288,11 +288,11 @@ impl Painter {
                 // bars...
                 let cpu_height = {
                     let c = (actual_cpu_data_len / 4) as u16
-                        + u16::from(actual_cpu_data_len % 4 != 0)
+                        + u16::from(!actual_cpu_data_len.is_multiple_of(4))
                         + u16::from(
                             app_state.app_config_fields.show_average_cpu
                                 && app_state.app_config_fields.dedicated_average_row
-                                && actual_cpu_data_len.saturating_sub(1) % 4 != 0,
+                                && !actual_cpu_data_len.saturating_sub(1).is_multiple_of(4),
                         );
 
                     if c <= 1 { 1 } else { c }
