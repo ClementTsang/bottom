@@ -10,6 +10,8 @@ cfg_if! {
         #[cfg(feature = "zfs")]
         pub use io_counters::IoCounters;
         pub(crate) use self::freebsd::*;
+        mod other;
+        pub(crate) use self::other::*;
     } else if #[cfg(target_os = "windows")] {
         mod windows;
         pub(crate) use self::windows::*;
@@ -59,10 +61,12 @@ cfg_if! {
     if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))] {
         mod io_counters;
         pub use io_counters::IoCounters;
+        use crate::collection::DataCollector;
 
         /// Returns the I/O usage of certain mount points.
-        pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
+        pub fn get_io_usage(_collector: &DataCollector) -> anyhow::Result<IoHarvest> {
             let mut io_hash: HashMap<String, Option<IoData>> = HashMap::default();
+
 
             // TODO: Maybe rewrite this to not do a result of vec of result...
             for io in io_stats()?.into_iter() {
@@ -80,7 +84,8 @@ cfg_if! {
             Ok(io_hash)
         }
     } else if #[cfg(not(target_os = "freebsd"))] {
-        pub fn get_io_usage() -> anyhow::Result<IoHarvest> {
+        use crate::collection::DataCollector;
+        pub fn get_io_usage(_collector: &DataCollector) -> anyhow::Result<IoHarvest> {
             anyhow::bail!("Unsupported OS");
         }
     }

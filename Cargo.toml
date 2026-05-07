@@ -40,7 +40,7 @@ exclude = [
 ]
 edition = "2024"
 # The oldest version I've tested that should still build - note this is not an official MSRV!
-rust-version = "1.85"
+rust-version = "1.95"
 
 [lib]
 test = true
@@ -62,11 +62,11 @@ required-features = ["generate_schema"]
 
 [features]
 # Used for general builds.
-battery = ["starship-battery"]
-nvidia = ["nvml-wrapper"]
-gpu = ["nvidia"]
+battery = ["dep:starship-battery"]
+nvidia = ["gpu", "dep:nvml-wrapper"]
+gpu = []
 zfs = []
-deploy = ["battery", "gpu", "zfs"]
+deploy = ["battery", "nvidia", "zfs"]
 default = ["deploy"]
 
 # Should not be included in builds.
@@ -91,7 +91,7 @@ regex = "1.12.3"
 rustc-hash = "2.1.1"
 serde = { version = "1.0.228", features = ["derive"] }
 starship-battery = { version = "0.10.3", optional = true }
-sysinfo = "=0.38.4"
+sysinfo = "=0.39.0"
 timeless = "0.0.14-alpha"
 toml_edit = { version = "0.24.0", features = ["serde"] }
 tui = { version = "0.30.0", package = "ratatui", features = [
