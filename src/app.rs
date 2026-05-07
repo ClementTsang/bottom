@@ -196,31 +196,19 @@ impl App {
         // Reset zoom.
         // TODO: Make this suck less... should just make it so that calling reset fixes this all (including above too).
         for widget_state in self.states.cpu_state.widget_states.values_mut() {
-            widget_state.time_series_state.reset_zoom(
-                self.app_config_fields.default_time_value,
-                self.app_config_fields.autohide_time,
-            );
+            widget_state.time_series_state.reset_zoom();
         }
 
         for widget_state in self.states.mem_state.widget_states.values_mut() {
-            widget_state.time_series_state.reset_zoom(
-                self.app_config_fields.default_time_value,
-                self.app_config_fields.autohide_time,
-            );
+            widget_state.time_series_state.reset_zoom();
         }
 
         for widget_state in self.states.net_state.widget_states.values_mut() {
-            widget_state.time_series_state.reset_zoom(
-                self.app_config_fields.default_time_value,
-                self.app_config_fields.autohide_time,
-            );
+            widget_state.time_series_state.reset_zoom();
         }
 
         for widget_state in self.states.temp_graph_state.widget_states.values_mut() {
-            widget_state.time_series_state.reset_zoom(
-                self.app_config_fields.default_time_value,
-                self.app_config_fields.autohide_time,
-            );
+            widget_state.time_series_state.reset_zoom();
         }
     }
 
@@ -2027,30 +2015,20 @@ impl App {
     }
 
     fn zoom_out(&mut self) {
-        let time_interval = self.app_config_fields.time_interval;
-        let retention_ms = self.app_config_fields.retention_ms;
-        let autohide_time = self.app_config_fields.autohide_time;
-
         if let Some(ts_state) = self.current_ts_state() {
-            ts_state.zoom_out(time_interval, retention_ms, autohide_time);
+            ts_state.zoom_out();
         }
     }
 
     fn zoom_in(&mut self) {
-        let time_interval = self.app_config_fields.time_interval;
-        let autohide_time = self.app_config_fields.autohide_time;
-
         if let Some(ts_state) = self.current_ts_state() {
-            ts_state.zoom_in(time_interval, autohide_time);
+            ts_state.zoom_in();
         }
     }
 
     fn reset_zoom(&mut self) {
-        let default_time_value = self.app_config_fields.default_time_value;
-        let autohide_time = self.app_config_fields.autohide_time;
-
         if let Some(ts_state) = self.current_ts_state() {
-            ts_state.reset_zoom(default_time_value, autohide_time);
+            ts_state.reset_zoom();
         }
     }
 
