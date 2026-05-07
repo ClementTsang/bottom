@@ -14,7 +14,7 @@ use crate::{
     },
     collection::cpu::{CpuData, CpuDataType},
     options::config::{cpu::CpuDefault, style::Styles},
-    widgets::TimeseriesState,
+    widgets::{TimeseriesConfig, TimeseriesState},
 };
 
 pub enum CpuWidgetColumn {
@@ -134,9 +134,15 @@ pub struct CpuWidgetState {
 
 impl CpuWidgetState {
     pub(crate) fn new(
-        config: &AppConfigFields, default_selection: CpuDefault, starting_time: u64,
-        autohide_timer: Option<Instant>, colours: &Styles,
+        config: &AppConfigFields, default_selection: CpuDefault, autohide_timer: Option<Instant>,
+        colours: &Styles,
     ) -> Self {
+        let ts_config = TimeseriesConfig {
+            time_interval: config.time_interval,
+            retention_ms: config.retention_ms,
+            autohide_time: config.autohide_time,
+            default_time_value: config.default_time_value,
+        };
         let columns = [
             Column::soft(CpuWidgetColumn::Cpu, Some(0.5)),
             Column::soft(
@@ -168,8 +174,7 @@ impl CpuWidgetState {
         }
 
         CpuWidgetState {
-            time_series_state: TimeseriesState::new(starting_time)
-                .with_autohide_timer(autohide_timer),
+            time_series_state: TimeseriesState::new(ts_config).with_autohide_timer(autohide_timer),
             is_legend_hidden: false,
             table,
             force_update_data: false,

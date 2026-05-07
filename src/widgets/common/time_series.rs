@@ -7,17 +7,28 @@ use timeless::data::ChunkedData;
 
 const STALE_MIN_MILLISECONDS: u64 = Duration::from_secs(30).as_millis() as u64;
 
+/// Configuration values for a [`TimeseriesState`], sourced from [`crate::app::AppConfigFields`].
+#[derive(Copy, Clone, Debug)]
+pub struct TimeseriesConfig {
+    pub time_interval: u64,
+    pub retention_ms: u64,
+    pub autohide_time: bool,
+    pub default_time_value: u64,
+}
+
 /// A time_series graph widget displays data over a period of time.
 pub struct TimeseriesState {
+    config: TimeseriesConfig,
     current_display_time: u64,
     autohide_timer: Option<Instant>,
 }
 
 impl TimeseriesState {
-    /// Create a new [`TimeseriesState`] that displays starting from `starting_time`.
-    pub fn new(starting_time: u64) -> Self {
+    /// Create a new [`TimeseriesState`] using the given config.
+    pub fn new(config: TimeseriesConfig) -> Self {
         Self {
-            current_display_time: starting_time,
+            current_display_time: config.default_time_value,
+            config,
             autohide_timer: None,
         }
     }
@@ -39,30 +50,33 @@ impl TimeseriesState {
     }
 
     /// Zoom in on the x-axis (reducing the time range shown).
-    pub fn zoom_in(&mut self, time_interval: u64, autohide_time: bool) {
-        let new_time = self.current_display_time.saturating_sub(time_interval);
+    pub fn zoom_in(&mut self) {
+        let new_time = self
+            .current_display_time
+            .saturating_sub(self.config.time_interval);
 
         self.current_display_time = max(new_time, STALE_MIN_MILLISECONDS);
-        self.maybe_start_autohide(autohide_time);
+        self.maybe_start_autohide();
     }
 
     /// Zoom out on the x-axis (increasing the time range shown).
-    pub fn zoom_out(&mut self, time_interval: u64, retention_ms: u64, autohide_time: bool) {
-        let new_time = self.current_display_time.saturating_add(time_interval);
+    pub fn zoom_out(&mut self) {
+        let new_time = self
+            .current_display_time
+            .saturating_add(self.config.time_interval);
 
-        self.current_display_time = min(new_time, retention_ms);
-        self.maybe_start_autohide(autohide_time);
+        self.current_display_time = min(new_time, self.config.retention_ms);
+        self.maybe_start_autohide();
     }
 
     /// Reset the zoom level to the default.
-    pub fn reset_zoom(&mut self, default_time_value: u64, autohide_time: bool) {
-        self.current_display_time = default_time_value;
-        self.maybe_start_autohide(autohide_time);
+    pub fn reset_zoom(&mut self) {
+        self.current_display_time = self.config.default_time_value;
+        self.maybe_start_autohide();
     }
 
-    /// Set the autohide timer if needed.
-    fn maybe_start_autohide(&mut self, autohide_time: bool) {
-        if autohide_time {
+    fn maybe_start_autohide(&mut self) {
+        if self.config.autohide_time {
             self.autohide_timer = Some(Instant::now());
         }
     }
@@ -153,69 +167,66 @@ impl GraphHeightCache {
 mod time_series_tests {
     use super::*;
 
+    const TEST_CONFIG: TimeseriesConfig = TimeseriesConfig {
+        time_interval: 15_000,
+        retention_ms: 300_000,
+        autohide_time: false,
+        default_time_value: 60_000,
+    };
+
+    fn state_at(display_time: u64, cfg: TimeseriesConfig) -> TimeseriesState {
+        TimeseriesState {
+            config: cfg,
+            current_display_time: display_time,
+            autohide_timer: None,
+        }
+    }
+
     #[test]
     fn zoom_in_decreases_display_time() {
-        let mut state = TimeseriesState {
-            current_display_time: 60_000,
-            autohide_timer: None,
-        };
-
-        state.zoom_in(15_000, false);
+        let mut state = state_at(60_000, TEST_CONFIG);
+        state.zoom_in();
         assert_eq!(state.current_display_time, 45_000);
     }
 
     #[test]
     fn zoom_in_clamps_at_minimum() {
-        let mut state = TimeseriesState {
-            current_display_time: 35_000,
-            autohide_timer: None,
-        };
-
-        state.zoom_in(15_000, false);
+        let mut state = state_at(35_000, TEST_CONFIG);
+        state.zoom_in();
         assert_eq!(state.current_display_time, STALE_MIN_MILLISECONDS); // 30_000
     }
 
     #[test]
     fn zoom_out_increases_display_time() {
-        let mut state = TimeseriesState {
-            current_display_time: 60_000,
-            autohide_timer: None,
-        };
-
-        state.zoom_out(15_000, 300_000, false);
+        let mut state = state_at(60_000, TEST_CONFIG);
+        state.zoom_out();
         assert_eq!(state.current_display_time, 75_000);
     }
 
     #[test]
     fn zoom_out_clamps_at_retention() {
-        let mut state = TimeseriesState {
-            current_display_time: 290_000,
-            autohide_timer: None,
-        };
-
-        state.zoom_out(15_000, 300_000, false);
+        let mut state = state_at(290_000, TEST_CONFIG);
+        state.zoom_out();
         assert_eq!(state.current_display_time, 300_000);
     }
 
     #[test]
     fn reset_zoom_restores_default() {
-        let mut state = TimeseriesState {
-            current_display_time: 120_000,
-            autohide_timer: None,
-        };
-
-        state.reset_zoom(60_000, false);
+        let mut state = state_at(120_000, TEST_CONFIG);
+        state.reset_zoom();
         assert_eq!(state.current_display_time, 60_000);
     }
 
     #[test]
     fn autohide_armed_on_change() {
-        let mut state = TimeseriesState {
-            current_display_time: 60_000,
-            autohide_timer: None,
-        };
-
-        state.zoom_in(15_000, true);
+        let mut state = state_at(
+            60_000,
+            TimeseriesConfig {
+                autohide_time: true,
+                ..TEST_CONFIG
+            },
+        );
+        state.zoom_in();
         assert!(state.autohide_timer.is_some());
     }
 }

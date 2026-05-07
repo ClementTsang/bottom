@@ -379,6 +379,13 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temperature_legend_position,
     };
 
+    let ts_config = TimeseriesConfig {
+        time_interval: app_config_fields.time_interval,
+        retention_ms: app_config_fields.retention_ms,
+        autohide_time: app_config_fields.autohide_time,
+        default_time_value: app_config_fields.default_time_value,
+    };
+
     let table_config = ProcTableConfig {
         is_case_sensitive,
         is_match_whole_word,
@@ -432,7 +439,6 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                 CpuWidgetState::new(
                                     &app_config_fields,
                                     default_cpu_selection,
-                                    default_time_value,
                                     autohide_timer,
                                     &styling,
                                 ),
@@ -441,13 +447,13 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                         Mem => {
                             mem_state_map.insert(
                                 widget.widget_id,
-                                MemWidgetState::init(default_time_value, autohide_timer),
+                                MemWidgetState::init(ts_config, autohide_timer),
                             );
                         }
                         Net => {
                             net_state_map.insert(
                                 widget.widget_id,
-                                NetWidgetState::init(default_time_value, autohide_timer),
+                                NetWidgetState::init(ts_config, autohide_timer),
                             );
                         }
                         Proc => {
@@ -494,11 +500,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                 .map(|v| v as f32);
                             temp_graph_state_map.insert(
                                 widget.widget_id,
-                                TempGraphWidgetState::new(
-                                    default_time_value,
-                                    autohide_timer,
-                                    upper_limit,
-                                ),
+                                TempGraphWidgetState::new(ts_config, autohide_timer, upper_limit),
                             );
                         }
                         Battery => {
