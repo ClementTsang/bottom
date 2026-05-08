@@ -242,11 +242,10 @@ impl Styles {
             selected_border_colour
         );
 
-        if let Some(widgets) = &config.widgets {
-            if let Some(widget_borders) = widgets.widget_border_type {
+        if let Some(widgets) = &config.widgets
+            && let Some(widget_borders) = widgets.widget_border_type {
                 self.border_type = widget_borders.into();
             }
-        }
 
         Ok(())
     }

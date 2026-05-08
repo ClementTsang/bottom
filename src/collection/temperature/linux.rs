@@ -62,8 +62,8 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
 
     if let Ok(read_dir) = Path::new("/sys/devices/platform").read_dir() {
         for entry in read_dir.flatten() {
-            if entry.file_name().to_string_lossy().starts_with("coretemp.") {
-                if let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
+            if entry.file_name().to_string_lossy().starts_with("coretemp.")
+                && let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
                     for entry in read_dir.flatten() {
                         let path = entry.path();
 
@@ -84,7 +84,6 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
                         }
                     }
                 }
-            }
         }
     }
 
@@ -326,16 +325,14 @@ fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) ->
 
                 // TODO: It's possible we may want to move the filter check further up to avoid
                 // probing hwmon if not needed?
-                if Filter::optional_should_keep(filter, &name)
-                    || Filter::optional_should_keep(graph_filter, &name)
-                {
-                    if let Ok(temp_celsius) = parse_temp(&temp_path) {
+                if (Filter::optional_should_keep(filter, &name)
+                    || Filter::optional_should_keep(graph_filter, &name))
+                    && let Ok(temp_celsius) = parse_temp(&temp_path) {
                         temperatures.push(TempSensorData {
                             name,
                             temperature: Some(temp_celsius),
                         });
                     }
-                }
             }
         }
     }

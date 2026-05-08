@@ -157,15 +157,14 @@ fn create_input_thread(
 
         loop {
             // We don't block.
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated {
                     break;
                 }
-            }
 
-            if let Ok(poll) = poll(Duration::from_millis(20)) {
-                if poll {
-                    if let Ok(event) = read() {
+            if let Ok(poll) = poll(Duration::from_millis(20))
+                && poll
+                    && let Ok(event) = read() {
                         match event {
                             Event::Resize(_, _) => {
                                 // TODO: Might want to debounce this in the future, or take into
@@ -214,8 +213,6 @@ fn create_input_thread(
                             Event::FocusLost => {}
                         }
                     }
-                }
-            }
         }
     })
 }
@@ -254,11 +251,10 @@ fn create_collection_thread(
 
         loop {
             // Check once at the very top... don't block though.
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated {
                     break;
                 }
-            }
 
             if let Ok(message) = control_receiver.try_recv() {
                 // trace!("Received message in collection thread: {message:?}");
@@ -272,11 +268,10 @@ fn create_collection_thread(
             data_collector.update_data();
 
             // Yet another check to bail if needed... do not block!
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated {
                     break;
                 }
-            }
 
             let event = BottomEvent::Update(Box::from(data_collector.data));
             data_collector.data = Data::default();

@@ -348,8 +348,8 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
             .unwrap_or(amd_gpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
 
         if let Some(mem) = get_amd_vram(&device_path) {
-            if widgets_to_harvest.use_mem {
-                if let Some(total_bytes) = NonZeroU64::new(mem.total) {
+            if widgets_to_harvest.use_mem
+                && let Some(total_bytes) = NonZeroU64::new(mem.total) {
                     mem_vec.push((
                         device_name.clone(),
                         MemData {
@@ -358,13 +358,12 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
                         },
                     ));
                 }
-            }
 
             total_mem += mem.total
         }
 
-        if widgets_to_harvest.use_proc {
-            if let Some(procs) = get_amd_fdinfo(&device_path) {
+        if widgets_to_harvest.use_proc
+            && let Some(procs) = get_amd_fdinfo(&device_path) {
                 PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
                     let prev_fdinfo = prev_proc_data.entry(device_path).or_default();
                     let mut seen_pids = IntHashSet::default();
@@ -417,7 +416,6 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
                     }
                 });
             }
-        }
     }
 
     // Bit of a hacky way to keep this trimmed. Ain't pretty but it should work.

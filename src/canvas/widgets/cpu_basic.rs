@@ -50,8 +50,7 @@ impl Painter {
         let show_decimal = app_state.app_config_fields.show_cpu_decimal;
         if app_state.app_config_fields.dedicated_average_row
             && app_state.app_config_fields.show_average_cpu
-        {
-            if let Some((index, avg)) = cpu_data
+            && let Some((index, avg)) = cpu_data
                 .iter()
                 .find_position(|&datum| matches!(datum.data_type, CpuDataType::Avg))
             {
@@ -77,7 +76,6 @@ impl Painter {
                 avg_index = index;
                 draw_loc = cores_loc;
             }
-        }
 
         if draw_loc.height > 0 {
             let remaining_height = usize::from(draw_loc.height);

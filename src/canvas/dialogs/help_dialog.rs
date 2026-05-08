@@ -27,12 +27,11 @@ impl Painter {
         HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
             let mut section = section.iter();
 
-            if itx > 0 {
-                if let Some(header) = section.next() {
+            if itx > 0
+                && let Some(header) = section.next() {
                     styled_help_spans.push(Span::default());
                     styled_help_spans.push(Span::styled(*header, self.styles.table_header_style));
                 }
-            }
 
             section.for_each(|&text| {
                 styled_help_spans.push(Span::styled(text, self.styles.text_style))

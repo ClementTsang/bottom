@@ -392,8 +392,8 @@ impl QueryProcessor for Prefix {
                                 }
                             }
 
-                            if let Some(condition) = condition {
-                                if let Some(read_value) = value {
+                            if let Some(condition) = condition
+                                && let Some(read_value) = value {
                                     // Note that the values *might* have a unit or need to be parsed
                                     // differently based on the
                                     // prefix type!
@@ -422,7 +422,6 @@ impl QueryProcessor for Prefix {
                                         NumericalQuery { condition, value },
                                     )?));
                                 }
-                            }
                         }
                     }
                 } else {

@@ -260,4 +260,3 @@ todo = "deny"
 unimplemented = "deny"
 missing_safety_doc = "deny"
 unwrap_used = "deny"
-collapsible_if = "allow"    # Allow this for now because that's a lot of changes...

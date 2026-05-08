@@ -179,8 +179,7 @@ impl BottomLayout {
                             if let Some(current_col) = current_row
                                 .1
                                 .get(&(col_width_percentage_start, col_width_percentage_end))
-                            {
-                                if let Some(current_col_row) = current_col.1.get(&(
+                                && let Some(current_col_row) = current_col.1.get(&(
                                     col_row_height_percentage_start,
                                     col_row_height_percentage_end,
                                 )) {
@@ -211,10 +210,9 @@ impl BottomLayout {
                                         widget.right_neighbour = Some(*to_right_neighbour.1);
                                     }
                                 }
-                            }
 
-                            if widget.left_neighbour.is_none() {
-                                if let Some(to_left_col) = current_row
+                            if widget.left_neighbour.is_none()
+                                && let Some(to_left_col) = current_row
                                     .1
                                     .range(
                                         ..(col_width_percentage_start, col_width_percentage_start),
@@ -244,24 +242,22 @@ impl BottomLayout {
                                                 (candidate_start, candidate_end),
                                             );
 
-                                            if current_best_distance < candidate_distance {
-                                                if let Some(new_best_widget) =
+                                            if current_best_distance < candidate_distance
+                                                && let Some(new_best_widget) =
                                                     (widget_position.1).1.iter().next_back()
                                                 {
                                                     current_best_distance = candidate_distance + 1;
                                                     current_best_widget_id = *(new_best_widget.1);
                                                 }
-                                            }
                                         }
                                     }
                                     if current_best_distance > 0 {
                                         widget.left_neighbour = Some(current_best_widget_id);
                                     }
                                 }
-                            }
 
-                            if widget.right_neighbour.is_none() {
-                                if let Some(to_right_col) = current_row
+                            if widget.right_neighbour.is_none()
+                                && let Some(to_right_col) = current_row
                                     .1
                                     .range((col_width_percentage_end, col_width_percentage_end)..)
                                     .next()
@@ -289,21 +285,19 @@ impl BottomLayout {
                                                 (candidate_start, candidate_end),
                                             );
 
-                                            if current_best_distance < candidate_distance {
-                                                if let Some(new_best_widget) =
+                                            if current_best_distance < candidate_distance
+                                                && let Some(new_best_widget) =
                                                     (widget_position.1).1.iter().next()
                                                 {
                                                     current_best_distance = candidate_distance + 1;
                                                     current_best_widget_id = *(new_best_widget.1);
                                                 }
-                                            }
                                         }
                                     }
                                     if current_best_distance > 0 {
                                         widget.right_neighbour = Some(current_best_widget_id);
                                     }
                                 }
-                            }
 
                             // Check up/down within same row;
                             // else check up/down with other rows
