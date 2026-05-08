@@ -1296,7 +1296,7 @@ mod test {
     }
 
     #[test]
-    fn default_sort_honored() {
+    fn default_sort_honoured() {
         let init_columns = [
             ProcWidgetColumn::PidOrCount,
             ProcWidgetColumn::ProcNameOrCommand,
@@ -1305,9 +1305,11 @@ mod test {
         ];
 
         let state_default = init_default_state(&init_columns);
-        // Without a configured sort, the process widget defaults to CPU
-        // (index 2 above).
-        assert_eq!(state_default.table.sort_index(), 2);
+        assert_eq!(
+            state_default.table.sort_index(),
+            2,
+            "default sort should be CPU (index 2 in init_columns)"
+        );
 
         let table_config = ProcTableConfig {
             default_sort: Some(ProcColumn::MemPercent),
