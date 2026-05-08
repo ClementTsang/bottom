@@ -1384,6 +1384,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#default-sort-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Sort Order
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1994,6 +2005,16 @@
 <span class="c1"># Pick which columns you want to use in any order.</span>
 <span class="n">columns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cpu%&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;mem%&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pid&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;read&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;write&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tread&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;twrite&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;state&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;user&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;time&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gmem%&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gpu%&quot;</span><span class="p">]</span>
 </code></pre></div>
+<h2 id="default-sort-order"><a class="toclink" href="#default-sort-order">Default Sort Order</a></h2>
+<p>By default, the process widget starts sorted by CPU usage. You can change the column it sorts by at startup:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[processes]</span>
+<span class="n">default_sort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mem&quot;</span>
+</code></pre></div>
+<p>Any of the column names accepted by <code>columns</code> work here (e.g. <code>"cpu%"</code>, <code>"mem"</code>, <code>"pid"</code>, <code>"name"</code>, <code>"read"</code>). If the
+column you pick is not actually shown by the widget, the built-in default is used instead.</p>
+<p>The same setting is also exposed as a CLI flag, which takes precedence over the config file:</p>
+<div class="highlight"><pre><span></span><code>btm --process_default_sort mem
+</code></pre></div>
 
 
 
@@ -2014,7 +2035,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="April 17, 2026 08:02:16">April 17, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 8, 2026 04:31:08">May 8, 2026</span>
   </span>
 
     
