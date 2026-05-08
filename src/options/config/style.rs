@@ -171,10 +171,10 @@ impl Styles {
             "gruvbox-light" => Ok(Self::gruvbox_light_palette()),
             "nord" => Ok(Self::nord_palette()),
             "nord-light" => Ok(Self::nord_light_palette()),
-            _ => Err(
-                OptionError::other(format!("'{theme}' is an invalid built-in color scheme."))
-                    .into(),
-            ),
+            _ => Err(OptionError::other(format!(
+                "'{theme}' is an invalid built-in colour scheme."
+            ))
+            .into()),
         }
     }
 
@@ -258,7 +258,51 @@ mod test {
     use tui::style::{Color, Style};
 
     use super::Styles;
-    use crate::options::config::style::utils::str_to_colour;
+    use crate::options::config::{Config, style::utils::str_to_colour};
+
+    #[test]
+    fn color_spelling_aliases_work() {
+        // Parse all_styling_color.toml (which uses the "color" alias spelling throughout)
+        // and assert every field was actually parsed.
+        let toml_str = include_str!("../../../tests/valid_configs/all_styling_color.toml");
+        let config = toml_edit::de::from_str::<Config>(toml_str)
+            .expect("config file should parse")
+            .styles
+            .expect("styles section should be present");
+
+        let cpu = config.cpu.as_ref().unwrap();
+        assert!(cpu.all_entry_colour.is_some());
+        assert!(cpu.avg_entry_colour.is_some());
+        assert!(cpu.cpu_core_colours.is_some());
+
+        let temp = config.temp_graph.as_ref().unwrap();
+        assert!(temp.temp_graph_colour_styles.is_some());
+
+        let mem = config.memory.as_ref().unwrap();
+        assert!(mem.ram_colour.is_some());
+        assert!(mem.cache_colour.is_some());
+        assert!(mem.swap_colour.is_some());
+        assert!(mem.arc_colour.is_some());
+        assert!(mem.gpu_colours.is_some());
+
+        let net = config.network.as_ref().unwrap();
+        assert!(net.rx_colour.is_some());
+        assert!(net.tx_colour.is_some());
+        assert!(net.rx_total_colour.is_some());
+        assert!(net.tx_total_colour.is_some());
+
+        let bat = config.battery.as_ref().unwrap();
+        assert!(bat.high_battery_colour.is_some());
+        assert!(bat.medium_battery_colour.is_some());
+        assert!(bat.low_battery_colour.is_some());
+
+        let graphs = config.graphs.as_ref().unwrap();
+        assert!(graphs.graph_colour.is_some());
+
+        let widgets = config.widgets.as_ref().unwrap();
+        assert!(widgets.border_colour.is_some());
+        assert!(widgets.selected_border_colour.is_some());
+    }
 
     #[test]
     fn default_selected_colour_works() {

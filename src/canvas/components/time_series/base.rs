@@ -71,7 +71,7 @@ pub struct TimeGraph<'a> {
     /// The graph style.
     pub graph_style: Style,
 
-    /// The background color
+    /// The background colour/styling.
     pub general_widget_style: Style,
 
     /// The border style.

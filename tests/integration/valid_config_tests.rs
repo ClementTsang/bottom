@@ -177,12 +177,12 @@ fn test_styling_sanity_check() {
 
 #[test]
 fn test_styling_sanity_check_2() {
-    run_and_kill(&["-C", "./tests/valid_configs/styling_2.toml"]);
+    run_and_kill(&["-C", "./tests/valid_configs/all_styling.toml"]);
 }
 
 #[test]
-fn test_colour_spelling_is_valid() {
-    run_and_kill(&["-C", "./tests/valid_configs/colour.toml"]);
+fn test_color_spelling_is_valid() {
+    run_and_kill(&["-C", "./tests/valid_configs/all_styling_color.toml"]);
 }
 
 #[test]

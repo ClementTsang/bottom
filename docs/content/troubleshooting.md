@@ -122,7 +122,7 @@ It may be handy to refer to the automatically generated config files or the
 [sample configuration files](https://github.com/ClementTsang/bottom/tree/main/sample_configs). The config files also
 follow the [TOML](https://toml.io/en/) format.
 
-Also make sure your config options are under the right table - for example, to set your temperature type, you must
+Also make sure your config option settings are in the right location - for example, to set your temperature type, you must
 set it under the `[flags]` table:
 
 ```toml
@@ -134,8 +134,7 @@ Meanwhile, if you want to set a custom colour or styling scheme, it would be und
 
 ```toml
 [styles.tables.headers]
-# color is also accepted
-colour="LightBlue"
+colour = "LightBlue"
 bold = true
 ```
 

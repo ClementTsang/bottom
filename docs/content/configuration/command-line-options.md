@@ -95,7 +95,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 | Option             | Behaviour                                                        |
 | ------------------ | ---------------------------------------------------------------- |
-| `--theme <SCHEME>` | Use a built-in color theme, use '--help' for info on the colors. |
+| `--theme <SCHEME>` | Use a built-in colour theme, use '--help' for info on the colours. |
 
 ## Other Options
 

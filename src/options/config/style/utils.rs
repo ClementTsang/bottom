@@ -322,7 +322,7 @@ mod test {
 
     #[test]
     fn valid_colour_names() {
-        // Standard color should work
+        // Standard colour should work
         assert_eq!(convert_name_to_colour("red"), Ok(Color::Red));
 
         // Capitalizing should be fine.
