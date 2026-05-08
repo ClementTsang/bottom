@@ -391,7 +391,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # The default sort column when bottom starts. Accepts any of the column names above.
 # If unset, defaults to CPU%.
-#default_sort = "Mem%"
+#default_sort = "CPU%"
 
 # Gather process child thread information
 #get_threads = false

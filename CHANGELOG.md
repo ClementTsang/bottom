@@ -37,7 +37,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2045](https://github.com/ClementTsang/bottom/pull/2045): Add support for showing a decimal place for CPU usage
 - [#2046](https://github.com/ClementTsang/bottom/pull/2046): Add a `show_table_scroll_bar` config option to show a scroll bar on table widgets.
 - [#2048](https://github.com/ClementTsang/bottom/pull/2048): Add support for a temperature graph to show sensor temperature change over time.
-- [#810](https://github.com/ClementTsang/bottom/issues/810): Add a configurable default sort column for the process widget, settable via the `default_sort` field under `[processes]` and the `--process_default_sort` CLI flag.
+- [#2053](https://github.com/ClementTsang/bottom/pull/2053): Add a configurable default sort column for the process widget (`processes.default_sort` or `--process_default_sort` ).
 
 ### Changes
 
