@@ -4,16 +4,16 @@ pub(super) mod default;
 pub(super) mod gruvbox;
 pub(super) mod nord;
 
-/// Convert a [`tui::style::Color`] into a [`tui::style::Style`] with the color
+/// Convert a [`tui::style::Color`] into a [`tui::style::Style`] with the colour
 /// as the foreground.
-macro_rules! color {
+macro_rules! colour {
     ($value:expr) => {
         tui::style::Style::new().fg($value)
     };
 }
 
 /// Convert a hex string to a [`tui::style::Style`], where the hex string is
-/// used as the foreground color.
+/// used as the foreground colour.
 macro_rules! hex {
     ($value:literal) => {
         tui::style::Style::new().fg(crate::options::config::style::utils::try_hex_to_colour(
@@ -30,6 +30,6 @@ macro_rules! hex_colour {
     };
 }
 
-pub(super) use color;
+pub(super) use colour;
 pub(super) use hex;
 pub(super) use hex_colour;
