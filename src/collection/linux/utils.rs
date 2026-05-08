@@ -29,4 +29,3 @@ pub fn is_device_awake(device: &Path) -> bool {
         true
     }
 }
-
