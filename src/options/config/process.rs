@@ -14,6 +14,10 @@ pub(crate) struct ProcessesConfig {
     #[serde(default)]
     pub columns: Vec<ProcColumn>,
 
+    /// The default sort column.
+    #[serde(default)]
+    pub default_sort: Option<ProcColumn>,
+
     /// Whether to get process child threads.
     pub get_threads: Option<bool>,
 }
@@ -75,6 +79,27 @@ mod test {
     #[test]
     fn bad_process_column_config() {
         let config = r#"columns = ["MEM", "TWrite", "Cpuz", "read", "wps"]"#;
+        toml_edit::de::from_str::<ProcessesConfig>(config).expect_err("Should error out!");
+    }
+
+    #[test]
+    fn valid_default_sort_config() {
+        let config = r#"default_sort = "mem""#;
+        let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
+        assert_eq!(generated.default_sort, Some(ProcColumn::MemPercent));
+
+        let config = r#"default_sort = "PID""#;
+        let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
+        assert_eq!(generated.default_sort, Some(ProcColumn::Pid));
+
+        let config = "";
+        let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
+        assert_eq!(generated.default_sort, None);
+    }
+
+    #[test]
+    fn invalid_default_sort_config() {
+        let config = r#"default_sort = "soup""#;
         toml_edit::de::from_str::<ProcessesConfig>(config).expect_err("Should error out!");
     }
 

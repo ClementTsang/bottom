@@ -344,6 +344,17 @@ pub struct ProcessArgs {
     pub get_threads: bool,
 
     #[arg(
+        long,
+        value_name = "COLUMN",
+        help = "Sets the default sort column for the process widget.",
+        long_help = "Sets the default sort column for the process widget. Accepts any of the \
+                     valid process column names (e.g. \"cpu%\", \"mem\", \"pid\", \"name\"). \
+                     Overrides the [processes] default_sort setting in the config file.",
+        alias = "process-default-sort"
+    )]
+    pub process_default_sort: Option<String>,
+
+    #[arg(
         short = 'g',
         long,
         action = ArgAction::SetTrue,
