@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::ColorStr;
+use super::ColourStr;
 
 /// Styling specific to the temperature graph widget.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -8,6 +8,6 @@ use super::ColorStr;
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct TempGraphStyle {
     /// Colour of each temperature sensor's graph line. Read in order.
-    #[serde(alias = "temp_graph_colour_styles")]
-    pub(crate) temp_graph_color_styles: Option<Vec<ColorStr>>,
+    #[serde(alias = "temp_graph_color_styles")]
+    pub(crate) temp_graph_colour_styles: Option<Vec<ColourStr>>,
 }

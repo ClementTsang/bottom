@@ -8,6 +8,9 @@ all_entry_colour = "green"
 avg_entry_colour = "red"
 cpu_core_colours = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
 
+[styles.temp_graph]
+temp_graph_colour_styles = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+
 [styles.memory]
 ram_colour = "light magenta"
 cache_colour = "light red"

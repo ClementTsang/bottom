@@ -3,7 +3,7 @@ use tui::{
     widgets::BorderType,
 };
 
-use super::{color, hex};
+use super::{colour, hex};
 use crate::options::config::style::{Styles, themes::hex_colour};
 
 impl Styles {
@@ -56,7 +56,7 @@ impl Styles {
             high_battery: hex!("#a3be8c"),
             medium_battery: hex!("#ebcb8b"),
             low_battery: hex!("#bf616a"),
-            invalid_query_style: color!(Color::Red),
+            invalid_query_style: colour!(Color::Red),
             disabled_text_style: hex!("#4c566a"),
             border_type: BorderType::Plain,
             #[cfg(target_os = "linux")]
@@ -113,7 +113,7 @@ impl Styles {
             high_battery: hex!("#a3be8c"),
             medium_battery: hex!("#ebcb8b"),
             low_battery: hex!("#bf616a"),
-            invalid_query_style: color!(Color::Red),
+            invalid_query_style: colour!(Color::Red),
             disabled_text_style: hex!("#d8dee9"),
             border_type: BorderType::Plain,
             #[cfg(target_os = "linux")]

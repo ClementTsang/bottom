@@ -34,7 +34,7 @@ use crate::options::{
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, derive(PartialEq, Eq))]
-pub(crate) struct ColorStr(Cow<'static, str>);
+pub(crate) struct ColourStr(Cow<'static, str>);
 
 /// A style for text.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -42,15 +42,15 @@ pub(crate) struct ColorStr(Cow<'static, str>);
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) enum TextStyleConfig {
-    Colour(ColorStr),
+    Colour(ColourStr),
     TextStyle {
         /// A built-in ANSI colour, RGB hex, or RGB colour code.
-        #[serde(alias = "colour")]
-        color: Option<ColorStr>,
+        #[serde(alias = "color")]
+        colour: Option<ColourStr>,
 
         /// A built-in ANSI colour, RGB hex, or RGB colour code.
-        #[serde(alias = "bg_colour")]
-        bg_color: Option<ColorStr>,
+        #[serde(alias = "bg_color")]
+        bg_colour: Option<ColourStr>,
 
         /// Whether to make this text bolded or not. If not set,
         /// will default to built-in defaults.
@@ -180,50 +180,50 @@ impl Styles {
 
     fn set_styles_from_config(&mut self, config: &StyleConfig) -> OptionResult<()> {
         // CPU
-        set_colour!(self.avg_cpu_colour, config.cpu, avg_entry_color);
-        set_colour!(self.all_cpu_colour, config.cpu, all_entry_color);
-        set_colour_list!(self.cpu_colour_styles, config.cpu, cpu_core_colors);
+        set_colour!(self.avg_cpu_colour, config.cpu, avg_entry_colour);
+        set_colour!(self.all_cpu_colour, config.cpu, all_entry_colour);
+        set_colour_list!(self.cpu_colour_styles, config.cpu, cpu_core_colours);
 
         // Temperature graph
         set_colour_list!(
             self.temp_graph_colour_styles,
             config.temp_graph,
-            temp_graph_color_styles
+            temp_graph_colour_styles
         );
 
         // Memory
-        set_colour!(self.ram_style, config.memory, ram_color);
-        set_colour!(self.swap_style, config.memory, swap_color);
+        set_colour!(self.ram_style, config.memory, ram_colour);
+        set_colour!(self.swap_style, config.memory, swap_colour);
 
         #[cfg(not(target_os = "windows"))]
-        set_colour!(self.cache_style, config.memory, cache_color);
+        set_colour!(self.cache_style, config.memory, cache_colour);
 
         #[cfg(feature = "zfs")]
-        set_colour!(self.arc_style, config.memory, arc_color);
+        set_colour!(self.arc_style, config.memory, arc_colour);
 
         #[cfg(feature = "gpu")]
-        set_colour_list!(self.gpu_colours, config.memory, gpu_colors);
+        set_colour_list!(self.gpu_colours, config.memory, gpu_colours);
 
         // Network
-        set_colour!(self.rx_style, config.network, rx_color);
-        set_colour!(self.tx_style, config.network, tx_color);
-        set_colour!(self.total_rx_style, config.network, rx_total_color);
-        set_colour!(self.total_tx_style, config.network, tx_total_color);
+        set_colour!(self.rx_style, config.network, rx_colour);
+        set_colour!(self.tx_style, config.network, tx_colour);
+        set_colour!(self.total_rx_style, config.network, rx_total_colour);
+        set_colour!(self.total_tx_style, config.network, tx_total_colour);
 
         // Battery
-        set_colour!(self.high_battery, config.battery, high_battery_color);
-        set_colour!(self.medium_battery, config.battery, medium_battery_color);
-        set_colour!(self.low_battery, config.battery, low_battery_color);
+        set_colour!(self.high_battery, config.battery, high_battery_colour);
+        set_colour!(self.medium_battery, config.battery, medium_battery_colour);
+        set_colour!(self.low_battery, config.battery, low_battery_colour);
 
         // Tables
         set_style!(self.table_header_style, config.tables, headers);
 
         // Widget graphs
-        set_colour!(self.graph_style, config.graphs, graph_color);
+        set_colour!(self.graph_style, config.graphs, graph_colour);
         set_style!(self.graph_legend_style, config.graphs, legend_text);
 
         // General widget text.
-        set_bg_colour!(self.general_widget_style, config.widgets, bg_color);
+        set_bg_colour!(self.general_widget_style, config.widgets, bg_colour);
         set_style!(self.widget_title_style, config.widgets, widget_title);
         set_style!(self.text_style, config.widgets, text);
         set_style!(self.selected_text_style, config.widgets, selected_text);
@@ -235,11 +235,11 @@ impl Styles {
         }
 
         // Widget borders
-        set_colour!(self.border_style, config.widgets, border_color);
+        set_colour!(self.border_style, config.widgets, border_colour);
         set_colour!(
             self.highlighted_border_style,
             config.widgets,
-            selected_border_color
+            selected_border_colour
         );
 
         if let Some(widgets) = &config.widgets {
