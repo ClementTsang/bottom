@@ -93,8 +93,8 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## Style Options
 
-| Option             | Behaviour                                                        |
-| ------------------ | ---------------------------------------------------------------- |
+| Option             | Behaviour                                                          |
+| ------------------ | ------------------------------------------------------------------ |
 | `--theme <SCHEME>` | Use a built-in colour theme, use '--help' for info on the colours. |
 
 ## Other Options
