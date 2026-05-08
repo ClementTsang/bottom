@@ -1,5 +1,4 @@
 pub mod battery_info;
-mod common;
 pub mod cpu_graph;
 pub mod disk_table;
 pub mod mem_graph;
@@ -9,7 +8,6 @@ pub mod temperature_graph;
 pub mod temperature_table;
 
 pub use battery_info::*;
-pub(crate) use common::*;
 pub use cpu_graph::*;
 pub use disk_table::*;
 pub use mem_graph::*;

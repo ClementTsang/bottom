@@ -33,6 +33,7 @@ use self::{
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
     canvas::components::time_series::LegendPosition,
+    components::time_series::TimeseriesConfig,
     constants::*,
     utils::data_units::DataUnit,
     widgets::*,

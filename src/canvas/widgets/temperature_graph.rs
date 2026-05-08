@@ -1,18 +1,18 @@
+use std::borrow::Cow;
+
 use tui::{
     Frame,
     layout::{Constraint, Rect},
-    symbols::Marker,
 };
 
 use crate::{
     app::{App, AppConfigFields},
     canvas::{
         Painter,
-        components::time_series::{
-            AxisBound, ChartScaling, GraphData, LegendConstraints, TimeGraph,
-        },
+        components::time_series::{AxisBound, ChartScaling, GraphData, LegendConstraints},
         drawing_utils::should_hide_x_label,
     },
+    components::time_series::GraphDrawCtx,
 };
 
 impl Painter {
@@ -27,29 +27,16 @@ impl Painter {
             let shared_data = app_state.data_store.get_data();
             let points = &(shared_data.time_series_data.temperature);
             let times = &(shared_data.time_series_data.time);
-            let time_start = -(widget_state.time_series_state.current_display_time() as f64);
 
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                widget_state.time_series_state.autohide_timer_mut(),
+                widget_state.graph.state_mut().autohide_timer_mut(),
                 draw_loc,
             );
 
-            let y_max = {
-                if let Some(last_time) = times.last() {
-                    let cache = &mut widget_state.height_cache;
-                    cache.get_or_update(
-                        last_time,
-                        widget_state.time_series_state.current_display_time(),
-                        points.values(),
-                        times,
-                    )
-                } else {
-                    0.0
-                }
-            };
+            let y_max = widget_state.graph.y_max(points.values(), times);
             let (adjusted_y_max, y_labels) =
                 adjust_temp_data_point(y_max, widget_state.max_temp, &app_state.app_config_fields);
             let y_bounds = AxisBound::Max(adjusted_y_max);
@@ -82,31 +69,33 @@ impl Painter {
                 })
                 .collect();
 
-            let marker = if app_state.app_config_fields.use_dot {
-                Marker::Dot
-            } else {
-                Marker::Braille
-            };
+            let marker = self.get_marker(app_state.app_config_fields.use_dot);
 
-            TimeGraph {
-                x_min: time_start,
-                hide_x_labels,
+            let y_labels: Vec<Cow<'_, str>> =
+                y_labels.into_iter().map(Into::into).collect();
+
+            widget_state.graph.draw(
+                f,
+                draw_loc,
+                GraphDrawCtx {
+                    title: " Temperature ".into(),
+                    border_style,
+                    title_style: self.styles.widget_title_style,
+                    graph_style: self.styles.graph_style,
+                    general_widget_style: self.styles.general_widget_style,
+                    border_type: self.styles.border_type,
+                    marker,
+                    hide_x_labels,
+                    is_selected: app_state.current_widget.widget_id == widget_id,
+                    is_expanded: app_state.is_expanded,
+                    legend_position: app_state.app_config_fields.temperature_legend_position,
+                    legend_constraints: Some(legend_constraints),
+                },
                 y_bounds,
-                y_labels: &(y_labels.into_iter().map(Into::into).collect::<Vec<_>>()),
-                graph_style: self.styles.graph_style,
-                general_widget_style: self.styles.general_widget_style,
-                border_style,
-                border_type: self.styles.border_type,
-                title: " Temperature ".into(),
-                is_selected: app_state.current_widget.widget_id == widget_id,
-                is_expanded: app_state.is_expanded,
-                title_style: self.styles.widget_title_style,
-                legend_position: app_state.app_config_fields.temperature_legend_position,
-                legend_constraints: Some(legend_constraints),
-                marker,
-                scaling: ChartScaling::Linear,
-            }
-            .draw(f, draw_loc, graph_data);
+                &y_labels,
+                ChartScaling::Linear,
+                graph_data,
+            );
         }
 
         // Update draw loc in widget map.

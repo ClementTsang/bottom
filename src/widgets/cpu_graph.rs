@@ -13,8 +13,8 @@ use crate::{
         },
     },
     collection::cpu::{CpuData, CpuDataType},
+    components::time_series::{PercentTimeGraph, TimeseriesConfig},
     options::config::{cpu::CpuDefault, style::Styles},
-    widgets::{TimeseriesConfig, TimeseriesState},
 };
 
 pub enum CpuWidgetColumn {
@@ -126,7 +126,7 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
 }
 
 pub struct CpuWidgetState {
-    pub time_series_state: TimeseriesState,
+    pub graph: PercentTimeGraph,
     pub is_legend_hidden: bool,
     pub table: DataTable<CpuWidgetTableData, CpuWidgetColumn>,
     pub force_update_data: bool,
@@ -174,7 +174,7 @@ impl CpuWidgetState {
         }
 
         CpuWidgetState {
-            time_series_state: TimeseriesState::new(ts_config).with_autohide_timer(autohide_timer),
+            graph: PercentTimeGraph::new(ts_config, autohide_timer),
             is_legend_hidden: false,
             table,
             force_update_data: false,

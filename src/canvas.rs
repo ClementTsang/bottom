@@ -61,6 +61,14 @@ impl Painter {
         }
     }
 
+    pub(crate) fn get_marker(&self, use_dot: bool) -> tui::symbols::Marker {
+        if use_dot {
+            tui::symbols::Marker::Dot
+        } else {
+            tui::symbols::Marker::Braille
+        }
+    }
+
     fn draw_frozen_indicator(&self, f: &mut Frame<'_>, draw_loc: Rect) {
         f.render_widget(
             Paragraph::new(Span::styled(

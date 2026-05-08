@@ -15,12 +15,12 @@ use crate::{
     canvas::{
         components::time_series::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
     },
+    components::time_series::TimeseriesState,
     constants,
     options::config::flags::TableGap,
     utils::data_units::DataUnit,
     widgets::{
-        DiskWidgetColumn, ProcWidgetColumn, ProcWidgetMode, TempWidgetColumn, TimeseriesState,
-        TreeCollapsed,
+        DiskWidgetColumn, ProcWidgetColumn, ProcWidgetMode, TempWidgetColumn, TreeCollapsed,
     },
 };
 
@@ -196,19 +196,19 @@ impl App {
         // Reset zoom.
         // TODO: Make this suck less... should just make it so that calling reset fixes this all (including above too).
         for widget_state in self.states.cpu_state.widget_states.values_mut() {
-            widget_state.time_series_state.reset_zoom();
+            widget_state.graph.state_mut().reset_zoom();
         }
 
         for widget_state in self.states.mem_state.widget_states.values_mut() {
-            widget_state.time_series_state.reset_zoom();
+            widget_state.graph.state_mut().reset_zoom();
         }
 
         for widget_state in self.states.net_state.widget_states.values_mut() {
-            widget_state.time_series_state.reset_zoom();
+            widget_state.graph.state_mut().reset_zoom();
         }
 
         for widget_state in self.states.temp_graph_state.widget_states.values_mut() {
-            widget_state.time_series_state.reset_zoom();
+            widget_state.graph.state_mut().reset_zoom();
         }
     }
 
@@ -1984,7 +1984,7 @@ impl App {
                     .cpu_state
                     .get_mut_widget_state(self.current_widget.widget_id) =>
             {
-                Some(&mut widget_state.time_series_state)
+                Some(widget_state.graph.state_mut())
             }
             BottomWidgetType::Mem
                 if let Some(widget_state) = self
@@ -1992,7 +1992,7 @@ impl App {
                     .mem_state
                     .get_mut_widget_state(self.current_widget.widget_id) =>
             {
-                Some(&mut widget_state.time_series_state)
+                Some(widget_state.graph.state_mut())
             }
             BottomWidgetType::Net
                 if let Some(widget_state) = self
@@ -2000,7 +2000,7 @@ impl App {
                     .net_state
                     .get_mut_widget_state(self.current_widget.widget_id) =>
             {
-                Some(&mut widget_state.time_series_state)
+                Some(widget_state.graph.state_mut())
             }
             BottomWidgetType::TempGraph
                 if let Some(widget_state) = self
@@ -2008,7 +2008,7 @@ impl App {
                     .temp_graph_state
                     .get_mut_widget_state(self.current_widget.widget_id) =>
             {
-                Some(&mut widget_state.time_series_state)
+                Some(widget_state.graph.state_mut())
             }
             _ => None,
         }
