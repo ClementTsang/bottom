@@ -111,7 +111,7 @@ pub struct GraphDrawCtx<'a> {
 mod time_series_tests {
     use super::*;
 
-    const BASE_CONFIG: TimeseriesConfig = TimeseriesConfig {
+    const TEST_CONFIG: TimeseriesConfig = TimeseriesConfig {
         time_interval: 15_000,
         retention_ms: 300_000,
         autohide_time: false,
@@ -128,35 +128,35 @@ mod time_series_tests {
 
     #[test]
     fn zoom_in_decreases_display_time() {
-        let mut state = state_at(60_000, BASE_CONFIG);
+        let mut state = state_at(60_000, TEST_CONFIG);
         state.zoom_in();
         assert_eq!(state.current_display_time, 45_000);
     }
 
     #[test]
     fn zoom_in_clamps_at_minimum() {
-        let mut state = state_at(35_000, BASE_CONFIG);
+        let mut state = state_at(35_000, TEST_CONFIG);
         state.zoom_in();
         assert_eq!(state.current_display_time, STALE_MIN_MILLISECONDS);
     }
 
     #[test]
     fn zoom_out_increases_display_time() {
-        let mut state = state_at(60_000, BASE_CONFIG);
+        let mut state = state_at(60_000, TEST_CONFIG);
         state.zoom_out();
         assert_eq!(state.current_display_time, 75_000);
     }
 
     #[test]
     fn zoom_out_clamps_at_retention() {
-        let mut state = state_at(290_000, BASE_CONFIG);
+        let mut state = state_at(290_000, TEST_CONFIG);
         state.zoom_out();
         assert_eq!(state.current_display_time, 300_000);
     }
 
     #[test]
     fn reset_zoom_restores_default() {
-        let mut state = state_at(120_000, BASE_CONFIG);
+        let mut state = state_at(120_000, TEST_CONFIG);
         state.reset_zoom();
         assert_eq!(state.current_display_time, 60_000);
     }
@@ -167,7 +167,7 @@ mod time_series_tests {
             60_000,
             TimeseriesConfig {
                 autohide_time: true,
-                ..BASE_CONFIG
+                ..TEST_CONFIG
             },
         );
         state.zoom_in();

@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use crate::components::time_series::{AutoYAxisTimeGraph, TimeseriesConfig};
 
-/// A time-series graph widget displaying temperature usage over time.
+/// A time series graph widget displaying temperature usage over time.
 pub struct TempGraphWidgetState {
     pub graph: AutoYAxisTimeGraph,
     pub max_temp: Option<f32>,

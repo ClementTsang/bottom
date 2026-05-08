@@ -12,6 +12,7 @@ use tui::{
     Frame, Terminal,
     backend::Backend,
     layout::{Constraint, Direction, Flex, Layout, Rect},
+    symbols::Marker,
     text::Span,
     widgets::Paragraph,
 };
@@ -61,11 +62,11 @@ impl Painter {
         }
     }
 
-    pub(crate) fn get_marker(&self, use_dot: bool) -> tui::symbols::Marker {
+    pub(crate) fn get_marker(&self, use_dot: bool) -> Marker {
         if use_dot {
-            tui::symbols::Marker::Dot
+            Marker::Dot
         } else {
-            tui::symbols::Marker::Braille
+            Marker::Braille
         }
     }
 
