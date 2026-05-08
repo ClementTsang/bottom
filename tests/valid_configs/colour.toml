@@ -1,0 +1,42 @@
+# Styling but we use "colour" everywhere.
+
+[styles]
+theme = "default"
+
+[styles.cpu]
+all_entry_colour = "green"
+avg_entry_colour = "red"
+cpu_core_colours = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+
+[styles.memory]
+ram_colour = "light magenta"
+cache_colour = "light red"
+swap_colour = "light yellow"
+arc_colour = "light cyan"
+gpu_colours = ["light blue", "light red", "cyan", "green", "blue", "red"]
+
+[styles.network]
+rx_colour = "light magenta"
+tx_colour = "light yellow"
+rx_total_colour = "light cyan"
+tx_total_colour = "light green"
+
+[styles.battery]
+high_battery_colour = "green"
+medium_battery_colour = "yellow"
+low_battery_colour = "red"
+
+[styles.tables]
+headers = { colour = "light blue" }
+
+[styles.graphs]
+graph_colour = "gray"
+legend_text = { colour = "gray" }
+
+[styles.widgets]
+border_colour = "gray"
+selected_border_colour = "light blue"
+widget_title = { colour = "gray" }
+text = { colour = "gray" }
+selected_text = { colour = "black", bg_colour = "light blue" }
+disabled_text = { colour = "dark gray" }

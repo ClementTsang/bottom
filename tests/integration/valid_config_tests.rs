@@ -181,6 +181,11 @@ fn test_styling_sanity_check_2() {
 }
 
 #[test]
+fn test_colour_spelling_is_valid() {
+    run_and_kill(&["-C", "./tests/valid_configs/colour.toml"]);
+}
+
+#[test]
 fn test_filtering() {
     run_and_kill(&["-C", "./tests/valid_configs/filtering.toml"]);
 }
