@@ -143,6 +143,7 @@ impl CpuWidgetState {
             autohide_time: config.autohide_time,
             default_time_value: config.default_time_value,
         };
+
         let columns = [
             Column::soft(CpuWidgetColumn::Cpu, Some(0.5)),
             Column::soft(
@@ -174,7 +175,7 @@ impl CpuWidgetState {
         }
 
         CpuWidgetState {
-            time_series_state: TimeseriesState::new(ts_config).with_autohide_timer(autohide_timer),
+            time_series_state: TimeseriesState::new(ts_config, autohide_timer),
             is_legend_hidden: false,
             table,
             force_update_data: false,

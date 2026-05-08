@@ -13,10 +13,10 @@ pub struct TempGraphWidgetState {
 
 impl TempGraphWidgetState {
     pub fn new(
-        config: TimeseriesConfig, autohide_timer: Option<Instant>, max_temp: Option<f32>,
+        ts_config: TimeseriesConfig, autohide_timer: Option<Instant>, max_temp: Option<f32>,
     ) -> Self {
         TempGraphWidgetState {
-            time_series_state: TimeseriesState::new(config).with_autohide_timer(autohide_timer),
+            time_series_state: TimeseriesState::new(ts_config, autohide_timer),
             height_cache: GraphHeightCache::default(),
             max_temp,
         }

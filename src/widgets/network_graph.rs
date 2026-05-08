@@ -8,9 +8,9 @@ pub struct NetWidgetState {
 }
 
 impl NetWidgetState {
-    pub fn init(config: TimeseriesConfig, autohide_timer: Option<Instant>) -> Self {
+    pub fn init(ts_config: TimeseriesConfig, autohide_timer: Option<Instant>) -> Self {
         NetWidgetState {
-            time_series_state: TimeseriesState::new(config).with_autohide_timer(autohide_timer),
+            time_series_state: TimeseriesState::new(ts_config, autohide_timer),
             height_cache: GraphHeightCache::default(),
         }
     }
