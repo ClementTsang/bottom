@@ -114,8 +114,12 @@ impl AutoYAxisTimeGraph {
         S: Iterator<Item = &'a ChunkedData<F>>,
     {
         if let Some(last_time) = times.last() {
-            self.height_cache
-                .get_or_update(last_time, self.state.current_display_time(), sources, times)
+            self.height_cache.get_or_update(
+                last_time,
+                self.state.current_display_time(),
+                sources,
+                times,
+            )
         } else {
             0.0
         }

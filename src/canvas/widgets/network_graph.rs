@@ -200,8 +200,7 @@ impl Painter {
                 AxisScaling::Linear => ChartScaling::Linear,
             };
 
-            let y_labels: Vec<Cow<'_, str>> =
-                y_labels.into_iter().map(Into::into).collect();
+            let y_labels: Vec<Cow<'_, str>> = y_labels.into_iter().map(Into::into).collect();
 
             network_widget_state.graph.draw(
                 f,

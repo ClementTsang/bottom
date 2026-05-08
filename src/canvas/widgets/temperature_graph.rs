@@ -71,8 +71,7 @@ impl Painter {
 
             let marker = self.get_marker(app_state.app_config_fields.use_dot);
 
-            let y_labels: Vec<Cow<'_, str>> =
-                y_labels.into_iter().map(Into::into).collect();
+            let y_labels: Vec<Cow<'_, str>> = y_labels.into_iter().map(Into::into).collect();
 
             widget_state.graph.draw(
                 f,
