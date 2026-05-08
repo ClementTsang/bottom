@@ -2,12 +2,11 @@
 
 use std::time::Instant;
 
-use crate::widgets::{GraphHeightCache, TimeseriesConfig, TimeseriesState};
+use crate::components::time_series::{AutoYAxisTimeGraph, TimeseriesConfig};
 
-/// A time_series graph widget displaying temperature usage over time.
+/// A time series graph widget displaying temperature usage over time.
 pub struct TempGraphWidgetState {
-    pub time_series_state: TimeseriesState,
-    pub height_cache: GraphHeightCache,
+    pub graph: AutoYAxisTimeGraph,
     pub max_temp: Option<f32>,
 }
 
@@ -16,8 +15,7 @@ impl TempGraphWidgetState {
         config: TimeseriesConfig, autohide_timer: Option<Instant>, max_temp: Option<f32>,
     ) -> Self {
         TempGraphWidgetState {
-            time_series_state: TimeseriesState::new(config).with_autohide_timer(autohide_timer),
-            height_cache: GraphHeightCache::default(),
+            graph: AutoYAxisTimeGraph::new(config, autohide_timer),
             max_temp,
         }
     }

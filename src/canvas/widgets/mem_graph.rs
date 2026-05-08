@@ -10,10 +10,11 @@ use crate::{
     app::{App, data::Values},
     canvas::{
         Painter,
-        components::time_series::{GraphData, LegendConstraints, PercentTimeGraph},
+        components::time_series::{GraphData, LegendConstraints},
         drawing_utils::should_hide_x_label,
     },
     collection::memory::MemData,
+    components::time_series::GraphDrawCtx,
     get_binary_unit_and_denominator,
 };
 
@@ -60,7 +61,7 @@ impl Painter {
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                mem_state.time_series_state.autohide_timer_mut(),
+                mem_state.graph.state_mut().autohide_timer_mut(),
                 draw_loc,
             );
             let graph_data = {
@@ -164,23 +165,31 @@ impl Painter {
                 points
             };
 
-            PercentTimeGraph {
-                display_range: mem_state.time_series_state.current_display_time(),
-                hide_x_labels,
-                app_config_fields: &app_state.app_config_fields,
-                current_widget: app_state.current_widget.widget_id,
-                is_expanded: app_state.is_expanded,
-                title: " Memory ".into(),
-                styles: &self.styles,
-                widget_id,
-                legend_position: app_state.app_config_fields.memory_legend_position,
-                legend_constraints: Some(LegendConstraints {
-                    width: Constraint::Ratio(3, 4),
-                    height: Constraint::Ratio(3, 4),
-                }),
-            }
-            .build()
-            .draw(f, draw_loc, graph_data);
+            let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
+            let marker = self.get_marker(app_state.app_config_fields.use_dot);
+
+            mem_state.graph.draw(
+                f,
+                draw_loc,
+                GraphDrawCtx {
+                    title: " Memory ".into(),
+                    border_style,
+                    title_style: self.styles.widget_title_style,
+                    graph_style: self.styles.graph_style,
+                    general_widget_style: self.styles.general_widget_style,
+                    border_type: self.styles.border_type,
+                    marker,
+                    hide_x_labels,
+                    is_selected: app_state.current_widget.widget_id == widget_id,
+                    is_expanded: app_state.is_expanded,
+                    legend_position: app_state.app_config_fields.memory_legend_position,
+                    legend_constraints: Some(LegendConstraints {
+                        width: Constraint::Ratio(3, 4),
+                        height: Constraint::Ratio(3, 4),
+                    }),
+                },
+                graph_data,
+            );
         }
 
         if app_state.should_get_widget_bounds() {

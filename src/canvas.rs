@@ -12,6 +12,7 @@ use tui::{
     Frame, Terminal,
     backend::Backend,
     layout::{Constraint, Direction, Flex, Layout, Rect},
+    symbols::Marker,
     text::Span,
     widgets::Paragraph,
 };
@@ -58,6 +59,14 @@ impl Painter {
             self.styles.highlighted_border_style
         } else {
             self.styles.border_style
+        }
+    }
+
+    pub(crate) fn get_marker(&self, use_dot: bool) -> Marker {
+        if use_dot {
+            Marker::Dot
+        } else {
+            Marker::Braille
         }
     }
 

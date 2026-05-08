@@ -1,9 +1,19 @@
+mod auto_y;
+mod percent;
+
 use std::{
+    borrow::Cow,
     cmp::{max, min},
     time::{Duration, Instant},
 };
 
-use timeless::data::ChunkedData;
+pub use auto_y::*;
+pub use percent::*;
+use tui::{style::Style, symbols::Marker, widgets::BorderType};
+
+use crate::canvas::components::time_series::{
+    AxisBound, ChartScaling, GraphData, LegendConstraints, LegendPosition, TimeGraph,
+};
 
 const STALE_MIN_MILLISECONDS: u64 = Duration::from_secs(30).as_millis() as u64;
 
@@ -45,7 +55,7 @@ impl TimeseriesState {
     }
 
     /// Get the current display time.
-    pub fn current_display_time(&self) -> u64 {
+    fn current_display_time(&self) -> u64 {
         self.current_display_time
     }
 
@@ -54,7 +64,6 @@ impl TimeseriesState {
         let new_time = self
             .current_display_time
             .saturating_sub(self.config.time_interval);
-
         self.current_display_time = max(new_time, STALE_MIN_MILLISECONDS);
         self.maybe_start_autohide();
     }
@@ -64,7 +73,6 @@ impl TimeseriesState {
         let new_time = self
             .current_display_time
             .saturating_add(self.config.time_interval);
-
         self.current_display_time = min(new_time, self.config.retention_ms);
         self.maybe_start_autohide();
     }
@@ -82,85 +90,21 @@ impl TimeseriesState {
     }
 }
 
-struct GraphHeightCacheInner {
-    best_point: (Instant, f64),
-    right_edge: Instant,
-    period: u64,
-}
-
-#[derive(Default)]
-pub struct GraphHeightCache {
-    inner: Option<GraphHeightCacheInner>,
-}
-
-impl GraphHeightCache {
-    /// Get the cached height if it exists, or set it otherwise.
-    pub(crate) fn get_or_update<
-        'a,
-        F: Into<f64> + Clone + Copy + 'a,
-        S: Iterator<Item = &'a ChunkedData<F>>,
-    >(
-        &mut self, last_time: &Instant, current_display_time: u64, sources: S, times: &[Instant],
-    ) -> f64 {
-        let visible_duration = Duration::from_millis(current_display_time);
-
-        let (mut biggest, mut biggest_time, oldest_to_check) = if let Some(GraphHeightCacheInner {
-            best_point,
-            right_edge,
-            period,
-        }) = self.inner.as_ref()
-            && *period == current_display_time
-            && last_time.duration_since(best_point.0) < visible_duration
-        {
-            (best_point.1, best_point.0, *right_edge)
-        } else {
-            let visible_duration = Duration::from_millis(current_display_time);
-
-            let visible_left_bound = match last_time.checked_sub(visible_duration) {
-                Some(v) => v,
-                None => {
-                    // On some systems (like Windows) it can be possible that the
-                    // current display time
-                    // causes subtraction to fail if, for example, the uptime of the
-                    // system is too low and current_display_time is too high. See https://github.com/ClementTsang/bottom/issues/1825.
-                    //
-                    // As such, we instead take the oldest visible time. This is a
-                    // bit inefficient, but
-                    // since it should only happen rarely, it should be fine.
-                    times
-                        .iter()
-                        .take_while(|t| last_time.duration_since(**t) < visible_duration)
-                        .last()
-                        .cloned()
-                        .unwrap_or(*last_time)
-                }
-            };
-
-            (0.0, visible_left_bound, visible_left_bound)
-        };
-
-        for source in sources {
-            for (&time, &v) in source
-                .iter_along_base(times)
-                .rev()
-                .take_while(|&(&time, _)| time >= oldest_to_check)
-            {
-                let v = v.into();
-                if v > biggest {
-                    biggest = v;
-                    biggest_time = time;
-                }
-            }
-        }
-
-        self.inner = Some(GraphHeightCacheInner {
-            best_point: (biggest_time, biggest),
-            right_edge: *last_time,
-            period: current_display_time,
-        });
-
-        biggest
-    }
+/// Per-render context passed to component draw methods. Carries everything that
+/// varies each frame but is not persistent state.
+pub struct GraphDrawCtx<'a> {
+    pub title: Cow<'a, str>,
+    pub border_style: Style,
+    pub title_style: Style,
+    pub graph_style: Style,
+    pub general_widget_style: Style,
+    pub border_type: BorderType,
+    pub marker: Marker,
+    pub hide_x_labels: bool,
+    pub is_selected: bool,
+    pub is_expanded: bool,
+    pub legend_position: Option<LegendPosition>,
+    pub legend_constraints: Option<LegendConstraints>,
 }
 
 #[cfg(test)]
@@ -193,7 +137,7 @@ mod time_series_tests {
     fn zoom_in_clamps_at_minimum() {
         let mut state = state_at(35_000, TEST_CONFIG);
         state.zoom_in();
-        assert_eq!(state.current_display_time, STALE_MIN_MILLISECONDS); // 30_000
+        assert_eq!(state.current_display_time, STALE_MIN_MILLISECONDS);
     }
 
     #[test]
@@ -233,6 +177,8 @@ mod time_series_tests {
 
 #[cfg(test)]
 mod graph_height_tests {
+    use timeless::data::ChunkedData;
+
     use super::*;
 
     fn build(times: &[Instant], values: &[f64]) -> ChunkedData<f64> {
@@ -242,18 +188,6 @@ mod graph_height_tests {
             data.push(v);
         }
         data
-    }
-
-    #[test]
-    fn empty_sources_returns_zero() {
-        let mut cache = GraphHeightCache::default();
-        let last_time = Instant::now();
-        let times: Vec<Instant> = vec![];
-        let sources: Vec<ChunkedData<f64>> = vec![];
-
-        let result = cache.get_or_update(&last_time, 1_000, sources.iter(), &times);
-        assert_eq!(result, 0.0);
-        assert!(cache.inner.is_some());
     }
 
     #[test]
