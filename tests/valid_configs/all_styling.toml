@@ -1,5 +1,3 @@
-# Styling but we use "colour" everywhere.
-
 # These are all the components that support custom theming. Note that colour support
 # will depend on terminal support.
 [styles]
@@ -65,3 +63,4 @@ widget_title = { colour = "gray" }
 text = { colour = "gray" }
 selected_text = { colour = "black", bg_colour = "light blue" }
 disabled_text = { colour = "dark gray" }
+bg_colour = "black"

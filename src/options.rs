@@ -381,7 +381,9 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let process_default_sort = match &args.process.process_default_sort {
         Some(name) => Some(ProcColumn::parse_column_name(name).ok_or_else(|| {
-            anyhow::anyhow!("'{name}' is not a valid process column for --process_default_sort")
+            OptionError::arg(format!(
+                "'{name}' is not a valid process column for '--process_default_sort'"
+            ))
         })?),
         None => config.processes.as_ref().and_then(|cfg| cfg.default_sort),
     };

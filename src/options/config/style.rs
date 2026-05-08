@@ -302,6 +302,7 @@ mod test {
         let widgets = config.widgets.as_ref().unwrap();
         assert!(widgets.border_colour.is_some());
         assert!(widgets.selected_border_colour.is_some());
+        assert!(widgets.bg_colour.is_some());
     }
 
     #[test]

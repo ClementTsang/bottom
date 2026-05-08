@@ -1,4 +1,6 @@
-# These are all the components that support custom theming. Note that colour support
+# Styling but we use "color" everywhere.
+
+# These are all the components that support custom theming. Note that color support
 # will depend on terminal support.
 [styles]
 
@@ -10,7 +12,7 @@
 # - "nord"
 # - "nord-light".
 
-# This will have the lowest precedence if a custom colour palette is set,
+# This will have the lowest precedence if a custom color palette is set,
 # or overridden if the command-line flag for a built-in theme is set.
 theme = "default"
 
@@ -20,7 +22,16 @@ avg_entry_color = "red"
 cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
 
 [styles.temp_graph]
-temp_graph_color_styles = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+temp_graph_color_styles = [
+    "light magenta",
+    "light yellow",
+    "light cyan",
+    "light green",
+    "light blue",
+    "cyan",
+    "green",
+    "blue",
+]
 
 [styles.memory]
 ram_color = "light magenta"
@@ -54,3 +65,4 @@ widget_title = { color = "gray" }
 text = { color = "gray" }
 selected_text = { color = "black", bg_color = "light blue" }
 disabled_text = { color = "dark gray" }
+bg_color = "black"
