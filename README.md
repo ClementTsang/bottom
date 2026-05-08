@@ -93,9 +93,7 @@ As (yet another) process/system visualization and management application, bottom
 
 - And more:
   - [An htop-inspired basic mode](https://bottom.pages.dev/nightly/usage/basic-mode/)
-  - [Expansion, which focuses on just one widget](https://bottom.pages.dev/nightly/usage/general-usage/#expansion)
-
-- And more!
+  - [Expansion to focus on just one widget](https://bottom.pages.dev/nightly/usage/general-usage/#expansion)
 
 You can find more details in [the documentation](https://bottom.pages.dev/nightly/usage/general-usage/).
 
