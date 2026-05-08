@@ -2142,6 +2142,26 @@ highest precedence to lowest precedence:</p>
 <h2 id="custom-styling"><a class="toclink" href="#custom-styling">Custom styling</a></h2>
 <p>bottom's components can also be individually styled by the user to control the colour of the text style.</p>
 <h3 id="colours"><a class="toclink" href="#colours">Colours</a></h3>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Note that anywhere <code>"colour"</code> is used, it can be substituted for <code>"color"</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># This is okay</span>
+<span class="k">[styles.widgets.widget_title]</span>
+<span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span>
+<span class="n">bg_colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;white&quot;</span>
+
+<span class="k">[styles.cpu]</span>
+<span class="n">all_entry_colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;green&quot;</span>
+
+<span class="c1"># This is also okay</span>
+<span class="k">[styles.widgets.widget_title]</span>
+<span class="n">color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span>
+<span class="n">bg_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;white&quot;</span>
+
+<span class="k">[styles.cpu]</span>
+<span class="n">all_entry_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;green&quot;</span>
+</code></pre></div>
+</div>
 <p>You can configure the colours for components with strings that are either hex colours (e.g. <code>"#ffffff"</code>), RGB colours
 (e.g. <code>"255, 255, 255"</code>), or named colours. Named colours are one of the following strings:</p>
 <ul>
@@ -2166,18 +2186,18 @@ highest precedence to lowest precedence:</p>
 <p>Text can generally be styled using the following TOML table:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[field]</span>
 <span class="c1"># The foreground colour of text.</span>
-<span class="n">color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span>
+<span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span>
 
 <span class="c1"># The background colour of text.</span>
-<span class="n">bg_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;blue&quot;</span>
+<span class="n">bg_colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;blue&quot;</span>
 
 <span class="c1"># Whether to make the text bold.</span>
 <span class="n">bold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 
 <span class="c1"># Inline table version</span>
-<span class="n">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">color</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bg_color</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;blue&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bold</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">colour</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bg_colour</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;blue&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bold</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
-<p>All fields are optional; by default if <code>bg_color</code> is not set then there will be no background color.</p>
+<p>All fields are optional; by default if <code>bg_colour</code> is not set then there will be no background colour.</p>
 <p>If you <em>just</em> want to style text by setting the foreground colour, for brevity, then you can also just set the field
 to be the colour itself. For example:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[styles.widgets]</span>
@@ -2196,19 +2216,19 @@ to be the colour itself. For example:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>all_entry_color</code></td>
+<td><code>all_entry_colour</code></td>
 <td>The colour of the "All" CPU label</td>
-<td><code>all_entry_color = "Red"</code></td>
+<td><code>all_entry_colour = "Red"</code></td>
 </tr>
 <tr>
-<td><code>avg_entry_color</code></td>
+<td><code>avg_entry_colour</code></td>
 <td>The colour of the average CPU label and graph line</td>
-<td><code>avg_entry_color = "255, 0, 255"</code></td>
+<td><code>avg_entry_colour = "255, 0, 255"</code></td>
 </tr>
 <tr>
-<td><code>cpu_core_colors</code></td>
+<td><code>cpu_core_colours</code></td>
 <td>Colour of each CPU threads' label and graph line. Read in order.</td>
-<td><code>cpu_core_colors = ["Red", "Blue", "Green"]</code></td>
+<td><code>cpu_core_colours = ["Red", "Blue", "Green"]</code></td>
 </tr>
 </tbody>
 </table>
@@ -2224,9 +2244,9 @@ to be the colour itself. For example:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>temp_graph_color_styles</code></td>
+<td><code>temp_graph_colour_styles</code></td>
 <td>Colour of each temperature sensor's graph line. Read in order.</td>
-<td><code>temp_graph_color_styles = ["Red", "Blue", "Green"]</code></td>
+<td><code>temp_graph_colour_styles = ["Red", "Blue", "Green"]</code></td>
 </tr>
 </tbody>
 </table>
@@ -2242,29 +2262,29 @@ to be the colour itself. For example:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>ram_color</code></td>
+<td><code>ram_colour</code></td>
 <td>The colour of the RAM label and graph line</td>
-<td><code>ram_color = "Red"</code></td>
+<td><code>ram_colour = "Red"</code></td>
 </tr>
 <tr>
-<td><code>cache_color</code></td>
+<td><code>cache_colour</code></td>
 <td>The colour of the cache label and graph line. Does not do anything on Windows.</td>
-<td><code>cache_color = "#ffffff"</code></td>
+<td><code>cache_colour = "#ffffff"</code></td>
 </tr>
 <tr>
-<td><code>swap_color</code></td>
+<td><code>swap_colour</code></td>
 <td>The colour of the swap label and graph line</td>
-<td><code>swap_color = "255, 0, 255"</code></td>
+<td><code>swap_colour = "255, 0, 255"</code></td>
 </tr>
 <tr>
-<td><code>arc_color</code></td>
+<td><code>arc_colour</code></td>
 <td>The colour of the ARC label and graph line</td>
-<td><code>arc_color = "Blue"</code></td>
+<td><code>arc_colour = "Blue"</code></td>
 </tr>
 <tr>
-<td><code>gpu_colors</code></td>
+<td><code>gpu_colours</code></td>
 <td>Colour of each GPU's memory label and graph line. Read in order.</td>
-<td><code>gpu_colors = ["Red", "Blue", "Green"]</code></td>
+<td><code>gpu_colours = ["Red", "Blue", "Green"]</code></td>
 </tr>
 </tbody>
 </table>
@@ -2280,24 +2300,24 @@ to be the colour itself. For example:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>rx_color</code></td>
+<td><code>rx_colour</code></td>
 <td>The colour of the RX (download) label and graph line</td>
-<td><code>rx_color = "Red"</code></td>
+<td><code>rx_colour = "Red"</code></td>
 </tr>
 <tr>
-<td><code>tx_color</code></td>
+<td><code>tx_colour</code></td>
 <td>The colour of the TX (upload) label and graph line</td>
-<td><code>tx_color = "#ffffff"</code></td>
+<td><code>tx_colour = "#ffffff"</code></td>
 </tr>
 <tr>
-<td><code>rx_total_color</code></td>
+<td><code>rx_total_colour</code></td>
 <td>The colour of the total RX (download) label in basic mode</td>
-<td><code>rx_total_color = "0, 0, 0"</code></td>
+<td><code>rx_total_colour = "0, 0, 0"</code></td>
 </tr>
 <tr>
-<td><code>tx_total_color</code></td>
+<td><code>tx_total_colour</code></td>
 <td>The colour of the total TX (upload) label in basic mode</td>
-<td><code>tx_total_color = "#000"</code></td>
+<td><code>tx_total_colour = "#000"</code></td>
 </tr>
 </tbody>
 </table>
@@ -2313,19 +2333,19 @@ to be the colour itself. For example:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>high_battery_color</code></td>
+<td><code>high_battery_colour</code></td>
 <td>The colour of the battery widget bar when the battery is over 50%</td>
-<td><code>high_battery_color = "Red"</code></td>
+<td><code>high_battery_colour = "Red"</code></td>
 </tr>
 <tr>
-<td><code>medium_battery_color</code></td>
+<td><code>medium_battery_colour</code></td>
 <td>The colour of the battery widget bar when the battery between 10% to 50%</td>
-<td><code>medium_battery_color = "#ffffff"</code></td>
+<td><code>medium_battery_colour = "#ffffff"</code></td>
 </tr>
 <tr>
-<td><code>low_battery_color</code></td>
+<td><code>low_battery_colour</code></td>
 <td>The colour of the battery widget bar when the battery is under 10%</td>
-<td><code>low_battery_color = "0, 0, 0"</code></td>
+<td><code>low_battery_colour = "0, 0, 0"</code></td>
 </tr>
 </tbody>
 </table>
@@ -2343,7 +2363,7 @@ to be the colour itself. For example:</p>
 <tr>
 <td><code>headers</code></td>
 <td>Text styling for table headers</td>
-<td><code>headers = { color = "red", bg_color = "black", bold = true }</code></td>
+<td><code>headers = { colour = "red", bg_colour = "black", bold = true }</code></td>
 </tr>
 </tbody>
 </table>
@@ -2359,14 +2379,14 @@ to be the colour itself. For example:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>graph_color</code></td>
+<td><code>graph_colour</code></td>
 <td>The general colour of the parts of the graph</td>
-<td><code>graph_color = "white"</code></td>
+<td><code>graph_colour = "white"</code></td>
 </tr>
 <tr>
 <td><code>legend_text</code></td>
 <td>Text styling for graph's legend text</td>
-<td><code>legend_text = { color = "black", bg_color = "blue", bold = true }</code></td>
+<td><code>legend_text = { colour = "black", bg_colour = "blue", bold = true }</code></td>
 </tr>
 </tbody>
 </table>
@@ -2382,44 +2402,44 @@ to be the colour itself. For example:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>border_color</code></td>
+<td><code>border_colour</code></td>
 <td>The colour of the widgets' borders</td>
-<td><code>border_color = "white"</code></td>
+<td><code>border_colour = "white"</code></td>
 </tr>
 <tr>
-<td><code>selected_border_color</code></td>
+<td><code>selected_border_colour</code></td>
 <td>The colour of a widget's borders when the widget is selected</td>
-<td><code>selected_border_color = "white"</code></td>
+<td><code>selected_border_colour = "white"</code></td>
 </tr>
 <tr>
 <td><code>widget_title</code></td>
 <td>Text styling for a widget's title</td>
-<td><code>widget_title = { color = "black", bg_color = "blue", bold = true }</code></td>
+<td><code>widget_title = { colour = "black", bg_colour = "blue", bold = true }</code></td>
 </tr>
 <tr>
-<td><code>bg_color</code></td>
-<td>The background color of the widgets.</td>
-<td><code>bg_color = "black"</code></td>
+<td><code>bg_colour</code></td>
+<td>The background colour of the widgets.</td>
+<td><code>bg_colour = "black"</code></td>
 </tr>
 <tr>
 <td><code>text</code></td>
 <td>Text styling for text in general</td>
-<td><code>text = { color = "black", bg_color = "blue", bold = true }</code></td>
+<td><code>text = { colour = "black", bg_colour = "blue", bold = true }</code></td>
 </tr>
 <tr>
 <td><code>selected_text</code></td>
 <td>Text styling for text when representing something that is selected</td>
-<td><code>selected_text = { color = "black", bg_color = "blue", bold = true }</code></td>
+<td><code>selected_text = { colour = "black", bg_colour = "blue", bold = true }</code></td>
 </tr>
 <tr>
 <td><code>disabled_text</code></td>
 <td>Text styling for text when representing something that is disabled</td>
-<td><code>disabled_text = { color = "black", bg_color = "blue", bold = true }</code></td>
+<td><code>disabled_text = { colour = "black", bg_colour = "blue", bold = true }</code></td>
 </tr>
 <tr>
 <td><code>thread_text</code></td>
 <td>Text styling for text when representing process threads. Only usable on Linux at the moment.</td>
-<td><code>thread_text = { color = "green", bg_color = "blue", bold = true }</code></td>
+<td><code>thread_text = { colour = "green", bg_colour = "blue", bold = true }</code></td>
 </tr>
 </tbody>
 </table>
@@ -2443,7 +2463,7 @@ to be the colour itself. For example:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 3, 2026 07:19:49">May 3, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 8, 2026 05:34:02">May 8, 2026</span>
   </span>
 
     

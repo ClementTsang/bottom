@@ -2186,27 +2186,24 @@ Here are some possible solutions:</p>
 </li>
 <li>
 <p>Here, add a new <code>String value</code>, and set the <code>Name</code> to a bunch of 0's (e.g. <code>000</code> - make sure the name isn't already used), then set the <code>Data</code> to the font name (e.g. <code>Iosevka</code>).</p>
+<p><figure>
+      <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
+      <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
+  </figure></p>
+</li>
+<li>
+<p>Then, open the Command Prompt/PowerShell, and right-click on the top bar, and open "Properties":</p>
+<p><figure>
+      <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
+  </figure></p>
+</li>
+<li>
+<p>From here, go to "Font", and set the font to your new font (so in this example, Iosevka):</p>
+<p><figure>
+      <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
+  </figure></p>
 </li>
 </ol>
-<figure>
-    <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
-    <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
-</figure>
-
-<ol>
-<li>Then, open the Command Prompt/PowerShell, and right-click on the top bar, and open "Properties":</li>
-</ol>
-<figure>
-    <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
-</figure>
-
-<ol>
-<li>From here, go to "Font", and set the font to your new font (so in this example, Iosevka):</li>
-</ol>
-<figure>
-    <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
-</figure>
-
 <h2 id="why-cant-i-see-all-my-temperature-sensors-on-windows"><a class="toclink" href="#why-cant-i-see-all-my-temperature-sensors-on-windows">Why can't I see all my temperature sensors on Windows?</a></h2>
 <p>This is a known issue, some sensors may require admin privileges to get sensor data.</p>
 <h2 id="why-dont-i-see-dual-batteries-on-windows-reported-separately-eg-thinkpads"><a class="toclink" href="#why-dont-i-see-dual-batteries-on-windows-reported-separately-eg-thinkpads">Why don't I see dual batteries on Windows reported separately? (e.g. Thinkpads)</a></h2>
@@ -2234,14 +2231,15 @@ on how to run htop without sudo for bottom. However, <strong>please</strong> und
 <p>It may be handy to refer to the automatically generated config files or the
 <a href="https://github.com/ClementTsang/bottom/tree/main/sample_configs">sample configuration files</a>. The config files also
 follow the <a href="https://toml.io/en/">TOML</a> format.</p>
-<p>Also make sure your config options are under the right table - for example, to set your temperature type, you must
+<p>Also make sure your config option settings are in the right location - for example, to set your temperature type, you must
 set it under the <code>[flags]</code> table:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[flags]</span>
 <span class="n">temperature_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;f&quot;</span>
 </code></pre></div>
-<p>Meanwhile, if you want to set a custom color scheme, it would be under the <code>[styles]</code> table:</p>
+<p>Meanwhile, if you want to set a custom colour or styling scheme, it would be under the <code>[styles]</code> table - for example:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[styles.tables.headers]</span>
-<span class="n">color</span><span class="o">=</span><span class="s2">&quot;LightBlue&quot;</span>
+<span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;LightBlue&quot;</span>
+<span class="n">bold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 </code></pre></div>
 <p>To help validate your configuration files, there is <a href="https://json-schema.org/">JSON Schema</a> support if your IDE/editor
 supports it.</p>
@@ -2306,7 +2304,7 @@ question about it, and I (or others) can try to help.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="December 26, 2025 00:57:38">December 26, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 8, 2026 05:34:02">May 8, 2026</span>
   </span>
 
     
