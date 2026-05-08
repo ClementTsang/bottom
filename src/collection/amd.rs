@@ -349,73 +349,75 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
 
         if let Some(mem) = get_amd_vram(&device_path) {
             if widgets_to_harvest.use_mem
-                && let Some(total_bytes) = NonZeroU64::new(mem.total) {
-                    mem_vec.push((
-                        device_name.clone(),
-                        MemData {
-                            total_bytes,
-                            used_bytes: mem.used,
-                        },
-                    ));
-                }
+                && let Some(total_bytes) = NonZeroU64::new(mem.total)
+            {
+                mem_vec.push((
+                    device_name.clone(),
+                    MemData {
+                        total_bytes,
+                        used_bytes: mem.used,
+                    },
+                ));
+            }
 
             total_mem += mem.total
         }
 
         if widgets_to_harvest.use_proc
-            && let Some(procs) = get_amd_fdinfo(&device_path) {
-                PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
-                    let prev_fdinfo = prev_proc_data.entry(device_path).or_default();
-                    let mut seen_pids = IntHashSet::default();
+            && let Some(procs) = get_amd_fdinfo(&device_path)
+        {
+            PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
+                let prev_fdinfo = prev_proc_data.entry(device_path).or_default();
+                let mut seen_pids = IntHashSet::default();
 
-                    let mut procs_map = IntHashMap::default();
-                    for (proc_pid, proc_usage) in procs {
-                        seen_pids.insert(proc_pid);
-                        if let Some(prev_usage) = prev_fdinfo.get_mut(&proc_pid) {
-                            // calculate deltas
-                            let gfx_usage =
-                                diff_usage(prev_usage.gfx_usage, proc_usage.gfx_usage, &interval);
-                            let dma_usage =
-                                diff_usage(prev_usage.dma_usage, proc_usage.dma_usage, &interval);
-                            let enc_usage =
-                                diff_usage(prev_usage.enc_usage, proc_usage.enc_usage, &interval);
-                            let dec_usage =
-                                diff_usage(prev_usage.dec_usage, proc_usage.dec_usage, &interval);
-                            let uvd_usage =
-                                diff_usage(prev_usage.uvd_usage, proc_usage.uvd_usage, &interval);
-                            let vcn_usage =
-                                diff_usage(prev_usage.vcn_usage, proc_usage.vcn_usage, &interval);
-                            let vpe_usage =
-                                diff_usage(prev_usage.vpe_usage, proc_usage.vpe_usage, &interval);
+                let mut procs_map = IntHashMap::default();
+                for (proc_pid, proc_usage) in procs {
+                    seen_pids.insert(proc_pid);
+                    if let Some(prev_usage) = prev_fdinfo.get_mut(&proc_pid) {
+                        // calculate deltas
+                        let gfx_usage =
+                            diff_usage(prev_usage.gfx_usage, proc_usage.gfx_usage, &interval);
+                        let dma_usage =
+                            diff_usage(prev_usage.dma_usage, proc_usage.dma_usage, &interval);
+                        let enc_usage =
+                            diff_usage(prev_usage.enc_usage, proc_usage.enc_usage, &interval);
+                        let dec_usage =
+                            diff_usage(prev_usage.dec_usage, proc_usage.dec_usage, &interval);
+                        let uvd_usage =
+                            diff_usage(prev_usage.uvd_usage, proc_usage.uvd_usage, &interval);
+                        let vcn_usage =
+                            diff_usage(prev_usage.vcn_usage, proc_usage.vcn_usage, &interval);
+                        let vpe_usage =
+                            diff_usage(prev_usage.vpe_usage, proc_usage.vpe_usage, &interval);
 
-                            // combined usage
-                            let gpu_util_wide = gfx_usage
-                                + dma_usage
-                                + enc_usage
-                                + dec_usage
-                                + uvd_usage
-                                + vcn_usage
-                                + vpe_usage;
+                        // combined usage
+                        let gpu_util_wide = gfx_usage
+                            + dma_usage
+                            + enc_usage
+                            + dec_usage
+                            + uvd_usage
+                            + vcn_usage
+                            + vpe_usage;
 
-                            let gpu_util: u32 = gpu_util_wide.try_into().unwrap_or(0);
+                        let gpu_util: u32 = gpu_util_wide.try_into().unwrap_or(0);
 
-                            if gpu_util > 0 || proc_usage.vram_usage > 0 {
-                                procs_map.insert(proc_pid, (proc_usage.vram_usage, gpu_util));
-                            }
-
-                            *prev_usage = proc_usage;
-                        } else {
-                            prev_fdinfo.insert(proc_pid, proc_usage);
+                        if gpu_util > 0 || proc_usage.vram_usage > 0 {
+                            procs_map.insert(proc_pid, (proc_usage.vram_usage, gpu_util));
                         }
-                    }
 
-                    prev_fdinfo.retain(|k, _| seen_pids.contains(k));
-
-                    if !procs_map.is_empty() {
-                        proc_vec.push(procs_map);
+                        *prev_usage = proc_usage;
+                    } else {
+                        prev_fdinfo.insert(proc_pid, proc_usage);
                     }
-                });
-            }
+                }
+
+                prev_fdinfo.retain(|k, _| seen_pids.contains(k));
+
+                if !procs_map.is_empty() {
+                    proc_vec.push(procs_map);
+                }
+            });
+        }
     }
 
     // Bit of a hacky way to keep this trimmed. Ain't pretty but it should work.

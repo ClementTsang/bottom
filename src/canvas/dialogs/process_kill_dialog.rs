@@ -243,29 +243,27 @@ impl ProcessKillDialog {
                     use crate::utils::process_killer;
 
                     if let Some(selected) = state.selected()
-                        && selected != 0 {
-                            // On Linux, we need to skip 32 and 33.
-                            let signal = if cfg!(target_os = "linux")
-                                && (selected == 32 || selected == 33)
-                            {
+                        && selected != 0
+                    {
+                        // On Linux, we need to skip 32 and 33.
+                        let signal =
+                            if cfg!(target_os = "linux") && (selected == 32 || selected == 33) {
                                 selected + 2
                             } else {
                                 selected
                             };
 
-                            for pid in pids {
-                                if let Err(err) =
-                                    process_killer::kill_process_given_pid(pid, signal)
-                                {
-                                    self.state = ProcessKillDialogState::Error {
-                                        process_name,
-                                        pid: Some(pid),
-                                        err: err.to_string(),
-                                    };
-                                    return;
-                                }
+                        for pid in pids {
+                            if let Err(err) = process_killer::kill_process_given_pid(pid, signal) {
+                                self.state = ProcessKillDialogState::Error {
+                                    process_name,
+                                    pid: Some(pid),
+                                    err: err.to_string(),
+                                };
+                                return;
                             }
                         }
+                    }
                 }
                 ButtonState::Simple { yes, .. } => {
                     if yes {
@@ -319,47 +317,47 @@ impl ProcessKillDialog {
                         button_state: ButtonState::Signals { state, .. },
                         ..
                     }) = &mut self.state
-                    {
-                        if let Some((prev, last_press)) = self.last_char {
-                            if prev.is_ascii_digit() && last_press.elapsed() <= MAX_KEY_TIMEOUT {
-                                let current = state.selected().unwrap_or(0);
-                                let new = {
-                                    let new = current * 10 + value as usize;
+                {
+                    if let Some((prev, last_press)) = self.last_char {
+                        if prev.is_ascii_digit() && last_press.elapsed() <= MAX_KEY_TIMEOUT {
+                            let current = state.selected().unwrap_or(0);
+                            let new = {
+                                let new = current * 10 + value as usize;
 
-                                    // Note that 32 and 33 are skipped on linux.
-                                    if cfg!(target_os = "linux") {
-                                        if new == 32 || new == 33 {
-                                            value as usize
-                                        } else if new >= 34 {
-                                            new - 2
-                                        } else {
-                                            new
-                                        }
+                                // Note that 32 and 33 are skipped on linux.
+                                if cfg!(target_os = "linux") {
+                                    if new == 32 || new == 33 {
+                                        value as usize
+                                    } else if new >= 34 {
+                                        new - 2
                                     } else {
                                         new
                                     }
-                                };
-
-                                if new >= SIGNAL_TEXT.len() {
-                                    // If the new value is too large, then just assume we instead
-                                    // want the value itself.
-                                    state.select(Some(value as usize));
-                                    self.last_char = Some((c, Instant::now()));
                                 } else {
-                                    state.select(Some(new));
-                                    self.last_char = None;
+                                    new
                                 }
-                            } else {
+                            };
+
+                            if new >= SIGNAL_TEXT.len() {
+                                // If the new value is too large, then just assume we instead
+                                // want the value itself.
                                 state.select(Some(value as usize));
                                 self.last_char = Some((c, Instant::now()));
+                            } else {
+                                state.select(Some(new));
+                                self.last_char = None;
                             }
                         } else {
                             state.select(Some(value as usize));
                             self.last_char = Some((c, Instant::now()));
                         }
-
-                        return; // Needed to avoid accidentally clearing last_char.
+                    } else {
+                        state.select(Some(value as usize));
+                        self.last_char = Some((c, Instant::now()));
                     }
+
+                    return; // Needed to avoid accidentally clearing last_char.
+                }
             }
             'g' => {
                 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]

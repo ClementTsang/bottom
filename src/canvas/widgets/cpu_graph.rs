@@ -42,11 +42,12 @@ impl Painter {
 
             // Update draw loc in widget map
             if app_state.should_get_widget_bounds()
-                && let Some(bottom_widget) = app_state.widget_map.get_mut(&widget_id) {
-                    bottom_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
-                    bottom_widget.bottom_right_corner =
-                        Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
-                }
+                && let Some(bottom_widget) = app_state.widget_map.get_mut(&widget_id)
+            {
+                bottom_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+                bottom_widget.bottom_right_corner =
+                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
+            }
         } else {
             let graph_width = draw_loc.width - legend_width;
             let (graph_index, legend_index, constraints) =

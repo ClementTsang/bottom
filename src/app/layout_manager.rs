@@ -182,34 +182,35 @@ impl BottomLayout {
                                 && let Some(current_col_row) = current_col.1.get(&(
                                     col_row_height_percentage_start,
                                     col_row_height_percentage_end,
-                                )) {
-                                    if let Some(to_left_widget) = current_col_row
-                                        .1
-                                        .range(
-                                            ..(
-                                                widget_width_percentage_start,
-                                                widget_width_percentage_start,
-                                            ),
-                                        )
-                                        .next_back()
-                                    {
-                                        widget.left_neighbour = Some(*to_left_widget.1);
-                                    }
-
-                                    // Right
-                                    if let Some(to_right_neighbour) = current_col_row
-                                        .1
-                                        .range(
-                                            (
-                                                widget_width_percentage_end,
-                                                widget_width_percentage_end,
-                                            )..,
-                                        )
-                                        .next()
-                                    {
-                                        widget.right_neighbour = Some(*to_right_neighbour.1);
-                                    }
+                                ))
+                            {
+                                if let Some(to_left_widget) = current_col_row
+                                    .1
+                                    .range(
+                                        ..(
+                                            widget_width_percentage_start,
+                                            widget_width_percentage_start,
+                                        ),
+                                    )
+                                    .next_back()
+                                {
+                                    widget.left_neighbour = Some(*to_left_widget.1);
                                 }
+
+                                // Right
+                                if let Some(to_right_neighbour) = current_col_row
+                                    .1
+                                    .range(
+                                        (
+                                            widget_width_percentage_end,
+                                            widget_width_percentage_end,
+                                        )..,
+                                    )
+                                    .next()
+                                {
+                                    widget.right_neighbour = Some(*to_right_neighbour.1);
+                                }
+                            }
 
                             if widget.left_neighbour.is_none()
                                 && let Some(to_left_col) = current_row
@@ -218,86 +219,86 @@ impl BottomLayout {
                                         ..(col_width_percentage_start, col_width_percentage_start),
                                     )
                                     .next_back()
-                                {
-                                    // Check left in same row
-                                    let mut current_best_distance = 0;
-                                    let mut current_best_widget_id = widget.widget_id;
+                            {
+                                // Check left in same row
+                                let mut current_best_distance = 0;
+                                let mut current_best_widget_id = widget.widget_id;
 
-                                    for widget_position in &(to_left_col.1).1 {
-                                        let candidate_start = (widget_position.0).0;
-                                        let candidate_end = (widget_position.0).1;
+                                for widget_position in &(to_left_col.1).1 {
+                                    let candidate_start = (widget_position.0).0;
+                                    let candidate_end = (widget_position.0).1;
 
-                                        if is_intersecting(
+                                    if is_intersecting(
+                                        (
+                                            col_row_height_percentage_start,
+                                            col_row_height_percentage_end,
+                                        ),
+                                        (candidate_start, candidate_end),
+                                    ) {
+                                        let candidate_distance = get_distance(
                                             (
                                                 col_row_height_percentage_start,
                                                 col_row_height_percentage_end,
                                             ),
                                             (candidate_start, candidate_end),
-                                        ) {
-                                            let candidate_distance = get_distance(
-                                                (
-                                                    col_row_height_percentage_start,
-                                                    col_row_height_percentage_end,
-                                                ),
-                                                (candidate_start, candidate_end),
-                                            );
+                                        );
 
-                                            if current_best_distance < candidate_distance
-                                                && let Some(new_best_widget) =
-                                                    (widget_position.1).1.iter().next_back()
-                                                {
-                                                    current_best_distance = candidate_distance + 1;
-                                                    current_best_widget_id = *(new_best_widget.1);
-                                                }
+                                        if current_best_distance < candidate_distance
+                                            && let Some(new_best_widget) =
+                                                (widget_position.1).1.iter().next_back()
+                                        {
+                                            current_best_distance = candidate_distance + 1;
+                                            current_best_widget_id = *(new_best_widget.1);
                                         }
                                     }
-                                    if current_best_distance > 0 {
-                                        widget.left_neighbour = Some(current_best_widget_id);
-                                    }
                                 }
+                                if current_best_distance > 0 {
+                                    widget.left_neighbour = Some(current_best_widget_id);
+                                }
+                            }
 
                             if widget.right_neighbour.is_none()
                                 && let Some(to_right_col) = current_row
                                     .1
                                     .range((col_width_percentage_end, col_width_percentage_end)..)
                                     .next()
-                                {
-                                    // Check right in same row
-                                    let mut current_best_distance = 0;
-                                    let mut current_best_widget_id = widget.widget_id;
+                            {
+                                // Check right in same row
+                                let mut current_best_distance = 0;
+                                let mut current_best_widget_id = widget.widget_id;
 
-                                    for widget_position in &(to_right_col.1).1 {
-                                        let candidate_start = (widget_position.0).0;
-                                        let candidate_end = (widget_position.0).1;
+                                for widget_position in &(to_right_col.1).1 {
+                                    let candidate_start = (widget_position.0).0;
+                                    let candidate_end = (widget_position.0).1;
 
-                                        if is_intersecting(
+                                    if is_intersecting(
+                                        (
+                                            col_row_height_percentage_start,
+                                            col_row_height_percentage_end,
+                                        ),
+                                        (candidate_start, candidate_end),
+                                    ) {
+                                        let candidate_distance = get_distance(
                                             (
                                                 col_row_height_percentage_start,
                                                 col_row_height_percentage_end,
                                             ),
                                             (candidate_start, candidate_end),
-                                        ) {
-                                            let candidate_distance = get_distance(
-                                                (
-                                                    col_row_height_percentage_start,
-                                                    col_row_height_percentage_end,
-                                                ),
-                                                (candidate_start, candidate_end),
-                                            );
+                                        );
 
-                                            if current_best_distance < candidate_distance
-                                                && let Some(new_best_widget) =
-                                                    (widget_position.1).1.iter().next()
-                                                {
-                                                    current_best_distance = candidate_distance + 1;
-                                                    current_best_widget_id = *(new_best_widget.1);
-                                                }
+                                        if current_best_distance < candidate_distance
+                                            && let Some(new_best_widget) =
+                                                (widget_position.1).1.iter().next()
+                                        {
+                                            current_best_distance = candidate_distance + 1;
+                                            current_best_widget_id = *(new_best_widget.1);
                                         }
                                     }
-                                    if current_best_distance > 0 {
-                                        widget.right_neighbour = Some(current_best_widget_id);
-                                    }
                                 }
+                                if current_best_distance > 0 {
+                                    widget.right_neighbour = Some(current_best_widget_id);
+                                }
+                            }
 
                             // Check up/down within same row;
                             // else check up/down with other rows

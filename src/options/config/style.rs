@@ -243,9 +243,10 @@ impl Styles {
         );
 
         if let Some(widgets) = &config.widgets
-            && let Some(widget_borders) = widgets.widget_border_type {
-                self.border_type = widget_borders.into();
-            }
+            && let Some(widget_borders) = widgets.widget_border_type
+        {
+            self.border_type = widget_borders.into();
+        }
 
         Ok(())
     }

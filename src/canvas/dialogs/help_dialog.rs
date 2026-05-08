@@ -28,10 +28,11 @@ impl Painter {
             let mut section = section.iter();
 
             if itx > 0
-                && let Some(header) = section.next() {
-                    styled_help_spans.push(Span::default());
-                    styled_help_spans.push(Span::styled(*header, self.styles.table_header_style));
-                }
+                && let Some(header) = section.next()
+            {
+                styled_help_spans.push(Span::default());
+                styled_help_spans.push(Span::styled(*header, self.styles.table_header_style));
+            }
 
             section.for_each(|&text| {
                 styled_help_spans.push(Span::styled(text, self.styles.text_style))

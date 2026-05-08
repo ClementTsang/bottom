@@ -59,15 +59,16 @@ pub fn get_nvidia_vecs(
                     if let Ok(name) = device.name() {
                         if widgets_to_harvest.use_mem
                             && let Ok(mem) = device.memory_info()
-                                && let Some(total_bytes) = NonZeroU64::new(mem.total) {
-                                    mem_vec.push((
-                                        name.clone(),
-                                        MemData {
-                                            total_bytes,
-                                            used_bytes: mem.used,
-                                        },
-                                    ));
-                                }
+                            && let Some(total_bytes) = NonZeroU64::new(mem.total)
+                        {
+                            mem_vec.push((
+                                name.clone(),
+                                MemData {
+                                    total_bytes,
+                                    used_bytes: mem.used,
+                                },
+                            ));
+                        }
 
                         if (widgets_to_harvest.use_temp || widgets_to_harvest.use_temp_graph)
                             && (Filter::optional_should_keep(filter, &name)

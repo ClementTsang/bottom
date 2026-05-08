@@ -53,29 +53,29 @@ impl Painter {
             && let Some((index, avg)) = cpu_data
                 .iter()
                 .find_position(|&datum| matches!(datum.data_type, CpuDataType::Avg))
-            {
-                let (outer, inner, ratio, style) = self.cpu_info(avg, show_decimal);
-                let [cores_loc, mut avg_loc] =
-                    Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(draw_loc);
+        {
+            let (outer, inner, ratio, style) = self.cpu_info(avg, show_decimal);
+            let [cores_loc, mut avg_loc] =
+                Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(draw_loc);
 
-                // The cores section all have horizontal margin, so to line up with the cores we
-                // need to add some margin ourselves.
-                avg_loc.x += 1;
-                avg_loc.width -= 2;
+            // The cores section all have horizontal margin, so to line up with the cores we
+            // need to add some margin ourselves.
+            avg_loc.x += 1;
+            avg_loc.width -= 2;
 
-                f.render_widget(
-                    PipeGauge::default()
-                        .gauge_style(style)
-                        .label_style(style)
-                        .inner_label(inner)
-                        .start_label(outer)
-                        .ratio(ratio.into()),
-                    avg_loc,
-                );
-                avg_row_count += 1;
-                avg_index = index;
-                draw_loc = cores_loc;
-            }
+            f.render_widget(
+                PipeGauge::default()
+                    .gauge_style(style)
+                    .label_style(style)
+                    .inner_label(inner)
+                    .start_label(outer)
+                    .ratio(ratio.into()),
+                avg_loc,
+            );
+            avg_row_count += 1;
+            avg_index = index;
+            draw_loc = cores_loc;
+        }
 
         if draw_loc.height > 0 {
             let remaining_height = usize::from(draw_loc.height);

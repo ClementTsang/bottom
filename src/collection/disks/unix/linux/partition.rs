@@ -192,9 +192,10 @@ pub(crate) fn physical_partitions() -> anyhow::Result<Vec<Partition>> {
     while let Ok(bytes) = reader.read_line(&mut line) {
         if bytes > 0 {
             if let Ok(partition) = Partition::from_str(&line)
-                && partition.fs_type().is_physical() {
-                    results.push(partition);
-                }
+                && partition.fs_type().is_physical()
+            {
+                results.push(partition);
+            }
 
             line.clear();
         } else {

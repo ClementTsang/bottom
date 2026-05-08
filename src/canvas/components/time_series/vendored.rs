@@ -840,10 +840,11 @@ impl<F: Copy + Default + Into<f64>> Widget for TimeChart<'_, F> {
 
         if let Some(y) = layout.axis_x
             && let Some(x) = layout.axis_y
-                && let Some(cell) = buf.cell_mut((x, y)) {
-                    cell.set_symbol(symbols::line::BOTTOM_LEFT)
-                        .set_style(self.x_axis.style);
-                }
+            && let Some(cell) = buf.cell_mut((x, y))
+        {
+            cell.set_symbol(symbols::line::BOTTOM_LEFT)
+                .set_style(self.x_axis.style);
+        }
 
         let x_bounds = self.x_axis.bounds.get_bounds();
         let y_bounds = self.y_axis.bounds.get_bounds();
@@ -859,40 +860,42 @@ impl<F: Copy + Default + Into<f64>> Widget for TimeChart<'_, F> {
             .render(graph_area, buf);
 
         if let Some((x, y)) = layout.title_x
-            && let Some(title) = self.x_axis.title.as_ref() {
-                let width = graph_area
-                    .right()
-                    .saturating_sub(x)
-                    .min(title.width() as u16);
-                buf.set_style(
-                    Rect {
-                        x,
-                        y,
-                        width,
-                        height: 1,
-                    },
-                    original_style,
-                );
-                buf.set_line(x, y, title, width);
-            }
+            && let Some(title) = self.x_axis.title.as_ref()
+        {
+            let width = graph_area
+                .right()
+                .saturating_sub(x)
+                .min(title.width() as u16);
+            buf.set_style(
+                Rect {
+                    x,
+                    y,
+                    width,
+                    height: 1,
+                },
+                original_style,
+            );
+            buf.set_line(x, y, title, width);
+        }
 
         if let Some((x, y)) = layout.title_y
-            && let Some(title) = self.y_axis.title.as_ref() {
-                let width = graph_area
-                    .right()
-                    .saturating_sub(x)
-                    .min(title.width() as u16);
-                buf.set_style(
-                    Rect {
-                        x,
-                        y,
-                        width,
-                        height: 1,
-                    },
-                    original_style,
-                );
-                buf.set_line(x, y, title, width);
-            }
+            && let Some(title) = self.y_axis.title.as_ref()
+        {
+            let width = graph_area
+                .right()
+                .saturating_sub(x)
+                .min(title.width() as u16);
+            buf.set_style(
+                Rect {
+                    x,
+                    y,
+                    width,
+                    height: 1,
+                },
+                original_style,
+            );
+            buf.set_line(x, y, title, width);
+        }
 
         if let Some(legend_area) = layout.legend_area {
             buf.set_style(legend_area, original_style);

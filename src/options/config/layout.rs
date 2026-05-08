@@ -87,9 +87,10 @@ impl Row {
                         } else {
                             // Check default flag
                             if let Some(default_widget_flag) = widget.default
-                                && default_widget_flag {
-                                    *default_widget_id = *iter_id;
-                                }
+                                && default_widget_flag
+                            {
+                                *default_widget_id = *iter_id;
+                            }
                         }
 
                         children.push(match widget_type {
@@ -144,9 +145,10 @@ impl Row {
                             } else {
                                 // Check default flag
                                 if let Some(default_widget_flag) = widget.default
-                                    && default_widget_flag {
-                                        *default_widget_id = *iter_id;
-                                    }
+                                    && default_widget_flag
+                                {
+                                    *default_widget_id = *iter_id;
+                                }
                             }
 
                             match widget_type {
