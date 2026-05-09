@@ -52,7 +52,6 @@ impl Default for AppHelpDialogState {
 
 impl AppHelpDialogState {
     /// Get whether the search state is active.
-    #[inline]
     pub fn is_searching(&self) -> bool {
         self.is_searching
     }
