@@ -237,22 +237,15 @@ impl Painter {
             search_input::render_search_input(
                 f,
                 input_area,
-                search_input::SearchInputConfig {
-                    query: app_state
-                        .help_dialog_state
-                        .search_input_state
-                        .current_query(),
-                    cursor_index: app_state
-                        .help_dialog_state
-                        .search_input_state
-                        .cursor_index(),
+                search_input::SearchInputState {
+                    input_field_state: &app_state.help_dialog_state.search_input_state,
                     is_focused: true,
                     prefix: "Search: ",
                     hint: Some("Type to search, Esc to close"),
                 },
                 search_input::SearchInputStyles {
                     prefix_style: self.styles.widget_title_style,
-                    query_style: self.styles.text_style,
+                    text_style: self.styles.text_style,
                     cursor_style: self.styles.selected_text_style,
                     hint_style: self.styles.text_style.dim(),
                 },

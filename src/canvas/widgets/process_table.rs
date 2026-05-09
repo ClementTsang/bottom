@@ -1,16 +1,18 @@
 use tui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::Style,
     text::{Line, Span},
     widgets::Paragraph,
 };
 
 use crate::{
-    app::{App, AppSearchState},
+    app::App,
     canvas::{
         Painter,
-        components::data_table::{DrawInfo, SelectionState},
+        components::{
+            data_table::{DrawInfo, SelectionState},
+            search_input::build_query_spans,
+        },
         drawing_utils::widget_block,
     },
 };
@@ -105,48 +107,6 @@ impl Painter {
     fn draw_search_field(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        fn build_query_span(
-            search_state: &AppSearchState, available_width: usize, is_on_widget: bool,
-            currently_selected_text_style: Style, text_style: Style,
-        ) -> Vec<Span<'_>> {
-            let query = search_state.input_field_state.current_query();
-
-            if !is_on_widget {
-                // This is easier - we just need to get a range of graphemes, rather than
-                // dealing with possibly inserting a cursor (as none is shown!)
-                return vec![Span::styled(query.to_string(), text_style)];
-            }
-
-            let start_index = search_state.input_field_state.display_start_index();
-            let cursor_index = search_state.input_field_state.cursor_index();
-            let mut current_width = 0;
-            let mut res = Vec::with_capacity(available_width);
-
-            for (index, grapheme, lengths) in search_state.input_field_state.graphemes_with_ranges()
-            {
-                if index < start_index {
-                    continue;
-                } else if current_width > available_width {
-                    break;
-                } else {
-                    let styled = if index == cursor_index {
-                        Span::styled(grapheme, currently_selected_text_style)
-                    } else {
-                        Span::styled(grapheme, text_style)
-                    };
-
-                    res.push(styled);
-                    current_width += lengths.end - lengths.start;
-                }
-            }
-
-            if cursor_index == query.len() {
-                res.push(Span::styled(" ", currently_selected_text_style))
-            }
-
-            res
-        }
-
         let is_basic = app_state.app_config_fields.use_basic_mode;
 
         if let Some(proc_widget_state) = app_state
@@ -172,8 +132,8 @@ impl Painter {
                 .get_start_position(available_width, app_state.is_force_redraw);
 
             // TODO: [CURSOR] blinking cursor?
-            let query_with_cursor = build_query_span(
-                &proc_widget_state.proc_search.search_state,
+            let query_with_cursor = build_query_spans(
+                &proc_widget_state.proc_search.search_state.input_field_state,
                 available_width,
                 is_selected,
                 self.styles.selected_text_style,
