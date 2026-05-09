@@ -34,19 +34,13 @@ pub struct TimeseriesState {
 }
 
 impl TimeseriesState {
-    /// Create a new [`TimeseriesState`] using the given config.
-    pub fn new(config: TimeseriesConfig) -> Self {
+    /// Create a new [`TimeseriesState`] using the given config and `autohide_timer` setting.
+    pub fn new(config: TimeseriesConfig, autohide_timer: Option<Instant>) -> Self {
         Self {
             current_display_time: config.default_time_value,
             config,
-            autohide_timer: None,
+            autohide_timer,
         }
-    }
-
-    /// Set the autohide timer.
-    pub fn with_autohide_timer(mut self, autohide_timer: Option<Instant>) -> Self {
-        self.autohide_timer = autohide_timer;
-        self
     }
 
     /// Get a mutable reference to the autohide timer.

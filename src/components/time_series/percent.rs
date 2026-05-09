@@ -7,7 +7,7 @@ use super::{
 };
 
 /// A time series graph that expects data to be in a percentage format,
-/// from 0.0 to 100.0.
+/// from 0% to 100%.
 pub struct PercentTimeGraph {
     state: TimeseriesState,
 }
@@ -15,7 +15,7 @@ pub struct PercentTimeGraph {
 impl PercentTimeGraph {
     pub(crate) fn new(config: TimeseriesConfig, autohide_timer: Option<Instant>) -> Self {
         PercentTimeGraph {
-            state: TimeseriesState::new(config).with_autohide_timer(autohide_timer),
+            state: TimeseriesState::new(config, autohide_timer),
         }
     }
 
