@@ -177,7 +177,12 @@ fn test_styling_sanity_check() {
 
 #[test]
 fn test_styling_sanity_check_2() {
-    run_and_kill(&["-C", "./tests/valid_configs/styling_2.toml"]);
+    run_and_kill(&["-C", "./tests/valid_configs/all_styling.toml"]);
+}
+
+#[test]
+fn test_color_spelling_is_valid() {
+    run_and_kill(&["-C", "./tests/valid_configs/all_styling_color.toml"]);
 }
 
 #[test]
@@ -199,4 +204,9 @@ fn test_linux_only() {
 #[test]
 fn test_temp_disk_sort_columns() {
     run_and_kill(&["-C", "./tests/valid_configs/temp_disk_sort_columns.toml"]);
+}
+
+#[test]
+fn test_proc_default_sort() {
+    run_and_kill(&["-C", "./tests/valid_configs/proc_default_sort.toml"]);
 }

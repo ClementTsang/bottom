@@ -53,11 +53,12 @@ pub(crate) struct GeneralConfig {
     pub(crate) disable_click: Option<bool>,
     pub(crate) disable_keys: Option<bool>,
     pub(crate) no_write: Option<bool>,
-    pub(crate) network_legend: Option<String>,
+    pub(crate) network_legend: Option<String>, // TODO: Migrate this to per-widget config
     pub(crate) memory_legend: Option<String>,
     pub(crate) process_memory_as_value: Option<bool>,
     pub(crate) tree: Option<bool>,
     pub(crate) show_table_scroll_position: Option<bool>,
+    pub(crate) show_table_scroll_bar: Option<bool>,
     pub(crate) process_command: Option<bool>,
     // This does nothing on Windows, but we leave it enabled to make the config file consistent
     // across platforms.

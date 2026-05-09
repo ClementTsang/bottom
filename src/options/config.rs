@@ -7,6 +7,7 @@ pub mod network;
 pub mod process;
 pub mod style;
 pub mod temperature;
+pub mod temperature_graph;
 
 use disk::DiskConfig;
 use flags::GeneralConfig;
@@ -14,6 +15,7 @@ use network::NetworkConfig;
 use serde::{Deserialize, Serialize};
 use style::StyleConfig;
 use temperature::TempConfig;
+use temperature_graph::TempGraphConfig;
 
 pub use self::ignore_list::IgnoreList;
 use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
@@ -21,7 +23,7 @@ use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
 /// Overall config for `bottom`.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
-#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq))]
 pub struct Config {
     pub(crate) flags: Option<GeneralConfig>,
     pub(crate) styles: Option<StyleConfig>,
@@ -29,6 +31,7 @@ pub struct Config {
     pub(crate) processes: Option<ProcessesConfig>,
     pub(crate) disk: Option<DiskConfig>,
     pub(crate) temperature: Option<TempConfig>,
+    pub(crate) temperature_graph: Option<TempGraphConfig>,
     pub(crate) network: Option<NetworkConfig>,
     pub(crate) cpu: Option<CpuConfig>,
 }

@@ -2,15 +2,22 @@ use std::cmp::{max, min};
 
 use tui::{
     Frame,
-    layout::{Alignment, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     text::{Line, Span},
-    widgets::{Paragraph, Wrap},
+    widgets::{Padding, Paragraph, Wrap},
 };
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
     app::App,
-    canvas::{Painter, components::search_input, drawing_utils::dialog_block},
+    canvas::{
+        Painter,
+        components::{
+            scroll_bar::{ScrollBarArgs, dialog_scroll_bar_area, draw_scroll_bar},
+            search_input,
+        },
+        drawing_utils::dialog_block,
+    },
     constants::{self, HELP_TEXT},
 };
 
@@ -114,11 +121,13 @@ impl Painter {
     pub fn draw_help_dialog(&self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect) {
         let styled_help_text = self.help_text_lines(app_state);
 
+        // Reserve one column on the right for the scroll bar.
         let block = dialog_block(self.styles.border_type, self.styles.border_style)
             .title_top(Line::styled(" Help ", self.styles.widget_title_style))
             .title_top(
                 Line::styled(" Esc to close ", self.styles.widget_title_style).right_aligned(),
-            );
+            )
+            .padding(Padding::right(1));
 
         if app_state.should_get_widget_bounds() {
             // We must also recalculate how many lines are wrapping to properly get
@@ -126,21 +135,19 @@ impl Painter {
 
             // Split into content and input areas; use content area for height and scrolling math.
             let content_area = if app_state.help_dialog_state.is_searching {
-                tui::layout::Layout::default()
-                    .direction(tui::layout::Direction::Vertical)
-                    .constraints([
-                        tui::layout::Constraint::Min(1),
-                        tui::layout::Constraint::Length(1),
-                    ])
+                Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([Constraint::Min(1), Constraint::Length(1)])
                     .areas::<2>(draw_loc)[0]
             } else {
                 draw_loc
             };
 
-            app_state.help_dialog_state.height = block.inner(content_area).height;
+            let inner = block.inner(content_area);
+            app_state.help_dialog_state.height = inner.height;
 
             let mut overflow_buffer = 0;
-            let paragraph_width = max(draw_loc.width.saturating_sub(2), 1) as usize;
+            let paragraph_width: usize = max(inner.width, 1).into();
             let mut prev_section_len = 0;
 
             if app_state.help_dialog_state.search_query.is_empty() {
@@ -197,12 +204,9 @@ impl Painter {
 
         // Split into content and input areas for rendering
         let content_area = if app_state.help_dialog_state.is_searching {
-            tui::layout::Layout::default()
-                .direction(tui::layout::Direction::Vertical)
-                .constraints([
-                    tui::layout::Constraint::Min(1),
-                    tui::layout::Constraint::Length(1),
-                ])
+            Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Min(1), Constraint::Length(1)])
                 .areas::<2>(draw_loc)[0]
         } else {
             draw_loc
@@ -227,12 +231,9 @@ impl Painter {
 
         // Render input pane only when searching with visible cursor
         if app_state.help_dialog_state.is_searching {
-            let input_area = tui::layout::Layout::default()
-                .direction(tui::layout::Direction::Vertical)
-                .constraints([
-                    tui::layout::Constraint::Min(1),
-                    tui::layout::Constraint::Length(1),
-                ])
+            let input_area = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Min(1), Constraint::Length(1)])
                 .areas::<2>(draw_loc)[1];
 
             search_input::render_search_input(
@@ -253,5 +254,29 @@ impl Painter {
                 },
             );
         }
+
+        let scrollbar_area = dialog_scroll_bar_area(draw_loc);
+        let content_length = app_state
+            .help_dialog_state
+            .scroll_state
+            .max_scroll_index
+            .into();
+        let viewport_length = app_state.help_dialog_state.height.into();
+        let position = app_state
+            .help_dialog_state
+            .scroll_state
+            .current_scroll_index
+            .into();
+
+        draw_scroll_bar(
+            f,
+            scrollbar_area,
+            ScrollBarArgs {
+                content_length,
+                viewport_length,
+                position,
+                style: self.styles.text_style,
+            },
+        );
     }
 }

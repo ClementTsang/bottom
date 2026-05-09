@@ -8,6 +8,7 @@
 //! *usage* of bottom, refer to [here](https://bottom.pages.dev/stable/).
 
 pub(crate) mod app;
+pub(crate) mod components;
 mod utils {
     pub(crate) mod cancellation_token;
     pub(crate) mod conversion;

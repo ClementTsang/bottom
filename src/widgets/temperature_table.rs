@@ -135,6 +135,7 @@ impl TempWidgetState {
                 left_to_right: false,
                 is_basic: config.use_basic_mode,
                 show_table_scroll_position: config.show_table_scroll_position,
+                show_table_scroll_bar: config.show_table_scroll_bar,
                 show_current_entry_when_unfocused: false,
             },
             // This is hard-coded, but there's only two columns so it's fine.

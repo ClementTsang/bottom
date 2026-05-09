@@ -45,7 +45,7 @@ fn init_nvml() -> Result<Nvml, NvmlError> {
 /// Returns the GPU data from NVIDIA cards.
 #[inline]
 pub fn get_nvidia_vecs(
-    filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
+    filter: &Option<Filter>, graph_filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
 ) -> Option<GpusData> {
     if let Ok(nvml) = NVML_DATA.get_or_init(init_nvml) {
         if let Ok(num_gpu) = nvml.device_count() {
@@ -71,8 +71,9 @@ pub fn get_nvidia_vecs(
                             }
                         }
 
-                        if widgets_to_harvest.use_temp
-                            && Filter::optional_should_keep(filter, &name)
+                        if (widgets_to_harvest.use_temp || widgets_to_harvest.use_temp_graph)
+                            && (Filter::optional_should_keep(filter, &name)
+                                || Filter::optional_should_keep(graph_filter, &name))
                         {
                             if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
                                 temp_vec.push(TempSensorData {

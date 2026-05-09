@@ -9,7 +9,7 @@ use tui::{
 
 use super::{Context, Data, Point, TimeChart};
 
-impl TimeChart<'_> {
+impl<F: Copy + Default + Into<f64>> TimeChart<'_, F> {
     pub(crate) fn draw_points(&self, ctx: &mut Context<'_>) {
         // Idea is to:
         // - Go over all datasets, determine *where* a point will be drawn.
@@ -52,7 +52,7 @@ impl TimeChart<'_> {
                     // XXX: Should this be generic over dataset.graph_type instead? That would allow
                     // us to move transformations behind a type - however, that
                     // also means that there's some complexity added.
-                    (from_start, self.scaling.scale(val))
+                    (from_start, self.scaling.scale(val.into()))
                 })
                 .tuple_windows()
             {
@@ -115,7 +115,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn time_graph_test_interpolation() {
+    fn time_series_test_interpolation() {
         let data = [(-3.0, 8.0), (-1.0, 6.0), (0.0, 5.0)];
 
         assert_eq!(interpolate_point(&data[1], &data[2], 0.0), 5.0);

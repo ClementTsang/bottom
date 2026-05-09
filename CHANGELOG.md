@@ -31,9 +31,13 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 - [#1938](https://github.com/ClementTsang/bottom/pull/1938), [#1980](https://github.com/ClementTsang/bottom/pull/1980): Report average packet size and packet rate.
 - [#2003](https://github.com/ClementTsang/bottom/pull/2003): Configurable default sort column for temperature and disk table widgets.
-- [#1979](https://github.com/ClementTsang/bottom/pull/1979): Add global `bg_color` option to set widget background colour.
-- [#2039](https://github.com/ClementTsang/bottom/pull/2039): Support drawing a line separator between the column headers and data.
-- [#1948](https://github.com/ClementTsang/bottom/pull/1948): Support `!=` operator and `!` negation prefixes in query searches.
+- [#1979](https://github.com/ClementTsang/bottom/pull/1979): Add a global `bg_colour` config option to set widget background colour.
+- [#2039](https://github.com/ClementTsang/bottom/pull/2039): Add a config option for drawing a line separator (`table_gap`) between the column headers and data.
+- [#1948](https://github.com/ClementTsang/bottom/pull/1948): Add support for both an `!=` operator and `!` negation prefixes in query searches.
+- [#2045](https://github.com/ClementTsang/bottom/pull/2045): Add support for showing a decimal place for CPU usage
+- [#2046](https://github.com/ClementTsang/bottom/pull/2046): Add a `show_table_scroll_bar` config option to show a scroll bar on table widgets.
+- [#2048](https://github.com/ClementTsang/bottom/pull/2048): Add support for a temperature graph to show sensor temperature change over time.
+- [#2053](https://github.com/ClementTsang/bottom/pull/2053): Add a configurable default sort column for the process widget (`processes.default_sort` or `--process-default-sort`).
 
 ### Changes
 

@@ -3,7 +3,7 @@ use tui::{
     widgets::BorderType,
 };
 
-use super::color;
+use super::colour;
 use crate::options::config::style::Styles;
 
 impl Styles {
@@ -17,101 +17,107 @@ impl Styles {
         const HIGHLIGHT_COLOUR: Color = Color::LightBlue;
         const AVG_COLOUR: Color = Color::Red;
         const ALL_COLOUR: Color = Color::Green;
-        const DEFAULT_SELECTED_TEXT_STYLE: Style = color!(Color::Black).bg(HIGHLIGHT_COLOUR);
+        const DEFAULT_SELECTED_TEXT_STYLE: Style = colour!(Color::Black).bg(HIGHLIGHT_COLOUR);
         const TEXT_COLOUR: Color = Color::Gray;
 
+        let list_colours = vec![
+            colour!(Color::LightMagenta),
+            colour!(Color::LightYellow),
+            colour!(Color::LightCyan),
+            colour!(Color::LightGreen),
+            colour!(Color::LightBlue),
+            colour!(Color::Cyan),
+            colour!(Color::Green),
+            colour!(Color::Blue),
+        ];
+
         Self {
-            ram_style: color!(FIRST_COLOUR),
+            ram_style: colour!(FIRST_COLOUR),
             #[cfg(not(target_os = "windows"))]
-            cache_style: color!(FIFTH_COLOUR),
-            swap_style: color!(SECOND_COLOUR),
+            cache_style: colour!(FIFTH_COLOUR),
+            swap_style: colour!(SECOND_COLOUR),
             #[cfg(feature = "zfs")]
-            arc_style: color!(THIRD_COLOUR),
+            arc_style: colour!(THIRD_COLOUR),
             #[cfg(feature = "gpu")]
             gpu_colours: vec![
-                color!(FOURTH_COLOUR),
-                color!(Color::LightBlue),
-                color!(Color::LightRed),
-                color!(Color::Cyan),
-                color!(Color::Green),
-                color!(Color::Blue),
-                color!(Color::Red),
+                colour!(FOURTH_COLOUR),
+                colour!(Color::LightBlue),
+                colour!(Color::LightRed),
+                colour!(Color::Cyan),
+                colour!(Color::Green),
+                colour!(Color::Blue),
+                colour!(Color::Red),
             ],
-            rx_style: color!(FIRST_COLOUR),
-            tx_style: color!(SECOND_COLOUR),
-            total_rx_style: color!(THIRD_COLOUR),
-            total_tx_style: color!(FOURTH_COLOUR),
-            all_cpu_colour: color!(ALL_COLOUR),
-            avg_cpu_colour: color!(AVG_COLOUR),
-            cpu_colour_styles: vec![
-                color!(Color::LightMagenta),
-                color!(Color::LightYellow),
-                color!(Color::LightCyan),
-                color!(Color::LightGreen),
-                color!(Color::LightBlue),
-                color!(Color::Cyan),
-                color!(Color::Green),
-                color!(Color::Blue),
-            ],
-            border_style: color!(TEXT_COLOUR),
-            highlighted_border_style: color!(HIGHLIGHT_COLOUR),
-            text_style: color!(TEXT_COLOUR),
+            rx_style: colour!(FIRST_COLOUR),
+            tx_style: colour!(SECOND_COLOUR),
+            total_rx_style: colour!(THIRD_COLOUR),
+            total_tx_style: colour!(FOURTH_COLOUR),
+            all_cpu_colour: colour!(ALL_COLOUR),
+            avg_cpu_colour: colour!(AVG_COLOUR),
+            cpu_colour_styles: list_colours.clone(),
+            temp_graph_colour_styles: list_colours,
+            border_style: colour!(TEXT_COLOUR),
+            highlighted_border_style: colour!(HIGHLIGHT_COLOUR),
+            text_style: colour!(TEXT_COLOUR),
             selected_text_style: DEFAULT_SELECTED_TEXT_STYLE,
-            table_header_style: color!(HIGHLIGHT_COLOUR).add_modifier(Modifier::BOLD),
-            widget_title_style: color!(TEXT_COLOUR),
+            table_header_style: colour!(HIGHLIGHT_COLOUR).add_modifier(Modifier::BOLD),
+            widget_title_style: colour!(TEXT_COLOUR),
             general_widget_style: Style::default(),
-            graph_style: color!(TEXT_COLOUR),
-            graph_legend_style: color!(TEXT_COLOUR),
-            high_battery: color!(Color::Green),
-            medium_battery: color!(Color::Yellow),
-            low_battery: color!(Color::Red),
-            invalid_query_style: color!(Color::Red),
-            disabled_text_style: color!(Color::DarkGray),
+            graph_style: colour!(TEXT_COLOUR),
+            graph_legend_style: colour!(TEXT_COLOUR),
+            high_battery: colour!(Color::Green),
+            medium_battery: colour!(Color::Yellow),
+            low_battery: colour!(Color::Red),
+            invalid_query_style: colour!(Color::Red),
+            disabled_text_style: colour!(Color::DarkGray),
             border_type: BorderType::Plain,
             #[cfg(target_os = "linux")]
-            thread_text_style: color!(Color::Green),
+            thread_text_style: colour!(Color::Green),
         }
     }
 
     pub fn default_light_palette() -> Self {
+        let list_colours = vec![
+            colour!(Color::LightMagenta),
+            colour!(Color::LightBlue),
+            colour!(Color::LightRed),
+            colour!(Color::Cyan),
+            colour!(Color::Green),
+            colour!(Color::Blue),
+            colour!(Color::Red),
+        ];
+
         Self {
-            ram_style: color!(Color::Blue),
+            ram_style: colour!(Color::Blue),
             #[cfg(not(target_os = "windows"))]
-            cache_style: color!(Color::LightRed),
-            swap_style: color!(Color::Red),
+            cache_style: colour!(Color::LightRed),
+            swap_style: colour!(Color::Red),
             #[cfg(feature = "zfs")]
-            arc_style: color!(Color::LightBlue),
+            arc_style: colour!(Color::LightBlue),
             #[cfg(feature = "gpu")]
             gpu_colours: vec![
-                color!(Color::LightGreen),
-                color!(Color::LightCyan),
-                color!(Color::LightRed),
-                color!(Color::Cyan),
-                color!(Color::Green),
-                color!(Color::Blue),
-                color!(Color::Red),
+                colour!(Color::LightGreen),
+                colour!(Color::LightCyan),
+                colour!(Color::LightRed),
+                colour!(Color::Cyan),
+                colour!(Color::Green),
+                colour!(Color::Blue),
+                colour!(Color::Red),
             ],
-            rx_style: color!(Color::Blue),
-            tx_style: color!(Color::Red),
-            total_rx_style: color!(Color::LightBlue),
-            total_tx_style: color!(Color::LightRed),
-            cpu_colour_styles: vec![
-                color!(Color::LightMagenta),
-                color!(Color::LightBlue),
-                color!(Color::LightRed),
-                color!(Color::Cyan),
-                color!(Color::Green),
-                color!(Color::Blue),
-                color!(Color::Red),
-            ],
-            border_style: color!(Color::Black),
-            text_style: color!(Color::Black),
-            selected_text_style: color!(Color::White).bg(Color::LightBlue),
-            table_header_style: color!(Color::Black).add_modifier(Modifier::BOLD),
-            widget_title_style: color!(Color::Black),
-            graph_style: color!(Color::Black),
-            graph_legend_style: color!(Color::Black),
-            disabled_text_style: color!(Color::Gray),
+            rx_style: colour!(Color::Blue),
+            tx_style: colour!(Color::Red),
+            total_rx_style: colour!(Color::LightBlue),
+            total_tx_style: colour!(Color::LightRed),
+            cpu_colour_styles: list_colours.clone(),
+            temp_graph_colour_styles: list_colours,
+            border_style: colour!(Color::Black),
+            text_style: colour!(Color::Black),
+            selected_text_style: colour!(Color::White).bg(Color::LightBlue),
+            table_header_style: colour!(Color::Black).add_modifier(Modifier::BOLD),
+            widget_title_style: colour!(Color::Black),
+            graph_style: colour!(Color::Black),
+            graph_legend_style: colour!(Color::Black),
+            disabled_text_style: colour!(Color::Gray),
             ..Self::default_palette()
         }
     }

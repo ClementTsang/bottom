@@ -92,6 +92,9 @@
 # Shows an indicator in table widgets tracking where in the list you are.
 #show_table_scroll_position = false
 
+# Show a scroll bar on the right edge of table widgets.
+#show_table_scroll_bar = false
+
 # Show processes as their commands by default in the process widget.
 #process_command = false
 
@@ -138,6 +141,10 @@
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%, Nice, Priority
 #columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%", "Priority"]
 
+# The default sort column when bottom starts. Accepts any of the column names above.
+# If unset, defaults to CPU%.
+#default_sort = "CPU%"
+
 # Gather process child thread information
 #get_threads = false
 
@@ -146,6 +153,9 @@
 #[cpu]
 # One of "all" (default), "average"/"avg"
 #default = "average"
+
+# Whether to show a decimal place for CPU usage values.
+#show_decimal = false
 
 
 # Disk widget configuration
@@ -176,7 +186,7 @@
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 # By default, there are no mount name filters enabled. An example use case is provided below.
@@ -193,7 +203,7 @@
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 
@@ -220,7 +230,35 @@
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
+#whole_word = false
+
+
+# Temperature graph widget configuration
+#[temperature_graph]
+
+# Where to place the legend for the temperature graph widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
+#legend_position = "top-right"
+
+# An upper temperature value for the graph; entries higher than this will be hidden. If not set,
+# there is no limit. Is in the unit of `temperature_type`.
+#max_temp = 100.0
+
+# By default, there are no temperature sensor filters enabled. An example use case is provided below.
+#[temperature_graph.sensor_filter]
+# Whether to ignore any matches. Defaults to true.
+#is_list_ignored = true
+
+# A list of filters to try and match.
+#list = ["cpu", "wifi"]
+
+# Whether to use regex. Defaults to false.
+#regex = false
+
+# Whether to be case-sensitive. Defaults to false.
+#case_sensitive = false
+
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 
@@ -240,7 +278,7 @@
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 
@@ -259,54 +297,60 @@
 # or overridden if the command-line flag for a built-in theme is set.
 #theme = "default"
 
+# Styling options. You can control things like colour choices, text styling (bold, italic, etc), and more.
+# Note that any setting that uses the word "colour" can be substituted for "color" and it will still work fine.
+
 #[styles.cpu]
-#all_entry_color = "green"
-#avg_entry_color = "red"
-#cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+#all_entry_colour = "green"
+#avg_entry_colour = "red"
+#cpu_core_colours = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+
+#[styles.temp_graph]
+#temp_graph_colour_styles = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
 
 #[styles.memory]
-#ram_color = "light magenta"
-#cache_color = "light red"
-#swap_color = "light yellow"
-#arc_color = "light cyan"
-#gpu_colors = ["light blue", "light red", "cyan", "green", "blue", "red"]
+#ram_colour = "light magenta"
+#cache_colour = "light red"
+#swap_colour = "light yellow"
+#arc_colour = "light cyan"
+#gpu_colours = ["light blue", "light red", "cyan", "green", "blue", "red"]
 
 #[styles.network]
-#rx_color = "light magenta"
-#tx_color = "light yellow"
-#rx_total_color = "light cyan"
-#tx_total_color = "light green"
+#rx_colour = "light magenta"
+#tx_colour = "light yellow"
+#rx_total_colour = "light cyan"
+#tx_total_colour = "light green"
 
 #[styles.battery]
-#high_battery_color = "green"
-#medium_battery_color = "yellow"
-#low_battery_color = "red"
+#high_battery_colour = "green"
+#medium_battery_colour = "yellow"
+#low_battery_colour = "red"
 
 #[styles.tables]
-#headers = {color = "light blue", bold = true}
+#headers = {colour = "light blue", bold = true}
 
 #[styles.graphs]
-#graph_color = "gray"
-#legend_text = {color = "gray"}
+#graph_colour = "gray"
+#legend_text = {colour = "gray"}
 
 #[styles.widgets]
-#border_color = "gray"
-#selected_border_color = "light blue"
-#widget_title = {color = "gray"}
-#text = {color = "gray"}
-#selected_text = {color = "black", bg_color = "light blue"}
-#disabled_text = {color = "dark gray"}
+#border_colour = "gray"
+#selected_border_colour = "light blue"
+#widget_title = {colour = "gray"}
+#text = {colour = "gray"}
+#selected_text = {colour = "black", bg_colour = "light blue"}
+#disabled_text = {colour = "dark gray"}
 # Disabled by default
-#bg_color = "black"
+#bg_colour = "black"
 # Only on Linux
-#thread_text = {color = "green"}
+#thread_text = {colour = "green"}
 
 # Layout - layouts follow a pattern like this:
 # [[row]] represents a row in the application.
 # [[row.child]] represents either a widget or a column.
 # [[row.child.child]] represents a widget.
 #
-# All widgets must have the type value set to one of ["cpu", "mem", "proc", "net", "temp", "disk", "empty"].
+# All widgets must have the type value set to one of ["cpu", "mem", "proc", "net", "temp", "temp_graph", "disk", "empty"].
 # All layout components have a ratio value - if this is not set, then it defaults to 1.
 # The default widget layout:
 #[[row]]

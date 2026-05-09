@@ -1,9 +1,8 @@
-use std::time::Duration;
+use std::borrow::Cow;
 
 use tui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    symbols::Marker,
     text::Text,
     widgets::{Row, Table},
 };
@@ -12,17 +11,15 @@ use crate::{
     app::{App, AppConfigFields, AxisScaling},
     canvas::{
         Painter,
-        components::time_graph::{
-            AxisBound, ChartScaling, GraphData, LegendConstraints, TimeGraph,
-        },
+        components::time_series::{AxisBound, ChartScaling, GraphData, LegendConstraints},
         drawing_utils::{should_hide_x_label, widget_block},
         widgets::{PacketInfo, calculate_packet_info},
     },
+    components::time_series::GraphDrawCtx,
     utils::{
         data_units::*,
         general::{saturating_log2, saturating_log10},
     },
-    widgets::{NetWidgetHeightCache, NetWidgetState},
 };
 
 impl Painter {
@@ -66,87 +63,21 @@ impl Painter {
         {
             let shared_data = app_state.data_store.get_data();
             let network_latest_data = &(shared_data.network_harvest);
-            let rx_points = &(shared_data.timeseries_data.rx);
-            let tx_points = &(shared_data.timeseries_data.tx);
-            let times = &(shared_data.timeseries_data.time);
-            let time_start = -(network_widget_state.current_display_time as f64);
+            let rx_points = &(shared_data.time_series_data.rx);
+            let tx_points = &(shared_data.time_series_data.tx);
+            let times = &(shared_data.time_series_data.time);
 
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                &mut network_widget_state.autohide_timer,
+                network_widget_state.graph.state_mut().autohide_timer_mut(),
                 draw_loc,
             );
 
-            let y_max = {
-                if let Some(last_time) = times.last() {
-                    let cached_network_height =
-                        check_network_height_cache(network_widget_state, last_time);
-
-                    let (mut biggest, mut biggest_time, oldest_to_check) = cached_network_height
-                        .unwrap_or_else(|| {
-                            let visible_duration =
-                                Duration::from_millis(network_widget_state.current_display_time);
-
-                            let visible_left_bound = match last_time.checked_sub(visible_duration) {
-                                Some(v) => v,
-                                None => {
-                                    // On some systems (like Windows) it can be possible that the
-                                    // current display time
-                                    // causes subtraction to fail if, for example, the uptime of the
-                                    // system is too low and current_display_time is too high. See https://github.com/ClementTsang/bottom/issues/1825.
-                                    //
-                                    // As such, we instead take the oldest visible time. This is a
-                                    // bit inefficient, but
-                                    // since it should only happen rarely, it should be fine.
-                                    times
-                                        .iter()
-                                        .take_while(|t| {
-                                            last_time.duration_since(**t) < visible_duration
-                                        })
-                                        .last()
-                                        .cloned()
-                                        .unwrap_or(*last_time)
-                                }
-                            };
-
-                            (0.0, visible_left_bound, visible_left_bound)
-                        });
-
-                    for (&time, &v) in rx_points
-                        .iter_along_base(times)
-                        .rev()
-                        .take_while(|&(&time, _)| time >= oldest_to_check)
-                    {
-                        if v > biggest {
-                            biggest = v;
-                            biggest_time = time;
-                        }
-                    }
-
-                    for (&time, &v) in tx_points
-                        .iter_along_base(times)
-                        .rev()
-                        .take_while(|&(&time, _)| time >= oldest_to_check)
-                    {
-                        if v > biggest {
-                            biggest = v;
-                            biggest_time = time;
-                        }
-                    }
-
-                    network_widget_state.height_cache = Some(NetWidgetHeightCache {
-                        best_point: (biggest_time, biggest),
-                        right_edge: *last_time,
-                        period: network_widget_state.current_display_time,
-                    });
-
-                    biggest
-                } else {
-                    0.0
-                }
-            };
+            let y_max = network_widget_state
+                .graph
+                .y_max([rx_points, tx_points].into_iter(), times);
             let (adjusted_y_max, y_labels) =
                 adjust_network_data_point(y_max, &app_state.app_config_fields);
             let y_bounds = AxisBound::Max(adjusted_y_max);
@@ -193,7 +124,7 @@ impl Painter {
                         .style(self.styles.tx_style),
                 ];
 
-                graph_data.extend(vec![
+                graph_data.extend([
                     GraphData::default().style(self.styles.total_rx_style),
                     GraphData::default().style(self.styles.total_tx_style),
                 ]);
@@ -255,11 +186,7 @@ impl Painter {
                 }
             };
 
-            let marker = if app_state.app_config_fields.use_dot {
-                Marker::Dot
-            } else {
-                Marker::Braille
-            };
+            let marker = self.get_marker(app_state.app_config_fields.use_dot);
 
             let scaling = match app_state.app_config_fields.network_scale_type {
                 AxisScaling::Log => {
@@ -273,25 +200,30 @@ impl Painter {
                 AxisScaling::Linear => ChartScaling::Linear,
             };
 
-            TimeGraph {
-                x_min: time_start,
-                hide_x_labels,
+            let y_labels: Vec<Cow<'_, str>> = y_labels.into_iter().map(Into::into).collect();
+
+            network_widget_state.graph.draw(
+                f,
+                draw_loc,
+                GraphDrawCtx {
+                    title: " Network ".into(),
+                    border_style,
+                    title_style: self.styles.widget_title_style,
+                    graph_style: self.styles.graph_style,
+                    general_widget_style: self.styles.general_widget_style,
+                    border_type: self.styles.border_type,
+                    marker,
+                    hide_x_labels,
+                    is_selected: app_state.current_widget.widget_id == widget_id,
+                    is_expanded: app_state.is_expanded,
+                    legend_position: app_state.app_config_fields.network_legend_position,
+                    legend_constraints: Some(legend_constraints),
+                },
                 y_bounds,
-                y_labels: &(y_labels.into_iter().map(Into::into).collect::<Vec<_>>()),
-                graph_style: self.styles.graph_style,
-                general_widget_style: self.styles.general_widget_style,
-                border_style,
-                border_type: self.styles.border_type,
-                title: " Network ".into(),
-                is_selected: app_state.current_widget.widget_id == widget_id,
-                is_expanded: app_state.is_expanded,
-                title_style: self.styles.widget_title_style,
-                legend_position: app_state.app_config_fields.network_legend_position,
-                legend_constraints: Some(legend_constraints),
-                marker,
+                &y_labels,
                 scaling,
-            }
-            .draw(f, draw_loc, graph_data);
+                graph_data,
+            );
         }
     }
 
@@ -387,30 +319,6 @@ impl Painter {
             draw_loc,
         );
     }
-}
-
-/// Returns a cached max value, it's time, and what period it covers if it is
-/// cached.
-#[inline]
-fn check_network_height_cache(
-    network_widget_state: &NetWidgetState, last_time: &std::time::Instant,
-) -> Option<(f64, std::time::Instant, std::time::Instant)> {
-    let visible_duration = Duration::from_millis(network_widget_state.current_display_time);
-
-    if let Some(NetWidgetHeightCache {
-        best_point,
-        right_edge,
-        period,
-    }) = &network_widget_state.height_cache
-    {
-        if *period == network_widget_state.current_display_time
-            && last_time.duration_since(best_point.0) < visible_duration
-        {
-            return Some((best_point.1, best_point.0, *right_edge));
-        }
-    }
-
-    None
 }
 
 /// Returns the required labels.
