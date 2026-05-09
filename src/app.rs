@@ -224,7 +224,7 @@ impl App {
             self.is_force_redraw = true;
         } else if self.help_dialog_state.is_showing_help {
             if self.help_dialog_state.is_searching() {
-                self.help_dialog_state.disable_search();
+                self.help_dialog_state.close_search();
                 self.is_force_redraw = true;
             } else {
                 self.help_dialog_state.is_showing_help = false;
@@ -347,7 +347,7 @@ impl App {
                 _ => {}
             }
         } else if self.help_dialog_state.is_showing_help {
-            self.help_dialog_state.enable_search();
+            self.help_dialog_state.open_search();
         }
     }
 
@@ -969,7 +969,7 @@ impl App {
                     }
                     'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                     '/' => {
-                        self.help_dialog_state.enable_search();
+                        self.help_dialog_state.open_search();
                         self.is_force_redraw = true;
                     }
                     _ => {}

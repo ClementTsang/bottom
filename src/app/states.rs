@@ -56,13 +56,13 @@ impl AppHelpDialogState {
         self.is_searching
     }
 
-    /// Enable search state.
-    pub fn enable_search(&mut self) {
+    /// Opens the search dialog.
+    pub fn open_search(&mut self) {
         self.is_searching = true;
     }
 
-    /// Close the search.
-    pub fn disable_search(&mut self) {
+    /// Close the search dialog.
+    pub fn close_search(&mut self) {
         self.is_searching = false;
     }
 }
