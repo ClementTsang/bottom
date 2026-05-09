@@ -96,7 +96,7 @@ impl Painter {
                             )));
                         }
                     }
-                    // Push matching body lines
+
                     lines.extend(matched_body);
                 }
             });

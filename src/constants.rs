@@ -25,7 +25,6 @@ const HELP_CONTENTS_TEXT: [&str; 12] = [
     "Press 'Ctrl-f' or '/' to search for a keyword in the help text.",
 ];
 
-// TODO [Help]: Search in help?
 // TODO [Help]: Move to using tables for easier formatting?
 pub(crate) const GENERAL_HELP_TEXT: [&str; 28] = [
     "1 - General",

@@ -224,7 +224,6 @@ impl App {
             self.is_force_redraw = true;
         } else if self.help_dialog_state.is_showing_help {
             if self.help_dialog_state.is_searching() {
-                // Exit help search mode first if the search box was open; keep help dialog open
                 self.help_dialog_state.disable_search();
                 self.is_force_redraw = true;
             } else {
@@ -489,7 +488,6 @@ impl App {
             // Not the best way of doing things for now but works as glue.
             self.process_kill_dialog.on_enter();
         } else if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
-            // Do not close help when searching; just trigger a redraw
             self.is_force_redraw = true;
         } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
