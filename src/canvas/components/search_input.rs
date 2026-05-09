@@ -21,7 +21,7 @@ pub struct SearchInputStyles {
     pub hint_style: Style,
 }
 
-pub fn build_query_spans(
+fn build_query_spans(
     query: &str, cursor_index: usize, is_focused: bool, query_style: Style, cursor_style: Style,
 ) -> Vec<Span<'static>> {
     if !is_focused {
@@ -42,47 +42,6 @@ pub fn build_query_spans(
 
     // If cursor is at end of query, show cursor as space with cursor style
     if cursor_pos == query.len() {
-        spans.push(Span::styled(" ", cursor_style));
-    }
-
-    spans
-}
-
-pub fn build_grapheme_query_spans(
-    graphemes: &[(usize, &str, std::ops::Range<usize>)], cursor_index: usize,
-    display_start_index: usize, is_focused: bool, available_width: usize, query_style: Style,
-    cursor_style: Style,
-) -> Vec<Span<'static>> {
-    if !is_focused {
-        let query_str = graphemes
-            .iter()
-            .map(|(_, g, _)| *g)
-            .collect::<Vec<_>>()
-            .join("");
-        return vec![Span::styled(query_str, query_style)];
-    }
-
-    let mut spans = Vec::new();
-    let mut current_width = 0;
-
-    for (index, grapheme, lengths) in graphemes {
-        if *index < display_start_index {
-            continue;
-        }
-        if current_width > available_width {
-            break;
-        }
-
-        let styled = if *index == cursor_index {
-            Span::styled(grapheme.to_string(), cursor_style)
-        } else {
-            Span::styled(grapheme.to_string(), query_style)
-        };
-        spans.push(styled);
-        current_width += lengths.end - lengths.start;
-    }
-
-    if cursor_index == graphemes.len() {
         spans.push(Span::styled(" ", cursor_style));
     }
 
