@@ -1,6 +1,7 @@
 use tui::{
     Frame,
     layout::Rect,
+    style::Style,
     text::{Line, Span},
     widgets::Paragraph,
 };
@@ -14,15 +15,14 @@ pub struct SearchInputConfig<'a> {
 }
 
 pub struct SearchInputStyles {
-    pub prefix_style: tui::style::Style,
-    pub query_style: tui::style::Style,
-    pub cursor_style: tui::style::Style,
-    pub hint_style: tui::style::Style,
+    pub prefix_style: Style,
+    pub query_style: Style,
+    pub cursor_style: Style,
+    pub hint_style: Style,
 }
 
 pub fn build_query_spans(
-    query: &str, cursor_index: usize, is_focused: bool, query_style: tui::style::Style,
-    cursor_style: tui::style::Style,
+    query: &str, cursor_index: usize, is_focused: bool, query_style: Style, cursor_style: Style,
 ) -> Vec<Span<'static>> {
     if !is_focused {
         return vec![Span::styled(query.to_string(), query_style)];
@@ -50,8 +50,8 @@ pub fn build_query_spans(
 
 pub fn build_grapheme_query_spans(
     graphemes: &[(usize, &str, std::ops::Range<usize>)], cursor_index: usize,
-    display_start_index: usize, is_focused: bool, available_width: usize,
-    query_style: tui::style::Style, cursor_style: tui::style::Style,
+    display_start_index: usize, is_focused: bool, available_width: usize, query_style: Style,
+    cursor_style: Style,
 ) -> Vec<Span<'static>> {
     if !is_focused {
         let query_str = graphemes
