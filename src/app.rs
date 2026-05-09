@@ -223,11 +223,9 @@ impl App {
             self.process_kill_dialog.on_esc();
             self.is_force_redraw = true;
         } else if self.help_dialog_state.is_showing_help {
-            if self.help_dialog_state.is_searching {
-                // Exit help search mode first; keep help dialog open
-                self.help_dialog_state.is_searching = false;
-                self.help_dialog_state.search_query.clear();
-                self.help_dialog_state.search_cursor_index = 0;
+            if self.help_dialog_state.is_searching() {
+                // Exit help search mode first if the search box was open; keep help dialog open
+                self.help_dialog_state.disable_search();
                 self.is_force_redraw = true;
             } else {
                 self.help_dialog_state.is_showing_help = false;
@@ -343,6 +341,8 @@ impl App {
                 }
                 _ => {}
             }
+        } else if self.help_dialog_state.is_showing_help {
+            self.help_dialog_state.enable_search();
         }
     }
 
@@ -482,7 +482,7 @@ impl App {
         if self.process_kill_dialog.is_open() {
             // Not the best way of doing things for now but works as glue.
             self.process_kill_dialog.on_enter();
-        } else if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
+        } else if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
             // Do not close help when searching; just trigger a redraw
             self.is_force_redraw = true;
         } else if !self.is_in_dialog() {
@@ -520,12 +520,8 @@ impl App {
     }
 
     pub fn on_delete(&mut self) {
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
-            let len = self.help_dialog_state.search_query.len();
-            let idx = self.help_dialog_state.search_cursor_index.min(len);
-            if idx < len {
-                self.help_dialog_state.search_query.remove(idx);
-            }
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+            self.help_dialog_state.search_input_state.delete_at_cursor();
             self.is_force_redraw = true;
             return;
         }
@@ -558,12 +554,10 @@ impl App {
     }
 
     pub fn on_backspace(&mut self) {
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
-            if self.help_dialog_state.search_cursor_index > 0 {
-                let idx = self.help_dialog_state.search_cursor_index - 1;
-                self.help_dialog_state.search_query.remove(idx);
-                self.help_dialog_state.search_cursor_index = idx;
-            }
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+            self.help_dialog_state
+                .search_input_state
+                .delete_behind_cursor();
             self.is_force_redraw = true;
         } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             let is_in_search_widget = self.is_in_search_widget();
@@ -611,12 +605,8 @@ impl App {
     }
 
     pub fn on_left_key(&mut self) {
-        // Move help search cursor left if searching in help dialog
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
-            if self.help_dialog_state.search_cursor_index > 0 {
-                self.help_dialog_state.search_cursor_index -= 1;
-                self.is_force_redraw = true;
-            }
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+            self.help_dialog_state.search_input_state.move_left();
             return;
         }
 
@@ -667,13 +657,8 @@ impl App {
     }
 
     pub fn on_right_key(&mut self) {
-        // Move help search cursor right if searching in help dialog
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
-            let len = self.help_dialog_state.search_query.len();
-            if self.help_dialog_state.search_cursor_index < len {
-                self.help_dialog_state.search_cursor_index += 1;
-                self.is_force_redraw = true;
-            }
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+            self.help_dialog_state.search_input_state.move_right();
             return;
         }
 
@@ -741,7 +726,7 @@ impl App {
                     proc_widget_state.toggle_current_tree_branch_entry();
                 }
             }
-        } else if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching {
+        } else if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
             self.on_char_key(' ');
         }
     }
@@ -944,13 +929,10 @@ impl App {
             }
             self.handle_char(caught_char);
         } else if self.help_dialog_state.is_showing_help {
-            if self.help_dialog_state.is_searching {
-                let idx = self
-                    .help_dialog_state
-                    .search_cursor_index
-                    .min(self.help_dialog_state.search_query.len());
-                self.help_dialog_state.search_query.insert(idx, caught_char);
-                self.help_dialog_state.search_cursor_index = idx + 1;
+            if self.help_dialog_state.is_searching() {
+                self.help_dialog_state
+                    .search_input_state
+                    .insert_char(caught_char);
                 self.is_force_redraw = true;
             } else {
                 match caught_char {
@@ -967,10 +949,7 @@ impl App {
                     }
                     'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                     '/' => {
-                        // Start help dialog search; place cursor at end of current query
-                        self.help_dialog_state.is_searching = true;
-                        self.help_dialog_state.search_cursor_index =
-                            self.help_dialog_state.search_query.len();
+                        self.help_dialog_state.enable_search();
                         self.is_force_redraw = true;
                     }
                     _ => {}

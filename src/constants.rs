@@ -10,8 +10,8 @@ pub const DEFAULT_WIDGET_ID: u64 = 56709;
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 
 // Help text
-const HELP_CONTENTS_TEXT: [&str; 10] = [
-    "Either scroll or press the number key to go to the corresponding help menu section:",
+const HELP_CONTENTS_TEXT: [&str; 12] = [
+    "Scroll to browse or press the number key to go to the corresponding help menu section:",
     "1 - General",
     "2 - CPU widget",
     "3 - Process widget",
@@ -21,6 +21,8 @@ const HELP_CONTENTS_TEXT: [&str; 10] = [
     "7 - Disk widget",
     "8 - Battery widget",
     "9 - Basic memory widget",
+    "",
+    "Press 'Ctrl-f' or '/' to search for a keyword in the help text.",
 ];
 
 // TODO [Help]: Search in help?
@@ -178,7 +180,7 @@ const BASIC_MEM_HELP_TEXT: [&str; 2] = [
     "%                    Toggle between values and percentages for memory usage",
 ];
 
-pub(crate) const HELP_TEXT: [&[&str]; HELP_CONTENTS_TEXT.len()] = [
+pub(crate) const HELP_TEXT: [&[&str]; 10] = [
     &HELP_CONTENTS_TEXT,
     &GENERAL_HELP_TEXT,
     &CPU_HELP_TEXT,

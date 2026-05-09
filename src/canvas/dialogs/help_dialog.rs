@@ -28,7 +28,8 @@ impl Painter {
 
         let query = app_state
             .help_dialog_state
-            .search_query
+            .search_input_state
+            .current_query()
             .trim()
             .to_lowercase();
 
@@ -153,7 +154,7 @@ impl Painter {
             // scrolling to work on small terminal sizes... oh joy.
 
             // Split into content and input areas; use content area for height and scrolling math.
-            let content_area = if app_state.help_dialog_state.is_searching {
+            let content_area = if app_state.help_dialog_state.is_searching() {
                 Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([Constraint::Min(1), Constraint::Length(1)])
@@ -169,7 +170,12 @@ impl Painter {
             let paragraph_width: usize = max(inner.width, 1).into();
             let mut prev_section_len = 0;
 
-            if app_state.help_dialog_state.search_query.is_empty() {
+            if app_state
+                .help_dialog_state
+                .search_input_state
+                .current_query()
+                .is_empty()
+            {
                 constants::HELP_TEXT
                     .iter()
                     .enumerate()
@@ -222,7 +228,7 @@ impl Painter {
         }
 
         // Split into content and input areas for rendering
-        let content_area = if app_state.help_dialog_state.is_searching {
+        let content_area = if app_state.help_dialog_state.is_searching() {
             Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([Constraint::Min(1), Constraint::Length(1)])
@@ -249,7 +255,7 @@ impl Painter {
         );
 
         // Render input pane only when searching with visible cursor
-        if app_state.help_dialog_state.is_searching {
+        if app_state.help_dialog_state.is_searching() {
             let input_area = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([Constraint::Min(1), Constraint::Length(1)])
@@ -259,8 +265,14 @@ impl Painter {
                 f,
                 input_area,
                 search_input::SearchInputConfig {
-                    query: app_state.help_dialog_state.search_query.as_str(),
-                    cursor_index: app_state.help_dialog_state.search_cursor_index,
+                    query: app_state
+                        .help_dialog_state
+                        .search_input_state
+                        .current_query(),
+                    cursor_index: app_state
+                        .help_dialog_state
+                        .search_input_state
+                        .cursor_index(),
                     is_focused: true,
                     prefix: "Search: ",
                     hint: Some("Type to search, Esc to close"),
