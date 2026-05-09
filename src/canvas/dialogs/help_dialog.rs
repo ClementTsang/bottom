@@ -43,21 +43,16 @@ impl Painter {
             HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
                 let mut iter = section.iter();
 
-                // Section 0 (intro) - hide entirely when filtering; render fully otherwise
                 if itx == 0 {
                     return;
                 }
 
-                // Non-root sections: pull out header; render header only if section has matches in search
                 let header_opt = iter.next();
                 let header_str = header_opt.copied();
-
-                // Check if header matches the query
                 let header_matches = header_str
                     .map(|h| h.to_lowercase().contains(&query))
                     .unwrap_or(false);
 
-                // Collect matching body lines
                 let mut matched_body: Vec<Line<'_>> = Vec::new();
                 for &text in iter {
                     let lower = text.to_lowercase();
@@ -109,7 +104,6 @@ impl Painter {
             HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
                 let mut iter = section.iter();
 
-                // Section 0 (intro) - hide entirely when filtering; render fully otherwise
                 if itx == 0 {
                     for &text in iter {
                         lines.push(Line::from(Span::styled(text, self.styles.text_style)));
@@ -117,11 +111,9 @@ impl Painter {
                     return;
                 }
 
-                // Non-root sections: pull out header; render header only if section has matches in search
                 let header_opt = iter.next();
                 let header_str = header_opt.copied();
 
-                // Non-search: show header and all body lines
                 if let Some(header) = header_str {
                     lines.push(Line::from(Span::default()));
                     lines.push(Line::from(Span::styled(
