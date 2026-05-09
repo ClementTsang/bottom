@@ -293,6 +293,12 @@ impl App {
         )
     }
 
+    pub fn is_in_any_search(&self) -> bool {
+        // TODO: This is really hacky, but is fine until we do some smarter things like putting event catching at a per-widget/dialog state.
+        self.is_in_search_widget()
+            || (self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching())
+    }
+
     fn reset_multi_tap_keys(&mut self) {
         self.awaiting_second_char = false;
         self.second_char = None;
@@ -811,7 +817,12 @@ impl App {
     }
 
     pub fn skip_cursor_beginning(&mut self) {
-        if !self.ignore_normal_keybinds() {
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+            self.help_dialog_state
+                .search_input_state
+                .skip_to_beginning();
+            self.is_force_redraw = true;
+        } else if !self.ignore_normal_keybinds() {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
@@ -833,7 +844,10 @@ impl App {
     }
 
     pub fn skip_cursor_end(&mut self) {
-        if !self.ignore_normal_keybinds() {
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+            self.help_dialog_state.search_input_state.skip_to_end();
+            self.is_force_redraw = true;
+        } else if !self.ignore_normal_keybinds() {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
@@ -855,7 +869,10 @@ impl App {
     }
 
     pub fn clear_search(&mut self) {
-        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+            self.help_dialog_state.search_input_state = Default::default();
+            self.is_force_redraw = true;
+        } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             if let Some(proc_widget_state) = self
                 .states
                 .proc_state
@@ -868,7 +885,12 @@ impl App {
     }
 
     pub fn clear_previous_word(&mut self) {
-        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+            self.help_dialog_state
+                .search_input_state
+                .delete_previous_word();
+            self.is_force_redraw = true;
+        } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             if let Some(proc_widget_state) = self
                 .states
                 .proc_state
