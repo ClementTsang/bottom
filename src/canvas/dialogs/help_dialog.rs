@@ -254,7 +254,7 @@ impl Painter {
                     prefix_style: self.styles.widget_title_style,
                     query_style: self.styles.text_style,
                     cursor_style: self.styles.selected_text_style,
-                    hint_style: self.styles.table_header_style,
+                    hint_style: self.styles.text_style.dim(),
                 },
             );
         }
