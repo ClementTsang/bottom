@@ -99,7 +99,7 @@ pub struct AutoYAxisTimeGraph {
 impl AutoYAxisTimeGraph {
     pub(crate) fn new(config: TimeseriesConfig, autohide_timer: Option<Instant>) -> Self {
         AutoYAxisTimeGraph {
-            state: TimeseriesState::new(config).with_autohide_timer(autohide_timer),
+            state: TimeseriesState::new(config, autohide_timer),
             height_cache: GraphHeightCache::default(),
         }
     }
