@@ -53,7 +53,7 @@ pub(crate) struct GeneralConfig {
     pub(crate) disable_click: Option<bool>,
     pub(crate) disable_keys: Option<bool>,
     pub(crate) no_write: Option<bool>,
-    pub(crate) network_legend: Option<String>,
+    pub(crate) network_legend: Option<String>, // TODO: Migrate this to per-widget config
     pub(crate) memory_legend: Option<String>,
     pub(crate) process_memory_as_value: Option<bool>,
     pub(crate) tree: Option<bool>,
