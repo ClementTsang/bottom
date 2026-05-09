@@ -109,43 +109,42 @@ impl Painter {
             search_state: &AppSearchState, available_width: usize, is_on_widget: bool,
             currently_selected_text_style: Style, text_style: Style,
         ) -> Vec<Span<'_>> {
+            let query = search_state.input_field_state.current_query();
+
+            if !is_on_widget {
+                // This is easier - we just need to get a range of graphemes, rather than
+                // dealing with possibly inserting a cursor (as none is shown!)
+                return vec![Span::styled(query.to_string(), text_style)];
+            }
+
             let start_index = search_state.input_field_state.display_start_index();
             let cursor_index = search_state.input_field_state.cursor_index();
             let mut current_width = 0;
-            let query = search_state.input_field_state.current_query();
+            let mut res = Vec::with_capacity(available_width);
 
-            if is_on_widget {
-                let mut res = Vec::with_capacity(available_width);
-
-                for (index, grapheme, lengths) in
-                    search_state.input_field_state.graphemes_with_ranges()
-                {
-                    if index < start_index {
-                        continue;
-                    } else if current_width > available_width {
-                        break;
+            for (index, grapheme, lengths) in search_state.input_field_state.graphemes_with_ranges()
+            {
+                if index < start_index {
+                    continue;
+                } else if current_width > available_width {
+                    break;
+                } else {
+                    let styled = if index == cursor_index {
+                        Span::styled(grapheme, currently_selected_text_style)
                     } else {
-                        let styled = if index == cursor_index {
-                            Span::styled(grapheme, currently_selected_text_style)
-                        } else {
-                            Span::styled(grapheme, text_style)
-                        };
+                        Span::styled(grapheme, text_style)
+                    };
 
-                        res.push(styled);
-                        current_width += lengths.end - lengths.start;
-                    }
+                    res.push(styled);
+                    current_width += lengths.end - lengths.start;
                 }
-
-                if cursor_index == query.len() {
-                    res.push(Span::styled(" ", currently_selected_text_style))
-                }
-
-                res
-            } else {
-                // This is easier - we just need to get a range of graphemes, rather than
-                // dealing with possibly inserting a cursor (as none is shown!)
-                vec![Span::styled(query.to_string(), text_style)]
             }
+
+            if cursor_index == query.len() {
+                res.push(Span::styled(" ", currently_selected_text_style))
+            }
+
+            res
         }
 
         let is_basic = app_state.app_config_fields.use_basic_mode;
