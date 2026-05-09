@@ -149,19 +149,18 @@ impl Painter {
             )
             .padding(Padding::right(1));
 
+        let [content_area, input_area] = if app_state.help_dialog_state.is_searching() {
+            Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Min(1), Constraint::Length(1)])
+                .areas::<2>(draw_loc)
+        } else {
+            [draw_loc, Rect::default()]
+        };
+
         if app_state.should_get_widget_bounds() {
             // We must also recalculate how many lines are wrapping to properly get
             // scrolling to work on small terminal sizes... oh joy.
-
-            // Split into content and input areas; use content area for height and scrolling math.
-            let content_area = if app_state.help_dialog_state.is_searching() {
-                Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([Constraint::Min(1), Constraint::Length(1)])
-                    .areas::<2>(draw_loc)[0]
-            } else {
-                draw_loc
-            };
 
             let inner = block.inner(content_area);
             app_state.help_dialog_state.height = inner.height;
@@ -199,15 +198,14 @@ impl Painter {
                         overflow_buffer += buffer;
                     });
             } else {
-                // When filtering in search mode, calculate wrapping more accurately
                 for line in &styled_help_text {
-                    // Get the width by extracting text from all spans
                     let line_text = line
                         .spans
                         .iter()
                         .map(|s| s.content.as_ref())
                         .collect::<String>();
                     let width = UnicodeWidthStr::width(line_text.as_str());
+
                     if width > paragraph_width {
                         overflow_buffer += (width.saturating_sub(1) / paragraph_width) as u16;
                     }
@@ -227,17 +225,6 @@ impl Painter {
             *index = min(*index, *max_scroll_index);
         }
 
-        // Split into content and input areas for rendering
-        let content_area = if app_state.help_dialog_state.is_searching() {
-            Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Min(1), Constraint::Length(1)])
-                .areas::<2>(draw_loc)[0]
-        } else {
-            draw_loc
-        };
-
-        // Render help content
         f.render_widget(
             Paragraph::new(styled_help_text.clone())
                 .block(block)
@@ -254,13 +241,7 @@ impl Painter {
             content_area,
         );
 
-        // Render input pane only when searching with visible cursor
         if app_state.help_dialog_state.is_searching() {
-            let input_area = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Min(1), Constraint::Length(1)])
-                .areas::<2>(draw_loc)[1];
-
             search_input::render_search_input(
                 f,
                 input_area,

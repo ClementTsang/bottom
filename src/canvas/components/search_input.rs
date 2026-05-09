@@ -63,6 +63,7 @@ pub fn render_search_input(
     input_vec.extend(query_spans);
 
     if let Some(hint) = config.hint {
+        // TODO: There's a bug right now if you move the cursor, this shifts because of the extra space at the end.
         input_vec.push(Span::styled("  ", styles.query_style));
         input_vec.push(Span::styled(hint, styles.hint_style));
     }
