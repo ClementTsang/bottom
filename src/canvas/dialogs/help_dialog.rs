@@ -31,26 +31,26 @@ impl Painter {
             .search_query
             .trim()
             .to_lowercase();
+
         let is_filtering = !query.is_empty();
+        if is_filtering {
+            let selected_header_style = self
+                .styles
+                .selected_text_style
+                .add_modifier(self.styles.table_header_style.add_modifier);
 
-        HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
-            let mut iter = section.iter();
+            HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
+                let mut iter = section.iter();
 
-            // Section 0 (intro) - hide entirely when filtering; render fully otherwise
-            if itx == 0 {
-                if !is_filtering {
-                    for &text in iter {
-                        lines.push(Line::from(Span::styled(text, self.styles.text_style)));
-                    }
+                // Section 0 (intro) - hide entirely when filtering; render fully otherwise
+                if itx == 0 {
+                    return;
                 }
-                return;
-            }
 
-            // Non-root sections: pull out header; render header only if section has matches in search
-            let header_opt = iter.next();
-            let header_str = header_opt.copied();
+                // Non-root sections: pull out header; render header only if section has matches in search
+                let header_opt = iter.next();
+                let header_str = header_opt.copied();
 
-            if is_filtering {
                 // Check if header matches the query
                 let header_matches = header_str
                     .map(|h| h.to_lowercase().contains(&query))
@@ -62,21 +62,24 @@ impl Painter {
                     let lower = text.to_lowercase();
                     if let Some(pos) = lower.find(&query) {
                         let pre = &text[..pos];
-                        let mat_end = pos + query.len();
-                        let mat_str = &text[pos..mat_end];
-                        let post = &text[mat_end..];
+                        let matching_end = pos + query.len();
+                        let matching_str = &text[pos..matching_end];
+                        let post = &text[matching_end..];
                         matched_body.push(Line::from(vec![
                             Span::styled(pre, self.styles.text_style),
-                            Span::styled(mat_str, self.styles.table_header_style),
+                            Span::styled(matching_str, self.styles.selected_text_style),
                             Span::styled(post, self.styles.text_style),
                         ]));
                     }
                 }
 
                 if !matched_body.is_empty() || header_matches {
-                    // Spacer + header (same appearance as non-search)
                     if let Some(header) = header_str {
-                        lines.push(Line::from(Span::default()));
+                        // Don't insert the space if there's nothing above anyway.
+                        if !lines.is_empty() {
+                            lines.push(Line::from(Span::default()));
+                        }
+
                         if header_matches {
                             let lower = header.to_lowercase();
                             if let Some(pos) = lower.find(&query) {
@@ -86,7 +89,7 @@ impl Painter {
                                 let post = &header[mat_end..];
                                 lines.push(Line::from(vec![
                                     Span::styled(pre, self.styles.table_header_style),
-                                    Span::styled(mat_str, self.styles.text_style),
+                                    Span::styled(mat_str, selected_header_style),
                                     Span::styled(post, self.styles.table_header_style),
                                 ]));
                             }
@@ -100,7 +103,23 @@ impl Painter {
                     // Push matching body lines
                     lines.extend(matched_body);
                 }
-            } else {
+            });
+        } else {
+            HELP_TEXT.iter().enumerate().for_each(|(itx, section)| {
+                let mut iter = section.iter();
+
+                // Section 0 (intro) - hide entirely when filtering; render fully otherwise
+                if itx == 0 {
+                    for &text in iter {
+                        lines.push(Line::from(Span::styled(text, self.styles.text_style)));
+                    }
+                    return;
+                }
+
+                // Non-root sections: pull out header; render header only if section has matches in search
+                let header_opt = iter.next();
+                let header_str = header_opt.copied();
+
                 // Non-search: show header and all body lines
                 if let Some(header) = header_str {
                     lines.push(Line::from(Span::default()));
@@ -112,8 +131,8 @@ impl Painter {
                 for &text in iter {
                     lines.push(Line::from(Span::styled(text, self.styles.text_style)));
                 }
-            }
-        });
+            });
+        }
 
         lines
     }
@@ -244,7 +263,7 @@ impl Painter {
                     cursor_index: app_state.help_dialog_state.search_cursor_index,
                     is_focused: true,
                     prefix: "Search: ",
-                    hint: Some("Type to search, Esc to clear"),
+                    hint: Some("Type to search, Esc to close"),
                 },
                 search_input::SearchInputStyles {
                     prefix_style: self.styles.widget_title_style,
