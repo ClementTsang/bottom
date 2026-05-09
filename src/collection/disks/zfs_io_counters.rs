@@ -108,19 +108,17 @@ pub fn zfs_io_stats() -> anyhow::Result<Vec<IoCounters>> {
                                             "nwritten" => {
                                                 if let Some((_type, val)) =
                                                     value.trim_start().rsplit_once(' ')
+                                                    && let Ok(number) = val.parse::<u64>()
                                                 {
-                                                    if let Ok(number) = val.parse::<u64>() {
-                                                        write = number;
-                                                    }
+                                                    write = number;
                                                 }
                                             }
                                             "nread" => {
                                                 if let Some((_type, val)) =
                                                     value.trim_start().rsplit_once(' ')
+                                                    && let Ok(number) = val.parse::<u64>()
                                                 {
-                                                    if let Ok(number) = val.parse::<u64>() {
-                                                        read = number;
-                                                    }
+                                                    read = number;
                                                 }
                                             }
                                             _ => {}

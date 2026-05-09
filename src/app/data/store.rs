@@ -92,11 +92,11 @@ impl StoredData {
 
         // We must adjust all the network values to their selected type (defaults to
         // bits).
-        if matches!(settings.network_unit_type, DataUnit::Byte) {
-            if let Some(network) = &mut data.network {
-                network.rx /= 8;
-                network.tx /= 8;
-            }
+        if matches!(settings.network_unit_type, DataUnit::Byte)
+            && let Some(network) = &mut data.network
+        {
+            network.rx /= 8;
+            network.tx /= 8;
         }
 
         if !settings.use_basic_mode {
@@ -150,10 +150,10 @@ impl StoredData {
             })
             .unwrap_or_default();
 
-        if let Some(disks) = data.disks {
-            if let Some(io) = data.io {
-                self.eat_disks(disks, io, harvested_time);
-            }
+        if let Some(disks) = data.disks
+            && let Some(io) = data.io
+        {
+            self.eat_disks(disks, io, harvested_time);
         }
 
         if let Some(list_of_processes) = data.list_of_processes {
@@ -243,22 +243,22 @@ impl StoredData {
             };
 
             let (mut io_read_rate_bytes, mut io_write_rate_bytes) = (None, None);
-            if let Some(Some(io_device)) = io_device {
-                if let Some(prev_io) = self.prev_io.get_mut(itx) {
-                    io_read_rate_bytes = Some(
-                        ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
-                            / time_since_last_harvest)
-                            .round() as u64,
-                    );
+            if let Some(Some(io_device)) = io_device
+                && let Some(prev_io) = self.prev_io.get_mut(itx)
+            {
+                io_read_rate_bytes = Some(
+                    ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
+                        / time_since_last_harvest)
+                        .round() as u64,
+                );
 
-                    io_write_rate_bytes = Some(
-                        ((io_device.write_bytes.saturating_sub(prev_io.1)) as f64
-                            / time_since_last_harvest)
-                            .round() as u64,
-                    );
+                io_write_rate_bytes = Some(
+                    ((io_device.write_bytes.saturating_sub(prev_io.1)) as f64
+                        / time_since_last_harvest)
+                        .round() as u64,
+                );
 
-                    *prev_io = (io_device.read_bytes, io_device.write_bytes);
-                }
+                *prev_io = (io_device.read_bytes, io_device.write_bytes);
             }
 
             let summed_total_bytes = match (device.used_space, device.free_space) {

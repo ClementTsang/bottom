@@ -447,14 +447,14 @@ impl DataCollector {
 
     #[inline]
     fn update_processes(&mut self) {
-        if self.widgets_to_harvest.use_proc {
-            if let Ok(mut process_list) = self.get_processes() {
-                // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
-                // PID here. We also want to avoid re-sorting *again* later on
-                // if we're sorting by PID, since we already did it here!
-                process_list.sort_unstable_by_key(|p| p.pid);
-                self.data.list_of_processes = Some(process_list);
-            }
+        if self.widgets_to_harvest.use_proc
+            && let Ok(mut process_list) = self.get_processes()
+        {
+            // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
+            // PID here. We also want to avoid re-sorting *again* later on
+            // if we're sorting by PID, since we already did it here!
+            process_list.sort_unstable_by_key(|p| p.pid);
+            self.data.list_of_processes = Some(process_list);
         }
     }
 

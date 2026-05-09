@@ -158,63 +158,59 @@ fn create_input_thread(
 
         loop {
             // We don't block.
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
-                    break;
-                }
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated
+            {
+                break;
             }
 
-            if let Ok(poll) = poll(Duration::from_millis(20)) {
-                if poll {
-                    if let Ok(event) = read() {
-                        match event {
-                            Event::Resize(_, _) => {
-                                // TODO: Might want to debounce this in the future, or take into
-                                // account the actual resize values.
-                                // Maybe we want to keep the current implementation in case the
-                                // resize event might not fire...
-                                // not sure.
+            if let Ok(poll) = poll(Duration::from_millis(20))
+                && poll
+                && let Ok(event) = read()
+            {
+                match event {
+                    Event::Resize(_, _) => {
+                        // TODO: Might want to debounce this in the future, or take into
+                        // account the actual resize values.
+                        // Maybe we want to keep the current implementation in case the
+                        // resize event might not fire...
+                        // not sure.
 
-                                if sender.send(BottomEvent::Resize).is_err() {
-                                    break;
-                                }
-                            }
-                            Event::Paste(paste) => {
-                                if sender.send(BottomEvent::PasteEvent(paste)).is_err() {
-                                    break;
-                                }
-                            }
-                            Event::Key(key)
-                                if !keys_disabled && key.kind == KeyEventKind::Press =>
-                            {
-                                // For now, we only care about key down events. This may change in
-                                // the future.
-                                if sender.send(BottomEvent::KeyInput(key)).is_err() {
-                                    break;
-                                }
-                            }
-                            Event::Mouse(mouse) => match mouse.kind {
-                                MouseEventKind::Moved | MouseEventKind::Drag(..) => {}
-                                MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
-                                    if Instant::now().duration_since(mouse_timer).as_millis() >= 20
-                                    {
-                                        if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
-                                            break;
-                                        }
-                                        mouse_timer = Instant::now();
-                                    }
-                                }
-                                _ => {
-                                    if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
-                                        break;
-                                    }
-                                }
-                            },
-                            Event::Key(_) => {}
-                            Event::FocusGained => {}
-                            Event::FocusLost => {}
+                        if sender.send(BottomEvent::Resize).is_err() {
+                            break;
                         }
                     }
+                    Event::Paste(paste) => {
+                        if sender.send(BottomEvent::PasteEvent(paste)).is_err() {
+                            break;
+                        }
+                    }
+                    Event::Key(key) if !keys_disabled && key.kind == KeyEventKind::Press => {
+                        // For now, we only care about key down events. This may change in
+                        // the future.
+                        if sender.send(BottomEvent::KeyInput(key)).is_err() {
+                            break;
+                        }
+                    }
+                    Event::Mouse(mouse) => match mouse.kind {
+                        MouseEventKind::Moved | MouseEventKind::Drag(..) => {}
+                        MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
+                            if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
+                                if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                    break;
+                                }
+                                mouse_timer = Instant::now();
+                            }
+                        }
+                        _ => {
+                            if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                break;
+                            }
+                        }
+                    },
+                    Event::Key(_) => {}
+                    Event::FocusGained => {}
+                    Event::FocusLost => {}
                 }
             }
         }
@@ -255,10 +251,10 @@ fn create_collection_thread(
 
         loop {
             // Check once at the very top... don't block though.
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
-                    break;
-                }
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated
+            {
+                break;
             }
 
             if let Ok(message) = control_receiver.try_recv() {
@@ -273,10 +269,10 @@ fn create_collection_thread(
             data_collector.update_data();
 
             // Yet another check to bail if needed... do not block!
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
-                    break;
-                }
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated
+            {
+                break;
             }
 
             let event = BottomEvent::Update(Box::from(data_collector.data));
