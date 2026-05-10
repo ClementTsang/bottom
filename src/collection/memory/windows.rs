@@ -1,6 +1,5 @@
 use std::{mem::zeroed, num::NonZeroU64};
 
-use sysinfo::System;
 use windows::{
     Win32::{
         Foundation::ERROR_SUCCESS,
@@ -13,6 +12,7 @@ use windows::{
     core::w,
 };
 
+use crate::collection::DataCollector;
 use crate::collection::memory::MemData;
 
 /// Get swap memory usage on Windows. This does it by using checking Windows'
