@@ -44,6 +44,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 - [#2031](https://github.com/ClementTsang/bottom/pull/2031): Tweak display/hiding logic for a graph widget's legend.
 - [#2039](https://github.com/ClementTsang/bottom/pull/2039): Replace `hide_table_gap` with `table_gap`.
+- [#2061](https://github.com/ClementTsang/bottom/pull/2061): Take cgroup into account for RAM/swap usage.
 
 ### Other
 

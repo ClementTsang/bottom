@@ -13,7 +13,7 @@ use windows::{
     core::w,
 };
 
-use crate::collection::memory::MemData;
+use crate::collection::{DataCollector, memory::MemData};
 
 /// Get swap memory usage on Windows. This does it by using checking Windows'
 /// performance counters. This is based on the technique done by psutil [here](https://github.com/giampaolo/psutil/pull/2160).
@@ -25,7 +25,12 @@ use crate::collection::memory::MemData;
 /// - <https://github.com/giampaolo/psutil/issues/2431>
 /// - <https://github.com/oshi/oshi/issues/1175>
 /// - <https://github.com/oshi/oshi/issues/1182>
-pub(crate) fn get_swap_usage(sys: &System) -> Option<MemData> {
+pub(crate) fn get_swap_usage(collector: &DataCollector) -> Option<MemData> {
+    let sys = &collector.sys.system;
+    get_swap_usage_inner(sys)
+}
+
+fn get_swap_usage_inner(sys: &System) -> Option<MemData> {
     let total_bytes = NonZeroU64::new(sys.total_swap())?;
 
     // See https://kennykerr.ca/rust-getting-started/string-tutorial.html
@@ -85,7 +90,7 @@ mod tests {
             RefreshKind::nothing().with_memory(MemoryRefreshKind::nothing().with_swap()),
         );
 
-        let swap_usage = get_swap_usage(&sys);
+        let swap_usage = get_swap_usage_inner(&sys);
         if sys.total_swap() > 0 {
             // Not sure if we can guarantee this to always pass on a machine, so I'll just
             // print out.
