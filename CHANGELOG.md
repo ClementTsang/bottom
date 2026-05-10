@@ -20,7 +20,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## [0.12.4]/[0.13.0] - Unreleased
+## [0.13.0] - Unreleased
 
 ### Bug Fixes
 
@@ -38,6 +38,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2046](https://github.com/ClementTsang/bottom/pull/2046): Add a `show_table_scroll_bar` config option to show a scroll bar on table widgets.
 - [#2048](https://github.com/ClementTsang/bottom/pull/2048): Add support for a temperature graph to show sensor temperature change over time.
 - [#2053](https://github.com/ClementTsang/bottom/pull/2053): Add a configurable default sort column for the process widget (`processes.default_sort` or `--process-default-sort`).
+- [#1754](https://github.com/ClementTsang/bottom/issues/1754): Add search support in the help dialog.
 
 ### Changes
 
@@ -58,7 +59,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ### Bug Fixes
 
-- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multibyte UTF8 chars in process names.
+- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multi-byte UTF8 chars in process names.
 
 ### Other
 
