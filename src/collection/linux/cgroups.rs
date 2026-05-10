@@ -77,6 +77,7 @@ impl CgroupMemCollector {
             });
 
             // --- Swap ---
+            // Since swap is dependent on the normal memory usage, we couple it together.
             if let Some(memsw) = read_u64("/sys/fs/cgroup/memory/memory.memsw.usage_in_bytes") {
                 let used_bytes = memsw.saturating_sub(mem_usage);
 
@@ -99,6 +100,8 @@ impl CgroupMemCollector {
 
     /// Try and update the memory using cgroup v2 semantics. If successful, returns `true`.
     fn try_update_memory_cgroup_v2(&mut self) -> bool {
+        let mut could_update = false;
+
         if let Some(mem_current) = read_u64("/sys/fs/cgroup/memory.current") {
             // --- Memory ---
             let inactive = read_stat_key("/sys/fs/cgroup/memory.stat", "inactive_file");
@@ -116,24 +119,26 @@ impl CgroupMemCollector {
 
             self.ram = Some(CgroupMemData { used_bytes, limit });
 
-            // --- Swap ---
-            if let Some(swap_current) = read_u64("/sys/fs/cgroup/memory.swap.current") {
-                let limit = fs::read_to_string("/sys/fs/cgroup/memory.swap.max")
-                    .ok()
-                    .and_then(|s| match s.trim() {
-                        "max" => Some(CgroupMemLimit::Max),
-                        v => v.parse::<u64>().map(CgroupMemLimit::Bytes).ok(),
-                    });
-
-                self.swap = Some(CgroupMemData {
-                    used_bytes: swap_current,
-                    limit,
-                });
-            }
-
-            true
-        } else {
-            false
+            could_update = true;
         }
+
+        // --- Swap ---
+        if let Some(swap_current) = read_u64("/sys/fs/cgroup/memory.swap.current") {
+            let limit = fs::read_to_string("/sys/fs/cgroup/memory.swap.max")
+                .ok()
+                .and_then(|s| match s.trim() {
+                    "max" => Some(CgroupMemLimit::Max),
+                    v => v.parse::<u64>().map(CgroupMemLimit::Bytes).ok(),
+                });
+
+            self.swap = Some(CgroupMemData {
+                used_bytes: swap_current,
+                limit,
+            });
+
+            could_update = true;
+        }
+
+        could_update
     }
 }
