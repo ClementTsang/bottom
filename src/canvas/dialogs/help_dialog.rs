@@ -29,7 +29,6 @@ fn add_highlight_match<'a>(
 ) -> bool {
     let lower = target.to_lowercase();
 
-    // TODO: Would there be any issues with unicode? Should probably add some tests.
     if let Some(pos) = lower.find(query) {
         let match_end = pos + query.len();
         lines.push(Line::from(vec![
@@ -289,5 +288,173 @@ impl Painter {
                 style: self.styles.text_style,
             },
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use tui::style::Style;
+
+    use super::*;
+
+    fn check_spans(line: &Line<'_>, expected: [&str; 3]) {
+        assert_eq!(line.spans[0].content, expected[0]);
+        assert_eq!(line.spans[1].content, expected[1]);
+        assert_eq!(line.spans[2].content, expected[2]);
+    }
+
+    #[test]
+    fn test_no_match() {
+        let mut lines = Vec::new();
+        let matched = add_highlight_match(
+            "xyz",
+            "hello world",
+            &mut lines,
+            Style::default(),
+            Style::default(),
+        );
+        assert!(!matched);
+        assert!(lines.is_empty());
+    }
+
+    #[test]
+    fn test_match_in_middle() {
+        let mut lines = Vec::new();
+        assert!(add_highlight_match(
+            "world",
+            "hello world!",
+            &mut lines,
+            Style::default(),
+            Style::default()
+        ));
+        check_spans(&lines[0], ["hello ", "world", "!"]);
+    }
+
+    #[test]
+    fn test_match_at_start() {
+        let mut lines = Vec::new();
+        assert!(add_highlight_match(
+            "hello",
+            "hello world",
+            &mut lines,
+            Style::default(),
+            Style::default()
+        ));
+        check_spans(&lines[0], ["", "hello", " world"]);
+    }
+
+    #[test]
+    fn test_match_at_end() {
+        let mut lines = Vec::new();
+        assert!(add_highlight_match(
+            "world",
+            "hello world",
+            &mut lines,
+            Style::default(),
+            Style::default()
+        ));
+        check_spans(&lines[0], ["hello ", "world", ""]);
+    }
+
+    #[test]
+    fn test_full_match() {
+        let mut lines = Vec::new();
+        assert!(add_highlight_match(
+            "hello",
+            "hello",
+            &mut lines,
+            Style::default(),
+            Style::default()
+        ));
+        check_spans(&lines[0], ["", "hello", ""]);
+    }
+
+    #[test]
+    fn test_case_insensitive() {
+        let mut lines = Vec::new();
+        assert!(add_highlight_match(
+            "cpu",
+            "CPU widget",
+            &mut lines,
+            Style::default(),
+            Style::default()
+        ));
+        check_spans(&lines[0], ["", "CPU", " widget"]);
+    }
+
+    #[test]
+    fn test_unicode_in_target() {
+        let mut lines = Vec::new();
+        assert!(add_highlight_match(
+            "éléphants",
+            "J'adore les éléphants et les lapins.",
+            &mut lines,
+            Style::default(),
+            Style::default()
+        ));
+        check_spans(&lines[0], ["J'adore les ", "éléphants", " et les lapins."]);
+    }
+
+    #[test]
+    fn test_unicode() {
+        let mut lines = Vec::new();
+        assert!(add_highlight_match(
+            "你",
+            "Hi 你好!🇨🇦",
+            &mut lines,
+            Style::default(),
+            Style::default()
+        ));
+        check_spans(&lines[0], ["Hi ", "你", "好!🇨🇦"]);
+    }
+
+    #[test]
+    fn test_unicode_2() {
+        let mut lines = Vec::new();
+        assert!(add_highlight_match(
+            "🇨🇦",
+            "Hi 你好!🇨🇦",
+            &mut lines,
+            Style::default(),
+            Style::default()
+        ));
+        check_spans(&lines[0], ["Hi 你好!", "🇨🇦", ""]);
+    }
+
+    /// Shows that we only match the first occurrence in the line. This is expected behaviour as we're passing
+    /// in separate strings.
+    #[test]
+    fn test_unicode_3() {
+        let mut lines = Vec::new();
+        assert!(add_highlight_match(
+            "🇨🇦",
+            "Hi 🇨🇦 你好!🇨🇦",
+            &mut lines,
+            Style::default(),
+            Style::default()
+        ));
+        check_spans(&lines[0], ["Hi ", "🇨🇦", " 你好!🇨🇦"]);
+    }
+
+    #[test]
+    fn test_unicode_case_insensitive() {
+        let mut lines = Vec::new();
+        assert!(add_highlight_match(
+            "éléphants",
+            "J'adore les Éléphants et les lapins.",
+            &mut lines,
+            Style::default(),
+            Style::default()
+        ));
+        check_spans(&lines[0], ["J'adore les ", "Éléphants", " et les lapins."]);
+    }
+
+    #[test]
+    fn test_accumulates_across_calls() {
+        let mut lines = Vec::new();
+        add_highlight_match("a", "cat", &mut lines, Style::default(), Style::default()); // match
+        add_highlight_match("a", "dog", &mut lines, Style::default(), Style::default()); // no match
+        add_highlight_match("a", "rat", &mut lines, Style::default(), Style::default()); // match
+        assert_eq!(lines.len(), 2);
     }
 }
