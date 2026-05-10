@@ -33,10 +33,8 @@ use starship_battery::{Battery, Manager};
 
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
-
 #[cfg(target_os = "linux")]
 use crate::collection::linux::cgroups::CgroupMemCollector;
-
 #[cfg(any(target_os = "linux", feature = "gpu"))]
 use crate::utils::int_hash::IntHashMap;
 

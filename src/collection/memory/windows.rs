@@ -12,8 +12,7 @@ use windows::{
     core::w,
 };
 
-use crate::collection::DataCollector;
-use crate::collection::memory::MemData;
+use crate::collection::{DataCollector, memory::MemData};
 
 /// Get swap memory usage on Windows. This does it by using checking Windows'
 /// performance counters. This is based on the technique done by psutil [here](https://github.com/giampaolo/psutil/pull/2160).
