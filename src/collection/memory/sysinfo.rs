@@ -2,8 +2,6 @@
 
 use std::num::NonZeroU64;
 
-use sysinfo::System;
-
 use crate::collection::{DataCollector, memory::MemData};
 
 #[inline]
@@ -95,7 +93,7 @@ pub(crate) fn get_swap_usage(collector: &DataCollector) -> Option<MemData> {
 /// For more information, see [sysinfo docs](https://docs.rs/sysinfo/latest/sysinfo/struct.System.html#method.available_memory)
 /// and [this explanation on memory](https://askubuntu.com/questions/867068/what-is-available-memory-while-using-free-command)
 #[cfg(not(target_os = "windows"))]
-pub(crate) fn get_cache_usage(sys: &System) -> Option<MemData> {
+pub(crate) fn get_cache_usage(sys: &sysinfo::System) -> Option<MemData> {
     let mem_used = sys.available_memory().saturating_sub(sys.free_memory());
     let mem_total = sys.total_memory();
 

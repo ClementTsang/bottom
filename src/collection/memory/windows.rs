@@ -1,5 +1,6 @@
 use std::{mem::zeroed, num::NonZeroU64};
 
+use sysinfo::System;
 use windows::{
     Win32::{
         Foundation::ERROR_SUCCESS,
@@ -29,7 +30,7 @@ pub(crate) fn get_swap_usage(collector: &DataCollector) -> Option<MemData> {
     get_swap_usage_inner(sys)
 }
 
-fn get_swap_usage_inner(sys: &sysinfo::System) -> Option<MemData> {
+fn get_swap_usage_inner(sys: &System) -> Option<MemData> {
     let total_bytes = NonZeroU64::new(sys.total_swap())?;
 
     // See https://kennykerr.ca/rust-getting-started/string-tutorial.html
