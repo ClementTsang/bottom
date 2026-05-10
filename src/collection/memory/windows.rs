@@ -1,5 +1,6 @@
 use std::{mem::zeroed, num::NonZeroU64};
 
+use sysinfo::System;
 use windows::{
     Win32::{
         Foundation::ERROR_SUCCESS,
