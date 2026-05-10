@@ -175,7 +175,10 @@ const BASIC_MEM_HELP_TEXT: [&str; 2] = [
     "%                       Toggle between values and percentages for memory usage",
 ];
 
+/// The number of help sections.
 const HELP_SECTIONS: usize = 10;
+
+// TODO: Add temp graph help section.
 pub(crate) const HELP_TEXT: [&[&str]; HELP_SECTIONS] = [
     &HELP_CONTENTS_TEXT,
     &GENERAL_HELP_TEXT,

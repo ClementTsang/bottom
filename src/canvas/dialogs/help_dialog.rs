@@ -145,6 +145,7 @@ impl Painter {
     }
 
     pub fn draw_help_dialog(&self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect) {
+        // TODO: We can reduce lines processed based on the known height.
         let styled_help_text = self.help_text_lines(app_state);
 
         // Reserve one column on the right for the scroll bar.
@@ -171,6 +172,8 @@ impl Painter {
             let inner = block.inner(content_area);
             app_state.help_dialog_state.height = inner.height;
 
+            // The overflow buffer is used to account for lines that wrap onto multiple lines,
+            // so we can properly calculate the max scroll index later.
             let mut overflow_buffer = 0;
             let paragraph_width: usize = max(inner.width, 1).into();
             let mut prev_section_len = 0;

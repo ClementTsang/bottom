@@ -1,6 +1,6 @@
 use tui::{
     Frame,
-    layout::Rect,
+    layout::{Alignment, Rect},
     style::Style,
     text::{Line, Span},
     widgets::Paragraph,
@@ -22,7 +22,7 @@ pub struct SearchInputStyles {
     pub hint_style: Style,
 }
 
-/// Build a query span from a [`InputFieldState`].
+/// Build a query span from a [`InputFieldState`]. `available_width` is the terminal column width.
 pub fn build_query_spans(
     input_field_state: &InputFieldState, available_width: usize, is_on_widget: bool,
     cursor_style: Style, text_style: Style,
@@ -53,6 +53,8 @@ pub fn build_query_spans(
             };
 
             res.push(styled);
+
+            // The lengths are the width of the graphemes terminal-wise.
             current_width += lengths.end - lengths.start;
         }
     }
@@ -90,7 +92,7 @@ pub fn render_search_input(
     f.render_widget(
         Paragraph::new(input_line)
             .style(styles.text_style)
-            .alignment(tui::layout::Alignment::Left),
+            .alignment(Alignment::Left),
         rect,
     );
 }

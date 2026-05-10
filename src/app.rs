@@ -347,6 +347,7 @@ impl App {
             }
         } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.open_search();
+            self.is_force_redraw = true;
         }
     }
 
@@ -487,6 +488,7 @@ impl App {
             // Not the best way of doing things for now but works as glue.
             self.process_kill_dialog.on_enter();
         } else if self.help_dialog_state.is_help_searching() {
+            self.help_dialog_state.close_search();
             self.is_force_redraw = true;
         } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
