@@ -3,6 +3,7 @@ use std::cmp::{max, min};
 use tui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::Style,
     text::{Line, Span},
     widgets::{Padding, Paragraph, Wrap},
 };
@@ -20,6 +21,27 @@ use crate::{
     },
     constants::{self, HELP_TEXT},
 };
+
+/// Append a highlighted match to `lines`, and return whether a match was found.
+fn add_highlight_match<'a>(
+    query: &str, target: &'a str, lines: &mut Vec<Line<'a>>, normal_style: Style,
+    match_style: Style,
+) -> bool {
+    let lower = target.to_lowercase();
+
+    // TODO: Would there be any issues with unicode? Should probably add some tests.
+    if let Some(pos) = lower.find(query) {
+        let match_end = pos + query.len();
+        lines.push(Line::from(vec![
+            Span::styled(&target[..pos], normal_style),
+            Span::styled(&target[pos..match_end], match_style),
+            Span::styled(&target[match_end..], normal_style),
+        ]));
+        true
+    } else {
+        false
+    }
+}
 
 // TODO: [REFACTOR] Make generic dialog boxes to build off of instead?
 impl Painter {
@@ -47,26 +69,30 @@ impl Painter {
                     return;
                 }
 
-                let header_opt = iter.next();
-                let header_str = header_opt.copied();
-                let header_matches = header_str
-                    .map(|h| h.to_lowercase().contains(&query))
-                    .unwrap_or(false);
+                let header_str = iter.next().copied();
+
+                let mut header_line: Vec<Line<'_>> = Vec::new();
+                let header_matches = if let Some(h) = header_str {
+                    add_highlight_match(
+                        &query,
+                        h,
+                        &mut header_line,
+                        self.styles.table_header_style,
+                        selected_header_style,
+                    )
+                } else {
+                    false
+                };
 
                 let mut matched_body: Vec<Line<'_>> = Vec::new();
                 for &text in iter {
-                    let lower = text.to_lowercase();
-                    if let Some(pos) = lower.find(&query) {
-                        let pre = &text[..pos];
-                        let matching_end = pos + query.len();
-                        let matching_str = &text[pos..matching_end];
-                        let post = &text[matching_end..];
-                        matched_body.push(Line::from(vec![
-                            Span::styled(pre, self.styles.text_style),
-                            Span::styled(matching_str, self.styles.selected_text_style),
-                            Span::styled(post, self.styles.text_style),
-                        ]));
-                    }
+                    add_highlight_match(
+                        &query,
+                        text,
+                        &mut matched_body,
+                        self.styles.text_style,
+                        self.styles.selected_text_style,
+                    );
                 }
 
                 if !matched_body.is_empty() || header_matches {
@@ -77,18 +103,7 @@ impl Painter {
                         }
 
                         if header_matches {
-                            let lower = header.to_lowercase();
-                            if let Some(pos) = lower.find(&query) {
-                                let pre = &header[..pos];
-                                let mat_end = pos + query.len();
-                                let mat_str = &header[pos..mat_end];
-                                let post = &header[mat_end..];
-                                lines.push(Line::from(vec![
-                                    Span::styled(pre, self.styles.table_header_style),
-                                    Span::styled(mat_str, selected_header_style),
-                                    Span::styled(post, self.styles.table_header_style),
-                                ]));
-                            }
+                            lines.extend(header_line);
                         } else {
                             lines.push(Line::from(Span::styled(
                                 header,
@@ -191,12 +206,11 @@ impl Painter {
                     });
             } else {
                 for line in &styled_help_text {
-                    let line_text = line
+                    let width: usize = line
                         .spans
                         .iter()
-                        .map(|s| s.content.as_ref())
-                        .collect::<String>();
-                    let width = UnicodeWidthStr::width(line_text.as_str());
+                        .map(|s| UnicodeWidthStr::width(s.content.as_ref()))
+                        .sum();
 
                     if width > paragraph_width {
                         overflow_buffer += (width.saturating_sub(1) / paragraph_width) as u16;
@@ -218,7 +232,7 @@ impl Painter {
         }
 
         f.render_widget(
-            Paragraph::new(styled_help_text.clone())
+            Paragraph::new(styled_help_text)
                 .block(block)
                 .style(self.styles.text_style)
                 .alignment(Alignment::Left)

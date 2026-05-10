@@ -633,9 +633,11 @@ mod test {
 
     #[test]
     fn help_menu_matches_entry_len() {
-        // The two match since HELP_TEXT contains HELP_CONTENTS_TEXT as an entry
+        // Subtract 2 to account for the extra newline + search instructions at the bottom.
+        const HELP_CONTENTS_TEXT_LEN: usize = HELP_CONTENTS_TEXT.len() - 2;
+
         assert_eq!(
-            HELP_CONTENTS_TEXT.len(),
+            HELP_CONTENTS_TEXT_LEN,
             HELP_TEXT.len(),
             "the two should be equal, or this test should be updated"
         )

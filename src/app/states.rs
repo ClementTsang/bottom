@@ -51,17 +51,18 @@ impl Default for AppHelpDialogState {
 }
 
 impl AppHelpDialogState {
-    /// Get whether the search state is active.
     pub fn is_searching(&self) -> bool {
         self.is_searching
     }
 
-    /// Opens the search dialog.
+    pub fn is_help_searching(&self) -> bool {
+        self.is_showing_help && self.is_searching
+    }
+
     pub fn open_search(&mut self) {
         self.is_searching = true;
     }
 
-    /// Close the search dialog.
     pub fn close_search(&mut self) {
         self.is_searching = false;
     }

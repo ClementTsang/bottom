@@ -294,8 +294,7 @@ impl App {
 
     pub fn is_in_any_search(&self) -> bool {
         // TODO: This is really hacky, but is fine until we do some smarter things like putting event catching at a per-widget/dialog state.
-        self.is_in_search_widget()
-            || (self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching())
+        self.is_in_search_widget() || (self.help_dialog_state.is_help_searching())
     }
 
     fn reset_multi_tap_keys(&mut self) {
@@ -487,7 +486,7 @@ impl App {
         if self.process_kill_dialog.is_open() {
             // Not the best way of doing things for now but works as glue.
             self.process_kill_dialog.on_enter();
-        } else if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+        } else if self.help_dialog_state.is_help_searching() {
             self.is_force_redraw = true;
         } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
@@ -524,7 +523,7 @@ impl App {
     }
 
     pub fn on_delete(&mut self) {
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+        if self.help_dialog_state.is_help_searching() {
             self.help_dialog_state.search_input_state.delete_at_cursor();
             self.is_force_redraw = true;
             return;
@@ -558,7 +557,7 @@ impl App {
     }
 
     pub fn on_backspace(&mut self) {
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+        if self.help_dialog_state.is_help_searching() {
             self.help_dialog_state
                 .search_input_state
                 .delete_behind_cursor();
@@ -609,7 +608,7 @@ impl App {
     }
 
     pub fn on_left_key(&mut self) {
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+        if self.help_dialog_state.is_help_searching() {
             self.help_dialog_state.search_input_state.move_left();
             return;
         }
@@ -661,7 +660,7 @@ impl App {
     }
 
     pub fn on_right_key(&mut self) {
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+        if self.help_dialog_state.is_help_searching() {
             self.help_dialog_state.search_input_state.move_right();
             return;
         }
@@ -730,7 +729,7 @@ impl App {
                     proc_widget_state.toggle_current_tree_branch_entry();
                 }
             }
-        } else if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+        } else if self.help_dialog_state.is_help_searching() {
             self.on_char_key(' ');
         }
     }
@@ -815,7 +814,7 @@ impl App {
     }
 
     pub fn skip_cursor_beginning(&mut self) {
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+        if self.help_dialog_state.is_help_searching() {
             self.help_dialog_state
                 .search_input_state
                 .skip_to_beginning();
@@ -842,7 +841,7 @@ impl App {
     }
 
     pub fn skip_cursor_end(&mut self) {
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+        if self.help_dialog_state.is_help_searching() {
             self.help_dialog_state.search_input_state.skip_to_end();
             self.is_force_redraw = true;
         } else if !self.ignore_normal_keybinds() {
@@ -867,7 +866,7 @@ impl App {
     }
 
     pub fn clear_search(&mut self) {
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+        if self.help_dialog_state.is_help_searching() {
             self.help_dialog_state.search_input_state = Default::default();
             self.is_force_redraw = true;
         } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
@@ -883,7 +882,7 @@ impl App {
     }
 
     pub fn clear_previous_word(&mut self) {
-        if self.help_dialog_state.is_showing_help && self.help_dialog_state.is_searching() {
+        if self.help_dialog_state.is_help_searching() {
             self.help_dialog_state
                 .search_input_state
                 .delete_previous_word();
