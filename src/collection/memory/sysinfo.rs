@@ -16,7 +16,34 @@ fn get_usage(used: u64, total: u64) -> Option<MemData> {
 
 /// Returns RAM usage.
 pub(crate) fn get_ram_usage(sys: &System) -> Option<MemData> {
-    get_usage(sys.used_memory(), sys.total_memory())
+    cfg_if::cfg_if! {
+        if #[cfg(target_os = "linux")] {
+            use crate::collection::linux::cgroups;
+
+            let base_used = sys.used_memory();
+            let base_total = sys.total_memory();
+
+            let cgroup_data = cgroups::get_cgroup_memory_data();
+
+            let (used, total) = match cgroup_data {
+                Some(cgroup_data) => {
+                    let used = cgroup_data.used_bytes;
+                    let total = match cgroup_data.limit {
+                        Some(cgroups::CgroupMemLimit::Bytes(bytes)) => bytes,
+                        Some(cgroups::CgroupMemLimit::Max) => base_total,
+                        None => base_total,
+                    };
+
+                    (used, total)
+                }
+                None => (base_used, base_total),
+            };
+
+            get_usage(used, total)
+        } else {
+            get_usage(sys.used_memory(), sys.total_memory())
+        }
+    }
 }
 
 /// Returns SWAP usage.

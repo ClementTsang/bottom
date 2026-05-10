@@ -10,6 +10,7 @@ pub mod amd;
 
 #[cfg(target_os = "linux")]
 mod linux {
+    pub mod cgroups;
     pub mod utils;
 }
 
