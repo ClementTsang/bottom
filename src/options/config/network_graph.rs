@@ -24,7 +24,7 @@ pub(crate) struct NetworkGraphConfig {
     /// Displays the network widget with a log scale. Defaults to a non-log scale.
     pub(crate) use_log: Option<bool>,
 
-    ///Displays the network widget with binary prefixes (e.g. kibibits, mebibits) rather than a decimal
-    /// prefixes (e.g. kilobits, megabits). Defaults to decimal prefixes.
+    /// Displays the network widget with a binary prefix (e.g. kibibits) rather than a decimal
+    /// prefix (e.g. kilobits). Defaults to decimal prefixes.
     pub(crate) use_binary_prefix: Option<bool>,
 }

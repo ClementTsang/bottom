@@ -21,8 +21,8 @@ regex = false
 case_sensitive = false
 whole_word = false
 
-[network]
-[network.interface_filter]
+[network_graph]
+[network_graph.interface_filter]
 is_list_ignored = true
 list = ["virbr0.*"]
 regex = true

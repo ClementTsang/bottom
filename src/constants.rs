@@ -512,9 +512,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 
 # Network widget configuration
-#[network]
+#[network_graph]
 # By default, there are no network interface filters enabled. An example use case is provided below.
-#[network.interface_filter]
+#[network_graph.interface_filter]
 # Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
 

@@ -221,3 +221,8 @@ fn newer_mem_network() {
 fn deprecated_mem_network() {
     run_and_kill(&["-C", "./tests/valid_configs/deprecated_mem_network.toml"]);
 }
+
+#[test]
+fn test_network_alias() {
+    run_and_kill(&["-C", "./tests/valid_configs/network_alias.toml"]);
+}

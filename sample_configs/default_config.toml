@@ -134,7 +134,6 @@
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "top-right"
 
-
 # Processes widget configuration
 #[processes]
 # The columns shown by the process widget. The following columns are supported (the GPU columns are only available if the GPU feature is enabled when built):
@@ -148,7 +147,6 @@
 # Gather process child thread information
 #get_threads = false
 
-
 # CPU widget configuration
 #[cpu]
 # One of "all" (default), "average"/"avg"
@@ -156,7 +154,6 @@
 
 # Whether to show a decimal place for CPU usage values.
 #show_decimal = false
-
 
 # Disk widget configuration
 #[disk]
@@ -206,7 +203,6 @@
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Temperature widget configuration
 #[temperature]
 
@@ -232,7 +228,6 @@
 
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
-
 
 # Temperature graph widget configuration
 #[temperature_graph]
@@ -261,11 +256,10 @@
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Network widget configuration
-#[network]
+#[network_graph]
 # By default, there are no network interface filters enabled. An example use case is provided below.
-#[network.interface_filter]
+#[network_graph.interface_filter]
 # Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
 
@@ -280,7 +274,6 @@
 
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
-
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
