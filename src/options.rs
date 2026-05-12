@@ -303,9 +303,10 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let network_unit_type = get_network_unit_type(args, config);
     let network_scale_type = get_network_scale_type(args, config);
-    let network_use_binary_prefix =
-        is_flag_enabled!(network_use_binary_prefix, args.network, config);
-    let network_show_packets = is_flag_enabled_in!(show_packets, args.network, config.network);
+    // let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, args.network, config);
+    let network_use_binary_prefix = get_network_use_binary_prefix(args, config);
+    let network_show_packets =
+        is_flag_enabled_in!(show_packets, args.network, config.network_graph);
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
         config.processes.as_ref().and_then(|cfg| {
@@ -587,7 +588,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .context("Update 'temperature_graph.sensor_filter' in your config file")?,
         None => None,
     };
-    let net_interface_filter = match &config.network {
+    let net_interface_filter = match &config.network_graph {
         Some(cfg) => get_ignore_list(&cfg.interface_filter)
             .context("Update 'network.interface_filter' in your config file")?,
         None => None,
@@ -779,6 +780,14 @@ macro_rules! parse_ms_option {
             Ok($default_value)
         }
     }};
+}
+
+/// Mark a config option field as deprecated, and what to use instead.
+#[inline]
+fn deprecated_warning(deprecated_field: &str, new_field: &str) {
+    eprintln!(
+        "Warning: The config option '{deprecated_field}' is deprecated and will eventually be removed. Please use '{new_field}' instead.",
+    );
 }
 
 /// How quickly we update data.
@@ -1016,8 +1025,14 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> OptionResult<Option<Filt
 fn get_network_unit_type(args: &BottomArgs, config: &Config) -> DataUnit {
     if args.network.network_use_bytes {
         return DataUnit::Byte;
+    } else if let Some(use_bytes) = config.network_graph.as_ref().and_then(|cfg| cfg.use_bytes) {
+        if use_bytes {
+            return DataUnit::Byte;
+        }
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_bytes) = flags.network_use_bytes {
+            deprecated_warning("network_use_bytes", "network.use_bytes");
+
             if network_use_bytes {
                 return DataUnit::Byte;
             }
@@ -1030,8 +1045,14 @@ fn get_network_unit_type(args: &BottomArgs, config: &Config) -> DataUnit {
 fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
     if args.network.network_use_log {
         return AxisScaling::Log;
+    } else if let Some(use_log) = config.network_graph.as_ref().and_then(|cfg| cfg.use_log) {
+        if use_log {
+            return AxisScaling::Log;
+        }
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_log) = flags.network_use_log {
+            deprecated_warning("network_use_log", "network.use_log");
+
             if network_use_log {
                 return AxisScaling::Log;
             }
@@ -1039,6 +1060,26 @@ fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
     }
 
     AxisScaling::Linear
+}
+
+fn get_network_use_binary_prefix(args: &BottomArgs, config: &Config) -> bool {
+    if args.network.network_use_binary_prefix {
+        return true;
+    } else if let Some(use_binary_prefix) = config
+        .network_graph
+        .as_ref()
+        .and_then(|cfg| cfg.use_binary_prefix)
+    {
+        return use_binary_prefix;
+    } else if let Some(flags) = &config.flags {
+        if let Some(network_use_binary_prefix) = flags.network_use_binary_prefix {
+            deprecated_warning("network_use_binary_prefix", "network.use_binary_prefix");
+
+            return network_use_binary_prefix;
+        }
+    }
+
+    false
 }
 
 fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
@@ -1059,7 +1100,8 @@ fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
 
 #[inline]
 fn parse_legend_position(
-    arg: Option<&String>, cfg: Option<&String>, setting: &'static str,
+    arg: Option<&String>, cfg: Option<&String>, deprecated_cfg: Option<(&String, &'static str)>,
+    setting: &'static str,
 ) -> OptionResult<Option<LegendPosition>> {
     #[inline]
     fn parse_position_or_err<F: FnOnce(&'static str) -> OptionError>(
@@ -1075,6 +1117,10 @@ fn parse_legend_position(
         parse_position_or_err(s, setting, OptionError::invalid_arg_value)
     } else if let Some(s) = cfg {
         parse_position_or_err(s, setting, OptionError::invalid_config_value)
+    } else if let Some((s, name)) = deprecated_cfg {
+        // Remove the deprecated args/code paths and copy back to the function above later.
+        deprecated_warning(name, setting);
+        parse_position_or_err(s, setting, OptionError::invalid_config_value)
     } else {
         Ok(Some(LegendPosition::default()))
     }
@@ -1086,10 +1132,15 @@ fn get_network_legend_position(
     parse_legend_position(
         args.network.network_legend.as_ref(),
         config
+            .network_graph
+            .as_ref()
+            .and_then(|cfg| cfg.legend_position.as_ref()),
+        config
             .flags
             .as_ref()
-            .and_then(|flags| flags.network_legend.as_ref()),
-        "network_legend",
+            .and_then(|flags| flags.network_legend.as_ref())
+            .map(|s| (s, "network_legend")),
+        "network.legend_position",
     )
 }
 
@@ -1099,10 +1150,15 @@ fn get_memory_legend_position(
     parse_legend_position(
         args.memory.memory_legend.as_ref(),
         config
+            .memory_graph
+            .as_ref()
+            .and_then(|cfg| cfg.legend_position.as_ref()),
+        config
             .flags
             .as_ref()
-            .and_then(|flags| flags.memory_legend.as_ref()),
-        "memory_legend",
+            .and_then(|flags| flags.memory_legend.as_ref())
+            .map(|s| (s, "memory_legend")),
+        "memory.legend_position",
     )
 }
 
@@ -1113,6 +1169,7 @@ fn get_temperature_legend_position(config: &Config) -> OptionResult<Option<Legen
             .temperature_graph
             .as_ref()
             .and_then(|settings| settings.legend_position.as_ref()),
+        None,
         "legend_position",
     )
 }
@@ -1157,7 +1214,7 @@ mod test {
 
         // No arg, no config.
         assert_eq!(
-            parse_legend_position(None, None, setting),
+            parse_legend_position(None, None, None, setting),
             Ok(Some(LegendPosition::default()))
         );
 
@@ -1165,40 +1222,40 @@ mod test {
         let arg = "  ToP-lEfT  ".to_string();
         let cfg = "bottom-right".to_string();
         assert_eq!(
-            parse_legend_position(Some(&arg), Some(&cfg), setting),
+            parse_legend_position(Some(&arg), Some(&cfg), None, setting),
             Ok(Some(LegendPosition::TopLeft))
         );
 
         // "none" disables the legend, from either source.
         let none_arg = "None".to_string();
         assert_eq!(
-            parse_legend_position(Some(&none_arg), None, setting),
+            parse_legend_position(Some(&none_arg), None, None, setting),
             Ok(None)
         );
         let none_cfg = "none".to_string();
         assert_eq!(
-            parse_legend_position(None, Some(&none_cfg), setting),
+            parse_legend_position(None, Some(&none_cfg), None, setting),
             Ok(None)
         );
 
         // Config value is used when no arg is provided.
         let cfg_only = "left".to_string();
         assert_eq!(
-            parse_legend_position(None, Some(&cfg_only), setting),
+            parse_legend_position(None, Some(&cfg_only), None, setting),
             Ok(Some(LegendPosition::Left))
         );
 
         // Invalid arg value.
         let bad_arg = "bad".to_string();
         assert_eq!(
-            parse_legend_position(Some(&bad_arg), None, setting),
+            parse_legend_position(Some(&bad_arg), None, None, setting),
             Err(OptionError::invalid_arg_value(setting))
         );
 
         // Invalid config value.
         let bad_cfg = "bad".to_string();
         assert_eq!(
-            parse_legend_position(None, Some(&bad_cfg), setting),
+            parse_legend_position(None, Some(&bad_cfg), None, setting),
             Err(OptionError::invalid_config_value(setting))
         );
     }
