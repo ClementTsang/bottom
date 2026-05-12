@@ -1,0 +1,9 @@
+# This uses deprecated network and memory settings - once they are removed, this test file should be moved to invalid configs.
+
+[flags]
+network_use_bytes = true
+network_use_log = true
+network_use_binary_prefix = true
+network_legend = "left"
+
+memory_legend = "left"

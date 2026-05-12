@@ -589,6 +589,7 @@ Thanks to all contributors:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://www.jianshu.com/u/f5754cd2e83d"><img src="https://avatars.githubusercontent.com/u/15232241?v=4?s=100" width="100px;" alt="Qiying Wang"/><br /><sub><b>Qiying Wang</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=WqyJh" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dastarruer"><img src="https://avatars.githubusercontent.com/u/173855353?v=4?s=100" width="100px;" alt="dastarruer"/><br /><sub><b>dastarruer</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=dastarruer" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://linktr.ee/chrisjr404"><img src="https://avatars.githubusercontent.com/u/11917633?v=4?s=100" width="100px;" alt="ChrisJr404"/><br /><sub><b>ChrisJr404</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=ChrisJr404" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

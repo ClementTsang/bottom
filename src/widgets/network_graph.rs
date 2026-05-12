@@ -1,17 +1,15 @@
 use std::time::Instant;
 
-use crate::widgets::{GraphHeightCache, TimeseriesConfig, TimeseriesState};
+use crate::components::time_series::{AutoYAxisTimeGraph, TimeseriesConfig};
 
 pub struct NetWidgetState {
-    pub time_series_state: TimeseriesState,
-    pub height_cache: GraphHeightCache,
+    pub graph: AutoYAxisTimeGraph,
 }
 
 impl NetWidgetState {
-    pub fn init(ts_config: TimeseriesConfig, autohide_timer: Option<Instant>) -> Self {
+    pub fn init(config: TimeseriesConfig, autohide_timer: Option<Instant>) -> Self {
         NetWidgetState {
-            time_series_state: TimeseriesState::new(ts_config, autohide_timer),
-            height_cache: GraphHeightCache::default(),
+            graph: AutoYAxisTimeGraph::new(config, autohide_timer),
         }
     }
 }

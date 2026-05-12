@@ -162,8 +162,8 @@ nav:
       - "Basic Mode": usage/basic-mode.md
       - "Widgets":
           - "CPU Widget": usage/widgets/cpu.md
-          - "Memory Widget": usage/widgets/memory.md
-          - "Network Widget": usage/widgets/network.md
+          - "Memory Graph Widget": usage/widgets/memory-graph.md
+          - "Network Graph Widget": usage/widgets/network-graph.md
           - "Process Widget": usage/widgets/process.md
           - "Disk Widget": usage/widgets/disk.md
           - "Temperature Widget": usage/widgets/temperature-table.md
@@ -176,7 +176,8 @@ nav:
           - configuration/config-file/index.md
           - "CPU Widget": configuration/config-file/cpu.md
           - "Disk Table Widget": configuration/config-file/disk-table.md
-          - "Network Widget": configuration/config-file/network.md
+          - "Memory Graph Widget": configuration/config-file/memory-graph.md
+          - "Network Graph Widget": configuration/config-file/network-graph.md
           - "Processes Widget": configuration/config-file/processes.md
           - "Temperature Table Widget": configuration/config-file/temperature-table.md
           - "Temperature Graph Widget": configuration/config-file/temperature-graph.md

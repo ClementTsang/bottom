@@ -10,8 +10,8 @@ pub const DEFAULT_WIDGET_ID: u64 = 56709;
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 
 // Help text
-const HELP_CONTENTS_TEXT: [&str; 10] = [
-    "Either scroll or press the number key to go to the corresponding help menu section:",
+const HELP_CONTENTS_TEXT: [&str; 12] = [
+    "Scroll to browse or press the number key to go to the corresponding help menu section:",
     "1 - General",
     "2 - CPU widget",
     "3 - Process widget",
@@ -21,44 +21,41 @@ const HELP_CONTENTS_TEXT: [&str; 10] = [
     "7 - Disk widget",
     "8 - Battery widget",
     "9 - Basic memory widget",
+    "",
+    "Press 'Ctrl-f' or '/' to search for a keyword in the help text.",
 ];
 
-// TODO [Help]: Search in help?
 // TODO [Help]: Move to using tables for easier formatting?
-pub(crate) const GENERAL_HELP_TEXT: [&str; 28] = [
+pub(crate) const GENERAL_HELP_TEXT: [&str; 24] = [
     "1 - General",
-    "q, Ctrl-c            Quit",
-    "Esc                  Close dialog windows, search, widgets, or exit expanded mode",
-    "Ctrl-r               Reset display and any collected data",
-    "f                    Freeze/unfreeze updating with new data",
-    "Ctrl-Left,           ",
-    "Shift-Left, H, A     Move widget selection left",
-    "Ctrl-Right,          ",
-    "Shift-Right, L, D    Move widget selection right",
-    "Ctrl-Up,             ",
-    "Shift-Up, K, W       Move widget selection up",
-    "Ctrl-Down,           ",
-    "Shift-Down, J, S     Move widget selection down",
-    "Left, h              Move left within widget",
-    "Down, j              Move down within widget",
-    "Up, k                Move up within widget",
-    "Right, l             Move right within widget",
-    "?                    Open help menu",
-    "gg                   Jump to the first entry",
-    "G                    Jump to the last entry",
-    "e                    Toggle expanding the currently selected widget",
-    "+                    Zoom in on chart (decrease time range)",
-    "-                    Zoom out on chart (increase time range)",
-    "=                    Reset zoom",
-    "PgUp, PgDown         Scroll up/down a table by a page",
-    "Ctrl-u, Ctrl-d       Scroll up/down a table by half a page",
-    "Mouse scroll         Scroll through the tables or zoom in/out of charts by scrolling up/down",
-    "Mouse click          Selects the clicked widget, table entry, dialog option, or tab",
+    "q, Ctrl-c               Quit",
+    "Esc                     Close dialog windows, search, widgets, or exit expanded mode",
+    "Ctrl-r                  Reset display and any collected data",
+    "f                       Freeze/unfreeze updating with new data",
+    "Shift/Ctrl-Left, H, A   Move widget selection left",
+    "Shift/Ctrl-Right, L, D  Move widget selection right",
+    "Shift/Ctrl-Up, K, W     Move widget selection up",
+    "Shift/Ctrl-Down, J, S   Move widget selection down",
+    "Left, h                 Move left within widget",
+    "Down, j                 Move down within widget",
+    "Up, k                   Move up within widget",
+    "Right, l                Move right within widget",
+    "?                       Open help menu",
+    "gg                      Jump to the first entry",
+    "G                       Jump to the last entry",
+    "e                       Toggle expanding the currently selected widget",
+    "+                       Zoom in on chart (decrease time range)",
+    "-                       Zoom out on chart (increase time range)",
+    "=                       Reset zoom",
+    "PgUp, PgDown            Scroll up/down a table by a page",
+    "Ctrl-u, Ctrl-d          Scroll up/down a table by half a page",
+    "Mouse scroll            Scroll through the tables or zoom in/out of charts by scrolling up/down",
+    "Mouse click             Selects the clicked widget, table entry, dialog option, or tab",
 ];
 
 const CPU_HELP_TEXT: [&str; 2] = [
     "2 - CPU widget",
-    "Mouse scroll         Scrolling over a CPU core/average shows only that entry on the chart",
+    "Mouse scroll            Scrolling over a CPU core/average shows only that entry on the chart",
 ];
 
 const PROCESS_HELP_TEXT: [&str; 20] = [
@@ -86,99 +83,103 @@ const PROCESS_HELP_TEXT: [&str; 20] = [
 
 const SEARCH_HELP_TEXT: [&str; 53] = [
     "4 - Process search widget",
-    "Esc                  Close the search widget (retains the filter)",
-    "Ctrl-a               Skip to the start of the search query",
-    "Ctrl-e               Skip to the end of the search query",
-    "Ctrl-u               Clear the current search query",
-    "Ctrl-w               Delete a word behind the cursor",
-    "Ctrl-h               Delete the character behind the cursor",
-    "Backspace            Delete the character behind the cursor",
-    "Delete               Delete the character at the cursor",
-    "Alt-c, F1            Toggle matching case",
-    "Alt-w, F2            Toggle matching the entire word",
-    "Alt-r, F3            Toggle using regex",
-    "Left, Alt-h          Move cursor left",
-    "Right, Alt-l         Move cursor right",
+    "Esc                     Close the search widget (retains the filter)",
+    "Ctrl-a                  Skip to the start of the search query",
+    "Ctrl-e                  Skip to the end of the search query",
+    "Ctrl-u                  Clear the current search query",
+    "Ctrl-w                  Delete a word behind the cursor",
+    "Ctrl-h                  Delete the character behind the cursor",
+    "Backspace               Delete the character behind the cursor",
+    "Delete                  Delete the character at the cursor",
+    "Alt-c, F1               Toggle matching case",
+    "Alt-w, F2               Toggle matching the entire word",
+    "Alt-r, F3               Toggle using regex",
+    "Left, Alt-h             Move cursor left",
+    "Right, Alt-l            Move cursor right",
     "",
     "Supported search types:",
-    "<by name/cmd>        ex: btm",
-    "pid                  ex: pid 825",
-    "cpu, cpu%            ex: cpu > 4.2",
-    "mem, mem%            ex: mem < 4.2",
-    "memb                 ex: memb < 100 kb",
-    "read, r/s, rps       ex: read >= 1 b",
-    "write, w/s, wps      ex: write <= 1 tb",
-    "tread, t.read        ex: tread = 1",
-    "twrite, t.write      ex: twrite = 1",
-    "user                 ex: user = root",
-    "state                ex: state = running",
-    "gpu%                 ex: gpu% < 4.2",
-    "gmem                 ex: gmem < 100 kb",
-    "gmem%                ex: gmem% < 4.2",
+    "<by name/cmd>           ex: btm",
+    "pid                     ex: pid 825",
+    "cpu, cpu%               ex: cpu > 4.2",
+    "mem, mem%               ex: mem < 4.2",
+    "memb                    ex: memb < 100 kb",
+    "read, r/s, rps          ex: read >= 1 b",
+    "write, w/s, wps         ex: write <= 1 tb",
+    "tread, t.read           ex: tread = 1",
+    "twrite, t.write         ex: twrite = 1",
+    "user                    ex: user = root",
+    "state                   ex: state = running",
+    "gpu%                    ex: gpu% < 4.2",
+    "gmem                    ex: gmem < 100 kb",
+    "gmem%                   ex: gmem% < 4.2",
     "",
     "Comparison operators:",
-    "=                    ex: cpu = 1",
-    "!=                   ex: cpu != 1",
-    ">                    ex: cpu > 1",
-    "<                    ex: cpu < 1",
-    ">=                   ex: cpu >= 1",
-    "<=                   ex: cpu <= 1",
+    "=                       ex: cpu = 1",
+    "!=                      ex: cpu != 1",
+    ">                       ex: cpu > 1",
+    "<                       ex: cpu < 1",
+    ">=                      ex: cpu >= 1",
+    "<=                      ex: cpu <= 1",
     "",
     "Logical operators:",
-    "and, &&, <Space>     ex: btm and cpu > 1 and mem > 1",
-    "or, ||               ex: btm or firefox",
-    "!                    ex: !firefox, !(cpu > 5 or btm)",
+    "and, &&, <Space>        ex: btm and cpu > 1 and mem > 1",
+    "or, ||                  ex: btm or firefox",
+    "!                       ex: !firefox, !(cpu > 5 or btm)",
     "",
     "Supported units:",
-    "B                    ex: read > 1 b",
-    "KB                   ex: read > 1 kb",
-    "MB                   ex: read > 1 mb",
-    "TB                   ex: read > 1 tb",
-    "KiB                  ex: read > 1 kib",
-    "MiB                  ex: read > 1 mib",
-    "GiB                  ex: read > 1 gib",
-    "TiB                  ex: read > 1 tib",
+    "B                       ex: read > 1 b",
+    "KB                      ex: read > 1 kb",
+    "MB                      ex: read > 1 mb",
+    "TB                      ex: read > 1 tb",
+    "KiB                     ex: read > 1 kib",
+    "MiB                     ex: read > 1 mib",
+    "GiB                     ex: read > 1 gib",
+    "TiB                     ex: read > 1 tib",
 ];
 
 const SORT_HELP_TEXT: [&str; 6] = [
     "5 - Sort widget",
-    "Down, 'j'            Scroll down in list",
-    "Up, 'k'              Scroll up in list",
-    "Mouse scroll         Scroll through sort widget",
-    "Esc                  Close the sort widget",
-    "Enter                Sort by current selected column",
+    "Down, 'j'               Scroll down in list",
+    "Up, 'k'                 Scroll up in list",
+    "Mouse scroll            Scroll through sort widget",
+    "Esc                     Close the sort widget",
+    "Enter                   Sort by current selected column",
 ];
 
 const TEMP_HELP_WIDGET: [&str; 3] = [
     "6 - Temperature widget",
-    "'s'                  Sort by sensor name, press again to reverse",
-    "'t'                  Sort by temperature, press again to reverse",
+    "'s'                     Sort by sensor name, press again to reverse",
+    "'t'                     Sort by temperature, press again to reverse",
 ];
 
 const DISK_HELP_WIDGET: [&str; 9] = [
     "7 - Disk widget",
-    "'d'                  Sort by disk name, press again to reverse",
-    "'m'                  Sort by disk mount, press again to reverse",
-    "'u'                  Sort by disk usage, press again to reverse",
-    "'n'                  Sort by disk free space, press again to reverse",
-    "'t'                  Sort by total disk space, press again to reverse",
-    "'p'                  Sort by disk usage percentage, press again to reverse",
-    "'r'                  Sort by disk read activity, press again to reverse",
-    "'w'                  Sort by disk write activity, press again to reverse",
+    "'d'                     Sort by disk name, press again to reverse",
+    "'m'                     Sort by disk mount, press again to reverse",
+    "'u'                     Sort by disk usage, press again to reverse",
+    "'n'                     Sort by disk free space, press again to reverse",
+    "'t'                     Sort by total disk space, press again to reverse",
+    "'p'                     Sort by disk usage percentage, press again to reverse",
+    "'r'                     Sort by disk read activity, press again to reverse",
+    "'w'                     Sort by disk write activity, press again to reverse",
 ];
 
 const BATTERY_HELP_TEXT: [&str; 3] = [
     "8 - Battery widget",
-    "Left                 Go to previous battery",
-    "Right                Go to next battery",
+    "Left                    Go to previous battery",
+    "Right                   Go to next battery",
 ];
 
 const BASIC_MEM_HELP_TEXT: [&str; 2] = [
     "9 - Basic memory widget",
-    "%                    Toggle between values and percentages for memory usage",
+    "%                       Toggle between values and percentages for memory usage",
 ];
 
-pub(crate) const HELP_TEXT: [&[&str]; HELP_CONTENTS_TEXT.len()] = [
+/// The number of help sections.
+const HELP_SECTIONS: usize = 10;
+
+// TODO: Add temp graph help section.
+pub(crate) const HELP_TEXT: [&[&str]; HELP_SECTIONS] = [
     &HELP_CONTENTS_TEXT,
     &GENERAL_HELP_TEXT,
     &CPU_HELP_TEXT,
@@ -389,6 +390,10 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%, Nice, Priority
 #columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%", "Priority"]
 
+# The default sort column when bottom starts. Accepts any of the column names above.
+# If unset, defaults to CPU%.
+#default_sort = "CPU%"
+
 # Gather process child thread information
 #get_threads = false
 
@@ -507,9 +512,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 
 # Network widget configuration
-#[network]
+#[network_graph]
 # By default, there are no network interface filters enabled. An example use case is provided below.
-#[network.interface_filter]
+#[network_graph.interface_filter]
 # Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
 
@@ -541,50 +546,53 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # or overridden if the command-line flag for a built-in theme is set.
 #theme = "default"
 
+# Styling options. You can control things like colour choices, text styling (bold, italic, etc), and more.
+# Note that any setting that uses the word "colour" can be substituted for "color" and it will still work fine.
+
 #[styles.cpu]
-#all_entry_color = "green"
-#avg_entry_color = "red"
-#cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+#all_entry_colour = "green"
+#avg_entry_colour = "red"
+#cpu_core_colours = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
 
 #[styles.temp_graph]
-#temp_graph_color_styles = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+#temp_graph_colour_styles = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
 
 #[styles.memory]
-#ram_color = "light magenta"
-#cache_color = "light red"
-#swap_color = "light yellow"
-#arc_color = "light cyan"
-#gpu_colors = ["light blue", "light red", "cyan", "green", "blue", "red"]
+#ram_colour = "light magenta"
+#cache_colour = "light red"
+#swap_colour = "light yellow"
+#arc_colour = "light cyan"
+#gpu_colours = ["light blue", "light red", "cyan", "green", "blue", "red"]
 
 #[styles.network]
-#rx_color = "light magenta"
-#tx_color = "light yellow"
-#rx_total_color = "light cyan"
-#tx_total_color = "light green"
+#rx_colour = "light magenta"
+#tx_colour = "light yellow"
+#rx_total_colour = "light cyan"
+#tx_total_colour = "light green"
 
 #[styles.battery]
-#high_battery_color = "green"
-#medium_battery_color = "yellow"
-#low_battery_color = "red"
+#high_battery_colour = "green"
+#medium_battery_colour = "yellow"
+#low_battery_colour = "red"
 
 #[styles.tables]
-#headers = {color = "light blue", bold = true}
+#headers = {colour = "light blue", bold = true}
 
 #[styles.graphs]
-#graph_color = "gray"
-#legend_text = {color = "gray"}
+#graph_colour = "gray"
+#legend_text = {colour = "gray"}
 
 #[styles.widgets]
-#border_color = "gray"
-#selected_border_color = "light blue"
-#widget_title = {color = "gray"}
-#text = {color = "gray"}
-#selected_text = {color = "black", bg_color = "light blue"}
-#disabled_text = {color = "dark gray"}
+#border_colour = "gray"
+#selected_border_colour = "light blue"
+#widget_title = {colour = "gray"}
+#text = {colour = "gray"}
+#selected_text = {colour = "black", bg_colour = "light blue"}
+#disabled_text = {colour = "dark gray"}
 # Disabled by default
-#bg_color = "black"
+#bg_colour = "black"
 # Only on Linux
-#thread_text = {color = "green"}
+#thread_text = {colour = "green"}
 
 # Layout - layouts follow a pattern like this:
 # [[row]] represents a row in the application.
@@ -624,9 +632,11 @@ mod test {
 
     #[test]
     fn help_menu_matches_entry_len() {
-        // The two match since HELP_TEXT contains HELP_CONTENTS_TEXT as an entry
+        // Subtract 2 to account for the extra newline + search instructions at the bottom.
+        const HELP_CONTENTS_TEXT_LEN: usize = HELP_CONTENTS_TEXT.len() - 2;
+
         assert_eq!(
-            HELP_CONTENTS_TEXT.len(),
+            HELP_CONTENTS_TEXT_LEN,
             HELP_TEXT.len(),
             "the two should be equal, or this test should be updated"
         )

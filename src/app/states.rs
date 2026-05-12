@@ -33,6 +33,8 @@ pub struct AppHelpDialogState {
     pub height: u16,
     pub scroll_state: ParagraphScrollState,
     pub index_shortcuts: Vec<u16>,
+    is_searching: bool,
+    pub search_input_state: InputFieldState,
 }
 
 impl Default for AppHelpDialogState {
@@ -42,7 +44,27 @@ impl Default for AppHelpDialogState {
             height: 0,
             scroll_state: ParagraphScrollState::default(),
             index_shortcuts: vec![0; constants::HELP_TEXT.len()],
+            is_searching: false,
+            search_input_state: InputFieldState::default(),
         }
+    }
+}
+
+impl AppHelpDialogState {
+    pub fn is_searching(&self) -> bool {
+        self.is_searching
+    }
+
+    pub fn is_help_searching(&self) -> bool {
+        self.is_showing_help && self.is_searching
+    }
+
+    pub fn open_search(&mut self) {
+        self.is_searching = true;
+    }
+
+    pub fn close_search(&mut self) {
+        self.is_searching = false;
     }
 }
 
@@ -51,7 +73,6 @@ impl Default for AppHelpDialogState {
 pub struct AppSearchState {
     pub is_enabled: bool,
     pub is_invalid_search: bool,
-
     pub input_field_state: InputFieldState,
 
     /// The query. TODO: Merge this as one enum.

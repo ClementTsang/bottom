@@ -9,11 +9,12 @@ use crate::{
         Painter,
         components::{
             data_table::{DrawInfo, SelectionState},
-            time_series::{GraphData, PercentTimeGraph},
+            time_series::GraphData,
         },
         drawing_utils::should_hide_x_label,
     },
     collection::cpu::CpuData,
+    components::time_series::GraphDrawCtx,
     widgets::CpuWidgetState,
 };
 
@@ -177,7 +178,7 @@ impl Painter {
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                cpu_widget_state.time_series_state.autohide_timer_mut(),
+                cpu_widget_state.graph.state_mut().autohide_timer_mut(),
                 draw_loc,
             );
 
@@ -205,20 +206,28 @@ impl Painter {
                 }
             };
 
-            PercentTimeGraph {
-                display_range: cpu_widget_state.time_series_state.current_display_time(),
-                hide_x_labels,
-                app_config_fields: &app_state.app_config_fields,
-                current_widget: app_state.current_widget.widget_id,
-                is_expanded: app_state.is_expanded,
-                title,
-                styles: &self.styles,
-                widget_id,
-                legend_position: None,
-                legend_constraints: None,
-            }
-            .build()
-            .draw(f, draw_loc, graph_data);
+            let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
+            let marker = self.get_marker(app_state.app_config_fields.use_dot);
+
+            cpu_widget_state.graph.draw(
+                f,
+                draw_loc,
+                GraphDrawCtx {
+                    title,
+                    border_style,
+                    title_style: self.styles.widget_title_style,
+                    graph_style: self.styles.graph_style,
+                    general_widget_style: self.styles.general_widget_style,
+                    border_type: self.styles.border_type,
+                    marker,
+                    hide_x_labels,
+                    is_selected: app_state.current_widget.widget_id == widget_id,
+                    is_expanded: app_state.is_expanded,
+                    legend_position: None,
+                    legend_constraints: None,
+                },
+                graph_data,
+            );
         }
     }
 

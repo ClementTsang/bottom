@@ -53,7 +53,9 @@ pub(crate) struct GeneralConfig {
     pub(crate) disable_click: Option<bool>,
     pub(crate) disable_keys: Option<bool>,
     pub(crate) no_write: Option<bool>,
+    // FIXME: Deprecate this in the future.
     pub(crate) network_legend: Option<String>,
+    // FIXME: Deprecate this in the future.
     pub(crate) memory_legend: Option<String>,
     pub(crate) process_memory_as_value: Option<bool>,
     pub(crate) tree: Option<bool>,
@@ -70,8 +72,11 @@ pub(crate) struct GeneralConfig {
     pub(crate) hide_k_threads: Option<bool>,
     // #[cfg(feature = "zfs")]
     pub(crate) free_arc: Option<bool>,
+    // FIXME: Deprecate this in the future.
     pub(crate) network_use_bytes: Option<bool>,
+    // FIXME: Deprecate this in the future.
     pub(crate) network_use_log: Option<bool>,
+    // FIXME: Deprecate this in the future.
     pub(crate) network_use_binary_prefix: Option<bool>,
     pub(crate) disable_gpu: Option<bool>,
     pub(crate) enable_cache_memory: Option<bool>,

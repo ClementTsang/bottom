@@ -62,6 +62,8 @@ pub struct TimeSeriesData {
     pub gpu_mem: HashMap<String, Values>,
 
     /// Temperature data.
+    ///
+    /// TODO: Maybe make this use TypedTemperature?
     pub temperature: HashMap<String, ChunkedData<f32>>,
 }
 
