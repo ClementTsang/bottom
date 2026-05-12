@@ -3,7 +3,8 @@ pub mod disk;
 pub mod flags;
 mod ignore_list;
 pub mod layout;
-pub mod network;
+pub mod memory_graph;
+pub mod network_graph;
 pub mod process;
 pub mod style;
 pub mod temperature;
@@ -11,7 +12,7 @@ pub mod temperature_graph;
 
 use disk::DiskConfig;
 use flags::GeneralConfig;
-use network::NetworkConfig;
+use network_graph::NetworkGraphConfig;
 use serde::{Deserialize, Serialize};
 use style::StyleConfig;
 use temperature::TempConfig;
@@ -19,6 +20,7 @@ use temperature_graph::TempGraphConfig;
 
 pub use self::ignore_list::IgnoreList;
 use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
+use crate::options::config::memory_graph::MemoryGraphConfig;
 
 /// Overall config for `bottom`.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -32,7 +34,9 @@ pub struct Config {
     pub(crate) disk: Option<DiskConfig>,
     pub(crate) temperature: Option<TempConfig>,
     pub(crate) temperature_graph: Option<TempGraphConfig>,
-    pub(crate) network: Option<NetworkConfig>,
+    #[serde(alias = "network")]
+    pub(crate) network_graph: Option<NetworkGraphConfig>,
+    pub(crate) memory_graph: Option<MemoryGraphConfig>,
     pub(crate) cpu: Option<CpuConfig>,
 }
 
