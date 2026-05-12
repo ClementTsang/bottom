@@ -210,3 +210,14 @@ fn test_temp_disk_sort_columns() {
 fn test_proc_default_sort() {
     run_and_kill(&["-C", "./tests/valid_configs/proc_default_sort.toml"]);
 }
+
+#[test]
+fn newer_mem_network() {
+    run_and_kill(&["-C", "./tests/valid_configs/newer_mem_network.toml"]);
+}
+
+/// This uses deprecated network and memory settings - once they are removed, this test file should be moved to invalid configs.
+#[test]
+fn deprecated_mem_network() {
+    run_and_kill(&["-C", "./tests/valid_configs/deprecated_mem_network.toml"]);
+}
