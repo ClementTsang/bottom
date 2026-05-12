@@ -17,7 +17,7 @@ If you want to change some of the default behaviour of the network graph widget,
 You can filter out what entries to show by configuring `[network_graph.interface_filter]` .
 In particular, you can set a list of things to filter with by setting `list`, and configure how that list is processed with the other options.
 
-For example, here we are ignoring any entry with a name that matches `/dev/sda<NUMBERS>`, or specifically `/dev/nvme0n1p2`.
+For example, here we are ignoring any entry with a name that matches the regex `eth0.*`, or specifically `virbr0`.
 
 ```toml
 [network_graph.interface_filter]
@@ -25,7 +25,7 @@ For example, here we are ignoring any entry with a name that matches `/dev/sda<N
 is_list_ignored = true
 
 # A list of filters to try and match.
-list = ["virbr0.*"]
+list = ["virbr0", "eth0slab"]
 
 # Whether to use regex. Defaults to false.
 regex = true

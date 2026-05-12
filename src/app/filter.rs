@@ -64,10 +64,29 @@ mod test {
 
     use super::*;
 
+    /// Quick test for filtering w/ regex.
+    #[test]
+    fn filter_simple() {
+        let values = ["eth0slab", "virbr0", "eth0", "wlan0", "lo"];
+
+        let filter = Filter {
+            is_list_ignored: false,
+            list: vec![Regex::new("virbr0").unwrap(), Regex::new("eth0").unwrap()],
+        };
+
+        assert_eq!(
+            values
+                .into_iter()
+                .filter(|r| filter.should_keep(r))
+                .collect::<Vec<_>>(),
+            vec!["eth0slab", "virbr0", "eth0"]
+        );
+    }
+
     /// Test based on the issue in <https://github.com/ClementTsang/bottom/pull/1037>.
     #[test]
     fn filter_is_list_ignored() {
-        let results = [
+        let values = [
             "CPU socket temperature",
             "wifi_0",
             "motherboard temperature",
@@ -80,7 +99,7 @@ mod test {
         };
 
         assert_eq!(
-            results
+            values
                 .into_iter()
                 .filter(|r| ignore_true.should_keep(r))
                 .collect::<Vec<_>>(),
@@ -93,7 +112,7 @@ mod test {
         };
 
         assert_eq!(
-            results
+            values
                 .into_iter()
                 .filter(|r| ignore_false.should_keep(r))
                 .collect::<Vec<_>>(),
@@ -109,7 +128,7 @@ mod test {
         };
 
         assert_eq!(
-            results
+            values
                 .into_iter()
                 .filter(|r| multi_true.should_keep(r))
                 .collect::<Vec<_>>(),
@@ -125,7 +144,7 @@ mod test {
         };
 
         assert_eq!(
-            results
+            values
                 .into_iter()
                 .filter(|r| multi_false.should_keep(r))
                 .collect::<Vec<_>>(),

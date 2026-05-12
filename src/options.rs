@@ -303,6 +303,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let network_unit_type = get_network_unit_type(args, config);
     let network_scale_type = get_network_scale_type(args, config);
+    // Use + update this again after deprecation
     // let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, args.network, config);
     let network_use_binary_prefix = get_network_use_binary_prefix(args, config);
     let network_show_packets =
@@ -590,7 +591,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     };
     let net_interface_filter = match &config.network_graph {
         Some(cfg) => get_ignore_list(&cfg.interface_filter)
-            .context("Update 'network.interface_filter' in your config file")?,
+            .context("Update 'network_graph.interface_filter' in your config file")?,
         None => None,
     };
 
@@ -1031,7 +1032,7 @@ fn get_network_unit_type(args: &BottomArgs, config: &Config) -> DataUnit {
         }
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_bytes) = flags.network_use_bytes {
-            deprecated_warning("network_use_bytes", "network.use_bytes");
+            deprecated_warning("network_use_bytes", "network_graph.use_bytes");
 
             if network_use_bytes {
                 return DataUnit::Byte;
@@ -1051,7 +1052,7 @@ fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
         }
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_log) = flags.network_use_log {
-            deprecated_warning("network_use_log", "network.use_log");
+            deprecated_warning("network_use_log", "network_graph.use_log");
 
             if network_use_log {
                 return AxisScaling::Log;
@@ -1073,7 +1074,10 @@ fn get_network_use_binary_prefix(args: &BottomArgs, config: &Config) -> bool {
         return use_binary_prefix;
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_binary_prefix) = flags.network_use_binary_prefix {
-            deprecated_warning("network_use_binary_prefix", "network.use_binary_prefix");
+            deprecated_warning(
+                "network_use_binary_prefix",
+                "network_graph.use_binary_prefix",
+            );
 
             return network_use_binary_prefix;
         }

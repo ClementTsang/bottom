@@ -212,13 +212,13 @@ fn test_proc_default_sort() {
 }
 
 #[test]
-fn newer_mem_network() {
+fn test_newer_mem_network() {
     run_and_kill(&["-C", "./tests/valid_configs/newer_mem_network.toml"]);
 }
 
 /// This uses deprecated network and memory settings - once they are removed, this test file should be moved to invalid configs.
 #[test]
-fn deprecated_mem_network() {
+fn test_deprecated_mem_network() {
     run_and_kill(&["-C", "./tests/valid_configs/deprecated_mem_network.toml"]);
 }
 
