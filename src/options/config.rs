@@ -18,10 +18,9 @@ use style::StyleConfig;
 use temperature::TempConfig;
 use temperature_graph::TempGraphConfig;
 
-use crate::options::config::memory_graph::MemoryGraphConfig;
-
 pub use self::ignore_list::IgnoreList;
 use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
+use crate::options::config::memory_graph::MemoryGraphConfig;
 
 /// Overall config for `bottom`.
 #[derive(Clone, Debug, Default, Deserialize)]
