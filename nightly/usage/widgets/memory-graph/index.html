@@ -12,13 +12,13 @@
         <meta name="author" content="Clement Tsang">
       
       
-        <link rel="canonical" href="https://bottom.pages.dev/stable/usage/widgets/network/">
+        <link rel="canonical" href="https://bottom.pages.dev/stable/usage/widgets/memory-graph/">
       
       
-        <link rel="prev" href="../memory/">
+        <link rel="prev" href="../cpu/">
       
       
-        <link rel="next" href="../process/">
+        <link rel="next" href="../network-graph/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Network Widget - bottom</title>
+        <title>Memory Graph Widget - bottom</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#network-widget" class="md-skip">
+        <a href="#memory-widget" class="md-skip">
           Skip to content
         </a>
       
@@ -130,7 +130,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Network Widget
+              Memory Graph Widget
             
           </span>
         </div>
@@ -802,34 +802,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../memory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Memory Widget
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -849,7 +821,7 @@
   <span class="md-ellipsis">
     
   
-    Network Widget
+    Memory Graph Widget
   
 
     
@@ -867,7 +839,7 @@
   <span class="md-ellipsis">
     
   
-    Network Widget
+    Memory Graph Widget
   
 
     
@@ -925,10 +897,77 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#how-are-memory-values-determined" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How are memory values determined?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How are memory values determined?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#linux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../network-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Network Graph Widget
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1236,6 +1275,8 @@
       
         
       
+        
+      
     
     
     
@@ -1355,14 +1396,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../configuration/config-file/network/" class="md-nav__link">
+      <a href="../../../configuration/config-file/memory-graph/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Network Widget
+    Memory Graph Widget
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../configuration/config-file/network-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Network Graph Widget
   
 
     
@@ -1972,7 +2041,7 @@
 
 
   
-    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/usage/widgets/network.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/usage/widgets/memory-graph.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
     </a>
@@ -1980,19 +2049,17 @@
   
 
 
-<h1 id="network-widget"><a class="toclink" href="#network-widget">Network Widget</a></h1>
-<p>The network widget provides a visual representation of network input and output per second, as well as noting the total amount
-received and transmitted.</p>
+<h1 id="memory-widget"><a class="toclink" href="#memory-widget">Memory Widget</a></h1>
+<p>The memory widget provides a visual representation of RAM and swap usage over time.</p>
 <figure>
-    <img src="../../../assets/screenshots/network/network.webp" alt="A picture of an expanded network widget."/>
+    <img src="../../../assets/screenshots/memory.webp" alt="A picture of an expanded memory widget."/>
 </figure>
 
 <h2 id="features"><a class="toclink" href="#features">Features</a></h2>
-<p>The legend displays the current reads and writes per second in bits, as well as the total amount read/written.</p>
-<p>The y-axis automatically scales based on shown read/write values, and by default, is a linear scale based on base-10 units (e.x. kilobit, gigabit, etc.).
-Through <a href="../../../configuration/command-line-options/">configuration</a>, the read/write per second unit can be changed to bytes, while the y-axis can be changed to a
-log scale and/or use base-2 units (e.x. kibibit, gibibit, etc.).</p>
+<p>The legend displays the current usage in terms of percentage and actual usage in binary units (KiB, MiB, GiB, etc.).
+If the total RAM or swap available is 0, then it is automatically hidden from the legend and graph.</p>
 <p>One can also adjust the displayed time range through either the keyboard or mouse, with a range of 30s to 600s.</p>
+<p>This widget can also be configured to display Nvidia and AMD GPU memory usage (<code>--disable_gpu</code> on Linux/Windows to disable) or cache memory usage (<code>--enable_cache_memory</code>).</p>
 <h2 id="key-bindings"><a class="toclink" href="#key-bindings">Key bindings</a></h2>
 <p>Note that key bindings are generally case-sensitive.</p>
 <table>
@@ -2032,6 +2099,17 @@ log scale and/or use base-2 units (e.x. kibibit, gibibit, etc.).</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-are-memory-values-determined"><a class="toclink" href="#how-are-memory-values-determined">How are memory values determined?</a></h2>
+<h3 id="linux"><a class="toclink" href="#linux">Linux</a></h3>
+<p>Memory usage is calculated using the following formula based on values from <code>/proc/meminfo</code> (based on <a href="https://github.com/htop-dev/htop/blob/976c6123f41492aaf613b9d172eef1842fb7b0a3/linux/LinuxProcessList.c#L1584">htop's implementation</a>):</p>
+<div class="highlight"><pre><span></span><code>MemTotal - MemFree - Buffers - (Cached + SReclaimable - Shmem)
+</code></pre></div>
+<p>You can find more info on <code>/proc/meminfo</code> and its fields <a href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/s2-proc-meminfo">here</a>.</p>
+<h3 id="windows"><a class="toclink" href="#windows">Windows</a></h3>
+<p>In Windows, we calculate swap by querying <code>Get-Counter "\Paging File(*)\% Usage"</code>. This
+is also what some libraries like <a href="https://github.com/giampaolo/psutil/blob/master/psutil/arch/windows/mem.c">psutil</a> use. However, note there are also a few other valid methods of
+representing "swap" in Windows (e.g. using <code>GetPerformanceInfo</code>), which all slightly don't
+match.</p>
 
 
 
@@ -2052,7 +2130,7 @@ log scale and/or use base-2 units (e.x. kibibit, gibibit, etc.).</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="January 11, 2024 05:25:53">January 11, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 12, 2026 08:59:59">May 12, 2026</span>
   </span>
 
     
@@ -2088,7 +2166,7 @@ log scale and/or use base-2 units (e.x. kibibit, gibibit, etc.).</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../memory/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Memory Widget">
+          <a href="../cpu/" class="md-footer__link md-footer__link--prev" aria-label="Previous: CPU Widget">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2098,20 +2176,20 @@ log scale and/or use base-2 units (e.x. kibibit, gibibit, etc.).</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Memory Widget
+                CPU Widget
               </div>
             </div>
           </a>
         
         
           
-          <a href="../process/" class="md-footer__link md-footer__link--next" aria-label="Next: Process Widget">
+          <a href="../network-graph/" class="md-footer__link md-footer__link--next" aria-label="Next: Network Graph Widget">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Process Widget
+                Network Graph Widget
               </div>
             </div>
             <div class="md-footer__button md-icon">

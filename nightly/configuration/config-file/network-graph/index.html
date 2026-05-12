@@ -12,10 +12,10 @@
         <meta name="author" content="Clement Tsang">
       
       
-        <link rel="canonical" href="https://bottom.pages.dev/stable/configuration/config-file/network/">
+        <link rel="canonical" href="https://bottom.pages.dev/stable/configuration/config-file/network-graph/">
       
       
-        <link rel="prev" href="../disk-table/">
+        <link rel="prev" href="../memory-graph/">
       
       
         <link rel="next" href="../processes/">
@@ -29,7 +29,7 @@
     
     
       
-        <title>Network Widget - bottom</title>
+        <title>Network Graph Widget - bottom</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#network" class="md-skip">
+        <a href="#network-graph" class="md-skip">
           Skip to content
         </a>
       
@@ -130,7 +130,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Network Widget
+              Network Graph Widget
             
           </span>
         </div>
@@ -799,14 +799,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/widgets/memory/" class="md-nav__link">
+      <a href="../../../usage/widgets/memory-graph/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Memory Widget
+    Memory Graph Widget
   
 
     
@@ -827,14 +827,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/widgets/network/" class="md-nav__link">
+      <a href="../../../usage/widgets/network-graph/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Network Widget
+    Network Graph Widget
   
 
     
@@ -1155,6 +1155,8 @@
       
         
       
+        
+      
     
     
     
@@ -1272,6 +1274,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory Graph Widget
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1291,7 +1321,7 @@
   <span class="md-ellipsis">
     
   
-    Network Widget
+    Network Graph Widget
   
 
     
@@ -1309,7 +1339,7 @@
   <span class="md-ellipsis">
     
   
-    Network Widget
+    Network Graph Widget
   
 
     
@@ -1961,7 +1991,7 @@
 
 
   
-    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/configuration/config-file/network.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/configuration/config-file/network-graph.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
     </a>
@@ -1969,9 +1999,9 @@
   
 
 
-<h1 id="network"><a class="toclink" href="#network">Network</a></h1>
+<h1 id="network-graph"><a class="toclink" href="#network-graph">Network Graph</a></h1>
 <h2 id="settings"><a class="toclink" href="#settings">Settings</a></h2>
-<p>If you want to change some of the default behaviour of the network widget, you can configure some things in the config file.</p>
+<p>If you want to change some of the default behaviour of the network graph widget, you can configure some things in the config file.</p>
 <table>
 <thead>
 <tr>
@@ -1986,18 +2016,38 @@
 <td>Boolean</td>
 <td>Displays packet rate and average packet size info.</td>
 </tr>
+<tr>
+<td><code>legend_position</code></td>
+<td>String (one of ["none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"])</td>
+<td>Where to place the legend for the network widget.</td>
+</tr>
+<tr>
+<td><code>use_bytes</code></td>
+<td>Boolean</td>
+<td>Displays the network widget using bytes. Defaults to bits.</td>
+</tr>
+<tr>
+<td><code>use_log</code></td>
+<td>Boolean</td>
+<td>Displays the network widget with a log scale. Defaults to a non-log scale.</td>
+</tr>
+<tr>
+<td><code>use_binary_prefix</code></td>
+<td>Boolean</td>
+<td>Displays the network widget with a binary prefix (e.g. kibibits) rather than a decimal prefix (e.g. kilobits). Defaults to decimal prefixes.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="filtering-entries"><a class="toclink" href="#filtering-entries">Filtering Entries</a></h2>
-<p>You can filter out what entries to show by configuring <code>[network.interface_filter]</code> .
+<p>You can filter out what entries to show by configuring <code>[network_graph.interface_filter]</code> .
 In particular, you can set a list of things to filter with by setting <code>list</code>, and configure how that list is processed with the other options.</p>
-<p>For example, here we are ignoring any entry with a name that matches <code>/dev/sda&lt;NUMBERS&gt;</code>, or specifically <code>/dev/nvme0n1p2</code>.</p>
-<div class="highlight"><pre><span></span><code><span class="k">[network.interface_filter]</span>
+<p>For example, here we are ignoring any entry with a name that matches the regex <code>eth0.*</code>, or specifically <code>virbr0</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">[network_graph.interface_filter]</span>
 <span class="c1"># Whether to ignore any matches. Defaults to true.</span>
 <span class="n">is_list_ignored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 
 <span class="c1"># A list of filters to try and match.</span>
-<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;virbr0.*&quot;</span><span class="p">]</span>
+<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;virbr0&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;eth0slab&quot;</span><span class="p">]</span>
 
 <span class="c1"># Whether to use regex. Defaults to false.</span>
 <span class="n">regex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
@@ -2028,7 +2078,7 @@ In particular, you can set a list of things to filter with by setting <code>list
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 3, 2026 07:19:49">May 3, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 12, 2026 08:59:59">May 12, 2026</span>
   </span>
 
     
@@ -2064,7 +2114,7 @@ In particular, you can set a list of things to filter with by setting <code>list
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../disk-table/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Disk Table Widget">
+          <a href="../memory-graph/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Memory Graph Widget">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2074,7 +2124,7 @@ In particular, you can set a list of things to filter with by setting <code>list
                 Previous
               </span>
               <div class="md-ellipsis">
-                Disk Table Widget
+                Memory Graph Widget
               </div>
             </div>
           </a>

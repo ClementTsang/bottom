@@ -33,7 +33,11 @@
          <lastmod>2026-05-12</lastmod>
     </url>
     <url>
-         <loc>https://bottom.pages.dev/stable/configuration/config-file/network/</loc>
+         <loc>https://bottom.pages.dev/stable/configuration/config-file/memory-graph/</loc>
+         <lastmod>2026-05-12</lastmod>
+    </url>
+    <url>
+         <loc>https://bottom.pages.dev/stable/configuration/config-file/network-graph/</loc>
          <lastmod>2026-05-12</lastmod>
     </url>
     <url>
@@ -117,11 +121,11 @@
          <lastmod>2026-05-12</lastmod>
     </url>
     <url>
-         <loc>https://bottom.pages.dev/stable/usage/widgets/memory/</loc>
+         <loc>https://bottom.pages.dev/stable/usage/widgets/memory-graph/</loc>
          <lastmod>2026-05-12</lastmod>
     </url>
     <url>
-         <loc>https://bottom.pages.dev/stable/usage/widgets/network/</loc>
+         <loc>https://bottom.pages.dev/stable/usage/widgets/network-graph/</loc>
          <lastmod>2026-05-12</lastmod>
     </url>
     <url>

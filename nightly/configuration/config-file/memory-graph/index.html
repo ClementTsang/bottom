@@ -12,31 +12,31 @@
         <meta name="author" content="Clement Tsang">
       
       
-        <link rel="canonical" href="https://bottom.pages.dev/stable/contribution/documentation/">
+        <link rel="canonical" href="https://bottom.pages.dev/stable/configuration/config-file/memory-graph/">
       
       
-        <link rel="prev" href="../issues-and-pull-requests/">
+        <link rel="prev" href="../disk-table/">
       
       
-        <link rel="next" href="../packaging-and-distribution/">
+        <link rel="next" href="../network-graph/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Documentation - bottom</title>
+        <title>Memory Graph Widget - bottom</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -50,14 +50,14 @@
         
         
         
-        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.5be84a27.css">
+        <link rel="stylesheet" href="../../../assets/external/fonts.googleapis.com/css.5be84a27.css">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"IBM Plex Mono"}</style>
       
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#documentation" class="md-skip">
+        <a href="#memory-graph" class="md-skip">
           Skip to content
         </a>
       
@@ -93,7 +93,7 @@
           <div class="md-banner__inner md-grid md-typeset">
             
             <div style="margin: 0.6rem auto">
-        This is <strong>nightly</strong> documentation, and it may differ from stable. Please see <strong><a href="../../..">here for stable documentation</a></strong>.
+        This is <strong>nightly</strong> documentation, and it may differ from stable. Please see <strong><a href="../../../..">here for stable documentation</a></strong>.
     </div>
           </div>
           
@@ -110,7 +110,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="bottom" class="md-header__button md-logo" aria-label="bottom" data-md-component="logo">
+    <a href="../../.." title="bottom" class="md-header__button md-logo" aria-label="bottom" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -130,7 +130,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Documentation
+              Memory Graph Widget
             
           </span>
         </div>
@@ -253,7 +253,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href="../../.." class="md-tabs__link">
         
   
   
@@ -274,7 +274,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../support/official/" class="md-tabs__link">
+        <a href="../../../support/official/" class="md-tabs__link">
           
   
   
@@ -296,7 +296,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../usage/general-usage/" class="md-tabs__link">
+        <a href="../../../usage/general-usage/" class="md-tabs__link">
           
   
   
@@ -314,11 +314,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../configuration/command-line-options/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../command-line-options/" class="md-tabs__link">
           
   
   
@@ -336,13 +338,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../issues-and-pull-requests/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../contribution/issues-and-pull-requests/" class="md-tabs__link">
           
   
   
@@ -362,7 +362,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../troubleshooting/" class="md-tabs__link">
+      <a href="../../../troubleshooting/" class="md-tabs__link">
         
   
   
@@ -399,7 +399,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="bottom" class="md-nav__button md-logo" aria-label="bottom" data-md-component="logo">
+    <a href="../../.." title="bottom" class="md-nav__button md-logo" aria-label="bottom" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -429,7 +429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -516,7 +516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../support/official/" class="md-nav__link">
+      <a href="../../../support/official/" class="md-nav__link">
         
   
   
@@ -544,7 +544,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../support/unofficial/" class="md-nav__link">
+      <a href="../../../support/unofficial/" class="md-nav__link">
         
   
   
@@ -643,7 +643,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/general-usage/" class="md-nav__link">
+      <a href="../../../usage/general-usage/" class="md-nav__link">
         
   
   
@@ -671,7 +671,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/basic-mode/" class="md-nav__link">
+      <a href="../../../usage/basic-mode/" class="md-nav__link">
         
   
   
@@ -771,7 +771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/widgets/cpu/" class="md-nav__link">
+      <a href="../../../usage/widgets/cpu/" class="md-nav__link">
         
   
   
@@ -799,7 +799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/widgets/memory-graph/" class="md-nav__link">
+      <a href="../../../usage/widgets/memory-graph/" class="md-nav__link">
         
   
   
@@ -827,7 +827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/widgets/network-graph/" class="md-nav__link">
+      <a href="../../../usage/widgets/network-graph/" class="md-nav__link">
         
   
   
@@ -855,7 +855,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/widgets/process/" class="md-nav__link">
+      <a href="../../../usage/widgets/process/" class="md-nav__link">
         
   
   
@@ -883,7 +883,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/widgets/disk/" class="md-nav__link">
+      <a href="../../../usage/widgets/disk/" class="md-nav__link">
         
   
   
@@ -911,7 +911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/widgets/temperature-table/" class="md-nav__link">
+      <a href="../../../usage/widgets/temperature-table/" class="md-nav__link">
         
   
   
@@ -939,7 +939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/widgets/temperature-graph/" class="md-nav__link">
+      <a href="../../../usage/widgets/temperature-graph/" class="md-nav__link">
         
   
   
@@ -967,7 +967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/widgets/battery/" class="md-nav__link">
+      <a href="../../../usage/widgets/battery/" class="md-nav__link">
         
   
   
@@ -1003,7 +1003,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../usage/autocomplete/" class="md-nav__link">
+      <a href="../../../usage/autocomplete/" class="md-nav__link">
         
   
   
@@ -1035,8 +1035,10 @@
       
   
   
+    
   
   
+  
     
     
       
@@ -1048,21 +1050,22 @@
     
     
       
+        
+        
+      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1080,7 +1083,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1098,7 +1101,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/command-line-options/" class="md-nav__link">
+      <a href="../../command-line-options/" class="md-nav__link">
         
   
   
@@ -1123,6 +1126,8 @@
                 
   
   
+    
+  
   
   
     
@@ -1158,20 +1163,21 @@
       
       
         
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
+          
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" checked>
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../configuration/config-file/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   
@@ -1189,13 +1195,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_4_2" id="__nav_4_2_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1215,7 +1221,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/config-file/cpu/" class="md-nav__link">
+      <a href="../cpu/" class="md-nav__link">
         
   
   
@@ -1243,7 +1249,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/config-file/disk-table/" class="md-nav__link">
+      <a href="../disk-table/" class="md-nav__link">
         
   
   
@@ -1268,10 +1274,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../configuration/config-file/memory-graph/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory Graph Widget
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1287,6 +1320,37 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1299,7 +1363,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/config-file/network-graph/" class="md-nav__link">
+      <a href="../network-graph/" class="md-nav__link">
         
   
   
@@ -1327,7 +1391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/config-file/processes/" class="md-nav__link">
+      <a href="../processes/" class="md-nav__link">
         
   
   
@@ -1355,7 +1419,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/config-file/temperature-table/" class="md-nav__link">
+      <a href="../temperature-table/" class="md-nav__link">
         
   
   
@@ -1383,7 +1447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/config-file/temperature-graph/" class="md-nav__link">
+      <a href="../temperature-graph/" class="md-nav__link">
         
   
   
@@ -1411,7 +1475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/config-file/flags/" class="md-nav__link">
+      <a href="../flags/" class="md-nav__link">
         
   
   
@@ -1439,7 +1503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/config-file/layout/" class="md-nav__link">
+      <a href="../layout/" class="md-nav__link">
         
   
   
@@ -1467,7 +1531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/config-file/styling/" class="md-nav__link">
+      <a href="../styling/" class="md-nav__link">
         
   
   
@@ -1507,10 +1571,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -1526,22 +1588,21 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   
@@ -1559,7 +1620,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1577,7 +1638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../issues-and-pull-requests/" class="md-nav__link">
+      <a href="../../../contribution/issues-and-pull-requests/" class="md-nav__link">
         
   
   
@@ -1602,37 +1663,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Documentation
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../contribution/documentation/" class="md-nav__link">
         
   
   
@@ -1648,59 +1682,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#when-should-documentation-changes-be-done" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        When should documentation changes be done?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-pages-need-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What pages need documentation?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-should-i-addupdate-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How should I add/update documentation?
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1713,7 +1694,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../packaging-and-distribution/" class="md-nav__link">
+      <a href="../../../contribution/packaging-and-distribution/" class="md-nav__link">
         
   
   
@@ -1759,13 +1740,10 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
@@ -1774,7 +1752,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4" >
         
           
-          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
             
   
   
@@ -1810,7 +1788,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/dev_env/" class="md-nav__link">
+      <a href="../../../contribution/development/dev_env/" class="md-nav__link">
         
   
   
@@ -1838,7 +1816,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/testing/" class="md-nav__link">
+      <a href="../../../contribution/development/testing/" class="md-nav__link">
         
   
   
@@ -1866,7 +1844,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/logging/" class="md-nav__link">
+      <a href="../../../contribution/development/logging/" class="md-nav__link">
         
   
   
@@ -1894,7 +1872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/build_process/" class="md-nav__link">
+      <a href="../../../contribution/development/build_process/" class="md-nav__link">
         
   
   
@@ -1922,7 +1900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/deploy_process/" class="md-nav__link">
+      <a href="../../../contribution/development/deploy_process/" class="md-nav__link">
         
   
   
@@ -1965,7 +1943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/" class="md-nav__link">
+      <a href="../../../troubleshooting/" class="md-nav__link">
         
   
   
@@ -2002,7 +1980,7 @@
 
 
   
-    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/contribution/documentation.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/configuration/config-file/memory-graph.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
     </a>
@@ -2010,58 +1988,25 @@
   
 
 
-<h1 id="documentation"><a class="toclink" href="#documentation">Documentation</a></h1>
-<h2 id="when-should-documentation-changes-be-done"><a class="toclink" href="#when-should-documentation-changes-be-done">When should documentation changes be done?</a></h2>
-<ul>
-<li>Whenever a new feature is added, a bug is fixed, or a breaking change is made, it should be documented where
-  appropriate (ex: <code>README.md</code>, changelog, etc.)</li>
-<li>New methods of installation are always appreciated and should be documented</li>
-</ul>
-<h2 id="what-pages-need-documentation"><a class="toclink" href="#what-pages-need-documentation">What pages need documentation?</a></h2>
-<p>There are a few areas where documentation changes are often needed:</p>
-<ul>
-<li>The <a href="https://github.com/ClementTsang/bottom/blob/main/README.md"><code>README.md</code></a></li>
-<li>The help menu inside of the application (located <a href="https://github.com/ClementTsang/bottom/blob/main/src/constants.rs">here</a>)</li>
-<li>The <a href="../../">extended documentation</a> (what you're reading right now)</li>
-<li>The <a href="https://github.com/ClementTsang/bottom/blob/main/CHANGELOG.md"><code>CHANGELOG.md</code></a></li>
-</ul>
-<h2 id="how-should-i-addupdate-documentation"><a class="toclink" href="#how-should-i-addupdate-documentation">How should I add/update documentation?</a></h2>
-<ol>
-<li>
-<p>Fork the repository to make changes in.</p>
-</li>
-<li>
-<p>Where you're adding documentation will probably affect what you need to do:</p>
-<h3><code>README.md</code> or <code>CHANGELOG.md</code></h3>
-
-<p>For changes to <a href="https://github.com/ClementTsang/bottom/blob/main/README.md"><code>README.md</code></a> and <a href="https://github.com/ClementTsang/bottom/blob/main/CHANGELOG.md"><code>CHANGELOG.md</code></a>, just follow the formatting provided and use any editor.</p>
-<p>Generally, changes to <a href="https://github.com/ClementTsang/bottom/blob/main/CHANGELOG.md"><code>CHANGELOG.md</code></a> will be handled
- by a maintainer, and the contents of the file should follow the <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>
- format, as well as link to the relevant PR or issues.</p>
-<h3>Help menu</h3>
-
-<p>For changes to the help menu, try to refer to the existing code within <a href="https://github.com/ClementTsang/bottom/blob/main/src/constants.rs"><code>src/constants.rs</code></a> on how the help menu is generated.</p>
-<h3>Extended documentation</h3>
-
-<p>For changes to the extended documentation, you'll probably want at least Python 3.11 (older and newer versions
- should be fine), <a href="https://www.mkdocs.org/">MkDocs</a>, <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a>,
- <code>mdx_truly_sane_lists</code>, and optionally <a href="https://github.com/jimporter/mike">Mike</a> installed. These can help with
- validating your changes locally.</p>
-<p>You can do so through <code>pip</code> or your system's package managers. If you use <code>pip</code>, you can use venv to cleanly install
- the documentation dependencies:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Change directories to the documentation.</span>
-<span class="nb">cd</span><span class="w"> </span>docs/
-
-<span class="w"> </span><span class="c1"># Create venv, install the dependencies, and serve the page.</span>
-./serve.sh
-</code></pre></div>
-<p>This will serve a local version of the docs that you can open on your browser. It will update as you make changes.</p>
-</li>
-<li>
-<p>Once you have your documentation changes done, submit it as a pull request. For more information regarding that,
-   refer to <a href="../issues-and-pull-requests/">Issues, Pull Requests, and Discussions</a>.</p>
-</li>
-</ol>
+<h1 id="memory-graph"><a class="toclink" href="#memory-graph">Memory Graph</a></h1>
+<h2 id="settings"><a class="toclink" href="#settings">Settings</a></h2>
+<p>If you want to change some of the default behaviour of the memory graph widget, you can configure some things in the config file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Functionality</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>legend_position</code></td>
+<td>String (one of ["none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"])</td>
+<td>Where to place the legend for the memory widget.</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -2082,7 +2027,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="March 28, 2025 04:22:40">March 28, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 12, 2026 08:59:59">May 12, 2026</span>
   </span>
 
     
@@ -2118,7 +2063,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../issues-and-pull-requests/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Issues, Pull Requests, and Discussions">
+          <a href="../disk-table/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Disk Table Widget">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2128,20 +2073,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Issues, Pull Requests, and Discussions
+                Disk Table Widget
               </div>
             </div>
           </a>
         
         
           
-          <a href="../packaging-and-distribution/" class="md-footer__link md-footer__link--next" aria-label="Next: Packaging and Distribution">
+          <a href="../network-graph/" class="md-footer__link md-footer__link--next" aria-label="Next: Network Graph Widget">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Packaging and Distribution
+                Network Graph Widget
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -2184,10 +2129,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.action.edit", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.sections", "navigation.tabs", "navigation.top", "search.highlight", "search.suggest", "toc.integrate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "stable", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.action.edit", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.sections", "navigation.tabs", "navigation.top", "search.highlight", "search.suggest", "toc.integrate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
