@@ -219,7 +219,7 @@ fn test_newer_mem_network() {
 /// This uses deprecated network and memory settings - once they are removed, this test file should be moved to invalid configs.
 #[test]
 fn test_deprecated_mem_network() {
-    run_and_kill(&["-C", "./tests/valid_configs/deprecated_mem_network.toml"]);
+    run_and_kill(&["-C", "./tests/valid_configs/deprecated/mem_network.toml"]);
 }
 
 #[test]
