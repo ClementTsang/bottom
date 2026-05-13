@@ -4,9 +4,21 @@
 
 If you want to change some of the default behaviour of the processes widget, you can configure some things in the config file.
 
-| Field         | Type    | Functionality                      |
-| ------------- | ------- | ---------------------------------- |
-| `get_threads` | Boolean | Gather process thread information. |
+| Field                   | Type    | Functionality                                                                                             |
+| ----------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| `get_threads`           | Boolean | Gather process thread information.                                                                        |
+| `hide_k_threads`        | Boolean | Hide kernel threads from being shown.                                                                     |
+| `tree_collapse`         | Boolean | Collapse the process tree by default when tree mode is set.                                               |
+| `process_command`       | Boolean | Shows the full command name instead of the process name by default.                                       |
+| `disable_advanced_kill` | Boolean | Disable the advanced kill dialog and just show the basic one with no options. Linux, macOS, FreeBSD only. |
+| `default_memory_value`  | Boolean | Defaults to showing process memory usage by value.                                                        |
+| `default_grouped`       | Boolean | Groups processes with the same name by default. No effect if `--tree` is set.                             |
+| `regex`                 | Boolean | Enables regex by default while searching.                                                                 |
+| `case_sensitive`        | Boolean | Enables case sensitivity by default when searching.                                                       |
+| `whole_word`            | Boolean | Enables whole-word matching by default while searching.                                                   |
+| `default_tree`          | Boolean | Makes the process widget use tree mode by default.                                                        |
+| `current_usage`         | Boolean | Calculates process CPU usage as a percentage of current usage rather than total usage.                    |
+| `unnormalized_cpu`      | Boolean | Show process CPU% usage without averaging over the number of CPU cores.                                   |
 
 ## Columns
 
