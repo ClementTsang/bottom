@@ -912,12 +912,40 @@
       "description": "Process configuration fields.",
       "type": "object",
       "properties": {
+        "case_sensitive": {
+          "description": "Enables case sensitivity by default when searching.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "columns": {
           "description": "A list of process widget columns.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/ProcColumn"
           }
+        },
+        "current_usage": {
+          "description": "Calculates process CPU usage as a percentage of current usage rather than total usage.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "default_grouped": {
+          "description": "Groups processes with the same name by default. No effect if `--tree` is set.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "default_memory_value": {
+          "description": "Defaults to showing process memory usage by value.",
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "default_sort": {
           "description": "The default sort column.",
@@ -930,8 +958,64 @@
             }
           ]
         },
+        "default_tree": {
+          "description": "Makes the process widget use tree mode by default.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "disable_advanced_kill": {
+          "description": "Disable the advanced kill dialog and just show the basic one with no options.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "get_threads": {
           "description": "Whether to get process child threads.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "hide_k_threads": {
+          "description": "Hide kernel threads from being shown.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "process_command": {
+          "description": "Shows the full command name instead of the process name by default.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "regex": {
+          "description": "Enables regex by default while searching.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "tree_collapse": {
+          "description": "Collapse the process tree by default when tree mode is set.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "unnormalized_cpu": {
+          "description": "Show process CPU% usage without averaging over the number of CPU cores.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "whole_word": {
+          "description": "Enables whole-word matching by default while searching.",
           "type": [
             "boolean",
             "null"
