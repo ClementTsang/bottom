@@ -279,20 +279,66 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let free_arc = is_flag_enabled!(free_arc, args.memory, config);
 
     // For processes
-    let is_grouped = is_flag_enabled!(group_processes, args.process, config);
-    let is_case_sensitive = is_flag_enabled!(case_sensitive, args.process, config);
-    let is_match_whole_word = is_flag_enabled!(whole_word, args.process, config);
-    let is_use_regex = is_flag_enabled!(regex, args.process, config);
-    let is_default_tree = is_flag_enabled!(tree, args.process, config);
-    let is_default_command = is_flag_enabled!(process_command, args.process, config);
+    let is_grouped = enabled_option_with_deprecated!(
+        args.process.group_processes,
+        config,
+        processes.default_grouped,
+        flags.group_processes,
+    );
+    let is_case_sensitive = enabled_option_with_deprecated!(
+        args.process.case_sensitive,
+        config,
+        processes.case_sensitive,
+        flags.case_sensitive,
+    );
+    let is_match_whole_word = enabled_option_with_deprecated!(
+        args.process.whole_word,
+        config,
+        processes.whole_word,
+        flags.whole_word,
+    );
+    let is_use_regex =
+        enabled_option_with_deprecated!(args.process.regex, config, processes.regex, flags.regex,);
+    let is_default_tree = enabled_option_with_deprecated!(
+        args.process.tree,
+        config,
+        processes.default_tree,
+        flags.tree,
+    );
+    let is_default_command = enabled_option_with_deprecated!(
+        args.process.process_command,
+        config,
+        processes.process_command,
+        flags.process_command,
+    );
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-    let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, args.process, config));
+    let is_advanced_kill = !(enabled_option_with_deprecated!(
+        args.process.disable_advanced_kill,
+        config,
+        processes.disable_advanced_kill,
+        flags.disable_advanced_kill,
+    ));
     let is_read_only = is_flag_enabled!(read_only, args.process, config);
     #[cfg(target_os = "linux")]
-    let hide_k_threads = is_flag_enabled!(hide_k_threads, args.process, config);
+    let hide_k_threads = enabled_option_with_deprecated!(
+        args.process.hide_k_threads,
+        config,
+        processes.hide_k_threads,
+        flags.hide_k_threads,
+    );
 
-    let process_memory_as_value = is_flag_enabled!(process_memory_as_value, args.process, config);
-    let is_default_tree_collapsed = is_flag_enabled!(tree_collapse, args.process, config);
+    let process_memory_as_value = enabled_option_with_deprecated!(
+        args.process.process_memory_as_value,
+        config,
+        processes.default_memory_value,
+        flags.process_memory_as_value,
+    );
+    let is_default_tree_collapsed = enabled_option_with_deprecated!(
+        args.process.tree_collapse,
+        config,
+        processes.tree_collapse,
+        flags.tree_collapse,
+    );
 
     // For CPU
     let default_cpu_selection = get_default_cpu_selection(args, config);
@@ -357,8 +403,18 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         show_cpu_decimal: config_or!(config, cpu.show_decimal, false),
         use_dot: is_flag_enabled!(dot_marker, args.general, config),
         cpu_left_legend: is_flag_enabled!(cpu_left_legend, args.cpu, config),
-        use_current_cpu_total: is_flag_enabled!(current_usage, args.process, config),
-        unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, args.process, config),
+        use_current_cpu_total: enabled_option_with_deprecated!(
+            args.process.current_usage,
+            config,
+            processes.current_usage,
+            flags.current_usage,
+        ),
+        unnormalized_cpu: enabled_option_with_deprecated!(
+            args.process.unnormalized_cpu,
+            config,
+            processes.unnormalized_cpu,
+            flags.unnormalized_cpu,
+        ),
         get_process_threads: is_flag_enabled_in!(get_threads, args.process, config.processes),
         use_basic_mode,
         default_time_value,

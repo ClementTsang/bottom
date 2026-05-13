@@ -223,6 +223,17 @@ fn test_deprecated_mem_network() {
 }
 
 #[test]
+fn test_newer_processes() {
+    run_and_kill(&["-C", "./tests/valid_configs/newer_processes.toml"]);
+}
+
+/// This uses deprecated process settings - once they are removed, this test file should be moved to invalid configs.
+#[test]
+fn test_deprecated_processes() {
+    run_and_kill(&["-C", "./tests/valid_configs/deprecated/processes.toml"]);
+}
+
+#[test]
 fn test_network_alias() {
     run_and_kill(&["-C", "./tests/valid_configs/network_alias.toml"]);
 }
