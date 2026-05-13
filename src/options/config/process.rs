@@ -21,7 +21,8 @@ pub(crate) struct ProcessesConfig {
     /// Whether to get process child threads.
     pub get_threads: Option<bool>,
 
-    /// Hide kernel threads from being shown.
+    /// Hide kernel threads from being shown. Linux only.
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
     pub hide_k_threads: Option<bool>,
 
     /// Collapse the process tree by default when tree mode is set.
@@ -35,6 +36,10 @@ pub(crate) struct ProcessesConfig {
     //
     // #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     /// Disable the advanced kill dialog and just show the basic one with no options.
+    #[cfg_attr(
+        not(any(target_os = "linux", target_os = "macos", target_os = "freebsd")),
+        allow(dead_code)
+    )]
     pub disable_advanced_kill: Option<bool>,
 
     /// Defaults to showing process memory usage by value.

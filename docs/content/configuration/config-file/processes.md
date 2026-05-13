@@ -7,7 +7,7 @@ If you want to change some of the default behaviour of the processes widget, you
 | Field                   | Type    | Functionality                                                                                             |
 | ----------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
 | `get_threads`           | Boolean | Gather process thread information.                                                                        |
-| `hide_k_threads`        | Boolean | Hide kernel threads from being shown.                                                                     |
+| `hide_k_threads`        | Boolean | Hide kernel threads from being shown. Linux only.                                                         |
 | `tree_collapse`         | Boolean | Collapse the process tree by default when tree mode is set.                                               |
 | `process_command`       | Boolean | Shows the full command name instead of the process name by default.                                       |
 | `disable_advanced_kill` | Boolean | Disable the advanced kill dialog and just show the basic one with no options. Linux, macOS, FreeBSD only. |
