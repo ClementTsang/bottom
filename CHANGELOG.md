@@ -46,7 +46,8 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2039](https://github.com/ClementTsang/bottom/pull/2039): Replace `hide_table_gap` with `table_gap`.
 - [#2061](https://github.com/ClementTsang/bottom/pull/2061): Take cgroup into account for RAM/swap usage.
 - [#2062](https://github.com/ClementTsang/bottom/pull/2062): Rename `[network]` to `[network_graph]` in the config file; `[network]` remains valid as an alias.
-- [#2062](https://github.com/ClementTsang/bottom/pull/2062): Move network and memory graph config file options from flags to be under `[network_graph]` and `[memory_graph]`.
+- [#2062](https://github.com/ClementTsang/bottom/pull/2062): Move network and memory graph config file options from `[flags]` to be under `[network_graph]` and `[memory_graph]`.
+- [#2063](https://github.com/ClementTsang/bottom/pull/2063): Move process config file options from `[flags]` to be under `[processes]`.
 
 ### Other
 
