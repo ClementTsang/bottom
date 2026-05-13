@@ -362,7 +362,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Prevents performing any actions that affect the system (e.g. stopping processes).
 #read_only = false
 
-# Hides the kernel threads
+# Hide kernel threads from being shown.
 #hide_k_threads = false
 
 # Hide GPU(s) information
@@ -396,6 +396,42 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Gather process child thread information
 #get_threads = false
+
+# Hide kernel threads from being shown. Linux only.
+#hide_k_threads = false
+
+# Collapse the process tree by default when tree mode is set.
+#tree_collapse = false
+
+# Shows the full command name instead of the process name by default.
+#process_command = false
+
+# Disable the advanced kill dialog and just show the basic one with no options. Only available on Linux, macOS, and FreeBSD.
+#disable_advanced_kill = false
+
+# Defaults to showing process memory usage by value.
+#default_memory_value = false
+
+# Groups processes with the same name by default. No effect if tree is set.
+#default_grouped = false
+
+# Enables regex by default while searching.
+#regex = false
+
+# Enables case sensitivity by default when searching.
+#case_sensitive = false
+
+# Enables whole-word matching by default while searching.
+#whole_word = false
+
+# Makes the process widget use tree mode by default.
+#default_tree = false
+
+# Calculates process CPU usage as a percentage of current usage rather than total usage.
+#current_usage = false
+
+# Show process CPU% usage without averaging over the number of CPU cores.
+#unnormalized_cpu = false
 
 
 # CPU widget configuration
