@@ -77,6 +77,23 @@ macro_rules! is_flag_enabled_in {
     };
 }
 
+/// A version of [`is_flag_enabled`] which should be used to deprecate old config flags.
+macro_rules! enabled_option_with_deprecated {
+    ($arg:expr, $config:expr, $section:ident . $field:ident, $flags:ident . $deprecated_flag:ident $(,)?) => {
+        if $arg {
+            true
+        } else if let Some(section) = &$config.$section {
+            section.$field.unwrap_or(false)
+        } else if let Some(flags) = &$config.flags {
+            deprecated_warning(stringify!($deprecated_flag), stringify!($section.$field));
+
+            flags.$deprecated_flag.unwrap_or(false)
+        } else {
+            false
+        }
+    };
+}
+
 /// Get the value of a field for a specific section in the config file if set. If not set, the default is used.
 macro_rules! config_or_default {
     ($config:expr, $section:ident . $field:ident) => {
@@ -305,7 +322,12 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let network_scale_type = get_network_scale_type(args, config);
     // Use + update this again after deprecation
     // let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, args.network, config);
-    let network_use_binary_prefix = get_network_use_binary_prefix(args, config);
+    let network_use_binary_prefix = enabled_option_with_deprecated!(
+        args.network.network_use_binary_prefix,
+        config,
+        network_graph.use_binary_prefix,
+        flags.network_use_binary_prefix,
+    );
     let network_show_packets =
         is_flag_enabled_in!(show_packets, args.network, config.network_graph);
 
@@ -1063,29 +1085,6 @@ fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
     AxisScaling::Linear
 }
 
-fn get_network_use_binary_prefix(args: &BottomArgs, config: &Config) -> bool {
-    if args.network.network_use_binary_prefix {
-        return true;
-    } else if let Some(use_binary_prefix) = config
-        .network_graph
-        .as_ref()
-        .and_then(|cfg| cfg.use_binary_prefix)
-    {
-        return use_binary_prefix;
-    } else if let Some(flags) = &config.flags {
-        if let Some(network_use_binary_prefix) = flags.network_use_binary_prefix {
-            deprecated_warning(
-                "network_use_binary_prefix",
-                "network_graph.use_binary_prefix",
-            );
-
-            return network_use_binary_prefix;
-        }
-    }
-
-    false
-}
-
 fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
     const DEFAULT_RETENTION_MS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
@@ -1144,7 +1143,7 @@ fn get_network_legend_position(
             .as_ref()
             .and_then(|flags| flags.network_legend.as_ref())
             .map(|s| (s, "network_legend")),
-        "network.legend_position",
+        "network_graph.legend_position",
     )
 }
 
