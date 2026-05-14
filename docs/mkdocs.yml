@@ -161,7 +161,7 @@ nav:
       - "General Usage": usage/general-usage.md
       - "Basic Mode": usage/basic-mode.md
       - "Widgets":
-          - "CPU Widget": usage/widgets/cpu.md
+          - "CPU Widget": usage/widgets/cpu-graph.md
           - "Memory Graph Widget": usage/widgets/memory-graph.md
           - "Network Graph Widget": usage/widgets/network-graph.md
           - "Process Widget": usage/widgets/process.md
@@ -174,7 +174,7 @@ nav:
       - "Command-line Options": configuration/command-line-options.md
       - "Config File":
           - configuration/config-file/index.md
-          - "CPU Widget": configuration/config-file/cpu.md
+          - "CPU Widget": configuration/config-file/cpu-graph.md
           - "Disk Table Widget": configuration/config-file/disk-table.md
           - "Memory Graph Widget": configuration/config-file/memory-graph.md
           - "Network Graph Widget": configuration/config-file/network-graph.md
