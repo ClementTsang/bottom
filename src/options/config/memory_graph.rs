@@ -17,6 +17,6 @@ pub struct MemoryGraphConfig {
     pub(crate) cache_memory: Option<bool>,
 
     /// Whether to subtract freeable ARC from memory usage.
-    #[cfg_attr(feature = "zfs", allow(dead_code))]
+    #[cfg_attr(not(feature = "zfs"), allow(dead_code))]
     pub(crate) free_arc: Option<bool>,
 }
