@@ -275,6 +275,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let use_basic_mode = is_flag_enabled!(basic, args.general, config);
     let expanded = is_flag_enabled!(expanded, args.general, config);
+
     #[cfg(feature = "zfs")]
     let free_arc = enabled_option_with_deprecated!(
         args.memory.free_arc,

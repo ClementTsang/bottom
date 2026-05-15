@@ -13,8 +13,10 @@ pub struct MemoryGraphConfig {
     pub(crate) legend_position: Option<String>,
 
     /// Whether to collect and display cache and buffer memory. Not available on Windows.
+    #[cfg_attr(target_os = "windows", allow(dead_code))]
     pub(crate) cache_memory: Option<bool>,
 
     /// Whether to subtract freeable ARC from memory usage.
+    #[cfg_attr(feature = "zfs", allow(dead_code))]
     pub(crate) free_arc: Option<bool>,
 }
