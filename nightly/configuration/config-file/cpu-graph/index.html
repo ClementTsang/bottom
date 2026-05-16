@@ -12,7 +12,7 @@
         <meta name="author" content="Clement Tsang">
       
       
-        <link rel="canonical" href="https://bottom.pages.dev/stable/configuration/config-file/cpu/">
+        <link rel="canonical" href="https://bottom.pages.dev/stable/configuration/config-file/cpu-graph/">
       
       
         <link rel="prev" href="../">
@@ -771,7 +771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/widgets/cpu/" class="md-nav__link">
+      <a href="../../../usage/widgets/cpu-graph/" class="md-nav__link">
         
   
   
@@ -1284,7 +1284,7 @@
   <a href="#default-cpu-graph-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Default CPU Graph Selection
+        Default CPU graph selection
       
     </span>
   </a>
@@ -1295,7 +1295,40 @@
   <a href="#show-decimal" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Show Decimal
+        Show decimal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hide-average-cpu-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hide average CPU entry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#place-legend-on-the-left" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Place legend on the left
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#average-cpu-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Average CPU row
       
     </span>
   </a>
@@ -1991,7 +2024,7 @@
 
 
   
-    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/configuration/config-file/cpu.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/configuration/config-file/cpu-graph.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
     </a>
@@ -2000,16 +2033,34 @@
 
 
 <h1 id="cpu"><a class="toclink" href="#cpu">CPU</a></h1>
-<h2 id="default-cpu-graph-selection"><a class="toclink" href="#default-cpu-graph-selection">Default CPU Graph Selection</a></h2>
-<p>You can configure which CPU graph is shown by default when starting up bottom by setting <code>cpu.default</code>.</p>
+<p>If you want to change some of the default behaviour of the CPU graph widget, you can configure things under the <code>[cpu]</code> section.</p>
+<h2 id="default-cpu-graph-selection"><a class="toclink" href="#default-cpu-graph-selection">Default CPU graph selection</a></h2>
+<p>You can configure which CPU graph is shown by default on startup by setting <code>cpu.default</code>. Defaults to <code>"all"</code>, which
+shows all entries.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[cpu]</span>
 <span class="c1"># One of &quot;all&quot; (default), &quot;average&quot;/&quot;avg&quot;</span>
 <span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;average&quot;</span>
 </code></pre></div>
-<h2 id="show-decimal"><a class="toclink" href="#show-decimal">Show Decimal</a></h2>
-<p>You can configure whether CPU usage values are shown with a decimal place by setting <code>cpu.show_decimal</code>. Defaults to <code>false</code>.</p>
+<h2 id="show-decimal"><a class="toclink" href="#show-decimal">Show decimal</a></h2>
+<p>You can configure whether CPU usage values are shown with a decimal place by setting <code>cpu.show_decimal</code>. Defaults
+to <code>false</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[cpu]</span>
 <span class="n">show_decimal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</code></pre></div>
+<h2 id="hide-average-cpu-entry"><a class="toclink" href="#hide-average-cpu-entry">Hide average CPU entry</a></h2>
+<p>You can hide the average CPU entry entirely by setting <code>cpu.hide_avg_cpu</code>. Defaults to <code>false</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">[cpu]</span>
+<span class="n">hide_avg_cpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</code></pre></div>
+<h2 id="place-legend-on-the-left"><a class="toclink" href="#place-legend-on-the-left">Place legend on the left</a></h2>
+<p>You can place the CPU chart legend on the left side by setting <code>cpu.left_legend</code>. Defaults to <code>false</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">[cpu]</span>
+<span class="n">left_legend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</code></pre></div>
+<h2 id="average-cpu-row"><a class="toclink" href="#average-cpu-row">Average CPU row</a></h2>
+<p>In basic mode, you can give the average CPU entry a dedicated row by setting <code>cpu.basic_average_cpu_row</code>. Defaults to <code>false</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">[cpu]</span>
+<span class="n">basic_average_cpu_row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 </code></pre></div>
 
 
@@ -2031,7 +2082,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="April 22, 2026 03:27:25">April 22, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 00:00:44">May 16, 2026</span>
   </span>
 
     
