@@ -14,9 +14,9 @@ legend_position = "top-right"
 
 ## Upper Limit
 
-By default, the y-axis is bounded at 100°C (or the equivalent in the configured `temperature_type`) and grows
+By default, the y-axis is bounded at 100°C (or the equivalent in the configured temperature unit) and grows
 automatically if a reading exceeds that. An explicit upper bound can be set with `max_temp` (uses the same unit as
-`temperature_type`). Sensor readings above this value will be drawn off the chart.
+the configured temperature unit). Sensor readings above this value will be drawn off the chart.
 
 ```toml
 [temperature_graph]

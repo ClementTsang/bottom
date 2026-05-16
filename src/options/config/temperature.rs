@@ -14,7 +14,4 @@ pub(crate) struct TempConfig {
     /// The default sort column.
     #[serde(default)]
     pub(crate) default_sort: Option<TempWidgetColumn>,
-
-    /// The temperature unit to use. One of "celsius", "fahrenheit", or "kelvin".
-    pub(crate) temperature_type: Option<String>,
 }

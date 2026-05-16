@@ -526,7 +526,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #legend_position = "top-right"
 
 # An upper temperature value for the graph; entries higher than this will be hidden. If not set,
-# there is no limit. Is in the unit of `temperature_type`.
+# there is no limit. Is in the configured temperature unit.
 #max_temp = 100.0
 
 # By default, there are no temperature sensor filters enabled. An example use case is provided below.

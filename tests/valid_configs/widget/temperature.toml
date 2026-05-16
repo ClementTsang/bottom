@@ -1,7 +1,6 @@
 # This uses the newer temperature config location.
 
 [temperature]
-temperature_type = "fahrenheit"
 default_sort = "Temp"
 
 [temperature.sensor_filter]

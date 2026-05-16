@@ -1,4 +1,1 @@
 # This uses deprecated temperature settings - once they are removed, this test file should be moved to invalid configs.
-
-[flags]
-temperature_type = "fahrenheit"

@@ -2,16 +2,6 @@
 
 The temperature table widget is configured under `[temperature]`.
 
-## Temperature Unit
-
-You can set the temperature unit by setting `temperature.temperature_type`. This defaults to `"celsius"`.
-
-```toml
-[temperature]
-# One of "celsius" (default), "fahrenheit", "kelvin"
-temperature_type = "fahrenheit"
-```
-
 ## Default Sort Order
 
 You can customize the default sort order (by default, it sorts by temperature sensor name). For example, to sort by temperature:

@@ -49,9 +49,9 @@ pub(crate) struct GeneralConfig {
     pub(crate) read_only: Option<bool>,
     pub(crate) disable_gpu: Option<bool>,
     pub(crate) retention: Option<StringOrNum>,
+    pub(crate) temperature_type: Option<String>,
 
     // FIXME: Deprecate these in the future.
-    pub(crate) temperature_type: Option<String>,
     pub(crate) hide_avg_cpu: Option<bool>,
     pub(crate) cpu_left_legend: Option<bool>,
     pub(crate) average_cpu_row: Option<bool>,
