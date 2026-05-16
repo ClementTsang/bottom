@@ -1268,7 +1268,7 @@
           "default": null
         },
         "max_temp": {
-          "description": "An upper temperature value for the graph; entries higher than this will be hidden. If not set,\nthere is no limit.\n\nIs in the unit of `temperature_type`.",
+          "description": "An upper temperature value for the graph; entries higher than this will be hidden. If not set,\nthere is no limit.\n\nIs in the configured temperature unit.",
           "type": [
             "number",
             "null"

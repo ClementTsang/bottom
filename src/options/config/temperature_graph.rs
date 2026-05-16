@@ -17,7 +17,7 @@ pub(crate) struct TempGraphConfig {
     /// An upper temperature value for the graph; entries higher than this will be hidden. If not set,
     /// there is no limit.
     ///
-    /// Is in the unit of `temperature_type`.
+    /// Is in the configured temperature unit.
     #[serde(default)]
     pub(crate) max_temp: Option<f64>,
 }
