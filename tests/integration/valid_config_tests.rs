@@ -212,19 +212,34 @@ fn test_proc_default_sort() {
 }
 
 #[test]
-fn test_newer_mem_network() {
-    run_and_kill(&["-C", "./tests/valid_configs/newer_mem_network.toml"]);
+fn test_newer_memory() {
+    run_and_kill(&["-C", "./tests/valid_configs/newer_memory.toml"]);
 }
 
-/// This uses deprecated network and memory settings - once they are removed, this test file should be moved to invalid configs.
 #[test]
-fn test_deprecated_mem_network() {
-    run_and_kill(&["-C", "./tests/valid_configs/deprecated/mem_network.toml"]);
+fn test_newer_cpu() {
+    run_and_kill(&["-C", "./tests/valid_configs/newer_cpu.toml"]);
 }
 
 #[test]
 fn test_newer_processes() {
     run_and_kill(&["-C", "./tests/valid_configs/newer_processes.toml"]);
+}
+
+#[test]
+fn test_newer_network() {
+    run_and_kill(&["-C", "./tests/valid_configs/newer_network.toml"]);
+}
+
+#[test]
+fn test_network_alias() {
+    run_and_kill(&["-C", "./tests/valid_configs/network_alias.toml"]);
+}
+
+/// This uses deprecated network settings - once they are removed, this test file should be moved to invalid configs.
+#[test]
+fn test_deprecated_network() {
+    run_and_kill(&["-C", "./tests/valid_configs/deprecated/network.toml"]);
 }
 
 /// This uses deprecated process settings - once they are removed, this test file should be moved to invalid configs.
@@ -233,7 +248,14 @@ fn test_deprecated_processes() {
     run_and_kill(&["-C", "./tests/valid_configs/deprecated/processes.toml"]);
 }
 
+/// This uses deprecated CPU settings - once they are removed, this test file should be moved to invalid configs.
 #[test]
-fn test_network_alias() {
-    run_and_kill(&["-C", "./tests/valid_configs/network_alias.toml"]);
+fn test_deprecated_cpu() {
+    run_and_kill(&["-C", "./tests/valid_configs/deprecated/cpu.toml"]);
+}
+
+/// This uses deprecated memory settings - once they are removed, this test file should be moved to invalid configs.
+#[test]
+fn test_deprecated_memory() {
+    run_and_kill(&["-C", "./tests/valid_configs/deprecated/memory.toml"]);
 }

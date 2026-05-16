@@ -48,6 +48,8 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2062](https://github.com/ClementTsang/bottom/pull/2062): Rename `[network]` to `[network_graph]` in the config file; `[network]` remains valid as an alias.
 - [#2062](https://github.com/ClementTsang/bottom/pull/2062): Move network and memory graph config file options from `[flags]` to be under `[network_graph]` and `[memory_graph]`.
 - [#2063](https://github.com/ClementTsang/bottom/pull/2063): Move process config file options from `[flags]` to be under `[processes]`.
+- [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move CPU config file options from `[flags]` to be under `[cpu]`.
+- [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move memory config file options from `[flags]` to be under `[memory_graph]`.
 
 ### Other
 

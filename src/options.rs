@@ -275,8 +275,14 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let use_basic_mode = is_flag_enabled!(basic, args.general, config);
     let expanded = is_flag_enabled!(expanded, args.general, config);
+
     #[cfg(feature = "zfs")]
-    let free_arc = is_flag_enabled!(free_arc, args.memory, config);
+    let free_arc = enabled_option_with_deprecated!(
+        args.memory.free_arc,
+        config,
+        memory_graph.free_arc,
+        flags.free_arc,
+    );
 
     // For processes
     let is_grouped = enabled_option_with_deprecated!(
@@ -402,7 +408,12 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         show_average_cpu: get_show_average_cpu(args, config),
         show_cpu_decimal: config_or!(config, cpu.show_decimal, false),
         use_dot: is_flag_enabled!(dot_marker, args.general, config),
-        cpu_left_legend: is_flag_enabled!(cpu_left_legend, args.cpu, config),
+        cpu_left_legend: enabled_option_with_deprecated!(
+            args.cpu.cpu_left_legend,
+            config,
+            cpu.left_legend,
+            flags.cpu_left_legend,
+        ),
         use_current_cpu_total: enabled_option_with_deprecated!(
             args.process.current_usage,
             config,
@@ -445,7 +456,12 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         network_use_binary_prefix,
         network_show_packets,
         retention_ms,
-        dedicated_average_row: config_or!(config, flags.average_cpu_row, false),
+        dedicated_average_row: enabled_option_with_deprecated!(
+            false,
+            config,
+            cpu.basic_average_cpu_row,
+            flags.average_cpu_row,
+        ),
         default_tree_collapse: is_default_tree_collapsed,
         #[cfg(feature = "zfs")]
         free_arc,
@@ -716,7 +732,12 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 fn get_widget_layout(
     args: &BottomArgs, config: &Config,
 ) -> OptionResult<(BottomLayout, u64, Option<BottomWidgetType>)> {
-    let cpu_left_legend = is_flag_enabled!(cpu_left_legend, args.cpu, config);
+    let cpu_left_legend = enabled_option_with_deprecated!(
+        args.cpu.cpu_left_legend,
+        config,
+        cpu.left_legend,
+        flags.cpu_left_legend,
+    );
 
     let (default_widget_type, mut default_widget_count) =
         get_default_widget_and_count(args, config)?;
@@ -903,9 +924,12 @@ fn get_temperature(args: &BottomArgs, config: &Config) -> OptionResult<Temperatu
 fn get_show_average_cpu(args: &BottomArgs, config: &Config) -> bool {
     if args.cpu.hide_avg_cpu {
         return false;
+    } else if let Some(cpu) = &config.cpu {
+        return !cpu.hide_avg_cpu.unwrap_or(false);
     } else if let Some(flags) = &config.flags {
-        if let Some(avg_cpu) = flags.hide_avg_cpu {
-            return !avg_cpu;
+        if let Some(hide) = flags.hide_avg_cpu {
+            deprecated_warning("hide_avg_cpu", "cpu.hide_avg_cpu");
+            return !hide;
         }
     }
 
@@ -1057,7 +1081,12 @@ fn get_enable_gpu(_: &BottomArgs, _: &Config) -> bool {
 
 #[cfg(not(target_os = "windows"))]
 fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
-    is_flag_enabled!(enable_cache_memory, args.memory, config)
+    enabled_option_with_deprecated!(
+        args.memory.enable_cache_memory,
+        config,
+        memory_graph.cache_memory,
+        flags.enable_cache_memory,
+    )
 }
 
 #[cfg(target_os = "windows")]

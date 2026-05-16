@@ -27,11 +27,9 @@ impl TableGap {
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct GeneralConfig {
-    pub(crate) hide_avg_cpu: Option<bool>,
     pub(crate) dot_marker: Option<bool>,
     pub(crate) temperature_type: Option<String>,
     pub(crate) rate: Option<StringOrNum>,
-    pub(crate) cpu_left_legend: Option<bool>,
     pub(crate) basic: Option<bool>,
     pub(crate) default_time_value: Option<StringOrNum>,
     pub(crate) time_delta: Option<StringOrNum>,
@@ -50,16 +48,16 @@ pub(crate) struct GeneralConfig {
     pub(crate) show_table_scroll_position: Option<bool>,
     pub(crate) show_table_scroll_bar: Option<bool>,
     pub(crate) read_only: Option<bool>,
-    // #[cfg(feature = "zfs")]
-    pub(crate) free_arc: Option<bool>,
     pub(crate) disable_gpu: Option<bool>,
-    // FIXME: This makes no sense outside of basic mode, add a basic mode config section.
-    // FIXME: This also should be moved to CPU-specific... same with all the other entries.
-    pub(crate) average_cpu_row: Option<bool>,
-    pub(crate) enable_cache_memory: Option<bool>,
     pub(crate) retention: Option<StringOrNum>,
 
     // FIXME: Deprecate these in the future.
+    pub(crate) hide_avg_cpu: Option<bool>,
+    pub(crate) cpu_left_legend: Option<bool>,
+    pub(crate) average_cpu_row: Option<bool>,
+    pub(crate) enable_cache_memory: Option<bool>,
+    // #[cfg(feature = "zfs")]
+    pub(crate) free_arc: Option<bool>,
     pub(crate) network_use_bytes: Option<bool>,
     pub(crate) network_use_log: Option<bool>,
     pub(crate) network_use_binary_prefix: Option<bool>,

@@ -36,6 +36,7 @@ pub struct Config {
     pub(crate) temperature_graph: Option<TempGraphConfig>,
     #[serde(alias = "network")]
     pub(crate) network_graph: Option<NetworkGraphConfig>,
+    #[serde(alias = "memory")]
     pub(crate) memory_graph: Option<MemoryGraphConfig>,
     pub(crate) cpu: Option<CpuConfig>,
 }

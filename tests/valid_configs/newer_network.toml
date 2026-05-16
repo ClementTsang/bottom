@@ -5,6 +5,3 @@ use_log = true
 use_bytes = true
 use_binary_prefix = true
 legend_position = "left"
-
-[memory_graph]
-legend_position = "left"
