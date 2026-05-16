@@ -255,9 +255,11 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # added when running (ie: btm -a) will override this config file if an option
 # is also set here.
 [flags]
+# Deprecated - use cpu.hide_avg_cpu.
 # Whether to hide the average cpu entry.
 #hide_avg_cpu = false
 
+# Deprecated - use cpu.basic_average_cpu_row.
 # Whether to use a dedicated row for the average cpu entry
 #average_cpu_row = false
 
@@ -267,25 +269,32 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # The update rate of the application.
 #rate = "1s"
 
+# Deprecated - use cpu.left_legend.
 # Whether to put the CPU legend to the left.
 #cpu_left_legend = false
 
+# Deprecated - use processes.current_usage.
 # Whether to set CPU% on a process to be based on the total CPU or just current usage.
 #current_usage = false
 
+# Deprecated - use processes.unnormalized_cpu.
 # Whether to set CPU% on a process to be based on the total CPU or per-core CPU% (not divided by the number of cpus).
 #unnormalized_cpu = false
 
+# Deprecated - use processes.default_grouped.
 # Whether to group processes with the same name together by default. Doesn't do anything
 # if tree is set to true or --tree is set.
 #group_processes = false
 
+# Deprecated - use processes.case_sensitive.
 # Whether to make process searching case sensitive by default.
 #case_sensitive = false
 
+# Deprecated - use processes.whole_word.
 # Whether to make process searching look for matching the entire word by default.
 #whole_word = false
 
+# Deprecated - use processes.regex.
 # Whether to make process searching use regex by default.
 #regex = false
 
@@ -332,9 +341,11 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Disable keyboard shortcuts
 #disable_keys = false
 
+# Deprecated - use processes.default_memory_value.
 # Show memory values in the processes widget as values by default
 #process_memory_as_value = false
 
+# Deprecated - use processes.default_tree.
 # Show tree mode by default in the processes widget.
 #tree = false
 
@@ -344,42 +355,52 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Show a scroll bar on the right edge of table widgets.
 #show_table_scroll_bar = false
 
+# Deprecated - use processes.process_command.
 # Show processes as their commands by default in the process widget.
 #process_command = false
 
+# Deprecated - use network_graph.use_binary_prefix.
 # Displays the network widget with binary prefixes.
 #network_use_binary_prefix = false
 
+# Deprecated - use network_graph.use_bytes.
 # Displays the network widget using bytes.
 #network_use_bytes = false
 
+# Deprecated - use network_graph.use_log.
 # Displays the network widget with a log scale.
 #network_use_log = false
 
+# Deprecated - use processes.disable_advanced_kill.
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
 
 # Prevents performing any actions that affect the system (e.g. stopping processes).
 #read_only = false
 
+# Deprecated - use processes.hide_k_threads.
 # Hide kernel threads from being shown.
 #hide_k_threads = false
 
 # Hide GPU(s) information
 #disable_gpu = false
 
+# Deprecated - use memory.cache_memory.
 # Shows cache and buffer memory
 #enable_cache_memory = false
 
+# Deprecated - use memory.free_arc.
 # Subtract freeable ARC from memory usage
 #free_arc = false
 
 # How much data is stored at once in terms of time.
 #retention = "10m"
 
+# Deprecated - use memory.legend_position.
 # Where to place the legend for the memory widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #memory_legend = "top-right"
 
+# Deprecated - use network_graph.legend_position.
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "top-right"
 
