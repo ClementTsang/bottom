@@ -6,11 +6,12 @@ pub(crate) use self::sysinfo::get_ram_usage;
 
 pub mod sysinfo;
 
-cfg_if::cfg_if! {
-    if #[cfg(target_os = "windows")] {
+cfg_select! {
+    target_os = "windows" => {
         mod windows;
         pub(crate) use self::windows::get_swap_usage;
-    } else {
+    }
+    _ =>{
         pub(crate) use self::sysinfo::{get_cache_usage, get_swap_usage};
     }
 }

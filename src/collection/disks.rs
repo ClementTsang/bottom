@@ -1,7 +1,7 @@
 //! Data collection about disks (e.g. I/O, usage, space).
 
-cfg_if! {
-    if #[cfg(target_os = "freebsd")] {
+cfg_select! {
+    target_os = "freebsd" => {
         mod freebsd;
         #[cfg(feature = "zfs")]
         mod io_counters;
@@ -12,24 +12,27 @@ cfg_if! {
         pub(crate) use self::freebsd::*;
         mod other;
         pub(crate) use self::other::*;
-    } else if #[cfg(target_os = "windows")] {
+    }
+    target_os = "windows" => {
         mod windows;
         pub(crate) use self::windows::*;
-    } else if #[cfg(target_os = "linux")] {
+    }
+    target_os = "linux" => {
         mod unix;
         #[cfg(feature = "zfs")]
         mod zfs_io_counters;
         pub(crate) use self::unix::*;
-    } else if #[cfg(target_os = "macos")] {
+    }
+    target_os = "macos" => {
         mod unix;
         pub(crate) use self::unix::*;
-    } else {
+    }
+    _ => {
         mod other;
         pub(crate) use self::other::*;
     }
 }
 
-use cfg_if::cfg_if;
 use rustc_hash::FxHashMap as HashMap;
 
 use crate::app::filter::Filter;
@@ -57,8 +60,8 @@ pub struct IoData {
 
 pub type IoHarvest = HashMap<String, Option<IoData>>;
 
-cfg_if! {
-    if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))] {
+cfg_select! {
+    any(target_os = "linux", target_os = "macos", target_os = "windows") => {
         mod io_counters;
         pub use io_counters::IoCounters;
         use crate::collection::DataCollector;
@@ -83,12 +86,14 @@ cfg_if! {
 
             Ok(io_hash)
         }
-    } else if #[cfg(not(target_os = "freebsd"))] {
+    }
+    not(target_os = "freebsd") => {
         use crate::collection::DataCollector;
         pub fn get_io_usage(_collector: &DataCollector) -> anyhow::Result<IoHarvest> {
             anyhow::bail!("Unsupported OS");
         }
     }
+    _ => {}
 }
 
 /// Whether to keep the current disk entry given the filters, disk name, and

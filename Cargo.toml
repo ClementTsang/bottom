@@ -75,7 +75,6 @@ generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
 anyhow = "1.0.101"
-cfg-if = "1.0.4"
 clap = { version = "4.5.57", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
 crossterm = "0.29.0"

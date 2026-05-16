@@ -1006,10 +1006,11 @@ impl App {
                     let current_process = (id, pids);
 
                     let use_simple_selection = {
-                        cfg_if::cfg_if! {
-                            if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+                        cfg_select! {
+                            any(target_os = "linux", target_os = "macos", target_os = "freebsd") => {
                                 !self.app_config_fields.is_advanced_kill
-                            } else {
+                            }
+                            _ => {
                                 true
                             }
                         }

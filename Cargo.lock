@@ -160,7 +160,6 @@ version = "0.12.3"
 dependencies = [
  "anyhow",
  "assert_cmd",
- "cfg-if",
  "clap",
  "clap_complete",
  "clap_complete_fig",
