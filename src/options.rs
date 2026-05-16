@@ -912,8 +912,13 @@ fn get_temperature(args: &BottomArgs, config: &Config) -> OptionResult<Temperatu
         return Ok(TemperatureType::Kelvin);
     } else if args.temperature.celsius {
         return Ok(TemperatureType::Celsius);
+    } else if let Some(temperature) = &config.temperature {
+        if let Some(temp_type) = &temperature.temperature_type {
+            return parse_config_value!(TemperatureType::from_str(temp_type), "temperature_type");
+        }
     } else if let Some(flags) = &config.flags {
         if let Some(temp_type) = &flags.temperature_type {
+            deprecated_warning("temperature_type", "temperature.temperature_type");
             return parse_config_value!(TemperatureType::from_str(temp_type), "temperature_type");
         }
     }

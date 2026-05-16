@@ -28,7 +28,6 @@ impl TableGap {
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct GeneralConfig {
     pub(crate) dot_marker: Option<bool>,
-    pub(crate) temperature_type: Option<String>,
     pub(crate) rate: Option<StringOrNum>,
     pub(crate) basic: Option<bool>,
     pub(crate) default_time_value: Option<StringOrNum>,
@@ -52,6 +51,7 @@ pub(crate) struct GeneralConfig {
     pub(crate) retention: Option<StringOrNum>,
 
     // FIXME: Deprecate these in the future.
+    pub(crate) temperature_type: Option<String>,
     pub(crate) hide_avg_cpu: Option<bool>,
     pub(crate) cpu_left_legend: Option<bool>,
     pub(crate) average_cpu_row: Option<bool>,
