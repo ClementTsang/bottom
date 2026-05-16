@@ -152,9 +152,30 @@
       "description": "CPU column settings.",
       "type": "object",
       "properties": {
+        "basic_average_cpu_row": {
+          "description": "Whether to give the average CPU entry a dedicated row in basic mode.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "default": {
           "description": "The default selected entry of the CPU widget.",
           "$ref": "#/$defs/CpuDefault"
+        },
+        "hide_avg_cpu": {
+          "description": "Whether to hide the average CPU entry.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "left_legend": {
+          "description": "Whether to put the CPU chart legend on the left side.",
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "show_decimal": {
           "description": "Whether to show a decimal place for CPU usage values.",
@@ -665,6 +686,20 @@
       "description": "Memory-related configuration file options.",
       "type": "object",
       "properties": {
+        "cache_memory": {
+          "description": "Whether to collect and display cache and buffer memory. Not available on Windows.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "free_arc": {
+          "description": "Whether to subtract freeable ARC from memory usage.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "legend_position": {
           "description": "Where to place the legend for the memory chart widget.",
           "type": [
@@ -980,7 +1015,7 @@
           ]
         },
         "hide_k_threads": {
-          "description": "Hide kernel threads from being shown.",
+          "description": "Hide kernel threads from being shown. Linux only.",
           "type": [
             "boolean",
             "null"

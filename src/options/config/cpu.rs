@@ -23,6 +23,15 @@ pub(crate) struct CpuConfig {
 
     /// Whether to show a decimal place for CPU usage values.
     pub(crate) show_decimal: Option<bool>,
+
+    /// Whether to hide the average CPU entry.
+    pub(crate) hide_avg_cpu: Option<bool>,
+
+    /// Whether to put the CPU chart legend on the left side.
+    pub(crate) left_legend: Option<bool>,
+
+    /// Whether to give the average CPU entry a dedicated row in basic mode.
+    pub(crate) basic_average_cpu_row: Option<bool>,
 }
 
 #[cfg(test)]
