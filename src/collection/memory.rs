@@ -11,7 +11,7 @@ cfg_select! {
         mod windows;
         pub(crate) use self::windows::get_swap_usage;
     }
-    _ =>{
+    _ => {
         pub(crate) use self::sysinfo::{get_cache_usage, get_swap_usage};
     }
 }
