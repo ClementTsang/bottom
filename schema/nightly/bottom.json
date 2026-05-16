@@ -1252,6 +1252,13 @@
               "type": "null"
             }
           ]
+        },
+        "temperature_type": {
+          "description": "The temperature unit to use. One of \"celsius\", \"fahrenheit\", or \"kelvin\".",
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },
