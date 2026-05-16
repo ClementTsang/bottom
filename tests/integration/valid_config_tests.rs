@@ -38,6 +38,10 @@ fn run_and_kill(args: &[&str]) {
     handle.kill().unwrap();
 }
 
+fn run_and_kill_cfg(path: &str) {
+    run_and_kill(&["-C", path]);
+}
+
 #[test]
 fn test_basic() {
     run_and_kill(&[]);
@@ -52,7 +56,7 @@ fn test_bad_basic() {
 
 #[test]
 fn test_empty() {
-    run_and_kill(&["-C", "./tests/valid_configs/empty_config.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/empty_config.toml");
 }
 
 #[cfg(feature = "default")]
@@ -152,110 +156,121 @@ fn test_demo() {
 
 #[test]
 fn test_many_proc() {
-    run_and_kill(&["-C", "./tests/valid_configs/many_proc.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/many_proc.toml");
 }
 
 #[test]
 fn test_all_proc() {
-    run_and_kill(&["-C", "./tests/valid_configs/all_proc.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/all_proc.toml");
 }
 
 #[test]
 fn test_cpu_doughnut() {
-    run_and_kill(&["-C", "./tests/valid_configs/cpu_doughnut.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/cpu_doughnut.toml");
 }
 
 #[test]
 fn test_theme() {
-    run_and_kill(&["-C", "./tests/valid_configs/theme.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/theme.toml");
 }
 
 #[test]
 fn test_styling_sanity_check() {
-    run_and_kill(&["-C", "./tests/valid_configs/styling.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/styling.toml");
 }
 
 #[test]
 fn test_styling_sanity_check_2() {
-    run_and_kill(&["-C", "./tests/valid_configs/all_styling.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/all_styling.toml");
 }
 
 #[test]
 fn test_color_spelling_is_valid() {
-    run_and_kill(&["-C", "./tests/valid_configs/all_styling_color.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/all_styling_color.toml");
 }
 
 #[test]
 fn test_filtering() {
-    run_and_kill(&["-C", "./tests/valid_configs/filtering.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/filtering.toml");
 }
 
 #[test]
 fn test_proc_columns() {
-    run_and_kill(&["-C", "./tests/valid_configs/proc_columns.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/proc_columns.toml");
 }
 
 #[cfg(target_os = "linux")]
 #[test]
 fn test_linux_only() {
-    run_and_kill(&["-C", "./tests/valid_configs/os_specific/linux.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/os_specific/linux.toml");
 }
 
 #[test]
 fn test_temp_disk_sort_columns() {
-    run_and_kill(&["-C", "./tests/valid_configs/temp_disk_sort_columns.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/temp_disk_sort_columns.toml");
 }
 
 #[test]
 fn test_proc_default_sort() {
-    run_and_kill(&["-C", "./tests/valid_configs/proc_default_sort.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/proc_default_sort.toml");
 }
 
 #[test]
 fn test_newer_memory() {
-    run_and_kill(&["-C", "./tests/valid_configs/newer_memory.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/widget/memory.toml");
 }
 
 #[test]
 fn test_newer_cpu() {
-    run_and_kill(&["-C", "./tests/valid_configs/newer_cpu.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/widget/cpu.toml");
 }
 
 #[test]
 fn test_newer_processes() {
-    run_and_kill(&["-C", "./tests/valid_configs/newer_processes.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/widget/processes.toml");
 }
 
 #[test]
 fn test_newer_network() {
-    run_and_kill(&["-C", "./tests/valid_configs/newer_network.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/widget/network.toml");
 }
 
 #[test]
 fn test_network_alias() {
-    run_and_kill(&["-C", "./tests/valid_configs/network_alias.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/network_alias.toml");
 }
 
 /// This uses deprecated network settings - once they are removed, this test file should be moved to invalid configs.
 #[test]
 fn test_deprecated_network() {
-    run_and_kill(&["-C", "./tests/valid_configs/deprecated/network.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/deprecated/network.toml");
 }
 
 /// This uses deprecated process settings - once they are removed, this test file should be moved to invalid configs.
 #[test]
 fn test_deprecated_processes() {
-    run_and_kill(&["-C", "./tests/valid_configs/deprecated/processes.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/deprecated/processes.toml");
 }
 
 /// This uses deprecated CPU settings - once they are removed, this test file should be moved to invalid configs.
 #[test]
 fn test_deprecated_cpu() {
-    run_and_kill(&["-C", "./tests/valid_configs/deprecated/cpu.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/deprecated/cpu.toml");
 }
 
 /// This uses deprecated memory settings - once they are removed, this test file should be moved to invalid configs.
 #[test]
 fn test_deprecated_memory() {
-    run_and_kill(&["-C", "./tests/valid_configs/deprecated/memory.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/deprecated/memory.toml");
+}
+
+#[test]
+fn test_newer_temperature() {
+    run_and_kill_cfg("./tests/valid_configs/widget/temperature.toml");
+}
+
+/// This uses deprecated temperature settings - once they are removed, this test file should be moved to invalid configs.
+#[test]
+fn test_deprecated_temperature() {
+    run_and_kill_cfg("./tests/valid_configs/deprecated/temperature.toml");
 }

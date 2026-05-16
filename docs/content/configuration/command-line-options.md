@@ -77,7 +77,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `--network_use_binary_prefix` | Displays the network widget with binary prefixes.       |
 | `--network_use_log`           | Displays the network widget with a log scale.           |
 | `--show_packets`              | Displays packet rate and average packet size info.      |
-| `--use_old_network_legend`    | (DEPRECATED) Uses a separate network legend.            |
+| `--use_old_network_legend`    | Uses a separate network legend.                         |
 
 ## Battery Options
 
