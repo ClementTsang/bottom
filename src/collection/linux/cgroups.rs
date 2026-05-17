@@ -5,27 +5,6 @@
 
 use std::{fs, io::BufRead};
 
-/// cgroup memory limits.
-#[derive(Debug)]
-pub(crate) enum CgroupMemLimit {
-    Bytes(u64),
-    Max,
-}
-
-/// cgroup memory usage data.
-#[derive(Debug)]
-pub(crate) struct CgroupMemData {
-    pub used_bytes: u64,
-    pub limit: Option<CgroupMemLimit>,
-}
-
-/// overall cgroup memory data.
-#[derive(Default, Debug)]
-pub(crate) struct CgroupMemCollector {
-    pub ram: Option<CgroupMemData>,
-    pub swap: Option<CgroupMemData>,
-}
-
 fn read_u64(path: &str) -> Option<u64> {
     fs::read_to_string(path).ok()?.trim().parse().ok()
 }
@@ -42,6 +21,27 @@ fn read_stat_key(path: &str, key: &str) -> Option<u64> {
     }
 
     None
+}
+
+/// Represents cgroup memory limits.
+#[derive(Debug)]
+pub(crate) enum CgroupMemLimit {
+    Bytes(u64),
+    Max,
+}
+
+/// Represents cgroup memory usage data.
+#[derive(Debug)]
+pub(crate) struct CgroupMemData {
+    pub used_bytes: u64,
+    pub limit: Option<CgroupMemLimit>,
+}
+
+/// Gathers memory data from cgroup sources.
+#[derive(Default, Debug)]
+pub(crate) struct CgroupMemCollector {
+    pub ram: Option<CgroupMemData>,
+    pub swap: Option<CgroupMemData>,
 }
 
 impl CgroupMemCollector {
@@ -140,5 +140,113 @@ impl CgroupMemCollector {
         }
 
         could_update
+    }
+}
+
+/// Gathers CPU data from cgroup sources.
+#[derive(Default, Debug)]
+pub(crate) struct CgroupCpuCollector {
+    /// Effective number of CPUs based on quota/period ratio.
+    pub quota_cpus: Option<f64>,
+    /// Computed average CPU usage percent (only set when a quota is active).
+    pub avg_cpu_percent: Option<f32>,
+    prev_cpu_usec: Option<u64>,
+    prev_time: Option<std::time::Instant>,
+}
+
+impl CgroupCpuCollector {
+    pub(crate) fn refresh(&mut self) {
+        if !self.try_update_cpu_cgroup_v1() && !self.try_update_cpu_cgroup_v2() {
+            self.quota_cpus = None;
+            self.avg_cpu_percent = None;
+            self.prev_cpu_usec = None;
+            self.prev_time = None;
+        }
+    }
+
+    /// Try to update CPU data using cgroup v1 semantics. Returns `true` on success.
+    fn try_update_cpu_cgroup_v1(&mut self) -> bool {
+        let quota_str = match fs::read_to_string("/sys/fs/cgroup/cpu/cpu.cfs_quota_us") {
+            Ok(s) => s,
+            Err(_) => return false,
+        };
+        let quota_raw: i64 = match quota_str.trim().parse() {
+            Ok(v) => v,
+            Err(_) => return false,
+        };
+
+        let period = read_u64("/sys/fs/cgroup/cpu/cpu.cfs_period_us");
+        self.quota_cpus = if quota_raw > 0 {
+            period.and_then(|p| if p > 0 { Some(quota_raw as f64 / p as f64) } else { None })
+        } else {
+            None // -1 = unlimited
+        };
+
+        // cpuacct.usage is in nanoseconds; convert to microseconds for consistency with v2
+        if let Some(usage_nsec) = read_u64("/sys/fs/cgroup/cpuacct/cpuacct.usage") {
+            self.compute_avg_and_update(usage_nsec / 1000);
+        } else {
+            self.avg_cpu_percent = None;
+        }
+
+        true
+    }
+
+    /// Try to update CPU data using cgroup v2 semantics. Returns `true` on success.
+    fn try_update_cpu_cgroup_v2(&mut self) -> bool {
+        let cpu_max = match fs::read_to_string("/sys/fs/cgroup/cpu.max") {
+            Ok(s) => s,
+            Err(_) => return false,
+        };
+
+        let mut parts = cpu_max.trim().split_whitespace();
+        let quota_str = parts.next().unwrap_or("");
+        let period_str = parts.next().unwrap_or("");
+
+        let period: u64 = match period_str.parse() {
+            Ok(v) => v,
+            Err(_) => return false,
+        };
+
+        self.quota_cpus = if quota_str != "max" {
+            match quota_str.parse::<u64>() {
+                Ok(quota) if quota > 0 && period > 0 => Some(quota as f64 / period as f64),
+                _ => None,
+            }
+        } else {
+            None // "max" = unlimited
+        };
+
+        // cpu.stat usage_usec is already in microseconds
+        if let Some(usage_usec) = read_stat_key("/sys/fs/cgroup/cpu.stat", "usage_usec") {
+            self.compute_avg_and_update(usage_usec);
+        } else {
+            self.avg_cpu_percent = None;
+        }
+
+        true
+    }
+
+    fn compute_avg_and_update(&mut self, current_usec: u64) {
+        let now = std::time::Instant::now();
+
+        self.avg_cpu_percent = if let (Some(quota_cpus), Some(prev_usec), Some(prev_time)) =
+            (self.quota_cpus, self.prev_cpu_usec, self.prev_time)
+        {
+            let elapsed_usec = now.duration_since(prev_time).as_micros() as u64;
+            if elapsed_usec > 0 && quota_cpus > 0.0 {
+                let delta_usec = current_usec.saturating_sub(prev_usec);
+                let pct =
+                    (delta_usec as f64 / (elapsed_usec as f64 * quota_cpus) * 100.0) as f32;
+                Some(pct.clamp(0.0, 100.0))
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        self.prev_cpu_usec = Some(current_usec);
+        self.prev_time = Some(now);
     }
 }

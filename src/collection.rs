@@ -34,7 +34,7 @@ use starship_battery::{Battery, Manager};
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 #[cfg(target_os = "linux")]
-use crate::collection::linux::cgroups::CgroupMemCollector;
+use crate::collection::linux::cgroups::{CgroupCpuCollector, CgroupMemCollector};
 #[cfg(any(target_os = "linux", feature = "gpu"))]
 use crate::utils::int_hash::IntHashMap;
 
@@ -194,6 +194,9 @@ pub struct DataCollector {
 
     #[cfg(target_os = "linux")]
     cgroup_memory_data: CgroupMemCollector,
+
+    #[cfg(target_os = "linux")]
+    cgroup_cpu_data: CgroupCpuCollector,
 }
 
 const LESS_ROUTINE_TASK_TIME: Duration = Duration::from_secs(60);
@@ -240,6 +243,8 @@ impl DataCollector {
             should_run_less_routine_tasks: true,
             #[cfg(target_os = "linux")]
             cgroup_memory_data: CgroupMemCollector::default(),
+            #[cfg(target_os = "linux")]
+            cgroup_cpu_data: CgroupCpuCollector::default(),
         }
     }
 
@@ -372,6 +377,9 @@ impl DataCollector {
         #[cfg(target_os = "linux")]
         self.cgroup_memory_data.refresh();
 
+        #[cfg(target_os = "linux")]
+        self.cgroup_cpu_data.refresh();
+
         self.update_cpu_usage();
         self.update_memory_usage();
         self.update_temps();
@@ -447,7 +455,13 @@ impl DataCollector {
     #[inline]
     fn update_cpu_usage(&mut self) {
         if self.widgets_to_harvest.use_cpu {
-            self.data.cpu = cpu::get_cpu_data_list(&self.sys.system, self.show_average_cpu).ok();
+            #[cfg(target_os = "linux")]
+            let cgroup_avg = self.cgroup_cpu_data.avg_cpu_percent;
+            #[cfg(not(target_os = "linux"))]
+            let cgroup_avg: Option<f32> = None;
+
+            self.data.cpu =
+                cpu::get_cpu_data_list(&self.sys.system, self.show_average_cpu, cgroup_avg).ok();
 
             #[cfg(unix)]
             {

@@ -6,13 +6,15 @@ use sysinfo::System;
 use super::{CpuData, CpuDataType, CpuHarvest};
 use crate::collection::error::CollectionResult;
 
-pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResult<CpuHarvest> {
+pub fn get_cpu_data_list(
+    sys: &System, show_average_cpu: bool, cgroup_avg: Option<f32>,
+) -> CollectionResult<CpuHarvest> {
     let mut cpus = vec![];
 
     if show_average_cpu {
         cpus.push(CpuData {
             data_type: CpuDataType::Avg,
-            usage: sys.global_cpu_usage(),
+            usage: cgroup_avg.unwrap_or_else(|| sys.global_cpu_usage()),
         })
     }
 
