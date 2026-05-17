@@ -195,16 +195,22 @@ impl StoredData {
                 }
                 #[cfg(not(target_os = "windows"))]
                 {
-                    #[cfg(feature = "zfs")]
+                    #[cfg(any(feature = "zfs", target_os = "freebsd"))]
                     {
                         if !device.name.starts_with('/') {
-                            Some(device.name.as_str()) // use the whole zfs
-                        // dataset name
+                            Some(device.name.as_str()) // use the whole name
                         } else {
-                            device.name.split('/').next_back()
+                            #[cfg(target_os = "freebsd")]
+                            {
+                                Some(device.mount_point.as_str()) // use mount_point for sysinfo
+                            }
+                            #[cfg(not(target_os = "freebsd"))]
+                            {
+                                device.name.split('/').next_back() // use device name
+                            }
                         }
                     }
-                    #[cfg(not(feature = "zfs"))]
+                    #[cfg(not(any(feature = "zfs", target_os = "freebsd")))]
                     {
                         device.name.split('/').next_back()
                     }

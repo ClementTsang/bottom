@@ -24,18 +24,23 @@ struct FileSystem {
     mounted_on: String,
 }
 
-pub fn get_io_usage() -> CollectionResult<IoHarvest> {
-    // TODO: Should this (and other I/O collectors) fail fast? In general, should
-    // collection ever fail fast?
+pub fn get_io_usage(collector: &DataCollector) -> CollectionResult<IoHarvest> {
     #[cfg_attr(not(feature = "zfs"), expect(unused_mut))]
-    let mut io_harvest: HashMap<String, Option<IoData>> =
-        get_disk_info().map(|storage_system_information| {
-            storage_system_information
-                .filesystem
-                .into_iter()
-                .map(|disk| (disk.name, None))
-                .collect()
-        })?;
+    let mut io_harvest: HashMap<String, Option<IoData>> = collector
+        .sys
+        .disks
+        .iter()
+        .map(|disk| {
+            let usage = disk.usage();
+            (
+                disk.mount_point().to_string_lossy().to_string(),
+                Some(IoData {
+                    read_bytes: usage.read_bytes,
+                    write_bytes: usage.written_bytes,
+                }),
+            )
+        })
+        .collect();
 
     #[cfg(feature = "zfs")]
     {

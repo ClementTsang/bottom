@@ -126,7 +126,7 @@ pub struct SysinfoSource {
     pub(crate) network: sysinfo::Networks,
     #[cfg(not(target_os = "linux"))]
     pub(crate) temps: sysinfo::Components,
-    #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "freebsd")))]
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     pub(crate) disks: sysinfo::Disks,
     #[cfg(target_os = "windows")]
     pub(crate) users: sysinfo::Users,
@@ -141,7 +141,7 @@ impl Default for SysinfoSource {
             network: Networks::new(),
             #[cfg(not(target_os = "linux"))]
             temps: Components::new(),
-            #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "freebsd")))]
+            #[cfg(not(any(target_os = "linux", target_os = "macos")))]
             disks: Disks::new(),
             #[cfg(target_os = "windows")]
             users: Users::new(),
@@ -295,7 +295,7 @@ impl DataCollector {
     /// - Memory usage
     /// - Network usage
     /// - Processes (non-Linux)
-    /// - Disk (Windows)
+    /// - Disk (Windows, FreeBSD)
     /// - Temperatures (non-Linux)
     fn refresh_sysinfo_data(&mut self) {
         // Refresh the list of objects once every minute. If it's too frequent it can
@@ -315,7 +315,7 @@ impl DataCollector {
 
         // sysinfo is used on non-Linux systems for the following:
         // - Processes (users list as well for Windows)
-        // - Disks (Windows only)
+        // - Disks (Windows/FreeBSD)
         // - Temperatures and temperature components list.
         #[cfg(not(target_os = "linux"))]
         {
@@ -346,7 +346,7 @@ impl DataCollector {
                 }
             }
 
-            #[cfg(target_os = "windows")]
+            #[cfg(any(target_os = "windows", target_os = "freebsd"))]
             if self.widgets_to_harvest.use_disk {
                 if self.should_run_less_routine_tasks {
                     self.sys.disks.refresh(true);
@@ -621,7 +621,7 @@ impl DataCollector {
     fn update_disks(&mut self) {
         if self.widgets_to_harvest.use_disk {
             self.data.disks = disks::get_disk_usage(self).ok();
-            self.data.io = disks::get_io_usage().ok();
+            self.data.io = disks::get_io_usage(self).ok();
         }
     }
 

@@ -2,7 +2,6 @@
 
 use std::time::Instant;
 
-use cfg_if::cfg_if;
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
 use tui::widgets::ListState;
 use tui::{
@@ -21,8 +20,8 @@ use crate::{
 };
 
 // Configure signal text based on the target OS.
-cfg_if! {
-    if #[cfg(target_os = "linux")] {
+cfg_select! {
+    target_os = "linux" => {
         const DEFAULT_KILL_SIGNAL: usize = 15;
         const SIGNAL_TEXT: [&str; 63] = [
             "0: Cancel",
@@ -89,7 +88,8 @@ cfg_if! {
             "63: RTMAX-1",
             "64: RTMAX",
         ];
-    } else if #[cfg(target_os = "macos")] {
+    }
+    target_os = "macos" => {
         const DEFAULT_KILL_SIGNAL: usize = 15;
         const SIGNAL_TEXT: [&str; 32] = [
             "0: Cancel",
@@ -125,7 +125,8 @@ cfg_if! {
             "30: USR1",
             "31: USR2",
         ];
-    } else if #[cfg(target_os = "freebsd")] {
+    }
+    target_os = "freebsd" => {
         const DEFAULT_KILL_SIGNAL: usize = 15;
         const SIGNAL_TEXT: [&str; 34] = [
             "0: Cancel",
@@ -164,6 +165,7 @@ cfg_if! {
             "33: LIBRT",
         ];
     }
+    _ => {}
 }
 
 /// Button state type for a [`ProcessKillDialog`].
@@ -270,8 +272,8 @@ impl ProcessKillDialog {
                 }
                 ButtonState::Simple { yes, .. } => {
                     if yes {
-                        cfg_if! {
-                            if #[cfg(target_os = "windows")] {
+                        cfg_select! {
+                            target_os = "windows" => {
                                 use crate::utils::process_killer;
 
                                 for pid in pids {
@@ -280,7 +282,8 @@ impl ProcessKillDialog {
                                         break;
                                     }
                                 }
-                            } else if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+                            }
+                            any(target_os = "linux", target_os = "macos", target_os = "freebsd") => {
                                 use crate::utils::process_killer;
 
                                 for pid in pids {
@@ -290,7 +293,8 @@ impl ProcessKillDialog {
                                         break;
                                     }
                                 }
-                            } else {
+                            }
+                            _ => {
                                 self.state = ProcessKillDialogState::Error { process_name, pid: None, err: "Killing processes is not supported on this platform.".into() };
 
                             }
@@ -586,10 +590,11 @@ impl ProcessKillDialog {
                 last_no_button_area: Rect::default(),
             }
         } else {
-            cfg_if! {
-                if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+            cfg_select! {
+                any(target_os = "linux", target_os = "macos", target_os = "freebsd") => {
                     ButtonState::Signals { state: ListState::default().with_selected(Some(DEFAULT_KILL_SIGNAL)), last_button_draw_area: Rect::default() }
-                } else {
+                }
+                _ => {
                     ButtonState::Simple { yes: false, last_yes_button_area: Rect::default(), last_no_button_area: Rect::default()}
                 }
             }
