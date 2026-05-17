@@ -35,12 +35,12 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `--read_only`               | Prevents performing any actions that affect the system (e.g. stopping processes).      |
 | `--get_threads`             | Also gather process thread information.                                                |
 | `-g, --group_processes`     | Groups processes with the same name by default. No effect if `--tree` is set.          |
-| `--hide_k_threads`          | Hide kernel threads by default.                                                        |
+| `--hide_k_threads`          | Hide kernel threads from being shown.                                                  |
 | `--process_memory_as_value` | Defaults to showing process memory usage by value.                                     |
 | `--process_command`         | Shows the full command name instead of the process name by default.                    |
 | `-R, --regex`               | Enables regex by default while searching.                                              |
 | `-T, --tree`                | Makes the process widget use tree mode by default.                                     |
-| `--tree_collapse`           | Collapse process tree by default.                                                      |
+| `--tree_collapse`           | Collapse the process tree by default.                                                  |
 | `-n, --unnormalized_cpu`    | Show process CPU% usage without averaging over the number of CPU cores.                |
 | `-W, --whole_word`          | Enables whole-word matching by default while searching.                                |
 
@@ -77,7 +77,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `--network_use_binary_prefix` | Displays the network widget with binary prefixes.       |
 | `--network_use_log`           | Displays the network widget with a log scale.           |
 | `--show_packets`              | Displays packet rate and average packet size info.      |
-| `--use_old_network_legend`    | (DEPRECATED) Uses a separate network legend.            |
+| `--use_old_network_legend`    | Uses a separate network legend.                         |
 
 ## Battery Options
 
@@ -93,9 +93,9 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## Style Options
 
-| Option             | Behaviour                                                        |
-| ------------------ | ---------------------------------------------------------------- |
-| `--theme <SCHEME>` | Use a built-in color theme, use '--help' for info on the colors. |
+| Option             | Behaviour                                                          |
+| ------------------ | ------------------------------------------------------------------ |
+| `--theme <SCHEME>` | Use a built-in colour theme, use '--help' for info on the colours. |
 
 ## Other Options
 

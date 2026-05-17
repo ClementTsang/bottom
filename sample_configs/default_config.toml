@@ -6,9 +6,11 @@
 # added when running (ie: btm -a) will override this config file if an option
 # is also set here.
 [flags]
+# Deprecated - use cpu.hide_avg_cpu.
 # Whether to hide the average cpu entry.
 #hide_avg_cpu = false
 
+# Deprecated - use cpu.basic_average_cpu_row.
 # Whether to use a dedicated row for the average cpu entry
 #average_cpu_row = false
 
@@ -18,25 +20,32 @@
 # The update rate of the application.
 #rate = "1s"
 
+# Deprecated - use cpu.left_legend.
 # Whether to put the CPU legend to the left.
 #cpu_left_legend = false
 
+# Deprecated - use processes.current_usage.
 # Whether to set CPU% on a process to be based on the total CPU or just current usage.
 #current_usage = false
 
+# Deprecated - use processes.unnormalized_cpu.
 # Whether to set CPU% on a process to be based on the total CPU or per-core CPU% (not divided by the number of cpus).
 #unnormalized_cpu = false
 
+# Deprecated - use processes.default_grouped.
 # Whether to group processes with the same name together by default. Doesn't do anything
 # if tree is set to true or --tree is set.
 #group_processes = false
 
+# Deprecated - use processes.case_sensitive.
 # Whether to make process searching case sensitive by default.
 #case_sensitive = false
 
+# Deprecated - use processes.whole_word.
 # Whether to make process searching look for matching the entire word by default.
 #whole_word = false
 
+# Deprecated - use processes.regex.
 # Whether to make process searching use regex by default.
 #regex = false
 
@@ -83,51 +92,66 @@
 # Disable keyboard shortcuts
 #disable_keys = false
 
+# Deprecated - use processes.default_memory_value.
 # Show memory values in the processes widget as values by default
 #process_memory_as_value = false
 
+# Deprecated - use processes.default_tree.
 # Show tree mode by default in the processes widget.
 #tree = false
 
 # Shows an indicator in table widgets tracking where in the list you are.
 #show_table_scroll_position = false
 
+# Show a scroll bar on the right edge of table widgets.
+#show_table_scroll_bar = false
+
+# Deprecated - use processes.process_command.
 # Show processes as their commands by default in the process widget.
 #process_command = false
 
+# Deprecated - use network_graph.use_binary_prefix.
 # Displays the network widget with binary prefixes.
 #network_use_binary_prefix = false
 
+# Deprecated - use network_graph.use_bytes.
 # Displays the network widget using bytes.
 #network_use_bytes = false
 
+# Deprecated - use network_graph.use_log.
 # Displays the network widget with a log scale.
 #network_use_log = false
 
+# Deprecated - use processes.disable_advanced_kill.
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
 
 # Prevents performing any actions that affect the system (e.g. stopping processes).
 #read_only = false
 
-# Hides the kernel threads
+# Deprecated - use processes.hide_k_threads.
+# Hide kernel threads from being shown.
 #hide_k_threads = false
 
 # Hide GPU(s) information
 #disable_gpu = false
 
+# Deprecated - use memory.cache_memory.
 # Shows cache and buffer memory
 #enable_cache_memory = false
 
+# Deprecated - use memory.free_arc.
 # Subtract freeable ARC from memory usage
 #free_arc = false
 
 # How much data is stored at once in terms of time.
 #retention = "10m"
 
+# Deprecated - use memory.legend_position.
 # Where to place the legend for the memory widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #memory_legend = "top-right"
 
+# Deprecated - use network_graph.legend_position.
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "top-right"
 
@@ -138,14 +162,57 @@
 # PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%, Nice, Priority
 #columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%", "Priority"]
 
+# The default sort column when bottom starts. Accepts any of the column names above.
+# If unset, defaults to CPU%.
+#default_sort = "CPU%"
+
 # Gather process child thread information
 #get_threads = false
+
+# Hide kernel threads from being shown. Linux only.
+#hide_k_threads = false
+
+# Collapse the process tree by default when tree mode is set.
+#tree_collapse = false
+
+# Shows the full command name instead of the process name by default.
+#process_command = false
+
+# Disable the advanced kill dialog and just show the basic one with no options. Only available on Linux, macOS, and FreeBSD.
+#disable_advanced_kill = false
+
+# Defaults to showing process memory usage by value.
+#default_memory_value = false
+
+# Groups processes with the same name by default. No effect if tree is set.
+#default_grouped = false
+
+# Enables regex by default while searching.
+#regex = false
+
+# Enables case sensitivity by default when searching.
+#case_sensitive = false
+
+# Enables whole-word matching by default while searching.
+#whole_word = false
+
+# Makes the process widget use tree mode by default.
+#default_tree = false
+
+# Calculates process CPU usage as a percentage of current usage rather than total usage.
+#current_usage = false
+
+# Show process CPU% usage without averaging over the number of CPU cores.
+#unnormalized_cpu = false
 
 
 # CPU widget configuration
 #[cpu]
 # One of "all" (default), "average"/"avg"
 #default = "average"
+
+# Whether to show a decimal place for CPU usage values.
+#show_decimal = false
 
 
 # Disk widget configuration
@@ -176,7 +243,7 @@
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 # By default, there are no mount name filters enabled. An example use case is provided below.
@@ -193,7 +260,7 @@
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 
@@ -220,14 +287,42 @@
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
+#whole_word = false
+
+
+# Temperature graph widget configuration
+#[temperature_graph]
+
+# Where to place the legend for the temperature graph widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
+#legend_position = "top-right"
+
+# An upper temperature value for the graph; entries higher than this will be hidden. If not set,
+# there is no limit. Is in the configured temperature unit.
+#max_temp = 100.0
+
+# By default, there are no temperature sensor filters enabled. An example use case is provided below.
+#[temperature_graph.sensor_filter]
+# Whether to ignore any matches. Defaults to true.
+#is_list_ignored = true
+
+# A list of filters to try and match.
+#list = ["cpu", "wifi"]
+
+# Whether to use regex. Defaults to false.
+#regex = false
+
+# Whether to be case-sensitive. Defaults to false.
+#case_sensitive = false
+
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 
 # Network widget configuration
-#[network]
+#[network_graph]
 # By default, there are no network interface filters enabled. An example use case is provided below.
-#[network.interface_filter]
+#[network_graph.interface_filter]
 # Whether to ignore any matches. Defaults to true.
 #is_list_ignored = true
 
@@ -240,7 +335,7 @@
 # Whether to be case-sensitive. Defaults to false.
 #case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
 
@@ -259,54 +354,60 @@
 # or overridden if the command-line flag for a built-in theme is set.
 #theme = "default"
 
+# Styling options. You can control things like colour choices, text styling (bold, italic, etc), and more.
+# Note that any setting that uses the word "colour" can be substituted for "color" and it will still work fine.
+
 #[styles.cpu]
-#all_entry_color = "green"
-#avg_entry_color = "red"
-#cpu_core_colors = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+#all_entry_colour = "green"
+#avg_entry_colour = "red"
+#cpu_core_colours = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
+
+#[styles.temp_graph]
+#temp_graph_colour_styles = ["light magenta", "light yellow", "light cyan", "light green", "light blue", "cyan", "green", "blue"]
 
 #[styles.memory]
-#ram_color = "light magenta"
-#cache_color = "light red"
-#swap_color = "light yellow"
-#arc_color = "light cyan"
-#gpu_colors = ["light blue", "light red", "cyan", "green", "blue", "red"]
+#ram_colour = "light magenta"
+#cache_colour = "light red"
+#swap_colour = "light yellow"
+#arc_colour = "light cyan"
+#gpu_colours = ["light blue", "light red", "cyan", "green", "blue", "red"]
 
 #[styles.network]
-#rx_color = "light magenta"
-#tx_color = "light yellow"
-#rx_total_color = "light cyan"
-#tx_total_color = "light green"
+#rx_colour = "light magenta"
+#tx_colour = "light yellow"
+#rx_total_colour = "light cyan"
+#tx_total_colour = "light green"
 
 #[styles.battery]
-#high_battery_color = "green"
-#medium_battery_color = "yellow"
-#low_battery_color = "red"
+#high_battery_colour = "green"
+#medium_battery_colour = "yellow"
+#low_battery_colour = "red"
 
 #[styles.tables]
-#headers = {color = "light blue", bold = true}
+#headers = {colour = "light blue", bold = true}
 
 #[styles.graphs]
-#graph_color = "gray"
-#legend_text = {color = "gray"}
+#graph_colour = "gray"
+#legend_text = {colour = "gray"}
 
 #[styles.widgets]
-#border_color = "gray"
-#selected_border_color = "light blue"
-#widget_title = {color = "gray"}
-#text = {color = "gray"}
-#selected_text = {color = "black", bg_color = "light blue"}
-#disabled_text = {color = "dark gray"}
+#border_colour = "gray"
+#selected_border_colour = "light blue"
+#widget_title = {colour = "gray"}
+#text = {colour = "gray"}
+#selected_text = {colour = "black", bg_colour = "light blue"}
+#disabled_text = {colour = "dark gray"}
 # Disabled by default
-#bg_color = "black"
+#bg_colour = "black"
 # Only on Linux
-#thread_text = {color = "green"}
+#thread_text = {colour = "green"}
 
 # Layout - layouts follow a pattern like this:
 # [[row]] represents a row in the application.
 # [[row.child]] represents either a widget or a column.
 # [[row.child.child]] represents a widget.
 #
-# All widgets must have the type value set to one of ["cpu", "mem", "proc", "net", "temp", "disk", "empty"].
+# All widgets must have the type value set to one of ["cpu", "mem", "proc", "net", "temp", "temp_graph", "disk", "empty"].
 # All layout components have a ratio value - if this is not set, then it defaults to 1.
 # The default widget layout:
 #[[row]]

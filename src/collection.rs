@@ -10,6 +10,7 @@ pub mod amd;
 
 #[cfg(target_os = "linux")]
 mod linux {
+    pub mod cgroups;
     pub mod utils;
 }
 
@@ -32,6 +33,8 @@ use starship_battery::{Battery, Manager};
 
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
+#[cfg(target_os = "linux")]
+use crate::collection::linux::cgroups::CgroupMemCollector;
 #[cfg(any(target_os = "linux", feature = "gpu"))]
 use crate::utils::int_hash::IntHashMap;
 
@@ -188,6 +191,9 @@ pub struct DataCollector {
     gpus_total_mem: Option<u64>,
     #[cfg(feature = "zfs")]
     free_arc_mem: bool,
+
+    #[cfg(target_os = "linux")]
+    cgroup_memory_data: CgroupMemCollector,
 }
 
 const LESS_ROUTINE_TASK_TIME: Duration = Duration::from_secs(60);
@@ -232,6 +238,8 @@ impl DataCollector {
             free_arc_mem: false,
             last_list_collection_time: last_collection_time,
             should_run_less_routine_tasks: true,
+            #[cfg(target_os = "linux")]
+            cgroup_memory_data: CgroupMemCollector::default(),
         }
     }
 
@@ -328,7 +336,7 @@ impl DataCollector {
                 }
             }
 
-            if self.widgets_to_harvest.use_temp {
+            if self.widgets_to_harvest.use_temp || self.widgets_to_harvest.use_temp_graph {
                 if self.should_run_less_routine_tasks {
                     self.sys.temps.refresh(true);
                 }
@@ -360,6 +368,9 @@ impl DataCollector {
         self.run_less_routine_tasks();
 
         self.refresh_sysinfo_data();
+
+        #[cfg(target_os = "linux")]
+        self.cgroup_memory_data.refresh();
 
         self.update_cpu_usage();
         self.update_memory_usage();
@@ -393,9 +404,11 @@ impl DataCollector {
             let mut local_gpu_total_mem: u64 = 0;
 
             #[cfg(feature = "nvidia")]
-            if let Some(data) =
-                nvidia::get_nvidia_vecs(&self.filters.temp_filter, &self.widgets_to_harvest)
-            {
+            if let Some(data) = nvidia::get_nvidia_vecs(
+                &self.filters.temp_filter,
+                &self.filters.temp_graph_filter,
+                &self.widgets_to_harvest,
+            ) {
                 if let Some(mut temp) = data.temperature {
                     if let Some(sensors) = &mut self.data.temperature_sensors {
                         sensors.append(&mut temp);
@@ -458,16 +471,21 @@ impl DataCollector {
 
     #[inline]
     fn update_temps(&mut self) {
-        if self.widgets_to_harvest.use_temp {
+        if self.widgets_to_harvest.use_temp || self.widgets_to_harvest.use_temp_graph {
             #[cfg(not(target_os = "linux"))]
-            if let Ok(data) =
-                temperature::get_temperature_data(&self.sys.temps, &self.filters.temp_filter)
-            {
+            if let Ok(data) = temperature::get_temperature_data(
+                &self.sys.temps,
+                &self.filters.temp_filter,
+                &self.filters.temp_graph_filter,
+            ) {
                 self.data.temperature_sensors = data;
             }
 
             #[cfg(target_os = "linux")]
-            if let Ok(data) = temperature::get_temperature_data(&self.filters.temp_filter) {
+            if let Ok(data) = temperature::get_temperature_data(
+                &self.filters.temp_filter,
+                &self.filters.temp_graph_filter,
+            ) {
                 self.data.temperature_sensors = data;
             }
         }
@@ -476,7 +494,7 @@ impl DataCollector {
     #[inline]
     fn update_memory_usage(&mut self) {
         if self.widgets_to_harvest.use_mem {
-            self.data.memory = memory::get_ram_usage(&self.sys.system);
+            self.data.memory = memory::get_ram_usage(self);
 
             #[cfg(feature = "zfs")]
             {
@@ -516,7 +534,7 @@ impl DataCollector {
                 self.data.cache = memory::get_cache_usage(&self.sys.system);
             }
 
-            self.data.swap = memory::get_swap_usage(&self.sys.system);
+            self.data.swap = memory::get_swap_usage(self);
         }
     }
 
@@ -642,6 +660,7 @@ mod tests {
             disk_filter: None,
             mount_filter: None,
             temp_filter: None,
+            temp_graph_filter: None,
             net_filter: None,
         });
 

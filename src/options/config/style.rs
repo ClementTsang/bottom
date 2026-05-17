@@ -7,6 +7,7 @@ mod graphs;
 mod memory;
 mod network;
 mod tables;
+mod temp_graph;
 mod themes;
 mod utils;
 mod widgets;
@@ -20,6 +21,7 @@ use memory::MemoryStyle;
 use network::NetworkStyle;
 use serde::{Deserialize, Serialize};
 use tables::TableStyle;
+use temp_graph::TempGraphStyle;
 use tui::{style::Style, widgets::BorderType};
 use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
@@ -32,7 +34,7 @@ use crate::options::{
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, derive(PartialEq, Eq))]
-pub(crate) struct ColorStr(Cow<'static, str>);
+pub(crate) struct ColourStr(Cow<'static, str>);
 
 /// A style for text.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -40,15 +42,15 @@ pub(crate) struct ColorStr(Cow<'static, str>);
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) enum TextStyleConfig {
-    Colour(ColorStr),
+    Colour(ColourStr),
     TextStyle {
         /// A built-in ANSI colour, RGB hex, or RGB colour code.
-        #[serde(alias = "colour")]
-        color: Option<ColorStr>,
+        #[serde(alias = "color")]
+        colour: Option<ColourStr>,
 
         /// A built-in ANSI colour, RGB hex, or RGB colour code.
-        #[serde(alias = "bg_colour")]
-        bg_color: Option<ColorStr>,
+        #[serde(alias = "bg_color")]
+        bg_colour: Option<ColourStr>,
 
         /// Whether to make this text bolded or not. If not set,
         /// will default to built-in defaults.
@@ -82,6 +84,9 @@ pub(crate) struct StyleConfig {
     /// Styling for the network widget.
     pub(crate) network: Option<NetworkStyle>,
 
+    /// Styling for the temperature graph widget.
+    pub(crate) temp_graph: Option<TempGraphStyle>,
+
     /// Styling for the battery widget.
     pub(crate) battery: Option<BatteryStyle>,
 
@@ -113,6 +118,7 @@ pub struct Styles {
     pub(crate) all_cpu_colour: Style,
     pub(crate) avg_cpu_colour: Style,
     pub(crate) cpu_colour_styles: Vec<Style>,
+    pub(crate) temp_graph_colour_styles: Vec<Style>,
     pub(crate) border_style: Style,
     pub(crate) highlighted_border_style: Style,
     pub(crate) text_style: Style,
@@ -165,52 +171,59 @@ impl Styles {
             "gruvbox-light" => Ok(Self::gruvbox_light_palette()),
             "nord" => Ok(Self::nord_palette()),
             "nord-light" => Ok(Self::nord_light_palette()),
-            _ => Err(
-                OptionError::other(format!("'{theme}' is an invalid built-in color scheme."))
-                    .into(),
-            ),
+            _ => Err(OptionError::other(format!(
+                "'{theme}' is an invalid built-in colour scheme."
+            ))
+            .into()),
         }
     }
 
     fn set_styles_from_config(&mut self, config: &StyleConfig) -> OptionResult<()> {
         // CPU
-        set_colour!(self.avg_cpu_colour, config.cpu, avg_entry_color);
-        set_colour!(self.all_cpu_colour, config.cpu, all_entry_color);
-        set_colour_list!(self.cpu_colour_styles, config.cpu, cpu_core_colors);
+        set_colour!(self.avg_cpu_colour, config.cpu, avg_entry_colour);
+        set_colour!(self.all_cpu_colour, config.cpu, all_entry_colour);
+        set_colour_list!(self.cpu_colour_styles, config.cpu, cpu_core_colours);
+
+        // Temperature graph
+        set_colour_list!(
+            self.temp_graph_colour_styles,
+            config.temp_graph,
+            temp_graph_colour_styles
+        );
 
         // Memory
-        set_colour!(self.ram_style, config.memory, ram_color);
-        set_colour!(self.swap_style, config.memory, swap_color);
+        set_colour!(self.ram_style, config.memory, ram_colour);
+        set_colour!(self.swap_style, config.memory, swap_colour);
 
         #[cfg(not(target_os = "windows"))]
-        set_colour!(self.cache_style, config.memory, cache_color);
+        set_colour!(self.cache_style, config.memory, cache_colour);
 
         #[cfg(feature = "zfs")]
-        set_colour!(self.arc_style, config.memory, arc_color);
+        set_colour!(self.arc_style, config.memory, arc_colour);
 
         #[cfg(feature = "gpu")]
-        set_colour_list!(self.gpu_colours, config.memory, gpu_colors);
+        set_colour_list!(self.gpu_colours, config.memory, gpu_colours);
 
         // Network
-        set_colour!(self.rx_style, config.network, rx_color);
-        set_colour!(self.tx_style, config.network, tx_color);
-        set_colour!(self.total_rx_style, config.network, rx_total_color);
-        set_colour!(self.total_tx_style, config.network, tx_total_color);
+        set_colour!(self.rx_style, config.network, rx_colour);
+        set_colour!(self.tx_style, config.network, tx_colour);
+        set_colour!(self.total_rx_style, config.network, rx_total_colour);
+        set_colour!(self.total_tx_style, config.network, tx_total_colour);
 
         // Battery
-        set_colour!(self.high_battery, config.battery, high_battery_color);
-        set_colour!(self.medium_battery, config.battery, medium_battery_color);
-        set_colour!(self.low_battery, config.battery, low_battery_color);
+        set_colour!(self.high_battery, config.battery, high_battery_colour);
+        set_colour!(self.medium_battery, config.battery, medium_battery_colour);
+        set_colour!(self.low_battery, config.battery, low_battery_colour);
 
         // Tables
         set_style!(self.table_header_style, config.tables, headers);
 
         // Widget graphs
-        set_colour!(self.graph_style, config.graphs, graph_color);
+        set_colour!(self.graph_style, config.graphs, graph_colour);
         set_style!(self.graph_legend_style, config.graphs, legend_text);
 
         // General widget text.
-        set_bg_colour!(self.general_widget_style, config.widgets, bg_color);
+        set_bg_colour!(self.general_widget_style, config.widgets, bg_colour);
         set_style!(self.widget_title_style, config.widgets, widget_title);
         set_style!(self.text_style, config.widgets, text);
         set_style!(self.selected_text_style, config.widgets, selected_text);
@@ -222,11 +235,11 @@ impl Styles {
         }
 
         // Widget borders
-        set_colour!(self.border_style, config.widgets, border_color);
+        set_colour!(self.border_style, config.widgets, border_colour);
         set_colour!(
             self.highlighted_border_style,
             config.widgets,
-            selected_border_color
+            selected_border_colour
         );
 
         if let Some(widgets) = &config.widgets {
@@ -245,7 +258,52 @@ mod test {
     use tui::style::{Color, Style};
 
     use super::Styles;
-    use crate::options::config::style::utils::str_to_colour;
+    use crate::options::config::{Config, style::utils::str_to_colour};
+
+    #[test]
+    fn color_spelling_aliases_work() {
+        // Parse all_styling_color.toml (which uses the "color" alias spelling throughout)
+        // and assert every field was actually parsed.
+        let toml_str = include_str!("../../../tests/valid_configs/all_styling_color.toml");
+        let config = toml_edit::de::from_str::<Config>(toml_str)
+            .expect("config file should parse")
+            .styles
+            .expect("styles section should be present");
+
+        let cpu = config.cpu.as_ref().unwrap();
+        assert!(cpu.all_entry_colour.is_some());
+        assert!(cpu.avg_entry_colour.is_some());
+        assert!(cpu.cpu_core_colours.is_some());
+
+        let temp = config.temp_graph.as_ref().unwrap();
+        assert!(temp.temp_graph_colour_styles.is_some());
+
+        let mem = config.memory.as_ref().unwrap();
+        assert!(mem.ram_colour.is_some());
+        assert!(mem.cache_colour.is_some());
+        assert!(mem.swap_colour.is_some());
+        assert!(mem.arc_colour.is_some());
+        assert!(mem.gpu_colours.is_some());
+
+        let net = config.network.as_ref().unwrap();
+        assert!(net.rx_colour.is_some());
+        assert!(net.tx_colour.is_some());
+        assert!(net.rx_total_colour.is_some());
+        assert!(net.tx_total_colour.is_some());
+
+        let bat = config.battery.as_ref().unwrap();
+        assert!(bat.high_battery_colour.is_some());
+        assert!(bat.medium_battery_colour.is_some());
+        assert!(bat.low_battery_colour.is_some());
+
+        let graphs = config.graphs.as_ref().unwrap();
+        assert!(graphs.graph_colour.is_some());
+
+        let widgets = config.widgets.as_ref().unwrap();
+        assert!(widgets.border_colour.is_some());
+        assert!(widgets.selected_border_colour.is_some());
+        assert!(widgets.bg_colour.is_some());
+    }
 
     #[test]
     fn default_selected_colour_works() {

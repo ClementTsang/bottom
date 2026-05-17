@@ -51,7 +51,7 @@ jobs:
     needs: pre-job
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: ${{ matrix.info.os }}
-    timeout-minutes: 12
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -276,7 +276,7 @@ jobs:
             }
     runs-on: ${{ matrix.info.os }}
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

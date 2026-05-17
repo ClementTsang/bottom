@@ -35,10 +35,20 @@
         }
       ]
     },
-    "network": {
+    "memory_graph": {
       "anyOf": [
         {
-          "$ref": "#/$defs/NetworkConfig"
+          "$ref": "#/$defs/MemoryGraphConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "network_graph": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/NetworkGraphConfig"
         },
         {
           "type": "null"
@@ -83,6 +93,16 @@
           "type": "null"
         }
       ]
+    },
+    "temperature_graph": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TempGraphConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "$defs": {
@@ -90,33 +110,33 @@
       "description": "Styling specific to the battery widget.",
       "type": "object",
       "properties": {
-        "high_battery_color": {
+        "high_battery_colour": {
           "description": "The colour of the battery widget bar when the battery is over 50%.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "low_battery_color": {
+        "low_battery_colour": {
           "description": "The colour of the battery widget bar when the battery is under 10%.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "medium_battery_color": {
+        "medium_battery_colour": {
           "description": "The colour of the battery widget bar when the battery between 10% to\n50%.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
@@ -125,16 +145,44 @@
         }
       }
     },
-    "ColorStr": {
+    "ColourStr": {
       "type": "string"
     },
     "CpuConfig": {
       "description": "CPU column settings.",
       "type": "object",
       "properties": {
+        "basic_average_cpu_row": {
+          "description": "Whether to give the average CPU entry a dedicated row in basic mode.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "default": {
           "description": "The default selected entry of the CPU widget.",
           "$ref": "#/$defs/CpuDefault"
+        },
+        "hide_avg_cpu": {
+          "description": "Whether to hide the average CPU entry.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "left_legend": {
+          "description": "Whether to put the CPU chart legend on the left side.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "show_decimal": {
+          "description": "Whether to show a decimal place for CPU usage values.",
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       }
     },
@@ -150,36 +198,36 @@
       "description": "Styling specific to the CPU widget.",
       "type": "object",
       "properties": {
-        "all_entry_color": {
+        "all_entry_colour": {
           "description": "The colour of the \"All\" CPU label.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "avg_entry_color": {
+        "avg_entry_colour": {
           "description": "The colour of the average CPU label and graph line.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "cpu_core_colors": {
+        "cpu_core_colours": {
           "description": "Colour of each CPU threads' label and graph line. Read in order.",
           "type": [
             "array",
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/ColorStr"
+            "$ref": "#/$defs/ColourStr"
           }
         }
       }
@@ -512,6 +560,12 @@
             }
           ]
         },
+        "show_table_scroll_bar": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "show_table_scroll_position": {
           "type": [
             "boolean",
@@ -574,11 +628,11 @@
       "description": "General styling for graph widgets.",
       "type": "object",
       "properties": {
-        "graph_color": {
+        "graph_colour": {
           "description": "The general colour of the parts of the graph.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
@@ -628,58 +682,85 @@
         "list"
       ]
     },
+    "MemoryGraphConfig": {
+      "description": "Memory-related configuration file options.",
+      "type": "object",
+      "properties": {
+        "cache_memory": {
+          "description": "Whether to collect and display cache and buffer memory. Not available on Windows.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "free_arc": {
+          "description": "Whether to subtract freeable ARC from memory usage.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "legend_position": {
+          "description": "Where to place the legend for the memory chart widget.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
     "MemoryStyle": {
       "description": "Styling specific to the memory widget.",
       "type": "object",
       "properties": {
-        "arc_color": {
+        "arc_colour": {
           "description": "The colour of the ARC label and graph line.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "cache_color": {
+        "cache_colour": {
           "description": "The colour of the cache label and graph line. Does not do anything on\nWindows.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "gpu_colors": {
+        "gpu_colours": {
           "description": "Colour of each GPU's memory label and graph line. Read in order.",
           "type": [
             "array",
             "null"
           ],
           "items": {
-            "$ref": "#/$defs/ColorStr"
+            "$ref": "#/$defs/ColourStr"
           }
         },
-        "ram_color": {
+        "ram_colour": {
           "description": "The colour of the RAM label and graph line.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "swap_color": {
+        "swap_colour": {
           "description": "The colour of the swap label and graph line.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
@@ -688,7 +769,7 @@
         }
       }
     },
-    "NetworkConfig": {
+    "NetworkGraphConfig": {
       "description": "Network configuration.",
       "type": "object",
       "properties": {
@@ -703,8 +784,36 @@
             }
           ]
         },
+        "legend_position": {
+          "description": "Where to place the legend for the network chart widget.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "show_packets": {
           "description": "Displays packet rate and average packet size info.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "use_binary_prefix": {
+          "description": "Displays the network widget with a binary prefix (e.g. kibibits) rather than a decimal\nprefix (e.g. kilobits). Defaults to decimal prefixes.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "use_bytes": {
+          "description": "Displays the network widget using bytes. Defaults to bits.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "use_log": {
+          "description": "Displays the network widget with a log scale. Defaults to a non-log scale.",
           "type": [
             "boolean",
             "null"
@@ -716,44 +825,44 @@
       "description": "Styling specific to the network widget.",
       "type": "object",
       "properties": {
-        "rx_color": {
+        "rx_colour": {
           "description": "The colour of the RX (download) label and graph line.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "rx_total_color": {
-          "description": "he colour of the total RX (download) label in basic mode.",
+        "rx_total_colour": {
+          "description": "The colour of the total RX (download) label in basic mode.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "tx_color": {
+        "tx_colour": {
           "description": "The colour of the TX (upload) label and graph line.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "tx_total_color": {
+        "tx_total_colour": {
           "description": "The colour of the total TX (upload) label in basic mode.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
@@ -838,6 +947,13 @@
       "description": "Process configuration fields.",
       "type": "object",
       "properties": {
+        "case_sensitive": {
+          "description": "Enables case sensitivity by default when searching.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "columns": {
           "description": "A list of process widget columns.",
           "type": "array",
@@ -845,8 +961,96 @@
             "$ref": "#/$defs/ProcColumn"
           }
         },
+        "current_usage": {
+          "description": "Calculates process CPU usage as a percentage of current usage rather than total usage.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "default_grouped": {
+          "description": "Groups processes with the same name by default. No effect if `--tree` is set.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "default_memory_value": {
+          "description": "Defaults to showing process memory usage by value.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "default_sort": {
+          "description": "The default sort column.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProcColumn"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "default_tree": {
+          "description": "Makes the process widget use tree mode by default.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "disable_advanced_kill": {
+          "description": "Disable the advanced kill dialog and just show the basic one with no options.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "get_threads": {
           "description": "Whether to get process child threads.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "hide_k_threads": {
+          "description": "Hide kernel threads from being shown. Linux only.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "process_command": {
+          "description": "Shows the full command name instead of the process name by default.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "regex": {
+          "description": "Enables regex by default while searching.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "tree_collapse": {
+          "description": "Collapse the process tree by default when tree mode is set.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "unnormalized_cpu": {
+          "description": "Show process CPU% usage without averaging over the number of CPU cores.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "whole_word": {
+          "description": "Enables whole-word matching by default while searching.",
           "type": [
             "boolean",
             "null"
@@ -967,6 +1171,17 @@
             }
           ]
         },
+        "temp_graph": {
+          "description": "Styling for the temperature graph widget.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TempGraphStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "theme": {
           "description": "A built-in theme.\n\nIf this is and a custom colour are both set, in the config file,\nthe custom colour scheme will be prioritized first. If a theme\nis set in the command-line args, however, it will always be\nprioritized first.",
           "type": [
@@ -1040,6 +1255,56 @@
         }
       }
     },
+    "TempGraphConfig": {
+      "description": "Temperature graph configuration.",
+      "type": "object",
+      "properties": {
+        "legend_position": {
+          "description": "The location of the graph's legend.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "max_temp": {
+          "description": "An upper temperature value for the graph; entries higher than this will be hidden. If not set,\nthere is no limit.\n\nIs in the configured temperature unit.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double",
+          "default": null
+        },
+        "sensor_filter": {
+          "description": "A filter over the sensor names.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IgnoreList"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "TempGraphStyle": {
+      "description": "Styling specific to the temperature graph widget.",
+      "type": "object",
+      "properties": {
+        "temp_graph_colour_styles": {
+          "description": "Colour of each temperature sensor's graph line. Read in order.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/ColourStr"
+          }
+        }
+      }
+    },
     "TempWidgetColumn": {
       "type": "string",
       "enum": [
@@ -1055,16 +1320,16 @@
       "description": "A style for text.",
       "anyOf": [
         {
-          "$ref": "#/$defs/ColorStr"
+          "$ref": "#/$defs/ColourStr"
         },
         {
           "type": "object",
           "properties": {
-            "bg_color": {
+            "bg_colour": {
               "description": "A built-in ANSI colour, RGB hex, or RGB colour code.",
               "anyOf": [
                 {
-                  "$ref": "#/$defs/ColorStr"
+                  "$ref": "#/$defs/ColourStr"
                 },
                 {
                   "type": "null"
@@ -1078,11 +1343,11 @@
                 "null"
               ]
             },
-            "color": {
+            "colour": {
               "description": "A built-in ANSI colour, RGB hex, or RGB colour code.",
               "anyOf": [
                 {
-                  "$ref": "#/$defs/ColorStr"
+                  "$ref": "#/$defs/ColourStr"
                 },
                 {
                   "type": "null"
@@ -1113,22 +1378,22 @@
       "description": "General styling for generic widgets.",
       "type": "object",
       "properties": {
-        "bg_color": {
-          "description": "Background color for widgets.",
+        "bg_colour": {
+          "description": "Background colour for widgets.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
             }
           ]
         },
-        "border_color": {
+        "border_colour": {
           "description": "The colour of the widgets' borders.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"
@@ -1146,11 +1411,11 @@
             }
           ]
         },
-        "selected_border_color": {
+        "selected_border_colour": {
           "description": "The colour of a widget's borders when the widget is selected.",
           "anyOf": [
             {
-              "$ref": "#/$defs/ColorStr"
+              "$ref": "#/$defs/ColourStr"
             },
             {
               "type": "null"

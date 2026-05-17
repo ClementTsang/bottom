@@ -1,0 +1,7 @@
+# This uses the newer memory/network config location.
+
+[network_graph]
+use_log = true
+use_bytes = true
+use_binary_prefix = true
+legend_position = "left"

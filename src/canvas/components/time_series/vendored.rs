@@ -1,8 +1,8 @@
 //! A [`tui::widgets::Chart`] but slightly more specialized to show
-//! right-aligned timeseries data.
+//! right-aligned time_series data.
 //!
 //! Generally should be updated to be in sync with [`chart.rs`](https://github.com/ratatui-org/ratatui/blob/main/src/widgets/chart.rs);
-//! the specializations are factored out to `time_graph/points.rs`.
+//! the specializations are factored out to `time_series/points.rs`.
 
 mod canvas;
 mod grid;
@@ -15,6 +15,7 @@ use std::{
 };
 
 use canvas::*;
+use timeless::data::ChunkedData;
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Flex, Layout, Rect},
@@ -26,8 +27,7 @@ use tui::{
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
-    app::data::Values,
-    canvas::components::time_graph::LegendConstraints,
+    canvas::components::time_series::LegendConstraints,
     utils::general::{saturating_log2, saturating_log10},
 };
 
@@ -268,10 +268,10 @@ impl FromStr for LegendPosition {
 }
 
 #[derive(Debug, Default, Clone)]
-enum Data<'a> {
+enum Data<'a, F> {
     Some {
         times: &'a [Instant],
-        values: &'a Values,
+        values: &'a ChunkedData<F>,
     },
     #[default]
     None,
@@ -284,11 +284,11 @@ enum Data<'a> {
 /// A dataset can be [named](Dataset::name). Only named datasets will be
 /// rendered in the legend.
 #[derive(Debug, Default, Clone)]
-pub struct Dataset<'a> {
+pub struct Dataset<'a, F: Copy + Default + Into<f64> = f64> {
     /// Name of the dataset (used in the legend if shown)
     name: Option<Line<'a>>,
     /// A reference to data.
-    data: Data<'a>,
+    data: Data<'a, F>,
     /// Symbol used for each points of this dataset
     marker: symbols::Marker,
     /// Determines graph type used for drawing points
@@ -297,10 +297,10 @@ pub struct Dataset<'a> {
     style: Style,
 }
 
-impl<'a> Dataset<'a> {
+impl<'a, F: Copy + Default + Into<f64>> Dataset<'a, F> {
     /// Sets the name of the dataset.
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn name<S>(mut self, name: S) -> Dataset<'a>
+    pub fn name<S>(mut self, name: S) -> Dataset<'a, F>
     where
         S: Into<Line<'a>>,
     {
@@ -317,7 +317,7 @@ impl<'a> Dataset<'a> {
     /// element being X and the second Y. It's also worth noting that,
     /// unlike the [`Rect`], here the Y axis is bottom to top, as in math.
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn data(mut self, times: &'a [Instant], values: &'a Values) -> Dataset<'a> {
+    pub fn data(mut self, times: &'a [Instant], values: &'a ChunkedData<F>) -> Dataset<'a, F> {
         self.data = Data::Some { times, values };
         self
     }
@@ -332,7 +332,7 @@ impl<'a> Dataset<'a> {
     /// Patterns.
     #[must_use = "method moves the value of self and returns the modified value"]
     #[expect(dead_code)]
-    pub fn marker(mut self, marker: symbols::Marker) -> Dataset<'a> {
+    pub fn marker(mut self, marker: symbols::Marker) -> Dataset<'a, F> {
         self.marker = marker;
         self
     }
@@ -344,7 +344,7 @@ impl<'a> Dataset<'a> {
     /// in the dataset while a line will also draw a line between them. See
     /// [`GraphType`] for more details
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn graph_type(mut self, graph_type: GraphType) -> Dataset<'a> {
+    pub fn graph_type(mut self, graph_type: GraphType) -> Dataset<'a, F> {
         self.graph_type = graph_type;
         self
     }
@@ -359,7 +359,7 @@ impl<'a> Dataset<'a> {
     /// [`Style`], [`Color`], or your own type that implements
     /// [`Into<Style>`]).
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn style<S: Into<Style>>(mut self, style: S) -> Dataset<'a> {
+    pub fn style<S: Into<Style>>(mut self, style: S) -> Dataset<'a, F> {
         self.style = style.into();
         self
     }
@@ -419,7 +419,7 @@ impl ChartScaling {
 /// - Automatically trimming out redundant draws in the x-bounds.
 /// - Automatic interpolation to points that fall *just* outside of the screen.
 #[derive(Debug, Default, Clone)]
-pub(super) struct TimeChart<'a> {
+pub(super) struct TimeChart<'a, F: Copy + Default + Into<f64> = f64> {
     /// A block to display around the widget eventually
     block: Option<Block<'a>>,
     /// The horizontal axis
@@ -427,12 +427,12 @@ pub(super) struct TimeChart<'a> {
     /// The vertical axis
     y_axis: Axis<'a>,
     /// A reference to the datasets
-    datasets: Vec<Dataset<'a>>,
+    datasets: Vec<Dataset<'a, F>>,
     /// The widget base style
     style: Style,
     /// The legend's style.
     legend_style: Style,
-    /// Constraints used to determine whether the legend should be shown or not
+    /// Constraints used to determine whether the legend should be shown or not.
     hidden_legend_constraints: (Constraint, Constraint),
     /// The position determining whether the length is shown or hidden,
     /// regardless of `hidden_legend_constraints`
@@ -443,9 +443,9 @@ pub(super) struct TimeChart<'a> {
     scaling: ChartScaling,
 }
 
-impl<'a> TimeChart<'a> {
+impl<'a, F: Copy + Default + Into<f64>> TimeChart<'a, F> {
     /// Creates a chart with the given [datasets](Dataset).
-    pub fn new(datasets: Vec<Dataset<'a>>) -> TimeChart<'a> {
+    pub fn new(datasets: Vec<Dataset<'a, F>>) -> TimeChart<'a, F> {
         TimeChart {
             block: None,
             x_axis: Axis::default(),
@@ -462,7 +462,7 @@ impl<'a> TimeChart<'a> {
 
     /// Wraps the chart with the given [`Block`]
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn block(mut self, block: Block<'a>) -> TimeChart<'a> {
+    pub fn block(mut self, block: Block<'a>) -> TimeChart<'a, F> {
         self.block = Some(block);
         self
     }
@@ -475,14 +475,14 @@ impl<'a> TimeChart<'a> {
     ///
     /// Styles of [`Axis`] and [`Dataset`] will have priority over this style.
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn style<S: Into<Style>>(mut self, style: S) -> TimeChart<'a> {
+    pub fn style<S: Into<Style>>(mut self, style: S) -> TimeChart<'a, F> {
         self.style = style.into();
         self
     }
 
     /// Sets the legend's style.
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn legend_style(mut self, legend_style: Style) -> TimeChart<'a> {
+    pub fn legend_style(mut self, legend_style: Style) -> TimeChart<'a, F> {
         self.legend_style = legend_style;
         self
     }
@@ -491,7 +491,7 @@ impl<'a> TimeChart<'a> {
     ///
     /// The default is an empty [`Axis`], i.e. only a line.
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn x_axis(mut self, axis: Axis<'a>) -> TimeChart<'a> {
+    pub fn x_axis(mut self, axis: Axis<'a>) -> TimeChart<'a, F> {
         self.x_axis = axis;
         self
     }
@@ -500,14 +500,14 @@ impl<'a> TimeChart<'a> {
     ///
     /// The default is an empty [`Axis`], i.e. only a line.
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn y_axis(mut self, axis: Axis<'a>) -> TimeChart<'a> {
+    pub fn y_axis(mut self, axis: Axis<'a>) -> TimeChart<'a, F> {
         self.y_axis = axis;
         self
     }
 
     /// Sets the marker type.
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn marker(mut self, marker: Marker) -> TimeChart<'a> {
+    pub fn marker(mut self, marker: Marker) -> TimeChart<'a, F> {
         self.marker = marker;
         self
     }
@@ -525,7 +525,7 @@ impl<'a> TimeChart<'a> {
     #[must_use = "method moves the value of self and returns the modified value"]
     pub fn hidden_legend_constraints(
         mut self, constraints: (Constraint, Constraint),
-    ) -> TimeChart<'a> {
+    ) -> TimeChart<'a, F> {
         self.hidden_legend_constraints = constraints;
         self
     }
@@ -543,14 +543,14 @@ impl<'a> TimeChart<'a> {
     ///
     /// [`hidden_legend_constraints`]: Self::hidden_legend_constraints
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn legend_position(mut self, position: Option<LegendPosition>) -> TimeChart<'a> {
+    pub fn legend_position(mut self, position: Option<LegendPosition>) -> TimeChart<'a, F> {
         self.legend_position = position;
         self
     }
 
     /// Set chart scaling.
     #[must_use = "method moves the value of self and returns the modified value"]
-    pub fn scaling(mut self, scaling: ChartScaling) -> TimeChart<'a> {
+    pub fn scaling(mut self, scaling: ChartScaling) -> TimeChart<'a, F> {
         self.scaling = scaling;
         self
     }
@@ -793,7 +793,7 @@ impl<'a> TimeChart<'a> {
     }
 }
 
-impl Widget for TimeChart<'_> {
+impl<F: Copy + Default + Into<f64>> Widget for TimeChart<'_, F> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         buf.set_style(area, self.style);
 
@@ -958,8 +958,8 @@ impl<'a> Styled for Axis<'a> {
     }
 }
 
-impl<'a> Styled for Dataset<'a> {
-    type Item = Dataset<'a>;
+impl<'a, F: Copy + Default + Into<f64>> Styled for Dataset<'a, F> {
+    type Item = Dataset<'a, F>;
 
     fn style(&self) -> Style {
         self.style
@@ -970,8 +970,8 @@ impl<'a> Styled for Dataset<'a> {
     }
 }
 
-impl<'a> Styled for TimeChart<'a> {
-    type Item = TimeChart<'a>;
+impl<'a, F: Copy + Default + Into<f64>> Styled for TimeChart<'a, F> {
+    type Item = TimeChart<'a, F>;
 
     fn style(&self) -> Style {
         self.style
@@ -1040,6 +1040,7 @@ mod tests {
     use tui::style::{Modifier, Stylize};
 
     use super::*;
+    use crate::app::data::Values;
 
     struct LegendTestCase {
         chart_area: Rect,
@@ -1103,7 +1104,12 @@ mod tests {
     #[test]
     fn dataset_can_be_stylized() {
         assert_eq!(
-            Dataset::default().black().on_white().bold().not_dim().style,
+            Dataset::<f64>::default()
+                .black()
+                .on_white()
+                .bold()
+                .not_dim()
+                .style,
             Style::default()
                 .fg(Color::Black)
                 .bg(Color::White)
@@ -1115,7 +1121,7 @@ mod tests {
     #[test]
     fn chart_can_be_stylized() {
         assert_eq!(
-            TimeChart::new(vec![])
+            TimeChart::<f64>::new(vec![])
                 .black()
                 .on_white()
                 .bold()
@@ -1144,7 +1150,7 @@ mod tests {
 
     #[test]
     fn it_does_not_panic_if_title_is_wider_than_buffer() {
-        let widget = TimeChart::default()
+        let widget = TimeChart::<f64>::default()
             .y_axis(Axis::default().title("xxxxxxxxxxxxxxxx"))
             .x_axis(Axis::default().title("xxxxxxxxxxxxxxxx"));
         let mut buffer = Buffer::empty(Rect::new(0, 0, 8, 4));
@@ -1158,7 +1164,7 @@ mod tests {
         let data_named_1 = Dataset::default().name("data1"); // must occupy a row in legend
         let data_named_2 = Dataset::default().name(""); // must occupy a row in legend, even if name is empty
         let data_unnamed = Dataset::default(); // must not occupy a row in legend
-        let widget = TimeChart::new(vec![data_named_1, data_unnamed, data_named_2]);
+        let widget = TimeChart::<f64>::new(vec![data_named_1, data_unnamed, data_named_2]);
         let buffer = Buffer::empty(Rect::new(0, 0, 50, 25));
         let layout = widget.layout(buffer.area);
 
@@ -1169,7 +1175,7 @@ mod tests {
 
     #[test]
     fn no_legend_if_no_named_datasets() {
-        let dataset = Dataset::default();
+        let dataset = Dataset::<f64>::default();
         let widget = TimeChart::new(vec![dataset; 3]);
         let buffer = Buffer::empty(Rect::new(0, 0, 50, 25));
         let layout = widget.layout(buffer.area);
@@ -1179,7 +1185,7 @@ mod tests {
 
     #[test]
     fn dataset_legend_style_is_patched() {
-        let long_dataset_name = Dataset::default().name("Very long name");
+        let long_dataset_name = Dataset::<f64>::default().name("Very long name");
         let short_dataset =
             Dataset::default().name(Line::from("Short name").alignment(Alignment::Right));
         let widget = TimeChart::new(vec![long_dataset_name, short_dataset])
@@ -1200,7 +1206,7 @@ mod tests {
 
     #[test]
     fn test_chart_have_a_topleft_legend() {
-        let chart = TimeChart::new(vec![Dataset::default().name("Ds1")])
+        let chart = TimeChart::<f64>::new(vec![Dataset::default().name("Ds1")])
             .legend_position(Some(LegendPosition::TopLeft));
 
         let area = Rect::new(0, 0, 30, 20);
@@ -1236,7 +1242,7 @@ mod tests {
 
     #[test]
     fn test_chart_have_a_long_y_axis_title_overlapping_legend() {
-        let chart = TimeChart::new(vec![Dataset::default().name("Ds1")])
+        let chart = TimeChart::<f64>::new(vec![Dataset::default().name("Ds1")])
             .y_axis(Axis::default().title("The title overlap a legend."));
 
         let area = Rect::new(0, 0, 30, 20);
@@ -1272,7 +1278,7 @@ mod tests {
 
     #[test]
     fn test_chart_have_overflowed_y_axis() {
-        let chart = TimeChart::new(vec![Dataset::default().name("Ds1")])
+        let chart = TimeChart::<f64>::new(vec![Dataset::default().name("Ds1")])
             .y_axis(Axis::default().title("The title overlap a legend."));
 
         let area = Rect::new(0, 0, 10, 10);
@@ -1299,7 +1305,7 @@ mod tests {
     #[test]
     fn test_legend_area_can_fit_same_chart_area() {
         let name = "Data";
-        let chart = TimeChart::new(vec![Dataset::default().name(name)])
+        let chart = TimeChart::<f64>::new(vec![Dataset::default().name(name)])
             .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
 
         let area = Rect::new(0, 0, name.len() as u16 + 2, 3);
@@ -1329,7 +1335,7 @@ mod tests {
     #[test]
     fn test_legend_of_chart_have_odd_margin_size() {
         let name = "Data";
-        let base_chart = TimeChart::new(vec![Dataset::default().name(name)])
+        let base_chart = TimeChart::<f64>::new(vec![Dataset::default().name(name)])
             .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
 
         let area = Rect::new(0, 0, name.len() as u16 + 2 + 3, 3 + 3);
@@ -1496,7 +1502,7 @@ mod tests {
         let datasets: Vec<_> = (0..5)
             .map(|i| Dataset::default().name(format!("D{i}")))
             .collect();
-        let chart = TimeChart::new(datasets)
+        let chart = TimeChart::<f64>::new(datasets)
             .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
 
         // Height 5 means room for 3 entries (5 - 2 borders).
@@ -1514,7 +1520,7 @@ mod tests {
         let datasets: Vec<_> = (0..5)
             .map(|i| Dataset::default().name(format!("D{i}")))
             .collect();
-        let chart = TimeChart::new(datasets)
+        let chart = TimeChart::<f64>::new(datasets)
             .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
 
         let area = Rect::new(0, 0, 20, 4); // 4 - 2 = 2 entries
@@ -1536,7 +1542,7 @@ mod tests {
             Dataset::default().name("Short"),
             Dataset::default().name("A very long dataset name"),
         ];
-        let chart = TimeChart::new(datasets)
+        let chart = TimeChart::<f64>::new(datasets)
             .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
 
         // Width 12 means legend_width capped to 12, inner width = 10.
@@ -1556,7 +1562,7 @@ mod tests {
             Dataset::default().name("AB"),
             Dataset::default().name("Very long name here"),
         ];
-        let chart = TimeChart::new(datasets)
+        let chart = TimeChart::<f64>::new(datasets)
             .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
 
         // Width 8, legend box capped to 8, inner is 6, long name truncated.
@@ -1584,7 +1590,7 @@ mod tests {
             Dataset::default().name("CD"),
             Dataset::default().name("A very long dataset name"),
         ];
-        let chart = TimeChart::new(datasets)
+        let chart = TimeChart::<f64>::new(datasets)
             .hidden_legend_constraints((Constraint::Percentage(100), Constraint::Percentage(100)));
 
         let area = Rect::new(0, 0, 30, 4); // height 4 → 2 visible entries

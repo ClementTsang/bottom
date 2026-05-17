@@ -20,7 +20,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## [0.12.4]/[0.13.0] - Unreleased
+## [0.13.0] - Unreleased
 
 ### Bug Fixes
 
@@ -31,14 +31,25 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 - [#1938](https://github.com/ClementTsang/bottom/pull/1938), [#1980](https://github.com/ClementTsang/bottom/pull/1980): Report average packet size and packet rate.
 - [#2003](https://github.com/ClementTsang/bottom/pull/2003): Configurable default sort column for temperature and disk table widgets.
-- [#1979](https://github.com/ClementTsang/bottom/pull/1979): Add global `bg_color` option to set widget background colour.
-- [#2039](https://github.com/ClementTsang/bottom/pull/2039): Support drawing a line separator between the column headers and data.
-- [#1948](https://github.com/ClementTsang/bottom/pull/1948): Support `!=` operator and `!` negation prefixes in query searches.
+- [#1979](https://github.com/ClementTsang/bottom/pull/1979): Add a global `bg_colour` config option to set widget background colour.
+- [#2039](https://github.com/ClementTsang/bottom/pull/2039): Add a config option for drawing a line separator (`table_gap`) between the column headers and data.
+- [#1948](https://github.com/ClementTsang/bottom/pull/1948): Add support for both an `!=` operator and `!` negation prefixes in query searches.
+- [#2045](https://github.com/ClementTsang/bottom/pull/2045): Add support for showing a decimal place for CPU usage
+- [#2046](https://github.com/ClementTsang/bottom/pull/2046): Add a `show_table_scroll_bar` config option to show a scroll bar on table widgets.
+- [#2048](https://github.com/ClementTsang/bottom/pull/2048): Add support for a temperature graph to show sensor temperature change over time.
+- [#2053](https://github.com/ClementTsang/bottom/pull/2053): Add a configurable default sort column for the process widget (`processes.default_sort` or `--process-default-sort`).
+- [#1754](https://github.com/ClementTsang/bottom/issues/1754): Add search support in the help dialog.
 
 ### Changes
 
 - [#2031](https://github.com/ClementTsang/bottom/pull/2031): Tweak display/hiding logic for a graph widget's legend.
 - [#2039](https://github.com/ClementTsang/bottom/pull/2039): Replace `hide_table_gap` with `table_gap`.
+- [#2061](https://github.com/ClementTsang/bottom/pull/2061): Take cgroup into account for RAM/swap usage.
+- [#2062](https://github.com/ClementTsang/bottom/pull/2062): Rename `[network]` to `[network_graph]` in the config file; `[network]` remains valid as an alias.
+- [#2062](https://github.com/ClementTsang/bottom/pull/2062): Move network and memory graph config file options from `[flags]` to be under `[network_graph]` and `[memory_graph]`.
+- [#2063](https://github.com/ClementTsang/bottom/pull/2063): Move process config file options from `[flags]` to be under `[processes]`.
+- [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move CPU config file options from `[flags]` to be under `[cpu]`.
+- [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move memory config file options from `[flags]` to be under `[memory_graph]`.
 
 ### Other
 
@@ -54,7 +65,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ### Bug Fixes
 
-- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multibyte UTF8 chars in process names.
+- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multi-byte UTF8 chars in process names.
 
 ### Other
 

@@ -174,6 +174,7 @@ pub struct ProcTableConfig {
     pub is_use_regex: bool,
     pub show_memory_as_values: bool,
     pub is_command: bool,
+    pub default_sort: Option<ProcColumn>,
 }
 
 /// A hacky workaround for now.
@@ -244,6 +245,7 @@ impl ProcWidgetState {
             left_to_right: true,
             is_basic: false,
             show_table_scroll_position: false,
+            show_table_scroll_bar: false,
             show_current_entry_when_unfocused: false,
         };
         let styling = DataTableStyling::from_palette(palette);
@@ -261,6 +263,7 @@ impl ProcWidgetState {
             left_to_right: true,
             is_basic: config.use_basic_mode,
             show_table_scroll_position: config.show_table_scroll_position,
+            show_table_scroll_bar: config.show_table_scroll_bar,
             show_current_entry_when_unfocused: false,
         };
         let props = SortDataTableProps {
@@ -407,18 +410,26 @@ impl ProcWidgetState {
             })
             .collect::<IndexSet<_>>();
 
-        let (default_sort_index, default_sort_order) =
-            if matches!(mode, ProcWidgetMode::Tree { .. }) {
-                if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::PidOrCount) {
-                    (index, columns[index].default_order)
-                } else {
-                    (0, columns[0].default_order)
-                }
-            } else if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::Cpu) {
+        let configured_default_sort = table_config.default_sort.and_then(|c| {
+            let widget_col = ProcWidgetColumn::from(&c);
+            column_mapping
+                .get_index_of(&widget_col)
+                .map(|index| (index, columns[index].default_order))
+        });
+
+        let (default_sort_index, default_sort_order) = if let Some(pair) = configured_default_sort {
+            pair
+        } else if matches!(mode, ProcWidgetMode::Tree { .. }) {
+            if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::PidOrCount) {
                 (index, columns[index].default_order)
             } else {
                 (0, columns[0].default_order)
-            };
+            }
+        } else if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::Cpu) {
+            (index, columns[index].default_order)
+        } else {
+            (0, columns[0].default_order)
+        };
 
         let sort_table = Self::new_sort_table(config, colours);
         let table = Self::new_process_table(
@@ -1282,6 +1293,55 @@ mod test {
 
     fn init_default_state(columns: &[ProcWidgetColumn]) -> ProcWidgetState {
         init_state(ProcTableConfig::default(), columns)
+    }
+
+    #[test]
+    fn default_sort_honoured() {
+        let init_columns = [
+            ProcWidgetColumn::PidOrCount,
+            ProcWidgetColumn::ProcNameOrCommand,
+            ProcWidgetColumn::Cpu,
+            ProcWidgetColumn::Mem,
+        ];
+
+        let state_default = init_default_state(&init_columns);
+        assert_eq!(
+            state_default.table.sort_index(),
+            2,
+            "default sort should be CPU (index 2 in init_columns)"
+        );
+
+        let table_config = ProcTableConfig {
+            default_sort: Some(ProcColumn::MemPercent),
+            ..Default::default()
+        };
+        let state_mem = init_state(table_config, &init_columns);
+        assert_eq!(state_mem.table.sort_index(), 3);
+
+        let table_config = ProcTableConfig {
+            default_sort: Some(ProcColumn::Pid),
+            ..Default::default()
+        };
+        let state_pid = init_state(table_config, &init_columns);
+        assert_eq!(state_pid.table.sort_index(), 0);
+    }
+
+    #[test]
+    fn default_sort_falls_back_when_column_absent() {
+        // `default_sort` points at a column the user didn't include. We should
+        // fall back to the built-in default rather than panic or pick column 0.
+        let init_columns = [
+            ProcWidgetColumn::PidOrCount,
+            ProcWidgetColumn::ProcNameOrCommand,
+            ProcWidgetColumn::Cpu,
+        ];
+
+        let table_config = ProcTableConfig {
+            default_sort: Some(ProcColumn::MemPercent),
+            ..Default::default()
+        };
+        let state = init_state(table_config, &init_columns);
+        assert_eq!(state.table.sort_index(), 2);
     }
 
     #[test]

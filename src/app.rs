@@ -13,8 +13,9 @@ pub use states::*;
 
 use crate::{
     canvas::{
-        components::time_graph::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
+        components::time_series::LegendPosition, dialogs::process_kill_dialog::ProcessKillDialog,
     },
+    components::time_series::TimeseriesState,
     constants,
     options::config::flags::TableGap,
     utils::data_units::DataUnit,
@@ -22,8 +23,6 @@ use crate::{
         DiskWidgetColumn, ProcWidgetColumn, ProcWidgetMode, TempWidgetColumn, TreeCollapsed,
     },
 };
-
-const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
 
 #[derive(Debug, Clone, Eq, PartialEq, Default, Copy)]
 pub enum AxisScaling {
@@ -44,6 +43,7 @@ pub struct AppConfigFields {
     pub use_dot: bool,
     pub cpu_left_legend: bool,
     pub show_average_cpu: bool, // TODO: Unify this in CPU options
+    pub show_cpu_decimal: bool,
     pub use_current_cpu_total: bool,
     pub unnormalized_cpu: bool,
     pub get_process_threads: bool,
@@ -59,6 +59,7 @@ pub struct AppConfigFields {
     pub enable_gpu: bool,
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,
+    pub show_table_scroll_bar: bool,
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub is_advanced_kill: bool,
     pub is_read_only: bool,
@@ -78,14 +79,16 @@ pub struct AppConfigFields {
     pub default_tree_collapse: bool,
     pub default_temp_sort_column: Option<TempWidgetColumn>,
     pub default_disk_sort_column: Option<DiskWidgetColumn>,
+    pub temperature_legend_position: Option<LegendPosition>,
 }
 
 /// For filtering out information
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DataFilters {
     pub disk_filter: Option<Filter>,
     pub mount_filter: Option<Filter>,
     pub temp_filter: Option<Filter>,
+    pub temp_graph_filter: Option<Filter>,
     pub net_filter: Option<Filter>,
 }
 
@@ -115,10 +118,13 @@ impl App {
         widget_map: HashMap<u64, BottomWidget>, current_widget: BottomWidget,
         used_widgets: UsedWidgets, filters: DataFilters, is_expanded: bool,
     ) -> Self {
+        let mut data_store = DataStore::new(used_widgets);
+        data_store.set_filters(filters.clone());
+
         Self {
             awaiting_second_char: false,
             second_char: None,
-            data_store: DataStore::default(),
+            data_store,
             last_key_press: Instant::now(),
             process_kill_dialog: ProcessKillDialog::default(),
             help_dialog_state: AppHelpDialogState::default(),
@@ -187,10 +193,23 @@ impl App {
 
         self.data_store.reset();
 
-        // Reset zoom
-        self.reset_cpu_zoom();
-        self.reset_mem_zoom();
-        self.reset_net_zoom();
+        // Reset zoom.
+        // TODO: Make this suck less... should just make it so that calling reset fixes this all (including above too).
+        for widget_state in self.states.cpu_state.widget_states.values_mut() {
+            widget_state.graph.state_mut().reset_zoom();
+        }
+
+        for widget_state in self.states.mem_state.widget_states.values_mut() {
+            widget_state.graph.state_mut().reset_zoom();
+        }
+
+        for widget_state in self.states.net_state.widget_states.values_mut() {
+            widget_state.graph.state_mut().reset_zoom();
+        }
+
+        for widget_state in self.states.temp_graph_state.widget_states.values_mut() {
+            widget_state.graph.state_mut().reset_zoom();
+        }
     }
 
     pub fn should_get_widget_bounds(&self) -> bool {
@@ -204,9 +223,14 @@ impl App {
             self.process_kill_dialog.on_esc();
             self.is_force_redraw = true;
         } else if self.help_dialog_state.is_showing_help {
-            self.help_dialog_state.is_showing_help = false;
-            self.help_dialog_state.scroll_state.current_scroll_index = 0;
-            self.is_force_redraw = true;
+            if self.help_dialog_state.is_searching() {
+                self.help_dialog_state.close_search();
+                self.is_force_redraw = true;
+            } else {
+                self.help_dialog_state.is_showing_help = false;
+                self.help_dialog_state.scroll_state.current_scroll_index = 0;
+                self.is_force_redraw = true;
+            }
         } else {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
@@ -268,6 +292,11 @@ impl App {
         )
     }
 
+    pub fn is_in_any_search(&self) -> bool {
+        // TODO: This is really hacky, but is fine until we do some smarter things like putting event catching at a per-widget/dialog state.
+        self.is_in_search_widget() || (self.help_dialog_state.is_help_searching())
+    }
+
     fn reset_multi_tap_keys(&mut self) {
         self.awaiting_second_char = false;
         self.second_char = None;
@@ -316,6 +345,9 @@ impl App {
                 }
                 _ => {}
             }
+        } else if self.help_dialog_state.is_showing_help {
+            self.help_dialog_state.open_search();
+            self.is_force_redraw = true;
         }
     }
 
@@ -455,6 +487,9 @@ impl App {
         if self.process_kill_dialog.is_open() {
             // Not the best way of doing things for now but works as glue.
             self.process_kill_dialog.on_enter();
+        } else if self.help_dialog_state.is_help_searching() {
+            self.help_dialog_state.close_search();
+            self.is_force_redraw = true;
         } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::ProcSearch => {
@@ -490,6 +525,11 @@ impl App {
     }
 
     pub fn on_delete(&mut self) {
+        if self.help_dialog_state.is_help_searching() {
+            self.help_dialog_state.search_input_state.delete_at_cursor();
+            self.is_force_redraw = true;
+            return;
+        }
         match self.current_widget.widget_type {
             BottomWidgetType::ProcSearch => {
                 let is_in_search_widget = self.is_in_search_widget();
@@ -519,7 +559,12 @@ impl App {
     }
 
     pub fn on_backspace(&mut self) {
-        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+        if self.help_dialog_state.is_help_searching() {
+            self.help_dialog_state
+                .search_input_state
+                .delete_behind_cursor();
+            self.is_force_redraw = true;
+        } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             let is_in_search_widget = self.is_in_search_widget();
             if let Some(proc_widget_state) = self
                 .states
@@ -565,6 +610,11 @@ impl App {
     }
 
     pub fn on_left_key(&mut self) {
+        if self.help_dialog_state.is_help_searching() {
+            self.help_dialog_state.search_input_state.move_left();
+            return;
+        }
+
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
@@ -612,6 +662,11 @@ impl App {
     }
 
     pub fn on_right_key(&mut self) {
+        if self.help_dialog_state.is_help_searching() {
+            self.help_dialog_state.search_input_state.move_right();
+            return;
+        }
+
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
@@ -676,9 +731,8 @@ impl App {
                     proc_widget_state.toggle_current_tree_branch_entry();
                 }
             }
-        } else if self.process_kill_dialog.is_open() {
-            // Either select the current option,
-            // or scroll to the next one
+        } else if self.help_dialog_state.is_help_searching() {
+            self.on_char_key(' ');
         }
     }
 
@@ -762,7 +816,12 @@ impl App {
     }
 
     pub fn skip_cursor_beginning(&mut self) {
-        if !self.ignore_normal_keybinds() {
+        if self.help_dialog_state.is_help_searching() {
+            self.help_dialog_state
+                .search_input_state
+                .skip_to_beginning();
+            self.is_force_redraw = true;
+        } else if !self.ignore_normal_keybinds() {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
@@ -784,7 +843,10 @@ impl App {
     }
 
     pub fn skip_cursor_end(&mut self) {
-        if !self.ignore_normal_keybinds() {
+        if self.help_dialog_state.is_help_searching() {
+            self.help_dialog_state.search_input_state.skip_to_end();
+            self.is_force_redraw = true;
+        } else if !self.ignore_normal_keybinds() {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
@@ -806,7 +868,10 @@ impl App {
     }
 
     pub fn clear_search(&mut self) {
-        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+        if self.help_dialog_state.is_help_searching() {
+            self.help_dialog_state.search_input_state = Default::default();
+            self.is_force_redraw = true;
+        } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             if let Some(proc_widget_state) = self
                 .states
                 .proc_state
@@ -819,7 +884,12 @@ impl App {
     }
 
     pub fn clear_previous_word(&mut self) {
-        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+        if self.help_dialog_state.is_help_searching() {
+            self.help_dialog_state
+                .search_input_state
+                .delete_previous_word();
+            self.is_force_redraw = true;
+        } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
             if let Some(proc_widget_state) = self
                 .states
                 .proc_state
@@ -880,20 +950,31 @@ impl App {
             }
             self.handle_char(caught_char);
         } else if self.help_dialog_state.is_showing_help {
-            match caught_char {
-                '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
-                    let potential_index = caught_char.to_digit(10);
-                    if let Some(potential_index) = potential_index {
-                        let potential_index = potential_index as usize;
-                        if (potential_index) < self.help_dialog_state.index_shortcuts.len() {
-                            self.help_scroll_to_or_max(
-                                self.help_dialog_state.index_shortcuts[potential_index],
-                            );
+            if self.help_dialog_state.is_searching() {
+                self.help_dialog_state
+                    .search_input_state
+                    .insert_char(caught_char);
+                self.is_force_redraw = true;
+            } else {
+                match caught_char {
+                    '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                        let potential_index = caught_char.to_digit(10);
+                        if let Some(potential_index) = potential_index {
+                            let potential_index = potential_index as usize;
+                            if (potential_index) < self.help_dialog_state.index_shortcuts.len() {
+                                self.help_scroll_to_or_max(
+                                    self.help_dialog_state.index_shortcuts[potential_index],
+                                );
+                            }
                         }
                     }
+                    'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
+                    '/' => {
+                        self.help_dialog_state.open_search();
+                        self.is_force_redraw = true;
+                    }
+                    _ => {}
                 }
-                'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
-                _ => {}
             }
         } else if self.process_kill_dialog.is_open() {
             self.process_kill_dialog.on_char(caught_char);
@@ -1956,216 +2037,60 @@ impl App {
         }
     }
 
-    fn zoom_out(&mut self) {
+    #[inline]
+    fn current_ts_state(&mut self) -> Option<&mut TimeseriesState> {
         match self.current_widget.widget_type {
-            BottomWidgetType::Cpu => {
-                if let Some(cpu_widget_state) = self
+            BottomWidgetType::Cpu
+                if let Some(widget_state) = self
                     .states
                     .cpu_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
-                {
-                    let new_time = cpu_widget_state
-                        .current_display_time
-                        .saturating_add(self.app_config_fields.time_interval);
-
-                    if new_time <= self.app_config_fields.retention_ms {
-                        cpu_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            cpu_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if cpu_widget_state.current_display_time
-                        != self.app_config_fields.retention_ms
-                    {
-                        cpu_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        if self.app_config_fields.autohide_time {
-                            cpu_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
-                }
+                    .get_mut_widget_state(self.current_widget.widget_id) =>
+            {
+                Some(widget_state.graph.state_mut())
             }
-            BottomWidgetType::Mem => {
-                if let Some(mem_widget_state) = self
+            BottomWidgetType::Mem
+                if let Some(widget_state) = self
                     .states
                     .mem_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
-                {
-                    let new_time = mem_widget_state
-                        .current_display_time
-                        .saturating_add(self.app_config_fields.time_interval);
-
-                    if new_time <= self.app_config_fields.retention_ms {
-                        mem_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            mem_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if mem_widget_state.current_display_time
-                        != self.app_config_fields.retention_ms
-                    {
-                        mem_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        if self.app_config_fields.autohide_time {
-                            mem_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
-                }
+                    .get_mut_widget_state(self.current_widget.widget_id) =>
+            {
+                Some(widget_state.graph.state_mut())
             }
-            BottomWidgetType::Net => {
-                if let Some(net_widget_state) = self
+            BottomWidgetType::Net
+                if let Some(widget_state) = self
                     .states
                     .net_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
-                {
-                    let new_time = net_widget_state
-                        .current_display_time
-                        .saturating_add(self.app_config_fields.time_interval);
-
-                    if new_time <= self.app_config_fields.retention_ms {
-                        net_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            net_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if net_widget_state.current_display_time
-                        != self.app_config_fields.retention_ms
-                    {
-                        net_widget_state.current_display_time = self.app_config_fields.retention_ms;
-                        if self.app_config_fields.autohide_time {
-                            net_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
-                }
+                    .get_mut_widget_state(self.current_widget.widget_id) =>
+            {
+                Some(widget_state.graph.state_mut())
             }
-            _ => {}
+            BottomWidgetType::TempGraph
+                if let Some(widget_state) = self
+                    .states
+                    .temp_graph_state
+                    .get_mut_widget_state(self.current_widget.widget_id) =>
+            {
+                Some(widget_state.graph.state_mut())
+            }
+            _ => None,
+        }
+    }
+
+    fn zoom_out(&mut self) {
+        if let Some(ts_state) = self.current_ts_state() {
+            ts_state.zoom_out();
         }
     }
 
     fn zoom_in(&mut self) {
-        match self.current_widget.widget_type {
-            BottomWidgetType::Cpu => {
-                if let Some(cpu_widget_state) = self
-                    .states
-                    .cpu_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
-                {
-                    let new_time = cpu_widget_state
-                        .current_display_time
-                        .saturating_sub(self.app_config_fields.time_interval);
-
-                    if new_time >= STALE_MIN_MILLISECONDS {
-                        cpu_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            cpu_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if cpu_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
-                        cpu_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
-                        if self.app_config_fields.autohide_time {
-                            cpu_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
-                }
-            }
-            BottomWidgetType::Mem => {
-                if let Some(mem_widget_state) = self
-                    .states
-                    .mem_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
-                {
-                    let new_time = mem_widget_state
-                        .current_display_time
-                        .saturating_sub(self.app_config_fields.time_interval);
-
-                    if new_time >= STALE_MIN_MILLISECONDS {
-                        mem_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            mem_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if mem_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
-                        mem_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
-                        if self.app_config_fields.autohide_time {
-                            mem_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
-                }
-            }
-            BottomWidgetType::Net => {
-                if let Some(net_widget_state) = self
-                    .states
-                    .net_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
-                {
-                    let new_time = net_widget_state
-                        .current_display_time
-                        .saturating_sub(self.app_config_fields.time_interval);
-
-                    if new_time >= STALE_MIN_MILLISECONDS {
-                        net_widget_state.current_display_time = new_time;
-                        if self.app_config_fields.autohide_time {
-                            net_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    } else if net_widget_state.current_display_time != STALE_MIN_MILLISECONDS {
-                        net_widget_state.current_display_time = STALE_MIN_MILLISECONDS;
-                        if self.app_config_fields.autohide_time {
-                            net_widget_state.autohide_timer = Some(Instant::now());
-                        }
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-
-    fn reset_cpu_zoom(&mut self) {
-        if let Some(cpu_widget_state) = self
-            .states
-            .cpu_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
-        {
-            cpu_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            if self.app_config_fields.autohide_time {
-                cpu_widget_state.autohide_timer = Some(Instant::now());
-            }
-        }
-    }
-
-    fn reset_mem_zoom(&mut self) {
-        if let Some(mem_widget_state) = self
-            .states
-            .mem_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
-        {
-            mem_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            if self.app_config_fields.autohide_time {
-                mem_widget_state.autohide_timer = Some(Instant::now());
-            }
-        }
-    }
-
-    fn reset_net_zoom(&mut self) {
-        if let Some(net_widget_state) = self
-            .states
-            .net_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
-        {
-            net_widget_state.current_display_time = self.app_config_fields.default_time_value;
-            if self.app_config_fields.autohide_time {
-                net_widget_state.autohide_timer = Some(Instant::now());
-            }
+        if let Some(ts_state) = self.current_ts_state() {
+            ts_state.zoom_in();
         }
     }
 
     fn reset_zoom(&mut self) {
-        match self.current_widget.widget_type {
-            BottomWidgetType::Cpu => self.reset_cpu_zoom(),
-            BottomWidgetType::Mem => self.reset_mem_zoom(),
-            BottomWidgetType::Net => self.reset_net_zoom(),
-            _ => {}
+        if let Some(ts_state) = self.current_ts_state() {
+            ts_state.reset_zoom();
         }
     }
 

@@ -1,0 +1,6 @@
+# This uses deprecated memory settings - once they are removed, this test file should be moved to invalid configs.
+
+[flags]
+enable_cache_memory = true
+free_arc = true
+memory_legend = "left"

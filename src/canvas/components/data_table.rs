@@ -192,6 +192,7 @@ mod test {
             left_to_right: false,
             is_basic: false,
             show_table_scroll_position: true,
+            show_table_scroll_bar: false,
             show_current_entry_when_unfocused: false,
         };
         let styling = DataTableStyling::default();

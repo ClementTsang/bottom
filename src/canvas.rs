@@ -12,6 +12,7 @@ use tui::{
     Frame, Terminal,
     backend::Backend,
     layout::{Constraint, Direction, Flex, Layout, Rect},
+    symbols::Marker,
     text::Span,
     widgets::Paragraph,
 };
@@ -58,6 +59,14 @@ impl Painter {
             self.styles.highlighted_border_style
         } else {
             self.styles.border_style
+        }
+    }
+
+    pub(crate) fn get_marker(&self, use_dot: bool) -> Marker {
+        if use_dot {
+            Marker::Dot
+        } else {
+            Marker::Braille
         }
     }
 
@@ -266,6 +275,12 @@ impl Painter {
                         #[cfg(feature = "battery")]
                         self.draw_battery(f, app_state, rect[0], app_state.current_widget.widget_id)
                     }
+                    TempGraph => self.draw_temperature_graph(
+                        f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
                     _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
@@ -380,6 +395,12 @@ impl Painter {
                                 #[cfg(feature = "battery")]
                                 self.draw_battery(f, app_state, vertical_chunks[3], widget_id)
                             }
+                            TempGraph => self.draw_temperature_graph(
+                                f,
+                                app_state,
+                                vertical_chunks[3],
+                                widget_id,
+                            ),
                             _ => {}
                         }
                     }
@@ -457,6 +478,9 @@ impl Painter {
                     {
                         #[cfg(feature = "battery")]
                         self.draw_battery(f, app_state, *draw_loc, widget.widget_id)
+                    }
+                    TempGraph => {
+                        self.draw_temperature_graph(f, app_state, *draw_loc, widget.widget_id)
                     }
                     _ => {}
                 }

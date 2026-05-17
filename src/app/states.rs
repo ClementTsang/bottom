@@ -6,7 +6,7 @@ use crate::{
     utils::input::InputFieldState,
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
-        ProcWidgetState, TempWidgetState, query::ProcessQuery,
+        ProcWidgetState, TempGraphWidgetState, TempWidgetState, query::ProcessQuery,
     },
 };
 
@@ -16,6 +16,7 @@ pub struct AppWidgetStates {
     pub net_state: NetState,
     pub proc_state: ProcState,
     pub temp_state: TempState,
+    pub temp_graph_state: TempGraphStates,
     pub disk_state: DiskState,
     pub battery_state: AppBatteryState,
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
@@ -32,6 +33,8 @@ pub struct AppHelpDialogState {
     pub height: u16,
     pub scroll_state: ParagraphScrollState,
     pub index_shortcuts: Vec<u16>,
+    is_searching: bool,
+    pub search_input_state: InputFieldState,
 }
 
 impl Default for AppHelpDialogState {
@@ -41,7 +44,27 @@ impl Default for AppHelpDialogState {
             height: 0,
             scroll_state: ParagraphScrollState::default(),
             index_shortcuts: vec![0; constants::HELP_TEXT.len()],
+            is_searching: false,
+            search_input_state: InputFieldState::default(),
         }
+    }
+}
+
+impl AppHelpDialogState {
+    pub fn is_searching(&self) -> bool {
+        self.is_searching
+    }
+
+    pub fn is_help_searching(&self) -> bool {
+        self.is_showing_help && self.is_searching
+    }
+
+    pub fn open_search(&mut self) {
+        self.is_searching = true;
+    }
+
+    pub fn close_search(&mut self) {
+        self.is_searching = false;
     }
 }
 
@@ -50,7 +73,6 @@ impl Default for AppHelpDialogState {
 pub struct AppSearchState {
     pub is_enabled: bool,
     pub is_invalid_search: bool,
-
     pub input_field_state: InputFieldState,
 
     /// The query. TODO: Merge this as one enum.
@@ -100,6 +122,10 @@ impl NetState {
     pub fn init(widget_states: HashMap<u64, NetWidgetState>) -> Self {
         NetState { widget_states }
     }
+
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut NetWidgetState> {
+        self.widget_states.get_mut(&widget_id)
+    }
 }
 
 pub struct CpuState {
@@ -128,6 +154,10 @@ impl MemState {
     pub fn init(widget_states: HashMap<u64, MemWidgetState>) -> Self {
         MemState { widget_states }
     }
+
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut MemWidgetState> {
+        self.widget_states.get_mut(&widget_id)
+    }
 }
 
 pub struct TempState {
@@ -145,6 +175,20 @@ impl TempState {
 
     pub fn get_widget_state(&self, widget_id: u64) -> Option<&TempWidgetState> {
         self.widget_states.get(&widget_id)
+    }
+}
+
+pub struct TempGraphStates {
+    pub widget_states: HashMap<u64, TempGraphWidgetState>,
+}
+
+impl TempGraphStates {
+    pub fn init(widget_states: HashMap<u64, TempGraphWidgetState>) -> Self {
+        TempGraphStates { widget_states }
+    }
+
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut TempGraphWidgetState> {
+        self.widget_states.get_mut(&widget_id)
     }
 }
 
