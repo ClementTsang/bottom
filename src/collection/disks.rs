@@ -10,8 +10,6 @@ cfg_select! {
         #[cfg(feature = "zfs")]
         pub use io_counters::IoCounters;
         pub(crate) use self::freebsd::*;
-        mod other;
-        pub(crate) use self::other::*;
     }
     target_os = "windows" => {
         mod windows;
