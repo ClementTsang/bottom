@@ -5,27 +5,6 @@
 
 use std::{fs, io::BufRead};
 
-/// cgroup memory limits.
-#[derive(Debug)]
-pub(crate) enum CgroupMemLimit {
-    Bytes(u64),
-    Max,
-}
-
-/// cgroup memory usage data.
-#[derive(Debug)]
-pub(crate) struct CgroupMemData {
-    pub used_bytes: u64,
-    pub limit: Option<CgroupMemLimit>,
-}
-
-/// overall cgroup memory data.
-#[derive(Default, Debug)]
-pub(crate) struct CgroupMemCollector {
-    pub ram: Option<CgroupMemData>,
-    pub swap: Option<CgroupMemData>,
-}
-
 fn read_u64(path: &str) -> Option<u64> {
     fs::read_to_string(path).ok()?.trim().parse().ok()
 }
@@ -42,6 +21,27 @@ fn read_stat_key(path: &str, key: &str) -> Option<u64> {
     }
 
     None
+}
+
+/// Represents cgroup memory limits.
+#[derive(Debug)]
+pub(crate) enum CgroupMemLimit {
+    Bytes(u64),
+    Max,
+}
+
+/// Represents cgroup memory usage data.
+#[derive(Debug)]
+pub(crate) struct CgroupMemData {
+    pub used_bytes: u64,
+    pub limit: Option<CgroupMemLimit>,
+}
+
+/// Gathers memory data from cgroup sources.
+#[derive(Default, Debug)]
+pub(crate) struct CgroupMemCollector {
+    pub ram: Option<CgroupMemData>,
+    pub swap: Option<CgroupMemData>,
 }
 
 impl CgroupMemCollector {
@@ -141,4 +141,11 @@ impl CgroupMemCollector {
 
         could_update
     }
+}
+
+/// Gathers CPU data from cgroup sources.
+pub(crate) struct CgroupCpuCollector {}
+
+impl CgroupCpuCollector {
+    pub(crate) fn refresh(&mut self) {}
 }
