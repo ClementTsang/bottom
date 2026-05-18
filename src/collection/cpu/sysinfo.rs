@@ -1,19 +1,28 @@
 //! CPU stats through sysinfo.
-//! Supports FreeBSD.
-
-use sysinfo::System;
 
 use super::{CpuData, CpuDataType, CpuHarvest};
-use crate::collection::error::CollectionResult;
+use crate::collection::{DataCollector, error::CollectionResult};
 
-pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResult<CpuHarvest> {
+pub fn get_cpu_data_list(collector: &DataCollector) -> CollectionResult<CpuHarvest> {
+    let sys = &collector.sys.system;
+    let show_average_cpu = collector.show_average_cpu;
+
     let mut cpus = vec![];
 
     if show_average_cpu {
-        cpus.push(CpuData {
-            data_type: CpuDataType::Avg,
-            usage: sys.global_cpu_usage(),
-        })
+        cfg_if::cfg_if! {
+            if #[cfg(target_os = "linux")] {
+                cpus.push(CpuData {
+                    data_type: CpuDataType::Avg,
+                    usage: collector.cgroup_cpu_data.avg_cpu_percent.unwrap_or_else(|| sys.global_cpu_usage()),
+                });
+            } else {
+                cpus.push(CpuData {
+                    data_type: CpuDataType::Avg,
+                    usage: sys.global_cpu_usage(),
+                })
+            }
+        }
     }
 
     cpus.extend(
