@@ -442,7 +442,7 @@ shell auto-completion files for Bash, Zsh, fish, Powershell, Elvish, Fig, and Nu
 - For PowerShell, add `_btm.ps1` to your PowerShell [profile](<https://docs.microsoft.com/en-us/previous-versions//bb613488(v=vs.85)>).
 - For Elvish, the completion file is `btm.elv`.
 - For Fig, the completion file is `btm.ts`.
-- For Nushell, source `btm.nu`.
+- For Nushell, use `btm.nu`.
 
 The individual auto-completion files are also included in the stable/nightly releases as `completion.tar.gz` if needed.
 
