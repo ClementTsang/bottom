@@ -120,16 +120,30 @@ pub(crate) fn parse_query(search_query: &str, options: &QueryOptions) -> QueryRe
     }
 
     let mut split_query = VecDeque::new();
+    let mut in_quotes = false;
 
     search_query.split_whitespace().for_each(|s| {
         // From https://stackoverflow.com/a/56923739 get a split but include the parentheses
         let mut last = 0;
         for (index, matched) in s.match_indices(|x| DELIMITER_LIST.contains(&x)) {
-            if last != index {
-                split_query.push_back(s[last..index].to_owned());
+            if matched == "\"" {
+                // Always split on quote delimiters to open/close quoted sections.
+                if last != index {
+                    split_query.push_back(s[last..index].to_owned());
+                }
+                split_query.push_back(matched.to_owned());
+                last = index + matched.len();
+                in_quotes = !in_quotes;
+            } else if !in_quotes {
+                // Only split on other delimiters when outside a quoted section,
+                // so that special chars like `<` and `>` in `"Thread<15>"` are
+                // preserved as literals.
+                if last != index {
+                    split_query.push_back(s[last..index].to_owned());
+                }
+                split_query.push_back(matched.to_owned());
+                last = index + matched.len();
             }
-            split_query.push_back(matched.to_owned());
-            last = index + matched.len();
         }
         if last < s.len() {
             split_query.push_back(s[last..].to_owned());
@@ -1096,6 +1110,54 @@ mod tests {
 
         assert!(query.check(&with_bang, false));
         assert!(!query.check(&without, false));
+    }
+
+    /// Quoted angle brackets should be treated as literal characters in name matches.
+    #[test]
+    fn quoted_angle_brackets_match_literal() {
+        let query = parse_query_no_options("\"Thread<15>\"").unwrap();
+
+        let matching = simple_process("Thread<15>");
+        let non_matching = simple_process("Thread");
+
+        assert!(query.check(&matching, false));
+        assert!(!query.check(&non_matching, false));
+    }
+
+    /// A quoted `=` should be treated as a literal character in name matches.
+    #[test]
+    fn quoted_equals_matches_literal() {
+        let query = parse_query_no_options("\"a=b\"").unwrap();
+
+        let matching = simple_process("a=b");
+        let non_matching = simple_process("ab");
+
+        assert!(query.check(&matching, false));
+        assert!(!query.check(&non_matching, false));
+    }
+
+    /// A quoted `!=` should be treated as a literal character sequence in name matches.
+    #[test]
+    fn quoted_not_equals_matches_literal() {
+        let query = parse_query_no_options("\"a!=b\"").unwrap();
+
+        let matching = simple_process("a!=b");
+        let non_matching = simple_process("ab");
+
+        assert!(query.check(&matching, false));
+        assert!(!query.check(&non_matching, false));
+    }
+
+    /// Quoted parentheses should be treated as literal characters in name matches.
+    #[test]
+    fn quoted_parens_match_literal() {
+        let query = parse_query_no_options("\"a(b)\"").unwrap();
+
+        let matching = simple_process("a(b)");
+        let non_matching = simple_process("ab");
+
+        assert!(query.check(&matching, false));
+        assert!(!query.check(&non_matching, false));
     }
 
     /// Trailing operators with no RHS must error.
