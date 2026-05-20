@@ -540,6 +540,15 @@ pub struct MemoryArgs {
         alias = "free-arc"
     )]
     pub free_arc: bool,
+
+    #[cfg(feature = "gpu")]
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Use short GPU names (e.g. 'GPU' or 'GPU0', 'GPU1') in the memory widget instead of full GPU names.",
+        alias = "short-gpu-names"
+    )]
+    pub short_gpu_names: bool,
 }
 
 /// Network arguments/config options.

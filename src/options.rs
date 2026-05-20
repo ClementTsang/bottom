@@ -440,6 +440,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         disable_click: is_flag_enabled!(disable_click, args.general, config),
         disable_keys: is_flag_enabled!(disable_keys, args.general, config),
         enable_gpu: get_enable_gpu(args, config),
+        short_gpu_names: get_short_gpu_names(args, config),
         enable_cache_memory: get_enable_cache_memory(args, config),
         show_table_scroll_position: is_flag_enabled!(
             show_table_scroll_position,
@@ -1079,6 +1080,24 @@ fn get_enable_gpu(args: &BottomArgs, config: &Config) -> bool {
 
 #[cfg(not(feature = "gpu"))]
 fn get_enable_gpu(_: &BottomArgs, _: &Config) -> bool {
+    false
+}
+
+#[cfg(feature = "gpu")]
+fn get_short_gpu_names(args: &BottomArgs, config: &Config) -> bool {
+    if args.memory.short_gpu_names {
+        return true;
+    }
+
+    config
+        .memory_graph
+        .as_ref()
+        .and_then(|m| m.short_gpu_names)
+        .unwrap_or(false)
+}
+
+#[cfg(not(feature = "gpu"))]
+fn get_short_gpu_names(_: &BottomArgs, _: &Config) -> bool {
     false
 }
 

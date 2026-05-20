@@ -694,7 +694,7 @@
           ]
         },
         "free_arc": {
-          "description": "Whether to subtract freeable ARC from memory usage.",
+          "description": "Whether to subtract ARC that can be freed from memory usage.",
           "type": [
             "boolean",
             "null"
@@ -704,6 +704,13 @@
           "description": "Where to place the legend for the memory chart widget.",
           "type": [
             "string",
+            "null"
+          ]
+        },
+        "short_gpu_names": {
+          "description": "Whether to use short GPU names in the memory widget.",
+          "type": [
+            "boolean",
             "null"
           ]
         }
