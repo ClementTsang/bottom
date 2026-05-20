@@ -10,13 +10,14 @@ pub fn get_cpu_data_list(collector: &DataCollector) -> CollectionResult<CpuHarve
     let mut cpus = vec![];
 
     if show_average_cpu {
-        cfg_if::cfg_if! {
-            if #[cfg(target_os = "linux")] {
+        cfg_select! {
+            target_os = "linux" => {
                 cpus.push(CpuData {
                     data_type: CpuDataType::Avg,
                     usage: collector.cgroup_cpu_data.avg_cpu_percent.unwrap_or_else(|| sys.global_cpu_usage()),
                 });
-            } else {
+            }
+            _ => {
                 cpus.push(CpuData {
                     data_type: CpuDataType::Avg,
                     usage: sys.global_cpu_usage(),
