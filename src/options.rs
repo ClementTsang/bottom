@@ -85,9 +85,12 @@ macro_rules! enabled_option_with_deprecated {
         } else if let Some(section) = &$config.$section {
             section.$field.unwrap_or(false)
         } else if let Some(flags) = &$config.flags {
-            deprecated_warning(stringify!($deprecated_flag), stringify!($section.$field));
-
-            flags.$deprecated_flag.unwrap_or(false)
+            flags
+                .$deprecated_flag
+                .inspect(|_| {
+                    deprecated_warning(stringify!($deprecated_flag), stringify!($section.$field))
+                })
+                .unwrap_or(false)
         } else {
             false
         }
