@@ -2,12 +2,69 @@
 
 use std::{io, time::Duration};
 
-use hashbrown::HashMap;
+use cfg_if::cfg_if;
 use itertools::Itertools;
 use sysinfo::{ProcessStatus, System};
 
 use super::{ProcessHarvest, process_status_str};
-use crate::collection::{Pid, error::CollectionResult, processes::UserTable};
+#[cfg(target_os = "macos")]
+use crate::collection::processes::macos::sysctl_bindings;
+use crate::{
+    collection::{Pid, error::CollectionResult, processes::UserTable},
+    utils::int_hash::IntHashMap,
+};
+
+fn get_nice(pid: Pid) -> i32 {
+    // SAFETY: getpriority takes no user pointers; pid is passed as a value
+    // and errors are reported via the return value.
+    cfg_if! {
+        if #[cfg(target_os = "freebsd")] {
+            unsafe { libc::getpriority(libc::PRIO_PROCESS, pid) }
+        } else if #[cfg(target_os = "macos")] {
+            unsafe { libc::getpriority(libc::PRIO_PROCESS, pid as u32) }
+        } else {
+            0
+        }
+    }
+}
+
+fn get_priority(pid: Pid) -> i32 {
+    cfg_if! {
+        if #[cfg(target_os = "macos")] {
+            if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
+                kinfo.kp_proc.p_priority as i32
+            } else {
+                0
+            }
+        } else if #[cfg(target_os = "freebsd")] {
+            use libc::{c_int, c_void};
+            use std::{mem, ptr};
+
+            let mib = [libc::CTL_KERN, libc::KERN_PROC, libc::KERN_PROC_PID, pid as c_int];
+            let mut kp: libc::kinfo_proc = unsafe { mem::zeroed() };
+            let mut size = mem::size_of::<libc::kinfo_proc>();
+
+            // SAFETY: sysctl takes the following pointer arguments
+            // - mib is valid for KERN_PROC_PID.
+            // - kp is a properly sized output buffer.
+            // - newp is null for a read-only sysctl.
+            let ret = unsafe {
+                libc::sysctl(
+                    mib.as_ptr(),
+                    mib.len() as u32,
+                    &mut kp as *mut _ as *mut c_void,
+                    &mut size,
+                    ptr::null_mut(),
+                    0,
+                )
+            };
+
+            if ret == 0 { kp.ki_pri.pri_level as i32 } else { 0 }
+        } else {
+            0
+        }
+    }
+}
 
 pub(crate) trait UnixProcessExt {
     fn sysinfo_process_data(
@@ -69,6 +126,9 @@ pub(crate) trait UnixProcessExt {
             };
             let uid = process_val.user_id().map(|u| **u);
             let pid = process_val.pid().as_u32() as Pid;
+            let nice = get_nice(pid);
+            let priority = get_priority(pid);
+
             process_vector.push(ProcessHarvest {
                 pid,
                 parent_pid: Self::parent_pid(process_val),
@@ -88,20 +148,8 @@ pub(crate) trait UnixProcessExt {
                 total_write: disk_usage.total_written_bytes,
                 process_state,
                 uid,
-                user: uid
-                    .and_then(|uid| {
-                        user_table
-                            .get_uid_to_username_mapping(uid)
-                            .map(Into::into)
-                            .ok()
-                    })
-                    .unwrap_or_else(|| "N/A".into()),
+                user: uid.and_then(|uid| user_table.uid_to_username(uid).ok()),
                 time: if process_val.start_time() == 0 {
-                    // Workaround for sysinfo occasionally returning a start time equal to UNIX
-                    // epoch, giving a run time in the range of 50+ years. We just
-                    // return a time of zero in this case for simplicity.
-                    //
-                    // TODO: Maybe return an option instead?
                     Duration::ZERO
                 } else {
                     Duration::from_secs(process_val.run_time())
@@ -112,6 +160,9 @@ pub(crate) trait UnixProcessExt {
                 gpu_mem_percent: 0.0,
                 #[cfg(feature = "gpu")]
                 gpu_util: 0,
+                #[cfg(unix)]
+                nice,
+                priority,
             });
         }
 
@@ -124,11 +175,11 @@ pub(crate) trait UnixProcessExt {
                 .collect();
             let cpu_usages = Self::backup_proc_cpu(&cpu_usage_unknown_pids)?;
             for process in &mut process_vector {
-                if cpu_usages.contains_key(&process.pid) {
+                if let Some(&cpu_usage) = cpu_usages.get(&process.pid) {
                     process.cpu_usage_percent = if unnormalized_cpu || num_processors == 0 {
-                        *cpu_usages.get(&process.pid).unwrap()
+                        cpu_usage
                     } else {
-                        *cpu_usages.get(&process.pid).unwrap() / num_processors as f32
+                        cpu_usage / num_processors as f32
                     };
                 }
             }
@@ -142,8 +193,8 @@ pub(crate) trait UnixProcessExt {
         false
     }
 
-    fn backup_proc_cpu(_pids: &[Pid]) -> io::Result<HashMap<Pid, f32>> {
-        Ok(HashMap::default())
+    fn backup_proc_cpu(_pids: &[Pid]) -> io::Result<IntHashMap<Pid, f32>> {
+        Ok(IntHashMap::default())
     }
 
     fn parent_pid(process_val: &sysinfo::Process) -> Option<Pid> {
@@ -179,7 +230,7 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
                 _ => '?'
             }
         } else if #[cfg(target_os = "freebsd")] {
-            const fn assert_u8(val: i8) -> u8 {
+            const fn assert_u8(val: libc::c_char) -> u8 {
                 if val < 0 { panic!("there was an invalid i8 constant that is supposed to be a char") } else { val as u8 }
             }
 

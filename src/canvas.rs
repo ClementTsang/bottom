@@ -1,18 +1,18 @@
 //! Code related to drawing.
 //!
-//! Note that eventually this should not contain any widget-specific draw code, but rather just generic code
-//! or components.
+//! Note that eventually this should not contain any widget-specific draw code,
+//! but rather just generic code or components.
 
 pub mod components;
 pub mod dialogs;
 mod drawing_utils;
 mod widgets;
 
-use itertools::izip;
 use tui::{
     Frame, Terminal,
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Flex, Layout, Rect},
+    symbols::Marker,
     text::Span,
     widgets::Paragraph,
 };
@@ -20,7 +20,7 @@ use tui::{
 use crate::{
     app::{
         App,
-        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType, IntermediaryConstraint},
+        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType},
     },
     constants::*,
     options::config::style::Styles,
@@ -29,122 +29,24 @@ use crate::{
 /// Handles the canvas' state.
 pub struct Painter {
     pub styles: Styles,
+
+    /// Used to know whether to invalidate things.
     previous_height: u16,
+
+    /// Used to know whether to invalidate things.
     previous_width: u16,
 
-    // TODO: Redo this entire thing.
-    row_constraints: Vec<LayoutConstraint>,
-    col_constraints: Vec<Vec<LayoutConstraint>>,
-    col_row_constraints: Vec<Vec<Vec<LayoutConstraint>>>,
-    layout_constraints: Vec<Vec<Vec<Vec<LayoutConstraint>>>>,
-    derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
-    widget_layout: BottomLayout,
-}
-
-/// The constraints of a widget relative to its parent.
-///
-/// This is used over ratatui's internal representation due to
-/// <https://github.com/ClementTsang/bottom/issues/896>.
-pub enum LayoutConstraint {
-    CanvasHandled,
-    Grow,
-    Ratio(u32, u32),
+    /// The layout.
+    layout: BottomLayout,
 }
 
 impl Painter {
     pub fn init(layout: BottomLayout, styling: Styles) -> anyhow::Result<Self> {
-        // Now for modularity; we have to also initialize the base layouts!
-        // We want to do this ONCE and reuse; after this we can just construct
-        // based on the console size.
-
-        let mut row_constraints = Vec::new();
-        let mut col_constraints = Vec::new();
-        let mut col_row_constraints = Vec::new();
-        let mut layout_constraints = Vec::new();
-
-        layout.rows.iter().for_each(|row| {
-            match row.constraint {
-                IntermediaryConstraint::PartialRatio(val) => {
-                    row_constraints
-                        .push(LayoutConstraint::Ratio(val, layout.total_row_height_ratio));
-                }
-                IntermediaryConstraint::CanvasHandled { .. } => {
-                    row_constraints.push(LayoutConstraint::CanvasHandled);
-                }
-                IntermediaryConstraint::Grow { .. } => {
-                    row_constraints.push(LayoutConstraint::Grow);
-                }
-            }
-
-            let mut new_col_constraints = Vec::new();
-            let mut new_widget_constraints = Vec::new();
-            let mut new_col_row_constraints = Vec::new();
-            row.children.iter().for_each(|col| {
-                match col.constraint {
-                    IntermediaryConstraint::PartialRatio(val) => {
-                        new_col_constraints.push(LayoutConstraint::Ratio(val, row.total_col_ratio));
-                    }
-                    IntermediaryConstraint::CanvasHandled { .. } => {
-                        new_col_constraints.push(LayoutConstraint::CanvasHandled);
-                    }
-                    IntermediaryConstraint::Grow { .. } => {
-                        new_col_constraints.push(LayoutConstraint::Grow);
-                    }
-                }
-
-                let mut new_new_col_row_constraints = Vec::new();
-                let mut new_new_widget_constraints = Vec::new();
-                col.children.iter().for_each(|col_row| {
-                    match col_row.constraint {
-                        IntermediaryConstraint::PartialRatio(val) => {
-                            new_new_col_row_constraints
-                                .push(LayoutConstraint::Ratio(val, col.total_col_row_ratio));
-                        }
-                        IntermediaryConstraint::CanvasHandled { .. } => {
-                            new_new_col_row_constraints.push(LayoutConstraint::CanvasHandled);
-                        }
-                        IntermediaryConstraint::Grow { .. } => {
-                            new_new_col_row_constraints.push(LayoutConstraint::Grow);
-                        }
-                    }
-
-                    let mut new_new_new_widget_constraints = Vec::new();
-                    col_row
-                        .children
-                        .iter()
-                        .for_each(|widget| match widget.constraint {
-                            IntermediaryConstraint::PartialRatio(val) => {
-                                new_new_new_widget_constraints
-                                    .push(LayoutConstraint::Ratio(val, col_row.total_widget_ratio));
-                            }
-                            IntermediaryConstraint::CanvasHandled { .. } => {
-                                new_new_new_widget_constraints
-                                    .push(LayoutConstraint::CanvasHandled);
-                            }
-                            IntermediaryConstraint::Grow { .. } => {
-                                new_new_new_widget_constraints.push(LayoutConstraint::Grow);
-                            }
-                        });
-                    new_new_widget_constraints.push(new_new_new_widget_constraints);
-                });
-                new_col_row_constraints.push(new_new_col_row_constraints);
-                new_widget_constraints.push(new_new_widget_constraints);
-            });
-            col_row_constraints.push(new_col_row_constraints);
-            layout_constraints.push(new_widget_constraints);
-            col_constraints.push(new_col_constraints);
-        });
-
         let painter = Painter {
             styles: styling,
             previous_height: 0,
             previous_width: 0,
-            row_constraints,
-            col_constraints,
-            col_row_constraints,
-            layout_constraints,
-            widget_layout: layout,
-            derived_widget_draw_locs: Vec::default(),
+            layout,
         };
 
         Ok(painter)
@@ -157,6 +59,14 @@ impl Painter {
             self.styles.highlighted_border_style
         } else {
             self.styles.border_style
+        }
+    }
+
+    pub(crate) fn get_marker(&self, use_dot: bool) -> Marker {
+        if use_dot {
+            Marker::Dot
+        } else {
+            Marker::Braille
         }
     }
 
@@ -175,7 +85,7 @@ impl Painter {
 
     pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut App,
-    ) -> Result<(), std::io::Error> {
+    ) -> Result<(), B::Error> {
         use BottomWidgetType::*;
 
         terminal.draw(|f| {
@@ -200,7 +110,8 @@ impl Painter {
                 self.previous_width = terminal_width;
             }
 
-            // TODO: We should probably remove this or make it done elsewhere, not the responsibility of the app.
+            // TODO: We should probably remove this or make it done elsewhere, not the
+            // responsibility of the app.
             if app_state.should_get_widget_bounds() {
                 // If we're force drawing, reset ALL mouse boundaries.
                 for widget in app_state.widget_map.values_mut() {
@@ -219,39 +130,74 @@ impl Painter {
 
             // TODO: Make drawing dialog generic.
             if app_state.help_dialog_state.is_showing_help {
+                let area = f.area();
+                f.buffer_mut()
+                    .set_style(area, self.styles.general_widget_style);
+
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
                 let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
-                let vertical_dialog_chunk = Layout::default()
+                let [_, vertical_dialog_chunk, _] = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([
                         Constraint::Length(border_len),
                         Constraint::Length(gen_help_len),
                         Constraint::Length(border_len),
                     ])
-                    .split(terminal_size);
+                    .areas(terminal_size);
 
-                let middle_dialog_chunk = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints(if terminal_width < 100 {
-                        // TODO: [REFACTOR] The point we start changing size at currently hard-coded
-                        // in.
-                        [
-                            Constraint::Percentage(0),
-                            Constraint::Percentage(100),
-                            Constraint::Percentage(0),
-                        ]
+                // An approximate proxy for the max line length to use.
+                const MAX_TEXT_LENGTH: u16 = const {
+                    let mut max = 0;
+
+                    let mut i = 0;
+                    while i < HELP_TEXT.len() {
+                        let section = HELP_TEXT[i];
+                        let mut j = 0;
+                        while j < section.len() {
+                            let line = section[j];
+                            if line.len() > max {
+                                max = line.len();
+                            }
+
+                            j += 1;
+                        }
+
+                        i += 1;
+                    }
+
+                    max as u16
+                };
+
+                let dialog_width = vertical_dialog_chunk.width;
+                let [middle_dialog_chunk] = if dialog_width < MAX_TEXT_LENGTH {
+                    Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints([Constraint::Percentage(100)])
+                        .areas(vertical_dialog_chunk)
+                } else {
+                    // We calculate this so that the margins never have to split an odd number.
+                    let len = if (dialog_width.saturating_sub(MAX_TEXT_LENGTH)) % 2 == 0 {
+                        MAX_TEXT_LENGTH
                     } else {
-                        [
-                            Constraint::Percentage(15),
-                            Constraint::Percentage(70),
-                            Constraint::Percentage(15),
-                        ]
-                    })
-                    .split(vertical_dialog_chunk[1]);
+                        // It can only be 1 if the difference is greater than 1, so this is fine.
+                        MAX_TEXT_LENGTH + 1
+                    };
 
-                self.draw_help_dialog(f, app_state, middle_dialog_chunk[1]);
+                    Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints([Constraint::Length(len)])
+                        .flex(Flex::SpaceAround)
+                        .areas(vertical_dialog_chunk)
+                };
+
+                self.draw_help_dialog(f, app_state, middle_dialog_chunk);
             } else if app_state.process_kill_dialog.is_open() {
-                // FIXME: For width, just limit to a max size or full width. For height, not sure. Maybe pass max and let child handle?
+                let area = f.area();
+                f.buffer_mut()
+                    .set_style(area, self.styles.general_widget_style);
+
+                // FIXME: For width, just limit to a max size or full width. For height, not
+                // sure. Maybe pass max and let child handle?
                 let horizontal_padding = if terminal_width < 100 { 0 } else { 5 };
                 let vertical_padding = if terminal_height < 100 { 0 } else { 5 };
 
@@ -311,13 +257,9 @@ impl Painter {
                         rect[0],
                         app_state.current_widget.widget_id,
                     ),
-                    Net => self.draw_network_graph(
-                        f,
-                        app_state,
-                        rect[0],
-                        app_state.current_widget.widget_id,
-                        false,
-                    ),
+                    Net => {
+                        self.draw_network(f, app_state, rect[0], app_state.current_widget.widget_id)
+                    }
                     Proc | ProcSearch | ProcSort => {
                         let widget_id = app_state.current_widget.widget_id
                             - match &app_state.current_widget.widget_type {
@@ -333,6 +275,12 @@ impl Painter {
                         #[cfg(feature = "battery")]
                         self.draw_battery(f, app_state, rect[0], app_state.current_widget.widget_id)
                     }
+                    TempGraph => self.draw_temperature_graph(
+                        f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
                     _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
@@ -351,7 +299,8 @@ impl Painter {
                     let c = (actual_cpu_data_len / 4) as u16
                         + u16::from(actual_cpu_data_len % 4 != 0)
                         + u16::from(
-                            app_state.app_config_fields.dedicated_average_row
+                            app_state.app_config_fields.show_average_cpu
+                                && app_state.app_config_fields.dedicated_average_row
                                 && actual_cpu_data_len.saturating_sub(1) % 4 != 0,
                         );
 
@@ -383,8 +332,14 @@ impl Painter {
                     mem_rows += data.gpu_harvest.len() as u16; // add row(s) for gpu
                 }
 
-                if mem_rows == 1 {
-                    mem_rows += 1; // need at least 2 rows for RX and TX
+                let network_rows = if app_state.app_config_fields.network_show_packets {
+                    4 // 4 rows for RX/TX and Packet Rates (Avg sizes moved to right side)
+                } else {
+                    2 // 2 rows for RX and TX
+                };
+
+                if mem_rows < network_rows {
+                    mem_rows += network_rows - mem_rows; // min rows
                 }
 
                 let vertical_chunks = Layout::default()
@@ -440,6 +395,12 @@ impl Painter {
                                 #[cfg(feature = "battery")]
                                 self.draw_battery(f, app_state, vertical_chunks[3], widget_id)
                             }
+                            TempGraph => self.draw_temperature_graph(
+                                f,
+                                app_state,
+                                vertical_chunks[3],
+                                widget_id,
+                            ),
                             _ => {}
                         }
                     }
@@ -454,235 +415,34 @@ impl Painter {
                     self.draw_frozen_indicator(f, frozen_draw_loc);
                 }
 
-                if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
-                    // TODO: Can I remove this? Does ratatui's layout constraints work properly for
-                    // fixing https://github.com/ClementTsang/bottom/issues/896 now?
-                    fn get_constraints(
-                        direction: Direction, constraints: &[LayoutConstraint], area: Rect,
-                    ) -> Vec<Rect> {
-                        // Order of operations:
-                        // - Ratios first + canvas-handled (which is just zero)
-                        // - Then any flex-grows to take up remaining space; divide amongst
-                        //   remaining hand out any remaining space
+                // A two-pass algorithm - get layouts using constraints (first pass),
+                // then pass each layout to the corresponding widget (second pass).
+                // Note that layouts are already cached in ratatui, so we don't need
+                // to do it manually!
+                let base = Layout::vertical(self.layout.rows.iter().map(|r| r.constraint))
+                    .split(terminal_size);
 
-                        #[derive(Debug, Default, Clone, Copy)]
-                        struct Size {
-                            width: u16,
-                            height: u16,
-                        }
+                for (br, base) in self.layout.rows.iter().zip(base.iter()) {
+                    let base =
+                        Layout::horizontal(br.children.iter().map(|bc| bc.constraint)).split(*base);
 
-                        impl Size {
-                            fn shrink_width(&mut self, amount: u16) {
-                                self.width -= amount;
-                            }
+                    for (bc, base) in br.children.iter().zip(base.iter()) {
+                        let base = Layout::vertical(bc.children.iter().map(|bcr| bcr.constraint))
+                            .split(*base);
 
-                            fn shrink_height(&mut self, amount: u16) {
-                                self.height -= amount;
-                            }
-                        }
+                        for (widgets, base) in bc.children.iter().zip(base.iter()) {
+                            let widget_draw_locs =
+                                Layout::horizontal(widgets.children.iter().map(|bw| bw.constraint))
+                                    .split(*base);
 
-                        let mut bounds = Size {
-                            width: area.width,
-                            height: area.height,
-                        };
-                        let mut sizes = vec![Size::default(); constraints.len()];
-                        let mut grow = vec![];
-                        let mut num_non_ch = 0;
-
-                        for (itx, (constraint, size)) in
-                            constraints.iter().zip(sizes.iter_mut()).enumerate()
-                        {
-                            match constraint {
-                                LayoutConstraint::Ratio(a, b) => {
-                                    match direction {
-                                        Direction::Horizontal => {
-                                            let amount =
-                                                (((area.width as u32) * (*a)) / (*b)) as u16;
-                                            bounds.shrink_width(amount);
-                                            size.width = amount;
-                                            size.height = area.height;
-                                        }
-                                        Direction::Vertical => {
-                                            let amount =
-                                                (((area.height as u32) * (*a)) / (*b)) as u16;
-                                            bounds.shrink_height(amount);
-                                            size.width = area.width;
-                                            size.height = amount;
-                                        }
-                                    }
-                                    num_non_ch += 1;
-                                }
-                                LayoutConstraint::Grow => {
-                                    // Mark it as grow in the vector and handle in second pass.
-                                    grow.push(itx);
-                                    num_non_ch += 1;
-                                }
-                                LayoutConstraint::CanvasHandled => {
-                                    // Do nothing in this case. It's already 0.
-                                }
-                            }
-                        }
-
-                        if !grow.is_empty() {
-                            match direction {
-                                Direction::Horizontal => {
-                                    let width = bounds.width / grow.len() as u16;
-                                    bounds.shrink_width(width * grow.len() as u16);
-                                    for g in grow {
-                                        sizes[g] = Size {
-                                            width,
-                                            height: area.height,
-                                        };
-                                    }
-                                }
-                                Direction::Vertical => {
-                                    let height = bounds.height / grow.len() as u16;
-                                    bounds.shrink_height(height * grow.len() as u16);
-                                    for g in grow {
-                                        sizes[g] = Size {
-                                            width: area.width,
-                                            height,
-                                        };
-                                    }
-                                }
-                            }
-                        }
-
-                        if num_non_ch > 0 {
-                            match direction {
-                                Direction::Horizontal => {
-                                    let per_item = bounds.width / num_non_ch;
-                                    let mut remaining_width = bounds.width % num_non_ch;
-                                    for (size, constraint) in sizes.iter_mut().zip(constraints) {
-                                        match constraint {
-                                            LayoutConstraint::CanvasHandled => {}
-                                            LayoutConstraint::Grow
-                                            | LayoutConstraint::Ratio(_, _) => {
-                                                if remaining_width > 0 {
-                                                    size.width += per_item + 1;
-                                                    remaining_width -= 1;
-                                                } else {
-                                                    size.width += per_item;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                Direction::Vertical => {
-                                    let per_item = bounds.height / num_non_ch;
-                                    let mut remaining_height = bounds.height % num_non_ch;
-                                    for (size, constraint) in sizes.iter_mut().zip(constraints) {
-                                        match constraint {
-                                            LayoutConstraint::CanvasHandled => {}
-                                            LayoutConstraint::Grow
-                                            | LayoutConstraint::Ratio(_, _) => {
-                                                if remaining_height > 0 {
-                                                    size.height += per_item + 1;
-                                                    remaining_height -= 1;
-                                                } else {
-                                                    size.height += per_item;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        let mut curr_x = area.x;
-                        let mut curr_y = area.y;
-                        sizes
-                            .into_iter()
-                            .map(|size| {
-                                let rect = Rect::new(curr_x, curr_y, size.width, size.height);
-                                match direction {
-                                    Direction::Horizontal => {
-                                        curr_x += size.width;
-                                    }
-                                    Direction::Vertical => {
-                                        curr_y += size.height;
-                                    }
-                                }
-
-                                rect
-                            })
-                            .collect()
-                    }
-
-                    let draw_locs =
-                        get_constraints(Direction::Vertical, &self.row_constraints, terminal_size);
-
-                    self.derived_widget_draw_locs = izip!(
-                        draw_locs,
-                        &self.col_constraints,
-                        &self.col_row_constraints,
-                        &self.layout_constraints,
-                        &self.widget_layout.rows
-                    )
-                    .map(
-                        |(
-                            draw_loc,
-                            col_constraint,
-                            col_row_constraint,
-                            row_constraint_vec,
-                            cols,
-                        )| {
-                            izip!(
-                                get_constraints(Direction::Horizontal, col_constraint, draw_loc),
-                                col_row_constraint,
-                                row_constraint_vec,
-                                &cols.children
-                            )
-                            .map(|(split_loc, constraint, col_constraint_vec, col_rows)| {
-                                izip!(
-                                    get_constraints(
-                                        Direction::Vertical,
-                                        constraint.as_slice(),
-                                        split_loc
-                                    ),
-                                    col_constraint_vec,
-                                    &col_rows.children
-                                )
-                                .map(|(draw_loc, col_row_constraint_vec, widgets)| {
-                                    // Note that col_row_constraint_vec CONTAINS the widget
-                                    // constraints
-                                    let widget_draw_locs = get_constraints(
-                                        Direction::Horizontal,
-                                        col_row_constraint_vec.as_slice(),
-                                        draw_loc,
-                                    );
-
-                                    // Side effect, draw here.
-                                    self.draw_widgets_with_constraints(
-                                        f,
-                                        app_state,
-                                        widgets,
-                                        &widget_draw_locs,
-                                    );
-
-                                    widget_draw_locs
-                                })
-                                .collect()
-                            })
-                            .collect()
-                        },
-                    )
-                    .collect();
-                } else {
-                    self.widget_layout
-                        .rows
-                        .iter()
-                        .flat_map(|row| &row.children)
-                        .flat_map(|col| &col.children)
-                        .zip(self.derived_widget_draw_locs.iter().flatten().flatten())
-                        .for_each(|(widgets, widget_draw_locs)| {
                             self.draw_widgets_with_constraints(
                                 f,
                                 app_state,
                                 widgets,
-                                widget_draw_locs,
+                                &widget_draw_locs,
                             );
-                        });
+                        }
+                    }
                 }
             }
         })?;
@@ -718,6 +478,9 @@ impl Painter {
                     {
                         #[cfg(feature = "battery")]
                         self.draw_battery(f, app_state, *draw_loc, widget.widget_id)
+                    }
+                    TempGraph => {
+                        self.draw_temperature_graph(f, app_state, *draw_loc, widget.widget_id)
                     }
                     _ => {}
                 }

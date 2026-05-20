@@ -6,19 +6,14 @@ use tui::{
     widgets::{Block, Widget},
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub enum LabelLimit {
+    #[default]
     None,
     #[expect(dead_code)]
     Auto(u16),
     Bars,
     StartLabel,
-}
-
-impl Default for LabelLimit {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 /// A widget to measure something, using pipe characters ('|') as a unit.

@@ -6,11 +6,13 @@ use std::{
     vec::Vec,
 };
 
-#[cfg(feature = "gpu")]
-use hashbrown::{HashMap, HashSet}; // TODO: Try fxhash again.
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use timeless::data::ChunkedData;
 
-use crate::collection::Data;
+use crate::{
+    app::{AppConfigFields, DataFilters, filter::Filter, layout_manager::UsedWidgets},
+    collection::Data,
+};
 
 /// Values corresponding to a time slice.
 pub type Values = ChunkedData<f64>;
@@ -18,15 +20,18 @@ pub type Values = ChunkedData<f64>;
 /// Represents time series data in a chunked, deduped manner.
 ///
 /// Properties:
-/// - Time in this manner is represented in a reverse-offset fashion from the current time.
+/// - Time in this manner is represented in a reverse-offset fashion from the
+///   current time.
 /// - All data is stored in SoA fashion.
-/// - Values are stored in a chunked format, which facilitates gaps in data collection if needed.
+/// - Values are stored in a chunked format, which facilitates gaps in data
+///   collection if needed.
 /// - Additional metadata is stored to make data pruning over time easy.
 #[derive(Clone, Debug, Default)]
 pub struct TimeSeriesData {
     /// Time values.
     ///
-    /// TODO: (points_rework_v1) Either store millisecond-level only or offsets only.
+    /// TODO: (points_rework_v1) Either store millisecond-level only or offsets
+    /// only.
     pub time: Vec<Instant>,
 
     /// Network RX data.
@@ -37,9 +42,6 @@ pub struct TimeSeriesData {
 
     /// CPU data.
     pub cpu: Vec<Values>,
-
-    /// Average CPU data.
-    pub avg_cpu: Values,
 
     /// RAM memory data.
     pub ram: Values,
@@ -58,11 +60,19 @@ pub struct TimeSeriesData {
     #[cfg(feature = "gpu")]
     /// GPU memory data.
     pub gpu_mem: HashMap<String, Values>,
+
+    /// Temperature data.
+    ///
+    /// TODO: Maybe make this use TypedTemperature?
+    pub temperature: HashMap<String, ChunkedData<f32>>,
 }
 
 impl TimeSeriesData {
     /// Add a new data point.
-    pub fn add(&mut self, data: &Data) {
+    pub fn add(
+        &mut self, data: &Data, used_widgets: &UsedWidgets, settings: &AppConfigFields,
+        filters: &DataFilters,
+    ) {
         self.time.push(data.collection_time);
 
         if let Some(network) = &data.network {
@@ -73,12 +83,10 @@ impl TimeSeriesData {
             self.tx.insert_break();
         }
 
-        if let Some(cpu_harvest) = &data.cpu {
-            let cpus = &cpu_harvest.cpus;
-
-            match self.cpu.len().cmp(&cpus.len()) {
+        if let Some(cpu) = &data.cpu {
+            match self.cpu.len().cmp(&cpu.len()) {
                 Ordering::Less => {
-                    let diff = cpus.len() - self.cpu.len();
+                    let diff = cpu.len() - self.cpu.len();
                     self.cpu.reserve_exact(diff);
 
                     for _ in 0..diff {
@@ -86,7 +94,7 @@ impl TimeSeriesData {
                     }
                 }
                 Ordering::Greater => {
-                    let diff = self.cpu.len() - cpus.len();
+                    let diff = self.cpu.len() - cpu.len();
                     let offset = self.cpu.len() - diff;
 
                     for curr in &mut self.cpu[offset..] {
@@ -96,20 +104,13 @@ impl TimeSeriesData {
                 Ordering::Equal => {}
             }
 
-            for (curr, new_data) in self.cpu.iter_mut().zip(cpus.iter()) {
-                curr.push((*new_data).into());
-            }
-
-            // If there isn't avg then we never had any to begin with.
-            if let Some(avg) = cpu_harvest.avg {
-                self.avg_cpu.push(avg.into());
+            for (curr, new_data) in self.cpu.iter_mut().zip(cpu.iter()) {
+                curr.push(new_data.usage.into());
             }
         } else {
             for c in &mut self.cpu {
                 c.insert_break();
             }
-
-            self.avg_cpu.insert_break();
         }
 
         if let Some(memory) = &data.memory {
@@ -177,6 +178,52 @@ impl TimeSeriesData {
                 }
             }
         }
+
+        if used_widgets.use_temp_graph {
+            if let Some(temperature_sensors) = &data.temperature_sensors {
+                let mut not_visited = self
+                    .temperature
+                    .keys()
+                    .map(String::to_owned)
+                    .collect::<HashSet<_>>();
+
+                for sensor_data in temperature_sensors {
+                    if !Filter::optional_should_keep(&filters.temp_graph_filter, &sensor_data.name)
+                    {
+                        continue;
+                    }
+
+                    if let Some(temperature) = sensor_data.temperature {
+                        not_visited.remove(&sensor_data.name);
+
+                        if !self.temperature.contains_key(&sensor_data.name) {
+                            self.temperature
+                                .insert(sensor_data.name.clone(), ChunkedData::default());
+                        }
+
+                        let curr = self
+                            .temperature
+                            .get_mut(&sensor_data.name)
+                            .expect("entry must exist as it was created above");
+
+                        let converted_temperature = settings
+                            .temperature_type
+                            .convert_temp_unit_float(temperature);
+                        curr.push(converted_temperature);
+                    }
+                }
+
+                for nv in not_visited {
+                    if let Some(entry) = self.temperature.get_mut(&nv) {
+                        entry.insert_break();
+                    }
+                }
+            } else {
+                for g in self.temperature.values_mut() {
+                    g.insert_break();
+                }
+            }
+        }
     }
 
     /// Prune any data older than the given duration.
@@ -191,12 +238,13 @@ impl TimeSeriesData {
                 .time
                 .partition_point(|then| now.duration_since(*then) > max_age);
 
-            // Partition point returns the first index that does not match the predicate, so minus one.
+            // Partition point returns the first index that does not match the predicate, so
+            // minus one.
             if partition_point > 0 {
                 partition_point - 1
             } else {
-                // If the partition point was 0, then it means all values are too new to be pruned.
-                // crate::info!("Skipping prune.");
+                // If the partition point was 0, then it means all values are too new to be
+                // pruned. crate::info!("Skipping prune.");
                 return;
             }
         };
@@ -237,5 +285,17 @@ impl TimeSeriesData {
                 }
             });
         }
+
+        self.temperature.retain(|_, data| {
+            let _ = data.prune(end);
+
+            // Remove the entry if it is empty. We can always add it again later.
+            if data.no_elements() {
+                false
+            } else {
+                data.shrink_to_fit();
+                true
+            }
+        });
     }
 }

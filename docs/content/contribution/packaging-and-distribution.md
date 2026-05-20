@@ -13,9 +13,9 @@ process.
 You can also find a nightly build in the [releases page](https://github.com/ClementTsang/bottom/releases), built every
 day at 00:00 UTC off of the `main` branch.
 
-In both cases, we use a combination of GitHub Actions and CirrusCI (mainly for FreeBSD and macOS M1) to create our
-release binaries. [`build_releases.yml`](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml)
-contains the GitHub Action workflow used to do both of these, if reference is needed.
+In both cases, we use GitHub Actions to create our release binaries.
+[`build_releases.yml`](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml)
+contains the GitHub Action workflow for this.
 
 ## Building manually
 
@@ -54,7 +54,7 @@ This will automatically generate completion and manpage files in `target/tmp/bot
 files, modify/delete either these files or set `BTM_GENERATE` to some other non-empty value to retrigger the build
 script.
 
-You may override the default diretories used to generate both completion and manpage files by specifying the
+You may override the default directories used to generate both completion and manpage files by specifying the
 `COMPLETION_DIR` and `MANPAGE_DIR` environment variables respectively.
 
 For more information, you may want to look at either the [`build.rs`](https://github.com/ClementTsang/bottom/blob/main/build.rs)

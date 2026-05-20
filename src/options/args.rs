@@ -236,14 +236,6 @@ pub struct GeneralArgs {
     )]
     pub expanded: bool,
 
-    #[arg(
-        long,
-        action = ArgAction::SetTrue,
-        help = "Hides spacing between table headers and entries.",
-        alias = "hide-table-gap"
-    )]
-    pub hide_table_gap: bool,
-
     #[arg(long, action = ArgAction::SetTrue, help = "Hides the time scale from being shown.", alias = "hide-time")]
     pub hide_time: bool,
 
@@ -327,10 +319,40 @@ pub struct ProcessArgs {
     #[arg(
         long,
         action = ArgAction::SetTrue,
+        help = "Prevents performing any actions that affect the system.",
+        long_help = "Prevents performing any actions that affect the system. Disables operations such as stopping or sending signals \
+                 to processes.",
+        alias = "read-only"
+    )]
+    pub read_only: bool,
+
+    #[cfg(target_os = "linux")]
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Hide kernel threads.",
+        alias = "hide-k-threads"
+    )]
+    pub hide_k_threads: bool,
+
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
         help = "Also gather process thread information.",
         alias = "get-threads",
     )]
     pub get_threads: bool,
+
+    #[arg(
+        long,
+        value_name = "COLUMN",
+        help = "Sets the default sort column for the process widget.",
+        long_help = "Sets the default sort column for the process widget. Accepts any of the \
+                     valid process column names (e.g. \"cpu%\", \"mem\", \"pid\", \"name\"). \
+                     Overrides the [processes] default_sort setting in the config file.",
+        alias = "process-default-sort"
+    )]
+    pub process_default_sort: Option<String>,
 
     #[arg(
         short = 'g',
@@ -509,6 +531,15 @@ pub struct MemoryArgs {
         alias = "enable-cache-memory"
     )]
     pub enable_cache_memory: bool,
+
+    #[cfg(feature = "zfs")]
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Subtract reclaimable ARC from memory.",
+        alias = "free-arc"
+    )]
+    pub free_arc: bool,
 }
 
 /// Network arguments/config options.
@@ -562,6 +593,15 @@ pub struct NetworkArgs {
         alias = "use-old-network-legend"
     )]
     pub use_old_network_legend: bool,
+
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Displays packets information (packet rate and average packet size) in the network widget.",
+        long_help = "Displays packets information including packet rate (packets per second) and average packet size in the network widget.",
+        alias = "show-packets"
+    )]
+    pub show_packets: bool,
 }
 
 /// Battery arguments/config options.
@@ -606,15 +646,15 @@ pub struct StyleArgs {
         ],
         hide_possible_values = true,
         help = indoc! {
-            "Use a built-in color theme, use '--help' for info on the colors. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
+            "Use a built-in colour theme, use '--help' for info on the colours. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
         },
         long_help = indoc! {
-            "Use a pre-defined color theme. Currently supported themes are:
+            "Use a pre-defined colour theme. Currently supported themes are:
             - default
             - default-light (default but adjusted for lighter backgrounds)
-            - gruvbox       (a bright theme with 'retro groove' colors)
+            - gruvbox       (a bright theme with 'retro groove' colours)
             - gruvbox-light (gruvbox but adjusted for lighter backgrounds)
-            - nord          (an arctic, north-bluish color palette)
+            - nord          (an arctic, north-bluish colour palette)
             - nord-light    (nord but adjusted for lighter backgrounds)"
         }
     )]
@@ -633,7 +673,8 @@ pub struct OtherArgs {
     version: (),
 }
 
-/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the program.
+/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the
+/// program.
 pub fn get_args() -> BottomArgs {
     BottomArgs::parse()
 }

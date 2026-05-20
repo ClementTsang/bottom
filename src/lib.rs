@@ -5,14 +5,17 @@
 //! **Note:** The following documentation is primarily intended for people to
 //! refer to for development purposes rather than the actual usage of the
 //! application. If you are instead looking for documentation regarding the
-//! *usage* of bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
+//! *usage* of bottom, refer to [here](https://bottom.pages.dev/stable/).
 
 pub(crate) mod app;
+pub(crate) mod components;
 mod utils {
     pub(crate) mod cancellation_token;
     pub(crate) mod conversion;
     pub(crate) mod data_units;
     pub(crate) mod general;
+    pub(crate) mod input;
+    pub(crate) mod int_hash;
     pub(crate) mod logging;
     pub(crate) mod process_killer;
     pub(crate) mod strings;
@@ -99,7 +102,7 @@ fn check_if_terminal() {
             "Warning: bottom is not being output to a terminal. Things might not work properly."
         );
         eprintln!("If you're stuck, press 'q' or 'Ctrl-c' to quit the program.");
-        stderr().flush().unwrap();
+        stderr().flush().expect("should succeed in flushing stderr");
         thread::sleep(Duration::from_secs(1));
     }
 }
@@ -128,7 +131,7 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
         },
     };
 
-    let backtrace = format!("{:?}", backtrace::Backtrace::new());
+    let backtrace = format!("{:?}", std::backtrace::Backtrace::capture());
 
     reset_stdout();
 
@@ -137,8 +140,9 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
         println!("thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}")
     }
 
-    // TODO: Might be cleaner in the future to use a cancellation token, but that causes some fun issues with
-    // lifetimes; for now if it panics then shut down the main program entirely ASAP.
+    // TODO: Might be cleaner in the future to use a cancellation token, but that
+    // causes some fun issues with lifetimes; for now if it panics then shut
+    // down the main program entirely ASAP.
     std::process::exit(1);
 }
 
@@ -228,6 +232,8 @@ fn create_collection_thread(
     let show_average_cpu = app_config_fields.show_average_cpu;
     let update_sleep = app_config_fields.update_rate;
     let get_process_threads = app_config_fields.get_process_threads;
+    #[cfg(feature = "zfs")]
+    let get_arc_free = app_config_fields.free_arc;
 
     thread::spawn(move || {
         let mut data_collector = collection::DataCollector::new(filters);
@@ -237,11 +243,14 @@ fn create_collection_thread(
         data_collector.set_unnormalized_cpu(unnormalized_cpu);
         data_collector.set_show_average_cpu(show_average_cpu);
         data_collector.set_get_process_threads(get_process_threads);
+        #[cfg(feature = "zfs")]
+        data_collector.set_free_arc_mem(get_arc_free);
 
         data_collector.update_data();
         data_collector.data = Data::default();
 
-        // Tiny sleep I guess? To go between the first update above and the first update in the loop.
+        // Tiny sleep I guess? To go between the first update above and the first update
+        // in the loop.
         std::thread::sleep(Duration::from_millis(5));
 
         loop {

@@ -7,7 +7,7 @@ cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
         pub mod linux;
         pub use self::linux::*;
-    } else if #[cfg(any(target_os = "freebsd", target_os = "macos", target_os = "windows", target_os = "android", target_os = "ios"))] {
+    } else {
         pub mod sysinfo;
         pub use self::sysinfo::*;
     }

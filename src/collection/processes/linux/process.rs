@@ -59,6 +59,16 @@ pub(crate) struct Stat {
 
     /// The start time of the process, represented in clock ticks.
     pub start_time: u64,
+
+    /// Kernel thread
+    pub is_kernel_thread: bool,
+
+    /// The kernel scheduling priority.
+    pub priority: i32,
+
+    /// The nice value (user-settable scheduling hint).
+    #[cfg(unix)]
+    pub nice: i32,
 }
 
 impl Stat {
@@ -67,7 +77,8 @@ impl Stat {
     /// [here](https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html) as a reference.
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
         // Since this is just one line, we can read it all at once. However, since it
-        // (technically) might have non-utf8 characters, we can't just use read_to_string.
+        // (technically) might have non-utf8 characters, we can't just use
+        // read_to_string.
         f.read_to_end(unsafe { buffer.as_mut_vec() })?;
 
         // TODO: Is this needed?
@@ -92,17 +103,32 @@ impl Stat {
             .ok_or_else(|| anyhow!("missing state"))?;
         let ppid: Pid = next_part(&mut rest)?.parse()?;
 
-        // Skip 9 fields until utime (pgrp, session, tty_nr, tpgid, flags, minflt,
-        // cminflt, majflt, cmajflt).
-        let mut rest = rest.skip(9);
+        // Skip 4 fields (pgrp, session, tty_nr, tpgid)
+        let mut rest = rest.skip(4);
+
+        // read flags for kernel thread (PF_KTHREAD from include/linux/sched.h)
+        let flags: u32 = next_part(&mut rest)?.parse()?;
+        let is_kernel_thread: bool = flags & 0x00200000 != 0;
+
+        // Skip 4 fields (minflt, cminflt, majflt, cmajflt)
+        let mut rest = rest.skip(4);
         let utime: u64 = next_part(&mut rest)?.parse()?;
         let stime: u64 = next_part(&mut rest)?.parse()?;
 
-        // Skip 6 fields until starttime (cutime, cstime, priority, nice, num_threads,
-        // itrealvalue).
-        let mut rest = rest.skip(6);
-        let start_time: u64 = next_part(&mut rest)?.parse()?;
+        // cutime
+        let _ = next_part(&mut rest)?;
+        // cstime
+        let _ = next_part(&mut rest)?;
+        // priority
+        let priority: i32 = next_part(&mut rest)?.parse()?;
+        // nice
+        let nice: i32 = next_part(&mut rest)?.parse()?;
+        // num_threads
+        let _ = next_part(&mut rest)?;
+        // itrealvalue
+        let _ = next_part(&mut rest)?;
 
+        let start_time: u64 = next_part(&mut rest)?.parse()?;
         let vsize: u64 = next_part(&mut rest)?.parse()?;
         let rss: u64 = next_part(&mut rest)?.parse()?;
 
@@ -115,6 +141,9 @@ impl Stat {
             rss,
             vsize,
             start_time,
+            is_kernel_thread,
+            priority,
+            nice,
         })
     }
 
@@ -230,7 +259,8 @@ impl Process {
     /// that are unlikely to change, or are short-lived and
     /// will be discarded quickly.
     ///
-    /// This takes in a buffer to avoid allocs; this function will clear the buffer.
+    /// This takes in a buffer to avoid allocs; this function will clear the
+    /// buffer.
     #[inline]
     pub(crate) fn from_path(
         pid_path: PathBuf, buffer: &mut String, get_threads: bool,
@@ -275,7 +305,8 @@ impl Process {
         reset(&mut root, buffer);
 
         let cmdline = if cmdline(&mut root, &pid_dir, buffer).is_ok() {
-            // The clone will give a string with the capacity of the length of buffer, don't worry.
+            // The clone will give a string with the capacity of the length of buffer, don't
+            // worry.
             Some(buffer.clone())
         } else {
             None

@@ -3,6 +3,8 @@
 use std::time::Instant;
 
 use cfg_if::cfg_if;
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+use tui::widgets::ListState;
 use tui::{
     Frame,
     layout::{Alignment, Constraint, Flex, Layout, Position, Rect},
@@ -11,8 +13,9 @@ use tui::{
 };
 
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-use tui::widgets::ListState;
-
+use crate::canvas::components::scroll_bar::{
+    ScrollBarArgs, dialog_scroll_bar_area, draw_scroll_bar,
+};
 use crate::{
     canvas::drawing_utils::dialog_block, collection::processes::Pid, options::config::style::Styles,
 };
@@ -339,7 +342,8 @@ impl ProcessKillDialog {
                                 };
 
                                 if new >= SIGNAL_TEXT.len() {
-                                    // If the new value is too large, then just assume we instead want the value itself.
+                                    // If the new value is too large, then just assume we instead
+                                    // want the value itself.
                                     state.select(Some(value as usize));
                                     self.last_char = Some((c, Instant::now()));
                                 } else {
@@ -608,7 +612,8 @@ impl ProcessKillDialog {
     }
 
     pub fn handle_redraw(&mut self) {
-        // FIXME: Not sure if we need this. We can probably handle this better in the draw function later.
+        // FIXME: Not sure if we need this. We can probably handle this better in the
+        // draw function later.
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         {
@@ -678,11 +683,9 @@ impl ProcessKillDialog {
             }
         };
 
-        let block = dialog_block(styles.border_type)
+        let block = dialog_block(styles.border_type, styles.border_style)
             .title_top(title)
-            .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned())
-            .style(styles.border_style)
-            .border_style(styles.border_style);
+            .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned());
 
         let num_lines = text.line_count(block.inner(draw_area).width) as u16;
 
@@ -698,7 +701,8 @@ impl ProcessKillDialog {
                 const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;
 
                 // Make the rect only as big as it needs to be, which is the height of the text,
-                // the buttons, and up to 2 spaces (margin and space between), and the size of the block.
+                // the buttons, and up to 2 spaces (margin and space between), and the size of
+                // the block.
                 let [draw_area] =
                     Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2 + 3)])
                         .flex(Flex::Center)
@@ -710,7 +714,7 @@ impl ProcessKillDialog {
                     Constraint::Max(num_lines),
                     Constraint::Max(SIGNAL_TEXT_LEN),
                 ])
-                .flex(Flex::SpaceAround)
+                .flex(Flex::SpaceEvenly)
                 .areas(block.inner(draw_area));
 
                 // Render the block.
@@ -747,13 +751,25 @@ impl ProcessKillDialog {
 
                     max as u16
                 };
-                let [button_draw_area] =
+
+                let [list_area] =
                     Layout::horizontal([Constraint::Length(LONGEST_SIGNAL_TEXT_LENGTH)])
                         .flex(Flex::Center)
                         .areas(button_draw_area);
 
-                *last_button_draw_area = button_draw_area;
-                f.render_stateful_widget(buttons, button_draw_area, state);
+                *last_button_draw_area = list_area;
+                f.render_stateful_widget(buttons, list_area, state);
+
+                draw_scroll_bar(
+                    f,
+                    dialog_scroll_bar_area(draw_area),
+                    ScrollBarArgs {
+                        content_length: SIGNAL_TEXT.len(),
+                        viewport_length: list_area.height as usize,
+                        position: state.selected().unwrap_or(0),
+                        style: styles.text_style,
+                    },
+                );
             }
             ButtonState::Simple {
                 yes,
@@ -770,7 +786,7 @@ impl ProcessKillDialog {
                 // and one for the buttons.
                 let [text_area, button_area] =
                     Layout::vertical([Constraint::Max(num_lines), Constraint::Length(1)])
-                        .flex(Flex::SpaceAround)
+                        .flex(Flex::SpaceEvenly)
                         .areas(block.inner(draw_area));
 
                 // Render things, starting from the block.
@@ -791,7 +807,7 @@ impl ProcessKillDialog {
                 };
 
                 let [yes_area, no_area] = Layout::horizontal([Constraint::Length(3); 2])
-                    .flex(Flex::SpaceAround)
+                    .flex(Flex::SpaceEvenly)
                     .areas(button_area);
 
                 *last_yes_button_area = yes_area;
@@ -812,11 +828,9 @@ impl ProcessKillDialog {
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
-        let block = dialog_block(styles.border_type)
+        let block = dialog_block(styles.border_type, styles.border_style)
             .title_top(title)
-            .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned())
-            .style(styles.border_style)
-            .border_style(styles.border_style);
+            .title_top(Line::styled(" Esc to close ", styles.widget_title_style).right_aligned());
 
         let num_lines = text.line_count(block.inner(draw_area).width) as u16;
 
@@ -840,8 +854,8 @@ impl ProcessKillDialog {
     pub fn draw(&mut self, f: &mut Frame<'_>, draw_area: Rect, styles: &Styles) {
         // The idea is:
         // - Use as big of a dialog box as needed (within the maximal draw loc)
-        //  - So the non-button ones are going to be smaller... probably
-        //    whatever the height of the text is.
+        //  - So the non-button ones are going to be smaller... probably whatever the
+        //    height of the text is.
         //  - Meanwhile for the button one, it'll likely be full height if it's
         //    "advanced" kill.
 

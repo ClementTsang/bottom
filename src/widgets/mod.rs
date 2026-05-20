@@ -4,6 +4,7 @@ pub mod disk_table;
 pub mod mem_graph;
 pub mod network_graph;
 pub mod process_table;
+pub mod temperature_graph;
 pub mod temperature_table;
 
 pub use battery_info::*;
@@ -12,4 +13,5 @@ pub use disk_table::*;
 pub use mem_graph::*;
 pub use network_graph::*;
 pub use process_table::*;
+pub use temperature_graph::*;
 pub use temperature_table::*;

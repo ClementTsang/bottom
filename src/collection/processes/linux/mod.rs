@@ -9,15 +9,16 @@ use std::{
 };
 
 use concat_string::concat_string;
-use hashbrown::{HashMap, HashSet};
+use itertools::Itertools;
 use process::*;
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use sysinfo::ProcessStatus;
 
 use super::{Pid, ProcessHarvest, UserTable, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult, processes::ProcessType};
 
-/// Maximum character length of a `/proc/<PID>/stat` process name (the length is 16,
-/// but this includes a null terminator).
+/// Maximum character length of a `/proc/<PID>/stat` process name (the length is
+/// 16, but this includes a null terminator).
 ///
 /// If it's equal or greater, then we instead refer to the command for the name.
 const MAX_STAT_NAME_LEN: usize = 15;
@@ -169,6 +170,8 @@ fn read_proc(
 
     let (parent_pid, process_type) = if let Some(thread_parent) = thread_parent {
         (Some(thread_parent), ProcessType::ProcessThread)
+    } else if stat.is_kernel_thread {
+        (Some(stat.ppid), ProcessType::Kernel)
     } else {
         (Some(stat.ppid), ProcessType::Regular)
     };
@@ -199,14 +202,7 @@ fn read_proc(
         (0, 0, 0, 0)
     };
 
-    let user = uid
-        .and_then(|uid| {
-            user_table
-                .get_uid_to_username_mapping(uid)
-                .map(Into::into)
-                .ok()
-        })
-        .unwrap_or_else(|| "N/A".into());
+    let user = uid.and_then(|uid| user_table.uid_to_username(uid).ok());
 
     let time = if let Ok(ticks_per_sec) = u32::try_from(rustix::param::clock_ticks_per_second()) {
         if ticks_per_sec == 0 {
@@ -229,12 +225,6 @@ fn read_proc(
                 // If the comm fits then we'll default to whatever is set.
                 // If it doesn't, we need to do some magic to determine what it's
                 // supposed to be.
-                //
-                // We follow something similar to how htop does it to identify a valid name based on the cmdline.
-                // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268 (kinda)
-                // - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L573
-                //
-                // Also note that cmdline is (for us) separated by \0.
 
                 // TODO: We might want to re-evaluate if we want to do it like this,
                 // as it turns out I was dumb and sometimes comm != process name...
@@ -244,9 +234,10 @@ fn read_proc(
                 // - command (full thing)
                 // - comm (as a separate thing)
                 //
-                // Stuff like htop also offers the option to "highlight" basename and comm in command. Might be neat?
+                // Stuff like htop also offers the option to "highlight" basename and comm in
+                // command. Might be neat?
                 let name = if comm.len() >= MAX_STAT_NAME_LEN {
-                    name_from_cmdline(&cmdline)
+                    binary_name_from_cmdline(&cmdline)
                 } else {
                     comm
                 };
@@ -259,7 +250,8 @@ fn read_proc(
     };
 
     // We have moved command processing here.
-    // SAFETY: We are only replacing a single char (NUL) with another single char (space).
+    // SAFETY: We are only replacing a single char (NUL) with another single char
+    // (space).
 
     let mut command = command;
     let buf_mut = unsafe { command.as_mut_vec() };
@@ -296,12 +288,22 @@ fn read_proc(
             #[cfg(feature = "gpu")]
             gpu_util: 0,
             process_type,
+            #[cfg(unix)]
+            nice: stat.nice,
+            priority: stat.priority,
         },
         new_process_times,
     ))
 }
 
-fn name_from_cmdline(cmdline: &str) -> String {
+/// We follow something similar to how htop does it to identify a valid name
+/// based on the cmdline.
+/// - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268
+///   (kinda)
+/// - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L573
+///
+/// Also note that cmdline is (for us) separated by \0.
+fn binary_name_from_cmdline(cmdline: &str) -> String {
     let mut start = 0;
     let mut end = cmdline.len();
 
@@ -314,7 +316,12 @@ fn name_from_cmdline(cmdline: &str) -> String {
         }
     }
 
-    cmdline[start..end].to_string()
+    // Bit of a hack to handle cases like "firefox -blah"
+    let partial = cmdline.chars().skip(start).take(end - start).join("");
+    partial
+        .split_once(" -")
+        .map(|(name, _)| name.to_string())
+        .unwrap_or_else(|| partial.to_string())
 }
 
 pub(crate) struct PrevProc<'a> {
@@ -379,18 +386,22 @@ pub(crate) fn linux_process_data(
     } = cpu_usage_calculation(prev_idle, prev_non_idle)?;
 
     if unnormalized_cpu {
-        let num_processors = collector.sys.system.cpus().len() as f64;
+        let num_processors = collector
+            .cgroup_cpu_data
+            .cpu_quota
+            .unwrap_or_else(|| collector.sys.system.cpus().len() as f64);
 
         // Note we *divide* here because the later calculation divides `cpu_usage` - in
         // effect, multiplying over the number of cores.
         cpu_usage /= num_processors;
     }
 
-    // TODO: Could maybe use a double buffer hashmap to avoid allocating this each time?
-    // e.g. we swap which is prev and which is new.
-    let mut seen_pids: HashSet<Pid> = HashSet::new();
+    // TODO: Could maybe use a double buffer hashmap to avoid allocating this each
+    // time? e.g. we swap which is prev and which is new.
+    let mut seen_pids: HashSet<Pid> = HashSet::default();
 
-    // Note this will only return PIDs of _processes_, not threads. You can get those from /proc/<PID>/task though.
+    // Note this will only return PIDs of _processes_, not threads. You can get
+    // those from /proc/<PID>/task though.
     let pids = fs::read_dir("/proc")?.flatten().filter_map(|dir| {
         // Need to filter out non-PID entries.
         if is_str_numeric(dir.file_name().to_string_lossy().trim()) {
@@ -412,7 +423,7 @@ pub(crate) fn linux_process_data(
 
     // TODO: Maybe pre-allocate these buffers in the future w/ routine cleanup.
     let mut buffer = String::new();
-    let mut process_threads_to_check = HashMap::new();
+    let mut process_threads_to_check = HashMap::default();
 
     let mut process_vector: Vec<ProcessHarvest> = pids
         .filter_map(|pid_path| {
@@ -430,7 +441,7 @@ pub(crate) fn linux_process_data(
                     if let Some(gpus) = &collector.gpu_pids {
                         gpus.iter().for_each(|gpu| {
                             // add mem/util for all gpus to pid
-                            if let Some((mem, util)) = gpu.get(&(pid as u32)) {
+                            if let Some((mem, util)) = gpu.get(&pid) {
                                 process_harvest.gpu_mem += mem;
                                 process_harvest.gpu_util += util;
                             }
@@ -488,8 +499,8 @@ pub(crate) fn linux_process_data(
         prev_process_details.shrink_to_fit();
     }
 
-    // TODO: This might be more efficient to just separate threads into their own list, but for now this works so it
-    // fits with existing code.
+    // TODO: This might be more efficient to just separate threads into their own
+    // list, but for now this works so it fits with existing code.
     Ok(process_vector)
 }
 
@@ -538,16 +549,32 @@ mod tests {
 
     #[test]
     fn test_name_from_cmdline() {
-        assert_eq!(name_from_cmdline("/usr/bin/btm"), "btm");
-        assert_eq!(name_from_cmdline("/usr/bin/btm\0--asdf\0--asdf/gkj"), "btm");
-        assert_eq!(name_from_cmdline("/usr/bin/btm:"), "btm");
-        assert_eq!(name_from_cmdline("/usr/bin/b tm"), "b tm");
-        assert_eq!(name_from_cmdline("/usr/bin/b tm:"), "b tm");
-        assert_eq!(name_from_cmdline("/usr/bin/b tm\0--test"), "b tm");
-        assert_eq!(name_from_cmdline("/usr/bin/b tm:\0--test"), "b tm");
+        assert_eq!(binary_name_from_cmdline("/usr/bin/btm"), "btm");
         assert_eq!(
-            name_from_cmdline("/usr/bin/b t m:\0--\"test thing\""),
+            binary_name_from_cmdline("/usr/bin/btm\0--asdf\0--asdf/gkj"),
+            "btm"
+        );
+        assert_eq!(binary_name_from_cmdline("/usr/bin/btm:"), "btm");
+        assert_eq!(binary_name_from_cmdline("/usr/bin/b tm"), "b tm");
+        assert_eq!(binary_name_from_cmdline("/usr/bin/b tm:"), "b tm");
+        assert_eq!(binary_name_from_cmdline("/usr/bin/b tm\0--test"), "b tm");
+        assert_eq!(binary_name_from_cmdline("/usr/bin/b tm:\0--test"), "b tm");
+        assert_eq!(
+            binary_name_from_cmdline("/usr/bin/b t m:\0--\"test thing\""),
             "b t m"
+        );
+        assert_eq!(
+            binary_name_from_cmdline("firefox -contentproc -isForBrowser -prefsHandle 0"),
+            "firefox"
+        );
+        assert_eq!(binary_name_from_cmdline("こんにちは\0"), "こんにちは");
+        assert_eq!(
+            binary_name_from_cmdline("こんにちは -こんばんは"),
+            "こんにちは"
+        );
+        assert_eq!(
+            binary_name_from_cmdline("/usr/bin/こんにちは -こんばんは\0"),
+            "こんにちは"
         );
     }
 }

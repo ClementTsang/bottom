@@ -3,6 +3,7 @@ use std::{
     cmp::{Ordering, max},
     fmt::Display,
     num::NonZeroU16,
+    sync::Arc,
     time::Duration,
 };
 
@@ -10,7 +11,8 @@ use concat_string::concat_string;
 use tui::widgets::Row;
 
 use super::process_columns::ProcColumn;
-
+#[cfg(target_os = "linux")]
+use crate::collection::processes::ProcessType;
 use crate::{
     canvas::{
         Painter,
@@ -207,7 +209,7 @@ pub struct ProcWidgetData {
     pub total_write: u64,
     pub process_state: &'static str,
     pub process_char: char,
-    pub user: String,
+    pub user: Option<Arc<str>>,
     pub num_similar: u64,
     pub disabled: bool,
     pub time: Duration,
@@ -215,9 +217,12 @@ pub struct ProcWidgetData {
     pub gpu_mem_usage: MemUsage,
     #[cfg(feature = "gpu")]
     pub gpu_usage: u32,
-    /// The process "type". Used to color things.
+    /// The process "type". Used to colour things.
     #[cfg(target_os = "linux")]
-    pub process_type: crate::collection::processes::ProcessType,
+    pub process_type: ProcessType,
+    #[cfg(unix)]
+    pub nice: i32,
+    pub priority: i32,
 }
 
 impl ProcWidgetData {
@@ -250,7 +255,7 @@ impl ProcWidgetData {
             total_write: process.total_write,
             process_state: process.process_state.0,
             process_char: process.process_state.1,
-            user: process.user.to_string(),
+            user: process.user.clone(),
             num_similar: 1,
             disabled: false,
             time: process.time,
@@ -264,6 +269,9 @@ impl ProcWidgetData {
             gpu_usage: process.gpu_util,
             #[cfg(target_os = "linux")]
             process_type: process.process_type,
+            #[cfg(unix)]
+            nice: process.nice,
+            priority: process.priority,
         }
     }
 
@@ -308,6 +316,9 @@ impl ProcWidgetData {
 
     fn to_string(&self, column: &ProcColumn) -> String {
         match column {
+            &ProcColumn::Priority => self.priority.to_string(),
+            #[cfg(unix)]
+            ProcColumn::Nice => self.nice.to_string(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem),
@@ -319,7 +330,11 @@ impl ProcWidgetData {
             ProcColumn::TotalRead => dec_bytes_string(self.total_read),
             ProcColumn::TotalWrite => dec_bytes_string(self.total_write),
             ProcColumn::State => self.process_char.to_string(),
-            ProcColumn::User => self.user.clone(),
+            ProcColumn::User => self
+                .user
+                .as_ref()
+                .map(|user| user.to_string())
+                .unwrap_or_else(|| "N/A".to_string()),
             ProcColumn::Time => format_time(self.time),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
@@ -333,12 +348,13 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
     fn to_cell_text(
         &self, column: &ProcColumn, calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
-        let calculated_width = calculated_width.get();
-
         // TODO: Optimize the string allocations here...
         // TODO: Also maybe just pull in the to_string call but add a variable for the
         // differences.
         Some(match column {
+            #[cfg(unix)]
+            ProcColumn::Nice => self.nice.to_string().into(),
+            &ProcColumn::Priority => self.priority.to_string().into(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem).into(),
@@ -350,13 +366,17 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             ProcColumn::TotalRead => dec_bytes_string(self.total_read).into(),
             ProcColumn::TotalWrite => dec_bytes_string(self.total_write).into(),
             ProcColumn::State => {
-                if calculated_width < 8 {
+                if calculated_width.get() < 8 {
                     self.process_char.to_string().into()
                 } else {
                     self.process_state.into()
                 }
             }
-            ProcColumn::User => self.user.clone().into(),
+            ProcColumn::User => self
+                .user
+                .as_ref()
+                .map(|user| user.to_string().into())
+                .unwrap_or_else(|| "N/A".into()),
             ProcColumn::Time => format_time(self.time).into(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => {

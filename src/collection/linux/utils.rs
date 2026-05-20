@@ -4,7 +4,8 @@ use std::{fs, path::Path};
 /// Will return false if the state is not D0/unknown, or if it does not support
 /// `device/power_state`.
 ///
-/// `path` is a path to the device itself (e.g. `/sys/class/hwmon/hwmon1/device`).
+/// `path` is a path to the device itself (e.g.
+/// `/sys/class/hwmon/hwmon1/device`).
 #[inline]
 pub fn is_device_awake(device: &Path) -> bool {
     // Whether the temperature should *actually* be read during enumeration.
@@ -18,7 +19,7 @@ pub fn is_device_awake(device: &Path) -> bool {
             // check to fail and temperatures to appear as zero instead of
             // having the file not exist.
             //
-            // Their self-hosted git instance has disabled sign up, so this bug cant be
+            // Their self-hosted git instance has disabled sign up, so this bug can't be
             // reported either.
             state == "D0" || state == "unknown"
         } else {

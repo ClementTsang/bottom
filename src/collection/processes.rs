@@ -19,20 +19,20 @@ cfg_if! {
     } else if #[cfg(target_os = "freebsd")] {
         pub mod freebsd;
         pub(crate) use self::freebsd::*;
-    } else if #[cfg(target_family = "unix")] {
+    } else if #[cfg(unix)] {
         pub(crate) struct GenericProcessExt;
         impl UnixProcessExt for GenericProcessExt {}
     }
 }
 
 cfg_if! {
-    if #[cfg(target_family = "unix")] {
+    if #[cfg(unix)] {
         pub mod unix;
         pub use self::unix::*;
     }
 }
 
-use std::{borrow::Cow, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use super::{DataCollector, error::CollectionResult};
 
@@ -40,7 +40,7 @@ cfg_if! {
     if #[cfg(target_family = "windows")] {
         /// A Windows process ID.
         pub type Pid = usize;
-    } else if #[cfg(target_family = "unix")] {
+    } else if #[cfg(unix)] {
         /// A UNIX process ID.
         pub type Pid = libc::pid_t;
     }
@@ -57,8 +57,6 @@ pub enum ProcessType {
     Regular,
 
     /// A kernel process.
-    ///
-    /// TODO: Use <https://github.com/htop-dev/htop/commit/07496eafb0166aafd9c33a6a95e16bcbc64c34d4>?
     Kernel,
 
     /// A thread spawned by a regular user process.
@@ -91,7 +89,8 @@ pub struct ProcessHarvest {
 
     /// Memory usage as a percentage.
     ///
-    /// TODO: Maybe calculate this on usage? Store the total mem along with the vector of results.
+    /// TODO: Maybe calculate this on usage? Store the total mem along with the
+    /// vector of results.
     pub mem_usage_percent: f32,
 
     /// Memory usage as bytes.
@@ -126,11 +125,11 @@ pub struct ProcessHarvest {
 
     /// This is the *effective* user ID of the process. This is only used on
     /// Unix platforms.
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub uid: Option<libc::uid_t>,
 
     /// This is the process' user.
-    pub user: Cow<'static, str>,
+    pub user: Option<Arc<str>>,
 
     /// Gpu memory usage as bytes.
     #[cfg(feature = "gpu")]
@@ -138,7 +137,8 @@ pub struct ProcessHarvest {
 
     /// Gpu memory usage as percentage.
     ///
-    /// TODO: Maybe calculate this on usage? Store the total GPU mem along with the vector of results.
+    /// TODO: Maybe calculate this on usage? Store the total GPU mem along with
+    /// the vector of results.
     #[cfg(feature = "gpu")]
     pub gpu_mem_percent: f32,
 
@@ -149,6 +149,13 @@ pub struct ProcessHarvest {
     /// The process entry "type".
     #[cfg(target_os = "linux")]
     pub process_type: ProcessType,
+
+    /// The nice value (user-settable scheduling hint).
+    #[cfg(unix)]
+    pub nice: i32,
+
+    /// The kernel scheduling priority.
+    pub priority: i32,
     // TODO: Additional fields
     // pub rss_kb: u64,
     // pub virt_kb: u64,

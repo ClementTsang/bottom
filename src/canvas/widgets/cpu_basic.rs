@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use itertools::{Either, Itertools};
+use itertools::Itertools;
 use tui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -30,25 +30,32 @@ impl Painter {
         // **General logic** - count number of elements in cpu_data.  Then see how
         // many rows and columns we have in draw_loc (-2 on both sides for border?).
         // I think what we can do is try to fit in as many in one column as possible.
-        // If not, then add a new column. Then, from this, split the row space across ALL columns.
-        // From there, generate the desired lengths.
+        // If not, then add a new column. Then, from this, split the row space across
+        // ALL columns. From there, generate the desired lengths.
 
-        if app_state.current_widget.widget_id == widget_id {
-            f.render_widget(
-                widget_block(true, true, self.styles.border_type)
-                    .border_style(self.styles.highlighted_border_style),
-                draw_loc,
-            );
-        }
+        f.render_widget(
+            widget_block(
+                true,
+                app_state.current_widget.widget_id == widget_id,
+                self.styles.border_type,
+                self.styles.general_widget_style,
+            )
+            .border_style(self.styles.highlighted_border_style),
+            draw_loc,
+        );
 
         // TODO: This is pretty ugly. Is there a better way of doing it?
-        let mut cpu_iter = Either::Right(cpu_data.iter());
-        if app_state.app_config_fields.dedicated_average_row {
+        let mut avg_index = cpu_data.len() + 1;
+        let mut avg_row_count = 0;
+        let show_decimal = app_state.app_config_fields.show_cpu_decimal;
+        if app_state.app_config_fields.dedicated_average_row
+            && app_state.app_config_fields.show_average_cpu
+        {
             if let Some((index, avg)) = cpu_data
                 .iter()
                 .find_position(|&datum| matches!(datum.data_type, CpuDataType::Avg))
             {
-                let (outer, inner, ratio, style) = self.cpu_info(avg);
+                let (outer, inner, ratio, style) = self.cpu_info(avg, show_decimal);
                 let [cores_loc, mut avg_loc] =
                     Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(draw_loc);
 
@@ -66,9 +73,9 @@ impl Painter {
                         .ratio(ratio.into()),
                     avg_loc,
                 );
-
+                avg_row_count += 1;
+                avg_index = index;
                 draw_loc = cores_loc;
-                cpu_iter = Either::Left(cpu_data.iter().skip(index));
             }
         }
 
@@ -83,7 +90,13 @@ impl Painter {
                 .direction(Direction::Horizontal)
                 .split(draw_loc);
 
-            let mut gauge_info = cpu_iter.map(|cpu| self.cpu_info(cpu));
+            let mut gauge_info = cpu_data.iter().enumerate().filter_map(|(index, cpu)| {
+                if index == avg_index {
+                    None
+                } else {
+                    Some(self.cpu_info(cpu, show_decimal))
+                }
+            });
 
             // Very ugly way to sync the gauge limit across all gauges.
             let hide_parts = columns
@@ -99,7 +112,7 @@ impl Painter {
                 })
                 .unwrap_or_default();
 
-            let num_entries = cpu_data.len();
+            let num_entries = cpu_data.len() - avg_row_count;
             let mut row_counter = num_entries;
             for (itx, column) in columns.iter().enumerate() {
                 if REQUIRED_COLUMNS > itx {
@@ -144,17 +157,22 @@ impl Painter {
     }
 
     #[inline]
-    fn cpu_info(&self, data: &CpuData) -> (String, String, f32, tui::style::Style) {
+    fn cpu_info(
+        &self, data: &CpuData, show_decimal: bool,
+    ) -> (String, String, f32, tui::style::Style) {
         let (outer, style) = match data.data_type {
             CpuDataType::Avg => ("AVG".to_string(), self.styles.avg_cpu_colour),
             CpuDataType::Cpu(index) => (
                 format!("{index:<3}",),
-                self.styles.cpu_colour_styles
-                    [(index as usize) % self.styles.cpu_colour_styles.len()],
+                self.styles.cpu_colour_styles[index % self.styles.cpu_colour_styles.len()],
             ),
         };
 
-        let inner = format!("{:>3.0}%", data.usage.round());
+        let inner = if show_decimal {
+            format!("{:>5.1}%", data.usage)
+        } else {
+            format!("{:>3.0}%", data.usage.round())
+        };
         let ratio = data.usage / 100.0;
 
         (outer, inner, ratio, style)

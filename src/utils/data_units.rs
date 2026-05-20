@@ -64,8 +64,12 @@ pub fn get_decimal_bytes(bytes: u64) -> (f64, &'static str) {
 /// Given a value in _bits_, turn a tuple containing the value and a unit.
 #[inline]
 pub fn convert_bits(bits: u64, base_two: bool) -> (f64, &'static str) {
-    let bytes = bits / 8;
+    convert_bytes(bits / 8, base_two)
+}
 
+/// Given a value in _bytes_, turn a tuple containing the value and a unit.
+#[inline]
+pub fn convert_bytes(bytes: u64, base_two: bool) -> (f64, &'static str) {
     if base_two {
         get_binary_bytes(bytes)
     } else {
@@ -73,7 +77,8 @@ pub fn convert_bits(bits: u64, base_two: bool) -> (f64, &'static str) {
     }
 }
 
-/// Return a tuple containing the value and a unit string to be used as a prefix.
+/// Return a tuple containing the value and a unit string to be used as a
+/// prefix.
 #[inline]
 pub fn get_unit_prefix(value: u64, base_two: bool) -> (f64, &'static str) {
     let float_value = value as f64;

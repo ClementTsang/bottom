@@ -1,0 +1,438 @@
+use std::{collections::VecDeque, fmt::Debug};
+
+use humantime::parse_duration;
+
+use crate::{
+    collection::processes::ProcessHarvest,
+    utils::data_units::*,
+    widgets::query::{
+        And, NumericalQuery, Or, PrefixType, ProcessAttribute, QueryComparison, QueryOptions,
+        QueryProcessor, QueryResult, TimeQuery,
+        attribute::{new_numerical_attribute, new_string_attribute, new_time_attribute},
+        error::QueryError,
+    },
+};
+
+#[inline]
+fn process_prefix_units(query: &mut VecDeque<String>, value: &mut f64) {
+    // If no unit, assume base.
+    //
+    // Furthermore, base must be PEEKED at initially, and will
+    // require (likely) prefix_type specific checks
+    // Lastly, if it *is* a unit, remember to POP!
+    if let Some(potential_unit) = query.front() {
+        if potential_unit.eq_ignore_ascii_case("tb") {
+            *value *= TERA_LIMIT_F64;
+            query.pop_front();
+        } else if potential_unit.eq_ignore_ascii_case("tib") {
+            *value *= TEBI_LIMIT_F64;
+            query.pop_front();
+        } else if potential_unit.eq_ignore_ascii_case("gb") {
+            *value *= GIGA_LIMIT_F64;
+            query.pop_front();
+        } else if potential_unit.eq_ignore_ascii_case("gib") {
+            *value *= GIBI_LIMIT_F64;
+            query.pop_front();
+        } else if potential_unit.eq_ignore_ascii_case("mb") {
+            *value *= MEGA_LIMIT_F64;
+            query.pop_front();
+        } else if potential_unit.eq_ignore_ascii_case("mib") {
+            *value *= MEBI_LIMIT_F64;
+            query.pop_front();
+        } else if potential_unit.eq_ignore_ascii_case("kb") {
+            *value *= KILO_LIMIT_F64;
+            query.pop_front();
+        } else if potential_unit.eq_ignore_ascii_case("kib") {
+            *value *= KIBI_LIMIT_F64;
+            query.pop_front();
+        } else if potential_unit.eq_ignore_ascii_case("b") {
+            query.pop_front();
+        }
+    }
+}
+
+/// Either contains a further `Or` recursively, or an attribute that can be
+/// queried, possibly as part of a larger query.
+///
+/// In theory, this can be made generic to work on all table types, though for
+/// now, it's hardcoded for processes.
+#[derive(Debug)]
+pub(super) enum Prefix {
+    /// True if the inner OR is true (allowing a recursive tree).
+    Or(Box<Or>),
+    /// A leaf node.
+    Attribute(ProcessAttribute),
+    /// Invert the match result of the inner prefix.
+    ///
+    /// TODO: Also support reading with "not".
+    Negate(Box<Prefix>),
+}
+
+impl Prefix {
+    pub(super) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+        match self {
+            Prefix::Or(or) => or.check(process, is_using_command),
+            Prefix::Attribute(attribute) => attribute.check(process, is_using_command),
+            Prefix::Negate(inner) => !inner.check(process, is_using_command),
+        }
+    }
+
+    fn process_in_quotes(
+        query: &mut VecDeque<String>, options: &QueryOptions,
+    ) -> QueryResult<Self> {
+        if let Some(queue_top) = query.pop_front() {
+            if queue_top == "\"" {
+                // This means we hit something like "". Return an empty prefix, and to deal
+                // with the close quote checker, add one to the top of the
+                // stack. Ugly fix but whatever.
+                query.push_front("\"".to_string());
+
+                Ok(Prefix::Attribute(ProcessAttribute::Empty))
+            } else {
+                let mut intern_string = vec![queue_top];
+
+                // TODO: I think this should consume the quote...? Might need to check the other
+                // spot we process quotes.
+                while let Some(next_str) = query.front() {
+                    if next_str == "\"" {
+                        break;
+                    } else {
+                        intern_string.push(query.pop_front().expect("we just peeked at the front"));
+                    }
+                }
+
+                let quoted_string = intern_string.join(" ");
+
+                Ok(Prefix::Attribute(new_string_attribute(
+                    PrefixType::Name,
+                    &quoted_string,
+                    options,
+                )?))
+            }
+        } else {
+            // Uh oh, there's nothing left in the stack, but we're inside quotes!
+            Err(QueryError::new("Missing closing quotation"))
+        }
+    }
+}
+
+impl QueryProcessor for Prefix {
+    fn process(query: &mut VecDeque<String>, options: &QueryOptions) -> QueryResult<Self>
+    where
+        Self: Sized,
+    {
+        if let Some(curr) = query.pop_front() {
+            if curr == "(" {
+                if query.is_empty() {
+                    return Err(QueryError::new("Missing closing parentheses"));
+                }
+
+                let mut list_of_ors = VecDeque::new();
+
+                while let Some(in_paren_query_top) = query.front() {
+                    if in_paren_query_top != ")" {
+                        list_of_ors.push_back(Or::process(query, options)?);
+                    } else {
+                        break;
+                    }
+                }
+
+                let Some(front) = list_of_ors.pop_front() else {
+                    return Err(QueryError::new("No values within parentheses group"));
+                };
+
+                // Now convert this back to a OR...
+                // TODO: is there a better way to do this than converting it?
+                let initial_or = Or {
+                    lhs: And {
+                        lhs: Prefix::Or(Box::new(front)),
+                        rhs: None,
+                    },
+                    rhs: None,
+                };
+                let returned_or = list_of_ors.into_iter().fold(initial_or, |lhs, rhs| Or {
+                    lhs: And {
+                        lhs: Prefix::Or(Box::new(lhs)),
+                        rhs: Some(Box::new(Prefix::Or(Box::new(rhs)))),
+                    },
+                    rhs: None,
+                });
+
+                return if let Some(close_paren) = query.pop_front() {
+                    if close_paren == ")" {
+                        Ok(Prefix::Or(Box::new(returned_or)))
+                    } else {
+                        Err(QueryError::new("Missing closing parentheses"))
+                    }
+                } else {
+                    Err(QueryError::new("Missing closing parentheses"))
+                };
+            } else if curr == ")" {
+                return Err(QueryError::new("Missing opening parentheses"));
+            } else if curr == "!" {
+                // Negation prefix: `!<expr>` inverts the match of the following
+                // expression. Handles:
+                // - Groups (`!(a or b)`)
+                // - Quoted names (`!"foo"`)
+                // - Bare names (`!foo`)
+                // - Stacked `!` (`!!foo`).
+                match query.front().map(|s| s.as_str()) {
+                    None | Some("=") | Some(">") | Some("<") | Some(")") => {
+                        return Err(QueryError::new(
+                            "`!` must be followed by an expression; use `\"!\"` to match a literal `!`",
+                        ));
+                    }
+                    Some(next) if next != "(" && next != "\"" && next != "!" => {
+                        let next: Result<PrefixType, QueryError> = next.parse();
+                        if !matches!(next, Ok(PrefixType::Name)) {
+                            return Err(QueryError::new(
+                                "`!` cannot be applied to a prefix keyword; use `!=`, `<=`, `>=` or group with `!(...)` instead",
+                            ));
+                        }
+                    }
+                    _ => {}
+                }
+                let inner = Prefix::process(query, options)?;
+                return Ok(Prefix::Negate(Box::new(inner)));
+            } else if curr == "\"" {
+                // Similar to parentheses, trap and check for missing closing quotes.  Note,
+                // however, that we will DIRECTLY call another process_prefix
+                // call...
+
+                let prefix = Prefix::process_in_quotes(query, options)?;
+                return if let Some(close_quote) = query.pop_front() {
+                    if close_quote == "\"" {
+                        Ok(prefix)
+                    } else {
+                        Err(QueryError::new("Missing closing quotation"))
+                    }
+                } else {
+                    Err(QueryError::new("Missing closing quotation"))
+                };
+            } else {
+                // Get prefix type.
+                let prefix_type = curr.parse::<PrefixType>()?;
+
+                // TODO: Separate these cases here and below.
+                let content = if let PrefixType::Name = prefix_type {
+                    Some(curr)
+                } else {
+                    query.pop_front()
+                };
+
+                if let Some(content) = content {
+                    match &prefix_type {
+                        PrefixType::Name => {
+                            return Ok(Prefix::Attribute(new_string_attribute(
+                                prefix_type,
+                                &content,
+                                options,
+                            )?));
+                        }
+                        PrefixType::Pid | PrefixType::State | PrefixType::User => {
+                            // We have to check if someone put an (in)equality check...
+                            if content == "=" || content == "!=" {
+                                let negate = content.starts_with('!');
+
+                                // Check next string if possible
+                                if let Some(string_value) = query.pop_front() {
+                                    if string_value == "!" {
+                                        return Err(QueryError::new(
+                                            "`!` is reserved; use `\"!\"` to match the literal character",
+                                        ));
+                                    }
+                                    // TODO: [Query] Need to consider the following cases:
+                                    // - (test)
+                                    // - (test
+                                    // - test)
+                                    // These are split into 2 to 3 different strings due to
+                                    // parentheses being
+                                    // delimiters in our query system.
+                                    //
+                                    // Do we want these to be valid?  They should, as a string,
+                                    // right?
+
+                                    // We also must check if this value is wrapped in quotes!
+                                    let final_value = if string_value == "\"" {
+                                        let mut intern_string = vec![];
+
+                                        // Keep parsing until we either hit another quotation or we
+                                        // error.
+                                        while let Some(next_string) = query.pop_front() {
+                                            if next_string == "\"" {
+                                                break;
+                                            }
+
+                                            intern_string.push(next_string);
+                                        }
+
+                                        intern_string.join(" ")
+                                    } else {
+                                        string_value
+                                    };
+
+                                    let inner_attribute = Prefix::Attribute(new_string_attribute(
+                                        prefix_type,
+                                        &final_value,
+                                        options,
+                                    )?);
+
+                                    return Ok(if negate {
+                                        Prefix::Negate(Box::new(inner_attribute))
+                                    } else {
+                                        inner_attribute
+                                    });
+                                }
+                            } else if content == "!" {
+                                return Err(QueryError::new(
+                                    "`!` is reserved; use `\"!\"` to match the literal character",
+                                ));
+                            } else {
+                                return Ok(Prefix::Attribute(new_string_attribute(
+                                    prefix_type,
+                                    &content,
+                                    options,
+                                )?));
+                            }
+                        }
+                        PrefixType::Time => {
+                            let mut condition: Option<QueryComparison> = None;
+                            let mut duration_string: Option<String> = None;
+
+                            if content == "=" {
+                                condition = Some(QueryComparison::Equal);
+                                duration_string = query.pop_front();
+                            } else if content == "!=" {
+                                condition = Some(QueryComparison::NotEqual);
+                                duration_string = query.pop_front();
+                            } else if content == ">" || content == "<" {
+                                if let Some(queue_next) = query.pop_front() {
+                                    if queue_next == "=" {
+                                        condition = Some(if content == ">" {
+                                            QueryComparison::GreaterOrEqual
+                                        } else {
+                                            QueryComparison::LessOrEqual
+                                        });
+                                        duration_string = query.pop_front();
+                                    } else {
+                                        condition = Some(if content == ">" {
+                                            QueryComparison::Greater
+                                        } else {
+                                            QueryComparison::Less
+                                        });
+                                        duration_string = Some(queue_next);
+                                    }
+                                } else {
+                                    return Err(QueryError::missing_value());
+                                }
+                            }
+
+                            if let Some(condition) = condition {
+                                let duration = parse_duration(
+                                    &duration_string.ok_or(QueryError::missing_value())?,
+                                )
+                                .map_err(|err| QueryError::new(err.to_string()))?;
+
+                                return Ok(Prefix::Attribute(new_time_attribute(
+                                    prefix_type,
+                                    TimeQuery {
+                                        condition,
+                                        duration,
+                                    },
+                                )?));
+                            }
+                        }
+                        _ => {
+                            // Assume it's some numerical value. Now we gotta parse the content... yay.
+                            // Note that for numerical parsing, we handle unit parsing later, not here.
+
+                            let mut condition: Option<QueryComparison> = None;
+                            let mut value: Option<f64> = None;
+
+                            // TODO: Jeez, what the heck did I write here... add some tests and
+                            // clean this up in the future.
+                            if content == "=" {
+                                condition = Some(QueryComparison::Equal);
+                                if let Some(queue_next) = query.pop_front() {
+                                    value = queue_next.parse::<f64>().ok();
+                                } else {
+                                    return Err(QueryError::missing_value());
+                                }
+                            } else if content == "!=" {
+                                condition = Some(QueryComparison::NotEqual);
+                                if let Some(queue_next) = query.pop_front() {
+                                    value = queue_next.parse::<f64>().ok();
+                                } else {
+                                    return Err(QueryError::missing_value());
+                                }
+                            } else if content == ">" || content == "<" {
+                                // We also have to check if the next string is an "="...
+                                if let Some(queue_next) = query.pop_front() {
+                                    if queue_next == "=" {
+                                        condition = Some(if content == ">" {
+                                            QueryComparison::GreaterOrEqual
+                                        } else {
+                                            QueryComparison::LessOrEqual
+                                        });
+                                        if let Some(queue_next_next) = query.pop_front() {
+                                            value = queue_next_next.parse::<f64>().ok();
+                                        } else {
+                                            return Err(QueryError::missing_value());
+                                        }
+                                    } else {
+                                        condition = Some(if content == ">" {
+                                            QueryComparison::Greater
+                                        } else {
+                                            QueryComparison::Less
+                                        });
+                                        value = queue_next.parse::<f64>().ok();
+                                    }
+                                } else {
+                                    return Err(QueryError::missing_value());
+                                }
+                            }
+
+                            if let Some(condition) = condition {
+                                if let Some(read_value) = value {
+                                    // Note that the values *might* have a unit or need to be parsed
+                                    // differently based on the
+                                    // prefix type!
+
+                                    // TODO: Support this without spaces?
+
+                                    let mut value = read_value;
+
+                                    match prefix_type {
+                                        PrefixType::MemBytes
+                                        | PrefixType::ReadPerSecond
+                                        | PrefixType::WritePerSecond
+                                        | PrefixType::TotalRead
+                                        | PrefixType::TotalWrite => {
+                                            process_prefix_units(query, &mut value);
+                                        }
+                                        #[cfg(feature = "gpu")]
+                                        PrefixType::GpuMemoryBytes => {
+                                            process_prefix_units(query, &mut value);
+                                        }
+                                        _ => {}
+                                    }
+
+                                    return Ok(Prefix::Attribute(new_numerical_attribute(
+                                        prefix_type,
+                                        NumericalQuery { condition, value },
+                                    )?));
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    return Err(QueryError::new("Missing argument for search prefix"));
+                }
+            }
+        }
+
+        // TODO: Give more information here (e.g. closest query?), though this is moreso
+        // meant as a fallback.
+        Err(QueryError::new("Invalid query"))
+    }
+}

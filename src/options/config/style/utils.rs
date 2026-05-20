@@ -3,15 +3,15 @@ use tui::style::Color;
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Convert a hex string to a colour.
-pub(super) fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
+pub(super) fn try_hex_to_colour(hex: &str) -> Result<Color, String> {
     fn hex_component_to_int(hex: &str, first: &str, second: &str) -> Result<u8, String> {
         u8::from_str_radix(&concat_string!(first, second), 16)
-            .map_err(|_| format!("'{hex}' is an invalid hex color, could not decode."))
+            .map_err(|_| format!("'{hex}' is an invalid hex colour, could not decode."))
     }
 
     fn invalid_hex_format(hex: &str) -> String {
         format!(
-            "'{hex}' is an invalid hex color. It must be either a 7 character hex string of the form '#12ab3c' or a 3 character hex string of the form '#1a2'.",
+            "'{hex}' is an invalid hex colour. It must be either a 7 character hex string of the form '#12ab3c' or a 3 character hex string of the form '#1a2'.",
         )
     }
 
@@ -42,9 +42,9 @@ pub(super) fn convert_hex_to_color(hex: &str) -> Result<Color, String> {
 pub fn str_to_colour(input_val: &str) -> Result<Color, String> {
     if input_val.len() > 1 {
         if input_val.starts_with('#') {
-            convert_hex_to_color(input_val)
+            try_hex_to_colour(input_val)
         } else if input_val.contains(',') {
-            convert_rgb_to_color(input_val)
+            convert_rgb_to_colour(input_val)
         } else {
             convert_name_to_colour(input_val)
         }
@@ -53,7 +53,7 @@ pub fn str_to_colour(input_val: &str) -> Result<Color, String> {
     }
 }
 
-fn convert_rgb_to_color(rgb_str: &str) -> Result<Color, String> {
+fn convert_rgb_to_colour(rgb_str: &str) -> Result<Color, String> {
     let rgb_list = rgb_str.split(',').collect::<Vec<&str>>();
     if rgb_list.len() != 3 {
         return Err(format!(
@@ -75,8 +75,8 @@ fn convert_rgb_to_color(rgb_str: &str) -> Result<Color, String> {
     }
 }
 
-fn convert_name_to_colour(color_name: &str) -> Result<Color, String> {
-    match color_name.to_lowercase().trim() {
+fn convert_name_to_colour(colour_name: &str) -> Result<Color, String> {
+    match colour_name.to_lowercase().trim() {
         "reset" => Ok(Color::Reset),
         "black" => Ok(Color::Black),
         "red" => Ok(Color::Red),
@@ -95,9 +95,9 @@ fn convert_name_to_colour(color_name: &str) -> Result<Color, String> {
         "lightcyan" | "light cyan" => Ok(Color::LightCyan),
         "white" => Ok(Color::White),
         _ => Err(format!(
-            "'{color_name}' is an invalid named color.
-            
-The following are supported named colors: 
+            "'{colour_name}' is an invalid named colour.
+
+The following are supported named colours:
 +--------+-------------+---------------------+
 |  Reset | Magenta     | Light Yellow        |
 +--------+-------------+---------------------+
@@ -112,7 +112,7 @@ The following are supported named colors:
 |  Blue  | Light Green |                     |
 +--------+-------------+---------------------+
 
-Alternatively, hex colors or RGB color codes are valid.\n"
+Alternatively, hex colours or RGB colour codes are valid.\n"
         )),
     }
 }
@@ -144,12 +144,12 @@ macro_rules! set_style {
                     );
                 }
                 TextStyleConfig::TextStyle {
-                    color,
-                    bg_color,
+                    colour,
+                    bg_colour,
                     bold,
                     italics,
                 } => {
-                    if let Some(fg) = &color {
+                    if let Some(fg) = &colour {
                         $palette_field = $palette_field
                             .fg(crate::options::config::style::utils::str_to_colour(
                             &fg.0,
@@ -168,7 +168,7 @@ macro_rules! set_style {
                         })?);
                     }
 
-                    if let Some(bg) = &bg_color {
+                    if let Some(bg) = &bg_colour {
                         $palette_field = $palette_field
                             .bg(crate::options::config::style::utils::str_to_colour(
                             &bg.0,
@@ -233,6 +233,28 @@ macro_rules! set_colour {
     };
 }
 
+macro_rules! set_bg_colour {
+    ($palette_field:expr, $config_location:expr, $field:tt) => {
+        if let Some(colour) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
+            $palette_field = $palette_field.bg(
+                crate::options::config::style::utils::str_to_colour(&colour.0).map_err(|err| {
+                    match stringify!($config_location).split_once(".") {
+                        Some((_, loc)) => crate::options::OptionError::config(format!(
+                            "Please update 'styles.{loc}.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
+                        None => crate::options::OptionError::config(format!(
+                            "Please update 'styles.{}' in your config file. {err}",
+                            stringify!($field)
+                        )),
+                    }
+                })?,
+            );
+        }
+    };
+}
+
+/// Set `palette_field` to the value in `config_location` for `field`.
 macro_rules! set_colour_list {
     ($palette_field:expr, $config_location:expr, $field:tt) => {
         if let Some(colour_list) = &(opt!($config_location.as_ref()?.$field.as_ref())) {
@@ -258,6 +280,7 @@ macro_rules! set_colour_list {
 }
 
 pub(super) use opt;
+pub(super) use set_bg_colour;
 pub(super) use set_colour;
 pub(super) use set_colour_list;
 pub(super) use set_style;
@@ -268,7 +291,7 @@ mod test {
     use tui::style::{Modifier, Style};
 
     use super::*;
-    use crate::options::config::style::{ColorStr, TextStyleConfig};
+    use crate::options::config::style::{ColourStr, TextStyleConfig};
 
     #[test]
     fn general_str_to_colour() {
@@ -299,7 +322,7 @@ mod test {
 
     #[test]
     fn valid_colour_names() {
-        // Standard color should work
+        // Standard colour should work
         assert_eq!(convert_name_to_colour("red"), Ok(Color::Red));
 
         // Capitalizing should be fine.
@@ -336,89 +359,83 @@ mod test {
     fn valid_hex_colours() {
         // Check hex with 6 characters.
         assert_eq!(
-            convert_hex_to_color("#ffffff").unwrap(),
+            try_hex_to_colour("#ffffff").unwrap(),
             Color::Rgb(255, 255, 255)
         );
+        assert_eq!(try_hex_to_colour("#000000").unwrap(), Color::Rgb(0, 0, 0));
+        try_hex_to_colour("#111111").unwrap();
+        try_hex_to_colour("#11ff11").unwrap();
+        try_hex_to_colour("#1f1f1f").unwrap();
         assert_eq!(
-            convert_hex_to_color("#000000").unwrap(),
-            Color::Rgb(0, 0, 0)
-        );
-        convert_hex_to_color("#111111").unwrap();
-        convert_hex_to_color("#11ff11").unwrap();
-        convert_hex_to_color("#1f1f1f").unwrap();
-        assert_eq!(
-            convert_hex_to_color("#123abc").unwrap(),
+            try_hex_to_colour("#123abc").unwrap(),
             Color::Rgb(18, 58, 188)
         );
 
         // Check hex with 3 characters.
         assert_eq!(
-            convert_hex_to_color("#fff").unwrap(),
+            try_hex_to_colour("#fff").unwrap(),
             Color::Rgb(255, 255, 255)
         );
-        assert_eq!(convert_hex_to_color("#000").unwrap(), Color::Rgb(0, 0, 0));
-        convert_hex_to_color("#111").unwrap();
-        convert_hex_to_color("#1f1").unwrap();
-        convert_hex_to_color("#f1f").unwrap();
-        convert_hex_to_color("#ff1").unwrap();
-        convert_hex_to_color("#1ab").unwrap();
-        assert_eq!(
-            convert_hex_to_color("#1ab").unwrap(),
-            Color::Rgb(17, 170, 187)
-        );
+        assert_eq!(try_hex_to_colour("#000").unwrap(), Color::Rgb(0, 0, 0));
+        try_hex_to_colour("#111").unwrap();
+        try_hex_to_colour("#1f1").unwrap();
+        try_hex_to_colour("#f1f").unwrap();
+        try_hex_to_colour("#ff1").unwrap();
+        try_hex_to_colour("#1ab").unwrap();
+        assert_eq!(try_hex_to_colour("#1ab").unwrap(), Color::Rgb(17, 170, 187));
     }
 
     #[test]
     fn invalid_hex_colours() {
-        assert!(convert_hex_to_color("ffffff").is_err());
-        assert!(convert_hex_to_color("111111").is_err());
+        assert!(try_hex_to_colour("ffffff").is_err());
+        assert!(try_hex_to_colour("111111").is_err());
 
-        assert!(convert_hex_to_color("fff").is_err());
-        assert!(convert_hex_to_color("111").is_err());
-        assert!(convert_hex_to_color("fffffff").is_err());
-        assert!(convert_hex_to_color("1234567").is_err());
+        assert!(try_hex_to_colour("fff").is_err());
+        assert!(try_hex_to_colour("111").is_err());
+        assert!(try_hex_to_colour("fffffff").is_err());
+        assert!(try_hex_to_colour("1234567").is_err());
 
-        assert!(convert_hex_to_color("#fffffff").is_err());
-        assert!(convert_hex_to_color("#1234567").is_err());
-        assert!(convert_hex_to_color("#ff").is_err());
-        assert!(convert_hex_to_color("#12").is_err());
-        assert!(convert_hex_to_color("").is_err());
+        assert!(try_hex_to_colour("#fffffff").is_err());
+        assert!(try_hex_to_colour("#1234567").is_err());
+        assert!(try_hex_to_colour("#ff").is_err());
+        assert!(try_hex_to_colour("#12").is_err());
+        assert!(try_hex_to_colour("").is_err());
 
-        assert!(convert_hex_to_color("#pppppp").is_err());
-        assert!(convert_hex_to_color("#00000p").is_err());
-        assert!(convert_hex_to_color("#ppp").is_err());
+        assert!(try_hex_to_colour("#pppppp").is_err());
+        assert!(try_hex_to_colour("#00000p").is_err());
+        assert!(try_hex_to_colour("#ppp").is_err());
 
-        assert!(convert_hex_to_color("#一").is_err());
-        assert!(convert_hex_to_color("#一二").is_err());
-        assert!(convert_hex_to_color("#一二三").is_err());
-        assert!(convert_hex_to_color("#一二三四").is_err());
+        assert!(try_hex_to_colour("#一").is_err());
+        assert!(try_hex_to_colour("#一二").is_err());
+        assert!(try_hex_to_colour("#一二三").is_err());
+        assert!(try_hex_to_colour("#一二三四").is_err());
 
-        assert!(convert_hex_to_color("#f一f").is_err());
-        assert!(convert_hex_to_color("#ff一11").is_err());
+        assert!(try_hex_to_colour("#f一f").is_err());
+        assert!(try_hex_to_colour("#ff一11").is_err());
 
-        assert!(convert_hex_to_color("#🇨🇦").is_err());
-        assert!(convert_hex_to_color("#🇨🇦🇨🇦").is_err());
-        assert!(convert_hex_to_color("#🇨🇦🇨🇦🇨🇦").is_err());
-        assert!(convert_hex_to_color("#🇨🇦🇨🇦🇨🇦🇨🇦").is_err());
+        assert!(try_hex_to_colour("#🇨🇦").is_err());
+        assert!(try_hex_to_colour("#🇨🇦🇨🇦").is_err());
+        assert!(try_hex_to_colour("#🇨🇦🇨🇦🇨🇦").is_err());
+        assert!(try_hex_to_colour("#🇨🇦🇨🇦🇨🇦🇨🇦").is_err());
 
-        assert!(convert_hex_to_color("#हिन्दी").is_err());
+        assert!(try_hex_to_colour("#हिन्दी").is_err());
     }
 
     #[test]
     fn test_rgb_colours() {
         assert_eq!(
-            convert_rgb_to_color("0, 0, 0").unwrap(),
+            convert_rgb_to_colour("0, 0, 0").unwrap(),
             Color::Rgb(0, 0, 0)
         );
         assert_eq!(
-            convert_rgb_to_color("255, 255, 255").unwrap(),
+            convert_rgb_to_colour("255, 255, 255").unwrap(),
             Color::Rgb(255, 255, 255)
         );
-        assert!(convert_rgb_to_color("255, 256, 255").is_err());
-        assert!(convert_rgb_to_color("256, 0, 256").is_err());
-        assert!(convert_rgb_to_color("1, -1, 1").is_err());
-        assert!(convert_rgb_to_color("1, -100000, 1").is_err());
-        assert!(convert_rgb_to_color("1, -100000, 100000").is_err());
+        assert!(convert_rgb_to_colour("255, 256, 255").is_err());
+        assert!(convert_rgb_to_colour("256, 0, 256").is_err());
+        assert!(convert_rgb_to_colour("1, -1, 1").is_err());
+        assert!(convert_rgb_to_colour("1, -100000, 1").is_err());
+        assert!(convert_rgb_to_colour("1, -100000, 100000").is_err());
     }
 
     struct DummyConfig {
@@ -426,18 +443,18 @@ mod test {
     }
 
     struct InnerDummyConfig {
-        color_a: Option<ColorStr>,
-        color_b: Option<ColorStr>,
-        color_c: Option<ColorStr>,
-        color_d: Option<ColorStr>,
-        many_colors: Option<Vec<ColorStr>>,
+        color_a: Option<ColourStr>,
+        color_b: Option<ColourStr>,
+        color_c: Option<ColourStr>,
+        color_d: Option<ColourStr>,
+        many_colors: Option<Vec<ColourStr>>,
         text_a: Option<TextStyleConfig>,
         text_b: Option<TextStyleConfig>,
         text_c: Option<TextStyleConfig>,
         text_d: Option<TextStyleConfig>,
         text_e: Option<TextStyleConfig>,
-        bad_color: Option<ColorStr>,
-        bad_list: Option<Vec<ColorStr>>,
+        bad_color: Option<ColourStr>,
+        bad_list: Option<Vec<ColourStr>>,
         bad_text_a: Option<TextStyleConfig>,
         bad_text_b: Option<TextStyleConfig>,
     }
@@ -446,45 +463,45 @@ mod test {
         fn default() -> Self {
             Self {
                 color_a: None,
-                color_b: Some(ColorStr("red".into())),
-                color_c: Some(ColorStr("255, 255, 255".into())),
-                color_d: Some(ColorStr("#000000".into())),
-                many_colors: Some(vec![ColorStr("red".into()), ColorStr("blue".into())]),
-                text_a: Some(TextStyleConfig::Colour(ColorStr("green".into()))),
+                color_b: Some(ColourStr("red".into())),
+                color_c: Some(ColourStr("255, 255, 255".into())),
+                color_d: Some(ColourStr("#000000".into())),
+                many_colors: Some(vec![ColourStr("red".into()), ColourStr("blue".into())]),
+                text_a: Some(TextStyleConfig::Colour(ColourStr("green".into()))),
                 text_b: Some(TextStyleConfig::TextStyle {
-                    color: None,
-                    bg_color: None,
+                    colour: None,
+                    bg_colour: None,
                     bold: None,
                     italics: None,
                 }),
                 text_c: Some(TextStyleConfig::TextStyle {
-                    color: Some(ColorStr("magenta".into())),
-                    bg_color: Some(ColorStr("255, 255, 255".into())),
+                    colour: Some(ColourStr("magenta".into())),
+                    bg_colour: Some(ColourStr("255, 255, 255".into())),
                     bold: Some(true),
                     italics: Some(false),
                 }),
                 text_d: Some(TextStyleConfig::TextStyle {
-                    color: Some(ColorStr("#fff".into())),
-                    bg_color: Some(ColorStr("1, 1, 1".into())),
+                    colour: Some(ColourStr("#fff".into())),
+                    bg_colour: Some(ColourStr("1, 1, 1".into())),
                     bold: Some(false),
                     italics: Some(true),
                 }),
                 text_e: None,
-                bad_color: Some(ColorStr("asdf".into())),
+                bad_color: Some(ColourStr("asdf".into())),
                 bad_list: Some(vec![
-                    ColorStr("red".into()),
-                    ColorStr("asdf".into()),
-                    ColorStr("ghi".into()),
+                    ColourStr("red".into()),
+                    ColourStr("asdf".into()),
+                    ColourStr("ghi".into()),
                 ]),
                 bad_text_a: Some(TextStyleConfig::TextStyle {
-                    color: Some(ColorStr("asdf".into())),
-                    bg_color: None,
+                    colour: Some(ColourStr("asdf".into())),
+                    bg_colour: None,
                     bold: None,
                     italics: None,
                 }),
                 bad_text_b: Some(TextStyleConfig::TextStyle {
-                    color: None,
-                    bg_color: Some(ColorStr("asdf".into())),
+                    colour: None,
+                    bg_colour: Some(ColourStr("asdf".into())),
                     bold: None,
                     italics: None,
                 }),
@@ -514,6 +531,32 @@ mod test {
         set_colour!(s, &dummy.inner, color_d);
         assert_eq!(s.fg.unwrap(), Color::Rgb(0, 0, 0));
         assert_eq!(s.bg, None);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_set_bg_colour() -> anyhow::Result<()> {
+        let mut s = Style::default().bg(Color::Black);
+        let dummy = DummyConfig {
+            inner: Some(InnerDummyConfig::default()),
+        };
+
+        set_bg_colour!(s, &dummy.inner, color_a);
+        assert_eq!(s.fg, None);
+        assert_eq!(s.bg.unwrap(), Color::Black);
+
+        set_bg_colour!(s, &dummy.inner, color_b);
+        assert_eq!(s.fg, None);
+        assert_eq!(s.bg.unwrap(), Color::Red);
+
+        set_bg_colour!(s, &dummy.inner, color_c);
+        assert_eq!(s.fg, None);
+        assert_eq!(s.bg.unwrap(), Color::Rgb(255, 255, 255));
+
+        set_bg_colour!(s, &dummy.inner, color_d);
+        assert_eq!(s.fg, None);
+        assert_eq!(s.bg.unwrap(), Color::Rgb(0, 0, 0));
 
         Ok(())
     }
@@ -550,12 +593,12 @@ mod test {
 
     #[test]
     fn test_bad_set_list() {
-        let mut _s: Vec<Style> = vec![];
         let dummy = DummyConfig {
             inner: Some(InnerDummyConfig::default()),
         };
 
         (move || -> anyhow::Result<()> {
+            let mut _s: Vec<Style>;
             set_colour_list!(_s, &dummy.inner, bad_list);
 
             Ok(())

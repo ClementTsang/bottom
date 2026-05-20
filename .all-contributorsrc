@@ -636,6 +636,107 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "Tommimon",
+      "name": "Tommaso Montanari",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37435103?v=4",
+      "profile": "https://github.com/Tommimon",
+      "contributions": [
+        "design",
+        "ideas"
+      ]
+    },
+    {
+      "login": "jylenhof",
+      "name": "Jean-Yves LENHOF",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36410287?v=4",
+      "profile": "http://blog.lenhof.eu.org",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Saphereye",
+      "name": "Adarsh Das",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59739923?v=4",
+      "profile": "http://saphereye.github.io",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "oxyzenQ",
+      "name": "rezky_nightky",
+      "avatar_url": "https://avatars.githubusercontent.com/u/130107241?v=4",
+      "profile": "https://github.com/oxyzenQ",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "gitgoggles",
+      "name": "gitgoggles",
+      "avatar_url": "https://avatars.githubusercontent.com/u/101480183?v=4",
+      "profile": "https://github.com/gitgoggles",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "thunze",
+      "name": "Tom",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22795263?v=4",
+      "profile": "https://github.com/thunze",
+      "contributions": [
+        "maintenance"
+      ]
+    },
+    {
+      "login": "ggaddy",
+      "name": "G",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13815367?v=4",
+      "profile": "https://github.com/ggaddy",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "lpnh",
+      "name": "Filipe Paniguel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90577992?v=4",
+      "profile": "https://github.com/lpnh",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "WqyJh",
+      "name": "Qiying Wang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15232241?v=4",
+      "profile": "https://www.jianshu.com/u/f5754cd2e83d",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "dastarruer",
+      "name": "dastarruer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/173855353?v=4",
+      "profile": "https://github.com/dastarruer",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ChrisJr404",
+      "name": "ChrisJr404",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11917633?v=4",
+      "profile": "https://linktr.ee/chrisjr404",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
@@ -643,7 +744,7 @@
   "projectOwner": "ClementTsang",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "skipCi": true,
+  "skipCi": false,
   "commitConvention": "angular",
   "commitType": "docs"
 }

@@ -1,5 +1,8 @@
 //! Integration tests for bottom.
 
+#![allow(clippy::unwrap_used)]
+#![allow(missing_docs)]
+
 mod util;
 
 mod arg_tests;

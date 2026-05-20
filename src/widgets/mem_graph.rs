@@ -1,15 +1,15 @@
 use std::time::Instant;
 
+use crate::components::time_series::{PercentTimeGraph, TimeseriesConfig};
+
 pub struct MemWidgetState {
-    pub current_display_time: u64,
-    pub autohide_timer: Option<Instant>,
+    pub graph: PercentTimeGraph,
 }
 
 impl MemWidgetState {
-    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
+    pub fn init(config: TimeseriesConfig, autohide_timer: Option<Instant>) -> Self {
         MemWidgetState {
-            current_display_time,
-            autohide_timer,
+            graph: PercentTimeGraph::new(config, autohide_timer),
         }
     }
 }

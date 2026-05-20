@@ -1,4 +1,7 @@
-//! General build script used by bottom to generate completion files and set binary version.
+//! General build script used by bottom to generate completion files and set
+//! binary version.
+
+#![expect(clippy::unwrap_used)]
 
 #[expect(dead_code)]
 #[path = "src/options/args.rs"]
@@ -88,10 +91,7 @@ fn nightly_version() {
         Some(var) if !var.is_empty() && var == "ci" => {
             let version = env!("CARGO_PKG_VERSION");
 
-            if let Some(hash) = extract_sha(option_env!("CIRRUS_CHANGE_IN_REPO")) {
-                // May be set if we're building with Cirrus CI.
-                output_nightly_version(version, hash);
-            } else if let Some(hash) = extract_sha(option_env!("GITHUB_SHA")) {
+            if let Some(hash) = extract_sha(option_env!("GITHUB_SHA")) {
                 // May be set if we're building with GHA.
                 output_nightly_version(version, hash);
             } else if let Ok(output) = std::process::Command::new("git")
@@ -108,7 +108,6 @@ fn nightly_version() {
     }
 
     println!("cargo:rerun-if-env-changed={ENV_KEY}");
-    println!("cargo:rerun-if-env-changed=CIRRUS_CHANGE_IN_REPO");
 }
 
 fn main() -> io::Result<()> {

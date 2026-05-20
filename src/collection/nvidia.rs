@@ -1,13 +1,13 @@
 use std::{num::NonZeroU64, sync::OnceLock};
 
-use hashbrown::HashMap;
 use nvml_wrapper::{
     Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError,
 };
 
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
-    collection::{memory::MemData, temperature::TempSensorData},
+    collection::{memory::MemData, processes::Pid, temperature::TempSensorData},
+    utils::int_hash::IntHashMap,
 };
 
 pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
@@ -15,13 +15,14 @@ pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
 pub struct GpusData {
     pub memory: Option<Vec<(String, MemData)>>,
     pub temperature: Option<Vec<TempSensorData>>,
-    pub procs: Option<(u64, Vec<HashMap<u32, (u64, u32)>>)>,
+    pub procs: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
 }
 
 /// Wrapper around Nvml::init
 ///
 /// On Linux, if `Nvml::init()` fails, this function attempts to explicitly load
-/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls `Nvml::init`.
+/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls
+/// `Nvml::init`.
 ///
 /// This is a workaround until https://github.com/Cldfire/nvml-wrapper/pull/63 is accepted.
 /// Then, we can go back to calling `Nvml::init` directly on all platforms.
@@ -44,7 +45,7 @@ fn init_nvml() -> Result<Nvml, NvmlError> {
 /// Returns the GPU data from NVIDIA cards.
 #[inline]
 pub fn get_nvidia_vecs(
-    filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
+    filter: &Option<Filter>, graph_filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
 ) -> Option<GpusData> {
     if let Ok(nvml) = NVML_DATA.get_or_init(init_nvml) {
         if let Ok(num_gpu) = nvml.device_count() {
@@ -70,8 +71,9 @@ pub fn get_nvidia_vecs(
                             }
                         }
 
-                        if widgets_to_harvest.use_temp
-                            && Filter::optional_should_keep(filter, &name)
+                        if (widgets_to_harvest.use_temp || widgets_to_harvest.use_temp_graph)
+                            && (Filter::optional_should_keep(filter, &name)
+                                || Filter::optional_should_keep(graph_filter, &name))
                         {
                             if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
                                 temp_vec.push(TempSensorData {
@@ -88,11 +90,11 @@ pub fn get_nvidia_vecs(
                     }
 
                     if widgets_to_harvest.use_proc {
-                        let mut procs = HashMap::new();
+                        let mut procs = IntHashMap::default();
 
                         if let Ok(gpu_procs) = device.process_utilization_stats(None) {
                             for proc in gpu_procs {
-                                let pid = proc.pid;
+                                let pid = proc.pid as Pid;
                                 let gpu_util = proc.sm_util + proc.enc_util + proc.dec_util;
                                 procs.insert(pid, (0, gpu_util));
                             }
@@ -100,7 +102,7 @@ pub fn get_nvidia_vecs(
 
                         if let Ok(compute_procs) = device.running_compute_processes() {
                             for proc in compute_procs {
-                                let pid = proc.pid;
+                                let pid = proc.pid as Pid;
                                 let gpu_mem = match proc.used_gpu_memory {
                                     UsedGpuMemory::Used(val) => val,
                                     UsedGpuMemory::Unavailable => 0,
@@ -116,7 +118,7 @@ pub fn get_nvidia_vecs(
                         // Use the legacy API too but prefer newer API results
                         if let Ok(graphics_procs) = device.running_graphics_processes_v2() {
                             for proc in graphics_procs {
-                                let pid = proc.pid;
+                                let pid = proc.pid as Pid;
                                 let gpu_mem = match proc.used_gpu_memory {
                                     UsedGpuMemory::Used(val) => val,
                                     UsedGpuMemory::Unavailable => 0,
@@ -131,7 +133,7 @@ pub fn get_nvidia_vecs(
 
                         if let Ok(graphics_procs) = device.running_graphics_processes() {
                             for proc in graphics_procs {
-                                let pid = proc.pid;
+                                let pid = proc.pid as Pid;
                                 let gpu_mem = match proc.used_gpu_memory {
                                     UsedGpuMemory::Used(val) => val,
                                     UsedGpuMemory::Unavailable => 0,

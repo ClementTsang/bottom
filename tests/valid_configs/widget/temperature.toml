@@ -1,0 +1,11 @@
+# This uses the newer temperature config location.
+
+[temperature]
+default_sort = "Temp"
+
+[temperature.sensor_filter]
+is_list_ignored = true
+list = ["cpu", "wifi"]
+regex = false
+case_sensitive = false
+whole_word = false

@@ -14,6 +14,8 @@ on:
         required: false
         type: boolean
 
+permissions: {}
+
 env:
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_DEV_DEBUG: 0
@@ -23,13 +25,13 @@ jobs:
   # Check if things should be skipped, or if this is a mock job.
   initialize-job:
     name: initialize-job
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
       - name: Check if this action should be skipped
         id: skip_check
-        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
+        uses: ClementTsang/skip-duplicate-actions@41b0a75f656d455934ffa6a46b779d8d996ac47c
         with:
           skip_after_successful_duplicate: "true"
           do_not_skip: '["workflow_dispatch"]'
@@ -47,6 +49,10 @@ jobs:
   build-release:
     needs: initialize-job
     if: ${{ needs.initialize-job.outputs.should_skip != 'true' }}
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
     uses: ./.github/workflows/build_releases.yml
     with:
       caller: "nightly"
@@ -55,10 +61,14 @@ jobs:
   upload-release:
     name: upload-release
     needs: build-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      TAG_NAME: ${{ steps.tag_release_name.outputs.TAG_NAME }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -74,24 +84,81 @@ jobs:
           echo "Generated $(ls ./release | wc -l) files:"
           du -h -d 0 ./release/*
 
-      - name: Delete tag and release if not mock
+      - name: Create and set tag name and release name
         if: github.event.inputs.isMock != 'true'
-        run: gh release delete nightly --cleanup-tag
+        id: tag_release_name
+        run: |
+          COMMIT_HASH=$(git rev-parse --short=8 HEAD)
+          TIME=$(date +%s)
+          TAG_NAME=$(echo "nightly-$COMMIT_HASH-$TIME")
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "TAG_NAME=$$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "$TAG_NAME"
+
+          DATE=$(date '+%Y-%m-%d')
+          RELEASE_NAME=$(echo "Nightly ($DATE)")
+          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
+          echo "$RELEASE_NAME"
+
+      # Delete all but last three nightly runs, as well as nightly runs that are a duplicate of today.
+      - name: Delete old tags and release if not mock
+        if: github.event.inputs.isMock != 'true'
+        run: |
+          echo "Deleting any nightly runs with the same name as today's nightly run..."
+          while true; do
+            TO_DELETE_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-")) | select (.name == $RELEASE_NAME)][0] | .tagName' | tr -d '"')
+            if [[ "$TO_DELETE_NIGHTLY" != "null" && "$TO_DELETE_NIGHTLY" == *"nightly-"* ]]; then
+              echo "Will delete nightly release with tag '$TO_DELETE_NIGHTLY'";
+              gh release delete $TO_DELETE_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
+            else
+              echo "no nightly releases left, done";
+              break;
+            fi
+          done
+
+          echo "Now pruning all but the last two nightly runs (so we end up with 3 releases after)..."
+          while true; do
+            # Very gross trick - keep deleting the 3rd nightly element ([2]) until null.
+            TO_DELETE_NIGHTLY=$(gh release list --json name,tagName,publishedAt | jq --arg RELEASE_NAME "$RELEASE_NAME" -c '[.[] | select (.tagName | contains("nightly-"))][2] | .tagName' | tr -d '"')
+            if [[ "$TO_DELETE_NIGHTLY" != "null" && "$TO_DELETE_NIGHTLY" == *"nightly-"* ]]; then
+              echo "Will delete nightly release with tag '$TO_DELETE_NIGHTLY'";
+              gh release delete $TO_DELETE_NIGHTLY --cleanup-tag || { echo "couldn't delete previous nightly release, halting"; break; }
+            else
+              echo "no nightly releases left, done";
+              break;
+            fi
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release
-        run: sleep 10
-        if: github.event.inputs.isMock != 'true'
-
+      # As a workaround to immutable releases, we create it as a draft first, then manually publish it after.
       - name: Add all release files and create nightly release if not mock
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # 2.0.8
         if: github.event.inputs.isMock != 'true'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
-          tag_name: "nightly"
-          draft: false
+          tag_name: ${{ env.TAG_NAME }}
+          draft: true
           fail_on_unmatched_files: true
+          name: ${{ env.RELEASE_NAME }}
           files: |
             ./release/*
+
+      - name: Publish the draft release
+        if: github.event.inputs.isMock != 'true'
+        run: gh release edit "$TAG_NAME" --draft=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docs:
+    needs: [initialize-job, upload-release]
+    if: ${{ needs.initialize-job.outputs.should_skip != 'true' && github.event.inputs.isMock != 'true' }}
+    permissions:
+      pages: write
+      id-token: write
+      contents: write
+    uses: ./.github/workflows/docs.yml
+    secrets: inherit
+    with:
+      version: nightly

@@ -1,0 +1,14 @@
+# We allow [network] as an alias since that's what it used to be called.
+
+[network]
+use_log = false
+use_bytes = false
+legend_position = "right"
+use_binary_prefix = false
+
+[network.interface_filter]
+is_list_ignored = true
+list = ["virbr0.*"]
+regex = true
+case_sensitive = false
+whole_word = false

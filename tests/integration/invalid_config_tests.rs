@@ -48,7 +48,7 @@ fn test_invalid_colour_hex() {
     btm_command(&["-C", "./tests/invalid_configs/invalid_colour_hex.toml"])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid hex color"));
+        .stderr(predicate::str::contains("invalid hex colour"));
 }
 
 /// Checks for if a hex is too long
@@ -57,7 +57,7 @@ fn test_invalid_colour_hex_2() {
     btm_command(&["-C", "./tests/invalid_configs/invalid_colour_hex_2.toml"])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid hex color"));
+        .stderr(predicate::str::contains("invalid hex colour"));
 }
 
 /// Checks unicode hex because the way we originally did it could cause char
@@ -67,7 +67,7 @@ fn test_invalid_colour_hex_3() {
     btm_command(&["-C", "./tests/invalid_configs/invalid_colour_hex_3.toml"])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid hex color"));
+        .stderr(predicate::str::contains("invalid hex colour"));
 }
 
 #[test]
@@ -75,7 +75,7 @@ fn test_invalid_colour_name() {
     btm_command(&["-C", "./tests/invalid_configs/invalid_colour_name.toml"])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid named color"));
+        .stderr(predicate::str::contains("invalid named colour"));
 }
 
 #[test]
@@ -99,7 +99,7 @@ fn test_invalid_colour_string() {
     btm_command(&["-C", "./tests/invalid_configs/invalid_colour_string.toml"])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid named color"));
+        .stderr(predicate::str::contains("invalid named colour"));
 }
 
 #[test]
@@ -121,7 +121,7 @@ fn test_invalid_default_widget_count() {
     ])
     .assert()
     .failure()
-    .stderr(predicate::str::contains("number too large"));
+    .stderr(predicate::str::contains("integer number overflowed"));
 }
 
 #[test]
@@ -138,4 +138,34 @@ fn test_invalid_disk_column() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("doesn't match"));
+}
+
+#[test]
+fn test_invalid_temp_disk_default_sorts() {
+    btm_command(&[
+        "-C",
+        "./tests/invalid_configs/invalid_temp_default_sort.toml",
+    ])
+    .assert()
+    .failure()
+    .stderr(predicate::str::contains("doesn't match"));
+
+    btm_command(&[
+        "-C",
+        "./tests/invalid_configs/invalid_disk_default_sort.toml",
+    ])
+    .assert()
+    .failure()
+    .stderr(predicate::str::contains("doesn't match"));
+}
+
+#[test]
+fn test_invalid_proc_default_sort() {
+    btm_command(&[
+        "-C",
+        "./tests/invalid_configs/invalid_proc_default_sort.toml",
+    ])
+    .assert()
+    .failure()
+    .stderr(predicate::str::contains("doesn't match"));
 }

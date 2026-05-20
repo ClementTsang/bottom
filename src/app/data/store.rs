@@ -7,21 +7,28 @@ use super::{ProcessData, TimeSeriesData};
 #[cfg(feature = "battery")]
 use crate::collection::batteries;
 use crate::{
-    app::AppConfigFields,
-    collection::{Data, cpu, disks, memory::MemData, network},
-    dec_bytes_per_second_string,
+    app::{AppConfigFields, DataFilters, filter::Filter, layout_manager::UsedWidgets},
+    collection::{
+        Data,
+        cpu::{CpuHarvest, LoadAvgHarvest},
+        disks,
+        memory::MemData,
+        network::NetworkHarvest,
+    },
     utils::data_units::DataUnit,
     widgets::{DiskWidgetData, TempWidgetData},
 };
 
 /// A collection of data. This is where we dump data into.
 ///
-/// TODO: Maybe reduce visibility of internal data, make it only accessible through DataStore?
+/// TODO: Maybe reduce visibility of internal data, make it only accessible
+/// through DataStore?
 #[derive(Debug, Clone)]
 pub struct StoredData {
-    pub last_update_time: Instant, // FIXME: (points_rework_v1) we could be able to remove this with some more refactoring.
-    pub timeseries_data: TimeSeriesData,
-    pub network_harvest: network::NetworkHarvest,
+    // FIXME: (points_rework_v1) we could be able to remove this with some more refactoring.
+    pub last_update_time: Instant,
+    pub time_series_data: TimeSeriesData,
+    pub network_harvest: NetworkHarvest,
     pub ram_harvest: Option<MemData>,
     pub swap_harvest: Option<MemData>,
     #[cfg(not(target_os = "windows"))]
@@ -30,10 +37,11 @@ pub struct StoredData {
     pub arc_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
     pub gpu_harvest: Vec<(String, MemData)>,
-    pub cpu_harvest: Vec<cpu::CpuData>,
-    pub load_avg_harvest: cpu::LoadAvgHarvest,
+    pub cpu_harvest: CpuHarvest,
+    pub load_avg_harvest: LoadAvgHarvest,
     pub process_data: ProcessData,
-    /// TODO: (points_rework_v1) Might be a better way to do this without having to store here?
+    /// TODO: (points_rework_v1) Might be a better way to do this without having
+    /// to store here?
     pub prev_io: Vec<(u64, u64)>,
     pub disk_harvest: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
@@ -45,14 +53,14 @@ impl Default for StoredData {
     fn default() -> Self {
         StoredData {
             last_update_time: Instant::now(),
-            timeseries_data: TimeSeriesData::default(),
-            network_harvest: network::NetworkHarvest::default(),
+            time_series_data: TimeSeriesData::default(),
+            network_harvest: NetworkHarvest::default(),
             ram_harvest: None,
             #[cfg(not(target_os = "windows"))]
             cache_harvest: None,
             swap_harvest: None,
-            cpu_harvest: Default::default(),
-            load_avg_harvest: cpu::LoadAvgHarvest::default(),
+            cpu_harvest: CpuHarvest::default(),
+            load_avg_harvest: LoadAvgHarvest::default(),
             process_data: Default::default(),
             prev_io: Vec::default(),
             disk_harvest: Vec::default(),
@@ -76,10 +84,14 @@ impl StoredData {
         clippy::boxed_local,
         reason = "This avoids warnings on certain platforms (e.g. 32-bit)."
     )]
-    fn eat_data(&mut self, mut data: Box<Data>, settings: &AppConfigFields) {
+    fn eat_data(
+        &mut self, mut data: Box<Data>, settings: &AppConfigFields, used_widgets: &UsedWidgets,
+        filters: &DataFilters,
+    ) {
         let harvested_time = data.collection_time;
 
-        // We must adjust all the network values to their selected type (defaults to bits).
+        // We must adjust all the network values to their selected type (defaults to
+        // bits).
         if matches!(settings.network_unit_type, DataUnit::Byte) {
             if let Some(network) = &mut data.network {
                 network.rx /= 8;
@@ -88,7 +100,8 @@ impl StoredData {
         }
 
         if !settings.use_basic_mode {
-            self.timeseries_data.add(&data);
+            self.time_series_data
+                .add(&data, used_widgets, settings, filters);
         }
 
         if let Some(network) = data.network {
@@ -114,25 +127,7 @@ impl StoredData {
         }
 
         if let Some(cpu) = data.cpu {
-            self.cpu_harvest.clear();
-
-            if let Some(avg) = cpu.avg {
-                self.cpu_harvest.push(cpu::CpuData {
-                    data_type: cpu::CpuDataType::Avg,
-                    usage: avg,
-                });
-            }
-
-            self.cpu_harvest
-                .extend(
-                    cpu.cpus
-                        .into_iter()
-                        .enumerate()
-                        .map(|(core, usage)| cpu::CpuData {
-                            data_type: cpu::CpuDataType::Cpu(core as u32),
-                            usage,
-                        }),
-                );
+            self.cpu_harvest = cpu;
         }
 
         if let Some(load_avg) = data.load_avg {
@@ -144,6 +139,7 @@ impl StoredData {
             .map(|sensors| {
                 sensors
                     .into_iter()
+                    .filter(|temp| Filter::optional_should_keep(&filters.temp_filter, &temp.name))
                     .map(|temp| TempWidgetData {
                         sensor: temp.name,
                         temperature: temp
@@ -232,7 +228,7 @@ impl StoredData {
                         reason = "this is fine since it's done via a static OnceLock. In the future though, separate it out."
                     )]
                     if let Some(new_name) = DISK_REGEX
-                        .get_or_init(|| Regex::new(r"disk\d+").unwrap())
+                        .get_or_init(|| Regex::new(r"disk\d+").expect("valid regex"))
                         .find(checked_name)
                     {
                         io.get(new_name.as_str())
@@ -246,21 +242,22 @@ impl StoredData {
                 }
             };
 
-            let (mut io_read, mut io_write) = ("N/A".into(), "N/A".into());
+            let (mut io_read_rate_bytes, mut io_write_rate_bytes) = (None, None);
             if let Some(Some(io_device)) = io_device {
                 if let Some(prev_io) = self.prev_io.get_mut(itx) {
-                    let r_rate = ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
-                        / time_since_last_harvest)
-                        .round() as u64;
+                    io_read_rate_bytes = Some(
+                        ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
+                            / time_since_last_harvest)
+                            .round() as u64,
+                    );
 
-                    let w_rate = ((io_device.write_bytes.saturating_sub(prev_io.1)) as f64
-                        / time_since_last_harvest)
-                        .round() as u64;
+                    io_write_rate_bytes = Some(
+                        ((io_device.write_bytes.saturating_sub(prev_io.1)) as f64
+                            / time_since_last_harvest)
+                            .round() as u64,
+                    );
 
                     *prev_io = (io_device.read_bytes, io_device.write_bytes);
-
-                    io_read = dec_bytes_per_second_string(r_rate).into();
-                    io_write = dec_bytes_per_second_string(w_rate).into();
                 }
             }
 
@@ -276,8 +273,8 @@ impl StoredData {
                 used_bytes: device.used_space,
                 total_bytes: device.total_space,
                 summed_total_bytes,
-                io_read,
-                io_write,
+                io_read_rate_bytes,
+                io_write_rate_bytes,
             });
         }
     }
@@ -293,13 +290,24 @@ pub enum FrozenState {
 }
 
 /// What data to share to other parts of the application.
-#[derive(Default)]
 pub struct DataStore {
     frozen_state: FrozenState,
     main: StoredData,
+    used_widgets: UsedWidgets,
+    filters: DataFilters,
 }
 
 impl DataStore {
+    /// Create a new [`DataStore`]
+    pub fn new(used_widgets: UsedWidgets) -> Self {
+        Self {
+            frozen_state: FrozenState::default(),
+            main: StoredData::default(),
+            used_widgets,
+            filters: DataFilters::default(),
+        }
+    }
+
     /// Toggle whether the [`DataState`] is frozen or not.
     pub fn toggle_frozen(&mut self) {
         match &self.frozen_state {
@@ -315,8 +323,9 @@ impl DataStore {
         matches!(self.frozen_state, FrozenState::Frozen(_))
     }
 
-    /// Return a reference to the currently available data. Note that if the data is
-    /// in a frozen state, it will return the snapshot of data from when it was frozen.
+    /// Return a reference to the currently available data. Note that if the
+    /// data is in a frozen state, it will return the snapshot of data from
+    /// when it was frozen.
     pub fn get_data(&self) -> &StoredData {
         match &self.frozen_state {
             FrozenState::NotFrozen => &self.main,
@@ -324,14 +333,19 @@ impl DataStore {
         }
     }
 
+    pub fn set_filters(&mut self, filters: DataFilters) {
+        self.filters = filters;
+    }
+
     /// Eat data.
     pub fn eat_data(&mut self, data: Box<Data>, settings: &AppConfigFields) {
-        self.main.eat_data(data, settings);
+        self.main
+            .eat_data(data, settings, &self.used_widgets, &self.filters);
     }
 
     /// Clean data.
     pub fn clean_data(&mut self, max_duration: Duration) {
-        self.main.timeseries_data.prune(max_duration);
+        self.main.time_series_data.prune(max_duration);
     }
 
     /// Reset data state.

@@ -5,12 +5,12 @@ mod sort_table;
 
 use std::{borrow::Cow, collections::BTreeMap};
 
-use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use itertools::Itertools;
 pub use process_columns::*;
 pub use process_data::*;
 use query::{ProcessQuery, parse_query};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use sort_table::SortTableColumn;
 
 use crate::{
@@ -24,39 +24,30 @@ use crate::{
     },
     collection::processes::{Pid, ProcessHarvest},
     options::config::style::Styles,
+    utils::int_hash::IntHashMap,
+    widgets::query::QueryOptions,
 };
 
 /// ProcessSearchState only deals with process' search's current settings and
 /// state.
+#[derive(Default)]
 pub struct ProcessSearchState {
+    // TODO: Flatten AppSearchState as it's been generalized further.
     pub search_state: AppSearchState,
-    pub is_ignoring_case: bool,
-    pub is_searching_whole_word: bool,
-    pub is_searching_with_regex: bool,
-}
-
-impl Default for ProcessSearchState {
-    fn default() -> Self {
-        ProcessSearchState {
-            search_state: AppSearchState::default(),
-            is_ignoring_case: true,
-            is_searching_whole_word: false,
-            is_searching_with_regex: false,
-        }
-    }
+    pub query_options: QueryOptions,
 }
 
 impl ProcessSearchState {
     pub fn search_toggle_ignore_case(&mut self) {
-        self.is_ignoring_case = !self.is_ignoring_case;
+        self.query_options.ignore_case = !self.query_options.ignore_case;
     }
 
     pub fn search_toggle_whole_word(&mut self) {
-        self.is_searching_whole_word = !self.is_searching_whole_word;
+        self.query_options.whole_word = !self.query_options.whole_word;
     }
 
     pub fn search_toggle_regex(&mut self) {
-        self.is_searching_with_regex = !self.is_searching_with_regex;
+        self.query_options.use_regex = !self.query_options.use_regex;
     }
 }
 
@@ -72,11 +63,11 @@ impl TreeCollapsed {
     pub(crate) fn new(default_collapsed: bool) -> Self {
         if default_collapsed {
             TreeCollapsed::DefaultCollapse {
-                expanded_pids: HashSet::new(),
+                expanded_pids: HashSet::default(),
             }
         } else {
             TreeCollapsed::DefaultExpand {
-                collapsed_pids: HashSet::new(),
+                collapsed_pids: HashSet::default(),
             }
         }
     }
@@ -164,6 +155,9 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         User => SortColumn::soft(User, Some(0.05)),
         State => SortColumn::hard(State, 9),
         Time => SortColumn::new(Time),
+        Priority => SortColumn::new(Priority).default_descending(),
+        #[cfg(unix)]
+        Nice => SortColumn::new(Nice),
         #[cfg(feature = "gpu")]
         GpuMemValue => SortColumn::new(GpuMemValue).default_descending(),
         #[cfg(feature = "gpu")]
@@ -180,6 +174,7 @@ pub struct ProcTableConfig {
     pub is_use_regex: bool,
     pub show_memory_as_values: bool,
     pub is_command: bool,
+    pub default_sort: Option<ProcColumn>,
 }
 
 /// A hacky workaround for now.
@@ -197,6 +192,9 @@ pub enum ProcWidgetColumn {
     User,
     State,
     Time,
+    Priority,
+    #[cfg(unix)]
+    Nice,
     #[cfg(feature = "gpu")]
     GpuMem,
     #[cfg(feature = "gpu")]
@@ -233,6 +231,8 @@ pub struct ProcWidgetState {
     pub is_sort_open: bool,
     pub force_rerender: bool,
     pub force_update_data: bool,
+    #[cfg(target_os = "linux")]
+    pub hide_k_threads: bool,
 }
 
 impl ProcWidgetState {
@@ -245,6 +245,7 @@ impl ProcWidgetState {
             left_to_right: true,
             is_basic: false,
             show_table_scroll_position: false,
+            show_table_scroll_bar: false,
             show_current_entry_when_unfocused: false,
         };
         let styling = DataTableStyling::from_palette(palette);
@@ -262,6 +263,7 @@ impl ProcWidgetState {
             left_to_right: true,
             is_basic: config.use_basic_mode,
             show_table_scroll_position: config.show_table_scroll_position,
+            show_table_scroll_bar: config.show_table_scroll_bar,
             show_current_entry_when_unfocused: false,
         };
         let props = SortDataTableProps {
@@ -337,6 +339,9 @@ impl ProcWidgetState {
                             ProcWidgetColumn::User => User,
                             ProcWidgetColumn::State => State,
                             ProcWidgetColumn::Time => Time,
+                            ProcWidgetColumn::Priority => Priority,
+                            #[cfg(unix)]
+                            ProcWidgetColumn::Nice => Nice,
                             #[cfg(feature = "gpu")]
                             ProcWidgetColumn::GpuMem => {
                                 if mem_as_values {
@@ -365,6 +370,10 @@ impl ProcWidgetState {
                         User,
                         State,
                         Time,
+                        Priority,
+                        // Maybe add nice back as a default when I can figure out how to do the
+                        // default configs better for Windows? As currently otherwise there's a
+                        // mismatch.
                     ];
 
                     default_columns.into_iter().map(make_column).collect()
@@ -390,6 +399,9 @@ impl ProcWidgetState {
                     State => ProcWidgetColumn::State,
                     User => ProcWidgetColumn::User,
                     Time => ProcWidgetColumn::Time,
+                    Priority => ProcWidgetColumn::Priority,
+                    #[cfg(unix)]
+                    Nice => ProcWidgetColumn::Nice,
                     #[cfg(feature = "gpu")]
                     GpuMemValue | GpuMemPercent => ProcWidgetColumn::GpuMem,
                     #[cfg(feature = "gpu")]
@@ -398,18 +410,26 @@ impl ProcWidgetState {
             })
             .collect::<IndexSet<_>>();
 
-        let (default_sort_index, default_sort_order) =
-            if matches!(mode, ProcWidgetMode::Tree { .. }) {
-                if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::PidOrCount) {
-                    (index, columns[index].default_order)
-                } else {
-                    (0, columns[0].default_order)
-                }
-            } else if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::Cpu) {
+        let configured_default_sort = table_config.default_sort.and_then(|c| {
+            let widget_col = ProcWidgetColumn::from(&c);
+            column_mapping
+                .get_index_of(&widget_col)
+                .map(|index| (index, columns[index].default_order))
+        });
+
+        let (default_sort_index, default_sort_order) = if let Some(pair) = configured_default_sort {
+            pair
+        } else if matches!(mode, ProcWidgetMode::Tree { .. }) {
+            if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::PidOrCount) {
                 (index, columns[index].default_order)
             } else {
                 (0, columns[0].default_order)
-            };
+            }
+        } else if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::Cpu) {
+            (index, columns[index].default_order)
+        } else {
+            (0, columns[0].default_order)
+        };
 
         let sort_table = Self::new_sort_table(config, colours);
         let table = Self::new_process_table(
@@ -434,6 +454,8 @@ impl ProcWidgetState {
             force_update_data: false,
             default_sort_index,
             default_sort_order,
+            #[cfg(target_os = "linux")]
+            hide_k_threads: config.hide_k_threads,
         };
         table.sort_table.set_data(table.column_text());
 
@@ -514,6 +536,11 @@ impl ProcWidgetState {
                     .map(|q| q.check(process, is_using_command))
                     .unwrap_or(true)
                 {
+                    #[cfg(target_os = "linux")]
+                    if self.hide_k_threads && process.process_type.is_kernel() {
+                        return None;
+                    }
+
                     Some(*pid)
                 } else {
                     None
@@ -545,10 +572,10 @@ impl ProcWidgetState {
         // - The process contains some descendant that matches.
         // - The process's parent (and only parent, not any ancestor) matches.
         let filtered_tree = {
-            let mut filtered_tree: HashMap<Pid, Vec<Pid>> = HashMap::default();
+            let mut filtered_tree: IntHashMap<Pid, Vec<Pid>> = IntHashMap::default();
 
             // We do a simple DFS traversal to build our filtered parent-to-tree mappings.
-            let mut visited_pids: HashMap<Pid, bool> = HashMap::default();
+            let mut visited_pids: IntHashMap<Pid, bool> = IntHashMap::default();
             let mut stack = orphan_pids
                 .iter()
                 .filter_map(|process| process_harvest.get(process))
@@ -632,7 +659,11 @@ impl ProcWidgetState {
 
         stack.sort_unstable_by_key(|p| p.pid);
 
-        let column = self.table.columns.get(self.table.sort_index()).unwrap();
+        let column = self
+            .table
+            .columns
+            .get(self.table.sort_index())
+            .expect("columns should contain the current sort index");
         sort_skip_pid_asc(column.inner(), &mut stack, self.table.order());
 
         let mut length_stack = vec![stack.len()];
@@ -673,7 +704,8 @@ impl ProcWidgetState {
                     has_children = !children_pids.is_empty();
                 }
 
-                // This is so that if an entry is "collapsed" but there are no children, avoid drawing the "+".
+                // This is so that if an entry is "collapsed" but there are no children, avoid
+                // drawing the "+".
                 let prefix = if has_children {
                     if prefixes.is_empty() {
                         "+ ".to_string()
@@ -759,6 +791,11 @@ impl ProcWidgetState {
         let is_mem_percent = self.is_mem_percent();
 
         let filtered_iter = process_harvest.values().filter(|process| {
+            #[cfg(target_os = "linux")]
+            if self.hide_k_threads && process.process_type.is_kernel() {
+                return false;
+            }
+
             search_query
                 .as_ref()
                 .map(|query| query.check(process, is_using_command))
@@ -892,12 +929,18 @@ impl ProcWidgetState {
         self.force_update_data = true;
     }
 
+    #[cfg(target_os = "linux")]
+    pub fn toggle_k_thread(&mut self) {
+        self.hide_k_threads = !self.hide_k_threads;
+        self.force_rerender_and_update();
+    }
+
     /// Marks the selected column as hidden, and automatically resets the
     /// selected column to the default sort index and order.
     fn hide_column(&mut self, column: ProcWidgetColumn) {
         if let Some(index) = self.column_mapping.get_index_of(&column) {
             if let Some(col) = self.table.columns.get_mut(index) {
-                col.is_hidden = true;
+                col.set_hidden(true);
 
                 if self.table.sort_index() == index {
                     self.table.set_sort_index(self.default_sort_index);
@@ -911,7 +954,7 @@ impl ProcWidgetState {
     fn show_column(&mut self, column: ProcWidgetColumn) {
         if let Some(index) = self.column_mapping.get_index_of(&column) {
             if let Some(col) = self.table.columns.get_mut(index) {
-                col.is_hidden = false;
+                col.set_hidden(false);
             }
         }
     }
@@ -1033,48 +1076,36 @@ impl ProcWidgetState {
         self.table
             .columns
             .iter()
-            .filter(|c| !c.is_hidden)
+            .filter(|c| !c.is_hidden())
             .map(|c| c.inner().text())
             .collect::<Vec<_>>()
-    }
-
-    pub fn cursor_char_index(&self) -> usize {
-        self.proc_search.search_state.grapheme_cursor.cur_cursor()
     }
 
     pub fn is_search_enabled(&self) -> bool {
         self.proc_search.search_state.is_enabled
     }
 
-    pub fn current_search_query(&self) -> &str {
-        &self.proc_search.search_state.current_search_query
-    }
-
+    /// Update the current search query.
+    ///
+    /// TODO: Maybe debounce this.
     pub fn update_query(&mut self) {
-        if self
+        let current_query = self
             .proc_search
             .search_state
-            .current_search_query
-            .is_empty()
-        {
-            self.proc_search.search_state.is_blank_search = true;
+            .input_field_state
+            .current_query();
+
+        if current_query.is_empty() {
             self.proc_search.search_state.is_invalid_search = false;
             self.proc_search.search_state.error_message = None;
         } else {
-            match parse_query(
-                &self.proc_search.search_state.current_search_query,
-                self.proc_search.is_searching_whole_word,
-                self.proc_search.is_ignoring_case,
-                self.proc_search.is_searching_with_regex,
-            ) {
+            match parse_query(current_query, &self.proc_search.query_options) {
                 Ok(parsed_query) => {
                     self.proc_search.search_state.query = Some(parsed_query);
-                    self.proc_search.search_state.is_blank_search = false;
                     self.proc_search.search_state.is_invalid_search = false;
                     self.proc_search.search_state.error_message = None;
                 }
                 Err(err) => {
-                    self.proc_search.search_state.is_blank_search = false;
                     self.proc_search.search_state.is_invalid_search = true;
                     self.proc_search.search_state.error_message = Some(err.to_string());
                 }
@@ -1083,23 +1114,12 @@ impl ProcWidgetState {
         self.table.state.display_start_index = 0;
         self.table.state.current_index = 0;
 
-        // Update the internal sizes too.
-        self.proc_search.search_state.update_sizes();
-
         self.force_data_update();
     }
 
     pub fn clear_search(&mut self) {
         self.proc_search.search_state.reset();
         self.force_data_update();
-    }
-
-    pub fn search_walk_forward(&mut self) {
-        self.proc_search.search_state.walk_forward();
-    }
-
-    pub fn search_walk_back(&mut self) {
-        self.proc_search.search_state.walk_backward();
     }
 
     /// Sets the [`ProcWidgetState`]'s current sort index to whatever was in the
@@ -1114,9 +1134,7 @@ impl ProcWidgetState {
     #[cfg(test)]
     pub(crate) fn test_equality(&self, other: &Self) -> bool {
         self.mode == other.mode
-            && self.proc_search.is_ignoring_case == other.proc_search.is_ignoring_case
-            && self.proc_search.is_searching_whole_word == other.proc_search.is_searching_whole_word
-            && self.proc_search.is_searching_with_regex == other.proc_search.is_searching_with_regex
+            && self.proc_search.query_options == other.proc_search.query_options
             && self
                 .table
                 .columns
@@ -1148,6 +1166,8 @@ mod test {
     use std::time::Duration;
 
     use super::*;
+    #[cfg(target_os = "linux")]
+    use crate::collection::processes::ProcessType;
     use crate::widgets::MemUsage;
 
     #[test]
@@ -1165,10 +1185,10 @@ mod test {
             total_write: 0,
             process_state: "N/A",
             process_char: '?',
-            #[cfg(target_family = "unix")]
-            user: "root".to_string(),
+            #[cfg(unix)]
+            user: Some("root".into()),
             #[cfg(not(target_family = "unix"))]
-            user: "N/A".to_string(),
+            user: Some("N/A".into()),
             num_similar: 0,
             disabled: false,
             time: Duration::from_secs(0),
@@ -1178,6 +1198,9 @@ mod test {
             gpu_usage: 0,
             #[cfg(target_os = "linux")]
             process_type: crate::collection::processes::ProcessType::Regular,
+            #[cfg(unix)]
+            nice: 0,
+            priority: -20,
         };
 
         let b = ProcWidgetData {
@@ -1235,8 +1258,8 @@ mod test {
         data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
-            [&c, &d, &a, &b].iter().map(|d| (d.pid)).collect::<Vec<_>>(),
-            data.iter().map(|d| (d.pid)).collect::<Vec<_>>(),
+            [&c, &d, &a, &b].iter().map(|d| d.pid).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
     }
 
@@ -1270,6 +1293,55 @@ mod test {
 
     fn init_default_state(columns: &[ProcWidgetColumn]) -> ProcWidgetState {
         init_state(ProcTableConfig::default(), columns)
+    }
+
+    #[test]
+    fn default_sort_honoured() {
+        let init_columns = [
+            ProcWidgetColumn::PidOrCount,
+            ProcWidgetColumn::ProcNameOrCommand,
+            ProcWidgetColumn::Cpu,
+            ProcWidgetColumn::Mem,
+        ];
+
+        let state_default = init_default_state(&init_columns);
+        assert_eq!(
+            state_default.table.sort_index(),
+            2,
+            "default sort should be CPU (index 2 in init_columns)"
+        );
+
+        let table_config = ProcTableConfig {
+            default_sort: Some(ProcColumn::MemPercent),
+            ..Default::default()
+        };
+        let state_mem = init_state(table_config, &init_columns);
+        assert_eq!(state_mem.table.sort_index(), 3);
+
+        let table_config = ProcTableConfig {
+            default_sort: Some(ProcColumn::Pid),
+            ..Default::default()
+        };
+        let state_pid = init_state(table_config, &init_columns);
+        assert_eq!(state_pid.table.sort_index(), 0);
+    }
+
+    #[test]
+    fn default_sort_falls_back_when_column_absent() {
+        // `default_sort` points at a column the user didn't include. We should
+        // fall back to the built-in default rather than panic or pick column 0.
+        let init_columns = [
+            ProcWidgetColumn::PidOrCount,
+            ProcWidgetColumn::ProcNameOrCommand,
+            ProcWidgetColumn::Cpu,
+        ];
+
+        let table_config = ProcTableConfig {
+            default_sort: Some(ProcColumn::MemPercent),
+            ..Default::default()
+        };
+        let state = init_state(table_config, &init_columns);
+        assert_eq!(state.table.sort_index(), 2);
     }
 
     #[test]
@@ -1621,7 +1693,8 @@ mod test {
         assert_eq!(get_columns(&state.table), original_columns);
     }
 
-    /// Sanity test to ensure tree collapse logic works, both when enabled-by-default or disabled-by-default.
+    /// Sanity test to ensure tree collapse logic works, both when
+    /// enabled-by-default or disabled-by-default.
     #[test]
     fn test_tree_collapse() {
         {
@@ -1659,5 +1732,61 @@ mod test {
             expanded_by_default.toggle(1);
             assert!(!expanded_by_default.is_collapsed(1));
         }
+    }
+    #[cfg(target_os = "linux")]
+    /// Sanity test to ensure kernel thread processes are toggled
+    #[test]
+    fn test_toggle_k_threads() {
+        let init_columns = [
+            ProcWidgetColumn::ProcNameOrCommand,
+            ProcWidgetColumn::PidOrCount,
+            ProcWidgetColumn::State,
+            ProcWidgetColumn::Mem,
+            ProcWidgetColumn::ProcNameOrCommand,
+        ];
+        let mut state = init_default_state(&init_columns);
+        let process_harvest = ProcessHarvest {
+            pid: 1,
+            ..Default::default()
+        };
+        let k_process_harvest = ProcessHarvest {
+            pid: 2,
+            process_type: ProcessType::Kernel,
+            ..Default::default()
+        };
+        // test get_normal_data default is filtered by toggle_k_thread
+        let mut normal_proc_harvest: BTreeMap<Pid, ProcessHarvest> = BTreeMap::new();
+        normal_proc_harvest.insert(1, process_harvest.clone());
+        normal_proc_harvest.insert(2, k_process_harvest.clone());
+        let default_normal_results = state.get_normal_data(&normal_proc_harvest).len();
+        assert!(default_normal_results == 2);
+        state.toggle_k_thread();
+        let filtered_normal_results = state.get_normal_data(&normal_proc_harvest).len();
+        assert!(filtered_normal_results == 1);
+        // test that get_normal_data in grouped mode is still filtered
+        state.mode = ProcWidgetMode::Grouped;
+        let filtered_grouped_results = state.get_normal_data(&normal_proc_harvest).len();
+        assert!(filtered_grouped_results == 1);
+        // test that get_tree_data is filtered on toggle_k_thread
+        let tree_collapsed = TreeCollapsed::new(false);
+        state.mode = ProcWidgetMode::Tree(tree_collapsed.clone());
+        state.hide_k_threads = false;
+        let mut tree_proc_data = ProcessData::default();
+        tree_proc_data.process_harvest.insert(1, process_harvest);
+        tree_proc_data.process_harvest.insert(2, k_process_harvest);
+        tree_proc_data.orphan_pids = vec![1, 2];
+        let tree_stored_data = StoredData {
+            process_data: tree_proc_data,
+            ..Default::default()
+        };
+        let default_tree_results = state
+            .get_tree_data(&tree_collapsed, &tree_stored_data)
+            .len();
+        assert!(default_tree_results == 2);
+        state.toggle_k_thread();
+        let filtered_tree_results = state
+            .get_tree_data(&tree_collapsed, &tree_stored_data)
+            .len();
+        assert!(filtered_tree_results == 1);
     }
 }

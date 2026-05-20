@@ -1,17 +1,18 @@
 use tui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::Style,
     text::{Line, Span},
     widgets::Paragraph,
 };
-use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    app::{App, AppSearchState},
+    app::App,
     canvas::{
         Painter,
-        components::data_table::{DrawInfo, SelectionState},
+        components::{
+            data_table::{DrawInfo, SelectionState},
+            search_input::build_query_spans,
+        },
         drawing_utils::widget_block,
     },
 };
@@ -106,50 +107,6 @@ impl Painter {
     fn draw_search_field(
         &self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        fn build_query_span(
-            search_state: &AppSearchState, available_width: usize, is_on_widget: bool,
-            currently_selected_text_style: Style, text_style: Style,
-        ) -> Vec<Span<'_>> {
-            let start_index = search_state.display_start_char_index;
-            let cursor_index = search_state.grapheme_cursor.cur_cursor();
-            let mut current_width = 0;
-            let query = search_state.current_search_query.as_str();
-
-            if is_on_widget {
-                let mut res = Vec::with_capacity(available_width);
-                for ((index, grapheme), lengths) in
-                    UnicodeSegmentation::grapheme_indices(query, true)
-                        .zip(search_state.size_mappings.values())
-                {
-                    if index < start_index {
-                        continue;
-                    } else if current_width > available_width {
-                        break;
-                    } else {
-                        let styled = if index == cursor_index {
-                            Span::styled(grapheme, currently_selected_text_style)
-                        } else {
-                            Span::styled(grapheme, text_style)
-                        };
-
-                        res.push(styled);
-                        current_width += lengths.end - lengths.start;
-                    }
-                }
-
-                if cursor_index == query.len() {
-                    res.push(Span::styled(" ", currently_selected_text_style))
-                }
-
-                res
-            } else {
-                // This is easier - we just need to get a range of graphemes, rather than
-                // dealing with possibly inserting a cursor (as none is shown!)
-
-                vec![Span::styled(query.to_string(), text_style)]
-            }
-        }
-
         let is_basic = app_state.app_config_fields.use_basic_mode;
 
         if let Some(proc_widget_state) = app_state
@@ -171,11 +128,12 @@ impl Painter {
             proc_widget_state
                 .proc_search
                 .search_state
+                .input_field_state
                 .get_start_position(available_width, app_state.is_force_redraw);
 
             // TODO: [CURSOR] blinking cursor?
-            let query_with_cursor = build_query_span(
-                &proc_widget_state.proc_search.search_state,
+            let query_with_cursor = build_query_spans(
+                &proc_widget_state.proc_search.search_state.input_field_state,
                 available_width,
                 is_selected,
                 self.styles.selected_text_style,
@@ -197,19 +155,19 @@ impl Painter {
             })];
 
             // Text options shamelessly stolen from VS Code.
-            let case_style = if !proc_widget_state.proc_search.is_ignoring_case {
+            let case_style = if !proc_widget_state.proc_search.query_options.ignore_case {
                 self.styles.selected_text_style
             } else {
                 self.styles.text_style
             };
 
-            let whole_word_style = if proc_widget_state.proc_search.is_searching_whole_word {
+            let whole_word_style = if proc_widget_state.proc_search.query_options.whole_word {
                 self.styles.selected_text_style
             } else {
                 self.styles.text_style
             };
 
-            let regex_style = if proc_widget_state.proc_search.is_searching_with_regex {
+            let regex_style = if proc_widget_state.proc_search.query_options.use_regex {
                 self.styles.selected_text_style
             } else {
                 self.styles.text_style
@@ -254,8 +212,13 @@ impl Painter {
                 };
 
             let process_search_block = {
-                let mut block = widget_block(is_basic, is_selected, self.styles.border_type)
-                    .border_style(current_border_style);
+                let mut block = widget_block(
+                    is_basic,
+                    is_selected,
+                    self.styles.border_type,
+                    self.styles.general_widget_style,
+                )
+                .border_style(current_border_style);
 
                 if !is_basic {
                     block = block.title_top(

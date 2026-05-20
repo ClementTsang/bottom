@@ -10,7 +10,7 @@ current_usage = false
 group_processes = false
 case_sensitive = false
 whole_word = false
-regex = true
+regex = false
 default_widget_type = "cpu"
 default_widget_count = 1
 
@@ -19,3 +19,4 @@ theme = "gruvbox"
 
 [processes]
 columns = ["PID", "Name", "CPU%", "Mem%", "Rps", "Wps", "TRead", "TWrite", "State", "Time", "Virt"]
+

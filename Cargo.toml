@@ -1,10 +1,10 @@
 [package]
 name = "bottom"
-version = "0.12.0"
+version = "0.12.3"
 repository = "https://github.com/ClementTsang/bottom"
 license = "MIT"
 description = "A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows."
-documentation = "https://clementtsang.github.io/bottom/stable"
+documentation = "https://bottom.pages.dev/stable"
 readme = "README.md"
 default-run = "btm"
 build = "build.rs"
@@ -17,6 +17,7 @@ exclude = [
     ".idea/",
     ".vscode/",
     "assets/",
+    "demos/",
     "desktop/",
     "docs/",
     "flamegraphs/",
@@ -25,7 +26,6 @@ exclude = [
     "scripts/",
     "wix/",
     ".all-contributorsrc",
-    ".cirrus.yml",
     ".gitignore",
     ".markdownlint.json",
     "CHANGELOG.md",
@@ -33,12 +33,14 @@ exclude = [
     "codecov.yml",
     "CONTRIBUTING.md",
     "Cross.toml",
-    "rust-toolchain.toml",
+    "debug.log",
+    "flamegraph.svg",
+    "profile.json.gz",
     "rustfmt.toml",
 ]
-edition = "2021"
+edition = "2024"
 # The oldest version I've tested that should still build - note this is not an official MSRV!
-rust-version = "1.81"
+rust-version = "1.85"
 
 [lib]
 test = true
@@ -72,103 +74,87 @@ logging = ["fern", "log", "time"]
 generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
-anyhow = "1.0.99"
-backtrace = "0.3.75"
-cfg-if = "1.0.3"
-clap = { version = "4.5.45", features = [
-    "default",
-    "cargo",
-    "wrap_help",
-    "derive",
-] }
+anyhow = "1.0.101"
+cfg-if = "1.0.4"
+clap = { version = "4.5.57", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
 crossterm = "0.29.0"
-ctrlc = { version = "3.4.7", features = ["termination"] }
+ctrlc = { version = "3.5.0", features = ["termination"] }
 dirs = "6.0.0"
-hashbrown = "0.15.5"
-humantime = "2.2.0"
-indexmap = "2.10.0"
-indoc = "2.0.6"
+humantime = "2.3.0"
+indexmap = "2.13.0"
+indoc = "2.0.7"
 itertools = "0.14.0"
-nvml-wrapper = { version = "0.11.0", optional = true, features = [
-    "legacy-functions",
-] }
-regex = "1.11.1"
-serde = { version = "1.0.219", features = ["derive"] }
-starship-battery = { version = "0.10.2", optional = true }
-sysinfo = "=0.37.0"
+nvml-wrapper = { version = "0.11.0", optional = true, features = ["legacy-functions"] }
+ratatui-core = "0.1.0"
+regex = "1.12.3"
+rustc-hash = "2.1.1"
+serde = { version = "1.0.228", features = ["derive"] }
+starship-battery = { version = "0.10.3", optional = true }
+sysinfo = "=0.38.4"
 timeless = "0.0.14-alpha"
-toml_edit = { version = "0.22.27", features = ["serde"] }
-tui = { version = "0.29.0", package = "ratatui", features = [
+toml_edit = { version = "0.24.0", features = ["serde"] }
+tui = { version = "0.30.0", package = "ratatui", features = [
     "unstable-rendered-line-info",
+    "layout-cache",
+    "crossterm",
 ] }
-unicode-ellipsis = "0.3.0"
-unicode-segmentation = "1.12.0"
-unicode-width = "0.2.0"
+unicode-ellipsis = "0.4.0"
+unicode-segmentation = "1.13.2"
+unicode-width = "0.2.2"
 
 # Used for logging. Mostly a debugging tool.
 fern = { version = "0.7.1", optional = true }
-log = { version = "0.4.27", optional = true }
-time = { version = "0.3.41", features = [
-    "local-offset",
-    "formatting",
-    "macros",
-], optional = true }
+log = { version = "0.4.29", optional = true }
+time = { version = "0.3.47", features = ["local-offset", "formatting", "macros"], optional = true }
 
 # These are just used for JSON schema generation.
-schemars = { version = "0.9.0", optional = true }
-serde_json = { version = "1.0.143", optional = true }
+schemars = { version = "1.2.1", optional = true }
+serde_json = { version = "1.0.149", optional = true }
 strum = { version = "0.27.2", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.175"
+libc = "0.2.180"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "1.0.8", features = ["fs", "param"] }
+rustix = { version = "1.1.2", features = ["fs", "param"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10.1"
-mach2 = "0.4.3"
+mach2 = "0.6.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.61.3", features = [
+windows = { version = "0.62.2", features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_Storage_FileSystem",
     "Win32_System_IO",
     "Win32_System_Ioctl",
+    "Win32_System_Performance",
     "Win32_System_ProcessStatus",
     "Win32_System_Threading",
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.143" }
-sysctl = { version = "0.6.0" }
+serde_json = { version = "1.0.145" }
+sysctl = { version = "0.7.1" }
 filedescriptor = "0.8.3"
 
 [dev-dependencies]
-assert_cmd = "2.0.17"
-cargo-husky = { version = "1.5.0", default-features = false, features = [
-    "user-hooks",
-] }
+assert_cmd = "2.1.2"
 predicates = "3.1.3"
-tempfile = { version = "3.21.0", default-features = false }
+tempfile = { version = "3.23.0", default-features = false }
 
 [target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
 portable-pty = "0.9.0"
 
 [build-dependencies]
-clap = { version = "4.5.45", features = [
-    "default",
-    "cargo",
-    "wrap_help",
-    "derive",
-] }
-clap_complete = "4.5.57"
-clap_complete_nushell = "4.5.8"
+clap = { version = "4.5.57", features = ["default", "cargo", "wrap_help", "derive"] }
+clap_complete = "4.5.62"
+clap_complete_nushell = "4.5.10"
 clap_complete_fig = "4.5.2"
-clap_mangen = "0.2.29"
-indoc = "2.0.6"
+clap_mangen = "0.2.31"
+indoc = "2.0.7"
 
 # Compile dependencies with optimizations enabled, even in debug mode.
 [profile.dev.package."*"]
@@ -224,7 +210,13 @@ assets = [
         "usr/share/applications/bottom.desktop",
         "644",
     ],
+    [
+        "assets/icons/bottom-system-monitor.svg",
+        "/usr/share/icons/hicolor/scalable/apps/bottom-system-monitor.svg",
+        "644",
+    ],
 ]
+conflicts = "btm"
 extended-description = """
 
 By default, bottom will look for a config file in ~/.config/bottom/bottom.toml. A config file can be specified \
@@ -240,6 +232,7 @@ depends = "libc6:armhf (>= 2.28)"
 
 [package.metadata.wix]
 output = "bottom_installer.msi"
+product-icon = "assets/icons/bottom.ico"
 
 [package.metadata.generate-rpm]
 assets = [
@@ -250,6 +243,7 @@ assets = [
     { source = "completion/btm.fish", dest = "/usr/share/fish/vendor_completions.d/btm.fish", mode = "644" },
     { source = "completion/_btm", dest = "/usr/share/zsh/vendor-completions/", mode = "644" },
     { source = "desktop/bottom.desktop", dest = "/usr/share/applications/bottom.desktop", mode = "644" },
+    { source = "assets/icons/bottom-system-monitor.svg", dest = "/usr/share/icons/hicolor/scalable/apps/bottom-system-monitor.svg", mode = "644" },
 ]
 
 [lints.rust]
@@ -258,9 +252,11 @@ rust_2018_idioms = "deny"
 
 [lints.rustdoc]
 broken_intra_doc_links = "deny"
+private_intra_doc_links = "deny"
 missing_crate_level_docs = "deny"
 
 [lints.clippy]
 todo = "deny"
 unimplemented = "deny"
 missing_safety_doc = "deny"
+unwrap_used = "deny"
