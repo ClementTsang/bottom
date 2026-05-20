@@ -4,7 +4,10 @@ use std::{io::Read, thread, time::Duration};
 #[cfg(feature = "default")]
 use std::{io::Write, path::Path};
 
-use crate::util::spawn_btm_in_pty;
+use assert_cmd::prelude::*;
+use predicates::prelude::*;
+
+use crate::util::{btm_command, spawn_btm_in_pty};
 
 fn reader_to_string(mut reader: Box<dyn Read>) -> String {
     let mut buf = String::default();
@@ -273,4 +276,13 @@ fn test_newer_temperature() {
 #[test]
 fn test_deprecated_temperature() {
     run_and_kill_cfg("./tests/valid_configs/deprecated/temperature.toml");
+}
+
+/// Test that deprecated warnings are not shown for config options that are not actually set,
+/// even when a [flags] section is present.
+#[test]
+fn test_no_spurious_deprecated_warnings() {
+    btm_command(&["-C", "./tests/valid_configs/empty_flags.toml"])
+        .assert()
+        .stderr(predicate::str::contains("deprecated").not());
 }

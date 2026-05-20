@@ -1,0 +1,4 @@
+# Config with a [flags] section but no deprecated options set.
+# This should not trigger any deprecated warnings.
+
+[flags]
