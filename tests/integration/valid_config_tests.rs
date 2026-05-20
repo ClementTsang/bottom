@@ -1,10 +1,9 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
-use std::{io::Read, thread, time::Duration};
+use std::{io::Read, process::Stdio, thread, time::Duration};
 #[cfg(feature = "default")]
 use std::{io::Write, path::Path};
 
-use assert_cmd::prelude::*;
 use predicates::prelude::*;
 
 use crate::util::{btm_command, spawn_btm_in_pty};
@@ -279,10 +278,31 @@ fn test_deprecated_temperature() {
 }
 
 /// Test that deprecated warnings are not shown for config options that are not actually set,
-/// even when a [flags] section is present.
+/// even when a `[flags]` section is present.
 #[test]
 fn test_no_spurious_deprecated_warnings() {
-    btm_command(&["-C", "./tests/valid_configs/empty_flags.toml"])
-        .assert()
-        .stderr(predicate::str::contains("deprecated").not());
+    let mut child = btm_command(&["-C", "./tests/valid_configs/empty_flags.toml"])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    thread::sleep(Duration::from_secs(1));
+    child.kill().unwrap();
+    child.wait().unwrap();
+
+    let stderr_str = {
+        let mut stderr = child.stderr.take().unwrap();
+        let mut buf = String::new();
+
+        stderr.read_to_string(&mut buf).unwrap();
+        buf
+    };
+
+    assert!(
+        predicate::str::contains("deprecated")
+            .not()
+            .eval(&stderr_str),
+        "Expected no deprecated warnings, but got: {stderr_str}"
+    );
 }
