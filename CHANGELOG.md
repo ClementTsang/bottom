@@ -26,6 +26,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 - [#2035](https://github.com/ClementTsang/bottom/pull/2035): Fix panic when deleting unicode words in search.
 - [#2042](https://github.com/ClementTsang/bottom/pull/2042): Address possible memory usage growth for AMD GPU stat gathering on Linux.
+- [#2069](https://github.com/ClementTsang/bottom/pull/2069): Fix issue in process search with parsing quoted delimiters.
 
 ### Features
 
@@ -50,6 +51,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2063](https://github.com/ClementTsang/bottom/pull/2063): Move process config file options from `[flags]` to be under `[processes]`.
 - [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move CPU config file options from `[flags]` to be under `[cpu]`.
 - [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move memory config file options from `[flags]` to be under `[memory_graph]`.
+- [#2066](https://github.com/ClementTsang/bottom/pull/2066): Take cgroup into account for CPU usage% calculations.
 
 ### Other
 

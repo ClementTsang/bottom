@@ -254,7 +254,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # This group of options represents a command-line option. Flags explicitly
 # added when running (ie: btm -a) will override this config file if an option
 # is also set here.
-[flags]
+#[flags]
 # Deprecated - use cpu.hide_avg_cpu.
 # Whether to hide the average cpu entry.
 #hide_avg_cpu = false

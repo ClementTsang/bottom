@@ -3,28 +3,7 @@
 //! For info about cgroups, see things like [the kernel docs](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html)
 //! and [Kubernetes docs](https://kubernetes.io/docs/concepts/architecture/cgroups/#deprecation-of-cgroup-v1).
 
-use std::{fs, io::BufRead};
-
-/// cgroup memory limits.
-#[derive(Debug)]
-pub(crate) enum CgroupMemLimit {
-    Bytes(u64),
-    Max,
-}
-
-/// cgroup memory usage data.
-#[derive(Debug)]
-pub(crate) struct CgroupMemData {
-    pub used_bytes: u64,
-    pub limit: Option<CgroupMemLimit>,
-}
-
-/// overall cgroup memory data.
-#[derive(Default, Debug)]
-pub(crate) struct CgroupMemCollector {
-    pub ram: Option<CgroupMemData>,
-    pub swap: Option<CgroupMemData>,
-}
+use std::{fs, io::BufRead, time::Instant};
 
 fn read_u64(path: &str) -> Option<u64> {
     fs::read_to_string(path).ok()?.trim().parse().ok()
@@ -42,6 +21,27 @@ fn read_stat_key(path: &str, key: &str) -> Option<u64> {
     }
 
     None
+}
+
+/// Represents cgroup memory limits.
+#[derive(Debug)]
+pub(crate) enum CgroupMemLimit {
+    Bytes(u64),
+    Max,
+}
+
+/// Represents cgroup memory usage data.
+#[derive(Debug)]
+pub(crate) struct CgroupMemData {
+    pub used_bytes: u64,
+    pub limit: Option<CgroupMemLimit>,
+}
+
+/// Gathers memory data from cgroup sources.
+#[derive(Default, Debug)]
+pub(crate) struct CgroupMemCollector {
+    pub ram: Option<CgroupMemData>,
+    pub swap: Option<CgroupMemData>,
 }
 
 impl CgroupMemCollector {
@@ -140,5 +140,137 @@ impl CgroupMemCollector {
         }
 
         could_update
+    }
+}
+
+#[inline]
+fn parse_cpu_quota(cpu_max: String) -> Option<f64> {
+    let mut parts = cpu_max.split_whitespace();
+    let quota_str = parts.next().unwrap_or("");
+
+    if quota_str != "max" {
+        let period: u64 = {
+            let period_str = parts.next().unwrap_or("");
+
+            match period_str.parse() {
+                Ok(v) => v,
+                Err(_) => return None,
+            }
+        };
+
+        match quota_str.parse::<u64>() {
+            Ok(quota) if quota > 0 && period > 0 => Some(quota as f64 / period as f64),
+            _ => None,
+        }
+    } else {
+        None // "max" = unlimited
+    }
+}
+
+/// Gathers CPU data from cgroup sources.
+#[derive(Default, Debug)]
+pub(crate) struct CgroupCpuCollector {
+    /// A maximum number of CPUs (cores) that can be used, as defined by the cgroup.
+    pub cpu_quota: Option<f64>,
+
+    /// Computed average CPU usage percent (only set when a quota is active).
+    pub avg_cpu_percent: Option<f32>,
+
+    /// The previous CPU microsecond time (usage) and when it was last updated. Used to compute average cgroup CPU usage.
+    prev_cpu: Option<(u64, Instant)>,
+}
+
+impl CgroupCpuCollector {
+    pub(crate) fn refresh(&mut self) {
+        if !self.try_update_cpu_cgroup_v1() && !self.try_update_cpu_cgroup_v2() {
+            self.cpu_quota = None;
+            self.avg_cpu_percent = None;
+            self.prev_cpu = None;
+        }
+    }
+
+    /// Try to update CPU data using cgroup v1 semantics. Returns `true` on success.
+    fn try_update_cpu_cgroup_v1(&mut self) -> bool {
+        let quota_raw: i64 = {
+            let quota_str = match fs::read_to_string("/sys/fs/cgroup/cpu/cpu.cfs_quota_us") {
+                Ok(s) => s,
+                Err(_) => return false,
+            };
+
+            match quota_str.trim().parse() {
+                Ok(v) => v,
+                Err(_) => return false,
+            }
+        };
+
+        self.cpu_quota = if quota_raw > 0 {
+            let period = read_u64("/sys/fs/cgroup/cpu/cpu.cfs_period_us");
+
+            period.and_then(|p| {
+                if p > 0 {
+                    Some(quota_raw as f64 / p as f64)
+                } else {
+                    None
+                }
+            })
+        } else {
+            // If it's less than 0 (-1) then it's representing "unlimited" quota (AKA use the full CPU).
+            None
+        };
+
+        // cpuacct.usage is in nanoseconds; convert to microseconds for consistency with v2
+        if let Some(usage_nsec) = read_u64("/sys/fs/cgroup/cpuacct/cpuacct.usage") {
+            self.try_compute_avg_and_update(usage_nsec / 1000);
+        } else {
+            self.avg_cpu_percent = None;
+        }
+
+        true
+    }
+
+    /// Try to update CPU data using cgroup v2 semantics. Returns `true` on success.
+    fn try_update_cpu_cgroup_v2(&mut self) -> bool {
+        let cpu_max = match fs::read_to_string("/sys/fs/cgroup/cpu.max") {
+            Ok(s) => s,
+            Err(_) => return false,
+        };
+
+        self.cpu_quota = parse_cpu_quota(cpu_max);
+
+        // cpu.stat usage_usec is in microseconds
+        if let Some(current_microseconds) = read_stat_key("/sys/fs/cgroup/cpu.stat", "usage_usec") {
+            self.try_compute_avg_and_update(current_microseconds);
+        } else {
+            self.avg_cpu_percent = None;
+        }
+
+        true
+    }
+
+    /// Try and compute average CPU usage based on the current microseconds. Note that this requires _two_ invocations
+    /// to compute a value, as the first invocation just sets the baseline for the next CPU time and timestamp to
+    /// compare with.
+    fn try_compute_avg_and_update(&mut self, current_microseconds: u64) {
+        let now = Instant::now();
+
+        self.avg_cpu_percent = if let (Some(cpu_quota), Some(prev_cpu)) =
+            (self.cpu_quota, self.prev_cpu)
+        {
+            let (prev_microseconds, prev_time) = prev_cpu;
+
+            let elapsed_microseconds = now.duration_since(prev_time).as_micros() as u64;
+            if elapsed_microseconds > 0 && cpu_quota > 0.0 {
+                let delta = current_microseconds.saturating_sub(prev_microseconds);
+                let pct = (delta as f64 / (elapsed_microseconds as f64 * cpu_quota) * 100.0) as f32;
+
+                Some(pct.clamp(0.0, 100.0))
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        self.prev_cpu = Some((current_microseconds, now));
     }
 }
