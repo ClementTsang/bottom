@@ -40,7 +40,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2048](https://github.com/ClementTsang/bottom/pull/2048): Add support for a temperature graph to show sensor temperature change over time.
 - [#2053](https://github.com/ClementTsang/bottom/pull/2053): Add a configurable default sort column for the process widget (`processes.default_sort` or `--process-default-sort`).
 - [#2066](https://github.com/ClementTsang/bottom/pull/2066): Add search support in the help dialog.
-- [#1791](https://github.com/ClementTsang/bottom/pull/1791): Add support for using a short name for the GPU in memory usage.
+- [#1791](https://github.com/ClementTsang/bottom/pull/1791), [#2072](https://github.com/ClementTsang/bottom/pull/2072): Add support for using a short name for the GPU in memory usage.
 
 ### Changes
 
