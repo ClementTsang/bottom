@@ -39,7 +39,8 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2046](https://github.com/ClementTsang/bottom/pull/2046): Add a `show_table_scroll_bar` config option to show a scroll bar on table widgets.
 - [#2048](https://github.com/ClementTsang/bottom/pull/2048): Add support for a temperature graph to show sensor temperature change over time.
 - [#2053](https://github.com/ClementTsang/bottom/pull/2053): Add a configurable default sort column for the process widget (`processes.default_sort` or `--process-default-sort`).
-- [#1754](https://github.com/ClementTsang/bottom/issues/1754): Add search support in the help dialog.
+- [#2066](https://github.com/ClementTsang/bottom/pull/2066): Add search support in the help dialog.
+- [#1791](https://github.com/ClementTsang/bottom/pull/1791): Add support for using a short name for the GPU in memory usage.
 
 ### Changes
 
@@ -109,7 +110,6 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#1891](https://github.com/ClementTsang/bottom/pull/1891): Fix typos in codebase.
 - [#1896](https://github.com/ClementTsang/bottom/pull/1896): Rename Linux icon to avoid collision with generic "bottom"
   icon.
-  
 - [#1913](https://github.com/ClementTsang/bottom/pull/1913): Add `loongarch64-unknown-linux-gnu` binary build target in
   CI.
 - [#1914](https://github.com/ClementTsang/bottom/pull/1914): Add `aarch64-linux-android` binary build target in CI (with

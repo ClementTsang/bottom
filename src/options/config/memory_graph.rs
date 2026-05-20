@@ -16,7 +16,11 @@ pub struct MemoryGraphConfig {
     #[cfg_attr(target_os = "windows", allow(dead_code))]
     pub(crate) cache_memory: Option<bool>,
 
-    /// Whether to subtract freeable ARC from memory usage.
+    /// Whether to subtract ARC that can be freed from memory usage.
     #[cfg_attr(not(feature = "zfs"), allow(dead_code))]
     pub(crate) free_arc: Option<bool>,
+
+    /// Whether to use short GPU names in the memory widget.
+    #[cfg_attr(not(feature = "gpu"), allow(dead_code))]
+    pub(crate) short_gpu_names: Option<bool>,
 }

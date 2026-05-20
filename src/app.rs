@@ -57,6 +57,7 @@ pub struct AppConfigFields {
     pub disable_click: bool,
     pub disable_keys: bool,
     pub enable_gpu: bool,
+    pub short_gpu_names: bool,
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,
     pub show_table_scroll_bar: bool,

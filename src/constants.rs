@@ -390,7 +390,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #enable_cache_memory = false
 
 # Deprecated - use memory.free_arc.
-# Subtract freeable ARC from memory usage
+# Subtract ARC memory that can be freed from memory usage.
 #free_arc = false
 
 # How much data is stored at once in terms of time.
@@ -566,6 +566,22 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
+
+
+# Memory widget configuration
+#[memory_graph]
+
+# Where to place the legend for the memory widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
+#legend_position = "top-right"
+
+# Shows cache and buffer memory. Linux only.
+#cache_memory = false
+
+# Subtract ARC memory that can be freed from memory usage. Only available if the ZFS feature is enabled when built.
+#free_arc = false
+
+# Use short GPU names (e.g. "GPU" or "GPU0", "GPU1") instead of full GPU names. Only available if the GPU feature is enabled when built.
+#short_gpu_names = false
 
 
 # Network widget configuration
