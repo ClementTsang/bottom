@@ -12,6 +12,7 @@ use timeless::data::ChunkedData;
 use crate::{
     app::{AppConfigFields, DataFilters, filter::Filter, layout_manager::UsedWidgets},
     collection::Data,
+    widgets::DiskWidgetData,
 };
 
 /// Values corresponding to a time slice.
@@ -65,6 +66,12 @@ pub struct TimeSeriesData {
     ///
     /// TODO: Maybe make this use TypedTemperature?
     pub temperature: HashMap<String, ChunkedData<f32>>,
+
+    /// Disk I/O read rate data, keyed by device name.
+    pub disk_io_read: HashMap<String, ChunkedData<f64>>,
+
+    /// Disk I/O write rate data, keyed by device name.
+    pub disk_io_write: HashMap<String, ChunkedData<f64>>,
 }
 
 impl TimeSeriesData {
@@ -226,6 +233,42 @@ impl TimeSeriesData {
         }
     }
 
+    /// Update disk I/O time series using already-calculated rates from
+    /// [`DiskWidgetData`]. Devices not present in `disks` get a break inserted
+    /// so the legend keeps them around for the window's remaining lifetime.
+    pub fn update_disk_io(&mut self, disks: &[DiskWidgetData], filter: &Option<Filter>) {
+        let mut not_visited: HashSet<String> = self.disk_io_read.keys().cloned().collect();
+
+        for disk in disks {
+            if !Filter::optional_should_keep(filter, &disk.name) {
+                continue;
+            }
+
+            not_visited.remove(&disk.name);
+
+            let read_entry = self.disk_io_read.entry(disk.name.clone()).or_default();
+            match disk.io_read_rate_bytes {
+                Some(v) => read_entry.push(v as f64),
+                None => read_entry.insert_break(),
+            }
+
+            let write_entry = self.disk_io_write.entry(disk.name.clone()).or_default();
+            match disk.io_write_rate_bytes {
+                Some(v) => write_entry.push(v as f64),
+                None => write_entry.insert_break(),
+            }
+        }
+
+        for name in not_visited {
+            if let Some(entry) = self.disk_io_read.get_mut(&name) {
+                entry.insert_break();
+            }
+            if let Some(entry) = self.disk_io_write.get_mut(&name) {
+                entry.insert_break();
+            }
+        }
+    }
+
     /// Prune any data older than the given duration.
     pub fn prune(&mut self, max_age: Duration) {
         if self.time.is_empty() {
@@ -290,6 +333,28 @@ impl TimeSeriesData {
             let _ = data.prune(end);
 
             // Remove the entry if it is empty. We can always add it again later.
+            if data.no_elements() {
+                false
+            } else {
+                data.shrink_to_fit();
+                true
+            }
+        });
+
+        self.disk_io_read.retain(|_, data| {
+            let _ = data.prune(end);
+
+            if data.no_elements() {
+                false
+            } else {
+                data.shrink_to_fit();
+                true
+            }
+        });
+
+        self.disk_io_write.retain(|_, data| {
+            let _ = data.prune(end);
+
             if data.no_elements() {
                 false
             } else {

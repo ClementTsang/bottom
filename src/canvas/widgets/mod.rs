@@ -2,6 +2,7 @@ use crate::{collection::network::NetworkHarvest, utils::data_units::convert_byte
 
 pub mod cpu_basic;
 pub mod cpu_graph;
+pub mod disk_io_graph;
 pub mod disk_table;
 pub mod mem_basic;
 pub mod mem_graph;

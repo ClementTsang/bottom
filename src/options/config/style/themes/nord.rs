@@ -19,6 +19,16 @@ impl Styles {
             hex!("#bf616a"),
         ];
 
+        let second_colours_list = vec![
+            hex!("#8fbcbb"),
+            hex!("#81a1c1"),
+            hex!("#d8dee9"),
+            hex!("#b48ead"),
+            hex!("#a3be8c"),
+            hex!("#ebcb8b"),
+            hex!("#bf616a"),
+        ];
+
         Self {
             ram_style: hex!("#88c0d0"),
             #[cfg(not(target_os = "windows"))]
@@ -27,15 +37,7 @@ impl Styles {
             #[cfg(feature = "zfs")]
             arc_style: hex!("#5e81ac"),
             #[cfg(feature = "gpu")]
-            gpu_colours: vec![
-                hex!("#8fbcbb"),
-                hex!("#81a1c1"),
-                hex!("#d8dee9"),
-                hex!("#b48ead"),
-                hex!("#a3be8c"),
-                hex!("#ebcb8b"),
-                hex!("#bf616a"),
-            ],
+            gpu_colours: second_colours_list.clone(),
             rx_style: hex!("#88c0d0"),
             tx_style: hex!("#d08770"),
             total_rx_style: hex!("#5e81ac"),
@@ -43,7 +45,9 @@ impl Styles {
             all_cpu_colour: hex!("#88c0d0"),
             avg_cpu_colour: hex!("#8fbcbb"),
             cpu_colour_styles: list_colours.clone(),
-            temp_graph_colour_styles: list_colours,
+            temp_graph_colour_styles: list_colours.clone(),
+            disk_io_read_colour_styles: list_colours,
+            disk_io_write_colour_styles: second_colours_list,
             border_style: hex!("#88c0d0"),
             highlighted_border_style: hex!("#5e81ac"),
             text_style: hex!("#e5e9f0"),
@@ -76,6 +80,16 @@ impl Styles {
             hex!("#bf616a"),
         ];
 
+        let second_colours_list = vec![
+            hex!("#8fbcbb"),
+            hex!("#88c0d0"),
+            hex!("#4c566a"),
+            hex!("#b48ead"),
+            hex!("#a3be8c"),
+            hex!("#ebcb8b"),
+            hex!("#bf616a"),
+        ];
+
         Self {
             ram_style: hex!("#81a1c1"),
             #[cfg(not(target_os = "windows"))]
@@ -84,15 +98,7 @@ impl Styles {
             #[cfg(feature = "zfs")]
             arc_style: hex!("#5e81ac"),
             #[cfg(feature = "gpu")]
-            gpu_colours: vec![
-                hex!("#8fbcbb"),
-                hex!("#88c0d0"),
-                hex!("#4c566a"),
-                hex!("#b48ead"),
-                hex!("#a3be8c"),
-                hex!("#ebcb8b"),
-                hex!("#bf616a"),
-            ],
+            gpu_colours: second_colours_list.clone(),
             rx_style: hex!("#81a1c1"),
             tx_style: hex!("#d08770"),
             total_rx_style: hex!("#5e81ac"),
@@ -100,7 +106,9 @@ impl Styles {
             all_cpu_colour: hex!("#81a1c1"),
             avg_cpu_colour: hex!("#8fbcbb"),
             cpu_colour_styles: list_colours.clone(),
-            temp_graph_colour_styles: list_colours,
+            temp_graph_colour_styles: list_colours.clone(),
+            disk_io_read_colour_styles: list_colours,
+            disk_io_write_colour_styles: second_colours_list,
             border_style: hex!("#2e3440"),
             highlighted_border_style: hex!("#5e81ac"),
             text_style: hex!("#2e3440"),

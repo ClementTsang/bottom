@@ -31,6 +31,16 @@ impl Styles {
             colour!(Color::Blue),
         ];
 
+        let second_colours_list = vec![
+            colour!(FOURTH_COLOUR),
+            colour!(Color::LightBlue),
+            colour!(Color::LightRed),
+            colour!(Color::Cyan),
+            colour!(Color::Green),
+            colour!(Color::Blue),
+            colour!(Color::Red),
+        ];
+
         Self {
             ram_style: colour!(FIRST_COLOUR),
             #[cfg(not(target_os = "windows"))]
@@ -39,15 +49,7 @@ impl Styles {
             #[cfg(feature = "zfs")]
             arc_style: colour!(THIRD_COLOUR),
             #[cfg(feature = "gpu")]
-            gpu_colours: vec![
-                colour!(FOURTH_COLOUR),
-                colour!(Color::LightBlue),
-                colour!(Color::LightRed),
-                colour!(Color::Cyan),
-                colour!(Color::Green),
-                colour!(Color::Blue),
-                colour!(Color::Red),
-            ],
+            gpu_colours: second_colours_list.clone(),
             rx_style: colour!(FIRST_COLOUR),
             tx_style: colour!(SECOND_COLOUR),
             total_rx_style: colour!(THIRD_COLOUR),
@@ -55,7 +57,9 @@ impl Styles {
             all_cpu_colour: colour!(ALL_COLOUR),
             avg_cpu_colour: colour!(AVG_COLOUR),
             cpu_colour_styles: list_colours.clone(),
-            temp_graph_colour_styles: list_colours,
+            temp_graph_colour_styles: list_colours.clone(),
+            disk_io_read_colour_styles: list_colours,
+            disk_io_write_colour_styles: second_colours_list,
             border_style: colour!(TEXT_COLOUR),
             highlighted_border_style: colour!(HIGHLIGHT_COLOUR),
             text_style: colour!(TEXT_COLOUR),
@@ -87,6 +91,16 @@ impl Styles {
             colour!(Color::Red),
         ];
 
+        let second_colours_list = vec![
+            colour!(Color::LightGreen),
+            colour!(Color::LightCyan),
+            colour!(Color::LightRed),
+            colour!(Color::Cyan),
+            colour!(Color::Green),
+            colour!(Color::Blue),
+            colour!(Color::Red),
+        ];
+
         Self {
             ram_style: colour!(Color::Blue),
             #[cfg(not(target_os = "windows"))]
@@ -95,21 +109,15 @@ impl Styles {
             #[cfg(feature = "zfs")]
             arc_style: colour!(Color::LightBlue),
             #[cfg(feature = "gpu")]
-            gpu_colours: vec![
-                colour!(Color::LightGreen),
-                colour!(Color::LightCyan),
-                colour!(Color::LightRed),
-                colour!(Color::Cyan),
-                colour!(Color::Green),
-                colour!(Color::Blue),
-                colour!(Color::Red),
-            ],
+            gpu_colours: second_colours_list.clone(),
             rx_style: colour!(Color::Blue),
             tx_style: colour!(Color::Red),
             total_rx_style: colour!(Color::LightBlue),
             total_tx_style: colour!(Color::LightRed),
             cpu_colour_styles: list_colours.clone(),
-            temp_graph_colour_styles: list_colours,
+            temp_graph_colour_styles: list_colours.clone(),
+            disk_io_read_colour_styles: list_colours,
+            disk_io_write_colour_styles: second_colours_list,
             border_style: colour!(Color::Black),
             text_style: colour!(Color::Black),
             selected_text_style: colour!(Color::White).bg(Color::LightBlue),

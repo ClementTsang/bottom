@@ -11,7 +11,7 @@ use crate::{
     collection::{
         Data,
         cpu::{CpuHarvest, LoadAvgHarvest},
-        disks,
+        disks::{DiskHarvest, IoHarvest},
         memory::MemData,
         network::NetworkHarvest,
     },
@@ -153,6 +153,11 @@ impl StoredData {
         if let Some(disks) = data.disks {
             if let Some(io) = data.io {
                 self.eat_disks(disks, io, harvested_time);
+
+                if used_widgets.use_disk_io_graph {
+                    self.time_series_data
+                        .update_disk_io(&self.disk_harvest, &filters.disk_io_graph_filter);
+                }
             }
         }
 
@@ -171,9 +176,8 @@ impl StoredData {
         self.last_update_time = harvested_time;
     }
 
-    fn eat_disks(
-        &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IoHarvest, harvested_time: Instant,
-    ) {
+    // TODO: There's a spike on the first hit. We should probably fix this and the index issue.
+    fn eat_disks(&mut self, disks: Vec<DiskHarvest>, io: IoHarvest, harvested_time: Instant) {
         let time_since_last_harvest = harvested_time
             .duration_since(self.last_update_time)
             .as_secs_f64();
@@ -184,6 +188,8 @@ impl StoredData {
         self.prev_io.reserve(prev_io_diff);
         self.prev_io.extend((0..prev_io_diff).map(|_| (0, 0)));
 
+        // FIXME: prev_io is indexed by position (itx), not by device name, which might cause problems
+        // if the order changes or something.
         for (itx, device) in disks.into_iter().enumerate() {
             let Some(checked_name) = ({
                 #[cfg(target_os = "windows")]
