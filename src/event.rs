@@ -57,7 +57,7 @@ pub fn handle_key_event_or_break(
 
     if event.modifiers.is_empty() {
         match event.code {
-            KeyCode::Char('q') if !app.is_in_any_search() => return true,
+            KeyCode::Char('q' | 'Q') if !app.is_in_any_search() => return true,
             KeyCode::End => app.skip_to_last(),
             KeyCode::Home => app.skip_to_first(),
             KeyCode::Up => app.on_up_key(),
