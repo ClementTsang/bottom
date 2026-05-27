@@ -1,4 +1,4 @@
-# Disk Table
+# Disk Table Configuration
 
 ## Columns
 

@@ -1,4 +1,4 @@
-# Disk I/O Graph
+# Disk I/O Graph Configuration
 
 The disk I/O graph widget is configured under `[disk_io_graph]`.
 
