@@ -603,6 +603,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
+# Whether to display packet rate and average packet size info. Defaults to false.
+#show_packets = false
+
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
