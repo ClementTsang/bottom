@@ -168,6 +168,7 @@ nav:
           - "Disk Widget": usage/widgets/disk.md
           - "Temperature Widget": usage/widgets/temperature-table.md
           - "Temperature Graph Widget": usage/widgets/temperature-graph.md
+          - "Disk I/O Graph Widget": usage/widgets/disk-io-graph.md
           - "Battery Widget": usage/widgets/battery.md
       - "Auto-Complete": usage/autocomplete.md
   - "Configuration":
@@ -181,6 +182,7 @@ nav:
           - "Processes Widget": configuration/config-file/processes.md
           - "Temperature Table Widget": configuration/config-file/temperature-table.md
           - "Temperature Graph Widget": configuration/config-file/temperature-graph.md
+          - "Disk I/O Graph Widget": configuration/config-file/disk-io-graph.md
           - "Flags": configuration/config-file/flags.md
           - "Layout": configuration/config-file/layout.md
           - "Styling": configuration/config-file/styling.md

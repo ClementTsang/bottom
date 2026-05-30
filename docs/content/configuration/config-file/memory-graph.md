@@ -1,4 +1,4 @@
-# Memory Graph
+# Memory Graph Configuration
 
 If you want to change some of the default behaviour of the memory graph widget, you can configure things under the `[memory_graph]` (or `[memory]`) section.
 

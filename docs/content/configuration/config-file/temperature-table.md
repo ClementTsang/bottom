@@ -1,4 +1,4 @@
-# Temperature Table
+# Temperature Table Configuration
 
 The temperature table widget is configured under `[temperature]`.
 

@@ -627,7 +627,7 @@ impl DataCollector {
 
     #[inline]
     fn update_disks(&mut self) {
-        if self.widgets_to_harvest.use_disk {
+        if self.widgets_to_harvest.use_disk || self.widgets_to_harvest.use_disk_io_graph {
             self.data.disks = disks::get_disk_usage(self).ok();
             self.data.io = disks::get_io_usage(self).ok();
         }
@@ -669,6 +669,7 @@ mod tests {
             mount_filter: None,
             temp_filter: None,
             temp_graph_filter: None,
+            disk_io_graph_filter: None,
             net_filter: None,
         });
 

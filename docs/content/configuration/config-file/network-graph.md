@@ -1,4 +1,4 @@
-# Network Graph
+# Network Graph Configuration
 
 ## Settings
 

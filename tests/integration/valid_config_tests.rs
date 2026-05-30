@@ -271,6 +271,11 @@ fn test_newer_temperature() {
     run_and_kill_cfg("./tests/valid_configs/widget/temperature.toml");
 }
 
+#[test]
+fn test_disk_io_graph() {
+    run_and_kill_cfg("./tests/valid_configs/widget/disk_io_graph.toml");
+}
+
 /// This uses deprecated temperature settings - once they are removed, this test file should be moved to invalid configs.
 #[test]
 fn test_deprecated_temperature() {

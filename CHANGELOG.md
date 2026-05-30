@@ -41,6 +41,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2053](https://github.com/ClementTsang/bottom/pull/2053): Add a configurable default sort column for the process widget (`processes.default_sort` or `--process-default-sort`).
 - [#2066](https://github.com/ClementTsang/bottom/pull/2066): Add search support in the help dialog.
 - [#1791](https://github.com/ClementTsang/bottom/pull/1791), [#2072](https://github.com/ClementTsang/bottom/pull/2072): Add support for using a short name for the GPU in memory usage.
+- [#2073](https://github.com/ClementTsang/bottom/pull/2073): Add disk I/O time series graph.
 
 ### Changes
 
@@ -53,6 +54,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move CPU config file options from `[flags]` to be under `[cpu]`.
 - [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move memory config file options from `[flags]` to be under `[memory_graph]`.
 - [#2066](https://github.com/ClementTsang/bottom/pull/2066): Take cgroup into account for CPU usage% calculations.
+- [#2074](https://github.com/ClementTsang/bottom/pull/2074): Treat uppercase 'Q' as a quit shortcut.
 
 ### Other
 
