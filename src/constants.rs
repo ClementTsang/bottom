@@ -586,6 +586,10 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Network widget configuration
 #[network_graph]
+
+# Whether to display packet rate and average packet size info. Defaults to false.
+#show_packets = false
+
 # By default, there are no network interface filters enabled. An example use case is provided below.
 #[network_graph.interface_filter]
 # Whether to ignore any matches. Defaults to true.
@@ -602,9 +606,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
-
-# Whether to display packet rate and average packet size info. Defaults to false.
-#show_packets = false
 
 
 # These are all the components that support custom theming.  Note that colour support
