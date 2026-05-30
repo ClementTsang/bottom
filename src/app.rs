@@ -81,6 +81,7 @@ pub struct AppConfigFields {
     pub default_temp_sort_column: Option<TempWidgetColumn>,
     pub default_disk_sort_column: Option<DiskWidgetColumn>,
     pub temperature_legend_position: Option<LegendPosition>,
+    pub disk_io_legend_position: Option<LegendPosition>,
 }
 
 /// For filtering out information
@@ -90,6 +91,7 @@ pub struct DataFilters {
     pub mount_filter: Option<Filter>,
     pub temp_filter: Option<Filter>,
     pub temp_graph_filter: Option<Filter>,
+    pub disk_io_graph_filter: Option<Filter>,
     pub net_filter: Option<Filter>,
 }
 
@@ -2069,6 +2071,14 @@ impl App {
                 if let Some(widget_state) = self
                     .states
                     .temp_graph_state
+                    .get_mut_widget_state(self.current_widget.widget_id) =>
+            {
+                Some(widget_state.graph.state_mut())
+            }
+            BottomWidgetType::DiskIoGraph
+                if let Some(widget_state) = self
+                    .states
+                    .disk_io_graph_state
                     .get_mut_widget_state(self.current_widget.widget_id) =>
             {
                 Some(widget_state.graph.state_mut())

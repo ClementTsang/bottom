@@ -1,18 +1,16 @@
-# Temperature Graph Widget
+# Disk I/O Graph Widget
 
-The temperature graph widget provides temperature readings over time.
+The disk I/O graph widget shows read and write rates over time.
 
 <figure>
-    <img src="../../../assets/screenshots/temperature_graph.webp" alt="A picture of an expanded temperature graph widget."/>
+    <img src="../../../assets/screenshots/disk_graph.webp" alt="A picture of an expanded disk I/O graph widget."/>
 </figure>
 
 ## Features
 
-Each detected sensor is drawn as its own line. The y-axis is in the configured temperature unit (Celsius by default;
-see the `--celsius`/`--fahrenheit`/`--kelvin` arguments or `flags.temperature_type` config option).
-
-By default the y-axis is bounded at 100°C (or the equivalent in the configured unit) and grows automatically.
-An upper bound can also be set explicitly via the [config file](../../configuration/config-file/temperature-graph.md).
+The legend displays the current reads and writes per second in bytes for each mount/disk item. The y-axis
+automatically scales based on shown read/write values. By default this is in a linear scale, but it can be
+switched to a logarithmic scale through the [config file](../../configuration/config-file/network-graph.md).
 
 The displayed time range can be adjusted through either the keyboard or mouse.
 

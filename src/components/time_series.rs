@@ -49,7 +49,7 @@ impl TimeseriesState {
     }
 
     /// Get the current display time.
-    fn current_display_time(&self) -> u64 {
+    pub(crate) fn current_display_time(&self) -> u64 {
         self.current_display_time
     }
 

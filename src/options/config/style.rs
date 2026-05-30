@@ -3,6 +3,7 @@
 mod battery;
 mod borders;
 mod cpu;
+mod disk_io_graph;
 mod graphs;
 mod memory;
 mod network;
@@ -16,6 +17,7 @@ use std::borrow::Cow;
 
 use battery::BatteryStyle;
 use cpu::CpuStyle;
+use disk_io_graph::DiskIoGraphStyle;
 use graphs::GraphStyle;
 use memory::MemoryStyle;
 use network::NetworkStyle;
@@ -84,6 +86,9 @@ pub(crate) struct StyleConfig {
     /// Styling for the network widget.
     pub(crate) network: Option<NetworkStyle>,
 
+    /// Styling for the disk I/O graph widget.
+    pub(crate) disk_io_graph: Option<DiskIoGraphStyle>,
+
     /// Styling for the temperature graph widget.
     pub(crate) temp_graph: Option<TempGraphStyle>,
 
@@ -119,6 +124,8 @@ pub struct Styles {
     pub(crate) avg_cpu_colour: Style,
     pub(crate) cpu_colour_styles: Vec<Style>,
     pub(crate) temp_graph_colour_styles: Vec<Style>,
+    pub(crate) disk_io_read_colour_styles: Vec<Style>,
+    pub(crate) disk_io_write_colour_styles: Vec<Style>,
     pub(crate) border_style: Style,
     pub(crate) highlighted_border_style: Style,
     pub(crate) text_style: Style,
@@ -189,6 +196,18 @@ impl Styles {
             self.temp_graph_colour_styles,
             config.temp_graph,
             temp_graph_colour_styles
+        );
+
+        // Disk I/O graph
+        set_colour_list!(
+            self.disk_io_read_colour_styles,
+            config.disk_io_graph,
+            read_colours
+        );
+        set_colour_list!(
+            self.disk_io_write_colour_styles,
+            config.disk_io_graph,
+            write_colours
         );
 
         // Memory

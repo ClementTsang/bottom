@@ -1,4 +1,4 @@
-# Temperature Graph
+# Temperature Graph Configuration
 
 The temperature graph widget is configured under `[temperature_graph]`.
 
