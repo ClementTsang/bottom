@@ -1,6 +1,7 @@
 pub mod cpu;
 pub mod disk;
 pub mod disk_io_graph;
+pub mod disk_space_graph;
 pub mod flags;
 mod ignore_list;
 pub mod layout;
@@ -13,6 +14,7 @@ pub mod temperature_graph;
 
 use disk::DiskConfig;
 use disk_io_graph::DiskIoGraphConfig;
+use disk_space_graph::DiskSpaceGraphConfig;
 use flags::GeneralConfig;
 use network_graph::NetworkGraphConfig;
 use serde::{Deserialize, Serialize};
@@ -35,6 +37,7 @@ pub struct Config {
     pub(crate) processes: Option<ProcessesConfig>,
     pub(crate) disk: Option<DiskConfig>,
     pub(crate) disk_io_graph: Option<DiskIoGraphConfig>,
+    pub(crate) disk_space_graph: Option<DiskSpaceGraphConfig>,
     pub(crate) temperature: Option<TempConfig>,
     pub(crate) temperature_graph: Option<TempGraphConfig>,
     #[serde(alias = "network")]

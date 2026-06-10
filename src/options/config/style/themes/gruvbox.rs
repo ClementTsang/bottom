@@ -59,7 +59,8 @@ impl Styles {
             cpu_colour_styles: list_colours.clone(),
             temp_graph_colour_styles: list_colours.clone(),
             disk_io_read_colour_styles: list_colours,
-            disk_io_write_colour_styles: second_colours_list,
+            disk_io_write_colour_styles: second_colours_list.clone(),
+            disk_space_graph_colour_styles: second_colours_list,
             border_style: hex!("#ebdbb2"),
             highlighted_border_style: hex!("#fe8019"),
             text_style: hex!("#ebdbb2"),
@@ -104,6 +105,16 @@ impl Styles {
             hex!("#af3a03"),
         ];
 
+        let second_colours_list = vec![
+            hex!("#9d0006"),
+            hex!("#98971a"),
+            hex!("#d79921"),
+            hex!("#458588"),
+            hex!("#b16286"),
+            hex!("#fe8019"),
+            hex!("#b8bb26"),
+        ];
+
         Self {
             ram_style: hex!("#427b58"),
             #[cfg(not(target_os = "windows"))]
@@ -112,15 +123,7 @@ impl Styles {
             #[cfg(feature = "zfs")]
             arc_style: hex!("#689d6a"),
             #[cfg(feature = "gpu")]
-            gpu_colours: vec![
-                hex!("#9d0006"),
-                hex!("#98971a"),
-                hex!("#d79921"),
-                hex!("#458588"),
-                hex!("#b16286"),
-                hex!("#fe8019"),
-                hex!("#b8bb26"),
-            ],
+            gpu_colours: second_colours_list.clone(),
             rx_style: hex!("#427b58"),
             tx_style: hex!("#cc241d"),
             total_rx_style: hex!("#689d6a"),
@@ -130,15 +133,8 @@ impl Styles {
             cpu_colour_styles: list_colours.clone(),
             temp_graph_colour_styles: list_colours.clone(),
             disk_io_read_colour_styles: list_colours,
-            disk_io_write_colour_styles: vec![
-                hex!("#9d0006"),
-                hex!("#98971a"),
-                hex!("#d79921"),
-                hex!("#458588"),
-                hex!("#b16286"),
-                hex!("#fe8019"),
-                hex!("#b8bb26"),
-            ],
+            disk_io_write_colour_styles: second_colours_list.clone(),
+            disk_space_graph_colour_styles: second_colours_list,
             border_style: hex!("#3c3836"),
             highlighted_border_style: hex!("#af3a03"),
             text_style: hex!("#3c3836"),

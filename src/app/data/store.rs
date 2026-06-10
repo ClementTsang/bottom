@@ -151,13 +151,19 @@ impl StoredData {
             .unwrap_or_default();
 
         if let Some(disks) = data.disks {
-            if let Some(io) = data.io {
-                self.eat_disks(disks, io, harvested_time);
+            // Disk space only needs the usage data, while I/O rates additionally
+            // need `data.io`. Keep them separate so a missing I/O harvest doesn't
+            // also stop the disk space graph from updating.
+            self.eat_disks(disks, data.io, harvested_time);
 
-                if used_widgets.use_disk_io_graph {
-                    self.time_series_data
-                        .update_disk_io(&self.disk_harvest, &filters.disk_io_graph_filter);
-                }
+            if used_widgets.use_disk_io_graph {
+                self.time_series_data
+                    .update_disk_io(&self.disk_harvest, &filters.disk_io_graph_filter);
+            }
+
+            if used_widgets.use_disk_space_graph {
+                self.time_series_data
+                    .update_disk_space(&self.disk_harvest, &filters.disk_space_graph_filter);
             }
         }
 
@@ -177,7 +183,9 @@ impl StoredData {
     }
 
     // TODO: There's a spike on the first hit. We should probably fix this and the index issue.
-    fn eat_disks(&mut self, disks: Vec<DiskHarvest>, io: IoHarvest, harvested_time: Instant) {
+    fn eat_disks(
+        &mut self, disks: Vec<DiskHarvest>, io: Option<IoHarvest>, harvested_time: Instant,
+    ) {
         let time_since_last_harvest = harvested_time
             .duration_since(self.last_update_time)
             .as_secs_f64();
@@ -219,7 +227,7 @@ impl StoredData {
                 continue;
             };
 
-            let io_device = {
+            let io_device = io.as_ref().and_then(|io| {
                 #[cfg(target_os = "macos")]
                 {
                     use std::sync::OnceLock;
@@ -246,7 +254,7 @@ impl StoredData {
                 {
                     io.get(checked_name)
                 }
-            };
+            });
 
             let (mut io_read_rate_bytes, mut io_write_rate_bytes) = (None, None);
             if let Some(Some(io_device)) = io_device {

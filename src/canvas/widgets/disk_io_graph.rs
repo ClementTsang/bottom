@@ -1,10 +1,5 @@
-use std::{
-    borrow::Cow,
-    time::{Duration, Instant},
-};
+use std::borrow::Cow;
 
-use rustc_hash::FxHashMap;
-use timeless::data::ChunkedData;
 use tui::{
     Frame,
     layout::{Constraint, Rect},
@@ -18,7 +13,6 @@ use crate::{
         drawing_utils::should_hide_x_label,
     },
     components::time_series::GraphDrawCtx,
-    options::config::disk_io_graph::DiskGraphLegend,
     utils::data_units::*,
 };
 
@@ -36,11 +30,7 @@ impl Painter {
             let write_data = &shared_data.time_series_data.disk_io_write;
             let times = &shared_data.time_series_data.time;
 
-            let mount_map: FxHashMap<&str, &str> = shared_data
-                .disk_harvest
-                .iter()
-                .map(|d| (d.name.as_str(), d.mount_point.as_str()))
-                .collect();
+            let mount_map = super::disk_mount_map(&shared_data.disk_harvest);
 
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let graph_state = widget_state.graph.state_mut();
@@ -57,16 +47,23 @@ impl Painter {
             let use_log = widget_state.use_log;
             let legend_type = &widget_state.legend;
 
+            // Consider both the read and write series so a device with data in
+            // only one of them is still shown.
             let mut device_names: Vec<&String> = read_data
                 .keys()
+                .chain(write_data.keys())
                 .filter(|name| {
                     mount_map.contains_key(name.as_str())
-                        || read_data
-                            .get(*name)
-                            .is_some_and(|d| has_data_in_window(d, times, current_display_time))
+                        || read_data.get(*name).is_some_and(|d| {
+                            super::has_data_in_window(d, times, current_display_time)
+                        })
+                        || write_data.get(*name).is_some_and(|d| {
+                            super::has_data_in_window(d, times, current_display_time)
+                        })
                 })
                 .collect();
             device_names.sort_unstable();
+            device_names.dedup();
 
             // Compute y_max across all visible series.
             let mut visible_sources: Vec<&_> = Vec::new();
@@ -103,29 +100,16 @@ impl Painter {
             let mut graph_data: Vec<GraphData<'_, f64>> =
                 Vec::with_capacity(device_names.len() * 2);
             for (idx, name) in device_names.iter().enumerate() {
-                let display_name = match legend_type {
-                    DiskGraphLegend::Disk => name.as_str(),
-                    DiskGraphLegend::Mount => mount_map
-                        .get(name.as_str())
-                        .copied()
-                        .unwrap_or(name.as_str()),
-                };
+                let display_name =
+                    legend_type.display_name(name, mount_map.get(name.as_str()).copied());
 
                 let is_active = mount_map.contains_key(name.as_str());
 
                 let read_values = show_read.then(|| read_data.get(*name)).flatten();
                 let write_values = show_write.then(|| write_data.get(*name)).flatten();
 
-                let read_style = if read_colours.is_empty() {
-                    tui::style::Style::default()
-                } else {
-                    read_colours[idx % read_colours.len()]
-                };
-                let write_style = if write_colours.is_empty() {
-                    tui::style::Style::default()
-                } else {
-                    write_colours[idx % write_colours.len()]
-                };
+                let read_style = super::cycle_style(read_colours, idx);
+                let write_style = super::cycle_style(write_colours, idx);
 
                 // TODO: Combine into one line; probably need to add some kind of multi-styled GraphData.
                 if let Some(values) = read_values {
@@ -200,22 +184,6 @@ impl Painter {
             }
         }
     }
-}
-
-/// Returns true if `data` has at least one real (non-gap) data point within the
-/// visible time window defined by `current_display_time` milliseconds from the end
-/// of `times`.
-fn has_data_in_window<F: Copy + Default + Into<f64>>(
-    data: &ChunkedData<F>, times: &[Instant], current_display_time: u64,
-) -> bool {
-    let Some(&last_time) = times.last() else {
-        return false;
-    };
-    let display_duration = Duration::from_millis(current_display_time);
-    let oldest = last_time.checked_sub(display_duration).unwrap_or(last_time);
-    data.iter_along_base(times)
-        .next_back()
-        .is_some_and(|(t, _)| *t >= oldest)
 }
 
 /// Format a byte/s rate as a fixed-width string (always 11 chars, right-aligned)

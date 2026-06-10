@@ -1,0 +1,10 @@
+[disk_space_graph]
+legend = "mount"
+legend_position = "bottom-left"
+
+[disk_space_graph.name_filter]
+is_list_ignored = true
+list = ["sda"]
+regex = false
+case_sensitive = false
+whole_word = false

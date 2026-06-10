@@ -72,6 +72,9 @@ pub struct TimeSeriesData {
 
     /// Disk I/O write rate data, keyed by device name.
     pub disk_io_write: HashMap<String, ChunkedData<f64>>,
+
+    /// Disk used-space percentage (0-100) data, keyed by device name.
+    pub disk_used_percent: HashMap<String, ChunkedData<f64>>,
 }
 
 impl TimeSeriesData {
@@ -237,36 +240,23 @@ impl TimeSeriesData {
     /// [`DiskWidgetData`]. Devices not present in `disks` get a break inserted
     /// so the legend keeps them around for the window's remaining lifetime.
     pub fn update_disk_io(&mut self, disks: &[DiskWidgetData], filter: &Option<Filter>) {
-        let mut not_visited: HashSet<String> = self.disk_io_read.keys().cloned().collect();
+        update_keyed_disk_series(&mut self.disk_io_read, disks, filter, |disk| {
+            disk.io_read_rate_bytes.map(|v| v as f64)
+        });
+        update_keyed_disk_series(&mut self.disk_io_write, disks, filter, |disk| {
+            disk.io_write_rate_bytes.map(|v| v as f64)
+        });
+    }
 
-        for disk in disks {
-            if !Filter::optional_should_keep(filter, &disk.name) {
-                continue;
+    /// Update disk space time series using already-computed data from
+    /// [`DiskWidgetData`]. Devices not present in `disks` get a break inserted.
+    pub fn update_disk_space(&mut self, disks: &[DiskWidgetData], filter: &Option<Filter>) {
+        update_keyed_disk_series(&mut self.disk_used_percent, disks, filter, |disk| {
+            match (disk.used_bytes, disk.total_bytes) {
+                (Some(used), Some(total)) if total > 0 => Some(used as f64 / total as f64 * 100.0),
+                _ => None,
             }
-
-            not_visited.remove(&disk.name);
-
-            let read_entry = self.disk_io_read.entry(disk.name.clone()).or_default();
-            match disk.io_read_rate_bytes {
-                Some(v) => read_entry.push(v as f64),
-                None => read_entry.insert_break(),
-            }
-
-            let write_entry = self.disk_io_write.entry(disk.name.clone()).or_default();
-            match disk.io_write_rate_bytes {
-                Some(v) => write_entry.push(v as f64),
-                None => write_entry.insert_break(),
-            }
-        }
-
-        for name in not_visited {
-            if let Some(entry) = self.disk_io_read.get_mut(&name) {
-                entry.insert_break();
-            }
-            if let Some(entry) = self.disk_io_write.get_mut(&name) {
-                entry.insert_break();
-            }
-        }
+        });
     }
 
     /// Prune any data older than the given duration.
@@ -315,52 +305,56 @@ impl TimeSeriesData {
         let _ = self.arc_mem.prune_and_shrink_to_fit(end);
 
         #[cfg(feature = "gpu")]
-        {
-            self.gpu_mem.retain(|_, gpu| {
-                let _ = gpu.prune(end);
+        prune_keyed_series(&mut self.gpu_mem, end);
 
-                // Remove the entry if it is empty. We can always add it again later.
-                if gpu.no_elements() {
-                    false
-                } else {
-                    gpu.shrink_to_fit();
-                    true
-                }
-            });
+        prune_keyed_series(&mut self.temperature, end);
+        prune_keyed_series(&mut self.disk_io_read, end);
+        prune_keyed_series(&mut self.disk_io_write, end);
+        prune_keyed_series(&mut self.disk_used_percent, end);
+    }
+}
+
+/// Push one value (or a break if `value` returns [`None`]) per disk into `map`,
+/// keyed by device name, then insert a break for any previously-seen device not
+/// in `disks`.
+fn update_keyed_disk_series(
+    map: &mut HashMap<String, ChunkedData<f64>>, disks: &[DiskWidgetData], filter: &Option<Filter>,
+    mut value: impl FnMut(&DiskWidgetData) -> Option<f64>,
+) {
+    let mut not_visited: HashSet<String> = map.keys().cloned().collect();
+
+    for disk in disks {
+        if !Filter::optional_should_keep(filter, &disk.name) {
+            continue;
         }
 
-        self.temperature.retain(|_, data| {
-            let _ = data.prune(end);
+        not_visited.remove(&disk.name);
 
-            // Remove the entry if it is empty. We can always add it again later.
-            if data.no_elements() {
-                false
-            } else {
-                data.shrink_to_fit();
-                true
-            }
-        });
-
-        self.disk_io_read.retain(|_, data| {
-            let _ = data.prune(end);
-
-            if data.no_elements() {
-                false
-            } else {
-                data.shrink_to_fit();
-                true
-            }
-        });
-
-        self.disk_io_write.retain(|_, data| {
-            let _ = data.prune(end);
-
-            if data.no_elements() {
-                false
-            } else {
-                data.shrink_to_fit();
-                true
-            }
-        });
+        let entry = map.entry(disk.name.clone()).or_default();
+        match value(disk) {
+            Some(v) => entry.push(v),
+            None => entry.insert_break(),
+        }
     }
+
+    for name in not_visited {
+        if let Some(entry) = map.get_mut(&name) {
+            entry.insert_break();
+        }
+    }
+}
+
+/// Prune a keyed map of series up to `end`, removing any entry left empty.
+/// We can always add removed entries again later.
+fn prune_keyed_series<F>(map: &mut HashMap<String, ChunkedData<F>>, end: usize) {
+    map.retain(|_, data| {
+        let _ = data.prune(end);
+
+        if data.no_elements() {
+            false
+        } else {
+            data.shrink_to_fit();
+            true
+        }
+    });
 }
