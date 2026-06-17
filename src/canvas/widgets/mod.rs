@@ -1,8 +1,17 @@
-use crate::{collection::network::NetworkHarvest, utils::data_units::convert_bytes};
+use std::time::{Duration, Instant};
+
+use rustc_hash::FxHashMap;
+use timeless::data::ChunkedData;
+use tui::style::Style;
+
+use crate::{
+    collection::network::NetworkHarvest, utils::data_units::convert_bytes, widgets::DiskWidgetData,
+};
 
 pub mod cpu_basic;
 pub mod cpu_graph;
 pub mod disk_io_graph;
+pub mod disk_space_graph;
 pub mod disk_table;
 pub mod mem_basic;
 pub mod mem_graph;
@@ -14,6 +23,40 @@ pub mod temperature_table;
 
 #[cfg(feature = "battery")]
 pub mod battery_display;
+
+/// Map device names to mount points for the currently-mounted disks.
+pub(super) fn disk_mount_map(disks: &[DiskWidgetData]) -> FxHashMap<&str, &str> {
+    disks
+        .iter()
+        .map(|d| (d.name.as_str(), d.mount_point.as_str()))
+        .collect()
+}
+
+/// Pick the style at `idx`, cycling through `styles`, or the default style if
+/// `styles` is empty.
+pub(super) fn cycle_style(styles: &[Style], idx: usize) -> Style {
+    if styles.is_empty() {
+        Style::default()
+    } else {
+        styles[idx % styles.len()]
+    }
+}
+
+/// Returns true if `data` has at least one real (non-gap) data point within the
+/// visible time window defined by `current_display_time` milliseconds from the end
+/// of `times`.
+pub(super) fn has_data_in_window<F: Copy + Default + Into<f64>>(
+    data: &ChunkedData<F>, times: &[Instant], current_display_time: u64,
+) -> bool {
+    let Some(&last_time) = times.last() else {
+        return false;
+    };
+    let display_duration = Duration::from_millis(current_display_time);
+    let oldest = last_time.checked_sub(display_duration).unwrap_or(last_time);
+    data.iter_along_base(times)
+        .next_back()
+        .is_some_and(|(t, _)| *t >= oldest)
+}
 
 /// Helper struct to hold packet-related data
 pub(super) struct PacketInfo {

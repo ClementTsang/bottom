@@ -70,9 +70,10 @@ As (yet another) process/system visualization and management application, bottom
 - Graphical visualization widgets for:
   - [CPU usage](https://bottom.pages.dev/nightly/usage/widgets/cpu-graph/) over time, at an average and per-core level
   - [RAM and swap usage](https://bottom.pages.dev/nightly/usage/widgets/memory-graph/) over time
-  - [Network I/O usage](https://bottom.pages.dev/nightly/usage/widgets/network-graph/) over time
+  - [Network I/O](https://bottom.pages.dev/nightly/usage/widgets/network-graph/) over time
   - [Temperature](https://bottom.pages.dev/nightly/usage/widgets/temperature-graph/) over time
-  - [Disk I/O usage](https://bottom.pages.dev/nightly/usage/widgets/disk-io-graph/) over time
+  - [Disk I/O](https://bottom.pages.dev/nightly/usage/widgets/disk-io-graph/) over time
+  - [Disk usage](https://bottom.pages.dev/nightly/usage/widgets/disk-usage-graph/) over time
 
   with support for zooming in/out the current time interval displayed.
 

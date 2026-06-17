@@ -352,7 +352,10 @@ impl DataCollector {
             }
 
             #[cfg(target_os = "windows")]
-            if self.widgets_to_harvest.use_disk {
+            if self.widgets_to_harvest.use_disk
+                || self.widgets_to_harvest.use_disk_io_graph
+                || self.widgets_to_harvest.use_disk_space_graph
+            {
                 if self.should_run_less_routine_tasks {
                     self.sys.disks.refresh(true);
                 }
@@ -627,7 +630,10 @@ impl DataCollector {
 
     #[inline]
     fn update_disks(&mut self) {
-        if self.widgets_to_harvest.use_disk || self.widgets_to_harvest.use_disk_io_graph {
+        if self.widgets_to_harvest.use_disk
+            || self.widgets_to_harvest.use_disk_io_graph
+            || self.widgets_to_harvest.use_disk_space_graph
+        {
             self.data.disks = disks::get_disk_usage(self).ok();
             self.data.io = disks::get_io_usage().ok();
         }
@@ -670,6 +676,7 @@ mod tests {
             temp_filter: None,
             temp_graph_filter: None,
             disk_io_graph_filter: None,
+            disk_space_graph_filter: None,
             net_filter: None,
         });
 

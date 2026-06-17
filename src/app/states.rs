@@ -5,9 +5,9 @@ use crate::{
     constants,
     utils::input::InputFieldState,
     widgets::{
-        BatteryWidgetState, CpuWidgetState, DiskIoGraphWidgetState, DiskTableWidget,
-        MemWidgetState, NetWidgetState, ProcWidgetState, TempGraphWidgetState, TempWidgetState,
-        query::ProcessQuery,
+        BatteryWidgetState, CpuWidgetState, DiskIoGraphWidgetState, DiskSpaceGraphWidgetState,
+        DiskTableWidget, MemWidgetState, NetWidgetState, ProcWidgetState, TempGraphWidgetState,
+        TempWidgetState, query::ProcessQuery,
     },
 };
 
@@ -20,6 +20,7 @@ pub struct AppWidgetStates {
     pub temp_graph_state: TempGraphStates,
     pub disk_state: DiskState,
     pub disk_io_graph_state: DiskIoGraphStates,
+    pub disk_space_graph_state: DiskSpaceGraphStates,
     pub battery_state: AppBatteryState,
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
 }
@@ -205,6 +206,23 @@ impl DiskIoGraphStates {
     }
 
     pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut DiskIoGraphWidgetState> {
+        self.widget_states.get_mut(&widget_id)
+    }
+}
+
+/// Holds per-widget state for all disk space graph instances in the layout.
+pub struct DiskSpaceGraphStates {
+    pub widget_states: HashMap<u64, DiskSpaceGraphWidgetState>,
+}
+
+impl DiskSpaceGraphStates {
+    pub fn init(widget_states: HashMap<u64, DiskSpaceGraphWidgetState>) -> Self {
+        DiskSpaceGraphStates { widget_states }
+    }
+
+    pub fn get_mut_widget_state(
+        &mut self, widget_id: u64,
+    ) -> Option<&mut DiskSpaceGraphWidgetState> {
         self.widget_states.get_mut(&widget_id)
     }
 }

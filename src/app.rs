@@ -82,6 +82,7 @@ pub struct AppConfigFields {
     pub default_disk_sort_column: Option<DiskWidgetColumn>,
     pub temperature_legend_position: Option<LegendPosition>,
     pub disk_io_legend_position: Option<LegendPosition>,
+    pub disk_space_legend_position: Option<LegendPosition>,
 }
 
 /// For filtering out information
@@ -92,6 +93,7 @@ pub struct DataFilters {
     pub temp_filter: Option<Filter>,
     pub temp_graph_filter: Option<Filter>,
     pub disk_io_graph_filter: Option<Filter>,
+    pub disk_space_graph_filter: Option<Filter>,
     pub net_filter: Option<Filter>,
 }
 

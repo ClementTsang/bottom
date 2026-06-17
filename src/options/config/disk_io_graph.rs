@@ -14,6 +14,17 @@ pub enum DiskGraphLegend {
     Mount,
 }
 
+impl DiskGraphLegend {
+    /// The name to show for a device: its mount point if requested and
+    /// available, the device name otherwise.
+    pub fn display_name<'a>(&self, name: &'a str, mount_point: Option<&'a str>) -> &'a str {
+        match self {
+            DiskGraphLegend::Disk => name,
+            DiskGraphLegend::Mount => mount_point.unwrap_or(name),
+        }
+    }
+}
+
 /// Disk I/O graph configuration.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]

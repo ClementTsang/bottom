@@ -361,6 +361,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let mut temp_graph_state_map: FxHashMap<u64, TempGraphWidgetState> = FxHashMap::default();
     let mut disk_state_map: FxHashMap<u64, DiskTableWidget> = FxHashMap::default();
     let mut disk_io_graph_state_map: FxHashMap<u64, DiskIoGraphWidgetState> = FxHashMap::default();
+    let mut disk_space_graph_state_map: FxHashMap<u64, DiskSpaceGraphWidgetState> =
+        FxHashMap::default();
     let mut battery_state_map: FxHashMap<u64, BatteryWidgetState> = FxHashMap::default();
 
     let autohide_timer = if autohide_time {
@@ -402,11 +404,35 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let network_legend_position = get_network_legend_position(args, config)?;
     let memory_legend_position = get_memory_legend_position(args, config)?;
-    let temperature_legend_position = get_temperature_legend_position(config)?;
-    let disk_io_legend_position = get_disk_io_legend_position(config)?;
+    let temperature_legend_position = get_config_legend_position(
+        config
+            .temperature_graph
+            .as_ref()
+            .and_then(|cfg| cfg.legend_position.as_ref()),
+        "legend_position",
+    )?;
+    let disk_io_legend_position = get_config_legend_position(
+        config
+            .disk_io_graph
+            .as_ref()
+            .and_then(|cfg| cfg.legend_position.as_ref()),
+        "disk_io_graph.legend_position",
+    )?;
     let disk_io_name_filter = match &config.disk_io_graph {
         Some(cfg) => get_ignore_list(&cfg.name_filter)
             .context("Update 'disk_io_graph.name_filter' in your config file")?,
+        None => None,
+    };
+    let disk_space_legend_position = get_config_legend_position(
+        config
+            .disk_space_graph
+            .as_ref()
+            .and_then(|cfg| cfg.legend_position.as_ref()),
+        "disk_space_graph.legend_position",
+    )?;
+    let disk_space_name_filter = match &config.disk_space_graph {
+        Some(cfg) => get_ignore_list(&cfg.name_filter)
+            .context("Update 'disk_space_graph.name_filter' in your config file")?,
         None => None,
     };
 
@@ -486,6 +512,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .and_then(|cfg| cfg.default_sort.to_owned()),
         temperature_legend_position,
         disk_io_legend_position,
+        disk_space_legend_position,
     };
 
     let process_default_sort = match &args.process.process_default_sort {
@@ -659,6 +686,18 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                 ),
                             );
                         }
+                        DiskSpaceGraph => {
+                            let legend = config
+                                .disk_space_graph
+                                .as_ref()
+                                .and_then(|c| c.legend.clone())
+                                .unwrap_or_default();
+
+                            disk_space_graph_state_map.insert(
+                                widget.widget_id,
+                                DiskSpaceGraphWidgetState::new(ts_config, autohide_timer, legend),
+                            );
+                        }
                         Battery => {
                             battery_state_map
                                 .insert(widget.widget_id, BatteryWidgetState::default());
@@ -707,6 +746,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         use_temp: used_widget_set.contains(&Temp),
         use_temp_graph: used_widget_set.contains(&TempGraph),
         use_disk_io_graph: used_widget_set.contains(&DiskIoGraph),
+        use_disk_space_graph: used_widget_set.contains(&DiskSpaceGraph),
         use_battery: used_widget_set.contains(&Battery),
     };
 
@@ -748,6 +788,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temp_graph_state: TempGraphStates::init(temp_graph_state_map),
         disk_state: DiskState::init(disk_state_map),
         disk_io_graph_state: DiskIoGraphStates::init(disk_io_graph_state_map),
+        disk_space_graph_state: DiskSpaceGraphStates::init(disk_space_graph_state_map),
         battery_state: AppBatteryState::init(battery_state_map),
         basic_table_widget_state,
     };
@@ -762,6 +803,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temp_filter: temp_sensor_filter,
         temp_graph_filter: temp_graph_sensor_filter,
         disk_io_graph_filter: disk_io_name_filter,
+        disk_space_graph_filter: disk_space_name_filter,
         net_filter: net_interface_filter,
     };
     let is_expanded = expanded && !use_basic_mode;
@@ -1320,28 +1362,12 @@ fn get_memory_legend_position(
     )
 }
 
-fn get_temperature_legend_position(config: &Config) -> OptionResult<Option<LegendPosition>> {
-    parse_legend_position(
-        None,
-        config
-            .temperature_graph
-            .as_ref()
-            .and_then(|settings| settings.legend_position.as_ref()),
-        None,
-        "legend_position",
-    )
-}
-
-fn get_disk_io_legend_position(config: &Config) -> OptionResult<Option<LegendPosition>> {
-    parse_legend_position(
-        None,
-        config
-            .disk_io_graph
-            .as_ref()
-            .and_then(|settings| settings.legend_position.as_ref()),
-        None,
-        "disk_io_graph.legend_position",
-    )
+/// Parse a legend position that is only configurable through the config file
+/// (no CLI argument or deprecated fallback).
+fn get_config_legend_position(
+    cfg: Option<&String>, setting: &'static str,
+) -> OptionResult<Option<LegendPosition>> {
+    parse_legend_position(None, cfg, None, setting)
 }
 
 #[cfg(test)]
