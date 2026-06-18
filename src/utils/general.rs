@@ -24,18 +24,18 @@ pub(crate) fn partial_ordering_desc<T: PartialOrd>(a: T, b: T) -> Ordering {
     partial_ordering(a, b).reverse()
 }
 
-/// Consumes and returns the leading run of ASCII digits from `chars`.
-fn take_digits(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> String {
-    let mut digits = String::new();
-    while let Some(&c) = chars.peek() {
-        if c.is_ascii_digit() {
-            digits.push(c);
-            chars.next();
-        } else {
-            break;
-        }
+/// Returns the digit run starting at `i` with its leading zeroes stripped,
+/// alongside the full run's length. `bytes[i]` is assumed to be an ASCII digit.
+fn digit_run(bytes: &[u8], i: usize) -> (&[u8], usize) {
+    let start = i;
+    let mut end = i;
+    while end < bytes.len() && bytes[end].is_ascii_digit() {
+        end += 1;
     }
-    digits
+
+    let run = &bytes[start..end];
+    let significant = &run[run.iter().take_while(|&&c| c == b'0').count()..];
+    (significant, run.len())
 }
 
 /// Compares two strings using "natural" ordering, where consecutive runs of
@@ -43,53 +43,53 @@ fn take_digits(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> String {
 /// character. For example, `"core 2"` is ordered before `"core 10"`, unlike the
 /// default lexicographic ordering which would place `"core 10"` first.
 ///
-/// Non-digit characters are compared by their usual [`char`] ordering. When two
-/// numeric runs share the same value, the one with more leading zeroes is
-/// ordered afterwards so that the comparison remains a total order.
+/// Non-digit bytes are compared by their usual ordering, which for UTF-8 matches
+/// `char` (Unicode scalar value) ordering. When two numeric runs share the same
+/// value, the one with more leading zeroes is ordered afterwards so that the
+/// comparison remains a total order.
+///
+/// This walks the strings as byte slices and allocates nothing, since ASCII
+/// digits are always single bytes and never appear inside a multi-byte UTF-8
+/// sequence.
 pub(crate) fn natural_cmp(a: &str, b: &str) -> Ordering {
-    let mut a_chars = a.chars().peekable();
-    let mut b_chars = b.chars().peekable();
+    let (a, b) = (a.as_bytes(), b.as_bytes());
+    let (mut ai, mut bi) = (0, 0);
 
-    loop {
-        match (a_chars.peek().copied(), b_chars.peek().copied()) {
-            (None, None) => return Ordering::Equal,
-            (None, Some(_)) => return Ordering::Less,
-            (Some(_), None) => return Ordering::Greater,
-            (Some(ac), Some(bc)) => {
-                if ac.is_ascii_digit() && bc.is_ascii_digit() {
-                    let a_digits = take_digits(&mut a_chars);
-                    let b_digits = take_digits(&mut b_chars);
+    while ai < a.len() && bi < b.len() {
+        let (ac, bc) = (a[ai], b[bi]);
 
-                    let a_trimmed = a_digits.trim_start_matches('0');
-                    let b_trimmed = b_digits.trim_start_matches('0');
+        if ac.is_ascii_digit() && bc.is_ascii_digit() {
+            let (a_sig, a_len) = digit_run(a, ai);
+            let (b_sig, b_len) = digit_run(b, bi);
 
-                    // A longer run of significant digits is a larger number; for
-                    // equal lengths a lexicographic comparison matches the
-                    // numeric one.
-                    let by_value = a_trimmed
-                        .len()
-                        .cmp(&b_trimmed.len())
-                        .then_with(|| a_trimmed.cmp(b_trimmed));
-                    if by_value != Ordering::Equal {
-                        return by_value;
-                    }
-
-                    // Same numeric value; fewer leading zeroes sorts first.
-                    let by_zeroes = a_digits.len().cmp(&b_digits.len());
-                    if by_zeroes != Ordering::Equal {
-                        return by_zeroes;
-                    }
-                } else {
-                    let by_char = ac.cmp(&bc);
-                    if by_char != Ordering::Equal {
-                        return by_char;
-                    }
-                    a_chars.next();
-                    b_chars.next();
-                }
+            // A longer run of significant digits is a larger number; for equal
+            // lengths a byte-wise comparison matches the numeric one.
+            let by_value = a_sig.len().cmp(&b_sig.len()).then_with(|| a_sig.cmp(b_sig));
+            if by_value != Ordering::Equal {
+                return by_value;
             }
+
+            // Same numeric value; fewer leading zeroes sorts first.
+            let by_zeroes = a_len.cmp(&b_len);
+            if by_zeroes != Ordering::Equal {
+                return by_zeroes;
+            }
+
+            ai += a_len;
+            bi += b_len;
+        } else {
+            let by_byte = ac.cmp(&bc);
+            if by_byte != Ordering::Equal {
+                return by_byte;
+            }
+            ai += 1;
+            bi += 1;
         }
     }
+
+    // Whichever string still has bytes left is the longer, and thus greater, one;
+    // a prefix sorts before the string that extends it.
+    (a.len() - ai).cmp(&(b.len() - bi))
 }
 
 /// Compares two strings for sorting, optionally using [`natural_cmp`] instead of
