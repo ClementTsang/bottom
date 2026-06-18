@@ -161,6 +161,7 @@ impl CpuWidgetState {
             show_table_scroll_position: false, // TODO: Should this be possible?
             show_table_scroll_bar: config.show_table_scroll_bar,
             show_current_entry_when_unfocused: true,
+            natural_sort: false,
         };
 
         let styling = DataTableStyling::from_palette(colours);

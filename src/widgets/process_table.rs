@@ -247,6 +247,7 @@ impl ProcWidgetState {
             show_table_scroll_position: false,
             show_table_scroll_bar: false,
             show_current_entry_when_unfocused: false,
+            natural_sort: false,
         };
         let styling = DataTableStyling::from_palette(palette);
 
@@ -265,6 +266,7 @@ impl ProcWidgetState {
             show_table_scroll_position: config.show_table_scroll_position,
             show_table_scroll_bar: config.show_table_scroll_bar,
             show_current_entry_when_unfocused: false,
+            natural_sort: config.enable_natural_sort,
         };
         let props = SortDataTableProps {
             inner: inner_props,
@@ -664,7 +666,12 @@ impl ProcWidgetState {
             .columns
             .get(self.table.sort_index())
             .expect("columns should contain the current sort index");
-        sort_skip_pid_asc(column.inner(), &mut stack, self.table.order());
+        sort_skip_pid_asc(
+            column.inner(),
+            &mut stack,
+            self.table.order(),
+            self.table.props.natural_sort,
+        );
 
         let mut length_stack = vec![stack.len()];
         stack.reverse();
@@ -763,7 +770,11 @@ impl ProcWidgetState {
                         })
                         .collect_vec();
 
-                    column.sort_by(&mut children, self.table.order().rev());
+                    column.sort_by(
+                        &mut children,
+                        self.table.order().rev(),
+                        self.table.props.natural_sort,
+                    );
 
                     length_stack.push(children.len());
                     stack.extend(children);
@@ -869,7 +880,12 @@ impl ProcWidgetState {
         self.id_pid_map = id_pid_map;
 
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
-            sort_skip_pid_asc(column.inner(), &mut filtered_data, self.table.order());
+            sort_skip_pid_asc(
+                column.inner(),
+                &mut filtered_data,
+                self.table.order(),
+                self.table.props.natural_sort,
+            );
         }
 
         filtered_data
@@ -1151,12 +1167,14 @@ impl ProcWidgetState {
 }
 
 #[inline]
-fn sort_skip_pid_asc(column: &ProcColumn, data: &mut [ProcWidgetData], order: SortOrder) {
+fn sort_skip_pid_asc(
+    column: &ProcColumn, data: &mut [ProcWidgetData], order: SortOrder, natural: bool,
+) {
     let descending = matches!(order, SortOrder::Descending);
     match column {
         ProcColumn::Pid if !descending => {}
         _ => {
-            column.sort_data(data, descending);
+            column.sort_data(data, descending, natural);
         }
     }
 }
@@ -1233,7 +1251,12 @@ mod test {
 
         // Assume we had sorted over by pid.
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Descending);
+        sort_skip_pid_asc(
+            &ProcColumn::CpuPercent,
+            &mut data,
+            SortOrder::Descending,
+            false,
+        );
         assert_eq!(
             [&c, &b, &a, &d].iter().map(|d| d.pid).collect::<Vec<_>>(),
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),
@@ -1241,14 +1264,24 @@ mod test {
 
         // Note that the PID ordering for ties is still ascending.
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Ascending);
+        sort_skip_pid_asc(
+            &ProcColumn::CpuPercent,
+            &mut data,
+            SortOrder::Ascending,
+            false,
+        );
         assert_eq!(
             [&a, &d, &b, &c].iter().map(|d| d.pid).collect::<Vec<_>>(),
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
 
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Descending);
+        sort_skip_pid_asc(
+            &ProcColumn::MemPercent,
+            &mut data,
+            SortOrder::Descending,
+            false,
+        );
         assert_eq!(
             [&b, &a, &c, &d].iter().map(|d| d.pid).collect::<Vec<_>>(),
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),
@@ -1256,7 +1289,12 @@ mod test {
 
         // Note that the PID ordering for ties is still ascending.
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Ascending);
+        sort_skip_pid_asc(
+            &ProcColumn::MemPercent,
+            &mut data,
+            SortOrder::Ascending,
+            false,
+        );
         assert_eq!(
             [&c, &d, &a, &b].iter().map(|d| d.pid).collect::<Vec<_>>(),
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),

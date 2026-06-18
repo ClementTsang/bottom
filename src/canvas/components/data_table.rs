@@ -194,6 +194,7 @@ mod test {
             show_table_scroll_position: true,
             show_table_scroll_bar: false,
             show_current_entry_when_unfocused: false,
+            natural_sort: false,
         };
         let styling = DataTableStyling::default();
 

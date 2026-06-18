@@ -46,6 +46,7 @@ pub(crate) struct GeneralConfig {
     pub(crate) no_write: Option<bool>,
     pub(crate) show_table_scroll_position: Option<bool>,
     pub(crate) show_table_scroll_bar: Option<bool>,
+    pub(crate) enable_natural_sort: Option<bool>,
     pub(crate) read_only: Option<bool>,
     pub(crate) disable_gpu: Option<bool>,
     pub(crate) retention: Option<StringOrNum>,

@@ -42,6 +42,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2066](https://github.com/ClementTsang/bottom/pull/2066): Add search support in the help dialog.
 - [#1791](https://github.com/ClementTsang/bottom/pull/1791), [#2072](https://github.com/ClementTsang/bottom/pull/2072): Add support for using a short name for the GPU in memory usage.
 - [#2073](https://github.com/ClementTsang/bottom/pull/2073): Add disk I/O time series graph.
+- [#2086](https://github.com/ClementTsang/bottom/pull/2086): Add an `enable_natural_sort` config option to sort string table entries using natural ordering.
 
 ### Changes
 
