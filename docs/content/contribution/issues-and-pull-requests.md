@@ -36,8 +36,8 @@ The expected workflow for a pull request is:
 
 Some other things related to making changes or pull requests:
 
-- It's in the checklist, but please review your code _yourself_ and test your changes before you create the PR and ask for a review.
-  - I'm fine if you use AI to help with your change, but I expect you to still review the changes yourself.
-  - I also expect to be talking with a human if I have questions or comments - if I wanted to talk to an AI agent I can do that myself.
-- If you are adding or changing any dependency, I expect a justification on why this is necessary.
+- Please review your code _yourself_ and test your changes before you create the PR and ask for a review.
+  - I'm fine with AI assistance, but I expect you to still review the changes before creating the PR.
+  - I also expect to be talking with a human if I have questions or comments - if I wanted to talk to an AI agent to make a change, I can do that myself.
+- If you are adding or changing any dependency, a justification on why this is necessary must be included.
 - Please ensure that any changes made are compatible with the license of bottom.
