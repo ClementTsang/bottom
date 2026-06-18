@@ -10,8 +10,9 @@ use crate::{
     },
     options::config::style::Styles,
     utils::{
-        conversion::dec_bytes_per_second_string, data_units::get_decimal_bytes,
-        general::sort_partial_fn,
+        conversion::dec_bytes_per_second_string,
+        data_units::get_decimal_bytes,
+        general::{sort_partial_fn, sort_str_fn},
     },
 };
 
@@ -224,13 +225,15 @@ pub struct DiskTableWidget {
 impl SortsRow for DiskWidgetColumn {
     type DataType = DiskWidgetData;
 
-    fn sort_data(&self, data: &mut [Self::DataType], descending: bool) {
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool, natural: bool) {
         match self {
             DiskWidgetColumn::Disk => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(&a.name, &b.name));
+                data.sort_by(|a, b| sort_str_fn(&a.name, &b.name, descending, natural));
             }
             DiskWidgetColumn::Mount => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(&a.mount_point, &b.mount_point));
+                data.sort_by(|a, b| {
+                    sort_str_fn(&a.mount_point, &b.mount_point, descending, natural)
+                });
             }
             DiskWidgetColumn::Used => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.used_bytes, &b.used_bytes));
@@ -328,6 +331,7 @@ impl DiskTableWidget {
                 show_table_scroll_position: config.show_table_scroll_position,
                 show_table_scroll_bar: config.show_table_scroll_bar,
                 show_current_entry_when_unfocused: false,
+                natural_sort: config.enable_natural_sort,
             },
             sort_index: match &config.default_disk_sort_column {
                 Some(column) => {
@@ -376,7 +380,7 @@ impl DiskTableWidget {
         let mut data = data.disk_harvest.clone();
 
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
-            column.sort_by(&mut data, self.table.order());
+            column.sort_by(&mut data, self.table.order(), self.table.props.natural_sort);
         }
         self.table.set_data(data);
         self.force_update_data = false;

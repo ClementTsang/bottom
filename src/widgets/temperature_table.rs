@@ -9,7 +9,7 @@ use crate::{
         SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
     options::config::style::Styles,
-    utils::general::sort_partial_fn,
+    utils::general::{sort_partial_fn, sort_str_fn},
 };
 
 #[derive(Clone, Debug)]
@@ -104,10 +104,10 @@ impl DataToCell<TempWidgetColumn> for TempWidgetData {
 impl SortsRow for TempWidgetColumn {
     type DataType = TempWidgetData;
 
-    fn sort_data(&self, data: &mut [Self::DataType], descending: bool) {
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool, natural: bool) {
         match self {
             TempWidgetColumn::Sensor => {
-                data.sort_by(move |a, b| sort_partial_fn(descending)(&a.sensor, &b.sensor));
+                data.sort_by(move |a, b| sort_str_fn(&a.sensor, &b.sensor, descending, natural));
             }
             TempWidgetColumn::Temperature => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.temperature, &b.temperature));
@@ -137,6 +137,7 @@ impl TempWidgetState {
                 show_table_scroll_position: config.show_table_scroll_position,
                 show_table_scroll_bar: config.show_table_scroll_bar,
                 show_current_entry_when_unfocused: false,
+                natural_sort: config.enable_natural_sort,
             },
             // This is hard-coded, but there's only two columns so it's fine.
             sort_index: match config.default_temp_sort_column {
@@ -164,7 +165,7 @@ impl TempWidgetState {
     pub fn set_table_data(&mut self, data: &[TempWidgetData]) {
         let mut data = data.to_vec();
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
-            column.sort_by(&mut data, self.table.order());
+            column.sort_by(&mut data, self.table.order(), self.table.props.natural_sort);
         }
         self.table.set_data(data);
         self.force_update_data = false;

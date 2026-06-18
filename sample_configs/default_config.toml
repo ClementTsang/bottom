@@ -106,6 +106,10 @@
 # Show a scroll bar on the right edge of table widgets.
 #show_table_scroll_bar = false
 
+# Sort string entries (such as sensor or disk names) using natural ordering, so
+# that e.g. "core 2" comes before "core 10".
+#enable_natural_sort = false
+
 # Deprecated - use processes.process_command.
 # Show processes as their commands by default in the process widget.
 #process_command = false

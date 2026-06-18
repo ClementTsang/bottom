@@ -120,7 +120,11 @@ pub trait SortsRow {
     type DataType;
 
     /// Sorts data.
-    fn sort_data(&self, data: &mut [Self::DataType], descending: bool);
+    ///
+    /// When `natural` is set, string columns are compared using natural ordering
+    /// (so e.g. `core 2` sorts before `core 10`); columns with non-string data
+    /// ignore it.
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool, natural: bool);
 }
 
 /// A wrapper around [`Column`] that also has sorting capabilities.
@@ -216,9 +220,11 @@ where
 
     /// Given a [`SortColumn`] and the sort order, sort a mutable slice of
     /// associated data.
-    pub fn sort_by(&self, data: &mut [D], order: SortOrder) {
+    ///
+    /// When `natural` is set, string columns are sorted using natural ordering.
+    pub fn sort_by(&self, data: &mut [D], order: SortOrder, natural: bool) {
         let descending = matches!(order, SortOrder::Descending);
-        self.column.inner().sort_data(data, descending);
+        self.column.inner().sort_data(data, descending, natural);
     }
 }
 
@@ -374,7 +380,7 @@ mod test {
     impl SortsRow for ColumnType {
         type DataType = TestType;
 
-        fn sort_data(&self, data: &mut [TestType], descending: bool) {
+        fn sort_data(&self, data: &mut [TestType], descending: bool, _natural: bool) {
             match self {
                 ColumnType::Index => data.sort_by_key(|t| t.index),
                 ColumnType::Data => data.sort_by_key(|t| t.data),
@@ -401,6 +407,7 @@ mod test {
                 show_table_scroll_position: true,
                 show_table_scroll_bar: false,
                 show_current_entry_when_unfocused: false,
+                natural_sort: false,
             };
 
             SortDataTableProps {
@@ -440,7 +447,7 @@ mod test {
             .columns
             .get(table.sort_type.sort_index)
             .unwrap()
-            .sort_by(&mut data, SortOrder::Ascending);
+            .sort_by(&mut data, SortOrder::Ascending, false);
         assert_eq!(
             data,
             vec![
@@ -471,7 +478,7 @@ mod test {
             .columns
             .get(table.sort_type.sort_index)
             .unwrap()
-            .sort_by(&mut data, SortOrder::Descending);
+            .sort_by(&mut data, SortOrder::Descending, false);
         assert_eq!(
             data,
             vec![
@@ -503,7 +510,7 @@ mod test {
             .columns
             .get(table.sort_type.sort_index)
             .unwrap()
-            .sort_by(&mut data, SortOrder::Ascending);
+            .sort_by(&mut data, SortOrder::Ascending, false);
         assert_eq!(
             data,
             vec![

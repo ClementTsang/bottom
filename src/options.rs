@@ -455,6 +455,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             config
         ),
         show_table_scroll_bar: config_or!(config, flags.show_table_scroll_bar, false),
+        enable_natural_sort: config_or!(config, flags.enable_natural_sort, false),
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         is_advanced_kill,
         is_read_only,

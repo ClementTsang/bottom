@@ -5,7 +5,7 @@ use serde::Deserialize;
 use super::{ProcWidgetColumn, ProcWidgetData};
 use crate::{
     canvas::components::data_table::{ColumnHeader, SortsRow},
-    utils::general::sort_partial_fn,
+    utils::general::{sort_partial_fn, sort_str_fn},
 };
 
 /// A column in the process widget.
@@ -123,7 +123,7 @@ impl ColumnHeader for ProcColumn {
 impl SortsRow for ProcColumn {
     type DataType = ProcWidgetData;
 
-    fn sort_data(&self, data: &mut [ProcWidgetData], descending: bool) {
+    fn sort_data(&self, data: &mut [ProcWidgetData], descending: bool, natural: bool) {
         match self {
             ProcColumn::CpuPercent => {
                 data.sort_by(|a, b| {
@@ -143,7 +143,13 @@ impl SortsRow for ProcColumn {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.num_similar, b.num_similar));
             }
             ProcColumn::Name | ProcColumn::Command => {
-                if descending {
+                if natural {
+                    // The natural comparison can't be expressed as a sort key, so
+                    // fall back to comparing the (lowercased) names directly.
+                    data.sort_by(|a, b| {
+                        sort_str_fn(&a.id.to_lowercase(), &b.id.to_lowercase(), descending, true)
+                    });
+                } else if descending {
                     data.sort_by_cached_key(|pd| Reverse(pd.id.to_lowercase()));
                 } else {
                     data.sort_by_cached_key(|pd| pd.id.to_lowercase());

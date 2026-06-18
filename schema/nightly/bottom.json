@@ -444,6 +444,12 @@
             "null"
           ]
         },
+        "enable_natural_sort": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "expanded": {
           "type": [
             "boolean",

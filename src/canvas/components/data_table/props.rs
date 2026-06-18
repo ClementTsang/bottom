@@ -23,4 +23,8 @@ pub struct DataTableProps {
 
     /// Whether to show the current entry as highlighted when not focused.
     pub show_current_entry_when_unfocused: bool,
+
+    /// Whether string columns should be sorted using natural ordering (so e.g.
+    /// `core 2` sorts before `core 10`).
+    pub natural_sort: bool,
 }
