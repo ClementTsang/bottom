@@ -234,6 +234,8 @@ fn create_collection_thread(
     let get_process_threads = app_config_fields.get_process_threads;
     #[cfg(feature = "zfs")]
     let get_arc_free = app_config_fields.free_arc;
+    let include_unmounted_disks =
+        app_config_fields.disk_show_unmounted || app_config_fields.disk_io_graph_show_unmounted;
 
     thread::spawn(move || {
         let mut data_collector = collection::DataCollector::new(filters);
@@ -245,6 +247,7 @@ fn create_collection_thread(
         data_collector.set_get_process_threads(get_process_threads);
         #[cfg(feature = "zfs")]
         data_collector.set_free_arc_mem(get_arc_free);
+        data_collector.set_include_unmounted_disks(include_unmounted_disks);
 
         data_collector.update_data();
         data_collector.data = Data::default();

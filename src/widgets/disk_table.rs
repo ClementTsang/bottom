@@ -219,6 +219,8 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
 pub struct DiskTableWidget {
     pub table: SortDataTable<DiskWidgetData, DiskWidgetColumn>,
     pub force_update_data: bool,
+    /// Whether to show unmounted block devices (those without a mount point).
+    show_unmounted: bool,
 }
 
 impl SortsRow for DiskWidgetColumn {
@@ -318,6 +320,7 @@ const fn default_disk_columns() -> [SortColumn<DiskWidgetColumn>; 8] {
 impl DiskTableWidget {
     pub fn new(
         config: &AppConfigFields, palette: &Styles, columns: Option<&[DiskWidgetColumn]>,
+        show_unmounted: bool,
     ) -> Self {
         let props = SortDataTableProps {
             inner: DataTableProps {
@@ -356,11 +359,13 @@ impl DiskTableWidget {
                 Self {
                     table: SortDataTable::new_sortable(columns, props, styling),
                     force_update_data: false,
+                    show_unmounted,
                 }
             }
             None => Self {
                 table: SortDataTable::new_sortable(default_disk_columns(), props, styling),
                 force_update_data: false,
+                show_unmounted,
             },
         }
     }
@@ -373,7 +378,17 @@ impl DiskTableWidget {
 
     /// Update the current table data.
     pub fn set_table_data(&mut self, data: &StoredData) {
-        let mut data = data.disk_harvest.clone();
+        // Unmounted devices have no mount point. They're collected for the disk
+        // I/O graph but should only appear here if the user opted in.
+        let mut data: Vec<DiskWidgetData> = if self.show_unmounted {
+            data.disk_harvest.clone()
+        } else {
+            data.disk_harvest
+                .iter()
+                .filter(|disk| !disk.mount_point.is_empty())
+                .cloned()
+                .collect()
+        };
 
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
             column.sort_by(&mut data, self.table.order());

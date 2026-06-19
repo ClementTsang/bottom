@@ -155,8 +155,11 @@ impl StoredData {
                 self.eat_disks(disks, io, harvested_time);
 
                 if used_widgets.use_disk_io_graph {
-                    self.time_series_data
-                        .update_disk_io(&self.disk_harvest, &filters.disk_io_graph_filter);
+                    self.time_series_data.update_disk_io(
+                        &self.disk_harvest,
+                        &filters.disk_io_graph_filter,
+                        settings.disk_io_graph_show_unmounted,
+                    );
                 }
             }
         }

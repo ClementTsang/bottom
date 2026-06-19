@@ -236,10 +236,16 @@ impl TimeSeriesData {
     /// Update disk I/O time series using already-calculated rates from
     /// [`DiskWidgetData`]. Devices not present in `disks` get a break inserted
     /// so the legend keeps them around for the window's remaining lifetime.
-    pub fn update_disk_io(&mut self, disks: &[DiskWidgetData], filter: &Option<Filter>) {
+    pub fn update_disk_io(
+        &mut self, disks: &[DiskWidgetData], filter: &Option<Filter>, show_unmounted: bool,
+    ) {
         let mut not_visited: HashSet<String> = self.disk_io_read.keys().cloned().collect();
 
         for disk in disks {
+            if !show_unmounted && disk.mount_point.is_empty() {
+                continue;
+            }
+
             if !Filter::optional_should_keep(filter, &disk.name) {
                 continue;
             }

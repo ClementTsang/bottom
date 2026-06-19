@@ -409,6 +409,16 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .context("Update 'disk_io_graph.name_filter' in your config file")?,
         None => None,
     };
+    let disk_show_unmounted = config
+        .disk
+        .as_ref()
+        .and_then(|cfg| cfg.include_unmounted)
+        .unwrap_or(false);
+    let disk_io_graph_show_unmounted = config
+        .disk_io_graph
+        .as_ref()
+        .and_then(|cfg| cfg.include_unmounted)
+        .unwrap_or(false);
 
     // TODO: Can probably just reuse the options struct.
     let app_config_fields = AppConfigFields {
@@ -486,6 +496,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .and_then(|cfg| cfg.default_sort.to_owned()),
         temperature_legend_position,
         disk_io_legend_position,
+        disk_show_unmounted,
+        disk_io_graph_show_unmounted,
     };
 
     let process_default_sort = match &args.process.process_default_sort {
@@ -602,6 +614,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                     &app_config_fields,
                                     &styling,
                                     config.disk.as_ref().and_then(|cfg| cfg.columns.as_deref()),
+                                    disk_show_unmounted,
                                 ),
                             );
                         }
