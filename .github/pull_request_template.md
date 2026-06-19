@@ -30,11 +30,12 @@ _Ensure **all** of these are met:_
 - [ ] _If this is a code change, your changes pass `cargo clippy --all -- -D warnings`_
 - [ ] _If this is a code change, new tests were added if relevant_
 - [ ] _If this is a code change, your changes pass `cargo test`_
-- [ ] _The change has been tested to work (see above) and doesn't appear to break other things_
+- [ ] _The change has been verified to work (see the Testing section) and doesn't unexpectedly break anything else_
 - [ ] _Documentation has been updated if needed (`README.md`, help menu, docs, configs, etc.)_
 - [ ] _There are no merge conflicts_
-- [ ] _You have reviewed your changes first_
+- [ ] _You have personally reviewed your changes already before creating the PR_
 - [ ] _The pull request passes the provided CI pipeline_
+- [ ] _If this PR was generated with AI, please specify how in the "Other" section, and that you as a human have personally reviewed it_
 
 ## Other
 

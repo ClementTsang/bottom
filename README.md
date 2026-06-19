@@ -68,15 +68,17 @@
 As (yet another) process/system visualization and management application, bottom supports the typical features:
 
 - Graphical visualization widgets for:
-  - [CPU usage](https://bottom.pages.dev/nightly/usage/widgets/cpu/) over time, at an average and per-core level
-  - [RAM and swap usage](https://bottom.pages.dev/nightly/usage/widgets/memory/) over time
-  - [Network I/O usage](https://bottom.pages.dev/nightly/usage/widgets/network/) over time
+  - [CPU usage](https://bottom.pages.dev/nightly/usage/widgets/cpu-graph/) over time, at an average and per-core level
+  - [RAM and swap usage](https://bottom.pages.dev/nightly/usage/widgets/memory-graph/) over time
+  - [Network I/O usage](https://bottom.pages.dev/nightly/usage/widgets/network-graph/) over time
+  - [Temperature](https://bottom.pages.dev/nightly/usage/widgets/temperature-graph/) over time
+  - [Disk I/O usage](https://bottom.pages.dev/nightly/usage/widgets/disk-io-graph/) over time
 
   with support for zooming in/out the current time interval displayed.
 
 - Widgets for displaying info about:
   - [Disk capacity/usage](https://bottom.pages.dev/nightly/usage/widgets/disk/)
-  - [Temperature sensors](https://bottom.pages.dev/nightly/usage/widgets/temperature/)
+  - [Temperature sensors](https://bottom.pages.dev/nightly/usage/widgets/temperature-table/)
   - [Battery usage](https://bottom.pages.dev/nightly/usage/widgets/battery/)
 
 - [A process widget](https://bottom.pages.dev/nightly/usage/widgets/process/) for displaying, sorting, and searching info about processes, as well as support for:
