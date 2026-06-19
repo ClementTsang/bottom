@@ -25,6 +25,16 @@
         }
       ]
     },
+    "disk_io_graph": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DiskIoGraphConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "flags": {
       "anyOf": [
         {
@@ -257,6 +267,13 @@
             }
           ]
         },
+        "include_unmounted": {
+          "description": "Whether to include block devices that aren't currently mounted. Defaults to false.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "mount_filter": {
           "description": "A filter over the mount names.",
           "anyOf": [
@@ -278,6 +295,110 @@
               "type": "null"
             }
           ]
+        }
+      }
+    },
+    "DiskGraphLegend": {
+      "description": "Whether the disk graph legend labels use device names or mount points.",
+      "oneOf": [
+        {
+          "description": "Label entries by kernel device name (e.g. `sda`, `nvme0n1`).",
+          "type": "string",
+          "const": "disk"
+        },
+        {
+          "description": "Label entries by mount point (e.g. `/`, `/home`).",
+          "type": "string",
+          "const": "mount"
+        }
+      ]
+    },
+    "DiskIoGraphConfig": {
+      "description": "Disk I/O graph configuration.",
+      "type": "object",
+      "properties": {
+        "include_unmounted": {
+          "description": "Whether to include block devices that aren't currently mounted. Defaults\nto false.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "legend": {
+          "description": "Whether to label legend entries by device name or mount point. Defaults to disk name.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DiskGraphLegend"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "legend_position": {
+          "description": "Where to position the legend within the widget.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name_filter": {
+          "description": "An optional list of device names to include or exclude.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IgnoreList"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "show_read": {
+          "description": "Whether to show the read rate line. Defaults to true.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "show_write": {
+          "description": "Whether to show the write rate line. Defaults to true.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "use_log": {
+          "description": "Whether to use a logarithmic scale on the y-axis. Defaults to false.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "DiskIoGraphStyle": {
+      "description": "Styling specific to the disk I/O graph widget.",
+      "type": "object",
+      "properties": {
+        "read_colours": {
+          "description": "Colour of each disk's read rate graph line. Read in order.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/ColourStr"
+          }
+        },
+        "write_colours": {
+          "description": "Colour of each disk's write rate graph line. Read in order.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/ColourStr"
+          }
         }
       }
     },
@@ -1128,6 +1249,17 @@
           "anyOf": [
             {
               "$ref": "#/$defs/CpuStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "disk_io_graph": {
+          "description": "Styling for the disk I/O graph widget.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DiskIoGraphStyle"
             },
             {
               "type": "null"
