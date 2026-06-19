@@ -22,6 +22,19 @@ default_sort = "R/s"
 You can use any valid [column](#columns) name here (e.g. "Disk", "Mount", etc.). Note that if you put a column name that
 is not actually used, the default sort will just be the first column shown.
 
+## Show Unmounted Devices (Linux only)
+
+By default, only mounted devices are shown. To also show unmounted devices on Linux, enable `include_unmounted`:
+
+```toml
+[disk]
+include_unmounted = true
+```
+
+Unmounted devices show I/O activity but have no used/free space (those require a live mount), so those
+columns appear as `N/A`. Pseudo-devices (`loop*`, `ram*`, `zram*`) are skipped, and you can hide other
+noisy devices with the [name filter](#filtering-entries).
+
 ## Filtering Entries
 
 You can filter out what entries to show by configuring `[disk.name_filter]` and `[disk.mount_filter]` to filter by name and mount point respectively. In particular,
