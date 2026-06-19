@@ -14,7 +14,7 @@ pub(crate) struct DiskConfig {
     /// A filter over the mount names.
     pub(crate) mount_filter: Option<IgnoreList>,
 
-    /// Whether to include block devices that aren't currently mounted. Defaults to false.
+    /// Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
     pub(crate) include_unmounted: Option<bool>,
 
     /// A list of disk widget columns.

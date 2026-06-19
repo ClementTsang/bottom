@@ -37,7 +37,6 @@ pub(crate) struct DiskIoGraphConfig {
     /// An optional list of device names to include or exclude.
     pub(crate) name_filter: Option<IgnoreList>,
 
-    /// Whether to include block devices that aren't currently mounted. Defaults
-    /// to false.
+    /// Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
     pub(crate) include_unmounted: Option<bool>,
 }

@@ -268,7 +268,7 @@
           ]
         },
         "include_unmounted": {
-          "description": "Whether to include block devices that aren't currently mounted. Defaults to false.",
+          "description": "Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.",
           "type": [
             "boolean",
             "null"
@@ -318,7 +318,7 @@
       "type": "object",
       "properties": {
         "include_unmounted": {
-          "description": "Whether to include block devices that aren't currently mounted. Defaults\nto false.",
+          "description": "Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.",
           "type": [
             "boolean",
             "null"

@@ -477,8 +477,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Defaults to "Disk".
 #default_sort = "Disk"
 
-# Whether to include block devices that aren't currently mounted (Linux only). These show I/O activity
-# but have no used/free space. Defaults to false.
+# Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
 #include_unmounted = false
 
 # By default, there are no disk name filters enabled. These can be turned on to filter out specific data entries if you
@@ -535,7 +534,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Where to place the legend. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #legend_position = "top-right"
 
-# Whether to include block devices that aren't currently mounted (Linux only). Defaults to false.
+# Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
 #include_unmounted = false
 
 # By default, there are no disk I/O name filters enabled. An example use case is provided below.
