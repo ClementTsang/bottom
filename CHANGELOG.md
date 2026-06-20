@@ -32,6 +32,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ### Other
 
+- [#2052](https://github.com/ClementTsang/bottom/pull/2052): Update minimum Rust version to 1.95.0.
 - [#2055](https://github.com/ClementTsang/bottom/pull/2055): Use sysinfo for disk I/O for FreeBSD.
 
 ## [0.13.0] - 2026-06-19
