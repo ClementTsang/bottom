@@ -1,6 +1,6 @@
 use std::{borrow::Cow, num::NonZeroU16};
 
-use ratatui::widgets::Row;
+use ratatui::{style::Style, widgets::Row};
 
 use super::{ColumnHeader, DataTableColumn};
 use crate::canvas::Painter;
@@ -22,7 +22,7 @@ where
         unused_variables,
         reason = "The default implementation just returns `None`."
     )]
-    fn style_cell(&self, column: &H, painter: &Painter) -> Option<ratatui::style::Style> {
+    fn style_cell(&self, column: &H, painter: &Painter) -> Option<Style> {
         None
     }
 

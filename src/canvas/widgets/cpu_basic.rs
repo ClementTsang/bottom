@@ -4,6 +4,7 @@ use itertools::Itertools;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
+    style::Style,
 };
 
 use crate::{
@@ -156,9 +157,7 @@ impl Painter {
     }
 
     #[inline]
-    fn cpu_info(
-        &self, data: &CpuData, show_decimal: bool,
-    ) -> (String, String, f32, ratatui::style::Style) {
+    fn cpu_info(&self, data: &CpuData, show_decimal: bool) -> (String, String, f32, Style) {
         let (outer, style) = match data.data_type {
             CpuDataType::Avg => ("AVG".to_string(), self.styles.avg_cpu_colour),
             CpuDataType::Cpu(index) => (

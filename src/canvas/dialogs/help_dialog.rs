@@ -296,8 +296,6 @@ impl Painter {
 
 #[cfg(test)]
 mod tests {
-    use ratatui::style::Style;
-
     use super::*;
 
     fn check_spans(line: &Line<'_>, expected: [&str; 3]) {

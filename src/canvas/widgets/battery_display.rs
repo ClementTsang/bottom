@@ -3,7 +3,7 @@ use std::cmp::min;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    symbols::line,
+    symbols::{self, line},
     text::{Line, Span},
     widgets::{Cell, Paragraph, Row, Table, Tabs},
 };
@@ -93,7 +93,7 @@ impl Painter {
                             .map(|name| Line::from((*name).clone()))
                             .collect::<Vec<_>>(),
                     )
-                    .divider(ratatui::symbols::line::VERTICAL)
+                    .divider(symbols::line::VERTICAL)
                     .style(self.styles.text_style)
                     .highlight_style(self.styles.selected_text_style)
                     .select(battery_widget_state.currently_selected_battery_index),
