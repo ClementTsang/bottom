@@ -36,15 +36,19 @@ pub fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<DiskHarve
     // Track the kernel names of mounted devices so we can tell which block devices
     // are unmounted later on (Linux only).
     #[cfg(target_os = "linux")]
-    let mut mounted_names: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut mounted_names = std::collections::HashSet::new();
 
     for partition in physical_partitions()? {
         let name = partition.get_device_name();
         let mount_point = partition.mount_point().to_string_lossy().to_string();
 
+        // Only track mounted names when we actually need them to compute the
+        // unmounted set; the default path skips this bookkeeping entirely.
         #[cfg(target_os = "linux")]
-        if let Some(base) = name.rsplit('/').next() {
-            mounted_names.insert(base.to_string());
+        if collector.include_unmounted_disks {
+            if let Some(base) = name.rsplit('/').next() {
+                mounted_names.insert(base.to_string());
+            }
         }
 
         // Precedence ordering in the case where name and mount filters disagree,

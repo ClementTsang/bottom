@@ -60,10 +60,22 @@ impl Painter {
             let mut device_names: Vec<&String> = read_data
                 .keys()
                 .filter(|name| {
-                    mount_map.contains_key(name.as_str())
-                        || read_data
+                    let has_read_data = || {
+                        read_data
                             .get(*name)
                             .is_some_and(|d| has_data_in_window(d, times, current_display_time))
+                    };
+
+                    // If there is a mount point and we're in mount legend mode, it must be non-empty (i.e. actually mounted), or we will short-circuit and ignore it.
+                    if let Some(mount_point) = mount_map.get(name.as_str()) {
+                        match legend_type {
+                            DiskGraphLegend::Disk => true,
+                            DiskGraphLegend::Mount => !mount_point.is_empty() && has_read_data(),
+                        }
+                    } else {
+                        // Otherwise, it may have _previously_ been a valid mount point, so keep showing it until it ages out.
+                        has_read_data()
+                    }
                 })
                 .collect();
             device_names.sort_unstable();

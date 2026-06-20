@@ -239,9 +239,13 @@ impl TimeSeriesData {
     pub fn update_disk_io(
         &mut self, disks: &[DiskWidgetData], filter: &Option<Filter>, show_unmounted: bool,
     ) {
+        #[cfg(not(target_os = "linux"))]
+        let _ = show_unmounted;
+
         let mut not_visited: HashSet<String> = self.disk_io_read.keys().cloned().collect();
 
         for disk in disks {
+            #[cfg(target_os = "linux")]
             if !show_unmounted && disk.mount_point.is_empty() {
                 continue;
             }
