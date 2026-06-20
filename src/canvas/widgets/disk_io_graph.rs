@@ -8,6 +8,7 @@ use timeless::data::ChunkedData;
 use tui::{
     Frame,
     layout::{Constraint, Rect},
+    style::Style,
 };
 
 use crate::{
@@ -66,15 +67,24 @@ impl Painter {
                             .is_some_and(|d| has_data_in_window(d, times, current_display_time))
                     };
 
-                    // If there is a mount point and we're in mount legend mode, it must be non-empty (i.e. actually mounted), or we will short-circuit and ignore it.
+                    // If there is a mount point and we're in mount legend mode, it must be non-empty
+                    // (i.e. actually mounted), or we will short-circuit and ignore it.
                     if let Some(mount_point) = mount_map.get(name.as_str()) {
                         match legend_type {
                             DiskGraphLegend::Disk => true,
                             DiskGraphLegend::Mount => !mount_point.is_empty() && has_read_data(),
                         }
                     } else {
-                        // Otherwise, it may have _previously_ been a valid mount point, so keep showing it until it ages out.
-                        has_read_data()
+                        match legend_type {
+                            DiskGraphLegend::Disk => {
+                                // Otherwise, it may have _previously_ been a valid mount point, so keep showing it until it ages out.
+                                has_read_data()
+                            }
+                            DiskGraphLegend::Mount => {
+                                // Since it would be misleading in this case, just skip it in mount mode.
+                                false
+                            }
+                        }
                     }
                 })
                 .collect();
@@ -128,13 +138,15 @@ impl Painter {
 
             let mut graph_data: Vec<GraphData<'_, f64>> =
                 Vec::with_capacity(device_names.len() * 2);
+
             for (idx, name) in device_names.iter().enumerate() {
                 let display_name = match legend_type {
                     DiskGraphLegend::Disk => name.as_str(),
-                    DiskGraphLegend::Mount => mount_map
-                        .get(name.as_str())
-                        .copied()
-                        .unwrap_or(name.as_str()),
+                    DiskGraphLegend::Mount => match mount_map.get(name.as_str()).copied() {
+                        Some(mount) => mount,
+                        // This wouldn't trigger anyway, we filter out devices without mount points in mount legend mode.
+                        None => continue,
+                    },
                 };
 
                 let is_active = mount_map.contains_key(name.as_str());
@@ -143,12 +155,12 @@ impl Painter {
                 let write_values = show_write.then(|| write_data.get(*name)).flatten();
 
                 let read_style = if read_colours.is_empty() {
-                    tui::style::Style::default()
+                    Style::default()
                 } else {
                     read_colours[idx % read_colours.len()]
                 };
                 let write_style = if write_colours.is_empty() {
-                    tui::style::Style::default()
+                    Style::default()
                 } else {
                     write_colours[idx % write_colours.len()]
                 };
