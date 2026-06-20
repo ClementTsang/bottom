@@ -1326,7 +1326,7 @@ fn get_memory_legend_position(
             .as_ref()
             .and_then(|flags| flags.memory_legend.as_ref())
             .map(|s| (s, "memory_legend")),
-        "memory.legend_position",
+        "memory_graph.legend_position",
     )
 }
 
