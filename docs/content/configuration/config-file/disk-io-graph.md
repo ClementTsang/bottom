@@ -46,6 +46,15 @@ The location of the legend can be set with `legend_position`. Valid values are `
 legend_position = "top-right"
 ```
 
+## Show Unmounted Devices (Linux only)
+
+By default, only mounted devices are shown. To also show unmounted devices on Linux, enable `include_unmounted`:
+
+```toml
+[disk_io_graph]
+include_unmounted = true
+```
+
 ## Filtering Entries
 
 You can filter out what entries to show by configuring `[disk_io_graph.name_filter]` and `[disk_io_graph.mount_filter]` to filter by

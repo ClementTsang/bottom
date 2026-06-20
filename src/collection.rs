@@ -156,6 +156,7 @@ pub struct DataCollector {
     last_collection_time: Instant,
     widgets_to_harvest: UsedWidgets,
     filters: DataFilters,
+    include_unmounted_disks: bool,
 
     total_rx: u64,
     total_tx: u64,
@@ -245,6 +246,7 @@ impl DataCollector {
             cgroup_memory_data: CgroupMemCollector::default(),
             #[cfg(target_os = "linux")]
             cgroup_cpu_data: CgroupCpuCollector::default(),
+            include_unmounted_disks: false,
         }
     }
 
@@ -288,6 +290,10 @@ impl DataCollector {
 
     pub fn set_get_process_threads(&mut self, get_process_threads: bool) {
         self.get_process_threads = get_process_threads;
+    }
+
+    pub fn set_include_unmounted_disks(&mut self, include_unmounted_disks: bool) {
+        self.include_unmounted_disks = include_unmounted_disks;
     }
 
     #[cfg(feature = "zfs")]

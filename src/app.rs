@@ -82,6 +82,8 @@ pub struct AppConfigFields {
     pub default_disk_sort_column: Option<DiskWidgetColumn>,
     pub temperature_legend_position: Option<LegendPosition>,
     pub disk_io_legend_position: Option<LegendPosition>,
+    pub disk_show_unmounted: bool,
+    pub disk_io_graph_show_unmounted: bool,
 }
 
 /// For filtering out information
