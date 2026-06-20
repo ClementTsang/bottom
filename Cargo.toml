@@ -93,7 +93,7 @@ starship-battery = { version = "0.10.3", optional = true }
 sysinfo = "=0.39.3"
 timeless = "0.0.14-alpha"
 toml_edit = { version = "0.24.0", features = ["serde"] }
-tui = { version = "0.30.2", package = "ratatui", features = [
+tui = { version = "0.30.2", package = "ratatui", default-features = false, features = [
     "unstable-rendered-line-info",
     "layout-cache",
     "crossterm",
