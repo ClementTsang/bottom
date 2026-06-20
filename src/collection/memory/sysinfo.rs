@@ -18,8 +18,8 @@ fn get_usage(used: u64, total: u64) -> Option<MemData> {
 pub(crate) fn get_ram_usage(collector: &DataCollector) -> Option<MemData> {
     let sys = &collector.sys.system;
 
-    cfg_if::cfg_if! {
-        if #[cfg(target_os = "linux")] {
+    cfg_select! {
+        target_os = "linux" => {
             use crate::collection::linux::cgroups;
 
             let base_used = sys.used_memory();
@@ -40,7 +40,8 @@ pub(crate) fn get_ram_usage(collector: &DataCollector) -> Option<MemData> {
             };
 
             get_usage(used, total)
-        } else {
+        }
+        _ => {
             get_usage(sys.used_memory(), sys.total_memory())
         }
     }
@@ -53,8 +54,8 @@ pub(crate) fn get_ram_usage(collector: &DataCollector) -> Option<MemData> {
 pub(crate) fn get_swap_usage(collector: &DataCollector) -> Option<MemData> {
     let sys = &collector.sys.system;
 
-    cfg_if::cfg_if! {
-        if #[cfg(target_os = "linux")] {
+    cfg_select! {
+        target_os = "linux" => {
             use crate::collection::linux::cgroups;
 
             let base_used = sys.used_swap();
@@ -75,7 +76,8 @@ pub(crate) fn get_swap_usage(collector: &DataCollector) -> Option<MemData> {
             };
 
             get_usage(used, total)
-        } else {
+        }
+        _ => {
             get_usage(sys.used_swap(), sys.total_swap())
         }
     }

@@ -5,17 +5,19 @@ mod file_systems;
 
 mod usage;
 
-cfg_if::cfg_if! {
-    if #[cfg(target_os = "linux")] {
+cfg_select! {
+    target_os = "linux" => {
         mod linux;
         pub use linux::*;
-    } else if #[cfg(target_os = "macos")] {
+    }
+    target_os = "macos" => {
         mod other;
         use other::*;
 
         mod macos;
         pub use macos::*;
-    } else {
+    }
+    _ => {
         mod other;
         use other::*;
     }
