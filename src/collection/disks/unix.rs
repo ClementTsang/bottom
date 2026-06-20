@@ -41,10 +41,10 @@ pub fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<DiskHarve
         let mount_point = partition.mount_point().to_string_lossy().to_string();
 
         #[cfg(target_os = "linux")]
-        if collector.include_unmounted_disks {
-            if let Some(base) = name.rsplit('/').next() {
-                mounted_names.insert(base.to_string());
-            }
+        if collector.include_unmounted_disks
+            && let Some(base) = name.rsplit('/').next()
+        {
+            mounted_names.insert(base.to_string());
         }
 
         // Precedence ordering in the case where name and mount filters disagree,

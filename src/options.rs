@@ -142,13 +142,13 @@ fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
         let mut old_home_path = home_path;
         old_home_path.push(".config/");
         old_home_path.push(DEFAULT_CONFIG_FILE_LOCATION);
-        if let Ok(res) = old_home_path.try_exists() {
-            if res {
-                // We used to create it at `<HOME>/DEFAULT_CONFIG_FILE_PATH`, but changed it
-                // to be more correct later. However, for legacy reasons, if it already exists,
-                // use the old one.
-                return Some(old_home_path);
-            }
+        if let Ok(res) = old_home_path.try_exists()
+            && res
+        {
+            // We used to create it at `<HOME>/DEFAULT_CONFIG_FILE_PATH`, but changed it
+            // to be more correct later. However, for legacy reasons, if it already exists,
+            // use the old one.
+            return Some(old_home_path);
         }
     }
 
@@ -157,28 +157,26 @@ fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
         path
     });
 
-    if cfg!(target_os = "macos") {
-        if let Ok(xdg_config_path) = std::env::var("XDG_CONFIG_HOME") {
-            if !xdg_config_path.is_empty() {
-                // If XDG_CONFIG_HOME exists and is non-empty, _but_ we previously used the
-                // Library-based path for a config and it exists, then use that
-                // instead for backwards-compatibility.
-                if let Some(old_macos_path) = &config_path {
-                    if let Ok(res) = old_macos_path.try_exists() {
-                        if res {
-                            return config_path;
-                        }
-                    }
-                }
-
-                // Otherwise, try and use the XDG_CONFIG_HOME-based path.
-                let mut cfg_path = PathBuf::new();
-                cfg_path.push(xdg_config_path);
-                cfg_path.push(DEFAULT_CONFIG_FILE_LOCATION);
-
-                return Some(cfg_path);
-            }
+    if cfg!(target_os = "macos")
+        && let Ok(xdg_config_path) = std::env::var("XDG_CONFIG_HOME")
+        && !xdg_config_path.is_empty()
+    {
+        // If XDG_CONFIG_HOME exists and is non-empty, _but_ we previously used the
+        // Library-based path for a config and it exists, then use that
+        // instead for backwards-compatibility.
+        if let Some(old_macos_path) = &config_path
+            && let Ok(res) = old_macos_path.try_exists()
+            && res
+        {
+            return config_path;
         }
+
+        // Otherwise, try and use the XDG_CONFIG_HOME-based path.
+        let mut cfg_path = PathBuf::new();
+        cfg_path.push(xdg_config_path);
+        cfg_path.push(DEFAULT_CONFIG_FILE_LOCATION);
+
+        return Some(cfg_path);
     }
 
     config_path
@@ -530,32 +528,32 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             for col_row in &col.children {
                 for widget in &col_row.children {
                     widget_map.insert(widget.widget_id, widget.clone());
-                    if let Some(default_widget_type) = &default_widget_type_option {
-                        if !is_custom_layout || use_basic_mode {
-                            match widget.widget_type {
-                                BasicCpu => {
-                                    if let Cpu = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
+                    if let Some(default_widget_type) = &default_widget_type_option
+                        && (!is_custom_layout || use_basic_mode)
+                    {
+                        match widget.widget_type {
+                            BasicCpu => {
+                                if let Cpu = *default_widget_type {
+                                    initial_widget_id = widget.widget_id;
+                                    initial_widget_type = Cpu;
                                 }
-                                BasicMem => {
-                                    if let Mem = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
+                            }
+                            BasicMem => {
+                                if let Mem = *default_widget_type {
+                                    initial_widget_id = widget.widget_id;
+                                    initial_widget_type = Cpu;
                                 }
-                                BasicNet => {
-                                    if let Net = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
+                            }
+                            BasicNet => {
+                                if let Net = *default_widget_type {
+                                    initial_widget_id = widget.widget_id;
+                                    initial_widget_type = Cpu;
                                 }
-                                _ => {
-                                    if *default_widget_type == widget.widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = widget.widget_type.clone();
-                                    }
+                            }
+                            _ => {
+                                if *default_widget_type == widget.widget_type {
+                                    initial_widget_id = widget.widget_id;
+                                    initial_widget_type = widget.widget_type.clone();
                                 }
                             }
                         }
@@ -977,10 +975,10 @@ fn get_temperature(args: &BottomArgs, config: &Config) -> OptionResult<Temperatu
         return Ok(TemperatureType::Kelvin);
     } else if args.temperature.celsius {
         return Ok(TemperatureType::Celsius);
-    } else if let Some(flags) = &config.flags {
-        if let Some(temp_type) = &flags.temperature_type {
-            return parse_config_value!(TemperatureType::from_str(temp_type), "temperature_type");
-        }
+    } else if let Some(flags) = &config.flags
+        && let Some(temp_type) = &flags.temperature_type
+    {
+        return parse_config_value!(TemperatureType::from_str(temp_type), "temperature_type");
     }
     Ok(TemperatureType::Celsius)
 }
@@ -991,11 +989,11 @@ fn get_show_average_cpu(args: &BottomArgs, config: &Config) -> bool {
         return false;
     } else if let Some(cpu) = &config.cpu {
         return !cpu.hide_avg_cpu.unwrap_or(false);
-    } else if let Some(flags) = &config.flags {
-        if let Some(hide) = flags.hide_avg_cpu {
-            deprecated_warning("hide_avg_cpu", "cpu.hide_avg_cpu");
-            return !hide;
-        }
+    } else if let Some(flags) = &config.flags
+        && let Some(hide) = flags.hide_avg_cpu
+    {
+        deprecated_warning("hide_avg_cpu", "cpu.hide_avg_cpu");
+        return !hide;
     }
 
     true
@@ -1102,20 +1100,19 @@ fn get_default_widget_and_count(
 fn get_use_battery(args: &BottomArgs, config: &Config) -> bool {
     // TODO: Move this so it's dynamic in the app itself and automatically hide if
     // there are no batteries?
-    if let Ok(battery_manager) = Manager::new() {
-        if let Ok(batteries) = battery_manager.batteries() {
-            if batteries.count() == 0 {
-                return false;
-            }
-        }
+    if let Ok(battery_manager) = Manager::new()
+        && let Ok(batteries) = battery_manager.batteries()
+        && batteries.count() == 0
+    {
+        return false;
     }
 
     if args.battery.battery {
         return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(battery) = flags.battery {
-            return battery;
-        }
+    } else if let Some(flags) = &config.flags
+        && let Some(battery) = flags.battery
+    {
+        return battery;
     }
 
     false
@@ -1220,13 +1217,13 @@ fn get_network_unit_type(args: &BottomArgs, config: &Config) -> DataUnit {
         if use_bytes {
             return DataUnit::Byte;
         }
-    } else if let Some(flags) = &config.flags {
-        if let Some(network_use_bytes) = flags.network_use_bytes {
-            deprecated_warning("network_use_bytes", "network_graph.use_bytes");
+    } else if let Some(flags) = &config.flags
+        && let Some(network_use_bytes) = flags.network_use_bytes
+    {
+        deprecated_warning("network_use_bytes", "network_graph.use_bytes");
 
-            if network_use_bytes {
-                return DataUnit::Byte;
-            }
+        if network_use_bytes {
+            return DataUnit::Byte;
         }
     }
 
@@ -1240,13 +1237,13 @@ fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
         if use_log {
             return AxisScaling::Log;
         }
-    } else if let Some(flags) = &config.flags {
-        if let Some(network_use_log) = flags.network_use_log {
-            deprecated_warning("network_use_log", "network_graph.use_log");
+    } else if let Some(flags) = &config.flags
+        && let Some(network_use_log) = flags.network_use_log
+    {
+        deprecated_warning("network_use_log", "network_graph.use_log");
 
-            if network_use_log {
-                return AxisScaling::Log;
-            }
+        if network_use_log {
+            return AxisScaling::Log;
         }
     }
 

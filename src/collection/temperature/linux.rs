@@ -62,24 +62,24 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
 
     if let Ok(read_dir) = Path::new("/sys/devices/platform").read_dir() {
         for entry in read_dir.flatten() {
-            if entry.file_name().to_string_lossy().starts_with("coretemp.") {
-                if let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
-                    for entry in read_dir.flatten() {
-                        let path = entry.path();
+            if entry.file_name().to_string_lossy().starts_with("coretemp.")
+                && let Ok(read_dir) = entry.path().join("hwmon").read_dir()
+            {
+                for entry in read_dir.flatten() {
+                    let path = entry.path();
 
-                        if path.join("temp1_input").exists() {
-                            // It's possible that there are dupes (represented by symlinks) - the
-                            // easy way is to just substitute the parent
-                            // directory and check if the hwmon
-                            // variant exists already in a set.
-                            //
-                            // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
-                            if let Some(child) = path.file_name() {
-                                let to_check_path = Path::new("/sys/class/hwmon").join(child);
+                    if path.join("temp1_input").exists() {
+                        // It's possible that there are dupes (represented by symlinks) - the
+                        // easy way is to just substitute the parent
+                        // directory and check if the hwmon
+                        // variant exists already in a set.
+                        //
+                        // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
+                        if let Some(child) = path.file_name() {
+                            let to_check_path = Path::new("/sys/class/hwmon").join(child);
 
-                                if !dirs.contains(&to_check_path) {
-                                    dirs.insert(path);
-                                }
+                            if !dirs.contains(&to_check_path) {
+                                dirs.insert(path);
                             }
                         }
                     }
@@ -326,15 +326,14 @@ fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) ->
 
                 // TODO: It's possible we may want to move the filter check further up to avoid
                 // probing hwmon if not needed?
-                if Filter::optional_should_keep(filter, &name)
-                    || Filter::optional_should_keep(graph_filter, &name)
+                if (Filter::optional_should_keep(filter, &name)
+                    || Filter::optional_should_keep(graph_filter, &name))
+                    && let Ok(temp_celsius) = parse_temp(&temp_path)
                 {
-                    if let Ok(temp_celsius) = parse_temp(&temp_path) {
-                        temperatures.push(TempSensorData {
-                            name,
-                            temperature: Some(temp_celsius),
-                        });
-                    }
+                    temperatures.push(TempSensorData {
+                        name,
+                        temperature: Some(temp_celsius),
+                    });
                 }
             }
         }
