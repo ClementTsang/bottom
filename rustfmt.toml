@@ -15,4 +15,4 @@ style_edition = "2024"
 
 # These sometimes break things, be careful re-enabling them.
 # wrap_comments = true
-# format_code_in_doc_comments = true
+format_code_in_doc_comments = true
