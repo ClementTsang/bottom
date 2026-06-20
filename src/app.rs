@@ -994,14 +994,14 @@ impl App {
                 let current_process = (id, pids);
 
                 let use_simple_selection = {
-                  cfg_select! {
-                    any(target_os = "linux", target_os = "macos", target_os = "freebsd") => {
-                        !self.app_config_fields.is_advanced_kill
+                    cfg_select! {
+                      any(target_os = "linux", target_os = "macos", target_os = "freebsd") => {
+                          !self.app_config_fields.is_advanced_kill
+                      }
+                      _ => {
+                          true
+                      }
                     }
-                    _ => {
-                        true
-                    }
-                  }
                 };
 
                 self.process_kill_dialog.start_process_kill(
