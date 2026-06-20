@@ -1036,7 +1036,7 @@ impl ProcWidgetState {
     /// Otherwise, if count is disabled, then if the columns exist, the User and
     /// State columns should be re-enabled, and the mode switched to
     /// [`ProcWidgetMode::Normal`].
-    pub fn toggle_tab(&mut self) {
+    pub(crate) fn toggle_tab(&mut self) {
         if !matches!(self.mode, ProcWidgetMode::Tree { .. })
             && let Some(index) = self
                 .column_mapping
