@@ -29,7 +29,8 @@ pub mod widgets;
 
 use std::{
     boxed::Box,
-    io::{Stdout, Write, stderr, stdout},
+    io::{Write, stderr, stdout},
+    panic::{self, PanicHookInfo},
     sync::{
         Arc,
         mpsc::{self, Receiver, Sender},
@@ -40,12 +41,13 @@ use std::{
 
 use app::{App, AppConfigFields, DataFilters, layout_manager::UsedWidgets};
 use crossterm::{
-    cursor::Show,
+    cursor::{Hide, Show},
     event::{
-        DisableBracketedPaste, DisableMouseCapture, Event, KeyEventKind, MouseEventKind, poll, read,
+        DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
+        Event, KeyEventKind, MouseEventKind, poll, read,
     },
     execute,
-    terminal::{LeaveAlternateScreen, disable_raw_mode},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use event::{BottomEvent, CollectionThreadEvent, handle_key_event_or_break, handle_mouse_event};
 use options::{args, get_or_create_config, init_app};
@@ -62,7 +64,8 @@ use crate::collection::Data;
 
 /// Try drawing. If not, clean up the terminal and return an error.
 fn try_drawing(
-    terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App, painter: &mut canvas::Painter,
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App,
+    painter: &mut canvas::Painter,
 ) -> anyhow::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
@@ -73,7 +76,9 @@ fn try_drawing(
 }
 
 /// Clean up the terminal before returning it to the user.
-fn cleanup_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> anyhow::Result<()> {
+fn cleanup_terminal(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+) -> anyhow::Result<()> {
     disable_raw_mode()?;
 
     execute!(
@@ -113,6 +118,32 @@ pub fn reset_stdout() {
         LeaveAlternateScreen,
         Show,
     );
+}
+
+/// A panic hook to properly restore the terminal in the case of a panic.
+/// Originally based on [spotify-tui's implementation](https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs).
+fn panic_hook(panic_info: &PanicHookInfo<'_>) {
+    let msg = match panic_info.payload().downcast_ref::<&'static str>() {
+        Some(s) => *s,
+        None => match panic_info.payload().downcast_ref::<String>() {
+            Some(s) => &s[..],
+            None => "Box<Any>",
+        },
+    };
+
+    let backtrace = format!("{:?}", std::backtrace::Backtrace::capture());
+
+    reset_stdout();
+
+    // Print stack trace. Must be done after!
+    if let Some(panic_info) = panic_info.location() {
+        println!("thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}")
+    }
+
+    // TODO: Might be cleaner in the future to use a cancellation token, but that
+    // causes some fun issues with lifetimes; for now if it panics then shut
+    // down the main program entirely ASAP.
+    std::process::exit(1);
 }
 
 /// Create a thread to poll for user inputs and forward them to the main thread.
@@ -334,7 +365,18 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // Set up tui and crossterm
     *enable_error_hook = true;
 
-    let mut terminal = ratatui::init();
+    let mut stdout_val = stdout();
+    execute!(stdout_val, Hide, EnterAlternateScreen, EnableBracketedPaste)?;
+    if app.app_config_fields.disable_click {
+        execute!(stdout_val, DisableMouseCapture)?;
+    } else {
+        execute!(stdout_val, EnableMouseCapture)?;
+    }
+    enable_raw_mode()?;
+
+    let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
+    terminal.clear()?;
+    terminal.hide_cursor()?;
 
     #[cfg(target_os = "freebsd")]
     let _stderr_fd = {
@@ -347,6 +389,9 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
         let path = OpenOptions::new().write(true).open("/dev/null")?;
         FileDescriptor::redirect_stdio(&path, StdioDescriptor::Stderr)?
     };
+
+    // Set panic hook
+    panic::set_hook(Box::new(panic_hook));
 
     // Set termination hook
     ctrlc::set_handler(move || {
