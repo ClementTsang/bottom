@@ -2,10 +2,9 @@
 
 use std::num::NonZeroU64;
 
-use crate::collection::{DataCollector, memory::MemData};
-
 #[cfg(target_os = "linux")]
 use crate::collection::linux::cgroups::CgroupMemLimit;
+use crate::collection::{DataCollector, memory::MemData};
 
 #[inline]
 fn get_usage(used: u64, total: u64) -> Option<MemData> {
