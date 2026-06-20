@@ -3,13 +3,13 @@ use std::{
     time::{Duration, Instant},
 };
 
-use rustc_hash::FxHashMap;
-use timeless::data::ChunkedData;
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Rect},
     style::Style,
 };
+use rustc_hash::FxHashMap;
+use timeless::data::ChunkedData;
 
 use crate::{
     app::App,

@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Rect},
     style::Style,

@@ -4,7 +4,7 @@ use std::{
 };
 
 use concat_string::concat_string;
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     symbols::line,

@@ -1,6 +1,6 @@
 use std::cmp::{max, min};
 
-use tui::{
+use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
@@ -296,7 +296,7 @@ impl Painter {
 
 #[cfg(test)]
 mod tests {
-    use tui::style::Style;
+    use ratatui::style::Style;
 
     use super::*;
 

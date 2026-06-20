@@ -1,4 +1,4 @@
-//! A [`tui::widgets::Chart`] but slightly more specialized to show
+//! A [`ratatui::widgets::Chart`] but slightly more specialized to show
 //! right-aligned time_series data.
 //!
 //! Generally should be updated to be in sync with [`chart.rs`](https://github.com/ratatui-org/ratatui/blob/main/src/widgets/chart.rs);
@@ -15,8 +15,7 @@ use std::{
 };
 
 use canvas::*;
-use timeless::data::ChunkedData;
-use tui::{
+use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Flex, Layout, Rect},
     style::{Color, Style, Styled},
@@ -24,6 +23,7 @@ use tui::{
     text::{Line, Span},
     widgets::{Block, BlockExt, Borders, GraphType, Widget},
 };
+use timeless::data::ChunkedData;
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
@@ -410,7 +410,7 @@ impl ChartScaling {
     }
 }
 
-/// A "custom" chart, just a slightly tweaked [`tui::widgets::Chart`] from
+/// A "custom" chart, just a slightly tweaked [`ratatui::widgets::Chart`] from
 /// ratatui, but with greater control over the legend, and built with the idea
 /// of drawing data points relative to a time-based x-axis.
 ///
@@ -1036,7 +1036,7 @@ mod tests {
 
     use std::time::Duration;
 
-    use tui::style::{Modifier, Stylize};
+    use ratatui::style::{Modifier, Stylize};
 
     use super::*;
     use crate::app::data::Values;

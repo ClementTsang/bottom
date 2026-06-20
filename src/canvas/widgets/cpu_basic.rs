@@ -1,7 +1,7 @@
 use std::cmp::min;
 
 use itertools::Itertools;
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
 };
@@ -158,7 +158,7 @@ impl Painter {
     #[inline]
     fn cpu_info(
         &self, data: &CpuData, show_decimal: bool,
-    ) -> (String, String, f32, tui::style::Style) {
+    ) -> (String, String, f32, ratatui::style::Style) {
         let (outer, style) = match data.data_type {
             CpuDataType::Avg => ("AVG".to_string(), self.styles.avg_cpu_colour),
             CpuDataType::Cpu(index) => (

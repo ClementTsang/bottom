@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
 };
@@ -145,7 +145,7 @@ impl Painter {
 
                 let style = {
                     if gpu_styles.is_empty() {
-                        tui::style::Style::default()
+                        ratatui::style::Style::default()
                     } else {
                         let colour = gpu_styles[colour_index % gpu_styles.len()];
                         colour_index += 1;

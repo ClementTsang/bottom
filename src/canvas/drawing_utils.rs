@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use tui::{
+use ratatui::{
     layout::Rect,
     style::Style,
     widgets::{Block, BorderType, Borders},
@@ -67,7 +67,7 @@ mod test {
     fn test_should_hide_x_label() {
         use std::time::{Duration, Instant};
 
-        use tui::layout::Rect;
+        use ratatui::layout::Rect;
 
         let rect = Rect::new(0, 0, 10, 10);
         let small_rect = Rect::new(0, 0, 10, 6);
