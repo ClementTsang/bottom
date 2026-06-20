@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## 0.14.1 - Unreleased
+
+### Bug Fixes
+
+- [#2096](https://github.com/ClementTsang/bottom/pull/2096): Fix documentation suggestions around `memory_graph`.
+
 ## 0.14.0 - 2026-06-20
 
 ### Bug Fixes
