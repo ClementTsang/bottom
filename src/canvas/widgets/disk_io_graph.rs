@@ -112,6 +112,20 @@ impl Painter {
             let read_colours = &self.styles.disk_io_read_colour_styles;
             let write_colours = &self.styles.disk_io_write_colour_styles;
 
+            // Pad the device/mount labels to the widest visible one so the rate columns
+            // line up in the legend (the rate itself is already fixed-width).
+            let name_width = device_names
+                .iter()
+                .map(|name| match legend_type {
+                    DiskGraphLegend::Disk => name.len(),
+                    DiskGraphLegend::Mount => mount_map
+                        .get(name.as_str())
+                        .map(|mount| mount.len())
+                        .unwrap_or(0),
+                })
+                .max()
+                .unwrap_or(0);
+
             let mut graph_data: Vec<GraphData<'_, f64>> =
                 Vec::with_capacity(device_names.len() * 2);
             for (idx, name) in device_names.iter().enumerate() {
@@ -148,7 +162,7 @@ impl Painter {
                     };
                     graph_data.push(
                         GraphData::default()
-                            .name(format!("{display_name} R:{rate}").into())
+                            .name(format!("{display_name:<name_width$} R:{rate}").into())
                             .style(read_style)
                             .time(times)
                             .values(values),
@@ -163,7 +177,7 @@ impl Painter {
                     };
                     graph_data.push(
                         GraphData::default()
-                            .name(format!("{display_name} W:{rate}").into())
+                            .name(format!("{display_name:<name_width$} W:{rate}").into())
                             .style(write_style)
                             .time(times)
                             .values(values),

@@ -1,5 +1,4 @@
-//! Enumeration of block devices that aren't currently mounted, via
-//! `/proc/partitions`.
+//! Return block devices that aren't currently mounted on Linux.
 
 use std::{
     collections::HashSet,
@@ -15,12 +14,9 @@ const PARTITION_BLOCK_SIZE: u64 = 1024;
 /// Returns [`DiskHarvest`] entries for block devices that aren't in `mounted`.
 ///
 /// These come from `/proc/partitions`, which lists every block device (so even
-/// devices with no I/O activity are covered) along with its size. Since they
-/// have no mount point, only the total size is available; used/free space
-/// require a live mount and are left as `None`.
-///
-/// Obvious pseudo-devices (`loop*`, `ram*`, `zram*`) are skipped since they're
-/// almost never something a user wants to monitor as an "unmounted disk".
+/// devices with no I/O activity are covered) along with its size in terms of blocks.
+/// Note this also filters out some devices, like `loop*`, `ram*`, `zram*`, etc., as
+/// these are not "disks".
 pub(crate) fn unmounted_disks(mounted: &HashSet<String>) -> Vec<DiskHarvest> {
     const PROC_PARTITIONS: &str = "/proc/partitions";
 
@@ -54,9 +50,7 @@ pub(crate) fn unmounted_disks(mounted: &HashSet<String>) -> Vec<DiskHarvest> {
                     mount_point: String::new(),
                     free_space: None,
                     used_space: None,
-                    // A zero-block device (e.g. an empty card reader) has no
-                    // meaningful size, so leave it blank.
-                    total_space: (blocks > 0).then_some(blocks * PARTITION_BLOCK_SIZE),
+                    total_space: Some(blocks * PARTITION_BLOCK_SIZE),
                 });
             }
         }
