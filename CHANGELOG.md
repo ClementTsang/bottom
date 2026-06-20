@@ -20,6 +20,18 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## 0.14.0 - Unreleased
+
+### Bug Fixes
+
+### Features
+
+- [#2055](https://github.com/ClementTsang/bottom/pull/2055): Add UFS disk I/O counters for FreeBSD.
+
+### Other
+
+- [#2055](https://github.com/ClementTsang/bottom/pull/2055): Use sysinfo for disk I/O for FreeBSD.
+
 ## [0.13.0] - 2026-06-19
 
 ### Bug Fixes
