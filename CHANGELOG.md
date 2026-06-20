@@ -20,9 +20,11 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## 0.14.0 - Unreleased
+## 0.14.0 - 2026-06-20
 
 ### Bug Fixes
+
+- [#2093](https://github.com/ClementTsang/bottom/pull/2093): Fix memory collection using cgroup v1 sentinel max as total.
 
 ### Features
 
