@@ -51,7 +51,7 @@ use crossterm::{
 };
 use event::{BottomEvent, CollectionThreadEvent, handle_key_event_or_break, handle_mouse_event};
 use options::{args, get_or_create_config, init_app};
-use ratatui::{Terminal, backend::CrosstermBackend};
+use ratatui::{Terminal, backend::CrosstermBackend, prelude::Backend};
 #[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;
 use utils::{cancellation_token::CancellationToken, conversion::*};
@@ -373,9 +373,9 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
 
-    // This may fail in some environments, like tests. In that case, fall back to just manually clearing it with backend.
+    // This may fail in some environments, like tests, since it may fail to get the cursor position.
+    // In that case, fall back to just manually clearing it with backend.
     if terminal.clear().is_err() {
-        use ratatui::prelude::Backend;
         terminal.backend_mut().clear()?;
     }
 
