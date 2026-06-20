@@ -38,6 +38,8 @@ use crate::app::filter::Filter;
 #[derive(Clone, Debug, Default)]
 pub struct DiskHarvest {
     pub name: String,
+
+    /// Current disk mount point. Empty string if not currently mounted.
     pub mount_point: String,
 
     /// Windows also contains an additional volume name field.

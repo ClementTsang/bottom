@@ -156,6 +156,7 @@ pub struct DataCollector {
     last_collection_time: Instant,
     widgets_to_harvest: UsedWidgets,
     filters: DataFilters,
+    include_unmounted_disks: bool,
 
     total_rx: u64,
     total_tx: u64,
@@ -245,6 +246,7 @@ impl DataCollector {
             cgroup_memory_data: CgroupMemCollector::default(),
             #[cfg(target_os = "linux")]
             cgroup_cpu_data: CgroupCpuCollector::default(),
+            include_unmounted_disks: false,
         }
     }
 
@@ -288,6 +290,10 @@ impl DataCollector {
 
     pub fn set_get_process_threads(&mut self, get_process_threads: bool) {
         self.get_process_threads = get_process_threads;
+    }
+
+    pub fn set_include_unmounted_disks(&mut self, include_unmounted_disks: bool) {
+        self.include_unmounted_disks = include_unmounted_disks;
     }
 
     #[cfg(feature = "zfs")]
@@ -466,14 +472,14 @@ impl DataCollector {
 
     #[inline]
     fn update_processes(&mut self) {
-        if self.widgets_to_harvest.use_proc {
-            if let Ok(mut process_list) = self.get_processes() {
-                // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
-                // PID here. We also want to avoid re-sorting *again* later on
-                // if we're sorting by PID, since we already did it here!
-                process_list.sort_unstable_by_key(|p| p.pid);
-                self.data.list_of_processes = Some(process_list);
-            }
+        if self.widgets_to_harvest.use_proc
+            && let Ok(mut process_list) = self.get_processes()
+        {
+            // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
+            // PID here. We also want to avoid re-sorting *again* later on
+            // if we're sorting by PID, since we already did it here!
+            process_list.sort_unstable_by_key(|p| p.pid);
+            self.data.list_of_processes = Some(process_list);
         }
     }
 

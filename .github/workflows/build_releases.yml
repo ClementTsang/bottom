@@ -246,7 +246,7 @@ jobs:
       - name: Upload unsigned Windows artifact
         id: upload-unsigned-artifact
         if: startsWith(matrix.info.os, 'windows')
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           retention-days: 1
           name: "unsigned-${{ matrix.info.target }}"
@@ -316,7 +316,7 @@ jobs:
           cp ./desktop/bottom.desktop release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           retention-days: 3
           name: "release-${{ matrix.info.artifact_name || matrix.info.target }}"
@@ -396,7 +396,7 @@ jobs:
           mv ${{ matrix.info.output }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           retention-days: 3
           name: "release-${{ matrix.info.target }}-msi"
@@ -532,7 +532,7 @@ jobs:
           mv ${{ steps.verify.outputs.DEB_FILE }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           retention-days: 3
           name: release-build-deb-${{ matrix.info.target }}
@@ -640,7 +640,7 @@ jobs:
           mv ${{ steps.verify.outputs.RPM_FILE }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           retention-days: 3
           name: release-build-rpm-${{ matrix.info.target }}

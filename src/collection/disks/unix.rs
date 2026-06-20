@@ -35,9 +35,19 @@ pub fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<DiskHarve
     let mount_filter = &collector.filters.mount_filter;
     let mut vec_disks: Vec<DiskHarvest> = Vec::new();
 
+    #[cfg(target_os = "linux")]
+    let mut mounted_names = std::collections::HashSet::new();
+
     for partition in physical_partitions()? {
         let name = partition.get_device_name();
         let mount_point = partition.mount_point().to_string_lossy().to_string();
+
+        #[cfg(target_os = "linux")]
+        if collector.include_unmounted_disks
+            && let Some(base) = name.rsplit('/').next()
+        {
+            mounted_names.insert(base.to_string());
+        }
 
         // Precedence ordering in the case where name and mount filters disagree,
         // "allow" takes precedence over "deny".
@@ -72,6 +82,19 @@ pub fn get_disk_usage(collector: &DataCollector) -> anyhow::Result<Vec<DiskHarve
                     mount_point,
                     name,
                 });
+            }
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        // If we're including unmounted disks, then we'll add any disks that we previously
+        // did not mark as mounted.
+        if collector.include_unmounted_disks {
+            for disk in unmounted_disks(&mounted_names) {
+                if keep_disk_entry(&disk.name, &disk.mount_point, disk_filter, &None) {
+                    vec_disks.push(disk);
+                }
             }
         }
     }

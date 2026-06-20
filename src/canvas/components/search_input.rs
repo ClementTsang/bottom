@@ -80,11 +80,11 @@ pub fn render_search_input(
 
     input_vec.extend(query_spans);
 
-    if let Some(hint) = state.hint {
-        if state.input_field_state.current_query().is_empty() {
-            input_vec.push(Span::styled(" ", styles.text_style));
-            input_vec.push(Span::styled(hint, styles.hint_style));
-        }
+    if let Some(hint) = state.hint
+        && state.input_field_state.current_query().is_empty()
+    {
+        input_vec.push(Span::styled(" ", styles.text_style));
+        input_vec.push(Span::styled(hint, styles.hint_style));
     }
 
     let input_line = Line::from(input_vec);
