@@ -8,10 +8,11 @@ pub mod dialogs;
 mod drawing_utils;
 mod widgets;
 
-use tui::{
+use ratatui::{
     Frame, Terminal,
     backend::Backend,
     layout::{Constraint, Direction, Flex, Layout, Rect},
+    style::Style,
     symbols::Marker,
     text::Span,
     widgets::Paragraph,
@@ -53,7 +54,7 @@ impl Painter {
     }
 
     /// Determines the border style.
-    pub fn get_border_style(&self, widget_id: u64, selected_widget_id: u64) -> tui::style::Style {
+    pub fn get_border_style(&self, widget_id: u64, selected_widget_id: u64) -> Style {
         let is_on_widget = widget_id == selected_widget_id;
         if is_on_widget {
             self.styles.highlighted_border_style

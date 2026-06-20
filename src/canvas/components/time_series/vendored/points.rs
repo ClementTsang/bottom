@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use tui::{
+use ratatui::{
     style::Color,
     widgets::{
         GraphType,

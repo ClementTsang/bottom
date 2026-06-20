@@ -1,6 +1,6 @@
 use std::cmp::{max, min};
 
-use tui::{
+use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
@@ -296,8 +296,6 @@ impl Painter {
 
 #[cfg(test)]
 mod tests {
-    use tui::style::Style;
-
     use super::*;
 
     fn check_spans(line: &Line<'_>, expected: [&str; 3]) {

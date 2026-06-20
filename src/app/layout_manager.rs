@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use tui::layout::Constraint;
+use ratatui::layout::Constraint;
 
 use crate::{constants::DEFAULT_WIDGET_ID, options::OptionError};
 

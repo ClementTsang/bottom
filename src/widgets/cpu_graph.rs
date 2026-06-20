@@ -1,7 +1,7 @@
 use std::{borrow::Cow, num::NonZeroU16, time::Instant};
 
 use concat_string::concat_string;
-use tui::widgets::Row;
+use ratatui::widgets::Row;
 
 use crate::{
     app::AppConfigFields,

@@ -29,7 +29,7 @@ pub mod widgets;
 
 use std::{
     boxed::Box,
-    io::{Write, stderr, stdout},
+    io::{Stdout, Write, stderr, stdout},
     panic::{self, PanicHookInfo},
     sync::{
         Arc,
@@ -51,7 +51,7 @@ use crossterm::{
 };
 use event::{BottomEvent, CollectionThreadEvent, handle_key_event_or_break, handle_mouse_event};
 use options::{args, get_or_create_config, init_app};
-use tui::{Terminal, backend::CrosstermBackend};
+use ratatui::{Terminal, backend::CrosstermBackend, prelude::Backend};
 #[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;
 use utils::{cancellation_token::CancellationToken, conversion::*};
@@ -64,8 +64,7 @@ use crate::collection::Data;
 
 /// Try drawing. If not, clean up the terminal and return an error.
 fn try_drawing(
-    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App,
-    painter: &mut canvas::Painter,
+    terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App, painter: &mut canvas::Painter,
 ) -> anyhow::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
@@ -76,9 +75,7 @@ fn try_drawing(
 }
 
 /// Clean up the terminal before returning it to the user.
-fn cleanup_terminal(
-    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
-) -> anyhow::Result<()> {
+fn cleanup_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> anyhow::Result<()> {
     disable_raw_mode()?;
 
     execute!(
@@ -375,7 +372,13 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     enable_raw_mode()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
-    terminal.clear()?;
+
+    // This may fail in some environments, like tests, since it may fail to get the cursor position.
+    // In that case, fall back to just manually clearing it with backend.
+    if terminal.clear().is_err() {
+        terminal.backend_mut().clear()?;
+    }
+
     terminal.hide_cursor()?;
 
     #[cfg(target_os = "freebsd")]

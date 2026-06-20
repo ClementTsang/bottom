@@ -2,7 +2,7 @@ use std::{borrow::Cow, marker::PhantomData, num::NonZeroU16};
 
 use concat_string::concat_string;
 use itertools::Itertools;
-use tui::widgets::Row;
+use ratatui::widgets::Row;
 
 use super::{
     ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,

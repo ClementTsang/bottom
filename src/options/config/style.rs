@@ -21,10 +21,10 @@ use disk_io_graph::DiskIoGraphStyle;
 use graphs::GraphStyle;
 use memory::MemoryStyle;
 use network::NetworkStyle;
+use ratatui::{style::Style, widgets::BorderType};
 use serde::{Deserialize, Serialize};
 use tables::TableStyle;
 use temp_graph::TempGraphStyle;
-use tui::{style::Style, widgets::BorderType};
 use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
 
@@ -274,7 +274,7 @@ impl Styles {
 #[cfg(test)]
 mod test {
 
-    use tui::style::{Color, Style};
+    use ratatui::style::{Color, Style};
 
     use super::Styles;
     use crate::options::config::{Config, style::utils::str_to_colour};

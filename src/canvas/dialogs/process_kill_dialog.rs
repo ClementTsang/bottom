@@ -3,8 +3,8 @@
 use std::time::Instant;
 
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-use tui::widgets::ListState;
-use tui::{
+use ratatui::widgets::ListState;
+use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Flex, Layout, Position, Rect},
     text::{Line, Span, Text},
@@ -696,7 +696,7 @@ impl ProcessKillDialog {
                 state,
                 last_button_draw_area,
             } => {
-                use tui::widgets::List;
+                use ratatui::widgets::List;
 
                 // A list of options, displayed vertically.
                 const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;

@@ -1,8 +1,7 @@
 use std::{borrow::Cow, time::Instant};
 
 use concat_string::concat_string;
-use timeless::data::ChunkedData;
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Rect},
     style::Style,
@@ -10,6 +9,7 @@ use tui::{
     text::{Line, Span},
     widgets::{BorderType, GraphType},
 };
+use timeless::data::ChunkedData;
 
 use crate::canvas::{components::time_series::*, drawing_utils::widget_block};
 
@@ -230,7 +230,7 @@ fn create_dataset<F: Copy + Default + Into<f64>>(data: GraphData<'_, F>) -> Data
 mod test {
     use std::borrow::Cow;
 
-    use tui::{
+    use ratatui::{
         style::{Color, Style},
         symbols::Marker,
         text::Span,

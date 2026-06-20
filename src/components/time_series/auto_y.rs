@@ -3,8 +3,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+use ratatui::{Frame, layout::Rect};
 use timeless::data::ChunkedData;
-use tui::{Frame, layout::Rect};
 
 use super::{
     AxisBound, ChartScaling, GraphData, GraphDrawCtx, TimeGraph, TimeseriesConfig, TimeseriesState,
