@@ -1,8 +1,8 @@
 {
-  "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/nightly/bottom.json",
+  "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/0.13.0/bottom.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Schema for bottom's config file (nightly)",
-  "description": "https://bottom.pages.dev/nightly/configuration/config-file/",
+  "title": "Schema for bottom's config file (v0.13.0)",
+  "description": "https://bottom.pages.dev/0.13.0/configuration/config-file/",
   "type": "object",
   "properties": {
     "cpu": {
