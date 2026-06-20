@@ -43,20 +43,19 @@ fn parse_unmounted_disks<R: BufRead>(mut reader: R, mounted: &HashSet<String>) -
         let blocks = parts.nth(2).and_then(|b| b.parse::<u64>().ok());
         let name = parts.next();
 
-        if let (Some(blocks), Some(name)) = (blocks, name) {
-            if !(mounted.contains(name)
+        if let (Some(blocks), Some(name)) = (blocks, name)
+            && !(mounted.contains(name)
                 || name.starts_with("loop")
                 || name.starts_with("ram")
                 || name.starts_with("zram"))
-            {
-                disks.push(DiskHarvest {
-                    name: format!("/dev/{name}"),
-                    mount_point: String::new(),
-                    free_space: None,
-                    used_space: None,
-                    total_space: Some(blocks * PARTITION_BLOCK_SIZE),
-                });
-            }
+        {
+            disks.push(DiskHarvest {
+                name: format!("/dev/{name}"),
+                mount_point: String::new(),
+                free_space: None,
+                used_space: None,
+                total_space: Some(blocks * PARTITION_BLOCK_SIZE),
+            });
         }
 
         line.clear();

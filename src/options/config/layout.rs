@@ -86,10 +86,10 @@ impl Row {
                             }
                         } else {
                             // Check default flag
-                            if let Some(default_widget_flag) = widget.default {
-                                if default_widget_flag {
-                                    *default_widget_id = *iter_id;
-                                }
+                            if let Some(default_widget_flag) = widget.default
+                                && default_widget_flag
+                            {
+                                *default_widget_id = *iter_id;
                             }
                         }
 
@@ -144,10 +144,10 @@ impl Row {
                                 }
                             } else {
                                 // Check default flag
-                                if let Some(default_widget_flag) = widget.default {
-                                    if default_widget_flag {
-                                        *default_widget_id = *iter_id;
-                                    }
+                                if let Some(default_widget_flag) = widget.default
+                                    && default_widget_flag
+                                {
+                                    *default_widget_id = *iter_id;
                                 }
                             }
 

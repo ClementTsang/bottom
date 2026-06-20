@@ -13,10 +13,10 @@ fn read_stat_key(path: &str, key: &str) -> Option<u64> {
     // TODO: Maybe check if this is worth it for the files we read.
     let file = fs::File::open(path).ok()?;
     for line in std::io::BufReader::new(file).lines().map_while(Result::ok) {
-        if let Some(rest) = line.strip_prefix(key) {
-            if let Some(val) = rest.strip_prefix(' ') {
-                return val.trim().parse().ok();
-            }
+        if let Some(rest) = line.strip_prefix(key)
+            && let Some(val) = rest.strip_prefix(' ')
+        {
+            return val.trim().parse().ok();
         }
     }
 

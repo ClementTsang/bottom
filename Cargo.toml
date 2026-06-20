@@ -40,7 +40,7 @@ exclude = [
 ]
 edition = "2024"
 # The oldest version I've tested that should still build - note this is not an official MSRV!
-rust-version = "1.85"
+rust-version = "1.95.0"
 
 [lib]
 test = true

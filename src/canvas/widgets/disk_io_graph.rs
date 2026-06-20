@@ -93,15 +93,11 @@ impl Painter {
             // Compute y_max across all visible series.
             let mut visible_sources: Vec<&_> = Vec::new();
             for name in &device_names {
-                if show_read {
-                    if let Some(data) = read_data.get(*name) {
-                        visible_sources.push(data);
-                    }
+                if show_read && let Some(data) = read_data.get(*name) {
+                    visible_sources.push(data);
                 }
-                if show_write {
-                    if let Some(data) = write_data.get(*name) {
-                        visible_sources.push(data);
-                    }
+                if show_write && let Some(data) = write_data.get(*name) {
+                    visible_sources.push(data);
                 }
             }
             let y_max = widget_state.graph.y_max(visible_sources.into_iter(), times);
@@ -230,12 +226,12 @@ impl Painter {
             );
         }
 
-        if app_state.should_get_widget_bounds() {
-            if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
-                widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
-                widget.bottom_right_corner =
-                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
-            }
+        if app_state.should_get_widget_bounds()
+            && let Some(widget) = app_state.widget_map.get_mut(&widget_id)
+        {
+            widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+            widget.bottom_right_corner =
+                Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
         }
     }
 }
