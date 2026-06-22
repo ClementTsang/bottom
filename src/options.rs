@@ -402,6 +402,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         config,
         network_graph.use_binary_prefix,
         flags.network_use_binary_prefix,
+        "network.use_binary_prefix",
     );
     let network_show_packets =
         is_flag_enabled_in!(show_packets, args.network, config.network_graph);
@@ -440,6 +441,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         .unwrap_or(false);
 
     let enable_cache_memory = get_enable_cache_memory(args, config);
+    let enable_gpu = get_enable_gpu(args, config);
 
     // TODO: Can probably just reuse the options struct.
     let app_config_fields = AppConfigFields {
@@ -477,7 +479,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         table_gap: config_or_default!(config, flags.table_gap),
         disable_click: is_flag_enabled!(disable_click, args.general, config),
         disable_keys: is_flag_enabled!(disable_keys, args.general, config),
-        enable_gpu: get_enable_gpu(args, config),
+        enable_gpu,
         short_gpu_names: get_short_gpu_names(args, config),
         enable_cache_memory,
         show_table_scroll_position: is_flag_enabled!(
@@ -734,7 +736,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         use_cpu: used_widget_set.contains(&Cpu) || used_widget_set.contains(&BasicCpu),
         use_mem,
         use_cache: use_mem && enable_cache_memory,
-        use_gpu: get_enable_gpu(args, config),
+        use_gpu: enable_gpu,
         use_net: used_widget_set.contains(&Net) || used_widget_set.contains(&BasicNet),
         use_proc: used_widget_set.contains(&Proc),
         use_disk: used_widget_set.contains(&Disk),
@@ -1252,7 +1254,11 @@ fn get_network_unit_type(args: &BottomArgs, config: &Config) -> DataUnit {
     } else if let Some(flags) = &config.flags
         && let Some(network_use_bytes) = flags.network_use_bytes
     {
-        deprecated_warning("network_use_bytes", "network_graph.use_bytes");
+        deprecated_warning_with_alias(
+            "network_use_bytes",
+            "network_graph.use_bytes",
+            "network.use_bytes",
+        );
 
         if network_use_bytes {
             return DataUnit::Byte;
@@ -1272,7 +1278,11 @@ fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
     } else if let Some(flags) = &config.flags
         && let Some(network_use_log) = flags.network_use_log
     {
-        deprecated_warning("network_use_log", "network_graph.use_log");
+        deprecated_warning_with_alias(
+            "network_use_log",
+            "network_graph.use_log",
+            "network.use_log",
+        );
 
         if network_use_log {
             return AxisScaling::Log;
