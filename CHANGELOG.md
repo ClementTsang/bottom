@@ -20,11 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## 0.14.1 - 2026-06-21
+## 0.14.1 - 2026-06-22
 
-### Bug Fixes
+### Other
 
 - [#2096](https://github.com/ClementTsang/bottom/pull/2096): Fix documentation suggestions around `memory_graph`.
+- [#2102](https://github.com/ClementTsang/bottom/pull/2102): Mention memory/network alias in deprecation warnings.
 
 ## 0.14.0 - 2026-06-20
 
