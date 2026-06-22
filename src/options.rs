@@ -95,6 +95,26 @@ macro_rules! enabled_option_with_deprecated {
             false
         }
     };
+    ($arg:expr, $config:expr, $section:ident . $field:ident, $flags:ident . $deprecated_flag:ident, $alias:literal $(,)?) => {
+        if $arg {
+            true
+        } else if let Some(section) = &$config.$section {
+            section.$field.unwrap_or(false)
+        } else if let Some(flags) = &$config.flags {
+            flags
+                .$deprecated_flag
+                .inspect(|_| {
+                    deprecated_warning_with_alias(
+                        stringify!($deprecated_flag),
+                        stringify!($section.$field),
+                        $alias,
+                    )
+                })
+                .unwrap_or(false)
+        } else {
+            false
+        }
+    };
 }
 
 /// Get the value of a field for a specific section in the config file if set. If not set, the default is used.
@@ -283,6 +303,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         config,
         memory_graph.free_arc,
         flags.free_arc,
+        "memory.free_arc",
     );
 
     // For processes
@@ -418,6 +439,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         .and_then(|cfg| cfg.include_unmounted)
         .unwrap_or(false);
 
+    let enable_cache_memory = get_enable_cache_memory(args, config);
+
     // TODO: Can probably just reuse the options struct.
     let app_config_fields = AppConfigFields {
         update_rate: get_update_rate(args, config)?,
@@ -456,7 +479,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         disable_keys: is_flag_enabled!(disable_keys, args.general, config),
         enable_gpu: get_enable_gpu(args, config),
         short_gpu_names: get_short_gpu_names(args, config),
-        enable_cache_memory: get_enable_cache_memory(args, config),
+        enable_cache_memory,
         show_table_scroll_position: is_flag_enabled!(
             show_table_scroll_position,
             args.general,
@@ -710,7 +733,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let used_widgets = UsedWidgets {
         use_cpu: used_widget_set.contains(&Cpu) || used_widget_set.contains(&BasicCpu),
         use_mem,
-        use_cache: use_mem && get_enable_cache_memory(args, config),
+        use_cache: use_mem && enable_cache_memory,
         use_gpu: get_enable_gpu(args, config),
         use_net: used_widget_set.contains(&Net) || used_widget_set.contains(&BasicNet),
         use_proc: used_widget_set.contains(&Proc),
@@ -953,6 +976,14 @@ fn deprecated_warning(deprecated_field: &str, new_field: &str) {
     );
 }
 
+/// Mark a config option field as deprecated, and what to use instead with an alias.
+#[inline]
+fn deprecated_warning_with_alias(deprecated_field: &str, new_field: &str, alias: &str) {
+    eprintln!(
+        "Warning: The config option '{deprecated_field}' is deprecated and will eventually be removed. Please use '{new_field}' or '{alias}' instead.",
+    );
+}
+
 /// How quickly we update data.
 #[inline]
 fn get_update_rate(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
@@ -1166,6 +1197,7 @@ fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
         config,
         memory_graph.cache_memory,
         flags.enable_cache_memory,
+        "memory.cache_memory",
     )
 }
 
@@ -1269,7 +1301,7 @@ fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
 #[inline]
 fn parse_legend_position(
     arg: Option<&String>, cfg: Option<&String>, deprecated_cfg: Option<(&String, &'static str)>,
-    setting: &'static str,
+    setting: &'static str, alias: Option<&'static str>,
 ) -> OptionResult<Option<LegendPosition>> {
     #[inline]
     fn parse_position_or_err<F: FnOnce(&'static str) -> OptionError>(
@@ -1287,7 +1319,11 @@ fn parse_legend_position(
         parse_position_or_err(s, setting, OptionError::invalid_config_value)
     } else if let Some((s, name)) = deprecated_cfg {
         // Remove the deprecated args/code paths and copy back to the function above later.
-        deprecated_warning(name, setting);
+        if let Some(alias) = alias {
+            deprecated_warning_with_alias(name, setting, alias);
+        } else {
+            deprecated_warning(name, setting);
+        }
         parse_position_or_err(s, setting, OptionError::invalid_config_value)
     } else {
         Ok(Some(LegendPosition::default()))
@@ -1309,6 +1345,7 @@ fn get_network_legend_position(
             .and_then(|flags| flags.network_legend.as_ref())
             .map(|s| (s, "network_legend")),
         "network_graph.legend_position",
+        Some("network.legend_position"),
     )
 }
 
@@ -1327,6 +1364,7 @@ fn get_memory_legend_position(
             .and_then(|flags| flags.memory_legend.as_ref())
             .map(|s| (s, "memory_legend")),
         "memory_graph.legend_position",
+        Some("memory.legend_position"),
     )
 }
 
@@ -1339,6 +1377,7 @@ fn get_temperature_legend_position(config: &Config) -> OptionResult<Option<Legen
             .and_then(|settings| settings.legend_position.as_ref()),
         None,
         "legend_position",
+        None,
     )
 }
 
@@ -1351,6 +1390,7 @@ fn get_disk_io_legend_position(config: &Config) -> OptionResult<Option<LegendPos
             .and_then(|settings| settings.legend_position.as_ref()),
         None,
         "disk_io_graph.legend_position",
+        None,
     )
 }
 
@@ -1394,7 +1434,7 @@ mod test {
 
         // No arg, no config.
         assert_eq!(
-            parse_legend_position(None, None, None, setting),
+            parse_legend_position(None, None, None, setting, None),
             Ok(Some(LegendPosition::default()))
         );
 
@@ -1402,40 +1442,40 @@ mod test {
         let arg = "  ToP-lEfT  ".to_string();
         let cfg = "bottom-right".to_string();
         assert_eq!(
-            parse_legend_position(Some(&arg), Some(&cfg), None, setting),
+            parse_legend_position(Some(&arg), Some(&cfg), None, setting, None),
             Ok(Some(LegendPosition::TopLeft))
         );
 
         // "none" disables the legend, from either source.
         let none_arg = "None".to_string();
         assert_eq!(
-            parse_legend_position(Some(&none_arg), None, None, setting),
+            parse_legend_position(Some(&none_arg), None, None, setting, None),
             Ok(None)
         );
         let none_cfg = "none".to_string();
         assert_eq!(
-            parse_legend_position(None, Some(&none_cfg), None, setting),
+            parse_legend_position(None, Some(&none_cfg), None, setting, None),
             Ok(None)
         );
 
         // Config value is used when no arg is provided.
         let cfg_only = "left".to_string();
         assert_eq!(
-            parse_legend_position(None, Some(&cfg_only), None, setting),
+            parse_legend_position(None, Some(&cfg_only), None, setting, None),
             Ok(Some(LegendPosition::Left))
         );
 
         // Invalid arg value.
         let bad_arg = "bad".to_string();
         assert_eq!(
-            parse_legend_position(Some(&bad_arg), None, None, setting),
+            parse_legend_position(Some(&bad_arg), None, None, setting, None),
             Err(OptionError::invalid_arg_value(setting))
         );
 
         // Invalid config value.
         let bad_cfg = "bad".to_string();
         assert_eq!(
-            parse_legend_position(None, Some(&bad_cfg), None, setting),
+            parse_legend_position(None, Some(&bad_cfg), None, setting, None),
             Err(OptionError::invalid_config_value(setting))
         );
     }

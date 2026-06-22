@@ -396,11 +396,11 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # How much data is stored at once in terms of time.
 #retention = "10m"
 
-# Deprecated - use memory_graph.legend_position.
+# Deprecated - use memory_graph.legend_position or memory.legend_position.
 # Where to place the legend for the memory widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #memory_legend = "top-right"
 
-# Deprecated - use network_graph.legend_position.
+# Deprecated - use network_graph.legend_position or network.legend_position.
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "top-right"
 
