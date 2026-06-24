@@ -1,28 +1,16 @@
 //! Disk stats for FreeBSD.
 
-use std::io;
+use std::ffi::CStr;
 
 use rustc_hash::FxHashMap as HashMap;
-use serde::Deserialize;
 
 use super::{DiskHarvest, IoHarvest, keep_disk_entry};
-use crate::collection::{DataCollector, deserialize_xo, disks::IoData, error::CollectionResult};
+use crate::collection::{DataCollector, disks::IoData, error::CollectionResult};
 
-#[derive(Deserialize, Debug, Default)]
-#[serde(rename_all = "kebab-case")]
-struct StorageSystemInformation {
-    filesystem: Vec<FileSystem>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "kebab-case")]
-struct FileSystem {
-    name: String,
-    total_blocks: u64,
-    used_blocks: u64,
-    available_blocks: u64,
-    mounted_on: String,
-}
+/// File system types we collect usage for. This mirrors the previous
+/// `df -t ufs,msdosfs,zfs` invocation that was used before we read mount
+/// information directly.
+const KEPT_FS_TYPES: [&str; 3] = ["ufs", "msdosfs", "zfs"];
 
 pub fn get_io_usage(collector: &DataCollector) -> CollectionResult<IoHarvest> {
     #[cfg_attr(not(feature = "zfs"), expect(unused_mut))]
@@ -64,33 +52,81 @@ pub fn get_io_usage(collector: &DataCollector) -> CollectionResult<IoHarvest> {
 pub fn get_disk_usage(collector: &DataCollector) -> CollectionResult<Vec<DiskHarvest>> {
     let disk_filter = &collector.filters.disk_filter;
     let mount_filter = &collector.filters.mount_filter;
-    let vec_disks: Vec<DiskHarvest> = get_disk_info().map(|storage_system_information| {
-        storage_system_information
-            .filesystem
-            .into_iter()
-            .filter_map(|disk| {
-                if keep_disk_entry(&disk.name, &disk.mounted_on, disk_filter, mount_filter) {
-                    Some(DiskHarvest {
-                        free_space: Some(disk.available_blocks * 1024),
-                        used_space: Some(disk.used_blocks * 1024),
-                        total_space: Some(disk.total_blocks * 1024),
-                        mount_point: disk.mounted_on,
-                        name: disk.name,
-                    })
-                } else {
-                    None
-                }
-            })
-            .collect()
-    })?;
+
+    let vec_disks: Vec<DiskHarvest> = mounts()?
+        .into_iter()
+        .filter_map(|stat| {
+            let fs_type = c_char_array_to_string(&stat.f_fstypename);
+            if !KEPT_FS_TYPES.iter().any(|kept| *kept == fs_type) {
+                return None;
+            }
+
+            let name = c_char_array_to_string(&stat.f_mntfromname);
+            let mount_point = c_char_array_to_string(&stat.f_mntonname);
+
+            if keep_disk_entry(&name, &mount_point, disk_filter, mount_filter) {
+                // Block counts are in units of `f_bsize`, matching how `df`
+                // derives the same values.
+                let block_size = stat.f_bsize;
+                let total_space = stat.f_blocks.saturating_mul(block_size);
+                let used_space = stat
+                    .f_blocks
+                    .saturating_sub(stat.f_bfree)
+                    .saturating_mul(block_size);
+                // `f_bavail` is signed since it can go negative when a volume
+                // is over its reserved threshold; clamp that to zero.
+                let free_space = (stat.f_bavail.max(0) as u64).saturating_mul(block_size);
+
+                Some(DiskHarvest {
+                    free_space: Some(free_space),
+                    used_space: Some(used_space),
+                    total_space: Some(total_space),
+                    mount_point,
+                    name,
+                })
+            } else {
+                None
+            }
+        })
+        .collect();
 
     Ok(vec_disks)
 }
 
-fn get_disk_info() -> io::Result<StorageSystemInformation> {
-    // TODO: Ideally we don't have to shell out to a new program.
-    let output = std::process::Command::new("df")
-        .args(["--libxo", "json", "-k", "-t", "ufs,msdosfs,zfs"])
-        .output()?;
-    deserialize_xo("storage-system-information", &output.stdout)
+/// Converts a null-terminated C character array (as returned by the kernel in a
+/// [`libc::statfs`]) into an owned [`String`].
+fn c_char_array_to_string(buf: &[libc::c_char]) -> String {
+    // SAFETY: The kernel always null-terminates these fixed-size string fields.
+    unsafe { CStr::from_ptr(buf.as_ptr()) }
+        .to_string_lossy()
+        .into_owned()
+}
+
+/// Returns all of the currently mounted filesystems via `getfsstat`, avoiding
+/// the need to shell out to `df`. This is the same syscall `df` itself uses.
+fn mounts() -> CollectionResult<Vec<libc::statfs>> {
+    // SAFETY: System API FFI call. Passing a null buffer with size 0 just asks
+    // for the number of mounted filesystems.
+    let expected_len = unsafe { libc::getfsstat(std::ptr::null_mut(), 0, libc::MNT_NOWAIT) };
+    if expected_len < 0 {
+        return Err(std::io::Error::last_os_error().into());
+    }
+
+    let mut mounts: Vec<libc::statfs> = Vec::with_capacity(expected_len as usize);
+    let bufsize = (size_of::<libc::statfs>() as libc::c_long) * (expected_len as libc::c_long);
+
+    // SAFETY: System API FFI call. The buffer has capacity for `expected_len`
+    // entries, and `bufsize` describes its size in bytes.
+    let result = unsafe { libc::getfsstat(mounts.as_mut_ptr(), bufsize, libc::MNT_NOWAIT) };
+    if result < 0 {
+        return Err(std::io::Error::last_os_error().into());
+    }
+
+    // SAFETY: On success, `getfsstat` returns the number of `statfs` entries it
+    // wrote into the buffer.
+    unsafe {
+        mounts.set_len(result as usize);
+    }
+
+    Ok(mounts)
 }

@@ -27,6 +27,7 @@ pub fn get_temperature_data(
     // sensors.
     #[cfg(target_os = "freebsd")]
     {
+        // TODO: remove this too
         use sysctl::Sysctl;
 
         const KEY: &str = "hw.temperature";
