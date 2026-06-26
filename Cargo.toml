@@ -75,12 +75,7 @@ generate_schema = ["schemars", "serde_json", "strum"]
 
 [dependencies]
 anyhow = "1.0.101"
-clap = { version = "4.5.57", features = [
-    "default",
-    "cargo",
-    "wrap_help",
-    "derive",
-] }
+clap = { version = "4.5.57", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
 crossterm = "0.29.0"
 ctrlc = { version = "3.5.0", features = ["termination"] }
@@ -88,10 +83,8 @@ dirs = "6.0.0"
 humantime = "2.3.0"
 indexmap = "2.13.0"
 indoc = "2.0.7"
-itertools = "0.14.0"
-nvml-wrapper = { version = "0.12.1", optional = true, features = [
-    "legacy-functions",
-] }
+itertools = "0.15.0"
+nvml-wrapper = { version = "0.12.1", optional = true, features = ["legacy-functions"] }
 ratatui = { version = "0.30.2", default-features = false, features = [
     "unstable-rendered-line-info",
     "layout-cache",
@@ -112,11 +105,7 @@ unicode-width = "0.2.2"
 # Used for logging. Mostly a debugging tool.
 fern = { version = "0.7.1", optional = true }
 log = { version = "0.4.29", optional = true }
-time = { version = "0.3.47", features = [
-    "local-offset",
-    "formatting",
-    "macros",
-], optional = true }
+time = { version = "0.3.47", features = ["local-offset", "formatting", "macros"], optional = true }
 
 # These are just used for JSON schema generation.
 schemars = { version = "1.2.1", optional = true }
@@ -159,12 +148,7 @@ tempfile = { version = "3.23.0", default-features = false }
 portable-pty = "0.9.0"
 
 [build-dependencies]
-clap = { version = "4.5.57", features = [
-    "default",
-    "cargo",
-    "wrap_help",
-    "derive",
-] }
+clap = { version = "4.5.57", features = ["default", "cargo", "wrap_help", "derive"] }
 clap_complete = "4.5.62"
 clap_complete_nushell = "4.5.10"
 clap_complete_fig = "4.5.2"
