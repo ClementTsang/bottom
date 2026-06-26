@@ -83,7 +83,7 @@ dirs = "6.0.0"
 humantime = "2.3.0"
 indexmap = "2.13.0"
 indoc = "2.0.7"
-itertools = "0.14.0"
+itertools = "0.15.0"
 nvml-wrapper = { version = "0.12.1", optional = true, features = ["legacy-functions"] }
 ratatui = { version = "0.30.2", default-features = false, features = [
     "unstable-rendered-line-info",
