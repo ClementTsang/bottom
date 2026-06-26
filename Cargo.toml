@@ -135,7 +135,8 @@ windows = { version = "0.62.2", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-sysctl = { version = "0.7.1" }
+serde_json = "1.0.149"
+sysctl = "0.7.1"
 filedescriptor = "0.8.3"
 
 [dev-dependencies]
