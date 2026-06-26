@@ -117,7 +117,11 @@ fn mounts() -> CollectionResult<Vec<libc::statfs>> {
 
     // SAFETY: System API FFI call. The buffer has capacity for `expected_len`
     // entries, and `bufsize` describes its size in bytes.
-    let result = unsafe { libc::getfsstat(mounts.as_mut_ptr(), bufsize, libc::MNT_NOWAIT) };
+    //
+    // `MNT_WAIT` requests fresh statistics from each filesystem rather than
+    // possibly-stale cached values (`MNT_NOWAIT`). This matches the default
+    // behaviour of `df`, so the reported free/used space lines up with it.
+    let result = unsafe { libc::getfsstat(mounts.as_mut_ptr(), bufsize, libc::MNT_WAIT) };
     if result < 0 {
         return Err(std::io::Error::last_os_error().into());
     }
