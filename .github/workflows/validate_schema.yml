@@ -11,8 +11,8 @@ on:
     paths:
       - "schema/**"
       - "scripts/schema/**"
-      - ".github/workflows/validate_schema.yml"
       - "tools/schema_gen/**"
+      - ".github/workflows/validate_schema.yml"
       - "Cargo.toml"
 
 permissions: {}
