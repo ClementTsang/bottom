@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## 0.14.2 - Unreleased
+
+### Other
+
+- [#2109](https://github.com/ClementTsang/bottom/pull/2109): Relocate the schema generation tool to avoid it interfering with `cargo install`.
+
 ## 0.14.1 - 2026-06-22
 
 ### Other
