@@ -7,7 +7,7 @@ publish = false
 [dependencies]
 anyhow = "1.0.101"
 bottom = { path = "../../", features = ["generate_schema"] }
-clap = { version = "4.5.57", features = ["default", "cargo", "wrap_help", "derive"] }
+clap = { version = "4.5.57", features = ["derive"] }
 itertools = "0.15.0"
 schemars = "1.2.1"
 serde_json = "1.0.149"
