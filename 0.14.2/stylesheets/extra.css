@@ -1,0 +1,12 @@
+:root {
+  --md-primary-fg-color: #268bd2;
+  --md-accent-fg-color: #81a1c1;
+}
+
+.md-typeset__table {
+  min-width: 100%;
+}
+
+.md-typeset table:not([class]) {
+  display: table;
+}
