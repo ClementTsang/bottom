@@ -1,4 +1,3 @@
-#![cfg(feature = "generate_schema")]
 #![expect(
     clippy::unwrap_used,
     reason = "this is just used to generate jsonschema files"

@@ -24,6 +24,7 @@ exclude = [
     "sample_configs/",
     "schema/",
     "scripts/",
+    "tools/",
     "wix/",
     ".all-contributorsrc",
     ".gitignore",
@@ -52,14 +53,6 @@ name = "btm"
 path = "src/bin/main.rs"
 doc = false
 
-[[bin]]
-name = "schema"
-path = "src/bin/schema.rs"
-test = false
-doctest = false
-doc = false
-required-features = ["generate_schema"]
-
 [features]
 # Used for general builds.
 battery = ["dep:starship-battery"]
@@ -71,7 +64,7 @@ default = ["deploy"]
 
 # Should not be included in builds.
 logging = ["fern", "log", "time"]
-generate_schema = ["schemars", "serde_json", "strum"]
+generate_schema = ["schemars", "strum"]
 
 [dependencies]
 anyhow = "1.0.101"
@@ -109,7 +102,6 @@ time = { version = "0.3.47", features = ["local-offset", "formatting", "macros"]
 
 # These are just used for JSON schema generation.
 schemars = { version = "1.2.1", optional = true }
-serde_json = { version = "1.0.149", optional = true }
 strum = { version = "0.27.2", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
