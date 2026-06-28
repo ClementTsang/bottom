@@ -192,8 +192,8 @@ These can be set under `[styles.widgets]`:
 | `border_colour`          | The colour of the widgets' borders                                                           | `border_colour = "white"`                                               |
 | `selected_border_colour` | The colour of a widget's borders when the widget is selected                                 | `selected_border_colour = "white"`                                      |
 | `widget_title`           | Text styling for a widget's title                                                            | `widget_title = { colour = "black", bg_colour = "blue", bold = true }`  |
-| `bg_colour`              | The background colour of the widgets.                                                        | `bg_colour = "black"`                                                   |
+| `bg_colour`              | The background colour of the widgets                                                         | `bg_colour = "black"`                                                   |
 | `text`                   | Text styling for text in general                                                             | `text = { colour = "black", bg_colour = "blue", bold = true }`          |
 | `selected_text`          | Text styling for text when representing something that is selected                           | `selected_text = { colour = "black", bg_colour = "blue", bold = true }` |
 | `disabled_text`          | Text styling for text when representing something that is disabled                           | `disabled_text = { colour = "black", bg_colour = "blue", bold = true }` |
-| `thread_text`            | Text styling for text when representing process thread. only usable on Linux at the moment   | `thread_text = { colour = "green", bg_colour = "blue", bold = true }`   |
+| `thread_text`            | Text styling for text when representing process thread, only usable on Linux at the moment   | `thread_text = { colour = "green", bg_colour = "blue", bold = true }`   |
