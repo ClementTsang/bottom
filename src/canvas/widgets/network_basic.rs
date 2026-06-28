@@ -1,4 +1,4 @@
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Line, Span},
@@ -56,7 +56,8 @@ impl Painter {
                 avg_tx_packet_size,
             } = calculate_packet_info(network_data, use_binary_prefix);
 
-            // TODO: Stylize packet stuff later with something else? Or maybe make it so total is now (by default) just bolded RX/TX? I doubt anyone cares...
+            // TODO: Stylize packet stuff later with something else? Or maybe make it so
+            // total is now (by default) just bolded RX/TX? I doubt anyone cares...
             let rx_packet_rate_label = format!("RX Pkt: {}pkt/s", rx_packet_rate);
             let tx_packet_rate_label = format!("TX Pkt: {}pkt/s", tx_packet_rate);
             let avg_rx_packet_size_label = format!(
@@ -277,12 +278,12 @@ impl Painter {
         }
 
         // Update draw loc in widget map
-        if app_state.should_get_widget_bounds() {
-            if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
-                widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
-                widget.bottom_right_corner =
-                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
-            }
+        if app_state.should_get_widget_bounds()
+            && let Some(widget) = app_state.widget_map.get_mut(&widget_id)
+        {
+            widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+            widget.bottom_right_corner =
+                Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
         }
     }
 }

@@ -1,8 +1,7 @@
 use serde::Deserialize;
 
-use crate::widgets::TempWidgetColumn;
-
 use super::IgnoreList;
+use crate::widgets::TempWidgetColumn;
 
 /// Temperature configuration.
 #[derive(Clone, Debug, Default, Deserialize)]

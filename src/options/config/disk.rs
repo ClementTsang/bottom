@@ -14,9 +14,14 @@ pub(crate) struct DiskConfig {
     /// A filter over the mount names.
     pub(crate) mount_filter: Option<IgnoreList>,
 
+    /// Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
+    pub(crate) include_unmounted: Option<bool>,
+
     /// A list of disk widget columns.
+    // TODO: make this more composable(?) in the future, we might need to
+    // rethink how it's done for custom widgets.
     #[serde(default)]
-    pub(crate) columns: Option<Vec<DiskWidgetColumn>>, // TODO: make this more composable(?) in the future, we might need to rethink how it's done for custom widgets
+    pub(crate) columns: Option<Vec<DiskWidgetColumn>>,
 
     /// The default sort column.
     #[serde(default)]

@@ -19,6 +19,9 @@ runs:
         release: "${{ inputs.os-version }}"
         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
+        prepare: |
+          # See https://github.com/freebsd/pkg/issues/2653#issuecomment-4321269771
+          pkg upgrade -Fqy || true
         run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: freebsd_attempt_1
       continue-on-error: true
@@ -30,6 +33,9 @@ runs:
         release: "${{ inputs.os-version }}"
         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
+        prepare: |
+          # See https://github.com/freebsd/pkg/issues/2653#issuecomment-4321269771
+          pkg upgrade -Fqy || true
         run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: freebsd_attempt_2
       continue-on-error: true
@@ -41,6 +47,9 @@ runs:
         release: "${{ inputs.os-version }}"
         envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
+        prepare: |
+          # See https://github.com/freebsd/pkg/issues/2653#issuecomment-4321269771
+          pkg upgrade -Fqy || true
         run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: freebsd_attempt_3
 

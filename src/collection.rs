@@ -10,6 +10,7 @@ pub mod amd;
 
 #[cfg(target_os = "linux")]
 mod linux {
+    pub mod cgroups;
     pub mod utils;
 }
 
@@ -25,8 +26,6 @@ pub mod temperature;
 
 use std::time::{Duration, Instant};
 
-#[cfg(any(target_os = "linux", feature = "gpu"))]
-use crate::utils::int_hash::IntHashMap;
 #[cfg(any(not(target_os = "windows"), feature = "gpu"))]
 use processes::Pid;
 #[cfg(feature = "battery")]
@@ -34,6 +33,10 @@ use starship_battery::{Battery, Manager};
 
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
+#[cfg(target_os = "linux")]
+use crate::collection::linux::cgroups::{CgroupCpuCollector, CgroupMemCollector};
+#[cfg(any(target_os = "linux", feature = "gpu"))]
+use crate::utils::int_hash::IntHashMap;
 
 // TODO: We can possibly reuse an internal buffer for this to reduce allocs.
 #[derive(Clone, Debug)]
@@ -123,7 +126,7 @@ pub struct SysinfoSource {
     pub(crate) network: sysinfo::Networks,
     #[cfg(not(target_os = "linux"))]
     pub(crate) temps: sysinfo::Components,
-    #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "freebsd")))]
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     pub(crate) disks: sysinfo::Disks,
     #[cfg(target_os = "windows")]
     pub(crate) users: sysinfo::Users,
@@ -138,7 +141,7 @@ impl Default for SysinfoSource {
             network: Networks::new(),
             #[cfg(not(target_os = "linux"))]
             temps: Components::new(),
-            #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "freebsd")))]
+            #[cfg(not(any(target_os = "linux", target_os = "macos")))]
             disks: Disks::new(),
             #[cfg(target_os = "windows")]
             users: Users::new(),
@@ -153,6 +156,7 @@ pub struct DataCollector {
     last_collection_time: Instant,
     widgets_to_harvest: UsedWidgets,
     filters: DataFilters,
+    include_unmounted_disks: bool,
 
     total_rx: u64,
     total_tx: u64,
@@ -188,6 +192,12 @@ pub struct DataCollector {
     gpus_total_mem: Option<u64>,
     #[cfg(feature = "zfs")]
     free_arc_mem: bool,
+
+    #[cfg(target_os = "linux")]
+    cgroup_memory_data: CgroupMemCollector,
+
+    #[cfg(target_os = "linux")]
+    cgroup_cpu_data: CgroupCpuCollector,
 }
 
 const LESS_ROUTINE_TASK_TIME: Duration = Duration::from_secs(60);
@@ -232,13 +242,20 @@ impl DataCollector {
             free_arc_mem: false,
             last_list_collection_time: last_collection_time,
             should_run_less_routine_tasks: true,
+            #[cfg(target_os = "linux")]
+            cgroup_memory_data: CgroupMemCollector::default(),
+            #[cfg(target_os = "linux")]
+            cgroup_cpu_data: CgroupCpuCollector::default(),
+            include_unmounted_disks: false,
         }
     }
 
-    /// Update the check for routine tasks like updating lists of batteries, cleanup, etc.
-    /// This is useful for things that we don't want to update all the time.
+    /// Update the check for routine tasks like updating lists of batteries,
+    /// cleanup, etc. This is useful for things that we don't want to update
+    /// all the time.
     ///
-    /// Note this should be set back to false if `self.last_list_collection_time` is updated.
+    /// Note this should be set back to false if
+    /// `self.last_list_collection_time` is updated.
     #[inline]
     fn run_less_routine_tasks(&mut self) {
         if self
@@ -275,6 +292,10 @@ impl DataCollector {
         self.get_process_threads = get_process_threads;
     }
 
+    pub fn set_include_unmounted_disks(&mut self, include_unmounted_disks: bool) {
+        self.include_unmounted_disks = include_unmounted_disks;
+    }
+
     #[cfg(feature = "zfs")]
     pub fn set_free_arc_mem(&mut self, free_mem: bool) {
         self.free_arc_mem = free_mem;
@@ -285,7 +306,7 @@ impl DataCollector {
     /// - Memory usage
     /// - Network usage
     /// - Processes (non-Linux)
-    /// - Disk (Windows)
+    /// - Disk (Windows, FreeBSD)
     /// - Temperatures (non-Linux)
     fn refresh_sysinfo_data(&mut self) {
         // Refresh the list of objects once every minute. If it's too frequent it can
@@ -305,7 +326,7 @@ impl DataCollector {
 
         // sysinfo is used on non-Linux systems for the following:
         // - Processes (users list as well for Windows)
-        // - Disks (Windows only)
+        // - Disks (Windows/FreeBSD)
         // - Temperatures and temperature components list.
         #[cfg(not(target_os = "linux"))]
         {
@@ -326,7 +347,7 @@ impl DataCollector {
                 }
             }
 
-            if self.widgets_to_harvest.use_temp {
+            if self.widgets_to_harvest.use_temp || self.widgets_to_harvest.use_temp_graph {
                 if self.should_run_less_routine_tasks {
                     self.sys.temps.refresh(true);
                 }
@@ -336,7 +357,7 @@ impl DataCollector {
                 }
             }
 
-            #[cfg(target_os = "windows")]
+            #[cfg(any(target_os = "windows", target_os = "freebsd"))]
             if self.widgets_to_harvest.use_disk {
                 if self.should_run_less_routine_tasks {
                     self.sys.disks.refresh(true);
@@ -358,6 +379,12 @@ impl DataCollector {
         self.run_less_routine_tasks();
 
         self.refresh_sysinfo_data();
+
+        #[cfg(target_os = "linux")]
+        self.cgroup_memory_data.refresh();
+
+        #[cfg(target_os = "linux")]
+        self.cgroup_cpu_data.refresh();
 
         self.update_cpu_usage();
         self.update_memory_usage();
@@ -391,9 +418,11 @@ impl DataCollector {
             let mut local_gpu_total_mem: u64 = 0;
 
             #[cfg(feature = "nvidia")]
-            if let Some(data) =
-                nvidia::get_nvidia_vecs(&self.filters.temp_filter, &self.widgets_to_harvest)
-            {
+            if let Some(data) = nvidia::get_nvidia_vecs(
+                &self.filters.temp_filter,
+                &self.filters.temp_graph_filter,
+                &self.widgets_to_harvest,
+            ) {
                 if let Some(mut temp) = data.temperature {
                     if let Some(sensors) = &mut self.data.temperature_sensors {
                         sensors.append(&mut temp);
@@ -432,7 +461,7 @@ impl DataCollector {
     #[inline]
     fn update_cpu_usage(&mut self) {
         if self.widgets_to_harvest.use_cpu {
-            self.data.cpu = cpu::get_cpu_data_list(&self.sys.system, self.show_average_cpu).ok();
+            self.data.cpu = cpu::get_cpu_data_list(self).ok();
 
             #[cfg(unix)]
             {
@@ -443,29 +472,34 @@ impl DataCollector {
 
     #[inline]
     fn update_processes(&mut self) {
-        if self.widgets_to_harvest.use_proc {
-            if let Ok(mut process_list) = self.get_processes() {
-                // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
-                // PID here. We also want to avoid re-sorting *again* later on
-                // if we're sorting by PID, since we already did it here!
-                process_list.sort_unstable_by_key(|p| p.pid);
-                self.data.list_of_processes = Some(process_list);
-            }
+        if self.widgets_to_harvest.use_proc
+            && let Ok(mut process_list) = self.get_processes()
+        {
+            // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
+            // PID here. We also want to avoid re-sorting *again* later on
+            // if we're sorting by PID, since we already did it here!
+            process_list.sort_unstable_by_key(|p| p.pid);
+            self.data.list_of_processes = Some(process_list);
         }
     }
 
     #[inline]
     fn update_temps(&mut self) {
-        if self.widgets_to_harvest.use_temp {
+        if self.widgets_to_harvest.use_temp || self.widgets_to_harvest.use_temp_graph {
             #[cfg(not(target_os = "linux"))]
-            if let Ok(data) =
-                temperature::get_temperature_data(&self.sys.temps, &self.filters.temp_filter)
-            {
+            if let Ok(data) = temperature::get_temperature_data(
+                &self.sys.temps,
+                &self.filters.temp_filter,
+                &self.filters.temp_graph_filter,
+            ) {
                 self.data.temperature_sensors = data;
             }
 
             #[cfg(target_os = "linux")]
-            if let Ok(data) = temperature::get_temperature_data(&self.filters.temp_filter) {
+            if let Ok(data) = temperature::get_temperature_data(
+                &self.filters.temp_filter,
+                &self.filters.temp_graph_filter,
+            ) {
                 self.data.temperature_sensors = data;
             }
         }
@@ -474,7 +508,7 @@ impl DataCollector {
     #[inline]
     fn update_memory_usage(&mut self) {
         if self.widgets_to_harvest.use_mem {
-            self.data.memory = memory::get_ram_usage(&self.sys.system);
+            self.data.memory = memory::get_ram_usage(self);
 
             #[cfg(feature = "zfs")]
             {
@@ -514,7 +548,7 @@ impl DataCollector {
                 self.data.cache = memory::get_cache_usage(&self.sys.system);
             }
 
-            self.data.swap = memory::get_swap_usage(&self.sys.system);
+            self.data.swap = memory::get_swap_usage(self);
         }
     }
 
@@ -542,9 +576,11 @@ impl DataCollector {
 
     /// Update battery information.
     ///
-    /// If the battery manager is not initialized, it will attempt to initialize it if at least one battery is found.
+    /// If the battery manager is not initialized, it will attempt to initialize
+    /// it if at least one battery is found.
     ///
-    /// This function also refreshes the list of batteries if `self.should_run_less_routine_tasks` is true.
+    /// This function also refreshes the list of batteries if
+    /// `self.should_run_less_routine_tasks` is true.
     #[inline]
     #[cfg(feature = "battery")]
     fn update_batteries(&mut self) {
@@ -597,9 +633,9 @@ impl DataCollector {
 
     #[inline]
     fn update_disks(&mut self) {
-        if self.widgets_to_harvest.use_disk {
+        if self.widgets_to_harvest.use_disk || self.widgets_to_harvest.use_disk_io_graph {
             self.data.disks = disks::get_disk_usage(self).ok();
-            self.data.io = disks::get_io_usage().ok();
+            self.data.io = disks::get_io_usage(self).ok();
         }
     }
 
@@ -638,6 +674,8 @@ mod tests {
             disk_filter: None,
             mount_filter: None,
             temp_filter: None,
+            temp_graph_filter: None,
+            disk_io_graph_filter: None,
             net_filter: None,
         });
 

@@ -1,0 +1,13 @@
+[disk_io_graph]
+show_read = true
+show_write = false
+legend = "mount"
+use_log = true
+legend_position = "bottom-left"
+
+[disk_io_graph.name_filter]
+is_list_ignored = true
+list = ["sda"]
+regex = false
+case_sensitive = false
+whole_word = false

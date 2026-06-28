@@ -77,7 +77,8 @@ pub fn convert_bytes(bytes: u64, base_two: bool) -> (f64, &'static str) {
     }
 }
 
-/// Return a tuple containing the value and a unit string to be used as a prefix.
+/// Return a tuple containing the value and a unit string to be used as a
+/// prefix.
 #[inline]
 pub fn get_unit_prefix(value: u64, base_two: bool) -> (f64, &'static str) {
     let float_value = value as f64;

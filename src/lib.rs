@@ -8,11 +8,13 @@
 //! *usage* of bottom, refer to [here](https://bottom.pages.dev/stable/).
 
 pub(crate) mod app;
+pub(crate) mod components;
 mod utils {
     pub(crate) mod cancellation_token;
     pub(crate) mod conversion;
     pub(crate) mod data_units;
     pub(crate) mod general;
+    pub(crate) mod input;
     pub(crate) mod int_hash;
     pub(crate) mod logging;
     pub(crate) mod process_killer;
@@ -27,7 +29,7 @@ pub mod widgets;
 
 use std::{
     boxed::Box,
-    io::{Write, stderr, stdout},
+    io::{Stdout, Write, stderr, stdout},
     panic::{self, PanicHookInfo},
     sync::{
         Arc,
@@ -49,7 +51,7 @@ use crossterm::{
 };
 use event::{BottomEvent, CollectionThreadEvent, handle_key_event_or_break, handle_mouse_event};
 use options::{args, get_or_create_config, init_app};
-use tui::{Terminal, backend::CrosstermBackend};
+use ratatui::{Terminal, backend::CrosstermBackend, prelude::Backend};
 #[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;
 use utils::{cancellation_token::CancellationToken, conversion::*};
@@ -62,8 +64,7 @@ use crate::collection::Data;
 
 /// Try drawing. If not, clean up the terminal and return an error.
 fn try_drawing(
-    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App,
-    painter: &mut canvas::Painter,
+    terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App, painter: &mut canvas::Painter,
 ) -> anyhow::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
@@ -74,9 +75,7 @@ fn try_drawing(
 }
 
 /// Clean up the terminal before returning it to the user.
-fn cleanup_terminal(
-    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
-) -> anyhow::Result<()> {
+fn cleanup_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> anyhow::Result<()> {
     disable_raw_mode()?;
 
     execute!(
@@ -138,8 +137,9 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
         println!("thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}")
     }
 
-    // TODO: Might be cleaner in the future to use a cancellation token, but that causes some fun issues with
-    // lifetimes; for now if it panics then shut down the main program entirely ASAP.
+    // TODO: Might be cleaner in the future to use a cancellation token, but that
+    // causes some fun issues with lifetimes; for now if it panics then shut
+    // down the main program entirely ASAP.
     std::process::exit(1);
 }
 
@@ -155,63 +155,59 @@ fn create_input_thread(
 
         loop {
             // We don't block.
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
-                    break;
-                }
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated
+            {
+                break;
             }
 
-            if let Ok(poll) = poll(Duration::from_millis(20)) {
-                if poll {
-                    if let Ok(event) = read() {
-                        match event {
-                            Event::Resize(_, _) => {
-                                // TODO: Might want to debounce this in the future, or take into
-                                // account the actual resize values.
-                                // Maybe we want to keep the current implementation in case the
-                                // resize event might not fire...
-                                // not sure.
+            if let Ok(poll) = poll(Duration::from_millis(20))
+                && poll
+                && let Ok(event) = read()
+            {
+                match event {
+                    Event::Resize(_, _) => {
+                        // TODO: Might want to debounce this in the future, or take into
+                        // account the actual resize values.
+                        // Maybe we want to keep the current implementation in case the
+                        // resize event might not fire...
+                        // not sure.
 
-                                if sender.send(BottomEvent::Resize).is_err() {
-                                    break;
-                                }
-                            }
-                            Event::Paste(paste) => {
-                                if sender.send(BottomEvent::PasteEvent(paste)).is_err() {
-                                    break;
-                                }
-                            }
-                            Event::Key(key)
-                                if !keys_disabled && key.kind == KeyEventKind::Press =>
-                            {
-                                // For now, we only care about key down events. This may change in
-                                // the future.
-                                if sender.send(BottomEvent::KeyInput(key)).is_err() {
-                                    break;
-                                }
-                            }
-                            Event::Mouse(mouse) => match mouse.kind {
-                                MouseEventKind::Moved | MouseEventKind::Drag(..) => {}
-                                MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
-                                    if Instant::now().duration_since(mouse_timer).as_millis() >= 20
-                                    {
-                                        if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
-                                            break;
-                                        }
-                                        mouse_timer = Instant::now();
-                                    }
-                                }
-                                _ => {
-                                    if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
-                                        break;
-                                    }
-                                }
-                            },
-                            Event::Key(_) => {}
-                            Event::FocusGained => {}
-                            Event::FocusLost => {}
+                        if sender.send(BottomEvent::Resize).is_err() {
+                            break;
                         }
                     }
+                    Event::Paste(paste) => {
+                        if sender.send(BottomEvent::PasteEvent(paste)).is_err() {
+                            break;
+                        }
+                    }
+                    Event::Key(key) if !keys_disabled && key.kind == KeyEventKind::Press => {
+                        // For now, we only care about key down events. This may change in
+                        // the future.
+                        if sender.send(BottomEvent::KeyInput(key)).is_err() {
+                            break;
+                        }
+                    }
+                    Event::Mouse(mouse) => match mouse.kind {
+                        MouseEventKind::Moved | MouseEventKind::Drag(..) => {}
+                        MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
+                            if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
+                                if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                    break;
+                                }
+                                mouse_timer = Instant::now();
+                            }
+                        }
+                        _ => {
+                            if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                break;
+                            }
+                        }
+                    },
+                    Event::Key(_) => {}
+                    Event::FocusGained => {}
+                    Event::FocusLost => {}
                 }
             }
         }
@@ -231,6 +227,8 @@ fn create_collection_thread(
     let get_process_threads = app_config_fields.get_process_threads;
     #[cfg(feature = "zfs")]
     let get_arc_free = app_config_fields.free_arc;
+    let include_unmounted_disks =
+        app_config_fields.disk_show_unmounted || app_config_fields.disk_io_graph_show_unmounted;
 
     thread::spawn(move || {
         let mut data_collector = collection::DataCollector::new(filters);
@@ -242,19 +240,21 @@ fn create_collection_thread(
         data_collector.set_get_process_threads(get_process_threads);
         #[cfg(feature = "zfs")]
         data_collector.set_free_arc_mem(get_arc_free);
+        data_collector.set_include_unmounted_disks(include_unmounted_disks);
 
         data_collector.update_data();
         data_collector.data = Data::default();
 
-        // Tiny sleep I guess? To go between the first update above and the first update in the loop.
+        // Tiny sleep I guess? To go between the first update above and the first update
+        // in the loop.
         std::thread::sleep(Duration::from_millis(5));
 
         loop {
             // Check once at the very top... don't block though.
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
-                    break;
-                }
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated
+            {
+                break;
             }
 
             if let Ok(message) = control_receiver.try_recv() {
@@ -269,10 +269,10 @@ fn create_collection_thread(
             data_collector.update_data();
 
             // Yet another check to bail if needed... do not block!
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
-                    break;
-                }
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated
+            {
+                break;
             }
 
             let event = BottomEvent::Update(Box::from(data_collector.data));
@@ -372,7 +372,13 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     enable_raw_mode()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
-    terminal.clear()?;
+
+    // This may fail in some environments, like tests, since it may fail to get the cursor position.
+    // In that case, fall back to just manually clearing it with backend.
+    if terminal.clear().is_err() {
+        terminal.backend_mut().clear()?;
+    }
+
     terminal.hide_cursor()?;
 
     #[cfg(target_os = "freebsd")]

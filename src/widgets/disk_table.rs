@@ -172,7 +172,8 @@ impl ColumnHeader for DiskWidgetColumn {
 }
 
 impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
-    // FIXME: (points_rework_v1) Can we change the return type to 'a instead of 'static?
+    // FIXME: (points_rework_v1) Can we change the return type to 'a instead of
+    // 'static?
     fn to_cell_text(
         &self, column: &DiskWidgetColumn, _calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
@@ -216,8 +217,9 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
 }
 
 pub struct DiskTableWidget {
-    pub table: SortDataTable<DiskWidgetData, DiskWidgetColumn>,
-    pub force_update_data: bool,
+    pub(crate) table: SortDataTable<DiskWidgetData, DiskWidgetColumn>,
+    pub(crate) force_update_data: bool,
+    pub(crate) show_unmounted: bool,
 }
 
 impl SortsRow for DiskWidgetColumn {
@@ -317,6 +319,7 @@ const fn default_disk_columns() -> [SortColumn<DiskWidgetColumn>; 8] {
 impl DiskTableWidget {
     pub fn new(
         config: &AppConfigFields, palette: &Styles, columns: Option<&[DiskWidgetColumn]>,
+        show_unmounted: bool,
     ) -> Self {
         let props = SortDataTableProps {
             inner: DataTableProps {
@@ -325,6 +328,7 @@ impl DiskTableWidget {
                 left_to_right: true,
                 is_basic: config.use_basic_mode,
                 show_table_scroll_position: config.show_table_scroll_position,
+                show_table_scroll_bar: config.show_table_scroll_bar,
                 show_current_entry_when_unfocused: false,
             },
             sort_index: match &config.default_disk_sort_column {
@@ -354,11 +358,13 @@ impl DiskTableWidget {
                 Self {
                     table: SortDataTable::new_sortable(columns, props, styling),
                     force_update_data: false,
+                    show_unmounted,
                 }
             }
             None => Self {
                 table: SortDataTable::new_sortable(default_disk_columns(), props, styling),
                 force_update_data: false,
+                show_unmounted,
             },
         }
     }
@@ -371,7 +377,24 @@ impl DiskTableWidget {
 
     /// Update the current table data.
     pub fn set_table_data(&mut self, data: &StoredData) {
-        let mut data = data.disk_harvest.clone();
+        // Note that the data may contain unmounted disks (e.g. we enable it for another disk widget),
+        // so we have to potentially filter it out here too.
+        let mut data: Vec<DiskWidgetData> = if self.show_unmounted {
+            data.disk_harvest.clone()
+        } else {
+            #[cfg(target_os = "linux")]
+            {
+                data.disk_harvest
+                    .iter()
+                    .filter(|disk| !disk.mount_point.is_empty())
+                    .cloned()
+                    .collect()
+            }
+            #[cfg(not(target_os = "linux"))]
+            {
+                data.disk_harvest.clone()
+            }
+        };
 
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
             column.sort_by(&mut data, self.table.order());

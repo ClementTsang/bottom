@@ -2,18 +2,20 @@
 
 ## Generation
 
-These are automatically generated from code using [`schemars`](https://github.com/GREsau/schemars). They're locked
-behind a feature flag to avoid building unnecessary code for release builds, and you can generate them like so:
+These are automatically generated from the code using [`schemars`](https://github.com/GREsau/schemars). The `schemars`
+derives are locked behind the `generate_schema` feature flag to avoid building unnecessary code for normal builds.
+Meanwhile, the generator itself lives in a separate `tools/schema_gen` helper crate. You can
+generate them like so:
 
 ```bash
 # Will print out to stdout
-cargo run --features="generate_schema" -- --generate_schema
+cargo run --manifest-path tools/schema_gen/Cargo.toml
 
 # e.g. for nightly
-cargo run --features="generate_schema" -- --generate_schema > schema/nightly/bottom.json
+cargo run --manifest-path tools/schema_gen/Cargo.toml > schema/nightly/bottom.json
 
 # e.g. for a specific version
-cargo run --features="generate_schema" -- --generate_schema 0.12.0 > schema/v0.12.0/bottom.json
+cargo run --manifest-path tools/schema_gen/Cargo.toml -- 0.12.0 > schema/v0.12.0/bottom.json
 ```
 
 Alternatively, run the `scripts/schema/generate.sh` script (for stable releases) or `scripts/schema/nightly.sh`

@@ -13,9 +13,9 @@ process.
 You can also find a nightly build in the [releases page](https://github.com/ClementTsang/bottom/releases), built every
 day at 00:00 UTC off of the `main` branch.
 
-In both cases, we use a combination of GitHub Actions and CirrusCI (mainly for FreeBSD and macOS M1) to create our
-release binaries. [`build_releases.yml`](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml)
-contains the GitHub Action workflow used to do both of these, if reference is needed.
+In both cases, we use GitHub Actions to create our release binaries.
+[`build_releases.yml`](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/build_releases.yml)
+contains the GitHub Action workflow for this.
 
 ## Building manually
 

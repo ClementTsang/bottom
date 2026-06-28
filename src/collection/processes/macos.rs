@@ -4,11 +4,10 @@ pub mod sysctl_bindings;
 
 use std::{io, process::Command};
 
-use crate::utils::int_hash::IntHashMap;
 use itertools::Itertools;
 
 use super::UnixProcessExt;
-use crate::collection::Pid;
+use crate::{collection::Pid, utils::int_hash::IntHashMap};
 
 pub(crate) struct MacOSProcessExt;
 

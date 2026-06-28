@@ -1,0 +1,27 @@
+[package]
+name = "schema_gen"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+anyhow = "1.0.101"
+bottom = { path = "../../", features = ["generate_schema"] }
+clap = { version = "4.5.57", features = ["derive"] }
+itertools = "0.15.0"
+schemars = "1.2.1"
+serde_json = "1.0.149"
+strum = { version = "0.27.2", features = ["derive"] }
+
+[lints.rust]
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+broken_intra_doc_links = "deny"
+private_intra_doc_links = "deny"
+
+[lints.clippy]
+todo = "deny"
+unimplemented = "deny"
+missing_safety_doc = "deny"
+unwrap_used = "deny"

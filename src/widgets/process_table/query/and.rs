@@ -8,7 +8,8 @@ use crate::{
 };
 
 /// A node where both the left hand side or the right hand side are considered.
-/// Note that the right hand side is optional, as that's how I implemented it a long time ago.
+/// Note that the right hand side is optional, as that's how I implemented it a
+/// long time ago.
 #[derive(Debug)]
 pub(super) struct And {
     pub(super) lhs: Prefix,

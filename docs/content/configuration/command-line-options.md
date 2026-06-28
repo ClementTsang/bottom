@@ -18,7 +18,6 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 |                                     | bottom.                                                    |
 | `-m`, `--dot_marker`                | Uses a dot marker for graphs.                              |
 | `-e`, `--expanded`                  | Expand the default widget upon starting the app.           |
-| `--hide_table_gap`                  | Hides spacing between table headers and entries.           |
 | `--hide_time`                       | Hides the time scale from being shown.                     |
 | `-r`, `--rate <TIME>`               | Sets how often data is refreshed.                          |
 | `--retention <TIME>`                | How far back data will be stored up to.                    |
@@ -36,12 +35,12 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `--read_only`               | Prevents performing any actions that affect the system (e.g. stopping processes).      |
 | `--get_threads`             | Also gather process thread information.                                                |
 | `-g, --group_processes`     | Groups processes with the same name by default. No effect if `--tree` is set.          |
-| `--hide_k_threads`          | Hide kernel threads by default.                                                        |
+| `--hide_k_threads`          | Hide kernel threads from being shown.                                                  |
 | `--process_memory_as_value` | Defaults to showing process memory usage by value.                                     |
 | `--process_command`         | Shows the full command name instead of the process name by default.                    |
 | `-R, --regex`               | Enables regex by default while searching.                                              |
 | `-T, --tree`                | Makes the process widget use tree mode by default.                                     |
-| `--tree_collapse`           | Collapse process tree by default.                                                      |
+| `--tree_collapse`           | Collapse the process tree by default.                                                  |
 | `-n, --unnormalized_cpu`    | Show process CPU% usage without averaging over the number of CPU cores.                |
 | `-W, --whole_word`          | Enables whole-word matching by default while searching.                                |
 
@@ -67,7 +66,8 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | ---------------------------- | --------------------------------------------------------- |
 | `--memory_legend <POSITION>` | Where to place the legend for the memory chart widget.    |
 | `--enable_cache_memory`      | Enable collecting and displaying cache and buffer memory. |
-| `--free_arc`                 | Subtract freeable ARC from memory.                        |
+| `--free_arc`                 | Subtract ARC memory that can be freed from memory usage.  |
+| `--short_gpu_names`          | Use short GPU names in the memory widget.                 |
 
 ## Network Options
 
@@ -77,7 +77,8 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `--network_use_bytes`         | Displays the network widget using bytes.                |
 | `--network_use_binary_prefix` | Displays the network widget with binary prefixes.       |
 | `--network_use_log`           | Displays the network widget with a log scale.           |
-| `--use_old_network_legend`    | (DEPRECATED) Uses a separate network legend.            |
+| `--show_packets`              | Displays packet rate and average packet size info.      |
+| `--use_old_network_legend`    | Uses a separate network legend.                         |
 
 ## Battery Options
 
@@ -93,9 +94,9 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## Style Options
 
-| Option             | Behaviour                                                        |
-| ------------------ | ---------------------------------------------------------------- |
-| `--theme <SCHEME>` | Use a built-in color theme, use '--help' for info on the colors. |
+| Option             | Behaviour                                                          |
+| ------------------ | ------------------------------------------------------------------ |
+| `--theme <SCHEME>` | Use a built-in colour theme, use '--help' for info on the colours. |
 
 ## Other Options
 

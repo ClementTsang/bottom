@@ -1,9 +1,10 @@
 use std::cmp::min;
 
 use itertools::Itertools;
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
+    style::Style,
 };
 
 use crate::{
@@ -30,8 +31,8 @@ impl Painter {
         // **General logic** - count number of elements in cpu_data.  Then see how
         // many rows and columns we have in draw_loc (-2 on both sides for border?).
         // I think what we can do is try to fit in as many in one column as possible.
-        // If not, then add a new column. Then, from this, split the row space across ALL columns.
-        // From there, generate the desired lengths.
+        // If not, then add a new column. Then, from this, split the row space across
+        // ALL columns. From there, generate the desired lengths.
 
         f.render_widget(
             widget_block(
@@ -47,35 +48,34 @@ impl Painter {
         // TODO: This is pretty ugly. Is there a better way of doing it?
         let mut avg_index = cpu_data.len() + 1;
         let mut avg_row_count = 0;
+        let show_decimal = app_state.app_config_fields.show_cpu_decimal;
         if app_state.app_config_fields.dedicated_average_row
             && app_state.app_config_fields.show_average_cpu
-        {
-            if let Some((index, avg)) = cpu_data
+            && let Some((index, avg)) = cpu_data
                 .iter()
                 .find_position(|&datum| matches!(datum.data_type, CpuDataType::Avg))
-            {
-                let (outer, inner, ratio, style) = self.cpu_info(avg);
-                let [cores_loc, mut avg_loc] =
-                    Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(draw_loc);
+        {
+            let (outer, inner, ratio, style) = self.cpu_info(avg, show_decimal);
+            let [cores_loc, mut avg_loc] =
+                Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(draw_loc);
 
-                // The cores section all have horizontal margin, so to line up with the cores we
-                // need to add some margin ourselves.
-                avg_loc.x += 1;
-                avg_loc.width -= 2;
+            // The cores section all have horizontal margin, so to line up with the cores we
+            // need to add some margin ourselves.
+            avg_loc.x += 1;
+            avg_loc.width -= 2;
 
-                f.render_widget(
-                    PipeGauge::default()
-                        .gauge_style(style)
-                        .label_style(style)
-                        .inner_label(inner)
-                        .start_label(outer)
-                        .ratio(ratio.into()),
-                    avg_loc,
-                );
-                avg_row_count += 1;
-                avg_index = index;
-                draw_loc = cores_loc;
-            }
+            f.render_widget(
+                PipeGauge::default()
+                    .gauge_style(style)
+                    .label_style(style)
+                    .inner_label(inner)
+                    .start_label(outer)
+                    .ratio(ratio.into()),
+                avg_loc,
+            );
+            avg_row_count += 1;
+            avg_index = index;
+            draw_loc = cores_loc;
         }
 
         if draw_loc.height > 0 {
@@ -93,7 +93,7 @@ impl Painter {
                 if index == avg_index {
                     None
                 } else {
-                    Some(self.cpu_info(cpu))
+                    Some(self.cpu_info(cpu, show_decimal))
                 }
             });
 
@@ -118,7 +118,8 @@ impl Painter {
                     let to_divide = REQUIRED_COLUMNS - itx;
                     let num_taken = min(
                         remaining_height,
-                        (row_counter / to_divide) + usize::from(row_counter % to_divide != 0),
+                        (row_counter / to_divide)
+                            + usize::from(!row_counter.is_multiple_of(to_divide)),
                     );
                     row_counter -= num_taken;
                     let chunk = (&mut gauge_info).take(num_taken);
@@ -156,7 +157,7 @@ impl Painter {
     }
 
     #[inline]
-    fn cpu_info(&self, data: &CpuData) -> (String, String, f32, tui::style::Style) {
+    fn cpu_info(&self, data: &CpuData, show_decimal: bool) -> (String, String, f32, Style) {
         let (outer, style) = match data.data_type {
             CpuDataType::Avg => ("AVG".to_string(), self.styles.avg_cpu_colour),
             CpuDataType::Cpu(index) => (
@@ -165,7 +166,11 @@ impl Painter {
             ),
         };
 
-        let inner = format!("{:>3.0}%", data.usage.round());
+        let inner = if show_decimal {
+            format!("{:>5.1}%", data.usage)
+        } else {
+            format!("{:>3.0}%", data.usage.round())
+        };
         let ratio = data.usage / 100.0;
 
         (outer, inner, ratio, style)

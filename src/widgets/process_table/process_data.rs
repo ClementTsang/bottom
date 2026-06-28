@@ -8,9 +8,11 @@ use std::{
 };
 
 use concat_string::concat_string;
-use tui::widgets::Row;
+use ratatui::widgets::Row;
 
 use super::process_columns::ProcColumn;
+#[cfg(target_os = "linux")]
+use crate::collection::processes::ProcessType;
 use crate::{
     canvas::{
         Painter,
@@ -215,9 +217,9 @@ pub struct ProcWidgetData {
     pub gpu_mem_usage: MemUsage,
     #[cfg(feature = "gpu")]
     pub gpu_usage: u32,
-    /// The process "type". Used to color things.
+    /// The process "type". Used to colour things.
     #[cfg(target_os = "linux")]
-    pub process_type: crate::collection::processes::ProcessType,
+    pub process_type: ProcessType,
     #[cfg(unix)]
     pub nice: i32,
     pub priority: i32,
@@ -387,7 +389,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
 
     #[cfg(target_os = "linux")]
     #[inline(always)]
-    fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<tui::style::Style> {
+    fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<ratatui::style::Style> {
         match column {
             ProcColumn::Name | ProcColumn::Command if self.process_type.is_thread() => {
                 Some(painter.styles.thread_text_style)

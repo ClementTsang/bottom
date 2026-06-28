@@ -2,7 +2,7 @@ use std::{borrow::Cow, marker::PhantomData, num::NonZeroU16};
 
 use concat_string::concat_string;
 use itertools::Itertools;
-use tui::widgets::Row;
+use ratatui::widgets::Row;
 
 use super::{
     ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,
@@ -334,6 +334,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::options::config::flags::TableGap;
 
     #[derive(Clone, PartialEq, Eq, Debug)]
     struct TestType {
@@ -394,10 +395,11 @@ mod test {
         let props = {
             let inner = DataTableProps {
                 title: Some("test".into()),
-                table_gap: 1,
+                table_gap: TableGap::Space,
                 left_to_right: false,
                 is_basic: false,
                 show_table_scroll_position: true,
+                show_table_scroll_bar: false,
                 show_current_entry_when_unfocused: false,
             };
 

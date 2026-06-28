@@ -2,12 +2,14 @@ use crate::{collection::network::NetworkHarvest, utils::data_units::convert_byte
 
 pub mod cpu_basic;
 pub mod cpu_graph;
+pub mod disk_io_graph;
 pub mod disk_table;
 pub mod mem_basic;
 pub mod mem_graph;
 pub mod network_basic;
 pub mod network_graph;
 pub mod process_table;
+pub mod temperature_graph;
 pub mod temperature_table;
 
 #[cfg(feature = "battery")]

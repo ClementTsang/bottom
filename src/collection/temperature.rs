@@ -3,11 +3,12 @@
 //! For Linux, this is handled by custom code.
 //! For everything else, this is handled by sysinfo.
 
-cfg_if::cfg_if! {
-    if #[cfg(target_os = "linux")] {
+cfg_select! {
+    target_os = "linux" => {
         pub mod linux;
         pub use self::linux::*;
-    } else {
+    }
+    _ => {
         pub mod sysinfo;
         pub use self::sysinfo::*;
     }

@@ -1,6 +1,5 @@
 use std::{num::NonZeroU64, sync::OnceLock};
 
-use crate::utils::int_hash::IntHashMap;
 use nvml_wrapper::{
     Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError,
 };
@@ -8,6 +7,7 @@ use nvml_wrapper::{
 use crate::{
     app::{filter::Filter, layout_manager::UsedWidgets},
     collection::{memory::MemData, processes::Pid, temperature::TempSensorData},
+    utils::int_hash::IntHashMap,
 };
 
 pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
@@ -21,7 +21,8 @@ pub struct GpusData {
 /// Wrapper around Nvml::init
 ///
 /// On Linux, if `Nvml::init()` fails, this function attempts to explicitly load
-/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls `Nvml::init`.
+/// the library from `libnvidia-ml.so.1`. On other platforms, it simply calls
+/// `Nvml::init`.
 ///
 /// This is a workaround until https://github.com/Cldfire/nvml-wrapper/pull/63 is accepted.
 /// Then, we can go back to calling `Nvml::init` directly on all platforms.
@@ -44,7 +45,7 @@ fn init_nvml() -> Result<Nvml, NvmlError> {
 /// Returns the GPU data from NVIDIA cards.
 #[inline]
 pub fn get_nvidia_vecs(
-    filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
+    filter: &Option<Filter>, graph_filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
 ) -> Option<GpusData> {
     if let Ok(nvml) = NVML_DATA.get_or_init(init_nvml) {
         if let Ok(num_gpu) = nvml.device_count() {
@@ -56,22 +57,22 @@ pub fn get_nvidia_vecs(
             for i in 0..num_gpu {
                 if let Ok(device) = nvml.device_by_index(i) {
                     if let Ok(name) = device.name() {
-                        if widgets_to_harvest.use_mem {
-                            if let Ok(mem) = device.memory_info() {
-                                if let Some(total_bytes) = NonZeroU64::new(mem.total) {
-                                    mem_vec.push((
-                                        name.clone(),
-                                        MemData {
-                                            total_bytes,
-                                            used_bytes: mem.used,
-                                        },
-                                    ));
-                                }
-                            }
+                        if widgets_to_harvest.use_mem
+                            && let Ok(mem) = device.memory_info()
+                            && let Some(total_bytes) = NonZeroU64::new(mem.total)
+                        {
+                            mem_vec.push((
+                                name.clone(),
+                                MemData {
+                                    total_bytes,
+                                    used_bytes: mem.used,
+                                },
+                            ));
                         }
 
-                        if widgets_to_harvest.use_temp
-                            && Filter::optional_should_keep(filter, &name)
+                        if (widgets_to_harvest.use_temp || widgets_to_harvest.use_temp_graph)
+                            && (Filter::optional_should_keep(filter, &name)
+                                || Filter::optional_should_keep(graph_filter, &name))
                         {
                             if let Ok(temperature) = device.temperature(TemperatureSensor::Gpu) {
                                 temp_vec.push(TempSensorData {

@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Rect},
     style::Style,
@@ -10,10 +10,11 @@ use crate::{
     app::{App, data::Values},
     canvas::{
         Painter,
-        components::time_graph::{GraphData, PercentTimeGraph},
+        components::time_series::{GraphData, LegendConstraints},
         drawing_utils::should_hide_x_label,
     },
     collection::memory::MemData,
+    components::time_series::GraphDrawCtx,
     get_binary_unit_and_denominator,
 };
 
@@ -60,15 +61,15 @@ impl Painter {
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                &mut mem_state.autohide_timer,
+                mem_state.graph.state_mut().autohide_timer_mut(),
                 draw_loc,
             );
             let graph_data = {
                 let mut size = 1;
                 let data = app_state.data_store.get_data();
 
-                // TODO: is this optimization really needed...? This just pre-allocates a vec, but it'll probably never
-                // be that big...
+                // TODO: is this optimization really needed...? This just pre-allocates a vec,
+                // but it'll probably never be that big...
 
                 if data.swap_harvest.is_some() {
                     size += 1; // add capacity for SWAP
@@ -85,8 +86,8 @@ impl Painter {
                 }
 
                 let mut points = Vec::with_capacity(size);
-                let timeseries = &data.timeseries_data;
-                let time = &timeseries.time;
+                let time_series = &data.time_series_data;
+                let time = &time_series.time;
 
                 // TODO: Add a "no data" option here/to time graph if there is no entries
                 graph_data(
@@ -94,7 +95,7 @@ impl Painter {
                     "RAM",
                     data.ram_harvest.as_ref(),
                     time,
-                    &timeseries.ram,
+                    &time_series.ram,
                     self.styles.ram_style,
                 );
 
@@ -103,7 +104,7 @@ impl Painter {
                     "SWP",
                     data.swap_harvest.as_ref(),
                     time,
-                    &timeseries.swap,
+                    &time_series.swap,
                     self.styles.swap_style,
                 );
 
@@ -114,7 +115,7 @@ impl Painter {
                         "CACHE", // TODO: Figure out how to line this up better
                         data.cache_harvest.as_ref(),
                         time,
-                        &timeseries.cache_mem,
+                        &time_series.cache_mem,
                         self.styles.cache_style,
                     );
                 }
@@ -126,7 +127,7 @@ impl Painter {
                         "ARC",
                         data.arc_harvest.as_ref(),
                         time,
-                        &timeseries.arc_mem,
+                        &time_series.arc_mem,
                         self.styles.arc_style,
                     );
                 }
@@ -135,9 +136,11 @@ impl Painter {
                 {
                     let mut colour_index = 0;
                     let gpu_styles = &self.styles.gpu_colours;
+                    let short_gpu_names = app_state.app_config_fields.short_gpu_names;
+                    let gpu_count = data.gpu_harvest.len();
 
-                    for (name, harvest) in &data.gpu_harvest {
-                        if let Some(gpu_data) = data.timeseries_data.gpu_mem.get(name) {
+                    for (gpu_index, (name, harvest)) in data.gpu_harvest.iter().enumerate() {
+                        if let Some(gpu_data) = data.time_series_data.gpu_mem.get(name) {
                             let style = {
                                 if gpu_styles.is_empty() {
                                     Style::default()
@@ -149,9 +152,19 @@ impl Painter {
                                 }
                             };
 
+                            let display_name = if short_gpu_names {
+                                if gpu_count == 1 {
+                                    "GPU".to_string()
+                                } else {
+                                    format!("GPU{gpu_index}")
+                                }
+                            } else {
+                                name.clone()
+                            };
+
                             graph_data(
                                 &mut points,
-                                name, // TODO: REALLY figure out how to line this up better
+                                &display_name,
                                 Some(harvest),
                                 time,
                                 gpu_data,
@@ -164,20 +177,31 @@ impl Painter {
                 points
             };
 
-            PercentTimeGraph {
-                display_range: mem_state.current_display_time,
-                hide_x_labels,
-                app_config_fields: &app_state.app_config_fields,
-                current_widget: app_state.current_widget.widget_id,
-                is_expanded: app_state.is_expanded,
-                title: " Memory ".into(),
-                styles: &self.styles,
-                widget_id,
-                legend_position: app_state.app_config_fields.memory_legend_position,
-                legend_constraints: Some((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
-            }
-            .build()
-            .draw(f, draw_loc, graph_data);
+            let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
+            let marker = self.get_marker(app_state.app_config_fields.use_dot);
+
+            mem_state.graph.draw(
+                f,
+                draw_loc,
+                GraphDrawCtx {
+                    title: " Memory ".into(),
+                    border_style,
+                    title_style: self.styles.widget_title_style,
+                    graph_style: self.styles.graph_style,
+                    general_widget_style: self.styles.general_widget_style,
+                    border_type: self.styles.border_type,
+                    marker,
+                    hide_x_labels,
+                    is_selected: app_state.current_widget.widget_id == widget_id,
+                    is_expanded: app_state.is_expanded,
+                    legend_position: app_state.app_config_fields.memory_legend_position,
+                    legend_constraints: Some(LegendConstraints {
+                        width: Constraint::Ratio(3, 4),
+                        height: Constraint::Ratio(3, 4),
+                    }),
+                },
+                graph_data,
+            );
         }
 
         if app_state.should_get_widget_bounds() {

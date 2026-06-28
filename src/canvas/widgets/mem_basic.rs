@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
 };
@@ -145,7 +145,7 @@ impl Painter {
 
                 let style = {
                     if gpu_styles.is_empty() {
-                        tui::style::Style::default()
+                        ratatui::style::Style::default()
                     } else {
                         let colour = gpu_styles[colour_index % gpu_styles.len()];
                         colour_index += 1;
@@ -179,12 +179,12 @@ impl Painter {
             });
 
         // Update draw loc in widget map
-        if app_state.should_get_widget_bounds() {
-            if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
-                widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
-                widget.bottom_right_corner =
-                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
-            }
+        if app_state.should_get_widget_bounds()
+            && let Some(widget) = app_state.widget_map.get_mut(&widget_id)
+        {
+            widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+            widget.bottom_right_corner =
+                Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
         }
     }
 }

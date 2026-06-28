@@ -6,12 +6,14 @@ name: post-release
 
 on:
   release:
-    types: [published]
+    types: [released]
   workflow_dispatch:
     inputs:
       tag:
         description: "Which tag to deploy as:"
         required: true
+
+permissions: {}
 
 env:
   # Assign commit authorship to official GitHub Actions bot when pushing to the `gh-pages` branch:
@@ -43,41 +45,15 @@ jobs:
 
   docs:
     needs: [initialize]
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Set release version
-        shell: bash
-        run: |
-          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
-
-      - name: Validate release version
-        run: |
-          echo "Release version: ${{ env.RELEASE_VERSION }}"
-
-      - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
-        with:
-          python-version: 3.12
-
-      - name: Install Python dependencies
-        run: pip install -r docs/requirements.txt
-
-      - name: Configure git user and email
-        run: ./scripts/ci/configure_git.sh
-
-      - name: Build and deploy docs with mike as the latest stable branch
-        run: |
-          cd docs
-          mike deploy --push --update-aliases ${RELEASE_VERSION} stable
-
-  publish-gh-pages:
-    needs: [docs]
-    uses: ./.github/workflows/publish_github_pages.yml
+    permissions:
+      pages: write
+      id-token: write
+      contents: write
+    uses: ./.github/workflows/docs.yml
     secrets: inherit
+    with:
+      version: ${{ needs.initialize.outputs.version }}
+      alias: "stable"
 
   chocolatey:
     needs: [initialize]
@@ -99,14 +75,14 @@ jobs:
           --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
 
   publish-crate:
-    needs: [initialize, chocolatey, publish-gh-pages]
+    needs: [initialize, chocolatey, docs]
     runs-on: ubuntu-24.04
     environment: production
     permissions:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 

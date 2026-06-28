@@ -1,4 +1,6 @@
-# Temperature Table
+# Temperature Table Configuration
+
+The temperature table widget is configured under `[temperature]`.
 
 ## Default Sort Order
 
@@ -29,6 +31,6 @@ regex = false
 # Whether to be case-sensitive. Defaults to false.
 case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 whole_word = false
 ```

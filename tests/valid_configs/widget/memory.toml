@@ -1,0 +1,6 @@
+# This uses the newer memory config location.
+
+[memory_graph]
+cache_memory = true
+free_arc = true
+legend_position = "left"

@@ -61,22 +61,22 @@ Let's say you're installing [Iosevka](https://github.com/be5invis/Iosevka). The 
 
 4. Here, add a new `String value`, and set the `Name` to a bunch of 0's (e.g. `000` - make sure the name isn't already used), then set the `Data` to the font name (e.g. `Iosevka`).
 
-<figure>
-    <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
-    <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
-</figure>
+    <figure>
+        <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
+        <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
+    </figure>
 
 5. Then, open the Command Prompt/PowerShell, and right-click on the top bar, and open "Properties":
 
-<figure>
-    <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
-</figure>
+    <figure>
+        <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
+    </figure>
 
 6. From here, go to "Font", and set the font to your new font (so in this example, Iosevka):
 
-<figure>
-    <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
-</figure>
+    <figure>
+        <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
+    </figure>
 
 ## Why can't I see all my temperature sensors on Windows?
 
@@ -122,7 +122,7 @@ It may be handy to refer to the automatically generated config files or the
 [sample configuration files](https://github.com/ClementTsang/bottom/tree/main/sample_configs). The config files also
 follow the [TOML](https://toml.io/en/) format.
 
-Also make sure your config options are under the right table - for example, to set your temperature type, you must
+Also make sure your config option settings are in the right location - for example, to set your temperature type, you must
 set it under the `[flags]` table:
 
 ```toml
@@ -130,11 +130,12 @@ set it under the `[flags]` table:
 temperature_type = "f"
 ```
 
-Meanwhile, if you want to set a custom color scheme, it would be under the `[styles]` table:
+Meanwhile, if you want to set a custom colour or styling scheme, it would be under the `[styles]` table - for example:
 
 ```toml
 [styles.tables.headers]
-color="LightBlue"
+colour = "LightBlue"
+bold = true
 ```
 
 To help validate your configuration files, there is [JSON Schema](https://json-schema.org/) support if your IDE/editor

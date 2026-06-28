@@ -20,25 +20,86 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## [0.12.4]/[0.13.0] - Unreleased
+## 0.14.2 - 2026-06-27
+
+### Other
+
+- [#2109](https://github.com/ClementTsang/bottom/pull/2109): Relocate the schema generation tool to avoid it interfering with `cargo install`.
+
+## 0.14.1 - 2026-06-22
+
+### Other
+
+- [#2096](https://github.com/ClementTsang/bottom/pull/2096): Fix documentation suggestions around `memory_graph`.
+- [#2102](https://github.com/ClementTsang/bottom/pull/2102): Mention memory/network alias in deprecation warnings.
+
+## 0.14.0 - 2026-06-20
+
+### Bug Fixes
+
+- [#2093](https://github.com/ClementTsang/bottom/pull/2093): Fix memory collection using cgroup v1 sentinel max as total.
+
+### Features
+
+- [#2055](https://github.com/ClementTsang/bottom/pull/2055): Add UFS disk I/O counters for FreeBSD.
+
+### Other
+
+- [#2052](https://github.com/ClementTsang/bottom/pull/2052): Update minimum Rust version to 1.95.0.
+- [#2055](https://github.com/ClementTsang/bottom/pull/2055): Use sysinfo for disk I/O for FreeBSD.
+
+## [0.13.0] - 2026-06-19
+
+### Bug Fixes
+
+- [#2035](https://github.com/ClementTsang/bottom/pull/2035): Fix panic when deleting unicode words in search.
+- [#2042](https://github.com/ClementTsang/bottom/pull/2042): Address possible memory usage growth for AMD GPU stat gathering on Linux.
+- [#2069](https://github.com/ClementTsang/bottom/pull/2069): Fix issue in process search with parsing quoted delimiters.
 
 ### Features
 
 - [#1938](https://github.com/ClementTsang/bottom/pull/1938), [#1980](https://github.com/ClementTsang/bottom/pull/1980): Report average packet size and packet rate.
 - [#2003](https://github.com/ClementTsang/bottom/pull/2003): Configurable default sort column for temperature and disk table widgets.
-- [#1979](https://github.com/ClementTsang/bottom/pull/1979): Add global `bg_color` option to set widget background colour.
+- [#1979](https://github.com/ClementTsang/bottom/pull/1979): Add a global `bg_colour` config option to set widget background colour.
+- [#2039](https://github.com/ClementTsang/bottom/pull/2039): Add a config option for drawing a line separator (`table_gap`) between the column headers and data.
+- [#1948](https://github.com/ClementTsang/bottom/pull/1948): Add support for both an `!=` operator and `!` negation prefixes in query searches.
+- [#2045](https://github.com/ClementTsang/bottom/pull/2045): Add support for showing a decimal place for CPU usage
+- [#2046](https://github.com/ClementTsang/bottom/pull/2046): Add a `show_table_scroll_bar` config option to show a scroll bar on table widgets.
+- [#2048](https://github.com/ClementTsang/bottom/pull/2048): Add support for a temperature graph to show sensor temperature change over time.
+- [#2053](https://github.com/ClementTsang/bottom/pull/2053): Add a configurable default sort column for the process widget (`processes.default_sort` or `--process-default-sort`).
+- [#2066](https://github.com/ClementTsang/bottom/pull/2066): Add search support in the help dialog.
+- [#1791](https://github.com/ClementTsang/bottom/pull/1791), [#2072](https://github.com/ClementTsang/bottom/pull/2072): Add support for using a short name for the GPU in memory usage.
+- [#2073](https://github.com/ClementTsang/bottom/pull/2073): Add disk I/O time series graph.
+- [#2088](https://github.com/ClementTsang/bottom/pull/2088): Add option to show unmounted disks on Linux.
+
+### Changes
+
+- [#2031](https://github.com/ClementTsang/bottom/pull/2031): Tweak display/hiding logic for a graph widget's legend.
+- [#2039](https://github.com/ClementTsang/bottom/pull/2039): Replace `hide_table_gap` with `table_gap`.
+- [#2061](https://github.com/ClementTsang/bottom/pull/2061): Take cgroup into account for RAM/swap usage.
+- [#2062](https://github.com/ClementTsang/bottom/pull/2062): Rename `[network]` to `[network_graph]` in the config file; `[network]` remains valid as an alias.
+- [#2062](https://github.com/ClementTsang/bottom/pull/2062): Move network and memory graph config file options from `[flags]` to be under `[network_graph]` and `[memory_graph]`.
+- [#2063](https://github.com/ClementTsang/bottom/pull/2063): Move process config file options from `[flags]` to be under `[processes]`.
+- [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move CPU config file options from `[flags]` to be under `[cpu]`.
+- [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move memory config file options from `[flags]` to be under `[memory_graph]`.
+- [#2066](https://github.com/ClementTsang/bottom/pull/2066): Take cgroup into account for CPU usage% calculations.
+- [#2074](https://github.com/ClementTsang/bottom/pull/2074): Treat uppercase 'Q' as a quit shortcut.
 
 ### Other
 
 - [#1955](https://github.com/ClementTsang/bottom/pull/1955): Fix mirrored documentation deploy to GitHub Pages.
 - [#1957](https://github.com/ClementTsang/bottom/pull/1957): Fix CI bug around deploying docs on release.
 - [#1958](https://github.com/ClementTsang/bottom/pull/1958): Fix cosmetic banner issue on docs page.
+- [#1962](https://github.com/ClementTsang/bottom/pull/1962): Add code signing for Windows artifacts.
+- [#1986](https://github.com/ClementTsang/bottom/pull/1986): Test and build NetBSD target.
+- [#2009](https://github.com/ClementTsang/bottom/pull/2009): Configure CI job to publish to crates.io.
+- [#2037](https://github.com/ClementTsang/bottom/pull/2037): Update AMD GPU names list.
 
 ## [0.12.3] - 2026-01-01
 
 ### Bug Fixes
 
-- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multibyte UTF8 chars in process names.
+- [#1943](https://github.com/ClementTsang/bottom/pull/1943): Fix a crash caused by multi-byte UTF8 chars in process names.
 
 ### Other
 

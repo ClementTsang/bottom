@@ -1,6 +1,6 @@
 # Run BSD VM jobs with manually-implemented retries.
 
-name: "BSD VM Check"
+name: "bsd vm check"
 
 on:
   workflow_call:
@@ -13,6 +13,8 @@ on:
         type: string
         description: "Release version"
         required: true
+
+permissions: {}
 
 # Duplicated because GHA doesn't support passing env vars through without making them all inputs or something.
 env:
@@ -27,7 +29,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 

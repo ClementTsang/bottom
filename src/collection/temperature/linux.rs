@@ -62,24 +62,24 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
 
     if let Ok(read_dir) = Path::new("/sys/devices/platform").read_dir() {
         for entry in read_dir.flatten() {
-            if entry.file_name().to_string_lossy().starts_with("coretemp.") {
-                if let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
-                    for entry in read_dir.flatten() {
-                        let path = entry.path();
+            if entry.file_name().to_string_lossy().starts_with("coretemp.")
+                && let Ok(read_dir) = entry.path().join("hwmon").read_dir()
+            {
+                for entry in read_dir.flatten() {
+                    let path = entry.path();
 
-                        if path.join("temp1_input").exists() {
-                            // It's possible that there are dupes (represented by symlinks) - the
-                            // easy way is to just substitute the parent
-                            // directory and check if the hwmon
-                            // variant exists already in a set.
-                            //
-                            // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
-                            if let Some(child) = path.file_name() {
-                                let to_check_path = Path::new("/sys/class/hwmon").join(child);
+                    if path.join("temp1_input").exists() {
+                        // It's possible that there are dupes (represented by symlinks) - the
+                        // easy way is to just substitute the parent
+                        // directory and check if the hwmon
+                        // variant exists already in a set.
+                        //
+                        // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
+                        if let Some(child) = path.file_name() {
+                            let to_check_path = Path::new("/sys/class/hwmon").join(child);
 
-                                if !dirs.contains(&to_check_path) {
-                                    dirs.insert(path);
-                                }
+                            if !dirs.contains(&to_check_path) {
+                                dirs.insert(path);
                             }
                         }
                     }
@@ -200,7 +200,7 @@ fn finalize_name(
 /// the device is already in ACPI D0. This has the notable issue that
 /// once this happens, the device will be *kept* on through the sensor
 /// reading, and not be able to re-enter ACPI D3cold.
-fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
+fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) -> HwmonResults {
     let mut temperatures: Vec<TempSensorData> = vec![];
     let mut seen_names: HashMap<String, u32> = HashMap::default();
 
@@ -326,13 +326,14 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
 
                 // TODO: It's possible we may want to move the filter check further up to avoid
                 // probing hwmon if not needed?
-                if Filter::optional_should_keep(filter, &name) {
-                    if let Ok(temp_celsius) = parse_temp(&temp_path) {
-                        temperatures.push(TempSensorData {
-                            name,
-                            temperature: Some(temp_celsius),
-                        });
-                    }
+                if (Filter::optional_should_keep(filter, &name)
+                    || Filter::optional_should_keep(graph_filter, &name))
+                    && let Ok(temp_celsius) = parse_temp(&temp_path)
+                {
+                    temperatures.push(TempSensorData {
+                        name,
+                        temperature: Some(temp_celsius),
+                    });
                 }
             }
         }
@@ -350,7 +351,9 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
 ///
 /// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
 /// for more details.
-fn add_thermal_zone_temperatures(temperatures: &mut Vec<TempSensorData>, filter: &Option<Filter>) {
+fn add_thermal_zone_temperatures(
+    temperatures: &mut Vec<TempSensorData>, filter: &Option<Filter>, graph_filter: &Option<Filter>,
+) {
     let path = Path::new("/sys/class/thermal");
     let Ok(read_dir) = path.read_dir() else {
         return;
@@ -374,7 +377,9 @@ fn add_thermal_zone_temperatures(temperatures: &mut Vec<TempSensorData>, filter:
                     name
                 };
 
-                if Filter::optional_should_keep(filter, &name) {
+                if Filter::optional_should_keep(filter, &name)
+                    || Filter::optional_should_keep(graph_filter, &name)
+                {
                     let temp_path = file_path.join("temp");
                     if let Ok(temp_celsius) = parse_temp(&temp_path) {
                         let name = counted_name(&mut seen_names, name);
@@ -391,11 +396,13 @@ fn add_thermal_zone_temperatures(temperatures: &mut Vec<TempSensorData>, filter:
 }
 
 /// Gets temperature sensors and data.
-pub fn get_temperature_data(filter: &Option<Filter>) -> Result<Option<Vec<TempSensorData>>> {
-    let mut results = hwmon_temperatures(filter);
+pub fn get_temperature_data(
+    filter: &Option<Filter>, graph_filter: &Option<Filter>,
+) -> Result<Option<Vec<TempSensorData>>> {
+    let mut results = hwmon_temperatures(filter, graph_filter);
 
     if results.num_hwmon == 0 {
-        add_thermal_zone_temperatures(&mut results.temperatures, filter);
+        add_thermal_zone_temperatures(&mut results.temperatures, filter, graph_filter);
     }
 
     Ok(Some(results.temperatures))

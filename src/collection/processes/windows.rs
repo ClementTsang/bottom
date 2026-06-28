@@ -13,10 +13,11 @@ use super::{ProcessHarvest, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult};
 
 /// See [here](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getpriorityclass)
-/// for more information on the core Windows API being called and the meaning of the priorities, as well as the access
-/// rights needed.
+/// for more information on the core Windows API being called and the meaning of
+/// the priorities, as well as the access rights needed.
 fn get_priority(pid: u32) -> anyhow::Result<i32> {
-    // SAFETY: We check validity of each step and bail on errors. We also close the handle.
+    // SAFETY: We check validity of each step and bail on errors. We also close the
+    // handle.
     unsafe {
         let process_handle: HANDLE = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)?;
         if process_handle.is_invalid() {

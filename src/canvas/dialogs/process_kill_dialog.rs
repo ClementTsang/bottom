@@ -2,23 +2,26 @@
 
 use std::time::Instant;
 
-use cfg_if::cfg_if;
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-use tui::widgets::ListState;
-use tui::{
+use ratatui::widgets::ListState;
+use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Flex, Layout, Position, Rect},
     text::{Line, Span, Text},
     widgets::{Paragraph, Wrap},
 };
 
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+use crate::canvas::components::scroll_bar::{
+    ScrollBarArgs, dialog_scroll_bar_area, draw_scroll_bar,
+};
 use crate::{
     canvas::drawing_utils::dialog_block, collection::processes::Pid, options::config::style::Styles,
 };
 
 // Configure signal text based on the target OS.
-cfg_if! {
-    if #[cfg(target_os = "linux")] {
+cfg_select! {
+    target_os = "linux" => {
         const DEFAULT_KILL_SIGNAL: usize = 15;
         const SIGNAL_TEXT: [&str; 63] = [
             "0: Cancel",
@@ -85,7 +88,8 @@ cfg_if! {
             "63: RTMAX-1",
             "64: RTMAX",
         ];
-    } else if #[cfg(target_os = "macos")] {
+    }
+    target_os = "macos" => {
         const DEFAULT_KILL_SIGNAL: usize = 15;
         const SIGNAL_TEXT: [&str; 32] = [
             "0: Cancel",
@@ -121,7 +125,8 @@ cfg_if! {
             "30: USR1",
             "31: USR2",
         ];
-    } else if #[cfg(target_os = "freebsd")] {
+    }
+    target_os = "freebsd" => {
         const DEFAULT_KILL_SIGNAL: usize = 15;
         const SIGNAL_TEXT: [&str; 34] = [
             "0: Cancel",
@@ -160,6 +165,7 @@ cfg_if! {
             "33: LIBRT",
         ];
     }
+    _ => {}
 }
 
 /// Button state type for a [`ProcessKillDialog`].
@@ -238,36 +244,33 @@ impl ProcessKillDialog {
                 ButtonState::Signals { state, .. } => {
                     use crate::utils::process_killer;
 
-                    if let Some(selected) = state.selected() {
-                        if selected != 0 {
-                            // On Linux, we need to skip 32 and 33.
-                            let signal = if cfg!(target_os = "linux")
-                                && (selected == 32 || selected == 33)
-                            {
+                    if let Some(selected) = state.selected()
+                        && selected != 0
+                    {
+                        // On Linux, we need to skip 32 and 33.
+                        let signal =
+                            if cfg!(target_os = "linux") && (selected == 32 || selected == 33) {
                                 selected + 2
                             } else {
                                 selected
                             };
 
-                            for pid in pids {
-                                if let Err(err) =
-                                    process_killer::kill_process_given_pid(pid, signal)
-                                {
-                                    self.state = ProcessKillDialogState::Error {
-                                        process_name,
-                                        pid: Some(pid),
-                                        err: err.to_string(),
-                                    };
-                                    return;
-                                }
+                        for pid in pids {
+                            if let Err(err) = process_killer::kill_process_given_pid(pid, signal) {
+                                self.state = ProcessKillDialogState::Error {
+                                    process_name,
+                                    pid: Some(pid),
+                                    err: err.to_string(),
+                                };
+                                return;
                             }
                         }
                     }
                 }
                 ButtonState::Simple { yes, .. } => {
                     if yes {
-                        cfg_if! {
-                            if #[cfg(target_os = "windows")] {
+                        cfg_select! {
+                            target_os = "windows" => {
                                 use crate::utils::process_killer;
 
                                 for pid in pids {
@@ -276,7 +279,8 @@ impl ProcessKillDialog {
                                         break;
                                     }
                                 }
-                            } else if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+                            }
+                            any(target_os = "linux", target_os = "macos", target_os = "freebsd") => {
                                 use crate::utils::process_killer;
 
                                 for pid in pids {
@@ -286,7 +290,8 @@ impl ProcessKillDialog {
                                         break;
                                     }
                                 }
-                            } else {
+                            }
+                            _ => {
                                 self.state = ProcessKillDialogState::Error { process_name, pid: None, err: "Killing processes is not supported on this platform.".into() };
 
                             }
@@ -311,51 +316,51 @@ impl ProcessKillDialog {
             'l' => self.on_right_key(),
             '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
                 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-                if let Some(value) = c.to_digit(10) {
-                    if let ProcessKillDialogState::Selecting(ProcessKillSelectingInner {
+                if let Some(value) = c.to_digit(10)
+                    && let ProcessKillDialogState::Selecting(ProcessKillSelectingInner {
                         button_state: ButtonState::Signals { state, .. },
                         ..
                     }) = &mut self.state
-                    {
-                        if let Some((prev, last_press)) = self.last_char {
-                            if prev.is_ascii_digit() && last_press.elapsed() <= MAX_KEY_TIMEOUT {
-                                let current = state.selected().unwrap_or(0);
-                                let new = {
-                                    let new = current * 10 + value as usize;
+                {
+                    if let Some((prev, last_press)) = self.last_char {
+                        if prev.is_ascii_digit() && last_press.elapsed() <= MAX_KEY_TIMEOUT {
+                            let current = state.selected().unwrap_or(0);
+                            let new = {
+                                let new = current * 10 + value as usize;
 
-                                    // Note that 32 and 33 are skipped on linux.
-                                    if cfg!(target_os = "linux") {
-                                        if new == 32 || new == 33 {
-                                            value as usize
-                                        } else if new >= 34 {
-                                            new - 2
-                                        } else {
-                                            new
-                                        }
+                                // Note that 32 and 33 are skipped on linux.
+                                if cfg!(target_os = "linux") {
+                                    if new == 32 || new == 33 {
+                                        value as usize
+                                    } else if new >= 34 {
+                                        new - 2
                                     } else {
                                         new
                                     }
-                                };
-
-                                if new >= SIGNAL_TEXT.len() {
-                                    // If the new value is too large, then just assume we instead want the value itself.
-                                    state.select(Some(value as usize));
-                                    self.last_char = Some((c, Instant::now()));
                                 } else {
-                                    state.select(Some(new));
-                                    self.last_char = None;
+                                    new
                                 }
-                            } else {
+                            };
+
+                            if new >= SIGNAL_TEXT.len() {
+                                // If the new value is too large, then just assume we instead
+                                // want the value itself.
                                 state.select(Some(value as usize));
                                 self.last_char = Some((c, Instant::now()));
+                            } else {
+                                state.select(Some(new));
+                                self.last_char = None;
                             }
                         } else {
                             state.select(Some(value as usize));
                             self.last_char = Some((c, Instant::now()));
                         }
-
-                        return; // Needed to avoid accidentally clearing last_char.
+                    } else {
+                        state.select(Some(value as usize));
+                        self.last_char = Some((c, Instant::now()));
                     }
+
+                    return; // Needed to avoid accidentally clearing last_char.
                 }
             }
             'g' => {
@@ -581,10 +586,11 @@ impl ProcessKillDialog {
                 last_no_button_area: Rect::default(),
             }
         } else {
-            cfg_if! {
-                if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))] {
+            cfg_select! {
+                any(target_os = "linux", target_os = "macos", target_os = "freebsd") => {
                     ButtonState::Signals { state: ListState::default().with_selected(Some(DEFAULT_KILL_SIGNAL)), last_button_draw_area: Rect::default() }
-                } else {
+                }
+                _ => {
                     ButtonState::Simple { yes: false, last_yes_button_area: Rect::default(), last_no_button_area: Rect::default()}
                 }
             }
@@ -607,7 +613,8 @@ impl ProcessKillDialog {
     }
 
     pub fn handle_redraw(&mut self) {
-        // FIXME: Not sure if we need this. We can probably handle this better in the draw function later.
+        // FIXME: Not sure if we need this. We can probably handle this better in the
+        // draw function later.
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         {
@@ -689,13 +696,14 @@ impl ProcessKillDialog {
                 state,
                 last_button_draw_area,
             } => {
-                use tui::widgets::List;
+                use ratatui::widgets::List;
 
                 // A list of options, displayed vertically.
                 const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;
 
                 // Make the rect only as big as it needs to be, which is the height of the text,
-                // the buttons, and up to 2 spaces (margin and space between), and the size of the block.
+                // the buttons, and up to 2 spaces (margin and space between), and the size of
+                // the block.
                 let [draw_area] =
                     Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2 + 3)])
                         .flex(Flex::Center)
@@ -744,13 +752,25 @@ impl ProcessKillDialog {
 
                     max as u16
                 };
-                let [button_draw_area] =
+
+                let [list_area] =
                     Layout::horizontal([Constraint::Length(LONGEST_SIGNAL_TEXT_LENGTH)])
                         .flex(Flex::Center)
                         .areas(button_draw_area);
 
-                *last_button_draw_area = button_draw_area;
-                f.render_stateful_widget(buttons, button_draw_area, state);
+                *last_button_draw_area = list_area;
+                f.render_stateful_widget(buttons, list_area, state);
+
+                draw_scroll_bar(
+                    f,
+                    dialog_scroll_bar_area(draw_area),
+                    ScrollBarArgs {
+                        content_length: SIGNAL_TEXT.len(),
+                        viewport_length: list_area.height as usize,
+                        position: state.selected().unwrap_or(0),
+                        style: styles.text_style,
+                    },
+                );
             }
             ButtonState::Simple {
                 yes,
@@ -835,8 +855,8 @@ impl ProcessKillDialog {
     pub fn draw(&mut self, f: &mut Frame<'_>, draw_area: Rect, styles: &Styles) {
         // The idea is:
         // - Use as big of a dialog box as needed (within the maximal draw loc)
-        //  - So the non-button ones are going to be smaller... probably
-        //    whatever the height of the text is.
+        //  - So the non-button ones are going to be smaller... probably whatever the
+        //    height of the text is.
         //  - Meanwhile for the button one, it'll likely be full height if it's
         //    "advanced" kill.
 

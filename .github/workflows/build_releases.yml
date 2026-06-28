@@ -1,7 +1,6 @@
 # Builds the following releases:
 # - Binaries
 # - Binaries via VMs
-# - Cirrus binaries (currently just Linux 2.17)
 # - MSI installer for Windows (.msi)
 # - .deb releases
 # - .rpm releases
@@ -14,7 +13,6 @@
 name: "build releases"
 
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       caller:
@@ -129,6 +127,15 @@ jobs:
               cross: true,
             }
 
+          # Linux 2.17 (CentOS 7)
+          - {
+              target: "x86_64-unknown-linux-gnu",
+              os: "ubuntu-22.04",
+              artifact_name: "x86_64-unknown-linux-gnu-2-17",
+              cross: true,
+              cross_image: "ghcr.io/cross-rs/x86_64-unknown-linux-gnu@sha256:ab2070e67704b2c85d0d1fa50a0165ec438ed87fd1dc1a4058692a2348c071cb", # edge-centos
+            }
+
           # Android
           - {
               target: "aarch64-linux-android",
@@ -163,7 +170,7 @@ jobs:
     steps:
       - name: Checkout repository
         if: matrix.info.container == ''
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -201,6 +208,12 @@ jobs:
           echo "Will build with the following features: $BUILD_FEATURES"
           echo "BUILD_FEATURES=$BUILD_FEATURES" >> $GITHUB_ENV
 
+      - name: Set cross docker image if set
+        if: matrix.info.cross == true && matrix.info.cross_image != ''
+        shell: bash
+        run: |
+          echo "CROSS_TARGET_X86_64_UNKNOWN_LINUX_GNU_IMAGE=${{ matrix.info.cross_image }}" >> $GITHUB_ENV
+
       - name: Build
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         env:
@@ -233,7 +246,7 @@ jobs:
       - name: Upload unsigned Windows artifact
         id: upload-unsigned-artifact
         if: startsWith(matrix.info.os, 'windows')
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           retention-days: 1
           name: "unsigned-${{ matrix.info.target }}"
@@ -256,17 +269,19 @@ jobs:
         shell: bash
         run: |
           mv signed/btm.exe btm.exe
-          7z a bottom_${{ matrix.info.target }}.zip "btm.exe"
-          7z a bottom_${{ matrix.info.target }}.zip "completion"
-          echo "ASSET=bottom_${{ matrix.info.target }}.zip" >> $GITHUB_ENV
+          ASSET_NAME="bottom_${{ matrix.info.artifact_name || matrix.info.target }}.zip"
+          7z a "$ASSET_NAME" "btm.exe"
+          7z a "$ASSET_NAME" "completion"
+          echo "ASSET=$ASSET_NAME" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
         if: ${{ !(startsWith(matrix.info.os, 'windows')) }}
         shell: bash
         run: |
+          ASSET_NAME="bottom_${{ matrix.info.artifact_name || matrix.info.target }}.tar.gz"
           cp target/${{ matrix.info.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.info.target }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.info.target }}.tar.gz" >> $GITHUB_ENV
+          tar -czvf "$ASSET_NAME" btm completion
+          echo "ASSET=$ASSET_NAME" >> $GITHUB_ENV
 
       - name: Generate artifact attestation for file
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
@@ -301,10 +316,10 @@ jobs:
           cp ./desktop/bottom.desktop release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           retention-days: 3
-          name: "release-${{ matrix.info.target }}"
+          name: "release-${{ matrix.info.artifact_name || matrix.info.target }}"
           path: release
 
   build-msi:
@@ -327,7 +342,7 @@ jobs:
     runs-on: ${{ matrix.info.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -381,48 +396,10 @@ jobs:
           mv ${{ matrix.info.output }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           retention-days: 3
           name: "release-${{ matrix.info.target }}-msi"
-          path: release
-
-  build-cirrus:
-    name: "Build using Cirrus CI"
-    runs-on: "ubuntu-24.04"
-    timeout-minutes: 12
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 0
-
-      - name: Create release directory
-        run: |
-          mkdir -p release
-
-      - name: Execute Cirrus CI build script
-        env:
-          CIRRUS_KEY: ${{ secrets.CIRRUS_TOKEN }}
-        run: |
-          if [[ "${{ github.ref_type }}" == "branch" ]]; then
-            BRANCH="${{ github.ref_name }}";
-          else
-            raw=$(git branch -r --contains '${{ github.ref_name }}');
-            BRANCH=${raw##*/};
-          fi
-          python ./scripts/ci/cirrus_release.py "$BRANCH" "release/" "${{ inputs.caller }}"
-
-      - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
-        with:
-          subject-path: "release/**/*.tar.gz"
-
-      - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
-        with:
-          retention-days: 3
-          name: release-build-cirrus
           path: release
 
   build-deb:
@@ -464,7 +441,7 @@ jobs:
             }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -555,7 +532,7 @@ jobs:
           mv ${{ steps.verify.outputs.DEB_FILE }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           retention-days: 3
           name: release-build-deb-${{ matrix.info.target }}
@@ -574,7 +551,7 @@ jobs:
           - { target: "x86_64-unknown-linux-musl", cross: true }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -663,7 +640,7 @@ jobs:
           mv ${{ steps.verify.outputs.RPM_FILE }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           retention-days: 3
           name: release-build-rpm-${{ matrix.info.target }}
@@ -683,7 +660,7 @@ jobs:
           - { os: "windows-2022", target: "x86_64-pc-windows-msvc" }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 

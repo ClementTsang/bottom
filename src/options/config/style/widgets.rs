@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{ColorStr, TextStyleConfig, borders::WidgetBorderType};
+use super::{ColourStr, TextStyleConfig, borders::WidgetBorderType};
 
 /// General styling for generic widgets.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -8,12 +8,12 @@ use super::{ColorStr, TextStyleConfig, borders::WidgetBorderType};
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct WidgetStyle {
     /// The colour of the widgets' borders.
-    #[serde(alias = "border_colour")]
-    pub(crate) border_color: Option<ColorStr>,
+    #[serde(alias = "border_color")]
+    pub(crate) border_colour: Option<ColourStr>,
 
     /// The colour of a widget's borders when the widget is selected.
-    #[serde(alias = "selected_border_colour")]
-    pub(crate) selected_border_color: Option<ColorStr>,
+    #[serde(alias = "selected_border_color")]
+    pub(crate) selected_border_colour: Option<ColourStr>,
 
     /// Text styling for a widget's title.
     pub(crate) widget_title: Option<TextStyleConfig>,
@@ -34,6 +34,7 @@ pub(crate) struct WidgetStyle {
     /// Widget borders type.
     pub(crate) widget_border_type: Option<WidgetBorderType>,
 
-    /// Background color for widgets.
-    pub(crate) bg_color: Option<ColorStr>,
+    /// Background colour for widgets.
+    #[serde(alias = "bg_color")]
+    pub(crate) bg_colour: Option<ColourStr>,
 }
