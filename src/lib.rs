@@ -41,7 +41,7 @@ use std::{
 
 use app::{App, AppConfigFields, DataFilters, layout_manager::UsedWidgets};
 use crossterm::{
-    cursor::{Hide, Show},
+    cursor::Show,
     event::{
         DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
         Event, KeyEventKind, MouseEventKind, poll, read,
@@ -363,7 +363,7 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     *enable_error_hook = true;
 
     let mut stdout_val = stdout();
-    execute!(stdout_val, Hide, EnterAlternateScreen, EnableBracketedPaste)?;
+    execute!(stdout_val, EnterAlternateScreen, EnableBracketedPaste)?;
     if app.app_config_fields.disable_click {
         execute!(stdout_val, DisableMouseCapture)?;
     } else {
