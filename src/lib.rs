@@ -83,7 +83,6 @@ fn cleanup_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> anyhow
         DisableMouseCapture,
         DisableBracketedPaste,
         LeaveAlternateScreen,
-        Show,
     )?;
     terminal.show_cursor()?;
 
