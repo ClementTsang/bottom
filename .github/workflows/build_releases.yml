@@ -284,7 +284,7 @@ jobs:
           echo "ASSET=$ASSET_NAME" >> $GITHUB_ENV
 
       - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
         with:
           subject-path: ${{ env.ASSET }}
 
@@ -385,7 +385,7 @@ jobs:
           mv bottom_installer.msi ${{ matrix.info.output }}
 
       - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
         with:
           subject-path: ${{ matrix.info.output }}
 
@@ -521,7 +521,7 @@ jobs:
           rm -r ./target/debian/
 
       - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
         with:
           subject-path: ${{ steps.verify.outputs.DEB_FILE }}
 
@@ -629,7 +629,7 @@ jobs:
           rm -r ./target/${{ matrix.info.target }}/generate-rpm/
 
       - name: Generate artifact attestation for file
-        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
         with:
           subject-path: ${{ steps.verify.outputs.RPM_FILE }}
 
