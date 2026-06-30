@@ -11,7 +11,7 @@ mod widgets;
 use ratatui::{
     Frame, Terminal,
     backend::Backend,
-    layout::{Constraint, Direction, Flex, Layout, Rect},
+    layout::{Constraint, Direction, Flex, Layout, Position, Rect},
     style::Style,
     symbols::Marker,
     text::Span,
@@ -456,6 +456,12 @@ impl Painter {
                 }
             }
         })?;
+
+        // We also move it back to the origin to try rand avoid wasting CPU cycles for things like kitty's
+        // `cursor_trail` calculations.
+        let backend = terminal.backend_mut();
+        backend.set_cursor_position(Position::ORIGIN)?;
+        backend.flush()?;
 
         if let Some(updated_current_widget) = app_state
             .widget_map
