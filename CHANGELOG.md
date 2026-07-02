@@ -22,7 +22,9 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ## 0.14.3 - 2026-07-01
 
-- [2119](https://github.com/ClementTsang/bottom/pull/2119): Workaround change for draw behaviour that caused Kitty with `cursor_trail` to occasionally use more CPU.
+### Other
+
+- [#2119](https://github.com/ClementTsang/bottom/pull/2119): Workaround change for draw behaviour that caused Kitty with `cursor_trail` to occasionally use more CPU.
 
 ## 0.14.2 - 2026-06-27
 
