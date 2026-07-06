@@ -1828,9 +1828,9 @@ checksum = "562d481066bde0658276a35467c4af00bdc6ee726305698a55b86e61d7ad82bb"
 
 [[package]]
 name = "unicode-ellipsis"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24ec3504d2729e4af5b282712c11b29e25bb694ab6b46a7c418f4ddcc1f95ad4"
+checksum = "c251ff0046b0e49918e1ef2b4804ae850ba113ae65ed5c6a1e2925a829e86e8c"
 dependencies = [
  "unicode-segmentation",
  "unicode-width",
