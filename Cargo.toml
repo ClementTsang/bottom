@@ -71,7 +71,6 @@ anyhow = "1.0.101"
 clap = { version = "4.6.1", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
 crossterm = "0.29.0"
-ctrlc = { version = "3.5.0", features = ["termination"] }
 dirs = "6.0.0"
 humantime = "2.3.0"
 indexmap = "2.14.0"
@@ -87,6 +86,7 @@ ratatui-core = "0.1.2"
 regex = "1.12.3"
 rustc-hash = "2.1.2"
 serde = { version = "1.0.228", features = ["derive"] }
+signal-hook = "0.4.4"
 starship-battery = { version = "0.11.0", optional = true }
 sysinfo = "=0.39.5"
 timeless = "0.0.14-alpha"
