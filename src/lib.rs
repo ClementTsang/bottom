@@ -289,6 +289,39 @@ fn create_collection_thread(
     })
 }
 
+/// Register signal hooks.
+#[inline]
+fn register_signal_hook(sender: &Sender<BottomEvent>) -> anyhow::Result<()> {
+    const SIGNALS: &[i32] = {
+        use signal_hook::consts::*;
+        cfg_select! {
+            target_os = "windows" => &[SIGTERM, SIGINT],
+            _ => &[SIGTERM, SIGQUIT, SIGINT, SIGHUP],
+        }
+    };
+
+    for signal in SIGNALS {
+        let sender = sender.clone();
+
+        // SAFETY: This is safe as:
+        // - We are _not_ calling a non-async-signal-safe function, just sending a message via a channel.
+        // - We are _not_ accessing globals or thread-locals at all.
+        // - The sender can't panic, and we swallow the error if there is one.
+        //
+        // See https://docs.rs/signal-hook/latest/signal_hook/low_level/fn.register.html#safety.
+        //
+        // We are also not worried about panic behaviour, as we are not catching any of the FORBIDDEN signals (SIGKILL,
+        // SIGSTOP, SIGILL, SIGFPE, SIGSEGV). See https://docs.rs/signal-hook/latest/signal_hook/low_level/fn.register.html#panics
+        unsafe {
+            signal_hook::low_level::register(*signal, move || {
+                let _ = sender.send(BottomEvent::Terminate);
+            })?;
+        }
+    }
+
+    Ok(())
+}
+
 /// Main code to call to start bottom.
 #[inline]
 pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
@@ -392,41 +425,12 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
         FileDescriptor::redirect_stdio(&path, StdioDescriptor::Stderr)?
     };
 
-    // Set panic hook
     panic::set_hook(Box::new(panic_hook));
-
-    // Set termination hook.
-    const SIGNALS: &[i32] = {
-        use signal_hook::consts::*;
-        cfg_select! {
-            target_os = "windows" => &[SIGTERM, SIGINT],
-            _ => &[SIGTERM, SIGQUIT, SIGINT, SIGHUP],
-        }
-    };
-
-    for signal in SIGNALS {
-        let sender = sender.clone();
-
-        // SAFETY: This is safe as:
-        // - We are _not_ calling a non-async-signal-safe function, just sending a message via a channel.
-        // - We are _not_ accessing globals or thread-locals at all.
-        // - The sender can't panic, and we swallow the error if there is one.
-        //
-        // See https://docs.rs/signal-hook/latest/signal_hook/low_level/fn.register.html#safety.
-        //
-        // We are also not worried about panic behaviour, as we are not catching any of the FORBIDDEN signals (SIGKILL,
-        // SIGSTOP, SIGILL, SIGFPE, SIGSEGV). See https://docs.rs/signal-hook/latest/signal_hook/low_level/fn.register.html#panics
-        unsafe {
-            signal_hook::low_level::register(*signal, move || {
-                let _ = sender.send(BottomEvent::Terminate);
-            })?;
-        }
-    }
+    register_signal_hook(&sender)?;
 
     let mut first_run = true;
 
-    // Draw once first to initialize the canvas, so it doesn't feel like it's
-    // frozen.
+    // Draw once first to initialize the canvas, so it doesn't feel like it's frozen.
     try_drawing(&mut terminal, &mut app, &mut painter)?;
 
     loop {
