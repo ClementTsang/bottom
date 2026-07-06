@@ -74,7 +74,7 @@ crossterm = "0.29.0"
 ctrlc = { version = "3.5.0", features = ["termination"] }
 dirs = "6.0.0"
 humantime = "2.3.0"
-indexmap = "2.13.0"
+indexmap = "2.14.0"
 indoc = "2.0.7"
 itertools = "0.15.0"
 nvml-wrapper = { version = "0.12.1", optional = true, features = ["legacy-functions"] }
