@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## Unreleased
+
+### Bug Fixes
+
+- [#2131](https://github.com/ClementTsang/bottom/pull/2131): Accept the `Memory`, `Memory%`, `Total Read`, and `Total Write` process column aliases that the config schema already advertises.
+
 ## 0.14.3 - 2026-07-01
 
 ### Other
