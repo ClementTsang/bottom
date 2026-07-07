@@ -990,13 +990,7 @@ mod tests {
                 (actual, expected) => {
                     if actual.area != expected.area {
                         panic!(
-                            indoc::indoc!(
-                                "
-                                buffer areas not equal
-                                expected:  {:?}
-                                actual:    {:?}"
-                            ),
-                            expected, actual
+                            "buffer areas not equal - expected: {expected:?} - actual: {actual:?}",
                         );
                     }
                     let diff = expected.diff(&actual);
