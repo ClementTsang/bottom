@@ -23,6 +23,7 @@ const TEMPLATE: &str = indoc! {
 
 const USAGE: &str = "btm [OPTIONS]";
 
+// Can't use an unwrap here at the moment since it's const.
 const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
     Some(nightly_version) => nightly_version,
     None => crate_version!(),

@@ -235,20 +235,19 @@ pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result
                 match create_config_at_path(path) {
                     Ok(cfg) => Ok(cfg),
                     Err(err) => {
+                        let path = path.display();
                         if config_path.is_some() {
                             Err(err.context(format!(
-                                "bottom could not create a new config file at '{}'.",
-                                path.display()
+                                "bottom could not create a new config file at '{path}'.",
                             )))
                         } else {
                             indoc::eprintdoc!(
-                                "Note: bottom couldn't create a default config file at '{}', and the \
+                                "Note: bottom couldn't create a default config file at '{path}', and the \
                                 application has fallen back to the default configuration.
 
                                 Caused by:
                                     {err}
                                 ",
-                                path.display()
                             );
 
                             Ok(Config::default())
