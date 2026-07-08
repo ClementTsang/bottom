@@ -31,8 +31,6 @@ The expected workflow for a pull request is:
 Some other things related to making changes or pull requests:
 
 - Please review your code _yourself_ and test your changes before you create the PR and ask for a review.
-  - I'm fine with AI assistance, but I expect you to still review the changes before creating the PR.
-  - I also expect to be talking with a human if I have questions or comments - if I wanted to talk to an AI agent to make a change, I can do that myself.
 - If you are adding or changing any dependency, a justification on why this is necessary must be included.
 - Please ensure that any changes made are compatible with the license of bottom.
 
@@ -46,3 +44,7 @@ For contributing to documentation, see [here](https://bottom.pages.dev/nightly/c
 
 If you want to become a package maintainer, see [here](https://bottom.pages.dev/nightly/contribution/packaging-and-distribution/)
 for details on how to build bottom, how to generate/obtain completion files and manpages, and how to add installation instructions for the package to the README.
+
+## AI Policy
+
+Note that any contribution, whether it be opening an issue, PRs, or commenting, should follow the [AI policy](./AI_POLICY.md). Contributions that do not follow this may be closed/hidden.
