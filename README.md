@@ -595,6 +595,7 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://linktr.ee/chrisjr404"><img src="https://avatars.githubusercontent.com/u/11917633?v=4?s=100" width="100px;" alt="ChrisJr404"/><br /><sub><b>ChrisJr404</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=ChrisJr404" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gepbird"><img src="https://avatars.githubusercontent.com/u/29818440?v=4?s=100" width="100px;" alt="Gergő Gutyina"/><br /><sub><b>Gergő Gutyina</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=gepbird" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/puneetdixit200"><img src="https://avatars.githubusercontent.com/u/236133619?v=4?s=100" width="100px;" alt="Puneet Dixit"/><br /><sub><b>Puneet Dixit</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=puneetdixit200" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/upuddu"><img src="https://avatars.githubusercontent.com/u/125773480?v=4?s=100" width="100px;" alt="Umberto Puddu"/><br /><sub><b>Umberto Puddu</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=upuddu" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
