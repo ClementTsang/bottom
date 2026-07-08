@@ -175,4 +175,31 @@ mod test {
             vec![ProcWidgetColumn::WritePerSecond; 3]
         );
     }
+
+    /// The generated JSON schema advertises additional column name aliases
+    /// (via `ProcColumn::get_schema_names`) that the deserializer must also
+    /// accept, otherwise valid configs are rejected at runtime.
+    #[test]
+    fn valid_process_column_config_schema_aliases() {
+        let config = r#"columns = ["Memory", "Memory%"]"#;
+        let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
+        assert_eq!(
+            to_columns(generated.columns),
+            vec![ProcWidgetColumn::Mem; 2]
+        );
+
+        let config = r#"columns = ["Total Read"]"#;
+        let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
+        assert_eq!(
+            to_columns(generated.columns),
+            vec![ProcWidgetColumn::TotalRead]
+        );
+
+        let config = r#"columns = ["Total Write"]"#;
+        let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
+        assert_eq!(
+            to_columns(generated.columns),
+            vec![ProcWidgetColumn::TotalWrite]
+        );
+    }
 }
