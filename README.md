@@ -10,6 +10,7 @@
 [<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://bottom.pages.dev/stable)
 [<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://bottom.pages.dev/nightly)
 [<img src="https://img.shields.io/badge/docs-mirror-8A2BE2?style=flat-square&labelColor=555555&logoColor=white" alt="Doc mirror on GitHub Pages">](https://clementtsang.github.io/bottom/stable)
+[<img src="https://img.shields.io/badge/Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&labelColor=555555&logoColor=white" alt="Ko-fi link">]([https://clementtsang.github.io/bottom/stable](https://ko-fi.com/clementtsang))
 
 </div>
 
