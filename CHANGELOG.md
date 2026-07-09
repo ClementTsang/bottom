@@ -25,6 +25,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Bug Fixes
 
 - [#2131](https://github.com/ClementTsang/bottom/pull/2131): Fix the config not accepting `Memory`, `Memory%`, `Total Read`, and `Total Write` process column aliases that the config schema advertised.
+- [#2132](https://github.com/ClementTsang/bottom/pull/2132): Fix 'Q' not working as a quit shortcut.
 
 ## 0.14.3 - 2026-07-01
 
