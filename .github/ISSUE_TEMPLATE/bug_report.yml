@@ -17,6 +17,10 @@ body:
             issues](https://github.com/ClementTsang/bottom/issues?q=is%3Aopen+is%3Aissue)
             for similar issues.
           required: true
+        - label: >
+            I've read through the [AI
+            policy](https://github.com/ClementTsang/bottom/blob/main/AI_POLICY.md)
+            and am following it when reporting this bug.
 
   - type: input
     id: operating_system

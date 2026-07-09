@@ -1,30 +1,38 @@
 name: Packaging
 description: For issues, questions, or requests regarding packaging or distribution.
-labels: ["packaging"]
+labels: [ "packaging" ]
 body:
   - type: markdown
     attributes:
       value: >
-        If this is an issue about supporting a new package/installation method for a platform you use, please
-        consider maintaining it yourself/with others and submitting a PR or issue with a link to it - they'll be
-        very much appreciated and likely added to the README quickly. [The documentation on packaging/distribution](https://bottom.pages.dev/nightly/contribution/packaging-and-distribution/)
-        may be helpful in setting things up. If there are some issues with bottom itself causing problems with
-        packaging, feel free to open an appropriate issue.
+        If this is an issue about supporting a new package/installation method
+        for a platform you use, please consider maintaining it yourself/with
+        others and submitting a PR or issue with a link to it - they'll be very
+        much appreciated and likely added to the README quickly. [The
+        documentation on
+        packaging/distribution](https://bottom.pages.dev/nightly/contribution/packaging-and-distribution/)
+        may be helpful in setting things up. If there are some issues with
+        bottom itself causing problems with packaging, feel free to open an
+        appropriate issue.
 
 
-        If this is an issue regarding a specific existing distribution channel, feel free to report issues here if they
-        are related to the following sources:
+        If this is an issue regarding a specific existing distribution channel,
+        feel free to report issues here if they are related to the following
+        sources:
 
           * [crates.io](https://crates.io/crates/bottom)
           * [Binary releases/packages released on GitHub](https://github.com/ClementTsang/bottom/releases)
 
 
-        For any other distribution channel, please first try to contact the package maintainers where appropriate
-        to get help regarding distribution-specific issues (e.g. the package has issues installing, the package
-        is outdated, etc.) before reaching out here. While I am happy to help where possible, I do not
-        personally use many of the various ways people distribute bottom. As such, I might lack the
-        platform-specific context, knowledge, or tools to be able to help you at all regarding the
-        distribution method, and the best I can do is just point you to the package maintainer.
+        For any other distribution channel, please first try to contact the
+        package maintainers where appropriate to get help regarding
+        distribution-specific issues (e.g. the package has issues installing,
+        the package is outdated, etc.) before reaching out here. While I am
+        happy to help where possible, I do not personally use many of the
+        various ways people distribute bottom. As such, I might lack the
+        platform-specific context, knowledge, or tools to be able to help you at
+        all regarding the distribution method, and the best I can do is just
+        point you to the package maintainer.
 
   - type: checkboxes
     id: acknowledgements
@@ -34,6 +42,10 @@ body:
         - label: >
             I have read and understood the above text.
           required: true
+        - label: >
+            I've read through the [AI
+            policy](https://github.com/ClementTsang/bottom/blob/main/AI_POLICY.md)
+            and am following it when reporting this issue.
 
   - type: textarea
     id: description
