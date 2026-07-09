@@ -254,7 +254,7 @@ jobs:
 
       - name: Sign Windows artifacts
         if: startsWith(matrix.info.os, 'windows')
-        uses: signpath/github-action-submit-signing-request@3f9250c56651ff692d6729a2fbb0603a42d7d322 # v2.0
+        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2.2
         with:
           api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
           organization-id: "06b1a1ff-74e1-4d9d-93b1-fa8180c67727"
