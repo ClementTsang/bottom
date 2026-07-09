@@ -111,7 +111,7 @@ dependencies = [
 
 [[package]]
 name = "bottom"
-version = "0.14.3"
+version = "0.14.4"
 dependencies = [
  "anyhow",
  "clap",
