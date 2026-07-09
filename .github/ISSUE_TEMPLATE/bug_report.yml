@@ -1,6 +1,7 @@
 name: Bug report
-description: Found something wrong or broken? If it hasn't already been filed/solved, report it!
-labels: ["bug"]
+description: Found something wrong or broken? If it hasn't already been
+  filed/solved, report it!
+labels: [ "bug" ]
 body:
   - type: checkboxes
     id: acknowledgements
@@ -8,10 +9,13 @@ body:
       label: Checklist
       options:
         - label: >
-            I've looked through the [troubleshooting docs](https://bottom.pages.dev/nightly/troubleshooting),
-            [the known problems list](https://bottom.pages.dev/nightly/support/official/#known-problems), and 
-            [existing open issues](https://github.com/ClementTsang/bottom/issues?q=is%3Aopen+is%3Aissue) for similar
-            issues.
+            I've looked through the [troubleshooting
+            docs](https://bottom.pages.dev/nightly/troubleshooting), [the known
+            problems
+            list](https://bottom.pages.dev/nightly/support/official/#known-problems),
+            and  [existing open
+            issues](https://github.com/ClementTsang/bottom/issues?q=is%3Aopen+is%3Aissue)
+            for similar issues.
           required: true
 
   - type: input
@@ -19,9 +23,11 @@ body:
     attributes:
       label: What operating system and version are you using?
       description: >
-        Please provide the operating system(s) and version(s) that are experiencing the problem.
-        Note that issues on operating systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
-        may not be prioritized/resolved.
+        Please provide the operating system(s) and version(s) that are
+        experiencing the problem. Note that issues on operating systems that
+        [are not officially
+        supported](https://github.com/ClementTsang/bottom#support) may not be
+        prioritized/resolved.
       placeholder: Arch Linux 6.6.2
 
   - type: dropdown
@@ -30,8 +36,9 @@ body:
       label: What architecture are you using?
       description: >
         Please select the architecture(s) that are experiencing the problem.
-        Note that systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
-        may not be prioritized/resolved.
+        Note that systems that [are not officially
+        supported](https://github.com/ClementTsang/bottom#support) may not be
+        prioritized/resolved.
       multiple: true
       options:
         - x86_64/AMD64
@@ -43,10 +50,12 @@ body:
   - type: textarea
     id: terminal
     attributes:
-      label: What terminal(s) are you running bottom on that are experiencing the problem?
+      label: What terminal(s) are you running bottom on that are experiencing the
+        problem?
       description: >
-        Please provide what terminal(s) you are running `bottom` on (e.g. Konsole, kitty, urxvt)
-        that are experiencing the issue, as well as their version and any relevant settings (e.g. terminal theme).
+        Please provide what terminal(s) you are running `bottom` on (e.g.
+        Konsole, kitty, urxvt) that are experiencing the issue, as well as their
+        version and any relevant settings (e.g. terminal theme).
       placeholder: kitty 0.25.2
 
   - type: dropdown
@@ -56,8 +65,9 @@ body:
     attributes:
       label: (Optional) What filesystem(s) are you using?
       description: >
-        If you know, please select what filesystem(s) you are using on the system that is experiencing the problem. This
-        can be especially helpful if the issue is related to either the disk or memory widgets.
+        If you know, please select what filesystem(s) you are using on the
+        system that is experiencing the problem. This can be especially helpful
+        if the issue is related to either the disk or memory widgets.
       multiple: true
       options:
         - ext4
@@ -76,12 +86,15 @@ body:
     attributes:
       label: What version of bottom are you running?
       description: >
-        Please specify which version of `bottom` you're running that is causing problems. You can find this with
-        `btm -V`. If you are using a nightly/non-release version, please also specify that.
+        Please specify which version of `bottom` you're running that is causing
+        problems. You can find this with `btm -V`. If you are using a
+        nightly/non-release version, please also specify that.
 
-        It would also be helpful if you are not running [the latest version](https://github.com/ClementTsang/bottom/releases/latest)
-        to try that as well to see if the issue has already been resolved.
-      placeholder: 0.14.3
+        If you're not running the latest version, it would also be helpful to
+        see if [the latest
+        version](https://github.com/ClementTsang/bottom/releases/latest) solves
+        the issue first.
+      placeholder: 0.14.4
 
   - type: textarea
     id: install
@@ -90,9 +103,11 @@ body:
     attributes:
       label: How did you install bottom?
       description: >
-        Please describe how you installed `bottom`. If you manually compiled it, please also mention your _Rust version_.
+        Please describe how you installed `bottom`. If you manually compiled it,
+        please also mention your _Rust version_.
 
-        **Note: if you installed `bottom` from cargo, please ensure that you installed the right crate (https://crates.io/crates/bottom).**
+        **Note: if you installed `bottom` from cargo, please ensure that you
+        installed the right crate (https://crates.io/crates/bottom).**
       placeholder: Installed bottom through the Arch official repos.
 
   # TODO: After some point also add in a `btm check` invocation
@@ -128,7 +143,8 @@ body:
     attributes:
       label: What is the actual behaviour?
       description: >
-        Describe the behaviour you actually see. If possible, provide screenshots/videos.
+        Describe the behaviour you actually see. If possible, provide
+        screenshots/videos.
       placeholder: |
         Example:
         I am unable to see information about my encrypted partition.
@@ -140,10 +156,12 @@ body:
     attributes:
       label: How can we reproduce this?
       description: >
-        Provide detailed steps on _how_ to reproduce your problem, to the best of your ability. Be as detailed as
-        possible. Include any config files or flags used. If possible, provide screenshots/videos of the issue.
+        Provide detailed steps on _how_ to reproduce your problem, to the best
+        of your ability. Be as detailed as possible. Include any config files or
+        flags used. If possible, provide screenshots/videos of the issue.
 
-        Remember - if maintainers cannot reproduce the issue, it will be very hard to fix!
+        Remember - if maintainers cannot reproduce the issue, it will be very
+        hard to fix!
       placeholder: |
         Example:
           1. Mount a LUKS encrypted partition.
