@@ -41,7 +41,7 @@ Note that key bindings are generally case-sensitive.
 
 | Binding                                                      | Action                                                       |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| ++q++ , ++ctrl+c++                                           | Quit                                                         |
+| ++q++, ++Q++, ++ctrl+c++                                     | Quit                                                         |
 | ++esc++                                                      | Close dialog windows, search, widgets, or exit expanded mode |
 | ++ctrl+r++                                                   | Reset display and any collected data                         |
 | ++f++                                                        | Freeze/unfreeze updating with new data                       |

@@ -28,7 +28,7 @@ const HELP_CONTENTS_TEXT: [&str; 12] = [
 // TODO [Help]: Move to using tables for easier formatting?
 pub(crate) const GENERAL_HELP_TEXT: [&str; 24] = [
     "1 - General",
-    "q, Ctrl-c               Quit",
+    "q, Q, Ctrl-c            Quit",
     "Esc                     Close dialog windows, search, widgets, or exit expanded mode",
     "Ctrl-r                  Reset display and any collected data",
     "f                       Freeze/unfreeze updating with new data",
