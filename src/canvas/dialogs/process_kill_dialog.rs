@@ -247,13 +247,12 @@ impl ProcessKillDialog {
                     if let Some(selected) = state.selected()
                         && selected != 0
                     {
-                        // On Linux, we need to skip 32 and 33.
-                        let signal =
-                            if cfg!(target_os = "linux") && (selected == 32 || selected == 33) {
-                                selected + 2
-                            } else {
-                                selected
-                            };
+                        // On Linux, we need to skip 32 and 33, so add an offset of 2 starting from entry 32.
+                        let signal = if cfg!(target_os = "linux") && selected >= 32 {
+                            selected + 2
+                        } else {
+                            selected
+                        };
 
                         for pid in pids {
                             if let Err(err) = process_killer::kill_process_given_pid(pid, signal) {
