@@ -892,6 +892,7 @@ impl ProcessKillDialog {
 /// Return the signal number to send given the index on a list.
 ///
 /// On Linux, we need to skip 32 and 33, so we add 2 to the index if it's >= 32.
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
 fn get_signal_from_index(index: usize) -> usize {
     if cfg!(target_os = "linux") && index >= 32 {
         index + 2
@@ -902,6 +903,7 @@ fn get_signal_from_index(index: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     use super::*;
 
     #[test]
@@ -915,7 +917,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(any(target_os = "macos", target_os = "freebsd"))]
     fn test_getting_signal_from_index_not_on_linux() {
         assert_eq!(get_signal_from_index(0), 0);
         assert_eq!(get_signal_from_index(31), 31);
