@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## Unreleased
+
+### Bug Fixes
+
+- [#2144](https://github.com/ClementTsang/bottom/pull/2144): Fix bug with Linux signals 34 or higher being off by 2.
+
 ## 0.14.4 - 2026-07-09
 
 ### Bug Fixes
