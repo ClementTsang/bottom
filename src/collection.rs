@@ -519,7 +519,10 @@ impl DataCollector {
                             if arc.0.used_bytes > arc.1 {
                                 #[cfg(target_os = "linux")]
                                 {
-                                    mem.used_bytes -= arc.0.used_bytes.saturating_sub(arc.1); // keep arc min like htop
+                                    // Keep arc min like htop; the subtraction below won't underflow because of
+                                    // the above check.
+                                    mem.used_bytes =
+                                        mem.used_bytes.saturating_sub(arc.0.used_bytes - arc.1);
                                 }
                                 #[cfg(target_os = "freebsd")]
                                 {
