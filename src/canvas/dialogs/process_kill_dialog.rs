@@ -247,13 +247,7 @@ impl ProcessKillDialog {
                     if let Some(selected) = state.selected()
                         && selected != 0
                     {
-                        // On Linux, we need to skip 32 and 33.
-                        let signal =
-                            if cfg!(target_os = "linux") && (selected == 32 || selected == 33) {
-                                selected + 2
-                            } else {
-                                selected
-                            };
+                        let signal = get_signal_from_index(selected);
 
                         for pid in pids {
                             if let Err(err) = process_killer::kill_process_given_pid(pid, signal) {
@@ -892,5 +886,43 @@ impl ProcessKillDialog {
                 self.draw_no_button_dialog(f, draw_area, styles, text, title);
             }
         }
+    }
+}
+
+/// Return the signal number to send given the index on a list.
+///
+/// On Linux, we need to skip 32 and 33, so we add 2 to the index if it's >= 32.
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+fn get_signal_from_index(index: usize) -> usize {
+    if cfg!(target_os = "linux") && index >= 32 {
+        index + 2
+    } else {
+        index
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+    use super::*;
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn test_getting_signal_from_index_on_linux() {
+        assert_eq!(get_signal_from_index(0), 0);
+        assert_eq!(get_signal_from_index(31), 31);
+        assert_eq!(get_signal_from_index(32), 34);
+        assert_eq!(get_signal_from_index(33), 35);
+        assert_eq!(get_signal_from_index(34), 36);
+    }
+
+    #[test]
+    #[cfg(any(target_os = "macos", target_os = "freebsd"))]
+    fn test_getting_signal_from_index_not_on_linux() {
+        assert_eq!(get_signal_from_index(0), 0);
+        assert_eq!(get_signal_from_index(31), 31);
+        assert_eq!(get_signal_from_index(32), 32);
+        assert_eq!(get_signal_from_index(33), 33);
+        assert_eq!(get_signal_from_index(34), 34);
     }
 }
