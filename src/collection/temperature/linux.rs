@@ -99,10 +99,10 @@ fn read_to_string_lossy<P: AsRef<Path>>(path: P) -> Option<String> {
 }
 
 #[inline]
-fn humanize_name(name: String, sensor_name: Option<&String>) -> String {
+fn humanize_name(name: &str, sensor_name: Option<&String>) -> String {
     match sensor_name {
         Some(ty) => format!("{name} ({ty})"),
-        None => name,
+        None => name.to_string(),
     }
 }
 
@@ -271,10 +271,7 @@ fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) ->
                                 cards.flatten().find_map(|card| {
                                     card.file_name().to_str().and_then(|name| {
                                         name.starts_with("card").then(|| {
-                                            humanize_name(
-                                                name.trim().to_string(),
-                                                sensor_name.as_ref(),
-                                            )
+                                            humanize_name(name.trim(), sensor_name.as_ref())
                                         })
                                     })
                                 })
@@ -289,10 +286,7 @@ fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) ->
                                 cards.flatten().find_map(|card| {
                                     card.file_name().to_str().and_then(|name| {
                                         name.starts_with("card").then(|| {
-                                            humanize_name(
-                                                name.trim().to_string(),
-                                                sensor_name.as_ref(),
-                                            )
+                                            humanize_name(name.trim(), sensor_name.as_ref())
                                         })
                                     })
                                 })
@@ -307,16 +301,15 @@ fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) ->
                         // else. If the first character is alphabetic, it's an actual name like
                         // k10temp or nvme0, not a PCI bus.
                         fs::read_link(device).ok().and_then(|link| {
-                            let link = link
-                                .file_name()
-                                .and_then(|f| f.to_str())
-                                .map(|s| s.trim().to_owned());
+                            let link = link.file_name().and_then(|f| f.to_str()).map(|s| s.trim());
 
-                            match link {
-                                Some(link) if link.as_bytes()[0].is_ascii_alphabetic() => {
-                                    Some(humanize_name(link, sensor_name.as_ref()))
-                                }
-                                _ => None,
+                            if let Some(link) = &link
+                                && let Some(first_char) = link.as_bytes().first()
+                                && first_char.is_ascii_alphabetic()
+                            {
+                                Some(humanize_name(link, sensor_name.as_ref()))
+                            } else {
+                                None
                             }
                         })
                     }
