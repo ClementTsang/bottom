@@ -68,9 +68,9 @@ impl Painter {
             (
                 0.0,
                 if app_state.basic_mode_use_percent {
-                    "0.0B/0.0B".into()
-                } else {
                     "  0%".into()
+                } else {
+                    "0.0B/0.0B".into()
                 },
             )
         };
