@@ -84,11 +84,23 @@ impl Stat {
         // TODO: Is this needed?
         let line = buffer.trim();
 
+        // Comm is represented by a string in parentheses (e.g. `(foo)`, `((bar))`).
+        // To handle that second case, we need to find the "last" closing parentheses.
         let (comm, rest) = {
             let start_paren = line
                 .find('(')
                 .ok_or_else(|| anyhow!("start paren missing"))?;
-            let end_paren = line.find(')').ok_or_else(|| anyhow!("end paren missing"))?;
+            // So, we _could_ parse the entire line from the end with rfind, but this is kinda inefficient, since we
+            // know the comm field is in the start. But, we know that he comm field is never more than 16 bytes +
+            // the start/end bracket characters, for a total of 18 bytes max. So we can bound our search! So starting
+            // from start_paren, just add 18 and rfind!
+            //
+            // Source: https://man.archlinux.org/man/proc_pid_stat.5.en
+            const TASK_COMM_LEN: usize = 16;
+            let end_paren = line[start_paren..start_paren + TASK_COMM_LEN + 2]
+                .rfind(')')
+                .ok_or_else(|| anyhow!("end paren missing"))?
+                + start_paren;
 
             (
                 line[start_paren + 1..end_paren].to_string(),
