@@ -20,12 +20,13 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## Unreleased
+## 0.14.5 - Unreleased
 
 ### Bug Fixes
 
 - [#2144](https://github.com/ClementTsang/bottom/pull/2144): Fix bug with Linux signals 34 or higher being off by 2.
 - [#2145](https://github.com/ClementTsang/bottom/pull/2145): Fix parsing issue certain comm entries to be missing.
+- [#2146](https://github.com/ClementTsang/bottom/pull/2146): Fix draw bug with the pipe gauge in basic mode if the value was 100%.
 
 ## 0.14.4 - 2026-07-09
 
