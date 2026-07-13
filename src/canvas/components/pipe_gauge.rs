@@ -196,8 +196,10 @@ impl Widget for PipeGauge<'_> {
                     gauge_area.width,
                 );
 
-                let pipe_end =
-                    start + (f64::from(end.saturating_sub(start)) * self.ratio).floor() as u16;
+                let pipe_end = (end - 1).min(
+                    start + (f64::from(end.saturating_sub(start)) * self.ratio).floor() as u16,
+                );
+
                 for col in start..pipe_end {
                     if let Some(cell) = buf.cell_mut((col, row)) {
                         cell.set_symbol("|").set_style(Style {
