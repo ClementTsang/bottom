@@ -196,7 +196,7 @@ impl Widget for PipeGauge<'_> {
                     gauge_area.width,
                 );
 
-                let pipe_end = (end - 1).min(
+                let pipe_end = end.saturating_sub(1).min(
                     start + (f64::from(end.saturating_sub(start)) * self.ratio).floor() as u16,
                 );
 
