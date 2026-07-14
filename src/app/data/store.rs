@@ -42,7 +42,7 @@ pub struct StoredData {
     pub process_data: ProcessData,
     /// TODO: (points_rework_v1) Might be a better way to do this without having
     /// to store here?
-    pub prev_io: Vec<(u64, u64)>,
+    pub prev_io: Vec<Option<(u64, u64)>>,
     pub disk_harvest: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
     #[cfg(feature = "battery")]
@@ -179,7 +179,6 @@ impl StoredData {
         self.last_update_time = harvested_time;
     }
 
-    // TODO: There's a spike on the first hit. We should probably fix this and the index issue.
     fn eat_disks(&mut self, disks: Vec<DiskHarvest>, io: IoHarvest, harvested_time: Instant) {
         let time_since_last_harvest = harvested_time
             .duration_since(self.last_update_time)
@@ -189,7 +188,7 @@ impl StoredData {
 
         let prev_io_diff = disks.len().saturating_sub(self.prev_io.len());
         self.prev_io.reserve(prev_io_diff);
-        self.prev_io.extend((0..prev_io_diff).map(|_| (0, 0)));
+        self.prev_io.extend((0..prev_io_diff).map(|_| None));
 
         // FIXME: prev_io is indexed by position (itx), not by device name, which might cause problems
         // if the order changes or something.
@@ -261,19 +260,21 @@ impl StoredData {
             if let Some(Some(io_device)) = io_device
                 && let Some(prev_io) = self.prev_io.get_mut(itx)
             {
-                io_read_rate_bytes = Some(
-                    ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
-                        / time_since_last_harvest)
-                        .round() as u64,
-                );
+                if let Some((prev_read_bytes, prev_write_bytes)) = *prev_io {
+                    io_read_rate_bytes = Some(
+                        ((io_device.read_bytes.saturating_sub(prev_read_bytes)) as f64
+                            / time_since_last_harvest)
+                            .round() as u64,
+                    );
 
-                io_write_rate_bytes = Some(
-                    ((io_device.write_bytes.saturating_sub(prev_io.1)) as f64
-                        / time_since_last_harvest)
-                        .round() as u64,
-                );
+                    io_write_rate_bytes = Some(
+                        ((io_device.write_bytes.saturating_sub(prev_write_bytes)) as f64
+                            / time_since_last_harvest)
+                            .round() as u64,
+                    );
+                }
 
-                *prev_io = (io_device.read_bytes, io_device.write_bytes);
+                *prev_io = Some((io_device.read_bytes, io_device.write_bytes));
             }
 
             let summed_total_bytes = match (device.used_space, device.free_space) {
@@ -292,6 +293,61 @@ impl StoredData {
                 io_write_rate_bytes,
             });
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::collection::disks::IoData;
+
+    const DISK_NAME: &str = "disk0";
+
+    fn disk_harvest() -> DiskHarvest {
+        DiskHarvest {
+            name: DISK_NAME.into(),
+            mount_point: "/".into(),
+            ..Default::default()
+        }
+    }
+
+    fn io_harvest(read_bytes: u64, write_bytes: u64) -> IoHarvest {
+        IoHarvest::from_iter([(
+            DISK_NAME.into(),
+            Some(IoData {
+                read_bytes,
+                write_bytes,
+            }),
+        )])
+    }
+
+    #[test]
+    fn disk_io_rate_requires_a_baseline_sample() {
+        let start = Instant::now();
+        let first_harvest = start + Duration::from_secs(1);
+        let mut data = StoredData {
+            last_update_time: start,
+            ..Default::default()
+        };
+
+        data.eat_disks(
+            vec![disk_harvest()],
+            io_harvest(1_000, 2_000),
+            first_harvest,
+        );
+
+        assert_eq!(data.disk_harvest[0].io_read_rate_bytes, None);
+        assert_eq!(data.disk_harvest[0].io_write_rate_bytes, None);
+
+        data.last_update_time = first_harvest;
+        data.eat_disks(
+            vec![disk_harvest()],
+            io_harvest(1_100, 2_300),
+            first_harvest + Duration::from_secs(1),
+        );
+
+        assert_eq!(data.disk_harvest[0].io_read_rate_bytes, Some(100));
+        assert_eq!(data.disk_harvest[0].io_write_rate_bytes, Some(300));
     }
 }
 
