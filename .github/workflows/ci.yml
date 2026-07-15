@@ -107,7 +107,7 @@ jobs:
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         with:
           command: test
-          args: --no-fail-fast --locked ${{ matrix.features }} --target=${{ matrix.info.target }} --features generate_schema -- --nocapture --quiet
+          args: --no-fail-fast --locked ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ env.CROSS_VERSION }}
         env:
