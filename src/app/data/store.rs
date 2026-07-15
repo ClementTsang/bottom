@@ -1,4 +1,6 @@
 use std::{
+    borrow::Borrow,
+    hash::{Hash, Hasher},
     time::{Duration, Instant},
     vec::Vec,
 };
@@ -20,6 +22,43 @@ use crate::{
     utils::data_units::DataUnit,
     widgets::{DiskWidgetData, TempWidgetData},
 };
+
+/// Because otherwise you can't do lookups for something like `(String, String)` as a key.
+trait PairKey {
+    fn pair(&self) -> (&str, &str);
+}
+
+impl PairKey for (String, String) {
+    fn pair(&self) -> (&str, &str) {
+        (&self.0, &self.1)
+    }
+}
+
+impl PairKey for (&str, &str) {
+    fn pair(&self) -> (&str, &str) {
+        *self
+    }
+}
+
+impl<'a> Borrow<dyn PairKey + 'a> for (String, String) {
+    fn borrow(&self) -> &(dyn PairKey + 'a) {
+        self
+    }
+}
+
+impl Hash for dyn PairKey + '_ {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.pair().hash(state)
+    }
+}
+
+impl PartialEq for dyn PairKey + '_ {
+    fn eq(&self, other: &Self) -> bool {
+        self.pair() == other.pair()
+    }
+}
+
+impl Eq for dyn PairKey + '_ {}
 
 /// A collection of data. This is where we dump data into.
 ///
@@ -44,7 +83,7 @@ pub struct StoredData {
     pub process_data: ProcessData,
     /// TODO: (points_rework_v1) Might be a better way to do this without having
     /// to store here?
-    pub prev_io: FxHashMap<String, (u64, u64)>,
+    pub prev_io: FxHashMap<(String, String), (u64, u64)>,
     pub disk_harvest: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
     #[cfg(feature = "battery")]
@@ -192,35 +231,35 @@ impl StoredData {
         let prev_io_diff = disks.len().saturating_sub(self.prev_io.len());
         self.prev_io.reserve(prev_io_diff);
 
-        for device in disks {
+        for disk in disks {
             let Some(checked_name) = ({
                 #[cfg(target_os = "windows")]
                 {
-                    match &device.volume_name {
+                    match &disk.volume_name {
                         Some(volume_name) => Some(volume_name.as_str()),
-                        None => device.name.split('/').next_back(),
+                        None => disk.name.split('/').next_back(),
                     }
                 }
                 #[cfg(not(target_os = "windows"))]
                 {
                     #[cfg(any(feature = "zfs", target_os = "freebsd"))]
                     {
-                        if !device.name.starts_with('/') {
-                            Some(device.name.as_str()) // use the whole name
+                        if !disk.name.starts_with('/') {
+                            Some(disk.name.as_str()) // use the whole name
                         } else {
                             #[cfg(target_os = "freebsd")]
                             {
-                                Some(device.mount_point.as_str()) // use mount_point for sysinfo
+                                Some(disk.mount_point.as_str()) // use mount_point for sysinfo
                             }
                             #[cfg(not(target_os = "freebsd"))]
                             {
-                                device.name.split('/').next_back() // use device name
+                                disk.name.split('/').next_back() // use device name
                             }
                         }
                     }
                     #[cfg(not(any(feature = "zfs", target_os = "freebsd")))]
                     {
-                        device.name.split('/').next_back()
+                        disk.name.split('/').next_back()
                     }
                 }
             }) else {
@@ -258,7 +297,10 @@ impl StoredData {
 
             let (mut io_read_rate_bytes, mut io_write_rate_bytes) = (None, None);
             if let Some(Some(io_device)) = io_device {
-                if let Some(prev_io) = self.prev_io.get_mut(&device.mount_point) {
+                if let Some(prev_io) = self
+                    .prev_io
+                    .get_mut(&(disk.mount_point.as_str(), checked_name) as &dyn PairKey)
+                {
                     io_read_rate_bytes = Some(
                         ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
                             / time_since_last_harvest)
@@ -279,23 +321,23 @@ impl StoredData {
 
                     // TODO: We probably want to also add some cleanup after a while if unused.
                     self.prev_io.insert(
-                        device.mount_point.clone(),
+                        (disk.mount_point.clone(), checked_name.to_string()),
                         (io_device.read_bytes, io_device.write_bytes),
                     );
                 }
             }
 
-            let summed_total_bytes = match (device.used_space, device.free_space) {
+            let summed_total_bytes = match (disk.used_space, disk.free_space) {
                 (Some(used), Some(free)) => Some(used + free),
                 _ => None,
             };
 
             self.disk_harvest.push(DiskWidgetData {
-                name: device.name,
-                mount_point: device.mount_point,
-                free_bytes: device.free_space,
-                used_bytes: device.used_space,
-                total_bytes: device.total_space,
+                name: disk.name,
+                mount_point: disk.mount_point,
+                free_bytes: disk.free_space,
+                used_bytes: disk.used_space,
+                total_bytes: disk.total_space,
                 summed_total_bytes,
                 io_read_rate_bytes,
                 io_write_rate_bytes,
