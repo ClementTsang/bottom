@@ -220,16 +220,12 @@ impl StoredData {
         self.last_update_time = harvested_time;
     }
 
-    // TODO: There's a spike on the first hit. We should probably fix this and the index issue.
     fn eat_disks(&mut self, disks: Vec<DiskHarvest>, io: IoHarvest, harvested_time: Instant) {
         let time_since_last_harvest = harvested_time
             .duration_since(self.last_update_time)
             .as_secs_f64();
 
         self.disk_harvest.clear();
-
-        let prev_io_diff = disks.len().saturating_sub(self.prev_io.len());
-        self.prev_io.reserve(prev_io_diff);
 
         for disk in disks {
             let Some(checked_name) = ({
