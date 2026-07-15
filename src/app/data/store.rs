@@ -3,6 +3,8 @@ use std::{
     vec::Vec,
 };
 
+use rustc_hash::FxHashMap;
+
 use super::{ProcessData, TimeSeriesData};
 #[cfg(feature = "battery")]
 use crate::collection::batteries;
@@ -42,7 +44,7 @@ pub struct StoredData {
     pub process_data: ProcessData,
     /// TODO: (points_rework_v1) Might be a better way to do this without having
     /// to store here?
-    pub prev_io: Vec<(u64, u64)>,
+    pub prev_io: FxHashMap<String, (u64, u64)>,
     pub disk_harvest: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
     #[cfg(feature = "battery")]
@@ -62,7 +64,7 @@ impl Default for StoredData {
             cpu_harvest: CpuHarvest::default(),
             load_avg_harvest: LoadAvgHarvest::default(),
             process_data: Default::default(),
-            prev_io: Vec::default(),
+            prev_io: FxHashMap::default(),
             disk_harvest: Vec::default(),
             temp_data: Vec::default(),
             #[cfg(feature = "battery")]
@@ -189,11 +191,8 @@ impl StoredData {
 
         let prev_io_diff = disks.len().saturating_sub(self.prev_io.len());
         self.prev_io.reserve(prev_io_diff);
-        self.prev_io.extend((0..prev_io_diff).map(|_| (0, 0)));
 
-        // FIXME: prev_io is indexed by position (itx), not by device name, which might cause problems
-        // if the order changes or something.
-        for (itx, device) in disks.into_iter().enumerate() {
+        for device in disks {
             let Some(checked_name) = ({
                 #[cfg(target_os = "windows")]
                 {
@@ -258,22 +257,28 @@ impl StoredData {
             };
 
             let (mut io_read_rate_bytes, mut io_write_rate_bytes) = (None, None);
-            if let Some(Some(io_device)) = io_device
-                && let Some(prev_io) = self.prev_io.get_mut(itx)
-            {
-                io_read_rate_bytes = Some(
-                    ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
-                        / time_since_last_harvest)
-                        .round() as u64,
-                );
+            if let Some(Some(io_device)) = io_device {
+                if let Some(prev_io) = self.prev_io.get_mut(checked_name) {
+                    io_read_rate_bytes = Some(
+                        ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
+                            / time_since_last_harvest)
+                            .round() as u64,
+                    );
 
-                io_write_rate_bytes = Some(
-                    ((io_device.write_bytes.saturating_sub(prev_io.1)) as f64
-                        / time_since_last_harvest)
-                        .round() as u64,
-                );
+                    io_write_rate_bytes = Some(
+                        ((io_device.write_bytes.saturating_sub(prev_io.1)) as f64
+                            / time_since_last_harvest)
+                            .round() as u64,
+                    );
 
-                *prev_io = (io_device.read_bytes, io_device.write_bytes);
+                    *prev_io = (io_device.read_bytes, io_device.write_bytes);
+                } else {
+                    // Skip on first run.
+                    self.prev_io.insert(
+                        checked_name.to_string(),
+                        (io_device.read_bytes, io_device.write_bytes),
+                    );
+                }
             }
 
             let summed_total_bytes = match (device.used_space, device.free_space) {
