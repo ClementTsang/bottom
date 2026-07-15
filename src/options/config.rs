@@ -65,6 +65,8 @@ impl From<u64> for StringOrNum {
     }
 }
 
+// I didn't do an invalid config test as a lot of them _are_ valid Config
+// when parsed, but fail other checks.
 #[cfg(test)]
 mod test {
 
@@ -91,7 +93,4 @@ mod test {
             }
         }
     }
-
-    // I didn't do an invalid config test as a lot of them _are_ valid Config
-    // when parsed, but fail other checks.
 }

@@ -107,7 +107,7 @@ jobs:
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14 # v0.0.7
         with:
           command: test
-          args: --no-fail-fast --locked ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
+          args: --no-fail-fast --locked ${{ matrix.features }} --target=${{ matrix.info.target }} --features generate_schema -- --nocapture --quiet
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ env.CROSS_VERSION }}
         env:
@@ -311,7 +311,7 @@ jobs:
         if: ${{ contains(matrix.info.checks, 'test') && !contains(matrix.info.target, 'bsd') }}
         with:
           command: test
-          args: --no-fail-fast --locked --target=${{ matrix.info.target }} -- --nocapture --quiet
+          args: --no-fail-fast --locked --target=${{ matrix.info.target }} --features generate_schema -- --nocapture --quiet
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
         env:
@@ -365,23 +365,6 @@ jobs:
           args: --all-targets --workspace --target=${{ matrix.info.target }} --locked ${{ env.FEATURE_FLAGS }} -- ${{ env.CLIPPY_FLAGS_EXTRA }}
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ matrix.info.cross-version || env.CROSS_VERSION }}
-
-  # # Check BSD platforms using a VM layer.
-  # check-bsd-vm:
-  #   needs: pre-job
-  #   if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       info:
-  #         # OpenBSD is not very well-supported, given that it's tier 3. We skip clippy and only run basic tests + fmt.
-  #         # We also use `--no-default-features` when building as starship-battery does not support OpenBSD.
-  #         # Cross also doesn't support OpenBSD, so we will do it with VMs here too.
-  #         - { os_release: "7.8", target: "x86_64-unknown-openbsd" } # Supports Rust 1.90
-  #   uses: ./.github/workflows/bsd_vm_check.yml
-  #   with:
-  #     os-target: ${{ matrix.info.target }}
-  #     os-version: ${{ matrix.info.os_release }}
 
   completion:
     name: "CI Pass Check"

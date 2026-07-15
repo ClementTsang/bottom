@@ -57,4 +57,22 @@ mod test {
         let config = r#"columns = ["diskk"]"#;
         toml_edit::de::from_str::<DiskConfig>(config).expect_err("Should error out!");
     }
+
+    /// Test that disk enum variants that are advertised in the schema are valid.
+    #[cfg(feature = "generate_schema")]
+    #[test]
+    fn ensure_disk_column_schema_is_accepted() {
+        use strum::VariantArray;
+
+        use crate::options::{Config, DiskWidgetColumn};
+
+        for column in DiskWidgetColumn::VARIANTS {
+            for &name in column.get_schema_names() {
+                let config = format!("[disk]\ncolumns = [\"{name}\"]\n");
+                toml_edit::de::from_str::<Config>(&config).unwrap_or_else(|e| {
+                    panic!("schema name {name:?} was rejected:\n{e}\nconfig was:\n{config}")
+                });
+            }
+        }
+    }
 }
