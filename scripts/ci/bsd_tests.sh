@@ -17,7 +17,7 @@ if [ "$BSD_TARGET" = "x86_64-unknown-freebsd" ]; then
     sh rustup.sh --default-toolchain stable -y
 
     . "$HOME/.cargo/env"
-    cargo test --no-fail-fast --locked -- --nocapture --quiet
+    cargo test --no-fail-fast --locked --features generate_schema -- --nocapture --quiet
 elif [ "$BSD_TARGET" = "x86_64-unknown-netbsd" ]; then
     /usr/sbin/pkg_add -u curl bash mozilla-rootcerts-openssl
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh

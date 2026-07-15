@@ -127,8 +127,8 @@ impl<'de> Deserialize<'de> for DiskWidgetColumn {
             "total" => Ok(DiskWidgetColumn::Total),
             "usedpercent" | "used%" => Ok(DiskWidgetColumn::UsedPercent),
             "freepercent" | "free%" => Ok(DiskWidgetColumn::FreePercent),
-            "r/s" => Ok(DiskWidgetColumn::IoRead),
-            "w/s" => Ok(DiskWidgetColumn::IoWrite),
+            "r/s" | "read" | "rps" => Ok(DiskWidgetColumn::IoRead),
+            "w/s" | "write" | "wps" => Ok(DiskWidgetColumn::IoWrite),
             _ => Err(serde::de::Error::custom(
                 "doesn't match any disk column name",
             )),

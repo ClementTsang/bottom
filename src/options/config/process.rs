@@ -176,30 +176,21 @@ mod test {
         );
     }
 
-    /// The generated JSON schema advertises additional column name aliases
-    /// (via `ProcColumn::get_schema_names`) that the deserializer must also
-    /// accept, otherwise valid configs are rejected at runtime.
+    /// Test that process enum variants that are advertised in the schema are valid.
+    #[cfg(feature = "generate_schema")]
     #[test]
-    fn valid_process_column_config_schema_aliases() {
-        let config = r#"columns = ["Memory", "Memory%"]"#;
-        let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(
-            to_columns(generated.columns),
-            vec![ProcWidgetColumn::Mem; 2]
-        );
+    fn ensure_process_column_schema_is_accepted() {
+        use strum::VariantArray;
 
-        let config = r#"columns = ["Total Read"]"#;
-        let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(
-            to_columns(generated.columns),
-            vec![ProcWidgetColumn::TotalRead]
-        );
+        use crate::options::{Config, ProcColumn};
 
-        let config = r#"columns = ["Total Write"]"#;
-        let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(
-            to_columns(generated.columns),
-            vec![ProcWidgetColumn::TotalWrite]
-        );
+        for column in ProcColumn::VARIANTS {
+            for &name in column.get_schema_names() {
+                let config = format!("[processes]\ncolumns = [\"{name}\"]\n");
+                toml_edit::de::from_str::<Config>(&config).unwrap_or_else(|e| {
+                    panic!("schema name {name:?} was rejected:\n{e}\nconfig was:\n{config}")
+                });
+            }
+        }
     }
 }
