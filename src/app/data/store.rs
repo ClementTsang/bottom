@@ -274,6 +274,8 @@ impl StoredData {
                     *prev_io = (io_device.read_bytes, io_device.write_bytes);
                 } else {
                     // Skip on first run.
+
+                    // TODO: We probably want to also add some cleanup after a while if unused.
                     self.prev_io.insert(
                         checked_name.to_string(),
                         (io_device.read_bytes, io_device.write_bytes),
