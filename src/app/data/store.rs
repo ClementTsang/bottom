@@ -258,7 +258,7 @@ impl StoredData {
 
             let (mut io_read_rate_bytes, mut io_write_rate_bytes) = (None, None);
             if let Some(Some(io_device)) = io_device {
-                if let Some(prev_io) = self.prev_io.get_mut(checked_name) {
+                if let Some(prev_io) = self.prev_io.get_mut(&device.mount_point) {
                     io_read_rate_bytes = Some(
                         ((io_device.read_bytes.saturating_sub(prev_io.0)) as f64
                             / time_since_last_harvest)
@@ -274,10 +274,12 @@ impl StoredData {
                     *prev_io = (io_device.read_bytes, io_device.write_bytes);
                 } else {
                     // Skip on first run.
+                    io_read_rate_bytes = Some(0);
+                    io_write_rate_bytes = Some(0);
 
                     // TODO: We probably want to also add some cleanup after a while if unused.
                     self.prev_io.insert(
-                        checked_name.to_string(),
+                        device.mount_point.clone(),
                         (io_device.read_bytes, io_device.write_bytes),
                     );
                 }
