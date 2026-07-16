@@ -177,7 +177,7 @@ pub struct ProcTableConfig {
     pub default_sort: Option<ProcColumn>,
 }
 
-/// A hacky workaround for now.
+/// FIXME: A hacky workaround for now, this is temporary. Switch back to `ProcColumn` later!
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum ProcWidgetColumn {
     PidOrCount,
@@ -200,8 +200,6 @@ pub enum ProcWidgetColumn {
     #[cfg(feature = "gpu")]
     GpuUtil,
 }
-
-// This is temporary. Switch back to `ProcColumn` later!
 
 pub struct ProcWidgetState {
     pub(crate) mode: ProcWidgetMode,

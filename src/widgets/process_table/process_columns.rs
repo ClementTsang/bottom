@@ -207,7 +207,8 @@ impl ProcColumn {
     pub fn parse_column_name(name: &str) -> Option<Self> {
         match name.to_lowercase().as_str() {
             "cpu%" => Some(ProcColumn::CpuPercent),
-            "mem" | "mem%" | "memory" | "memory%" => Some(ProcColumn::MemPercent),
+            "mem%" | "memory%" => Some(ProcColumn::MemPercent),
+            "mem" | "memory" => Some(ProcColumn::MemValue),
             "virt" | "virtual" | "virtmem" | "virtual memory" => Some(ProcColumn::VirtualMem),
             "pid" => Some(ProcColumn::Pid),
             "count" => Some(ProcColumn::Count),
