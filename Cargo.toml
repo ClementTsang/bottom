@@ -89,7 +89,7 @@ rustc-hash = "2.1.3"
 serde = { version = "1.0.228", features = ["derive"] }
 starship-battery = { version = "0.11.1", optional = true }
 sysinfo = "=0.39.5"
-timeless = "0.0.14-alpha"
+timeless = "0.0.15-alpha"
 toml_edit = { version = "0.25.12", features = ["serde"] }
 unicode-ellipsis = "0.6.0"
 unicode-segmentation = "1.13.3"
