@@ -408,3 +408,50 @@ fn threads(root: &mut PathBuf, pid: Pid, get_threads: bool) -> Vec<PathBuf> {
 
     Vec::new()
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io::{Seek, Write};
+
+    use super::*;
+
+    fn stat_from_name(name: &str) -> anyhow::Result<Stat> {
+        // Kinda garbage data but it should be fine.
+        let stat = format!(
+            "0 ({name}) R 0 0 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        );
+
+        let mut file = tempfile::tempfile().unwrap();
+        file.write_all(stat.as_bytes()).unwrap();
+        file.rewind().unwrap();
+
+        Stat::from_file(file, &mut String::new())
+    }
+
+    #[test]
+    fn parse_short_comm() {
+        let stat = stat_from_name("kworker/u16:2").unwrap();
+        assert_eq!(stat.comm, "kworker/u16:2");
+    }
+
+    #[test]
+    fn parse_long_comm() {
+        let stat = stat_from_name("kworker/u16:2-events_unbound").unwrap();
+        assert_eq!(stat.comm, "kworker/u16:2-events_unbound");
+    }
+
+    #[test]
+    fn parse_64_char_comm() {
+        let comm = "a".repeat(64);
+        let stat = stat_from_name(comm.as_str()).unwrap();
+
+        assert_eq!(stat.comm, comm);
+    }
+
+    #[test]
+    fn parse_double_paren_comm() {
+        let stat = stat_from_name("(sd-pam)").unwrap();
+
+        assert_eq!(stat.comm, "(sd-pam)");
+    }
+}
