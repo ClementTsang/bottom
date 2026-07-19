@@ -110,6 +110,7 @@ impl Stat {
                 .ok_or_else(|| anyhow!("end paren missing"))?
                 + start_paren;
 
+            // TODO: Maybe make this not panic.
             (
                 line[start_paren + 1..end_paren].to_string(),
                 &line[end_paren + 2..],
