@@ -144,7 +144,7 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         MemValue => SortColumn::new(MemValue).default_descending(),
         MemPercent => SortColumn::new(MemPercent).default_descending(),
         VirtualMem => SortColumn::new(VirtualMem).default_descending(),
-        Pid => SortColumn::new(Pid),
+        Pid => SortColumn::soft(Pid, None),
         Count => SortColumn::new(Count),
         Name => SortColumn::soft(Name, Some(0.3)),
         Command => SortColumn::soft(Command, Some(0.3)),

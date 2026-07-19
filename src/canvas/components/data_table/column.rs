@@ -259,3 +259,63 @@ where
         calculated_widths
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[derive(Clone, Debug)]
+    struct TestHeader(&'static str);
+
+    impl ColumnHeader for TestHeader {
+        fn text(&self) -> Cow<'static, str> {
+            Cow::Borrowed(self.0)
+        }
+    }
+
+    /// A [`ColumnWidthBounds::FollowHeader`] column always resolves to the
+    /// header's length, and has no way to grow to fit wider content. This is
+    /// what caused the process widget's PID column to truncate multi-digit
+    /// PIDs (see <https://github.com/ClementTsang/bottom/issues/2159>) - the
+    /// column was frozen at `"PID".len() == 3` no matter how wide the actual
+    /// PID values were.
+    #[test]
+    fn test_follow_header_width_ignores_content() {
+        let columns = [
+            Column::new(TestHeader("PID")),
+            Column::hard(TestHeader("OTHER"), 20),
+        ];
+
+        let widths = columns.calculate_column_widths(24, true);
+        assert_eq!(
+            widths[0].get(),
+            3,
+            "PID column should just be the header width"
+        );
+        assert_eq!(widths[1].get(), 20);
+    }
+
+    /// A [`ColumnWidthBounds::Soft`] column's desired width is recalculated
+    /// from the actual data before each draw (see `column_widths` in
+    /// `process_data.rs`), so it can grow past the header length to fit
+    /// wider content, like multi-digit PIDs.
+    #[test]
+    fn test_soft_width_grows_for_wide_content() {
+        let mut pid_column = Column::soft(TestHeader("PID"), None);
+        if let ColumnWidthBounds::Soft { desired, .. } = pid_column.bounds_mut() {
+            // Simulate a 7-digit PID (e.g. "1234567") being the widest value
+            // in the current data.
+            *desired = 7;
+        }
+
+        let columns = [pid_column, Column::hard(TestHeader("OTHER"), 20)];
+
+        let widths = columns.calculate_column_widths(28, true);
+        assert_eq!(
+            widths[0].get(),
+            7,
+            "PID column should widen to fit the widest PID in the data"
+        );
+        assert_eq!(widths[1].get(), 20);
+    }
+}
