@@ -90,14 +90,22 @@ impl Stat {
             let start_paren = line
                 .find('(')
                 .ok_or_else(|| anyhow!("start paren missing"))?;
+
             // So, we _could_ parse the entire line from the end with rfind, but this is kinda inefficient, since we
-            // know the comm field is in the start. But, we know that he comm field is never more than 16 bytes +
-            // the start/end bracket characters, for a total of 18 bytes max. So we can bound our search! So starting
-            // from start_paren, just add 18 and rfind!
+            // know the comm field is in the start. But, we know that he comm field is never more than 64 bytes +
+            // the start/end bracket characters, for a total of 66 bytes max. So we can bound our search! So starting
+            // from start_paren, just add 66 and rfind!
             //
-            // Source: https://man.archlinux.org/man/proc_pid_stat.5.en
-            const TASK_COMM_LEN: usize = 16;
-            let end_paren = line[start_paren..start_paren + TASK_COMM_LEN + 2]
+            // Note that many online sources will say the max is 16 bytes - this is true for user processes, but kernel
+            // threads and work-queue threads are allowed to be longer.
+            //
+            // Sources:
+            // - https://man.archlinux.org/man/proc_pid_stat.5.en
+            // - https://stackoverflow.com/questions/23534263/what-is-the-maximum-allowed-limit-on-the-length-of-a-process-name#comment138697304_23534499
+            // - https://elixir.bootlin.com/linux/v7.1.3/source/fs/proc/array.c#L100
+            const MAX_COMM_LEN: usize = 64;
+            let end_search = line.len().min(start_paren + MAX_COMM_LEN + 2);
+            let end_paren = line[start_paren..end_search]
                 .rfind(')')
                 .ok_or_else(|| anyhow!("end paren missing"))?
                 + start_paren;
