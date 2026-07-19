@@ -25,6 +25,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Bug Fixes
 
 - [#2162](https://github.com/ClementTsang/bottom/pull/2162): Fix incorrect column headers missing shortcut hints in the processes widget.
+- [#2163](https://github.com/ClementTsang/bottom/pull/2163): Fix incorrect bound length for comm parentheses searching.
 
 ## 0.14.5 - 2026-07-18
 
