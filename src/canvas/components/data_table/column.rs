@@ -277,9 +277,12 @@ mod test {
     }
 
     /// Ensure that the [`DataTableColumn`] implementation for [`Column`] calls the right method.
-    /// See <https://github.com/ClementTsang/bottom/issues/2159> for details.
+    /// Yes, this is a somewhat meaningless test but it may catch a regression if this happens again in the future
+    /// during a refactor.
+    ///
+    /// See <https://github.com/ClementTsang/bottom/issues/2159> for details of the issue.
     #[test]
-    fn column_header_uses_inner_header_override() {
+    fn column_header_impl_uses_right_function() {
         let column = Column::new(TestInnerColumn);
         assert_eq!(column.header(), TestInnerColumn.header());
     }
