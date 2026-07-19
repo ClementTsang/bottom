@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## 0.14.6 - Unreleased
+
+### Bug Fixes
+
+- [#2162](https://github.com/ClementTsang/bottom/pull/2162): Fix incorrect column headers missing shortcut hints in the processes widget.
+
 ## 0.14.5 - 2026-07-18
 
 ### Bug Fixes
