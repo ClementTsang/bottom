@@ -147,7 +147,6 @@ dependencies = [
  "ctrlc",
  "dirs",
  "fern",
- "filedescriptor",
  "humantime",
  "indexmap",
  "indoc",
