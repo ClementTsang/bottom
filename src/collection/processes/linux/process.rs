@@ -104,10 +104,12 @@ impl Stat {
                 .rfind(')')
                 .ok_or_else(|| anyhow!("end paren missing"))?;
 
-            // TODO: Maybe make this not panic.
             (
+                // This can't panic as we just checked hte bounds.
                 line[start_paren + 1..end_paren].to_string(),
-                &line[end_paren + 2..],
+                &line
+                    .get(end_paren + 2..)
+                    .ok_or_else(|| anyhow!("truncated stat file"))?,
             )
         };
 
