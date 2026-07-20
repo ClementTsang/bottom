@@ -458,5 +458,6 @@ mod tests {
     fn parse_invalid_stat() {
         assert!(stat_file("1 (blah").is_err(), "missing end paren");
         assert!(stat_file("1 (blah)").is_err(), "too short");
+        assert!(stat_file("1 )(").is_err(), "wrong order");
     }
 }
