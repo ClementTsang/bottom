@@ -92,7 +92,7 @@ impl Stat {
                 .ok_or_else(|| anyhow!("start paren missing"))?;
 
             // So, we _could_ try and be smart and only parse a limited slice of the string - however,
-            // there appears to be no ABI guarantees of comm length anymore, so we just take the hit and do an rfind
+            // there appears to be no ABI guarantees of comm length anymore, so we just take the hit and do an rsplit
             // over the full string.
             //
             // Sources/discussion:
@@ -102,7 +102,7 @@ impl Stat {
             // - https://github.com/ClementTsang/bottom/pull/2163#issuecomment-5017857303
             let (comm, rest) = line[start_paren + 1..]
                 .rsplit_once(") ")
-                .ok_or_else(|| anyhow!("end paren missing"))?;
+                .ok_or_else(|| anyhow!("stat string is malformed"))?;
 
             (comm.to_string(), rest)
         };
