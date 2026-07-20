@@ -91,30 +91,20 @@ impl Stat {
                 .find('(')
                 .ok_or_else(|| anyhow!("start paren missing"))?;
 
-            // So, we _could_ parse the entire line from the end with rfind, but this is kinda inefficient, since we
-            // know the comm field is in the start. But, we know that he comm field is never more than 64 bytes +
-            // the start/end bracket characters, for a total of 66 bytes max. So we can bound our search! So starting
-            // from start_paren, just add 66 and rfind!
+            // So, we _could_ try and be smart and only parse a limited slice of the string - however,
+            // there appears to be no ABI guarantees of comm length anymore, so we just take the hit and do an rsplit
+            // over the full string.
             //
-            // Note that many online sources will say the max is 16 bytes - this is true for user processes, but kernel
-            // threads and work-queue threads are allowed to be longer.
-            //
-            // Sources:
+            // Sources/discussion:
             // - https://man.archlinux.org/man/proc_pid_stat.5.en
             // - https://stackoverflow.com/questions/23534263/what-is-the-maximum-allowed-limit-on-the-length-of-a-process-name#comment138697304_23534499
             // - https://elixir.bootlin.com/linux/v7.1.3/source/fs/proc/array.c#L100
-            const MAX_COMM_LEN: usize = 64;
-            let end_search = line.len().min(start_paren + MAX_COMM_LEN + 2);
-            let end_paren = line[start_paren..end_search]
-                .rfind(')')
-                .ok_or_else(|| anyhow!("end paren missing"))?
-                + start_paren;
+            // - https://github.com/ClementTsang/bottom/pull/2163#issuecomment-5017857303
+            let (comm, rest) = line[start_paren + 1..]
+                .rsplit_once(") ")
+                .ok_or_else(|| anyhow!("stat string is malformed"))?;
 
-            // TODO: Maybe make this not panic.
-            (
-                line[start_paren + 1..end_paren].to_string(),
-                &line[end_paren + 2..],
-            )
+            (comm.to_string(), rest)
         };
 
         let mut rest = rest.split(' ');
@@ -422,6 +412,10 @@ mod tests {
             "0 ({name}) R 0 0 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
         );
 
+        stat_file(&stat)
+    }
+
+    fn stat_file(stat: &str) -> anyhow::Result<Stat> {
         let mut file = tempfile::tempfile().unwrap();
         file.write_all(stat.as_bytes()).unwrap();
         file.rewind().unwrap();
@@ -445,14 +439,25 @@ mod tests {
     fn parse_64_char_comm() {
         let comm = "a".repeat(64);
         let stat = stat_from_name(comm.as_str()).unwrap();
-
         assert_eq!(stat.comm, comm);
     }
 
     #[test]
     fn parse_double_paren_comm() {
         let stat = stat_from_name("(sd-pam)").unwrap();
-
         assert_eq!(stat.comm, "(sd-pam)");
+    }
+
+    #[test]
+    fn parse_comm_with_space() {
+        let stat = stat_from_name("a test").unwrap();
+        assert_eq!(stat.comm, "a test");
+    }
+
+    #[test]
+    fn parse_invalid_stat() {
+        assert!(stat_file("1 (blah").is_err(), "missing end paren");
+        assert!(stat_file("1 (blah)").is_err(), "too short");
+        assert!(stat_file("1 )(").is_err(), "wrong order");
     }
 }
