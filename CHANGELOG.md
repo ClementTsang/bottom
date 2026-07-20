@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## 0.14.7/0.15.0 - Unreleased
+
+### Other
+
+- [#2167](https://github.com/ClementTsang/bottom/pull/2167): Remove filedescriptor hack used to suppress false-positive stderr messages for older versions of FreeBSD.
+
 ## 0.14.6 - 2026-07-20
 
 ### Bug Fixes
