@@ -100,17 +100,11 @@ impl Stat {
             // - https://stackoverflow.com/questions/23534263/what-is-the-maximum-allowed-limit-on-the-length-of-a-process-name#comment138697304_23534499
             // - https://elixir.bootlin.com/linux/v7.1.3/source/fs/proc/array.c#L100
             // - https://github.com/ClementTsang/bottom/pull/2163#issuecomment-5017857303
-            let end_paren = line
-                .rfind(')')
+            let (comm, rest) = line[start_paren + 1..]
+                .rsplit_once(") ")
                 .ok_or_else(|| anyhow!("end paren missing"))?;
 
-            (
-                // This can't panic as we just checked hte bounds.
-                line[start_paren + 1..end_paren].to_string(),
-                &line
-                    .get(end_paren + 2..)
-                    .ok_or_else(|| anyhow!("truncated stat file"))?,
-            )
+            (comm.to_string(), rest)
         };
 
         let mut rest = rest.split(' ');
@@ -418,6 +412,10 @@ mod tests {
             "0 ({name}) R 0 0 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
         );
 
+        stat_file(&stat)
+    }
+
+    fn stat_file(stat: &str) -> anyhow::Result<Stat> {
         let mut file = tempfile::tempfile().unwrap();
         file.write_all(stat.as_bytes()).unwrap();
         file.rewind().unwrap();
@@ -454,5 +452,11 @@ mod tests {
     fn parse_comm_with_space() {
         let stat = stat_from_name("a test").unwrap();
         assert_eq!(stat.comm, "a test");
+    }
+
+    #[test]
+    fn parse_invalid_stat() {
+        assert!(stat_file("1 (blah").is_err(), "missing end paren");
+        assert!(stat_file("1 (blah)").is_err(), "too short");
     }
 }
