@@ -415,6 +415,10 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # If unset, defaults to CPU%.
 #default_sort = "CPU%"
 
+# The default sort order. Can be either "ascending" or "descending".
+# Defaults to sensible defaults for the data type (e.g. descending for CPU/memory usage, ascending for process names).
+#sort_order = "Ascending"
+
 # Gather process child thread information
 #get_threads = false
 
@@ -476,6 +480,10 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #
 # Defaults to "Disk".
 #default_sort = "Disk"
+
+# The default sort order. Can be either "ascending" or "descending".
+# Defaults to ascending.
+#sort_order = "Ascending"
 
 # Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
 #include_unmounted = false
@@ -563,6 +571,10 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #
 # Defaults to "Sensor".
 #default_sort = "Sensor"
+
+# The default sort order. Can be either "ascending" or "descending".
+# Defaults to ascending.
+#sort_order = "Ascending"
 
 # By default, there are no temperature sensor filters enabled. An example use case is provided below.
 #[temperature.sensor_filter]
