@@ -175,6 +175,7 @@ pub struct ProcTableConfig {
     pub show_memory_as_values: bool,
     pub is_command: bool,
     pub default_sort: Option<ProcColumn>,
+    pub sort_order: Option<SortOrder>,
 }
 
 /// A hacky workaround for now.
@@ -417,19 +418,25 @@ impl ProcWidgetState {
                 .map(|index| (index, columns[index].default_order))
         });
 
-        let (default_sort_index, default_sort_order) = if let Some(pair) = configured_default_sort {
-            pair
-        } else if matches!(mode, ProcWidgetMode::Tree { .. }) {
-            if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::PidOrCount) {
+        let (default_sort_index, mut default_sort_order) =
+            if let Some(pair) = configured_default_sort {
+                pair
+            } else if matches!(mode, ProcWidgetMode::Tree { .. }) {
+                if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::PidOrCount) {
+                    (index, columns[index].default_order)
+                } else {
+                    (0, columns[0].default_order)
+                }
+            } else if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::Cpu) {
                 (index, columns[index].default_order)
             } else {
                 (0, columns[0].default_order)
-            }
-        } else if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::Cpu) {
-            (index, columns[index].default_order)
-        } else {
-            (0, columns[0].default_order)
-        };
+            };
+
+        // If configured, override it with this.
+        if let Some(order) = table_config.sort_order {
+            default_sort_order = order;
+        }
 
         let sort_table = Self::new_sort_table(config, colours);
         let table = Self::new_process_table(

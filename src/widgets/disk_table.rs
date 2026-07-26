@@ -6,7 +6,7 @@ use crate::{
     app::{AppConfigFields, data::StoredData},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
-        SortDataTable, SortDataTableProps, SortOrder, SortsRow,
+        SortDataTable, SortDataTableProps, SortsRow,
     },
     options::config::style::Styles,
     utils::{
@@ -347,7 +347,7 @@ impl DiskTableWidget {
                 }
                 None => 0,
             },
-            order: SortOrder::Ascending,
+            order: config.default_disk_sort_order,
         };
 
         let styling = DataTableStyling::from_palette(palette);
