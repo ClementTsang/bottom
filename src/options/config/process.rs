@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::widgets::ProcColumn;
+use crate::{canvas::components::data_table::SortOrder, widgets::ProcColumn};
 
 /// Process configuration fields.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -14,6 +14,11 @@ pub(crate) struct ProcessesConfig {
     /// The default sort column.
     #[serde(default)]
     pub default_sort: Option<ProcColumn>,
+
+    /// The default sort order. If not set, defaults to column-specific defaults
+    /// (e.g. CPU usage is descending, process names are ascending).
+    #[serde(default)]
+    pub(crate) sort_order: Option<SortOrder>,
 
     /// Whether to get process child threads.
     pub get_threads: Option<bool>,
