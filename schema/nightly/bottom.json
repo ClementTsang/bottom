@@ -298,8 +298,7 @@
         },
         "sort_order": {
           "description": "The default sort order. Defaults to ascending.",
-          "$ref": "#/$defs/SortOrder",
-          "default": "Ascending"
+          "$ref": "#/$defs/SortOrder"
         }
       }
     },
@@ -1177,8 +1176,7 @@
             {
               "type": "null"
             }
-          ],
-          "default": null
+          ]
         },
         "tree_collapse": {
           "description": "Collapse the process tree by default when tree mode is set.",
@@ -1419,8 +1417,7 @@
         },
         "sort_order": {
           "description": "The default sort order. Defaults to ascending.",
-          "$ref": "#/$defs/SortOrder",
-          "default": "Ascending"
+          "$ref": "#/$defs/SortOrder"
         }
       }
     },
