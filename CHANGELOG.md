@@ -20,7 +20,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## 0.14.7/0.15.0 - Unreleased
+## 0.14.7 - 2026-07-27
 
 ### Features
 
@@ -29,6 +29,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Other
 
 - [#2167](https://github.com/ClementTsang/bottom/pull/2167): Remove filedescriptor hack used to suppress false-positive stderr messages for older versions of FreeBSD.
+- [#2177](https://github.com/ClementTsang/bottom/pull/2177): Fix `.deb` packaging CI job using a newer version of Ubuntu, breaking backwards compatibility.
 
 ## 0.14.6 - 2026-07-20
 
