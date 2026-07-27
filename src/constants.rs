@@ -415,7 +415,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # If unset, defaults to CPU%.
 #default_sort = "CPU%"
 
-# The default sort order. Can be either "ascending" or "descending".
+# The default sort order. Can be either "Ascending" or "Descending".
 # Defaults to sensible defaults for the data type (e.g. descending for CPU/memory usage, ascending for process names).
 #sort_order = "Ascending"
 
@@ -481,7 +481,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Defaults to "Disk".
 #default_sort = "Disk"
 
-# The default sort order. Can be either "ascending" or "descending".
+# The default sort order. Can be either "Ascending" or "Descending".
 # Defaults to ascending.
 #sort_order = "Ascending"
 
@@ -572,7 +572,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Defaults to "Sensor".
 #default_sort = "Sensor"
 
-# The default sort order. Can be either "ascending" or "descending".
+# The default sort order. Can be either "Ascending" or "Descending".
 # Defaults to ascending.
 #sort_order = "Ascending"
 

@@ -166,7 +166,7 @@
 # If unset, defaults to CPU%.
 #default_sort = "CPU%"
 
-# The default sort order. Can be either "ascending" or "descending".
+# The default sort order. Can be either "Ascending" or "Descending".
 # Defaults to sensible defaults for the data type (e.g. descending for CPU/memory usage, ascending for process names).
 #sort_order = "Ascending"
 
@@ -232,7 +232,7 @@
 # Defaults to "Disk".
 #default_sort = "Disk"
 
-# The default sort order. Can be either "ascending" or "descending".
+# The default sort order. Can be either "Ascending" or "Descending".
 # Defaults to ascending.
 #sort_order = "Ascending"
 
@@ -323,7 +323,7 @@
 # Defaults to "Sensor".
 #default_sort = "Sensor"
 
-# The default sort order. Can be either "ascending" or "descending".
+# The default sort order. Can be either "Ascending" or "Descending".
 # Defaults to ascending.
 #sort_order = "Ascending"
 
