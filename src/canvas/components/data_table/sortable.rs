@@ -13,6 +13,7 @@ use crate::{canvas::components::data_table::Column, utils::strings::truncate_to_
 
 /// Denotes the sort order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 pub enum SortOrder {
     Ascending,
     Descending,
