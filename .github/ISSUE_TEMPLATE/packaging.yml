@@ -1,6 +1,6 @@
 name: Packaging
 description: For issues, questions, or requests regarding packaging or distribution.
-labels: [ "packaging" ]
+labels: ["packaging"]
 body:
   - type: markdown
     attributes:
@@ -57,3 +57,16 @@ body:
         What is the packaging-related issue? Please be clear and concise.
       placeholder: |
         Example: Would it be possible to add shell completion generation as a separate build artifact?
+
+  - type: input
+    id: operating_system
+    validations:
+      required: false
+    attributes:
+      label: If relevant, what operating system and version are you using?
+      description: >
+        Please provide the operating system(s) and version(s) if relevant (e.g. there is a
+        packaging problem for a specific OS). Note that issues on operating systems that
+        [are not officially supported](https://github.com/ClementTsang/bottom#support) may not be
+        prioritized/resolved.
+      placeholder: Arch Linux 6.6.2

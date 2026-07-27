@@ -1,7 +1,7 @@
 name: Bug report
 description: Found something wrong or broken? If it hasn't already been
   filed/solved, report it!
-labels: [ "bug" ]
+labels: ["bug"]
 body:
   - type: checkboxes
     id: acknowledgements
@@ -24,6 +24,8 @@ body:
 
   - type: input
     id: operating_system
+    validations:
+      required: true
     attributes:
       label: What operating system and version are you using?
       description: >
@@ -36,6 +38,8 @@ body:
 
   - type: dropdown
     id: architecture
+    validations:
+      required: true
     attributes:
       label: What architecture are you using?
       description: >
@@ -53,8 +57,11 @@ body:
 
   - type: textarea
     id: terminal
+    validations:
+      required: true
     attributes:
-      label: What terminal(s) are you running bottom on that are experiencing the
+      label:
+        What terminal(s) are you running bottom on that are experiencing the
         problem?
       description: >
         Please provide what terminal(s) you are running `bottom` on (e.g.
@@ -71,7 +78,8 @@ body:
       description: >
         If you know, please select what filesystem(s) you are using on the
         system that is experiencing the problem. This can be especially helpful
-        if the issue is related to either the disk or memory widgets.
+        if the issue is related to either the disk or memory widgets. If not,
+        feel free to skip this question.
       multiple: true
       options:
         - ext4
