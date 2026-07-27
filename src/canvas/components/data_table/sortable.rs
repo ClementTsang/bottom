@@ -30,7 +30,7 @@ impl<'de> Deserialize<'de> for SortOrder {
         let value = String::deserialize(deserializer)?.to_lowercase();
         match value.as_str() {
             "ascending" => Ok(SortOrder::Ascending),
-            "descending" | "temperature" => Ok(SortOrder::Descending),
+            "descending" => Ok(SortOrder::Descending),
             _ => Err(serde::de::Error::custom(
                 "doesn't match any sort order variant",
             )),
