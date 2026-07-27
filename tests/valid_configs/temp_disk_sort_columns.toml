@@ -1,5 +1,11 @@
 [temperature]
 default_sort = "Temperature"
+sort_order = "ASCENDING"
 
 [disk]
 default_sort = "R/s"
+sort_order = "descending"
+
+[processes]
+default_sort = "rps"
+sort_order = "ascENding"
