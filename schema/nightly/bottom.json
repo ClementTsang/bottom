@@ -295,6 +295,10 @@
               "type": "null"
             }
           ]
+        },
+        "sort_order": {
+          "description": "The default sort order. Defaults to ascending.",
+          "$ref": "#/$defs/SortOrder"
         }
       }
     },
@@ -1163,6 +1167,17 @@
             "null"
           ]
         },
+        "sort_order": {
+          "description": "The default sort order. If not set, defaults to column-specific defaults\n(e.g. CPU usage is descending, process names are ascending).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SortOrder"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "tree_collapse": {
           "description": "Collapse the process tree by default when tree mode is set.",
           "type": [
@@ -1215,6 +1230,14 @@
             "child"
           ]
         }
+      ]
+    },
+    "SortOrder": {
+      "description": "Denotes the sort order.",
+      "type": "string",
+      "enum": [
+        "Ascending",
+        "Descending"
       ]
     },
     "StringOrNum": {
@@ -1391,6 +1414,10 @@
               "type": "null"
             }
           ]
+        },
+        "sort_order": {
+          "description": "The default sort order. Defaults to ascending.",
+          "$ref": "#/$defs/SortOrder"
         }
       }
     },

@@ -512,10 +512,20 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .temperature
             .as_ref()
             .and_then(|cfg| cfg.default_sort.to_owned()),
+        default_temp_sort_order: config
+            .temperature
+            .as_ref()
+            .map(|cfg| cfg.sort_order)
+            .unwrap_or_default(),
         default_disk_sort_column: config
             .disk
             .as_ref()
             .and_then(|cfg| cfg.default_sort.to_owned()),
+        default_disk_sort_order: config
+            .disk
+            .as_ref()
+            .map(|cfg| cfg.sort_order)
+            .unwrap_or_default(),
         temperature_legend_position,
         disk_io_legend_position,
         disk_show_unmounted,
@@ -538,6 +548,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         default_time_value: app_config_fields.default_time_value,
     };
 
+    let process_default_sort_order = config.processes.as_ref().and_then(|cfg| cfg.sort_order);
+
     let table_config = ProcTableConfig {
         is_case_sensitive,
         is_match_whole_word,
@@ -545,6 +557,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         show_memory_as_values: process_memory_as_value,
         is_command: is_default_command,
         default_sort: process_default_sort,
+        sort_order: process_default_sort_order,
     };
 
     for row in &widget_layout.rows {

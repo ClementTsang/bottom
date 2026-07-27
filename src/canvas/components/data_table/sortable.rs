@@ -3,6 +3,7 @@ use std::{borrow::Cow, marker::PhantomData, num::NonZeroU16};
 use concat_string::concat_string;
 use itertools::Itertools;
 use ratatui::widgets::Row;
+use serde::Deserialize;
 
 use super::{
     ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,
@@ -12,9 +13,29 @@ use crate::{canvas::components::data_table::Column, utils::strings::truncate_to_
 
 /// Denotes the sort order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "generate_schema",
+    derive(schemars::JsonSchema, strum::VariantArray)
+)]
 pub enum SortOrder {
     Ascending,
     Descending,
+}
+
+impl<'de> Deserialize<'de> for SortOrder {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?.to_lowercase();
+        match value.as_str() {
+            "ascending" => Ok(SortOrder::Ascending),
+            "descending" => Ok(SortOrder::Descending),
+            _ => Err(serde::de::Error::custom(
+                "doesn't match any sort order variant",
+            )),
+        }
+    }
 }
 
 impl SortOrder {

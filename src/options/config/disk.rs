@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use super::IgnoreList;
-use crate::options::DiskWidgetColumn;
+use crate::{canvas::components::data_table::SortOrder, options::DiskWidgetColumn};
 
 /// Disk configuration.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -26,6 +26,10 @@ pub(crate) struct DiskConfig {
     /// The default sort column.
     #[serde(default)]
     pub(crate) default_sort: Option<DiskWidgetColumn>,
+
+    /// The default sort order. Defaults to ascending.
+    #[serde(default)]
+    pub(crate) sort_order: SortOrder,
 }
 
 #[cfg(test)]

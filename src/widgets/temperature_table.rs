@@ -6,7 +6,7 @@ use crate::{
     app::{AppConfigFields, data::TypedTemperature},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
-        SortDataTable, SortDataTableProps, SortOrder, SortsRow,
+        SortDataTable, SortDataTableProps, SortsRow,
     },
     options::config::style::Styles,
     utils::general::sort_partial_fn,
@@ -143,7 +143,7 @@ impl TempWidgetState {
                 Some(TempWidgetColumn::Temperature) => 1,
                 Some(TempWidgetColumn::Sensor) | None => 0,
             },
-            order: SortOrder::Ascending,
+            order: config.default_temp_sort_order,
         };
 
         let styling = DataTableStyling::from_palette(palette);
