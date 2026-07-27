@@ -88,3 +88,20 @@ body:
         - x86
         - arm32
         - Other (please specify in the Additional Information area at the end)
+
+  - type: input
+    id: version
+    validations:
+      required: false
+    attributes:
+      label: What version of bottom are you running?
+      description: >
+        Please specify which version of `bottom` you're running if relevant (e.g. there's an installation
+        issue with a specific release). You can find this with `btm -V`. If you are using a
+        nightly/non-release version, please also specify that.
+
+        If you're not running the latest version, it would also be helpful to
+        see if [the latest
+        version](https://github.com/ClementTsang/bottom/releases/latest) solves
+        the issue first.
+      placeholder: 0.14.6
