@@ -30,9 +30,8 @@ body:
       label: What operating system and version are you using?
       description: >
         Please provide the operating system(s) and version(s) that are
-        experiencing the problem. Note that issues on operating systems that
-        [are not officially
-        supported](https://github.com/ClementTsang/bottom#support) may not be
+        experiencing the problem. Note that operating systems that
+        [are not officially supported](https://github.com/ClementTsang/bottom#support) may not be
         prioritized/resolved.
       placeholder: Arch Linux 6.6.2
 
@@ -44,7 +43,7 @@ body:
       label: What architecture are you using?
       description: >
         Please select the architecture(s) that are experiencing the problem.
-        Note that systems that [are not officially
+        Note that architectures that [are not officially
         supported](https://github.com/ClementTsang/bottom#support) may not be
         prioritized/resolved.
       multiple: true

@@ -63,10 +63,28 @@ body:
     validations:
       required: false
     attributes:
-      label: If relevant, what operating system and version are you using?
+      label: What operating system and version are you using?
       description: >
         Please provide the operating system(s) and version(s) if relevant (e.g. there is a
-        packaging problem for a specific OS). Note that issues on operating systems that
+        packaging problem for a specific OS). Note that operating systems that
         [are not officially supported](https://github.com/ClementTsang/bottom#support) may not be
         prioritized/resolved.
       placeholder: Arch Linux 6.6.2
+
+  - type: dropdown
+    id: architecture
+    validations:
+      required: false
+    attributes:
+      label: What architecture are you using?
+      description: >
+        Please select the architecture(s) if relevant (e.g. there is a packaging problem for a specific architecture).
+        Note that architectures that [are not officially supported](https://github.com/ClementTsang/bottom#support) may not be
+        prioritized/resolved.
+      multiple: true
+      options:
+        - x86_64/AMD64
+        - arm64
+        - x86
+        - arm32
+        - Other (please specify in the Additional Information area at the end)
