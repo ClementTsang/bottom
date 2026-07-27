@@ -404,7 +404,7 @@ jobs:
 
   build-deb:
     name: "Build .deb software packages"
-    runs-on: ${{ matrix.info.os || 'ubuntu-24.04' }}
+    runs-on: ${{ matrix.info.os || 'ubuntu-22.04' }}
     timeout-minutes: 12
     strategy:
       fail-fast: false
