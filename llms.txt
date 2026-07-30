@@ -1,0 +1,51 @@
+# bottom
+
+> A cross-platform graphical process/system monitor for the terminal, written in Rust. Supports Linux, macOS, Windows, FreeBSD, and Android/Termux. Displays CPU, memory, disk I/O, network, temperature, and process widgets in a customizable, keyboard-driven TUI.
+
+Source repository: https://github.com/ClementTsang/bottom
+Documentation: https://bottom.pages.dev/stable/
+
+## Usage
+
+- [General usage](https://bottom.pages.dev/stable/usage/general-usage/)
+- [Basic mode](https://bottom.pages.dev/stable/usage/basic-mode/)
+- [Autocomplete](https://bottom.pages.dev/stable/usage/autocomplete/)
+
+## Widgets
+
+- [CPU graph](https://bottom.pages.dev/stable/usage/widgets/cpu-graph/)
+- [Memory graph](https://bottom.pages.dev/stable/usage/widgets/memory-graph/)
+- [Disk](https://bottom.pages.dev/stable/usage/widgets/disk/)
+- [Disk I/O graph](https://bottom.pages.dev/stable/usage/widgets/disk-io-graph/)
+- [Network graph](https://bottom.pages.dev/stable/usage/widgets/network-graph/)
+- [Temperature graph](https://bottom.pages.dev/stable/usage/widgets/temperature-graph/)
+- [Temperature table](https://bottom.pages.dev/stable/usage/widgets/temperature-table/)
+- [Process](https://bottom.pages.dev/stable/usage/widgets/process/)
+- [Battery](https://bottom.pages.dev/stable/usage/widgets/battery/)
+
+## Configuration
+
+- [Command-line options](https://bottom.pages.dev/stable/configuration/command-line-options/)
+- [Config file](https://bottom.pages.dev/stable/configuration/config-file/)
+- [Layout](https://bottom.pages.dev/stable/configuration/config-file/layout/)
+- [Styling](https://bottom.pages.dev/stable/configuration/config-file/styling/)
+- [Processes](https://bottom.pages.dev/stable/configuration/config-file/processes/)
+- [CPU graph config](https://bottom.pages.dev/stable/configuration/config-file/cpu-graph/)
+- [Memory graph config](https://bottom.pages.dev/stable/configuration/config-file/memory-graph/)
+- [Disk table config](https://bottom.pages.dev/stable/configuration/config-file/disk-table/)
+- [Disk I/O graph config](https://bottom.pages.dev/stable/configuration/config-file/disk-io-graph/)
+- [Network graph config](https://bottom.pages.dev/stable/configuration/config-file/network-graph/)
+- [Temperature graph config](https://bottom.pages.dev/stable/configuration/config-file/temperature-graph/)
+- [Temperature table config](https://bottom.pages.dev/stable/configuration/config-file/temperature-table/)
+
+## Support
+
+- [Troubleshooting](https://bottom.pages.dev/stable/troubleshooting/)
+- [Officially supported platforms](https://bottom.pages.dev/stable/support/official/)
+- [Unofficially supported platforms](https://bottom.pages.dev/stable/support/unofficial/)
+
+## Optional
+
+- [Contribution guide](https://bottom.pages.dev/stable/contribution/documentation/)
+- [Issues and pull requests](https://bottom.pages.dev/stable/contribution/issues-and-pull-requests/)
+- [Packaging and distribution](https://bottom.pages.dev/stable/contribution/packaging-and-distribution/)
