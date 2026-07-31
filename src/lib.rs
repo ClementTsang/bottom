@@ -293,7 +293,6 @@ fn create_collection_thread(
 #[inline]
 pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
-
     let args = args::get_args();
 
     #[cfg(feature = "logging")]
