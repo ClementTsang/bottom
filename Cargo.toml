@@ -98,7 +98,6 @@ unicode-width = "0.2.2"
 # Used for logging. Mostly for dev-level debugging.
 fern = { version = "0.7.1", optional = true }
 log = { version = "0.4.29", optional = true }
-time = { version = "0.3.47", features = ["local-offset", "formatting", "macros"], optional = true }
 
 # These are just used for JSON schema generation.
 schemars = { version = "1.2.1", optional = true }

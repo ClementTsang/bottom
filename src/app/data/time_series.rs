@@ -297,7 +297,8 @@ impl TimeSeriesData {
                 partition_point - 1
             } else {
                 // If the partition point was 0, then it means all values are too new to be
-                // pruned. crate::info!("Skipping prune.");
+                // pruned.
+                // crate::info!("Skipping prune.");
                 return;
             }
         };
