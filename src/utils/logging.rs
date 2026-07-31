@@ -104,12 +104,13 @@ macro_rules! log_every_n_secs {
     ($level:expr, $n:expr, $($x:tt)*) => {
         #[cfg(feature = "logging")]
         {
-            static LAST_LOG: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-            let since_last_log = LAST_LOG.load(std::sync::atomic::Ordering::Relaxed);
+            use std::sync::atomic::{AtomicU64, Ordering};
+            static LAST_LOG: AtomicU64 = AtomicU64::new(0);
+            let since_last_log = LAST_LOG.load(Ordering::Relaxed);
             let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).expect("should be valid").as_secs();
 
             if now - since_last_log > $n {
-                LAST_LOG.store(now, std::sync::atomic::Ordering::Relaxed);
+                LAST_LOG.store(now, Ordering::Relaxed);
                 log::log!($level, $($x)*);
             }
         }
