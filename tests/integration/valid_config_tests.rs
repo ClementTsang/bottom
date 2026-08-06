@@ -137,7 +137,8 @@ fn test_new_default() {
         run_and_kill(&["-C", &(actual_temp_default_path.to_string_lossy())]);
 
         // Re-take control over the temp path to ensure it gets deleted.
-        let actual_temp_default_path = TempPath::from_path(actual_temp_default_path);
+        let actual_temp_default_path =
+            TempPath::try_from_path(actual_temp_default_path).expect("temp path exists");
         test_uncommented_default_config(&actual_temp_default_path, "test_new_default");
 
         actual_temp_default_path.close().unwrap();
