@@ -5,7 +5,7 @@ edition = "2024"
 publish = false
 
 [dependencies]
-anyhow = "1.0.101"
+anyhow = "1.0.104"
 bottom = { path = "../../", features = ["generate_schema"] }
 clap = { version = "4.5.57", features = ["derive"] }
 itertools = "0.15.0"
