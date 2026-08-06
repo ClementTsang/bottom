@@ -1,14 +1,30 @@
 name: Audit Rust dependencies
 on:
+  pull_request:
   push:
     paths:
       - "**/Cargo.toml"
       - "**/Cargo.lock"
+      - ".github/workflows/audit.yml"
 
 permissions: {}
 
 jobs:
+  pre-job:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - name: Check if this action should be skipped
+        id: skip_check
+        uses: ClementTsang/skip-duplicate-actions@41b0a75f656d455934ffa6a46b779d8d996ac47c
+        with:
+          skip_after_successful_duplicate: "true"
+          paths: '[".github/workflows/audit.yml", "**/Cargo.lock", "**/Cargo.toml"]'
+          do_not_skip: '["workflow_dispatch", "push"]'
+
   security_audit:
+    needs: pre-job
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
