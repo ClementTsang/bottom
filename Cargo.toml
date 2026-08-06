@@ -96,11 +96,11 @@ unicode-width = "0.2.2"
 
 # Used for logging. Mostly for dev-level debugging.
 fern = { version = "0.7.1", optional = true }
-log = { version = "0.4.29", optional = true }
+log = { version = "0.4.33", optional = true }
 
 # These are just used for JSON schema generation.
-schemars = { version = "1.2.1", optional = true }
-strum = { version = "0.27.2", features = ["derive"], optional = true }
+schemars = { version = "1.2.2", optional = true }
+strum = { version = "0.28.0", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.189"
@@ -125,13 +125,13 @@ windows = { version = "0.62.2", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.145" }
+serde_json = { version = "1.0.151" }
 sysctl = { version = "0.7.1" }
 
 [dev-dependencies]
-assert_cmd = "2.1.2"
-predicates = "3.1.3"
-tempfile = { version = "3.23.0", default-features = false }
+assert_cmd = "2.2.2"
+predicates = "3.1.4"
+tempfile = { version = "3.27.0", default-features = false }
 
 [target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
 portable-pty = "0.9.0"
