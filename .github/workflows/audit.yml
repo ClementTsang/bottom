@@ -21,7 +21,7 @@ jobs:
           paths: '[".github/workflows/audit.yml", "**/Cargo.lock", "**/Cargo.toml"]'
           do_not_skip: '["workflow_dispatch", "push"]'
 
-  security_audit:
+  rust_deps_audit:
     needs: pre-job
     runs-on: ubuntu-latest
     steps:
