@@ -2,10 +2,8 @@ name: Audit Rust dependencies
 on:
   pull_request:
   push:
-    paths:
-      - "**/Cargo.toml"
-      - "**/Cargo.lock"
-      - ".github/workflows/audit.yml"
+    branches:
+      - main
 
 permissions: {}
 
