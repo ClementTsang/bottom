@@ -42,6 +42,41 @@ fn init_nvml() -> Result<Nvml, NvmlError> {
     }
 }
 
+/// Whether the device should be queried at all.
+///
+/// Querying a device that has been powered down (e.g. the dGPU of a hybrid
+/// graphics laptop) will wake it up and keep it awake, so skip it entirely
+/// until it is back in D0.
+#[cfg(target_os = "linux")]
+fn is_gpu_awake(device: &nvml_wrapper::Device<'_>) -> bool {
+    use std::path::PathBuf;
+
+    use crate::collection::linux::utils::is_device_awake;
+
+    let Ok(pci_info) = device.pci_info() else {
+        return true;
+    };
+
+    // NVML reports bus IDs with a 32-bit domain (e.g. `00000000:01:00.0`), while
+    // sysfs prints it with `%04x` (e.g. `0000:01:00.0`).
+    let Some((domain, rest)) = pci_info.bus_id.trim().split_once(':') else {
+        return true;
+    };
+    let domain = domain.trim_start_matches('0');
+    let path = PathBuf::from(format!("/sys/bus/pci/devices/{domain:0>4}:{rest}"));
+
+    if path.exists() {
+        is_device_awake(&path)
+    } else {
+        true
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn is_gpu_awake(_device: &nvml_wrapper::Device<'_>) -> bool {
+    true
+}
+
 /// Returns the GPU data from NVIDIA cards.
 #[inline]
 pub fn get_nvidia_vecs(
@@ -56,6 +91,10 @@ pub fn get_nvidia_vecs(
 
             for i in 0..num_gpu {
                 if let Ok(device) = nvml.device_by_index(i) {
+                    if !is_gpu_awake(&device) {
+                        continue;
+                    }
+
                     if let Ok(name) = device.name() {
                         if widgets_to_harvest.use_mem
                             && let Ok(mem) = device.memory_info()
