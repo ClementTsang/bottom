@@ -398,6 +398,8 @@ You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 
 You can manually install bottom as a Windows program by downloading and using the `.msi` file from the [latest release](https://github.com/ClementTsang/bottom/releases/latest).
 
+After Chocolatey, Scoop, or winget, open a **new** terminal (or run `refreshenv` if you use Chocolatey) so `btm` is on `PATH`.
+
 ### Conda
 
 You can install bottom using `conda` with [this conda-smithy repository](https://github.com/conda-forge/bottom-feedstock):
