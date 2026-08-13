@@ -512,6 +512,7 @@ impl App {
                         .states
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
+                        && proc_widget_state.is_sort_open
                     {
                         proc_widget_state.use_sort_table_value();
                         self.move_widget_selection(&WidgetDirection::Right);
