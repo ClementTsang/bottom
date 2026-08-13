@@ -381,7 +381,11 @@ impl DataCollector {
         self.refresh_sysinfo_data();
 
         #[cfg(target_os = "linux")]
-        self.cgroup_memory_data.refresh();
+        {
+            let total_memory = self.sys.system.total_memory();
+            let total_swap = self.sys.system.total_swap();
+            self.cgroup_memory_data.refresh(total_memory, total_swap);
+        }
 
         #[cfg(target_os = "linux")]
         self.cgroup_cpu_data.refresh();
