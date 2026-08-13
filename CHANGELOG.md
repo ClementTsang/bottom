@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## 0.14.8/0.15.0 - Unreleased
+
+### Bug Fixes
+
+- [2191](https://github.com/ClementTsang/bottom/pull/2191): Fix close logic when pressing enter in sort menu.
+
 ## 0.14.7 - 2026-07-27
 
 ### Features

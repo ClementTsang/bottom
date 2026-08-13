@@ -1130,7 +1130,6 @@ impl ProcWidgetState {
     /// sort table if possible, then closes the sort table.
     pub(crate) fn use_sort_table_value(&mut self) {
         self.table.set_sort_index(self.sort_table.current_index());
-
         self.is_sort_open = false;
         self.force_rerender_and_update();
     }
