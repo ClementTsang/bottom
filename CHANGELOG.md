@@ -20,11 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## 0.14.8/0.15.0 - Unreleased
+## 0.14.8 - 2026-08-13
 
 ### Bug Fixes
 
 - [2191](https://github.com/ClementTsang/bottom/pull/2191): Fix close logic when pressing enter in sort menu.
+- [2195](https://github.com/ClementTsang/bottom/pull/2195): Fix cgroups v1 swap collection around sentinel max value.
 
 ## 0.14.7 - 2026-07-27
 
