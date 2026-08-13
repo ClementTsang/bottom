@@ -24,8 +24,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ### Bug Fixes
 
-- [2191](https://github.com/ClementTsang/bottom/pull/2191): Fix close logic when pressing enter in sort menu.
-- [2195](https://github.com/ClementTsang/bottom/pull/2195): Fix cgroups v1 swap collection around sentinel max value.
+- [#2191](https://github.com/ClementTsang/bottom/pull/2191): Fix close logic when pressing enter in sort menu.
+- [#2195](https://github.com/ClementTsang/bottom/pull/2195): Fix cgroups v1 swap collection around sentinel max value.
+
+### Other
+
+- [#2914](https://github.com/ClementTsang/bottom/pull/2194): Fix schema links + link generation.
 
 ## 0.14.7 - 2026-07-27
 
