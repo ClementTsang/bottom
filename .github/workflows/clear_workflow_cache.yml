@@ -1,5 +1,4 @@
-# Simple job to clear the cache used by a workflow. This automatically runs when a PR is closed/merged
-# to clean up the corresponding PR's cache.
+# Simple job to clear the cache used by a workflow.
 
 name: "clear workflow cache"
 
@@ -9,9 +8,6 @@ on:
       id:
         description: "Which id to clear. Type main/master/all to clean all, and keep-main/keep-master to clean all but the main branch."
         required: false
-  pull_request:
-    types:
-      - closed
   schedule:
     - cron: "0 11 * * 0"
 
