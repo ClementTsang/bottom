@@ -1,5 +1,5 @@
 {
-  "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/0.14.7/bottom.json",
+  "$id": "https://github.com/ClementTsang/bottom/blob/main/schema/v0.14.7/bottom.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Schema for bottom's config file (v0.14.7)",
   "description": "https://bottom.pages.dev/0.14.7/configuration/config-file/",
