@@ -514,11 +514,8 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
                         proc_widget_state.use_sort_table_value();
-                        if proc_widget_state.is_sort_open {
-                            proc_widget_state.is_sort_open = false;
-                            self.move_widget_selection(&WidgetDirection::Right);
-                            self.is_force_redraw = true;
-                        }
+                        self.move_widget_selection(&WidgetDirection::Right);
+                        self.is_force_redraw = true;
                     }
                 }
                 _ => {}
