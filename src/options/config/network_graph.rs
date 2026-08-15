@@ -27,4 +27,8 @@ pub(crate) struct NetworkGraphConfig {
     /// Displays the network widget with a binary prefix (e.g. kibibits) rather than a decimal
     /// prefix (e.g. kilobits). Defaults to decimal prefixes.
     pub(crate) use_binary_prefix: Option<bool>,
+
+    /// Zeroes out the total network usage ("All") counters so it shows the total usage
+    /// since the app is started, rather than the total usage since boot.
+    pub(crate) start_zeroed: Option<bool>,
 }

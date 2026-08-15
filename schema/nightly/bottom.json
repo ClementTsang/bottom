@@ -930,6 +930,13 @@
             "null"
           ]
         },
+        "start_zeroed": {
+          "description": "Zeroes out the total network usage (\"All\") counters when bottom starts, so they show\nusage since launch rather than since boot. Defaults to false.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "use_binary_prefix": {
           "description": "Displays the network widget with a binary prefix (e.g. kibibits) rather than a decimal\nprefix (e.g. kilobits). Defaults to decimal prefixes.",
           "type": [

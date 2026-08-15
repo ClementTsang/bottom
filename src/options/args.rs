@@ -612,6 +612,15 @@ pub struct NetworkArgs {
         alias = "show-packets"
     )]
     pub show_packets: bool,
+
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Show total network usage from app startup rather than on boot.",
+        long_help = "Zeroes out the total network usage (\"All\") counters so it shows the total usage since the app is started, rather than the total usage since boot.",
+        alias = "network-start-zeroed"
+    )]
+    pub network_start_zeroed: bool,
 }
 
 /// Battery arguments/config options.
