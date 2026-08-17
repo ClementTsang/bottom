@@ -931,7 +931,7 @@
           ]
         },
         "start_zeroed": {
-          "description": "Zeroes out the total network usage (\"All\") counters when bottom starts, so they show\nusage since launch rather than since boot. Defaults to false.",
+          "description": "Zeroes out the total network usage (\"All\") counters so it shows the total usage\nsince the app is started, rather than the total usage since boot.",
           "type": [
             "boolean",
             "null"
