@@ -26,20 +26,24 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       # We run each script twice with a small delay in between to try and catch everything.
       - name: Clear cache
         run: |
-          if [[ -n "${{ github.event.schedule }}" ]]; then
+          if [[ -n "${GITHUB_EVENT_SCHEDULE}" ]]; then
             python ./scripts/clear_cache.py keep-main
             sleep 5
             python ./scripts/clear_cache.py keep-main
-          elif [[ -z "${{ github.event.inputs.id }}" ]]; then
+          elif [[ -z "${GITHUB_EVENT_INPUTS_ID}" ]]; then
             python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
             sleep 5
             python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
           else
-            python ./scripts/clear_cache.py ${{ github.event.inputs.id }}
+            python ./scripts/clear_cache.py ${GITHUB_EVENT_INPUTS_ID}
             sleep 5
-            python ./scripts/clear_cache.py ${{ github.event.inputs.id }}
+            python ./scripts/clear_cache.py ${GITHUB_EVENT_INPUTS_ID}
           fi
+        env:
+          GITHUB_EVENT_SCHEDULE: ${{ github.event.schedule }}
+          GITHUB_EVENT_INPUTS_ID: ${{ github.event.inputs.id }}

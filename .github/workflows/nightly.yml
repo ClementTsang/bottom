@@ -38,13 +38,15 @@ jobs:
 
       - name: Check if mock
         run: |
-          if [[ -z "${{ github.event.inputs.isMock }}" ]]; then
+          if [[ -z "${GITHUB_EVENT_INPUTS_ISMOCK}" ]]; then
             echo "This is a scheduled nightly run."
-          elif [[ "${{ github.event.inputs.isMock }}" == "true" ]]; then
+          elif [[ "${GITHUB_EVENT_INPUTS_ISMOCK}" == "true" ]]; then
             echo "This is a mock run."
           else
             echo "This is NOT a mock run. Watch for the generated files!"
           fi
+        env:
+          GITHUB_EVENT_INPUTS_ISMOCK: ${{ github.event.inputs.isMock }}
 
   build-release:
     needs: initialize-job
@@ -71,6 +73,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Get release artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8

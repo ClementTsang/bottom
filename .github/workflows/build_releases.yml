@@ -173,6 +173,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       # TODO: Make this and the toolchain step a separate wrapper action?
       - name: Read Rust version
@@ -237,11 +238,13 @@ jobs:
         shell: bash
         run: |
           mkdir -p signed
-          if [[ ${{ inputs.caller }} == "nightly" ]]; then
+          if [[ ${INPUTS_CALLER} == "nightly" ]]; then
             echo "slug=test-signing" >> $GITHUB_OUTPUT
           else
             echo "slug=release-signing" >> $GITHUB_OUTPUT
           fi
+        env:
+          INPUTS_CALLER: ${{ inputs.caller }}
 
       - name: Upload unsigned Windows artifact
         id: upload-unsigned-artifact
@@ -292,7 +295,7 @@ jobs:
         shell: bash
         run: |
           mkdir release
-          mv ${{ env.ASSET }} release/
+          mv ${ASSET} release/
 
       - name: Compress completion files
         if: matrix.info.generate-other-artifacts == true
@@ -345,6 +348,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Install Net-Framework-Core
         shell: powershell
@@ -444,6 +448,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Read Rust version
         shell: bash
@@ -529,7 +534,9 @@ jobs:
         shell: bash
         run: |
           mkdir release
-          mv ${{ steps.verify.outputs.DEB_FILE }} release/
+          mv ${STEPS_VERIFY_OUTPUTS_DEB_FILE} release/
+        env:
+          STEPS_VERIFY_OUTPUTS_DEB_FILE: ${{ steps.verify.outputs.DEB_FILE }}
 
       - name: Save release as artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -554,6 +561,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Read Rust version
         shell: bash
@@ -614,14 +622,18 @@ jobs:
 
       - name: Check generated rpm file signatures
         run: |
-          rpm --checksig --verbose ${{ steps.verify.outputs.RPM_FILE }}
+          rpm --checksig --verbose ${STEPS_VERIFY_OUTPUTS_RPM_FILE}
           # Validate modern signature digest exist, see https://github.com/ClementTsang/bottom/issues/1848
-          rpm --checksig --verbose ${{ steps.verify.outputs.RPM_FILE }} | grep -q "SHA256"
+          rpm --checksig --verbose ${STEPS_VERIFY_OUTPUTS_RPM_FILE} | grep -q "SHA256"
+        env:
+          STEPS_VERIFY_OUTPUTS_RPM_FILE: ${{ steps.verify.outputs.RPM_FILE }}
 
       - name: Test installing generated rpm file
         run: |
-          yum localinstall -y ${{ steps.verify.outputs.RPM_FILE }}
+          yum localinstall -y ${STEPS_VERIFY_OUTPUTS_RPM_FILE}
           btm -V
+        env:
+          STEPS_VERIFY_OUTPUTS_RPM_FILE: ${{ steps.verify.outputs.RPM_FILE }}
 
       - name: Delete generated rpm folder
         run: |
@@ -637,7 +649,9 @@ jobs:
         shell: bash
         run: |
           mkdir release
-          mv ${{ steps.verify.outputs.RPM_FILE }} release/
+          mv ${STEPS_VERIFY_OUTPUTS_RPM_FILE} release/
+        env:
+          STEPS_VERIFY_OUTPUTS_RPM_FILE: ${{ steps.verify.outputs.RPM_FILE }}
 
       - name: Save release as artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -663,6 +677,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Read Rust version
         shell: bash
