@@ -4,7 +4,7 @@ use ratatui::{
 };
 
 use crate::{
-    app::{App, data::StoredData, layout_manager::WidgetDirection},
+    app::{App, data::InnerData, layout_manager::WidgetDirection},
     canvas::{
         Painter,
         components::{
@@ -118,7 +118,7 @@ impl Painter {
     }
 
     fn generate_points<'a>(
-        &self, cpu_widget_state: &'a CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
+        &self, cpu_widget_state: &'a CpuWidgetState, data: &'a InnerData, show_avg_cpu: bool,
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
         let current_scroll_position = cpu_widget_state.table.state.current_index;
