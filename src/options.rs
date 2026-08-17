@@ -405,6 +405,13 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     );
     let network_show_packets =
         is_flag_enabled_in!(show_packets, args.network, config.network_graph);
+    let network_start_zeroed = if args.network.network_start_zeroed {
+        true
+    } else if let Some(network_graph) = &config.network_graph {
+        network_graph.start_zeroed.unwrap_or(false)
+    } else {
+        false
+    };
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
         config.processes.as_ref().and_then(|cfg| {
@@ -498,6 +505,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         network_unit_type,
         network_use_binary_prefix,
         network_show_packets,
+        network_start_zeroed,
         retention_ms,
         dedicated_average_row: enabled_option_with_deprecated!(
             false,

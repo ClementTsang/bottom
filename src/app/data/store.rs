@@ -60,39 +60,49 @@ impl PartialEq for dyn PairKey + '_ {
 
 impl Eq for dyn PairKey + '_ {}
 
+#[derive(Debug, Clone)]
+pub struct TotalNetworkData {
+    total_rx: u64,
+    total_tx: u64,
+}
+
 /// A collection of data. This is where we dump data into.
 ///
 /// TODO: Maybe reduce visibility of internal data, make it only accessible
 /// through DataStore?
 #[derive(Debug, Clone)]
-pub struct StoredData {
+pub struct InnerData {
     // FIXME: (points_rework_v1) we could be able to remove this with some more refactoring.
-    pub last_update_time: Instant,
-    pub time_series_data: TimeSeriesData,
-    pub network_harvest: NetworkHarvest,
-    pub ram_harvest: Option<MemData>,
-    pub swap_harvest: Option<MemData>,
+    last_update_time: Instant,
+
+    pub(crate) time_series_data: TimeSeriesData,
+    pub(crate) network_harvest: NetworkHarvest,
+    pub(crate) ram_harvest: Option<MemData>,
+    pub(crate) swap_harvest: Option<MemData>,
     #[cfg(not(target_os = "windows"))]
-    pub cache_harvest: Option<MemData>,
+    pub(crate) cache_harvest: Option<MemData>,
     #[cfg(feature = "zfs")]
-    pub arc_harvest: Option<MemData>,
+    pub(crate) arc_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
-    pub gpu_harvest: Vec<(String, MemData)>,
-    pub cpu_harvest: CpuHarvest,
-    pub load_avg_harvest: LoadAvgHarvest,
-    pub process_data: ProcessData,
+    pub(crate) gpu_harvest: Vec<(String, MemData)>,
+    pub(crate) cpu_harvest: CpuHarvest,
+    pub(crate) load_avg_harvest: LoadAvgHarvest,
+    pub(crate) process_data: ProcessData,
     /// TODO: (points_rework_v1) Might be a better way to do this without having
     /// to store here?
-    pub prev_io: FxHashMap<(String, String), (u64, u64)>,
-    pub disk_harvest: Vec<DiskWidgetData>,
-    pub temp_data: Vec<TempWidgetData>,
+    prev_io: FxHashMap<(String, String), (u64, u64)>,
+    pub(crate) disk_harvest: Vec<DiskWidgetData>,
+    pub(crate) temp_data: Vec<TempWidgetData>,
     #[cfg(feature = "battery")]
-    pub battery_harvest: Vec<batteries::BatteryData>,
+    pub(crate) battery_harvest: Vec<batteries::BatteryData>,
+
+    /// Used if we are zeroing out the network data.
+    starting_total_network: Option<TotalNetworkData>,
 }
 
-impl Default for StoredData {
+impl Default for InnerData {
     fn default() -> Self {
-        StoredData {
+        InnerData {
             last_update_time: Instant::now(),
             time_series_data: TimeSeriesData::default(),
             network_harvest: NetworkHarvest::default(),
@@ -112,15 +122,12 @@ impl Default for StoredData {
             arc_harvest: None,
             #[cfg(feature = "gpu")]
             gpu_harvest: Vec::default(),
+            starting_total_network: None,
         }
     }
 }
 
-impl StoredData {
-    pub fn reset(&mut self) {
-        *self = StoredData::default();
-    }
-
+impl InnerData {
     #[allow(
         clippy::boxed_local,
         reason = "This avoids warnings on certain platforms (e.g. 32-bit)."
@@ -145,7 +152,19 @@ impl StoredData {
                 .add(&data, used_widgets, settings, filters);
         }
 
-        if let Some(network) = data.network {
+        if let Some(mut network) = data.network {
+            if settings.network_start_zeroed {
+                let TotalNetworkData {
+                    total_rx: starting_total_rx,
+                    total_tx: starting_total_tx,
+                } = self.starting_total_network.get_or_insert(TotalNetworkData {
+                    total_rx: network.total_rx,
+                    total_tx: network.total_tx,
+                });
+
+                network.total_rx = network.total_rx.saturating_sub(*starting_total_rx);
+                network.total_tx = network.total_tx.saturating_sub(*starting_total_tx);
+            }
             self.network_harvest = network;
         }
 
@@ -348,13 +367,13 @@ impl StoredData {
 pub enum FrozenState {
     #[default]
     NotFrozen,
-    Frozen(Box<StoredData>),
+    Frozen(Box<InnerData>),
 }
 
 /// What data to share to other parts of the application.
 pub struct DataStore {
     frozen_state: FrozenState,
-    main: StoredData,
+    inner: InnerData,
     used_widgets: UsedWidgets,
     filters: DataFilters,
 }
@@ -364,7 +383,7 @@ impl DataStore {
     pub fn new(used_widgets: UsedWidgets) -> Self {
         Self {
             frozen_state: FrozenState::default(),
-            main: StoredData::default(),
+            inner: InnerData::default(),
             used_widgets,
             filters: DataFilters::default(),
         }
@@ -374,7 +393,7 @@ impl DataStore {
     pub fn toggle_frozen(&mut self) {
         match &self.frozen_state {
             FrozenState::NotFrozen => {
-                self.frozen_state = FrozenState::Frozen(Box::new(self.main.clone()));
+                self.frozen_state = FrozenState::Frozen(Box::new(self.inner.clone()));
             }
             FrozenState::Frozen(_) => self.frozen_state = FrozenState::NotFrozen,
         }
@@ -388,9 +407,9 @@ impl DataStore {
     /// Return a reference to the currently available data. Note that if the
     /// data is in a frozen state, it will return the snapshot of data from
     /// when it was frozen.
-    pub fn get_data(&self) -> &StoredData {
+    pub fn get_data(&self) -> &InnerData {
         match &self.frozen_state {
-            FrozenState::NotFrozen => &self.main,
+            FrozenState::NotFrozen => &self.inner,
             FrozenState::Frozen(collected_data) => collected_data,
         }
     }
@@ -401,18 +420,18 @@ impl DataStore {
 
     /// Eat data.
     pub fn eat_data(&mut self, data: Box<Data>, settings: &AppConfigFields) {
-        self.main
+        self.inner
             .eat_data(data, settings, &self.used_widgets, &self.filters);
     }
 
     /// Clean data.
     pub fn clean_data(&mut self, max_duration: Duration) {
-        self.main.time_series_data.prune(max_duration);
+        self.inner.time_series_data.prune(max_duration);
     }
 
     /// Reset data state.
     pub fn reset(&mut self) {
         self.frozen_state = FrozenState::NotFrozen;
-        self.main = StoredData::default();
+        self.inner = InnerData::default();
     }
 }

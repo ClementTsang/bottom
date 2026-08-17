@@ -16,7 +16,7 @@ use sort_table::SortTableColumn;
 use crate::{
     app::{
         AppConfigFields, AppSearchState,
-        data::{ProcessData, StoredData},
+        data::{InnerData, ProcessData},
     },
     canvas::components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
@@ -502,7 +502,7 @@ impl ProcWidgetState {
     /// This function *only* updates the displayed process data. If there is a
     /// need to update the actual *stored* data, call it before this
     /// function.
-    pub fn set_table_data(&mut self, stored_data: &StoredData) {
+    pub fn set_table_data(&mut self, stored_data: &InnerData) {
         let data = match &self.mode {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
                 self.get_normal_data(&stored_data.process_data.process_harvest)
@@ -514,7 +514,7 @@ impl ProcWidgetState {
     }
 
     fn get_tree_data(
-        &self, collapsed: &TreeCollapsed, stored_data: &StoredData,
+        &self, collapsed: &TreeCollapsed, stored_data: &InnerData,
     ) -> Vec<ProcWidgetData> {
         const BRANCH_END: char = '└';
         const BRANCH_SPLIT: char = '├';
@@ -1778,10 +1778,8 @@ mod test {
         tree_proc_data.process_harvest.insert(1, process_harvest);
         tree_proc_data.process_harvest.insert(2, k_process_harvest);
         tree_proc_data.orphan_pids = vec![1, 2];
-        let tree_stored_data = StoredData {
-            process_data: tree_proc_data,
-            ..Default::default()
-        };
+        let mut tree_stored_data = InnerData::default();
+        tree_stored_data.process_data = tree_proc_data;
         let default_tree_results = state
             .get_tree_data(&tree_collapsed, &tree_stored_data)
             .len();

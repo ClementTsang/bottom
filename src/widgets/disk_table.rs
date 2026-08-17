@@ -3,7 +3,7 @@ use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 use serde::Deserialize;
 
 use crate::{
-    app::{AppConfigFields, data::StoredData},
+    app::{AppConfigFields, data::InnerData},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
         SortDataTable, SortDataTableProps, SortsRow,
@@ -376,7 +376,7 @@ impl DiskTableWidget {
     }
 
     /// Update the current table data.
-    pub fn set_table_data(&mut self, data: &StoredData) {
+    pub fn set_table_data(&mut self, data: &InnerData) {
         // Note that the data may contain unmounted disks (e.g. we enable it for another disk widget),
         // so we have to potentially filter it out here too.
         let mut data: Vec<DiskWidgetData> = if self.show_unmounted {
