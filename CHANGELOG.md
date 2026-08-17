@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## 0.14.9/0.15.0 - Unreleased
+
+### Features
+
+- [#2199](https://github.com/ClementTsang/bottom/pull/2199): Add option to show zeroed total network usage on startup.
+
 ## 0.14.8 - 2026-08-13
 
 ### Bug Fixes
