@@ -5,6 +5,7 @@ use_log = false
 use_bytes = false
 legend_position = "right"
 use_binary_prefix = false
+start_zeroed = true
 
 [network.interface_filter]
 is_list_ignored = true
