@@ -644,6 +644,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to display packet rate and average packet size info. Defaults to false.
 #show_packets = false
 
+# Zeroes out the total network usage ("All") counters so it shows the total usage\nsince the app is started, rather than the total usage since boot.
+#start_zeroed = false
+
 # By default, there are no network interface filters enabled. An example use case is provided below.
 #[network_graph.interface_filter]
 # Whether to ignore any matches. Defaults to true.
