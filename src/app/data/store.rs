@@ -156,12 +156,10 @@ impl InnerData {
                 let TotalNetworkData {
                     total_rx: starting_total_rx,
                     total_tx: starting_total_tx,
-                } = self
-                    .starting_total_network
-                    .get_or_insert_with(|| TotalNetworkData {
-                        total_rx: network.total_rx,
-                        total_tx: network.total_tx,
-                    });
+                } = self.starting_total_network.get_or_insert(TotalNetworkData {
+                    total_rx: network.total_rx,
+                    total_tx: network.total_tx,
+                });
 
                 network.total_rx = network.total_rx.saturating_sub(*starting_total_rx);
                 network.total_tx = network.total_tx.saturating_sub(*starting_total_tx);
