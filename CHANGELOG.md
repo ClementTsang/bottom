@@ -35,7 +35,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ### Other
 
-- [#2914](https://github.com/ClementTsang/bottom/pull/2194): Fix schema links + link generation.
+- [#2194](https://github.com/ClementTsang/bottom/pull/2194): Fix schema links + link generation.
 
 ## 0.14.7 - 2026-07-27
 
