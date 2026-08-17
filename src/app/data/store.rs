@@ -74,6 +74,7 @@ pub struct TotalNetworkData {
 pub struct InnerData {
     // FIXME: (points_rework_v1) we could be able to remove this with some more refactoring.
     last_update_time: Instant,
+
     pub(crate) time_series_data: TimeSeriesData,
     pub(crate) network_harvest: NetworkHarvest,
     pub(crate) ram_harvest: Option<MemData>,
@@ -89,7 +90,7 @@ pub struct InnerData {
     pub(crate) process_data: ProcessData,
     /// TODO: (points_rework_v1) Might be a better way to do this without having
     /// to store here?
-    pub(crate) prev_io: FxHashMap<(String, String), (u64, u64)>,
+    prev_io: FxHashMap<(String, String), (u64, u64)>,
     pub(crate) disk_harvest: Vec<DiskWidgetData>,
     pub(crate) temp_data: Vec<TempWidgetData>,
     #[cfg(feature = "battery")]
