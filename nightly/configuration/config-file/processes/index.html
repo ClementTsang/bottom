@@ -2153,12 +2153,12 @@
 <p>You can configure which columns are shown by the process widget by setting the <code>columns</code> setting:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[processes]</span>
 <span class="c1"># Pick which columns you want to use in any order.</span>
-<span class="n">columns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cpu%&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;mem%&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pid&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;read&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;write&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tread&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;twrite&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;state&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;user&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;time&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gmem%&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gpu%&quot;</span><span class="p">]</span>
+<span class="n">columns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"cpu%"</span><span class="p">,</span><span class="w"> </span><span class="s2">"mem%"</span><span class="p">,</span><span class="w"> </span><span class="s2">"pid"</span><span class="p">,</span><span class="w"> </span><span class="s2">"name"</span><span class="p">,</span><span class="w"> </span><span class="s2">"read"</span><span class="p">,</span><span class="w"> </span><span class="s2">"write"</span><span class="p">,</span><span class="w"> </span><span class="s2">"tread"</span><span class="p">,</span><span class="w"> </span><span class="s2">"twrite"</span><span class="p">,</span><span class="w"> </span><span class="s2">"state"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user"</span><span class="p">,</span><span class="w"> </span><span class="s2">"time"</span><span class="p">,</span><span class="w"> </span><span class="s2">"gmem%"</span><span class="p">,</span><span class="w"> </span><span class="s2">"gpu%"</span><span class="p">]</span>
 </code></pre></div>
 <h2 id="default-sort-column"><a class="toclink" href="#default-sort-column">Default Sort Column</a></h2>
 <p>By default, the process widget starts sorted by CPU usage in descending order. You can change the column it sorts by at startup:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[processes]</span>
-<span class="n">default_sort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mem&quot;</span>
+<span class="n">default_sort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"mem"</span>
 </code></pre></div>
 <p>Any of the column names accepted by <code>columns</code> work here (e.g. <code>"cpu%"</code>, <code>"mem"</code>, <code>"pid"</code>, <code>"name"</code>, <code>"read"</code>). If the
 column you pick is not actually shown by the widget, the built-in default is used instead.</p>
@@ -2167,7 +2167,7 @@ column you pick is not actually shown by the widget, the built-in default is use
 </code></pre></div>
 <p>You can also set the default order by changing <code>processes.sort_order</code> with <code>"Ascending"</code> or <code>"Descending"</code>. If not set, then by default, it will use a sort order that is reasonable (e.g. descending for CPU/memory usage, ascending for process names).</p>
 <div class="highlight"><pre><span></span><code><span class="k">[processes]</span>
-<span class="n">sort_order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Ascending&quot;</span>
+<span class="n">sort_order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Ascending"</span>
 </code></pre></div>
 
 

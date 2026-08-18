@@ -2086,19 +2086,19 @@
 <p>You can configure which columns are shown by the disk table widget by setting the <code>columns</code> setting:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[disk]</span>
 <span class="c1"># Pick which columns you want to use in any order.</span>
-<span class="n">columns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Disk&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Mount&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Used&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Free&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Total&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Used%&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;R/s&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;W/s&quot;</span><span class="p">]</span>
+<span class="n">columns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"Disk"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Mount"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Used"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Free"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Total"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Used%"</span><span class="p">,</span><span class="w"> </span><span class="s2">"R/s"</span><span class="p">,</span><span class="w"> </span><span class="s2">"W/s"</span><span class="p">]</span>
 </code></pre></div>
 <h2 id="default-sort-column"><a class="toclink" href="#default-sort-column">Default Sort Column</a></h2>
 <p>You can customize the default sort column (by default, it sorts by disk name in ascending order). For example, to sort by the read rate:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[disk]</span>
-<span class="n">default_sort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;R/s&quot;</span>
+<span class="n">default_sort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"R/s"</span>
 </code></pre></div>
 <p>You can use any valid <a href="#columns">column</a> name here (e.g. "Disk", "Mount", etc.). Note that if you put a column name that
 is not actually used, the default sort will just be the first column shown.</p>
 <p>You can also set the sort order by changing <code>disk.sort_order</code> with <code>"Ascending"</code> or <code>"Descending"</code>. Defaults to
 <code>"Ascending"</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[disk]</span>
-<span class="n">sort_order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Ascending&quot;</span>
+<span class="n">sort_order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Ascending"</span>
 </code></pre></div>
 <h2 id="show-unmounted-devices-linux-only"><a class="toclink" href="#show-unmounted-devices-linux-only">Show Unmounted Devices (Linux only)</a></h2>
 <p>By default, only mounted devices are shown. To also show unmounted devices on Linux, enable <code>include_unmounted</code>:</p>
@@ -2120,7 +2120,7 @@ is processed with the other options.</p>
 <span class="n">is_list_ignored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 
 <span class="c1"># A list of filters to try and match.</span>
-<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;/dev/sda&quot;</span><span class="p">]</span>
+<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"/dev/sda"</span><span class="p">]</span>
 
 <span class="c1"># Whether to use regex. Defaults to false.</span>
 <span class="n">regex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
@@ -2136,14 +2136,14 @@ is processed with the other options.</p>
 <p>We can also combine both the name filter and mount filter. For example:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[disk.name_filter]</span>
 <span class="n">is_list_ignored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
-<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;/dev/sda&quot;</span><span class="p">]</span>
+<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"/dev/sda"</span><span class="p">]</span>
 <span class="n">regex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">case_sensitive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="n">whole_word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 
 <span class="k">[disk.mount_filter]</span>
 <span class="n">is_list_ignored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;/mnt/.*&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;/&quot;</span><span class="p">]</span>
+<span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"/mnt/.*"</span><span class="p">,</span><span class="w"> </span><span class="s2">"/"</span><span class="p">]</span>
 <span class="n">regex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">case_sensitive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="n">whole_word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>

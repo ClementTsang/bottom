@@ -2227,7 +2227,7 @@ highest precedence to lowest precedence:</p>
 </code></pre></div>
 <p>To set the theme using the config file:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[styles]</span>
-<span class="n">theme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;gruvbox&quot;</span>
+<span class="n">theme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gruvbox"</span>
 </code></pre></div>
 <h2 id="custom-styling"><a class="toclink" href="#custom-styling">Custom styling</a></h2>
 <p>bottom's components can also be individually styled by the user to control the colour of the text style.</p>
@@ -2237,19 +2237,19 @@ highest precedence to lowest precedence:</p>
 <p>Note that anywhere <code>"colour"</code> is used, it can be substituted for <code>"color"</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># This is okay</span>
 <span class="k">[styles.widgets.widget_title]</span>
-<span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span>
-<span class="n">bg_colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;white&quot;</span>
+<span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"black"</span>
+<span class="n">bg_colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"white"</span>
 
 <span class="k">[styles.cpu]</span>
-<span class="n">all_entry_colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;green&quot;</span>
+<span class="n">all_entry_colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"green"</span>
 
 <span class="c1"># This is also okay</span>
 <span class="k">[styles.widgets.widget_title]</span>
-<span class="n">color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span>
-<span class="n">bg_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;white&quot;</span>
+<span class="n">color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"black"</span>
+<span class="n">bg_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"white"</span>
 
 <span class="k">[styles.cpu]</span>
-<span class="n">all_entry_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;green&quot;</span>
+<span class="n">all_entry_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"green"</span>
 </code></pre></div>
 </div>
 <p>You can configure the colours for components with strings that are either hex colours (e.g. <code>"#ffffff"</code>), RGB colours
@@ -2276,22 +2276,22 @@ highest precedence to lowest precedence:</p>
 <p>Text can generally be styled using the following TOML table:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[field]</span>
 <span class="c1"># The foreground colour of text.</span>
-<span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span>
+<span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"black"</span>
 
 <span class="c1"># The background colour of text.</span>
-<span class="n">bg_colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;blue&quot;</span>
+<span class="n">bg_colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"blue"</span>
 
 <span class="c1"># Whether to make the text bold.</span>
 <span class="n">bold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 
 <span class="c1"># Inline table version</span>
-<span class="n">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">colour</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;black&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bg_colour</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;blue&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bold</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">colour</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"black"</span><span class="p">,</span><span class="w"> </span><span class="n">bg_colour</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"blue"</span><span class="p">,</span><span class="w"> </span><span class="n">bold</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
 <p>All fields are optional; by default if <code>bg_colour</code> is not set then there will be no background colour.</p>
 <p>If you <em>just</em> want to style text by setting the foreground colour, for brevity, then you can also just set the field
 to be the colour itself. For example:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[styles.widgets]</span>
-<span class="n">selected_text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;#fff&quot;</span>
+<span class="n">selected_text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"#fff"</span>
 </code></pre></div>
 <h3 id="configuration"><a class="toclink" href="#configuration">Configuration</a></h3>
 <h4 id="cpu"><a class="toclink" href="#cpu">CPU</a></h4>
