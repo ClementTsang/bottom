@@ -129,34 +129,8 @@ jobs:
           echo "Generated $(ls ./release | wc -l) files:"
           du -h -d 0 ./release/*
 
-      - name: Create release and add release files
-        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # 2.0.8
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: false
-          tag_name: ${{ env.RELEASE_VERSION }}
-          draft: true
-          fail_on_unmatched_files: true
-          name: ${{ env.RELEASE_VERSION }} Release
-          body: |
-            <!-- Write summary here -->
-
-            ---
-
-            ## Bug Fixes
-              
-            ## Features
-              
-            ## Changes
-
-            ## Other
-
-            ## Internal Changes
-
-            ## New Contributors
-
-            ---
-
-            **Full Changelog:**
-          files: |
-            ./release/*
+      - name: Create release with files
+        run: |
+          gh release create "${RELEASE_VERSION}" ./release/* --title "${RELEASE_VERSION} Release" --notes-file ./.github/ci/release_notes.md --draft --generate-notes --fail-on-no-commits
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

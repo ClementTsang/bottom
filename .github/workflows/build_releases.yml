@@ -548,7 +548,7 @@ jobs:
   build-rpm:
     name: "Build .rpm software packages"
     runs-on: ubuntu-24.04
-    container: ghcr.io/clementtsang/almalinux-8
+    container: ghcr.io/clementtsang/almalinux-8:sha-00d3dee
     timeout-minutes: 12
     strategy:
       fail-fast: false

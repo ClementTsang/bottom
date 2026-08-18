@@ -135,18 +135,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # As a workaround to immutable releases, we create it as a draft first, then manually publish it after.
-      - name: Add all release files and create nightly release if not mock
-        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # 2.0.8
+      - name: Create nightly release with files if not mock
         if: github.event.inputs.isMock != 'true'
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: true
-          tag_name: ${{ env.TAG_NAME }}
-          draft: true
-          fail_on_unmatched_files: true
-          name: ${{ env.RELEASE_NAME }}
-          files: |
-            ./release/*
+        run: |
+          gh release create "${TAG_NAME}" ./release/* --title "${RELEASE_NAME}" --draft --prerelease
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish the draft release
         if: github.event.inputs.isMock != 'true'
