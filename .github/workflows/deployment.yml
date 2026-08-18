@@ -29,16 +29,18 @@ jobs:
       - name: Get the release version from the tag
         if: env.VERSION == ''
         run: |
-          if [[ -n "${{ github.event.inputs.tag }}" ]]; then
+          if [[ -n "${GITHUB_EVENT_INPUTS_TAG}" ]]; then
             echo "Manual run against a tag; overriding actual tag in the environment..."
-            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+            echo "VERSION=${GITHUB_EVENT_INPUTS_TAG}" >> $GITHUB_ENV
           else
             echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           fi
+        env:
+          GITHUB_EVENT_INPUTS_TAG: ${{ github.event.inputs.tag }}
 
       - name: Validate version environment variable
         run: |
-          echo "Version being built against is version ${{ env.VERSION }}"!
+          echo "Version being built against is version ${VERSION}"!
 
   build-release:
     needs: [initialize]
@@ -60,15 +62,18 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Set release version
         shell: bash
         run: |
-          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=${NEEDS_INITIALIZE_OUTPUTS_VERSION}" >> $GITHUB_ENV
+        env:
+          NEEDS_INITIALIZE_OUTPUTS_VERSION: ${{ needs.initialize.outputs.version }}
 
       - name: Validate release version
         run: |
-          echo "Release version: ${{ env.RELEASE_VERSION }}"
+          echo "Release version: ${RELEASE_VERSION}"
 
       - name: Get release artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
@@ -79,7 +84,7 @@ jobs:
 
       - name: Execute choco packaging script
         run: |
-          python "./scripts/windows/choco/choco_packager.py" "./release/bottom_x86_64-pc-windows-msvc.zip" ${{ env.RELEASE_VERSION }} "./scripts/windows/choco/bottom.nuspec.template" "./scripts/windows/choco/chocolateyinstall.ps1.template" "bottom.nuspec" "tools/chocolateyinstall.ps1" "tools/"
+          python "./scripts/windows/choco/choco_packager.py" "./release/bottom_x86_64-pc-windows-msvc.zip" ${RELEASE_VERSION} "./scripts/windows/choco/bottom.nuspec.template" "./scripts/windows/choco/chocolateyinstall.ps1.template" "bottom.nuspec" "tools/chocolateyinstall.ps1" "tools/"
           zip -r choco.zip "bottom.nuspec" "tools"
 
       - name: Move release file into release directory
@@ -104,11 +109,13 @@ jobs:
       - name: Set release version
         shell: bash
         run: |
-          echo "RELEASE_VERSION=${{ needs.initialize.outputs.version }}" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=${NEEDS_INITIALIZE_OUTPUTS_VERSION}" >> $GITHUB_ENV
+        env:
+          NEEDS_INITIALIZE_OUTPUTS_VERSION: ${{ needs.initialize.outputs.version }}
 
       - name: Validate release version
         run: |
-          echo "Release version: ${{ env.RELEASE_VERSION }}"
+          echo "Release version: ${RELEASE_VERSION}"
 
       - name: Get release artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8

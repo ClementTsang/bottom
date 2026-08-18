@@ -20,6 +20,7 @@ jobs:
           ref: gh-pages
           submodules: recursive
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Upload artifact
         id: upload
