@@ -1,4 +1,4 @@
-# Workflow to deploy nightly mkdocs documentation.
+# Workflow to deploy mkdocs documentation.
 
 name: docs
 
@@ -39,7 +39,8 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-          persist-credentials: false
+          # This is required due to mike needing to push.
+          persist-credentials: true
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
