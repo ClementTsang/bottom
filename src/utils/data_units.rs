@@ -101,3 +101,25 @@ pub fn get_unit_prefix(value: u64, base_two: bool) -> (f64, &'static str) {
         }
     }
 }
+
+pub fn format_significant_digits(value: f64, sig_digits: usize) -> String {
+    if value == 0.0 {
+        return "0".to_string();
+    }
+
+    let abs_value = value.abs();
+    let magnitude = abs_value.log10().floor() as i32;
+    let digits_after_decimal = (sig_digits as i32 - 1) - magnitude;
+
+    if digits_after_decimal < 0 {
+        // Large numbers: format without decimals
+        let divisor = 10_f64.powi(-digits_after_decimal);
+        format!("{:.0}", (value / divisor).round() * divisor)
+    } else {
+        // Format with appropriate decimal places
+        format!("{:.prec$}", value, prec = digits_after_decimal as usize)
+            .trim_end_matches('0')
+            .trim_end_matches('.')
+            .to_string()
+    }
+}
