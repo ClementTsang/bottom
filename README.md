@@ -598,6 +598,9 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/upuddu"><img src="https://avatars.githubusercontent.com/u/125773480?v=4?s=100" width="100px;" alt="Umberto Puddu"/><br /><sub><b>Umberto Puddu</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=upuddu" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Oseryx"><img src="https://avatars.githubusercontent.com/u/54248014?v=4?s=100" width="100px;" alt="Anis"/><br /><sub><b>Anis</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Oseryx" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://gitlab.com/fazzi/"><img src="https://avatars.githubusercontent.com/u/18248986?v=4?s=100" width="100px;" alt="fazzi"/><br /><sub><b>fazzi</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=fxzzi" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
