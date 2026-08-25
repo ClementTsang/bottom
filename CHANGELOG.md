@@ -22,6 +22,11 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ## 0.14.9/0.15.0 - Unreleased
 
+### Bug Fixes
+
+- [#2207](https://github.com/ClementTsang/bottom/pull/2207): Fix typo in `--help` flag.
+- [#2210](https://github.com/ClementTsang/bottom/pull/2210): Fix handling Linux cmdline values that don't have null byte separators.
+
 ### Features
 
 - [#2199](https://github.com/ClementTsang/bottom/pull/2199): Add option to show zeroed total network usage on startup.
