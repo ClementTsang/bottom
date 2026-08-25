@@ -9,7 +9,6 @@ use std::{
 };
 
 use concat_string::concat_string;
-use itertools::Itertools;
 use process::*;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use sysinfo::ProcessStatus;
@@ -304,24 +303,23 @@ fn read_proc(
 ///
 /// Also note that cmdline is (for us) separated by \0.
 fn binary_name_from_cmdline(cmdline: &str) -> String {
-    let mut start = 0;
-    let mut end = cmdline.len();
-
-    for (i, c) in cmdline.chars().enumerate() {
-        if c == '/' {
-            start = i + 1;
-        } else if c == '\0' || c == ':' {
-            end = i;
-            break;
-        }
-    }
-
-    // Bit of a hack to handle cases like "firefox -blah"
-    let partial = cmdline.chars().skip(start).take(end - start).join("");
-    partial
+    // Normally `/proc/<pid>/cmdline` separates arguments with NUL bytes. Some
+    // processes rewrite it using spaces, though, so stop at the first option in
+    // that case. In particular, do this before looking for the final slash;
+    // otherwise a path in a later argument can be mistaken for the executable.
+    let argv0 = cmdline.split_once('\0').map_or(cmdline, |(argv0, _)| argv0);
+    let executable = argv0
         .split_once(" -")
-        .map(|(name, _)| name.to_string())
-        .unwrap_or_else(|| partial.to_string())
+        .map_or(argv0, |(executable, _)| executable);
+    let executable = executable
+        .split_once(':')
+        .map_or(executable, |(executable, _)| executable);
+
+    executable
+        .rsplit('/')
+        .next()
+        .unwrap_or(executable)
+        .to_string()
 }
 
 pub(crate) struct PrevProc<'a> {
@@ -566,6 +564,13 @@ mod tests {
         assert_eq!(
             binary_name_from_cmdline("firefox -contentproc -isForBrowser -prefsHandle 0"),
             "firefox"
+        );
+        assert_eq!(
+            binary_name_from_cmdline(
+                "/nix/store/discord/opt/Discord/.Discord-wrapped --type=renderer \
+                 --openh264-library-path=/home/user/libopenh264-2.5.1-linux64.7.so"
+            ),
+            ".Discord-wrapped"
         );
         assert_eq!(binary_name_from_cmdline("こんにちは\0"), "こんにちは");
         assert_eq!(
