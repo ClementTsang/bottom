@@ -1,6 +1,6 @@
 name: Packaging
 description: For issues, questions, or requests regarding packaging or distribution.
-labels: ["packaging"]
+labels: [ "packaging" ]
 body:
   - type: markdown
     attributes:
@@ -65,9 +65,10 @@ body:
     attributes:
       label: What operating system and version are you using?
       description: >
-        Please provide the operating system(s) and version(s) if relevant (e.g. there is a
-        packaging problem for a specific OS). Note that operating systems that
-        [are not officially supported](https://github.com/ClementTsang/bottom#support) may not be
+        Please provide the operating system(s) and version(s) if relevant (e.g.
+        there is a packaging problem for a specific OS). Note that operating
+        systems that [are not officially
+        supported](https://github.com/ClementTsang/bottom#support) may not be
         prioritized/resolved.
       placeholder: Arch Linux 6.6.2
 
@@ -78,8 +79,10 @@ body:
     attributes:
       label: What architecture are you using?
       description: >
-        Please select the architecture(s) if relevant (e.g. there is a packaging problem for a specific architecture).
-        Note that architectures that [are not officially supported](https://github.com/ClementTsang/bottom#support) may not be
+        Please select the architecture(s) if relevant (e.g. there is a packaging
+        problem for a specific architecture). Note that architectures that [are
+        not officially
+        supported](https://github.com/ClementTsang/bottom#support) may not be
         prioritized/resolved.
       multiple: true
       options:
@@ -96,12 +99,13 @@ body:
     attributes:
       label: What version of bottom are you running?
       description: >
-        Please specify which version of `bottom` you're running if relevant (e.g. there's an installation
-        issue with a specific release). You can find this with `btm -V`. If you are using a
-        nightly/non-release version, please also specify that.
+        Please specify which version of `bottom` you're running if relevant
+        (e.g. there's an installation issue with a specific release). You can
+        find this with `btm -V`. If you are using a nightly/non-release version,
+        please also specify that.
 
         If you're not running the latest version, it would also be helpful to
         see if [the latest
         version](https://github.com/ClementTsang/bottom/releases/latest) solves
         the issue first.
-      placeholder: 0.14.8
+      placeholder: 0.14.9
