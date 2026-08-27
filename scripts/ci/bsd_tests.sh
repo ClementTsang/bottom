@@ -6,7 +6,7 @@ set -eu
 
 BSD_TARGET="${1:-}"
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" > /dev/null && pwd)
-RUST_VERSION=$(cat "$SCRIPT_DIR/.github/ci/rust_version.txt")
+RUST_VERSION=$(cat "$SCRIPT_DIR/../../.github/ci/rust_version.txt")
 
 if [ -z "$BSD_TARGET" ]; then
     echo "Error: BSD target must be specified."
