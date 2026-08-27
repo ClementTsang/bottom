@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # 2.9.1
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # 2.9.2
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
