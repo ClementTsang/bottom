@@ -20,7 +20,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## 0.14.9/0.15.0 - Unreleased
+## 0.14.9 - 2026-08-27
 
 ### Bug Fixes
 

@@ -105,7 +105,7 @@ body:
         see if [the latest
         version](https://github.com/ClementTsang/bottom/releases/latest) solves
         the issue first.
-      placeholder: 0.14.8
+      placeholder: 0.14.9
 
   - type: textarea
     id: install
