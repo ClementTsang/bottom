@@ -2,7 +2,7 @@ use std::{borrow::Cow, cmp::Reverse};
 
 use serde::Deserialize;
 
-use super::{ProcWidgetColumn, ProcWidgetData};
+use super::ProcWidgetData;
 use crate::{
     canvas::components::data_table::{ColumnHeader, SortsRow},
     utils::general::sort_partial_fn,
@@ -110,11 +110,18 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::MemValue => "Mem(m)".into(),
             ProcColumn::MemPercent => "Mem%(m)".into(),
             ProcColumn::Pid => "PID(p)".into(),
+            ProcColumn::Count => "Count(p)".into(),
             ProcColumn::Name => "Name(n)".into(),
             ProcColumn::Command => "Command(n)".into(),
             #[cfg(unix)]
             ProcColumn::Nice => "Nice".into(),
             ProcColumn::Priority => "Priority".into(),
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuMemValue => "GMem(M)".into(),
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuMemPercent => "GMem%(M)".into(),
+            #[cfg(feature = "gpu")]
+            ProcColumn::GpuUtilPercent => "GPU%(G)".into(),
             _ => self.text(),
         }
     }
@@ -207,7 +214,8 @@ impl ProcColumn {
     pub fn parse_column_name(name: &str) -> Option<Self> {
         match name.to_lowercase().as_str() {
             "cpu%" => Some(ProcColumn::CpuPercent),
-            "mem" | "mem%" | "memory" | "memory%" => Some(ProcColumn::MemPercent),
+            "mem%" | "memory%" => Some(ProcColumn::MemPercent),
+            "mem" | "memory" => Some(ProcColumn::MemValue),
             "virt" | "virtual" | "virtmem" | "virtual memory" => Some(ProcColumn::VirtualMem),
             "pid" => Some(ProcColumn::Pid),
             "count" => Some(ProcColumn::Count),
@@ -240,31 +248,5 @@ impl<'de> Deserialize<'de> for ProcColumn {
         let value = String::deserialize(deserializer)?;
         ProcColumn::parse_column_name(&value)
             .ok_or_else(|| serde::de::Error::custom("doesn't match any process column name"))
-    }
-}
-
-impl From<&ProcColumn> for ProcWidgetColumn {
-    fn from(value: &ProcColumn) -> Self {
-        match value {
-            ProcColumn::Pid | ProcColumn::Count => ProcWidgetColumn::PidOrCount,
-            ProcColumn::Name | ProcColumn::Command => ProcWidgetColumn::ProcNameOrCommand,
-            ProcColumn::CpuPercent => ProcWidgetColumn::Cpu,
-            ProcColumn::MemPercent | ProcColumn::MemValue => ProcWidgetColumn::Mem,
-            ProcColumn::VirtualMem => ProcWidgetColumn::VirtualMem,
-            ProcColumn::ReadPerSecond => ProcWidgetColumn::ReadPerSecond,
-            ProcColumn::WritePerSecond => ProcWidgetColumn::WritePerSecond,
-            ProcColumn::TotalRead => ProcWidgetColumn::TotalRead,
-            ProcColumn::TotalWrite => ProcWidgetColumn::TotalWrite,
-            ProcColumn::State => ProcWidgetColumn::State,
-            ProcColumn::User => ProcWidgetColumn::User,
-            ProcColumn::Time => ProcWidgetColumn::Time,
-            ProcColumn::Priority => ProcWidgetColumn::Priority,
-            #[cfg(unix)]
-            ProcColumn::Nice => ProcWidgetColumn::Nice,
-            #[cfg(feature = "gpu")]
-            ProcColumn::GpuMemPercent | ProcColumn::GpuMemValue => ProcWidgetColumn::GpuMem,
-            #[cfg(feature = "gpu")]
-            ProcColumn::GpuUtilPercent => ProcWidgetColumn::GpuUtil,
-        }
     }
 }

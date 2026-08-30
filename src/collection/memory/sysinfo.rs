@@ -51,9 +51,7 @@ pub(crate) fn get_ram_usage(collector: &DataCollector) -> Option<MemData> {
 
             get_usage(used, total)
         }
-        _ => {
-            get_usage(sys.used_memory(), sys.total_memory())
-        }
+        _ => get_usage(sys.used_memory(), sys.total_memory()),
     }
 }
 
@@ -81,9 +79,7 @@ pub(crate) fn get_swap_usage(collector: &DataCollector) -> Option<MemData> {
 
             get_usage(used, total)
         }
-        _ => {
-            get_usage(sys.used_swap(), sys.total_swap())
-        }
+        _ => get_usage(sys.used_swap(), sys.total_swap()),
     }
 }
 

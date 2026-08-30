@@ -413,18 +413,24 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         false
     };
 
-    let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
+    let proc_columns: Option<IndexSet<ProcColumn>> = {
         config.processes.as_ref().and_then(|cfg| {
             if cfg.columns.is_empty() {
                 None
             } else {
                 // TODO: Should we be using an indexmap? Or maybe allow dupes.
-                Some(IndexSet::from_iter(
-                    cfg.columns.iter().map(ProcWidgetColumn::from),
-                ))
+                Some(IndexSet::from_iter(cfg.columns.iter().cloned()))
             }
         })
     };
+
+    // For now, forbid a standalone count column as a proc column since it doesn't
+    // make sense to have it standalone...
+    if let Some(proc_columns) = &proc_columns
+        && proc_columns.contains(&ProcColumn::Count)
+    {
+        anyhow::bail!("'count' is not currently supported as a standalone process column option");
+    }
 
     let network_legend_position = get_network_legend_position(args, config)?;
     let memory_legend_position = get_memory_legend_position(args, config)?;

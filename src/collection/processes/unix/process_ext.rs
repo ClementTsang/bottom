@@ -17,15 +17,9 @@ fn get_nice(pid: Pid) -> i32 {
     // SAFETY: getpriority takes no user pointers; pid is passed as a value
     // and errors are reported via the return value.
     cfg_select! {
-        target_os = "freebsd" => {
-            unsafe { libc::getpriority(libc::PRIO_PROCESS, pid) }
-        }
-        target_os = "macos" => {
-            unsafe { libc::getpriority(libc::PRIO_PROCESS, pid as u32) }
-        }
-        _ => {
-            0
-        }
+        target_os = "freebsd" => unsafe { libc::getpriority(libc::PRIO_PROCESS, pid) },
+        target_os = "macos" => unsafe { libc::getpriority(libc::PRIO_PROCESS, pid as u32) },
+        _ => 0,
     }
 }
 
@@ -39,10 +33,16 @@ fn get_priority(pid: Pid) -> i32 {
             }
         }
         target_os = "freebsd" => {
-            use libc::{c_int, c_void};
             use std::{mem, ptr};
 
-            let mib = [libc::CTL_KERN, libc::KERN_PROC, libc::KERN_PROC_PID, pid as c_int];
+            use libc::{c_int, c_void};
+
+            let mib = [
+                libc::CTL_KERN,
+                libc::KERN_PROC,
+                libc::KERN_PROC_PID,
+                pid as c_int,
+            ];
             let mut kp: libc::kinfo_proc = unsafe { mem::zeroed() };
             let mut size = mem::size_of::<libc::kinfo_proc>();
 
@@ -61,11 +61,13 @@ fn get_priority(pid: Pid) -> i32 {
                 )
             };
 
-            if ret == 0 { kp.ki_pri.pri_level as i32 } else { 0 }
+            if ret == 0 {
+                kp.ki_pri.pri_level as i32
+            } else {
+                0
+            }
         }
-        _ => {
-            0
-        }
+        _ => 0,
     }
 }
 
@@ -230,12 +232,16 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
                 ProcessStatus::Sleep => SSLEEP,
                 ProcessStatus::Stop => SSTOP,
                 ProcessStatus::Zombie => SZOMB,
-                _ => '?'
+                _ => '?',
             }
         }
         target_os = "freebsd" => {
             const fn assert_u8(val: libc::c_char) -> u8 {
-                if val < 0 { panic!("there was an invalid i8 constant that is supposed to be a char") } else { val as u8 }
+                if val < 0 {
+                    panic!("there was an invalid i8 constant that is supposed to be a char")
+                } else {
+                    val as u8
+                }
             }
 
             const SIDL: u8 = assert_u8(libc::SIDL);
@@ -254,11 +260,9 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
                 ProcessStatus::Zombie => SZOMB as char,
                 ProcessStatus::Dead => SWAIT as char,
                 ProcessStatus::LockBlocked => SLOCK as char,
-                _ => '?'
+                _ => '?',
             }
         }
-        _ => {
-            '?'
-        }
+        _ => '?',
     }
 }

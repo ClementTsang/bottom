@@ -169,3 +169,15 @@ fn test_invalid_proc_default_sort() {
     .failure()
     .stderr(predicate::str::contains("doesn't match"));
 }
+
+/// For now, forbid the count column as a standalone proc column.
+#[test]
+fn test_do_not_allow_count_column() {
+    btm_command(&[
+        "-C",
+        "./tests/invalid_configs/do_not_allow_count_column.toml",
+    ])
+    .assert()
+    .failure()
+    .stderr(predicate::str::contains("not currently supported"));
+}
