@@ -283,6 +283,19 @@ fn test_deprecated_temperature() {
     run_and_kill_cfg("./tests/valid_configs/deprecated/temperature.toml");
 }
 
+/// Tests that we can define multiple memory columns and multiple name columns in the process widget, and that they are interpreted correctly.
+#[test]
+fn test_multiple_mem_and_name() {
+    run_and_kill_cfg("./tests/valid_configs/multiple_mem_and_name_proc.toml");
+}
+
+/// Tests that we can define multiple GPU memory usage columns in the process widget, and that they are interpreted correctly.
+#[cfg(feature = "gpu")]
+#[test]
+fn test_multiple_gpu_mem() {
+    run_and_kill_cfg("./tests/valid_configs/multiple_gpu_mem_proc.toml");
+}
+
 /// Test that deprecated warnings are not shown for config options that are not actually set,
 /// even when a `[flags]` section is present.
 #[test]

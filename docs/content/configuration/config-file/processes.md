@@ -36,7 +36,7 @@ By default, the process widget starts sorted by CPU usage in descending order. Y
 
 ```toml
 [processes]
-default_sort = "mem"
+default_sort = "mem%"
 ```
 
 Any of the column names accepted by `columns` work here (e.g. `"cpu%"`, `"mem"`, `"pid"`, `"name"`, `"read"`). If the

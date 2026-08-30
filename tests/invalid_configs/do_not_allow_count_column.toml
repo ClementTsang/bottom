@@ -1,0 +1,3 @@
+# For now, forbid the count column as a proc column.
+[processes]
+columns = ["name", "count"]

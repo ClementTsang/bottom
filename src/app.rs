@@ -20,9 +20,7 @@ use crate::{
     constants,
     options::config::flags::TableGap,
     utils::data_units::DataUnit,
-    widgets::{
-        DiskWidgetColumn, ProcWidgetColumn, ProcWidgetMode, TempWidgetColumn, TreeCollapsed,
-    },
+    widgets::{DiskWidgetColumn, ProcColumn, ProcWidgetMode, TempWidgetColumn, TreeCollapsed},
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Default, Copy)]
@@ -326,7 +324,7 @@ impl App {
                 .proc_state
                 .get_mut_widget_state(self.current_widget.widget_id)
         {
-            proc_widget_state.toggle_tab();
+            proc_widget_state.toggle_count_pid();
         }
     }
 
@@ -1080,7 +1078,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    proc_widget_state.select_column(ProcWidgetColumn::Cpu);
+                    proc_widget_state.select_column(ProcColumn::CpuPercent);
                 }
             }
             'm' => {
@@ -1090,7 +1088,8 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.select_column(ProcWidgetColumn::Mem);
+                        proc_widget_state
+                            .select_first_column(&[ProcColumn::MemPercent, ProcColumn::MemValue]);
                     }
                 } else if let Some(disk) = self
                     .states
@@ -1107,7 +1106,8 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.select_column(ProcWidgetColumn::PidOrCount);
+                        proc_widget_state
+                            .select_first_column(&[ProcColumn::Pid, ProcColumn::Count]);
                     }
                 } else if let Some(disk) = self
                     .states
@@ -1134,7 +1134,8 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.select_column(ProcWidgetColumn::ProcNameOrCommand);
+                        proc_widget_state
+                            .select_first_column(&[ProcColumn::Command, ProcColumn::Name]);
                     }
                 } else if let Some(disk) = self
                     .states
@@ -1152,7 +1153,8 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    proc_widget_state.select_column(ProcWidgetColumn::GpuMem);
+                    proc_widget_state
+                        .select_first_column(&[ProcColumn::GpuMemValue, ProcColumn::GpuMemPercent]);
                 }
             }
             #[cfg(feature = "gpu")]
@@ -1163,7 +1165,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                 {
-                    proc_widget_state.select_column(ProcWidgetColumn::GpuUtil);
+                    proc_widget_state.select_column(ProcColumn::GpuUtilPercent);
                 }
             }
             '?' => {

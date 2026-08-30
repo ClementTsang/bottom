@@ -72,7 +72,6 @@ pub(crate) struct ProcessesConfig {
 #[cfg(test)]
 mod test {
     use super::{ProcColumn, ProcessesConfig};
-    use crate::widgets::ProcWidgetColumn;
 
     #[test]
     fn empty_column_setting() {
@@ -81,44 +80,38 @@ mod test {
         assert!(generated.columns.is_empty());
     }
 
-    fn to_columns(columns: Vec<ProcColumn>) -> Vec<ProcWidgetColumn> {
-        columns
-            .iter()
-            .map(ProcWidgetColumn::from)
-            .collect::<Vec<_>>()
-    }
-
     #[test]
     fn valid_process_column_config() {
         #[cfg(unix)]
         let config = r#"
-            columns = ["CPU%", "PiD", "user", "MEM", "virt", "Tread", "T.Write", "Rps", "W/s", "tiMe", "USER", "state", "prioRity", "Nice"]
+            columns = ["CPU%", "PiD", "user", "MEM", "meM%", "virt", "Tread", "T.Write", "Rps", "W/s", "tiMe", "USER", "state", "prioRity", "Nice"]
         "#;
 
         #[cfg(target_os = "windows")]
         let config = r#"
-            columns = ["CPU%", "PiD", "user", "MEM", "virt", "Tread", "T.Write", "Rps", "W/s", "tiMe", "USER", "state", "prioRity"]
+            columns = ["CPU%", "PiD", "user", "MEM", "meM%", "virt", "Tread", "T.Write", "Rps", "W/s", "tiMe", "USER", "state", "prioRity"]
         "#;
 
         let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
         assert_eq!(
-            to_columns(generated.columns),
+            generated.columns,
             vec![
-                ProcWidgetColumn::Cpu,
-                ProcWidgetColumn::PidOrCount,
-                ProcWidgetColumn::User,
-                ProcWidgetColumn::Mem,
-                ProcWidgetColumn::VirtualMem,
-                ProcWidgetColumn::TotalRead,
-                ProcWidgetColumn::TotalWrite,
-                ProcWidgetColumn::ReadPerSecond,
-                ProcWidgetColumn::WritePerSecond,
-                ProcWidgetColumn::Time,
-                ProcWidgetColumn::User,
-                ProcWidgetColumn::State,
-                ProcWidgetColumn::Priority,
+                ProcColumn::CpuPercent,
+                ProcColumn::Pid,
+                ProcColumn::User,
+                ProcColumn::MemValue,
+                ProcColumn::MemPercent,
+                ProcColumn::VirtualMem,
+                ProcColumn::TotalRead,
+                ProcColumn::TotalWrite,
+                ProcColumn::ReadPerSecond,
+                ProcColumn::WritePerSecond,
+                ProcColumn::Time,
+                ProcColumn::User,
+                ProcColumn::State,
+                ProcColumn::Priority,
                 #[cfg(unix)]
-                ProcWidgetColumn::Nice,
+                ProcColumn::Nice,
             ],
         );
     }
@@ -131,9 +124,13 @@ mod test {
 
     #[test]
     fn valid_default_sort_config() {
-        let config = r#"default_sort = "mem""#;
+        let config = r#"default_sort = "mem%""#;
         let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
         assert_eq!(generated.default_sort, Some(ProcColumn::MemPercent));
+
+        let config = r#"default_sort = "mem""#;
+        let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
+        assert_eq!(generated.default_sort, Some(ProcColumn::MemValue));
 
         let config = r#"default_sort = "PID""#;
         let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
@@ -154,31 +151,19 @@ mod test {
     fn valid_process_column_config_2() {
         let config = r#"columns = ["Twrite", "T.Write"]"#;
         let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(
-            to_columns(generated.columns),
-            vec![ProcWidgetColumn::TotalWrite; 2]
-        );
+        assert_eq!(generated.columns, vec![ProcColumn::TotalWrite; 2]);
 
         let config = r#"columns = ["Tread", "T.read"]"#;
         let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(
-            to_columns(generated.columns),
-            vec![ProcWidgetColumn::TotalRead; 2]
-        );
+        assert_eq!(generated.columns, vec![ProcColumn::TotalRead; 2]);
 
         let config = r#"columns = ["read", "rps", "r/s"]"#;
         let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(
-            to_columns(generated.columns),
-            vec![ProcWidgetColumn::ReadPerSecond; 3]
-        );
+        assert_eq!(generated.columns, vec![ProcColumn::ReadPerSecond; 3]);
 
         let config = r#"columns = ["write", "wps", "w/s"]"#;
         let generated: ProcessesConfig = toml_edit::de::from_str(config).unwrap();
-        assert_eq!(
-            to_columns(generated.columns),
-            vec![ProcWidgetColumn::WritePerSecond; 3]
-        );
+        assert_eq!(generated.columns, vec![ProcColumn::WritePerSecond; 3]);
     }
 
     /// Test that process enum variants that are advertised in the schema are valid.
