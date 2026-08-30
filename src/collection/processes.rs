@@ -172,21 +172,22 @@ impl DataCollector {
     pub(crate) fn get_processes(&mut self) -> CollectionResult<Vec<ProcessHarvest>> {
         cfg_select! {
             target_os = "linux" => {
-                let time_diff = self.data.collection_time
+                let time_diff = self
+                    .data
+                    .collection_time
                     .duration_since(self.last_collection_time)
                     .as_secs();
 
-                linux_process_data(
-                    self,
-                    time_diff,
-                )
+                linux_process_data(self, time_diff)
             }
-            any(target_os = "freebsd", target_os = "macos", target_os = "windows", target_os = "android", target_os = "ios") => {
-                sysinfo_process_data(self)
-            }
-            _ => {
-                Err(crate::collection::error::CollectionError::Unsupported)
-            }
+            any(
+                target_os = "freebsd",
+                target_os = "macos",
+                target_os = "windows",
+                target_os = "android",
+                target_os = "ios"
+            ) => sysinfo_process_data(self),
+            _ => Err(crate::collection::error::CollectionError::Unsupported),
         }
     }
 }
@@ -194,52 +195,42 @@ impl DataCollector {
 /// Pulled from [`ProcessStatus::to_string`] to avoid an alloc.
 pub(super) fn process_status_str(status: ProcessStatus) -> &'static str {
     cfg_select! {
-        target_os = "linux" => {
-            match status {
-                ProcessStatus::Idle => "Idle",
-                ProcessStatus::Run => "Runnable",
-                ProcessStatus::Sleep => "Sleeping",
-                ProcessStatus::Stop => "Stopped",
-                ProcessStatus::Zombie => "Zombie",
-                ProcessStatus::Tracing => "Tracing",
-                ProcessStatus::Dead => "Dead",
-                ProcessStatus::Wakekill => "Wakekill",
-                ProcessStatus::Waking => "Waking",
-                ProcessStatus::Parked => "Parked",
-                ProcessStatus::UninterruptibleDiskSleep => "UninterruptibleDiskSleep",
-                _ => "Unknown",
-            }
-        }
-        target_os = "windows" => {
-            match status {
-                ProcessStatus::Run => "Runnable",
-                _ => "Unknown",
-            }
-        }
-        target_os = "macos" => {
-            match status {
-                ProcessStatus::Idle => "Idle",
-                ProcessStatus::Run => "Runnable",
-                ProcessStatus::Sleep => "Sleeping",
-                ProcessStatus::Stop => "Stopped",
-                ProcessStatus::Zombie => "Zombie",
-                _ => "Unknown",
-            }
-        }
-        target_os = "freebsd" => {
-            match status {
-                ProcessStatus::Idle => "Idle",
-                ProcessStatus::Run => "Runnable",
-                ProcessStatus::Sleep => "Sleeping",
-                ProcessStatus::Stop => "Stopped",
-                ProcessStatus::Zombie => "Zombie",
-                ProcessStatus::Dead => "Dead",
-                ProcessStatus::LockBlocked => "LockBlocked",
-                _ => "Unknown",
-            }
-        }
-        _ => {
-            "Unknown"
-        }
+        target_os = "linux" => match status {
+            ProcessStatus::Idle => "Idle",
+            ProcessStatus::Run => "Runnable",
+            ProcessStatus::Sleep => "Sleeping",
+            ProcessStatus::Stop => "Stopped",
+            ProcessStatus::Zombie => "Zombie",
+            ProcessStatus::Tracing => "Tracing",
+            ProcessStatus::Dead => "Dead",
+            ProcessStatus::Wakekill => "Wakekill",
+            ProcessStatus::Waking => "Waking",
+            ProcessStatus::Parked => "Parked",
+            ProcessStatus::UninterruptibleDiskSleep => "UninterruptibleDiskSleep",
+            _ => "Unknown",
+        },
+        target_os = "windows" => match status {
+            ProcessStatus::Run => "Runnable",
+            _ => "Unknown",
+        },
+        target_os = "macos" => match status {
+            ProcessStatus::Idle => "Idle",
+            ProcessStatus::Run => "Runnable",
+            ProcessStatus::Sleep => "Sleeping",
+            ProcessStatus::Stop => "Stopped",
+            ProcessStatus::Zombie => "Zombie",
+            _ => "Unknown",
+        },
+        target_os = "freebsd" => match status {
+            ProcessStatus::Idle => "Idle",
+            ProcessStatus::Run => "Runnable",
+            ProcessStatus::Sleep => "Sleeping",
+            ProcessStatus::Stop => "Stopped",
+            ProcessStatus::Zombie => "Zombie",
+            ProcessStatus::Dead => "Dead",
+            ProcessStatus::LockBlocked => "LockBlocked",
+            _ => "Unknown",
+        },
+        _ => "Unknown",
     }
 }

@@ -53,9 +53,15 @@ pub(crate) fn get_arc_usage() -> Option<(MemData, u64)> {
                     sysctl::Ctl::new("kstat.zfs.misc.arcstats.c_max"),
                     sysctl::Ctl::new("kstat.zfs.misc.arcstats.c_min"),
                 ) {
-                    if let (Ok(sysctl::CtlValue::U64(arc)), Ok(sysctl::CtlValue::U64(mem)), Ok(sysctl::CtlValue::U64(min))) =
-                    (mem_arc_value.value(), mem_sys_value.value(), mem_min_value.value())
-                    {
+                    if let (
+                        Ok(sysctl::CtlValue::U64(arc)),
+                        Ok(sysctl::CtlValue::U64(mem)),
+                        Ok(sysctl::CtlValue::U64(min)),
+                    ) = (
+                        mem_arc_value.value(),
+                        mem_sys_value.value(),
+                        mem_min_value.value(),
+                    ) {
                         (mem, arc, min)
                     } else {
                         (0, 0, 0)
@@ -64,9 +70,7 @@ pub(crate) fn get_arc_usage() -> Option<(MemData, u64)> {
                     (0, 0, 0)
                 }
             }
-            _ => {
-                (0, 0, 0)
-            }
+            _ => (0, 0, 0),
         }
     };
 
