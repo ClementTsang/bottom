@@ -1472,7 +1472,7 @@ mod test {
             ProcColumn::State,
             ProcColumn::Name,
         ];
-        let original_columns = init_columns.clone();
+        let original_columns = init_columns;
         let new_columns = [
             ProcColumn::Pid,
             ProcColumn::MemValue,
@@ -1498,7 +1498,7 @@ mod test {
             ProcColumn::State,
             ProcColumn::Name,
         ];
-        let original_columns = init_columns.clone();
+        let original_columns = init_columns;
         let new_columns = [
             ProcColumn::Pid,
             ProcColumn::MemPercent,
@@ -1528,7 +1528,7 @@ mod test {
             ProcColumn::State,
             ProcColumn::Name,
         ];
-        let original_columns = init_columns.clone();
+        let original_columns = init_columns;
         let new_columns = [
             ProcColumn::Pid,
             ProcColumn::MemValue,
@@ -1557,7 +1557,7 @@ mod test {
             ProcColumn::State,
             ProcColumn::Command,
         ];
-        let original_columns = init_columns.clone();
+        let original_columns = init_columns;
 
         let table_config = ProcTableConfig {
             is_command: true,
@@ -1582,7 +1582,7 @@ mod test {
             ProcColumn::State,
             ProcColumn::Name,
         ];
-        let original_columns = init_columns.clone();
+        let original_columns = init_columns;
 
         let table_config = ProcTableConfig {
             show_memory_as_values: true,
@@ -1609,7 +1609,7 @@ mod test {
             ProcColumn::Name,
             ProcColumn::MemValue,
         ];
-        let original_columns = init_columns.clone();
+        let original_columns = init_columns;
 
         let mut state = init_default_state(&init_columns);
         assert_eq!(get_columns(&state.table), original_columns);
@@ -1631,7 +1631,7 @@ mod test {
             ProcColumn::State,
             ProcColumn::Count,
         ];
-        let original_columns = init_columns.clone();
+        let original_columns = init_columns;
 
         let mut state = init_default_state(&init_columns);
         assert_eq!(get_columns(&state.table), original_columns);
@@ -1655,7 +1655,7 @@ mod test {
             ProcColumn::MemPercent,
             ProcColumn::Name,
         ];
-        let original_columns = init_columns.clone();
+        let original_columns = init_columns;
 
         let mut state = init_default_state(&init_columns);
         assert_eq!(get_columns(&state.table), original_columns);
