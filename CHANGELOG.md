@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## 0.15.0 - Unreleased
+
+### Features
+
+- [#2179](https://github.com/ClementTsang/bottom/pull/2179): Support separate memory value and name/command columns.
+
 ## 0.14.9 - 2026-08-27
 
 ### Bug Fixes
