@@ -1354,6 +1354,93 @@ mod test {
     }
 
     #[test]
+    fn select_first_column_picks_first_present() {
+        let init_columns = [
+            ProcColumn::Pid,
+            ProcColumn::Name,
+            ProcColumn::MemValue,
+            ProcColumn::MemPercent,
+        ];
+
+        let mut state = init_default_state(&init_columns);
+        state.select_first_column(&[ProcColumn::MemPercent, ProcColumn::MemValue]);
+        assert_eq!(
+            state.table.sort_index(),
+            2,
+            "should pick MemValue (index 2) since it comes before MemPercent"
+        );
+        assert_eq!(state.table.order(), SortOrder::Descending);
+
+        // Flip the layout so MemPercent comes first.
+        let init_columns = [
+            ProcColumn::Pid,
+            ProcColumn::Name,
+            ProcColumn::MemPercent,
+            ProcColumn::MemValue,
+        ];
+        let mut state = init_default_state(&init_columns);
+        state.select_first_column(&[ProcColumn::MemPercent, ProcColumn::MemValue]);
+        assert_eq!(
+            state.table.sort_index(),
+            2,
+            "should pick MemPercent (index 2) since it comes before MemValue"
+        );
+        assert_eq!(state.table.order(), SortOrder::Descending);
+    }
+
+    #[test]
+    fn select_first_column_only_one_present() {
+        let init_columns = [
+            ProcColumn::Pid,
+            ProcColumn::Name,
+            ProcColumn::CpuPercent,
+            ProcColumn::MemPercent,
+        ];
+
+        let mut state = init_default_state(&init_columns);
+        state.select_first_column(&[ProcColumn::MemValue, ProcColumn::MemPercent]);
+        assert_eq!(state.table.sort_index(), 3);
+        assert_eq!(state.table.order(), SortOrder::Descending);
+    }
+
+    #[test]
+    fn select_first_column_toggles_when_already_selected() {
+        let init_columns = [
+            ProcColumn::Pid,
+            ProcColumn::Name,
+            ProcColumn::MemValue,
+            ProcColumn::MemPercent,
+        ];
+
+        let mut state = init_default_state(&init_columns);
+        state.select_first_column(&[ProcColumn::MemPercent, ProcColumn::MemValue]);
+        assert_eq!(state.table.sort_index(), 2);
+        assert_eq!(state.table.order(), SortOrder::Descending);
+
+        state.select_first_column(&[ProcColumn::MemPercent, ProcColumn::MemValue]);
+        assert_eq!(state.table.sort_index(), 2, "index should stay put");
+        assert_eq!(
+            state.table.order(),
+            SortOrder::Ascending,
+            "re-selecting the same column should toggle the order"
+        );
+    }
+
+    #[test]
+    fn select_first_column_none_present() {
+        // If none of the candidate columns exist, nothing should change.
+        let init_columns = [ProcColumn::Pid, ProcColumn::Name, ProcColumn::CpuPercent];
+
+        let mut state = init_default_state(&init_columns);
+        let before_index = state.table.sort_index();
+        let before_order = state.table.order();
+
+        state.select_first_column(&[ProcColumn::MemValue, ProcColumn::MemPercent]);
+        assert_eq!(state.table.sort_index(), before_index);
+        assert_eq!(state.table.order(), before_order);
+    }
+
+    #[test]
     fn custom_columns() {
         let init_columns = vec![
             ProcColumn::Pid,
