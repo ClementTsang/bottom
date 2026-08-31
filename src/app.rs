@@ -154,10 +154,10 @@ impl App {
     pub fn update_data(&mut self) {
         let data_source = self.data_store.get_data();
 
-        // FIXME: (points_rework_v1) maybe separate PR but would it make more sense to
-        // store references of data? Would it also make more sense to move the
-        // "data set" step to the draw step, and make it only set if force
-        // update is set here?
+        // FIXME: (points_rework_v1) maybe separate PR but would it make more
+        // sense to store references of data? Would it also make more
+        // sense to move the "data set" step to the draw step, and make
+        // it only set if force update is set here?
         for proc in self.states.proc_state.widget_states.values_mut() {
             if proc.force_update_data {
                 proc.set_table_data(data_source);
@@ -203,7 +203,8 @@ impl App {
         self.data_store.reset();
 
         // Reset zoom.
-        // TODO: Make this suck less... should just make it so that calling reset fixes this all (including above too).
+        // TODO: Make this suck less... should just make it so that calling
+        // reset fixes this all (including above too).
         for widget_state in self.states.cpu_state.widget_states.values_mut() {
             widget_state.graph.state_mut().reset_zoom();
         }
@@ -299,7 +300,8 @@ impl App {
     }
 
     pub fn is_in_any_search(&self) -> bool {
-        // TODO: This is really hacky, but is fine until we do some smarter things like putting event catching at a per-widget/dialog state.
+        // TODO: This is really hacky, but is fine until we do some smarter
+        // things like putting event catching at a per-widget/dialog state.
         self.is_in_search_widget() || (self.help_dialog_state.is_help_searching())
     }
 
@@ -367,8 +369,8 @@ impl App {
             pws.is_sort_open = !pws.is_sort_open;
             pws.force_rerender = true;
 
-            // If the sort is now open, move left. Otherwise, if the proc sort was selected,
-            // force move right.
+            // If the sort is now open, move left. Otherwise, if the proc sort
+            // was selected, force move right.
             if pws.is_sort_open {
                 pws.sort_table.set_position(pws.table.sort_index());
                 self.move_widget_selection(&WidgetDirection::Left);
@@ -1297,8 +1299,8 @@ impl App {
         // 1. Send a movement signal in `direction`.
         // 2. Check if this new widget we've landed on is hidden.  If not, halt.
         // 3. If it hidden, loop and either send:
-        //    - A signal equal to the current direction, if it is opposite of the
-        //      reflection.
+        //    - A signal equal to the current direction, if it is opposite of
+        //      the reflection.
         //    - Reflection direction.
 
         if !self.ignore_normal_keybinds() && !self.is_expanded {
@@ -1357,8 +1359,10 @@ impl App {
                     BottomWidgetType::BasicTables => {
                         match &direction {
                             WidgetDirection::Up => {
-                                // Note this case would fail if it moved up into a hidden
-                                // widget, but it's for basic so whatever, it's all hard-coded
+                                // Note this case would fail if it moved up into
+                                // a hidden
+                                // widget, but it's for basic so whatever, it's
+                                // all hard-coded
                                 // right now anyways...
                                 if let Some(next_new_widget_id) = new_widget.up_neighbour
                                     && let Some(next_new_widget) =
@@ -1368,12 +1372,15 @@ impl App {
                                 }
                             }
                             WidgetDirection::Down => {
-                                // Assuming we're in basic mode (BasicTables), then
-                                // we want to move DOWN to the currently shown widget.
+                                // Assuming we're in basic mode (BasicTables),
+                                // then
+                                // we want to move DOWN to the currently shown
+                                // widget.
                                 if let Some(basic_table_widget_state) =
                                     &mut self.states.basic_table_widget_state
                                 {
-                                    // We also want to move towards Proc if we had set it to
+                                    // We also want to move towards Proc if we
+                                    // had set it to
                                     // ProcSort.
                                     if let BottomWidgetType::ProcSort =
                                         basic_table_widget_state.currently_displayed_widget_type
@@ -1397,7 +1404,8 @@ impl App {
                         // It may be hidden...
                         if let Some((parent_direction, offset)) = &new_widget.parent_reflector {
                             if direction.is_opposite(parent_direction) {
-                                // Keep going in the current direction if hidden...
+                                // Keep going in the current direction if
+                                // hidden...
                                 // unless we hit a wall of sorts.
                                 let option_next_neighbour_id = match &direction {
                                     WidgetDirection::Left => new_widget.left_neighbour,
@@ -2046,19 +2054,19 @@ impl App {
     /// Moves the mouse to the widget that was clicked on, then propagates the
     /// click down to be handled by the widget specifically.
     pub fn on_left_mouse_up(&mut self, x: u16, y: u16) {
-        // Pretty dead simple - iterate through the widget map and go to the widget
-        // where the click is within.
+        // Pretty dead simple - iterate through the widget map and go to the
+        // widget where the click is within.
 
         // TODO: [REFACTOR] might want to refactor this, it's really ugly.
-        // TODO: [REFACTOR] Might wanna refactor ALL state things in general, currently
-        // everything is grouped up as an app state.  We should separate stuff
-        // like event state and gui state and etc.
+        // TODO: [REFACTOR] Might wanna refactor ALL state things in general,
+        // currently everything is grouped up as an app state.  We
+        // should separate stuff like event state and gui state and etc.
 
-        // TODO: [MOUSE] double click functionality...?  We would do this above all
-        // other actions and SC if needed.
+        // TODO: [MOUSE] double click functionality...?  We would do this above
+        // all other actions and SC if needed.
 
-        // Short circuit if we're in basic table... we might have to handle the basic
-        // table arrow case here...
+        // Short circuit if we're in basic table... we might have to handle the
+        // basic table arrow case here...
 
         if let Some(bt) = &mut self.states.basic_table_widget_state
             && let (
@@ -2104,7 +2112,8 @@ impl App {
                     }
                 }
                 self.move_widget_selection(&WidgetDirection::Right);
-                // Bit extra logic to ensure you always land on a proc widget, not the sort
+                // Bit extra logic to ensure you always land on a proc widget,
+                // not the sort
                 if let BottomWidgetType::ProcSort = &self.current_widget.widget_type {
                     self.move_widget_selection(&WidgetDirection::Right);
                 }
@@ -2112,8 +2121,8 @@ impl App {
             }
         }
 
-        // Second short circuit --- are we in the dd dialog state?  If so, only check
-        // yes/no/signals and bail after.
+        // Second short circuit --- are we in the dd dialog state?  If so, only
+        // check yes/no/signals and bail after.
         if self.process_kill_dialog.is_open() && self.process_kill_dialog.on_click(x, y) {
             return;
         }
@@ -2161,8 +2170,8 @@ impl App {
         ) {
             let border_offset = u16::from(self.is_drawing_border());
 
-            // This check ensures the click isn't actually just clicking on the bottom
-            // border.
+            // This check ensures the click isn't actually just clicking on the
+            // bottom border.
             if y < (brc_y - border_offset) {
                 match &self.current_widget.widget_type {
                     BottomWidgetType::Proc
@@ -2194,9 +2203,11 @@ impl App {
 
                                         self.change_process_position(change);
 
-                                        // If in tree mode, also check to see if this click is
+                                        // If in tree mode, also check to see if
+                                        // this click is
                                         // on
-                                        // the same entry as the already selected one - if it
+                                        // the same entry as the already
+                                        // selected one - if it
                                         // is,
                                         // then we minimize.
                                         if is_tree_mode && change == 0 {
@@ -2205,7 +2216,8 @@ impl App {
                                     }
                                 }
                                 BottomWidgetType::ProcSort => {
-                                    // TODO: [Feature] This could sort if you double click!
+                                    // TODO: [Feature] This could sort if you
+                                    // double click!
                                     if let Some(proc_widget_state) = self
                                         .states
                                         .proc_state
@@ -2260,7 +2272,8 @@ impl App {
                                 _ => {}
                             }
                         } else {
-                            // We might have clicked on a header!  Check if we only exceeded the
+                            // We might have clicked on a header!  Check if we
+                            // only exceeded the
                             // table + border offset, and it's implied
                             // we exceeded the gap offset.
                             if clicked_entry == border_offset {
@@ -2315,7 +2328,8 @@ impl App {
                                     let num_batteries =
                                         self.data_store.get_data().battery_harvest.len();
                                     if itx >= num_batteries {
-                                        // range check to keep within current data
+                                        // range check to keep within current
+                                        // data
                                         battery_widget_state.currently_selected_battery_index =
                                             num_batteries - 1;
                                     } else {

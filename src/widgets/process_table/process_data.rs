@@ -351,8 +351,8 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
         &self, column: &ProcColumn, calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
         // TODO: Optimize the string allocations here...
-        // TODO: Also maybe just pull in the to_string call but add a variable for the
-        // differences.
+        // TODO: Also maybe just pull in the to_string call but add a variable
+        // for the differences.
         Some(match column {
             #[cfg(unix)]
             ProcColumn::Nice => self.nice.to_string().into(),

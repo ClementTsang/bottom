@@ -64,9 +64,10 @@ fn is_gpu_class(class_code: &str) -> bool {
     class_code.starts_with(PCI_BASE_CLASS_DISPLAY)
 }
 
-/// Get a list of PCI bus IDs for Linux. This will handle whether the device is awake or not.
-/// We do this separately to avoid the possibility of NVML waking up the device at all;
-/// this is particularly useful for things like laptops with hybrid graphics (e.g. NVIDIA Optimus).
+/// Get a list of PCI bus IDs for Linux. This will handle whether the device is
+/// awake or not. We do this separately to avoid the possibility of NVML waking
+/// up the device at all; this is particularly useful for things like laptops
+/// with hybrid graphics (e.g. NVIDIA Optimus).
 ///
 /// Note this is somewhat expensive, so it may be worth caching this result.
 ///
@@ -179,8 +180,9 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
                 }
             }
             _ => {
-                // The fallback behaviour (the old one) is to just list all nvml devices blindly.
-                // Note this has the risk of waking up sleeping devices.
+                // The fallback behaviour (the old one) is to just list all nvml
+                // devices blindly. Note this has the risk of
+                // waking up sleeping devices.
                 let num_gpus = nvml.device_count().ok()?;
                 (
                     (0..num_gpus).flat_map(|i| nvml.device_by_index(i)),

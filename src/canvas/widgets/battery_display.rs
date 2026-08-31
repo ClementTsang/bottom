@@ -110,7 +110,8 @@ impl Painter {
                         tab_click_locs
                             .push(((current_x, current_y), (current_x + width, current_y)));
 
-                        // +4 because we want to go one space, then one space past to get to the
+                        // +4 because we want to go one space, then one space
+                        // past to get to the
                         // '|', then 2 more to start at the blank space
                         // before the tab label.
                         current_x += width + 4;

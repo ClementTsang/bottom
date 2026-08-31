@@ -136,9 +136,9 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
         println!("thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}")
     }
 
-    // TODO: Might be cleaner in the future to use a cancellation token, but that
-    // causes some fun issues with lifetimes; for now if it panics then shut
-    // down the main program entirely ASAP.
+    // TODO: Might be cleaner in the future to use a cancellation token, but
+    // that causes some fun issues with lifetimes; for now if it panics then
+    // shut down the main program entirely ASAP.
     std::process::exit(1);
 }
 
@@ -166,9 +166,10 @@ fn create_input_thread(
             {
                 match event {
                     Event::Resize(_, _) => {
-                        // TODO: Might want to debounce this in the future, or take into
-                        // account the actual resize values.
-                        // Maybe we want to keep the current implementation in case the
+                        // TODO: Might want to debounce this in the future, or
+                        // take into account the actual
+                        // resize values. Maybe we want
+                        // to keep the current implementation in case the
                         // resize event might not fire...
                         // not sure.
 
@@ -182,8 +183,8 @@ fn create_input_thread(
                         }
                     }
                     Event::Key(key) if !keys_disabled && key.kind == KeyEventKind::Press => {
-                        // For now, we only care about key down events. This may change in
-                        // the future.
+                        // For now, we only care about key down events. This may
+                        // change in the future.
                         if sender.send(BottomEvent::KeyInput(key)).is_err() {
                             break;
                         }
@@ -244,8 +245,8 @@ fn create_collection_thread(
         data_collector.update_data();
         data_collector.data = Data::default();
 
-        // Tiny sleep I guess? To go between the first update above and the first update
-        // in the loop.
+        // Tiny sleep I guess? To go between the first update above and the
+        // first update in the loop.
         std::thread::sleep(Duration::from_millis(5));
 
         loop {
@@ -371,8 +372,9 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
 
-    // This may fail in some environments, like tests, since it may fail to get the cursor position.
-    // In that case, fall back to just manually clearing it with backend.
+    // This may fail in some environments, like tests, since it may fail to get
+    // the cursor position. In that case, fall back to just manually
+    // clearing it with backend.
     if terminal.clear().is_err() {
         terminal.backend_mut().clear()?;
     }
@@ -422,8 +424,9 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
                 BottomEvent::Update(data) => {
                     app.data_store.eat_data(data, &app.app_config_fields);
 
-                    // This thing is required as otherwise, some widgets can't draw correctly w/o
-                    // some data (or they need to be re-drawn).
+                    // This thing is required as otherwise, some widgets can't
+                    // draw correctly w/o some data (or they
+                    // need to be re-drawn).
                     if first_run {
                         first_run = false;
                         app.is_force_redraw = true;

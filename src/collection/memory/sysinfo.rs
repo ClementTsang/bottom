@@ -14,11 +14,12 @@ fn get_usage(used: u64, total: u64) -> Option<MemData> {
     })
 }
 
-/// Resolves the total memory to report given an optional cgroup limit and the physical total.
+/// Resolves the total memory to report given an optional cgroup limit and the
+/// physical total.
 ///
-/// cgroup v1 reports an "unlimited" limit as a very large value, which causes problems if taken
-/// literally. This function caps it to the minimum of the cgroup total or the actual total to
-/// avoid this problem.
+/// cgroup v1 reports an "unlimited" limit as a very large value, which causes
+/// problems if taken literally. This function caps it to the minimum of the
+/// cgroup total or the actual total to avoid this problem.
 #[cfg(target_os = "linux")]
 #[inline]
 fn resolve_cgroup_total(limit: Option<&CgroupMemLimit>, base_total: u64) -> u64 {

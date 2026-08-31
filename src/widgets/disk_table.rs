@@ -333,7 +333,8 @@ impl DiskTableWidget {
             },
             sort_index: match &config.default_disk_sort_column {
                 Some(column) => {
-                    // Must check that the column used exists. If not, fall back to 0.
+                    // Must check that the column used exists. If not, fall back
+                    // to 0.
 
                     let existing_columns = match columns {
                         Some(c) => c,
@@ -377,8 +378,9 @@ impl DiskTableWidget {
 
     /// Update the current table data.
     pub fn set_table_data(&mut self, data: &InnerData) {
-        // Note that the data may contain unmounted disks (e.g. we enable it for another disk widget),
-        // so we have to potentially filter it out here too.
+        // Note that the data may contain unmounted disks (e.g. we enable it for
+        // another disk widget), so we have to potentially filter it out
+        // here too.
         let mut data: Vec<DiskWidgetData> = if self.show_unmounted {
             data.disk_harvest.clone()
         } else {

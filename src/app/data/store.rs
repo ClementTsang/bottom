@@ -23,7 +23,8 @@ use crate::{
     widgets::{DiskWidgetData, TempWidgetData},
 };
 
-/// Because otherwise you can't do lookups for something like `(String, String)` as a key.
+/// Because otherwise you can't do lookups for something like `(String, String)`
+/// as a key.
 trait PairKey {
     fn pair(&self) -> (&str, &str);
 }
@@ -138,8 +139,8 @@ impl InnerData {
     ) {
         let harvested_time = data.collection_time;
 
-        // We must adjust all the network values to their selected type (defaults to
-        // bits).
+        // We must adjust all the network values to their selected type
+        // (defaults to bits).
         if matches!(settings.network_unit_type, DataUnit::Byte)
             && let Some(network) = &mut data.network
         {
@@ -334,7 +335,8 @@ impl InnerData {
                     io_read_rate_bytes = Some(0);
                     io_write_rate_bytes = Some(0);
 
-                    // TODO: We probably want to also add some cleanup after a while if unused.
+                    // TODO: We probably want to also add some cleanup after a
+                    // while if unused.
                     self.prev_io.insert(
                         (disk.mount_point.clone(), checked_name.to_string()),
                         (io_device.read_bytes, io_device.write_bytes),

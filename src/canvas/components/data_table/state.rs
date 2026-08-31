@@ -60,22 +60,26 @@ impl DataTableState {
         self.display_start_index = match scroll_direction {
             ScrollDirection::Down => {
                 if current_scroll_position < start_index + num_rows {
-                    // If, using the current scroll position, we can see the element
-                    // (so within that and + num_rows) just reuse the current previously
+                    // If, using the current scroll position, we can see the
+                    // element (so within that and +
+                    // num_rows) just reuse the current previously
                     // scrolled position.
                     start_index
                 } else if current_scroll_position >= num_rows {
-                    // If the current position past the last element visible in the list,
-                    // then skip until we can see that element.
+                    // If the current position past the last element visible in
+                    // the list, then skip until we can see
+                    // that element.
                     current_scroll_position - num_rows + 1
                 } else {
-                    // Else, if it is not past the last element visible, do not omit anything.
+                    // Else, if it is not past the last element visible, do not
+                    // omit anything.
                     0
                 }
             }
             ScrollDirection::Up => {
                 if current_scroll_position <= start_index {
-                    // If it's past the first element, then show from that element downwards
+                    // If it's past the first element, then show from that
+                    // element downwards
                     current_scroll_position
                 } else if current_scroll_position >= start_index + num_rows {
                     current_scroll_position - num_rows + 1

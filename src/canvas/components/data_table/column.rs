@@ -222,8 +222,9 @@ where
             } else {
                 total_width_left = total_width_left.saturating_sub(new_width + COLUMN_SPACING);
 
-                // SAFETY: This is safe as we call `stop_allocating_space` which checks that
-                // the value pushed is greater than zero.
+                // SAFETY: This is safe as we call `stop_allocating_space` which
+                // checks that the value pushed is greater than
+                // zero.
                 unsafe {
                     calculated_widths.push(NonZeroU16::new_unchecked(new_width));
                 }
@@ -276,8 +277,9 @@ mod test {
         }
     }
 
-    /// Ensure that the [`DataTableColumn`] implementation for [`Column`] calls the right method.
-    /// Yes, this is a somewhat meaningless test but it may catch a regression if this happens again in the future
+    /// Ensure that the [`DataTableColumn`] implementation for [`Column`] calls
+    /// the right method. Yes, this is a somewhat meaningless test but it
+    /// may catch a regression if this happens again in the future
     /// during a refactor.
     ///
     /// See <https://github.com/ClementTsang/bottom/issues/2159> for details of the issue.

@@ -22,7 +22,8 @@ pub struct SearchInputStyles {
     pub hint_style: Style,
 }
 
-/// Build a query span from a [`InputFieldState`]. `available_width` is the terminal column width.
+/// Build a query span from a [`InputFieldState`]. `available_width` is the
+/// terminal column width.
 pub fn build_query_spans(
     input_field_state: &InputFieldState, available_width: usize, is_on_widget: bool,
     cursor_style: Style, text_style: Style,
@@ -30,8 +31,9 @@ pub fn build_query_spans(
     let query = input_field_state.current_query();
 
     if !is_on_widget {
-        // This is easier - we just need to get a range of graphemes, rather than
-        // dealing with possibly inserting a cursor (as none is shown!)
+        // This is easier - we just need to get a range of graphemes, rather
+        // than dealing with possibly inserting a cursor (as none is
+        // shown!)
         return vec![Span::styled(query.to_string(), text_style)];
     }
 

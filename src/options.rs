@@ -39,7 +39,8 @@ use crate::{
     widgets::*,
 };
 
-/// Macro to check whether a flag is enabled, either as an arg or in the config file.
+/// Macro to check whether a flag is enabled, either as an arg or in the config
+/// file.
 macro_rules! is_flag_enabled {
     ($flag_name:ident, $arg:expr, $config:expr) => {
         if $arg.$flag_name {
@@ -77,7 +78,8 @@ macro_rules! is_flag_enabled_in {
     };
 }
 
-/// A version of [`is_flag_enabled`] which should be used to deprecate old config flags.
+/// A version of [`is_flag_enabled`] which should be used to deprecate old
+/// config flags.
 macro_rules! enabled_option_with_deprecated {
     ($arg:expr, $config:expr, $section:ident . $field:ident, $flags:ident . $deprecated_flag:ident $(,)?) => {
         if $arg {
@@ -117,7 +119,8 @@ macro_rules! enabled_option_with_deprecated {
     };
 }
 
-/// Get the value of a field for a specific section in the config file if set. If not set, the default is used.
+/// Get the value of a field for a specific section in the config file if set.
+/// If not set, the default is used.
 macro_rules! config_or_default {
     ($config:expr, $section:ident . $field:ident) => {
         $config
@@ -128,8 +131,8 @@ macro_rules! config_or_default {
     };
 }
 
-/// Get the value of a field for a specific section in the config file if set. If not set,
-/// the provided default is used.
+/// Get the value of a field for a specific section in the config file if set.
+/// If not set, the provided default is used.
 macro_rules! config_or {
     ($config:expr, $section:ident . $field:ident, $default:expr) => {
         $config
@@ -165,9 +168,10 @@ fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
         if let Ok(res) = old_home_path.try_exists()
             && res
         {
-            // We used to create it at `<HOME>/DEFAULT_CONFIG_FILE_PATH`, but changed it
-            // to be more correct later. However, for legacy reasons, if it already exists,
-            // use the old one.
+            // We used to create it at `<HOME>/DEFAULT_CONFIG_FILE_PATH`, but
+            // changed it to be more correct later. However, for
+            // legacy reasons, if it already exists, use the old
+            // one.
             return Some(old_home_path);
         }
     }
@@ -181,9 +185,9 @@ fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
         && let Ok(xdg_config_path) = std::env::var("XDG_CONFIG_HOME")
         && !xdg_config_path.is_empty()
     {
-        // If XDG_CONFIG_HOME exists and is non-empty, _but_ we previously used the
-        // Library-based path for a config and it exists, then use that
-        // instead for backwards-compatibility.
+        // If XDG_CONFIG_HOME exists and is non-empty, _but_ we previously used
+        // the Library-based path for a config and it exists, then use
+        // that instead for backwards-compatibility.
         if let Some(old_macos_path) = &config_path
             && let Ok(res) = old_macos_path.try_exists()
             && res
@@ -257,11 +261,11 @@ pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result
             }
         }
         None => {
-            // If we somehow don't have any config path, then just assume the default config
-            // but don't write to any file.
+            // If we somehow don't have any config path, then just assume the
+            // default config but don't write to any file.
             //
-            // TODO: For now, just print a message to stderr indicating this. In the future,
-            // probably show in-app (too).
+            // TODO: For now, just print a message to stderr indicating this. In
+            // the future, probably show in-app (too).
 
             eprintln!(
                 "Note: bottom couldn't find a location to create or read a config file, so \
@@ -395,7 +399,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let network_unit_type = get_network_unit_type(args, config);
     let network_scale_type = get_network_scale_type(args, config);
     // Use + update this again after deprecation
-    // let network_use_binary_prefix = is_flag_enabled!(network_use_binary_prefix, args.network, config);
+    // let network_use_binary_prefix =
+    // is_flag_enabled!(network_use_binary_prefix, args.network, config);
     let network_use_binary_prefix = enabled_option_with_deprecated!(
         args.network.network_use_binary_prefix,
         config,
@@ -998,7 +1003,8 @@ fn deprecated_warning(deprecated_field: &str, new_field: &str) {
     );
 }
 
-/// Mark a config option field as deprecated, and what to use instead with an alias.
+/// Mark a config option field as deprecated, and what to use instead with an
+/// alias.
 #[inline]
 fn deprecated_warning_with_alias(deprecated_field: &str, new_field: &str, alias: &str) {
     eprintln!(
@@ -1151,8 +1157,8 @@ fn get_default_widget_and_count(
 
 #[cfg(feature = "battery")]
 fn get_use_battery(args: &BottomArgs, config: &Config) -> bool {
-    // TODO: Move this so it's dynamic in the app itself and automatically hide if
-    // there are no batteries?
+    // TODO: Move this so it's dynamic in the app itself and automatically hide
+    // if there are no batteries?
     if let Ok(battery_manager) = Manager::new()
         && let Ok(batteries) = battery_manager.batteries()
         && batteries.count() == 0
@@ -1348,7 +1354,8 @@ fn parse_legend_position(
     } else if let Some(s) = cfg {
         parse_position_or_err(s, setting, OptionError::invalid_config_value)
     } else if let Some((s, name)) = deprecated_cfg {
-        // Remove the deprecated args/code paths and copy back to the function above later.
+        // Remove the deprecated args/code paths and copy back to the function
+        // above later.
         if let Some(alias) = alias {
             deprecated_warning_with_alias(name, setting, alias);
         } else {
@@ -1655,17 +1662,17 @@ mod test {
         super::init_app(args, config).unwrap().0
     }
 
-    // TODO: There's probably a better way to create clap options AND unify together
-    // to avoid the possibility of typos/mixing up. Use proc macros to unify on
-    // one struct?
+    // TODO: There's probably a better way to create clap options AND unify
+    // together to avoid the possibility of typos/mixing up. Use proc macros
+    // to unify on one struct?
     #[test]
     fn verify_cli_options_build() {
         let app = crate::args::build_cmd();
 
         let default_app = create_app(BottomArgs::parse_from(["btm"]));
 
-        // Skip battery since it's tricky to test depending on the platform/features
-        // we're testing with.
+        // Skip battery since it's tricky to test depending on the
+        // platform/features we're testing with.
         let skip = ["help", "version", "celsius", "battery", "generate_schema"];
 
         for arg in app.get_arguments().collect::<Vec<_>>() {
@@ -1710,8 +1717,8 @@ mod test {
         use super::{DEFAULT_CONFIG_FILE_LOCATION, get_config_path};
 
         // Case three: no previous config, no XDG var.
-        // SAFETY: This is fine, this is just a test, and no other test affects env
-        // vars.
+        // SAFETY: This is fine, this is just a test, and no other test affects
+        // env vars.
         unsafe {
             std::env::remove_var("XDG_CONFIG_HOME");
         }
@@ -1729,8 +1736,8 @@ mod test {
         }
 
         // Case two: no previous config, XDG var exists.
-        // SAFETY: This is fine, this is just a test, and no other test affects env
-        // vars.
+        // SAFETY: This is fine, this is just a test, and no other test affects
+        // env vars.
         unsafe {
             std::env::set_var("XDG_CONFIG_HOME", "/tmp");
         }

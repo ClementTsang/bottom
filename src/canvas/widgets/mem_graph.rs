@@ -68,8 +68,9 @@ impl Painter {
                 let mut size = 1;
                 let data = app_state.data_store.get_data();
 
-                // TODO: is this optimization really needed...? This just pre-allocates a vec,
-                // but it'll probably never be that big...
+                // TODO: is this optimization really needed...? This just
+                // pre-allocates a vec, but it'll probably never
+                // be that big...
 
                 if data.swap_harvest.is_some() {
                     size += 1; // add capacity for SWAP
@@ -89,7 +90,8 @@ impl Painter {
                 let time_series = &data.time_series_data;
                 let time = &time_series.time;
 
-                // TODO: Add a "no data" option here/to time graph if there is no entries
+                // TODO: Add a "no data" option here/to time graph if there is
+                // no entries
                 graph_data(
                     &mut points,
                     "RAM",

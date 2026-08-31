@@ -175,7 +175,8 @@ impl BottomLayout {
                         if let Some(current_row) = layout_mapping
                             .get(&(row_height_percentage_start, row_height_percentage_end))
                         {
-                            // First check for within the same col_row for left and right
+                            // First check for within the same col_row for left
+                            // and right
                             if let Some(current_col) = current_row
                                 .1
                                 .get(&(col_width_percentage_start, col_width_percentage_end))
@@ -316,7 +317,8 @@ impl BottomLayout {
                                     )
                                     .next_back()
                                 {
-                                    // Now check each widget_width and pick the best
+                                    // Now check each widget_width and pick the
+                                    // best
                                     for candidate_widget in &(to_up.1).1 {
                                         let mut current_best_distance = 0;
                                         let mut current_best_widget_id = widget.widget_id;

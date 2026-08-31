@@ -32,7 +32,8 @@ pub(crate) fn get_arc_usage() -> Option<(MemData, u64)> {
                                 // Parse the value, remember it's in bytes!
                                 if let Ok(number) = number.parse::<u64>() {
                                     *to_write = number;
-                                    // We only need a few keys, so we can bail early.
+                                    // We only need a few keys, so we can bail
+                                    // early.
                                     zfs_keys_read += 1;
                                     if zfs_keys_read == ZFS_KEYS_NEEDED {
                                         break;

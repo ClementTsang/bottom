@@ -766,7 +766,8 @@ mod test {
 
     #[test]
     fn help_menu_matches_entry_len() {
-        // Subtract 2 to account for the extra newline + search instructions at the bottom.
+        // Subtract 2 to account for the extra newline + search instructions at
+        // the bottom.
         const HELP_CONTENTS_TEXT_LEN: usize = HELP_CONTENTS_TEXT.len() - 2;
 
         assert_eq!(
@@ -800,8 +801,8 @@ mod test {
             .unwrap()
             .replace_all(CONFIG_TEXT, "$1");
 
-        // Then, trim off anything that has more than 2 spaces + alphabetical character
-        // or '[' following a "#".
+        // Then, trim off anything that has more than 2 spaces + alphabetical
+        // character or '[' following a "#".
         let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z\[])")
             .unwrap()
             .replace_all(&default_config, "$2");

@@ -352,7 +352,8 @@ impl ProcessKillDialog {
                             };
 
                             if new >= SIGNAL_TEXT.len() {
-                                // If the new value is too large, then just assume we instead
+                                // If the new value is too large, then just
+                                // assume we instead
                                 // want the value itself.
                                 state.select(Some(value as usize));
                                 self.last_char = Some((c, Instant::now()));
@@ -627,8 +628,8 @@ impl ProcessKillDialog {
     }
 
     pub fn handle_redraw(&mut self) {
-        // FIXME: Not sure if we need this. We can probably handle this better in the
-        // draw function later.
+        // FIXME: Not sure if we need this. We can probably handle this better
+        // in the draw function later.
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         {
@@ -715,16 +716,17 @@ impl ProcessKillDialog {
                 // A list of options, displayed vertically.
                 const SIGNAL_TEXT_LEN: u16 = SIGNAL_TEXT.len() as u16;
 
-                // Make the rect only as big as it needs to be, which is the height of the text,
-                // the buttons, and up to 2 spaces (margin and space between), and the size of
+                // Make the rect only as big as it needs to be, which is the
+                // height of the text, the buttons, and up to 2
+                // spaces (margin and space between), and the size of
                 // the block.
                 let [draw_area] =
                     Layout::vertical([Constraint::Max(num_lines + SIGNAL_TEXT_LEN + 2 + 3)])
                         .flex(Flex::Center)
                         .areas(draw_area);
 
-                // Now we need to divide the block into one area for the paragraph,
-                // and one for the buttons.
+                // Now we need to divide the block into one area for the
+                // paragraph, and one for the buttons.
                 let [text_draw_area, button_draw_area] = Layout::vertical([
                     Constraint::Max(num_lines),
                     Constraint::Max(SIGNAL_TEXT_LEN),
@@ -753,7 +755,8 @@ impl ProcessKillDialog {
                     Span::styled(signal, style)
                 }));
 
-                // This is kinda dumb how you have to set the constraint, but ok.
+                // This is kinda dumb how you have to set the constraint, but
+                // ok.
                 const LONGEST_SIGNAL_TEXT_LENGTH: u16 = const {
                     let mut i = 0;
                     let mut max = 0;
@@ -791,14 +794,15 @@ impl ProcessKillDialog {
                 last_yes_button_area,
                 last_no_button_area,
             } => {
-                // Make the rect only as big as it needs to be, which is the height of the text,
-                // the buttons, and up to 3 spaces (margin and space between) + 2 for block.
+                // Make the rect only as big as it needs to be, which is the
+                // height of the text, the buttons, and up to 3
+                // spaces (margin and space between) + 2 for block.
                 let [draw_area] = Layout::vertical([Constraint::Max(num_lines + 1 + 3 + 2)])
                     .flex(Flex::Center)
                     .areas(draw_area);
 
-                // Now we need to divide the block into one area for the paragraph,
-                // and one for the buttons.
+                // Now we need to divide the block into one area for the
+                // paragraph, and one for the buttons.
                 let [text_area, button_area] =
                     Layout::vertical([Constraint::Max(num_lines), Constraint::Length(1)])
                         .flex(Flex::SpaceEvenly)
@@ -869,8 +873,8 @@ impl ProcessKillDialog {
     pub fn draw(&mut self, f: &mut Frame<'_>, draw_area: Rect, styles: &Styles) {
         // The idea is:
         // - Use as big of a dialog box as needed (within the maximal draw loc)
-        //  - So the non-button ones are going to be smaller... probably whatever the
-        //    height of the text is.
+        //  - So the non-button ones are going to be smaller... probably
+        //    whatever the height of the text is.
         //  - Meanwhile for the button one, it'll likely be full height if it's
         //    "advanced" kill.
 
@@ -883,7 +887,8 @@ impl ProcessKillDialog {
         match &mut self.state {
             ProcessKillDialogState::NotEnabled => {}
             ProcessKillDialogState::Selecting(state) => {
-                // Draw a text box. If buttons are yes/no, fit it, otherwise, use max space.
+                // Draw a text box. If buttons are yes/no, fit it, otherwise,
+                // use max space.
                 Self::draw_selecting(f, draw_area, styles, state);
             }
             ProcessKillDialogState::Error {
