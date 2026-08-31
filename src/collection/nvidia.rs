@@ -84,7 +84,7 @@ fn get_active_pci_bus_ids() -> Vec<String> {
         return Vec::new();
     };
 
-    entries
+    let mut result: Vec<String> = entries
         .flatten()
         .filter_map(|entry| {
             let path = entry.path();
@@ -125,7 +125,10 @@ fn get_active_pci_bus_ids() -> Vec<String> {
                 None
             }
         })
-        .collect()
+        .collect();
+
+    result.sort_unstable();
+    result
 }
 
 /// Returns the GPU data from NVIDIA cards.
