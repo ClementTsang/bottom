@@ -20,6 +20,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## 0.15.0 - Unreleased
+
+### Bug Fixes
+
+- [#2225](https://github.com/ClementTsang/bottom/pull/2225): Fix waking up NVIDIA GPUs when getting stats on Linux.
+
 ## 0.14.9 - 2026-08-27
 
 ### Bug Fixes
