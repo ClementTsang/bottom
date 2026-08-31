@@ -171,7 +171,7 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
                 // The fallback behaviour (the old one) is to just list all nvml devices blindly.
                 // Note this has the risk of waking up sleeping devices.
                 let num_gpus = nvml.device_count().ok()?;
-                ((0..num_gpus).map(|i| nvml.device_by_index(i)).flatten(), num_gpus as usize)
+                ((0..num_gpus).flat_map(|i| nvml.device_by_index(i)), num_gpus as usize)
             }
         }
     };
