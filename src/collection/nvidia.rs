@@ -5,8 +5,8 @@ use nvml_wrapper::{
 };
 
 use crate::{
-    app::{filter::Filter, layout_manager::UsedWidgets},
-    collection::{memory::MemData, processes::Pid, temperature::TempSensorData},
+    app::filter::Filter,
+    collection::{DataCollector, memory::MemData, processes::Pid, temperature::TempSensorData},
     utils::int_hash::IntHashMap,
 };
 
@@ -130,9 +130,11 @@ fn get_active_pci_bus_ids() -> Vec<String> {
 
 /// Returns the GPU data from NVIDIA cards.
 #[inline]
-pub fn get_nvidia_gpu_data(
-    filter: &Option<Filter>, graph_filter: &Option<Filter>, widgets_to_harvest: &UsedWidgets,
-) -> Option<GpusData> {
+pub fn get_nvidia_gpu_data(collector: &DataCollector) -> Option<GpusData> {
+    let filter = &collector.filters.temp_filter;
+    let graph_filter = &collector.filters.temp_graph_filter;
+    let widgets_to_harvest = &collector.widgets_to_harvest;
+
     let Ok(nvml) = NVML_DATA.get_or_init(init_nvml) else {
         return None;
     };
