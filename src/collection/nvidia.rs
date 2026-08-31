@@ -1,5 +1,7 @@
 use std::{num::NonZeroU64, sync::OnceLock};
 
+#[cfg(target_os = "linux")]
+use nvml_wrapper::Device;
 use nvml_wrapper::{
     Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError,
 };
@@ -42,6 +44,62 @@ fn init_nvml() -> Result<Nvml, NvmlError> {
     }
 }
 
+/// Return whether the device (typically a GPU) is awake or not. This is useful for things like laptops that may
+/// have hybrid graphics (e.g. NVIDIA Optimus).
+///
+/// Note that it is possible this check fails; in this case it will return an [`NvmlError`].
+///
+/// ------
+///
+/// For Linux, we check things similarly to how it's done with other non-Nvidia devices already, by checking the
+/// `power_state` file in sysfs.
+///
+/// Note that if the associated device path somehow does not exist, we just assume it is awake for simplicity.
+///
+/// For more information, see:
+/// - <https://us.download.nvidia.com/XFree86/Linux-x86_64/525.89.02/README/dynamicpowermanagement.html>
+/// - <https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power_state>
+#[cfg(target_os = "linux")]
+#[inline]
+fn is_device_awake(device: &Device<'_>) -> Result<bool, NvmlError> {
+    use crate::collection::linux::utils::is_device_awake;
+    use std::path::PathBuf;
+
+    let pci_info = device.pci_info()?;
+
+    // The "0th" function is the GPU itself - from the NVIDIA power management docs
+    // (https://us.download.nvidia.com/XFree86/Linux-x86_64/525.89.02/README/dynamicpowermanagement.html):
+    // > The NVIDIA GPU may have one, two or four PCI functions:
+    // > - Function 0: VGA controller / 3D controller
+    // > - Function 1: Audio device
+    // > - Function 2: USB xHCI Host controller
+    // > - Function 3: USB Type-C UCSI controller
+    //
+    // We also know the "shape" of the path from aforementioned docs (ignore what it's trying to do):
+    // > For pre-Ampere notebooks, runtime D3 power management can be enabled for each PCI function using the following command.
+    // > echo auto > /sys/bus/pci/devices/<Domain>:<Bus>:<Device>.<Function>/power/control
+    // > For example:
+    // > echo auto > /sys/bus/pci/devices/0000:01:00.0/power/control
+    let device_path = PathBuf::from(format!(
+        "/sys/bus/pci/devices/{:04x}:{:02x}:{:02x}.0",
+        pci_info.domain, pci_info.bus, pci_info.device
+    ));
+
+    // Not going to even bother checking if the device path exists here, as
+    // `is_device_awake` kinda already does that for us.
+    Ok(is_device_awake(&device_path))
+}
+
+/// Return whether the device (typically a GPU) is awake or not. This is useful for things like laptops that may
+/// have hybrid graphics (e.g. NVIDIA Optimus).
+///
+/// Note that it is possible this check fails; in this case it will return an [`NvmlError`].
+#[cfg(not(target_os = "linux"))]
+#[inline]
+fn is_device_awake(_device: &Device<'_>) -> Result<bool, NvmlError> {
+    Ok(true)
+}
+
 /// Returns the GPU data from NVIDIA cards.
 #[inline]
 pub fn get_nvidia_vecs(
@@ -56,6 +114,11 @@ pub fn get_nvidia_vecs(
 
             for i in 0..num_gpu {
                 if let Ok(device) = nvml.device_by_index(i) {
+                    // Skip to avoid waking up the GPU. If we can't determine it, we just default to being awake.
+                    if !is_device_awake(&device).unwrap_or(true) {
+                        continue;
+                    }
+
                     if let Ok(name) = device.name() {
                         if widgets_to_harvest.use_mem
                             && let Ok(mem) = device.memory_info()
