@@ -190,6 +190,9 @@ pub struct DataCollector {
     gpu_pids: Option<Vec<IntHashMap<Pid, (u64, u32)>>>,
     #[cfg(feature = "gpu")]
     gpus_total_mem: Option<u64>,
+    #[cfg(all(target_os = "linux", feature = "gpu", feature = "nvidia"))]
+    nvidia_gpu_list_cache: Option<(Vec<String>, Instant)>,
+
     #[cfg(feature = "zfs")]
     free_arc_mem: bool,
 
@@ -238,6 +241,8 @@ impl DataCollector {
             gpu_pids: None,
             #[cfg(feature = "gpu")]
             gpus_total_mem: None,
+            #[cfg(all(target_os = "linux", feature = "gpu", feature = "nvidia"))]
+            nvidia_gpu_list_cache: None,
             #[cfg(feature = "zfs")]
             free_arc_mem: false,
             last_list_collection_time: last_collection_time,

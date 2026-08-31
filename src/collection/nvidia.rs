@@ -139,7 +139,7 @@ fn get_active_pci_bus_ids() -> Vec<String> {
 
 /// Returns the GPU data from NVIDIA cards.
 #[inline]
-pub fn get_nvidia_gpu_data(collector: &DataCollector) -> Option<GpusData> {
+pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
     let filter = &collector.filters.temp_filter;
     let graph_filter = &collector.filters.temp_graph_filter;
     let widgets_to_harvest = &collector.widgets_to_harvest;
@@ -151,11 +151,21 @@ pub fn get_nvidia_gpu_data(collector: &DataCollector) -> Option<GpusData> {
     let (gpu_iter, max_num_gpus): (_, usize) = {
         cfg_select! {
             target_os = "linux" => {
-                // TODO: Cache this, maybe every 10s? Want to avoid calling this too often as it may be expensive. Could also cache w/ number of entries to auto-bust?
-                let pci_bus_ids = get_active_pci_bus_ids();
-                let num_gpus = pci_bus_ids.len();
+                use itertools::Either;
 
-                (pci_bus_ids.into_iter().filter_map(|id| nvml.device_by_pci_bus_id(id).ok()), num_gpus)
+                // Refresh every ~10 seconds.
+                if let Some((cached_list, cached_time)) = &collector.nvidia_gpu_list_cache && cached_time.elapsed().as_secs() < 10 {
+                    let devices = Either::Left(cached_list.iter().filter_map(|id| nvml.device_by_pci_bus_id(id.as_str()).ok()));
+                    (devices, cached_list.len())
+                }
+                else {
+                    let pci_bus_ids = get_active_pci_bus_ids();
+                    let num_gpus = pci_bus_ids.len();
+                    collector.nvidia_gpu_list_cache = Some((pci_bus_ids.clone(), std::time::Instant::now()));
+
+                    let devices = Either::Right(pci_bus_ids.into_iter().filter_map(|id| nvml.device_by_pci_bus_id(id).ok()));
+                    (devices, num_gpus)
+                }
             },
             _ => {
                 // The fallback behaviour (the old one) is to just list all nvml devices blindly.
