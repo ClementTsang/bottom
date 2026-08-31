@@ -1,9 +1,8 @@
 use std::{num::NonZeroU64, sync::OnceLock};
 
-#[cfg(target_os = "linux")]
-use nvml_wrapper::Device;
 use nvml_wrapper::{
-    Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory, error::NvmlError,
+    Device, Nvml, enum_wrappers::device::TemperatureSensor, enums::device::UsedGpuMemory,
+    error::NvmlError,
 };
 
 use crate::{
@@ -52,16 +51,15 @@ fn init_nvml() -> Result<Nvml, NvmlError> {
 /// ------
 ///
 /// For Linux, we check things similarly to how it's done with other non-Nvidia devices already, by checking the
-/// `power_state` file in sysfs.
-///
-/// Note that if the associated device path somehow does not exist, we just assume it is awake for simplicity.
+/// `power_state` file in sysfs. Note that if the associated device path somehow does not exist, we just assume it
+/// is awake for simplicity.
 ///
 /// For more information, see:
 /// - <https://us.download.nvidia.com/XFree86/Linux-x86_64/525.89.02/README/dynamicpowermanagement.html>
 /// - <https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power_state>
 #[cfg(target_os = "linux")]
 #[inline]
-fn is_device_awake(device: &Device<'_>) -> Result<bool, NvmlError> {
+fn is_nv_device_awake(device: &Device<'_>) -> Result<bool, NvmlError> {
     use crate::collection::linux::utils::is_device_awake;
     use std::path::PathBuf;
 
@@ -93,10 +91,11 @@ fn is_device_awake(device: &Device<'_>) -> Result<bool, NvmlError> {
 /// Return whether the device (typically a GPU) is awake or not. This is useful for things like laptops that may
 /// have hybrid graphics (e.g. NVIDIA Optimus).
 ///
-/// Note that it is possible this check fails; in this case it will return an [`NvmlError`].
+/// While some variants of this function can fail, for this catch-all implementation, it will always succeed and
+/// return `Ok(true)`.
 #[cfg(not(target_os = "linux"))]
 #[inline]
-fn is_device_awake(_device: &Device<'_>) -> Result<bool, NvmlError> {
+fn is_nv_device_awake(_device: &Device<'_>) -> Result<bool, NvmlError> {
     Ok(true)
 }
 
@@ -115,7 +114,7 @@ pub fn get_nvidia_vecs(
             for i in 0..num_gpu {
                 if let Ok(device) = nvml.device_by_index(i) {
                     // Skip to avoid waking up the GPU. If we can't determine it, we just default to being awake.
-                    if !is_device_awake(&device).unwrap_or(true) {
+                    if !is_nv_device_awake(&device).unwrap_or(true) {
                         continue;
                     }
 
