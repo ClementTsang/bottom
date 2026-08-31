@@ -120,7 +120,13 @@ fn get_active_pci_bus_ids() -> Vec<String> {
             // > For example:
             // > echo auto > /sys/bus/pci/devices/0000:01:00.0/power/control
             if is_awake {
-                entry.file_name().into_string().ok()
+                // Note that NVML expects an eight-digit bus ID at the front, so we prepend the current device name
+                // with `0000`.
+                entry
+                    .file_name()
+                    .into_string()
+                    .ok()
+                    .map(|name| concat_string::concat_string!("0000:", name))
             } else {
                 None
             }
