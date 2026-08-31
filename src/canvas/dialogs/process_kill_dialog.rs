@@ -269,7 +269,11 @@ impl ProcessKillDialog {
 
                                 for pid in pids {
                                     if let Err(err) = process_killer::kill_process_given_pid(pid) {
-                                        self.state = ProcessKillDialogState::Error { process_name, pid: Some(pid), err: err.to_string() };
+                                        self.state = ProcessKillDialogState::Error {
+                                            process_name,
+                                            pid: Some(pid),
+                                            err: err.to_string(),
+                                        };
                                         break;
                                     }
                                 }
@@ -279,15 +283,26 @@ impl ProcessKillDialog {
 
                                 for pid in pids {
                                     // Send a SIGTERM by default.
-                                    if let Err(err) = process_killer::kill_process_given_pid(pid, DEFAULT_KILL_SIGNAL) {
-                                        self.state = ProcessKillDialogState::Error { process_name, pid: Some(pid), err: err.to_string() };
+                                    if let Err(err) = process_killer::kill_process_given_pid(
+                                        pid,
+                                        DEFAULT_KILL_SIGNAL,
+                                    ) {
+                                        self.state = ProcessKillDialogState::Error {
+                                            process_name,
+                                            pid: Some(pid),
+                                            err: err.to_string(),
+                                        };
                                         break;
                                     }
                                 }
                             }
                             _ => {
-                                self.state = ProcessKillDialogState::Error { process_name, pid: None, err: "Killing processes is not supported on this platform.".into() };
-
+                                self.state = ProcessKillDialogState::Error {
+                                    process_name,
+                                    pid: None,
+                                    err: "Killing processes is not supported on this platform."
+                                        .into(),
+                                };
                             }
                         }
                     }
@@ -582,11 +597,16 @@ impl ProcessKillDialog {
         } else {
             cfg_select! {
                 any(target_os = "linux", target_os = "macos", target_os = "freebsd") => {
-                    ButtonState::Signals { state: ListState::default().with_selected(Some(DEFAULT_KILL_SIGNAL)), last_button_draw_area: Rect::default() }
+                    ButtonState::Signals {
+                        state: ListState::default().with_selected(Some(DEFAULT_KILL_SIGNAL)),
+                        last_button_draw_area: Rect::default(),
+                    }
                 }
-                _ => {
-                    ButtonState::Simple { yes: false, last_yes_button_area: Rect::default(), last_no_button_area: Rect::default()}
-                }
+                _ => ButtonState::Simple {
+                    yes: false,
+                    last_yes_button_area: Rect::default(),
+                    last_no_button_area: Rect::default(),
+                },
             }
         };
 

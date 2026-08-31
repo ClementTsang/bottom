@@ -14,15 +14,16 @@ pub fn get_cpu_data_list(collector: &DataCollector) -> CollectionResult<CpuHarve
             target_os = "linux" => {
                 cpus.push(CpuData {
                     data_type: CpuDataType::Avg,
-                    usage: collector.cgroup_cpu_data.avg_cpu_percent.unwrap_or_else(|| sys.global_cpu_usage()),
+                    usage: collector
+                        .cgroup_cpu_data
+                        .avg_cpu_percent
+                        .unwrap_or_else(|| sys.global_cpu_usage()),
                 });
             }
-            _ => {
-                cpus.push(CpuData {
-                    data_type: CpuDataType::Avg,
-                    usage: sys.global_cpu_usage(),
-                })
-            }
+            _ => cpus.push(CpuData {
+                data_type: CpuDataType::Avg,
+                usage: sys.global_cpu_usage(),
+            }),
         }
     }
 
