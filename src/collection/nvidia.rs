@@ -126,7 +126,7 @@ fn get_active_pci_bus_ids() -> Vec<String> {
                     .file_name()
                     .into_string()
                     .ok()
-                    .map(|name| concat_string::concat_string!("0000:", name))
+                    .map(|name| concat_string::concat_string!("0000", name))
             } else {
                 None
             }
