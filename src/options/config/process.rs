@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::widgets::ProcColumn;
+use crate::{canvas::components::data_table::SortOrder, widgets::ProcColumn};
 
 /// Process configuration fields.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -8,15 +8,17 @@ use crate::widgets::ProcColumn;
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct ProcessesConfig {
     /// A list of process widget columns.
-    ///
-    // TODO: make this more composable(?) in the future, we might need to
-    // rethink how it's done for custom widgets
     #[serde(default)]
-    pub columns: Vec<ProcColumn>,
+    pub columns: Vec<ProcColumn>, // TODO: make this more composable(?) in the future, we might need to rethink how it's done for custom widgets
 
     /// The default sort column.
     #[serde(default)]
     pub default_sort: Option<ProcColumn>,
+
+    /// The default sort order. If not set, defaults to column-specific defaults
+    /// (e.g. CPU usage is descending, process names are ascending).
+    #[serde(default)]
+    pub(crate) sort_order: Option<SortOrder>,
 
     /// Whether to get process child threads.
     pub get_threads: Option<bool>,
@@ -177,5 +179,23 @@ mod test {
             to_columns(generated.columns),
             vec![ProcWidgetColumn::WritePerSecond; 3]
         );
+    }
+
+    /// Test that process enum variants that are advertised in the schema are valid.
+    #[cfg(feature = "generate_schema")]
+    #[test]
+    fn ensure_process_column_schema_is_accepted() {
+        use strum::VariantArray;
+
+        use crate::options::{Config, ProcColumn};
+
+        for column in ProcColumn::VARIANTS {
+            for &name in column.get_schema_names() {
+                let config = format!("[processes]\ncolumns = [\"{name}\"]\n");
+                toml_edit::de::from_str::<Config>(&config).unwrap_or_else(|e| {
+                    panic!("schema name {name:?} was rejected:\n{e}\nconfig was:\n{config}")
+                });
+            }
+        }
     }
 }

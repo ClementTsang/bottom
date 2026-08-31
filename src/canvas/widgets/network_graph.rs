@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     text::Text,

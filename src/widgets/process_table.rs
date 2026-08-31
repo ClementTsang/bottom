@@ -16,7 +16,7 @@ use sort_table::SortTableColumn;
 use crate::{
     app::{
         AppConfigFields, AppSearchState,
-        data::{ProcessData, StoredData},
+        data::{InnerData, ProcessData},
     },
     canvas::components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
@@ -175,6 +175,7 @@ pub struct ProcTableConfig {
     pub show_memory_as_values: bool,
     pub is_command: bool,
     pub default_sort: Option<ProcColumn>,
+    pub sort_order: Option<SortOrder>,
 }
 
 /// A hacky workaround for now.
@@ -417,19 +418,25 @@ impl ProcWidgetState {
                 .map(|index| (index, columns[index].default_order))
         });
 
-        let (default_sort_index, default_sort_order) = if let Some(pair) = configured_default_sort {
-            pair
-        } else if matches!(mode, ProcWidgetMode::Tree { .. }) {
-            if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::PidOrCount) {
+        let (default_sort_index, mut default_sort_order) =
+            if let Some(pair) = configured_default_sort {
+                pair
+            } else if matches!(mode, ProcWidgetMode::Tree { .. }) {
+                if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::PidOrCount) {
+                    (index, columns[index].default_order)
+                } else {
+                    (0, columns[0].default_order)
+                }
+            } else if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::Cpu) {
                 (index, columns[index].default_order)
             } else {
                 (0, columns[0].default_order)
-            }
-        } else if let Some(index) = column_mapping.get_index_of(&ProcWidgetColumn::Cpu) {
-            (index, columns[index].default_order)
-        } else {
-            (0, columns[0].default_order)
-        };
+            };
+
+        // If configured, override it with this.
+        if let Some(order) = table_config.sort_order {
+            default_sort_order = order;
+        }
 
         let sort_table = Self::new_sort_table(config, colours);
         let table = Self::new_process_table(
@@ -495,7 +502,7 @@ impl ProcWidgetState {
     /// This function *only* updates the displayed process data. If there is a
     /// need to update the actual *stored* data, call it before this
     /// function.
-    pub fn set_table_data(&mut self, stored_data: &StoredData) {
+    pub fn set_table_data(&mut self, stored_data: &InnerData) {
         let data = match &self.mode {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
                 self.get_normal_data(&stored_data.process_data.process_harvest)
@@ -507,7 +514,7 @@ impl ProcWidgetState {
     }
 
     fn get_tree_data(
-        &self, collapsed: &TreeCollapsed, stored_data: &StoredData,
+        &self, collapsed: &TreeCollapsed, stored_data: &InnerData,
     ) -> Vec<ProcWidgetData> {
         const BRANCH_END: char = '└';
         const BRANCH_SPLIT: char = '├';
@@ -881,38 +888,38 @@ impl ProcWidgetState {
     }
 
     pub fn toggle_mem_percentage(&mut self) {
-        if let Some(index) = self.column_mapping.get_index_of(&ProcWidgetColumn::Mem) {
-            if let Some(mem) = self.get_mut_proc_col(index) {
-                match mem {
-                    ProcColumn::MemValue => {
-                        *mem = ProcColumn::MemPercent;
-                    }
-                    ProcColumn::MemPercent => {
-                        *mem = ProcColumn::MemValue;
-                    }
-                    _ => unreachable!(),
+        if let Some(index) = self.column_mapping.get_index_of(&ProcWidgetColumn::Mem)
+            && let Some(mem) = self.get_mut_proc_col(index)
+        {
+            match mem {
+                ProcColumn::MemValue => {
+                    *mem = ProcColumn::MemPercent;
                 }
-
-                self.sort_table.set_data(self.column_text());
-                self.force_data_update();
+                ProcColumn::MemPercent => {
+                    *mem = ProcColumn::MemValue;
+                }
+                _ => unreachable!(),
             }
+
+            self.sort_table.set_data(self.column_text());
+            self.force_data_update();
         }
         #[cfg(feature = "gpu")]
-        if let Some(index) = self.column_mapping.get_index_of(&ProcWidgetColumn::GpuMem) {
-            if let Some(mem) = self.get_mut_proc_col(index) {
-                match mem {
-                    ProcColumn::GpuMemValue => {
-                        *mem = ProcColumn::GpuMemPercent;
-                    }
-                    ProcColumn::GpuMemPercent => {
-                        *mem = ProcColumn::GpuMemValue;
-                    }
-                    _ => unreachable!(),
+        if let Some(index) = self.column_mapping.get_index_of(&ProcWidgetColumn::GpuMem)
+            && let Some(mem) = self.get_mut_proc_col(index)
+        {
+            match mem {
+                ProcColumn::GpuMemValue => {
+                    *mem = ProcColumn::GpuMemPercent;
                 }
-
-                self.sort_table.set_data(self.column_text());
-                self.force_data_update();
+                ProcColumn::GpuMemPercent => {
+                    *mem = ProcColumn::GpuMemValue;
+                }
+                _ => unreachable!(),
             }
+
+            self.sort_table.set_data(self.column_text());
+            self.force_data_update();
         }
     }
 
@@ -938,24 +945,24 @@ impl ProcWidgetState {
     /// Marks the selected column as hidden, and automatically resets the
     /// selected column to the default sort index and order.
     fn hide_column(&mut self, column: ProcWidgetColumn) {
-        if let Some(index) = self.column_mapping.get_index_of(&column) {
-            if let Some(col) = self.table.columns.get_mut(index) {
-                col.set_hidden(true);
+        if let Some(index) = self.column_mapping.get_index_of(&column)
+            && let Some(col) = self.table.columns.get_mut(index)
+        {
+            col.set_hidden(true);
 
-                if self.table.sort_index() == index {
-                    self.table.set_sort_index(self.default_sort_index);
-                    self.table.set_order(self.default_sort_order);
-                }
+            if self.table.sort_index() == index {
+                self.table.set_sort_index(self.default_sort_index);
+                self.table.set_order(self.default_sort_order);
             }
         }
     }
 
     /// Marks the selected column as shown.
     fn show_column(&mut self, column: ProcWidgetColumn) {
-        if let Some(index) = self.column_mapping.get_index_of(&column) {
-            if let Some(col) = self.table.columns.get_mut(index) {
-                col.set_hidden(false);
-            }
+        if let Some(index) = self.column_mapping.get_index_of(&column)
+            && let Some(col) = self.table.columns.get_mut(index)
+        {
+            col.set_hidden(false);
         }
     }
 
@@ -969,29 +976,29 @@ impl ProcWidgetState {
     }
 
     pub fn collapse_current_tree_branch_entry(&mut self) {
-        if let ProcWidgetMode::Tree(collapsed) = &mut self.mode {
-            if let Some(process) = self.table.current_item() {
-                collapsed.collapse(process.pid);
-                self.force_data_update();
-            }
+        if let ProcWidgetMode::Tree(collapsed) = &mut self.mode
+            && let Some(process) = self.table.current_item()
+        {
+            collapsed.collapse(process.pid);
+            self.force_data_update();
         }
     }
 
     pub fn expand_current_tree_branch_entry(&mut self) {
-        if let ProcWidgetMode::Tree(collapsed) = &mut self.mode {
-            if let Some(process) = self.table.current_item() {
-                collapsed.expand(process.pid);
-                self.force_data_update();
-            }
+        if let ProcWidgetMode::Tree(collapsed) = &mut self.mode
+            && let Some(process) = self.table.current_item()
+        {
+            collapsed.expand(process.pid);
+            self.force_data_update();
         }
     }
 
     pub fn toggle_current_tree_branch_entry(&mut self) {
-        if let ProcWidgetMode::Tree(collapsed) = &mut self.mode {
-            if let Some(process) = self.table.current_item() {
-                collapsed.toggle(process.pid);
-                self.force_data_update();
-            }
+        if let ProcWidgetMode::Tree(collapsed) = &mut self.mode
+            && let Some(process) = self.table.current_item()
+        {
+            collapsed.toggle(process.pid);
+            self.force_data_update();
         }
     }
 
@@ -999,30 +1006,29 @@ impl ProcWidgetState {
         if let Some(index) = self
             .column_mapping
             .get_index_of(&ProcWidgetColumn::ProcNameOrCommand)
+            && let Some(col) = self.table.columns.get_mut(index)
         {
-            if let Some(col) = self.table.columns.get_mut(index) {
-                let inner = col.inner_mut();
-                match inner {
-                    ProcColumn::Name => {
-                        *inner = ProcColumn::Command;
-                        if let ColumnWidthBounds::Soft { max_percentage, .. } = col.bounds_mut() {
-                            *max_percentage = Some(0.5);
-                        }
+            let inner = col.inner_mut();
+            match inner {
+                ProcColumn::Name => {
+                    *inner = ProcColumn::Command;
+                    if let ColumnWidthBounds::Soft { max_percentage, .. } = col.bounds_mut() {
+                        *max_percentage = Some(0.5);
                     }
-                    ProcColumn::Command => {
-                        *inner = ProcColumn::Name;
-                        if let ColumnWidthBounds::Soft { max_percentage, .. } = col.bounds_mut() {
-                            *max_percentage = match self.mode {
-                                ProcWidgetMode::Tree { .. } => Some(0.5),
-                                ProcWidgetMode::Grouped | ProcWidgetMode::Normal => Some(0.3),
-                            };
-                        }
-                    }
-                    _ => unreachable!(),
                 }
-                self.sort_table.set_data(self.column_text());
-                self.force_rerender_and_update();
+                ProcColumn::Command => {
+                    *inner = ProcColumn::Name;
+                    if let ColumnWidthBounds::Soft { max_percentage, .. } = col.bounds_mut() {
+                        *max_percentage = match self.mode {
+                            ProcWidgetMode::Tree { .. } => Some(0.5),
+                            ProcWidgetMode::Grouped | ProcWidgetMode::Normal => Some(0.3),
+                        };
+                    }
+                }
+                _ => unreachable!(),
             }
+            self.sort_table.set_data(self.column_text());
+            self.force_rerender_and_update();
         }
     }
 
@@ -1037,38 +1043,36 @@ impl ProcWidgetState {
     /// Otherwise, if count is disabled, then if the columns exist, the User and
     /// State columns should be re-enabled, and the mode switched to
     /// [`ProcWidgetMode::Normal`].
-    pub fn toggle_tab(&mut self) {
-        if !matches!(self.mode, ProcWidgetMode::Tree { .. }) {
-            if let Some(index) = self
+    pub(crate) fn toggle_tab(&mut self) {
+        if !matches!(self.mode, ProcWidgetMode::Tree { .. })
+            && let Some(index) = self
                 .column_mapping
                 .get_index_of(&ProcWidgetColumn::PidOrCount)
-            {
-                if let Some(sort_col) = self.table.columns.get_mut(index) {
-                    let col = sort_col.inner_mut();
-                    match col {
-                        ProcColumn::Pid => {
-                            *col = ProcColumn::Count;
-                            sort_col.default_order = SortOrder::Descending;
+            && let Some(sort_col) = self.table.columns.get_mut(index)
+        {
+            let col = sort_col.inner_mut();
+            match col {
+                ProcColumn::Pid => {
+                    *col = ProcColumn::Count;
+                    sort_col.default_order = SortOrder::Descending;
 
-                            self.hide_column(ProcWidgetColumn::User);
-                            self.hide_column(ProcWidgetColumn::State);
-                            self.mode = ProcWidgetMode::Grouped;
-                        }
-                        ProcColumn::Count => {
-                            *col = ProcColumn::Pid;
-                            sort_col.default_order = SortOrder::Ascending;
-
-                            self.show_column(ProcWidgetColumn::User);
-                            self.show_column(ProcWidgetColumn::State);
-                            self.mode = ProcWidgetMode::Normal;
-                        }
-                        _ => unreachable!(),
-                    }
-
-                    self.sort_table.set_data(self.column_text());
-                    self.force_rerender_and_update();
+                    self.hide_column(ProcWidgetColumn::User);
+                    self.hide_column(ProcWidgetColumn::State);
+                    self.mode = ProcWidgetMode::Grouped;
                 }
+                ProcColumn::Count => {
+                    *col = ProcColumn::Pid;
+                    sort_col.default_order = SortOrder::Ascending;
+
+                    self.show_column(ProcWidgetColumn::User);
+                    self.show_column(ProcWidgetColumn::State);
+                    self.mode = ProcWidgetMode::Normal;
+                }
+                _ => unreachable!(),
             }
+
+            self.sort_table.set_data(self.column_text());
+            self.force_rerender_and_update();
         }
     }
 
@@ -1126,7 +1130,6 @@ impl ProcWidgetState {
     /// sort table if possible, then closes the sort table.
     pub(crate) fn use_sort_table_value(&mut self) {
         self.table.set_sort_index(self.sort_table.current_index());
-
         self.is_sort_open = false;
         self.force_rerender_and_update();
     }
@@ -1775,10 +1778,8 @@ mod test {
         tree_proc_data.process_harvest.insert(1, process_harvest);
         tree_proc_data.process_harvest.insert(2, k_process_harvest);
         tree_proc_data.orphan_pids = vec![1, 2];
-        let tree_stored_data = StoredData {
-            process_data: tree_proc_data,
-            ..Default::default()
-        };
+        let mut tree_stored_data = InnerData::default();
+        tree_stored_data.process_data = tree_proc_data;
         let default_tree_results = state
             .get_tree_data(&tree_collapsed, &tree_stored_data)
             .len();

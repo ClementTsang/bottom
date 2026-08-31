@@ -1,14 +1,22 @@
-# Temperature Table
+# Temperature Table Configuration
 
 The temperature table widget is configured under `[temperature]`.
 
-## Default Sort Order
+## Default Sort Column
 
-You can customize the default sort order (by default, it sorts by temperature sensor name). For example, to sort by temperature:
+You can customize the default sort column (by default, it sorts by temperature sensor name in ascending order). For example, to sort by temperature:
 
 ```toml
 [temperature]
 default_sort = "Temp"
+```
+
+You can also set the sort order by changing `temperature.sort_order` with `"Ascending"` or `"Descending"`. Defaults to
+`"Ascending"`:
+
+```toml
+[temperature]
+sort_order = "Ascending"
 ```
 
 ## Filtering Entries

@@ -62,24 +62,24 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
 
     if let Ok(read_dir) = Path::new("/sys/devices/platform").read_dir() {
         for entry in read_dir.flatten() {
-            if entry.file_name().to_string_lossy().starts_with("coretemp.") {
-                if let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
-                    for entry in read_dir.flatten() {
-                        let path = entry.path();
+            if entry.file_name().to_string_lossy().starts_with("coretemp.")
+                && let Ok(read_dir) = entry.path().join("hwmon").read_dir()
+            {
+                for entry in read_dir.flatten() {
+                    let path = entry.path();
 
-                        if path.join("temp1_input").exists() {
-                            // It's possible that there are dupes (represented by symlinks) - the
-                            // easy way is to just substitute the parent
-                            // directory and check if the hwmon
-                            // variant exists already in a set.
-                            //
-                            // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
-                            if let Some(child) = path.file_name() {
-                                let to_check_path = Path::new("/sys/class/hwmon").join(child);
+                    if path.join("temp1_input").exists() {
+                        // It's possible that there are dupes (represented by symlinks) - the
+                        // easy way is to just substitute the parent
+                        // directory and check if the hwmon
+                        // variant exists already in a set.
+                        //
+                        // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
+                        if let Some(child) = path.file_name() {
+                            let to_check_path = Path::new("/sys/class/hwmon").join(child);
 
-                                if !dirs.contains(&to_check_path) {
-                                    dirs.insert(path);
-                                }
+                            if !dirs.contains(&to_check_path) {
+                                dirs.insert(path);
                             }
                         }
                     }
@@ -99,10 +99,10 @@ fn read_to_string_lossy<P: AsRef<Path>>(path: P) -> Option<String> {
 }
 
 #[inline]
-fn humanize_name(name: String, sensor_name: Option<&String>) -> String {
+fn humanize_name(name: &str, sensor_name: Option<&String>) -> String {
     match sensor_name {
         Some(ty) => format!("{name} ({ty})"),
-        None => name,
+        None => name.to_string(),
     }
 }
 
@@ -271,10 +271,7 @@ fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) ->
                                 cards.flatten().find_map(|card| {
                                     card.file_name().to_str().and_then(|name| {
                                         name.starts_with("card").then(|| {
-                                            humanize_name(
-                                                name.trim().to_string(),
-                                                sensor_name.as_ref(),
-                                            )
+                                            humanize_name(name.trim(), sensor_name.as_ref())
                                         })
                                     })
                                 })
@@ -289,10 +286,7 @@ fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) ->
                                 cards.flatten().find_map(|card| {
                                     card.file_name().to_str().and_then(|name| {
                                         name.starts_with("card").then(|| {
-                                            humanize_name(
-                                                name.trim().to_string(),
-                                                sensor_name.as_ref(),
-                                            )
+                                            humanize_name(name.trim(), sensor_name.as_ref())
                                         })
                                     })
                                 })
@@ -307,16 +301,15 @@ fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) ->
                         // else. If the first character is alphabetic, it's an actual name like
                         // k10temp or nvme0, not a PCI bus.
                         fs::read_link(device).ok().and_then(|link| {
-                            let link = link
-                                .file_name()
-                                .and_then(|f| f.to_str())
-                                .map(|s| s.trim().to_owned());
+                            let link = link.file_name().and_then(|f| f.to_str()).map(|s| s.trim());
 
-                            match link {
-                                Some(link) if link.as_bytes()[0].is_ascii_alphabetic() => {
-                                    Some(humanize_name(link, sensor_name.as_ref()))
-                                }
-                                _ => None,
+                            if let Some(link) = &link
+                                && let Some(first_char) = link.as_bytes().first()
+                                && first_char.is_ascii_alphabetic()
+                            {
+                                Some(humanize_name(link, sensor_name.as_ref()))
+                            } else {
+                                None
                             }
                         })
                     }
@@ -326,15 +319,14 @@ fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) ->
 
                 // TODO: It's possible we may want to move the filter check further up to avoid
                 // probing hwmon if not needed?
-                if Filter::optional_should_keep(filter, &name)
-                    || Filter::optional_should_keep(graph_filter, &name)
+                if (Filter::optional_should_keep(filter, &name)
+                    || Filter::optional_should_keep(graph_filter, &name))
+                    && let Ok(temp_celsius) = parse_temp(&temp_path)
                 {
-                    if let Ok(temp_celsius) = parse_temp(&temp_path) {
-                        temperatures.push(TempSensorData {
-                            name,
-                            temperature: Some(temp_celsius),
-                        });
-                    }
+                    temperatures.push(TempSensorData {
+                        name,
+                        temperature: Some(temp_celsius),
+                    });
                 }
             }
         }

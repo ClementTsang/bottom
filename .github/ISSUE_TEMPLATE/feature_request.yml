@@ -1,6 +1,6 @@
 name: Feature request
 description: Got a good idea that hasn't already been suggested?  Mention it here!
-labels: ["feature"]
+labels: [ "feature" ]
 body:
   - type: checkboxes
     id: acknowledgements
@@ -8,10 +8,16 @@ body:
       label: Checklist
       options:
         - label: >
-            I've looked through [the documentation](https://bottom.pages.dev/nightly/) and 
-            [existing open issues](https://github.com/ClementTsang/bottom/issues?q=is%3Aopen+is%3Aissue+label%3Afeature)
+            I've looked through [the
+            documentation](https://bottom.pages.dev/nightly/) and  [existing
+            open
+            issues](https://github.com/ClementTsang/bottom/issues?q=is%3Aopen+is%3Aissue+label%3Afeature)
             for similar feature requests.
           required: true
+        - label: >
+            I've read through the [AI
+            policy](https://github.com/ClementTsang/bottom/blob/main/AI_POLICY.md)
+            and am following it when reporting this feature request.
 
   - type: textarea
     id: description
@@ -20,10 +26,12 @@ body:
     attributes:
       label: Describe the feature request
       description: >
-        Please describe what behaviour you are looking for, the motivation for it, and use cases where this feature
-        would be helpful to both you and others. Try to be clear and concise.
+        Please describe what behaviour you are looking for, the motivation for
+        it, and use cases where this feature would be helpful to both you and
+        others. Try to be clear and concise.
 
-        If you have any ideas to implement this feature as well, feel free to write them down here too.
+        If you have any ideas to implement this feature as well, feel free to
+        write them down here too.
       placeholder: |
         Example:
         It would be nice to support FreeBSD, as I and others often use similar tools on my FreeBSD-based system.

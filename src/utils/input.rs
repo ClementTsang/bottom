@@ -113,11 +113,11 @@ impl InputFieldState {
 
                         let mut index = 0;
                         for i in 0..(cursor_index + 1) {
-                            if let Some(r) = self.size_mappings.get(&i) {
-                                if r.start + available_width >= cursor_range.end {
-                                    index = i;
-                                    break;
-                                }
+                            if let Some(r) = self.size_mappings.get(&i)
+                                && r.start + available_width >= cursor_range.end
+                            {
+                                index = i;
+                                break;
                             }
                         }
 
@@ -130,11 +130,11 @@ impl InputFieldState {
                     if cursor_range.start < start_range.end {
                         let mut index = 0;
                         for i in cursor_index..(self.current_query.len()) {
-                            if let Some(r) = self.size_mappings.get(&i) {
-                                if r.start + available_width >= cursor_range.end {
-                                    index = i;
-                                    break;
-                                }
+                            if let Some(r) = self.size_mappings.get(&i)
+                                && r.start + available_width >= cursor_range.end
+                            {
+                                index = i;
+                                break;
                             }
                         }
                         index

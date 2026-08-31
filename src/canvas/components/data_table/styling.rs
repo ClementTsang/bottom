@@ -1,4 +1,4 @@
-use tui::{style::Style, widgets::BorderType};
+use ratatui::{style::Style, widgets::BorderType};
 
 use crate::options::config::style::Styles;
 

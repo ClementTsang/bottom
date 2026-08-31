@@ -120,7 +120,7 @@ impl<H: ColumnHeader> DataTableColumn<H> for Column<H> {
     }
 
     fn header(&self) -> Cow<'static, str> {
-        self.inner.text()
+        self.inner.header()
     }
 }
 
@@ -257,5 +257,33 @@ where
         }
 
         calculated_widths
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    struct TestInnerColumn;
+
+    impl ColumnHeader for TestInnerColumn {
+        fn text(&self) -> Cow<'static, str> {
+            "text".into()
+        }
+
+        fn header(&self) -> Cow<'static, str> {
+            "header(h)".into()
+        }
+    }
+
+    /// Ensure that the [`DataTableColumn`] implementation for [`Column`] calls the right method.
+    /// Yes, this is a somewhat meaningless test but it may catch a regression if this happens again in the future
+    /// during a refactor.
+    ///
+    /// See <https://github.com/ClementTsang/bottom/issues/2159> for details of the issue.
+    #[test]
+    fn column_header_impl_uses_right_function() {
+        let column = Column::new(TestInnerColumn);
+        assert_eq!(column.header(), TestInnerColumn.header());
     }
 }

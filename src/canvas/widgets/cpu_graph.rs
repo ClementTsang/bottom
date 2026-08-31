@@ -1,10 +1,10 @@
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
 };
 
 use crate::{
-    app::{App, data::StoredData, layout_manager::WidgetDirection},
+    app::{App, data::InnerData, layout_manager::WidgetDirection},
     canvas::{
         Painter,
         components::{
@@ -42,12 +42,12 @@ impl Painter {
             }
 
             // Update draw loc in widget map
-            if app_state.should_get_widget_bounds() {
-                if let Some(bottom_widget) = app_state.widget_map.get_mut(&widget_id) {
-                    bottom_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
-                    bottom_widget.bottom_right_corner =
-                        Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
-                }
+            if app_state.should_get_widget_bounds()
+                && let Some(bottom_widget) = app_state.widget_map.get_mut(&widget_id)
+            {
+                bottom_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+                bottom_widget.bottom_right_corner =
+                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
             }
         } else {
             let graph_width = draw_loc.width - legend_width;
@@ -118,7 +118,7 @@ impl Painter {
     }
 
     fn generate_points<'a>(
-        &self, cpu_widget_state: &'a CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
+        &self, cpu_widget_state: &'a CpuWidgetState, data: &'a InnerData, show_avg_cpu: bool,
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
         let current_scroll_position = cpu_widget_state.table.state.current_index;

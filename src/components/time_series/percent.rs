@@ -1,6 +1,6 @@
 use std::{borrow::Cow, time::Instant};
 
-use tui::{Frame, layout::Rect};
+use ratatui::{Frame, layout::Rect};
 
 use super::{
     AxisBound, ChartScaling, GraphData, GraphDrawCtx, TimeGraph, TimeseriesConfig, TimeseriesState,

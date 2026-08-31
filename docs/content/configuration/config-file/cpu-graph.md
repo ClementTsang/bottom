@@ -1,4 +1,4 @@
-# CPU
+# CPU Configuration
 
 If you want to change some of the default behaviour of the CPU graph widget, you can configure things under the `[cpu]` section.
 

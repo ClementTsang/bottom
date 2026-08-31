@@ -32,7 +32,7 @@ jobs:
         uses: ClementTsang/skip-duplicate-actions@41b0a75f656d455934ffa6a46b779d8d996ac47c
         with:
           skip_after_successful_duplicate: "false"
-          paths: '["tests/**", "src/**", ".github/workflows/coverage.yml", ".github/ci", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
+          paths: '["tests/**", "src/**", ".github/actions/**", ".github/ci/**", ".github/workflows/coverage.yml", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
           do_not_skip: '["workflow_dispatch", "push"]'
 
   coverage:
@@ -50,6 +50,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Read Rust version
         shell: bash
@@ -64,7 +66,7 @@ jobs:
           toolchain: ${{ env.RUST_VERSION }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # 2.9.1
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # 2.9.2
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
@@ -73,7 +75,7 @@ jobs:
       - name: Install cargo-llvm-cov
         run: |
           rustup component add llvm-tools-preview
-          cargo install cargo-llvm-cov --version 0.6.22 --locked
+          cargo install cargo-llvm-cov --version 0.8.6 --locked
 
       - name: Generate code coverage
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --locked --target=${{ matrix.info.target }}

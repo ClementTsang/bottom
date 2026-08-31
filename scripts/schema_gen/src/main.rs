@@ -1,4 +1,3 @@
-#![cfg(feature = "generate_schema")]
 #![expect(
     clippy::unwrap_used,
     reason = "this is just used to generate jsonschema files"
@@ -62,33 +61,28 @@ fn generate_schema(schema_options: SchemaOptions) -> anyhow::Result<()> {
     }
 
     let version = schema_options.version.unwrap_or("nightly".to_string());
-    schema.insert(
-        "$id".into(),
-        format!("https://github.com/ClementTsang/bottom/blob/main/schema/{version}/bottom.json")
-            .into(),
-    );
-
-    schema.insert(
-        "description".into(),
-        format!(
-            "https://bottom.pages.dev/{}/configuration/config-file/",
-            if version == "nightly" {
-                "nightly"
-            } else {
-                version.as_str()
-            }
-        )
-        .into(),
-    );
-
-    let description_version = if version == "nightly" {
+    let version_with_v = if version == "nightly" {
         "nightly".to_string()
     } else {
         format!("v{version}")
     };
+
+    schema.insert(
+        "$id".into(),
+        format!(
+            "https://github.com/ClementTsang/bottom/blob/main/schema/{version_with_v}/bottom.json"
+        )
+        .into(),
+    );
+
+    schema.insert(
+        "description".into(),
+        format!("https://bottom.pages.dev/{version}/configuration/config-file/").into(),
+    );
+
     schema.insert(
         "title".into(),
-        format!("Schema for bottom's config file ({description_version})").into(),
+        format!("Schema for bottom's config file ({version_with_v})").into(),
     );
 
     println!("{}", serde_json::to_string_pretty(&schema).unwrap());

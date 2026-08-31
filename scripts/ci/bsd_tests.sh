@@ -5,6 +5,8 @@
 set -eu
 
 BSD_TARGET="${1:-}"
+SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" > /dev/null && pwd)
+RUST_VERSION=$(cat "$SCRIPT_DIR/../../.github/ci/rust_version.txt")
 
 if [ -z "$BSD_TARGET" ]; then
     echo "Error: BSD target must be specified."
@@ -14,14 +16,14 @@ fi
 if [ "$BSD_TARGET" = "x86_64-unknown-freebsd" ]; then
     pkg install -y curl bash
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-    sh rustup.sh --default-toolchain stable -y
+    sh rustup.sh --default-toolchain "$RUST_VERSION" -y
 
     . "$HOME/.cargo/env"
-    cargo test --no-fail-fast --locked -- --nocapture --quiet
+    cargo test --no-fail-fast --locked --features generate_schema -- --nocapture --quiet
 elif [ "$BSD_TARGET" = "x86_64-unknown-netbsd" ]; then
     /usr/sbin/pkg_add -u curl bash mozilla-rootcerts-openssl
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
-    sh rustup.sh --default-toolchain stable -y
+    sh rustup.sh --default-toolchain "$RUST_VERSION" -y
 
     . "$HOME/.cargo/env"
     # TODO: Support default features eventually?

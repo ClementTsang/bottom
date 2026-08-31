@@ -2,7 +2,6 @@
 
 use std::{io, time::Duration};
 
-use cfg_if::cfg_if;
 use itertools::Itertools;
 use sysinfo::{ProcessStatus, System};
 
@@ -17,26 +16,29 @@ use crate::{
 fn get_nice(pid: Pid) -> i32 {
     // SAFETY: getpriority takes no user pointers; pid is passed as a value
     // and errors are reported via the return value.
-    cfg_if! {
-        if #[cfg(target_os = "freebsd")] {
+    cfg_select! {
+        target_os = "freebsd" => {
             unsafe { libc::getpriority(libc::PRIO_PROCESS, pid) }
-        } else if #[cfg(target_os = "macos")] {
+        }
+        target_os = "macos" => {
             unsafe { libc::getpriority(libc::PRIO_PROCESS, pid as u32) }
-        } else {
+        }
+        _ => {
             0
         }
     }
 }
 
 fn get_priority(pid: Pid) -> i32 {
-    cfg_if! {
-        if #[cfg(target_os = "macos")] {
+    cfg_select! {
+        target_os = "macos" => {
             if let Ok(kinfo) = sysctl_bindings::kinfo_process(pid) {
                 kinfo.kp_proc.p_priority as i32
             } else {
                 0
             }
-        } else if #[cfg(target_os = "freebsd")] {
+        }
+        target_os = "freebsd" => {
             use libc::{c_int, c_void};
             use std::{mem, ptr};
 
@@ -60,7 +62,8 @@ fn get_priority(pid: Pid) -> i32 {
             };
 
             if ret == 0 { kp.ki_pri.pri_level as i32 } else { 0 }
-        } else {
+        }
+        _ => {
             0
         }
     }
@@ -204,8 +207,8 @@ pub(crate) trait UnixProcessExt {
 
 fn convert_process_status_to_char(status: ProcessStatus) -> char {
     // TODO: Based on https://github.com/GuillaumeGomez/sysinfo/blob/baa46efb46d82f21b773088603720262f4a34646/src/unix/freebsd/process.rs#L13?
-    cfg_if::cfg_if! {
-        if #[cfg(target_os = "macos")] {
+    cfg_select! {
+        target_os = "macos" => {
             // SAFETY: These are all const and should be valid characters.
             const SIDL: char = unsafe { char::from_u32_unchecked(libc::SIDL) };
 
@@ -229,7 +232,8 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
                 ProcessStatus::Zombie => SZOMB,
                 _ => '?'
             }
-        } else if #[cfg(target_os = "freebsd")] {
+        }
+        target_os = "freebsd" => {
             const fn assert_u8(val: libc::c_char) -> u8 {
                 if val < 0 { panic!("there was an invalid i8 constant that is supposed to be a char") } else { val as u8 }
             }
@@ -252,7 +256,8 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
                 ProcessStatus::LockBlocked => SLOCK as char,
                 _ => '?'
             }
-        } else {
+        }
+        _ => {
             '?'
         }
     }

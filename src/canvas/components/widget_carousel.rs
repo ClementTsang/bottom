@@ -1,4 +1,4 @@
-use tui::{
+use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     text::{Line, Span},

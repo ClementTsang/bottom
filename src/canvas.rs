@@ -8,10 +8,11 @@ pub mod dialogs;
 mod drawing_utils;
 mod widgets;
 
-use tui::{
+use ratatui::{
     Frame, Terminal,
     backend::Backend,
-    layout::{Constraint, Direction, Flex, Layout, Rect},
+    layout::{Constraint, Direction, Flex, Layout, Position, Rect},
+    style::Style,
     symbols::Marker,
     text::Span,
     widgets::Paragraph,
@@ -53,7 +54,7 @@ impl Painter {
     }
 
     /// Determines the border style.
-    pub fn get_border_style(&self, widget_id: u64, selected_widget_id: u64) -> tui::style::Style {
+    pub fn get_border_style(&self, widget_id: u64, selected_widget_id: u64) -> Style {
         let is_on_widget = widget_id == selected_widget_id;
         if is_on_widget {
             self.styles.highlighted_border_style
@@ -281,6 +282,12 @@ impl Painter {
                         rect[0],
                         app_state.current_widget.widget_id,
                     ),
+                    DiskIoGraph => self.draw_disk_io_graph(
+                        f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
                     _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
@@ -297,11 +304,11 @@ impl Painter {
                 // bars...
                 let cpu_height = {
                     let c = (actual_cpu_data_len / 4) as u16
-                        + u16::from(actual_cpu_data_len % 4 != 0)
+                        + u16::from(!actual_cpu_data_len.is_multiple_of(4))
                         + u16::from(
                             app_state.app_config_fields.show_average_cpu
                                 && app_state.app_config_fields.dedicated_average_row
-                                && actual_cpu_data_len.saturating_sub(1) % 4 != 0,
+                                && !actual_cpu_data_len.saturating_sub(1).is_multiple_of(4),
                         );
 
                     if c <= 1 { 1 } else { c }
@@ -401,6 +408,9 @@ impl Painter {
                                 vertical_chunks[3],
                                 widget_id,
                             ),
+                            DiskIoGraph => {
+                                self.draw_disk_io_graph(f, app_state, vertical_chunks[3], widget_id)
+                            }
                             _ => {}
                         }
                     }
@@ -447,6 +457,12 @@ impl Painter {
             }
         })?;
 
+        // We also move it back to the origin to try rand avoid wasting CPU cycles for things like kitty's
+        // `cursor_trail` calculations.
+        let backend = terminal.backend_mut();
+        backend.set_cursor_position(Position::ORIGIN)?;
+        backend.flush()?;
+
         if let Some(updated_current_widget) = app_state
             .widget_map
             .get(&app_state.current_widget.widget_id)
@@ -481,6 +497,9 @@ impl Painter {
                     }
                     TempGraph => {
                         self.draw_temperature_graph(f, app_state, *draw_loc, widget.widget_id)
+                    }
+                    DiskIoGraph => {
+                        self.draw_disk_io_graph(f, app_state, *draw_loc, widget.widget_id)
                     }
                     _ => {}
                 }

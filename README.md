@@ -5,11 +5,11 @@
     A customizable cross-platform graphical process/system monitor for the terminal.<br />Supports Linux, macOS, and Windows. Inspired by <a href=https://github.com/aksakalli/gtop>gtop</a>, <a href=https://github.com/xxxserxxx/gotop>gotop</a>, and <a href=https://github.com/htop-dev/htop>htop</a>.
   </p>
 
-[<img src="https://img.shields.io/github/checks-status/ClementTsang/bottom/main?style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%3Amain)
 [<img src="https://img.shields.io/crates/v/bottom.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/bottom)
 [<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://bottom.pages.dev/stable)
 [<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://bottom.pages.dev/nightly)
 [<img src="https://img.shields.io/badge/docs-mirror-8A2BE2?style=flat-square&labelColor=555555&logoColor=white" alt="Doc mirror on GitHub Pages">](https://clementtsang.github.io/bottom/stable)
+[<img src="https://img.shields.io/badge/Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&labelColor=555555&logoColor=white" alt="Ko-fi link">](https://ko-fi.com/clementtsang)
 
 </div>
 
@@ -68,15 +68,17 @@
 As (yet another) process/system visualization and management application, bottom supports the typical features:
 
 - Graphical visualization widgets for:
-  - [CPU usage](https://bottom.pages.dev/nightly/usage/widgets/cpu/) over time, at an average and per-core level
-  - [RAM and swap usage](https://bottom.pages.dev/nightly/usage/widgets/memory/) over time
-  - [Network I/O usage](https://bottom.pages.dev/nightly/usage/widgets/network/) over time
+  - [CPU usage](https://bottom.pages.dev/nightly/usage/widgets/cpu-graph/) over time, at an average and per-core level
+  - [RAM and swap usage](https://bottom.pages.dev/nightly/usage/widgets/memory-graph/) over time
+  - [Network I/O usage](https://bottom.pages.dev/nightly/usage/widgets/network-graph/) over time
+  - [Temperature](https://bottom.pages.dev/nightly/usage/widgets/temperature-graph/) over time
+  - [Disk I/O usage](https://bottom.pages.dev/nightly/usage/widgets/disk-io-graph/) over time
 
   with support for zooming in/out the current time interval displayed.
 
 - Widgets for displaying info about:
   - [Disk capacity/usage](https://bottom.pages.dev/nightly/usage/widgets/disk/)
-  - [Temperature sensors](https://bottom.pages.dev/nightly/usage/widgets/temperature/)
+  - [Temperature sensors](https://bottom.pages.dev/nightly/usage/widgets/temperature-table/)
   - [Battery usage](https://bottom.pages.dev/nightly/usage/widgets/battery/)
 
 - [A process widget](https://bottom.pages.dev/nightly/usage/widgets/process/) for displaying, sorting, and searching info about processes, as well as support for:
@@ -128,6 +130,7 @@ A non-comprehensive list of some currently unofficially-supported platforms that
 - Linux (`armv6`, `armv7`, `powerpc64le`, `riscv64gc`, `loongarch64`)
 - Android (`arm64`)
 - Windows (`arm64`)
+- NetBSD (`x86_64`)
 
 For more details on unsupported platforms and known problems, check out [the documentation](https://bottom.pages.dev/nightly/support/unofficial/).
 
@@ -163,8 +166,8 @@ Alternatively, you can use `cargo install` using the repo as the source.
 rustup update stable
 
 # Option 1 - Download an archive from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.12.3.tar.gz
-tar -xzvf 0.12.3.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.14.9.tar.gz
+tar -xzvf 0.14.9.tar.gz
 cargo install --path . --locked
 
 # Option 2 - Manually clone the repo and install
@@ -216,20 +219,20 @@ Some examples of installing it this way:
 
 ```bash
 # x86-64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.3/bottom_0.12.3-1_amd64.deb
-sudo dpkg -i bottom_0.12.3-1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.14.9/bottom_0.14.9-1_amd64.deb
+sudo dpkg -i bottom_0.14.9-1_amd64.deb
 
 # ARM64
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.3/bottom_0.12.3-1_arm64.deb
-sudo dpkg -i bottom_0.12.3-1_arm64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.14.9/bottom_0.14.9-1_arm64.deb
+sudo dpkg -i bottom_0.14.9-1_arm64.deb
 
 # ARM
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.3/bottom_0.12.3-1_armhf.deb
-sudo dpkg -i bottom_0.12.3-1_armhf.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.14.9/bottom_0.14.9-1_armhf.deb
+sudo dpkg -i bottom_0.14.9-1_armhf.deb
 
 # musl-based
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.3/bottom-musl_0.12.3-1_amd64.deb
-sudo dpkg -i bottom-musl_0.12.3-1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.14.9/bottom-musl_0.14.9-1_amd64.deb
+sudo dpkg -i bottom-musl_0.14.9-1_amd64.deb
 ```
 
 ### Exherbo Linux
@@ -271,8 +274,8 @@ sudo dnf install bottom
 For example:
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.12.3/bottom-0.12.3-1.x86_64.rpm
-sudo dnf install ./bottom-0.12.3-1.x86_64.rpm
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.14.9/bottom-0.14.9-1.x86_64.rpm
+sudo dnf install ./bottom-0.14.9-1.x86_64.rpm
 ```
 
 ### Gentoo
@@ -442,7 +445,7 @@ shell auto-completion files for Bash, Zsh, fish, Powershell, Elvish, Fig, and Nu
 - For PowerShell, add `_btm.ps1` to your PowerShell [profile](<https://docs.microsoft.com/en-us/previous-versions//bb613488(v=vs.85)>).
 - For Elvish, the completion file is `btm.elv`.
 - For Fig, the completion file is `btm.ts`.
-- For Nushell, source `btm.nu`.
+- For Nushell, use `btm.nu`.
 
 The individual auto-completion files are also included in the stable/nightly releases as `completion.tar.gz` if needed.
 
@@ -590,6 +593,13 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://www.jianshu.com/u/f5754cd2e83d"><img src="https://avatars.githubusercontent.com/u/15232241?v=4?s=100" width="100px;" alt="Qiying Wang"/><br /><sub><b>Qiying Wang</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=WqyJh" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dastarruer"><img src="https://avatars.githubusercontent.com/u/173855353?v=4?s=100" width="100px;" alt="dastarruer"/><br /><sub><b>dastarruer</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=dastarruer" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://linktr.ee/chrisjr404"><img src="https://avatars.githubusercontent.com/u/11917633?v=4?s=100" width="100px;" alt="ChrisJr404"/><br /><sub><b>ChrisJr404</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=ChrisJr404" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/gepbird"><img src="https://avatars.githubusercontent.com/u/29818440?v=4?s=100" width="100px;" alt="Gergő Gutyina"/><br /><sub><b>Gergő Gutyina</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=gepbird" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/puneetdixit200"><img src="https://avatars.githubusercontent.com/u/236133619?v=4?s=100" width="100px;" alt="Puneet Dixit"/><br /><sub><b>Puneet Dixit</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=puneetdixit200" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/upuddu"><img src="https://avatars.githubusercontent.com/u/125773480?v=4?s=100" width="100px;" alt="Umberto Puddu"/><br /><sub><b>Umberto Puddu</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=upuddu" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Oseryx"><img src="https://avatars.githubusercontent.com/u/54248014?v=4?s=100" width="100px;" alt="Anis"/><br /><sub><b>Anis</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Oseryx" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://gitlab.com/fazzi/"><img src="https://avatars.githubusercontent.com/u/18248986?v=4?s=100" width="100px;" alt="fazzi"/><br /><sub><b>fazzi</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=fxzzi" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

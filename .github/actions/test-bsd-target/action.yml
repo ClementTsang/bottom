@@ -1,5 +1,7 @@
 name: Test BSD Target
-description: Run tests for a BSD target using VMs, with retries on failure. Needed as cross doesn't support them (https://github.com/cross-rs/cross/wiki/FAQ#running-bsd-tests).
+description: Run tests for a BSD target using VMs, with retries on failure.
+  Needed as cross doesn't support them
+  (https://github.com/cross-rs/cross/wiki/FAQ#running-bsd-tests).
 
 inputs:
   target:
@@ -17,7 +19,8 @@ runs:
       if: ${{ inputs.target == 'x86_64-unknown-freebsd' }}
       with:
         release: "${{ inputs.os-version }}"
-        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG
+          CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
         prepare: |
           # See https://github.com/freebsd/pkg/issues/2653#issuecomment-4321269771
@@ -28,10 +31,12 @@ runs:
 
     - name: FreeBSD Test (Attempt 2)
       uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
-      if: ${{ inputs.target == 'x86_64-unknown-freebsd' && steps.freebsd_attempt_1.outcome == 'failure' }}
+      if: ${{ inputs.target == 'x86_64-unknown-freebsd' &&
+        steps.freebsd_attempt_1.outcome == 'failure' }}
       with:
         release: "${{ inputs.os-version }}"
-        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG
+          CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
         prepare: |
           # See https://github.com/freebsd/pkg/issues/2653#issuecomment-4321269771
@@ -42,45 +47,52 @@ runs:
 
     - name: FreeBSD Test (Attempt 3)
       uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
-      if: ${{ inputs.target == 'x86_64-unknown-freebsd' && steps.freebsd_attempt_2.outcome == 'failure' }}
+      if: ${{ inputs.target == 'x86_64-unknown-freebsd' &&
+        steps.freebsd_attempt_2.outcome == 'failure' }}
       with:
         release: "${{ inputs.os-version }}"
-        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG
+          CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
         prepare: |
           # See https://github.com/freebsd/pkg/issues/2653#issuecomment-4321269771
           pkg upgrade -Fqy || true
         run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
-      id: freebsd_attempt_3
+      id: freebsd_attempt_3F
 
     - name: NetBSD Test (Attempt 1)
-      uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
+      uses: vmactions/netbsd-vm@0c26a4c4a5e234038862a4a53a00c905b8a107c9 # v1.4.2
       if: ${{ inputs.target == 'x86_64-unknown-netbsd' }}
       with:
         release: "${{ inputs.os-version }}"
-        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG
+          CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
         run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: netbsd_attempt_1
       continue-on-error: true
 
     - name: NetBSD Test (Attempt 2)
-      uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
-      if: ${{ inputs.target == 'x86_64-unknown-netbsd' && steps.netbsd_attempt_1.outcome == 'failure' }}
+      uses: vmactions/netbsd-vm@0c26a4c4a5e234038862a4a53a00c905b8a107c9 # v1.4.2
+      if: ${{ inputs.target == 'x86_64-unknown-netbsd' &&
+        steps.netbsd_attempt_1.outcome == 'failure' }}
       with:
         release: "${{ inputs.os-version }}"
-        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG
+          CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
         run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: netbsd_attempt_2
       continue-on-error: true
 
     - name: NetBSD Test (Attempt 3)
-      uses: vmactions/netbsd-vm@e04aec09540429f9cebb0e7941f7cd0c0fc3b44f # v1.3.6
-      if: ${{ inputs.target == 'x86_64-unknown-netbsd' && steps.netbsd_attempt_2.outcome == 'failure' }}
+      uses: vmactions/netbsd-vm@0c26a4c4a5e234038862a4a53a00c905b8a107c9 # v1.4.2
+      if: ${{ inputs.target == 'x86_64-unknown-netbsd' &&
+        steps.netbsd_attempt_2.outcome == 'failure' }}
       with:
         release: "${{ inputs.os-version }}"
-        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG CARGO_HUSKY_DONT_INSTALL_HOOKS"
+        envs: "RUST_BACKTRACE CARGO_INCREMENTAL CARGO_PROFILE_DEV_DEBUG
+          CARGO_HUSKY_DONT_INSTALL_HOOKS"
         usesh: true
         run: sh ./scripts/ci/bsd_tests.sh ${{ inputs.target }}
       id: netbsd_attempt_3

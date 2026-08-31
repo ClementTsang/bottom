@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Rect},
     style::Style,
@@ -136,8 +136,10 @@ impl Painter {
                 {
                     let mut colour_index = 0;
                     let gpu_styles = &self.styles.gpu_colours;
+                    let short_gpu_names = app_state.app_config_fields.short_gpu_names;
+                    let gpu_count = data.gpu_harvest.len();
 
-                    for (name, harvest) in &data.gpu_harvest {
+                    for (gpu_index, (name, harvest)) in data.gpu_harvest.iter().enumerate() {
                         if let Some(gpu_data) = data.time_series_data.gpu_mem.get(name) {
                             let style = {
                                 if gpu_styles.is_empty() {
@@ -150,9 +152,19 @@ impl Painter {
                                 }
                             };
 
+                            let display_name = if short_gpu_names {
+                                if gpu_count == 1 {
+                                    "GPU".to_string()
+                                } else {
+                                    format!("GPU{gpu_index}")
+                                }
+                            } else {
+                                name.clone()
+                            };
+
                             graph_data(
                                 &mut points,
-                                name, // TODO: REALLY figure out how to line this up better
+                                &display_name,
                                 Some(harvest),
                                 time,
                                 gpu_data,

@@ -66,18 +66,20 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | ---------------------------- | --------------------------------------------------------- |
 | `--memory_legend <POSITION>` | Where to place the legend for the memory chart widget.    |
 | `--enable_cache_memory`      | Enable collecting and displaying cache and buffer memory. |
-| `--free_arc`                 | Subtract freeable ARC from memory.                        |
+| `--free_arc`                 | Subtract ARC memory that can be freed from memory usage.  |
+| `--short_gpu_names`          | Use short GPU names in the memory widget.                 |
 
 ## Network Options
 
-| Option                        | Behaviour                                               |
-| ----------------------------- | ------------------------------------------------------- |
-| `--network_legend <POSITION>` | Where to place the legend for the network chart widget. |
-| `--network_use_bytes`         | Displays the network widget using bytes.                |
-| `--network_use_binary_prefix` | Displays the network widget with binary prefixes.       |
-| `--network_use_log`           | Displays the network widget with a log scale.           |
-| `--show_packets`              | Displays packet rate and average packet size info.      |
-| `--use_old_network_legend`    | Uses a separate network legend.                         |
+| Option                        | Behaviour                                                      |
+| ----------------------------- | -------------------------------------------------------------- |
+| `--network_legend <POSITION>` | Where to place the legend for the network chart widget.        |
+| `--network_use_bytes`         | Displays the network widget using bytes.                       |
+| `--network_use_binary_prefix` | Displays the network widget with binary prefixes.              |
+| `--network_use_log`           | Displays the network widget with a log scale.                  |
+| `--show_packets`              | Displays packet rate and average packet size info.             |
+| `--use_old_network_legend`    | Uses a separate network legend.                                |
+| `--network_start_zeroed`      | Show total network usage from app startup rather than on boot. |
 
 ## Battery Options
 

@@ -1,6 +1,6 @@
 //! A shared helper for drawing a vertical scroll bar.
 
-use tui::{
+use ratatui::{
     Frame,
     layout::Rect,
     style::Style,

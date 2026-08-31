@@ -23,6 +23,7 @@ const TEMPLATE: &str = indoc! {
 
 const USAGE: &str = "btm [OPTIONS]";
 
+// Can't use an unwrap here at the moment since it's const.
 const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
     Some(nightly_version) => nightly_version,
     None => crate_version!(),
@@ -540,6 +541,15 @@ pub struct MemoryArgs {
         alias = "free-arc"
     )]
     pub free_arc: bool,
+
+    #[cfg(feature = "gpu")]
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Use short GPU names (e.g. 'GPU' or 'GPU0', 'GPU1') in the memory widget instead of full GPU names.",
+        alias = "short-gpu-names"
+    )]
+    pub short_gpu_names: bool,
 }
 
 /// Network arguments/config options.
@@ -602,6 +612,15 @@ pub struct NetworkArgs {
         alias = "show-packets"
     )]
     pub show_packets: bool,
+
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Show total network usage from app startup rather than on boot.",
+        long_help = "Zeroes out the total network usage (\"All\") counters so it shows the total usage since the app is started, rather than the total usage since boot.",
+        alias = "network-start-zeroed"
+    )]
+    pub network_start_zeroed: bool,
 }
 
 /// Battery arguments/config options.
@@ -666,7 +685,7 @@ pub struct StyleArgs {
 #[derive(Args, Clone, Debug)]
 #[command(next_help_heading = "Other Options", rename_all = "snake_case")]
 pub struct OtherArgs {
-    #[arg(short = 'h', long, action = ArgAction::Help, help = "Prints help info (for more details use '--help'.")]
+    #[arg(short = 'h', long, action = ArgAction::Help, help = "Prints help info (for more details use '--help').")]
     help: (),
 
     #[arg(short = 'V', long, action = ArgAction::Version, help = "Prints version information.")]

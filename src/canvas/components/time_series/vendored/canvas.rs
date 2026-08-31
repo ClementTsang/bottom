@@ -12,11 +12,7 @@
 //! See <https://github.com/ClementTsang/bottom/pull/918> and <https://github.com/ClementTsang/bottom/pull/937> for the
 //! original motivation.
 
-use ratatui_core::symbols::{
-    braille::BRAILLE,
-    pixel::{OCTANTS, QUADRANTS, SEXTANTS},
-};
-use tui::{
+use ratatui::{
     buffer::Buffer,
     layout::Rect,
     prelude::BlockExt,
@@ -27,6 +23,10 @@ use tui::{
         Block, Widget,
         canvas::{Line as CanvasLine, Points},
     },
+};
+use ratatui_core::symbols::{
+    braille::BRAILLE,
+    pixel::{OCTANTS, QUADRANTS, SEXTANTS},
 };
 
 use super::grid::{CharGrid, Grid, HalfBlockGrid, PatternGrid};

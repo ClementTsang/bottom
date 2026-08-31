@@ -20,12 +20,104 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## [0.13.0] - Unreleased
+## 0.14.9 - 2026-08-27
+
+### Bug Fixes
+
+- [#2207](https://github.com/ClementTsang/bottom/pull/2207): Fix typo in `--help` flag.
+- [#2210](https://github.com/ClementTsang/bottom/pull/2210): Fix handling Linux cmdline values that don't have null byte separators.
+
+### Features
+
+- [#2199](https://github.com/ClementTsang/bottom/pull/2199): Add option to show zeroed total network usage on startup.
+
+## 0.14.8 - 2026-08-13
+
+### Bug Fixes
+
+- [#2191](https://github.com/ClementTsang/bottom/pull/2191): Fix close logic when pressing enter in sort menu.
+- [#2195](https://github.com/ClementTsang/bottom/pull/2195): Fix cgroups v1 swap collection around sentinel max value.
+
+### Other
+
+- [#2194](https://github.com/ClementTsang/bottom/pull/2194): Fix schema links + link generation.
+
+## 0.14.7 - 2026-07-27
+
+### Features
+
+- [#2174](https://github.com/ClementTsang/bottom/pull/2174): Support setting default sort order in config.
+
+### Other
+
+- [#2167](https://github.com/ClementTsang/bottom/pull/2167): Remove filedescriptor hack used to suppress false-positive stderr messages for older versions of FreeBSD.
+- [#2177](https://github.com/ClementTsang/bottom/pull/2177): Fix `.deb` packaging CI job using a newer version of Ubuntu, breaking backwards compatibility.
+
+## 0.14.6 - 2026-07-20
+
+### Bug Fixes
+
+- [#2162](https://github.com/ClementTsang/bottom/pull/2162): Fix incorrect column headers missing shortcut hints in the processes widget.
+- [#2163](https://github.com/ClementTsang/bottom/pull/2163): Fix incorrect bound length for comm parentheses searching.
+
+## 0.14.5 - 2026-07-18
+
+### Bug Fixes
+
+- [#2144](https://github.com/ClementTsang/bottom/pull/2144): Fix bug with Linux signals 34 or higher being off by 2.
+- [#2145](https://github.com/ClementTsang/bottom/pull/2145): Fix parsing issue certain comm entries to be missing.
+- [#2146](https://github.com/ClementTsang/bottom/pull/2146): Fix draw bug with the pipe gauge in basic mode if the value was 100%.
+- [#2150](https://github.com/ClementTsang/bottom/pull/2150): Fix missing deserialize options for read/write columns in the disk widget.
+- [#2152](https://github.com/ClementTsang/bottom/pull/2152): Fix first disk I/O value reported at startup being way too high.
+
+## 0.14.4 - 2026-07-09
+
+### Bug Fixes
+
+- [#2131](https://github.com/ClementTsang/bottom/pull/2131): Fix the config not accepting `Memory`, `Memory%`, `Total Read`, and `Total Write` process column aliases that the config schema advertised.
+- [#2132](https://github.com/ClementTsang/bottom/pull/2132): Fix 'Q' not working as a quit shortcut.
+
+## 0.14.3 - 2026-07-01
+
+### Other
+
+- [#2119](https://github.com/ClementTsang/bottom/pull/2119): Add workaround for draw behaviour that caused Kitty with `cursor_trail` to occasionally use more CPU.
+
+## 0.14.2 - 2026-06-27
+
+### Other
+
+- [#2109](https://github.com/ClementTsang/bottom/pull/2109): Relocate the schema generation tool to avoid it interfering with `cargo install`.
+
+## 0.14.1 - 2026-06-22
+
+### Other
+
+- [#2096](https://github.com/ClementTsang/bottom/pull/2096): Fix documentation suggestions around `memory_graph`.
+- [#2102](https://github.com/ClementTsang/bottom/pull/2102): Mention memory/network alias in deprecation warnings.
+
+## 0.14.0 - 2026-06-20
+
+### Bug Fixes
+
+- [#2093](https://github.com/ClementTsang/bottom/pull/2093): Fix memory collection using cgroup v1 sentinel max as total.
+
+### Features
+
+- [#2055](https://github.com/ClementTsang/bottom/pull/2055): Add UFS disk I/O counters for FreeBSD.
+
+### Other
+
+- [#2052](https://github.com/ClementTsang/bottom/pull/2052): Update minimum Rust version to 1.95.0.
+- [#2055](https://github.com/ClementTsang/bottom/pull/2055): Use sysinfo for disk I/O for FreeBSD.
+
+## [0.13.0] - 2026-06-19
 
 ### Bug Fixes
 
 - [#2035](https://github.com/ClementTsang/bottom/pull/2035): Fix panic when deleting unicode words in search.
 - [#2042](https://github.com/ClementTsang/bottom/pull/2042): Address possible memory usage growth for AMD GPU stat gathering on Linux.
+- [#2069](https://github.com/ClementTsang/bottom/pull/2069): Fix issue in process search with parsing quoted delimiters.
 
 ### Features
 
@@ -38,7 +130,10 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2046](https://github.com/ClementTsang/bottom/pull/2046): Add a `show_table_scroll_bar` config option to show a scroll bar on table widgets.
 - [#2048](https://github.com/ClementTsang/bottom/pull/2048): Add support for a temperature graph to show sensor temperature change over time.
 - [#2053](https://github.com/ClementTsang/bottom/pull/2053): Add a configurable default sort column for the process widget (`processes.default_sort` or `--process-default-sort`).
-- [#1754](https://github.com/ClementTsang/bottom/issues/1754): Add search support in the help dialog.
+- [#2066](https://github.com/ClementTsang/bottom/pull/2066): Add search support in the help dialog.
+- [#1791](https://github.com/ClementTsang/bottom/pull/1791), [#2072](https://github.com/ClementTsang/bottom/pull/2072): Add support for using a short name for the GPU in memory usage.
+- [#2073](https://github.com/ClementTsang/bottom/pull/2073): Add disk I/O time series graph.
+- [#2088](https://github.com/ClementTsang/bottom/pull/2088): Add option to show unmounted disks on Linux.
 
 ### Changes
 
@@ -50,6 +145,8 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2063](https://github.com/ClementTsang/bottom/pull/2063): Move process config file options from `[flags]` to be under `[processes]`.
 - [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move CPU config file options from `[flags]` to be under `[cpu]`.
 - [#2064](https://github.com/ClementTsang/bottom/pull/2064): Move memory config file options from `[flags]` to be under `[memory_graph]`.
+- [#2066](https://github.com/ClementTsang/bottom/pull/2066): Take cgroup into account for CPU usage% calculations.
+- [#2074](https://github.com/ClementTsang/bottom/pull/2074): Treat uppercase 'Q' as a quit shortcut.
 
 ### Other
 
@@ -107,7 +204,6 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#1891](https://github.com/ClementTsang/bottom/pull/1891): Fix typos in codebase.
 - [#1896](https://github.com/ClementTsang/bottom/pull/1896): Rename Linux icon to avoid collision with generic "bottom"
   icon.
-  
 - [#1913](https://github.com/ClementTsang/bottom/pull/1913): Add `loongarch64-unknown-linux-gnu` binary build target in
   CI.
 - [#1914](https://github.com/ClementTsang/bottom/pull/1914): Add `aarch64-linux-android` binary build target in CI (with

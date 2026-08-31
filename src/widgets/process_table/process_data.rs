@@ -3,12 +3,13 @@ use std::{
     cmp::{Ordering, max},
     fmt::Display,
     num::NonZeroU16,
+    ops::Add,
     sync::Arc,
     time::Duration,
 };
 
 use concat_string::concat_string;
-use tui::widgets::Row;
+use ratatui::widgets::Row;
 
 use super::process_columns::ProcColumn;
 #[cfg(target_os = "linux")]
@@ -88,10 +89,25 @@ impl Display for Id {
     }
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Copy)]
 pub enum MemUsage {
     Percent(f32),
     Bytes(u64),
+}
+
+impl Add for MemUsage {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (MemUsage::Percent(a), MemUsage::Percent(b)) => MemUsage::Percent(a + b),
+            (MemUsage::Bytes(a), MemUsage::Bytes(b)) => MemUsage::Bytes(a + b),
+            (MemUsage::Bytes(_), MemUsage::Percent(_))
+            | (MemUsage::Percent(_), MemUsage::Bytes(_)) => {
+                unreachable!("trying to add together two different memory usage types!")
+            }
+        }
+    }
 }
 
 impl PartialOrd for MemUsage {
@@ -287,14 +303,7 @@ impl ProcWidgetData {
 
     pub fn add(&mut self, other: &Self) {
         self.cpu_usage_percent += other.cpu_usage_percent;
-        self.mem_usage = match (&self.mem_usage, &other.mem_usage) {
-            (MemUsage::Percent(a), MemUsage::Percent(b)) => MemUsage::Percent(a + b),
-            (MemUsage::Bytes(a), MemUsage::Bytes(b)) => MemUsage::Bytes(a + b),
-            (MemUsage::Percent(_), MemUsage::Bytes(_))
-            | (MemUsage::Bytes(_), MemUsage::Percent(_)) => {
-                unreachable!("trying to add together two different memory usage types!")
-            }
-        };
+        self.mem_usage = self.mem_usage + other.mem_usage;
         self.rps += other.rps;
         self.wps += other.wps;
         self.total_read += other.total_read;
@@ -302,14 +311,7 @@ impl ProcWidgetData {
         self.time = self.time.max(other.time);
         #[cfg(feature = "gpu")]
         {
-            self.gpu_mem_usage = match (&self.gpu_mem_usage, &other.gpu_mem_usage) {
-                (MemUsage::Percent(a), MemUsage::Percent(b)) => MemUsage::Percent(a + b),
-                (MemUsage::Bytes(a), MemUsage::Bytes(b)) => MemUsage::Bytes(a + b),
-                (MemUsage::Percent(_), MemUsage::Bytes(_))
-                | (MemUsage::Bytes(_), MemUsage::Percent(_)) => {
-                    unreachable!("trying to add together two different memory usage types!")
-                }
-            };
+            self.gpu_mem_usage = self.gpu_mem_usage + other.gpu_mem_usage;
             self.gpu_usage += other.gpu_usage;
         }
     }
@@ -389,7 +391,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
 
     #[cfg(target_os = "linux")]
     #[inline(always)]
-    fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<tui::style::Style> {
+    fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<ratatui::style::Style> {
         match column {
             ProcColumn::Name | ProcColumn::Command if self.process_type.is_thread() => {
                 Some(painter.styles.thread_text_style)

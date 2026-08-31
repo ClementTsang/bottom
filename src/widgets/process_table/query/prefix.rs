@@ -392,36 +392,36 @@ impl QueryProcessor for Prefix {
                                 }
                             }
 
-                            if let Some(condition) = condition {
-                                if let Some(read_value) = value {
-                                    // Note that the values *might* have a unit or need to be parsed
-                                    // differently based on the
-                                    // prefix type!
+                            if let Some(condition) = condition
+                                && let Some(read_value) = value
+                            {
+                                // Note that the values *might* have a unit or need to be parsed
+                                // differently based on the
+                                // prefix type!
 
-                                    // TODO: Support this without spaces?
+                                // TODO: Support this without spaces?
 
-                                    let mut value = read_value;
+                                let mut value = read_value;
 
-                                    match prefix_type {
-                                        PrefixType::MemBytes
-                                        | PrefixType::ReadPerSecond
-                                        | PrefixType::WritePerSecond
-                                        | PrefixType::TotalRead
-                                        | PrefixType::TotalWrite => {
-                                            process_prefix_units(query, &mut value);
-                                        }
-                                        #[cfg(feature = "gpu")]
-                                        PrefixType::GpuMemoryBytes => {
-                                            process_prefix_units(query, &mut value);
-                                        }
-                                        _ => {}
+                                match prefix_type {
+                                    PrefixType::MemBytes
+                                    | PrefixType::ReadPerSecond
+                                    | PrefixType::WritePerSecond
+                                    | PrefixType::TotalRead
+                                    | PrefixType::TotalWrite => {
+                                        process_prefix_units(query, &mut value);
                                     }
-
-                                    return Ok(Prefix::Attribute(new_numerical_attribute(
-                                        prefix_type,
-                                        NumericalQuery { condition, value },
-                                    )?));
+                                    #[cfg(feature = "gpu")]
+                                    PrefixType::GpuMemoryBytes => {
+                                        process_prefix_units(query, &mut value);
+                                    }
+                                    _ => {}
                                 }
+
+                                return Ok(Prefix::Attribute(new_numerical_attribute(
+                                    prefix_type,
+                                    NumericalQuery { condition, value },
+                                )?));
                             }
                         }
                     }

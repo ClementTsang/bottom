@@ -1,4 +1,4 @@
-# Processes
+# Processes Configuration
 
 ## Settings
 
@@ -30,9 +30,9 @@ You can configure which columns are shown by the process widget by setting the `
 columns = ["cpu%", "mem%", "pid", "name", "read", "write", "tread", "twrite", "state", "user", "time", "gmem%", "gpu%"]
 ```
 
-## Default Sort Order
+## Default Sort Column
 
-By default, the process widget starts sorted by CPU usage. You can change the column it sorts by at startup:
+By default, the process widget starts sorted by CPU usage in descending order. You can change the column it sorts by at startup:
 
 ```toml
 [processes]
@@ -46,4 +46,11 @@ The same setting is also exposed as a CLI flag, which takes precedence over the 
 
 ```
 btm --process_default_sort mem
+```
+
+You can also set the default order by changing `processes.sort_order` with `"Ascending"` or `"Descending"`. If not set, then by default, it will use a sort order that is reasonable (e.g. descending for CPU/memory usage, ascending for process names).
+
+```toml
+[processes]
+sort_order = "Ascending"
 ```

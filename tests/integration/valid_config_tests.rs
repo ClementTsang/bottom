@@ -1,10 +1,12 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
-use std::{io::Read, thread, time::Duration};
+use std::{io::Read, process::Stdio, thread, time::Duration};
 #[cfg(feature = "default")]
 use std::{io::Write, path::Path};
 
-use crate::util::spawn_btm_in_pty;
+use predicates::prelude::*;
+
+use crate::util::{btm_command, spawn_btm_in_pty};
 
 fn reader_to_string(mut reader: Box<dyn Read>) -> String {
     let mut buf = String::default();
@@ -135,7 +137,8 @@ fn test_new_default() {
         run_and_kill(&["-C", &(actual_temp_default_path.to_string_lossy())]);
 
         // Re-take control over the temp path to ensure it gets deleted.
-        let actual_temp_default_path = TempPath::from_path(actual_temp_default_path);
+        let actual_temp_default_path =
+            TempPath::try_from_path(actual_temp_default_path).expect("temp path exists");
         test_uncommented_default_config(&actual_temp_default_path, "test_new_default");
 
         actual_temp_default_path.close().unwrap();
@@ -269,8 +272,43 @@ fn test_newer_temperature() {
     run_and_kill_cfg("./tests/valid_configs/widget/temperature.toml");
 }
 
+#[test]
+fn test_disk_io_graph() {
+    run_and_kill_cfg("./tests/valid_configs/widget/disk_io_graph.toml");
+}
+
 /// This uses deprecated temperature settings - once they are removed, this test file should be moved to invalid configs.
 #[test]
 fn test_deprecated_temperature() {
     run_and_kill_cfg("./tests/valid_configs/deprecated/temperature.toml");
+}
+
+/// Test that deprecated warnings are not shown for config options that are not actually set,
+/// even when a `[flags]` section is present.
+#[test]
+fn test_no_spurious_deprecated_warnings() {
+    let mut child = btm_command(&["-C", "./tests/valid_configs/empty_flags.toml"])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    thread::sleep(Duration::from_secs(1));
+    child.kill().unwrap();
+    child.wait().unwrap();
+
+    let stderr_str = {
+        let mut stderr = child.stderr.take().unwrap();
+        let mut buf = String::new();
+
+        stderr.read_to_string(&mut buf).unwrap();
+        buf
+    };
+
+    assert!(
+        predicate::str::contains("deprecated")
+            .not()
+            .eval(&stderr_str),
+        "Expected no deprecated warnings, but got: {stderr_str}"
+    );
 }

@@ -3,7 +3,7 @@
 use std::{fmt::Debug, iter::zip};
 
 use itertools::Itertools;
-use tui::{style::Color, symbols};
+use ratatui::{style::Color, symbols};
 
 /// A single layer of the canvas.
 ///

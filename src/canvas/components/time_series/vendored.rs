@@ -1,4 +1,4 @@
-//! A [`tui::widgets::Chart`] but slightly more specialized to show
+//! A [`ratatui::widgets::Chart`] but slightly more specialized to show
 //! right-aligned time_series data.
 //!
 //! Generally should be updated to be in sync with [`chart.rs`](https://github.com/ratatui-org/ratatui/blob/main/src/widgets/chart.rs);
@@ -15,8 +15,7 @@ use std::{
 };
 
 use canvas::*;
-use timeless::data::ChunkedData;
-use tui::{
+use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Flex, Layout, Rect},
     style::{Color, Style, Styled},
@@ -24,6 +23,7 @@ use tui::{
     text::{Line, Span},
     widgets::{Block, BlockExt, Borders, GraphType, Widget},
 };
+use timeless::data::ChunkedData;
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
@@ -410,7 +410,7 @@ impl ChartScaling {
     }
 }
 
-/// A "custom" chart, just a slightly tweaked [`tui::widgets::Chart`] from
+/// A "custom" chart, just a slightly tweaked [`ratatui::widgets::Chart`] from
 /// ratatui, but with greater control over the legend, and built with the idea
 /// of drawing data points relative to a time-based x-axis.
 ///
@@ -838,13 +838,12 @@ impl<F: Copy + Default + Into<f64>> Widget for TimeChart<'_, F> {
             }
         }
 
-        if let Some(y) = layout.axis_x {
-            if let Some(x) = layout.axis_y {
-                if let Some(cell) = buf.cell_mut((x, y)) {
-                    cell.set_symbol(symbols::line::BOTTOM_LEFT)
-                        .set_style(self.x_axis.style);
-                }
-            }
+        if let Some(y) = layout.axis_x
+            && let Some(x) = layout.axis_y
+            && let Some(cell) = buf.cell_mut((x, y))
+        {
+            cell.set_symbol(symbols::line::BOTTOM_LEFT)
+                .set_style(self.x_axis.style);
         }
 
         let x_bounds = self.x_axis.bounds.get_bounds();
@@ -860,42 +859,42 @@ impl<F: Copy + Default + Into<f64>> Widget for TimeChart<'_, F> {
             })
             .render(graph_area, buf);
 
-        if let Some((x, y)) = layout.title_x {
-            if let Some(title) = self.x_axis.title.as_ref() {
-                let width = graph_area
-                    .right()
-                    .saturating_sub(x)
-                    .min(title.width() as u16);
-                buf.set_style(
-                    Rect {
-                        x,
-                        y,
-                        width,
-                        height: 1,
-                    },
-                    original_style,
-                );
-                buf.set_line(x, y, title, width);
-            }
+        if let Some((x, y)) = layout.title_x
+            && let Some(title) = self.x_axis.title.as_ref()
+        {
+            let width = graph_area
+                .right()
+                .saturating_sub(x)
+                .min(title.width() as u16);
+            buf.set_style(
+                Rect {
+                    x,
+                    y,
+                    width,
+                    height: 1,
+                },
+                original_style,
+            );
+            buf.set_line(x, y, title, width);
         }
 
-        if let Some((x, y)) = layout.title_y {
-            if let Some(title) = self.y_axis.title.as_ref() {
-                let width = graph_area
-                    .right()
-                    .saturating_sub(x)
-                    .min(title.width() as u16);
-                buf.set_style(
-                    Rect {
-                        x,
-                        y,
-                        width,
-                        height: 1,
-                    },
-                    original_style,
-                );
-                buf.set_line(x, y, title, width);
-            }
+        if let Some((x, y)) = layout.title_y
+            && let Some(title) = self.y_axis.title.as_ref()
+        {
+            let width = graph_area
+                .right()
+                .saturating_sub(x)
+                .min(title.width() as u16);
+            buf.set_style(
+                Rect {
+                    x,
+                    y,
+                    width,
+                    height: 1,
+                },
+                original_style,
+            );
+            buf.set_line(x, y, title, width);
         }
 
         if let Some(legend_area) = layout.legend_area {
@@ -991,13 +990,7 @@ mod tests {
                 (actual, expected) => {
                     if actual.area != expected.area {
                         panic!(
-                            indoc::indoc!(
-                                "
-                                buffer areas not equal
-                                expected:  {:?}
-                                actual:    {:?}"
-                            ),
-                            expected, actual
+                            "buffer areas not equal - expected: {expected:?} - actual: {actual:?}",
                         );
                     }
                     let diff = expected.diff(&actual);
@@ -1037,7 +1030,7 @@ mod tests {
 
     use std::time::Duration;
 
-    use tui::style::{Modifier, Stylize};
+    use ratatui::style::{Modifier, Stylize};
 
     use super::*;
     use crate::app::data::Values;

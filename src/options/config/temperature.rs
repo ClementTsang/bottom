@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use super::IgnoreList;
-use crate::widgets::TempWidgetColumn;
+use crate::{canvas::components::data_table::SortOrder, widgets::TempWidgetColumn};
 
 /// Temperature configuration.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -14,4 +14,29 @@ pub(crate) struct TempConfig {
     /// The default sort column.
     #[serde(default)]
     pub(crate) default_sort: Option<TempWidgetColumn>,
+
+    /// The default sort order. Defaults to ascending.
+    #[serde(default)]
+    pub(crate) sort_order: SortOrder,
+}
+
+#[cfg(test)]
+mod tests {
+    /// Test that temp enum variants that are advertised in the schema are valid.
+    #[cfg(feature = "generate_schema")]
+    #[test]
+    fn ensure_temp_column_schema_is_accepted() {
+        use strum::VariantArray;
+
+        use crate::options::{Config, TempWidgetColumn};
+
+        for column in TempWidgetColumn::VARIANTS {
+            for &name in column.get_schema_names() {
+                let config = format!("[temperature]\ndefault_sort= \"{name}\"\n");
+                toml_edit::de::from_str::<Config>(&config).unwrap_or_else(|e| {
+                    panic!("schema name {name:?} was rejected:\n{e}\nconfig was:\n{config}")
+                });
+            }
+        }
+    }
 }

@@ -84,16 +84,27 @@ impl Stat {
         // TODO: Is this needed?
         let line = buffer.trim();
 
+        // Comm is represented by a string in parentheses (e.g. `(foo)`, `((bar))`).
+        // To handle that second case, we need to find the "last" closing parentheses.
         let (comm, rest) = {
             let start_paren = line
                 .find('(')
                 .ok_or_else(|| anyhow!("start paren missing"))?;
-            let end_paren = line.find(')').ok_or_else(|| anyhow!("end paren missing"))?;
 
-            (
-                line[start_paren + 1..end_paren].to_string(),
-                &line[end_paren + 2..],
-            )
+            // So, we _could_ try and be smart and only parse a limited slice of the string - however,
+            // there appears to be no ABI guarantees of comm length anymore, so we just take the hit and do an rsplit
+            // over the full string.
+            //
+            // Sources/discussion:
+            // - https://man.archlinux.org/man/proc_pid_stat.5.en
+            // - https://stackoverflow.com/questions/23534263/what-is-the-maximum-allowed-limit-on-the-length-of-a-process-name#comment138697304_23534499
+            // - https://elixir.bootlin.com/linux/v7.1.3/source/fs/proc/array.c#L100
+            // - https://github.com/ClementTsang/bottom/pull/2163#issuecomment-5017857303
+            let (comm, rest) = line[start_paren + 1..]
+                .rsplit_once(") ")
+                .ok_or_else(|| anyhow!("stat string is malformed"))?;
+
+            (comm.to_string(), rest)
         };
 
         let mut rest = rest.split(' ');
@@ -387,4 +398,66 @@ fn threads(root: &mut PathBuf, pid: Pid, get_threads: bool) -> Vec<PathBuf> {
     }
 
     Vec::new()
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::{Seek, Write};
+
+    use super::*;
+
+    fn stat_from_name(name: &str) -> anyhow::Result<Stat> {
+        // Kinda garbage data but it should be fine.
+        let stat = format!(
+            "0 ({name}) R 0 0 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        );
+
+        stat_file(&stat)
+    }
+
+    fn stat_file(stat: &str) -> anyhow::Result<Stat> {
+        let mut file = tempfile::tempfile().unwrap();
+        file.write_all(stat.as_bytes()).unwrap();
+        file.rewind().unwrap();
+
+        Stat::from_file(file, &mut String::new())
+    }
+
+    #[test]
+    fn parse_short_comm() {
+        let stat = stat_from_name("kworker/u16:2").unwrap();
+        assert_eq!(stat.comm, "kworker/u16:2");
+    }
+
+    #[test]
+    fn parse_long_comm() {
+        let stat = stat_from_name("kworker/u16:2-events_unbound").unwrap();
+        assert_eq!(stat.comm, "kworker/u16:2-events_unbound");
+    }
+
+    #[test]
+    fn parse_64_char_comm() {
+        let comm = "a".repeat(64);
+        let stat = stat_from_name(comm.as_str()).unwrap();
+        assert_eq!(stat.comm, comm);
+    }
+
+    #[test]
+    fn parse_double_paren_comm() {
+        let stat = stat_from_name("(sd-pam)").unwrap();
+        assert_eq!(stat.comm, "(sd-pam)");
+    }
+
+    #[test]
+    fn parse_comm_with_space() {
+        let stat = stat_from_name("a test").unwrap();
+        assert_eq!(stat.comm, "a test");
+    }
+
+    #[test]
+    fn parse_invalid_stat() {
+        assert!(stat_file("1 (blah").is_err(), "missing end paren");
+        assert!(stat_file("1 (blah)").is_err(), "too short");
+        assert!(stat_file("1 )(").is_err(), "wrong order");
+    }
 }

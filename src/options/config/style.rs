@@ -3,6 +3,7 @@
 mod battery;
 mod borders;
 mod cpu;
+mod disk_io_graph;
 mod graphs;
 mod memory;
 mod network;
@@ -16,13 +17,14 @@ use std::borrow::Cow;
 
 use battery::BatteryStyle;
 use cpu::CpuStyle;
+use disk_io_graph::DiskIoGraphStyle;
 use graphs::GraphStyle;
 use memory::MemoryStyle;
 use network::NetworkStyle;
+use ratatui::{style::Style, widgets::BorderType};
 use serde::{Deserialize, Serialize};
 use tables::TableStyle;
 use temp_graph::TempGraphStyle;
-use tui::{style::Style, widgets::BorderType};
 use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
 
@@ -84,6 +86,9 @@ pub(crate) struct StyleConfig {
     /// Styling for the network widget.
     pub(crate) network: Option<NetworkStyle>,
 
+    /// Styling for the disk I/O graph widget.
+    pub(crate) disk_io_graph: Option<DiskIoGraphStyle>,
+
     /// Styling for the temperature graph widget.
     pub(crate) temp_graph: Option<TempGraphStyle>,
 
@@ -119,6 +124,8 @@ pub struct Styles {
     pub(crate) avg_cpu_colour: Style,
     pub(crate) cpu_colour_styles: Vec<Style>,
     pub(crate) temp_graph_colour_styles: Vec<Style>,
+    pub(crate) disk_io_read_colour_styles: Vec<Style>,
+    pub(crate) disk_io_write_colour_styles: Vec<Style>,
     pub(crate) border_style: Style,
     pub(crate) highlighted_border_style: Style,
     pub(crate) text_style: Style,
@@ -191,6 +198,18 @@ impl Styles {
             temp_graph_colour_styles
         );
 
+        // Disk I/O graph
+        set_colour_list!(
+            self.disk_io_read_colour_styles,
+            config.disk_io_graph,
+            read_colours
+        );
+        set_colour_list!(
+            self.disk_io_write_colour_styles,
+            config.disk_io_graph,
+            write_colours
+        );
+
         // Memory
         set_colour!(self.ram_style, config.memory, ram_colour);
         set_colour!(self.swap_style, config.memory, swap_colour);
@@ -242,10 +261,10 @@ impl Styles {
             selected_border_colour
         );
 
-        if let Some(widgets) = &config.widgets {
-            if let Some(widget_borders) = widgets.widget_border_type {
-                self.border_type = widget_borders.into();
-            }
+        if let Some(widgets) = &config.widgets
+            && let Some(widget_borders) = widgets.widget_border_type
+        {
+            self.border_type = widget_borders.into();
         }
 
         Ok(())
@@ -255,7 +274,7 @@ impl Styles {
 #[cfg(test)]
 mod test {
 
-    use tui::style::{Color, Style};
+    use ratatui::style::{Color, Style};
 
     use super::Styles;
     use crate::options::config::{Config, style::utils::str_to_colour};

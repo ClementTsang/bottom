@@ -22,7 +22,7 @@ jobs:
         uses: ClementTsang/skip-duplicate-actions@41b0a75f656d455934ffa6a46b779d8d996ac47c
         with:
           skip_after_successful_duplicate: "true"
-          paths: '["docs/**", ".github/workflows/docs.yml", ".github/workflows/test_docs.yml"]'
+          paths: '["docs/**", ".github/actions/**", ".github/ci/**", ".github/workflows/docs.yml", ".github/workflows/test_docs.yml"]'
           do_not_skip: '["workflow_dispatch"]'
 
   test-build-documentation:
@@ -35,6 +35,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:

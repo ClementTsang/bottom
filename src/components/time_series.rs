@@ -9,7 +9,7 @@ use std::{
 
 pub use auto_y::*;
 pub use percent::*;
-use tui::{style::Style, symbols::Marker, widgets::BorderType};
+use ratatui::{style::Style, symbols::Marker, widgets::BorderType};
 
 use crate::canvas::components::time_series::{
     AxisBound, ChartScaling, GraphData, LegendConstraints, LegendPosition, TimeGraph,
@@ -49,7 +49,7 @@ impl TimeseriesState {
     }
 
     /// Get the current display time.
-    fn current_display_time(&self) -> u64 {
+    pub(crate) fn current_display_time(&self) -> u64 {
         self.current_display_time
     }
 

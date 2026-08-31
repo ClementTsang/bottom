@@ -9,7 +9,6 @@ use std::{
 };
 
 use concat_string::concat_string;
-use itertools::Itertools;
 use process::*;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use sysinfo::ProcessStatus;
@@ -119,7 +118,7 @@ fn get_linux_cpu_usage(
 ) -> (f32, u64) {
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
     let new_proc_times = stat.utime + stat.stime;
-    let diff = (new_proc_times - prev_proc_times) as f64; // No try_from for u64 -> f64... oh well.
+    let diff = new_proc_times.saturating_sub(prev_proc_times) as f64; // No try_from for u64 -> f64... oh well.
 
     if cpu_usage == 0.0 {
         (0.0, new_proc_times)
@@ -304,24 +303,23 @@ fn read_proc(
 ///
 /// Also note that cmdline is (for us) separated by \0.
 fn binary_name_from_cmdline(cmdline: &str) -> String {
-    let mut start = 0;
-    let mut end = cmdline.len();
-
-    for (i, c) in cmdline.chars().enumerate() {
-        if c == '/' {
-            start = i + 1;
-        } else if c == '\0' || c == ':' {
-            end = i;
-            break;
-        }
-    }
-
-    // Bit of a hack to handle cases like "firefox -blah"
-    let partial = cmdline.chars().skip(start).take(end - start).join("");
-    partial
+    // Normally `/proc/<pid>/cmdline` separates arguments with NUL bytes. Some
+    // processes rewrite it using spaces, though, so stop at the first option in
+    // that case. In particular, do this before looking for the final slash;
+    // otherwise a path in a later argument can be mistaken for the executable.
+    let argv0 = cmdline.split_once('\0').map_or(cmdline, |(argv0, _)| argv0);
+    let executable = argv0
         .split_once(" -")
-        .map(|(name, _)| name.to_string())
-        .unwrap_or_else(|| partial.to_string())
+        .map_or(argv0, |(executable, _)| executable);
+    let executable = executable
+        .split_once(':')
+        .map_or(executable, |(executable, _)| executable);
+
+    executable
+        .rsplit('/')
+        .next()
+        .unwrap_or(executable)
+        .to_string()
 }
 
 pub(crate) struct PrevProc<'a> {
@@ -386,7 +384,10 @@ pub(crate) fn linux_process_data(
     } = cpu_usage_calculation(prev_idle, prev_non_idle)?;
 
     if unnormalized_cpu {
-        let num_processors = collector.sys.system.cpus().len() as f64;
+        let num_processors = collector
+            .cgroup_cpu_data
+            .cpu_quota
+            .unwrap_or_else(|| collector.sys.system.cpus().len() as f64);
 
         // Note we *divide* here because the later calculation divides `cpu_usage` - in
         // effect, multiplying over the number of cores.
@@ -563,6 +564,13 @@ mod tests {
         assert_eq!(
             binary_name_from_cmdline("firefox -contentproc -isForBrowser -prefsHandle 0"),
             "firefox"
+        );
+        assert_eq!(
+            binary_name_from_cmdline(
+                "/nix/store/discord/opt/Discord/.Discord-wrapped --type=renderer \
+                 --openh264-library-path=/home/user/libopenh264-2.5.1-linux64.7.so"
+            ),
+            ".Discord-wrapped"
         );
         assert_eq!(binary_name_from_cmdline("こんにちは\0"), "こんにちは");
         assert_eq!(

@@ -28,7 +28,7 @@ const HELP_CONTENTS_TEXT: [&str; 12] = [
 // TODO [Help]: Move to using tables for easier formatting?
 pub(crate) const GENERAL_HELP_TEXT: [&str; 24] = [
     "1 - General",
-    "q, Ctrl-c               Quit",
+    "q, Q, Ctrl-c            Quit",
     "Esc                     Close dialog windows, search, widgets, or exit expanded mode",
     "Ctrl-r                  Reset display and any collected data",
     "f                       Freeze/unfreeze updating with new data",
@@ -254,7 +254,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # This group of options represents a command-line option. Flags explicitly
 # added when running (ie: btm -a) will override this config file if an option
 # is also set here.
-[flags]
+#[flags]
 # Deprecated - use cpu.hide_avg_cpu.
 # Whether to hide the average cpu entry.
 #hide_avg_cpu = false
@@ -390,17 +390,17 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #enable_cache_memory = false
 
 # Deprecated - use memory.free_arc.
-# Subtract freeable ARC from memory usage
+# Subtract ARC memory that can be freed from memory usage.
 #free_arc = false
 
 # How much data is stored at once in terms of time.
 #retention = "10m"
 
-# Deprecated - use memory.legend_position.
+# Deprecated - use memory_graph.legend_position or memory.legend_position.
 # Where to place the legend for the memory widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #memory_legend = "top-right"
 
-# Deprecated - use network_graph.legend_position.
+# Deprecated - use network_graph.legend_position or network.legend_position.
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "top-right"
 
@@ -414,6 +414,10 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # The default sort column when bottom starts. Accepts any of the column names above.
 # If unset, defaults to CPU%.
 #default_sort = "CPU%"
+
+# The default sort order. Can be either "Ascending" or "Descending".
+# Defaults to sensible defaults for the data type (e.g. descending for CPU/memory usage, ascending for process names).
+#sort_order = "Ascending"
 
 # Gather process child thread information
 #get_threads = false
@@ -477,6 +481,13 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Defaults to "Disk".
 #default_sort = "Disk"
 
+# The default sort order. Can be either "Ascending" or "Descending".
+# Defaults to ascending.
+#sort_order = "Ascending"
+
+# Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
+#include_unmounted = false
+
 # By default, there are no disk name filters enabled. These can be turned on to filter out specific data entries if you
 # don't want to see them. An example use case is provided below.
 #[disk.name_filter]
@@ -513,6 +524,45 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #whole_word = false
 
 
+# Disk I/O graph widget configuration
+#[disk_io_graph]
+
+# Whether to show the read rate line. Defaults to true.
+#show_read = true
+
+# Whether to show the write rate line. Defaults to true.
+#show_write = true
+
+# Whether to label legend entries by device name ("disk") or mount point ("mount"). Defaults to "disk".
+#legend = "disk"
+
+# Whether to use a logarithmic scale on the y-axis. Defaults to false.
+#use_log = false
+
+# Where to place the legend. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
+#legend_position = "top-right"
+
+# Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
+#include_unmounted = false
+
+# By default, there are no disk I/O name filters enabled. An example use case is provided below.
+#[disk_io_graph.name_filter]
+# Whether to ignore any matches. Defaults to true.
+#is_list_ignored = true
+
+# A list of filters to try and match.
+#list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
+
+# Whether to use regex. Defaults to false.
+#regex = true
+
+# Whether to be case-sensitive. Defaults to false.
+#case_sensitive = false
+
+# Whether to require matching the whole word. Defaults to false.
+#whole_word = false
+
+
 # Temperature widget configuration
 #[temperature]
 
@@ -521,6 +571,10 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #
 # Defaults to "Sensor".
 #default_sort = "Sensor"
+
+# The default sort order. Can be either "Ascending" or "Descending".
+# Defaults to ascending.
+#sort_order = "Ascending"
 
 # By default, there are no temperature sensor filters enabled. An example use case is provided below.
 #[temperature.sensor_filter]
@@ -568,8 +622,31 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #whole_word = false
 
 
+# Memory widget configuration
+#[memory_graph]
+
+# Where to place the legend for the memory widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
+#legend_position = "top-right"
+
+# Shows cache and buffer memory. Linux only.
+#cache_memory = false
+
+# Subtract ARC memory that can be freed from memory usage. Only available if the ZFS feature is enabled when built.
+#free_arc = false
+
+# Use short GPU names (e.g. "GPU" or "GPU0", "GPU1") instead of full GPU names. Only available if the GPU feature is enabled when built.
+#short_gpu_names = false
+
+
 # Network widget configuration
 #[network_graph]
+
+# Whether to display packet rate and average packet size info. Defaults to false.
+#show_packets = false
+
+# Zeroes out the total network usage ("All") counters so it shows the total usage\nsince the app is started, rather than the total usage since boot.
+#start_zeroed = false
+
 # By default, there are no network interface filters enabled. An example use case is provided below.
 #[network_graph.interface_filter]
 # Whether to ignore any matches. Defaults to true.

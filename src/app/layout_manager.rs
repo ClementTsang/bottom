@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use tui::layout::Constraint;
+use ratatui::layout::Constraint;
 
 use crate::{constants::DEFAULT_WIDGET_ID, options::OptionError};
 
@@ -179,129 +179,124 @@ impl BottomLayout {
                             if let Some(current_col) = current_row
                                 .1
                                 .get(&(col_width_percentage_start, col_width_percentage_end))
-                            {
-                                if let Some(current_col_row) = current_col.1.get(&(
+                                && let Some(current_col_row) = current_col.1.get(&(
                                     col_row_height_percentage_start,
                                     col_row_height_percentage_end,
-                                )) {
-                                    if let Some(to_left_widget) = current_col_row
-                                        .1
-                                        .range(
-                                            ..(
-                                                widget_width_percentage_start,
-                                                widget_width_percentage_start,
-                                            ),
-                                        )
-                                        .next_back()
-                                    {
-                                        widget.left_neighbour = Some(*to_left_widget.1);
-                                    }
+                                ))
+                            {
+                                if let Some(to_left_widget) = current_col_row
+                                    .1
+                                    .range(
+                                        ..(
+                                            widget_width_percentage_start,
+                                            widget_width_percentage_start,
+                                        ),
+                                    )
+                                    .next_back()
+                                {
+                                    widget.left_neighbour = Some(*to_left_widget.1);
+                                }
 
-                                    // Right
-                                    if let Some(to_right_neighbour) = current_col_row
-                                        .1
-                                        .range(
-                                            (
-                                                widget_width_percentage_end,
-                                                widget_width_percentage_end,
-                                            )..,
-                                        )
-                                        .next()
-                                    {
-                                        widget.right_neighbour = Some(*to_right_neighbour.1);
-                                    }
+                                // Right
+                                if let Some(to_right_neighbour) = current_col_row
+                                    .1
+                                    .range(
+                                        (
+                                            widget_width_percentage_end,
+                                            widget_width_percentage_end,
+                                        )..,
+                                    )
+                                    .next()
+                                {
+                                    widget.right_neighbour = Some(*to_right_neighbour.1);
                                 }
                             }
 
-                            if widget.left_neighbour.is_none() {
-                                if let Some(to_left_col) = current_row
+                            if widget.left_neighbour.is_none()
+                                && let Some(to_left_col) = current_row
                                     .1
                                     .range(
                                         ..(col_width_percentage_start, col_width_percentage_start),
                                     )
                                     .next_back()
-                                {
-                                    // Check left in same row
-                                    let mut current_best_distance = 0;
-                                    let mut current_best_widget_id = widget.widget_id;
+                            {
+                                // Check left in same row
+                                let mut current_best_distance = 0;
+                                let mut current_best_widget_id = widget.widget_id;
 
-                                    for widget_position in &(to_left_col.1).1 {
-                                        let candidate_start = (widget_position.0).0;
-                                        let candidate_end = (widget_position.0).1;
+                                for widget_position in &(to_left_col.1).1 {
+                                    let candidate_start = (widget_position.0).0;
+                                    let candidate_end = (widget_position.0).1;
 
-                                        if is_intersecting(
+                                    if is_intersecting(
+                                        (
+                                            col_row_height_percentage_start,
+                                            col_row_height_percentage_end,
+                                        ),
+                                        (candidate_start, candidate_end),
+                                    ) {
+                                        let candidate_distance = get_distance(
                                             (
                                                 col_row_height_percentage_start,
                                                 col_row_height_percentage_end,
                                             ),
                                             (candidate_start, candidate_end),
-                                        ) {
-                                            let candidate_distance = get_distance(
-                                                (
-                                                    col_row_height_percentage_start,
-                                                    col_row_height_percentage_end,
-                                                ),
-                                                (candidate_start, candidate_end),
-                                            );
+                                        );
 
-                                            if current_best_distance < candidate_distance {
-                                                if let Some(new_best_widget) =
-                                                    (widget_position.1).1.iter().next_back()
-                                                {
-                                                    current_best_distance = candidate_distance + 1;
-                                                    current_best_widget_id = *(new_best_widget.1);
-                                                }
-                                            }
+                                        if current_best_distance < candidate_distance
+                                            && let Some(new_best_widget) =
+                                                (widget_position.1).1.iter().next_back()
+                                        {
+                                            current_best_distance = candidate_distance + 1;
+                                            current_best_widget_id = *(new_best_widget.1);
                                         }
                                     }
-                                    if current_best_distance > 0 {
-                                        widget.left_neighbour = Some(current_best_widget_id);
-                                    }
+                                }
+                                if current_best_distance > 0 {
+                                    widget.left_neighbour = Some(current_best_widget_id);
                                 }
                             }
 
-                            if widget.right_neighbour.is_none() {
-                                if let Some(to_right_col) = current_row
+                            if widget.right_neighbour.is_none()
+                                && let Some(to_right_col) = current_row
                                     .1
                                     .range((col_width_percentage_end, col_width_percentage_end)..)
                                     .next()
-                                {
-                                    // Check right in same row
-                                    let mut current_best_distance = 0;
-                                    let mut current_best_widget_id = widget.widget_id;
+                            {
+                                // Check right in same row
+                                let mut current_best_distance = 0;
+                                let mut current_best_widget_id = widget.widget_id;
 
-                                    for widget_position in &(to_right_col.1).1 {
-                                        let candidate_start = (widget_position.0).0;
-                                        let candidate_end = (widget_position.0).1;
+                                for widget_position in &(to_right_col.1).1 {
+                                    let candidate_start = (widget_position.0).0;
+                                    let candidate_end = (widget_position.0).1;
 
-                                        if is_intersecting(
+                                    if is_intersecting(
+                                        (
+                                            col_row_height_percentage_start,
+                                            col_row_height_percentage_end,
+                                        ),
+                                        (candidate_start, candidate_end),
+                                    ) {
+                                        let candidate_distance = get_distance(
                                             (
                                                 col_row_height_percentage_start,
                                                 col_row_height_percentage_end,
                                             ),
                                             (candidate_start, candidate_end),
-                                        ) {
-                                            let candidate_distance = get_distance(
-                                                (
-                                                    col_row_height_percentage_start,
-                                                    col_row_height_percentage_end,
-                                                ),
-                                                (candidate_start, candidate_end),
-                                            );
+                                        );
 
-                                            if current_best_distance < candidate_distance {
-                                                if let Some(new_best_widget) =
-                                                    (widget_position.1).1.iter().next()
-                                                {
-                                                    current_best_distance = candidate_distance + 1;
-                                                    current_best_widget_id = *(new_best_widget.1);
-                                                }
-                                            }
+                                        if current_best_distance < candidate_distance
+                                            && let Some(new_best_widget) =
+                                                (widget_position.1).1.iter().next()
+                                        {
+                                            current_best_distance = candidate_distance + 1;
+                                            current_best_widget_id = *(new_best_widget.1);
                                         }
                                     }
-                                    if current_best_distance > 0 {
-                                        widget.right_neighbour = Some(current_best_widget_id);
-                                    }
+                                }
+                                if current_best_distance > 0 {
+                                    widget.right_neighbour = Some(current_best_widget_id);
                                 }
                             }
 
@@ -943,6 +938,7 @@ pub enum BottomWidgetType {
     Temp,
     TempGraph,
     Disk,
+    DiskIoGraph,
     BasicCpu,
     BasicMem,
     BasicNet,
@@ -958,7 +954,7 @@ impl BottomWidgetType {
 
     pub fn is_widget_graph(&self) -> bool {
         use BottomWidgetType::*;
-        matches!(self, Cpu | Net | Mem | TempGraph)
+        matches!(self, Cpu | Net | Mem | TempGraph | DiskIoGraph)
     }
 
     pub fn get_pretty_name(&self) -> &str {
@@ -990,6 +986,7 @@ impl std::str::FromStr for BottomWidgetType {
             "temp" | "temperature" => Ok(BottomWidgetType::Temp),
             "temp_graph" | "temperature_graph" => Ok(BottomWidgetType::TempGraph),
             "disk" => Ok(BottomWidgetType::Disk),
+            "disk_io_graph" => Ok(BottomWidgetType::DiskIoGraph),
             "empty" => Ok(BottomWidgetType::Empty),
             #[cfg(feature = "battery")]
             "battery" | "batt" => Ok(BottomWidgetType::Battery),
@@ -1014,6 +1011,8 @@ Supported widget names:
 |  temp_graph, temperature_graph |
 +--------------------------------+
 |              disk              |
++--------------------------------+
+|          disk_io_graph         |
 +--------------------------------+
 |          batt, battery         |
 +--------------------------------+
@@ -1043,6 +1042,8 @@ Supported widget names:
 +--------------------------------+
 |              disk              |
 +--------------------------------+
+|          disk_io_graph         |
++--------------------------------+
 |              empty             |
 +--------------------------------+
                 ",
@@ -1064,5 +1065,6 @@ pub struct UsedWidgets {
     pub use_disk: bool,
     pub use_temp: bool,
     pub use_temp_graph: bool,
+    pub use_disk_io_graph: bool,
     pub use_battery: bool,
 }

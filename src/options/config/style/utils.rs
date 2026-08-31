@@ -1,5 +1,5 @@
 use concat_string::concat_string;
-use tui::style::Color;
+use ratatui::style::Color;
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Convert a hex string to a colour.
@@ -190,20 +190,20 @@ macro_rules! set_style {
                     if let Some(bold) = &bold {
                         if *bold {
                             $palette_field =
-                                $palette_field.add_modifier(tui::style::Modifier::BOLD);
+                                $palette_field.add_modifier(ratatui::style::Modifier::BOLD);
                         } else {
                             $palette_field =
-                                $palette_field.remove_modifier(tui::style::Modifier::BOLD);
+                                $palette_field.remove_modifier(ratatui::style::Modifier::BOLD);
                         }
                     }
 
                     if let Some(italics) = &italics {
                         if *italics {
                             $palette_field =
-                                $palette_field.add_modifier(tui::style::Modifier::ITALIC);
+                                $palette_field.add_modifier(ratatui::style::Modifier::ITALIC);
                         } else {
                             $palette_field =
-                                $palette_field.remove_modifier(tui::style::Modifier::ITALIC);
+                                $palette_field.remove_modifier(ratatui::style::Modifier::ITALIC);
                         }
                     }
                 }
@@ -288,7 +288,7 @@ pub(super) use set_style;
 #[cfg(test)]
 mod test {
 
-    use tui::style::{Modifier, Style};
+    use ratatui::style::{Modifier, Style};
 
     use super::*;
     use crate::options::config::style::{ColourStr, TextStyleConfig};

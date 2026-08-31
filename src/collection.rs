@@ -34,7 +34,7 @@ use starship_battery::{Battery, Manager};
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
 #[cfg(target_os = "linux")]
-use crate::collection::linux::cgroups::CgroupMemCollector;
+use crate::collection::linux::cgroups::{CgroupCpuCollector, CgroupMemCollector};
 #[cfg(any(target_os = "linux", feature = "gpu"))]
 use crate::utils::int_hash::IntHashMap;
 
@@ -126,7 +126,7 @@ pub struct SysinfoSource {
     pub(crate) network: sysinfo::Networks,
     #[cfg(not(target_os = "linux"))]
     pub(crate) temps: sysinfo::Components,
-    #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "freebsd")))]
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     pub(crate) disks: sysinfo::Disks,
     #[cfg(target_os = "windows")]
     pub(crate) users: sysinfo::Users,
@@ -141,7 +141,7 @@ impl Default for SysinfoSource {
             network: Networks::new(),
             #[cfg(not(target_os = "linux"))]
             temps: Components::new(),
-            #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "freebsd")))]
+            #[cfg(not(any(target_os = "linux", target_os = "macos")))]
             disks: Disks::new(),
             #[cfg(target_os = "windows")]
             users: Users::new(),
@@ -156,6 +156,7 @@ pub struct DataCollector {
     last_collection_time: Instant,
     widgets_to_harvest: UsedWidgets,
     filters: DataFilters,
+    include_unmounted_disks: bool,
 
     total_rx: u64,
     total_tx: u64,
@@ -194,6 +195,9 @@ pub struct DataCollector {
 
     #[cfg(target_os = "linux")]
     cgroup_memory_data: CgroupMemCollector,
+
+    #[cfg(target_os = "linux")]
+    cgroup_cpu_data: CgroupCpuCollector,
 }
 
 const LESS_ROUTINE_TASK_TIME: Duration = Duration::from_secs(60);
@@ -240,6 +244,9 @@ impl DataCollector {
             should_run_less_routine_tasks: true,
             #[cfg(target_os = "linux")]
             cgroup_memory_data: CgroupMemCollector::default(),
+            #[cfg(target_os = "linux")]
+            cgroup_cpu_data: CgroupCpuCollector::default(),
+            include_unmounted_disks: false,
         }
     }
 
@@ -285,6 +292,10 @@ impl DataCollector {
         self.get_process_threads = get_process_threads;
     }
 
+    pub fn set_include_unmounted_disks(&mut self, include_unmounted_disks: bool) {
+        self.include_unmounted_disks = include_unmounted_disks;
+    }
+
     #[cfg(feature = "zfs")]
     pub fn set_free_arc_mem(&mut self, free_mem: bool) {
         self.free_arc_mem = free_mem;
@@ -295,7 +306,7 @@ impl DataCollector {
     /// - Memory usage
     /// - Network usage
     /// - Processes (non-Linux)
-    /// - Disk (Windows)
+    /// - Disk (Windows, FreeBSD)
     /// - Temperatures (non-Linux)
     fn refresh_sysinfo_data(&mut self) {
         // Refresh the list of objects once every minute. If it's too frequent it can
@@ -315,7 +326,7 @@ impl DataCollector {
 
         // sysinfo is used on non-Linux systems for the following:
         // - Processes (users list as well for Windows)
-        // - Disks (Windows only)
+        // - Disks (Windows/FreeBSD)
         // - Temperatures and temperature components list.
         #[cfg(not(target_os = "linux"))]
         {
@@ -346,7 +357,7 @@ impl DataCollector {
                 }
             }
 
-            #[cfg(target_os = "windows")]
+            #[cfg(any(target_os = "windows", target_os = "freebsd"))]
             if self.widgets_to_harvest.use_disk {
                 if self.should_run_less_routine_tasks {
                     self.sys.disks.refresh(true);
@@ -370,7 +381,14 @@ impl DataCollector {
         self.refresh_sysinfo_data();
 
         #[cfg(target_os = "linux")]
-        self.cgroup_memory_data.refresh();
+        {
+            let total_memory = self.sys.system.total_memory();
+            let total_swap = self.sys.system.total_swap();
+            self.cgroup_memory_data.refresh(total_memory, total_swap);
+        }
+
+        #[cfg(target_os = "linux")]
+        self.cgroup_cpu_data.refresh();
 
         self.update_cpu_usage();
         self.update_memory_usage();
@@ -447,7 +465,7 @@ impl DataCollector {
     #[inline]
     fn update_cpu_usage(&mut self) {
         if self.widgets_to_harvest.use_cpu {
-            self.data.cpu = cpu::get_cpu_data_list(&self.sys.system, self.show_average_cpu).ok();
+            self.data.cpu = cpu::get_cpu_data_list(self).ok();
 
             #[cfg(unix)]
             {
@@ -458,14 +476,14 @@ impl DataCollector {
 
     #[inline]
     fn update_processes(&mut self) {
-        if self.widgets_to_harvest.use_proc {
-            if let Ok(mut process_list) = self.get_processes() {
-                // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
-                // PID here. We also want to avoid re-sorting *again* later on
-                // if we're sorting by PID, since we already did it here!
-                process_list.sort_unstable_by_key(|p| p.pid);
-                self.data.list_of_processes = Some(process_list);
-            }
+        if self.widgets_to_harvest.use_proc
+            && let Ok(mut process_list) = self.get_processes()
+        {
+            // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
+            // PID here. We also want to avoid re-sorting *again* later on
+            // if we're sorting by PID, since we already did it here!
+            process_list.sort_unstable_by_key(|p| p.pid);
+            self.data.list_of_processes = Some(process_list);
         }
     }
 
@@ -505,7 +523,10 @@ impl DataCollector {
                             if arc.0.used_bytes > arc.1 {
                                 #[cfg(target_os = "linux")]
                                 {
-                                    mem.used_bytes -= arc.0.used_bytes.saturating_sub(arc.1); // keep arc min like htop
+                                    // Keep arc min like htop; the subtraction below won't underflow because of
+                                    // the above check.
+                                    mem.used_bytes =
+                                        mem.used_bytes.saturating_sub(arc.0.used_bytes - arc.1);
                                 }
                                 #[cfg(target_os = "freebsd")]
                                 {
@@ -619,9 +640,9 @@ impl DataCollector {
 
     #[inline]
     fn update_disks(&mut self) {
-        if self.widgets_to_harvest.use_disk {
+        if self.widgets_to_harvest.use_disk || self.widgets_to_harvest.use_disk_io_graph {
             self.data.disks = disks::get_disk_usage(self).ok();
-            self.data.io = disks::get_io_usage().ok();
+            self.data.io = disks::get_io_usage(self).ok();
         }
     }
 
@@ -661,6 +682,7 @@ mod tests {
             mount_filter: None,
             temp_filter: None,
             temp_graph_filter: None,
+            disk_io_graph_filter: None,
             net_filter: None,
         });
 
