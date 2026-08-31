@@ -63,7 +63,7 @@ fn is_nv_device_awake(device: &Device<'_>) -> Result<bool, NvmlError> {
     use crate::collection::linux::utils::is_device_awake;
     use std::path::PathBuf;
 
-    let pci_info = device.pci_info()?;
+    let pci_info = device.pci_info()?; // TODO: Does this wake up the GPU...?
 
     // The "0th" function is the GPU itself - from the NVIDIA power management docs
     // (https://us.download.nvidia.com/XFree86/Linux-x86_64/525.89.02/README/dynamicpowermanagement.html):
