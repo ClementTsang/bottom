@@ -10,6 +10,7 @@ use std::{
     time::Duration,
 };
 
+use concat_string::concat_string;
 use rustc_hash::FxHashSet as HashSet;
 
 use crate::{
@@ -26,7 +27,12 @@ pub(crate) fn enumerate_drm_devices(driver: &str) -> Option<Vec<PathBuf>> {
     let mut devices = Vec::new();
 
     // read all PCI devices controlled by the given driver module
-    let Ok(paths) = fs::read_dir(format!("/sys/module/{driver}/drivers/pci:{driver}")) else {
+    let Ok(paths) = fs::read_dir(concat_string!(
+        "/sys/module/",
+        driver,
+        "/drivers/pci:",
+        driver
+    )) else {
         return None;
     };
 
@@ -83,7 +89,7 @@ pub(crate) fn get_drm_render_nodes(device_path: &Path) -> Option<Vec<PathBuf>> {
             continue;
         }
 
-        drm_devices.push(PathBuf::from(format!("/dev/dri/{drm_name}")));
+        drm_devices.push(PathBuf::from(concat_string!("/dev/dri/", drm_name)));
     }
 
     if drm_devices.is_empty() {
