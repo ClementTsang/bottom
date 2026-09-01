@@ -288,8 +288,8 @@ pub(crate) fn kinfo_process(pid: Pid) -> Result<kinfo_proc> {
         bail!("failed to get process for pid {pid}");
     }
 
-    // SAFETY: info is initialized if result succeeded and returned a non-negative
-    // result. If sysctl failed, it returns -1 with errno set.
+    // SAFETY: info is initialized if result succeeded and returned a
+    // non-negative result. If sysctl failed, it returns -1 with errno set.
     //
     // Source: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/sysctl.3.html
     unsafe { Ok(info.assume_init()) }

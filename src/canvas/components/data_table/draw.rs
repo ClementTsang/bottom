@@ -209,7 +209,8 @@ where
 
             if !self.data.is_empty() || !self.first_draw {
                 if self.first_draw {
-                    // TODO: Doing it this way is fine, but it could be done better (e.g. showing
+                    // TODO: Doing it this way is fine, but it could be done
+                    // better (e.g. showing
                     // custom no results/entries message)
                     self.first_draw = false;
                     if let Some(first_index) = self.first_index {

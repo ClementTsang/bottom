@@ -70,8 +70,8 @@ fn get_amd_devs() -> Option<Vec<PathBuf>> {
             continue;
         }
 
-        // This will exist for GPUs but not others, this is how we find their kernel
-        // name.
+        // This will exist for GPUs but not others, this is how we find their
+        // kernel name.
         let test_path = device_path.join("drm");
         if test_path.as_path().exists() {
             devices.push(device_path);

@@ -64,9 +64,10 @@ fn is_gpu_class(class_code: &str) -> bool {
     class_code.starts_with(PCI_BASE_CLASS_DISPLAY)
 }
 
-/// Get a list of PCI bus IDs for Linux. This will handle whether the device is awake or not.
-/// We do this separately to avoid the possibility of NVML waking up the device at all;
-/// this is particularly useful for things like laptops with hybrid graphics (e.g. NVIDIA Optimus).
+/// Get a list of PCI bus IDs for Linux. This will handle whether the device is
+/// awake or not. We do this separately to avoid the possibility of NVML waking
+/// up the device at all; this is particularly useful for things like laptops
+/// with hybrid graphics (e.g. NVIDIA Optimus).
 ///
 /// Note this is somewhat expensive, so it may be worth caching this result.
 ///
@@ -77,8 +78,9 @@ fn is_gpu_class(class_code: &str) -> bool {
 /// - <https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power_state>
 #[cfg(target_os = "linux")]
 fn get_active_pci_bus_ids() -> Vec<String> {
-    use crate::collection::linux::utils::is_device_awake;
     use std::fs;
+
+    use crate::collection::linux::utils::is_device_awake;
 
     let Ok(entries) = fs::read_dir("/sys/bus/pci/devices") else {
         return Vec::new();
@@ -154,24 +156,38 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
                 use itertools::Either;
 
                 // Refresh every ~10 seconds.
-                if let Some((cached_list, cached_time)) = &collector.nvidia_gpu_list_cache && cached_time.elapsed().as_secs() < 10 {
-                    let devices = Either::Left(cached_list.iter().filter_map(|id| nvml.device_by_pci_bus_id(id.as_str()).ok()));
+                if let Some((cached_list, cached_time)) = &collector.nvidia_gpu_list_cache
+                    && cached_time.elapsed().as_secs() < 10
+                {
+                    let devices = Either::Left(
+                        cached_list
+                            .iter()
+                            .filter_map(|id| nvml.device_by_pci_bus_id(id.as_str()).ok()),
+                    );
                     (devices, cached_list.len())
-                }
-                else {
+                } else {
                     let pci_bus_ids = get_active_pci_bus_ids();
                     let num_gpus = pci_bus_ids.len();
-                    collector.nvidia_gpu_list_cache = Some((pci_bus_ids.clone(), std::time::Instant::now()));
+                    collector.nvidia_gpu_list_cache =
+                        Some((pci_bus_ids.clone(), std::time::Instant::now()));
 
-                    let devices = Either::Right(pci_bus_ids.into_iter().filter_map(|id| nvml.device_by_pci_bus_id(id).ok()));
+                    let devices = Either::Right(
+                        pci_bus_ids
+                            .into_iter()
+                            .filter_map(|id| nvml.device_by_pci_bus_id(id).ok()),
+                    );
                     (devices, num_gpus)
                 }
-            },
+            }
             _ => {
-                // The fallback behaviour (the old one) is to just list all nvml devices blindly.
-                // Note this has the risk of waking up sleeping devices.
+                // The fallback behaviour (the old one) is to just list all nvml
+                // devices blindly. Note this has the risk of
+                // waking up sleeping devices.
                 let num_gpus = nvml.device_count().ok()?;
-                ((0..num_gpus).flat_map(|i| nvml.device_by_index(i)), num_gpus as usize)
+                (
+                    (0..num_gpus).flat_map(|i| nvml.device_by_index(i)),
+                    num_gpus as usize,
+                )
             }
         }
     };

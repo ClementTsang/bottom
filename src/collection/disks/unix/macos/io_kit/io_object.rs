@@ -81,8 +81,8 @@ impl From<io_object_t> for IoObject {
 
 impl Drop for IoObject {
     fn drop(&mut self) {
-        // SAFETY: IOKit call, the argument here (an `io_object_t`) should be safe and
-        // expected.
+        // SAFETY: IOKit call, the argument here (an `io_object_t`) should be
+        // safe and expected.
         let result = unsafe { IOObjectRelease(self.0) };
         assert_eq!(result, kern_return::KERN_SUCCESS);
     }
@@ -95,12 +95,14 @@ pub fn get_dict(
 
     dict.find(&key)
         .map(|value_ref| {
-            // SAFETY: Only used for debug asserts, system API call that should be safe.
+            // SAFETY: Only used for debug asserts, system API call that should
+            // be safe.
             unsafe {
                 debug_assert!(value_ref.type_of() == CFDictionaryGetTypeID());
             }
 
-            // "Casting" `CFDictionary<*const void, *const void>` into a needed dict type
+            // "Casting" `CFDictionary<*const void, *const void>` into a needed
+            // dict type
             let ptr = value_ref.to_void() as CFDictionaryRef;
 
             // SAFETY: System API call, it should be safe?
@@ -116,7 +118,8 @@ pub fn get_i64(
 
     dict.find(&key)
         .and_then(|value_ref| {
-            // SAFETY: Only used for debug asserts, system API call that should be safe.
+            // SAFETY: Only used for debug asserts, system API call that should
+            // be safe.
             unsafe {
                 debug_assert!(value_ref.type_of() == CFNumberGetTypeID());
             }
@@ -133,7 +136,8 @@ pub fn get_string(
 
     dict.find(&key)
         .and_then(|value_ref| {
-            // SAFETY: Only used for debug asserts, system API call that should be safe.
+            // SAFETY: Only used for debug asserts, system API call that should
+            // be safe.
             unsafe {
                 debug_assert!(value_ref.type_of() == CFStringGetTypeID());
             }

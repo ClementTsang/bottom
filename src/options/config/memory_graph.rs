@@ -12,7 +12,8 @@ pub struct MemoryGraphConfig {
     /// Where to place the legend for the memory chart widget.
     pub(crate) legend_position: Option<String>,
 
-    /// Whether to collect and display cache and buffer memory. Not available on Windows.
+    /// Whether to collect and display cache and buffer memory. Not available on
+    /// Windows.
     #[cfg_attr(target_os = "windows", allow(dead_code))]
     pub(crate) cache_memory: Option<bool>,
 

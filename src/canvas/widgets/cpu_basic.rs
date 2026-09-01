@@ -28,10 +28,11 @@ impl Painter {
         // of columns to draw all CPUs. Ideally, as well, we want to not have
         // to ever scroll.
         //
-        // **General logic** - count number of elements in cpu_data.  Then see how
-        // many rows and columns we have in draw_loc (-2 on both sides for border?).
-        // I think what we can do is try to fit in as many in one column as possible.
-        // If not, then add a new column. Then, from this, split the row space across
+        // **General logic** - count number of elements in cpu_data.  Then see
+        // how many rows and columns we have in draw_loc (-2 on both
+        // sides for border?). I think what we can do is try to fit in
+        // as many in one column as possible. If not, then add a new
+        // column. Then, from this, split the row space across
         // ALL columns. From there, generate the desired lengths.
 
         f.render_widget(
@@ -59,8 +60,8 @@ impl Painter {
             let [cores_loc, mut avg_loc] =
                 Layout::vertical([Constraint::Min(0), Constraint::Length(1)]).areas(draw_loc);
 
-            // The cores section all have horizontal margin, so to line up with the cores we
-            // need to add some margin ourselves.
+            // The cores section all have horizontal margin, so to line up with
+            // the cores we need to add some margin ourselves.
             avg_loc.x += 1;
             avg_loc.width -= 2;
 

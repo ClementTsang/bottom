@@ -82,17 +82,18 @@ impl Prefix {
     ) -> QueryResult<Self> {
         if let Some(queue_top) = query.pop_front() {
             if queue_top == "\"" {
-                // This means we hit something like "". Return an empty prefix, and to deal
-                // with the close quote checker, add one to the top of the
-                // stack. Ugly fix but whatever.
+                // This means we hit something like "". Return an empty prefix,
+                // and to deal with the close quote checker, add
+                // one to the top of the stack. Ugly fix but
+                // whatever.
                 query.push_front("\"".to_string());
 
                 Ok(Prefix::Attribute(ProcessAttribute::Empty))
             } else {
                 let mut intern_string = vec![queue_top];
 
-                // TODO: I think this should consume the quote...? Might need to check the other
-                // spot we process quotes.
+                // TODO: I think this should consume the quote...? Might need to
+                // check the other spot we process quotes.
                 while let Some(next_str) = query.front() {
                     if next_str == "\"" {
                         break;
@@ -110,7 +111,8 @@ impl Prefix {
                 )?))
             }
         } else {
-            // Uh oh, there's nothing left in the stack, but we're inside quotes!
+            // Uh oh, there's nothing left in the stack, but we're inside
+            // quotes!
             Err(QueryError::new("Missing closing quotation"))
         }
     }
@@ -195,9 +197,9 @@ impl QueryProcessor for Prefix {
                 let inner = Prefix::process(query, options)?;
                 return Ok(Prefix::Negate(Box::new(inner)));
             } else if curr == "\"" {
-                // Similar to parentheses, trap and check for missing closing quotes.  Note,
-                // however, that we will DIRECTLY call another process_prefix
-                // call...
+                // Similar to parentheses, trap and check for missing closing
+                // quotes.  Note, however, that we will DIRECTLY
+                // call another process_prefix call...
 
                 let prefix = Prefix::process_in_quotes(query, options)?;
                 return if let Some(close_quote) = query.pop_front() {
@@ -230,7 +232,8 @@ impl QueryProcessor for Prefix {
                             )?));
                         }
                         PrefixType::Pid | PrefixType::State | PrefixType::User => {
-                            // We have to check if someone put an (in)equality check...
+                            // We have to check if someone put an (in)equality
+                            // check...
                             if content == "=" || content == "!=" {
                                 let negate = content.starts_with('!');
 
@@ -241,22 +244,27 @@ impl QueryProcessor for Prefix {
                                             "`!` is reserved; use `\"!\"` to match the literal character",
                                         ));
                                     }
-                                    // TODO: [Query] Need to consider the following cases:
+                                    // TODO: [Query] Need to consider the
+                                    // following cases:
                                     // - (test)
                                     // - (test
                                     // - test)
-                                    // These are split into 2 to 3 different strings due to
+                                    // These are split into 2 to 3 different
+                                    // strings due to
                                     // parentheses being
                                     // delimiters in our query system.
                                     //
-                                    // Do we want these to be valid?  They should, as a string,
+                                    // Do we want these to be valid?  They
+                                    // should, as a string,
                                     // right?
 
-                                    // We also must check if this value is wrapped in quotes!
+                                    // We also must check if this value is
+                                    // wrapped in quotes!
                                     let final_value = if string_value == "\"" {
                                         let mut intern_string = vec![];
 
-                                        // Keep parsing until we either hit another quotation or we
+                                        // Keep parsing until we either hit
+                                        // another quotation or we
                                         // error.
                                         while let Some(next_string) = query.pop_front() {
                                             if next_string == "\"" {
@@ -343,13 +351,16 @@ impl QueryProcessor for Prefix {
                             }
                         }
                         _ => {
-                            // Assume it's some numerical value. Now we gotta parse the content... yay.
-                            // Note that for numerical parsing, we handle unit parsing later, not here.
+                            // Assume it's some numerical value. Now we gotta
+                            // parse the content... yay.
+                            // Note that for numerical parsing, we handle unit
+                            // parsing later, not here.
 
                             let mut condition: Option<QueryComparison> = None;
                             let mut value: Option<f64> = None;
 
-                            // TODO: Jeez, what the heck did I write here... add some tests and
+                            // TODO: Jeez, what the heck did I write here... add
+                            // some tests and
                             // clean this up in the future.
                             if content == "=" {
                                 condition = Some(QueryComparison::Equal);
@@ -366,7 +377,8 @@ impl QueryProcessor for Prefix {
                                     return Err(QueryError::missing_value());
                                 }
                             } else if content == ">" || content == "<" {
-                                // We also have to check if the next string is an "="...
+                                // We also have to check if the next string is
+                                // an "="...
                                 if let Some(queue_next) = query.pop_front() {
                                     if queue_next == "=" {
                                         condition = Some(if content == ">" {
@@ -395,7 +407,8 @@ impl QueryProcessor for Prefix {
                             if let Some(condition) = condition
                                 && let Some(read_value) = value
                             {
-                                // Note that the values *might* have a unit or need to be parsed
+                                // Note that the values *might* have a unit or
+                                // need to be parsed
                                 // differently based on the
                                 // prefix type!
 
@@ -431,8 +444,8 @@ impl QueryProcessor for Prefix {
             }
         }
 
-        // TODO: Give more information here (e.g. closest query?), though this is moreso
-        // meant as a fallback.
+        // TODO: Give more information here (e.g. closest query?), though this
+        // is moreso meant as a fallback.
         Err(QueryError::new("Invalid query"))
     }
 }

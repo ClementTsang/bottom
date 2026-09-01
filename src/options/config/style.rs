@@ -281,8 +281,8 @@ mod test {
 
     #[test]
     fn color_spelling_aliases_work() {
-        // Parse all_styling_color.toml (which uses the "color" alias spelling throughout)
-        // and assert every field was actually parsed.
+        // Parse all_styling_color.toml (which uses the "color" alias spelling
+        // throughout) and assert every field was actually parsed.
         let toml_str = include_str!("../../../tests/valid_configs/all_styling_color.toml");
         let config = toml_edit::de::from_str::<Config>(toml_str)
             .expect("config file should parse")
