@@ -11,6 +11,8 @@ pub mod amd;
 #[cfg(target_os = "linux")]
 mod linux {
     pub mod cgroups;
+    #[cfg(feature = "gpu")]
+    pub mod drm;
     pub mod utils;
 }
 
