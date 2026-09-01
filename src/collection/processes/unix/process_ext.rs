@@ -144,6 +144,7 @@ pub(crate) trait UnixProcessExt {
                 },
                 mem_usage: process_val.memory(),
                 virtual_mem: process_val.virtual_memory(),
+                swap_bytes: None,
                 cpu_usage_percent: process_cpu_usage,
                 read_per_sec: disk_usage.read_bytes,
                 write_per_sec: disk_usage.written_bytes,

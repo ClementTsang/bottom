@@ -142,6 +142,7 @@ fn read_proc(
         stat,
         io,
         cmdline,
+        swap_bytes,
     } = process;
 
     let ReadProcArgs {
@@ -270,6 +271,7 @@ fn read_proc(
             mem_usage_percent,
             mem_usage,
             virtual_mem,
+            swap_bytes,
             name,
             command,
             read_per_sec,
@@ -362,6 +364,7 @@ pub(crate) fn linux_process_data(
         unnormalized_cpu: collector.unnormalized_cpu,
         get_process_threads: collector.get_process_threads,
     };
+    let get_swap = collector.get_process_swap;
     let prev_process_details = &mut collector.prev_process_details;
     let user_table = &mut collector.user_table;
 
@@ -426,7 +429,7 @@ pub(crate) fn linux_process_data(
     let mut process_vector: Vec<ProcessHarvest> = pids
         .filter_map(|pid_path| {
             if let Ok((process, threads)) =
-                Process::from_path(pid_path, &mut buffer, args.get_process_threads)
+                Process::from_path(pid_path, &mut buffer, args.get_process_threads, get_swap)
             {
                 let pid = process.pid;
                 let prev_proc_details = prev_process_details.entry(pid).or_default();
@@ -471,7 +474,7 @@ pub(crate) fn linux_process_data(
     // Get thread data.
     for (pid, tid_paths) in process_threads_to_check {
         for tid_path in tid_paths {
-            if let Ok((process, _)) = Process::from_path(tid_path, &mut buffer, false) {
+            if let Ok((process, _)) = Process::from_path(tid_path, &mut buffer, false, get_swap) {
                 let tid = process.pid;
                 let prev_proc_details = prev_process_details.entry(tid).or_default();
 

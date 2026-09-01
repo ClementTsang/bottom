@@ -19,7 +19,7 @@ use crate::{
         Painter,
         components::data_table::{DataTableColumn, DataToCell},
     },
-    collection::processes::{Pid, ProcessHarvest},
+    collection::processes::{Bytes, Pid, ProcessHarvest},
     dec_bytes_per_second_string,
     utils::data_units::{GIBI_LIMIT, GIGA_LIMIT, get_binary_bytes, get_decimal_bytes},
 };
@@ -219,6 +219,7 @@ pub struct ProcWidgetData {
     pub cpu_usage_percent: f32,
     pub mem_usage: MemUsage,
     pub virtual_mem: u64,
+    pub swap_bytes: Option<Bytes>,
     pub rps: u64,
     pub wps: u64,
     pub total_read: u64,
@@ -265,6 +266,7 @@ impl ProcWidgetData {
             cpu_usage_percent: process.cpu_usage_percent,
             mem_usage,
             virtual_mem: process.virtual_mem,
+            swap_bytes: process.swap_bytes,
             rps: process.read_per_sec,
             wps: process.write_per_sec,
             total_read: process.total_read,
@@ -309,6 +311,11 @@ impl ProcWidgetData {
         self.total_read += other.total_read;
         self.total_write += other.total_write;
         self.time = self.time.max(other.time);
+        self.swap_bytes = match (self.swap_bytes, other.swap_bytes) {
+            (Some(a), Some(b)) => Some(a + b),
+            (Some(a), None) | (None, Some(a)) => Some(a),
+            (None, None) => None,
+        };
         #[cfg(feature = "gpu")]
         {
             self.gpu_mem_usage = self.gpu_mem_usage + other.gpu_mem_usage;
@@ -324,6 +331,10 @@ impl ProcWidgetData {
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem),
+            ProcColumn::Swap => self
+                .swap_bytes
+                .map(binary_byte_string)
+                .unwrap_or_else(|| "N/A".to_string()),
             ProcColumn::Pid => self.pid.to_string(),
             ProcColumn::Count => self.num_similar.to_string(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string(),
@@ -360,6 +371,11 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem).into(),
+            ProcColumn::Swap => self
+                .swap_bytes
+                .map(binary_byte_string)
+                .unwrap_or_else(|| "N/A".to_string())
+                .into(),
             ProcColumn::Pid => self.pid.to_string().into(),
             ProcColumn::Count => self.num_similar.to_string().into(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string().into(),
@@ -486,5 +502,47 @@ mod test {
             binary_byte_string((10.36 * TEBI_LIMIT as f64) as u64),
             "10.4TiB".to_string()
         );
+    }
+
+    #[test]
+    fn test_swap_string() {
+        let process = ProcessHarvest {
+            swap_bytes: Some(4 * MEBI_LIMIT),
+            ..Default::default()
+        };
+        let data = ProcWidgetData::from_data(&process, false, false);
+
+        assert_eq!(data.to_string(&ProcColumn::Swap), "4MiB");
+
+        let process = ProcessHarvest::default();
+        let data = ProcWidgetData::from_data(&process, false, false);
+
+        assert_eq!(data.to_string(&ProcColumn::Swap), "N/A");
+    }
+
+    #[test]
+    fn test_swap_addition() {
+        let process = ProcessHarvest {
+            swap_bytes: Some(100),
+            ..Default::default()
+        };
+        let other = ProcessHarvest {
+            swap_bytes: Some(200),
+            ..Default::default()
+        };
+        let mut data = ProcWidgetData::from_data(&process, false, false);
+        let other = ProcWidgetData::from_data(&other, false, false);
+
+        data.add(&other);
+        assert_eq!(data.swap_bytes, Some(300));
+
+        let unknown = ProcWidgetData::from_data(&ProcessHarvest::default(), false, false);
+        data.add(&unknown);
+        assert_eq!(data.swap_bytes, Some(300));
+
+        let known = ProcWidgetData::from_data(&process, false, false);
+        let mut unknown = ProcWidgetData::from_data(&ProcessHarvest::default(), false, false);
+        unknown.add(&known);
+        assert_eq!(unknown.swap_bytes, Some(100));
     }
 }

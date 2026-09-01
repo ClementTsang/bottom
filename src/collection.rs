@@ -167,6 +167,7 @@ pub struct DataCollector {
     use_current_cpu_total: bool,
     show_average_cpu: bool,
     get_process_threads: bool,
+    get_process_swap: bool,
 
     last_list_collection_time: Instant,
     should_run_less_routine_tasks: bool,
@@ -223,6 +224,7 @@ impl DataCollector {
             use_current_cpu_total: false,
             unnormalized_cpu: false,
             get_process_threads: false,
+            get_process_swap: false,
             last_collection_time,
             total_rx: 0,
             total_tx: 0,
@@ -295,6 +297,10 @@ impl DataCollector {
 
     pub fn set_get_process_threads(&mut self, get_process_threads: bool) {
         self.get_process_threads = get_process_threads;
+    }
+
+    pub fn set_get_process_swap(&mut self, get_process_swap: bool) {
+        self.get_process_swap = get_process_swap;
     }
 
     pub fn set_include_unmounted_disks(&mut self, include_unmounted_disks: bool) {

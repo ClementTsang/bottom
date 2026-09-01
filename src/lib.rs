@@ -224,6 +224,7 @@ fn create_collection_thread(
     let show_average_cpu = app_config_fields.show_average_cpu;
     let update_sleep = app_config_fields.update_rate;
     let get_process_threads = app_config_fields.get_process_threads;
+    let get_process_swap = app_config_fields.get_process_swap;
     #[cfg(feature = "zfs")]
     let get_arc_free = app_config_fields.free_arc;
     let include_unmounted_disks =
@@ -237,6 +238,7 @@ fn create_collection_thread(
         data_collector.set_unnormalized_cpu(unnormalized_cpu);
         data_collector.set_show_average_cpu(show_average_cpu);
         data_collector.set_get_process_threads(get_process_threads);
+        data_collector.set_get_process_swap(get_process_swap);
         #[cfg(feature = "zfs")]
         data_collector.set_free_arc_mem(get_arc_free);
         data_collector.set_include_unmounted_disks(include_unmounted_disks);
