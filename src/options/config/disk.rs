@@ -14,7 +14,8 @@ pub(crate) struct DiskConfig {
     /// A filter over the mount names.
     pub(crate) mount_filter: Option<IgnoreList>,
 
-    /// Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
+    /// Whether to include block devices that aren't currently mounted
+    /// (currently Linux only). Defaults to false.
     pub(crate) include_unmounted: Option<bool>,
 
     /// A list of disk widget columns.
@@ -62,7 +63,8 @@ mod test {
         toml_edit::de::from_str::<DiskConfig>(config).expect_err("Should error out!");
     }
 
-    /// Test that disk enum variants that are advertised in the schema are valid.
+    /// Test that disk enum variants that are advertised in the schema are
+    /// valid.
     #[cfg(feature = "generate_schema")]
     #[test]
     fn ensure_disk_column_schema_is_accepted() {

@@ -243,25 +243,29 @@ fn test_network_alias() {
     run_and_kill_cfg("./tests/valid_configs/network_alias.toml");
 }
 
-/// This uses deprecated network settings - once they are removed, this test file should be moved to invalid configs.
+/// This uses deprecated network settings - once they are removed, this test
+/// file should be moved to invalid configs.
 #[test]
 fn test_deprecated_network() {
     run_and_kill_cfg("./tests/valid_configs/deprecated/network.toml");
 }
 
-/// This uses deprecated process settings - once they are removed, this test file should be moved to invalid configs.
+/// This uses deprecated process settings - once they are removed, this test
+/// file should be moved to invalid configs.
 #[test]
 fn test_deprecated_processes() {
     run_and_kill_cfg("./tests/valid_configs/deprecated/processes.toml");
 }
 
-/// This uses deprecated CPU settings - once they are removed, this test file should be moved to invalid configs.
+/// This uses deprecated CPU settings - once they are removed, this test file
+/// should be moved to invalid configs.
 #[test]
 fn test_deprecated_cpu() {
     run_and_kill_cfg("./tests/valid_configs/deprecated/cpu.toml");
 }
 
-/// This uses deprecated memory settings - once they are removed, this test file should be moved to invalid configs.
+/// This uses deprecated memory settings - once they are removed, this test file
+/// should be moved to invalid configs.
 #[test]
 fn test_deprecated_memory() {
     run_and_kill_cfg("./tests/valid_configs/deprecated/memory.toml");
@@ -277,14 +281,15 @@ fn test_disk_io_graph() {
     run_and_kill_cfg("./tests/valid_configs/widget/disk_io_graph.toml");
 }
 
-/// This uses deprecated temperature settings - once they are removed, this test file should be moved to invalid configs.
+/// This uses deprecated temperature settings - once they are removed, this test
+/// file should be moved to invalid configs.
 #[test]
 fn test_deprecated_temperature() {
     run_and_kill_cfg("./tests/valid_configs/deprecated/temperature.toml");
 }
 
-/// Test that deprecated warnings are not shown for config options that are not actually set,
-/// even when a `[flags]` section is present.
+/// Test that deprecated warnings are not shown for config options that are not
+/// actually set, even when a `[flags]` section is present.
 #[test]
 fn test_no_spurious_deprecated_warnings() {
     let mut child = btm_command(&["-C", "./tests/valid_configs/empty_flags.toml"])

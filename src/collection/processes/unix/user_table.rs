@@ -16,8 +16,8 @@ impl UserTable {
         if let Some(user) = self.uid_user_mapping.get(&uid) {
             Ok(user.clone())
         } else {
-            // SAFETY: getpwuid returns a null pointer if no passwd entry is found for the
-            // uid which we check.
+            // SAFETY: getpwuid returns a null pointer if no passwd entry is
+            // found for the uid which we check.
             let passwd = unsafe { libc::getpwuid(uid) };
 
             if passwd.is_null() {

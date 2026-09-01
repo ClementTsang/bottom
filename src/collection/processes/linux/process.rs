@@ -76,24 +76,26 @@ impl Stat {
     /// `/proc/<PID>/stat`. For documentation, see
     /// [here](https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html) as a reference.
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
-        // Since this is just one line, we can read it all at once. However, since it
-        // (technically) might have non-utf8 characters, we can't just use
-        // read_to_string.
+        // Since this is just one line, we can read it all at once. However,
+        // since it (technically) might have non-utf8 characters, we
+        // can't just use read_to_string.
         f.read_to_end(unsafe { buffer.as_mut_vec() })?;
 
         // TODO: Is this needed?
         let line = buffer.trim();
 
-        // Comm is represented by a string in parentheses (e.g. `(foo)`, `((bar))`).
-        // To handle that second case, we need to find the "last" closing parentheses.
+        // Comm is represented by a string in parentheses (e.g. `(foo)`,
+        // `((bar))`). To handle that second case, we need to find the
+        // "last" closing parentheses.
         let (comm, rest) = {
             let start_paren = line
                 .find('(')
                 .ok_or_else(|| anyhow!("start paren missing"))?;
 
-            // So, we _could_ try and be smart and only parse a limited slice of the string - however,
-            // there appears to be no ABI guarantees of comm length anymore, so we just take the hit and do an rsplit
-            // over the full string.
+            // So, we _could_ try and be smart and only parse a limited slice of
+            // the string - however, there appears to be no ABI
+            // guarantees of comm length anymore, so we just take the hit and do
+            // an rsplit over the full string.
             //
             // Sources/discussion:
             // - https://man.archlinux.org/man/proc_pid_stat.5.en
@@ -189,8 +191,8 @@ impl Io {
         let mut read_bytes = 0;
         let mut write_bytes = 0;
 
-        // This saves us from doing a string allocation on each iteration compared to
-        // `lines()`.
+        // This saves us from doing a string allocation on each iteration
+        // compared to `lines()`.
         while let Ok(bytes) = reader.read_line(buffer) {
             if bytes > 0 {
                 if buffer.is_empty() {
@@ -225,7 +227,8 @@ impl Io {
                     }
                 }
 
-                // Quick short circuit if we have already read all the required fields.
+                // Quick short circuit if we have already read all the required
+                // fields.
                 if read_fields == NUM_FIELDS {
                     break;
                 }
@@ -333,8 +336,8 @@ impl Process {
 
         let mut root = pid_path;
 
-        // NB: Whenever you add a new stat, make sure to pop the root and clear the
-        // buffer!
+        // NB: Whenever you add a new stat, make sure to pop the root and clear
+        // the buffer!
 
         // Stat is pretty long, do this first to pre-allocate up-front.
         let stat =
@@ -342,8 +345,8 @@ impl Process {
         reset(&mut root, buffer);
 
         let cmdline = if cmdline(&mut root, &pid_dir, buffer).is_ok() {
-            // The clone will give a string with the capacity of the length of buffer, don't
-            // worry.
+            // The clone will give a string with the capacity of the length of
+            // buffer, don't worry.
             Some(buffer.clone())
         } else {
             None

@@ -223,19 +223,21 @@ fn read_proc(
                 (concat_string!("[", comm, "]"), comm)
             } else {
                 // If the comm fits then we'll default to whatever is set.
-                // If it doesn't, we need to do some magic to determine what it's
-                // supposed to be.
+                // If it doesn't, we need to do some magic to determine what
+                // it's supposed to be.
 
-                // TODO: We might want to re-evaluate if we want to do it like this,
-                // as it turns out I was dumb and sometimes comm != process name...
+                // TODO: We might want to re-evaluate if we want to do it like
+                // this, as it turns out I was dumb and
+                // sometimes comm != process name...
                 //
                 // What we should do is store:
-                // - basename (what we're kinda doing now, except we're gating on comm length)
+                // - basename (what we're kinda doing now, except we're gating
+                //   on comm length)
                 // - command (full thing)
                 // - comm (as a separate thing)
                 //
-                // Stuff like htop also offers the option to "highlight" basename and comm in
-                // command. Might be neat?
+                // Stuff like htop also offers the option to "highlight"
+                // basename and comm in command. Might be neat?
                 let name = if comm.len() >= MAX_STAT_NAME_LEN {
                     binary_name_from_cmdline(&cmdline)
                 } else {
@@ -250,8 +252,8 @@ fn read_proc(
     };
 
     // We have moved command processing here.
-    // SAFETY: We are only replacing a single char (NUL) with another single char
-    // (space).
+    // SAFETY: We are only replacing a single char (NUL) with another single
+    // char (space).
 
     let mut command = command;
     let buf_mut = unsafe { command.as_mut_vec() };
@@ -392,13 +394,14 @@ pub(crate) fn linux_process_data(
             .cpu_quota
             .unwrap_or_else(|| collector.sys.system.cpus().len() as f64);
 
-        // Note we *divide* here because the later calculation divides `cpu_usage` - in
-        // effect, multiplying over the number of cores.
+        // Note we *divide* here because the later calculation divides
+        // `cpu_usage` - in effect, multiplying over the number of
+        // cores.
         cpu_usage /= num_processors;
     }
 
-    // TODO: Could maybe use a double buffer hashmap to avoid allocating this each
-    // time? e.g. we swap which is prev and which is new.
+    // TODO: Could maybe use a double buffer hashmap to avoid allocating this
+    // each time? e.g. we swap which is prev and which is new.
     let mut seen_pids: HashSet<Pid> = HashSet::default();
 
     // Note this will only return PIDs of _processes_, not threads. You can get
@@ -500,8 +503,8 @@ pub(crate) fn linux_process_data(
         prev_process_details.shrink_to_fit();
     }
 
-    // TODO: This might be more efficient to just separate threads into their own
-    // list, but for now this works so it fits with existing code.
+    // TODO: This might be more efficient to just separate threads into their
+    // own list, but for now this works so it fits with existing code.
     Ok(process_vector)
 }
 

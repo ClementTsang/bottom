@@ -4,8 +4,8 @@ pub(super) mod default;
 pub(super) mod gruvbox;
 pub(super) mod nord;
 
-/// Convert a [`ratatui::style::Color`] into a [`ratatui::style::Style`] with the colour
-/// as the foreground.
+/// Convert a [`ratatui::style::Color`] into a [`ratatui::style::Style`] with
+/// the colour as the foreground.
 macro_rules! colour {
     ($value:expr) => {
         ratatui::style::Style::new().fg($value)

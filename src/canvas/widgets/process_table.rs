@@ -177,12 +177,8 @@ impl Painter {
             // TODO: [MOVEMENT] Movement support for these in search
             let (case, whole, regex) = {
                 cfg_select! {
-                    target_os = "macos" => {
-                        ("Case(F1)", "Whole(F2)", "Regex(F3)")
-                    }
-                    _ => {
-                        ("Case(Alt+C)", "Whole(Alt+W)", "Regex(Alt+R)")
-                    }
+                    target_os = "macos" => ("Case(F1)", "Whole(F2)", "Regex(F3)"),
+                    _ => ("Case(Alt+C)", "Whole(Alt+W)", "Regex(Alt+R)"),
                 }
             };
             let option_text = Line::from(vec![

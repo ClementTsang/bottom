@@ -320,8 +320,8 @@ impl DataCollector {
     /// - Disk (Windows, FreeBSD)
     /// - Temperatures (non-Linux)
     fn refresh_sysinfo_data(&mut self) {
-        // Refresh the list of objects once every minute. If it's too frequent it can
-        // cause segfaults.
+        // Refresh the list of objects once every minute. If it's too frequent
+        // it can cause segfaults.
 
         if self.widgets_to_harvest.use_cpu || self.widgets_to_harvest.use_proc {
             self.sys.system.refresh_cpu_all();
@@ -486,9 +486,10 @@ impl DataCollector {
         if self.widgets_to_harvest.use_proc
             && let Ok(mut process_list) = self.get_processes()
         {
-            // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
-            // PID here. We also want to avoid re-sorting *again* later on
-            // if we're sorting by PID, since we already did it here!
+            // NB: To avoid duplicate sorts on rerenders/events, we sort the
+            // processes by PID here. We also want to avoid
+            // re-sorting *again* later on if we're sorting by PID,
+            // since we already did it here!
             process_list.sort_unstable_by_key(|p| p.pid);
             self.data.list_of_processes = Some(process_list);
         }
@@ -530,7 +531,8 @@ impl DataCollector {
                             if arc.0.used_bytes > arc.1 {
                                 #[cfg(target_os = "linux")]
                                 {
-                                    // Keep arc min like htop; the subtraction below won't underflow because of
+                                    // Keep arc min like htop; the subtraction
+                                    // below won't underflow because of
                                     // the above check.
                                     mem.used_bytes =
                                         mem.used_bytes.saturating_sub(arc.0.used_bytes - arc.1);

@@ -291,13 +291,13 @@ impl TimeSeriesData {
                 .time
                 .partition_point(|then| now.duration_since(*then) > max_age);
 
-            // Partition point returns the first index that does not match the predicate, so
-            // minus one.
+            // Partition point returns the first index that does not match the
+            // predicate, so minus one.
             if partition_point > 0 {
                 partition_point - 1
             } else {
-                // If the partition point was 0, then it means all values are too new to be
-                // pruned.
+                // If the partition point was 0, then it means all values are
+                // too new to be pruned.
                 // crate::info!("Skipping prune.");
                 return;
             }
@@ -330,7 +330,8 @@ impl TimeSeriesData {
             self.gpu_mem.retain(|_, gpu| {
                 let _ = gpu.prune(end);
 
-                // Remove the entry if it is empty. We can always add it again later.
+                // Remove the entry if it is empty. We can always add it again
+                // later.
                 if gpu.no_elements() {
                     false
                 } else {
@@ -343,7 +344,8 @@ impl TimeSeriesData {
         self.temperature.retain(|_, data| {
             let _ = data.prune(end);
 
-            // Remove the entry if it is empty. We can always add it again later.
+            // Remove the entry if it is empty. We can always add it again
+            // later.
             if data.no_elements() {
                 false
             } else {

@@ -9,7 +9,8 @@ use crate::{canvas::components::data_table::SortOrder, widgets::ProcColumn};
 pub(crate) struct ProcessesConfig {
     /// A list of process widget columns.
     #[serde(default)]
-    pub columns: Vec<ProcColumn>, // TODO: make this more composable(?) in the future, we might need to rethink how it's done for custom widgets
+    pub columns: Vec<ProcColumn>, /* TODO: make this more composable(?) in the future, we might
+                                   * need to rethink how it's done for custom widgets */
 
     /// The default sort column.
     #[serde(default)]
@@ -37,7 +38,8 @@ pub(crate) struct ProcessesConfig {
     // across platforms.
     //
     // #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-    /// Disable the advanced kill dialog and just show the basic one with no options.
+    /// Disable the advanced kill dialog and just show the basic one with no
+    /// options.
     #[cfg_attr(
         not(any(target_os = "linux", target_os = "macos", target_os = "freebsd")),
         allow(dead_code)
@@ -47,7 +49,8 @@ pub(crate) struct ProcessesConfig {
     /// Defaults to showing process memory usage by value.
     pub default_memory_value: Option<bool>,
 
-    /// Groups processes with the same name by default. No effect if `--tree` is set.
+    /// Groups processes with the same name by default. No effect if `--tree` is
+    /// set.
     pub default_grouped: Option<bool>,
 
     /// Enables regex by default while searching.
@@ -62,7 +65,8 @@ pub(crate) struct ProcessesConfig {
     /// Makes the process widget use tree mode by default.
     pub default_tree: Option<bool>,
 
-    /// Calculates process CPU usage as a percentage of current usage rather than total usage.
+    /// Calculates process CPU usage as a percentage of current usage rather
+    /// than total usage.
     pub current_usage: Option<bool>,
 
     /// Show process CPU% usage without averaging over the number of CPU cores.
@@ -182,7 +186,8 @@ mod test {
         );
     }
 
-    /// Test that process enum variants that are advertised in the schema are valid.
+    /// Test that process enum variants that are advertised in the schema are
+    /// valid.
     #[cfg(feature = "generate_schema")]
     #[test]
     fn ensure_process_column_schema_is_accepted() {

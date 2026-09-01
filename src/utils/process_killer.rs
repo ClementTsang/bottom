@@ -27,7 +27,8 @@ impl Process {
     }
 
     fn kill(self) -> anyhow::Result<()> {
-        // SAFETY: Windows API call, this is safe as we are passing in the handle.
+        // SAFETY: Windows API call, this is safe as we are passing in the
+        // handle.
         let result = unsafe { TerminateProcess(self.0, 1) };
         if result.is_err() {
             bail!("process may have already been terminated.");
@@ -40,7 +41,8 @@ impl Process {
 #[cfg(target_os = "windows")]
 impl Drop for Process {
     fn drop(&mut self) {
-        // SAFETY: Windows API call, this is safe as we are passing in the handle.
+        // SAFETY: Windows API call, this is safe as we are passing in the
+        // handle.
         unsafe {
             let _ = CloseHandle(self.0);
         }

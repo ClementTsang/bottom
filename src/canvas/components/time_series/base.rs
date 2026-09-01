@@ -109,7 +109,8 @@ pub struct TimeGraph<'a> {
 impl TimeGraph<'_> {
     /// Generates the [`Axis`] for the x-axis.
     fn generate_x_axis(&self) -> Axis<'_> {
-        // Due to how we display things, we need to adjust the time bound values.
+        // Due to how we display things, we need to adjust the time bound
+        // values.
         let adjusted_x_bounds = AxisBound::Min(self.x_min);
 
         if self.hide_x_labels {
@@ -155,8 +156,8 @@ impl TimeGraph<'_> {
     pub fn draw<F: Copy + Default + Into<f64>>(
         &self, f: &mut Frame<'_>, draw_loc: Rect, graph_data: Vec<GraphData<'_, F>>,
     ) {
-        // TODO: (points_rework_v1) can we reduce allocations in the underlying graph by
-        // saving some sort of state?
+        // TODO: (points_rework_v1) can we reduce allocations in the underlying
+        // graph by saving some sort of state?
 
         let x_axis = self.generate_x_axis();
         let y_axis = self.generate_y_axis();

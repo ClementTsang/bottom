@@ -16,8 +16,8 @@ use crate::collection::{DataCollector, error::CollectionResult};
 /// for more information on the core Windows API being called and the meaning of
 /// the priorities, as well as the access rights needed.
 fn get_priority(pid: u32) -> anyhow::Result<i32> {
-    // SAFETY: We check validity of each step and bail on errors. We also close the
-    // handle.
+    // SAFETY: We check validity of each step and bail on errors. We also close
+    // the handle.
     unsafe {
         let process_handle: HANDLE = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)?;
         if process_handle.is_invalid() {
@@ -147,9 +147,10 @@ pub fn sysinfo_process_data(
                 .user_id()
                 .and_then(|uid| users.get_user_by_id(uid).map(|user| user.name().into())),
             time: if process.start_time() == 0 {
-                // Workaround for sysinfo occasionally returning a start time equal to UNIX
-                // epoch, giving a run time in the range of 50+ years. We just
-                // return a time of zero in this case for simplicity.
+                // Workaround for sysinfo occasionally returning a start time
+                // equal to UNIX epoch, giving a run time in the
+                // range of 50+ years. We just return a time of
+                // zero in this case for simplicity.
                 //
                 // TODO: Maybe return an option instead?
                 Duration::ZERO

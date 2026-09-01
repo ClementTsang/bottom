@@ -111,8 +111,8 @@ impl Painter {
                 self.previous_width = terminal_width;
             }
 
-            // TODO: We should probably remove this or make it done elsewhere, not the
-            // responsibility of the app.
+            // TODO: We should probably remove this or make it done elsewhere,
+            // not the responsibility of the app.
             if app_state.should_get_widget_bounds() {
                 // If we're force drawing, reset ALL mouse boundaries.
                 for widget in app_state.widget_map.values_mut() {
@@ -176,11 +176,13 @@ impl Painter {
                         .constraints([Constraint::Percentage(100)])
                         .areas(vertical_dialog_chunk)
                 } else {
-                    // We calculate this so that the margins never have to split an odd number.
+                    // We calculate this so that the margins never have to split
+                    // an odd number.
                     let len = if (dialog_width.saturating_sub(MAX_TEXT_LENGTH)) % 2 == 0 {
                         MAX_TEXT_LENGTH
                     } else {
-                        // It can only be 1 if the difference is greater than 1, so this is fine.
+                        // It can only be 1 if the difference is greater than 1,
+                        // so this is fine.
                         MAX_TEXT_LENGTH + 1
                     };
 
@@ -197,8 +199,9 @@ impl Painter {
                 f.buffer_mut()
                     .set_style(area, self.styles.general_widget_style);
 
-                // FIXME: For width, just limit to a max size or full width. For height, not
-                // sure. Maybe pass max and let child handle?
+                // FIXME: For width, just limit to a max size or full width. For
+                // height, not sure. Maybe pass max and let
+                // child handle?
                 let horizontal_padding = if terminal_width < 100 { 0 } else { 5 };
                 let vertical_padding = if terminal_height < 100 { 0 } else { 5 };
 
@@ -300,8 +303,8 @@ impl Painter {
                 let data = app_state.data_store.get_data();
                 let actual_cpu_data_len = data.cpu_harvest.len();
 
-                // This fixes #397, apparently if the height is 1, it can't render the CPU
-                // bars...
+                // This fixes #397, apparently if the height is 1, it can't
+                // render the CPU bars...
                 let cpu_height = {
                     let c = (actual_cpu_data_len / 4) as u16
                         + u16::from(!actual_cpu_data_len.is_multiple_of(4))
@@ -425,9 +428,10 @@ impl Painter {
                     self.draw_frozen_indicator(f, frozen_draw_loc);
                 }
 
-                // A two-pass algorithm - get layouts using constraints (first pass),
-                // then pass each layout to the corresponding widget (second pass).
-                // Note that layouts are already cached in ratatui, so we don't need
+                // A two-pass algorithm - get layouts using constraints (first
+                // pass), then pass each layout to the
+                // corresponding widget (second pass). Note that
+                // layouts are already cached in ratatui, so we don't need
                 // to do it manually!
                 let base = Layout::vertical(self.layout.rows.iter().map(|r| r.constraint))
                     .split(terminal_size);
@@ -457,8 +461,8 @@ impl Painter {
             }
         })?;
 
-        // We also move it back to the origin to try rand avoid wasting CPU cycles for things like kitty's
-        // `cursor_trail` calculations.
+        // We also move it back to the origin to try rand avoid wasting CPU
+        // cycles for things like kitty's `cursor_trail` calculations.
         let backend = terminal.backend_mut();
         backend.set_cursor_position(Position::ORIGIN)?;
         backend.flush()?;

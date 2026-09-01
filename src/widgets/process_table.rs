@@ -585,7 +585,8 @@ impl ProcWidgetState {
         let filtered_tree = {
             let mut filtered_tree: IntHashMap<Pid, Vec<Pid>> = IntHashMap::default();
 
-            // We do a simple DFS traversal to build our filtered parent-to-tree mappings.
+            // We do a simple DFS traversal to build our filtered parent-to-tree
+            // mappings.
             let mut visited_pids: IntHashMap<Pid, bool> = IntHashMap::default();
             let mut stack = orphan_pids
                 .iter()
@@ -607,8 +608,8 @@ impl ProcWidgetState {
 
                         // Show the entry if it is:
                         // - Matches the filter.
-                        // - Has at least one child (doesn't have to be direct) that matches the
-                        //   filter.
+                        // - Has at least one child (doesn't have to be direct)
+                        //   that matches the filter.
                         // - Is the child of a shown process.
                         let is_shown = is_process_matching
                             || !shown_children.is_empty()
@@ -715,8 +716,8 @@ impl ProcWidgetState {
                     has_children = !children_pids.is_empty();
                 }
 
-                // This is so that if an entry is "collapsed" but there are no children, avoid
-                // drawing the "+".
+                // This is so that if an entry is "collapsed" but there are no
+                // children, avoid drawing the "+".
                 let prefix = if has_children {
                     if prefixes.is_empty() {
                         "+ ".to_string()
