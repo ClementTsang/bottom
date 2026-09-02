@@ -77,7 +77,7 @@ fn is_gpu_class(class_code: &str) -> bool {
 /// - <https://us.download.nvidia.com/XFree86/Linux-x86_64/525.89.02/README/dynamicpowermanagement.html>
 /// - <https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power_state>
 #[cfg(target_os = "linux")]
-fn get_active_pci_bus_ids() -> Vec<String> {
+fn get_active_pci_bus_ids() -> Vec<(String, std::path::PathBuf)> {
     use std::fs;
 
     use crate::collection::linux::utils::is_device_awake;
@@ -86,7 +86,7 @@ fn get_active_pci_bus_ids() -> Vec<String> {
         return Vec::new();
     };
 
-    let mut result: Vec<String> = entries
+    let mut result: Vec<(String, std::path::PathBuf)> = entries
         .flatten()
         .filter_map(|entry| {
             let path = entry.path();
@@ -128,7 +128,7 @@ fn get_active_pci_bus_ids() -> Vec<String> {
                     .file_name()
                     .into_string()
                     .ok()
-                    .map(|name| concat_string::concat_string!("0000", name))
+                    .map(|name| (concat_string::concat_string!("0000", name), path))
             } else {
                 None
             }
@@ -155,28 +155,42 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
             target_os = "linux" => {
                 use itertools::Either;
 
-                // Refresh every ~10 seconds.
-                // TODO: IS it possible that our caching keeps stuff awake...? Hm.
+                // We cache for a minute, but still check whether the list of devices is sleeping. This way,
+                // solves the problem of waking sleeping devices, but also means we don't check as much AND we
+                // still support hotplugged devices (in theory).
                 if let Some((cached_list, cached_time)) = &collector.nvidia_gpu_list_cache
-                    && cached_time.elapsed().as_secs() < 10
+                    && cached_time.elapsed().as_secs() < 60
                 {
                     let devices = Either::Left(
                         cached_list
                             .iter()
-                            .filter_map(|id| nvml.device_by_pci_bus_id(id.as_str()).ok()),
+                            .filter_map(|(id, device)| {
+                                use crate::collection::linux::utils::is_device_awake;
+
+                                if is_device_awake(device) {
+                                    nvml.device_by_pci_bus_id(id.as_str()).ok()
+                                } else {
+                                    None
+                                }
+                            }),
                     );
                     (devices, cached_list.len())
                 } else {
                     let pci_bus_ids = get_active_pci_bus_ids();
                     let num_gpus = pci_bus_ids.len();
+
                     collector.nvidia_gpu_list_cache =
-                        Some((pci_bus_ids.clone(), std::time::Instant::now()));
+                        Some((pci_bus_ids, std::time::Instant::now()));
 
                     let devices = Either::Right(
-                        pci_bus_ids
-                            .into_iter()
-                            .filter_map(|id| nvml.device_by_pci_bus_id(id).ok()),
+                        collector.nvidia_gpu_list_cache
+                            .as_ref()
+                            .expect("we just inserted the cache entry")
+                            .0
+                            .iter()
+                            .filter_map(|(id, _path)| nvml.device_by_pci_bus_id(id.as_str()).ok())
                     );
+
                     (devices, num_gpus)
                 }
             }

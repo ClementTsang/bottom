@@ -26,6 +26,8 @@ pub mod network;
 pub mod processes;
 pub mod temperature;
 
+#[cfg(all(target_os = "linux", feature = "gpu", feature = "nvidia"))]
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 #[cfg(any(not(target_os = "windows"), feature = "gpu"))]
@@ -192,8 +194,10 @@ pub struct DataCollector {
     gpu_pids: Option<Vec<IntHashMap<Pid, (u64, u32)>>>,
     #[cfg(feature = "gpu")]
     gpus_total_mem: Option<u64>,
+
     #[cfg(all(target_os = "linux", feature = "gpu", feature = "nvidia"))]
-    nvidia_gpu_list_cache: Option<(Vec<String>, Instant)>,
+    /// A vector of GPU names and their corresponding paths, alongside the last update time.
+    nvidia_gpu_list_cache: Option<(Vec<(String, PathBuf)>, Instant)>,
 
     #[cfg(feature = "zfs")]
     free_arc_mem: bool,
