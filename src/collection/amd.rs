@@ -2,18 +2,21 @@ mod amd_gpu_marketing;
 
 use std::{
     cell::RefCell,
-    fs::{self, read_to_string},
+    fs::read_to_string,
     num::NonZeroU64,
     path::{Path, PathBuf},
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
-use super::linux::utils::is_device_awake;
 use crate::{
     app::layout_manager::UsedWidgets,
-    collection::{memory::MemData, processes::Pid},
+    collection::{
+        linux::drm::{collect_drm_fdinfo, diff_usage, enumerate_drm_devices, get_drm_render_nodes},
+        memory::MemData,
+        processes::Pid,
+    },
     utils::int_hash::{IntHashMap, IntHashSet},
 };
 
@@ -46,43 +49,6 @@ pub struct AmdGpuProc {
 thread_local! {
     static PREV_PROC_DATA: RefCell<HashMap<PathBuf, IntHashMap<Pid, AmdGpuProc>>> = RefCell::new(HashMap::default());
     static LAST_CLEAN_COUNTER: RefCell<u32> = const { RefCell::new(0) };
-}
-
-fn get_amd_devs() -> Option<Vec<PathBuf>> {
-    let mut devices = Vec::new();
-
-    // read all PCI devices controlled by the AMDGPU module
-    let Ok(paths) = fs::read_dir("/sys/module/amdgpu/drivers/pci:amdgpu") else {
-        return None;
-    };
-
-    for path in paths {
-        let Ok(path) = path else { continue };
-
-        // test if it has a valid vendor path
-        let device_path = path.path();
-        if !device_path.is_dir() {
-            continue;
-        }
-
-        // Skip if asleep to avoid wakeups.
-        if !is_device_awake(&device_path) {
-            continue;
-        }
-
-        // This will exist for GPUs but not others, this is how we find their
-        // kernel name.
-        let test_path = device_path.join("drm");
-        if test_path.as_path().exists() {
-            devices.push(device_path);
-        }
-    }
-
-    if devices.is_empty() {
-        None
-    } else {
-        Some(devices)
-    }
 }
 
 pub fn get_amd_name(device_path: &Path) -> Option<String> {
@@ -152,186 +118,28 @@ fn get_amd_vram(device_path: &Path) -> Option<AmdGpuMemory> {
     })
 }
 
-// from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L114
-fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
-    use std::ops::Mul;
-
-    let diff_ns = if pre == 0 || cur < pre {
-        return 0;
-    } else {
-        cur.saturating_sub(pre) as u128
-    };
-
-    diff_ns
-        .mul(100)
-        .checked_div(interval.as_nanos())
-        .unwrap_or(0) as u64
-}
-
-// from amdgpu_top: https://github.com/Umio-Yasuno/amdgpu_top/blob/c961cf6625c4b6d63fda7f03348323048563c584/crates/libamdgpu_top/src/stat/fdinfo/proc_info.rs#L13-L27
-fn get_amdgpu_pid_fds(pid: Pid, device_path: Vec<PathBuf>) -> Option<Vec<u32>> {
-    let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else {
-        return None;
-    };
-
-    let valid_fds: Vec<u32> = fd_list
-        .filter_map(|fd_link| {
-            let dir_entry = fd_link.map(|fd_link| fd_link.path()).ok()?;
-            let link = fs::read_link(&dir_entry).ok()?;
-
-            // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
-            if device_path.iter().any(|path| link.starts_with(path)) {
-                dir_entry.file_name()?.to_str()?.parse::<u32>().ok()
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    if valid_fds.is_empty() {
-        None
-    } else {
-        Some(valid_fds)
-    }
-}
-
-fn get_amdgpu_drm(device_path: &Path) -> Option<Vec<PathBuf>> {
-    let mut drm_devices = Vec::new();
-    let drm_root = device_path.join("drm");
-
-    let Ok(drm_paths) = fs::read_dir(drm_root) else {
-        return None;
-    };
-
-    for drm_dir in drm_paths {
-        let Ok(drm_dir) = drm_dir else {
-            continue;
-        };
-
-        // attempt to get the device renderer name
-        let drm_name = drm_dir.file_name();
-        let Some(drm_name) = drm_name.to_str() else {
-            continue;
-        };
-
-        // construct driver device path if valid
-        if !drm_name.starts_with("card") && !drm_name.starts_with("render") {
-            continue;
-        }
-
-        drm_devices.push(PathBuf::from(format!("/dev/dri/{drm_name}")));
-    }
-
-    if drm_devices.is_empty() {
-        None
-    } else {
-        Some(drm_devices)
-    }
-}
-
 fn get_amd_fdinfo(device_path: &Path) -> Option<IntHashMap<Pid, AmdGpuProc>> {
-    let mut fdinfo = IntHashMap::default();
+    let drm_paths = get_drm_render_nodes(device_path)?;
 
-    let drm_paths = get_amdgpu_drm(device_path)?;
-
-    let Ok(proc_dir) = fs::read_dir("/proc") else {
-        return None;
-    };
-
-    let pids: Vec<Pid> = proc_dir
-        .filter_map(|dir_entry| {
-            // check if pid is valid
-            let dir_entry = dir_entry.ok()?;
-            let metadata = dir_entry.metadata().ok()?;
-
-            if !metadata.is_dir() {
-                return None;
-            }
-
-            let pid = dir_entry.file_name().to_str()?.parse::<Pid>().ok()?;
-
-            // skip init process
-            if pid == 1 {
-                return None;
-            }
-
-            Some(pid)
-        })
-        .collect();
-
-    for pid in pids {
-        // collect file descriptors that point to our device renderers
-        let Some(fds) = get_amdgpu_pid_fds(pid, drm_paths.clone()) else {
-            continue;
-        };
-
-        let mut usage: AmdGpuProc = Default::default();
-
-        let mut observed_ids: HashSet<usize> = HashSet::default();
-
-        for fd in fds {
-            let fdinfo_path = format!("/proc/{pid}/fdinfo/{fd}");
-            let Ok(fdinfo_data) = read_to_string(fdinfo_path) else {
-                continue;
-            };
-
-            let mut fdinfo_lines = fdinfo_data
-                .lines()
-                .skip_while(|l| !l.starts_with("drm-client-id"));
-            if let Some(id) = fdinfo_lines.next().and_then(|fdinfo_line| {
-                const LEN: usize = "drm-client-id:\t".len();
-                fdinfo_line.get(LEN..)?.parse().ok()
-            }) {
-                if !observed_ids.insert(id) {
-                    continue;
-                }
-            } else {
-                continue;
-            }
-
-            for fdinfo_line in fdinfo_lines {
-                let Some(fdinfo_separator_index) = fdinfo_line.find(':') else {
-                    continue;
-                };
-
-                let (fdinfo_keyword, mut fdinfo_value) =
-                    fdinfo_line.split_at(fdinfo_separator_index);
-                fdinfo_value = &fdinfo_value[1..];
-
-                fdinfo_value = fdinfo_value.trim();
-                if let Some(fdinfo_value_space_index) = fdinfo_value.find(' ') {
-                    fdinfo_value = &fdinfo_value[..fdinfo_value_space_index];
-                };
-
-                let Ok(fdinfo_value_num) = fdinfo_value.parse::<u64>() else {
-                    continue;
-                };
-
-                match fdinfo_keyword {
-                    "drm-engine-gfx" => usage.gfx_usage += fdinfo_value_num,
-                    "drm-engine-dma" => usage.dma_usage += fdinfo_value_num,
-                    "drm-engine-dec" => usage.dec_usage += fdinfo_value_num,
-                    "drm-engine-enc" => usage.enc_usage += fdinfo_value_num,
-                    "drm-engine-enc_1" => usage.uvd_usage += fdinfo_value_num,
-                    "drm-engine-jpeg" => usage.vcn_usage += fdinfo_value_num,
-                    "drm-engine-vpe" => usage.vpe_usage += fdinfo_value_num,
-                    "drm-engine-compute" => usage.compute_usage += fdinfo_value_num,
-                    "drm-memory-vram" => usage.vram_usage += fdinfo_value_num << 10, // KiB -> B
-                    _ => {}
-                };
-            }
-        }
-
-        if usage != Default::default() {
-            fdinfo.insert(pid, usage);
-        }
-    }
-
-    Some(fdinfo)
+    collect_drm_fdinfo(
+        &drm_paths,
+        |usage: &mut AmdGpuProc, (keyword, value)| match keyword {
+            "drm-engine-gfx" => usage.gfx_usage += value,
+            "drm-engine-dma" => usage.dma_usage += value,
+            "drm-engine-dec" => usage.dec_usage += value,
+            "drm-engine-enc" => usage.enc_usage += value,
+            "drm-engine-enc_1" => usage.uvd_usage += value,
+            "drm-engine-jpeg" => usage.vcn_usage += value,
+            "drm-engine-vpe" => usage.vpe_usage += value,
+            "drm-engine-compute" => usage.compute_usage += value,
+            "drm-memory-vram" => usage.vram_usage += value << 10, // KiB -> B
+            _ => {}
+        },
+    )
 }
 
 pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Option<AmdGpuData> {
-    let device_path_list = get_amd_devs()?;
+    let device_path_list = enumerate_drm_devices("amdgpu")?;
     let interval = Instant::now().duration_since(prev_time);
     let num_gpu = device_path_list.len();
     let mut mem_vec = Vec::with_capacity(num_gpu);

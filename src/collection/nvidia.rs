@@ -156,6 +156,7 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
                 use itertools::Either;
 
                 // Refresh every ~10 seconds.
+                // TODO: IS it possible that our caching keeps stuff awake...? Hm.
                 if let Some((cached_list, cached_time)) = &collector.nvidia_gpu_list_cache
                     && cached_time.elapsed().as_secs() < 10
                 {
