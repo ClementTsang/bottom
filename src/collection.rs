@@ -193,8 +193,10 @@ pub struct DataCollector {
     gpu_pids: Option<Vec<IntHashMap<Pid, (u64, u32)>>>,
     #[cfg(feature = "gpu")]
     gpus_total_mem: Option<u64>,
+
     #[cfg(all(target_os = "linux", feature = "gpu", feature = "nvidia"))]
-    nvidia_gpu_list_cache: Option<(Vec<String>, Instant)>,
+    /// A vector of GPU names and their corresponding paths, alongside the last update time.
+    nvidia_gpu_list_cache: Option<(Vec<(String, std::path::PathBuf)>, Instant)>,
 
     #[cfg(feature = "zfs")]
     free_arc_mem: bool,
