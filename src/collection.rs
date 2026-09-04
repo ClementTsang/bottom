@@ -2,11 +2,10 @@
 //!
 //! TODO: Rename this to intake? Collection?
 
-#[cfg(feature = "nvidia")]
-pub mod nvidia;
-
-#[cfg(all(target_os = "linux", feature = "gpu"))]
-pub mod amd;
+#[cfg(feature = "gpu")]
+pub mod gpu;
+#[cfg(feature = "gpu")]
+pub use gpu::*;
 
 #[cfg(target_os = "linux")]
 mod linux {
