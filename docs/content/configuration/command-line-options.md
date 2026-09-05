@@ -27,8 +27,8 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## Disk Options
 
-| Option                     | Behaviour                                                |
-| -------------------------- | -------------------------------------------------------- |
+| Option                     | Behaviour                                                       |
+| -------------------------- | --------------------------------------------------------------- |
 | `--disk_use_binary_prefix` | Displays used, free, and total disk space with binary prefixes. |
 
 ## Process Options
