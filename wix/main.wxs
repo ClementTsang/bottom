@@ -32,9 +32,9 @@
     <!--
       Scope='perUserOrMachine' makes this a dual-purpose package: it can install
       per-machine (elevated, into Program Files) or per-user (non-elevated, into
-      %LocalAppData%). winget's user scope drives the per-user path silently
-      via MSIINSTALLPERUSER=1. See the SetProperty for APPLICATIONFOLDER below,
-      which redirects the install directory for the per-user case.
+      %LocalAppData%).
+      
+      Note that winget's user scope drives the per-user path silently via MSIINSTALLPERUSER=1
     -->
     <Package
         Name='bottom'
@@ -169,19 +169,6 @@
             </Directory>
         </StandardDirectory>
 
-        <!--
-          Redirect the install directory to a user-writable location for per-user
-          installs (ALLUSERS is empty when installing per-user). Must run before
-          CostFinalize so the new path is used for costing and file layout, and it
-          is sequenced in both the UI and execute sequences so it also applies to
-          silent installs (e.g. winget user-scope installs).
-        -->
-        <SetProperty Id='APPLICATIONFOLDER'
-            Value='[LocalAppDataFolder]Programs\bottom'
-            Before='CostFinalize'
-            Sequence='both'
-            Condition='NOT ALLUSERS'/>
-
         <Feature
             Id='Binaries'
             Title='Application'
@@ -229,8 +216,21 @@
         <!--<Property Id='ARPPRODUCTICON' Value='ProductICO' />-->
 
         <Property Id='ARPHELPLINK' Value='https://bottom.pages.dev/stable'/>
+        <Property Id='ApplicationFolderName' Value='bottom'/>
+        <Property Id='WixAppFolder' Value='WixPerMachineFolder'/>
+  
+        <CustomAction Id='OverridePerMachineFolder'
+            Property='WixPerMachineFolder'
+            Value='[ProgramFiles64Folder][ApplicationFolderName]'
+            Execute='immediate'/>
+        <InstallUISequence>
+            <Custom Action='OverridePerMachineFolder' After='WixSetDefaultPerMachineFolder'/>
+        </InstallUISequence>
+        <InstallExecuteSequence>
+            <Custom Action='OverridePerMachineFolder' After='WixSetDefaultPerMachineFolder'/>
+        </InstallExecuteSequence>
 
-        <ui:WixUI Id='WixUI_FeatureTree'/>
+        <ui:WixUI Id='WixUI_Advanced'/>
         <!--
           Disabling the EULA dialog in the installer is a two step process:
 
