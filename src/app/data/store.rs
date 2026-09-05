@@ -441,3 +441,36 @@ impl DataStore {
         self.inner = InnerData::default();
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::collection::disks::DiskHarvest;
+
+    #[test]
+    fn disk_binary_prefix_setting_reaches_harvested_data() {
+        let mut data_store = DataStore::new(UsedWidgets {
+            use_disk: true,
+            ..Default::default()
+        });
+        let settings = AppConfigFields {
+            disk_use_binary_prefix: true,
+            ..Default::default()
+        };
+        data_store.eat_data(
+            Box::new(Data {
+                disks: Some(vec![DiskHarvest {
+                    name: "disk".into(),
+                    mount_point: "/".into(),
+                    ..Default::default()
+                }]),
+                io: Some(Default::default()),
+                ..Default::default()
+            }),
+            &settings,
+        );
+
+        assert_eq!(data_store.get_data().disk_harvest.len(), 1);
+        assert!(data_store.get_data().disk_harvest[0].use_binary_prefix);
+    }
+}

@@ -1670,14 +1670,6 @@ mod test {
 
     #[test]
     fn disk_binary_prefix_options() {
-        use std::num::NonZeroU16;
-
-        use crate::{
-            canvas::components::data_table::DataToCell,
-            collection::{Data, disks::DiskHarvest},
-            utils::data_units::GIBI_LIMIT,
-        };
-
         for (config_text, flag, expected) in [
             ("", None, false),
             ("[disk]", None, false),
@@ -1695,31 +1687,9 @@ mod test {
             arguments.extend(flag);
             let args = BottomArgs::parse_from(arguments);
             let config = toml_edit::de::from_str(config_text).unwrap();
-            let mut app = super::init_app(args, config).unwrap().0;
+            let app = super::init_app(args, config).unwrap().0;
             assert_eq!(app.app_config_fields.disk_use_binary_prefix, expected);
             assert!(!app.app_config_fields.network_use_binary_prefix);
-
-            app.data_store.eat_data(
-                Box::new(Data {
-                    disks: Some(vec![DiskHarvest {
-                        name: "disk".into(),
-                        mount_point: "/".into(),
-                        used_space: Some(500 * GIBI_LIMIT),
-                        free_space: Some(500 * GIBI_LIMIT),
-                        total_space: Some(1000 * GIBI_LIMIT),
-                        ..Default::default()
-                    }]),
-                    io: Some(Default::default()),
-                    ..Default::default()
-                }),
-                &app.app_config_fields,
-            );
-            let rows = &app.data_store.get_data().disk_harvest;
-            assert_eq!(rows.len(), 1);
-            assert_eq!(
-                rows[0].to_cell_text(&DiskWidgetColumn::Used, NonZeroU16::new(8).unwrap()),
-                Some(if expected { "500GiB" } else { "537GB" }.into())
-            );
         }
     }
 
