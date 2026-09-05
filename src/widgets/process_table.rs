@@ -144,6 +144,7 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         MemValue => SortColumn::new(MemValue).default_descending(),
         MemPercent => SortColumn::new(MemPercent).default_descending(),
         VirtualMem => SortColumn::new(VirtualMem).default_descending(),
+        Swap => SortColumn::new(Swap).default_descending(),
         Pid => SortColumn::new(Pid),
         Count => SortColumn::new(Count),
         Name => SortColumn::soft(Name, Some(0.3)),
@@ -186,6 +187,7 @@ pub enum ProcWidgetColumn {
     Cpu,
     Mem,
     VirtualMem,
+    Swap,
     ReadPerSecond,
     WritePerSecond,
     TotalRead,
@@ -333,6 +335,7 @@ impl ProcWidgetState {
                                 }
                             }
                             ProcWidgetColumn::VirtualMem => VirtualMem,
+                            ProcWidgetColumn::Swap => Swap,
                             ProcWidgetColumn::ReadPerSecond => ReadPerSecond,
                             ProcWidgetColumn::WritePerSecond => WritePerSecond,
                             ProcWidgetColumn::TotalRead => TotalRead,
@@ -391,6 +394,7 @@ impl ProcWidgetState {
                     CpuPercent => ProcWidgetColumn::Cpu,
                     MemValue | MemPercent => ProcWidgetColumn::Mem,
                     VirtualMem => ProcWidgetColumn::VirtualMem,
+                    Swap => ProcWidgetColumn::Swap,
                     Pid | Count => ProcWidgetColumn::PidOrCount,
                     Name | Command => ProcWidgetColumn::ProcNameOrCommand,
                     ReadPerSecond => ProcWidgetColumn::ReadPerSecond,
@@ -840,6 +844,12 @@ impl ProcWidgetState {
                         }
                     }
 
+                    pwd.swap_bytes = match (pwd.swap_bytes, process.swap_bytes) {
+                        (Some(a), Some(b)) => Some(a + b),
+                        (Some(a), None) | (None, Some(a)) => Some(a),
+                        (None, None) => None,
+                    };
+
                     pwd.rps += process.read_per_sec;
                     pwd.wps += process.write_per_sec;
                     pwd.total_read += process.total_read;
@@ -1183,6 +1193,7 @@ mod test {
             cpu_usage_percent: 0.0,
             mem_usage: MemUsage::Percent(1.1),
             virtual_mem: 100,
+            swap_bytes: None,
             rps: 0,
             wps: 0,
             total_read: 0,
@@ -1265,6 +1276,66 @@ mod test {
             [&c, &d, &a, &b].iter().map(|d| d.pid).collect::<Vec<_>>(),
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
+
+        let mut data = vec![
+            ProcWidgetData {
+                swap_bytes: Some(100),
+                ..a.clone()
+            },
+            ProcWidgetData {
+                swap_bytes: Some(200),
+                ..b.clone()
+            },
+            ProcWidgetData {
+                swap_bytes: Some(50),
+                ..c.clone()
+            },
+            d.clone(),
+        ];
+
+        sort_skip_pid_asc(&ProcColumn::Swap, &mut data, SortOrder::Descending);
+        assert_eq!(
+            vec![2, 1, 3, 4],
+            data.iter().map(|process| process.pid).collect::<Vec<_>>(),
+        );
+
+        sort_skip_pid_asc(&ProcColumn::Swap, &mut data, SortOrder::Ascending);
+        assert_eq!(
+            vec![4, 3, 1, 2],
+            data.iter().map(|process| process.pid).collect::<Vec<_>>(),
+        );
+    }
+
+    #[test]
+    fn grouped_swap_is_summed() {
+        let init_columns = [ProcWidgetColumn::ProcNameOrCommand, ProcWidgetColumn::Swap];
+        let mut state = init_default_state(&init_columns);
+        state.mode = ProcWidgetMode::Grouped;
+
+        let mut process_harvest = BTreeMap::new();
+        process_harvest.insert(
+            1,
+            ProcessHarvest {
+                pid: 1,
+                name: "same".into(),
+                swap_bytes: Some(100),
+                ..Default::default()
+            },
+        );
+        process_harvest.insert(
+            2,
+            ProcessHarvest {
+                pid: 2,
+                name: "same".into(),
+                swap_bytes: Some(200),
+                ..Default::default()
+            },
+        );
+
+        let data = state.get_normal_data(&process_harvest);
+
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0].swap_bytes, Some(300));
     }
 
     fn get_columns(table: &ProcessTable) -> Vec<ProcColumn> {

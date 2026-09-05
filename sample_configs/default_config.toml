@@ -159,8 +159,8 @@
 # Processes widget configuration
 #[processes]
 # The columns shown by the process widget. The following columns are supported (the GPU columns are only available if the GPU feature is enabled when built):
-# PID, Name, CPU%, Mem%, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%, Nice, Priority
-#columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%", "Priority"]
+# PID, Name, CPU%, Mem%, Swap, R/s, W/s, T.Read, T.Write, User, State, Time, GMem%, GPU%, Nice, Priority
+#columns = ["PID", "Name", "CPU%", "Mem%", "Swap", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%", "Priority"]
 
 # The default sort column when bottom starts. Accepts any of the column names above.
 # If unset, defaults to CPU%.

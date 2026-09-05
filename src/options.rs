@@ -481,6 +481,9 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             flags.unnormalized_cpu,
         ),
         get_process_threads: is_flag_enabled_in!(get_threads, args.process, config.processes),
+        get_process_swap: proc_columns
+            .as_ref()
+            .is_some_and(|columns| columns.contains(&ProcWidgetColumn::Swap)),
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(args, config, retention_ms)?,
