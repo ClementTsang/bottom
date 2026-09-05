@@ -214,7 +214,7 @@ impl InnerData {
         if let Some(disks) = data.disks
             && let Some(io) = data.io
         {
-            self.eat_disks(disks, io, harvested_time);
+            self.eat_disks(disks, io, harvested_time, settings.disk_use_binary_prefix);
 
             if used_widgets.use_disk_io_graph {
                 self.time_series_data.update_disk_io(
@@ -240,7 +240,10 @@ impl InnerData {
         self.last_update_time = harvested_time;
     }
 
-    fn eat_disks(&mut self, disks: Vec<DiskHarvest>, io: IoHarvest, harvested_time: Instant) {
+    fn eat_disks(
+        &mut self, disks: Vec<DiskHarvest>, io: IoHarvest, harvested_time: Instant,
+        use_binary_prefix: bool,
+    ) {
         let time_since_last_harvest = harvested_time
             .duration_since(self.last_update_time)
             .as_secs_f64();
@@ -350,6 +353,7 @@ impl InnerData {
             };
 
             self.disk_harvest.push(DiskWidgetData {
+                use_binary_prefix,
                 name: disk.name,
                 mount_point: disk.mount_point,
                 free_bytes: disk.free_space,

@@ -542,6 +542,12 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temperature_legend_position,
         disk_io_legend_position,
         disk_show_unmounted,
+        disk_use_binary_prefix: args.disk.disk_use_binary_prefix
+            || config
+                .disk
+                .as_ref()
+                .and_then(|cfg| cfg.use_binary_prefix)
+                .unwrap_or(false),
         disk_io_graph_show_unmounted,
     };
 
@@ -1660,6 +1666,61 @@ mod test {
     fn create_app(args: BottomArgs) -> App {
         let config = Config::default();
         super::init_app(args, config).unwrap().0
+    }
+
+    #[test]
+    fn disk_binary_prefix_options() {
+        use std::num::NonZeroU16;
+
+        use crate::{
+            canvas::components::data_table::DataToCell,
+            collection::{Data, disks::DiskHarvest},
+            utils::data_units::GIBI_LIMIT,
+        };
+
+        for (config_text, flag, expected) in [
+            ("", None, false),
+            ("[disk]", None, false),
+            ("[disk]\nuse_binary_prefix = false", None, false),
+            ("[disk]\nuse_binary_prefix = true", None, true),
+            ("", Some("--disk_use_binary_prefix"), true),
+            ("", Some("--disk-use-binary-prefix"), true),
+            (
+                "[disk]\nuse_binary_prefix = false",
+                Some("--disk_use_binary_prefix"),
+                true,
+            ),
+        ] {
+            let mut arguments = vec!["btm"];
+            arguments.extend(flag);
+            let args = BottomArgs::parse_from(arguments);
+            let config = toml_edit::de::from_str(config_text).unwrap();
+            let mut app = super::init_app(args, config).unwrap().0;
+            assert_eq!(app.app_config_fields.disk_use_binary_prefix, expected);
+            assert!(!app.app_config_fields.network_use_binary_prefix);
+
+            app.data_store.eat_data(
+                Box::new(Data {
+                    disks: Some(vec![DiskHarvest {
+                        name: "disk".into(),
+                        mount_point: "/".into(),
+                        used_space: Some(500 * GIBI_LIMIT),
+                        free_space: Some(500 * GIBI_LIMIT),
+                        total_space: Some(1000 * GIBI_LIMIT),
+                        ..Default::default()
+                    }]),
+                    io: Some(Default::default()),
+                    ..Default::default()
+                }),
+                &app.app_config_fields,
+            );
+            let rows = &app.data_store.get_data().disk_harvest;
+            assert_eq!(rows.len(), 1);
+            assert_eq!(
+                rows[0].to_cell_text(&DiskWidgetColumn::Used, NonZeroU16::new(8).unwrap()),
+                Some(if expected { "500GiB" } else { "537GB" }.into())
+            );
+        }
     }
 
     // TODO: There's probably a better way to create clap options AND unify
