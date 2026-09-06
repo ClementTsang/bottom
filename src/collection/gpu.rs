@@ -6,4 +6,5 @@ cfg_select! {
         pub mod intel;
         pub mod amd;
     }
+    _ => {}
 }
