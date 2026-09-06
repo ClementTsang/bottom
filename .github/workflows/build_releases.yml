@@ -355,10 +355,12 @@ jobs:
         run: |
           choco install dotnet-sdk --pre -y --no-progress;
 
-      - name: Install wixtoolset
+      - name: Install WiX Toolset
         shell: powershell
         run: |
-          choco install -y wixtoolset --no-progress;
+          dotnet tool install --global wix --version 4.0.6
+          "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          wix extension add --global WixToolset.UI.wixext/4.0.6
 
       - name: Read Rust version
         shell: bash
@@ -376,16 +378,15 @@ jobs:
       - name: Install cargo-wix
         shell: powershell
         run: |
-          cargo install cargo-wix --version 0.3.8 --locked
+          # We use a git version as the newest stable version doesn't support WiX 4 unfortunately.
+          cargo install cargo-wix --git https://github.com/volks73/cargo-wix --rev 9a8ed9486637e1fb839f209730eda6c95fd12d88 --locked
 
       - name: Build MSI file
         shell: powershell
         env:
           BTM_GENERATE: true
         run: |
-          Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
-          refreshenv
-          cargo wix --nocapture
+          cargo wix --toolset modern --nocapture
           mv bottom_installer.msi ${{ matrix.info.output }}
 
       - name: Generate artifact attestation for file
