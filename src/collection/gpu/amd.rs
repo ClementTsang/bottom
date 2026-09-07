@@ -1,3 +1,7 @@
+//! A collection of functions/utilities to get AMD GPU data.
+//!
+//! Note this currently only works on Linux.
+
 mod amd_gpu_marketing;
 
 use std::{
@@ -20,13 +24,16 @@ use crate::{
     utils::int_hash::{IntHashMap, IntHashSet},
 };
 
-// TODO: May be able to clean up some of these, Option<Vec> for example is a bit
-// redundant.
+/// AMD GPU data.
+///
+/// TODO: May be able to clean up some of these, Option<Vec> for example is a bit
+/// redundant.
 pub struct AmdGpuData {
     pub memory: Option<Vec<(String, MemData)>>,
-    pub procs: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
+    pub process_data: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
 }
 
+/// AMD GPU VRAM usage.
 pub struct AmdGpuMemory {
     pub total: u64,
     pub used: u64,
@@ -89,6 +96,7 @@ pub fn get_amd_name(device_path: &Path) -> Option<String> {
         .map(|tuple| tuple.2.to_string())
 }
 
+/// VRAM used for a device.
 fn get_amd_vram(device_path: &Path) -> Option<AmdGpuMemory> {
     // get vram memory info from sysfs
     let vram_total_path = device_path.join("mem_info_vram_total");
@@ -138,20 +146,23 @@ fn get_amd_fdinfo(device_path: &Path) -> Option<IntHashMap<Pid, AmdGpuProc>> {
     )
 }
 
-pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Option<AmdGpuData> {
-    let device_path_list = enumerate_drm_devices("amdgpu")?;
+pub fn get_amd_gpu_data(
+    widgets_to_harvest: &UsedWidgets, prev_time: Instant,
+) -> Option<AmdGpuData> {
+    // TODO: Add caching for this.
+    let device_paths = enumerate_drm_devices("amdgpu")?;
     let interval = Instant::now().duration_since(prev_time);
-    let num_gpu = device_path_list.len();
+    let num_gpu = device_paths.len();
     let mut mem_vec = Vec::with_capacity(num_gpu);
     let mut proc_vec = Vec::with_capacity(num_gpu);
     let mut total_mem = 0;
 
     PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
-        let device_path_set = device_path_list.iter().cloned().collect::<HashSet<_>>();
+        let device_path_set = device_paths.iter().cloned().collect::<HashSet<_>>();
         prev_proc_data.retain(|k, _| device_path_set.contains(k));
     });
 
-    for device_path in device_path_list {
+    for device_path in device_paths {
         let device_name = get_amd_name(&device_path)
             .unwrap_or(amd_gpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
 
@@ -247,6 +258,6 @@ pub fn get_amd_vecs(widgets_to_harvest: &UsedWidgets, prev_time: Instant) -> Opt
 
     Some(AmdGpuData {
         memory: (!mem_vec.is_empty()).then_some(mem_vec),
-        procs: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),
+        process_data: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),
     })
 }

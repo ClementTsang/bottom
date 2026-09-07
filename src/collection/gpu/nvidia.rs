@@ -1,3 +1,5 @@
+//! A collection of functions/utilities to get NVIDIA GPU data.
+
 use std::{num::NonZeroU64, sync::OnceLock};
 
 use nvml_wrapper::{
