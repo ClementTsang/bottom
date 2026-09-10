@@ -44,14 +44,15 @@
   - [Snap](#snap)
   - [Solus](#solus)
   - [Void](#void)
-  - [gah](#gah)
   - [Homebrew](#homebrew)
   - [MacPorts](#macports)
   - [Chocolatey](#chocolatey)
   - [Scoop](#scoop)
   - [winget](#winget)
-  - [Windows installer](#windows-installer)
+  - [Windows installer (MSI)](#windows-installer-msi)
   - [Conda](#conda)
+  - [gah](#gah)
+  - [ghr](#ghr)
   - [mise](#mise)
   - [Pre-built binaries](#pre-built-binaries)
     - [Auto-completion](#auto-completion)
@@ -340,14 +341,6 @@ Available [in the void-packages repo](https://github.com/void-linux/void-package
 sudo xbps-install bottom
 ```
 
-### gah
-
-bottom can also be installed on Linux or macOS using [gah](https://github.com/marverix/gah):
-
-```bash
-gah install bottom
-```
-
 ### Homebrew
 
 The formula is available [here](https://formulae.brew.sh/formula/bottom):
@@ -394,7 +387,7 @@ winget install Clement.bottom
 
 You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 
-### Windows installer
+### Windows installer (MSI)
 
 You can manually install bottom as a Windows program by downloading and using the `.msi` file from the [latest release](https://github.com/ClementTsang/bottom/releases/latest).
 
@@ -411,11 +404,27 @@ conda config --set channel_priority strict
 conda install bottom
 ```
 
+### gah
+
+bottom can also be installed on Linux or macOS using [gah](https://github.com/marverix/gah):
+
+```bash
+gah install bottom
+```
+
+### ghr
+
+bottom can be installed using [ghr](https://github.com/cataggar/ghr) like so:
+
+```bash
+ghr install clementtsang/bottom
+```
+
 ### mise
 
-bottom is available in [mise](https://github.com/jdx/mise). You can install it like so:
+bottom is available via [mise](https://github.com/jdx/mise):
 
-```
+```bash
 mise use -g bottom@latest
 ```
 
