@@ -2,6 +2,7 @@ use ratatui::{
     buffer::Buffer,
     layout::Rect,
     style::Style,
+    symbols,
     text::Line,
     widgets::{Block, Widget},
 };
@@ -16,7 +17,30 @@ pub enum LabelLimit {
     StartLabel,
 }
 
-/// A widget to measure something, using pipe characters ('|') as a unit.
+/// What bar character type to use.
+#[derive(Debug, Clone)]
+pub enum BarType {
+    /// The pipe character (`|`)
+    Pipe,
+    /// Bar characters (`█`, `▉`, etc.)
+    Bar,
+}
+
+fn get_unicode_block<'a>(frac: f64) -> &'a str {
+    match (frac * 8.0).round() as u16 {
+        1 => symbols::block::ONE_EIGHTH,
+        2 => symbols::block::ONE_QUARTER,
+        3 => symbols::block::THREE_EIGHTHS,
+        4 => symbols::block::HALF,
+        5 => symbols::block::FIVE_EIGHTHS,
+        6 => symbols::block::THREE_QUARTERS,
+        7 => symbols::block::SEVEN_EIGHTHS,
+        8 => symbols::block::FULL,
+        _ => " ",
+    }
+}
+
+/// A widget to measure something, using pipe characters ('|') or horizontal bar characters as a unit.
 #[derive(Debug, Clone)]
 pub struct PipeGauge<'a> {
     block: Option<Block<'a>>,
@@ -26,6 +50,7 @@ pub struct PipeGauge<'a> {
     label_style: Style,
     gauge_style: Style,
     hide_parts: LabelLimit,
+    bar_type: BarType,
 }
 
 impl Default for PipeGauge<'_> {
@@ -38,6 +63,7 @@ impl Default for PipeGauge<'_> {
             label_style: Style::default(),
             gauge_style: Style::default(),
             hide_parts: LabelLimit::default(),
+            bar_type: BarType::Pipe,
         }
     }
 }
@@ -87,6 +113,12 @@ impl<'a> PipeGauge<'a> {
     /// fit.
     pub fn hide_parts(mut self, hide_parts: LabelLimit) -> Self {
         self.hide_parts = hide_parts;
+        self
+    }
+
+    /// What type of bar character to use.
+    pub fn bar_type(mut self, bar_type: BarType) -> Self {
+        self.bar_type = bar_type;
         self
     }
 }
@@ -202,7 +234,21 @@ impl Widget for PipeGauge<'_> {
 
                 for col in start..pipe_end {
                     if let Some(cell) = buf.cell_mut((col, row)) {
-                        cell.set_symbol("|").set_style(Style {
+                        match self.bar_type {
+                            BarType::Pipe => {
+                                cell.set_symbol("|");
+                            }
+                            BarType::Bar => {
+                                if self.ratio < 1.0 {
+                                    // Based on what Ratatui does!
+                                    cell.set_symbol(get_unicode_block(self.ratio % 1.0));
+                                } else {
+                                    cell.set_symbol(symbols::block::FULL);
+                                }
+                            }
+                        }
+
+                        cell.set_style(Style {
                             fg: self.gauge_style.fg,
                             bg: None,
                             add_modifier: self.gauge_style.add_modifier,
