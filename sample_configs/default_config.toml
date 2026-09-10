@@ -218,6 +218,11 @@
 # Whether to show a decimal place for CPU usage values.
 #show_decimal = false
 
+# Where to place an in-chart legend for the CPU chart widget, replacing the classic side
+# table. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left",
+# "bottom", "bottom-right". If unset, the side table is used.
+#legend_position = "top-right"
+
 
 # Disk widget configuration
 #[disk]

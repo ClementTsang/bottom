@@ -41,6 +41,24 @@ You can place the CPU chart legend on the left side by setting `cpu.left_legend`
 left_legend = true
 ```
 
+## In-chart legend
+
+You can replace the classic side table of per-CPU usages with a compact in-chart legend
+(like the memory and network graph widgets) by setting `cpu.legend_position`. When set, the
+CPU chart uses the full widget width, and the legend shows the current usage of the
+selected entries in a small box on top of the chart.
+
+```toml
+[cpu]
+# One of ["none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"]
+legend_position = "top-right"
+```
+
+- `"none"` hides the legend entirely (and the side table is not drawn either).
+- If left unset, the classic side table behaviour is kept.
+- When the "all" view is selected, the legend labels the average CPU usage (`AVG 12%`);
+  when a single CPU is selected, it labels that entry (`CPU3 8%`).
+
 ## Average CPU row
 
 In basic mode, you can give the average CPU entry a dedicated row by setting `cpu.basic_average_cpu_row`. Defaults to `false`.

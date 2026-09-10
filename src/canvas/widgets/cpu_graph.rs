@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -9,12 +11,13 @@ use crate::{
         Painter,
         components::{
             data_table::{DrawInfo, SelectionState},
-            time_series::GraphData,
+            time_series::{GraphData, LegendConstraints},
         },
         drawing_utils::should_hide_x_label,
     },
     collection::cpu::CpuData,
     components::time_series::GraphDrawCtx,
+    options::config::cpu::CpuLegendMode,
     widgets::CpuWidgetState,
 };
 
@@ -23,7 +26,17 @@ const ALL_POSITION: usize = 0;
 
 impl Painter {
     pub fn draw_cpu(&self, f: &mut Frame<'_>, app_state: &mut App, draw_loc: Rect, widget_id: u64) {
-        let legend_width = (draw_loc.width as f64 * 0.15) as u16;
+        // In overlay/hidden legend modes, the CPU chart always uses the full width;
+        // only the classic table mode may carve out space for the side legend.
+        let use_side_table = matches!(
+            app_state.app_config_fields.cpu_legend_mode,
+            CpuLegendMode::Table
+        );
+        let legend_width = if use_side_table {
+            (draw_loc.width as f64 * 0.15) as u16
+        } else {
+            0
+        };
 
         if legend_width < 6 {
             // Skip drawing legend
@@ -119,6 +132,7 @@ impl Painter {
 
     fn generate_points<'a>(
         &self, cpu_widget_state: &'a CpuWidgetState, data: &'a InnerData, show_avg_cpu: bool,
+        name_entries: bool,
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
         let current_scroll_position = cpu_widget_state.table.state.current_index;
@@ -141,7 +155,15 @@ impl Painter {
                             [(itx - show_avg_offset) % self.styles.cpu_colour_styles.len()]
                     };
 
-                    GraphData::default().style(style).time(time).values(values)
+                    let mut gd = GraphData::default().style(style).time(time).values(values);
+                    if name_entries
+                        && show_avg_cpu
+                        && itx == 0
+                        && let Some(avg) = cpu_entries.first()
+                    {
+                        gd = gd.name(Cow::Owned(format!("AVG {:3.0}%", avg.usage)));
+                    }
+                    gd
                 })
                 .rev()
                 .collect()
@@ -158,12 +180,22 @@ impl Painter {
                     [(offset_position - show_avg_offset) % self.styles.cpu_colour_styles.len()]
             };
 
-            vec![
-                GraphData::default()
-                    .style(style)
-                    .time(time)
-                    .values(&cpu_points[current_scroll_position - 1]),
-            ]
+            let mut gd = GraphData::default()
+                .style(style)
+                .time(time)
+                .values(&cpu_points[current_scroll_position - 1]);
+            if name_entries && let Some(entry) = cpu_entries.get(current_scroll_position - 1) {
+                let label = match entry.data_type {
+                    crate::collection::cpu::CpuDataType::Avg => {
+                        Cow::Owned(format!("AVG {:3.0}%", entry.usage))
+                    }
+                    crate::collection::cpu::CpuDataType::Cpu(i) => {
+                        Cow::Owned(format!("CPU{} {:3.0}%", i, entry.usage))
+                    }
+                };
+                gd = gd.name(label);
+            }
+            vec![gd]
         } else {
             vec![]
         }
@@ -183,10 +215,18 @@ impl Painter {
                 draw_loc,
             );
 
+            let legend_mode = app_state.app_config_fields.cpu_legend_mode;
+            let (legend_position, name_entries) = match legend_mode {
+                CpuLegendMode::Table => (None, false),
+                CpuLegendMode::Overlay(pos) => (pos, true),
+                CpuLegendMode::Hidden => (None, false),
+            };
+
             let graph_data = self.generate_points(
                 cpu_widget_state,
                 data,
                 app_state.app_config_fields.show_average_cpu,
+                name_entries,
             );
 
             // TODO: Maybe hide load avg if too long? Or maybe the CPU part.
@@ -224,8 +264,15 @@ impl Painter {
                     hide_x_labels,
                     is_selected: app_state.current_widget.widget_id == widget_id,
                     is_expanded: app_state.is_expanded,
-                    legend_position: None,
-                    legend_constraints: None,
+                    legend_position,
+                    legend_constraints: if matches!(legend_mode, CpuLegendMode::Overlay(_)) {
+                        Some(LegendConstraints {
+                            width: Constraint::Ratio(3, 4),
+                            height: Constraint::Ratio(3, 4),
+                        })
+                    } else {
+                        None
+                    },
                 },
                 graph_data,
             );

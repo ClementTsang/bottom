@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use crate::canvas::components::time_series::LegendPosition;
+
 /// The default selected entry of the CPU widget.
 #[derive(Clone, Copy, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
@@ -10,6 +12,19 @@ pub(crate) enum CpuDefault {
     All,
     #[serde(alias = "avg")]
     Average,
+}
+
+/// The mode used to display the CPU chart legend.
+///
+/// - `Table`: the classic side table of per-CPU usages (default).
+/// - `Overlay`: a compact in-chart legend, like the memory/network widgets.
+/// - `None`: no legend at all.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum CpuLegendMode {
+    #[default]
+    Table,
+    Overlay(Option<LegendPosition>),
+    Hidden,
 }
 
 /// CPU column settings.
@@ -32,6 +47,11 @@ pub(crate) struct CpuConfig {
 
     /// Whether to give the average CPU entry a dedicated row in basic mode.
     pub(crate) basic_average_cpu_row: Option<bool>,
+
+    /// Where to place an in-chart legend for the CPU chart widget, replacing
+    /// the classic side table. One of "none", "top-left", "top", "top-right",
+    /// "left", "right", "bottom-left", "bottom", "bottom-right".
+    pub(crate) legend_position: Option<String>,
 }
 
 #[cfg(test)]

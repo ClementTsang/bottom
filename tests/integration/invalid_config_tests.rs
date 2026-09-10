@@ -169,3 +169,14 @@ fn test_invalid_proc_default_sort() {
     .failure()
     .stderr(predicate::str::contains("doesn't match"));
 }
+
+#[test]
+fn test_invalid_cpu_legend_position() {
+    btm_command(&[
+        "-C",
+        "./tests/invalid_configs/invalid_cpu_legend_position.toml",
+    ])
+    .assert()
+    .failure()
+    .stderr(predicate::str::contains("invalid value"));
+}

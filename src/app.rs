@@ -43,6 +43,7 @@ pub struct AppConfigFields {
     pub temperature_type: TemperatureType,
     pub use_dot: bool,
     pub cpu_left_legend: bool,
+    pub cpu_legend_mode: crate::options::config::cpu::CpuLegendMode,
     pub show_average_cpu: bool, // TODO: Unify this in CPU options
     pub show_cpu_decimal: bool,
     pub use_current_cpu_total: bool,

@@ -508,6 +508,16 @@ pub struct CpuArgs {
         alias = "hide-avg-cpu"
     )]
     pub hide_avg_cpu: bool,
+
+    #[arg(
+        long,
+        value_parser = CHART_WIDGET_POSITIONS,
+        value_name = "POSITION",
+        ignore_case = true,
+        help = "Where to place an in-chart legend for the CPU chart widget, replacing the side table. One of: none, top-left, top, top-right, left, right, bottom-left, bottom, bottom-right.",
+        alias = "cpu-legend"
+    )]
+    pub cpu_legend: Option<String>,
 }
 
 /// Memory argument/config options.
