@@ -155,7 +155,6 @@
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "top-right"
 
-
 # Processes widget configuration
 #[processes]
 # The columns shown by the process widget. The following columns are supported (the GPU columns are only available if the GPU feature is enabled when built):
@@ -209,7 +208,6 @@
 # Show process CPU% usage without averaging over the number of CPU cores.
 #unnormalized_cpu = false
 
-
 # CPU widget configuration
 #[cpu]
 # One of "all" (default), "average"/"avg"
@@ -217,7 +215,6 @@
 
 # Whether to show a decimal place for CPU usage values.
 #show_decimal = false
-
 
 # Disk widget configuration
 #[disk]
@@ -274,7 +271,6 @@
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Disk I/O graph widget configuration
 #[disk_io_graph]
 
@@ -313,7 +309,6 @@
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Temperature widget configuration
 #[temperature]
 
@@ -344,7 +339,6 @@
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Temperature graph widget configuration
 #[temperature_graph]
 
@@ -372,7 +366,6 @@
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Memory widget configuration
 #[memory_graph]
 
@@ -387,7 +380,6 @@
 
 # Use short GPU names (e.g. "GPU" or "GPU0", "GPU1") instead of full GPU names. Only available if the GPU feature is enabled when built.
 #short_gpu_names = false
-
 
 # Network widget configuration
 #[network_graph]
@@ -414,7 +406,6 @@
 
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
-
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
@@ -474,10 +465,12 @@
 #text = {colour = "gray"}
 #selected_text = {colour = "black", bg_colour = "light blue"}
 #disabled_text = {colour = "dark gray"}
-# Disabled by default
+# Disabled by default.
 #bg_colour = "black"
-# Only on Linux
+# Only supported on Linux.
 #thread_text = {colour = "green"}
+# One of "pipe" or "solid".
+#bar_type = "pipe"
 
 # Layout - layouts follow a pattern like this:
 # [[row]] represents a row in the application.

@@ -18,16 +18,30 @@ pub enum LabelLimit {
 }
 
 /// What bar character type to use.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default, Copy)]
 pub enum BarType {
+    #[default]
     /// The pipe character (`|`)
     Pipe,
     /// Bar characters (`█`, `▉`, etc.)
     Bar,
+    // TODO: Maybe also support small blocks, similar to btop?
+}
+
+impl BarType {
+    #[expect(dead_code)]
+    fn is_pipe(&self) -> bool {
+        matches!(self, BarType::Pipe)
+    }
+
+    fn is_bar(&self) -> bool {
+        matches!(self, BarType::Bar)
+    }
 }
 
 fn get_unicode_block<'a>(frac: f64) -> &'a str {
     match (frac * 8.0).round() as u16 {
+        0 => " ",
         1 => symbols::block::ONE_EIGHTH,
         2 => symbols::block::ONE_QUARTER,
         3 => symbols::block::THREE_EIGHTHS,
@@ -36,7 +50,7 @@ fn get_unicode_block<'a>(frac: f64) -> &'a str {
         6 => symbols::block::THREE_QUARTERS,
         7 => symbols::block::SEVEN_EIGHTHS,
         8 => symbols::block::FULL,
-        _ => " ",
+        _ => unreachable!("this case should never occur"),
     }
 }
 
@@ -63,7 +77,7 @@ impl Default for PipeGauge<'_> {
             label_style: Style::default(),
             gauge_style: Style::default(),
             hide_parts: LabelLimit::default(),
-            bar_type: BarType::Pipe,
+            bar_type: BarType::default(),
         }
     }
 }
@@ -216,11 +230,11 @@ impl Widget for PipeGauge<'_> {
                 );
             }
             LabelLimit::Auto(_) | LabelLimit::None => {
+                // FIXME: "[" and "]" don't look that great with block bars.
                 let (start, _) = buf.set_line(col, row, &Line::from("["), gauge_area.width);
                 if start >= gauge_area.right() {
                     return;
                 }
-
                 let (end, _) = buf.set_line(
                     (gauge_area.x + gauge_area.width).saturating_sub(1),
                     row,
@@ -228,34 +242,39 @@ impl Widget for PipeGauge<'_> {
                     gauge_area.width,
                 );
 
-                let pipe_end = end.saturating_sub(1).min(
-                    start + (f64::from(end.saturating_sub(start)) * self.ratio).floor() as u16,
-                );
+                // How many cells worth of bar to draw, where the last cell may only be
+                // partially filled.
+                let filled_width = f64::from(end.saturating_sub(start)) * self.ratio;
+                let bar_end = end.saturating_sub(1);
+                let pipe_end = bar_end.min(start + filled_width.floor() as u16);
+
+                let symbol = match self.bar_type {
+                    BarType::Pipe => "|",
+                    BarType::Bar => symbols::block::FULL,
+                };
+
+                let bar_style = Style {
+                    fg: self.gauge_style.fg,
+                    bg: None,
+                    add_modifier: self.gauge_style.add_modifier,
+                    sub_modifier: self.gauge_style.sub_modifier,
+                    underline_color: None,
+                };
 
                 for col in start..pipe_end {
                     if let Some(cell) = buf.cell_mut((col, row)) {
-                        match self.bar_type {
-                            BarType::Pipe => {
-                                cell.set_symbol("|");
-                            }
-                            BarType::Bar => {
-                                if self.ratio < 1.0 {
-                                    // Based on what Ratatui does!
-                                    cell.set_symbol(get_unicode_block(self.ratio % 1.0));
-                                } else {
-                                    cell.set_symbol(symbols::block::FULL);
-                                }
-                            }
-                        }
-
-                        cell.set_style(Style {
-                            fg: self.gauge_style.fg,
-                            bg: None,
-                            add_modifier: self.gauge_style.add_modifier,
-                            sub_modifier: self.gauge_style.sub_modifier,
-                            underline_color: None,
-                        });
+                        cell.set_symbol(symbol).set_style(bar_style);
                     }
+                }
+
+                // Unlike pipes, blocks can also show the leftover fraction of a cell.
+                // Based on what Ratatui does!
+                if self.bar_type.is_bar()
+                    && pipe_end < bar_end
+                    && let Some(cell) = buf.cell_mut((pipe_end, row))
+                {
+                    cell.set_symbol(get_unicode_block(filled_width.fract()))
+                        .set_style(bar_style);
                 }
 
                 if (end_label.width() as u16) < end.saturating_sub(start) {
@@ -266,6 +285,86 @@ impl Widget for PipeGauge<'_> {
                 }
             }
             LabelLimit::StartLabel => unreachable!(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_unicode_block() {
+        // Each exact eighth should map to its own block.
+        assert_eq!(get_unicode_block(0.0), " ");
+        assert_eq!(get_unicode_block(0.125), symbols::block::ONE_EIGHTH);
+        assert_eq!(get_unicode_block(0.25), symbols::block::ONE_QUARTER);
+        assert_eq!(get_unicode_block(0.375), symbols::block::THREE_EIGHTHS);
+        assert_eq!(get_unicode_block(0.5), symbols::block::HALF);
+        assert_eq!(get_unicode_block(0.625), symbols::block::FIVE_EIGHTHS);
+        assert_eq!(get_unicode_block(0.75), symbols::block::THREE_QUARTERS);
+        assert_eq!(get_unicode_block(0.875), symbols::block::SEVEN_EIGHTHS);
+        assert_eq!(get_unicode_block(1.0), symbols::block::FULL);
+
+        // Anything in between should round to the nearest eighth.
+        assert_eq!(get_unicode_block(0.05), " ");
+        assert_eq!(get_unicode_block(0.1), symbols::block::ONE_EIGHTH);
+        assert_eq!(get_unicode_block(0.3), symbols::block::ONE_QUARTER);
+        assert_eq!(get_unicode_block(0.4), symbols::block::THREE_EIGHTHS);
+        assert_eq!(get_unicode_block(0.55), symbols::block::HALF);
+        assert_eq!(get_unicode_block(0.6), symbols::block::FIVE_EIGHTHS);
+        assert_eq!(get_unicode_block(0.8), symbols::block::THREE_QUARTERS);
+        assert_eq!(get_unicode_block(0.9), symbols::block::SEVEN_EIGHTHS);
+        assert_eq!(get_unicode_block(0.99), symbols::block::FULL);
+    }
+
+    /// Draw a label-less gauge into a 12-wide area, which leaves 10 cells
+    /// between the brackets.
+    fn render_bar(ratio: f64, bar_type: BarType) -> String {
+        const WIDTH: u16 = 12;
+
+        let area = Rect::new(0, 0, WIDTH, 1);
+        let mut buf = Buffer::empty(area);
+        PipeGauge::default()
+            .ratio(ratio)
+            .bar_type(bar_type)
+            .render(area, &mut buf);
+
+        (0..WIDTH).map(|x| buf[(x, 0)].symbol()).collect()
+    }
+
+    #[test]
+    fn test_pipe_bars() {
+        assert_eq!(render_bar(0.0, BarType::Pipe), "[          ]");
+        assert_eq!(render_bar(0.5, BarType::Pipe), "[|||||     ]");
+        assert_eq!(render_bar(1.0, BarType::Pipe), "[||||||||||]");
+    }
+
+    #[test]
+    fn test_solid_bars() {
+        assert_eq!(render_bar(0.0, BarType::Bar), "[          ]");
+        assert_eq!(render_bar(0.5, BarType::Bar), "[█████▌    ]");
+        assert_eq!(render_bar(1.0, BarType::Bar), "[██████████]");
+    }
+
+    /// A partial block should never be drawn in place of a full one, or the
+    /// bar would show less than it should.
+    #[test]
+    fn test_solid_bars_are_monotonic() {
+        let mut prev = 0;
+
+        for ratio in (0..=100).map(f64::from) {
+            let bar = render_bar(ratio / 100.0, BarType::Bar);
+            let filled = bar
+                .chars()
+                .filter(|c| *c != ' ' && *c != '[' && *c != ']')
+                .count();
+
+            assert!(
+                filled >= prev,
+                "bar at {ratio}% ({bar}) is shorter than the one before it"
+            );
+            prev = filled;
         }
     }
 }

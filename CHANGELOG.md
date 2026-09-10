@@ -29,6 +29,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Features
 
 - [#2239](https://github.com/ClementTsang/bottom/pull/2239): Initial Intel GPU support for Linux to get process GPU usage.
+- [#1434](https://github.com/ClementTsang/bottom/issues/1434): Support solid bars in basic mode via `styles.widgets.bar_type`.
 
 ### Other
 

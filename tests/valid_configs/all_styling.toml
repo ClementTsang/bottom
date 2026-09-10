@@ -64,3 +64,4 @@ text = { colour = "gray" }
 selected_text = { colour = "black", bg_colour = "light blue" }
 disabled_text = { colour = "dark gray" }
 bg_colour = "black"
+bar_type = "solid"
