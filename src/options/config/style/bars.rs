@@ -13,7 +13,7 @@ pub(crate) enum WidgetBarType {
     #[default]
     Pipe,
     /// Fill bars with block characters (`█`, `▉`, etc.).
-    Solid,
+    Block,
     /// Fill bars with square characters (`■`).
     Square,
 }
@@ -26,7 +26,7 @@ impl<'de> Deserialize<'de> for WidgetBarType {
         let value = String::deserialize(deserializer)?.to_lowercase();
         match value.as_str() {
             "pipe" => Ok(WidgetBarType::Pipe),
-            "solid" => Ok(WidgetBarType::Solid),
+            "block" => Ok(WidgetBarType::Block),
             "square" => Ok(WidgetBarType::Square),
             _ => Err(serde::de::Error::custom("doesn't match any bar type")),
         }
@@ -37,7 +37,7 @@ impl From<WidgetBarType> for BarType {
     fn from(value: WidgetBarType) -> Self {
         match value {
             WidgetBarType::Pipe => BarType::Pipe,
-            WidgetBarType::Solid => BarType::Bar,
+            WidgetBarType::Block => BarType::Block,
             WidgetBarType::Square => BarType::Square,
         }
     }
@@ -57,12 +57,12 @@ mod test {
     #[test]
     fn valid_bar_types() {
         assert_eq!(parse("\"pipe\"").unwrap(), Some(WidgetBarType::Pipe));
-        assert_eq!(parse("\"solid\"").unwrap(), Some(WidgetBarType::Solid));
-        assert_eq!(parse("\"square\"").unwrap(), Some(WidgetBarType::Solid));
+        assert_eq!(parse("\"block\"").unwrap(), Some(WidgetBarType::Block));
+        assert_eq!(parse("\"square\"").unwrap(), Some(WidgetBarType::Block));
 
         // Casing shouldn't matter.
         assert_eq!(parse("\"PIPE\"").unwrap(), Some(WidgetBarType::Pipe));
-        assert_eq!(parse("\"SOLID\"").unwrap(), Some(WidgetBarType::Solid));
+        assert_eq!(parse("\"BLOCK\"").unwrap(), Some(WidgetBarType::Block));
         assert_eq!(parse("\"SQUARE\"").unwrap(), Some(WidgetBarType::Pipe));
     }
 

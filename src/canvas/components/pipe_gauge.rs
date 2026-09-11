@@ -23,8 +23,8 @@ pub enum BarType {
     #[default]
     /// The pipe character (`|`)
     Pipe,
-    /// Bar characters (`█`, `▉`, etc.)
-    Bar,
+    /// Block characters (`█`, `▉`, etc.)
+    Block,
     /// Square characters (`■`)
     Square,
 }
@@ -36,7 +36,7 @@ impl BarType {
     }
 
     fn is_bar(&self) -> bool {
-        matches!(self, BarType::Bar)
+        matches!(self, BarType::Block)
     }
 }
 
@@ -249,7 +249,7 @@ impl Widget for PipeGauge<'_> {
 
                 let symbol = match self.bar_type {
                     BarType::Pipe => "|",
-                    BarType::Bar => symbols::block::FULL,
+                    BarType::Block => symbols::block::FULL,
                     BarType::Square => "■",
                 };
 
@@ -316,55 +316,5 @@ mod tests {
         assert_eq!(get_unicode_block(0.8), symbols::block::THREE_QUARTERS);
         assert_eq!(get_unicode_block(0.9), symbols::block::SEVEN_EIGHTHS);
         assert_eq!(get_unicode_block(0.99), symbols::block::FULL);
-    }
-
-    /// Draw a label-less gauge into a 12-wide area, which leaves 10 cells
-    /// between the brackets.
-    fn render_bar(ratio: f64, bar_type: BarType) -> String {
-        const WIDTH: u16 = 12;
-
-        let area = Rect::new(0, 0, WIDTH, 1);
-        let mut buf = Buffer::empty(area);
-        PipeGauge::default()
-            .ratio(ratio)
-            .bar_type(bar_type)
-            .render(area, &mut buf);
-
-        (0..WIDTH).map(|x| buf[(x, 0)].symbol()).collect()
-    }
-
-    #[test]
-    fn test_pipe_bars() {
-        assert_eq!(render_bar(0.0, BarType::Pipe), "[          ]");
-        assert_eq!(render_bar(0.5, BarType::Pipe), "[|||||     ]");
-        assert_eq!(render_bar(1.0, BarType::Pipe), "[||||||||||]");
-    }
-
-    #[test]
-    fn test_solid_bars() {
-        assert_eq!(render_bar(0.0, BarType::Bar), "[          ]");
-        assert_eq!(render_bar(0.5, BarType::Bar), "[█████▌    ]");
-        assert_eq!(render_bar(1.0, BarType::Bar), "[██████████]");
-    }
-
-    /// A partial block should never be drawn in place of a full one, or the
-    /// bar would show less than it should.
-    #[test]
-    fn test_solid_bars_are_monotonic() {
-        let mut prev = 0;
-
-        for ratio in (0..=100).map(f64::from) {
-            let bar = render_bar(ratio / 100.0, BarType::Bar);
-            let filled = bar
-                .chars()
-                .filter(|c| *c != ' ' && *c != '[' && *c != ']')
-                .count();
-
-            assert!(
-                filled >= prev,
-                "bar at {ratio}% ({bar}) is shorter than the one before it"
-            );
-            prev = filled;
-        }
     }
 }

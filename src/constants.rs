@@ -727,7 +727,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #bg_colour = "black"
 # Only supported on Linux.
 #thread_text = {colour = "green"}
-# One of "pipe" or "solid".
+# One of "pipe" "block", or "square".
 #bar_type = "pipe"
 
 # Layout - layouts follow a pattern like this:

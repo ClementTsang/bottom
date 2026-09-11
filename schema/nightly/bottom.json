@@ -1549,7 +1549,7 @@
         {
           "description": "Fill bars with block characters (`█`, `▉`, etc.).",
           "type": "string",
-          "const": "solid"
+          "const": "block"
         },
         {
           "description": "Fill bars with square characters (`■`).",
