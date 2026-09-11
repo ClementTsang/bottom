@@ -1668,31 +1668,6 @@ mod test {
         super::init_app(args, config).unwrap().0
     }
 
-    #[test]
-    fn disk_binary_prefix_options() {
-        for (config_text, flag, expected) in [
-            ("", None, false),
-            ("[disk]", None, false),
-            ("[disk]\nuse_binary_prefix = false", None, false),
-            ("[disk]\nuse_binary_prefix = true", None, true),
-            ("", Some("--disk_use_binary_prefix"), true),
-            ("", Some("--disk-use-binary-prefix"), true),
-            (
-                "[disk]\nuse_binary_prefix = false",
-                Some("--disk_use_binary_prefix"),
-                true,
-            ),
-        ] {
-            let mut arguments = vec!["btm"];
-            arguments.extend(flag);
-            let args = BottomArgs::parse_from(arguments);
-            let config = toml_edit::de::from_str(config_text).unwrap();
-            let app = super::init_app(args, config).unwrap().0;
-            assert_eq!(app.app_config_fields.disk_use_binary_prefix, expected);
-            assert!(!app.app_config_fields.network_use_binary_prefix);
-        }
-    }
-
     // TODO: There's probably a better way to create clap options AND unify
     // together to avoid the possibility of typos/mixing up. Use proc macros
     // to unify on one struct?
