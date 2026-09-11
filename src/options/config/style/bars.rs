@@ -58,12 +58,12 @@ mod test {
     fn valid_bar_types() {
         assert_eq!(parse("\"pipe\"").unwrap(), Some(WidgetBarType::Pipe));
         assert_eq!(parse("\"block\"").unwrap(), Some(WidgetBarType::Block));
-        assert_eq!(parse("\"square\"").unwrap(), Some(WidgetBarType::Block));
+        assert_eq!(parse("\"square\"").unwrap(), Some(WidgetBarType::Square));
 
         // Casing shouldn't matter.
         assert_eq!(parse("\"PIPE\"").unwrap(), Some(WidgetBarType::Pipe));
         assert_eq!(parse("\"BLOCK\"").unwrap(), Some(WidgetBarType::Block));
-        assert_eq!(parse("\"SQUARE\"").unwrap(), Some(WidgetBarType::Pipe));
+        assert_eq!(parse("\"SQUARE\"").unwrap(), Some(WidgetBarType::Square));
     }
 
     #[test]
