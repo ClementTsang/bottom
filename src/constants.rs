@@ -467,6 +467,11 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to show a decimal place for CPU usage values.
 #show_decimal = false
 
+# Where to place an in-chart legend for the CPU chart widget, replacing the classic side
+# table. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left",
+# "bottom", "bottom-right". If unset, the side table is used.
+#legend_position = "top-right"
+
 
 # Disk widget configuration
 #[disk]
@@ -812,5 +817,18 @@ mod test {
 
         // TODO: Check this.
         // assert_eq!(config, Config::default());
+    }
+
+    /// `CONFIG_TEXT` is what bottom writes to a fresh user config file, and
+    /// `sample_configs/default_config.toml` is the repo's reference copy. They
+    /// must not drift, otherwise a newly-generated config silently documents
+    /// fewer options than the sample.
+    #[test]
+    fn config_text_matches_sample_default_config() {
+        assert_eq!(
+            CONFIG_TEXT,
+            include_str!("../sample_configs/default_config.toml"),
+            "`CONFIG_TEXT` and `sample_configs/default_config.toml` have drifted; update both."
+        );
     }
 }

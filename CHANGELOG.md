@@ -29,6 +29,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Features
 
 - [#2239](https://github.com/ClementTsang/bottom/pull/2239): Initial Intel GPU support for Linux to get process GPU usage.
+- Add optional in-chart legend for the CPU widget via `cpu.legend_position` / `--cpu_legend`.
 
 ### Other
 

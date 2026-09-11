@@ -17,14 +17,23 @@ pub(crate) enum CpuDefault {
 /// The mode used to display the CPU chart legend.
 ///
 /// - `Table`: the classic side table of per-CPU usages (default).
-/// - `Overlay`: a compact in-chart legend, like the memory/network widgets.
-/// - `None`: no legend at all.
+/// - `Overlay`: a compact in-chart legend, like the memory/network widgets,
+///   placed at the given position.
+/// - `Hidden`: no legend at all (config value `"none"`), and since this
+///   replaces the side table as well, no per-CPU table is drawn either.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum CpuLegendMode {
+pub(crate) enum CpuLegendMode {
     #[default]
     Table,
-    Overlay(Option<LegendPosition>),
+    Overlay(LegendPosition),
     Hidden,
+}
+
+impl CpuLegendMode {
+    /// Whether the classic side table should be drawn for the CPU widget.
+    pub(crate) fn uses_side_table(self) -> bool {
+        matches!(self, CpuLegendMode::Table)
+    }
 }
 
 /// CPU column settings.
@@ -48,6 +57,9 @@ pub(crate) struct CpuConfig {
     /// Whether to give the average CPU entry a dedicated row in basic mode.
     pub(crate) basic_average_cpu_row: Option<bool>,
 
+    // TODO: We probably want to make this an enum...? If we want to also support external legends
+    // (e.g. table-style, list-style) then we probably need a new system outright. Note that unlike
+    // the memory/network widgets, this accepts "none" to mean "no legend and no side table".
     /// Where to place an in-chart legend for the CPU chart widget, replacing
     /// the classic side table. One of "none", "top-left", "top", "top-right",
     /// "left", "right", "bottom-left", "bottom", "bottom-right".

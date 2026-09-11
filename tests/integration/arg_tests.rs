@@ -152,6 +152,28 @@ fn test_invalid_default_cpu_entry() {
 }
 
 #[test]
+fn test_invalid_cpu_legend() {
+    no_cfg_btm_command()
+        .arg("--cpu_legend")
+        .arg("invalid")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("possible values"));
+}
+
+#[test]
+fn test_cpu_legend_hyphen_alias_is_accepted() {
+    // Verifies the `--cpu-legend` alias wires up to the same option; an invalid
+    // value should therefore also be rejected by clap.
+    no_cfg_btm_command()
+        .arg("--cpu-legend")
+        .arg("invalid")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("possible values"));
+}
+
+#[test]
 #[cfg_attr(feature = "battery", ignore)]
 fn test_battery_flag() {
     no_cfg_btm_command()

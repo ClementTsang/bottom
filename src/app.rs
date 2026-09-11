@@ -18,7 +18,7 @@ use crate::{
     },
     components::time_series::TimeseriesState,
     constants,
-    options::config::flags::TableGap,
+    options::config::{cpu::CpuLegendMode, flags::TableGap},
     utils::data_units::DataUnit,
     widgets::{
         DiskWidgetColumn, ProcWidgetColumn, ProcWidgetMode, TempWidgetColumn, TreeCollapsed,
@@ -43,7 +43,7 @@ pub struct AppConfigFields {
     pub temperature_type: TemperatureType,
     pub use_dot: bool,
     pub cpu_left_legend: bool,
-    pub cpu_legend_mode: crate::options::config::cpu::CpuLegendMode,
+    pub(crate) cpu_legend_mode: CpuLegendMode,
     pub show_average_cpu: bool, // TODO: Unify this in CPU options
     pub show_cpu_decimal: bool,
     pub use_current_cpu_total: bool,
@@ -1759,6 +1759,17 @@ impl App {
                         cpu_widget_state.table.scroll_to_first();
                     }
                 }
+                BottomWidgetType::Cpu
+                    if !self.app_config_fields.cpu_legend_mode.uses_side_table() =>
+                {
+                    if let Some(cpu_widget_state) = self
+                        .states
+                        .cpu_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        cpu_widget_state.table.scroll_to_first();
+                    }
+                }
 
                 _ => {}
             }
@@ -1819,6 +1830,17 @@ impl App {
                         cpu_widget_state.table.scroll_to_last();
                     }
                 }
+                BottomWidgetType::Cpu
+                    if !self.app_config_fields.cpu_legend_mode.uses_side_table() =>
+                {
+                    if let Some(cpu_widget_state) = self
+                        .states
+                        .cpu_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        cpu_widget_state.table.scroll_to_last();
+                    }
+                }
                 _ => {}
             }
             self.reset_multi_tap_keys();
@@ -1848,8 +1870,28 @@ impl App {
                 BottomWidgetType::Temp => self.change_temp_position(amount),
                 BottomWidgetType::Disk => self.change_disk_position(amount),
                 BottomWidgetType::CpuLegend => self.change_cpu_legend_position(amount),
+                // When the side table is not drawn (in-chart or hidden legend
+                // mode), the CPU graph widget itself is where the user picks
+                // which CPU entry to graph.
+                BottomWidgetType::Cpu
+                    if !self.app_config_fields.cpu_legend_mode.uses_side_table() =>
+                {
+                    self.change_cpu_position(amount);
+                }
                 _ => {}
             }
+        }
+    }
+
+    /// Changes the selected CPU entry for the CPU graph widget itself.
+    fn change_cpu_position(&mut self, num_to_change_by: i64) {
+        if let Some(cpu_widget_state) = self
+            .states
+            .cpu_state
+            .widget_states
+            .get_mut(&self.current_widget.widget_id)
+        {
+            cpu_widget_state.table.increment_position(num_to_change_by);
         }
     }
 
