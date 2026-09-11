@@ -44,6 +44,8 @@ macro_rules! generate_column_schemas {
 }
 
 fn generate_schema(schema_options: SchemaOptions) -> anyhow::Result<()> {
+    // TODO: remove newlines in descriptions?
+
     let mut schema = schemars::schema_for!(config::Config);
     {
         // TODO: Maybe make this case insensitive? See https://stackoverflow.com/a/68639341
