@@ -25,7 +25,8 @@ pub enum BarType {
     Pipe,
     /// Bar characters (`█`, `▉`, etc.)
     Bar,
-    // TODO: Maybe also support small blocks, similar to btop?
+    /// Square characters (`■`)
+    Square,
 }
 
 impl BarType {
@@ -242,8 +243,6 @@ impl Widget for PipeGauge<'_> {
                     gauge_area.width,
                 );
 
-                // How many cells worth of bar to draw, where the last cell may only be
-                // partially filled.
                 let filled_width = f64::from(end.saturating_sub(start)) * self.ratio;
                 let bar_end = end.saturating_sub(1);
                 let pipe_end = bar_end.min(start + filled_width.floor() as u16);
@@ -251,6 +250,7 @@ impl Widget for PipeGauge<'_> {
                 let symbol = match self.bar_type {
                     BarType::Pipe => "|",
                     BarType::Bar => symbols::block::FULL,
+                    BarType::Square => "■",
                 };
 
                 let bar_style = Style {

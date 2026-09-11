@@ -14,6 +14,8 @@ pub(crate) enum WidgetBarType {
     Pipe,
     /// Fill bars with block characters (`█`, `▉`, etc.).
     Solid,
+    /// Fill bars with square characters (`■`).
+    Square,
 }
 
 impl<'de> Deserialize<'de> for WidgetBarType {
@@ -25,6 +27,7 @@ impl<'de> Deserialize<'de> for WidgetBarType {
         match value.as_str() {
             "pipe" => Ok(WidgetBarType::Pipe),
             "solid" => Ok(WidgetBarType::Solid),
+            "square" => Ok(WidgetBarType::Square),
             _ => Err(serde::de::Error::custom("doesn't match any bar type")),
         }
     }
@@ -35,6 +38,7 @@ impl From<WidgetBarType> for BarType {
         match value {
             WidgetBarType::Pipe => BarType::Pipe,
             WidgetBarType::Solid => BarType::Bar,
+            WidgetBarType::Square => BarType::Square,
         }
     }
 }
@@ -54,10 +58,12 @@ mod test {
     fn valid_bar_types() {
         assert_eq!(parse("\"pipe\"").unwrap(), Some(WidgetBarType::Pipe));
         assert_eq!(parse("\"solid\"").unwrap(), Some(WidgetBarType::Solid));
+        assert_eq!(parse("\"square\"").unwrap(), Some(WidgetBarType::Solid));
 
         // Casing shouldn't matter.
-        assert_eq!(parse("\"Solid\"").unwrap(), Some(WidgetBarType::Solid));
         assert_eq!(parse("\"PIPE\"").unwrap(), Some(WidgetBarType::Pipe));
+        assert_eq!(parse("\"SOLID\"").unwrap(), Some(WidgetBarType::Solid));
+        assert_eq!(parse("\"SQUARE\"").unwrap(), Some(WidgetBarType::Pipe));
     }
 
     #[test]
