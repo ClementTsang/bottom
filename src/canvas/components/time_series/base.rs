@@ -44,6 +44,12 @@ impl<'a, F> GraphData<'a, F> {
         self.name = Some(name);
         self
     }
+
+    /// The dataset's legend name, if any.
+    #[cfg(test)]
+    pub(crate) fn get_name(&self) -> Option<&Cow<'a, str>> {
+        self.name.as_ref()
+    }
 }
 
 #[derive(Clone, Copy)]

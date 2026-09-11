@@ -22,6 +22,45 @@ pub enum CpuWidgetColumn {
     Use { show_decimal: bool },
 }
 
+/// The full short label for a CPU entry, e.g. `"AVG"` or `"CPU3"`.
+///
+/// Shared between the classic side table and the in-chart legend so the naming
+/// rule lives in exactly one place.
+pub(crate) fn cpu_entry_name(data_type: CpuDataType) -> Cow<'static, str> {
+    match data_type {
+        CpuDataType::Avg => "AVG".into(),
+        CpuDataType::Cpu(index) => concat_string!("CPU", index.to_string()).into(),
+    }
+}
+
+/// The usage value for a CPU entry, honouring whether a decimal place is shown.
+fn cpu_usage_value_str(usage: f32, show_decimal: bool) -> String {
+    if show_decimal {
+        format!("{usage:.1}")
+    } else {
+        format!("{usage:.0}")
+    }
+}
+
+/// The usage string for a CPU entry, e.g. `"12%"` or `"8.4%"`.
+pub(crate) fn cpu_usage_str(usage: f32, show_decimal: bool) -> String {
+    concat_string!(cpu_usage_value_str(usage, show_decimal), "%")
+}
+
+/// The full label for a CPU entry in the in-chart legend, e.g. `"AVG  12%"`.
+///
+/// Uses a fixed-width usage column so entries line up, matching the memory
+/// widget's legend.
+pub(crate) fn cpu_legend_label(
+    data_type: CpuDataType, usage: f32, show_decimal: bool,
+) -> Cow<'static, str> {
+    Cow::Owned(format!(
+        "{} {:>3}%",
+        cpu_entry_name(data_type),
+        cpu_usage_value_str(usage, show_decimal)
+    ))
+}
+
 impl ColumnHeader for CpuWidgetColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
@@ -75,23 +114,18 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
                 } else {
                     match column {
                         CpuWidgetColumn::Cpu => match data_type {
-                            CpuDataType::Avg => Some("AVG".into()),
+                            CpuDataType::Avg => Some(cpu_entry_name(CpuDataType::Avg)),
                             CpuDataType::Cpu(index) => {
-                                let index_str = index.to_string();
-                                let text = if calculated_width < CPU_TRUNCATE_BREAKPOINT {
-                                    index_str.into()
+                                Some(if calculated_width < CPU_TRUNCATE_BREAKPOINT {
+                                    index.to_string().into()
                                 } else {
-                                    concat_string!("CPU", index_str).into()
-                                };
-
-                                Some(text)
+                                    cpu_entry_name(CpuDataType::Cpu(*index))
+                                })
                             }
                         },
-                        CpuWidgetColumn::Use { show_decimal } => Some(if *show_decimal {
-                            format!("{last_entry:.1}%").into()
-                        } else {
-                            format!("{last_entry:.0}%").into()
-                        }),
+                        CpuWidgetColumn::Use { show_decimal } => {
+                            Some(cpu_usage_str(*last_entry, *show_decimal).into())
+                        }
                     }
                 }
             }
@@ -195,5 +229,38 @@ impl CpuWidgetState {
                 .collect(),
         );
         self.force_update_data = false;
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn cpu_entry_names() {
+        assert_eq!(cpu_entry_name(CpuDataType::Avg), "AVG");
+        assert_eq!(cpu_entry_name(CpuDataType::Cpu(0)), "CPU0");
+        assert_eq!(cpu_entry_name(CpuDataType::Cpu(12)), "CPU12");
+    }
+
+    #[test]
+    fn cpu_usage_respects_decimal_setting() {
+        assert_eq!(cpu_usage_str(12.4, false), "12%");
+        assert_eq!(cpu_usage_str(12.4, true), "12.4%");
+    }
+
+    #[test]
+    fn cpu_legend_label_aligns_and_respects_decimal_setting() {
+        // The usage column is right-aligned to a fixed width so entries line up.
+        assert_eq!(
+            cpu_legend_label(CpuDataType::Cpu(3), 8.2, false),
+            "CPU3   8%"
+        );
+        assert_eq!(cpu_legend_label(CpuDataType::Avg, 12.4, false), "AVG  12%");
+        assert_eq!(
+            cpu_legend_label(CpuDataType::Cpu(3), 8.2, true),
+            "CPU3 8.2%"
+        );
+        assert_eq!(cpu_legend_label(CpuDataType::Avg, 100.0, false), "AVG 100%");
     }
 }

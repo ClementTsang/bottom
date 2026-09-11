@@ -57,6 +57,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | Option                | Behaviour                                         |
 | --------------------- | ------------------------------------------------- |
 | `--cpu_left_legend`   | Puts the CPU chart legend on the left side.       |
+| `--cpu_legend <POSITION>` | Replaces the CPU side table with an in-chart legend at the given position. |
 | `--default_cpu_entry` | Sets which CPU entry type is selected by default. |
 | `-a, --hide_avg_cpu`  | Hides the average CPU usage entry.                |
 

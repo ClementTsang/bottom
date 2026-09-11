@@ -173,6 +173,11 @@ fn test_cpu_doughnut() {
 }
 
 #[test]
+fn test_cpu_in_chart_legend() {
+    run_and_kill_cfg("./tests/valid_configs/cpu_in_chart_legend.toml");
+}
+
+#[test]
 fn test_theme() {
     run_and_kill_cfg("./tests/valid_configs/theme.toml");
 }

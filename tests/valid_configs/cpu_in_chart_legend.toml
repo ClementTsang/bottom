@@ -1,0 +1,8 @@
+[cpu]
+legend_position = "top-right"
+
+[[row]]
+  [[row.child]]
+  type = "cpu"
+  [[row.child]]
+  type = "mem"

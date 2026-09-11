@@ -35,6 +35,7 @@ use crate::{
     canvas::components::time_series::LegendPosition,
     components::time_series::TimeseriesConfig,
     constants::*,
+    options::config::cpu::CpuLegendMode,
     utils::data_units::DataUnit,
     widgets::*,
 };
@@ -433,6 +434,21 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let network_legend_position = get_network_legend_position(args, config)?;
     let memory_legend_position = get_memory_legend_position(args, config)?;
+    let cpu_legend_mode = get_cpu_legend_mode(args, config)?;
+    let cpu_left_legend = enabled_option_with_deprecated!(
+        args.cpu.cpu_left_legend,
+        config,
+        cpu.left_legend,
+        flags.cpu_left_legend,
+    );
+    // `cpu.left_legend` only describes where the classic side table goes. When an
+    // in-chart or hidden legend is requested there is no side table, so the
+    // setting has no effect - tell the user rather than silently ignoring it.
+    if cpu_left_legend && !cpu_legend_mode.uses_side_table() {
+        eprintln!(
+            "Warning: 'cpu.left_legend' has no effect when 'cpu.legend_position' is set, as there is no side table to place."
+        );
+    }
     let temperature_legend_position = get_temperature_legend_position(config)?;
     let disk_io_legend_position = get_disk_io_legend_position(config)?;
     let disk_io_name_filter = match &config.disk_io_graph {
@@ -462,12 +478,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         show_average_cpu: get_show_average_cpu(args, config),
         show_cpu_decimal: config_or!(config, cpu.show_decimal, false),
         use_dot: is_flag_enabled!(dot_marker, args.general, config),
-        cpu_left_legend: enabled_option_with_deprecated!(
-            args.cpu.cpu_left_legend,
-            config,
-            cpu.left_legend,
-            flags.cpu_left_legend,
-        ),
+        cpu_left_legend,
         use_current_cpu_total: enabled_option_with_deprecated!(
             args.process.current_usage,
             config,
@@ -506,6 +517,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         hide_k_threads,
         memory_legend_position,
         network_legend_position,
+        cpu_legend_mode,
         network_scale_type,
         network_unit_type,
         network_use_binary_prefix,
@@ -1386,6 +1398,38 @@ fn get_network_legend_position(
     )
 }
 
+/// Unlike the memory/network widgets, the CPU widget has two legend styles
+/// (classic side table vs in-chart legend), so this returns a mode rather
+/// than just a position: `Table` keeps the default side table, `Overlay`
+/// replaces it with an in-chart legend at the given position, and `Hidden`
+/// hides the legend entirely (config value `"none"`).
+///
+/// The actual string parsing/trimming/none-handling is delegated to
+/// [`parse_legend_position`]; the only extra logic here is the three-way
+/// unset/`"none"`/position distinction that helper cannot express on its own.
+fn get_cpu_legend_mode(args: &BottomArgs, config: &Config) -> OptionResult<CpuLegendMode> {
+    let cfg_position = config
+        .cpu
+        .as_ref()
+        .and_then(|cfg| cfg.legend_position.as_ref());
+
+    // Neither source set anything: keep the classic side table.
+    if args.cpu.cpu_legend.is_none() && cfg_position.is_none() {
+        return Ok(CpuLegendMode::Table);
+    }
+
+    match parse_legend_position(
+        args.cpu.cpu_legend.as_ref(),
+        cfg_position,
+        None,
+        "cpu.legend_position",
+        None,
+    )? {
+        Some(pos) => Ok(CpuLegendMode::Overlay(pos)),
+        None => Ok(CpuLegendMode::Hidden),
+    }
+}
+
 fn get_memory_legend_position(
     args: &BottomArgs, config: &Config,
 ) -> OptionResult<Option<LegendPosition>> {
@@ -1753,5 +1797,89 @@ mod test {
         // Case one: old non-XDG exists already, XDG var exists.
         // let case_3 = case_1;
         // assert_eq!(get_config_path(None), Some(case_1));
+    }
+}
+
+#[cfg(test)]
+mod cpu_legend_position_tests {
+    use clap::Parser;
+
+    use super::{OptionError, get_cpu_legend_mode};
+    use crate::{args::BottomArgs, options::config::cpu::CpuLegendMode};
+
+    fn parse_config(raw: &str) -> crate::options::Config {
+        toml_edit::de::from_str(raw).unwrap()
+    }
+
+    #[test]
+    fn default_is_table() {
+        let args = BottomArgs::parse_from(["btm"]);
+        assert_eq!(
+            get_cpu_legend_mode(&args, &parse_config("")).unwrap(),
+            CpuLegendMode::Table
+        );
+    }
+
+    #[test]
+    fn config_position_maps_to_overlay() {
+        let args = BottomArgs::parse_from(["btm"]);
+        let config = parse_config(
+            r#"[cpu]
+legend_position = "top-right""#,
+        );
+        assert_eq!(
+            get_cpu_legend_mode(&args, &config).unwrap(),
+            CpuLegendMode::Overlay(
+                crate::canvas::components::time_series::LegendPosition::TopRight
+            )
+        );
+    }
+
+    #[test]
+    fn config_none_maps_to_hidden() {
+        let args = BottomArgs::parse_from(["btm"]);
+        let config = parse_config(
+            r#"[cpu]
+legend_position = "none""#,
+        );
+        assert_eq!(
+            get_cpu_legend_mode(&args, &config).unwrap(),
+            CpuLegendMode::Hidden
+        );
+    }
+
+    #[test]
+    fn arg_overrides_config() {
+        let args = BottomArgs::parse_from(["btm", "--cpu_legend", "none"]);
+        let config = parse_config(
+            r#"[cpu]
+legend_position = "top-right""#,
+        );
+        assert_eq!(
+            get_cpu_legend_mode(&args, &config).unwrap(),
+            CpuLegendMode::Hidden
+        );
+    }
+
+    #[test]
+    fn invalid_config_errors() {
+        let args = BottomArgs::parse_from(["btm"]);
+        let config = parse_config(
+            r#"[cpu]
+legend_position = "bogus""#,
+        );
+        assert_eq!(
+            get_cpu_legend_mode(&args, &config),
+            Err(OptionError::invalid_config_value("cpu.legend_position"))
+        );
+    }
+
+    #[test]
+    fn only_side_table_uses_side_table() {
+        use crate::canvas::components::time_series::LegendPosition;
+
+        assert!(CpuLegendMode::Table.uses_side_table());
+        assert!(!CpuLegendMode::Overlay(LegendPosition::TopRight).uses_side_table());
+        assert!(!CpuLegendMode::Hidden.uses_side_table());
     }
 }

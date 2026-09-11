@@ -187,6 +187,13 @@
             "null"
           ]
         },
+        "legend_position": {
+          "description": "Where to place an in-chart legend for the CPU chart widget, replacing\nthe classic side table. One of \"none\", \"top-left\", \"top\", \"top-right\",\n\"left\", \"right\", \"bottom-left\", \"bottom\", \"bottom-right\".",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "show_decimal": {
           "description": "Whether to show a decimal place for CPU usage values.",
           "type": [
