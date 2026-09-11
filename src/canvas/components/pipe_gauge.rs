@@ -30,12 +30,7 @@ pub enum BarType {
 }
 
 impl BarType {
-    #[expect(dead_code)]
-    fn is_pipe(&self) -> bool {
-        matches!(self, BarType::Pipe)
-    }
-
-    fn is_bar(&self) -> bool {
+    fn is_block(&self) -> bool {
         matches!(self, BarType::Block)
     }
 }
@@ -269,7 +264,7 @@ impl Widget for PipeGauge<'_> {
 
                 // Unlike pipes, blocks can also show the leftover fraction of a cell.
                 // Based on what Ratatui does!
-                if self.bar_type.is_bar()
+                if self.bar_type.is_block()
                     && pipe_end < bar_end
                     && let Some(cell) = buf.cell_mut((pipe_end, row))
                 {
@@ -295,7 +290,7 @@ mod tests {
 
     #[test]
     fn test_get_unicode_block() {
-        // Each exact eighth should map to its own block.
+        // Test exact values.
         assert_eq!(get_unicode_block(0.0), " ");
         assert_eq!(get_unicode_block(0.125), symbols::block::ONE_EIGHTH);
         assert_eq!(get_unicode_block(0.25), symbols::block::ONE_QUARTER);
@@ -306,7 +301,7 @@ mod tests {
         assert_eq!(get_unicode_block(0.875), symbols::block::SEVEN_EIGHTHS);
         assert_eq!(get_unicode_block(1.0), symbols::block::FULL);
 
-        // Anything in between should round to the nearest eighth.
+        // Test rounding.
         assert_eq!(get_unicode_block(0.05), " ");
         assert_eq!(get_unicode_block(0.1), symbols::block::ONE_EIGHTH);
         assert_eq!(get_unicode_block(0.3), symbols::block::ONE_QUARTER);
@@ -316,5 +311,67 @@ mod tests {
         assert_eq!(get_unicode_block(0.8), symbols::block::THREE_QUARTERS);
         assert_eq!(get_unicode_block(0.9), symbols::block::SEVEN_EIGHTHS);
         assert_eq!(get_unicode_block(0.99), symbols::block::FULL);
+    }
+
+    /// Create a [`PipeGauge`] and return what it would have rendered.
+    fn render_gauge(
+        ratio: f64, bar_type: BarType, start_label: Option<&str>, inner_label: Option<&str>,
+    ) -> String {
+        const WIDTH: u16 = 12;
+
+        let area = Rect::new(0, 0, WIDTH, 1);
+        let mut buf = Buffer::empty(area);
+        let mut gauge = PipeGauge::default().ratio(ratio).bar_type(bar_type);
+
+        if let Some(start_label) = start_label {
+            gauge = gauge.start_label(start_label.to_owned());
+        }
+
+        if let Some(inner_label) = inner_label {
+            gauge = gauge.inner_label(inner_label.to_owned());
+        }
+
+        gauge.render(area, &mut buf);
+
+        (0..WIDTH).map(|x| buf[(x, 0)].symbol()).collect()
+    }
+
+    #[test]
+    fn test_pipe_bars() {
+        assert_eq!(render_gauge(0.0, BarType::Pipe, None, None), "[          ]");
+        assert_eq!(render_gauge(0.5, BarType::Pipe, None, None), "[|||||     ]");
+        assert_eq!(render_gauge(1.0, BarType::Pipe, None, None), "[||||||||||]");
+    }
+
+    #[test]
+    fn test_solid_bars() {
+        assert_eq!(
+            render_gauge(0.0, BarType::Block, None, None),
+            "[          ]"
+        );
+        assert_eq!(
+            render_gauge(0.5, BarType::Block, None, None),
+            "[█████▌    ]"
+        );
+        assert_eq!(
+            render_gauge(1.0, BarType::Block, None, None),
+            "[██████████]"
+        );
+    }
+
+    #[test]
+    fn test_labelled_bars() {
+        assert_eq!(
+            render_gauge(0.5, BarType::Pipe, Some("CPU"), Some(" 50%")),
+            "CPU[||| 50%]"
+        );
+        assert_eq!(
+            render_gauge(0.5, BarType::Block, Some("CPU"), Some(" 50%")),
+            "CPU[███ 50%]"
+        );
+        assert_eq!(
+            render_gauge(1.0, BarType::Block, Some("CPU"), Some("100%")),
+            "CPU[███100%]"
+        );
     }
 }
