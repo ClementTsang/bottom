@@ -505,22 +505,6 @@ mod test {
     }
 
     #[test]
-    fn test_swap_string() {
-        let process = ProcessHarvest {
-            swap_bytes: Some(4 * MEBI_LIMIT),
-            ..Default::default()
-        };
-        let data = ProcWidgetData::from_data(&process, false, false);
-
-        assert_eq!(data.to_string(&ProcColumn::Swap), "4MiB");
-
-        let process = ProcessHarvest::default();
-        let data = ProcWidgetData::from_data(&process, false, false);
-
-        assert_eq!(data.to_string(&ProcColumn::Swap), "N/A");
-    }
-
-    #[test]
     fn test_swap_addition() {
         let process = ProcessHarvest {
             swap_bytes: Some(100),

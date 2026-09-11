@@ -1193,7 +1193,7 @@ mod test {
             cpu_usage_percent: 0.0,
             mem_usage: MemUsage::Percent(1.1),
             virtual_mem: 100,
-            swap_bytes: None,
+            swap_bytes: Some(100),
             rps: 0,
             wps: 0,
             total_read: 0,
@@ -1224,6 +1224,7 @@ mod test {
             id: "B".into(),
             cpu_usage_percent: 1.1,
             mem_usage: MemUsage::Percent(2.2),
+            swap_bytes: Some(200),
             ..(a.clone())
         };
 
@@ -1233,6 +1234,7 @@ mod test {
             id: "C".into(),
             cpu_usage_percent: 2.2,
             mem_usage: MemUsage::Percent(0.0),
+            swap_bytes: Some(50),
             ..(a.clone())
         };
 
@@ -1242,8 +1244,10 @@ mod test {
             id: "D".into(),
             cpu_usage_percent: 0.0,
             mem_usage: MemUsage::Percent(0.0),
+            swap_bytes: None,
             ..(a.clone())
         };
+
         let mut data = vec![d.clone(), b.clone(), c.clone(), a.clone()];
 
         // Assume we had sorted over by pid.
@@ -1277,28 +1281,14 @@ mod test {
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
 
-        let mut data = vec![
-            ProcWidgetData {
-                swap_bytes: Some(100),
-                ..a.clone()
-            },
-            ProcWidgetData {
-                swap_bytes: Some(200),
-                ..b.clone()
-            },
-            ProcWidgetData {
-                swap_bytes: Some(50),
-                ..c.clone()
-            },
-            d.clone(),
-        ];
-
+        data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::Swap, &mut data, SortOrder::Descending);
         assert_eq!(
             vec![2, 1, 3, 4],
             data.iter().map(|process| process.pid).collect::<Vec<_>>(),
         );
 
+        data.sort_by_key(|p| p.pid);
         sort_skip_pid_asc(&ProcColumn::Swap, &mut data, SortOrder::Ascending);
         assert_eq!(
             vec![4, 3, 1, 2],
