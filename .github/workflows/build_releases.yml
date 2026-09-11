@@ -430,19 +430,19 @@ jobs:
               target: "aarch64-unknown-linux-musl",
               cross: true,
               dpkg: arm64,
-              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
+              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu@sha256:d36a9c470790bf2ef86eb7a68cd6ecca3c3934ccd0be7299cba76678b40a48aa",
             }
           - {
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
               dpkg: armhf,
-              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
+              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf@sha256:44ee95e9a2248287815c57affa673b0f50cf34a3126c59ae83205f483c450d02",
             }
           - {
               target: "armv7-unknown-linux-musleabihf",
               cross: true,
               dpkg: armhf,
-              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
+              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf@sha256:44ee95e9a2248287815c57affa673b0f50cf34a3126c59ae83205f483c450d02",
             }
     steps:
       - name: Checkout repository
