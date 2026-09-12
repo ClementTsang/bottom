@@ -19,6 +19,7 @@ pub enum ProcColumn {
     MemValue,
     MemPercent,
     VirtualMem,
+    Swap,
     Pid,
     Count,
     Name,
@@ -54,6 +55,7 @@ impl ProcColumn {
             // TODO: Change this
             ProcColumn::MemValue | ProcColumn::MemPercent => &["Mem", "Mem%", "Memory", "Memory%"],
             ProcColumn::VirtualMem => &["Virt", "Virtual", "VirtMem", "Virtual Memory"],
+            ProcColumn::Swap => &["Swap"],
             ProcColumn::ReadPerSecond => &["R/s", "Read", "Rps"],
             ProcColumn::WritePerSecond => &["W/s", "Write", "Wps"],
             ProcColumn::TotalRead => &["T.Read", "TRead", "Total Read"],
@@ -80,6 +82,7 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::MemValue => "Mem",
             ProcColumn::MemPercent => "Mem%",
             ProcColumn::VirtualMem => "Virt",
+            ProcColumn::Swap => "Swap",
             ProcColumn::Pid => "PID",
             ProcColumn::Count => "Count",
             ProcColumn::Name => "Name",
@@ -135,6 +138,9 @@ impl SortsRow for ProcColumn {
             }
             ProcColumn::VirtualMem => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.virtual_mem, &b.virtual_mem));
+            }
+            ProcColumn::Swap => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.swap_bytes, &b.swap_bytes));
             }
             ProcColumn::Pid => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.pid, b.pid));
@@ -209,6 +215,7 @@ impl ProcColumn {
             "cpu%" => Some(ProcColumn::CpuPercent),
             "mem" | "mem%" | "memory" | "memory%" => Some(ProcColumn::MemPercent),
             "virt" | "virtual" | "virtmem" | "virtual memory" => Some(ProcColumn::VirtualMem),
+            "swap" => Some(ProcColumn::Swap),
             "pid" => Some(ProcColumn::Pid),
             "count" => Some(ProcColumn::Count),
             "name" => Some(ProcColumn::Name),
@@ -251,6 +258,7 @@ impl From<&ProcColumn> for ProcWidgetColumn {
             ProcColumn::CpuPercent => ProcWidgetColumn::Cpu,
             ProcColumn::MemPercent | ProcColumn::MemValue => ProcWidgetColumn::Mem,
             ProcColumn::VirtualMem => ProcWidgetColumn::VirtualMem,
+            ProcColumn::Swap => ProcWidgetColumn::Swap,
             ProcColumn::ReadPerSecond => ProcWidgetColumn::ReadPerSecond,
             ProcColumn::WritePerSecond => ProcWidgetColumn::WritePerSecond,
             ProcColumn::TotalRead => ProcWidgetColumn::TotalRead,

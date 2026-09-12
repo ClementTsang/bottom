@@ -144,6 +144,7 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         MemValue => SortColumn::new(MemValue).default_descending(),
         MemPercent => SortColumn::new(MemPercent).default_descending(),
         VirtualMem => SortColumn::new(VirtualMem).default_descending(),
+        Swap => SortColumn::new(Swap).default_descending(),
         Pid => SortColumn::new(Pid),
         Count => SortColumn::new(Count),
         Name => SortColumn::soft(Name, Some(0.3)),
@@ -186,6 +187,7 @@ pub enum ProcWidgetColumn {
     Cpu,
     Mem,
     VirtualMem,
+    Swap,
     ReadPerSecond,
     WritePerSecond,
     TotalRead,
@@ -333,6 +335,7 @@ impl ProcWidgetState {
                                 }
                             }
                             ProcWidgetColumn::VirtualMem => VirtualMem,
+                            ProcWidgetColumn::Swap => Swap,
                             ProcWidgetColumn::ReadPerSecond => ReadPerSecond,
                             ProcWidgetColumn::WritePerSecond => WritePerSecond,
                             ProcWidgetColumn::TotalRead => TotalRead,
@@ -391,6 +394,7 @@ impl ProcWidgetState {
                     CpuPercent => ProcWidgetColumn::Cpu,
                     MemValue | MemPercent => ProcWidgetColumn::Mem,
                     VirtualMem => ProcWidgetColumn::VirtualMem,
+                    Swap => ProcWidgetColumn::Swap,
                     Pid | Count => ProcWidgetColumn::PidOrCount,
                     Name | Command => ProcWidgetColumn::ProcNameOrCommand,
                     ReadPerSecond => ProcWidgetColumn::ReadPerSecond,
@@ -840,6 +844,12 @@ impl ProcWidgetState {
                         }
                     }
 
+                    pwd.swap_bytes = match (pwd.swap_bytes, process.swap_bytes) {
+                        (Some(a), Some(b)) => Some(a + b),
+                        (Some(a), None) | (None, Some(a)) => Some(a),
+                        (None, None) => None,
+                    };
+
                     pwd.rps += process.read_per_sec;
                     pwd.wps += process.write_per_sec;
                     pwd.total_read += process.total_read;
@@ -1183,6 +1193,7 @@ mod test {
             cpu_usage_percent: 0.0,
             mem_usage: MemUsage::Percent(1.1),
             virtual_mem: 100,
+            swap_bytes: Some(100),
             rps: 0,
             wps: 0,
             total_read: 0,
@@ -1213,6 +1224,7 @@ mod test {
             id: "B".into(),
             cpu_usage_percent: 1.1,
             mem_usage: MemUsage::Percent(2.2),
+            swap_bytes: Some(200),
             ..(a.clone())
         };
 
@@ -1222,6 +1234,7 @@ mod test {
             id: "C".into(),
             cpu_usage_percent: 2.2,
             mem_usage: MemUsage::Percent(0.0),
+            swap_bytes: Some(50),
             ..(a.clone())
         };
 
@@ -1231,8 +1244,10 @@ mod test {
             id: "D".into(),
             cpu_usage_percent: 0.0,
             mem_usage: MemUsage::Percent(0.0),
+            swap_bytes: None,
             ..(a.clone())
         };
+
         let mut data = vec![d.clone(), b.clone(), c.clone(), a.clone()];
 
         // Assume we had sorted over by pid.
@@ -1264,6 +1279,20 @@ mod test {
         assert_eq!(
             [&c, &d, &a, &b].iter().map(|d| d.pid).collect::<Vec<_>>(),
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),
+        );
+
+        data.sort_by_key(|p| p.pid);
+        sort_skip_pid_asc(&ProcColumn::Swap, &mut data, SortOrder::Descending);
+        assert_eq!(
+            vec![2, 1, 3, 4],
+            data.iter().map(|process| process.pid).collect::<Vec<_>>(),
+        );
+
+        data.sort_by_key(|p| p.pid);
+        sort_skip_pid_asc(&ProcColumn::Swap, &mut data, SortOrder::Ascending);
+        assert_eq!(
+            vec![4, 3, 1, 2],
+            data.iter().map(|process| process.pid).collect::<Vec<_>>(),
         );
     }
 
