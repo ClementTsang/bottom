@@ -248,6 +248,8 @@ impl Io {
 
 /// Helper that reads the `VmSwap` line from `/proc/<PID>/status`.
 ///
+/// Helper that reads the `VmSwap` line from `/proc/<PID>/status`.
+///
 /// NB: `buffer` must be empty.
 ///
 /// See the [`proc_pid_status(5)`](https://man7.org/linux/man-pages/man5/proc_pid_status.5.html)
