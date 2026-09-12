@@ -71,7 +71,8 @@ impl Painter {
                     .label_style(style)
                     .inner_label(inner)
                     .start_label(outer)
-                    .ratio(ratio.into()),
+                    .ratio(ratio.into())
+                    .bar_type(self.styles.bar_type),
                 avg_loc,
             );
             avg_row_count += 1;
@@ -139,7 +140,8 @@ impl Painter {
                                 .inner_label(inner_label)
                                 .start_label(start_label)
                                 .ratio(ratio.into())
-                                .hide_parts(hide_parts),
+                                .hide_parts(hide_parts)
+                                .bar_type(self.styles.bar_type),
                             *row,
                         );
                     }

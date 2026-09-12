@@ -214,7 +214,8 @@ impl Painter {
 
                 let block_inner = block.inner(margined_draw_loc);
 
-                // Draw bar
+                // Draw bar.
+                // TODO: Switch to pipe_gauge.
                 f.render_widget(
                     Table::new(battery_charge_rows, [Constraint::Percentage(100)])
                         .block(block.clone())

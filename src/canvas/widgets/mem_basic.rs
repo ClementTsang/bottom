@@ -81,7 +81,8 @@ impl Painter {
                 .start_label("RAM")
                 .inner_label(ram_label)
                 .label_style(self.styles.ram_style)
-                .gauge_style(self.styles.ram_style),
+                .gauge_style(self.styles.ram_style)
+                .bar_type(self.styles.bar_type),
         );
 
         if let Some(swap_harvest) = &data.swap_harvest {
@@ -94,7 +95,8 @@ impl Painter {
                     .start_label("SWP")
                     .inner_label(swap_label)
                     .label_style(self.styles.swap_style)
-                    .gauge_style(self.styles.swap_style),
+                    .gauge_style(self.styles.swap_style)
+                    .bar_type(self.styles.bar_type),
             );
         }
 
@@ -111,7 +113,8 @@ impl Painter {
                         .start_label("CHE")
                         .inner_label(cache_fraction_label)
                         .label_style(self.styles.cache_style)
-                        .gauge_style(self.styles.cache_style),
+                        .gauge_style(self.styles.cache_style)
+                        .bar_type(self.styles.bar_type),
                 );
             }
         }
@@ -129,7 +132,8 @@ impl Painter {
                         .start_label("ARC")
                         .inner_label(arc_fraction_label)
                         .label_style(self.styles.arc_style)
-                        .gauge_style(self.styles.arc_style),
+                        .gauge_style(self.styles.arc_style)
+                        .bar_type(self.styles.bar_type),
                 );
             }
         }
@@ -160,7 +164,8 @@ impl Painter {
                         .start_label("GPU")
                         .inner_label(label)
                         .label_style(style)
-                        .gauge_style(style),
+                        .gauge_style(style)
+                        .bar_type(self.styles.bar_type),
                 );
             }
         }

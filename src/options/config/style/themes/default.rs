@@ -4,7 +4,7 @@ use ratatui::{
 };
 
 use super::colour;
-use crate::options::config::style::Styles;
+use crate::{canvas::components::pipe_gauge::BarType, options::config::style::Styles};
 
 impl Styles {
     pub(crate) fn default_palette() -> Self {
@@ -75,6 +75,7 @@ impl Styles {
             invalid_query_style: colour!(Color::Red),
             disabled_text_style: colour!(Color::DarkGray),
             border_type: BorderType::Plain,
+            bar_type: BarType::default(),
             #[cfg(target_os = "linux")]
             thread_text_style: colour!(Color::Green),
         }
