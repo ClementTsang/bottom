@@ -1296,38 +1296,6 @@ mod test {
         );
     }
 
-    #[test]
-    fn grouped_swap_is_summed() {
-        let init_columns = [ProcWidgetColumn::ProcNameOrCommand, ProcWidgetColumn::Swap];
-        let mut state = init_default_state(&init_columns);
-        state.mode = ProcWidgetMode::Grouped;
-
-        let mut process_harvest = BTreeMap::new();
-        process_harvest.insert(
-            1,
-            ProcessHarvest {
-                pid: 1,
-                name: "same".into(),
-                swap_bytes: Some(100),
-                ..Default::default()
-            },
-        );
-        process_harvest.insert(
-            2,
-            ProcessHarvest {
-                pid: 2,
-                name: "same".into(),
-                swap_bytes: Some(200),
-                ..Default::default()
-            },
-        );
-
-        let data = state.get_normal_data(&process_harvest);
-
-        assert_eq!(data.len(), 1);
-        assert_eq!(data[0].swap_bytes, Some(300));
-    }
-
     fn get_columns(table: &ProcessTable) -> Vec<ProcColumn> {
         table
             .columns

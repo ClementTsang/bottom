@@ -153,6 +153,7 @@ fn read_proc(
         time_difference_in_secs,
         system_uptime,
         get_process_threads: _,
+        get_process_swap: _,
     } = args;
 
     let process_state_char = stat.state;
@@ -351,6 +352,7 @@ pub(crate) struct ReadProcArgs {
     pub time_difference_in_secs: u64,
     pub system_uptime: u64,
     pub get_process_threads: bool,
+    pub get_process_swap: bool,
 }
 
 pub(crate) fn linux_process_data(
@@ -366,6 +368,7 @@ pub(crate) fn linux_process_data(
         unnormalized_cpu: collector.unnormalized_cpu,
         get_process_threads: collector.get_process_threads,
     };
+    let get_swap = collector.get_process_swap;
 
     let prev_process_details = &mut collector.prev_process_details;
     let user_table = &mut collector.user_table;
@@ -423,9 +426,8 @@ pub(crate) fn linux_process_data(
         time_difference_in_secs,
         system_uptime: sysinfo::System::uptime(),
         get_process_threads: get_threads,
+        get_process_swap: get_swap,
     };
-
-    let get_swap = collector.get_process_swap;
 
     // TODO: Maybe pre-allocate these buffers in the future w/ routine cleanup.
     let mut buffer = String::new();
@@ -433,9 +435,12 @@ pub(crate) fn linux_process_data(
 
     let mut process_vector: Vec<ProcessHarvest> = pids
         .filter_map(|pid_path| {
-            if let Ok((process, threads)) =
-                Process::from_path(pid_path, &mut buffer, args.get_process_threads, get_swap)
-            {
+            if let Ok((process, threads)) = Process::from_path(
+                pid_path,
+                &mut buffer,
+                args.get_process_threads,
+                args.get_process_swap,
+            ) {
                 let pid = process.pid;
                 let prev_proc_details = prev_process_details.entry(pid).or_default();
 
