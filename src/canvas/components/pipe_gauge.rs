@@ -35,7 +35,7 @@ impl BarType {
     }
 }
 
-fn get_unicode_block<'a>(frac: f64) -> &'a str {
+fn get_unicode_block(frac: f64) -> &'static str {
     match (frac * 8.0).round() as u16 {
         0 => " ",
         1 => symbols::block::ONE_EIGHTH,
@@ -238,8 +238,8 @@ impl Widget for PipeGauge<'_> {
                     gauge_area.width,
                 );
 
-                let filled_width = f64::from(end.saturating_sub(start)) * self.ratio;
                 let bar_end = end.saturating_sub(1);
+                let filled_width = f64::from(bar_end.saturating_sub(start)) * self.ratio;
                 let pipe_end = bar_end.min(start + filled_width.floor() as u16);
 
                 let symbol = match self.bar_type {
@@ -340,6 +340,10 @@ mod tests {
     fn test_pipe_bars() {
         assert_eq!(render_gauge(0.0, BarType::Pipe, None, None), "[          ]");
         assert_eq!(render_gauge(0.5, BarType::Pipe, None, None), "[|||||     ]");
+        assert_eq!(
+            render_gauge(0.95, BarType::Pipe, None, None),
+            "[||||||||| ]"
+        );
         assert_eq!(render_gauge(1.0, BarType::Pipe, None, None), "[||||||||||]");
     }
 
@@ -351,7 +355,15 @@ mod tests {
         );
         assert_eq!(
             render_gauge(0.5, BarType::Block, None, None),
+            "[█████     ]"
+        );
+        assert_eq!(
+            render_gauge(0.55, BarType::Block, None, None),
             "[█████▌    ]"
+        );
+        assert_eq!(
+            render_gauge(0.9, BarType::Block, None, None),
+            "[█████████ ]"
         );
         assert_eq!(
             render_gauge(1.0, BarType::Block, None, None),
