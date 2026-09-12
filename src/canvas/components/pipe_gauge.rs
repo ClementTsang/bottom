@@ -30,6 +30,7 @@ pub enum BarType {
 }
 
 impl BarType {
+    #[inline]
     fn is_block(&self) -> bool {
         matches!(self, BarType::Block)
     }
