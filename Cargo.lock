@@ -153,7 +153,7 @@ dependencies = [
  "itertools 0.15.0",
  "libc",
  "log",
- "mach2",
+ "mach2 0.7.0",
  "nvml-wrapper",
  "portable-pty",
  "predicates",
@@ -870,6 +870,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dae608c151f68243f2b000364e1f7b186d9c29845f7d2d85bd31b9ad77ad552b"
 
 [[package]]
+name = "mach2"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0d28e293f2b8c9d2b2d1c0193bd3c1cbdc0d2cf396888dc01162f7cf9d6c3f3"
+
+[[package]]
 name = "memchr"
 version = "2.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1568,7 +1574,7 @@ dependencies = [
  "cfg-if",
  "lazycell",
  "libc",
- "mach2",
+ "mach2 0.6.0",
  "nix 0.31.3",
  "num-traits",
  "objc2-core-foundation",
