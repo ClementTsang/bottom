@@ -117,7 +117,7 @@ rustix = { version = "1.1.4", features = ["fs", "param"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10.1"
-mach2 = "0.6.0"
+mach2 = "0.7.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.62.2", features = [
