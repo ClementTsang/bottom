@@ -361,15 +361,15 @@ impl Process {
 
         reset(&mut root, buffer);
 
-        let swap_bytes = if get_swap {
-            open_at(&mut root, "status", &pid_dir)
+        let swap_bytes = if get_swap && !stat.is_kernel_thread {
+            let bytes = open_at(&mut root, "status", &pid_dir)
                 .and_then(|file| get_swap_bytes(file, buffer))
-                .ok()
+                .ok();
+            reset(&mut root, buffer);
+            bytes
         } else {
             None
         };
-
-        reset(&mut root, buffer);
 
         let threads = threads(&mut root, pid, get_threads);
 
