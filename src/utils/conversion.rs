@@ -34,7 +34,7 @@ pub(crate) fn dec_bytes_per_second_string(value: u64) -> String {
 }
 
 /// Returns a binary-prefixed string given a value that is converted to the
-/// closest SI-variant, per second. If the value is greater than a giga-X,
+/// closest SI-variant, per second. If the value is greater than a gibi-X,
 /// then it will return a decimal place.
 #[inline]
 pub(crate) fn bin_bytes_per_second_string(value: u64) -> String {
