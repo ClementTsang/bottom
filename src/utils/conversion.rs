@@ -34,7 +34,7 @@ pub(crate) fn dec_bytes_per_second_string(value: u64) -> String {
 }
 
 /// Returns a binary-prefixed string given a value that is converted to the
-/// closest SI-variant, per second. If the value is greater than a gibi-X,
+/// closest IEC-variant, per second. If the value is greater than a gibi-X,
 /// then it will return a decimal place.
 #[inline]
 pub(crate) fn bin_bytes_per_second_string(value: u64) -> String {
@@ -82,6 +82,61 @@ mod test {
         assert_eq!(
             dec_bytes_per_second_string((10.36 * TERA_LIMIT as f64) as u64),
             "10.4TB/s".to_string()
+        );
+    }
+
+    #[test]
+    fn test_bin_bytes_per_second_string() {
+        assert_eq!(bin_bytes_per_second_string(0), "0B/s".to_string());
+        assert_eq!(bin_bytes_per_second_string(1), "1B/s".to_string());
+        assert_eq!(bin_bytes_per_second_string(900), "900B/s".to_string());
+        assert_eq!(
+            bin_bytes_per_second_string(KILO_LIMIT),
+            "1000B/s".to_string()
+        );
+        assert_eq!(bin_bytes_per_second_string(1023), "1023B/s".to_string());
+        assert_eq!(
+            bin_bytes_per_second_string(KIBI_LIMIT),
+            "1KiB/s".to_string()
+        );
+        assert_eq!(
+            bin_bytes_per_second_string(KIBI_LIMIT + 1),
+            "1KiB/s".to_string()
+        );
+        assert_eq!(
+            bin_bytes_per_second_string(MEBI_LIMIT),
+            "1MiB/s".to_string()
+        );
+
+        // The decimal place is added past a gibibyte, not a gigabyte.
+        assert_eq!(
+            bin_bytes_per_second_string(GIGA_LIMIT),
+            "954MiB/s".to_string()
+        );
+        assert_eq!(
+            bin_bytes_per_second_string(GIBI_LIMIT - 1),
+            "1024MiB/s".to_string()
+        );
+
+        assert_eq!(
+            bin_bytes_per_second_string(GIBI_LIMIT),
+            "1.0GiB/s".to_string()
+        );
+        assert_eq!(
+            bin_bytes_per_second_string(2 * GIBI_LIMIT),
+            "2.0GiB/s".to_string()
+        );
+        assert_eq!(
+            bin_bytes_per_second_string((2.5 * GIBI_LIMIT as f64) as u64),
+            "2.5GiB/s".to_string()
+        );
+        assert_eq!(
+            bin_bytes_per_second_string((10.34 * TEBI_LIMIT as f64) as u64),
+            "10.3TiB/s".to_string()
+        );
+        assert_eq!(
+            bin_bytes_per_second_string((10.36 * TEBI_LIMIT as f64) as u64),
+            "10.4TiB/s".to_string()
         );
     }
 }

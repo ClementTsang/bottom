@@ -18,7 +18,8 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct DiskWidgetData {
-    // TODO: Remove this field, carry it through the widget configuration rather than data (requires some refactoring)
+    // TODO: Remove this field, carry it through the widget configuration
+    // rather than data (requires some refactoring)
     pub use_binary_prefix: bool,
     pub name: String,
     pub mount_point: String,
