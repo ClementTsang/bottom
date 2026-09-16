@@ -30,7 +30,8 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 - [#2239](https://github.com/ClementTsang/bottom/pull/2239): Initial Intel GPU support for Linux to get process GPU usage.
 - [#2245](https://github.com/ClementTsang/bottom/pull/2245): Support solid bars using block and square characters via `styles.widgets.bar_type`.
-- [#2236](https://github.com/ClementTsang/bottom/pull/2236): Add configurable binary disk capacity units for usage.
+- [#2236](https://github.com/ClementTsang/bottom/pull/2236): Add configurable binary disk capacity units for disk widget usage.
+- [#2251](https://github.com/ClementTsang/bottom/pull/2251): Add configurable binary disk capacity units for disk widget I/O.
 
 ### Other
 
