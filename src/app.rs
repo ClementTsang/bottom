@@ -87,6 +87,7 @@ pub struct AppConfigFields {
     pub temperature_legend_position: Option<LegendPosition>,
     pub disk_io_legend_position: Option<LegendPosition>,
     pub disk_show_unmounted: bool,
+    pub disk_use_binary_prefix: bool,
     pub disk_io_graph_show_unmounted: bool,
 }
 

@@ -542,6 +542,12 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temperature_legend_position,
         disk_io_legend_position,
         disk_show_unmounted,
+        disk_use_binary_prefix: args.disk.disk_use_binary_prefix
+            || config
+                .disk
+                .as_ref()
+                .and_then(|cfg| cfg.use_binary_prefix)
+                .unwrap_or(false),
         disk_io_graph_show_unmounted,
     };
 

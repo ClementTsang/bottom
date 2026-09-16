@@ -25,6 +25,12 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 |                                     | for table widgets.                                         |
 | `-d`, `--time_delta <TIME>`         | The amount of time changed upon zooming.                   |
 
+## Disk Options
+
+| Option                     | Behaviour                                                       |
+| -------------------------- | --------------------------------------------------------------- |
+| `--disk_use_binary_prefix` | Displays used, free, and total disk space with binary prefixes. |
+
 ## Process Options
 
 | Option                      | Behaviour                                                                              |

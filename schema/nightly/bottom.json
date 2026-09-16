@@ -299,6 +299,13 @@
         "sort_order": {
           "description": "The default sort order. Defaults to ascending.",
           "$ref": "#/$defs/SortOrder"
+        },
+        "use_binary_prefix": {
+          "description": "Displays used, free, and total disk space with binary prefixes (e.g. GiB).\nDefaults to decimal prefixes (e.g. GB).",
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       }
     },

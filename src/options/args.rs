@@ -73,6 +73,9 @@ pub struct BottomArgs {
     #[command(flatten)]
     pub network: NetworkArgs,
 
+    #[command(flatten)]
+    pub disk: DiskArgs,
+
     #[cfg(feature = "battery")]
     #[command(flatten)]
     pub battery: BatteryArgs,
@@ -550,6 +553,21 @@ pub struct MemoryArgs {
         alias = "short-gpu-names"
     )]
     pub short_gpu_names: bool,
+}
+
+/// Disk arguments/config options.
+#[derive(Args, Clone, Debug, Default)]
+#[command(next_help_heading = "Disk Options", rename_all = "snake_case")]
+pub struct DiskArgs {
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Displays disk space with binary prefixes.",
+        long_help = "Displays used, free, and total disk space with binary prefixes (e.g. KiB, MiB, GiB) \
+                    rather than decimal prefixes (e.g. KB, MB, GB). Defaults to decimal prefixes.",
+        alias = "disk-use-binary-prefix"
+    )]
+    pub disk_use_binary_prefix: bool,
 }
 
 /// Network arguments/config options.

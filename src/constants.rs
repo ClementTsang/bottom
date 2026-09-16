@@ -471,6 +471,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Disk widget configuration
 #[disk]
 
+# Whether to display used, free, and total disk space with binary prefixes (e.g. GiB instead of GB).
+#use_binary_prefix = false
+
 # The columns shown by the process widget. The following columns are supported:
 # Disk, Mount, Used, Free, Total, Used%, Free%, R/s, W/s
 #columns = ["Disk", "Mount", "Used", "Free", "Total", "Used%", "R/s", "W/s"]
