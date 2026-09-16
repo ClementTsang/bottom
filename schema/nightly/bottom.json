@@ -301,7 +301,7 @@
           "$ref": "#/$defs/SortOrder"
         },
         "use_binary_prefix": {
-          "description": "Displays used, free, and total disk space with binary prefixes (e.g. GiB).\nDefaults to decimal prefixes (e.g. GB).",
+          "description": "Use binary prefixes (e.g. GiB, MiB) instead of decimal prefixes (e.g. GB, MB).\n\nDefaults to decimal prefixes.",
           "type": [
             "boolean",
             "null"

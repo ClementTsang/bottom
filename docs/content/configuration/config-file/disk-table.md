@@ -30,10 +30,10 @@ You can also set the sort order by changing `disk.sort_order` with `"Ascending"`
 sort_order = "Ascending"
 ```
 
-## Disk Space Units
+## Using Binary Prefixes
 
-Disk space uses decimal prefixes (KB, MB, GB, TB) by default. To display the Used, Free, and Total columns
-with binary prefixes (KiB, MiB, GiB, TiB), enable `use_binary_prefix`:
+Disk space uses decimal prefixes (e.g. KB, MB, GB, TB) by default. To display using binary prefixes instead
+(e.g. KiB, MiB, GiB, TiB), enable `use_binary_prefix`:
 
 ```toml
 [disk]
