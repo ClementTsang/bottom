@@ -10,13 +10,16 @@ use crate::{
     },
     options::config::style::Styles,
     utils::{
-        conversion::dec_bytes_per_second_string, data_units::convert_bytes,
+        conversion::{bin_bytes_per_second_string, dec_bytes_per_second_string},
+        data_units::convert_bytes,
         general::sort_partial_fn,
     },
 };
 
 #[derive(Clone, Debug)]
 pub struct DiskWidgetData {
+    // TODO: Remove this field, carry it through the widget configuration
+    // rather than data (requires some refactoring)
     pub use_binary_prefix: bool,
     pub name: String,
     pub mount_point: String,
@@ -86,13 +89,21 @@ impl DiskWidgetData {
 
     fn io_read(&self) -> Cow<'static, str> {
         self.io_read_rate_bytes.map_or("N/A".into(), |r_rate| {
-            dec_bytes_per_second_string(r_rate).into()
+            if self.use_binary_prefix {
+                bin_bytes_per_second_string(r_rate).into()
+            } else {
+                dec_bytes_per_second_string(r_rate).into()
+            }
         })
     }
 
     fn io_write(&self) -> Cow<'static, str> {
         self.io_write_rate_bytes.map_or("N/A".into(), |w_rate| {
-            dec_bytes_per_second_string(w_rate).into()
+            if self.use_binary_prefix {
+                bin_bytes_per_second_string(w_rate).into()
+            } else {
+                dec_bytes_per_second_string(w_rate).into()
+            }
         })
     }
 }
@@ -431,7 +442,7 @@ mod test {
         }
     }
 
-    fn cell(data: &DiskWidgetData, column: DiskWidgetColumn) -> Cow<'static, str> {
+    fn render_cell(data: &DiskWidgetData, column: DiskWidgetColumn) -> Cow<'static, str> {
         data.to_cell_text(&column, NonZeroU16::new(10).unwrap())
             .unwrap()
     }
@@ -455,7 +466,7 @@ mod test {
                     DiskWidgetColumn::Free,
                     DiskWidgetColumn::Total,
                 ] {
-                    assert_eq!(cell(&data, column), expected);
+                    assert_eq!(render_cell(&data, column), expected);
                 }
             }
         }
@@ -474,15 +485,20 @@ mod test {
                 DiskWidgetColumn::IoRead,
                 DiskWidgetColumn::IoWrite,
             ] {
-                assert_eq!(cell(&missing, column), "N/A");
+                assert_eq!(render_cell(&missing, column), "N/A");
             }
             let data = disk(Some(500 * GIBI_LIMIT), use_binary_prefix);
-            assert_eq!(cell(&data, DiskWidgetColumn::UsedPercent), "50.0%");
-            assert_eq!(cell(&data, DiskWidgetColumn::FreePercent), "50.0%");
-            assert_eq!(cell(&data, DiskWidgetColumn::IoRead), "536.9GB/s");
-            assert_eq!(cell(&data, DiskWidgetColumn::IoWrite), "536.9GB/s");
+            assert_eq!(render_cell(&data, DiskWidgetColumn::UsedPercent), "50.0%");
+            assert_eq!(render_cell(&data, DiskWidgetColumn::FreePercent), "50.0%");
+            if use_binary_prefix {
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoRead), "500.0GiB/s");
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoWrite), "500.0GiB/s");
+            } else {
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoRead), "536.9GB/s");
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoWrite), "536.9GB/s");
+            }
             assert_eq!(
-                cell(
+                render_cell(
                     &disk(Some(0), use_binary_prefix),
                     DiskWidgetColumn::UsedPercent
                 ),
