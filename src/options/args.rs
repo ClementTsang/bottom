@@ -562,9 +562,8 @@ pub struct DiskArgs {
     #[arg(
         long,
         action = ArgAction::SetTrue,
-        help = "Displays disk space with binary prefixes.",
-        long_help = "Displays used, free, and total disk space with binary prefixes (e.g. KiB, MiB, GiB) \
-                    rather than decimal prefixes (e.g. KB, MB, GB). Defaults to decimal prefixes.",
+        help = "Displays disk widget with binary prefixes.",
+        long_help = "Use binary prefixes (e.g. GiB, MiB) instead of decimal prefixes (e.g. GB, MB).",
         alias = "disk-use-binary-prefix"
     )]
     pub disk_use_binary_prefix: bool,

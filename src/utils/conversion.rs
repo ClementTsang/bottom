@@ -20,12 +20,25 @@ pub(crate) fn get_binary_unit_and_denominator(bytes: u64) -> (&'static str, f64)
     }
 }
 
-/// Returns a string given a value that is converted to the closest SI-variant,
-/// per second. If the value is greater than a giga-X, then it will return a
-/// decimal place.
+/// Returns a decimal-prefixed string given a value that is converted to the
+/// closest SI-variant, per second. If the value is greater than a giga-X,
+/// then it will return a decimal place.
 #[inline]
 pub(crate) fn dec_bytes_per_second_string(value: u64) -> String {
     let converted_values = get_decimal_bytes(value);
+    if value >= GIGA_LIMIT {
+        format!("{:.1}{}/s", converted_values.0, converted_values.1)
+    } else {
+        format!("{:.0}{}/s", converted_values.0, converted_values.1)
+    }
+}
+
+/// Returns a binary-prefixed string given a value that is converted to the
+/// closest SI-variant, per second. If the value is greater than a giga-X,
+/// then it will return a decimal place.
+#[inline]
+pub(crate) fn bin_bytes_per_second_string(value: u64) -> String {
+    let converted_values = get_binary_bytes(value);
     if value >= GIGA_LIMIT {
         format!("{:.1}{}/s", converted_values.0, converted_values.1)
     } else {

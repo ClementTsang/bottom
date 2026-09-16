@@ -10,13 +10,15 @@ use crate::{
     },
     options::config::style::Styles,
     utils::{
-        conversion::dec_bytes_per_second_string, data_units::convert_bytes,
+        conversion::{bin_bytes_per_second_string, dec_bytes_per_second_string},
+        data_units::convert_bytes,
         general::sort_partial_fn,
     },
 };
 
 #[derive(Clone, Debug)]
 pub struct DiskWidgetData {
+    // TODO: Remove this field, carry it through the widget configuration rather than data (requires some refactoring)
     pub use_binary_prefix: bool,
     pub name: String,
     pub mount_point: String,
@@ -86,13 +88,21 @@ impl DiskWidgetData {
 
     fn io_read(&self) -> Cow<'static, str> {
         self.io_read_rate_bytes.map_or("N/A".into(), |r_rate| {
-            dec_bytes_per_second_string(r_rate).into()
+            if self.use_binary_prefix {
+                bin_bytes_per_second_string(r_rate).into()
+            } else {
+                dec_bytes_per_second_string(r_rate).into()
+            }
         })
     }
 
     fn io_write(&self) -> Cow<'static, str> {
         self.io_write_rate_bytes.map_or("N/A".into(), |w_rate| {
-            dec_bytes_per_second_string(w_rate).into()
+            if self.use_binary_prefix {
+                bin_bytes_per_second_string(w_rate).into()
+            } else {
+                dec_bytes_per_second_string(w_rate).into()
+            }
         })
     }
 }
