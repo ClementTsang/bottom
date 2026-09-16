@@ -404,7 +404,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Where to place the legend for the network widget. One of "none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right".
 #network_legend = "top-right"
 
-
 # Processes widget configuration
 #[processes]
 # The columns shown by the process widget. The following columns are supported (the GPU columns are only available if the GPU feature is enabled when built):
@@ -458,7 +457,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Show process CPU% usage without averaging over the number of CPU cores.
 #unnormalized_cpu = false
 
-
 # CPU widget configuration
 #[cpu]
 # One of "all" (default), "average"/"avg"
@@ -467,9 +465,11 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to show a decimal place for CPU usage values.
 #show_decimal = false
 
-
 # Disk widget configuration
 #[disk]
+
+# Whether to display disk widget data with binary prefixes (e.g. GiB instead of GB).
+#use_binary_prefix = false
 
 # The columns shown by the process widget. The following columns are supported:
 # Disk, Mount, Used, Free, Total, Used%, Free%, R/s, W/s
@@ -523,7 +523,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Disk I/O graph widget configuration
 #[disk_io_graph]
 
@@ -562,7 +561,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Temperature widget configuration
 #[temperature]
 
@@ -593,7 +591,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Temperature graph widget configuration
 #[temperature_graph]
 
@@ -621,7 +618,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
 
-
 # Memory widget configuration
 #[memory_graph]
 
@@ -636,7 +632,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Use short GPU names (e.g. "GPU" or "GPU0", "GPU1") instead of full GPU names. Only available if the GPU feature is enabled when built.
 #short_gpu_names = false
-
 
 # Network widget configuration
 #[network_graph]
@@ -663,7 +658,6 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 
 # Whether to require matching the whole word. Defaults to false.
 #whole_word = false
-
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.

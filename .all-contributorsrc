@@ -782,6 +782,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "pederbe",
+      "name": "Peder Bergan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16326438?v=4",
+      "profile": "https://pederbe.dev/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

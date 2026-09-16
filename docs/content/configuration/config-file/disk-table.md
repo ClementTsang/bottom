@@ -30,6 +30,16 @@ You can also set the sort order by changing `disk.sort_order` with `"Ascending"`
 sort_order = "Ascending"
 ```
 
+## Using Binary Prefixes
+
+Disk space uses decimal prefixes (e.g. KB, MB, GB, TB) by default. To display using binary prefixes instead
+(e.g. KiB, MiB, GiB, TiB), enable `use_binary_prefix`:
+
+```toml
+[disk]
+use_binary_prefix = true
+```
+
 ## Show Unmounted Devices (Linux only)
 
 By default, only mounted devices are shown. To also show unmounted devices on Linux, enable `include_unmounted`:

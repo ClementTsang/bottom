@@ -73,6 +73,9 @@ pub struct BottomArgs {
     #[command(flatten)]
     pub network: NetworkArgs,
 
+    #[command(flatten)]
+    pub disk: DiskArgs,
+
     #[cfg(feature = "battery")]
     #[command(flatten)]
     pub battery: BatteryArgs,
@@ -552,6 +555,20 @@ pub struct MemoryArgs {
     pub short_gpu_names: bool,
 }
 
+/// Disk arguments/config options.
+#[derive(Args, Clone, Debug, Default)]
+#[command(next_help_heading = "Disk Options", rename_all = "snake_case")]
+pub struct DiskArgs {
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Displays the disk widget with binary prefixes.",
+        long_help = "Displays the disk widget with binary prefixes (e.g. GiB, MiB) instead of decimal prefixes (e.g. GB, MB).",
+        alias = "disk-use-binary-prefix"
+    )]
+    pub disk_use_binary_prefix: bool,
+}
+
 /// Network arguments/config options.
 #[derive(Args, Clone, Debug, Default)]
 #[command(next_help_heading = "Network Options", rename_all = "snake_case")]
@@ -580,8 +597,7 @@ pub struct NetworkArgs {
         long,
         action = ArgAction::SetTrue,
         help = "Displays the network widget with binary prefixes.",
-        long_help = "Displays the network widget with binary prefixes (e.g. kibibits, mebibits) rather than a decimal \
-                    prefixes (e.g. kilobits, megabits). Defaults to decimal prefixes.",
+        long_help = "Displays the network widget binary prefixes (e.g. GiB, MiB) instead of decimal prefixes (e.g. GB, MB).",
         alias = "network-use-binary-prefix"
     )]
     pub network_use_binary_prefix: bool,

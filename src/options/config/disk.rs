@@ -8,6 +8,11 @@ use crate::{canvas::components::data_table::SortOrder, options::DiskWidgetColumn
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct DiskConfig {
+    /// Use binary prefixes (e.g. GiB, MiB) instead of decimal prefixes (e.g. GB, MB).
+    ///
+    /// Defaults to decimal prefixes.
+    pub(crate) use_binary_prefix: Option<bool>,
+
     /// A filter over the disk names.
     pub(crate) name_filter: Option<IgnoreList>,
 
