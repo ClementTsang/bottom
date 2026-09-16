@@ -441,7 +441,7 @@ mod test {
         }
     }
 
-    fn cell(data: &DiskWidgetData, column: DiskWidgetColumn) -> Cow<'static, str> {
+    fn render_cell(data: &DiskWidgetData, column: DiskWidgetColumn) -> Cow<'static, str> {
         data.to_cell_text(&column, NonZeroU16::new(10).unwrap())
             .unwrap()
     }
@@ -465,7 +465,7 @@ mod test {
                     DiskWidgetColumn::Free,
                     DiskWidgetColumn::Total,
                 ] {
-                    assert_eq!(cell(&data, column), expected);
+                    assert_eq!(render_cell(&data, column), expected);
                 }
             }
         }
@@ -484,15 +484,20 @@ mod test {
                 DiskWidgetColumn::IoRead,
                 DiskWidgetColumn::IoWrite,
             ] {
-                assert_eq!(cell(&missing, column), "N/A");
+                assert_eq!(render_cell(&missing, column), "N/A");
             }
             let data = disk(Some(500 * GIBI_LIMIT), use_binary_prefix);
-            assert_eq!(cell(&data, DiskWidgetColumn::UsedPercent), "50.0%");
-            assert_eq!(cell(&data, DiskWidgetColumn::FreePercent), "50.0%");
-            assert_eq!(cell(&data, DiskWidgetColumn::IoRead), "536.9GB/s");
-            assert_eq!(cell(&data, DiskWidgetColumn::IoWrite), "536.9GB/s");
+            assert_eq!(render_cell(&data, DiskWidgetColumn::UsedPercent), "50.0%");
+            assert_eq!(render_cell(&data, DiskWidgetColumn::FreePercent), "50.0%");
+            if use_binary_prefix {
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoRead), "500.0GiB/s");
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoWrite), "500.0GiB/s");
+            } else {
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoRead), "536.9GB/s");
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoWrite), "536.9GB/s");
+            }
             assert_eq!(
-                cell(
+                render_cell(
                     &disk(Some(0), use_binary_prefix),
                     DiskWidgetColumn::UsedPercent
                 ),

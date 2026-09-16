@@ -39,7 +39,7 @@ pub(crate) fn dec_bytes_per_second_string(value: u64) -> String {
 #[inline]
 pub(crate) fn bin_bytes_per_second_string(value: u64) -> String {
     let converted_values = get_binary_bytes(value);
-    if value >= GIGA_LIMIT {
+    if value >= GIBI_LIMIT {
         format!("{:.1}{}/s", converted_values.0, converted_values.1)
     } else {
         format!("{:.0}{}/s", converted_values.0, converted_values.1)
