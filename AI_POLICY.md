@@ -26,5 +26,7 @@ edit your comments for this purpose (e.g. grammar, spelling), please take the ti
 own voice and ideas. If you're using AI tooling for translation purposes, then it's recommended to write in your native
 language and include the translation in a quote block.
 
+---
+
 This policy was inspired by [ripgrep's AI policy](https://github.com/BurntSushi/ripgrep/blob/4857d6fa67db69a95cd4b6f2adda5d807d4d0119/AI_POLICY.md)
 and [uv's AI policy](https://github.com/astral-sh/.github/blob/c5187e200db51bfe11d56e13053d29bd3793fdd8/AI_POLICY.md).
