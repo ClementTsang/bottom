@@ -106,6 +106,9 @@ pub struct ProcessHarvest {
     /// Virtual memory.
     pub virtual_mem: Bytes,
 
+    /// Swapped memory.
+    pub swap_bytes: Option<Bytes>,
+
     /// The name of the process.
     pub name: String,
 
