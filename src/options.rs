@@ -501,7 +501,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             args.general,
             config
         ),
-        show_table_scroll_bar: config_or!(config, flags.show_table_scroll_bar, false),
+        show_table_scroll_bar: config_or!(config, flags.show_table_scroll_bar, true),
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         is_advanced_kill,
         is_read_only,
