@@ -71,7 +71,7 @@ mod test {
     use super::*;
     use ratatui::{Terminal, backend::TestBackend};
 
-    fn render(height: u16, content_length: usize, position: usize) -> Vec<String> {
+    fn render_test_bar(height: u16, content_length: usize, position: usize) -> Vec<String> {
         let mut terminal = Terminal::new(TestBackend::new(1, height)).unwrap();
         terminal
             .draw(|f| {
@@ -97,21 +97,21 @@ mod test {
     /// Make sure that a short scrollbar (height <= 2) is still drawn, just without the head/tail arrows.
     #[test]
     fn test_small_height_scroll_still_drawn() {
-        assert_eq!(render(1, 3, 0), ["█"]);
-        assert_eq!(render(2, 3, 0), ["█", " "]);
-        assert_eq!(render(2, 3, 2), [" ", "█"]);
+        assert_eq!(render_test_bar(1, 3, 0), ["█"]);
+        assert_eq!(render_test_bar(2, 3, 0), ["█", " "]);
+        assert_eq!(render_test_bar(2, 3, 2), [" ", "█"]);
     }
 
     #[test]
     fn test_normal_height_scroll_all_drawn() {
-        assert_eq!(render(3, 3, 0), ["▲", "█", "▼"]);
-        assert_eq!(render(4, 3, 0), ["▲", "█", " ", "▼"]);
-        assert_eq!(render(4, 3, 2), ["▲", " ", "█", "▼"]);
+        assert_eq!(render_test_bar(3, 3, 0), ["▲", "█", "▼"]);
+        assert_eq!(render_test_bar(4, 3, 0), ["▲", "█", " ", "▼"]);
+        assert_eq!(render_test_bar(4, 3, 2), ["▲", " ", "█", "▼"]);
     }
 
     #[test]
     fn test_no_scroll_bar_when_list_fits() {
-        assert_eq!(render(4, 2, 0), [" ", " ", " ", " "]);
-        assert_eq!(render(2, 1, 0), [" ", " "]);
+        assert_eq!(render_test_bar(4, 2, 0), [" ", " ", " ", " "]);
+        assert_eq!(render_test_bar(2, 1, 0), [" ", " "]);
     }
 }
