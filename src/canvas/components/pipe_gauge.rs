@@ -315,7 +315,7 @@ mod tests {
     }
 
     /// Create a [`PipeGauge`] and return what it would have rendered.
-    fn render_gauge(
+    fn render_test_gauge(
         ratio: f64, bar_type: BarType, start_label: Option<&str>, inner_label: Option<&str>,
     ) -> String {
         const WIDTH: u16 = 12;
@@ -339,35 +339,44 @@ mod tests {
 
     #[test]
     fn test_pipe_bars() {
-        assert_eq!(render_gauge(0.0, BarType::Pipe, None, None), "[          ]");
-        assert_eq!(render_gauge(0.5, BarType::Pipe, None, None), "[|||||     ]");
         assert_eq!(
-            render_gauge(0.95, BarType::Pipe, None, None),
+            render_test_gauge(0.0, BarType::Pipe, None, None),
+            "[          ]"
+        );
+        assert_eq!(
+            render_test_gauge(0.5, BarType::Pipe, None, None),
+            "[|||||     ]"
+        );
+        assert_eq!(
+            render_test_gauge(0.95, BarType::Pipe, None, None),
             "[||||||||| ]"
         );
-        assert_eq!(render_gauge(1.0, BarType::Pipe, None, None), "[||||||||||]");
+        assert_eq!(
+            render_test_gauge(1.0, BarType::Pipe, None, None),
+            "[||||||||||]"
+        );
     }
 
     #[test]
     fn test_solid_bars() {
         assert_eq!(
-            render_gauge(0.0, BarType::Block, None, None),
+            render_test_gauge(0.0, BarType::Block, None, None),
             "[          ]"
         );
         assert_eq!(
-            render_gauge(0.5, BarType::Block, None, None),
+            render_test_gauge(0.5, BarType::Block, None, None),
             "[█████     ]"
         );
         assert_eq!(
-            render_gauge(0.55, BarType::Block, None, None),
+            render_test_gauge(0.55, BarType::Block, None, None),
             "[█████▌    ]"
         );
         assert_eq!(
-            render_gauge(0.9, BarType::Block, None, None),
+            render_test_gauge(0.9, BarType::Block, None, None),
             "[█████████ ]"
         );
         assert_eq!(
-            render_gauge(1.0, BarType::Block, None, None),
+            render_test_gauge(1.0, BarType::Block, None, None),
             "[██████████]"
         );
     }
@@ -375,15 +384,15 @@ mod tests {
     #[test]
     fn test_labelled_bars() {
         assert_eq!(
-            render_gauge(0.5, BarType::Pipe, Some("CPU"), Some(" 50%")),
+            render_test_gauge(0.5, BarType::Pipe, Some("CPU"), Some(" 50%")),
             "CPU[||| 50%]"
         );
         assert_eq!(
-            render_gauge(0.5, BarType::Block, Some("CPU"), Some(" 50%")),
+            render_test_gauge(0.5, BarType::Block, Some("CPU"), Some(" 50%")),
             "CPU[███ 50%]"
         );
         assert_eq!(
-            render_gauge(1.0, BarType::Block, Some("CPU"), Some("100%")),
+            render_test_gauge(1.0, BarType::Block, Some("CPU"), Some("100%")),
             "CPU[███100%]"
         );
     }
