@@ -32,6 +32,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2245](https://github.com/ClementTsang/bottom/pull/2245): Support solid bars using block and square characters via `styles.widgets.bar_type`.
 - [#2236](https://github.com/ClementTsang/bottom/pull/2236): Add configurable binary disk capacity units for disk widget usage.
 - [#2251](https://github.com/ClementTsang/bottom/pull/2251): Add configurable binary disk capacity units for disk widget I/O.
+- [#2224](https://github.com/ClementTsang/bottom/pull/2224): Add swap column for processes for Linux.
 
 ### Other
 
