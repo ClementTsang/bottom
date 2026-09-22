@@ -18,13 +18,11 @@ Versioning for this project is based on [Semantic Versioning](https://semver.org
 
 That said, these are more guidelines rather than hard rules, though the project will generally try to follow them.
 
+<!--TODO: Make the changelog order standardized with features, changes, bugs, other -->
+
 ---
 
 ## 0.15.0 - Unreleased
-
-### Bug Fixes
-
-- [#2225](https://github.com/ClementTsang/bottom/pull/2225): Fix waking up NVIDIA GPUs when getting stats on Linux.
 
 ### Features
 
@@ -33,6 +31,15 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2236](https://github.com/ClementTsang/bottom/pull/2236): Add configurable binary disk capacity units for disk widget usage.
 - [#2251](https://github.com/ClementTsang/bottom/pull/2251): Add configurable binary disk capacity units for disk widget I/O.
 - [#2224](https://github.com/ClementTsang/bottom/pull/2224): Add swap column for processes for Linux.
+
+### Changes
+
+- [#2260](https://github.com/ClementTsang/bottom/pull/2260): Enable scrollbars by default.
+
+### Bug Fixes
+
+- [#2225](https://github.com/ClementTsang/bottom/pull/2225): Fix waking up NVIDIA GPUs when getting stats on Linux.
+- [#2261](https://github.com/ClementTsang/bottom/pull/2261): Fix scrollbars not drawing when height of bar was 2 or less.
 
 ### Other
 
