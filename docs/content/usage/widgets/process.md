@@ -112,6 +112,8 @@ keys, or by clicking on the entry again. The ++space++ key can also be used to t
 
 You can show the full command instead of just the process name by pressing ++P++.
 
+Press ++w++ to open the selected process's complete command in a wrapped, scrollable view. Processes must be ungrouped before opening this view.
+
 <figure>
     <img src="../../../assets/screenshots/process/process_full.webp" alt="A picture of a process widget using full commands."/>
 </figure>
@@ -230,6 +232,7 @@ Note that key bindings are generally case-sensitive.
 | ++n++                                               | Sort by process name, press again to reverse sorting order       |
 | ++tab++                                             | Toggle grouping processes with the same name                     |
 | ++P++                                               | Toggle between showing the full command or just the process name |
+| ++w++                                               | Show the full command in a wrapped view                          |
 | ++ctrl+f++ , ++slash++                              | Toggle showing the search sub-widget                             |
 | ++s++ , ++f6++, ++delete++ (++fn+delete++ on macOS) | Toggle showing the sort sub-widget                               |
 | ++I++                                               | Invert the current sort                                          |
