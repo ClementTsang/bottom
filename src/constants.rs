@@ -58,7 +58,7 @@ const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll            Scrolling over a CPU core/average shows only that entry on the chart",
 ];
 
-const PROCESS_HELP_TEXT: [&str; 20] = [
+const PROCESS_HELP_TEXT: [&str; 21] = [
     "3 - Process widget",
     "dd, F9, Delete          Kill the selected process",
     "c                       Sort by CPU usage, press again to reverse",
@@ -68,6 +68,7 @@ const PROCESS_HELP_TEXT: [&str; 20] = [
     "Tab                     Group/un-group processes with the same name",
     "Ctrl-f, /               Open process search widget",
     "P                       Toggle between showing the full command or just the process name",
+    "w                       Show the full command in a wrapped view",
     "s, F6                   Open process sort widget",
     "I                       Invert current sort",
     "%                       Toggle between values and percentages for memory usage",

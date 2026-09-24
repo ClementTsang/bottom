@@ -26,6 +26,7 @@ use crate::{
     constants::*,
     options::config::style::Styles,
 };
+use dialogs::command_dialog::CommandDialog;
 
 /// Handles the canvas' state.
 pub struct Painter {
@@ -130,7 +131,14 @@ impl Painter {
             }
 
             // TODO: Make drawing dialog generic.
-            if app_state.help_dialog_state.is_showing_help {
+            if app_state.command_dialog.is_open() {
+                let area = f.area();
+                f.render_stateful_widget(
+                    CommandDialog::new(&self.styles),
+                    area,
+                    &mut app_state.command_dialog,
+                );
+            } else if app_state.help_dialog_state.is_showing_help {
                 let area = f.area();
                 f.buffer_mut()
                     .set_style(area, self.styles.general_widget_style);

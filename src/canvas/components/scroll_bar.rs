@@ -2,10 +2,11 @@
 
 use ratatui::{
     Frame,
+    buffer::Buffer,
     layout::Rect,
     style::Style,
     symbols::{self, scrollbar},
-    widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState},
+    widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState, StatefulWidget},
 };
 
 /// Arguments for [`draw_scroll_bar`].
@@ -33,6 +34,11 @@ pub fn dialog_scroll_bar_area(block_area: Rect) -> Rect {
 
 /// Draw a vertical scroll bar in `area`.
 pub fn draw_scroll_bar(f: &mut Frame<'_>, area: Rect, args: ScrollBarArgs) {
+    draw_scroll_bar_buffer(f.buffer_mut(), area, args);
+}
+
+/// Draw a vertical scroll bar directly into a buffer.
+pub fn draw_scroll_bar_buffer(buffer: &mut Buffer, area: Rect, args: ScrollBarArgs) {
     if args.content_length <= args.viewport_length || area.width == 0 || area.height == 0 {
         return;
     }
@@ -63,7 +69,7 @@ pub fn draw_scroll_bar(f: &mut Frame<'_>, area: Rect, args: ScrollBarArgs) {
         .position(args.position)
         .viewport_content_length(args.viewport_length);
 
-    f.render_stateful_widget(scrollbar, area, &mut state);
+    scrollbar.render(area, buffer, &mut state);
 }
 
 #[cfg(test)]
