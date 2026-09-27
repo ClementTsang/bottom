@@ -23,7 +23,8 @@ use crate::{
     widgets::{DiskWidgetData, TempWidgetData},
 };
 
-/// Because otherwise you can't do lookups for something like `(String, String)` as a key.
+/// Because otherwise you can't do lookups for something like `(String, String)`
+/// as a key.
 trait PairKey {
     fn pair(&self) -> (&str, &str);
 }
@@ -138,8 +139,8 @@ impl InnerData {
     ) {
         let harvested_time = data.collection_time;
 
-        // We must adjust all the network values to their selected type (defaults to
-        // bits).
+        // We must adjust all the network values to their selected type
+        // (defaults to bits).
         if matches!(settings.network_unit_type, DataUnit::Byte)
             && let Some(network) = &mut data.network
         {
@@ -213,7 +214,7 @@ impl InnerData {
         if let Some(disks) = data.disks
             && let Some(io) = data.io
         {
-            self.eat_disks(disks, io, harvested_time);
+            self.eat_disks(disks, io, harvested_time, settings.disk_use_binary_prefix);
 
             if used_widgets.use_disk_io_graph {
                 self.time_series_data.update_disk_io(
@@ -239,7 +240,10 @@ impl InnerData {
         self.last_update_time = harvested_time;
     }
 
-    fn eat_disks(&mut self, disks: Vec<DiskHarvest>, io: IoHarvest, harvested_time: Instant) {
+    fn eat_disks(
+        &mut self, disks: Vec<DiskHarvest>, io: IoHarvest, harvested_time: Instant,
+        use_binary_prefix: bool,
+    ) {
         let time_since_last_harvest = harvested_time
             .duration_since(self.last_update_time)
             .as_secs_f64();
@@ -334,7 +338,8 @@ impl InnerData {
                     io_read_rate_bytes = Some(0);
                     io_write_rate_bytes = Some(0);
 
-                    // TODO: We probably want to also add some cleanup after a while if unused.
+                    // TODO: We probably want to also add some cleanup after a
+                    // while if unused.
                     self.prev_io.insert(
                         (disk.mount_point.clone(), checked_name.to_string()),
                         (io_device.read_bytes, io_device.write_bytes),
@@ -348,6 +353,7 @@ impl InnerData {
             };
 
             self.disk_harvest.push(DiskWidgetData {
+                use_binary_prefix,
                 name: disk.name,
                 mount_point: disk.mount_point,
                 free_bytes: disk.free_space,

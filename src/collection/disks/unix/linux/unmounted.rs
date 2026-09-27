@@ -14,9 +14,9 @@ const PARTITION_BLOCK_SIZE: u64 = 1024;
 /// Returns [`DiskHarvest`] entries for block devices that aren't in `mounted`.
 ///
 /// These come from `/proc/partitions`, which lists every block device (so even
-/// devices with no I/O activity are covered) along with its size in terms of blocks.
-/// Note this also filters out some devices, like `loop*`, `ram*`, `zram*`, etc., as
-/// these are not "disks".
+/// devices with no I/O activity are covered) along with its size in terms of
+/// blocks. Note this also filters out some devices, like `loop*`, `ram*`,
+/// `zram*`, etc., as these are not "disks".
 pub(crate) fn unmounted_disks(mounted: &HashSet<String>) -> Vec<DiskHarvest> {
     const PROC_PARTITIONS: &str = "/proc/partitions";
 
@@ -27,7 +27,8 @@ pub(crate) fn unmounted_disks(mounted: &HashSet<String>) -> Vec<DiskHarvest> {
     parse_unmounted_disks(BufReader::new(file), mounted)
 }
 
-/// Parses `/proc/partitions` into [`DiskHarvest`] entries for block devices not present in `mounted`.
+/// Parses `/proc/partitions` into [`DiskHarvest`] entries for block devices not
+/// present in `mounted`.
 fn parse_unmounted_disks<R: BufRead>(mut reader: R, mounted: &HashSet<String>) -> Vec<DiskHarvest> {
     let mut disks = Vec::new();
     let mut line = String::new();
@@ -37,8 +38,8 @@ fn parse_unmounted_disks<R: BufRead>(mut reader: R, mounted: &HashSet<String>) -
             break;
         }
 
-        // Format: `major minor #blocks name`. The header line and the blank line
-        // after it simply fail to parse here and get skipped.
+        // Format: `major minor #blocks name`. The header line and the blank
+        // line after it simply fail to parse here and get skipped.
         let mut parts = line.split_whitespace();
         let blocks = parts.nth(2).and_then(|b| b.parse::<u64>().ok());
         let name = parts.next();

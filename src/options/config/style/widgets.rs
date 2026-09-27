@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{ColourStr, TextStyleConfig, borders::WidgetBorderType};
+use super::{ColourStr, TextStyleConfig, bars::WidgetBarType, borders::WidgetBorderType};
 
 /// General styling for generic widgets.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -37,4 +37,8 @@ pub(crate) struct WidgetStyle {
     /// Background colour for widgets.
     #[serde(alias = "bg_color")]
     pub(crate) bg_colour: Option<ColourStr>,
+
+    /// What character to fill in bars with, such as the ones used by the basic
+    /// CPU and memory widgets.
+    pub(crate) bar_type: Option<WidgetBarType>,
 }

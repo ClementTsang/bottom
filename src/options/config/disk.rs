@@ -8,13 +8,19 @@ use crate::{canvas::components::data_table::SortOrder, options::DiskWidgetColumn
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct DiskConfig {
+    /// Use binary prefixes (e.g. GiB, MiB) instead of decimal prefixes (e.g. GB, MB).
+    ///
+    /// Defaults to decimal prefixes.
+    pub(crate) use_binary_prefix: Option<bool>,
+
     /// A filter over the disk names.
     pub(crate) name_filter: Option<IgnoreList>,
 
     /// A filter over the mount names.
     pub(crate) mount_filter: Option<IgnoreList>,
 
-    /// Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
+    /// Whether to include block devices that aren't currently mounted
+    /// (currently Linux only). Defaults to false.
     pub(crate) include_unmounted: Option<bool>,
 
     /// A list of disk widget columns.
@@ -62,7 +68,8 @@ mod test {
         toml_edit::de::from_str::<DiskConfig>(config).expect_err("Should error out!");
     }
 
-    /// Test that disk enum variants that are advertised in the schema are valid.
+    /// Test that disk enum variants that are advertised in the schema are
+    /// valid.
     #[cfg(feature = "generate_schema")]
     #[test]
     fn ensure_disk_column_schema_is_accepted() {

@@ -18,7 +18,34 @@ Versioning for this project is based on [Semantic Versioning](https://semver.org
 
 That said, these are more guidelines rather than hard rules, though the project will generally try to follow them.
 
+<!--TODO: Make the changelog order standardized with features, changes, bugs, other -->
+
 ---
+
+## 0.15.0 - Unreleased
+
+### Features
+
+- [#2239](https://github.com/ClementTsang/bottom/pull/2239): Initial Intel GPU support for Linux to get process GPU usage.
+- [#2245](https://github.com/ClementTsang/bottom/pull/2245): Support solid bars using block and square characters via `styles.widgets.bar_type`.
+- [#2236](https://github.com/ClementTsang/bottom/pull/2236): Add configurable binary disk capacity units for disk widget usage.
+- [#2251](https://github.com/ClementTsang/bottom/pull/2251): Add configurable binary disk capacity units for disk widget I/O.
+- [#2224](https://github.com/ClementTsang/bottom/pull/2224): Add swap column for processes for Linux.
+
+### Changes
+
+- [#2260](https://github.com/ClementTsang/bottom/pull/2260): Enable scrollbars by default.
+
+### Bug Fixes
+
+- [#2225](https://github.com/ClementTsang/bottom/pull/2225): Fix waking up NVIDIA GPUs when getting stats on Linux.
+- [#2261](https://github.com/ClementTsang/bottom/pull/2261): Fix scrollbars not drawing when height of bar was 2 or less.
+
+### Other
+
+- [#2227](https://github.com/ClementTsang/bottom/pull/2227): Add missing documentation around disk I/O graph.
+- [#2233](https://github.com/ClementTsang/bottom/pull/2233): Add user-level installation scope for Windows MSI installer.
+- [#2237](https://github.com/ClementTsang/bottom/pull/2237): Use `WixUI_Advanced` for better installation scope selection in Windows MSI installer.
 
 ## 0.14.9 - 2026-08-27
 

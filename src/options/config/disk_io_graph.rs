@@ -25,7 +25,8 @@ pub(crate) struct DiskIoGraphConfig {
     /// Whether to show the write rate line. Defaults to true.
     pub(crate) show_write: Option<bool>,
 
-    /// Whether to label legend entries by device name or mount point. Defaults to disk name.
+    /// Whether to label legend entries by device name or mount point. Defaults
+    /// to disk name.
     pub(crate) legend: Option<DiskGraphLegend>,
 
     /// Whether to use a logarithmic scale on the y-axis. Defaults to false.
@@ -37,6 +38,7 @@ pub(crate) struct DiskIoGraphConfig {
     /// An optional list of device names to include or exclude.
     pub(crate) name_filter: Option<IgnoreList>,
 
-    /// Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
+    /// Whether to include block devices that aren't currently mounted
+    /// (currently Linux only). Defaults to false.
     pub(crate) include_unmounted: Option<bool>,
 }

@@ -10,11 +10,11 @@ cfg_select! {
         pub(crate) use process_ext::*;
 
         use super::ProcessHarvest;
+        use crate::collection::{DataCollector, error::CollectionResult, processes::*};
 
-        use crate::collection::{DataCollector, processes::*};
-        use crate::collection::error::CollectionResult;
-
-        pub fn sysinfo_process_data(collector: &mut DataCollector) -> CollectionResult<Vec<ProcessHarvest>> {
+        pub fn sysinfo_process_data(
+            collector: &mut DataCollector,
+        ) -> CollectionResult<Vec<ProcessHarvest>> {
             let sys = &collector.sys.system;
             let use_current_cpu_total = collector.use_current_cpu_total;
             let unnormalized_cpu = collector.unnormalized_cpu;
@@ -22,18 +22,29 @@ cfg_select! {
             let user_table = &mut collector.user_table;
 
             cfg_select! {
-                target_os = "macos" => {
-                    MacOSProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
-                }
-                target_os = "freebsd" => {
-                    FreeBSDProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
-                }
-                _ => {
-                    GenericProcessExt::sysinfo_process_data(sys, use_current_cpu_total, unnormalized_cpu, total_memory, user_table)
-                }
+                target_os = "macos" => MacOSProcessExt::sysinfo_process_data(
+                    sys,
+                    use_current_cpu_total,
+                    unnormalized_cpu,
+                    total_memory,
+                    user_table,
+                ),
+                target_os = "freebsd" => FreeBSDProcessExt::sysinfo_process_data(
+                    sys,
+                    use_current_cpu_total,
+                    unnormalized_cpu,
+                    total_memory,
+                    user_table,
+                ),
+                _ => GenericProcessExt::sysinfo_process_data(
+                    sys,
+                    use_current_cpu_total,
+                    unnormalized_cpu,
+                    total_memory,
+                    user_table,
+                ),
             }
         }
-
     }
     _ => {}
 }

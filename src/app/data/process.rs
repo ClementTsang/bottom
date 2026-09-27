@@ -43,7 +43,8 @@ impl ProcessData {
 
         // We collect all processes that either:
         // - Do not have a parent PID (that is, they are orphan processes)
-        // - Have a parent PID but we don't have the parent (we promote them as orphans)
+        // - Have a parent PID but we don't have the parent (we promote them as
+        //   orphans)
         self.orphan_pids = self
             .process_harvest
             .iter()

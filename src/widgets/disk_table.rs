@@ -10,14 +10,17 @@ use crate::{
     },
     options::config::style::Styles,
     utils::{
-        conversion::dec_bytes_per_second_string,
-        data_units::{format_significant_digits, get_decimal_bytes},
+        conversion::{bin_bytes_per_second_string, dec_bytes_per_second_string},
+        data_units::{convert_bytes, format_significant_digits, get_decimal_bytes},
         general::sort_partial_fn,
     },
 };
 
 #[derive(Clone, Debug)]
 pub struct DiskWidgetData {
+    // TODO: Remove this field, carry it through the widget configuration
+    // rather than data (requires some refactoring)
+    pub use_binary_prefix: bool,
     pub name: String,
     pub mount_point: String,
     pub free_bytes: Option<u64>,
@@ -31,7 +34,7 @@ pub struct DiskWidgetData {
 impl DiskWidgetData {
     fn total_space(&self) -> Cow<'static, str> {
         if let Some(total_bytes) = self.total_bytes {
-            let converted_total_space = get_decimal_bytes(total_bytes);
+            let converted_total_space = convert_bytes(total_bytes, self.use_binary_prefix);
             format!(
                 "{}{}",
                 format_significant_digits(converted_total_space.0, 3),
@@ -45,7 +48,7 @@ impl DiskWidgetData {
 
     fn free_space(&self) -> Cow<'static, str> {
         if let Some(free_bytes) = self.free_bytes {
-            let converted_free_space = get_decimal_bytes(free_bytes);
+            let converted_free_space = convert_bytes(free_bytes, self.use_binary_prefix);
             format!(
                 "{}{}",
                 format_significant_digits(converted_free_space.0, 3),
@@ -59,7 +62,7 @@ impl DiskWidgetData {
 
     fn used_space(&self) -> Cow<'static, str> {
         if let Some(used_bytes) = self.used_bytes {
-            let converted_used_space = get_decimal_bytes(used_bytes);
+            let converted_used_space = convert_bytes(used_bytes, self.use_binary_prefix);
             format!(
                 "{}{}",
                 format_significant_digits(converted_used_space.0, 3),
@@ -101,13 +104,21 @@ impl DiskWidgetData {
 
     fn io_read(&self) -> Cow<'static, str> {
         self.io_read_rate_bytes.map_or("N/A".into(), |r_rate| {
-            dec_bytes_per_second_string(r_rate).into()
+            if self.use_binary_prefix {
+                bin_bytes_per_second_string(r_rate).into()
+            } else {
+                dec_bytes_per_second_string(r_rate).into()
+            }
         })
     }
 
     fn io_write(&self) -> Cow<'static, str> {
         self.io_write_rate_bytes.map_or("N/A".into(), |w_rate| {
-            dec_bytes_per_second_string(w_rate).into()
+            if self.use_binary_prefix {
+                bin_bytes_per_second_string(w_rate).into()
+            } else {
+                dec_bytes_per_second_string(w_rate).into()
+            }
         })
     }
 }
@@ -349,7 +360,8 @@ impl DiskTableWidget {
             },
             sort_index: match &config.default_disk_sort_column {
                 Some(column) => {
-                    // Must check that the column used exists. If not, fall back to 0.
+                    // Must check that the column used exists. If not, fall back
+                    // to 0.
 
                     let existing_columns = match columns {
                         Some(c) => c,
@@ -393,8 +405,9 @@ impl DiskTableWidget {
 
     /// Update the current table data.
     pub fn set_table_data(&mut self, data: &InnerData) {
-        // Note that the data may contain unmounted disks (e.g. we enable it for another disk widget),
-        // so we have to potentially filter it out here too.
+        // Note that the data may contain unmounted disks (e.g. we enable it for
+        // another disk widget), so we have to potentially filter it out
+        // here too.
         let mut data: Vec<DiskWidgetData> = if self.show_unmounted {
             data.disk_harvest.clone()
         } else {
@@ -422,5 +435,110 @@ impl DiskTableWidget {
     pub fn set_index(&mut self, index: usize) {
         self.table.set_sort_index(index);
         self.force_data_update();
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::utils::data_units::{GIBI_LIMIT, MEBI_LIMIT, TEBI_LIMIT};
+
+    fn disk(bytes: Option<u64>, use_binary_prefix: bool) -> DiskWidgetData {
+        DiskWidgetData {
+            use_binary_prefix,
+            name: "disk".into(),
+            mount_point: "/".into(),
+            free_bytes: bytes,
+            used_bytes: bytes,
+            total_bytes: bytes,
+            summed_total_bytes: bytes.map(|bytes| bytes * 2),
+            io_read_rate_bytes: bytes,
+            io_write_rate_bytes: bytes,
+        }
+    }
+
+    fn render_cell(data: &DiskWidgetData, column: DiskWidgetColumn) -> Cow<'static, str> {
+        data.to_cell_text(&column, NonZeroU16::new(10).unwrap())
+            .unwrap()
+    }
+
+    #[test]
+    fn disk_space_units() {
+        for (bytes, decimal, binary) in [
+            (0, "0B", "0B"),
+            (999, "999B", "999B"),
+            (1000, "1KB", "1000B"),
+            (1023, "1KB", "1023B"),
+            (1024, "1KB", "1KiB"),
+            (MEBI_LIMIT, "1MB", "1MiB"),
+            (500 * GIBI_LIMIT, "537GB", "500GiB"),
+            (TEBI_LIMIT, "1TB", "1TiB"),
+        ] {
+            for (use_binary_prefix, expected) in [(false, decimal), (true, binary)] {
+                let data = disk(Some(bytes), use_binary_prefix);
+                for column in [
+                    DiskWidgetColumn::Used,
+                    DiskWidgetColumn::Free,
+                    DiskWidgetColumn::Total,
+                ] {
+                    assert_eq!(render_cell(&data, column), expected);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn disk_missing_space_and_percentages() {
+        for use_binary_prefix in [false, true] {
+            let missing = disk(None, use_binary_prefix);
+            for column in [
+                DiskWidgetColumn::Used,
+                DiskWidgetColumn::Free,
+                DiskWidgetColumn::Total,
+                DiskWidgetColumn::UsedPercent,
+                DiskWidgetColumn::FreePercent,
+                DiskWidgetColumn::IoRead,
+                DiskWidgetColumn::IoWrite,
+            ] {
+                assert_eq!(render_cell(&missing, column), "N/A");
+            }
+            let data = disk(Some(500 * GIBI_LIMIT), use_binary_prefix);
+            assert_eq!(render_cell(&data, DiskWidgetColumn::UsedPercent), "50.0%");
+            assert_eq!(render_cell(&data, DiskWidgetColumn::FreePercent), "50.0%");
+            if use_binary_prefix {
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoRead), "500.0GiB/s");
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoWrite), "500.0GiB/s");
+            } else {
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoRead), "536.9GB/s");
+                assert_eq!(render_cell(&data, DiskWidgetColumn::IoWrite), "536.9GB/s");
+            }
+            assert_eq!(
+                render_cell(
+                    &disk(Some(0), use_binary_prefix),
+                    DiskWidgetColumn::UsedPercent
+                ),
+                "N/A"
+            );
+        }
+    }
+
+    #[test]
+    fn disk_space_sorting_uses_bytes() {
+        for use_binary_prefix in [false, true] {
+            for column in [
+                DiskWidgetColumn::Used,
+                DiskWidgetColumn::Free,
+                DiskWidgetColumn::Total,
+            ] {
+                let mut data = [
+                    disk(Some(GIBI_LIMIT), use_binary_prefix),
+                    disk(Some(2 * MEBI_LIMIT), use_binary_prefix),
+                ];
+                column.sort_data(&mut data, false);
+                assert_eq!(data[0].total_bytes, Some(2 * MEBI_LIMIT));
+                column.sort_data(&mut data, true);
+                assert_eq!(data[0].total_bytes, Some(GIBI_LIMIT));
+            }
+        }
     }
 }

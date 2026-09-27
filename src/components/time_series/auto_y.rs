@@ -47,13 +47,15 @@ impl GraphHeightCache {
             let visible_left_bound = match last_time.checked_sub(visible_duration) {
                 Some(v) => v,
                 None => {
-                    // On some systems (like Windows) it can be possible that the
-                    // current display time causes subtraction to fail if, for example,
-                    // the uptime of the system is too low and current_display_time is
-                    // too high. See https://github.com/ClementTsang/bottom/issues/1825.
+                    // On some systems (like Windows) it can be possible that
+                    // the current display time causes
+                    // subtraction to fail if, for example,
+                    // the uptime of the system is too low and
+                    // current_display_time is too high. See https://github.com/ClementTsang/bottom/issues/1825.
                     //
-                    // As such, we instead take the oldest visible time. This is a bit
-                    // inefficient, but since it should only happen rarely, it's fine.
+                    // As such, we instead take the oldest visible time. This is
+                    // a bit inefficient, but since it
+                    // should only happen rarely, it's fine.
                     times
                         .iter()
                         .take_while(|t| last_time.duration_since(**t) < visible_duration)
@@ -90,7 +92,8 @@ impl GraphHeightCache {
     }
 }
 
-/// A time series graph that automatically adjusts the y-axis based on the data provided.
+/// A time series graph that automatically adjusts the y-axis based on the data
+/// provided.
 pub struct AutoYAxisTimeGraph {
     state: TimeseriesState,
     height_cache: GraphHeightCache,

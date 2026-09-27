@@ -9,6 +9,7 @@ cfg_select! {
         mod zfs_io_counters;
         #[cfg(feature = "zfs")]
         pub use io_counters::IoCounters;
+
         pub(crate) use self::freebsd::*;
     }
     target_os = "windows" => {
@@ -64,12 +65,12 @@ cfg_select! {
     any(target_os = "linux", target_os = "macos", target_os = "windows") => {
         mod io_counters;
         pub use io_counters::IoCounters;
+
         use crate::collection::DataCollector;
 
         /// Returns the I/O usage of certain mount points.
         pub fn get_io_usage(_collector: &DataCollector) -> anyhow::Result<IoHarvest> {
             let mut io_hash: HashMap<String, Option<IoData>> = HashMap::default();
-
 
             // TODO: Maybe rewrite this to not do a result of vec of result...
             for io in io_stats()?.into_iter() {

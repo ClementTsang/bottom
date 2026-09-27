@@ -22,7 +22,8 @@ pub(crate) struct TempConfig {
 
 #[cfg(test)]
 mod tests {
-    /// Test that temp enum variants that are advertised in the schema are valid.
+    /// Test that temp enum variants that are advertised in the schema are
+    /// valid.
     #[cfg(feature = "generate_schema")]
     #[test]
     fn ensure_temp_column_schema_is_accepted() {

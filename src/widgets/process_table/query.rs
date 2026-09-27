@@ -127,7 +127,8 @@ pub(crate) fn parse_query(search_query: &str, options: &QueryOptions) -> QueryRe
         let mut last = 0;
         for (index, matched) in s.match_indices(|x| DELIMITER_LIST.contains(&x)) {
             if matched == "\"" {
-                // Always split on quote delimiters to open/close quoted sections.
+                // Always split on quote delimiters to open/close quoted
+                // sections.
                 if last != index {
                     split_query.push_back(s[last..index].to_owned());
                 }
@@ -211,7 +212,8 @@ impl std::str::FromStr for PrefixType {
         // TODO: Didn't add mem_bytes, total_read, and total_write
         // for now as it causes help to be clogged.
 
-        // TODO: Add a `name` keyword alias so something like `name = blah` is valid.
+        // TODO: Add a `name` keyword alias so something like `name = blah` is
+        // valid.
 
         let mut result = Name;
         if multi_eq_ignore_ascii_case!(s, "cpu" | "cpu%") {
@@ -940,7 +942,8 @@ mod tests {
         assert!(query.check(&other, false));
     }
 
-    /// Test state queries with the non-equality operator. This also tests that string comparisons.
+    /// Test state queries with the non-equality operator. This also tests that
+    /// string comparisons.
     #[test]
     fn state_not_equal_query() {
         let query = parse_query_no_options("state != sleeping").unwrap();
@@ -1084,8 +1087,8 @@ mod tests {
         assert!(!query.check(&other, false));
     }
 
-    /// A quoted `"!"` as the RHS of a prefixed string query with "!=" should not match the
-    /// literal `!`, nor should it be treated as an operator.
+    /// A quoted `"!"` as the RHS of a prefixed string query with "!=" should
+    /// not match the literal `!`, nor should it be treated as an operator.
     #[test]
     fn user_negated_equals_quoted_bang() {
         let query = parse_query_no_options("user != \"!\"").unwrap();
@@ -1112,7 +1115,8 @@ mod tests {
         assert!(!query.check(&without, false));
     }
 
-    /// Quoted angle brackets should be treated as literal characters in name matches.
+    /// Quoted angle brackets should be treated as literal characters in name
+    /// matches.
     #[test]
     fn quoted_angle_brackets_match_literal() {
         let query = parse_query_no_options("\"Thread<15>\"").unwrap();
@@ -1136,7 +1140,8 @@ mod tests {
         assert!(!query.check(&non_matching, false));
     }
 
-    /// A quoted `!=` should be treated as a literal character sequence in name matches.
+    /// A quoted `!=` should be treated as a literal character sequence in name
+    /// matches.
     #[test]
     fn quoted_not_equals_matches_literal() {
         let query = parse_query_no_options("\"a!=b\"").unwrap();
@@ -1148,7 +1153,8 @@ mod tests {
         assert!(!query.check(&non_matching, false));
     }
 
-    /// Quoted parentheses should be treated as literal characters in name matches.
+    /// Quoted parentheses should be treated as literal characters in name
+    /// matches.
     #[test]
     fn quoted_parens_match_literal() {
         let query = parse_query_no_options("\"a(b)\"").unwrap();
@@ -1168,7 +1174,8 @@ mod tests {
         parse_query_no_options("time !=").unwrap_err();
     }
 
-    /// Some miscellaneous invalid string searches involving negation (`!`) parsing.
+    /// Some miscellaneous invalid string searches involving negation (`!`)
+    /// parsing.
     #[test]
     fn misc_invalid_bang_search() {
         parse_query_no_options("user = !").unwrap_err();

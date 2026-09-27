@@ -44,7 +44,8 @@ pub(crate) struct CgroupMemCollector {
     pub swap: Option<CgroupMemData>,
 }
 
-/// Computes the cgroup v1 swap limit. Calculated by getting memsw and subtracting the memory limits.
+/// Computes the cgroup v1 swap limit. Calculated by getting memsw and
+/// subtracting the memory limits.
 #[inline]
 fn cgroup_v1_swap_limit(
     memsw_limit: u64, mem_limit: Option<u64>, total_memory: u64, total_swap: u64,
@@ -68,7 +69,8 @@ impl CgroupMemCollector {
         }
     }
 
-    /// Try and update the memory using cgroup v1 semantics. If successful, returns `true`.
+    /// Try and update the memory using cgroup v1 semantics. If successful,
+    /// returns `true`.
     fn try_update_memory_cgroup_v1(&mut self, total_memory: u64, total_swap: u64) -> bool {
         if let Some(mem_usage) = read_u64("/sys/fs/cgroup/memory/memory.usage_in_bytes") {
             // --- Memory ---
@@ -80,7 +82,8 @@ impl CgroupMemCollector {
             };
 
             // Technically if it's some insanely high value (https://unix.stackexchange.com/a/421182),
-            // then it's "unlimited", but we can just make it so we take the max of the main and this anyway.
+            // then it's "unlimited", but we can just make it so we take the max
+            // of the main and this anyway.
             let mem_limit_raw = read_u64("/sys/fs/cgroup/memory/memory.limit_in_bytes");
             let mem_limit = mem_limit_raw.map(CgroupMemLimit::Bytes);
 
@@ -90,7 +93,8 @@ impl CgroupMemCollector {
             });
 
             // --- Swap ---
-            // Since swap is dependent on the normal memory usage, we couple it together.
+            // Since swap is dependent on the normal memory usage, we couple it
+            // together.
             if let Some(memsw_usage) = read_u64("/sys/fs/cgroup/memory/memory.memsw.usage_in_bytes")
             {
                 let used_bytes = memsw_usage.saturating_sub(mem_usage);
@@ -114,7 +118,8 @@ impl CgroupMemCollector {
         }
     }
 
-    /// Try and update the memory using cgroup v2 semantics. If successful, returns `true`.
+    /// Try and update the memory using cgroup v2 semantics. If successful,
+    /// returns `true`.
     fn try_update_memory_cgroup_v2(&mut self) -> bool {
         let mut could_update = false;
 
@@ -186,13 +191,15 @@ fn parse_cpu_quota(cpu_max: String) -> Option<f64> {
 /// Gathers CPU data from cgroup sources.
 #[derive(Default, Debug)]
 pub(crate) struct CgroupCpuCollector {
-    /// A maximum number of CPUs (cores) that can be used, as defined by the cgroup.
+    /// A maximum number of CPUs (cores) that can be used, as defined by the
+    /// cgroup.
     pub cpu_quota: Option<f64>,
 
     /// Computed average CPU usage percent (only set when a quota is active).
     pub avg_cpu_percent: Option<f32>,
 
-    /// The previous CPU microsecond time (usage) and when it was last updated. Used to compute average cgroup CPU usage.
+    /// The previous CPU microsecond time (usage) and when it was last updated.
+    /// Used to compute average cgroup CPU usage.
     prev_cpu: Option<(u64, Instant)>,
 }
 
@@ -205,7 +212,8 @@ impl CgroupCpuCollector {
         }
     }
 
-    /// Try to update CPU data using cgroup v1 semantics. Returns `true` on success.
+    /// Try to update CPU data using cgroup v1 semantics. Returns `true` on
+    /// success.
     fn try_update_cpu_cgroup_v1(&mut self) -> bool {
         let quota_raw: i64 = {
             let quota_str = match fs::read_to_string("/sys/fs/cgroup/cpu/cpu.cfs_quota_us") {
@@ -230,11 +238,13 @@ impl CgroupCpuCollector {
                 }
             })
         } else {
-            // If it's less than 0 (-1) then it's representing "unlimited" quota (AKA use the full CPU).
+            // If it's less than 0 (-1) then it's representing "unlimited" quota
+            // (AKA use the full CPU).
             None
         };
 
-        // cpuacct.usage is in nanoseconds; convert to microseconds for consistency with v2
+        // cpuacct.usage is in nanoseconds; convert to microseconds for
+        // consistency with v2
         if let Some(usage_nsec) = read_u64("/sys/fs/cgroup/cpuacct/cpuacct.usage") {
             self.try_compute_avg_and_update(usage_nsec / 1000);
         } else {
@@ -244,7 +254,8 @@ impl CgroupCpuCollector {
         true
     }
 
-    /// Try to update CPU data using cgroup v2 semantics. Returns `true` on success.
+    /// Try to update CPU data using cgroup v2 semantics. Returns `true` on
+    /// success.
     fn try_update_cpu_cgroup_v2(&mut self) -> bool {
         let cpu_max = match fs::read_to_string("/sys/fs/cgroup/cpu.max") {
             Ok(s) => s,
@@ -263,9 +274,10 @@ impl CgroupCpuCollector {
         true
     }
 
-    /// Try and compute average CPU usage based on the current microseconds. Note that this requires _two_ invocations
-    /// to compute a value, as the first invocation just sets the baseline for the next CPU time and timestamp to
-    /// compare with.
+    /// Try and compute average CPU usage based on the current microseconds.
+    /// Note that this requires _two_ invocations to compute a value, as the
+    /// first invocation just sets the baseline for the next CPU time and
+    /// timestamp to compare with.
     fn try_compute_avg_and_update(&mut self, current_microseconds: u64) {
         let now = Instant::now();
 

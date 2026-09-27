@@ -17,7 +17,8 @@ use crate::canvas::components::time_series::{
 
 const STALE_MIN_MILLISECONDS: u64 = Duration::from_secs(30).as_millis() as u64;
 
-/// Configuration values for a [`TimeseriesState`], sourced from [`crate::app::AppConfigFields`].
+/// Configuration values for a [`TimeseriesState`], sourced from
+/// [`crate::app::AppConfigFields`].
 #[derive(Copy, Clone, Debug)]
 pub struct TimeseriesConfig {
     pub time_interval: u64,
@@ -34,7 +35,8 @@ pub struct TimeseriesState {
 }
 
 impl TimeseriesState {
-    /// Create a new [`TimeseriesState`] using the given config and `autohide_timer` setting.
+    /// Create a new [`TimeseriesState`] using the given config and
+    /// `autohide_timer` setting.
     pub fn new(config: TimeseriesConfig, autohide_timer: Option<Instant>) -> Self {
         Self {
             current_display_time: config.default_time_value,

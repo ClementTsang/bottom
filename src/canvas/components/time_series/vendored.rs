@@ -400,8 +400,8 @@ pub(crate) enum ChartScaling {
 impl ChartScaling {
     /// Scale a value.
     pub(super) fn scale(&self, value: f64) -> f64 {
-        // Remember to do saturating log checks as otherwise 0.0 becomes inf, and you
-        // get gaps!
+        // Remember to do saturating log checks as otherwise 0.0 becomes inf,
+        // and you get gaps!
         match self {
             ChartScaling::Linear => value,
             ChartScaling::Log10 => saturating_log10(value),
@@ -672,8 +672,9 @@ impl<'a, F: Copy + Default + Into<f64>> TimeChart<'a, F> {
             let first_label_width = first_x_label.content.width() as u16;
             let width_left_of_y_axis = match self.x_axis.labels_alignment {
                 Alignment::Left => {
-                    // The last character of the label should be below the Y-Axis when it exists,
-                    // not on its left
+                    // The last character of the label should be below the
+                    // Y-Axis when it exists, not on its
+                    // left
                     let y_axis_offset = u16::from(has_y_axis);
                     first_label_width.saturating_sub(y_axis_offset)
                 }
@@ -682,8 +683,8 @@ impl<'a, F: Copy + Default + Into<f64>> TimeChart<'a, F> {
             };
             max_width = max(max_width, width_left_of_y_axis);
         }
-        // labels of y axis and first label of x axis can take at most 1/3rd of the
-        // total width
+        // labels of y axis and first label of x axis can take at most 1/3rd of
+        // the total width
         max_width.min(area.width / 3)
     }
 
@@ -721,8 +722,8 @@ impl<'a, F: Copy + Default + Into<f64>> TimeChart<'a, F> {
         Self::render_label(buf, first_label, label_area, label_alignment);
 
         for (i, label) in labels[1..labels.len() - 1].iter().enumerate() {
-            // We add 1 to x (and width-1 below) to leave at least one space before each
-            // intermediate labels
+            // We add 1 to x (and width-1 below) to leave at least one space
+            // before each intermediate labels
             let x = graph_area.left() + (i + 1) as u16 * width_between_ticks + 1;
             let label_area = Rect::new(x, y, width_between_ticks.saturating_sub(1), 1);
 
@@ -731,7 +732,8 @@ impl<'a, F: Copy + Default + Into<f64>> TimeChart<'a, F> {
 
         let x = graph_area.right() - width_between_ticks;
         let label_area = Rect::new(x, y, width_between_ticks, 1);
-        // The last label should be aligned Right to be at the edge of the graph area
+        // The last label should be aligned Right to be at the edge of the graph
+        // area
         Self::render_label(buf, last_label, label_area, Alignment::Right);
     }
 
@@ -803,9 +805,9 @@ impl<F: Copy + Default + Into<f64>> Widget for TimeChart<'_, F> {
             return;
         }
 
-        // Sample the style of the entire widget. This sample will be used to reset the
-        // style of the cells that are part of the components put on top of the
-        // graph area (i.e legend and axis names).
+        // Sample the style of the entire widget. This sample will be used to
+        // reset the style of the cells that are part of the components
+        // put on top of the graph area (i.e legend and axis names).
         let Some(original_style) = buf.cell((area.left(), area.top())).map(|cell| cell.style())
         else {
             return;
@@ -1490,8 +1492,8 @@ mod tests {
 
     #[test]
     fn legend_truncates_entries_by_height() {
-        // 5 datasets but only room for 3 entries in the legend (height=5, so 5-2=3
-        // entries).
+        // 5 datasets but only room for 3 entries in the legend (height=5, so
+        // 5-2=3 entries).
         let datasets: Vec<_> = (0..5)
             .map(|i| Dataset::default().name(format!("D{i}")))
             .collect();
@@ -1591,8 +1593,8 @@ mod tests {
 
         assert!(layout.legend_area.is_some());
         let legend = layout.legend_area.unwrap();
-        // Width should be based on "AB"/"CD" (2 chars) + 2 borders = 4, not the long
-        // name.
+        // Width should be based on "AB"/"CD" (2 chars) + 2 borders = 4, not the
+        // long name.
         assert_eq!(legend.width, 4);
     }
 }

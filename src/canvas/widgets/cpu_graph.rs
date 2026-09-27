@@ -127,7 +127,8 @@ impl Painter {
         let time = &data.time_series_data.time;
 
         if current_scroll_position == ALL_POSITION {
-            // This case ensures the other cases cannot have the position be equal to 0.
+            // This case ensures the other cases cannot have the position be
+            // equal to 0.
 
             cpu_points
                 .iter()
@@ -145,9 +146,9 @@ impl Painter {
                 .rev()
                 .collect()
         } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position - 1) {
-            // We generally subtract one from current scroll position because of the all
-            // entry. TODO: Do this a bit better (e.g. we can just do if let
-            // Some(_) = cpu_points.get())
+            // We generally subtract one from current scroll position because of
+            // the all entry. TODO: Do this a bit better (e.g. we
+            // can just do if let Some(_) = cpu_points.get())
 
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.styles.avg_cpu_colour
@@ -241,8 +242,8 @@ impl Painter {
             .widget_states
             .get_mut(&(widget_id - 1))
         {
-            // TODO: This line (and the one above, see caller) is pretty dumb but I guess
-            // needed for now. Refactor if possible!
+            // TODO: This line (and the one above, see caller) is pretty dumb
+            // but I guess needed for now. Refactor if possible!
             cpu_widget_state.is_legend_hidden = false;
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;

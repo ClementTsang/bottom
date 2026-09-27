@@ -4,7 +4,10 @@ use ratatui::{
 };
 
 use super::{colour, hex};
-use crate::options::config::style::{Styles, themes::hex_colour};
+use crate::{
+    canvas::components::pipe_gauge::BarType,
+    options::config::style::{Styles, themes::hex_colour},
+};
 
 impl Styles {
     pub(crate) fn gruvbox_palette() -> Self {
@@ -75,6 +78,7 @@ impl Styles {
             invalid_query_style: colour!(Color::Red),
             disabled_text_style: hex!("#665c54"),
             border_type: BorderType::Plain,
+            bar_type: BarType::default(),
             #[cfg(target_os = "linux")]
             thread_text_style: hex!("#458588"),
         }
@@ -154,6 +158,7 @@ impl Styles {
             invalid_query_style: colour!(Color::Red),
             disabled_text_style: hex!("#d5c4a1"),
             border_type: BorderType::Plain,
+            bar_type: BarType::default(),
             #[cfg(target_os = "linux")]
             thread_text_style: hex!("#458588"),
         }

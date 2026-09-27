@@ -45,8 +45,8 @@ impl Painter {
 
         if app_state.should_get_widget_bounds() {
             // Update draw loc in widget map
-            // Note that in both cases, we always go to the same widget id so it's fine to
-            // do it like this lol.
+            // Note that in both cases, we always go to the same widget id so
+            // it's fine to do it like this lol.
             if let Some(network_widget) = app_state.widget_map.get_mut(&widget_id) {
                 network_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
                 network_widget.bottom_right_corner =
@@ -84,8 +84,8 @@ impl Painter {
 
             let use_old_network_legend = app_state.app_config_fields.use_old_network_legend;
             let legend_constraints = if use_old_network_legend {
-                // Always hide it. Note that I could pass in `None` to the position as well but
-                // eh this works.
+                // Always hide it. Note that I could pass in `None` to the
+                // position as well but eh this works.
                 LegendConstraints {
                     width: Constraint::Length(0),
                     height: Constraint::Length(0),
@@ -99,7 +99,8 @@ impl Painter {
                 }
             };
 
-            // TODO: Add support for clicking on legend to only show that value on chart.
+            // TODO: Add support for clicking on legend to only show that value
+            // on chart.
             let use_binary_prefix = app_state.app_config_fields.network_use_binary_prefix;
             let unit_type = app_state.app_config_fields.network_unit_type;
             let unit = match unit_type {
@@ -140,9 +141,10 @@ impl Painter {
                 const MAX_LEGEND_WIDTH: u16 = 70;
                 let approx_legend_width = draw_loc.width * 3 / 4;
 
-                // FIXME: I'm not really a huge fan of this - I think it may be better to just
-                // not support this and allow for more easily spawning a
-                // separate legend table (basically old legend).
+                // FIXME: I'm not really a huge fan of this - I think it may be
+                // better to just not support this and allow for
+                // more easily spawning a separate legend table
+                // (basically old legend).
                 if app_state.app_config_fields.network_show_packets
                     && approx_legend_width > MAX_LEGEND_WIDTH
                 {
@@ -329,20 +331,21 @@ impl Painter {
 fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, Vec<String>) {
     // So, we're going with an approach like this for linear data:
     // - Main goal is to maximize the amount of information displayed given a
-    //   specific height. We don't want to drown out some data if the ranges are too
-    //   far though!  Nor do we want to filter out too much data...
-    // - Change the y-axis unit (kilo/kibi, mega/mebi...) dynamically based on max
-    //   load.
+    //   specific height. We don't want to drown out some data if the ranges are
+    //   too far though!  Nor do we want to filter out too much data...
+    // - Change the y-axis unit (kilo/kibi, mega/mebi...) dynamically based on
+    //   max load.
     //
-    // The idea is we take the top value, build our scale such that each "point" is
-    // a scaled version of that. So for example, let's say I use 390 Mb/s.  If I
-    // drew 4 segments, it would be 97.5, 195, 292.5, 390, and
+    // The idea is we take the top value, build our scale such that each "point"
+    // is a scaled version of that. So for example, let's say I use 390
+    // Mb/s.  If I drew 4 segments, it would be 97.5, 195, 292.5, 390, and
     // probably something like 438.75?
     //
-    // So, how do we do this in ratatui?  Well, if we are using intervals that tie
-    // in perfectly to the max value we want... then it's actually not that
-    // hard. Since ratatui accepts a vector as labels and will properly space
-    // them all out... we just work with that and space it out properly.
+    // So, how do we do this in ratatui?  Well, if we are using intervals that
+    // tie in perfectly to the max value we want... then it's actually not
+    // that hard. Since ratatui accepts a vector as labels and will properly
+    // space them all out... we just work with that and space it out
+    // properly.
     //
     // Dynamic chart idea based off of FreeNAS's chart design.
     //
@@ -382,8 +385,9 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
             };
 
             let max_entry_upper = if max_entry == 0.0 {
-                // If it's 0, then just use a very low value so the labels aren't just "0.0" 4
-                // times. This _also_ prevents the y-axis height range ever
+                // If it's 0, then just use a very low value so the labels
+                // aren't just "0.0" 4 times. This _also_
+                // prevents the y-axis height range ever
                 // being 0.
                 1.0
             } else {
@@ -420,9 +424,10 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
                 }
             };
 
-            // Finally, build an acceptable range starting from there, using the given
-            // height! Note we try to put more of a weight on the bottom section
-            // vs. the top, since the top has less data.
+            // Finally, build an acceptable range starting from there, using the
+            // given height! Note we try to put more of a weight on
+            // the bottom section vs. the top, since the top has
+            // less data.
             let base_unit = max_value_scaled;
             let labels: Vec<String> = vec![
                 format!("0{unit_prefix}{unit_type}"),
@@ -432,8 +437,9 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
             ]
             .into_iter()
             .map(|s| {
-                // Pull 5 as the longest legend value is generally going to be 5 digits (if they
-                // somehow hit over 5 terabits per second)
+                // Pull 5 as the longest legend value is generally going to be 5
+                // digits (if they somehow hit over 5 terabits
+                // per second)
                 format!("{s:>5}")
             })
             .collect();
@@ -447,8 +453,8 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
                 (LOG_MEGA_LIMIT, LOG_GIGA_LIMIT, LOG_TERA_LIMIT)
             };
 
-            // Remember to do saturating log checks as otherwise 0.0 becomes inf, and you
-            // get gaps!
+            // Remember to do saturating log checks as otherwise 0.0 becomes
+            // inf, and you get gaps!
             let max_entry = if use_binary_prefix {
                 saturating_log2(max_entry)
             } else {
@@ -534,7 +540,8 @@ fn adjust_network_data_point(max_entry: f64, config: &AppConfigFields) -> (f64, 
                     ],
                 )
             } else {
-                // I really doubt anyone's transferring beyond petabyte speeds...
+                // I really doubt anyone's transferring beyond petabyte
+                // speeds...
                 (
                     if use_binary_prefix {
                         LOG_PEBI_LIMIT

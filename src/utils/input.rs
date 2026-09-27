@@ -74,8 +74,8 @@ impl InputFieldState {
     /// such that this is clear this only matters for drawing... but it also
     /// changes states...
     pub(crate) fn get_start_position(&mut self, available_width: usize, is_force_redraw: bool) {
-        // Remember - the number of columns != the number of grapheme slots/sizes, you
-        // cannot use index to determine this reliably!
+        // Remember - the number of columns != the number of grapheme
+        // slots/sizes, you cannot use index to determine this reliably!
 
         let start_index = if is_force_redraw {
             0
@@ -100,7 +100,8 @@ impl InputFieldState {
             // - The current start index can show the cursor's word.
             // - The current start index cannot show the cursor's word.
             //
-            // What differs is how we "scroll" based on the cursor movement direction.
+            // What differs is how we "scroll" based on the cursor movement
+            // direction.
 
             self.display_start_index = match self.cursor_direction {
                 CursorDirection::Right => {
@@ -108,7 +109,8 @@ impl InputFieldState {
                         // Use the current index.
                         start_index
                     } else if cursor_range.end >= available_width {
-                        // If the current position is past the last visible element, skip until we
+                        // If the current position is past the last visible
+                        // element, skip until we
                         // see it.
 
                         let mut index = 0;
@@ -159,8 +161,8 @@ impl InputFieldState {
             Ok(_) => {}
             Err(err) => match err {
                 GraphemeIncomplete::PreContext(ctx) => {
-                    // Provide the entire string as context. Not efficient but should resolve
-                    // failures.
+                    // Provide the entire string as context. Not efficient but
+                    // should resolve failures.
                     self.grapheme_cursor
                         .provide_context(&self.current_query[0..ctx], 0);
 
@@ -182,8 +184,8 @@ impl InputFieldState {
             Ok(_) => {}
             Err(err) => match err {
                 GraphemeIncomplete::PreContext(ctx) => {
-                    // Provide the entire string as context. Not efficient but should resolve
-                    // failures.
+                    // Provide the entire string as context. Not efficient but
+                    // should resolve failures.
                     self.grapheme_cursor
                         .provide_context(&self.current_query[0..ctx], 0);
 
@@ -717,18 +719,19 @@ mod tests {
     /// producing the wrong result or panicking.
     #[test]
     fn delete_previous_word_unicode() {
-        // "你好 world" - '你'=3 bytes, '好'=3 bytes, ' '=1, "world"=5, so 12 bytes
-        // total
+        // "你好 world" - '你'=3 bytes, '好'=3 bytes, ' '=1, "world"=5, so 12
+        // bytes total
         let mut state = InputFieldState::default();
         state.insert_string("你好 world".to_string());
 
-        // Cursor is at the end (byte 12). Deleting the previous word should remove
-        // "world", leaving "你好 " (7 bytes).
+        // Cursor is at the end (byte 12). Deleting the previous word should
+        // remove "world", leaving "你好 " (7 bytes).
         state.delete_previous_word();
         assert_eq!(state.current_query(), "你好 ");
         assert_eq!(state.cursor_index(), 7);
 
-        // Deleting again skips the trailing space then removes "你好", leaving "".
+        // Deleting again skips the trailing space then removes "你好", leaving
+        // "".
         state.delete_previous_word();
         assert_eq!(state.current_query(), "");
         assert_eq!(state.cursor_index(), 0);
@@ -821,7 +824,8 @@ mod tests {
         assert_eq!(state.grapheme_cursor.cur_cursor(), 12);
         assert_eq!(state.display_start_index, 10);
 
-        // Move past the flag emoji (🇨🇦 = 8 bytes) to the end of string (byte 20).
+        // Move past the flag emoji (🇨🇦 = 8 bytes) to the end of string (byte
+        // 20).
         state.move_right();
         state.get_start_position(4, false);
         assert_eq!(state.grapheme_cursor.cur_cursor(), 20);

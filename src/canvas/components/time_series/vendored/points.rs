@@ -16,17 +16,19 @@ impl<F: Copy + Default + Into<f64>> TimeChart<'_, F> {
         // - Last point wins for what gets drawn.
         // - We set _all_ points for all datasets before actually rendering.
         //
-        // By doing this, it's a bit more efficient from my experience than looping
-        // over each dataset and rendering a new layer each time.
+        // By doing this, it's a bit more efficient from my experience than
+        // looping over each dataset and rendering a new layer each
+        // time.
         //
         // See https://github.com/ClementTsang/bottom/pull/918 and
         // https://github.com/ClementTsang/bottom/pull/937 for the original motivation.
         //
-        // We also additionally do some interpolation logic because we may get caught
-        // missing some points when drawing, but we generally want to avoid
-        // jarring gaps between the edges when there's a point that is off
-        // screen and so a line isn't drawn (right edge generally won't have this issue
-        // issue but it can happen in some cases).
+        // We also additionally do some interpolation logic because we may get
+        // caught missing some points when drawing, but we generally
+        // want to avoid jarring gaps between the edges when there's a
+        // point that is off screen and so a line isn't drawn (right
+        // edge generally won't have this issue issue but it can happen
+        // in some cases).
 
         for dataset in &self.datasets {
             let Data::Some { times, values } = dataset.data else {
@@ -40,24 +42,27 @@ impl<F: Copy + Default + Into<f64>> TimeChart<'_, F> {
             let color = dataset.style.fg.unwrap_or(Color::Reset);
             let left_edge = self.x_axis.bounds.get_bounds()[0];
 
-            // TODO: (points_rework_v1) Can we instead modify the range so it's based on the
-            // epoch rather than having to convert? TODO: (points_rework_v1) Is
-            // this efficient? Or should I prune using take_while first?
+            // TODO: (points_rework_v1) Can we instead modify the range so it's
+            // based on the epoch rather than having to convert?
+            // TODO: (points_rework_v1) Is this efficient? Or should
+            // I prune using take_while first?
             for (curr, next) in values
                 .iter_along_base(times)
                 .rev()
                 .map(|(&time, &val)| {
                     let from_start = -(current_time.duration_since(time).as_millis() as f64);
 
-                    // XXX: Should this be generic over dataset.graph_type instead? That would allow
-                    // us to move transformations behind a type - however, that
+                    // XXX: Should this be generic over dataset.graph_type
+                    // instead? That would allow us to move
+                    // transformations behind a type - however, that
                     // also means that there's some complexity added.
                     (from_start, self.scaling.scale(val.into()))
                 })
                 .tuple_windows()
             {
                 if curr.0 == left_edge {
-                    // The current point hits the left edge. Draw just the current point and halt.
+                    // The current point hits the left edge. Draw just the
+                    // current point and halt.
                     ctx.draw(&Points {
                         coords: &[curr],
                         color,
@@ -65,8 +70,8 @@ impl<F: Copy + Default + Into<f64>> TimeChart<'_, F> {
 
                     break;
                 } else if next.0 < left_edge {
-                    // The next point goes past the left edge. Interpolate a point + the line and
-                    // halt.
+                    // The next point goes past the left edge. Interpolate a
+                    // point + the line and halt.
                     let interpolated = interpolate_point(&next, &curr, left_edge);
 
                     ctx.draw(&CanvasLine {

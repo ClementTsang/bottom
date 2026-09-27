@@ -2,11 +2,11 @@
 
 ---
 
-## Bug Fixes
-
 ## Features
 
 ## Changes
+
+## Bug Fixes
 
 ## Other
 

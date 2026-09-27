@@ -96,7 +96,8 @@ impl Painter {
 
                 if !matched_body.is_empty() || header_matches {
                     if let Some(header) = header_str {
-                        // Don't insert the space if there's nothing above anyway.
+                        // Don't insert the space if there's nothing above
+                        // anyway.
                         if !lines.is_empty() {
                             lines.push(Line::from(Span::default()));
                         }
@@ -166,14 +167,16 @@ impl Painter {
         };
 
         if app_state.should_get_widget_bounds() {
-            // We must also recalculate how many lines are wrapping to properly get
-            // scrolling to work on small terminal sizes... oh joy.
+            // We must also recalculate how many lines are wrapping to properly
+            // get scrolling to work on small terminal sizes... oh
+            // joy.
 
             let inner = block.inner(content_area);
             app_state.help_dialog_state.height = inner.height;
 
-            // The overflow buffer is used to account for lines that wrap onto multiple lines,
-            // so we can properly calculate the max scroll index later.
+            // The overflow buffer is used to account for lines that wrap onto
+            // multiple lines, so we can properly calculate the max
+            // scroll index later.
             let mut overflow_buffer = 0;
             let paragraph_width: usize = max(inner.width, 1).into();
             let mut prev_section_len = 0;
@@ -422,8 +425,8 @@ mod tests {
         check_spans(&lines[0], ["Hi 你好!", "🇨🇦", ""]);
     }
 
-    /// Shows that we only match the first occurrence in the line. This is expected behaviour as we're passing
-    /// in separate strings.
+    /// Shows that we only match the first occurrence in the line. This is
+    /// expected behaviour as we're passing in separate strings.
     #[test]
     fn test_unicode_3() {
         let mut lines = Vec::new();

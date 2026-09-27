@@ -2,15 +2,16 @@
 //!
 //! TODO: Rename this to intake? Collection?
 
-#[cfg(feature = "nvidia")]
-pub mod nvidia;
-
-#[cfg(all(target_os = "linux", feature = "gpu"))]
-pub mod amd;
+#[cfg(feature = "gpu")]
+pub mod gpu;
+#[cfg(feature = "gpu")]
+pub use gpu::*;
 
 #[cfg(target_os = "linux")]
 mod linux {
     pub mod cgroups;
+    #[cfg(feature = "gpu")]
+    pub mod drm;
     pub mod utils;
 }
 
@@ -167,6 +168,7 @@ pub struct DataCollector {
     use_current_cpu_total: bool,
     show_average_cpu: bool,
     get_process_threads: bool,
+    get_process_swap: bool,
 
     last_list_collection_time: Instant,
     should_run_less_routine_tasks: bool,
@@ -190,6 +192,11 @@ pub struct DataCollector {
     gpu_pids: Option<Vec<IntHashMap<Pid, (u64, u32)>>>,
     #[cfg(feature = "gpu")]
     gpus_total_mem: Option<u64>,
+
+    #[cfg(all(target_os = "linux", feature = "gpu", feature = "nvidia"))]
+    /// A vector of GPU names and their corresponding paths, alongside the last update time.
+    nvidia_gpu_list_cache: Option<(Vec<(String, std::path::PathBuf)>, Instant)>,
+
     #[cfg(feature = "zfs")]
     free_arc_mem: bool,
 
@@ -220,6 +227,7 @@ impl DataCollector {
             use_current_cpu_total: false,
             unnormalized_cpu: false,
             get_process_threads: false,
+            get_process_swap: false,
             last_collection_time,
             total_rx: 0,
             total_tx: 0,
@@ -238,6 +246,8 @@ impl DataCollector {
             gpu_pids: None,
             #[cfg(feature = "gpu")]
             gpus_total_mem: None,
+            #[cfg(all(target_os = "linux", feature = "gpu", feature = "nvidia"))]
+            nvidia_gpu_list_cache: None,
             #[cfg(feature = "zfs")]
             free_arc_mem: false,
             last_list_collection_time: last_collection_time,
@@ -292,6 +302,10 @@ impl DataCollector {
         self.get_process_threads = get_process_threads;
     }
 
+    pub fn set_get_process_swap(&mut self, get_process_swap: bool) {
+        self.get_process_swap = get_process_swap;
+    }
+
     pub fn set_include_unmounted_disks(&mut self, include_unmounted_disks: bool) {
         self.include_unmounted_disks = include_unmounted_disks;
     }
@@ -309,8 +323,8 @@ impl DataCollector {
     /// - Disk (Windows, FreeBSD)
     /// - Temperatures (non-Linux)
     fn refresh_sysinfo_data(&mut self) {
-        // Refresh the list of objects once every minute. If it's too frequent it can
-        // cause segfaults.
+        // Refresh the list of objects once every minute. If it's too frequent
+        // it can cause segfaults.
 
         if self.widgets_to_harvest.use_cpu || self.widgets_to_harvest.use_proc {
             self.sys.system.refresh_cpu_all();
@@ -422,11 +436,7 @@ impl DataCollector {
             let mut local_gpu_total_mem: u64 = 0;
 
             #[cfg(feature = "nvidia")]
-            if let Some(data) = nvidia::get_nvidia_vecs(
-                &self.filters.temp_filter,
-                &self.filters.temp_graph_filter,
-                &self.widgets_to_harvest,
-            ) {
+            if let Some(data) = nvidia::get_nvidia_gpu_data(self) {
                 if let Some(mut temp) = data.temperature {
                     if let Some(sensors) = &mut self.data.temperature_sensors {
                         sensors.append(&mut temp);
@@ -445,12 +455,25 @@ impl DataCollector {
 
             #[cfg(target_os = "linux")]
             if let Some(data) =
-                amd::get_amd_vecs(&self.widgets_to_harvest, self.last_collection_time)
+                amd::get_amd_gpu_data(&self.widgets_to_harvest, self.last_collection_time)
             {
                 if let Some(mut mem) = data.memory {
                     local_gpu.append(&mut mem);
                 }
-                if let Some(mut proc) = data.procs {
+                if let Some(mut proc) = data.process_data {
+                    local_gpu_pids.append(&mut proc.1);
+                    local_gpu_total_mem += proc.0;
+                }
+            }
+
+            #[cfg(target_os = "linux")]
+            if let Some(data) =
+                intel::get_intel_gpu_data(&self.widgets_to_harvest, self.last_collection_time)
+            {
+                if let Some(mut mem) = data.memory {
+                    local_gpu.append(&mut mem);
+                }
+                if let Some(mut proc) = data.process_data {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
@@ -479,9 +502,10 @@ impl DataCollector {
         if self.widgets_to_harvest.use_proc
             && let Ok(mut process_list) = self.get_processes()
         {
-            // NB: To avoid duplicate sorts on rerenders/events, we sort the processes by
-            // PID here. We also want to avoid re-sorting *again* later on
-            // if we're sorting by PID, since we already did it here!
+            // NB: To avoid duplicate sorts on rerenders/events, we sort the
+            // processes by PID here. We also want to avoid
+            // re-sorting *again* later on if we're sorting by PID,
+            // since we already did it here!
             process_list.sort_unstable_by_key(|p| p.pid);
             self.data.list_of_processes = Some(process_list);
         }
@@ -523,7 +547,8 @@ impl DataCollector {
                             if arc.0.used_bytes > arc.1 {
                                 #[cfg(target_os = "linux")]
                                 {
-                                    // Keep arc min like htop; the subtraction below won't underflow because of
+                                    // Keep arc min like htop; the subtraction
+                                    // below won't underflow because of
                                     // the above check.
                                     mem.used_bytes =
                                         mem.used_bytes.saturating_sub(arc.0.used_bytes - arc.1);

@@ -14,15 +14,16 @@ pub fn get_cpu_data_list(collector: &DataCollector) -> CollectionResult<CpuHarve
             target_os = "linux" => {
                 cpus.push(CpuData {
                     data_type: CpuDataType::Avg,
-                    usage: collector.cgroup_cpu_data.avg_cpu_percent.unwrap_or_else(|| sys.global_cpu_usage()),
+                    usage: collector
+                        .cgroup_cpu_data
+                        .avg_cpu_percent
+                        .unwrap_or_else(|| sys.global_cpu_usage()),
                 });
             }
-            _ => {
-                cpus.push(CpuData {
-                    data_type: CpuDataType::Avg,
-                    usage: sys.global_cpu_usage(),
-                })
-            }
+            _ => cpus.push(CpuData {
+                data_type: CpuDataType::Avg,
+                usage: sys.global_cpu_usage(),
+            }),
         }
     }
 
@@ -42,8 +43,8 @@ pub fn get_cpu_data_list(collector: &DataCollector) -> CollectionResult<CpuHarve
 
 #[cfg(unix)]
 pub(crate) fn get_load_avg() -> crate::collection::cpu::LoadAvgHarvest {
-    // The API for sysinfo apparently wants you to call it like this, rather than
-    // using a &System.
+    // The API for sysinfo apparently wants you to call it like this, rather
+    // than using a &System.
     let sysinfo::LoadAvg { one, five, fifteen } = sysinfo::System::load_average();
 
     [one as f32, five as f32, fifteen as f32]

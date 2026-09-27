@@ -67,8 +67,9 @@ impl Painter {
                             .is_some_and(|d| has_data_in_window(d, times, current_display_time))
                     };
 
-                    // If there is a mount point and we're in mount legend mode, it must be non-empty
-                    // (i.e. actually mounted), or we will short-circuit and ignore it.
+                    // If there is a mount point and we're in mount legend mode,
+                    // it must be non-empty (i.e. actually
+                    // mounted), or we will short-circuit and ignore it.
                     if let Some(mount_point) = mount_map.get(name.as_str()) {
                         match legend_type {
                             DiskGraphLegend::Disk => true,
@@ -77,11 +78,14 @@ impl Painter {
                     } else {
                         match legend_type {
                             DiskGraphLegend::Disk => {
-                                // Otherwise, it may have _previously_ been a valid mount point, so keep showing it until it ages out.
+                                // Otherwise, it may have _previously_ been a
+                                // valid mount point, so keep showing it until
+                                // it ages out.
                                 has_read_data()
                             }
                             DiskGraphLegend::Mount => {
-                                // Since it would be misleading in this case, just skip it in mount mode.
+                                // Since it would be misleading in this case,
+                                // just skip it in mount mode.
                                 false
                             }
                         }
@@ -114,12 +118,14 @@ impl Painter {
             };
 
             // Removed devices still visible in the window show "N/A".
-            // TODO: Maybe should make it so the colour is based on entry name? As then it may shift.
+            // TODO: Maybe should make it so the colour is based on entry name?
+            // As then it may shift.
             let read_colours = &self.styles.disk_io_read_colour_styles;
             let write_colours = &self.styles.disk_io_write_colour_styles;
 
-            // Pad the device/mount labels to the widest visible one so the rate columns
-            // line up in the legend (the rate itself is already fixed-width).
+            // Pad the device/mount labels to the widest visible one so the rate
+            // columns line up in the legend (the rate itself is
+            // already fixed-width).
             let name_width = device_names
                 .iter()
                 .map(|name| match legend_type {
@@ -140,7 +146,8 @@ impl Painter {
                     DiskGraphLegend::Disk => name.as_str(),
                     DiskGraphLegend::Mount => match mount_map.get(name.as_str()).copied() {
                         Some(mount) => mount,
-                        // This wouldn't trigger anyway, we filter out devices without mount points in mount legend mode.
+                        // This wouldn't trigger anyway, we filter out devices without mount points
+                        // in mount legend mode.
                         None => continue,
                     },
                 };
@@ -161,7 +168,8 @@ impl Painter {
                     write_colours[idx % write_colours.len()]
                 };
 
-                // TODO: Combine into one line; probably need to add some kind of multi-styled GraphData.
+                // TODO: Combine into one line; probably need to add some kind
+                // of multi-styled GraphData.
                 if let Some(values) = read_values {
                     let rate = if is_active {
                         format_rate_fixed(values.last().copied().unwrap_or(0.0))
@@ -237,8 +245,8 @@ impl Painter {
 }
 
 /// Returns true if `data` has at least one real (non-gap) data point within the
-/// visible time window defined by `current_display_time` milliseconds from the end
-/// of `times`.
+/// visible time window defined by `current_display_time` milliseconds from the
+/// end of `times`.
 fn has_data_in_window<F: Copy + Default + Into<f64>>(
     data: &ChunkedData<F>, times: &[Instant], current_display_time: u64,
 ) -> bool {
@@ -252,8 +260,9 @@ fn has_data_in_window<F: Copy + Default + Into<f64>>(
         .is_some_and(|(t, _)| *t >= oldest)
 }
 
-/// Format a byte/s rate as a fixed-width string (always 11 chars, right-aligned)
-/// to keep legend labels a stable width and prevent legend box shifting between frames.
+/// Format a byte/s rate as a fixed-width string (always 11 chars,
+/// right-aligned) to keep legend labels a stable width and prevent legend box
+/// shifting between frames.
 fn format_rate_fixed(bytes_per_sec: f64) -> String {
     let (val, unit) = if bytes_per_sec < KIBI_LIMIT_F64 {
         (bytes_per_sec, "B/s")

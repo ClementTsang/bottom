@@ -1,5 +1,6 @@
 //! Config options around styling.
 
+mod bars;
 mod battery;
 mod borders;
 mod cpu;
@@ -29,8 +30,9 @@ use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
 
 use super::Config;
-use crate::options::{
-    OptionError, OptionResult, args::BottomArgs, config::style::utils::set_bg_colour,
+use crate::{
+    canvas::components::pipe_gauge::BarType,
+    options::{OptionError, OptionResult, args::BottomArgs, config::style::utils::set_bg_colour},
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -143,6 +145,7 @@ pub struct Styles {
     #[cfg(target_os = "linux")]
     pub(crate) thread_text_style: Style,
     pub(crate) border_type: BorderType,
+    pub(crate) bar_type: BarType,
 }
 
 impl Default for Styles {
@@ -261,10 +264,14 @@ impl Styles {
             selected_border_colour
         );
 
-        if let Some(widgets) = &config.widgets
-            && let Some(widget_borders) = widgets.widget_border_type
-        {
-            self.border_type = widget_borders.into();
+        if let Some(widgets) = &config.widgets {
+            if let Some(widget_borders) = widgets.widget_border_type {
+                self.border_type = widget_borders.into();
+            }
+
+            if let Some(bar_type) = widgets.bar_type {
+                self.bar_type = bar_type.into();
+            }
         }
 
         Ok(())
@@ -281,8 +288,8 @@ mod test {
 
     #[test]
     fn color_spelling_aliases_work() {
-        // Parse all_styling_color.toml (which uses the "color" alias spelling throughout)
-        // and assert every field was actually parsed.
+        // Parse all_styling_color.toml (which uses the "color" alias spelling
+        // throughout) and assert every field was actually parsed.
         let toml_str = include_str!("../../../tests/valid_configs/all_styling_color.toml");
         let config = toml_edit::de::from_str::<Config>(toml_str)
             .expect("config file should parse")

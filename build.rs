@@ -98,8 +98,9 @@ fn nightly_version() {
                 .args(["rev-parse", "--short=8", "HEAD"])
                 .output()
             {
-                // If we're not building in either, we do the lazy thing and fall back to
-                // manually grabbing info using git as a command.
+                // If we're not building in either, we do the lazy thing and
+                // fall back to manually grabbing info using git
+                // as a command.
                 let hash = String::from_utf8(output.stdout).unwrap();
                 output_nightly_version(version, &hash);
             }

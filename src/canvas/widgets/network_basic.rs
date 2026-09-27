@@ -56,8 +56,9 @@ impl Painter {
                 avg_tx_packet_size,
             } = calculate_packet_info(network_data, use_binary_prefix);
 
-            // TODO: Stylize packet stuff later with something else? Or maybe make it so
-            // total is now (by default) just bolded RX/TX? I doubt anyone cares...
+            // TODO: Stylize packet stuff later with something else? Or maybe
+            // make it so total is now (by default) just bolded
+            // RX/TX? I doubt anyone cares...
             let rx_packet_rate_label = format!("RX Pkt: {}pkt/s", rx_packet_rate);
             let tx_packet_rate_label = format!("TX Pkt: {}pkt/s", tx_packet_rate);
             let avg_rx_packet_size_label = format!(
@@ -72,7 +73,8 @@ impl Painter {
             if draw_loc.width < 60 {
                 // 4 rows x 2 columns layout
                 // Column 1: RX, TX, Total RX, Total TX (top to bottom)
-                // Column 2: RX Packets, TX Packets, AVG RX, AVG TX (top to bottom)
+                // Column 2: RX Packets, TX Packets, AVG RX, AVG TX (top to
+                // bottom)
                 let grid_loc = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])

@@ -355,10 +355,12 @@ jobs:
         run: |
           choco install dotnet-sdk --pre -y --no-progress;
 
-      - name: Install wixtoolset
+      - name: Install WiX Toolset
         shell: powershell
         run: |
-          choco install -y wixtoolset --no-progress;
+          dotnet tool install --global wix --version 4.0.6
+          "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          wix extension add --global WixToolset.UI.wixext/4.0.6
 
       - name: Read Rust version
         shell: bash
@@ -376,16 +378,15 @@ jobs:
       - name: Install cargo-wix
         shell: powershell
         run: |
-          cargo install cargo-wix --version 0.3.8 --locked
+          # We use a git version as the newest stable version doesn't support WiX 4 unfortunately.
+          cargo install cargo-wix --git https://github.com/volks73/cargo-wix --rev 9a8ed9486637e1fb839f209730eda6c95fd12d88 --locked
 
       - name: Build MSI file
         shell: powershell
         env:
           BTM_GENERATE: true
         run: |
-          Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
-          refreshenv
-          cargo wix --nocapture
+          cargo wix --toolset modern --nocapture
           mv bottom_installer.msi ${{ matrix.info.output }}
 
       - name: Generate artifact attestation for file
@@ -429,19 +430,19 @@ jobs:
               target: "aarch64-unknown-linux-musl",
               cross: true,
               dpkg: arm64,
-              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
+              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu@sha256:d36a9c470790bf2ef86eb7a68cd6ecca3c3934ccd0be7299cba76678b40a48aa",
             }
           - {
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
               dpkg: armhf,
-              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
+              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf@sha256:44ee95e9a2248287815c57affa673b0f50cf34a3126c59ae83205f483c450d02",
             }
           - {
               target: "armv7-unknown-linux-musleabihf",
               cross: true,
               dpkg: armhf,
-              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
+              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf@sha256:44ee95e9a2248287815c57affa673b0f50cf34a3126c59ae83205f483c450d02",
             }
     steps:
       - name: Checkout repository

@@ -138,22 +138,24 @@ impl<const W: usize, const H: usize> Grid for PatternGrid<W, H> {
         // The ratatui/tui-rs implementation; this gives a more merged
         // look, but it also makes it a bit harder to read in some cases.
         //
-        // using get_mut here because we are indexing the vector with usize values
-        // and we want to make sure we don't panic if the index is out of bounds
-        // if let Some(cell) = self.cells.get_mut(index) {
-        //     cell.pattern |= 1u8 << ((x % W) + W * (y % H));
-        //     cell.color = Some(color);
+        // using get_mut here because we are indexing the vector with usize
+        // values and we want to make sure we don't panic if the index
+        // is out of bounds if let Some(cell) =
+        // self.cells.get_mut(index) {     cell.pattern |= 1u8 << ((x %
+        // W) + W * (y % H));     cell.color = Some(color);
         // }
 
         // Custom implementation do distinguish between lines better.
         if let Some(cell) = self.cells.get_mut(index) {
             if let Some(curr_color) = &mut cell.color {
                 if *curr_color != color {
-                    // If the colour doesn't match, then reset the colour and cell.
+                    // If the colour doesn't match, then reset the colour and
+                    // cell.
                     *curr_color = color;
                     cell.pattern = 1u8 << ((x % W) + W * (y % H));
                 } else {
-                    // If it does match, then combine it with the previous underlying cell.
+                    // If it does match, then combine it with the previous
+                    // underlying cell.
                     cell.pattern |= 1u8 << ((x % W) + W * (y % H));
                 }
             } else {
@@ -306,8 +308,9 @@ impl Grid for CharGrid {
 
     fn paint(&mut self, x: usize, y: usize, color: Color) {
         let index = y.saturating_mul(self.width as usize).saturating_add(x);
-        // using get_mut here because we are indexing the vector with usize values
-        // and we want to make sure we don't panic if the index is out of bounds
+        // using get_mut here because we are indexing the vector with usize
+        // values and we want to make sure we don't panic if the index
+        // is out of bounds
         if let Some(c) = self.cells.get_mut(index) {
             *c = Some(color);
         }
@@ -380,39 +383,41 @@ impl Grid for HalfBlockGrid {
     }
 
     fn save(&self) -> Layer {
-        // Given that we store the pixels in a grid, and that we want to use 2 pixels
-        // arranged vertically to form a single terminal cell, which can be
-        // either empty, upper half block, lower half block or full block, we
-        // need examine the pixels in vertical pairs to decide what character to
-        // print in each cell. So these are the 4 states we use to represent each
-        // cell:
+        // Given that we store the pixels in a grid, and that we want to use 2
+        // pixels arranged vertically to form a single terminal cell,
+        // which can be either empty, upper half block, lower half block
+        // or full block, we need examine the pixels in vertical pairs
+        // to decide what character to print in each cell. So these are
+        // the 4 states we use to represent each cell:
         //
         // 1. upper: reset, lower: reset => ' ' fg: reset / bg: reset
         // 2. upper: reset, lower: color => '▄' fg: lower color / bg: reset
         // 3. upper: color, lower: reset => '▀' fg: upper color / bg: reset
-        // 4. upper: color, lower: color => '▀' fg: upper color / bg: lower color
+        // 4. upper: color, lower: color => '▀' fg: upper color / bg: lower
+        //    color
         //
-        // Note that because the foreground reset color (i.e. default foreground color)
-        // is usually not the same as the background reset color (i.e. default
-        // background color), we need to swap around the colors for that state
-        // (2 reset/color).
+        // Note that because the foreground reset color (i.e. default foreground
+        // color) is usually not the same as the background reset color
+        // (i.e. default background color), we need to swap around the
+        // colors for that state (2 reset/color).
         //
-        // When the upper and lower colors are the same, we could continue to use an
-        // upper half block, but we choose to use a full block instead. This
-        // allows us to write unit tests that treat the cell as a single
-        // character instead of two half block characters.
+        // When the upper and lower colors are the same, we could continue to
+        // use an upper half block, but we choose to use a full block
+        // instead. This allows us to write unit tests that treat the
+        // cell as a single character instead of two half block
+        // characters.
 
-        // first we join each adjacent row together to get an iterator that contains
-        // vertical pairs of pixels, with the lower row being the first element
-        // in the pair
+        // first we join each adjacent row together to get an iterator that
+        // contains vertical pairs of pixels, with the lower row being
+        // the first element in the pair
         let vertical_color_pairs = self
             .pixels
             .iter()
             .tuples()
             .flat_map(|(upper_row, lower_row)| zip(upper_row, lower_row));
 
-        // Then we determine the character to print for each pair, along with the color
-        // of the foreground and background.
+        // Then we determine the character to print for each pair, along with
+        // the color of the foreground and background.
         let contents = vertical_color_pairs
             .map(|(upper, lower)| {
                 let (symbol, fg, bg) = match (upper, lower) {
