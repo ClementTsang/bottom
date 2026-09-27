@@ -11,7 +11,7 @@ use crate::{
     options::config::style::Styles,
     utils::{
         conversion::{bin_bytes_per_second_string, dec_bytes_per_second_string},
-        data_units::{convert_bytes, format_significant_digits, get_decimal_bytes},
+        data_units::{convert_bytes, format_significant_digits},
         general::sort_partial_fn,
     },
 };
