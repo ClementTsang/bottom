@@ -1,5 +1,6 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
+use concat_string::concat_string;
 use serde::Deserialize;
 
 use crate::{
@@ -11,7 +12,7 @@ use crate::{
     options::config::style::Styles,
     utils::{
         conversion::{bin_bytes_per_second_string, dec_bytes_per_second_string},
-        data_units::convert_bytes,
+        data_units::{convert_bytes, format_byte_decimal_values},
         general::sort_partial_fn,
     },
 };
@@ -35,7 +36,11 @@ impl DiskWidgetData {
     fn total_space(&self) -> Cow<'static, str> {
         if let Some(total_bytes) = self.total_bytes {
             let converted_total_space = convert_bytes(total_bytes, self.use_binary_prefix);
-            format!("{:.0}{}", converted_total_space.0, converted_total_space.1).into()
+            concat_string!(
+                format_byte_decimal_values(converted_total_space.0),
+                converted_total_space.1
+            )
+            .into()
         } else {
             "N/A".into()
         }
@@ -44,7 +49,11 @@ impl DiskWidgetData {
     fn free_space(&self) -> Cow<'static, str> {
         if let Some(free_bytes) = self.free_bytes {
             let converted_free_space = convert_bytes(free_bytes, self.use_binary_prefix);
-            format!("{:.0}{}", converted_free_space.0, converted_free_space.1).into()
+            concat_string!(
+                format_byte_decimal_values(converted_free_space.0),
+                converted_free_space.1
+            )
+            .into()
         } else {
             "N/A".into()
         }
@@ -52,8 +61,12 @@ impl DiskWidgetData {
 
     fn used_space(&self) -> Cow<'static, str> {
         if let Some(used_bytes) = self.used_bytes {
-            let converted_free_space = convert_bytes(used_bytes, self.use_binary_prefix);
-            format!("{:.0}{}", converted_free_space.0, converted_free_space.1).into()
+            let converted_used_space = convert_bytes(used_bytes, self.use_binary_prefix);
+            concat_string!(
+                format_byte_decimal_values(converted_used_space.0),
+                converted_used_space.1
+            )
+            .into()
         } else {
             "N/A".into()
         }
@@ -453,11 +466,11 @@ mod test {
             (0, "0B", "0B"),
             (999, "999B", "999B"),
             (1000, "1KB", "1000B"),
-            (1023, "1KB", "1023B"),
-            (1024, "1KB", "1KiB"),
-            (MEBI_LIMIT, "1MB", "1MiB"),
-            (500 * GIBI_LIMIT, "537GB", "500GiB"),
-            (TEBI_LIMIT, "1TB", "1TiB"),
+            (1023, "1.02KB", "1023B"),
+            (1024, "1.02KB", "1KiB"),
+            (MEBI_LIMIT, "1.05MB", "1MiB"),
+            (500 * GIBI_LIMIT, "536.9GB", "500GiB"),
+            (TEBI_LIMIT, "1.1TB", "1TiB"),
         ] {
             for (use_binary_prefix, expected) in [(false, decimal), (true, binary)] {
                 let data = disk(Some(bytes), use_binary_prefix);
