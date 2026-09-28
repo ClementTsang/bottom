@@ -22,19 +22,23 @@ impl Process {
         // SAFETY: Windows API call, tread carefully with the args.
         match unsafe { OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE, false, pid) } {
             Ok(process) => Ok(Process(process)),
-            Err(_) => bail!("process may have already been terminated."),
+            Err(e) => bail!(
+                "failed to open the process ({e}); if this process is elevated or a system \
+                process, try running bottom as an administrator."
+            ),
         }
     }
 
     fn kill(self) -> anyhow::Result<()> {
         // SAFETY: Windows API call, this is safe as we are passing in the
         // handle.
-        let result = unsafe { TerminateProcess(self.0, 1) };
-        if result.is_err() {
-            bail!("process may have already been terminated.");
+        match unsafe { TerminateProcess(self.0, 1) } {
+            Ok(_) => Ok(()),
+            Err(e) => bail!(
+                "failed to terminate the process ({e}); it may have already been terminated, or \
+                access was denied."
+            ),
         }
-
-        Ok(())
     }
 }
 

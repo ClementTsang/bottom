@@ -153,6 +153,16 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     pub fn ratatui_selected(&self) -> Option<usize> {
         self.state.table_state.selected()
     }
+
+    /// Returns the currently stored data.
+    pub fn data(&self) -> &[DataType] {
+        &self.data
+    }
+
+    /// Returns the index of the first visible row, as of the last draw.
+    pub fn display_start_index(&self) -> usize {
+        self.state.display_start_index
+    }
 }
 
 #[cfg(test)]

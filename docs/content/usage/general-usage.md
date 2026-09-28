@@ -63,6 +63,7 @@ Note that key bindings are generally case-sensitive.
 
 ## Mouse bindings
 
-| Binding     | Action             |
-| ----------- | ------------------ |
-| ++lbutton++ | Selects the widget |
+| Binding      | Action                                                                        |
+| ------------ | ----------------------------------------------------------------------------- |
+| ++lbutton++  | Selects the widget                                                            |
+| ++rbutton++  | Selects the widget and, if it is a process, opens the process kill dialog     |

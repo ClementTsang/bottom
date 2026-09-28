@@ -2053,6 +2053,21 @@ impl App {
         }
     }
 
+    /// Right-clicking selects the process under the cursor and opens the
+    /// kill dialog for it.
+    pub(crate) fn on_right_mouse_click(&mut self, x: u16, y: u16) {
+        if self.process_kill_dialog.is_open() {
+            // Clicks while the dialog is open are already routed to the
+            // dialog itself.
+            return;
+        }
+
+        self.on_left_mouse_up(x, y);
+        if matches!(self.current_widget.widget_type, BottomWidgetType::Proc) {
+            self.kill_current_process();
+        }
+    }
+
     /// Moves the mouse to the widget that was clicked on, then propagates the
     /// click down to be handled by the widget specifically.
     pub fn on_left_mouse_up(&mut self, x: u16, y: u16) {
@@ -2189,32 +2204,29 @@ impl App {
                             let offset_clicked_entry = clicked_entry - offset;
                             match &self.current_widget.widget_type {
                                 BottomWidgetType::Proc => {
-                                    if let Some(proc_widget_state) = self
+                                    let (is_tree_mode, clicked_selected) = self
                                         .states
                                         .proc_state
-                                        .get_widget_state(self.current_widget.widget_id)
-                                        && let Some(visual_index) =
-                                            proc_widget_state.table.ratatui_selected()
-                                    {
-                                        let is_tree_mode = matches!(
-                                            proc_widget_state.mode,
-                                            ProcWidgetMode::Tree { .. }
-                                        );
-                                        let change =
-                                            offset_clicked_entry as i64 - visual_index as i64;
+                                        .get_mut_widget_state(self.current_widget.widget_id)
+                                        .map(|proc_widget_state| {
+                                            (
+                                                matches!(
+                                                    proc_widget_state.mode,
+                                                    ProcWidgetMode::Tree { .. }
+                                                ),
+                                                proc_widget_state.select_clicked_row(
+                                                    offset_clicked_entry.into(),
+                                                ),
+                                            )
+                                        })
+                                        .unwrap_or((false, false));
 
-                                        self.change_process_position(change);
-
-                                        // If in tree mode, also check to see if
-                                        // this click is
-                                        // on
-                                        // the same entry as the already
-                                        // selected one - if it
-                                        // is,
-                                        // then we minimize.
-                                        if is_tree_mode && change == 0 {
-                                            self.toggle_collapsing_process_branch();
-                                        }
+                                    // If in tree mode, also check to see if
+                                    // this click is on the same entry as the
+                                    // already selected one - if it is, then
+                                    // we minimize.
+                                    if is_tree_mode && clicked_selected {
+                                        self.toggle_collapsing_process_branch();
                                     }
                                 }
                                 BottomWidgetType::ProcSort => {

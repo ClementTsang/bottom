@@ -225,6 +225,11 @@ pub struct ProcWidgetState {
     /// A name-to-pid mapping.
     pub id_pid_map: StringPidMap,
 
+    /// A snapshot of the row pids in display order, as of the last time the
+    /// table data was set. Used to resolve mouse clicks to the process that
+    /// was actually drawn, even if the data was re-sorted in between.
+    drawn_row_ids: Vec<Pid>,
+
     /// The default sort index.
     default_sort_index: usize,
 
@@ -458,6 +463,7 @@ impl ProcWidgetState {
             table,
             sort_table,
             id_pid_map,
+            drawn_row_ids: Vec::new(),
             column_mapping,
             is_sort_open: false,
             mode,
@@ -513,8 +519,28 @@ impl ProcWidgetState {
             }
             ProcWidgetMode::Tree(collapse) => self.get_tree_data(collapse, stored_data),
         };
+        self.drawn_row_ids = data.iter().map(|d| d.pid).collect();
         self.table.set_data(data);
         self.force_update_data = false;
+    }
+
+    /// Selects the process that was drawn at the given row offset in the
+    /// table's visible area, even if the underlying data was re-sorted since
+    /// the last draw. Returns whether the clicked row was already the
+    /// selected one.
+    pub fn select_clicked_row(&mut self, offset_clicked_entry: usize) -> bool {
+        let start = self.table.display_start_index();
+        let Some(drawn_pid) = self.drawn_row_ids.get(start + offset_clicked_entry) else {
+            return false;
+        };
+
+        let Some(new_position) = self.table.data().iter().position(|d| &d.pid == drawn_pid) else {
+            return false;
+        };
+
+        let was_selected = self.table.current_index() == new_position;
+        self.table.set_position(new_position);
+        was_selected
     }
 
     fn get_tree_data(
@@ -1375,6 +1401,79 @@ mod test {
         };
         let state = init_state(table_config, &init_columns);
         assert_eq!(state.table.sort_index(), 2);
+    }
+
+    #[test]
+    fn select_clicked_row_resolves_drawn_process() {
+        let init_columns = [
+            ProcWidgetColumn::PidOrCount,
+            ProcWidgetColumn::ProcNameOrCommand,
+            ProcWidgetColumn::Cpu,
+        ];
+
+        let mut state = init_default_state(&init_columns);
+
+        let base = ProcWidgetData {
+            pid: 1,
+            ppid: None,
+            id: "one".into(),
+            cpu_usage_percent: 0.0,
+            mem_usage: MemUsage::Percent(1.1),
+            virtual_mem: 100,
+            swap_bytes: Some(100),
+            rps: 0,
+            wps: 0,
+            total_read: 0,
+            total_write: 0,
+            process_state: "N/A",
+            process_char: '?',
+            #[cfg(unix)]
+            user: Some("root".into()),
+            #[cfg(not(target_family = "unix"))]
+            user: Some("N/A".into()),
+            num_similar: 0,
+            disabled: false,
+            time: Duration::from_secs(0),
+            #[cfg(feature = "gpu")]
+            gpu_mem_usage: MemUsage::Percent(1.1),
+            #[cfg(feature = "gpu")]
+            gpu_usage: 0,
+            #[cfg(target_os = "linux")]
+            process_type: crate::collection::processes::ProcessType::Regular,
+            #[cfg(unix)]
+            nice: 0,
+            priority: -20,
+        };
+
+        let one = base.clone();
+        let mut two = base.clone();
+        two.pid = 2;
+        let mut three = base;
+        three.pid = 3;
+
+        // Drawn order: one, two, three.
+        state
+            .table
+            .set_data(vec![one.clone(), two.clone(), three.clone()]);
+        state.drawn_row_ids = vec![1, 2, 3];
+
+        // Clicking the third visible row selects pid 3. The return value
+        // reports whether the clicked row was already the selected one.
+        assert!(!state.select_clicked_row(2));
+        assert_eq!(state.table.current_item().unwrap().pid, 3);
+
+        // If the data is re-sorted between the draw and the click, the click
+        // should still select the process that was drawn at the row, not
+        // whatever process now occupies it.
+        state
+            .table
+            .set_data(vec![three.clone(), one.clone(), two.clone()]);
+        assert!(!state.select_clicked_row(0));
+        assert_eq!(state.table.current_item().unwrap().pid, 1);
+
+        // Clicking the row the selection is already on is not a move.
+        assert!(state.select_clicked_row(0));
+        assert_eq!(state.table.current_item().unwrap().pid, 1);
     }
 
     #[test]

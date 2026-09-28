@@ -40,7 +40,10 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
                         // Trigger left click widget activity
                         app.on_left_mouse_up(x, y);
                     }
-                    crossterm::event::MouseButton::Right => {}
+                    crossterm::event::MouseButton::Right => {
+                        // Trigger right click widget activity
+                        app.on_right_mouse_click(x, y);
+                    }
                     _ => {}
                 }
             }
