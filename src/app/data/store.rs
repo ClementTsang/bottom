@@ -295,7 +295,8 @@ impl InnerData {
                     // Must trim one level further for macOS!
                     static DISK_REGEX: OnceLock<Regex> = OnceLock::new();
 
-                    #[expect(
+                    // FIXME: Can remove this later once https://github.com/rust-lang/rust-clippy/pull/17681 lands in stable?
+                    #[allow(
                         clippy::regex_creation_in_loops,
                         reason = "this is fine since it's done via a static OnceLock. In the future though, separate it out."
                     )]

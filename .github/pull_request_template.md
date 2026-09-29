@@ -36,10 +36,12 @@ _Ensure **all** of these are met:_
 - [ ] _There are no merge conflicts_
 - [ ] _You have personally reviewed your changes already before creating the PR_
 - [ ] _The pull request passes the provided CI pipeline_
-- _If the changes were generated with AI tools:_
-  - [ ] _Ensure it **fully** follows the [AI policy](https://github.com/ClementTsang/bottom/blob/main/AI_POLICY.md)._
-  - [ ] _Specify how it was used in the "Other" section._
-  - [ ] _Ensure that you, as a human, have personally reviewed the change_
+
+
+_If the changes were generated with AI tools:_
+- [ ] _Ensure it **fully** follows the [AI policy](https://github.com/ClementTsang/bottom/blob/main/AI_POLICY.md)._
+- [ ] _Specify how it was used in the "Other" section._
+- [ ] _Ensure that you, as a human, have personally reviewed the change_
 
 ## Other
 
