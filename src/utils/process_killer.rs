@@ -4,11 +4,57 @@
 use anyhow::bail;
 #[cfg(target_os = "windows")]
 use windows::Win32::{
-    Foundation::{CloseHandle, HANDLE},
+    Foundation::{CloseHandle, HANDLE, LUID},
+    Security::{
+        AdjustTokenPrivileges, LookupPrivilegeValueW, SE_DEBUG_NAME, SE_PRIVILEGE_ENABLED,
+        TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY,
+    },
     System::Threading::{
-        OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE, TerminateProcess,
+        GetCurrentProcess, OpenProcess, OpenProcessToken, PROCESS_QUERY_INFORMATION,
+        PROCESS_TERMINATE, TerminateProcess,
     },
 };
+
+/// Try to enable `SeDebugPrivilege` once, so `OpenProcess` below can open
+/// processes started by services or scheduled tasks when running elevated
+/// (this is what `taskkill /F` does internally). The privilege is present but
+/// disabled by default in elevated tokens; on non-elevated tokens this is a
+/// no-op and kills keep working as before.
+///
+/// See <https://github.com/ClementTsang/bottom/issues/1241>.
+#[cfg(target_os = "windows")]
+fn enable_debug_privilege() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        // SAFETY: Windows API calls, tread carefully with the args.
+        unsafe {
+            let mut token = HANDLE::default();
+            if OpenProcessToken(
+                GetCurrentProcess(),
+                TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+                &mut token,
+            )
+            .is_err()
+            {
+                return;
+            }
+
+            let mut luid = LUID::default();
+            if LookupPrivilegeValueW(None, SE_DEBUG_NAME, &mut luid).is_ok() {
+                let new_state = TOKEN_PRIVILEGES {
+                    PrivilegeCount: 1,
+                    Privileges: [windows::Win32::Security::LUID_AND_ATTRIBUTES {
+                        Luid: luid,
+                        Attributes: SE_PRIVILEGE_ENABLED,
+                    }],
+                };
+                let _ = AdjustTokenPrivileges(token, false, Some(&new_state), 0, None, None);
+            }
+
+            let _ = CloseHandle(token);
+        }
+    });
+}
 
 use crate::collection::processes::Pid;
 
@@ -52,6 +98,7 @@ impl Drop for Process {
 /// Kills a process, given a PID, for windows.
 #[cfg(target_os = "windows")]
 pub fn kill_process_given_pid(pid: Pid) -> anyhow::Result<()> {
+    enable_debug_privilege();
     let process = Process::open(pid as u32)?;
     process.kill()?;
 
