@@ -1,5 +1,5 @@
 name: Feature request
-description: Got a good idea that hasn't already been suggested?  Mention it here!
+description: Got a good idea that hasn't already been suggested? Mention it here!
 labels: [ "feature" ]
 body:
   - type: checkboxes
