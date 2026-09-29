@@ -7,7 +7,7 @@ _A description of the change, what it does, and why it was made. If relevant (e.
 
 ## Issue
 
-_If applicable, what issue does this address?_
+_If applicable, what issue does this address? Note that if this is for a new feature, please create an issue first and let it be discussed first. PRs that do not follow this may be closed._
 
 Closes: #<issue-number>
 
@@ -36,7 +36,10 @@ _Ensure **all** of these are met:_
 - [ ] _There are no merge conflicts_
 - [ ] _You have personally reviewed your changes already before creating the PR_
 - [ ] _The pull request passes the provided CI pipeline_
-- [ ] _If the changes were generated with AI tools, ensure it follows the [AI policy](https://github.com/ClementTsang/bottom/blob/main/AI_POLICY.md). Specify how it was used in the "Other" section, and that you as a human have personally reviewed the change_
+- _If the changes were generated with AI tools:_
+  - [ ] _Ensure it **fully** follows the [AI policy](https://github.com/ClementTsang/bottom/blob/main/AI_POLICY.md)._
+  - [ ] _Specify how it was used in the "Other" section._
+  - [ ] _Ensure that you, as a human, have personally reviewed the change_
 
 ## Other
 
