@@ -35,6 +35,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Changes
 
 - [#2260](https://github.com/ClementTsang/bottom/pull/2260): Enable scrollbars by default.
+- [#2266](https://github.com/ClementTsang/bottom/pull/2266): Show decimal places for disk usage info.
 
 ### Bug Fixes
 
