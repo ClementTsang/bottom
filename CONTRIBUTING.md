@@ -11,9 +11,12 @@ so that makes it much easier to reproduce the problem!
 
 ### Feature requests
 
-Please fill out the [feature request template](https://github.com/ClementTsang/bottom/issues/new?assignees=&labels=feature&template=feature_request.yml). Remember to give details about what the feature is along with why you think this suggestion will be useful.
+Please use the [feature request template](https://github.com/ClementTsang/bottom/issues/new?assignees=&labels=feature&template=feature_request.md&title=) and fill it out. Remember to give details about what the feature is along with why you think this suggestion will be useful first! Also, please check whether an existing issue
+already covers your specific feature request.
 
 ## Pull requests
+
+**Note**: if you want to add a new feature, please first open an appropriate issue to discuss the merits of the feature. PRs that do not do this may be closed.
 
 The expected workflow for a pull request is:
 
