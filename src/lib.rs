@@ -131,9 +131,13 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
 
     reset_stdout();
 
-    // Print stack trace. Must be done after!
+    // Print stack trace. Must be done after! Ignore write errors, as `println!`
+    // would panic inside this hook (and abort) if the terminal is gone.
     if let Some(panic_info) = panic_info.location() {
-        println!("thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}")
+        let _ = writeln!(
+            stdout(),
+            "thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}"
+        );
     }
 
     // TODO: Might be cleaner in the future to use a cancellation token, but
