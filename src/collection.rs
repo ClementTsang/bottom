@@ -453,6 +453,20 @@ impl DataCollector {
                 }
             }
 
+            #[cfg(all(target_os = "windows", feature = "gpu"))]
+            if (self.widgets_to_harvest.use_temp || self.widgets_to_harvest.use_temp_graph)
+                && let Some(mut temp) = amd_windows::get_amd_windows_temps(
+                    &self.filters.temp_filter,
+                    &self.filters.temp_graph_filter,
+                )
+            {
+                if let Some(sensors) = &mut self.data.temperature_sensors {
+                    sensors.append(&mut temp);
+                } else {
+                    self.data.temperature_sensors = Some(temp);
+                }
+            }
+
             #[cfg(target_os = "linux")]
             if let Some(data) =
                 amd::get_amd_gpu_data(&self.widgets_to_harvest, self.last_collection_time)

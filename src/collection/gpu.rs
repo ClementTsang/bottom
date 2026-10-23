@@ -6,5 +6,8 @@ cfg_select! {
         pub mod intel;
         pub mod amd;
     }
+    all(target_os = "windows", feature = "gpu") => {
+        pub mod amd_windows;
+    }
     _ => {}
 }
