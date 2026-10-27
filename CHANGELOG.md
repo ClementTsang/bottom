@@ -41,6 +41,8 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 - [#2225](https://github.com/ClementTsang/bottom/pull/2225): Fix waking up NVIDIA GPUs when getting stats on Linux.
 - [#2261](https://github.com/ClementTsang/bottom/pull/2261): Fix scrollbars not drawing when height of bar was 2 or less.
+- [#2279](https://github.com/ClementTsang/bottom/pull/2279): Fix an abort (SIGABRT) if the terminal is gone when exiting.
+- [#2284](https://github.com/ClementTsang/bottom/pull/2284): Fix bracketed paste not being supported on Windows 7/8 causing btm to panic on startup.
 
 ### Other
 
