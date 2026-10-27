@@ -373,7 +373,7 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     execute!(stdout_val, EnterAlternateScreen)?;
 
     let mut bracketed_paste_enabled = true;
-    let mouse_capture_enabled = app.app_config_fields.disable_click;
+    let mouse_capture_enabled = !app.app_config_fields.disable_click;
 
     // Note that some operating systems (basically Windows 8.1 and older) don't support
     // this, so we'll catch the error, but not outright fail.
