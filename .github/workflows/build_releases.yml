@@ -28,7 +28,7 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
   COMPLETION_DIR: "target/tmp/bottom/completion/"
   MANPAGE_DIR: "target/tmp/bottom/manpage/"
-  CROSS_VERSION: "git:588b3c99db52b5a9c5906fab96cfadcf1bde7863"
+  CROSS_VERSION: "git:d6204e62acdba1a117341f93972f3d52470a3052"
 
 permissions:
   id-token: write
