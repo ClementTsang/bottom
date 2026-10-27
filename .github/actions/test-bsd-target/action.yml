@@ -61,7 +61,7 @@ runs:
       id: freebsd_attempt_3F
 
     - name: NetBSD Test (Attempt 1)
-      uses: vmactions/netbsd-vm@0c26a4c4a5e234038862a4a53a00c905b8a107c9 # v1.4.2
+      uses: vmactions/netbsd-vm@c8a0d7ddb84619a7a8cc4e652efa7950b3fd9f92 # v1.5.2
       if: ${{ inputs.target == 'x86_64-unknown-netbsd' }}
       with:
         release: "${{ inputs.os-version }}"
@@ -73,7 +73,7 @@ runs:
       continue-on-error: true
 
     - name: NetBSD Test (Attempt 2)
-      uses: vmactions/netbsd-vm@0c26a4c4a5e234038862a4a53a00c905b8a107c9 # v1.4.2
+      uses: vmactions/netbsd-vm@c8a0d7ddb84619a7a8cc4e652efa7950b3fd9f92 # v1.5.2
       if: ${{ inputs.target == 'x86_64-unknown-netbsd' &&
         steps.netbsd_attempt_1.outcome == 'failure' }}
       with:
@@ -86,7 +86,7 @@ runs:
       continue-on-error: true
 
     - name: NetBSD Test (Attempt 3)
-      uses: vmactions/netbsd-vm@0c26a4c4a5e234038862a4a53a00c905b8a107c9 # v1.4.2
+      uses: vmactions/netbsd-vm@c8a0d7ddb84619a7a8cc4e652efa7950b3fd9f92 # v1.5.2
       if: ${{ inputs.target == 'x86_64-unknown-netbsd' &&
         steps.netbsd_attempt_2.outcome == 'failure' }}
       with:
