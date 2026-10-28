@@ -103,6 +103,21 @@ pub struct DataFilters {
     pub net_filter: Option<Filter>,
 }
 
+#[derive(Clone, Copy)]
+pub struct TerminalFeatures {
+    pub bracketed_paste_enabled: bool,
+    pub mouse_capture_enabled: bool,
+}
+
+impl Default for TerminalFeatures {
+    fn default() -> Self {
+        Self {
+            bracketed_paste_enabled: true,
+            mouse_capture_enabled: true,
+        }
+    }
+}
+
 pub struct App {
     awaiting_second_char: bool,
     second_char: Option<char>,
@@ -120,6 +135,7 @@ pub struct App {
     pub current_widget: BottomWidget,
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
+    pub terminal_features: TerminalFeatures,
 }
 
 impl App {
@@ -149,6 +165,7 @@ impl App {
             current_widget,
             used_widgets,
             filters,
+            terminal_features: TerminalFeatures::default(),
         }
     }
 

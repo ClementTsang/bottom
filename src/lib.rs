@@ -56,7 +56,7 @@ use ratatui::{Terminal, backend::CrosstermBackend, prelude::Backend};
 use utils::logging::*;
 use utils::{cancellation_token::CancellationToken, conversion::*};
 
-use crate::collection::Data;
+use crate::{app::TerminalFeatures, collection::Data};
 
 // Used for heap allocation debugging purposes.
 // #[global_allocator]
@@ -67,7 +67,7 @@ fn try_drawing(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App, painter: &mut canvas::Painter,
 ) -> anyhow::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
-        cleanup_terminal(terminal)?;
+        cleanup_terminal(terminal, app.terminal_features)?;
         Err(err.into())
     } else {
         Ok(())
@@ -75,15 +75,20 @@ fn try_drawing(
 }
 
 /// Clean up the terminal before returning it to the user.
-fn cleanup_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> anyhow::Result<()> {
+fn cleanup_terminal(
+    terminal: &mut Terminal<CrosstermBackend<Stdout>>, terminal_features: TerminalFeatures,
+) -> anyhow::Result<()> {
     disable_raw_mode()?;
 
-    execute!(
-        terminal.backend_mut(),
-        DisableMouseCapture,
-        DisableBracketedPaste,
-        LeaveAlternateScreen,
-    )?;
+    if terminal_features.mouse_capture_enabled {
+        execute!(terminal.backend_mut(), DisableMouseCapture)?;
+    }
+
+    if terminal_features.bracketed_paste_enabled {
+        execute!(terminal.backend_mut(), DisableBracketedPaste)?;
+    }
+
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
 
     Ok(())
@@ -107,13 +112,10 @@ fn check_if_terminal() {
 pub fn reset_stdout() {
     let mut stdout = stdout();
     let _ = disable_raw_mode();
-    let _ = execute!(
-        stdout,
-        DisableMouseCapture,
-        DisableBracketedPaste,
-        LeaveAlternateScreen,
-        Show,
-    );
+    let _ = execute!(stdout, DisableMouseCapture);
+    let _ = execute!(stdout, DisableBracketedPaste);
+    let _ = execute!(stdout, LeaveAlternateScreen);
+    let _ = execute!(stdout, Show);
 }
 
 /// A panic hook to properly restore the terminal in the case of a panic.
@@ -368,11 +370,27 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     *enable_error_hook = true;
 
     let mut stdout_val = stdout();
-    execute!(stdout_val, EnterAlternateScreen, EnableBracketedPaste)?;
-    if app.app_config_fields.disable_click {
-        execute!(stdout_val, DisableMouseCapture)?;
-    } else {
+    execute!(stdout_val, EnterAlternateScreen)?;
+
+    let mut bracketed_paste_enabled = true;
+    let mouse_capture_enabled = !app.app_config_fields.disable_click;
+
+    // Note that some operating systems (basically Windows 8.1 and older) don't support
+    // this, so we'll catch the error, but not outright fail.
+    // For more info, see https://github.com/ClementTsang/bottom/issues/2277 and
+    // https://github.com/helix-editor/helix/discussions/9025.
+    match execute!(stdout_val, EnableBracketedPaste) {
+        Err(err) if err.kind() == std::io::ErrorKind::Unsupported => {
+            bracketed_paste_enabled = false;
+        }
+        Err(err) => return Err(err.into()),
+        Ok(_) => {}
+    }
+
+    if mouse_capture_enabled {
         execute!(stdout_val, EnableMouseCapture)?;
+    } else {
+        execute!(stdout_val, DisableMouseCapture)?;
     }
     enable_raw_mode()?;
 
@@ -386,6 +404,13 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     }
 
     terminal.hide_cursor()?;
+
+    let terminal_features = TerminalFeatures {
+        bracketed_paste_enabled,
+        mouse_capture_enabled,
+    };
+
+    app.terminal_features = terminal_features;
 
     // Set panic hook
     panic::set_hook(Box::new(panic_hook));
@@ -480,7 +505,7 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // I think doing it in this order is safe...
     // TODO: maybe move the cancellation token to the ctrl-c handler?
     cancellation_token.cancel();
-    cleanup_terminal(&mut terminal)?;
+    cleanup_terminal(&mut terminal, terminal_features)?;
 
     Ok(())
 }
