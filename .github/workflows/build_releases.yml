@@ -180,18 +180,10 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Install Windows ARM64 GNU-family toolchain
+      - name: Install Windows ARM64 GNU toolchain
         if: matrix.info.target == 'aarch64-pc-windows-gnullvm'
         shell: pwsh
-        run: |
-          $msys2 = 'C:\msys64'
-          & "$msys2\usr\bin\bash.exe" -lc 'pacman --noconfirm -S --needed mingw-w64-clang-aarch64-clang'
-          if ($LASTEXITCODE -ne 0) {
-            throw "Failed to install the CLANGARM64 toolchain"
-          }
-          $bin = "$msys2\clangarm64\bin"
-          echo $bin >> $env:GITHUB_PATH
-          & "$bin\aarch64-w64-mingw32-clang.exe" --version
+        run: ./scripts/ci/setup_windows_gnullvm.ps1
 
       # TODO: Make this and the toolchain step a separate wrapper action?
       - name: Read Rust version
@@ -373,16 +365,10 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Install Windows ARM64 GNU-family toolchain
+      - name: Install Windows ARM64 GNU toolchain
         if: matrix.info.target == 'aarch64-pc-windows-gnullvm'
         shell: pwsh
-        run: |
-          $msys2 = 'C:\msys64'
-          & "$msys2\usr\bin\bash.exe" -lc 'pacman --noconfirm -S --needed mingw-w64-clang-aarch64-clang'
-          if ($LASTEXITCODE -ne 0) {
-            throw "Failed to install the CLANGARM64 toolchain"
-          }
-          echo "$msys2\clangarm64\bin" >> $env:GITHUB_PATH
+        run: ./scripts/ci/setup_windows_gnullvm.ps1
 
       - name: Install Net-Framework-Core
         shell: powershell
