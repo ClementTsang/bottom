@@ -151,9 +151,14 @@ jobs:
               cross: true,
             }
 
-          # Windows ARM, may promote to official.
+          # Windows ARM; may promote to official.
           - {
               target: "aarch64-pc-windows-msvc",
+              os: "windows-11-arm",
+              cross: false,
+            }
+          - {
+              target: "aarch64-pc-windows-gnullvm",
               os: "windows-11-arm",
               cross: false,
             }
@@ -174,6 +179,19 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
+
+      - name: Install Windows ARM64 GNU-family toolchain
+        if: matrix.info.target == 'aarch64-pc-windows-gnullvm'
+        shell: pwsh
+        run: |
+          $msys2 = 'C:\msys64'
+          & "$msys2\usr\bin\bash.exe" -lc 'pacman --noconfirm -S --needed mingw-w64-clang-aarch64-clang'
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to install the CLANGARM64 toolchain"
+          }
+          $bin = "$msys2\clangarm64\bin"
+          echo $bin >> $env:GITHUB_PATH
+          & "$bin\aarch64-w64-mingw32-clang.exe" --version
 
       # TODO: Make this and the toolchain step a separate wrapper action?
       - name: Read Rust version
@@ -341,6 +359,11 @@ jobs:
               os: "windows-11-arm",
               target: "aarch64-pc-windows-msvc",
               output: "bottom_aarch64_installer.msi",
+            }
+          - {
+              os: "windows-11-arm",
+              target: "aarch64-pc-windows-gnullvm",
+              output: "bottom_aarch64_gnullvm_installer.msi",
             }
     runs-on: ${{ matrix.info.os }}
     steps:
