@@ -373,6 +373,17 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Install Windows ARM64 GNU-family toolchain
+        if: matrix.info.target == 'aarch64-pc-windows-gnullvm'
+        shell: pwsh
+        run: |
+          $msys2 = 'C:\msys64'
+          & "$msys2\usr\bin\bash.exe" -lc 'pacman --noconfirm -S --needed mingw-w64-clang-aarch64-clang'
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to install the CLANGARM64 toolchain"
+          }
+          echo "$msys2\clangarm64\bin" >> $env:GITHUB_PATH
+
       - name: Install Net-Framework-Core
         shell: powershell
         run: |
@@ -409,7 +420,7 @@ jobs:
         env:
           BTM_GENERATE: true
         run: |
-          cargo wix --toolset modern --nocapture
+          cargo wix --toolset modern --target ${{ matrix.info.target }} --nocapture
           mv bottom_installer.msi ${{ matrix.info.output }}
 
       - name: Generate artifact attestation for file
