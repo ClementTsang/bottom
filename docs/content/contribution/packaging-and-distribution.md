@@ -3,6 +3,9 @@
 Package maintainers are always welcome and appreciated! Here's some info on how one can help with package distribution
 and bottom.
 
+**Note:** Before making a PR around distribution (e.g. adding a new artifact), please first make an issue and wait
+for a response approving the idea!
+
 ## Pre-built binaries
 
 The latest stable release can be found [here](https://github.com/ClementTsang/bottom/releases/latest), where you can
