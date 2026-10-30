@@ -49,6 +49,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2227](https://github.com/ClementTsang/bottom/pull/2227): Add missing documentation around disk I/O graph.
 - [#2233](https://github.com/ClementTsang/bottom/pull/2233): Add user-level installation scope for Windows MSI installer.
 - [#2237](https://github.com/ClementTsang/bottom/pull/2237): Use `WixUI_Advanced` for better installation scope selection in Windows MSI installer.
+- [#2290](https://github.com/ClementTsang/bottom/pull/2290): Add Windows aarch64-gnullvm build target.
 
 ## 0.14.9 - 2026-08-27
 

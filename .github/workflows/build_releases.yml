@@ -151,9 +151,14 @@ jobs:
               cross: true,
             }
 
-          # Windows ARM, may promote to official.
+          # Windows ARM; may promote to official.
           - {
               target: "aarch64-pc-windows-msvc",
+              os: "windows-11-arm",
+              cross: false,
+            }
+          - {
+              target: "aarch64-pc-windows-gnullvm",
               os: "windows-11-arm",
               cross: false,
             }
@@ -174,6 +179,11 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
+
+      - name: Install Windows ARM64 GNU toolchain
+        if: matrix.info.target == 'aarch64-pc-windows-gnullvm'
+        shell: pwsh
+        run: ./scripts/ci/setup_windows_gnullvm.ps1
 
       # TODO: Make this and the toolchain step a separate wrapper action?
       - name: Read Rust version
@@ -342,6 +352,11 @@ jobs:
               target: "aarch64-pc-windows-msvc",
               output: "bottom_aarch64_installer.msi",
             }
+          - {
+              os: "windows-11-arm",
+              target: "aarch64-pc-windows-gnullvm",
+              output: "bottom_aarch64_gnullvm_installer.msi",
+            }
     runs-on: ${{ matrix.info.os }}
     steps:
       - name: Checkout repository
@@ -349,6 +364,11 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
+
+      - name: Install Windows ARM64 GNU toolchain
+        if: matrix.info.target == 'aarch64-pc-windows-gnullvm'
+        shell: pwsh
+        run: ./scripts/ci/setup_windows_gnullvm.ps1
 
       - name: Install Net-Framework-Core
         shell: powershell
@@ -386,7 +406,7 @@ jobs:
         env:
           BTM_GENERATE: true
         run: |
-          cargo wix --toolset modern --nocapture
+          cargo wix --toolset modern --target ${{ matrix.info.target }} --nocapture
           mv bottom_installer.msi ${{ matrix.info.output }}
 
       - name: Generate artifact attestation for file
