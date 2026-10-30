@@ -51,7 +51,8 @@ use crossterm::{
 };
 use event::{BottomEvent, CollectionThreadEvent, handle_key_event_or_break, handle_mouse_event};
 use options::{args, get_or_create_config, init_app};
-use ratatui::{Terminal, backend::CrosstermBackend, prelude::Backend};
+use ratatui::{Terminal, prelude::Backend};
+use ratatui_crossterm::CrosstermBackend;
 #[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;
 use utils::{cancellation_token::CancellationToken, conversion::*};
