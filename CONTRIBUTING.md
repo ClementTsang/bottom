@@ -16,7 +16,8 @@ already covers your specific feature request.
 
 ## Pull requests
 
-**Note**: if you want to add a new feature, please first open an appropriate issue to discuss the merits of the feature. PRs that do not do this may be closed.
+**Note**: if you want to make a change, please first open an appropriate issue and wait for a response so the
+merits of making the change can be discussed before work starts. PRs that do not do this may be closed.
 
 The expected workflow for a pull request is:
 
