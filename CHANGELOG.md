@@ -43,6 +43,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2261](https://github.com/ClementTsang/bottom/pull/2261): Fix scrollbars not drawing when height of bar was 2 or less.
 - [#2279](https://github.com/ClementTsang/bottom/pull/2279): Fix an abort (SIGABRT) if the terminal is gone when exiting.
 - [#2284](https://github.com/ClementTsang/bottom/pull/2284): Fix bracketed paste not being supported on Windows 7/8 causing btm to panic on startup.
+- [#2293](https://github.com/ClementTsang/bottom/pull/2293): Fix older Windows compatibility by disabling the underline feature in ratatui.
 
 ### Other
 
