@@ -14,7 +14,7 @@ pub use states::*;
 use crate::{
     canvas::{
         components::{data_table::SortOrder, time_series::LegendPosition},
-        dialogs::process_kill_dialog::ProcessKillDialog,
+        dialogs::{command_dialog::CommandDialogState, process_kill_dialog::ProcessKillDialog},
     },
     components::time_series::TimeseriesState,
     constants,
@@ -124,6 +124,7 @@ pub struct App {
     pub data_store: DataStore,
     last_key_press: Instant,
     pub(crate) process_kill_dialog: ProcessKillDialog,
+    pub(crate) command_dialog: CommandDialogState,
     pub help_dialog_state: AppHelpDialogState,
     pub is_expanded: bool,
     pub is_force_redraw: bool,
@@ -154,6 +155,7 @@ impl App {
             data_store,
             last_key_press: Instant::now(),
             process_kill_dialog: ProcessKillDialog::default(),
+            command_dialog: CommandDialogState::default(),
             help_dialog_state: AppHelpDialogState::default(),
             is_expanded,
             is_force_redraw: false,
@@ -209,6 +211,7 @@ impl App {
         // Reset dialog state
         self.help_dialog_state.is_showing_help = false;
         self.process_kill_dialog.reset();
+        self.command_dialog.close();
 
         // Close all searches and reset it
         self.states
@@ -248,7 +251,10 @@ impl App {
     pub fn on_esc(&mut self) {
         self.reset_multi_tap_keys();
 
-        if self.process_kill_dialog.is_open() {
+        if self.command_dialog.is_open() {
+            self.command_dialog.close();
+            self.is_force_redraw = true;
+        } else if self.process_kill_dialog.is_open() {
             self.process_kill_dialog.on_esc();
             self.is_force_redraw = true;
         } else if self.help_dialog_state.is_showing_help {
@@ -330,7 +336,9 @@ impl App {
     }
 
     fn is_in_dialog(&self) -> bool {
-        self.help_dialog_state.is_showing_help || self.process_kill_dialog.is_open()
+        self.command_dialog.is_open()
+            || self.help_dialog_state.is_showing_help
+            || self.process_kill_dialog.is_open()
     }
 
     fn ignore_normal_keybinds(&self) -> bool {
@@ -610,6 +618,9 @@ impl App {
         if !self.is_in_dialog() {
             self.decrement_position_count();
             self.reset_multi_tap_keys();
+        } else if self.command_dialog.is_open() {
+            self.command_dialog.scroll_up();
+            self.reset_multi_tap_keys();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
             self.reset_multi_tap_keys();
@@ -621,6 +632,9 @@ impl App {
     pub fn on_down_key(&mut self) {
         if !self.is_in_dialog() {
             self.increment_position_count();
+            self.reset_multi_tap_keys();
+        } else if self.command_dialog.is_open() {
+            self.command_dialog.scroll_down();
             self.reset_multi_tap_keys();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
@@ -752,7 +766,10 @@ impl App {
     }
 
     pub fn on_page_up(&mut self) {
-        if self.process_kill_dialog.is_open() {
+        if self.command_dialog.is_open() {
+            self.command_dialog.page_up();
+            self.reset_multi_tap_keys();
+        } else if self.process_kill_dialog.is_open() {
             self.process_kill_dialog.on_page_up();
         } else if self.help_dialog_state.is_showing_help {
             let current = &mut self.help_dialog_state.scroll_state.current_scroll_index;
@@ -772,7 +789,10 @@ impl App {
     }
 
     pub fn on_page_down(&mut self) {
-        if self.process_kill_dialog.is_open() {
+        if self.command_dialog.is_open() {
+            self.command_dialog.page_down();
+            self.reset_multi_tap_keys();
+        } else if self.process_kill_dialog.is_open() {
             self.process_kill_dialog.on_page_down();
         } else if self.help_dialog_state.is_showing_help {
             let current = self.help_dialog_state.scroll_state.current_scroll_index;
@@ -793,7 +813,10 @@ impl App {
     }
 
     pub fn scroll_half_page_up(&mut self) {
-        if self.help_dialog_state.is_showing_help {
+        if self.command_dialog.is_open() {
+            self.command_dialog.half_page_up();
+            self.reset_multi_tap_keys();
+        } else if self.help_dialog_state.is_showing_help {
             let current = &mut self.help_dialog_state.scroll_state.current_scroll_index;
             let amount = self.help_dialog_state.height / 2;
 
@@ -812,7 +835,10 @@ impl App {
     }
 
     pub fn scroll_half_page_down(&mut self) {
-        if self.help_dialog_state.is_showing_help {
+        if self.command_dialog.is_open() {
+            self.command_dialog.half_page_down();
+            self.reset_multi_tap_keys();
+        } else if self.help_dialog_state.is_showing_help {
             let current = self.help_dialog_state.scroll_state.current_scroll_index;
             let amount = self.help_dialog_state.height / 2;
 
@@ -925,19 +951,15 @@ impl App {
         }
 
         const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
+        let now = Instant::now();
+        if now.duration_since(self.last_key_press).as_millis()
+            > MAX_KEY_TIMEOUT_IN_MILLISECONDS.into()
+        {
+            self.reset_multi_tap_keys();
+        }
+        self.last_key_press = now;
 
-        // Forbid any char key presses when showing a dialog box...
         if !self.ignore_normal_keybinds() {
-            let current_key_press_inst = Instant::now();
-            if current_key_press_inst
-                .duration_since(self.last_key_press)
-                .as_millis()
-                > MAX_KEY_TIMEOUT_IN_MILLISECONDS.into()
-            {
-                self.reset_multi_tap_keys();
-            }
-            self.last_key_press = current_key_press_inst;
-
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
@@ -960,6 +982,11 @@ impl App {
                 }
             }
             self.handle_char(caught_char);
+        } else if self.command_dialog.is_open() {
+            match caught_char {
+                'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
+                _ => self.reset_multi_tap_keys(),
+            }
         } else if self.help_dialog_state.is_showing_help {
             if self.help_dialog_state.is_searching() {
                 self.help_dialog_state
@@ -1247,7 +1274,29 @@ impl App {
                 }
             }
             'w' => {
-                if let Some(disk) = self
+                if let BottomWidgetType::Proc = self.current_widget.widget_type
+                    && let Some(state) = self
+                        .states
+                        .proc_state
+                        .get_widget_state(self.current_widget.widget_id)
+                    && let Some(selected) = state.table.current_item()
+                {
+                    if matches!(state.mode, ProcWidgetMode::Grouped) {
+                        self.command_dialog = CommandDialogState::grouped();
+                        self.is_force_redraw = true;
+                    } else if let Some(process) = self
+                        .data_store
+                        .get_data()
+                        .process_data
+                        .process_harvest
+                        .get(&selected.pid)
+                        && !process.command.is_empty()
+                    {
+                        self.command_dialog =
+                            CommandDialogState::command(selected.pid, process.command.clone());
+                        self.is_force_redraw = true;
+                    }
+                } else if let Some(disk) = self
                     .states
                     .disk_state
                     .get_mut_widget_state(self.current_widget.widget_id)
@@ -1730,7 +1779,10 @@ impl App {
     }
 
     pub fn skip_to_first(&mut self) {
-        if !self.ignore_normal_keybinds() {
+        if self.command_dialog.is_open() {
+            self.command_dialog.scroll_to_start();
+            self.reset_multi_tap_keys();
+        } else if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
@@ -1789,7 +1841,10 @@ impl App {
     }
 
     pub fn skip_to_last(&mut self) {
-        if !self.ignore_normal_keybinds() {
+        if self.command_dialog.is_open() {
+            self.command_dialog.scroll_to_end();
+            self.reset_multi_tap_keys();
+        } else if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
@@ -1953,7 +2008,10 @@ impl App {
     }
 
     pub fn handle_scroll_up(&mut self) {
-        if self.process_kill_dialog.is_open() {
+        if self.command_dialog.is_open() {
+            self.command_dialog.scroll_up();
+            self.reset_multi_tap_keys();
+        } else if self.process_kill_dialog.is_open() {
             self.process_kill_dialog.on_scroll_up();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
@@ -1965,7 +2023,10 @@ impl App {
     }
 
     pub fn handle_scroll_down(&mut self) {
-        if self.process_kill_dialog.is_open() {
+        if self.command_dialog.is_open() {
+            self.command_dialog.scroll_down();
+            self.reset_multi_tap_keys();
+        } else if self.process_kill_dialog.is_open() {
             self.process_kill_dialog.on_scroll_down();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
