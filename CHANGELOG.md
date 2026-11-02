@@ -22,7 +22,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## 0.15.0 - 2026-11-01
+## 0.15.0 - 2026-10-31 🎃
 
 ### Features
 
@@ -190,7 +190,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2009](https://github.com/ClementTsang/bottom/pull/2009): Configure CI job to publish to crates.io.
 - [#2037](https://github.com/ClementTsang/bottom/pull/2037): Update AMD GPU names list.
 
-## [0.12.3] - 2026-01-01
+## [0.12.3] - 2026-01-01 🥳
 
 ### Bug Fixes
 
