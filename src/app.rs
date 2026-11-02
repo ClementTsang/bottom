@@ -377,6 +377,10 @@ impl App {
     }
 
     pub fn toggle_sort_menu(&mut self) {
+        if self.ignore_normal_keybinds() {
+            return;
+        }
+
         let widget_id = self.current_widget.widget_id
             - match &self.current_widget.widget_type {
                 BottomWidgetType::Proc => 0,
@@ -440,6 +444,10 @@ impl App {
     }
 
     pub fn toggle_ignore_case(&mut self) {
+        if self.ignore_normal_keybinds() {
+            return;
+        }
+
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .states
@@ -455,6 +463,10 @@ impl App {
     }
 
     pub fn toggle_search_whole_word(&mut self) {
+        if self.ignore_normal_keybinds() {
+            return;
+        }
+
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .states
@@ -470,6 +482,10 @@ impl App {
     }
 
     pub fn toggle_search_regex(&mut self) {
+        if self.ignore_normal_keybinds() {
+            return;
+        }
+
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .states
@@ -485,6 +501,10 @@ impl App {
     }
 
     pub fn toggle_tree_mode(&mut self) {
+        if self.ignore_normal_keybinds() {
+            return;
+        }
+
         if let Some(proc_widget_state) = self
             .states
             .proc_state
@@ -552,6 +572,11 @@ impl App {
             self.is_force_redraw = true;
             return;
         }
+
+        if self.ignore_normal_keybinds() {
+            return;
+        }
+
         match self.current_widget.widget_type {
             BottomWidgetType::ProcSearch => {
                 let is_in_search_widget = self.is_in_search_widget();
@@ -585,7 +610,9 @@ impl App {
                 .search_input_state
                 .delete_behind_cursor();
             self.is_force_redraw = true;
-        } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+        } else if !self.ignore_normal_keybinds()
+            && let BottomWidgetType::ProcSearch = self.current_widget.widget_type
+        {
             let is_in_search_widget = self.is_in_search_widget();
             if let Some(proc_widget_state) = self
                 .states
@@ -884,7 +911,8 @@ impl App {
         if self.help_dialog_state.is_help_searching() {
             self.help_dialog_state.search_input_state = Default::default();
             self.is_force_redraw = true;
-        } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type
+        } else if !self.ignore_normal_keybinds()
+            && let BottomWidgetType::ProcSearch = self.current_widget.widget_type
             && let Some(proc_widget_state) = self
                 .states
                 .proc_state
@@ -901,7 +929,8 @@ impl App {
                 .search_input_state
                 .delete_previous_word();
             self.is_force_redraw = true;
-        } else if let BottomWidgetType::ProcSearch = self.current_widget.widget_type
+        } else if !self.ignore_normal_keybinds()
+            && let BottomWidgetType::ProcSearch = self.current_widget.widget_type
             && let Some(proc_widget_state) = self
                 .states
                 .proc_state
@@ -996,7 +1025,7 @@ impl App {
     ///
     /// TODO: This ideally gets abstracted out into a separate widget.
     pub(crate) fn kill_current_process(&mut self) {
-        if self.app_config_fields.is_read_only {
+        if self.ignore_normal_keybinds() || self.app_config_fields.is_read_only {
             return;
         }
 
@@ -2073,6 +2102,13 @@ impl App {
     /// Moves the mouse to the widget that was clicked on, then propagates the
     /// click down to be handled by the widget specifically.
     pub fn on_left_mouse_up(&mut self, x: u16, y: u16) {
+        if self.is_in_dialog() {
+            if self.process_kill_dialog.is_open() {
+                self.process_kill_dialog.on_click(x, y);
+            }
+            return;
+        }
+
         // Pretty dead simple - iterate through the widget map and go to the
         // widget where the click is within.
 
@@ -2138,12 +2174,6 @@ impl App {
                 }
                 return;
             }
-        }
-
-        // Second short circuit --- are we in the dd dialog state?  If so, only
-        // check yes/no/signals and bail after.
-        if self.process_kill_dialog.is_open() && self.process_kill_dialog.on_click(x, y) {
-            return;
         }
 
         let mut failed_to_get = true;
@@ -2387,6 +2417,10 @@ impl App {
 
     /// A quick and dirty way to handle paste events.
     pub fn handle_paste(&mut self, paste: String) {
+        if self.ignore_normal_keybinds() {
+            return;
+        }
+
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .states
