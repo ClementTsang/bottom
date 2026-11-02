@@ -73,23 +73,23 @@ fn cpu_usage_text(usage: f32, show_decimal: bool, width: u16) -> Option<String> 
     match text_length.cmp(&width) {
         Ordering::Less | Ordering::Equal => {
             if show_decimal {
-                Some(format!("{usage:.1}%"))
+                Some(format!("{rounded_usage:.1}%"))
             } else {
-                Some(format!("{usage:.0}%"))
+                Some(format!("{rounded_usage:.0}%"))
             }
         }
         Ordering::Greater => match text_length - width {
             1 => {
                 // If it's 1 character off, just drop the percentage sign.
                 if show_decimal {
-                    Some(format!("{usage:.1}"))
+                    Some(format!("{rounded_usage:.1}"))
                 } else {
-                    Some(format!("{usage:.0}"))
+                    Some(format!("{rounded_usage:.0}"))
                 }
             }
             2..=3 if show_decimal => {
                 // If it's 2 to 3 characters off and decimal, then we just drop the decimal + percentage sign.
-                Some(format!("{usage:.0}"))
+                Some(format!("{rounded_usage:.0}"))
             }
             _ => None,
         },
@@ -287,6 +287,13 @@ mod tests {
         assert_eq!(cpu_usage_text(99.96, true, 5).as_deref(), Some("100.0"));
         assert_eq!(cpu_usage_text(99.96, true, 6).as_deref(), Some("100.0%"));
         assert_eq!(cpu_usage_text(99.96, true, 2), None);
+    }
+
+    #[test]
+    fn cpu_usage_text_keeps_rounded_decimal_boundary_consistent_across_widths() {
+        assert_eq!(cpu_usage_text(9.95, true, 5).as_deref(), Some("10.0%"));
+        assert_eq!(cpu_usage_text(9.95, true, 4).as_deref(), Some("10.0"));
+        assert_eq!(cpu_usage_text(9.95, true, 3).as_deref(), Some("10"));
     }
 
     #[test]
