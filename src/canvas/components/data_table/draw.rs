@@ -236,6 +236,8 @@ where
                         let row = Row::new(
                             columns
                                 .iter()
+                                // The widths are those of the shown columns only.
+                                .filter(|column| !column.is_hidden())
                                 .zip(&self.state.calculated_widths)
                                 .filter_map(|(column, &width)| {
                                     data_row.to_cell_text(column.inner(), width).map(|content| {
