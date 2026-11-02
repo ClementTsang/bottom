@@ -28,6 +28,10 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 - [#2296](https://github.com/ClementTsang/bottom/pull/2296): Better truncate CPU usage strings with small widths.
 
+### Bug Fixes
+
+- [#2298](https://github.com/ClementTsang/bottom/pull/2298): Fix hidden table columns shifting the widths of later columns and header clicks.
+
 ## 0.15.0 - 2026-10-31 🎃
 
 ### Features
