@@ -22,6 +22,12 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
+## 0.15.1 - Unreleased
+
+### Changes
+
+- [#2296](https://github.com/ClementTsang/bottom/pull/2296): Better truncate CPU usage strings with small widths.
+
 ## 0.15.0 - 2026-10-31 🎃
 
 ### Features
