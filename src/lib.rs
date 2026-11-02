@@ -63,6 +63,10 @@ use crate::{app::TerminalFeatures, collection::Data};
 // #[global_allocator]
 // static ALLOC: dhat::Alloc = dhat::Alloc;
 
+#[cfg(all(feature = "musl_alloc", target_os = "linux", target_env = "musl"))]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 /// Try drawing. If not, clean up the terminal and return an error.
 fn try_drawing(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App, painter: &mut canvas::Painter,
