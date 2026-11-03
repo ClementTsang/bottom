@@ -54,7 +54,6 @@
             />
 
         <MajorUpgrade
-            AllowSameVersionUpgrades='yes'
             Schedule='afterInstallInitialize'
             DowngradeErrorMessage='A newer version of [ProductName] is already installed. Setup will now exit.'/>
 
@@ -63,8 +62,9 @@
 
         <!--
           Default install location is Program Files (used for per-machine
-          installs). For per-user installs WixUI_Advanced sets APPLICATIONFOLDER
-          to %LocalAppData%\Apps\bottom, so a non-elevated user can write to it.
+          installs). For per-user installs the SetProperty below overrides
+          APPLICATIONFOLDER to point at %LocalAppData%\Programs\bottom before
+          costing, so a non-elevated user can write to it.
         -->
         <StandardDirectory Id='ProgramFiles6432Folder'>
             <Directory Id='APPLICATIONFOLDER' Name='bottom'>
