@@ -809,6 +809,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "djbclark",
+      "name": "Daniel JB Clark",
+      "avatar_url": "https://avatars.githubusercontent.com/u/131936?v=4",
+      "profile": "http://freedomincluded.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
