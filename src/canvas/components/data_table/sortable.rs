@@ -78,7 +78,8 @@ pub struct Sortable {
 /// Note that the trait is [sealed](https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed),
 /// and therefore only [`Unsortable`] and [`Sortable`] can implement it.
 pub trait SortType: private::Sealed {
-    /// Constructs the table header.
+    /// Constructs the table header. `widths` are those of the shown (not
+    /// hidden) columns, in order.
     fn build_header<H, C>(&self, columns: &[C], widths: &[NonZeroU16]) -> Row<'_>
     where
         H: ColumnHeader,
@@ -87,6 +88,7 @@ pub trait SortType: private::Sealed {
         Row::new(
             columns
                 .iter()
+                .filter(|c| !c.is_hidden())
                 .zip(widths)
                 .map(|(c, &width)| truncate_to_text(&c.header(), width.get())),
         )
@@ -116,9 +118,10 @@ impl SortType for Sortable {
         Row::new(
             columns
                 .iter()
-                .zip(widths)
                 .enumerate()
-                .map(|(index, (c, &width))| {
+                .filter(|(_, c)| !c.is_hidden())
+                .zip(widths)
+                .map(|((index, c), &width)| {
                     if index == self.sort_index {
                         let arrow = match self.order {
                             SortOrder::Ascending => UP_ARROW,
@@ -299,7 +302,15 @@ where
     /// returned. If nothing happens, [`None`] is returned.
     pub fn try_select_location(&mut self, x: u16, y: u16) -> Option<usize> {
         if self.state.inner_rect.height > 1 && self.state.inner_rect.y == y {
-            if let Some(index) = self.get_range(x) {
+            // `get_range` counts shown columns only; map back to the column.
+            if let Some(index) = self.get_range(x).and_then(|shown| {
+                self.columns
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, c)| !c.is_hidden())
+                    .nth(shown)
+                    .map(|(index, _)| index)
+            }) {
                 self.set_sort_index(index);
                 Some(self.sort_type.sort_index)
             } else {
@@ -355,6 +366,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use ratatui::layout::Rect;
+
     use super::*;
     use crate::options::config::flags::TableGap;
 
@@ -551,5 +564,37 @@ mod test {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn test_click_header_after_hidden_column() {
+        let columns = [
+            SortColumn::new(ColumnType::Index),
+            SortColumn::new(ColumnType::Data),
+            SortColumn::new(ColumnType::Index),
+        ];
+        let props = SortDataTableProps {
+            inner: DataTableProps {
+                title: None,
+                table_gap: TableGap::None,
+                left_to_right: true,
+                is_basic: false,
+                show_table_scroll_position: false,
+                show_table_scroll_bar: false,
+                show_current_entry_when_unfocused: false,
+            },
+            sort_index: 0,
+            order: SortOrder::Ascending,
+        };
+        let mut table = DataTable::new_sortable(columns, props, DataTableStyling::default());
+        table.columns[1].set_hidden(true);
+
+        // Two shown columns, 5 cells each, with a 1-cell gap: the second shown
+        // one (column 2) starts at x = 6.
+        table.state.calculated_widths = vec![NonZeroU16::new(5).unwrap(); 2];
+        table.state.inner_rect = Rect::new(0, 0, 20, 10);
+
+        assert_eq!(table.try_select_location(7, 0), Some(2));
+        assert_eq!(table.try_select_location(1, 0), Some(0));
     }
 }

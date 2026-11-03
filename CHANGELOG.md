@@ -31,6 +31,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Bug Fixes
 
 - [#2300](https://github.com/ClementTsang/bottom/pull/2300): Fix dialog screens not blocking certain user events.
+- [#2298](https://github.com/ClementTsang/bottom/pull/2298): Fix hidden table columns shifting the widths of later columns and header clicks.
 
 ## 0.15.0 - 2026-10-31 🎃
 
