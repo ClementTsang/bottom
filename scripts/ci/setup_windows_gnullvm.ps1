@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 
 $msys2 = 'C:\msys64'
-$package = 'mingw-w64-clang-aarch64-clang=23.1.4-1'
+$package = 'mingw-w64-clang-aarch64-clang'
 & "$msys2\usr\bin\bash.exe" -lc 'pacman --noconfirm -Sy'
 if ($LASTEXITCODE -ne 0) {
     throw 'Failed to synchronize the MSYS2 package databases'
