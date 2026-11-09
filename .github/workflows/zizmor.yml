@@ -1,0 +1,40 @@
+# Runs Zizmor to verify GitHub workflows.
+
+name: Zizmor
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/**"
+
+permissions: {}
+
+jobs:
+  zizmor:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Enable Rust cache for Zizmor binary
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # 2.9.2
+        if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
+        with:
+          key: "zizmor"
+          cache-bin: true
+
+      - name: Install Zizmor
+        run: cargo install --locked zizmor
+
+      - name: Run Zizmor
+        run: zizmor check ./
