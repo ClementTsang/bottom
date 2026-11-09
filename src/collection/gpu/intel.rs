@@ -1,7 +1,7 @@
 //! A collection of functions/utilities to get Intel GPU data.
 //!
-//! Note this currently only works on Linux. For Linux, we support both the `i915` and `xe` DRM drivers.
-//! For more info, see <https://docs.kernel.org/gpu/drm-usage-stats.html> for info on the fdinfo format.
+//! Note this currently only works on Linux. For Linux, we support both the
+//! `i915` and `xe` DRM drivers. For more info, see <https://docs.kernel.org/gpu/drm-usage-stats.html> for info on the fdinfo format.
 
 use std::{
     cell::RefCell,
@@ -41,8 +41,8 @@ impl IntelDriver {
 
 /// Intel GPU data.
 ///
-/// TODO: May be able to clean up some of these, Option<Vec> for example is a bit
-/// redundant.
+/// TODO: May be able to clean up some of these, Option<Vec> for example is a
+/// bit redundant.
 pub struct IntelGpuData {
     pub memory: Option<Vec<(String, MemData)>>,
     pub process_data: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
@@ -54,8 +54,9 @@ pub struct IntelGpuMemory {
     pub used: u64,
 }
 
-/// Per-process accumulator. It holds fields for *both* drivers; only the subset relevant to the
-/// device's driver is ever populated (see [`get_intel_fdinfo`]).
+/// Per-process accumulator. It holds fields for *both* drivers; only the subset
+/// relevant to the device's driver is ever populated (see
+/// [`get_intel_fdinfo`]).
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 struct IntelGpuProc {
     // i915: per-engine busy time, in nanoseconds (accumulating counters).
@@ -110,7 +111,8 @@ fn get_intel_fdinfo(
                     "drm-engine-video" => usage.video_usage += value,
                     "drm-engine-video-enhance" => usage.video_enhance_usage += value,
                     "drm-engine-compute" => usage.compute_usage += value,
-                    // Memory keys are in KiB: local0 = discrete VRAM, system0 = shared system RAM.
+                    // Memory keys are in KiB: local0 = discrete VRAM, system0 =
+                    // shared system RAM.
                     "drm-total-local0" | "drm-total-system0" => usage.mem_used += value << 10,
                     _ => {}
                 }
@@ -119,7 +121,8 @@ fn get_intel_fdinfo(
         IntelDriver::Xe => {
             collect_drm_fdinfo(&drm_paths, |usage: &mut IntelGpuProc, (keyword, value)| {
                 match keyword {
-                    // rcs = render, ccs = compute, vcs = video decode, vecs = video enhance, bcs = copy.
+                    // rcs = render, ccs = compute, vcs = video decode, vecs =
+                    // video enhance, bcs = copy.
                     "drm-cycles-rcs" | "drm-cycles-ccs" | "drm-cycles-vcs" | "drm-cycles-vecs"
                     | "drm-cycles-bcs" => usage.cycles += value,
                     "drm-total-cycles-rcs"
@@ -140,7 +143,8 @@ fn compute_util(
     driver: IntelDriver, prev: &IntelGpuProc, cur: &IntelGpuProc, interval: &Duration,
 ) -> u32 {
     match driver {
-        // Busy-time deltas over the interval, summed across engines (as AMD does).
+        // Busy-time deltas over the interval, summed across engines (as AMD
+        // does).
         IntelDriver::I915 => {
             let util = diff_usage(prev.render_usage, cur.render_usage, interval)
                 + diff_usage(prev.copy_usage, cur.copy_usage, interval)

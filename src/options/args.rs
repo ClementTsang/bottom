@@ -484,7 +484,8 @@ impl ValueEnum for CpuDefault {
 #[derive(Args, Clone, Debug, Default)]
 #[command(next_help_heading = "CPU Options", rename_all = "snake_case")]
 pub struct CpuArgs {
-    // TODO: Maybe rename this or fix this? Should this apply to all "left legends"?
+    // TODO: Maybe rename this or fix this? Should this apply to all "left
+    // legends"?
     #[arg(
         short = 'l',
         long,

@@ -5,8 +5,8 @@ use std::{
 
 /// A cancellation token.
 pub(crate) struct CancellationToken {
-    // The "check" for the cancellation token. Setting this to true will mark the cancellation
-    // token as "cancelled".
+    // The "check" for the cancellation token. Setting this to true will mark
+    // the cancellation token as "cancelled".
     mutex: Mutex<bool>,
     cvar: Condvar,
 }

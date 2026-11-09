@@ -733,7 +733,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                             battery_state_map
                                 .insert(widget.widget_id, BatteryWidgetState::default());
                         }
-                        // FIXME: This is kind of a hack that we have these cases at all.
+                        // FIXME: This is kind of a hack that we have these
+                        // cases at all.
                         Empty | BasicCpu | BasicMem | BasicNet | BasicTables | CpuLegend
                         | ProcSort | ProcSearch => {}
                     }
