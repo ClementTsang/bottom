@@ -37,4 +37,4 @@ jobs:
         run: cargo install --locked zizmor
 
       - name: Run Zizmor
-        run: zizmor check ./
+        run: zizmor ./
