@@ -51,7 +51,8 @@ fn get_unicode_block(frac: f64) -> &'static str {
     }
 }
 
-/// A widget to measure something, using pipe characters ('|') or horizontal bar characters as a unit.
+/// A widget to measure something, using pipe characters ('|') or horizontal bar
+/// characters as a unit.
 #[derive(Debug, Clone)]
 pub struct PipeGauge<'a> {
     block: Option<Block<'a>>,
@@ -262,8 +263,8 @@ impl Widget for PipeGauge<'_> {
                     }
                 }
 
-                // Unlike pipes, blocks can also show the leftover fraction of a cell.
-                // Based on what Ratatui does!
+                // Unlike pipes, blocks can also show the leftover fraction of a
+                // cell. Based on what Ratatui does!
                 if self.bar_type.is_block()
                     && pipe_end < bar_end
                     && let Some(cell) = buf.cell_mut((pipe_end, row))

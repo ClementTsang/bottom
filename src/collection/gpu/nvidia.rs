@@ -157,9 +157,10 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
             target_os = "linux" => {
                 use itertools::Either;
 
-                // We cache for a minute, but still check whether the list of devices is sleeping. This way,
-                // solves the problem of waking sleeping devices, but also means we don't check as much AND we
-                // still support hotplugged devices (in theory).
+                // We cache for a minute, but still check whether the list of
+                // devices is sleeping. This way, solves the problem of waking
+                // sleeping devices, but also means we don't check as much AND
+                // we still support hotplugged devices (in theory).
                 if let Some((cached_list, cached_time)) = &collector.nvidia_gpu_list_cache
                     && cached_time.elapsed().as_secs() < 60
                 {

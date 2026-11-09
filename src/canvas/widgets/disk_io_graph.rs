@@ -146,8 +146,8 @@ impl Painter {
                     DiskGraphLegend::Disk => name.as_str(),
                     DiskGraphLegend::Mount => match mount_map.get(name.as_str()).copied() {
                         Some(mount) => mount,
-                        // This wouldn't trigger anyway, we filter out devices without mount points
-                        // in mount legend mode.
+                        // This wouldn't trigger anyway, we filter out devices
+                        // without mount points in mount legend mode.
                         None => continue,
                     },
                 };

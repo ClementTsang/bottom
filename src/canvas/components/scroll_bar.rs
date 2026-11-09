@@ -95,7 +95,8 @@ mod test {
             .collect()
     }
 
-    /// Make sure that a short scrollbar (height <= 2) is still drawn, just without the head/tail arrows.
+    /// Make sure that a short scrollbar (height <= 2) is still drawn, just
+    /// without the head/tail arrows.
     #[test]
     fn test_small_height_scroll_still_drawn() {
         assert_eq!(render_test_bar(1, 3, 0), ["█"]);
