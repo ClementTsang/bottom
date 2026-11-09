@@ -48,7 +48,7 @@ jobs:
       id-token: write
       contents: read
       attestations: write
-    uses: ./.github/workflows/build_releases.yml
+    uses: $/.github/workflows/build_releases.yml # zizmor: ignore[secrets-inherit]
     with:
       caller: "deployment"
     secrets: inherit
