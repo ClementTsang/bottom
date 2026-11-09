@@ -324,7 +324,7 @@ jobs:
       # *BSD targets run tests in a VM due to cross limitations.
       - name: Run tests (BSD)
         if: ${{ contains(matrix.info.checks, 'test') && contains(matrix.info.target, 'bsd') }}
-        uses: ./.github/actions/test-bsd-target
+        uses: $/.github/actions/test-bsd-target
         with:
           target: ${{ matrix.info.target }}
           os-version: ${{ matrix.info.os-version }}
