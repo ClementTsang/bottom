@@ -68,8 +68,9 @@ pub fn draw_scroll_bar(f: &mut Frame<'_>, area: Rect, args: ScrollBarArgs) {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use ratatui::{Terminal, backend::TestBackend};
+
+    use super::*;
 
     fn render_test_bar(height: u16, content_length: usize, position: usize) -> Vec<String> {
         let mut terminal = Terminal::new(TestBackend::new(1, height)).unwrap();

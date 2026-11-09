@@ -163,19 +163,15 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
                 if let Some((cached_list, cached_time)) = &collector.nvidia_gpu_list_cache
                     && cached_time.elapsed().as_secs() < 60
                 {
-                    let devices = Either::Left(
-                        cached_list
-                            .iter()
-                            .filter_map(|(id, device)| {
-                                use crate::collection::linux::utils::is_device_awake;
+                    let devices = Either::Left(cached_list.iter().filter_map(|(id, device)| {
+                        use crate::collection::linux::utils::is_device_awake;
 
-                                if is_device_awake(device) {
-                                    nvml.device_by_pci_bus_id(id.as_str()).ok()
-                                } else {
-                                    None
-                                }
-                            }),
-                    );
+                        if is_device_awake(device) {
+                            nvml.device_by_pci_bus_id(id.as_str()).ok()
+                        } else {
+                            None
+                        }
+                    }));
                     (devices, cached_list.len())
                 } else {
                     let pci_bus_ids = get_active_pci_bus_ids();
@@ -185,12 +181,13 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
                         Some((pci_bus_ids, std::time::Instant::now()));
 
                     let devices = Either::Right(
-                        collector.nvidia_gpu_list_cache
+                        collector
+                            .nvidia_gpu_list_cache
                             .as_ref()
                             .expect("we just inserted the cache entry")
                             .0
                             .iter()
-                            .filter_map(|(id, _path)| nvml.device_by_pci_bus_id(id.as_str()).ok())
+                            .filter_map(|(id, _path)| nvml.device_by_pci_bus_id(id.as_str()).ok()),
                     );
 
                     (devices, num_gpus)
