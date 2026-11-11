@@ -112,11 +112,12 @@ keys, or by clicking on the entry again. The ++space++ key can also be used to t
 
 You can show the full command instead of just the process name by pressing ++P++.
 
-Press ++w++ to open the selected process's complete command in a wrapped, scrollable view. If processes are grouped, a message explains how to ungroup them first.
-
 <figure>
     <img src="../../../assets/screenshots/process/process_full.webp" alt="A picture of a process widget using full commands."/>
 </figure>
+
+Press ++w++ to instead open the selected process's complete command in a wrapped, scrollable view. Note that if processes are grouped, this will not
+work, and you'll be asked to ungroup them first.
 
 ### Search
 
