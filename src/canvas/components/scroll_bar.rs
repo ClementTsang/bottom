@@ -68,8 +68,9 @@ pub fn draw_scroll_bar(f: &mut Frame<'_>, area: Rect, args: ScrollBarArgs) {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use ratatui::{Terminal, backend::TestBackend};
+
+    use super::*;
 
     fn render_test_bar(height: u16, content_length: usize, position: usize) -> Vec<String> {
         let mut terminal = Terminal::new(TestBackend::new(1, height)).unwrap();
@@ -94,7 +95,8 @@ mod test {
             .collect()
     }
 
-    /// Make sure that a short scrollbar (height <= 2) is still drawn, just without the head/tail arrows.
+    /// Make sure that a short scrollbar (height <= 2) is still drawn, just
+    /// without the head/tail arrows.
     #[test]
     fn test_small_height_scroll_still_drawn() {
         assert_eq!(render_test_bar(1, 3, 0), ["█"]);

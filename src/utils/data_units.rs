@@ -102,10 +102,10 @@ pub fn get_unit_prefix(value: u64, base_two: bool) -> (f64, &'static str) {
     }
 }
 
-/// Format a float value to a string in a format showing a (hopefully) reasonable amount of decimal
-/// places.
-/// - If the value is < 100, then it will show at most two decimal places; if the decimals have
-///   trailing 0s, they will be trimmed.
+/// Format a float value to a string in a format showing a (hopefully)
+/// reasonable amount of decimal places.
+/// - If the value is < 100, then it will show at most two decimal places; if
+///   the decimals have trailing 0s, they will be trimmed.
 /// - Likewise, if it is < 1000, then it will show just 1 decimal place at most.
 /// - If the value is >= 1000, then it will just omit decimals.
 #[inline]
@@ -114,13 +114,15 @@ pub fn format_byte_decimal_values(value: f64) -> String {
         // Don't show decimals for values with 4 or more digits anyway.
         format!("{value:.0}")
     } else if value >= 100.0 {
-        // Note the trim is safe, as `value:.2` will always emit a decimal place.
+        // Note the trim is safe, as `value:.2` will always emit a decimal
+        // place.
         format!("{value:.1}")
             .trim_end_matches('0')
             .trim_end_matches('.')
             .to_string()
     } else {
-        // Note the trim is safe, as `value:.2` will always emit a decimal place.
+        // Note the trim is safe, as `value:.2` will always emit a decimal
+        // place.
         format!("{value:.2}")
             .trim_end_matches('0')
             .trim_end_matches('.')

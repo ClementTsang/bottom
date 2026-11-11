@@ -48,9 +48,10 @@ impl CpuWidgetTableData {
 /// Returns a formatted CPU usage string based on the given usage value, whether
 /// to show a decimal, and the available width.
 ///
-/// Note that if there is not enough space to show the percentage sign or decimal place,
-/// they will be truncated first rather than hiding the whole thing. If the actual whole
-/// number value itself is unavailable, then it will entirely be hidden (and return [`None`]).
+/// Note that if there is not enough space to show the percentage sign or
+/// decimal place, they will be truncated first rather than hiding the whole
+/// thing. If the actual whole number value itself is unavailable, then it will
+/// entirely be hidden (and return [`None`]).
 fn cpu_usage_text(usage: f32, show_decimal: bool, width: u16) -> Option<String> {
     let rounded_usage = if show_decimal {
         (usage * 10.0).round() / 10.0
@@ -66,7 +67,8 @@ fn cpu_usage_text(usage: f32, show_decimal: bool, width: u16) -> Option<String> 
         1
     };
 
-    // +1 to account for percentage sign, and +2 more if showing decimal for the dot and the digit.
+    // +1 to account for percentage sign, and +2 more if showing decimal for the
+    // dot and the digit.
     let text_length = whole_usage_text_len + if show_decimal { 3 } else { 1 };
     let width = usize::from(width);
 
@@ -88,7 +90,8 @@ fn cpu_usage_text(usage: f32, show_decimal: bool, width: u16) -> Option<String> 
                 }
             }
             2..=3 if show_decimal => {
-                // If it's 2 to 3 characters off and decimal, then we just drop the decimal + percentage sign.
+                // If it's 2 to 3 characters off and decimal, then we just drop
+                // the decimal + percentage sign.
                 Some(format!("{rounded_usage:.0}"))
             }
             _ => None,

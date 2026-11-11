@@ -26,8 +26,8 @@ use crate::{
 
 /// AMD GPU data.
 ///
-/// TODO: May be able to clean up some of these, Option<Vec> for example is a bit
-/// redundant.
+/// TODO: May be able to clean up some of these, Option<Vec> for example is a
+/// bit redundant.
 pub struct AmdGpuData {
     pub memory: Option<Vec<(String, MemData)>>,
     pub process_data: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,

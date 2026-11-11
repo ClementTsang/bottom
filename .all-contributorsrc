@@ -809,6 +809,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "djbclark",
+      "name": "Daniel JB Clark",
+      "avatar_url": "https://avatars.githubusercontent.com/u/131936?v=4",
+      "profile": "http://freedomincluded.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "meop",
+      "name": "Marshall Porter",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2015670?v=4",
+      "profile": "https://github.com/meop",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

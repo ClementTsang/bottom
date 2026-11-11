@@ -1,5 +1,6 @@
-//! Shared helpers for collecting GPU data from the Linux DRM subsystem. Primarily used for AMD (`amdgpu`)
-//! and Intel (`i915`/`xe`) GPU collectors to gather info via sysfs and read info under `/proc/<pid>/fdinfo/`.
+//! Shared helpers for collecting GPU data from the Linux DRM subsystem.
+//! Primarily used for AMD (`amdgpu`) and Intel (`i915`/`xe`) GPU collectors to
+//! gather info via sysfs and read info under `/proc/<pid>/fdinfo/`.
 //!
 //! See <https://docs.kernel.org/gpu/drm-usage-stats.html> for more info.
 
@@ -18,11 +19,12 @@ use crate::{
     utils::int_hash::IntHashMap,
 };
 
-/// Enumerate the PCI device directories bound to a given DRM driver module (e.g. `amdgpu`,
-/// `i915`, `xe`).
+/// Enumerate the PCI device directories bound to a given DRM driver module
+/// (e.g. `amdgpu`, `i915`, `xe`).
 ///
-/// Reads `/sys/module/<driver>/drivers/pci:<driver>`, keeping only entries that are GPUs (i.e. have
-/// a `drm/` subdirectory) and that are currently awake, so we don't wake a sleeping device.
+/// Reads `/sys/module/<driver>/drivers/pci:<driver>`, keeping only entries that
+/// are GPUs (i.e. have a `drm/` subdirectory) and that are currently awake, so
+/// we don't wake a sleeping device.
 pub(crate) fn enumerate_drm_devices(driver: &str) -> Option<Vec<PathBuf>> {
     let mut devices = Vec::new();
 
@@ -49,7 +51,8 @@ pub(crate) fn enumerate_drm_devices(driver: &str) -> Option<Vec<PathBuf>> {
             continue;
         }
 
-        // This will exist for GPUs but not others, this is how we find their kernel name.
+        // This will exist for GPUs but not others, this is how we find their
+        // kernel name.
         let test_path = device_path.join("drm");
         if test_path.as_path().exists() {
             devices.push(device_path);
@@ -63,8 +66,8 @@ pub(crate) fn enumerate_drm_devices(driver: &str) -> Option<Vec<PathBuf>> {
     }
 }
 
-/// Return the DRM device nodes (e.g. `/dev/dri/renderD128`, `/dev/dri/card0`) for a PCI device, by
-/// reading its `drm/` subdirectory.
+/// Return the DRM device nodes (e.g. `/dev/dri/renderD128`, `/dev/dri/card0`)
+/// for a PCI device, by reading its `drm/` subdirectory.
 pub(crate) fn get_drm_render_nodes(device_path: &Path) -> Option<Vec<PathBuf>> {
     let mut drm_devices = Vec::new();
     let drm_root = device_path.join("drm");
@@ -140,12 +143,12 @@ pub(crate) fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
         .unwrap_or(0) as u64
 }
 
-/// Scan every process for open fds pointing at the given DRM device nodes, parse each fd's
-/// `fdinfo`, and accumulate per-process usage keyed by pid.
+/// Scan every process for open fds pointing at the given DRM device nodes,
+/// parse each fd's `fdinfo`, and accumulate per-process usage keyed by pid.
 ///
 /// - `T` is the accumulator type (e.g. a struct holding a bunch of counters).
-/// - `F` is a function that takes an accumulator and a keyword/value pair from the fdinfo,
-///   and updates the accumulator with that info.
+/// - `F` is a function that takes an accumulator and a keyword/value pair from
+///   the fdinfo, and updates the accumulator with that info.
 pub(crate) fn collect_drm_fdinfo<T, F>(
     render_nodes: &[PathBuf], accumulate: F,
 ) -> Option<IntHashMap<Pid, T>>

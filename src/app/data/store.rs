@@ -73,7 +73,8 @@ pub struct TotalNetworkData {
 /// through DataStore?
 #[derive(Debug, Clone)]
 pub struct InnerData {
-    // FIXME: (points_rework_v1) we could be able to remove this with some more refactoring.
+    // FIXME: (points_rework_v1) we could be able to remove this with some more
+    // refactoring.
     last_update_time: Instant,
 
     pub(crate) time_series_data: TimeSeriesData,

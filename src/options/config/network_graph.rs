@@ -13,8 +13,9 @@ pub(crate) struct NetworkGraphConfig {
     /// Displays packet rate and average packet size info.
     pub(crate) show_packets: Option<bool>,
 
-    // TODO: We probably want to make this an enum...? If we want to also support external legends
-    // (e.g. table-style, list-style) then we probably need a new system outright.
+    // TODO: We probably want to make this an enum...? If we want to also
+    // support external legends (e.g. table-style, list-style) then we probably
+    // need a new system outright.
     /// Where to place the legend for the network chart widget.
     pub(crate) legend_position: Option<String>,
 

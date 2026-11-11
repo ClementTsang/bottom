@@ -71,5 +71,5 @@ jobs:
     permissions:
       pages: write
       id-token: write
-    uses: ./.github/workflows/publish_github_pages.yml
+    uses: $/.github/workflows/publish_github_pages.yml # zizmor: ignore[secrets-inherit]
     secrets: inherit

@@ -380,8 +380,8 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     let mut bracketed_paste_enabled = true;
     let mouse_capture_enabled = !app.app_config_fields.disable_click;
 
-    // Note that some operating systems (basically Windows 8.1 and older) don't support
-    // this, so we'll catch the error, but not outright fail.
+    // Note that some operating systems (basically Windows 8.1 and older) don't
+    // support this, so we'll catch the error, but not outright fail.
     // For more info, see https://github.com/ClementTsang/bottom/issues/2277 and
     // https://github.com/helix-editor/helix/discussions/9025.
     match execute!(stdout_val, EnableBracketedPaste) {

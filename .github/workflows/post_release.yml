@@ -52,7 +52,7 @@ jobs:
       pages: write
       id-token: write
       contents: write
-    uses: ./.github/workflows/docs.yml
+    uses: $/.github/workflows/docs.yml # zizmor: ignore[secrets-inherit]
     secrets: inherit
     with:
       version: ${{ needs.initialize.outputs.version }}
