@@ -116,6 +116,9 @@ You can show the full command instead of just the process name by pressing ++P++
     <img src="../../../assets/screenshots/process/process_full.webp" alt="A picture of a process widget using full commands."/>
 </figure>
 
+Press ++w++ to instead open the selected process's complete command in a wrapped, scrollable view. Note that if processes are grouped, this will not
+work, and you'll be asked to ungroup them first.
+
 ### Search
 
 Pressing ++slash++ or ++ctrl+f++ will open up the search sub-widget. By default, just typing in something will search by the process name.
@@ -230,6 +233,7 @@ Note that key bindings are generally case-sensitive.
 | ++n++                                               | Sort by process name, press again to reverse sorting order       |
 | ++tab++                                             | Toggle grouping processes with the same name                     |
 | ++P++                                               | Toggle between showing the full command or just the process name |
+| ++w++                                               | Show the full command in a wrapped view                          |
 | ++ctrl+f++ , ++slash++                              | Toggle showing the search sub-widget                             |
 | ++s++ , ++f6++, ++delete++ (++fn+delete++ on macOS) | Toggle showing the sort sub-widget                               |
 | ++I++                                               | Invert the current sort                                          |
