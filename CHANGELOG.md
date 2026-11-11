@@ -27,6 +27,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Changes
 
 - [#2296](https://github.com/ClementTsang/bottom/pull/2296): Better truncate CPU usage strings with small widths.
+- [#2263](https://github.com/ClementTsang/bottom/pull/2263): Add pop-out process command viewer.
 
 ### Bug Fixes
 
