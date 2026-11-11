@@ -827,6 +827,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "vegerot",
+      "name": "Max Coplan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5297725?v=4",
+      "profile": "https://www.linkedin.com/in/max-coplan-136a9a6b/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
