@@ -1024,7 +1024,7 @@ impl App {
                 self.is_force_redraw = true;
             } else {
                 match caught_char {
-                    '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                    '1'..='9' => {
                         let potential_index = caught_char.to_digit(10);
                         if let Some(potential_index) = potential_index {
                             let potential_index = potential_index as usize;

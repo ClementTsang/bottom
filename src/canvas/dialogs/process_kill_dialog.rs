@@ -323,7 +323,7 @@ impl ProcessKillDialog {
             'j' => self.on_down_key(),
             'k' => self.on_up_key(),
             'l' => self.on_right_key(),
-            '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+            '0'..='9' => {
                 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
                 if let Some(value) = c.to_digit(10)
                     && let ProcessKillDialogState::Selecting(ProcessKillSelectingInner {
