@@ -20,6 +20,7 @@ pub fn draw_command_dialog(
     f.buffer_mut().set_style(area, styles.general_widget_style);
 
     let (title, content) = match &state.content {
+        // Guarded by canvas.rs: draw only when is_open()
         CommandDialogContent::Closed => unreachable!("closed dialogs are not rendered"),
         CommandDialogContent::Command { pid, command } => {
             (format!(" Command for PID {pid} "), command.as_str())
