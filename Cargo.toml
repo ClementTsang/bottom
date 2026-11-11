@@ -42,6 +42,15 @@ edition = "2024"
 # The oldest version I've tested that should still build - note this is not an official MSRV!
 rust-version = "1.95.0"
 
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/{ version }/bottom_{ target }.tar.gz"
+pkg-fmt = "tgz"
+
+# Windows uses .zip instead of .tar.gz
+[package.metadata.binstall.overrides.'cfg(windows)']
+pkg-url = "{ repo }/releases/download/{ version }/bottom_{ target }.zip"
+pkg-fmt = "zip"
+
 [lib]
 test = true
 doctest = true
