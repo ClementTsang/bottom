@@ -38,6 +38,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 - [#2302](https://github.com/ClementTsang/bottom/pull/2302): Make the `aarch64-pc-windows-gnullvm` target statically linked.
 - [#2304](https://github.com/ClementTsang/bottom/pull/2304): Enable same-version upgrades for the Windows MSI installer.
+- [#2314](https://github.com/ClementTsang/bottom/pull/2314): Update sysinfo to 0.40.3.
 
 ## 0.15.0 - 2026-10-31 🎃
 
