@@ -133,20 +133,20 @@ pub struct SysinfoSource {
     pub(crate) users: sysinfo::Users,
 }
 
-impl Default for SysinfoSource {
-    fn default() -> Self {
+impl SysinfoSource {
+    fn new() -> Result<Self, sysinfo::Error> {
         use sysinfo::*;
 
-        Self {
-            system: System::new(),
-            network: Networks::new(),
+        Ok(Self {
+            system: System::new()?,
+            network: Networks::new()?,
             #[cfg(not(target_os = "linux"))]
-            temps: Components::new(),
+            temps: Components::new()?,
             #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-            disks: Disks::new(),
+            disks: Disks::new()?,
             #[cfg(target_os = "windows")]
-            users: Users::new(),
-        }
+            users: Users::new()?,
+        })
     }
 }
 
@@ -218,7 +218,7 @@ impl DataCollector {
 
         DataCollector {
             data: Data::default(),
-            sys: SysinfoSource::default(),
+            sys: SysinfoSource::new().expect("could not initialize sysinfo data source"),
             #[cfg(target_os = "linux")]
             prev_process_details: IntHashMap::default(),
             #[cfg(target_os = "linux")]

@@ -33,7 +33,7 @@ pub fn get_cpu_data_list(collector: &DataCollector) -> CollectionResult<CpuHarve
             .enumerate()
             .map(|(i, cpu)| CpuData {
                 data_type: CpuDataType::Cpu(i),
-                usage: cpu.cpu_usage(),
+                usage: cpu.usage(),
             })
             .collect::<Vec<_>>(),
     );
@@ -45,7 +45,10 @@ pub fn get_cpu_data_list(collector: &DataCollector) -> CollectionResult<CpuHarve
 pub(crate) fn get_load_avg() -> crate::collection::cpu::LoadAvgHarvest {
     // The API for sysinfo apparently wants you to call it like this, rather
     // than using a &System.
-    let sysinfo::LoadAvg { one, five, fifteen } = sysinfo::System::load_average();
+    let (one, five, fifteen) = match sysinfo::System::load_average() {
+        Ok(avg) => (avg.one as f32, avg.five as f32, avg.fifteen as f32),
+        Err(_) => (0.0, 0.0, 0.0),
+    };
 
-    [one as f32, five as f32, fifteen as f32]
+    [one, five, fifteen]
 }
