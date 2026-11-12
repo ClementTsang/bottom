@@ -158,7 +158,7 @@ fn read_proc(
 
     let process_state_char = stat.state;
     let process_state = (
-        process_status_str(ProcessStatus::from(process_state_char as u8)),
+        process_status_str(ProcessStatus::from(process_state_char)),
         process_state_char,
     );
     let (cpu_usage_percent, new_process_times) = get_linux_cpu_usage(
@@ -424,7 +424,7 @@ pub(crate) fn linux_process_data(
         cpu_fraction,
         total_memory,
         time_difference_in_secs,
-        system_uptime: sysinfo::System::uptime().unwrap_or_default(),
+        system_uptime: sysinfo::System::uptime(),
         get_process_threads: get_threads,
         get_process_swap: get_swap,
     };
