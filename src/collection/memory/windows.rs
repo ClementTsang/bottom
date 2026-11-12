@@ -88,9 +88,10 @@ mod tests {
     fn test_windows_get_swap_usage() {
         let sys = System::new_with_specifics(
             RefreshKind::nothing().with_memory(MemoryRefreshKind::nothing().with_swap()),
-        );
+        )
+        .expect("this is a test");
 
-        let swap_usage = get_swap_usage_inner(&sys).expect("this is a test");
+        let swap_usage = get_swap_usage_inner(&sys);
         if sys.total_swap() > 0 {
             // Not sure if we can guarantee this to always pass on a machine, so
             // I'll just print out.
