@@ -218,6 +218,7 @@ impl DataCollector {
 
         DataCollector {
             data: Data::default(),
+            // FIXME: consider whether we would want to somehow handle this more gracefully, e.g. handle piecemeal failures?
             sys: SysinfoSource::new().expect("could not initialize sysinfo data source"),
             #[cfg(target_os = "linux")]
             prev_process_details: IntHashMap::default(),
