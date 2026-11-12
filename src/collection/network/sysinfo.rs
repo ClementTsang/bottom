@@ -21,7 +21,7 @@ pub fn get_network_data(
 
     for (name, network) in networks {
         let to_keep = if let Some(filter) = filter {
-            filter.should_keep(name)
+            filter.should_keep(&name.to_string_lossy())
         } else {
             true
         };
