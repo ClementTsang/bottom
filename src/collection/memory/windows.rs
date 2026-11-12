@@ -90,7 +90,7 @@ mod tests {
             RefreshKind::nothing().with_memory(MemoryRefreshKind::nothing().with_swap()),
         );
 
-        let swap_usage = get_swap_usage_inner(&sys);
+        let swap_usage = get_swap_usage_inner(&sys).expect("this is a test");
         if sys.total_swap() > 0 {
             // Not sure if we can guarantee this to always pass on a machine, so
             // I'll just print out.
