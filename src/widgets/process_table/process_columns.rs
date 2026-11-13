@@ -134,75 +134,101 @@ impl SortsRow for ProcColumn {
         match self {
             ProcColumn::CpuPercent => {
                 data.sort_by(|a, b| {
-                    sort_partial_fn(descending)(a.cpu_usage_percent, b.cpu_usage_percent)
+                    sort_partial_fn(descending)(
+                        a.inner.cpu_usage_percent,
+                        b.inner.cpu_usage_percent,
+                    )
                 });
             }
             ProcColumn::MemValue | ProcColumn::MemPercent => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(&a.mem_usage, &b.mem_usage));
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(&a.inner.mem_usage, &b.inner.mem_usage)
+                });
             }
             ProcColumn::VirtualMem => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(&a.virtual_mem, &b.virtual_mem));
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(&a.inner.virtual_mem, &b.inner.virtual_mem)
+                });
             }
             ProcColumn::Pid => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.pid, b.pid));
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.pid(), b.pid()));
             }
             ProcColumn::Count => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.num_similar, b.num_similar));
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.count, b.count));
             }
-            ProcColumn::Name | ProcColumn::Command => {
+            ProcColumn::Name => {
                 if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.id.to_lowercase()));
+                    data.sort_by_cached_key(|pd| Reverse(pd.inner.name.to_lowercase()));
                 } else {
-                    data.sort_by_cached_key(|pd| pd.id.to_lowercase());
+                    data.sort_by_cached_key(|pd| pd.inner.name.to_lowercase());
+                }
+            }
+            ProcColumn::Command => {
+                if descending {
+                    data.sort_by_cached_key(|pd| Reverse(pd.inner.command.to_lowercase()));
+                } else {
+                    data.sort_by_cached_key(|pd| pd.inner.command.to_lowercase());
                 }
             }
             ProcColumn::ReadPerSecond => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.rps, b.rps));
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(a.inner.read_per_sec, b.inner.read_per_sec)
+                });
             }
             ProcColumn::WritePerSecond => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.wps, b.wps));
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(a.inner.write_per_sec, b.inner.write_per_sec)
+                });
             }
             ProcColumn::TotalRead => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.total_read, b.total_read));
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(a.inner.total_read, b.inner.total_read)
+                });
             }
             ProcColumn::TotalWrite => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.total_write, b.total_write));
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(a.inner.total_write, b.inner.total_write)
+                });
             }
             ProcColumn::State => {
                 if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.process_state));
+                    data.sort_by_cached_key(|pd| Reverse(pd.inner.process_state));
                 } else {
-                    data.sort_by_cached_key(|pd| pd.process_state);
+                    data.sort_by_cached_key(|pd| pd.inner.process_state);
                 }
             }
             ProcColumn::User => {
                 // FIXME: Is there a better way here to keep the to_lowercase? Usually it
                 // shouldn't matter but...
                 if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.user.clone()));
+                    data.sort_by_cached_key(|pd| Reverse(pd.inner.user.clone()));
                 } else {
-                    data.sort_by_cached_key(|pd| pd.user.clone());
+                    data.sort_by_cached_key(|pd| pd.inner.user.clone());
                 }
             }
             ProcColumn::Time => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.time, b.time));
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.inner.time, b.inner.time));
             }
             ProcColumn::Priority => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.priority, b.priority));
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(a.inner.priority, b.inner.priority)
+                });
             }
             #[cfg(unix)]
             ProcColumn::Nice => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.nice, b.nice));
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.inner.nice, b.inner.nice));
             }
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => {
                 data.sort_by(|a, b| {
-                    sort_partial_fn(descending)(&a.gpu_mem_usage, &b.gpu_mem_usage)
+                    sort_partial_fn(descending)(&a.inner.gpu_mem, &b.inner.gpu_mem)
                 });
             }
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.gpu_usage, b.gpu_usage));
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(a.inner.gpu_util, b.inner.gpu_util)
+                });
             }
         }
     }

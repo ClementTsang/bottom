@@ -984,14 +984,14 @@ impl App {
             .get(&self.current_widget.widget_id)
             && let Some(current) = pws.table.current_item()
         {
-            let id = current.id.to_string();
+            let id = current.current_identifier();
             if let Some(pids) = pws
                 .id_pid_map
-                .get(&id)
+                .get(id)
                 .cloned()
-                .or_else(|| Some(vec![current.pid]))
+                .or_else(|| Some(vec![current.pid()]))
             {
-                let current_process = (id, pids);
+                let current_identifier = id.to_string();
 
                 let use_simple_selection = {
                     cfg_select! {
@@ -1003,8 +1003,8 @@ impl App {
                 };
 
                 self.process_kill_dialog.start_process_kill(
-                    current_process.0,
-                    current_process.1,
+                    current_identifier,
+                    pids,
                     use_simple_selection,
                 );
 

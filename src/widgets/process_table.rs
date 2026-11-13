@@ -586,14 +586,14 @@ impl ProcWidgetState {
                 if filtered_tree.contains_key(pid) {
                     process_harvest
                         .get(pid)
-                        .map(|process| ProcWidgetData::from_data(process))
+                        .map(|process| ProcWidgetData::from_data(process, is_command))
                 } else {
                     None
                 }
             })
             .collect_vec();
 
-        stack.sort_unstable_by_key(|p| p.pid);
+        stack.sort_unstable_by_key(|p| p.pid());
 
         let column = self
             .table
@@ -608,31 +608,31 @@ impl ProcWidgetState {
         while let (Some(process), Some(siblings_left)) = (stack.pop(), length_stack.last_mut()) {
             *siblings_left -= 1;
 
-            let disabled = !kept_pids.contains(&process.pid);
+            let disabled = !kept_pids.contains(&process.pid());
             let is_last = *siblings_left == 0;
 
-            if collapsed.is_collapsed(process.pid) {
+            if collapsed.is_collapsed(process.pid()) {
                 let mut summed_process = process.clone();
                 let mut has_children = false;
 
-                if let Some(children_pids) = filtered_tree.get(&process.pid) {
+                if let Some(children_pids) = filtered_tree.get(&process.pid()) {
                     let mut sum_queue = children_pids
                         .iter()
                         .filter_map(|child| {
                             process_harvest
                                 .get(child)
-                                .map(|p| ProcWidgetData::from_data(p))
+                                .map(|p| ProcWidgetData::from_data(p, is_command))
                         })
                         .collect_vec();
 
                     while let Some(process) = sum_queue.pop() {
                         summed_process.add(&process);
 
-                        if let Some(pids) = filtered_tree.get(&process.pid) {
+                        if let Some(pids) = filtered_tree.get(&process.pid()) {
                             sum_queue.extend(pids.iter().filter_map(|child| {
                                 process_harvest
                                     .get(child)
-                                    .map(|p| ProcWidgetData::from_data(p))
+                                    .map(|p| ProcWidgetData::from_data(p, is_command))
                             }));
                         }
                     }
@@ -676,7 +676,7 @@ impl ProcWidgetState {
                         BRANCH_HORIZONTAL
                     )
                 };
-                let pid = process.pid;
+                let pid = process.pid();
                 data.push(process.prefix(Some(prefix)).disabled(disabled));
 
                 if let Some(children_pids) = filtered_tree.get(&pid) {
@@ -695,7 +695,7 @@ impl ProcWidgetState {
                         .filter_map(|child_pid| {
                             process_harvest
                                 .get(child_pid)
-                                .map(|p| ProcWidgetData::from_data(p))
+                                .map(|p| ProcWidgetData::from_data(p, is_command))
                         })
                         .collect_vec();
 
@@ -755,32 +755,33 @@ impl ProcWidgetState {
                 }
 
                 if let Some(pwd) = id_process_mapping.get_mut(id) {
-                    pwd.cpu_usage_percent += process.cpu_usage_percent;
+                    pwd.inner.cpu_usage_percent += process.cpu_usage_percent;
 
-                    pwd.mem_usage += process.mem_usage;
-                    pwd.mem_usage_percent += process.mem_usage_percent;
-                    pwd.rps += process.read_per_sec;
-                    pwd.wps += process.write_per_sec;
-                    pwd.total_read += process.total_read;
-                    pwd.total_write += process.total_write;
-                    pwd.time = pwd.time.max(process.time);
+                    pwd.inner.mem_usage += process.mem_usage;
+                    pwd.inner.mem_usage_percent += process.mem_usage_percent;
+                    pwd.inner.read_per_sec += process.read_per_sec;
+                    pwd.inner.write_per_sec += process.write_per_sec;
+                    pwd.inner.total_read += process.total_read;
+                    pwd.inner.total_write += process.total_write;
+                    pwd.inner.time = pwd.inner.time.max(process.time);
                     #[cfg(feature = "gpu")]
                     {
-                        pwd.gpu_usage += process.gpu_util;
-                        pwd.gpu_mem_usage += process.gpu_mem;
-                        pwd.gpu_mem_usage_percentage += process.gpu_mem_percent;
+                        pwd.inner.gpu_util += process.gpu_util;
+                        pwd.inner.gpu_mem += process.gpu_mem;
+                        pwd.inner.gpu_mem_percent += process.gpu_mem_percent;
                     }
 
-                    pwd.num_similar += 1;
+                    pwd.count += 1;
                 } else {
-                    id_process_mapping.insert(id, ProcWidgetData::from_data(process));
+                    id_process_mapping
+                        .insert(id, ProcWidgetData::from_data(process, is_using_command));
                 }
             }
 
             id_process_mapping.into_values().collect()
         } else {
             filtered_iter
-                .map(|process| ProcWidgetData::from_data(process))
+                .map(|process| ProcWidgetData::from_data(process, is_using_command))
                 .collect()
         };
 
@@ -925,7 +926,7 @@ impl ProcWidgetState {
         if let ProcWidgetMode::Tree(collapsed) = &mut self.mode
             && let Some(process) = self.table.current_item()
         {
-            collapsed.collapse(process.pid);
+            collapsed.collapse(process.pid());
             self.force_data_update();
         }
     }
@@ -934,7 +935,7 @@ impl ProcWidgetState {
         if let ProcWidgetMode::Tree(collapsed) = &mut self.mode
             && let Some(process) = self.table.current_item()
         {
-            collapsed.expand(process.pid);
+            collapsed.expand(process.pid());
             self.force_data_update();
         }
     }
@@ -943,7 +944,7 @@ impl ProcWidgetState {
         if let ProcWidgetMode::Tree(collapsed) = &mut self.mode
             && let Some(process) = self.table.current_item()
         {
-            collapsed.toggle(process.pid);
+            collapsed.toggle(process.inner.pid);
             self.force_data_update();
         }
     }
@@ -1168,7 +1169,7 @@ mod test {
             user: Some("root".into()),
             #[cfg(not(target_family = "unix"))]
             user: Some("N/A".into()),
-            num_similar: 0,
+            count: 0,
             disabled: false,
             time: Duration::from_secs(0),
             #[cfg(feature = "gpu")]

@@ -1,11 +1,9 @@
-use std::{borrow::Cow, cmp::max, fmt::Display, num::NonZeroU16, sync::Arc, time::Duration};
+use std::{borrow::Cow, cmp::max, num::NonZeroU16, time::Duration};
 
 use concat_string::concat_string;
 use ratatui::widgets::Row;
 
 use super::process_columns::ProcColumn;
-#[cfg(target_os = "linux")]
-use crate::collection::processes::ProcessType;
 use crate::{
     canvas::{
         Painter,
@@ -18,67 +16,14 @@ use crate::{
 
 #[derive(Clone, Debug)]
 enum IdType {
-    Name(String),
-    Command(String),
+    Name,
+    Command,
 }
 
 #[derive(Clone, Debug)]
 pub struct Id {
     id_type: IdType,
     prefix: Option<String>,
-}
-
-impl From<&'static str> for Id {
-    fn from(s: &'static str) -> Self {
-        Id {
-            id_type: IdType::Name(s.to_string()),
-            prefix: None,
-        }
-    }
-}
-
-impl Id {
-    /// Returns the ID as a lowercase [`String`], with no prefix. This is
-    /// primarily useful for cases like sorting where we treat everything as
-    /// the same case (e.g. `Discord` comes before `dkms`).
-    pub fn to_lowercase(&self) -> String {
-        match &self.id_type {
-            IdType::Name(name) => name.to_lowercase(),
-            IdType::Command(cmd) => cmd.to_lowercase(),
-        }
-    }
-
-    /// Return the ID as a borrowed [`str`] with no prefix.
-    pub fn as_str(&self) -> &str {
-        match &self.id_type {
-            IdType::Name(name) => name.as_str(),
-            IdType::Command(cmd) => cmd.as_str(),
-        }
-    }
-
-    /// Returns the ID as a [`String`] with prefix.
-    pub fn to_prefixed_string(&self) -> String {
-        if let Some(prefix) = &self.prefix {
-            concat_string!(
-                prefix,
-                match &self.id_type {
-                    IdType::Name(name) => name,
-                    IdType::Command(cmd) => cmd,
-                }
-            )
-        } else {
-            match &self.id_type {
-                IdType::Name(name) => name.to_string(),
-                IdType::Command(cmd) => cmd.to_string(),
-            }
-        }
-    }
-}
-
-impl Display for Id {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.as_str())
-    }
 }
 
 trait DurationExt {
@@ -167,78 +112,58 @@ fn dec_bytes_string(value: u64) -> String {
 /// TODO: Maybe we should filter out data that isn't set?
 #[derive(Clone)]
 pub struct ProcWidgetData {
-    pub pid: Pid,
-    #[allow(dead_code)]
-    pub ppid: Option<Pid>,
+    pub inner: ProcessHarvest,
     pub id: Id,
-    pub cpu_usage_percent: f32,
-    pub mem_usage: u64,
-    pub mem_usage_percent: f32,
-    pub virtual_mem: u64,
-    pub rps: u64,
-    pub wps: u64,
-    pub total_read: u64,
-    pub total_write: u64,
-    pub process_state: &'static str,
-    pub process_char: char,
-    pub user: Option<Arc<str>>,
-    pub num_similar: u64,
+    pub count: u64,
     pub disabled: bool,
-    pub time: Duration,
-    #[cfg(feature = "gpu")]
-    pub gpu_mem_usage: u64,
-    #[cfg(feature = "gpu")]
-    pub gpu_mem_usage_percentage: f32,
-    #[cfg(feature = "gpu")]
-    pub gpu_usage: u32,
-    /// The process "type". Used to colour things.
-    #[cfg(target_os = "linux")]
-    pub process_type: ProcessType,
-    #[cfg(unix)]
-    pub nice: i32,
-    pub priority: i32,
 }
 
 impl ProcWidgetData {
-    pub fn from_data(process: &ProcessHarvest) -> Self {
+    /// Returns the PID.
+    #[inline]
+    pub fn pid(&self) -> Pid {
+        self.inner.pid
+    }
+
+    /// Return the current string to be used as an identifier for the process.
+    #[inline]
+    pub fn current_identifier(&self) -> &str {
+        match &self.id.id_type {
+            IdType::Name => &self.inner.name,
+            IdType::Command => &self.inner.command,
+        }
+    }
+
+    /// Returns the ID as a [`String`] with prefix.
+    fn to_prefixed_string(&self) -> String {
+        if let Some(prefix) = &self.id.prefix {
+            concat_string!(
+                prefix,
+                match &self.id.id_type {
+                    IdType::Name => &self.inner.name,
+                    IdType::Command => &self.inner.command,
+                }
+            )
+        } else {
+            self.current_identifier().to_string()
+        }
+    }
+
+    pub fn from_data(process: &ProcessHarvest, is_command: bool) -> Self {
         let id = Id {
             id_type: if is_command {
-                IdType::Command(process.command.clone())
+                IdType::Command
             } else {
-                IdType::Name(process.name.clone())
+                IdType::Name
             },
             prefix: None,
         };
 
         Self {
-            pid: process.pid,
-            ppid: process.parent_pid,
+            inner: process.clone(),
             id,
-            cpu_usage_percent: process.cpu_usage_percent,
-            mem_usage: process.mem_usage,
-            mem_usage_percent: process.mem_usage_percent,
-            virtual_mem: process.virtual_mem,
-            rps: process.read_per_sec,
-            wps: process.write_per_sec,
-            total_read: process.total_read,
-            total_write: process.total_write,
-            process_state: process.process_state.0,
-            process_char: process.process_state.1,
-            user: process.user.clone(),
-            num_similar: 1,
+            count: 1,
             disabled: false,
-            time: process.time,
-            #[cfg(feature = "gpu")]
-            gpu_mem_usage: process.gpu_mem,
-            #[cfg(feature = "gpu")]
-            gpu_mem_usage_percentage: process.gpu_mem_percent,
-            #[cfg(feature = "gpu")]
-            gpu_usage: process.gpu_util,
-            #[cfg(target_os = "linux")]
-            process_type: process.process_type,
-            #[cfg(unix)]
-            nice: process.nice,
-            priority: process.priority,
         }
     }
 
@@ -253,46 +178,47 @@ impl ProcWidgetData {
     }
 
     pub fn add(&mut self, other: &Self) {
-        self.cpu_usage_percent += other.cpu_usage_percent;
-        self.mem_usage = self.mem_usage + other.mem_usage;
-        self.rps += other.rps;
-        self.wps += other.wps;
-        self.total_read += other.total_read;
-        self.total_write += other.total_write;
-        self.time = self.time.max(other.time);
+        self.inner.cpu_usage_percent += other.inner.cpu_usage_percent;
+        self.inner.mem_usage = self.inner.mem_usage + other.inner.mem_usage;
+        self.inner.read_per_sec += other.inner.read_per_sec;
+        self.inner.write_per_sec += other.inner.write_per_sec;
+        self.inner.total_read += other.inner.total_read;
+        self.inner.total_write += other.inner.total_write;
+        self.inner.time = self.inner.time.max(other.inner.time);
         #[cfg(feature = "gpu")]
         {
-            self.gpu_mem_usage = self.gpu_mem_usage + other.gpu_mem_usage;
-            self.gpu_usage += other.gpu_usage;
+            self.inner.gpu_mem += other.inner.gpu_mem;
+            self.inner.gpu_util += other.inner.gpu_util;
         }
     }
 
     fn to_string(&self, column: &ProcColumn) -> String {
         match column {
-            &ProcColumn::Priority => self.priority.to_string(),
+            &ProcColumn::Priority => self.inner.priority.to_string(),
             #[cfg(unix)]
-            ProcColumn::Nice => self.nice.to_string(),
-            ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
-            ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),
-            ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem),
-            ProcColumn::Pid => self.pid.to_string(),
-            ProcColumn::Count => self.num_similar.to_string(),
-            ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string(),
-            ProcColumn::ReadPerSecond => dec_bytes_per_second_string(self.rps),
-            ProcColumn::WritePerSecond => dec_bytes_per_second_string(self.wps),
-            ProcColumn::TotalRead => dec_bytes_string(self.total_read),
-            ProcColumn::TotalWrite => dec_bytes_string(self.total_write),
-            ProcColumn::State => self.process_char.to_string(),
+            ProcColumn::Nice => self.inner.nice.to_string(),
+            ProcColumn::CpuPercent => format!("{:.1}%", self.inner.cpu_usage_percent),
+            ProcColumn::MemValue | ProcColumn::MemPercent => self.inner.mem_usage.to_string(),
+            ProcColumn::VirtualMem => binary_byte_string(self.inner.virtual_mem),
+            ProcColumn::Pid => self.pid().to_string(),
+            ProcColumn::Count => self.count.to_string(),
+            ProcColumn::Name | ProcColumn::Command => self.to_prefixed_string(),
+            ProcColumn::ReadPerSecond => dec_bytes_per_second_string(self.inner.read_per_sec),
+            ProcColumn::WritePerSecond => dec_bytes_per_second_string(self.inner.write_per_sec),
+            ProcColumn::TotalRead => dec_bytes_string(self.inner.total_read),
+            ProcColumn::TotalWrite => dec_bytes_string(self.inner.total_write),
+            ProcColumn::State => self.inner.process_state.1.to_string(),
             ProcColumn::User => self
+                .inner
                 .user
                 .as_ref()
                 .map(|user| user.to_string())
                 .unwrap_or_else(|| "N/A".to_string()),
-            ProcColumn::Time => format_time(self.time),
+            ProcColumn::Time => format_time(self.inner.time),
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
+            ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => self.inner.gpu_mem.to_string(),
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage),
+            ProcColumn::GpuUtilPercent => format!("{:.1}%", self.inner.gpu_util),
         }
     }
 }
@@ -306,37 +232,44 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
         // differences.
         Some(match column {
             #[cfg(unix)]
-            ProcColumn::Nice => self.nice.to_string().into(),
-            &ProcColumn::Priority => self.priority.to_string().into(),
-            ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
-            ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),
-            ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem).into(),
-            ProcColumn::Pid => self.pid.to_string().into(),
-            ProcColumn::Count => self.num_similar.to_string().into(),
-            ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string().into(),
-            ProcColumn::ReadPerSecond => dec_bytes_per_second_string(self.rps).into(),
-            ProcColumn::WritePerSecond => dec_bytes_per_second_string(self.wps).into(),
-            ProcColumn::TotalRead => dec_bytes_string(self.total_read).into(),
-            ProcColumn::TotalWrite => dec_bytes_string(self.total_write).into(),
+            ProcColumn::Nice => self.inner.nice.to_string().into(),
+            &ProcColumn::Priority => self.inner.priority.to_string().into(),
+            ProcColumn::CpuPercent => format!("{:.1}%", self.inner.cpu_usage_percent).into(),
+            ProcColumn::MemValue | ProcColumn::MemPercent => {
+                self.inner.mem_usage.to_string().into()
+            }
+            ProcColumn::VirtualMem => binary_byte_string(self.inner.virtual_mem).into(),
+            ProcColumn::Pid => self.pid().to_string().into(),
+            ProcColumn::Count => self.count.to_string().into(),
+            ProcColumn::Name | ProcColumn::Command => self.to_prefixed_string().into(),
+            ProcColumn::ReadPerSecond => {
+                dec_bytes_per_second_string(self.inner.read_per_sec).into()
+            }
+            ProcColumn::WritePerSecond => {
+                dec_bytes_per_second_string(self.inner.write_per_sec).into()
+            }
+            ProcColumn::TotalRead => dec_bytes_string(self.inner.total_read).into(),
+            ProcColumn::TotalWrite => dec_bytes_string(self.inner.total_write).into(),
             ProcColumn::State => {
                 if calculated_width.get() < 8 {
-                    self.process_char.to_string().into()
+                    self.inner.process_state.1.to_string().into()
                 } else {
-                    self.process_state.into()
+                    self.inner.process_state.0.into()
                 }
             }
             ProcColumn::User => self
+                .inner
                 .user
                 .as_ref()
                 .map(|user| user.to_string().into())
                 .unwrap_or_else(|| "N/A".into()),
-            ProcColumn::Time => format_time(self.time).into(),
+            ProcColumn::Time => format_time(self.inner.time).into(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => {
-                self.gpu_mem_usage.to_string().into()
+                self.inner.gpu_mem.to_string().into()
             }
             #[cfg(feature = "gpu")]
-            ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage).into(),
+            ProcColumn::GpuUtilPercent => format!("{:.1}%", self.inner.gpu_util).into(),
         })
     }
 
@@ -344,7 +277,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
     #[inline(always)]
     fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<ratatui::style::Style> {
         match column {
-            ProcColumn::Name | ProcColumn::Command if self.process_type.is_thread() => {
+            ProcColumn::Name | ProcColumn::Command if self.inner.process_type.is_thread() => {
                 Some(painter.styles.thread_text_style)
             }
             _ => None,
