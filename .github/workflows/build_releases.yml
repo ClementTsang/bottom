@@ -133,7 +133,8 @@ jobs:
               os: "ubuntu-22.04",
               artifact_name: "x86_64-unknown-linux-gnu-2-17",
               cross: true,
-              cross_image: "ghcr.io/cross-rs/x86_64-unknown-linux-gnu@sha256:ab2070e67704b2c85d0d1fa50a0165ec438ed87fd1dc1a4058692a2348c071cb", # edge-centos
+              # https://github.com/cross-rs/cross/pkgs/container/x86_64-unknown-linux-gnu/1554248584?tag=edge-centos
+              cross_image: "ghcr.io/cross-rs/x86_64-unknown-linux-gnu@sha256:1be9b0f725e4fdd4f7fb90c8e29678414cda08e7ddd2489d78555e6b2fe4176b",
             }
 
           # Android
