@@ -18,11 +18,11 @@ pub(super) struct Or {
 }
 
 impl Or {
-    pub(super) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+    pub(super) fn check(&self, process: &ProcessHarvest) -> bool {
         if let Some(rhs) = &self.rhs {
-            self.lhs.check(process, is_using_command) || rhs.check(process, is_using_command)
+            self.lhs.check(process) || rhs.check(process)
         } else {
-            self.lhs.check(process, is_using_command)
+            self.lhs.check(process)
         }
     }
 }

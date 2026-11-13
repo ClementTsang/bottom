@@ -1,12 +1,4 @@
-use std::{
-    borrow::Cow,
-    cmp::{Ordering, max},
-    fmt::Display,
-    num::NonZeroU16,
-    ops::Add,
-    sync::Arc,
-    time::Duration,
-};
+use std::{borrow::Cow, cmp::max, fmt::Display, num::NonZeroU16, sync::Arc, time::Duration};
 
 use concat_string::concat_string;
 use ratatui::widgets::Row;
@@ -86,46 +78,6 @@ impl Id {
 impl Display for Id {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_str())
-    }
-}
-
-#[derive(PartialEq, Clone, Debug, Copy)]
-pub enum MemUsage {
-    Percent(f32),
-    Bytes(u64),
-}
-
-impl Add for MemUsage {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (MemUsage::Percent(a), MemUsage::Percent(b)) => MemUsage::Percent(a + b),
-            (MemUsage::Bytes(a), MemUsage::Bytes(b)) => MemUsage::Bytes(a + b),
-            (MemUsage::Bytes(_), MemUsage::Percent(_))
-            | (MemUsage::Percent(_), MemUsage::Bytes(_)) => {
-                unreachable!("trying to add together two different memory usage types!")
-            }
-        }
-    }
-}
-
-impl PartialOrd for MemUsage {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match (self, other) {
-            (MemUsage::Percent(a), MemUsage::Percent(b)) => a.partial_cmp(b),
-            (MemUsage::Bytes(a), MemUsage::Bytes(b)) => a.partial_cmp(b),
-            _ => unreachable!(),
-        }
-    }
-}
-
-impl Display for MemUsage {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MemUsage::Percent(percent) => f.write_fmt(format_args!("{percent:.1}%")),
-            MemUsage::Bytes(bytes) => f.write_str(&binary_byte_string(*bytes)),
-        }
     }
 }
 
@@ -210,6 +162,9 @@ fn dec_bytes_string(value: u64) -> String {
     }
 }
 
+/// Process widget data.
+///
+/// TODO: Maybe we should filter out data that isn't set?
 #[derive(Clone)]
 pub struct ProcWidgetData {
     pub pid: Pid,
@@ -217,7 +172,8 @@ pub struct ProcWidgetData {
     pub ppid: Option<Pid>,
     pub id: Id,
     pub cpu_usage_percent: f32,
-    pub mem_usage: MemUsage,
+    pub mem_usage: u64,
+    pub mem_usage_percent: f32,
     pub virtual_mem: u64,
     pub rps: u64,
     pub wps: u64,
@@ -230,7 +186,9 @@ pub struct ProcWidgetData {
     pub disabled: bool,
     pub time: Duration,
     #[cfg(feature = "gpu")]
-    pub gpu_mem_usage: MemUsage,
+    pub gpu_mem_usage: u64,
+    #[cfg(feature = "gpu")]
+    pub gpu_mem_usage_percentage: f32,
     #[cfg(feature = "gpu")]
     pub gpu_usage: u32,
     /// The process "type". Used to colour things.
@@ -242,7 +200,7 @@ pub struct ProcWidgetData {
 }
 
 impl ProcWidgetData {
-    pub fn from_data(process: &ProcessHarvest, is_command: bool, is_mem_percent: bool) -> Self {
+    pub fn from_data(process: &ProcessHarvest) -> Self {
         let id = Id {
             id_type: if is_command {
                 IdType::Command(process.command.clone())
@@ -252,18 +210,13 @@ impl ProcWidgetData {
             prefix: None,
         };
 
-        let mem_usage = if is_mem_percent {
-            MemUsage::Percent(process.mem_usage_percent)
-        } else {
-            MemUsage::Bytes(process.mem_usage)
-        };
-
         Self {
             pid: process.pid,
             ppid: process.parent_pid,
             id,
             cpu_usage_percent: process.cpu_usage_percent,
-            mem_usage,
+            mem_usage: process.mem_usage,
+            mem_usage_percent: process.mem_usage_percent,
             virtual_mem: process.virtual_mem,
             rps: process.read_per_sec,
             wps: process.write_per_sec,
@@ -276,11 +229,9 @@ impl ProcWidgetData {
             disabled: false,
             time: process.time,
             #[cfg(feature = "gpu")]
-            gpu_mem_usage: if is_mem_percent {
-                MemUsage::Percent(process.gpu_mem_percent)
-            } else {
-                MemUsage::Bytes(process.gpu_mem)
-            },
+            gpu_mem_usage: process.gpu_mem,
+            #[cfg(feature = "gpu")]
+            gpu_mem_usage_percentage: process.gpu_mem_percent,
             #[cfg(feature = "gpu")]
             gpu_usage: process.gpu_util,
             #[cfg(target_os = "linux")]

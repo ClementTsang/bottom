@@ -170,10 +170,8 @@ pub struct ProcessQuery {
 }
 
 impl ProcessQuery {
-    pub(crate) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
-        self.query
-            .iter()
-            .all(|ok| ok.check(process, is_using_command))
+    pub(crate) fn check(&self, process: &ProcessHarvest) -> bool {
+        self.query.iter().all(|ok| ok.check(process))
     }
 }
 
@@ -188,6 +186,7 @@ enum PrefixType {
     TotalRead,
     TotalWrite,
     Name,
+    Command,
     State,
     User,
     Time,
@@ -243,6 +242,8 @@ impl std::str::FromStr for PrefixType {
             }
         } else if multi_eq_ignore_ascii_case!(s, "priority") {
             result = Priority;
+        } else if multi_eq_ignore_ascii_case!(s, "command") {
+            result = Command;
         }
         #[cfg(feature = "gpu")]
         {
@@ -343,9 +344,9 @@ mod tests {
         let contains = simple_process("test string");
         let invalid = simple_process("no");
 
-        assert!(query.check(&exact_match, false));
-        assert!(query.check(&contains, false));
-        assert!(!query.check(&invalid, false));
+        assert!(query.check(&exact_match));
+        assert!(query.check(&contains));
+        assert!(!query.check(&invalid));
     }
 
     #[test]
@@ -356,9 +357,9 @@ mod tests {
         let b = simple_process("b");
         let invalid = simple_process("c");
 
-        assert!(query.check(&a, false));
-        assert!(query.check(&b, false));
-        assert!(!query.check(&invalid, false));
+        assert!(query.check(&a));
+        assert!(query.check(&b));
+        assert!(!query.check(&invalid));
     }
 
     #[test]
@@ -370,10 +371,10 @@ mod tests {
         let c = simple_process("c");
         let a_and_b = simple_process("a and b");
 
-        assert!(!query.check(&a, false));
-        assert!(!query.check(&b, false));
-        assert!(!query.check(&c, false));
-        assert!(query.check(&a_and_b, false));
+        assert!(!query.check(&a));
+        assert!(!query.check(&b));
+        assert!(!query.check(&c));
+        assert!(query.check(&a_and_b));
     }
 
     #[test]
@@ -385,10 +386,10 @@ mod tests {
         let c = simple_process("c");
         let all = simple_process("a b c");
 
-        assert!(!query.check(&a, false));
-        assert!(!query.check(&b, false));
-        assert!(!query.check(&c, false));
-        assert!(query.check(&all, false));
+        assert!(!query.check(&a));
+        assert!(!query.check(&b));
+        assert!(!query.check(&c));
+        assert!(query.check(&all));
     }
 
     /// Ensure that quoted keywords are treated as strings. In this case, rather
@@ -404,12 +405,12 @@ mod tests {
         let valid_2 = simple_process("a or b");
         let valid_3 = simple_process("a \"or\" b \"or\" c");
 
-        assert!(!query.check(&a, false));
-        assert!(!query.check(&b, false));
-        assert!(!query.check(&or, false));
-        assert!(query.check(&valid, false));
-        assert!(query.check(&valid_2, false));
-        assert!(query.check(&valid_3, false));
+        assert!(!query.check(&a));
+        assert!(!query.check(&b));
+        assert!(!query.check(&or));
+        assert!(query.check(&valid));
+        assert!(query.check(&valid_2));
+        assert!(query.check(&valid_3));
     }
 
     /// Ensure that multi-word quoted keywords are treated as strings. In this
@@ -426,12 +427,12 @@ mod tests {
         let valid_2 = simple_process("a or b \"or\" c");
         let invalid_no_regex = simple_process("a \"or\" b"); // Invalid now as the query is one big string!
 
-        assert!(!query.check(&a, false));
-        assert!(!query.check(&b, false));
-        assert!(!query.check(&or, false));
-        assert!(query.check(&valid, false));
-        assert!(query.check(&valid_2, false));
-        assert!(!query.check(&invalid_no_regex, false));
+        assert!(!query.check(&a));
+        assert!(!query.check(&b));
+        assert!(!query.check(&or));
+        assert!(query.check(&valid));
+        assert!(query.check(&valid_2));
+        assert!(!query.check(&invalid_no_regex));
     }
 
     #[test]
@@ -447,9 +448,9 @@ mod tests {
         let mut exact = simple_process("a");
         exact.cpu_usage_percent = 50.0;
 
-        assert!(query.check(&over, false));
-        assert!(!query.check(&under, false));
-        assert!(!query.check(&exact, false));
+        assert!(query.check(&over));
+        assert!(!query.check(&under));
+        assert!(!query.check(&exact));
     }
 
     #[test]
@@ -465,9 +466,9 @@ mod tests {
         let mut exact = simple_process("a");
         exact.mem_usage = 1024 * 1024 * 1024;
 
-        assert!(query.check(&over, false));
-        assert!(!query.check(&under, false));
-        assert!(!query.check(&exact, false));
+        assert!(query.check(&over));
+        assert!(!query.check(&under));
+        assert!(!query.check(&exact));
     }
 
     /// This test sees if parentheses work.
@@ -480,10 +481,10 @@ mod tests {
         let c = simple_process("c");
         let d = simple_process("d");
 
-        assert!(query.check(&a, false));
-        assert!(!query.check(&b, false));
-        assert!(!query.check(&c, false));
-        assert!(!query.check(&d, false));
+        assert!(query.check(&a));
+        assert!(!query.check(&b));
+        assert!(!query.check(&c));
+        assert!(!query.check(&d));
     }
 
     /// This test sees if parentheses and mixed query types work.
@@ -509,13 +510,13 @@ mod tests {
         let mut d = simple_process("d");
         d.cpu_usage_percent = 6.0;
 
-        assert!(query.check(&a_valid_1, false));
-        assert!(query.check(&a_valid_2, false));
-        assert!(query.check(&c, false));
+        assert!(query.check(&a_valid_1));
+        assert!(query.check(&a_valid_2));
+        assert!(query.check(&c));
 
-        assert!(!query.check(&a_invalid, false));
-        assert!(!query.check(&b, false));
-        assert!(!query.check(&d, false));
+        assert!(!query.check(&a_invalid));
+        assert!(!query.check(&b));
+        assert!(!query.check(&d));
     }
 
     /// This test adds a further layer of nesting to consider.
@@ -542,13 +543,13 @@ mod tests {
         let mut d = simple_process("d");
         d.cpu_usage_percent = 6.0;
 
-        assert!(query.check(&a_valid_1, false));
-        assert!(query.check(&a_valid_2, false));
-        assert!(query.check(&c, false));
-        assert!(query.check(&d, false));
+        assert!(query.check(&a_valid_1));
+        assert!(query.check(&a_valid_2));
+        assert!(query.check(&c));
+        assert!(query.check(&d));
 
-        assert!(!query.check(&a_invalid, false));
-        assert!(!query.check(&b, false));
+        assert!(!query.check(&a_invalid));
+        assert!(!query.check(&b));
     }
 
     #[test]
@@ -559,9 +560,9 @@ mod tests {
         let b = simple_process("b");
         let c = simple_process("c");
 
-        assert!(!query.check(&a, false));
-        assert!(!query.check(&b, false));
-        assert!(query.check(&c, false));
+        assert!(!query.check(&a));
+        assert!(!query.check(&b));
+        assert!(query.check(&c));
     }
 
     #[test]
@@ -572,9 +573,9 @@ mod tests {
         let b = simple_process("b");
         let c = simple_process("c");
 
-        assert!(query.check(&a, false));
-        assert!(!query.check(&b, false));
-        assert!(!query.check(&c, false));
+        assert!(query.check(&a));
+        assert!(!query.check(&b));
+        assert!(!query.check(&c));
     }
 
     /// Test if a complicated query even parses.
@@ -602,8 +603,8 @@ mod tests {
 
         let process = simple_process("test");
 
-        assert!(a.check(&process, false));
-        assert!(b.check(&process, false));
+        assert!(a.check(&process));
+        assert!(b.check(&process));
     }
 
     /// Test unfinished quotes error.
@@ -681,8 +682,8 @@ mod tests {
         let mut process_b = simple_process("test");
         process_b.command = "no".into();
 
-        assert!(query.check(&process_a, true));
-        assert!(!query.check(&process_b, true));
+        assert!(query.check(&process_a));
+        assert!(!query.check(&process_b));
     }
 
     #[test]
@@ -692,8 +693,8 @@ mod tests {
         let process_a = simple_process("施氏食獅史");
         let process_b = simple_process("沒有");
 
-        assert!(query.check(&process_a, false));
-        assert!(!query.check(&process_b, false));
+        assert!(query.check(&process_a));
+        assert!(!query.check(&process_b));
     }
 
     #[test]
@@ -703,8 +704,8 @@ mod tests {
         let process_a = simple_process("परीक्षा");
         let process_b = simple_process("उपलब्ध नहीं है");
 
-        assert!(query.check(&process_a, false));
-        assert!(!query.check(&process_b, false));
+        assert!(query.check(&process_a));
+        assert!(!query.check(&process_b));
     }
 
     #[test]
@@ -715,9 +716,9 @@ mod tests {
         let process_b = simple_process("❤️🇨🇦❤️");
         let process_c = simple_process("❤️");
 
-        assert!(query.check(&process_a, false));
-        assert!(query.check(&process_b, false));
-        assert!(!query.check(&process_c, false));
+        assert!(query.check(&process_a));
+        assert!(query.check(&process_b));
+        assert!(!query.check(&process_c));
     }
 
     #[test]
@@ -728,9 +729,9 @@ mod tests {
         let process_b = simple_process("施氏食狮史");
         let process_c = simple_process("沒有");
 
-        assert!(query.check(&process_a, false));
-        assert!(query.check(&process_b, false));
-        assert!(!query.check(&process_c, false));
+        assert!(query.check(&process_a));
+        assert!(query.check(&process_b));
+        assert!(!query.check(&process_c));
     }
 
     #[test]
@@ -748,11 +749,11 @@ mod tests {
         let process_d = simple_process("沒有");
         let process_e = simple_process("nope");
 
-        assert!(query.check(&process_a, false));
-        assert!(query.check(&process_b, false));
-        assert!(query.check(&process_c, false));
-        assert!(!query.check(&process_d, false));
-        assert!(!query.check(&process_e, false));
+        assert!(query.check(&process_a));
+        assert!(query.check(&process_b));
+        assert!(query.check(&process_c));
+        assert!(!query.check(&process_d));
+        assert!(!query.check(&process_e));
     }
 
     #[test]
@@ -770,8 +771,8 @@ mod tests {
         let process_a = simple_process("abc");
         let process_b = simple_process("test");
 
-        assert!(query.check(&process_a, false));
-        assert!(!query.check(&process_b, false));
+        assert!(query.check(&process_a));
+        assert!(!query.check(&process_b));
     }
 
     #[test]
@@ -791,10 +792,10 @@ mod tests {
         let process_c = simple_process("ytoz");
         let process_d = simple_process("atozoops");
 
-        assert!(query.check(&process_a, false));
-        assert!(!query.check(&process_b, false));
-        assert!(!query.check(&process_c, false));
-        assert!(!query.check(&process_d, false));
+        assert!(query.check(&process_a));
+        assert!(!query.check(&process_b));
+        assert!(!query.check(&process_c));
+        assert!(!query.check(&process_d));
     }
 
     #[test]
@@ -813,9 +814,9 @@ mod tests {
         let process_b = simple_process("testa");
         let process_c = simple_process("atest");
 
-        assert!(query.check(&process_a, false));
-        assert!(!query.check(&process_b, false));
-        assert!(!query.check(&process_c, false));
+        assert!(query.check(&process_a));
+        assert!(!query.check(&process_b));
+        assert!(!query.check(&process_c));
     }
 
     #[test]
@@ -834,17 +835,17 @@ mod tests {
         let process_b = simple_process("tEsT a");
         let process_c = simple_process("a tEsT");
 
-        assert!(query.check(&process_a, false));
-        assert!(query.check(&process_b, false));
-        assert!(query.check(&process_c, false));
+        assert!(query.check(&process_a));
+        assert!(query.check(&process_b));
+        assert!(query.check(&process_c));
 
         let process_d = simple_process("test");
         let process_e = simple_process("test a");
         let process_f = simple_process("a test");
 
-        assert!(!query.check(&process_d, false));
-        assert!(!query.check(&process_e, false));
-        assert!(!query.check(&process_f, false));
+        assert!(!query.check(&process_d));
+        assert!(!query.check(&process_e));
+        assert!(!query.check(&process_f));
     }
 
     #[cfg(feature = "gpu")]
@@ -859,18 +860,18 @@ mod tests {
         process_a.gpu_mem_percent = 50.0;
         process_a.gpu_util = 50;
 
-        assert!(mem.check(&process_a, false));
-        assert!(mem_percent.check(&process_a, false));
-        assert!(use_percent.check(&process_a, false));
+        assert!(mem.check(&process_a));
+        assert!(mem_percent.check(&process_a));
+        assert!(use_percent.check(&process_a));
 
         let mut process_b = simple_process("test");
         process_b.gpu_mem = 0;
         process_b.gpu_mem_percent = 10.0;
         process_b.gpu_util = 10;
 
-        assert!(!mem.check(&process_b, false));
-        assert!(!mem_percent.check(&process_b, false));
-        assert!(!use_percent.check(&process_b, false));
+        assert!(!mem.check(&process_b));
+        assert!(!mem_percent.check(&process_b));
+        assert!(!use_percent.check(&process_b));
     }
 
     /// Test GPU queries that involve invalid string comparisons.
@@ -893,7 +894,7 @@ mod tests {
     //     let mut process_a = simple_process("test");
     //     process_a.mem_usage = 100;
 
-    //     assert!(mem.check(&process_a, false));
+    //     assert!(mem.check(&process_a));
     // }
 
     /// Basic numerical non-equality operator test.
@@ -907,8 +908,8 @@ mod tests {
         let mut other = simple_process("a");
         other.cpu_usage_percent = 40.0;
 
-        assert!(!query.check(&equal, false));
-        assert!(query.check(&other, false));
+        assert!(!query.check(&equal));
+        assert!(query.check(&other));
     }
 
     /// `!=` should tokenize the same whether written as `foo!=bar` or
@@ -921,8 +922,8 @@ mod tests {
         let mut proc = simple_process("a");
         proc.cpu_usage_percent = 40.0;
 
-        assert!(spaced.check(&proc, false));
-        assert!(joined.check(&proc, false));
+        assert!(spaced.check(&proc));
+        assert!(joined.check(&proc));
     }
 
     /// Test the non-equality operator with time.
@@ -936,8 +937,8 @@ mod tests {
         let mut other = simple_process("a");
         other.time = Duration::from_secs(60);
 
-        assert!(!query.check(&equal, false));
-        assert!(query.check(&other, false));
+        assert!(!query.check(&equal));
+        assert!(query.check(&other));
     }
 
     /// Test state queries with the non-equality operator. This also tests that string comparisons.
@@ -951,8 +952,8 @@ mod tests {
         let mut running = simple_process("a");
         running.process_state.0 = "running";
 
-        assert!(!query.check(&sleeping, false));
-        assert!(query.check(&running, false));
+        assert!(!query.check(&sleeping));
+        assert!(query.check(&running));
     }
 
     /// Test byte unit searches work with the non-equality operator.
@@ -966,8 +967,8 @@ mod tests {
         let mut other = simple_process("a");
         other.mem_usage = 0;
 
-        assert!(!query.check(&equal, false));
-        assert!(query.check(&other, false));
+        assert!(!query.check(&equal));
+        assert!(query.check(&other));
     }
 
     /// `!(...)` negates a whole group.
@@ -983,9 +984,9 @@ mod tests {
         let mut low_cpu_no_match = simple_process("b");
         low_cpu_no_match.cpu_usage_percent = 1.0;
 
-        assert!(!query.check(&high_cpu, false));
-        assert!(!query.check(&name_match, false));
-        assert!(query.check(&low_cpu_no_match, false));
+        assert!(!query.check(&high_cpu));
+        assert!(!query.check(&name_match));
+        assert!(query.check(&low_cpu_no_match));
     }
 
     /// `!name` negates a bare-name match.
@@ -996,8 +997,8 @@ mod tests {
         let firefox = simple_process("firefox");
         let other = simple_process("btm");
 
-        assert!(!query.check(&firefox, false));
-        assert!(query.check(&other, false));
+        assert!(!query.check(&firefox));
+        assert!(query.check(&other));
     }
 
     /// `!"..."` negates a quoted-name match.
@@ -1008,8 +1009,8 @@ mod tests {
         let exact = simple_process("a or b");
         let other = simple_process("c");
 
-        assert!(!query.check(&exact, false));
-        assert!(query.check(&other, false));
+        assert!(!query.check(&exact));
+        assert!(query.check(&other));
     }
 
     /// `!!x` is double negation, which should behave like `x`.
@@ -1020,8 +1021,8 @@ mod tests {
         let firefox = simple_process("firefox");
         let other = simple_process("btm");
 
-        assert!(query.check(&firefox, false));
-        assert!(!query.check(&other, false));
+        assert!(query.check(&firefox));
+        assert!(!query.check(&other));
     }
 
     /// `!!(cpu > 5)` is double negation, which should behave like `cpu > 5`.
@@ -1034,8 +1035,8 @@ mod tests {
         let mut small = simple_process("small");
         small.cpu_usage_percent = 1.0;
 
-        assert!(query.check(&big, false));
-        assert!(!query.check(&small, false));
+        assert!(query.check(&big));
+        assert!(!query.check(&small));
     }
 
     /// `!` composes with `and`/`or`.
@@ -1052,9 +1053,9 @@ mod tests {
         let mut other_low = simple_process("btm");
         other_low.cpu_usage_percent = 1.0;
 
-        assert!(!query.check(&firefox, false));
-        assert!(query.check(&other_high, false));
-        assert!(!query.check(&other_low, false));
+        assert!(!query.check(&firefox));
+        assert!(query.check(&other_high));
+        assert!(!query.check(&other_low));
     }
 
     /// A bare `!` with nothing parseable after it must be rejected so that it
@@ -1080,8 +1081,8 @@ mod tests {
         let mut other = simple_process("a");
         other.user = Some("root".into());
 
-        assert!(query.check(&with_bang, false));
-        assert!(!query.check(&other, false));
+        assert!(query.check(&with_bang));
+        assert!(!query.check(&other));
     }
 
     /// A quoted `"!"` as the RHS of a prefixed string query with "!=" should not match the
@@ -1096,8 +1097,8 @@ mod tests {
         let mut other = simple_process("a");
         other.user = Some("root".into());
 
-        assert!(!query.check(&with_bang, false));
-        assert!(query.check(&other, false));
+        assert!(!query.check(&with_bang));
+        assert!(query.check(&other));
     }
 
     /// A quoted `"!"` should remain a valid literal-name match.
@@ -1108,8 +1109,8 @@ mod tests {
         let with_bang = simple_process("foo!");
         let without = simple_process("foo");
 
-        assert!(query.check(&with_bang, false));
-        assert!(!query.check(&without, false));
+        assert!(query.check(&with_bang));
+        assert!(!query.check(&without));
     }
 
     /// Quoted angle brackets should be treated as literal characters in name matches.
@@ -1120,8 +1121,8 @@ mod tests {
         let matching = simple_process("Thread<15>");
         let non_matching = simple_process("Thread");
 
-        assert!(query.check(&matching, false));
-        assert!(!query.check(&non_matching, false));
+        assert!(query.check(&matching));
+        assert!(!query.check(&non_matching));
     }
 
     /// A quoted `=` should be treated as a literal character in name matches.
@@ -1132,8 +1133,8 @@ mod tests {
         let matching = simple_process("a=b");
         let non_matching = simple_process("ab");
 
-        assert!(query.check(&matching, false));
-        assert!(!query.check(&non_matching, false));
+        assert!(query.check(&matching));
+        assert!(!query.check(&non_matching));
     }
 
     /// A quoted `!=` should be treated as a literal character sequence in name matches.
@@ -1144,8 +1145,8 @@ mod tests {
         let matching = simple_process("a!=b");
         let non_matching = simple_process("ab");
 
-        assert!(query.check(&matching, false));
-        assert!(!query.check(&non_matching, false));
+        assert!(query.check(&matching));
+        assert!(!query.check(&non_matching));
     }
 
     /// Quoted parentheses should be treated as literal characters in name matches.
@@ -1156,8 +1157,8 @@ mod tests {
         let matching = simple_process("a(b)");
         let non_matching = simple_process("ab");
 
-        assert!(query.check(&matching, false));
-        assert!(!query.check(&non_matching, false));
+        assert!(query.check(&matching));
+        assert!(!query.check(&non_matching));
     }
 
     /// Trailing operators with no RHS must error.

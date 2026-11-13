@@ -27,8 +27,24 @@ You can configure which columns are shown by the process widget by setting the `
 ```toml
 [processes]
 # Pick which columns you want to use in any order.
-columns = ["cpu%", "mem%", "pid", "name", "read", "write", "tread", "twrite", "state", "user", "time", "gmem%", "gpu%"]
+columns = ["cpu%", "mem%", "pid", "name", "read", "write", "tread", "twrite", "state", "user", "time", "gmem%", "gpu%", "mem", "command", "gmem"]
 ```
+
+Note that if the `mem` column is set, the `default_memory_value` option will not do anything.
+Likewise, if `command` is set, `process_command` will not do anything.
+
+A note regarding the `mem%`/`mem` columns, `gmem`/`gmem%`, and `name`/`command` columns - if you want to see both at
+the same time, then you can do so! For example:
+
+```toml
+[processes]
+# Pick which columns you want to use in any order.
+columns = ["mem%", "mem", "name", "command"]
+```
+
+is entirely valid. Note that if both `mem%`/`mem` is set, then the `++%++` shortcut will not do anything for those
+columns (as toggling doesn't really make sense), and likewise for `gmem%`/`gmem`. Similarly, if `name` and `command`
+are both set, then the `++P++` shortcut will not toggle between the name and command columns.
 
 ## Default Sort Column
 

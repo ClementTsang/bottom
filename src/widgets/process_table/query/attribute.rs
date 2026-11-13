@@ -29,6 +29,8 @@ pub(super) enum ProcessAttribute {
     TotalWrite(NumericalQuery),
     /// Note this is an "untagged" attribute (e.g. "btm", "firefox").
     Name(Regex),
+    /// Note this is an "untagged" attribute (e.g. "btm", "firefox").
+    Command(Regex),
     State(Regex),
     User(Regex),
     Time(TimeQuery),
@@ -44,7 +46,7 @@ pub(super) enum ProcessAttribute {
 }
 
 impl ProcessAttribute {
-    pub(super) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+    pub(super) fn check(&self, process: &ProcessHarvest) -> bool {
         match self {
             ProcessAttribute::Empty => true,
             ProcessAttribute::Pid(re) => re.is_match(process.pid.to_string().as_str()),
@@ -55,11 +57,12 @@ impl ProcessAttribute {
             ProcessAttribute::WritePerSecond(cmp) => cmp.check(process.write_per_sec as f64),
             ProcessAttribute::TotalRead(cmp) => cmp.check(process.total_read as f64),
             ProcessAttribute::TotalWrite(cmp) => cmp.check(process.total_write as f64),
-            ProcessAttribute::Name(re) => re.is_match(if is_using_command {
-                process.command.as_str()
-            } else {
-                process.name.as_str()
-            }),
+            ProcessAttribute::Name(re) => {
+                // TODO: Note that to preserve backwards-compatibility in terms of behaviour, we'll want to make it
+                // so that if there is no name column, we fall back to command instead.
+                re.is_match(process.name.as_str())
+            },
+            ProcessAttribute::Command(re) => re.is_match(process.command.as_str()),
             ProcessAttribute::State(re) => re.is_match(process.process_state.0),
             ProcessAttribute::User(re) => match process.user.as_ref() {
                 Some(user) => re.is_match(user),

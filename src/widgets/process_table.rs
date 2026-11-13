@@ -287,7 +287,7 @@ impl ProcWidgetState {
                         .into_iter()
                         .map(|p| {
                             // Note that we have to handle "toggle" columns - if a user "splits" a toggle column on their own,
-                            // then we won't do anything - but if they don't, then we have to take into account is_count,
+                            // then we won't do anything - but if they don't, then we _may_ have to take into account is_count,
                             // is_command, and mem_as_values.
                             fn contains_unique_toggle_column(
                                 curr: &ProcColumn, configured_columns: &IndexSet<ProcColumn>,
@@ -314,7 +314,7 @@ impl ProcWidgetState {
                                 ProcColumn::Name,
                                 ProcColumn::Command,
                             ) {
-                                if is_command {
+                                if *p == ProcColumn::Command || is_command {
                                     make_column(Command)
                                 } else {
                                     make_column(Name)
@@ -325,7 +325,7 @@ impl ProcWidgetState {
                                 ProcColumn::MemPercent,
                                 ProcColumn::MemValue,
                             ) {
-                                if mem_as_values {
+                                if *p == ProcColumn::MemValue || mem_as_values {
                                     make_column(MemValue)
                                 } else {
                                     make_column(MemPercent)
@@ -420,20 +420,6 @@ impl ProcWidgetState {
         table
     }
 
-    #[inline]
-    pub fn is_using_command(&self) -> bool {
-        self.column_mapping
-            .get_index_of(&ProcColumn::Command)
-            .is_some()
-    }
-
-    #[inline]
-    pub fn is_mem_percent(&self) -> bool {
-        self.column_mapping
-            .get_index_of(&ProcColumn::MemPercent)
-            .is_some()
-    }
-
     fn get_query(&self) -> &Option<ProcessQuery> {
         if self.proc_search.search_state.is_invalid_or_blank_search() {
             &None
@@ -467,8 +453,6 @@ impl ProcWidgetState {
         const SPACED_BRANCH_VERTICAL: &str = "│  ";
 
         let search_query = self.get_query();
-        let is_using_command = self.is_using_command();
-        let is_mem_percent = self.is_mem_percent();
 
         let ProcessData {
             process_harvest,
@@ -485,7 +469,7 @@ impl ProcWidgetState {
             .filter_map(|(pid, process)| {
                 if search_query
                     .as_ref()
-                    .map(|q| q.check(process, is_using_command))
+                    .map(|q| q.check(process))
                     .unwrap_or(true)
                 {
                     #[cfg(target_os = "linux")]
@@ -600,9 +584,9 @@ impl ProcWidgetState {
             .iter()
             .filter_map(|pid| {
                 if filtered_tree.contains_key(pid) {
-                    process_harvest.get(pid).map(|process| {
-                        ProcWidgetData::from_data(process, is_using_command, is_mem_percent)
-                    })
+                    process_harvest
+                        .get(pid)
+                        .map(|process| ProcWidgetData::from_data(process))
                 } else {
                     None
                 }
@@ -635,9 +619,9 @@ impl ProcWidgetState {
                     let mut sum_queue = children_pids
                         .iter()
                         .filter_map(|child| {
-                            process_harvest.get(child).map(|p| {
-                                ProcWidgetData::from_data(p, is_using_command, is_mem_percent)
-                            })
+                            process_harvest
+                                .get(child)
+                                .map(|p| ProcWidgetData::from_data(p))
                         })
                         .collect_vec();
 
@@ -646,9 +630,9 @@ impl ProcWidgetState {
 
                         if let Some(pids) = filtered_tree.get(&process.pid) {
                             sum_queue.extend(pids.iter().filter_map(|child| {
-                                process_harvest.get(child).map(|p| {
-                                    ProcWidgetData::from_data(p, is_using_command, is_mem_percent)
-                                })
+                                process_harvest
+                                    .get(child)
+                                    .map(|p| ProcWidgetData::from_data(p))
                             }));
                         }
                     }
@@ -709,9 +693,9 @@ impl ProcWidgetState {
                     let mut children = children_pids
                         .iter()
                         .filter_map(|child_pid| {
-                            process_harvest.get(child_pid).map(|p| {
-                                ProcWidgetData::from_data(p, is_using_command, is_mem_percent)
-                            })
+                            process_harvest
+                                .get(child_pid)
+                                .map(|p| ProcWidgetData::from_data(p))
                         })
                         .collect_vec();
 
@@ -739,8 +723,6 @@ impl ProcWidgetState {
         &mut self, process_harvest: &BTreeMap<Pid, ProcessHarvest>,
     ) -> Vec<ProcWidgetData> {
         let search_query = self.get_query();
-        let is_using_command = self.is_using_command();
-        let is_mem_percent = self.is_mem_percent();
 
         let filtered_iter = process_harvest.values().filter(|process| {
             #[cfg(target_os = "linux")]
@@ -750,7 +732,7 @@ impl ProcWidgetState {
 
             search_query
                 .as_ref()
-                .map(|query| query.check(process, is_using_command))
+                .map(|query| query.check(process))
                 .unwrap_or(true)
         });
 
@@ -775,15 +757,8 @@ impl ProcWidgetState {
                 if let Some(pwd) = id_process_mapping.get_mut(id) {
                     pwd.cpu_usage_percent += process.cpu_usage_percent;
 
-                    match &mut pwd.mem_usage {
-                        MemUsage::Percent(usage) => {
-                            *usage += process.mem_usage_percent;
-                        }
-                        MemUsage::Bytes(usage) => {
-                            *usage += process.mem_usage;
-                        }
-                    }
-
+                    pwd.mem_usage += process.mem_usage;
+                    pwd.mem_usage_percent += process.mem_usage_percent;
                     pwd.rps += process.read_per_sec;
                     pwd.wps += process.write_per_sec;
                     pwd.total_read += process.total_read;
@@ -792,29 +767,20 @@ impl ProcWidgetState {
                     #[cfg(feature = "gpu")]
                     {
                         pwd.gpu_usage += process.gpu_util;
-                        match &mut pwd.gpu_mem_usage {
-                            MemUsage::Percent(usage) => {
-                                *usage += process.gpu_mem_percent;
-                            }
-                            MemUsage::Bytes(usage) => {
-                                *usage += process.gpu_mem;
-                            }
-                        }
+                        pwd.gpu_mem_usage += process.gpu_mem;
+                        pwd.gpu_mem_usage_percentage += process.gpu_mem_percent;
                     }
 
                     pwd.num_similar += 1;
                 } else {
-                    id_process_mapping.insert(
-                        id,
-                        ProcWidgetData::from_data(process, is_using_command, is_mem_percent),
-                    );
+                    id_process_mapping.insert(id, ProcWidgetData::from_data(process));
                 }
             }
 
             id_process_mapping.into_values().collect()
         } else {
             filtered_iter
-                .map(|process| ProcWidgetData::from_data(process, is_using_command, is_mem_percent))
+                .map(|process| ProcWidgetData::from_data(process))
                 .collect()
         };
 
@@ -1181,7 +1147,6 @@ mod test {
     use super::*;
     #[cfg(target_os = "linux")]
     use crate::collection::processes::ProcessType;
-    use crate::widgets::MemUsage;
 
     #[test]
     fn test_proc_sort() {
@@ -1190,7 +1155,8 @@ mod test {
             ppid: None,
             id: "A".into(),
             cpu_usage_percent: 0.0,
-            mem_usage: MemUsage::Percent(1.1),
+            mem_usage: 10001,
+            mem_usage_percent: 1.1,
             virtual_mem: 100,
             rps: 0,
             wps: 0,
@@ -1206,7 +1172,9 @@ mod test {
             disabled: false,
             time: Duration::from_secs(0),
             #[cfg(feature = "gpu")]
-            gpu_mem_usage: MemUsage::Percent(1.1),
+            gpu_mem_usage: 100011,
+            #[cfg(feature = "gpu")]
+            gpu_mem_usage_percentage: 1.1,
             #[cfg(feature = "gpu")]
             gpu_usage: 0,
             #[cfg(target_os = "linux")]
@@ -1221,7 +1189,7 @@ mod test {
             ppid: Some(1),
             id: "B".into(),
             cpu_usage_percent: 1.1,
-            mem_usage: MemUsage::Percent(2.2),
+            mem_usage_percent: 2.2,
             ..(a.clone())
         };
 
@@ -1230,7 +1198,7 @@ mod test {
             ppid: Some(1),
             id: "C".into(),
             cpu_usage_percent: 2.2,
-            mem_usage: MemUsage::Percent(0.0),
+            mem_usage_percent: 0.0,
             ..(a.clone())
         };
 
@@ -1239,7 +1207,7 @@ mod test {
             ppid: Some(2),
             id: "D".into(),
             cpu_usage_percent: 0.0,
-            mem_usage: MemUsage::Percent(0.0),
+            mem_usage_percent: 0.0,
             ..(a.clone())
         };
         let mut data = vec![d.clone(), b.clone(), c.clone(), a.clone()];
@@ -1637,14 +1605,25 @@ mod test {
     }
 
     #[test]
-    fn columns_and_is_using_command() {
+    fn columns_with_is_command() {
         let init_columns = [
+            ProcColumn::Pid,
+            ProcColumn::MemPercent,
+            ProcColumn::State,
+            ProcColumn::Name,
+        ];
+        let original_columns = [
             ProcColumn::Pid,
             ProcColumn::MemPercent,
             ProcColumn::State,
             ProcColumn::Command,
         ];
-        let original_columns = init_columns;
+        let toggled_columns = [
+            ProcColumn::Pid,
+            ProcColumn::MemPercent,
+            ProcColumn::State,
+            ProcColumn::Name,
+        ];
 
         let table_config = ProcTableConfig {
             is_command: true,
@@ -1652,24 +1631,34 @@ mod test {
         };
         let mut state = init_state(table_config, &init_columns);
         assert_eq!(get_columns(&state.table), original_columns);
-        assert!(state.is_using_command());
 
         state.toggle_command();
-        assert!(!state.is_using_command());
+        assert_eq!(get_columns(&state.table), toggled_columns);
 
         state.toggle_command();
-        assert!(state.is_using_command());
+        assert_eq!(get_columns(&state.table), original_columns);
     }
 
     #[test]
-    fn columns_and_is_memory() {
+    fn columns_with_show_memory_as_values() {
         let init_columns = [
+            ProcColumn::Pid,
+            ProcColumn::MemPercent,
+            ProcColumn::State,
+            ProcColumn::Name,
+        ];
+        let original_columns = [
             ProcColumn::Pid,
             ProcColumn::MemValue,
             ProcColumn::State,
             ProcColumn::Name,
         ];
-        let original_columns = init_columns;
+        let toggled_columns = [
+            ProcColumn::Pid,
+            ProcColumn::MemPercent,
+            ProcColumn::State,
+            ProcColumn::Name,
+        ];
 
         let table_config = ProcTableConfig {
             show_memory_as_values: true,
@@ -1677,13 +1666,12 @@ mod test {
         };
         let mut state = init_state(table_config, &init_columns);
         assert_eq!(get_columns(&state.table), original_columns);
-        assert!(!state.is_mem_percent());
 
         state.toggle_mem_percentage();
-        assert!(state.is_mem_percent());
+        assert_eq!(get_columns(&state.table), toggled_columns);
 
         state.toggle_mem_percentage();
-        assert!(!state.is_mem_percent());
+        assert_eq!(get_columns(&state.table), original_columns);
     }
 
     /// Tests toggling if both mem and mem% columns are configured.
@@ -1846,5 +1834,62 @@ mod test {
             .get_tree_data(&tree_collapsed, &tree_stored_data)
             .len();
         assert!(filtered_tree_results == 1);
+    }
+
+    /// A sanity test while I was refactoring out ProcWidgetColumn in https://github.com/ClementTsang/bottom/pull/2179.
+    /// This ensures that if I manually specify a mem percent or name column with default configs it still works as
+    /// expected.
+    #[test]
+    fn completely_default_manual_column_works() {
+        let init_columns = [ProcColumn::Name, ProcColumn::MemPercent];
+        let original_columns = init_columns;
+
+        let state = init_default_state(&init_columns);
+        assert_eq!(get_columns(&state.table), original_columns);
+    }
+
+    #[test]
+    fn completely_default_manual_column_works_2() {
+        let init_columns = [ProcColumn::Command, ProcColumn::MemValue];
+        let original_columns = init_columns;
+
+        let state = init_default_state(&init_columns);
+        assert_eq!(get_columns(&state.table), original_columns);
+    }
+
+    #[test]
+    fn manual_command_column_makes_setting_noop() {
+        let init_columns = [
+            ProcColumn::Command,
+            ProcColumn::Pid,
+            ProcColumn::State,
+            ProcColumn::MemPercent,
+        ];
+        let original_columns = init_columns;
+
+        let config = ProcTableConfig {
+            is_command: true,
+            ..Default::default()
+        };
+        let state = init_state(config, &init_columns);
+        assert_eq!(get_columns(&state.table), original_columns);
+    }
+
+    #[test]
+    fn manual_mem_column_makes_setting_noop() {
+        let init_columns = [
+            ProcColumn::Command,
+            ProcColumn::Pid,
+            ProcColumn::State,
+            ProcColumn::MemValue,
+        ];
+        let original_columns = init_columns;
+
+        let config = ProcTableConfig {
+            show_memory_as_values: true,
+            ..Default::default()
+        };
+        let state = init_state(config, &init_columns);
+        assert_eq!(get_columns(&state.table), original_columns);
     }
 }

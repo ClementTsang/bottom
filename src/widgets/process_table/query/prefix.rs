@@ -69,11 +69,11 @@ pub(super) enum Prefix {
 }
 
 impl Prefix {
-    pub(super) fn check(&self, process: &ProcessHarvest, is_using_command: bool) -> bool {
+    pub(super) fn check(&self, process: &ProcessHarvest) -> bool {
         match self {
-            Prefix::Or(or) => or.check(process, is_using_command),
-            Prefix::Attribute(attribute) => attribute.check(process, is_using_command),
-            Prefix::Negate(inner) => !inner.check(process, is_using_command),
+            Prefix::Or(or) => or.check(process),
+            Prefix::Attribute(attribute) => attribute.check(process),
+            Prefix::Negate(inner) => !inner.check(process),
         }
     }
 
