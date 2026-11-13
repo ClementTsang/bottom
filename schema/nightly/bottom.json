@@ -301,7 +301,7 @@
           "$ref": "#/$defs/SortOrder"
         },
         "use_binary_prefix": {
-          "description": "Use binary prefixes (e.g. GiB, MiB) instead of decimal prefixes (e.g. GB, MB).\n\nDefaults to decimal prefixes.",
+          "description": "Use binary prefixes (e.g. GiB, MiB) instead of decimal prefixes (e.g.\nGB, MB).\n\nDefaults to decimal prefixes.",
           "type": [
             "boolean",
             "null"
