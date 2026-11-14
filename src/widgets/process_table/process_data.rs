@@ -195,7 +195,7 @@ impl ProcWidgetData {
 
     pub fn add(&mut self, other: &Self) {
         self.inner.cpu_usage_percent += other.inner.cpu_usage_percent;
-        self.inner.mem_usage = self.inner.mem_usage + other.inner.mem_usage;
+        self.inner.mem_usage += other.inner.mem_usage;
         self.inner.read_per_sec += other.inner.read_per_sec;
         self.inner.write_per_sec += other.inner.write_per_sec;
         self.inner.total_read += other.inner.total_read;

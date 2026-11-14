@@ -89,12 +89,17 @@ pub(super) fn new_string_attribute(
     prefix_type: PrefixType, base: &str, regex_options: &QueryOptions,
 ) -> QueryResult<ProcessAttribute> {
     match prefix_type {
-        PrefixType::Pid | PrefixType::Name | PrefixType::State | PrefixType::User => {
+        PrefixType::Pid
+        | PrefixType::Name
+        | PrefixType::Command
+        | PrefixType::State
+        | PrefixType::User => {
             let re = new_regex(base, regex_options)?;
 
             match prefix_type {
                 PrefixType::Pid => Ok(ProcessAttribute::Pid(re)),
                 PrefixType::Name => Ok(ProcessAttribute::Name(re)),
+                PrefixType::Command => Ok(ProcessAttribute::Command(re)),
                 PrefixType::State => Ok(ProcessAttribute::State(re)),
                 PrefixType::User => Ok(ProcessAttribute::User(re)),
                 _ => unreachable!(),

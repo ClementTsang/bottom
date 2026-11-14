@@ -214,7 +214,7 @@ impl QueryProcessor for Prefix {
                 let prefix_type = curr.parse::<PrefixType>()?;
 
                 // TODO: Separate these cases here and below.
-                let content = if let PrefixType::Name = prefix_type {
+                let content = if let PrefixType::Name | PrefixType::Command = prefix_type {
                     Some(curr)
                 } else {
                     query.pop_front()
@@ -222,7 +222,7 @@ impl QueryProcessor for Prefix {
 
                 if let Some(content) = content {
                     match &prefix_type {
-                        PrefixType::Name => {
+                        PrefixType::Name | PrefixType::Command => {
                             return Ok(Prefix::Attribute(new_string_attribute(
                                 prefix_type,
                                 &content,
