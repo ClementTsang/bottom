@@ -61,7 +61,7 @@ impl ProcessAttribute {
                 // TODO: Note that to preserve backwards-compatibility in terms of behaviour, we'll want to make it
                 // so that if there is no name column, we fall back to command instead.
                 re.is_match(process.name.as_str())
-            },
+            }
             ProcessAttribute::Command(re) => re.is_match(process.command.as_str()),
             ProcessAttribute::State(re) => re.is_match(process.process_state.0),
             ProcessAttribute::User(re) => match process.user.as_ref() {

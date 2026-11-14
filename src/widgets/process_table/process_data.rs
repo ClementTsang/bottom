@@ -26,6 +26,22 @@ pub struct Id {
     prefix: Option<String>,
 }
 
+impl Id {
+    pub fn name() -> Self {
+        Self {
+            id_type: IdType::Name,
+            prefix: None,
+        }
+    }
+
+    pub fn command() -> Self {
+        Self {
+            id_type: IdType::Command,
+            prefix: None,
+        }
+    }
+}
+
 trait DurationExt {
     fn num_days(&self) -> u64;
     fn num_hours(&self) -> u64;

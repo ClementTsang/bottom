@@ -444,6 +444,22 @@ impl ProcWidgetState {
         self.force_update_data = false;
     }
 
+    /// Return whether the left-most column is [`ProcColumn::Command`].
+    ///
+    /// TODO: Maybe cache this?
+    pub fn is_leftmost_column_command(&self) -> bool {
+        match self.table.columns.iter().find(|column| {
+            *column.inner() == ProcColumn::Name || *column.inner() == ProcColumn::Command
+        }) {
+            Some(column) => match column.inner() {
+                ProcColumn::Name => false,
+                ProcColumn::Command => true,
+                _ => false,
+            },
+            None => false,
+        }
+    }
+
     fn get_tree_data(
         &self, collapsed: &TreeCollapsed, stored_data: &InnerData,
     ) -> Vec<ProcWidgetData> {
@@ -580,6 +596,7 @@ impl ProcWidgetState {
 
         let mut data = vec![];
         let mut prefixes = vec![];
+        let is_command = self.is_leftmost_column_command();
         let mut stack = orphan_pids
             .iter()
             .filter_map(|pid| {
@@ -737,6 +754,7 @@ impl ProcWidgetState {
         });
 
         let mut id_pid_map: HashMap<String, Vec<Pid>> = HashMap::default();
+        let is_using_command = self.is_leftmost_column_command();
         let mut filtered_data: Vec<ProcWidgetData> = if let ProcWidgetMode::Grouped = self.mode {
             let mut id_process_mapping: HashMap<&String, ProcWidgetData> = HashMap::default();
 
@@ -1130,6 +1148,7 @@ impl ProcWidgetState {
     }
 }
 
+/// Sorts the process data by the given column, skipping ascending sort for the PID column.
 #[inline]
 fn sort_skip_pid_asc(column: &ProcColumn, data: &mut [ProcWidgetData], order: SortOrder) {
     let descending = matches!(order, SortOrder::Descending);
@@ -1151,97 +1170,122 @@ mod test {
 
     #[test]
     fn test_proc_sort() {
-        let a = ProcWidgetData {
+        let a_proc = ProcessHarvest {
             pid: 1,
-            ppid: None,
-            id: "A".into(),
+            parent_pid: None,
             cpu_usage_percent: 0.0,
             mem_usage: 10001,
             mem_usage_percent: 1.1,
             virtual_mem: 100,
-            rps: 0,
-            wps: 0,
+            read_per_sec: 0,
+            write_per_sec: 0,
             total_read: 0,
             total_write: 0,
-            process_state: "N/A",
-            process_char: '?',
+            process_state: ("N/A", '?'),
             #[cfg(unix)]
             user: Some("root".into()),
             #[cfg(not(target_family = "unix"))]
             user: Some("N/A".into()),
-            count: 0,
-            disabled: false,
             time: Duration::from_secs(0),
             #[cfg(feature = "gpu")]
-            gpu_mem_usage: 100011,
+            gpu_mem: 100011,
             #[cfg(feature = "gpu")]
-            gpu_mem_usage_percentage: 1.1,
+            gpu_mem_percent: 1.1,
             #[cfg(feature = "gpu")]
-            gpu_usage: 0,
+            gpu_util: 0,
             #[cfg(target_os = "linux")]
             process_type: crate::collection::processes::ProcessType::Regular,
             #[cfg(unix)]
             nice: 0,
             priority: -20,
+            name: "A".into(),
+            command: "A_command".into(),
+            #[cfg(unix)]
+            uid: Some(1),
         };
 
-        let b = ProcWidgetData {
+        let a = ProcWidgetData {
+            inner: a_proc.clone(),
+            count: 0,
+            disabled: false,
+            id: Id::name(),
+        };
+
+        let b_proc = ProcessHarvest {
             pid: 2,
-            ppid: Some(1),
-            id: "B".into(),
+            parent_pid: Some(1),
+            name: "B".into(),
+            command: "B_command".into(),
             cpu_usage_percent: 1.1,
             mem_usage_percent: 2.2,
+            mem_usage: 20002,
+            ..(a_proc.clone())
+        };
+        let b = ProcWidgetData {
+            inner: b_proc,
             ..(a.clone())
         };
 
-        let c = ProcWidgetData {
+        let c_proc = ProcessHarvest {
             pid: 3,
-            ppid: Some(1),
-            id: "C".into(),
+            parent_pid: Some(1),
+            name: "C".into(),
+            command: "C_process".into(),
             cpu_usage_percent: 2.2,
             mem_usage_percent: 0.0,
+            mem_usage: 0,
+            ..(a_proc.clone())
+        };
+        let c = ProcWidgetData {
+            inner: c_proc,
             ..(a.clone())
         };
 
-        let d = ProcWidgetData {
+        let d_proc = ProcessHarvest {
             pid: 4,
-            ppid: Some(2),
-            id: "D".into(),
+            parent_pid: Some(2),
+            name: "D".into(),
+            command: "D_command".into(),
             cpu_usage_percent: 0.0,
             mem_usage_percent: 0.0,
+            mem_usage: 0,
+            ..(a_proc.clone())
+        };
+        let d = ProcWidgetData {
+            inner: d_proc,
             ..(a.clone())
         };
         let mut data = vec![d.clone(), b.clone(), c.clone(), a.clone()];
 
         // Assume we had sorted over by pid.
-        data.sort_by_key(|p| p.pid);
+        data.sort_by_key(|p| p.pid());
         sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Descending);
         assert_eq!(
-            [&c, &b, &a, &d].iter().map(|d| d.pid).collect::<Vec<_>>(),
-            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
+            [&c, &b, &a, &d].iter().map(|d| d.pid()).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid()).collect::<Vec<_>>(),
         );
 
         // Note that the PID ordering for ties is still ascending.
-        data.sort_by_key(|p| p.pid);
+        data.sort_by_key(|p| p.pid());
         sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
-            [&a, &d, &b, &c].iter().map(|d| d.pid).collect::<Vec<_>>(),
-            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
+            [&a, &d, &b, &c].iter().map(|d| d.pid()).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid()).collect::<Vec<_>>(),
         );
 
-        data.sort_by_key(|p| p.pid);
+        data.sort_by_key(|p| p.pid());
         sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Descending);
         assert_eq!(
-            [&b, &a, &c, &d].iter().map(|d| d.pid).collect::<Vec<_>>(),
-            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
+            [&b, &a, &c, &d].iter().map(|d| d.pid()).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid()).collect::<Vec<_>>(),
         );
 
         // Note that the PID ordering for ties is still ascending.
-        data.sort_by_key(|p| p.pid);
+        data.sort_by_key(|p| p.pid());
         sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Ascending);
         assert_eq!(
-            [&c, &d, &a, &b].iter().map(|d| d.pid).collect::<Vec<_>>(),
-            data.iter().map(|d| d.pid).collect::<Vec<_>>(),
+            [&c, &d, &a, &b].iter().map(|d| d.pid()).collect::<Vec<_>>(),
+            data.iter().map(|d| d.pid()).collect::<Vec<_>>(),
         );
     }
 
