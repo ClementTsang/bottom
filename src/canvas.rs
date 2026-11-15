@@ -8,6 +8,7 @@ pub mod dialogs;
 mod drawing_utils;
 mod widgets;
 
+use dialogs::command_dialog::draw_command_dialog;
 use ratatui::{
     Frame, Terminal,
     backend::Backend,
@@ -26,7 +27,6 @@ use crate::{
     constants::*,
     options::config::style::Styles,
 };
-use dialogs::command_dialog::draw_command_dialog;
 
 /// Handles the canvas' state.
 pub struct Painter {

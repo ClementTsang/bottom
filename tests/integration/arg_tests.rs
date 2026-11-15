@@ -4,10 +4,9 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 
-use crate::util::{btm_command, no_cfg_btm_command};
-
 #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 use crate::util::run_and_kill;
+use crate::util::{btm_command, no_cfg_btm_command};
 
 #[test]
 fn test_small_rate() {
