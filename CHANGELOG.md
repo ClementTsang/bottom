@@ -27,7 +27,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Features
 
 - [#2263](https://github.com/ClementTsang/bottom/pull/2263): Add pop-out process command viewer.
-- [#2323](https://github.com/ClementTsang/bottom/pull/2323): Allow setting a custom terminal name - #2323
+- [#2323](https://github.com/ClementTsang/bottom/pull/2323): Allow setting a custom terminal name.
 
 ### Changes
 

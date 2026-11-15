@@ -109,6 +109,7 @@ pub struct DataFilters {
 pub struct TerminalFeatures {
     pub bracketed_paste_enabled: bool,
     pub mouse_capture_enabled: bool,
+    pub custom_name_enabled: bool,
 }
 
 impl Default for TerminalFeatures {
@@ -116,6 +117,7 @@ impl Default for TerminalFeatures {
         Self {
             bracketed_paste_enabled: true,
             mouse_capture_enabled: true,
+            custom_name_enabled: false,
         }
     }
 }

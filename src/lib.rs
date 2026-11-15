@@ -97,9 +97,11 @@ fn cleanup_terminal(
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
 
-    // Reset terminal window title to default (blank apparently does so).
-    if let Err(err) = execute!(terminal.backend_mut(), SetTitle("")) {
-        eprintln!("Failed to reset terminal title: {err:?}");
+    if terminal_features.custom_name_enabled {
+        // Reset terminal window title to default (blank apparently does so).
+        if let Err(err) = execute!(terminal.backend_mut(), SetTitle("")) {
+            eprintln!("Failed to reset terminal title: {err:?}");
+        }
     }
 
     Ok(())
@@ -127,6 +129,7 @@ pub fn reset_stdout() {
     let _ = execute!(stdout, DisableBracketedPaste);
     let _ = execute!(stdout, LeaveAlternateScreen);
     let _ = execute!(stdout, Show);
+    // We unconditionally reset the terminal title back to the default here by doing this.
     let _ = execute!(stdout, SetTitle(""));
 }
 
@@ -382,17 +385,21 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     *enable_error_hook = true;
 
     let mut stdout_val = stdout();
+    let mut terminal_features = TerminalFeatures::default();
 
     // Set the terminal window title.
-    let app_name = app.app_config_fields.app_name.as_deref().unwrap_or("btm");
-    if let Err(err) = execute!(stdout_val, SetTitle(app_name)) {
-        eprintln!("Failed to set terminal title: {err:?}");
+    if let Some(app_name) = &app.app_config_fields.app_name {
+        match execute!(stdout_val, SetTitle(app_name)) {
+            Ok(_) => {
+                terminal_features.custom_name_enabled = true;
+            }
+            Err(err) => {
+                eprintln!("Failed to set terminal title: {err:?}");
+            }
+        }
     }
 
     execute!(stdout_val, EnterAlternateScreen)?;
-
-    let mut bracketed_paste_enabled = true;
-    let mouse_capture_enabled = !app.app_config_fields.disable_click;
 
     // Note that some operating systems (basically Windows 8.1 and older) don't
     // support this, so we'll catch the error, but not outright fail.
@@ -400,13 +407,14 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // https://github.com/helix-editor/helix/discussions/9025.
     match execute!(stdout_val, EnableBracketedPaste) {
         Err(err) if err.kind() == std::io::ErrorKind::Unsupported => {
-            bracketed_paste_enabled = false;
+            terminal_features.bracketed_paste_enabled = false;
         }
         Err(err) => return Err(err.into()),
         Ok(_) => {}
     }
 
-    if mouse_capture_enabled {
+    terminal_features.mouse_capture_enabled = !app.app_config_fields.disable_click;
+    if terminal_features.mouse_capture_enabled {
         execute!(stdout_val, EnableMouseCapture)?;
     } else {
         execute!(stdout_val, DisableMouseCapture)?;
@@ -423,11 +431,6 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     }
 
     terminal.hide_cursor()?;
-
-    let terminal_features = TerminalFeatures {
-        bracketed_paste_enabled,
-        mouse_capture_enabled,
-    };
 
     app.terminal_features = terminal_features;
 

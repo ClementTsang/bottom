@@ -474,6 +474,13 @@
     "GeneralConfig": {
       "type": "object",
       "properties": {
+        "app_name": {
+          "description": "Sets the application name. Defaults to 'btm' if not specified.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "autohide_time": {
           "type": [
             "boolean",

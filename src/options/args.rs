@@ -288,7 +288,7 @@ pub struct GeneralArgs {
         long,
         value_name = "NAME",
         help = "Sets the application name.",
-        long_help = "Sets a custom name to display in the terminal title. Defaults to 'btm' if not specified.",
+        long_help = "Sets a custom name to display in the terminal title.",
         alias = "app-name"
     )]
     pub app_name: Option<String>,

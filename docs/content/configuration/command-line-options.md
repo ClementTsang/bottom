@@ -7,6 +7,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 | Option                              | Behaviour                                                  |
 | ----------------------------------- | ---------------------------------------------------------- |
+| `--app_name`                        | Sets the application name displayed in the terminal title. |
 | `--autohide_time`                   | Temporarily shows the time scale in graphs.                |
 | `-b`, `--basic`                     | Hides graphs and uses a more basic look.                   |
 | `-C`, `--config_location <PATH>`    | Sets the location of the config file.                      |

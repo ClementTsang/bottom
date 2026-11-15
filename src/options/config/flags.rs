@@ -80,6 +80,6 @@ pub(crate) struct GeneralConfig {
     pub(crate) tree: Option<bool>,
     pub(crate) current_usage: Option<bool>,
     pub(crate) unnormalized_cpu: Option<bool>,
-    /// Sets the application name. Defaults to 'btm' if not specified.
+    /// Sets the application name.
     pub(crate) app_name: Option<String>,
 }
