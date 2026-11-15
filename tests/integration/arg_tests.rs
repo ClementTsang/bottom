@@ -4,7 +4,7 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 
-use crate::util::{btm_command, no_cfg_btm_command};
+use crate::util::{btm_command, no_cfg_btm_command, run_and_kill};
 
 #[test]
 fn test_small_rate() {
@@ -187,4 +187,9 @@ fn test_version() {
 fn test_help() {
     btm_command(&["--help"]).assert().success();
     btm_command(&["-h"]).assert().success();
+}
+
+#[test]
+fn test_arg_custom_name() {
+    run_and_kill(&["--app-name", "custom test name"]);
 }

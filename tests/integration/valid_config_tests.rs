@@ -6,39 +6,7 @@ use std::{io::Write, path::Path};
 
 use predicates::prelude::*;
 
-use crate::util::{btm_command, spawn_btm_in_pty};
-
-fn reader_to_string(mut reader: Box<dyn Read>) -> String {
-    let mut buf = String::default();
-    reader.read_to_string(&mut buf).unwrap();
-
-    buf
-}
-
-fn run_and_kill(args: &[&str]) {
-    let (master, mut handle) = spawn_btm_in_pty(args);
-    let reader = master.try_clone_reader().unwrap();
-    let _ = master.take_writer().unwrap();
-
-    const TIMES_CHECKED: u64 = 6; // Check 6 times, once every 500ms, for 3 seconds total.
-
-    for _ in 0..TIMES_CHECKED {
-        thread::sleep(Duration::from_millis(500));
-        match handle.try_wait() {
-            Ok(Some(exit)) => {
-                println!("output: {}", reader_to_string(reader));
-                panic!("program terminated unexpectedly (exit status: {exit:?})");
-            }
-            Err(e) => {
-                println!("output: {}", reader_to_string(reader));
-                panic!("error while trying to wait: {e}")
-            }
-            _ => {}
-        }
-    }
-
-    handle.kill().unwrap();
-}
+use crate::util::{btm_command, run_and_kill};
 
 fn run_and_kill_cfg(path: &str) {
     run_and_kill(&["-C", path]);
@@ -316,4 +284,10 @@ fn test_no_spurious_deprecated_warnings() {
             .eval(&stderr_str),
         "Expected no deprecated warnings, but got: {stderr_str}"
     );
+}
+
+/// This sets a custom terminal name via config.
+#[test]
+fn test_config_custom_name() {
+    run_and_kill_cfg("./tests/valid_configs/custom_name.toml");
 }
