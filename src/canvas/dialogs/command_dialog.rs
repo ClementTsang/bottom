@@ -150,9 +150,8 @@ impl CommandDialogState {
 mod tests {
     use ratatui::{Terminal, backend::TestBackend};
 
-    use crate::options::config::style::Styles;
-
     use super::*;
+    use crate::options::config::style::Styles;
 
     #[test]
     fn scrollbar_reaches_bottom_when_command_is_scrolled_to_end() {

@@ -90,6 +90,8 @@ pub struct AppConfigFields {
     pub disk_show_unmounted: bool,
     pub disk_use_binary_prefix: bool,
     pub disk_io_graph_show_unmounted: bool,
+    // TODO: Support templating like `{hostname}`, etc.
+    pub app_name: Option<String>,
 }
 
 /// For filtering out information
@@ -107,6 +109,7 @@ pub struct DataFilters {
 pub struct TerminalFeatures {
     pub bracketed_paste_enabled: bool,
     pub mouse_capture_enabled: bool,
+    pub custom_name_enabled: bool,
 }
 
 impl Default for TerminalFeatures {
@@ -114,6 +117,7 @@ impl Default for TerminalFeatures {
         Self {
             bracketed_paste_enabled: true,
             mouse_capture_enabled: true,
+            custom_name_enabled: false,
         }
     }
 }

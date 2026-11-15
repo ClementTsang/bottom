@@ -1,0 +1,4 @@
+# A config that sets a custom name.
+
+[flags]
+app_name = "test custom name"

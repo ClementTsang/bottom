@@ -283,6 +283,15 @@ pub struct GeneralArgs {
         alias = "time-delta"
     )]
     pub time_delta: Option<String>,
+
+    #[arg(
+        long,
+        value_name = "NAME",
+        help = "Sets the application name.",
+        long_help = "Sets a custom name to display in the terminal title.",
+        alias = "app-name"
+    )]
+    pub app_name: Option<String>,
 }
 
 /// Process arguments/config options.

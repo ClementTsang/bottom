@@ -552,6 +552,12 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                 .and_then(|cfg| cfg.use_binary_prefix)
                 .unwrap_or(false),
         disk_io_graph_show_unmounted,
+        app_name: args
+            .general
+            .app_name
+            .as_ref()
+            .or_else(|| config.flags.as_ref().and_then(|f| f.app_name.as_ref()))
+            .cloned(),
     };
 
     let process_default_sort = match &args.process.process_default_sort {
