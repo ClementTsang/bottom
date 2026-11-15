@@ -87,18 +87,20 @@ fn cleanup_terminal(
     disable_raw_mode()?;
 
     if terminal_features.mouse_capture_enabled {
-        execute!(terminal.backend_mut(), DisableMouseCapture)?;
+        let _ = execute!(terminal.backend_mut(), DisableMouseCapture);
     }
 
     if terminal_features.bracketed_paste_enabled {
-        execute!(terminal.backend_mut(), DisableBracketedPaste)?;
+        let _ = execute!(terminal.backend_mut(), DisableBracketedPaste);
     }
 
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
 
     // Reset terminal window title to default (blank apparently does so).
-    execute!(terminal.backend_mut(), SetTitle(""))?;
+    if let Err(err) = execute!(terminal.backend_mut(), SetTitle("")) {
+        eprintln!("Failed to reset terminal title: {err:?}");
+    }
 
     Ok(())
 }
@@ -380,11 +382,14 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     *enable_error_hook = true;
 
     let mut stdout_val = stdout();
-    execute!(stdout_val, EnterAlternateScreen)?;
 
     // Set the terminal window title.
     let app_name = app.app_config_fields.app_name.as_deref().unwrap_or("btm");
-    execute!(stdout_val, SetTitle(app_name))?;
+    if let Err(err) = execute!(stdout_val, SetTitle(app_name)) {
+        eprintln!("Failed to set terminal title: {err:?}");
+    }
+
+    execute!(stdout_val, EnterAlternateScreen)?;
 
     let mut bracketed_paste_enabled = true;
     let mouse_capture_enabled = !app.app_config_fields.disable_click;
