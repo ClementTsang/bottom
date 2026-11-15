@@ -4,7 +4,10 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 
-use crate::util::{btm_command, no_cfg_btm_command, run_and_kill};
+use crate::util::{btm_command, no_cfg_btm_command};
+
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
+use crate::util::run_and_kill;
 
 #[test]
 fn test_small_rate() {
@@ -189,6 +192,10 @@ fn test_help() {
     btm_command(&["-h"]).assert().success();
 }
 
+/// Tests that a custom app name can be set via args (https://github.com/ClementTsang/bottom/pull/2323).
+///
+/// Note this only runs on x86 Linux because the `run_and_kill` function only works there at the moment.
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 #[test]
 fn test_arg_custom_name() {
     run_and_kill(&["--app-name", "custom test name"]);

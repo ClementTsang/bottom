@@ -1,4 +1,7 @@
-use std::{env, ffi::OsString, io::Read, path::Path, process::Command, thread, time::Duration};
+use std::{env, ffi::OsString, io::Read, path::Path, process::Command};
+
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
+use std::{thread, time::Duration};
 
 #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
@@ -158,6 +161,7 @@ fn reader_to_string(mut reader: Box<dyn Read>) -> String {
 }
 
 /// Run and kill bottom.
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 pub fn run_and_kill(args: &[&str]) {
     let (master, mut handle) = spawn_btm_in_pty(args);
     let reader = master.try_clone_reader().unwrap();

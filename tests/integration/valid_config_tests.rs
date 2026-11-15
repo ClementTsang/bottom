@@ -286,7 +286,7 @@ fn test_no_spurious_deprecated_warnings() {
     );
 }
 
-/// This sets a custom terminal name via config.
+/// Tests that a custom app name can be set via config (https://github.com/ClementTsang/bottom/pull/2323).
 #[test]
 fn test_config_custom_name() {
     run_and_kill_cfg("./tests/valid_configs/custom_name.toml");
